@@ -443,6 +443,30 @@ export default function AssistantChat({ mode = 'popup' }) {
               label.style.transform = 'translateX(-10px)'
             }
           }}
+          onTouchStart={(e) => {
+            // Espansione su mobile al tocco
+            e.currentTarget.style.width = '180px'
+            e.currentTarget.style.borderRadius = '32px'
+            e.currentTarget.style.boxShadow = '0 0 40px rgba(0, 212, 255, 0.8), inset 0 0 20px rgba(0, 212, 255, 0.4)'
+            const label = e.currentTarget.querySelector('.chat-label')
+            if (label) {
+              label.style.opacity = '1'
+              label.style.transform = 'translateX(0)'
+            }
+          }}
+          onTouchEnd={(e) => {
+            // Ritardo per permettere di vedere l'espansione prima che si apra
+            setTimeout(() => {
+              e.currentTarget.style.width = '64px'
+              e.currentTarget.style.borderRadius = '50%'
+              e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 212, 255, 0.5), inset 0 0 10px rgba(0, 212, 255, 0.3)'
+              const label = e.currentTarget.querySelector('.chat-label')
+              if (label) {
+                label.style.opacity = '0'
+                label.style.transform = 'translateX(-10px)'
+              }
+            }, 300)
+          }}
           aria-label={t('openAssistant') || 'Apri assistente'}
         >
           {/* Anelli pulse */}
