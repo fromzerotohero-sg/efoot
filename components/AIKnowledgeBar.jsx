@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
 import { supabase } from '@/lib/supabaseClient'
 import { safeJsonResponse } from '@/lib/fetchHelper'
-import { Brain, RefreshCw, AlertCircle, Sparkles, Trophy, Target, Zap, Crown } from 'lucide-react'
+import { RefreshCw, AlertCircle, Trophy, Target, Zap, Crown } from 'lucide-react'
 
 /**
  * Hook per rilevare mobile
@@ -294,13 +294,6 @@ export default function AIKnowledgeBar() {
         {/* Header row: Title + Avatar */}
         <div style={{...styles.header, marginBottom: isMobile ? '12px' : '16px'}}>
           <div style={styles.titleSection}>
-            {/* Badge nascosto su mobile */}
-            {!isMobile && (
-              <div style={styles.badgeRow}>
-                <Sparkles size={14} color="var(--neon-cyan)" />
-                <span style={styles.badgeText}>{t('aiKnowledgeBadge') || 'AI COACH INSIGHT'}</span>
-              </div>
-            )}
             <h2 style={{...styles.title, fontSize: isMobile ? '18px' : '20px'}}>{t('aiKnowledge')}</h2>
           </div>
           
@@ -367,13 +360,7 @@ export default function AIKnowledgeBar() {
           <span style={{...styles.levelDescription, fontSize: isMobile ? '12px' : '13px'}}>{currentLevel.description}</span>
         </div>
 
-        {/* Footer info - nascosto su mobile */}
-        {!isMobile && (
-          <div style={styles.footer}>
-            <Brain size={12} color="rgba(255,255,255,0.4)" />
-            <span style={styles.footerText}>{t('poweredByCoachAI') || 'Powered by Coach AI Engine'}</span>
-          </div>
-        )}
+
       </div>
 
       {/* CSS Animations */}
