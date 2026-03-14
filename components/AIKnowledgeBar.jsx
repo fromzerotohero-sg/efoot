@@ -8,6 +8,22 @@ import { safeJsonResponse } from '@/lib/fetchHelper'
 import { Brain, RefreshCw, AlertCircle, Sparkles, Trophy, Target, Zap, Crown } from 'lucide-react'
 
 /**
+ * Hook per rilevare mobile
+ */
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false)
+  
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 480)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+  
+  return isMobile
+}
+
+/**
  * AI Knowledge Bar - Enterprise Premium Edition
  * 
  * Design: Glassmorphism card with animated gradient borders,
@@ -16,6 +32,7 @@ import { Brain, RefreshCw, AlertCircle, Sparkles, Trophy, Target, Zap, Crown } f
 export default function AIKnowledgeBar() {
   const { t } = useTranslation()
   const router = useRouter()
+  const isMobile = useIsMobile()
   const [score, setScore] = useState(0)
   const [level, setLevel] = useState('beginner')
   const [breakdown, setBreakdown] = useState({})
@@ -239,7 +256,7 @@ export default function AIKnowledgeBar() {
 
   if (loading) {
     return (
-      <div style={styles.card} className="ai-knowledge-card">
+      <div style={{...styles.card, padding: isMobile ? '16px' : '24px'}}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div style={styles.avatarPulse}>
             <RefreshCw size={24} color="var(--neon-cyan)" style={{ animation: 'spin 1s linear infinite' }} />
@@ -259,7 +276,7 @@ export default function AIKnowledgeBar() {
 
   if (error) {
     return (
-      <div style={{ ...styles.card, borderColor: 'rgba(239, 68, 68, 0.4)' }}>
+      <div style={{ ...styles.card, padding: isMobile ? '16px' : '24px', borderColor: 'rgba(239, 68, 68, 0.4)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#EF4444' }}>
           <AlertCircle size={24} />
           <span style={{ fontSize: '15px' }}>{error}</span>
@@ -269,42 +286,46 @@ export default function AIKnowledgeBar() {
   }
 
   return (
-    <div style={styles.card}>
+    <div style={{...styles.card, padding: isMobile ? '16px' : '24px'}}>
       {/* Animated border glow effect */}
       <div style={{ ...styles.cardGlow, background: currentLevel.gradient }} />
       
-      <div style={styles.content} className="ai-knowledge-content">
+      <div style={{position: 'relative', zIndex: 1}}>
         {/* Header row: Title + Avatar */}
-        <div style={styles.header} className="ai-knowledge-header">
+        <div style={{...styles.header, marginBottom: isMobile ? '12px' : '16px'}}>
           <div style={styles.titleSection}>
-            <div style={styles.badgeRow}>
-              <Sparkles size={14} color="var(--neon-cyan)" />
-              <span style={styles.badgeText}>{t('aiKnowledgeBadge') || 'AI COACH INSIGHT'}</span>
-            </div>
-            <h2 style={styles.title} className="ai-knowledge-title">{t('aiKnowledge')}</h2>
+            {/* Badge nascosto su mobile */}
+            {!isMobile && (
+              <div style={styles.badgeRow}>
+                <Sparkles size={14} color="var(--neon-cyan)" />
+                <span style={styles.badgeText}>{t('aiKnowledgeBadge') || 'AI COACH INSIGHT'}</span>
+              </div>
+            )}
+            <h2 style={{...styles.title, fontSize: isMobile ? '18px' : '20px'}}>{t('aiKnowledge')}</h2>
           </div>
           
-          {/* Avatar with level ring - hidden on small mobile */}
-          <div style={{ ...styles.avatarContainer, boxShadow: `0 0 30px ${currentLevel.glow}` }} className="ai-knowledge-avatar">
+          {/* Avatar - sempre visibile ma più piccolo su mobile */}
+          <div style={{
+            ...styles.avatarContainer, 
+            width: isMobile ? '40px' : '56px',
+            height: isMobile ? '40px' : '56px',
+            boxShadow: `0 0 ${isMobile ? '15px' : '30px'} ${currentLevel.glow}`
+          }}>
             <div style={{ ...styles.avatarRing, borderColor: currentLevel.color }}>
-              <img 
-                src="/coach.jpg" 
-                alt="AI Coach" 
-                style={styles.avatar}
-              />
+              <img src="/coach.jpg" alt="AI Coach" style={styles.avatar} />
             </div>
             <div style={{ ...styles.levelDot, background: currentLevel.gradient }} />
           </div>
         </div>
 
         {/* Score display */}
-        <div style={styles.scoreSection} className="ai-knowledge-score-section">
-          <span style={styles.scoreValue} className="ai-knowledge-score">{Math.round(animatedScore)}</span>
-          <span style={styles.scorePercent} className="ai-knowledge-percent">%</span>
+        <div style={styles.scoreSection}>
+          <span style={{...styles.scoreValue, fontSize: isMobile ? '40px' : '48px'}}>{Math.round(animatedScore)}</span>
+          <span style={{...styles.scorePercent, fontSize: isMobile ? '20px' : '24px'}}>%</span>
         </div>
 
         {/* Premium Progress Bar */}
-        <div style={styles.progressContainer}>
+        <div style={{...styles.progressContainer, marginBottom: isMobile ? '12px' : '16px'}}>
           <div style={styles.progressTrack}>
             <div
               style={{
@@ -336,71 +357,30 @@ export default function AIKnowledgeBar() {
         </div>
 
         {/* Level badge */}
-        <div style={styles.levelSection} className="ai-knowledge-level-section">
+        <div style={{...styles.levelSection, marginBottom: isMobile ? '0' : '16px', gap: isMobile ? '8px' : '12px'}}>
           <div style={{ ...styles.levelBadge, background: `${currentLevel.color}20`, borderColor: currentLevel.color }}>
-            <LevelIcon size={16} color={currentLevel.color} />
+            <LevelIcon size={isMobile ? 14 : 16} color={currentLevel.color} />
             <span style={{ ...styles.levelText, color: currentLevel.color }}>
               {currentLevel.label}
             </span>
           </div>
-          <span style={styles.levelDescription} className="ai-knowledge-level-desc">{currentLevel.description}</span>
+          <span style={{...styles.levelDescription, fontSize: isMobile ? '12px' : '13px'}}>{currentLevel.description}</span>
         </div>
 
-        {/* Footer info */}
-        <div style={styles.footer}>
-          <Brain size={12} color="rgba(255,255,255,0.4)" />
-          <span style={styles.footerText}>{t('poweredByCoachAI') || 'Powered by Coach AI Engine'}</span>
-        </div>
+        {/* Footer info - nascosto su mobile */}
+        {!isMobile && (
+          <div style={styles.footer}>
+            <Brain size={12} color="rgba(255,255,255,0.4)" />
+            <span style={styles.footerText}>{t('poweredByCoachAI') || 'Powered by Coach AI Engine'}</span>
+          </div>
+        )}
       </div>
 
-      {/* CSS Animations & Responsive */}
+      {/* CSS Animations */}
       <style jsx>{`
         @keyframes shimmer {
           0% { transform: translateX(-100%); }
           100% { transform: translateX(100%); }
-        }
-        @keyframes pulse-glow {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 1; }
-        }
-        
-        /* Mobile responsive */
-        @media (max-width: 480px) {
-          .ai-knowledge-card {
-            border-radius: 16px;
-          }
-          .ai-knowledge-content {
-            padding: 16px;
-          }
-          .ai-knowledge-header {
-            margin-bottom: 12px;
-          }
-          .ai-knowledge-title {
-            font-size: 18px;
-          }
-          .ai-knowledge-avatar {
-            width: 44px;
-            height: 44px;
-          }
-          .ai-knowledge-score {
-            font-size: 40px;
-          }
-          .ai-knowledge-percent {
-            font-size: 20px;
-          }
-          .ai-knowledge-level-section {
-            gap: 8px;
-          }
-          .ai-knowledge-level-desc {
-            font-size: 12px;
-            width: 100%;
-          }
-        }
-        
-        @media (max-width: 360px) {
-          .ai-knowledge-avatar {
-            display: none;
-          }
         }
       `}</style>
     </div>
@@ -426,16 +406,10 @@ const styles = {
     height: '2px',
     opacity: 0.8,
   },
-  content: {
-    padding: '24px',
-    position: 'relative',
-    zIndex: 1,
-  },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: '16px',
     gap: '12px',
     flexWrap: 'wrap',
   },
@@ -460,15 +434,12 @@ const styles = {
   },
   title: {
     margin: 0,
-    fontSize: '20px',
     fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: '-0.5px',
   },
   avatarContainer: {
     position: 'relative',
-    width: '56px',
-    height: '56px',
     borderRadius: '50%',
     transition: 'all 0.3s ease',
     flexShrink: 0,
@@ -488,7 +459,7 @@ const styles = {
     height: '100%',
     borderRadius: '50%',
     border: '2px solid',
-    padding: '3px',
+    padding: '2px',
     transition: 'all 0.3s ease',
   },
   avatar: {
@@ -501,8 +472,8 @@ const styles = {
     position: 'absolute',
     bottom: '0',
     right: '0',
-    width: '16px',
-    height: '16px',
+    width: '14px',
+    height: '14px',
     borderRadius: '50%',
     border: '2px solid rgba(10, 14, 28, 0.8)',
   },
@@ -513,7 +484,6 @@ const styles = {
     marginBottom: '16px',
   },
   scoreValue: {
-    fontSize: '48px',
     fontWeight: '800',
     background: 'linear-gradient(180deg, #FFFFFF 0%, rgba(255,255,255,0.7) 100%)',
     WebkitBackgroundClip: 'text',
@@ -523,13 +493,11 @@ const styles = {
     letterSpacing: '-2px',
   },
   scorePercent: {
-    fontSize: '24px',
     fontWeight: '600',
     color: 'rgba(255,255,255,0.5)',
   },
   progressContainer: {
     position: 'relative',
-    marginBottom: '16px',
   },
   progressTrack: {
     width: '100%',
@@ -577,7 +545,6 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    marginBottom: '16px',
     flexWrap: 'wrap',
   },
   levelBadge: {
@@ -595,7 +562,6 @@ const styles = {
     fontWeight: '700',
   },
   levelDescription: {
-    fontSize: '13px',
     color: 'rgba(255,255,255,0.5)',
   },
   footer: {
