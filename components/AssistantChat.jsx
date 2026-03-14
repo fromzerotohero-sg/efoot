@@ -73,11 +73,19 @@ export default function AssistantChat({ mode = 'popup' }) {
         }
       }
 
+      // Accumula i risultati finali durante la sessione di ascolto
       if (finalTranscript) {
-        setInput(prev => prev + finalTranscript)
+        setInput(prev => {
+          const cleanPrev = prev.endsWith(' ') ? prev : prev + ' '
+          return (cleanPrev + finalTranscript).trim()
+        })
       } else if (interimTranscript) {
-        // Mostra preview mentre parla (opzionale, per UX)
-        setInput(prev => prev.replace(/\[\.\.\.\]$/, '') + interimTranscript + '[...]')
+        // Mostra preview mentre parla (senza sporcare con [...])
+        setInput(prev => {
+          // Se c'era già testo, mantienilo e aggiungi l'interim
+          const baseText = prev.replace(/\s*\.\.\.$/, '').trim()
+          return baseText + ' ' + interimTranscript.trim()
+        })
       }
     }
 
@@ -855,76 +863,103 @@ export default function AssistantChat({ mode = 'popup' }) {
           if (!SpeechRecognition) return null
           
           return (
-            <button
-              onClick={toggleVoiceInput}
-              disabled={loading}
-              style={{
-                padding: '12px',
-                background: isListening 
-                  ? 'rgba(255, 59, 48, 0.2)' 
-                  : 'rgba(0, 212, 255, 0.1)',
-                border: isListening 
-                  ? '1px solid rgba(255, 59, 48, 0.6)' 
-                  : '1px solid rgba(0, 212, 255, 0.3)',
-                borderRadius: '8px',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.2s',
-                position: 'relative',
-                overflow: 'hidden'
-              }}
-              onMouseEnter={(e) => {
-                if (!loading && !isListening) {
-                  e.currentTarget.style.background = 'rgba(0, 212, 255, 0.2)'
-                  e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.5)'
+            <>
+              <style jsx>{`
+                @keyframes voice-recording {
+                  0%, 100% { 
+                    box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.4),
+                                0 0 0 0 rgba(255, 59, 48, 0.2);
+                  }
+                  50% { 
+                    box-shadow: 0 0 0 8px rgba(255, 59, 48, 0),
+                                0 0 0 16px rgba(255, 59, 48, 0);
+                  }
                 }
-              }}
-              onMouseLeave={(e) => {
-                if (!loading && !isListening) {
-                  e.currentTarget.style.background = 'rgba(0, 212, 255, 0.1)'
-                  e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.3)'
+                @keyframes sound-wave-bar {
+                  0%, 100% { height: 4px; }
+                  50% { height: 20px; }
                 }
-              }}
-              aria-label={isListening ? t('voiceListening') : t('voiceInput')}
-              title={isListening ? t('voiceListening') : t('voiceInput')}
-            >
-              {isListening ? (
-                <>
-                  <style jsx>{`
-                    @keyframes mic-pulse {
-                      0%, 100% { transform: scale(1); opacity: 1; }
-                      50% { transform: scale(1.2); opacity: 0.7; }
-                    }
-                    .mic-pulse {
-                      animation: mic-pulse 1s ease-in-out infinite;
-                    }
-                    @keyframes sound-wave {
-                      0%, 100% { height: 4px; }
-                      50% { height: 16px; }
-                    }
-                    .sound-bar {
-                      width: 3px;
-                      background: #FF3B30;
-                      border-radius: 2px;
-                      animation: sound-wave 0.5s ease-in-out infinite;
-                    }
-                    .sound-bar:nth-child(2) { animation-delay: 0.1s; }
-                    .sound-bar:nth-child(3) { animation-delay: 0.2s; }
-                    .sound-bar:nth-child(4) { animation-delay: 0.3s; }
-                  `}</style>
-                  <div style={{ display: 'flex', gap: '2px', alignItems: 'center', height: '20px' }}>
-                    <div className="sound-bar" />
-                    <div className="sound-bar" />
-                    <div className="sound-bar" />
-                    <div className="sound-bar" />
+                .voice-btn {
+                  position: relative;
+                  overflow: visible !important;
+                }
+                .voice-btn.recording {
+                  animation: voice-recording 1.5s ease-out infinite;
+                }
+                .sound-wave {
+                  display: flex;
+                  gap: 3px;
+                  align-items: center;
+                  height: 24px;
+                }
+                .sound-wave span {
+                  width: 4px;
+                  background: #FF3B30;
+                  border-radius: 2px;
+                  animation: sound-wave-bar 0.5s ease-in-out infinite;
+                }
+                .sound-wave span:nth-child(1) { animation-delay: 0s; }
+                .sound-wave span:nth-child(2) { animation-delay: 0.1s; }
+                .sound-wave span:nth-child(3) { animation-delay: 0.2s; }
+                .sound-wave span:nth-child(4) { animation-delay: 0.3s; }
+                .sound-wave span:nth-child(5) { animation-delay: 0.15s; }
+              `}</style>
+              <button
+                onClick={toggleVoiceInput}
+                disabled={loading}
+                className={isListening ? 'voice-btn recording' : 'voice-btn'}
+                style={{
+                  padding: '12px 14px',
+                  minWidth: '44px',
+                  height: '44px',
+                  background: isListening 
+                    ? 'linear-gradient(135deg, #FF3B30 0%, #FF6B6B 100%)' 
+                    : 'linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 161, 166, 0.1) 100%)',
+                  border: isListening 
+                    ? '2px solid #FF3B30' 
+                    : '2px solid rgba(0, 212, 255, 0.6)',
+                  borderRadius: '12px',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease',
+                  boxShadow: isListening 
+                    ? '0 0 20px rgba(255, 59, 48, 0.5)' 
+                    : '0 0 10px rgba(0, 212, 255, 0.2)'
+                }}
+                onMouseEnter={(e) => {
+                  if (!loading && !isListening) {
+                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 212, 255, 0.25) 0%, rgba(0, 161, 166, 0.2) 100%)'
+                    e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.9)'
+                    e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 212, 255, 0.4)'
+                    e.currentTarget.style.transform = 'scale(1.05)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!loading && !isListening) {
+                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 161, 166, 0.1) 100%)'
+                    e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.6)'
+                    e.currentTarget.style.boxShadow = '0 0 10px rgba(0, 212, 255, 0.2)'
+                    e.currentTarget.style.transform = 'scale(1)'
+                  }
+                }}
+                aria-label={isListening ? t('voiceListening') : t('voiceInput')}
+                title={isListening ? t('voiceListening') : t('voiceInput')}
+              >
+                {isListening ? (
+                  <div className="sound-wave">
+                    <span />
+                    <span />
+                    <span />
+                    <span />
+                    <span />
                   </div>
-                </>
-              ) : (
-                <Mic size={18} color="var(--neon-cyan)" />
-              )}
-            </button>
+                ) : (
+                  <Mic size={22} color="#00d4ff" style={{ filter: 'drop-shadow(0 0 4px rgba(0, 212, 255, 0.8))' }} />
+                )}
+              </button>
+            </>
           )
         })()}
 
@@ -939,22 +974,23 @@ export default function AssistantChat({ mode = 'popup' }) {
               handleSend()
             }
           }}
-          placeholder={isListening ? t('voiceListening') : (t('typeMessage') || 'Scrivi un messaggio...')}
+          placeholder={isListening ? (t('voiceListening') || 'Sto ascoltando...') : (t('typeMessage') || 'Scrivi un messaggio...')}
           disabled={loading || isListening}
           style={{
             flex: 1,
-            padding: '12px',
+            padding: '12px 16px',
             background: isListening 
-              ? 'rgba(255, 59, 48, 0.05)' 
+              ? 'rgba(255, 59, 48, 0.08)' 
               : 'rgba(255, 255, 255, 0.1)',
             border: isListening 
-              ? '1px solid rgba(255, 59, 48, 0.4)' 
+              ? '2px solid rgba(255, 59, 48, 0.6)' 
               : '1px solid rgba(255, 255, 255, 0.2)',
-            borderRadius: '8px',
-            color: 'white',
+            borderRadius: '10px',
+            color: isListening ? '#FFB4B4' : 'white',
             fontSize: '14px',
             outline: 'none',
-            transition: 'all 0.2s'
+            transition: 'all 0.2s',
+            boxShadow: isListening ? '0 0 15px rgba(255, 59, 48, 0.2) inset' : 'none'
           }}
         />
         <button
