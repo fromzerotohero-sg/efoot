@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
 import { supabase } from '@/lib/supabaseClient'
-import { Brain, X, Send, Sparkles, ChevronDown, ChevronUp } from 'lucide-react'
+import { Brain, X, Send, Sparkles, ChevronDown, ChevronUp, Mic, MicOff } from 'lucide-react'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 
 export default function AssistantChat({ mode = 'popup' }) {
@@ -18,13 +18,92 @@ export default function AssistantChat({ mode = 'popup' }) {
   const [userProfile, setUserProfile] = useState(null)
   const [lastSuggestions, setLastSuggestions] = useState([]) // 3 suggerimenti cliccabili dopo ogni risposta
   const [suggestionsExpanded, setSuggestionsExpanded] = useState(false) // riquadro suggerimenti collassato = più spazio chat
+  const [isListening, setIsListening] = useState(false)
+  const [voiceError, setVoiceError] = useState(null)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
   const sendAbortRef = useRef(null)
+  const recognitionRef = useRef(null)
+  const voiceTimeoutRef = useRef(null)
 
   useEffect(() => {
-    return () => { sendAbortRef.current?.abort() }
+    return () => { 
+      sendAbortRef.current?.abort()
+      recognitionRef.current?.stop()
+      clearTimeout(voiceTimeoutRef.current)
+    }
   }, [])
+
+  // Inizializza Web Speech API
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SpeechRecognition) {
+      console.log('[AssistantChat] Web Speech API not supported')
+      return
+    }
+
+    const recognition = new SpeechRecognition()
+    recognition.continuous = false
+    recognition.interimResults = true
+    recognition.lang = lang === 'en' ? 'en-US' : 'it-IT'
+
+    recognition.onstart = () => {
+      setIsListening(true)
+      setVoiceError(null)
+      // Auto-stop dopo 10 secondi di silenzio o ascolto
+      voiceTimeoutRef.current = setTimeout(() => {
+        if (recognitionRef.current) {
+          recognitionRef.current.stop()
+        }
+      }, 10000)
+    }
+
+    recognition.onresult = (event) => {
+      let finalTranscript = ''
+      let interimTranscript = ''
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript
+        } else {
+          interimTranscript += transcript
+        }
+      }
+
+      if (finalTranscript) {
+        setInput(prev => prev + finalTranscript)
+      } else if (interimTranscript) {
+        // Mostra preview mentre parla (opzionale, per UX)
+        setInput(prev => prev.replace(/\[\.\.\.\]$/, '') + interimTranscript + '[...]')
+      }
+    }
+
+    recognition.onerror = (event) => {
+      console.error('[AssistantChat] Speech recognition error:', event.error)
+      if (event.error !== 'aborted') {
+        setVoiceError(t('voiceError'))
+      }
+      setIsListening(false)
+      clearTimeout(voiceTimeoutRef.current)
+    }
+
+    recognition.onend = () => {
+      setIsListening(false)
+      clearTimeout(voiceTimeoutRef.current)
+      // Rimuovi marker temporanei
+      setInput(prev => prev.replace(/\[\.\.\.\]$/, ''))
+    }
+
+    recognitionRef.current = recognition
+
+    return () => {
+      recognition.stop()
+      clearTimeout(voiceTimeoutRef.current)
+    }
+  }, [lang, t])
 
   // Apertura da Mission Center / link esterni: apri chat principale con messaggio precompilato
   useEffect(() => {
@@ -247,6 +326,28 @@ export default function AssistantChat({ mode = 'popup' }) {
   const handleQuickAction = (text) => {
     setInput(text)
     setTimeout(() => handleSend(text), 100)
+  }
+
+  const toggleVoiceInput = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SpeechRecognition) {
+      setVoiceError(t('voiceNotSupported'))
+      return
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop()
+      setIsListening(false)
+    } else {
+      setInput('') // Clear input per nuovo messaggio vocale
+      setVoiceError(null)
+      try {
+        recognitionRef.current?.start()
+      } catch (err) {
+        console.error('[AssistantChat] Failed to start recognition:', err)
+        setVoiceError(t('voiceError'))
+      }
+    }
   }
   
   if (!isOpen) {
@@ -748,6 +849,85 @@ export default function AssistantChat({ mode = 'popup' }) {
           background: 'rgba(0, 0, 0, 0.5)'
         }}
       >
+        {/* Voice Button */}
+        {(() => {
+          const SpeechRecognition = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null
+          if (!SpeechRecognition) return null
+          
+          return (
+            <button
+              onClick={toggleVoiceInput}
+              disabled={loading}
+              style={{
+                padding: '12px',
+                background: isListening 
+                  ? 'rgba(255, 59, 48, 0.2)' 
+                  : 'rgba(0, 212, 255, 0.1)',
+                border: isListening 
+                  ? '1px solid rgba(255, 59, 48, 0.6)' 
+                  : '1px solid rgba(0, 212, 255, 0.3)',
+                borderRadius: '8px',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+              onMouseEnter={(e) => {
+                if (!loading && !isListening) {
+                  e.currentTarget.style.background = 'rgba(0, 212, 255, 0.2)'
+                  e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.5)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!loading && !isListening) {
+                  e.currentTarget.style.background = 'rgba(0, 212, 255, 0.1)'
+                  e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.3)'
+                }
+              }}
+              aria-label={isListening ? t('voiceListening') : t('voiceInput')}
+              title={isListening ? t('voiceListening') : t('voiceInput')}
+            >
+              {isListening ? (
+                <>
+                  <style jsx>{`
+                    @keyframes mic-pulse {
+                      0%, 100% { transform: scale(1); opacity: 1; }
+                      50% { transform: scale(1.2); opacity: 0.7; }
+                    }
+                    .mic-pulse {
+                      animation: mic-pulse 1s ease-in-out infinite;
+                    }
+                    @keyframes sound-wave {
+                      0%, 100% { height: 4px; }
+                      50% { height: 16px; }
+                    }
+                    .sound-bar {
+                      width: 3px;
+                      background: #FF3B30;
+                      border-radius: 2px;
+                      animation: sound-wave 0.5s ease-in-out infinite;
+                    }
+                    .sound-bar:nth-child(2) { animation-delay: 0.1s; }
+                    .sound-bar:nth-child(3) { animation-delay: 0.2s; }
+                    .sound-bar:nth-child(4) { animation-delay: 0.3s; }
+                  `}</style>
+                  <div style={{ display: 'flex', gap: '2px', alignItems: 'center', height: '20px' }}>
+                    <div className="sound-bar" />
+                    <div className="sound-bar" />
+                    <div className="sound-bar" />
+                    <div className="sound-bar" />
+                  </div>
+                </>
+              ) : (
+                <Mic size={18} color="var(--neon-cyan)" />
+              )}
+            </button>
+          )
+        })()}
+
         <input
           ref={inputRef}
           type="text"
@@ -759,43 +939,48 @@ export default function AssistantChat({ mode = 'popup' }) {
               handleSend()
             }
           }}
-          placeholder={t('typeMessage') || 'Scrivi un messaggio...'}
-          disabled={loading}
+          placeholder={isListening ? t('voiceListening') : (t('typeMessage') || 'Scrivi un messaggio...')}
+          disabled={loading || isListening}
           style={{
             flex: 1,
             padding: '12px',
-            background: 'rgba(255, 255, 255, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
+            background: isListening 
+              ? 'rgba(255, 59, 48, 0.05)' 
+              : 'rgba(255, 255, 255, 0.1)',
+            border: isListening 
+              ? '1px solid rgba(255, 59, 48, 0.4)' 
+              : '1px solid rgba(255, 255, 255, 0.2)',
             borderRadius: '8px',
             color: 'white',
             fontSize: '14px',
-            outline: 'none'
+            outline: 'none',
+            transition: 'all 0.2s'
           }}
         />
         <button
           onClick={() => handleSend()}
-          disabled={loading || !input.trim()}
+          disabled={loading || !input.trim() || isListening}
           style={{
             padding: '12px 16px',
-            background: loading || !input.trim() 
+            background: loading || !input.trim() || isListening
               ? 'rgba(255, 255, 255, 0.1)'
               : 'var(--neon-blue)',
             border: 'none',
             borderRadius: '8px',
-            cursor: loading || !input.trim() ? 'not-allowed' : 'pointer',
+            cursor: loading || !input.trim() || isListening ? 'not-allowed' : 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             transition: 'all 0.2s'
           }}
           onMouseEnter={(e) => {
-            if (!loading && input.trim()) {
+            if (!loading && input.trim() && !isListening) {
               e.currentTarget.style.background = 'var(--neon-orange)'
               e.currentTarget.style.transform = 'scale(1.05)'
             }
           }}
           onMouseLeave={(e) => {
-            if (!loading && input.trim()) {
+            if (!loading && input.trim() && !isListening) {
               e.currentTarget.style.background = 'var(--neon-blue)'
               e.currentTarget.style.transform = 'scale(1)'
             }
@@ -805,6 +990,22 @@ export default function AssistantChat({ mode = 'popup' }) {
           <Send size={18} color="white" />
         </button>
       </div>
+      
+      {/* Voice Error Toast */}
+      {voiceError && (
+        <div
+          style={{
+            padding: '8px 12px',
+            background: 'rgba(255, 59, 48, 0.1)',
+            borderTop: '1px solid rgba(255, 59, 48, 0.2)',
+            color: '#FF3B30',
+            fontSize: '12px',
+            textAlign: 'center'
+          }}
+        >
+          {voiceError}
+        </div>
+      )}
     </div>
   )
 }
