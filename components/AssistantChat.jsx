@@ -386,9 +386,13 @@ export default function AssistantChat({ mode = 'popup' }) {
             0%, 100% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.2); opacity: 0.8; }
           }
+          @keyframes chat-launcher-pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 24px rgba(0, 212, 255, 0.5), inset 0 0 12px rgba(0, 212, 255, 0.25); }
+            50% { transform: scale(1.06); box-shadow: 0 0 32px rgba(0, 212, 255, 0.7), inset 0 0 14px rgba(0, 212, 255, 0.35); }
+          }
           .pulse-ring {
             position: absolute;
-            inset: -4px;
+            inset: -5px;
             border-radius: 50%;
             border: 2px solid rgba(0, 212, 255, 0.6);
             animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -396,6 +400,9 @@ export default function AssistantChat({ mode = 'popup' }) {
           }
           .pulse-ring:nth-child(2) {
             animation-delay: 0.5s;
+          }
+          .chat-launcher {
+            animation: chat-launcher-pulse 2s ease-in-out infinite;
           }
           .ai-badge {
             animation: pulse-dot 2s ease-in-out infinite;
@@ -408,13 +415,13 @@ export default function AssistantChat({ mode = 'popup' }) {
             position: 'fixed',
             bottom: '20px',
             right: '20px',
-            width: '64px',
-            height: '64px',
+            width: '80px',
+            height: '80px',
             borderRadius: '50%',
             background: '#050814',
             border: '2px solid rgba(0, 212, 255, 0.8)',
             cursor: 'pointer',
-            boxShadow: '0 0 20px rgba(0, 212, 255, 0.5), inset 0 0 10px rgba(0, 212, 255, 0.3)',
+            boxShadow: '0 0 24px rgba(0, 212, 255, 0.5), inset 0 0 12px rgba(0, 212, 255, 0.3)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -424,8 +431,9 @@ export default function AssistantChat({ mode = 'popup' }) {
             padding: 0
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.width = '180px'
-            e.currentTarget.style.borderRadius = '32px'
+            e.currentTarget.style.width = '200px'
+            e.currentTarget.style.borderRadius = '40px'
+            e.currentTarget.style.animation = 'none'
             e.currentTarget.style.boxShadow = '0 0 40px rgba(0, 212, 255, 0.8), inset 0 0 20px rgba(0, 212, 255, 0.4)'
             const label = e.currentTarget.querySelector('.chat-label')
             if (label) {
@@ -434,9 +442,10 @@ export default function AssistantChat({ mode = 'popup' }) {
             }
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.width = '64px'
+            e.currentTarget.style.width = '80px'
             e.currentTarget.style.borderRadius = '50%'
-            e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 212, 255, 0.5), inset 0 0 10px rgba(0, 212, 255, 0.3)'
+            e.currentTarget.style.animation = 'chat-launcher-pulse 2s ease-in-out infinite'
+            e.currentTarget.style.boxShadow = '0 0 24px rgba(0, 212, 255, 0.5), inset 0 0 12px rgba(0, 212, 255, 0.3)'
             const label = e.currentTarget.querySelector('.chat-label')
             if (label) {
               label.style.opacity = '0'
@@ -444,27 +453,24 @@ export default function AssistantChat({ mode = 'popup' }) {
             }
           }}
           onTouchStart={(e) => {
-            // Espansione su mobile al tocco
-            e.currentTarget.style.width = '180px'
-            e.currentTarget.style.borderRadius = '32px'
-            e.currentTarget.style.boxShadow = '0 0 40px rgba(0, 212, 255, 0.8), inset 0 0 20px rgba(0, 212, 255, 0.4)'
-            const label = e.currentTarget.querySelector('.chat-label')
-            if (label) {
-              label.style.opacity = '1'
-              label.style.transform = 'translateX(0)'
-            }
+            const el = e.currentTarget
+            el.style.width = '200px'
+            el.style.borderRadius = '40px'
+            el.style.animation = 'none'
+            el.style.boxShadow = '0 0 40px rgba(0, 212, 255, 0.8), inset 0 0 20px rgba(0, 212, 255, 0.4)'
+            const label = el.querySelector('.chat-label')
+            if (label) { label.style.opacity = '1'; label.style.transform = 'translateX(0)' }
           }}
           onTouchEnd={(e) => {
-            // Ritardo per permettere di vedere l'espansione prima che si apra
+            const el = e.currentTarget
             setTimeout(() => {
-              e.currentTarget.style.width = '64px'
-              e.currentTarget.style.borderRadius = '50%'
-              e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 212, 255, 0.5), inset 0 0 10px rgba(0, 212, 255, 0.3)'
-              const label = e.currentTarget.querySelector('.chat-label')
-              if (label) {
-                label.style.opacity = '0'
-                label.style.transform = 'translateX(-10px)'
-              }
+              if (!el || !el.isConnected) return
+              el.style.width = '80px'
+              el.style.borderRadius = '50%'
+              el.style.animation = 'chat-launcher-pulse 2s ease-in-out infinite'
+              el.style.boxShadow = '0 0 24px rgba(0, 212, 255, 0.5), inset 0 0 12px rgba(0, 212, 255, 0.3)'
+              const label = el.querySelector('.chat-label')
+              if (label) { label.style.opacity = '0'; label.style.transform = 'translateX(-10px)' }
             }, 300)
           }}
           aria-label={t('openAssistant') || 'Apri assistente'}
@@ -476,8 +482,8 @@ export default function AssistantChat({ mode = 'popup' }) {
           {/* Container immagine */}
           <div style={{
             position: 'relative',
-            width: '56px',
-            height: '56px',
+            width: '72px',
+            height: '72px',
             borderRadius: '50%',
             overflow: 'hidden',
             flexShrink: 0
@@ -494,7 +500,7 @@ export default function AssistantChat({ mode = 'popup' }) {
             className="chat-label"
             style={{
               position: 'absolute',
-              left: '68px',
+              left: '88px',
               whiteSpace: 'nowrap',
               color: '#fff',
               fontSize: '14px',

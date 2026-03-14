@@ -5,15 +5,13 @@ import { useRouter } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
 import { supabase } from '@/lib/supabaseClient'
 import { safeJsonResponse } from '@/lib/fetchHelper'
-import { Brain, RefreshCw, AlertCircle } from 'lucide-react'
+import { Brain, RefreshCw, AlertCircle, Sparkles, Trophy, Target, Zap, Crown } from 'lucide-react'
 
 /**
- * Componente Barra Conoscenza IA
+ * AI Knowledge Bar - Enterprise Premium Edition
  * 
- * Mostra quanto l'IA conosce l'utente basandosi su:
- * - Profilo, Rosa, Partite, Pattern, Allenatore, Utilizzo, Successi
- * 
- * Stile: Identico a barra profilazione in impostazioni-profilo
+ * Design: Glassmorphism card with animated gradient borders,
+ * level badges with icons, shimmer progress bar
  */
 export default function AIKnowledgeBar() {
   const { t } = useTranslation()
@@ -23,14 +21,34 @@ export default function AIKnowledgeBar() {
   const [breakdown, setBreakdown] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [animatedScore, setAnimatedScore] = useState(0)
 
   const scoreRef = React.useRef(score)
   const previousScoreRef = React.useRef(score)
   const retryTimeoutRef = React.useRef(null)
   scoreRef.current = score
 
+  // Animate score on load
   useEffect(() => {
-    // Solo lato client per evitare hydration mismatch
+    if (!loading && score > 0) {
+      const duration = 1200
+      const steps = 60
+      const increment = score / steps
+      let current = 0
+      const timer = setInterval(() => {
+        current += increment
+        if (current >= score) {
+          setAnimatedScore(score)
+          clearInterval(timer)
+        } else {
+          setAnimatedScore(Math.round(current))
+        }
+      }, duration / steps)
+      return () => clearInterval(timer)
+    }
+  }, [loading, score])
+
+  useEffect(() => {
     if (typeof window === 'undefined') return
 
     const ac = new AbortController()
@@ -70,17 +88,15 @@ export default function AIKnowledgeBar() {
           const data = await res.json()
           const newScore = data.score || 0
           
-          // Se lo score è cambiato, aggiorna e ferma retry
           if (ac.signal.aborted) return
           if (Math.abs(newScore - previousScoreRef.current) > 0.01) {
             if (process.env.NODE_ENV !== 'production') console.log(`[AIKnowledgeBar] Score updated: ${previousScoreRef.current} → ${newScore}`)
             setScore(newScore)
             setLevel(data.level || 'beginner')
             setBreakdown(data.breakdown || {})
-            return // Successo, ferma retry
+            return
           }
           
-          // Se score non cambiato, programma prossimo tentativo
           if (process.env.NODE_ENV !== 'production') console.log(`[AIKnowledgeBar] Score unchanged (${newScore}), scheduling next retry...`)
           if (attempt < retryDelays.length) {
             retryTimeoutRef.current = setTimeout(attemptRefresh, retryDelays[attempt])
@@ -88,7 +104,6 @@ export default function AIKnowledgeBar() {
         } catch (err) {
           if (err?.name === 'AbortError' || ac.signal.aborted) return
           console.error('[AIKnowledgeBar] Retry attempt failed:', err)
-          // Continua con prossimo tentativo anche in caso di errore
           if (attempt < retryDelays.length) {
             retryTimeoutRef.current = setTimeout(attemptRefresh, retryDelays[attempt])
           }
@@ -148,7 +163,6 @@ export default function AIKnowledgeBar() {
       })
       if (signal?.aborted) return
       if (res.status === 401) {
-        // Only redirect if NOT using custom auth. If custom auth is present, it might be a temp API issue.
         if (!localStorage.getItem('auth_token')) {
           setLoading(false)
           router.push('/login')
@@ -181,42 +195,60 @@ export default function AIKnowledgeBar() {
     }
   }
 
-  /** Zero → Hero: gradienti Stripe-style (ciano/arancio) */
-  const getBarGradient = (score) => {
-    if (score >= 81) return 'linear-gradient(90deg, #00A3CC 0%, #00D9FF 100%)'
-    if (score >= 61) return 'linear-gradient(90deg, #0088AA 0%, #00D9FF 100%)'
-    if (score >= 31) return 'linear-gradient(90deg, #CC7A00 0%, #FF9500 100%)'
-    return 'linear-gradient(90deg, #AA5500 0%, #FF9500 100%)'
-  }
-
-  const getLevelText = (level) => {
-    switch (level) {
-      case 'expert':
-        return t('aiKnowledgeExpert') || 'Esperto'
-      case 'advanced':
-        return t('aiKnowledgeAdvanced') || 'Avanzato'
-      case 'intermediate':
-        return t('aiKnowledgeIntermediate') || 'Intermedio'
-      default:
-        return t('aiKnowledgeBeginner') || 'Principiante'
+  // Level configuration with colors and icons
+  const levelConfig = {
+    beginner: {
+      color: '#FF9500',
+      gradient: 'linear-gradient(135deg, #FF9500 0%, #FFB347 100%)',
+      glow: 'rgba(255, 149, 0, 0.5)',
+      icon: Target,
+      label: t('aiKnowledgeBeginner') || 'Principiante',
+      description: 'Inizia il tuo percorso'
+    },
+    intermediate: {
+      color: '#00D4FF',
+      gradient: 'linear-gradient(135deg, #00A3CC 0%, #00D4FF 100%)',
+      glow: 'rgba(0, 212, 255, 0.5)',
+      icon: Zap,
+      label: t('aiKnowledgeIntermediate') || 'Intermedio',
+      description: 'Stai migliorando'
+    },
+    advanced: {
+      color: '#9D4EDD',
+      gradient: 'linear-gradient(135deg, #7B2CBF 0%, #C77DFF 100%)',
+      glow: 'rgba(157, 78, 221, 0.5)',
+      icon: Trophy,
+      label: t('aiKnowledgeAdvanced') || 'Avanzato',
+      description: 'Competenza elevata'
+    },
+    expert: {
+      color: '#FFD700',
+      gradient: 'linear-gradient(135deg, #B8860B 0%, #FFD700 100%)',
+      glow: 'rgba(255, 215, 0, 0.6)',
+      icon: Crown,
+      label: t('aiKnowledgeExpert') || 'Esperto',
+      description: 'Maestro del gioco'
     }
   }
 
+  const currentLevel = levelConfig[level] || levelConfig.beginner
+  const LevelIcon = currentLevel.icon
+
   if (loading) {
     return (
-      <div style={{
-        backgroundColor: 'rgba(5, 8, 20, 0.8)',
-        borderRadius: '12px',
-        padding: '20px',
-        marginBottom: '24px',
-        border: '1px solid rgba(0, 212, 255, 0.3)',
-        boxShadow: 'var(--shadow-sm)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <RefreshCw size={18} color="var(--primary-cyan)" style={{ animation: 'spin 1s linear infinite' }} />
-          <span style={{ fontSize: '15px', color: 'rgba(0, 212, 255, 0.7)' }}>
-            {t('loadingShort')}
-          </span>
+      <div style={styles.card}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={styles.avatarPulse}>
+            <RefreshCw size={24} color="var(--neon-cyan)" style={{ animation: 'spin 1s linear infinite' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>
+              {t('loading')}
+            </div>
+            <div style={{ fontSize: '18px', fontWeight: '600', color: 'rgba(255,255,255,0.8)' }}>
+              Analisi profilo...
+            </div>
+          </div>
         </div>
       </div>
     )
@@ -224,122 +256,308 @@ export default function AIKnowledgeBar() {
 
   if (error) {
     return (
-      <div style={{
-        backgroundColor: 'rgba(5, 8, 20, 0.8)',
-        borderRadius: '12px',
-        padding: '20px',
-        marginBottom: '24px',
-        border: '1px solid rgba(0, 212, 255, 0.3)',
-        boxShadow: 'var(--shadow-sm)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary-orange)' }}>
-          <AlertCircle size={18} />
-          <span style={{ fontSize: '14px' }}>
-            {error}
-          </span>
+      <div style={{ ...styles.card, borderColor: 'rgba(239, 68, 68, 0.4)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#EF4444' }}>
+          <AlertCircle size={24} />
+          <span style={{ fontSize: '15px' }}>{error}</span>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="neon-card" style={{
-      marginBottom: '24px',
-      padding: '24px'
-    }}>
-      {/* Header: Immagine Coach e Info */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: '20px',
-        flexWrap: 'wrap',
-        gap: '16px'
-      }}>
-        {/* Sinistra: Info AI e Testi */}
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-            <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: 'var(--neon-cyan)', textShadow: '0 0 10px rgba(0,212,255,0.4)', letterSpacing: '0.5px' }}>
-              {t('aiKnowledge')}
-            </h2>
+    <div style={styles.card}>
+      {/* Animated border glow effect */}
+      <div style={{ ...styles.cardGlow, background: currentLevel.gradient }} />
+      
+      <div style={styles.content}>
+        {/* Header row: Title + Avatar */}
+        <div style={styles.header}>
+          <div style={styles.titleSection}>
+            <div style={styles.badgeRow}>
+              <Sparkles size={14} color="var(--neon-cyan)" />
+              <span style={styles.badgeText}>AI COACH INSIGHT</span>
+            </div>
+            <h2 style={styles.title}>{t('aiKnowledge')}</h2>
           </div>
-          <span style={{
-            display: 'block',
-            fontSize: '36px',
-            fontWeight: '800',
-            background: 'linear-gradient(90deg, #00d4ff, #00a1a6)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            filter: 'drop-shadow(0 0 10px rgba(0,212,255,0.5))',
-            marginBottom: '4px'
-          }}>
-            {Math.round(score)}%
-          </span>
-          <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255, 255, 255, 0.6)' }}>
-            Powered by Coach AI
-          </p>
+          
+          {/* Avatar with level ring */}
+          <div style={{ ...styles.avatarContainer, boxShadow: `0 0 30px ${currentLevel.glow}` }}>
+            <div style={{ ...styles.avatarRing, borderColor: currentLevel.color }}>
+              <img 
+                src="/coach.jpg" 
+                alt="AI Coach" 
+                style={styles.avatar}
+              />
+            </div>
+            <div style={{ ...styles.levelDot, background: currentLevel.gradient }} />
+          </div>
         </div>
 
-        {/* Destra: Avatar grande Coach */}
-        <div style={{
-          width: '72px',
-          height: '72px',
-          borderRadius: '50%',
-          overflow: 'hidden',
-          border: '2px solid rgba(0, 212, 255, 0.8)',
-          boxShadow: '0 0 20px rgba(0, 212, 255, 0.4), inset 0 0 10px rgba(0, 212, 255, 0.3)',
-          flexShrink: 0
-        }}>
-          <img 
-            src="/coach.jpg" 
-            alt="AI Coach" 
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-          />
+        {/* Score display */}
+        <div style={styles.scoreSection}>
+          <span style={styles.scoreValue}>{Math.round(animatedScore)}</span>
+          <span style={styles.scorePercent}>%</span>
+        </div>
+
+        {/* Premium Progress Bar */}
+        <div style={styles.progressContainer}>
+          <div style={styles.progressTrack}>
+            <div
+              style={{
+                ...styles.progressFill,
+                width: `${score}%`,
+                background: currentLevel.gradient,
+                boxShadow: `0 0 20px ${currentLevel.glow}`
+              }}
+            >
+              {/* Shimmer effect */}
+              <div style={styles.shimmer} />
+            </div>
+          </div>
+          
+          {/* Level markers */}
+          <div style={styles.markers}>
+            {[25, 50, 75].map((mark) => (
+              <div
+                key={mark}
+                style={{
+                  ...styles.marker,
+                  left: `${mark}%`,
+                  background: score >= mark ? currentLevel.color : 'rgba(255,255,255,0.2)',
+                  boxShadow: score >= mark ? `0 0 10px ${currentLevel.glow}` : 'none'
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Level badge */}
+        <div style={styles.levelSection}>
+          <div style={{ ...styles.levelBadge, background: `${currentLevel.color}20`, borderColor: currentLevel.color }}>
+            <LevelIcon size={16} color={currentLevel.color} />
+            <span style={{ ...styles.levelText, color: currentLevel.color }}>
+              {currentLevel.label}
+            </span>
+          </div>
+          <span style={styles.levelDescription}>{currentLevel.description}</span>
+        </div>
+
+        {/* Footer info */}
+        <div style={styles.footer}>
+          <Brain size={12} color="rgba(255,255,255,0.4)" />
+          <span style={styles.footerText}>Powered by Coach AI Engine</span>
         </div>
       </div>
 
-      {/* Barra Zero → Hero: gradiente Stripe-style */}
-      <div
-        role="progressbar"
-        aria-valuenow={Math.round(score)}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={`${t('aiKnowledge')}: ${Math.round(score)}%`}
-        style={{
-          width: '100%',
-          height: '10px',
-          backgroundColor: 'rgba(0,0,0,0.4)',
-          borderRadius: '5px',
-          overflow: 'hidden',
-          marginBottom: '14px',
-          position: 'relative',
-          border: '1px solid rgba(0,212,255,0.2)',
-          boxShadow: '0 0 20px rgba(0, 212, 255, 0.5)'
-        }}
-      >
-        <div
-          style={{
-            width: `${score}%`,
-            height: '100%',
-            background: 'linear-gradient(90deg, rgba(0,161,166,0.8) 0%, rgba(0,212,255,1) 100%)',
-            transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
-            borderRadius: '4px',
-            position: 'relative',
-            animation: 'heroBarFill 1s ease-out',
-            boxShadow: '0 0 20px rgba(0, 212, 255, 0.5)'
-          }}
-        />
-      </div>
-
-      <p style={{
-        fontSize: '14px',
-        color: 'rgba(0, 212, 255, 0.7)',
-        margin: 0,
-        lineHeight: 1.4
-      }}>
-        {getLevelText(level)}
-      </p>
+      <style jsx>{`
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        @keyframes pulse-glow {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 1; }
+        }
+      `}</style>
     </div>
   )
+}
+
+const styles = {
+  card: {
+    position: 'relative',
+    background: 'rgba(10, 14, 28, 0.6)',
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
+    borderRadius: '20px',
+    border: '1px solid rgba(0, 212, 255, 0.2)',
+    overflow: 'hidden',
+    marginBottom: '24px',
+  },
+  cardGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '2px',
+    opacity: 0.8,
+  },
+  content: {
+    padding: '24px',
+    position: 'relative',
+    zIndex: 1,
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: '16px',
+  },
+  titleSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+  },
+  badgeRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+  },
+  badgeText: {
+    fontSize: '10px',
+    fontWeight: '700',
+    letterSpacing: '1.5px',
+    color: 'var(--neon-cyan)',
+    opacity: 0.8,
+  },
+  title: {
+    margin: 0,
+    fontSize: '20px',
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: '-0.5px',
+  },
+  avatarContainer: {
+    position: 'relative',
+    width: '56px',
+    height: '56px',
+    borderRadius: '50%',
+    transition: 'all 0.3s ease',
+  },
+  avatarPulse: {
+    width: '48px',
+    height: '48px',
+    borderRadius: '50%',
+    background: 'rgba(0, 212, 255, 0.1)',
+    border: '1px solid rgba(0, 212, 255, 0.3)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarRing: {
+    width: '100%',
+    height: '100%',
+    borderRadius: '50%',
+    border: '2px solid',
+    padding: '3px',
+    transition: 'all 0.3s ease',
+  },
+  avatar: {
+    width: '100%',
+    height: '100%',
+    borderRadius: '50%',
+    objectFit: 'cover',
+  },
+  levelDot: {
+    position: 'absolute',
+    bottom: '0',
+    right: '0',
+    width: '16px',
+    height: '16px',
+    borderRadius: '50%',
+    border: '2px solid rgba(10, 14, 28, 0.8)',
+  },
+  scoreSection: {
+    display: 'flex',
+    alignItems: 'baseline',
+    gap: '2px',
+    marginBottom: '16px',
+  },
+  scoreValue: {
+    fontSize: '48px',
+    fontWeight: '800',
+    background: 'linear-gradient(180deg, #FFFFFF 0%, rgba(255,255,255,0.7) 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+    lineHeight: 1,
+    letterSpacing: '-2px',
+  },
+  scorePercent: {
+    fontSize: '24px',
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.5)',
+  },
+  progressContainer: {
+    position: 'relative',
+    marginBottom: '16px',
+  },
+  progressTrack: {
+    width: '100%',
+    height: '8px',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    borderRadius: '4px',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: '4px',
+    transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  shimmer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
+    animation: 'shimmer 2s infinite',
+  },
+  markers: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    pointerEvents: 'none',
+  },
+  marker: {
+    position: 'absolute',
+    top: '-2px',
+    width: '12px',
+    height: '12px',
+    borderRadius: '50%',
+    transform: 'translateX(-50%)',
+    border: '2px solid rgba(10, 14, 28, 0.8)',
+    transition: 'all 0.3s ease',
+  },
+  levelSection: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    marginBottom: '16px',
+  },
+  levelBadge: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '6px 12px',
+    borderRadius: '20px',
+    border: '1px solid',
+    fontSize: '13px',
+    fontWeight: '600',
+  },
+  levelText: {
+    fontWeight: '700',
+  },
+  levelDescription: {
+    fontSize: '13px',
+    color: 'rgba(255,255,255,0.5)',
+  },
+  footer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    paddingTop: '16px',
+    borderTop: '1px solid rgba(255,255,255,0.05)',
+  },
+  footerText: {
+    fontSize: '11px',
+    color: 'rgba(255,255,255,0.35)',
+    letterSpacing: '0.5px',
+  },
 }
