@@ -470,9 +470,13 @@ Fonti: [Efootball Arena – How to Build a Competitive Dream Team](https://efoot
 - **A giro da distante**: Tiri a giro da fuori area. **Quando serve**: centrocampisti offensivi.
 - **Esterno a giro**: Tiri a giro con esterno piede. **Quando serve**: angolazioni particolari.
 - **Colpo di testa**: Conclusioni di testa più accurate *in fase d'attacco* (tiro di testa verso porta). **Quando serve**: attaccanti fisici, cross; timing migliore su palloni aerei. **NOTA**: NON è abilità difensiva; per duelli aerei in difesa vedi Dominio palle alte (§8.4). Dare Colpo di testa al difensore che mandi *in avanti* sui corner.
-- **Tiro acrobatico**: Tiri acrobatici (rovesciate, ecc.). **Quando serve**: area affollata, posizioni scomode.
+- **Finalizzazione acrobatica**: Tiri acrobatici (rovesciate, ecc.) anche da posizioni scomode o in equilibrio precario. **Quando serve**: area affollata, conclusioni difficili.
 - **Finalizzazione**: Precisione in conclusione. **Quando serve**: attaccanti, punte.
-- **Distanza**: Tiri precisi da lontano. **Quando serve**: centrocampisti offensivi, tiri da fuori area.
+- **Tiro dalla distanza**: Tiri precisi da fuori area. **Quando serve**: centrocampisti offensivi, tiri da distanza.
+- **Sassata rasoterra**: Tiro rasoterra veloce quando la barra potenza è inferiore al 50%. **Quando serve**: tiri veloci e precisi da dentro/fuori area.
+- **Incornata**: Colpire la palla di testa schiacciandola verso la porta, anche da situazioni difficili. **Quando serve**: attaccanti su cross, colpi di testa precisi verso il basso.
+- **Istinto del gol**: Aumenta potenza e precisione delle conclusioni tentate con il corpo posizionato in modo atipico. **Quando serve**: attaccanti che tirano in situazioni difficili o in equilibrio precario.
+- **Forza di volontà**: Migliora le abilità di tiro del giocatore ogni volta che effettua un tiro, fino a un massimo di 8 volte. **Quando serve**: attaccanti che tirano spesso, cumulo boost durante la partita.
 
 ### 8.2 Abilità Passaggio
 
@@ -504,6 +508,9 @@ Fonti: [Efootball Arena – How to Build a Competitive Dream Team](https://efoot
 - **Elastico**: Cambio direzione rapido con esterno. **Quando serve**: 1v1, spazi stretti.
 - **Controllo di suola**: Controllo palla con suola. **Quando serve**: spazi stretti, protezione palla.
 - **Doppio tocco speciale**: Combo Doppio tocco + Elastico + Controllo suola. **Quando serve**: dribblatori tecnici.
+- **Dribbling fulminei** (Showtime): Migliora le abilità di dribbling del giocatore vicino all'area di rigore avversaria. **Quando serve**: trequartisti/attaccanti che entrano in area.
+- **Scatto bruciante** (Showtime): Consente al giocatore di eseguire un tocco secco veloce da fermo o mentre si muove lentamente, con animazioni speciali. **Quando serve**: attaccanti che ricevono palla fermi e devono accelerare improvvisamente.
+- **Calamita ai piedi** (Showtime): Quando il giocatore ha la palla, aumenta la sua capacità di mantenerne il possesso in base al numero di avversari nel raggio di 5 metri (max 4 avversari). **Quando serve**: giocatori tecnici sotto pressing.
 - **Stop acrobatico**: Controllo palla acrobatico. **Quando serve**: passaggi difficili, posizioni scomode.
 - **Finta tiro**: Finta tiro per ingannare difensore. **Quando serve**: 1v1 in area.
 - **Finta passaggio**: Finta passaggio. **Quando serve**: aprire linee di passaggio.
@@ -515,10 +522,13 @@ Fonti: [Efootball Arena – How to Build a Competitive Dream Team](https://efoot
 - **Intercettazione**: Intercettare passaggi più facilmente. **Quando serve**: difensori, mediani; prioritaria per recupero palla.
 - **Marcatura**: Marcare avversario più efficacemente
 - **Entrata aggressiva**: Contrasti più efficaci
-- **Sliding tackle**: Tackle scorrevoli efficaci
+- **Scivolata**: Tackle in scivolata con maggiore precisione e velocità, conquista la palla più facilmente. **Quando serve**: difensori, tackle aggressivi.
+- **Tackle in allungo**: Aumenta la frequenza dei tackle in piedi, anche contro avversari lontani, da fermi o in movimento lento. **Quando serve**: difensori che recuperano palloni a distanza.
+- **Caposaldo**: Migliora le abilità difensive del giocatore a partire dal secondo tempo, a patto che la squadra sia in vantaggio. **Quando serve**: difensori per mantenere il vantaggio.
+- **Difesa svettante**: Migliora le abilità del giocatore nei duelli aerei quando è posizionato all'interno della propria area di rigore. **Quando serve**: difensori centrali, duelli aerei difensivi.
 - **Rientro difensivo**: Rientra rapidamente in fase difensiva dopo fase offensiva. **Quando serve**: centrocampisti, Box-to-Box, ali offensive.
 - **Blocco**: Maggiore efficacia nel bloccare passaggi e tiri. **Quando serve**: difensori centrali, mediani.
-- **Stoppaggio acrobatico**: Stoppate acrobatiche con i piedi. **Quando serve**: difensori, interventi di emergenza in area.
+- **Disimpegno acrobatico**: Stoppate/disimpegni acrobatici con i piedi anche quando il giocatore è in equilibrio precario o in aria. **Quando serve**: difensori, interventi di emergenza in area.
 - **Superiorità aerea**: Maggiore probabilità di vincere duelli aerei. **Quando serve**: difensori centrali, attaccanti fisici, cross.
 - **Dominio palle alte**: Abilità *difensiva* per duelli aerei; Colpo di testa (§8.1) è invece per tiro di testa in attacco. Su palla alta difensiva, con **posizionamento** e **timing** puoi anticipare l’avversario anche senza Dominio palle alte, ma l’abilità aumenta la probabilità di vincere il duello.
 
@@ -529,6 +539,9 @@ Fonti: [Efootball Arena – How to Build a Competitive Dream Team](https://efoot
 - **Parata con piedi**: Parate con piedi su tiri bassi. **Quando serve**: tiri rasoterra.
 - **Piazzamento**: Posizionamento ottimale in porta.
 - **Estensione PT**: Copertura maggiore porta. **Quando serve**: tiri angolati.
+- **Para-rigori**: Consente al giocatore una maggior reattività nel parare i rigori. **Quando serve**: portieri.
+- **Direzioni alla difesa PT**: Abilità da portiere che migliora le capacità difensive dei difensori posizionati a ridosso dell'area di rigore. **Quando serve**: portieri che comandano la difesa.
+- **PT galvanizzatore** (Showtime): Abilità del portiere che migliora le capacità fisiche dei difensori quando la squadra è in vantaggio dopo l'intervallo. **Quando serve**: portieri con squadra in vantaggio al secondo tempo.
 
 ### 8.6 Abilità Fisiche e Atletiche
 - **Scatto**: Accelerazione esplosiva. **Quando serve**: attaccanti, ali, contropiede.
@@ -547,7 +560,7 @@ Fonti: [Efootball Arena – How to Build a Competitive Dream Team](https://efoot
 - **Lancio lungo**: Maggiore ampiezza lancio dalle mani (laterali/portieri). **Quando serve**: rinvii rapidi.
 - **Riserva di lusso** (Super riserva): Prestazioni migliorate quando subentra in corso partita. **Quando serve**: panchinari d’impatto, cambi tattici.
 - **Spirito combattivo**: Prestazioni migliori sotto pressione e fatica. **Quando serve**: Box-to-Box, mediani, pressing. **Comunità**: ideale per tutti gli 11; fondamentale per DC, MED e TrQ (smistano palloni in spazi ridotti). I TrQ hanno spesso Resistenza bassa: anche se li sostituisci al 46', Spirito combattivo li aiuta già al primo tempo (intorno al 30' la Resistenza cala e influisce su lucidità e rapidità). Riduce impatto fatica, migliora anche gestione Resistenza.
-- **Tattica** (astuzia): Maggiore probabilità di ottenere falli quando appropriato. **EVITARE su difensori**: Konami gestisce male l'abilità, effetto contrario – più falli a sfavore. Dare a centrocampisti/attaccanti se utile.
+- **Astuzia** (Tattica): Maggiore probabilità di ottenere falli quando è in possesso di palla. **EVITARE su difensori**: Konami gestisce male l'abilità, effetto contrario – più falli a sfavore. Dare a centrocampisti/attaccanti se utile.
 
 ### 8.8 Programmi Aggiunta Abilità
 - **Disponibile per**: In evidenza, In risalto, Epico, Leggendario, Standard
