@@ -492,7 +492,10 @@ export default function SidebarNew() {
           >
             <LogOut size={16} style={{ 
               transition: 'all 0.3s ease',
-              opacity: 0.6 
+              opacity: 0.6,
+              display: 'flex',
+              alignItems: 'center',
+              marginTop: '1px'
             }} className="group-hover:opacity-100" />
             <span>{t('logout')}</span>
           </button>
