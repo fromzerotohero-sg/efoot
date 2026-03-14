@@ -20,11 +20,13 @@ export default function AssistantChat({ mode = 'popup' }) {
   const [suggestionsExpanded, setSuggestionsExpanded] = useState(false) // riquadro suggerimenti collassato = più spazio chat
   const [isListening, setIsListening] = useState(false)
   const [voiceError, setVoiceError] = useState(null)
+  const [interimText, setInterimText] = useState('') // Testo temporaneo durante l'ascolto
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
   const sendAbortRef = useRef(null)
   const recognitionRef = useRef(null)
   const voiceTimeoutRef = useRef(null)
+  const confirmedTextRef = useRef('') // Testo finale confermato durante la sessione
 
   useEffect(() => {
     return () => { 
@@ -52,6 +54,9 @@ export default function AssistantChat({ mode = 'popup' }) {
     recognition.onstart = () => {
       setIsListening(true)
       setVoiceError(null)
+      setInterimText('')
+      // Prendi il testo attuale come base
+      confirmedTextRef.current = input.trim()
       // Auto-stop dopo 10 secondi di silenzio o ascolto
       voiceTimeoutRef.current = setTimeout(() => {
         if (recognitionRef.current) {
@@ -73,19 +78,21 @@ export default function AssistantChat({ mode = 'popup' }) {
         }
       }
 
-      // Accumula i risultati finali durante la sessione di ascolto
+      // Se c'è un risultato finale, accumulalo nel ref
       if (finalTranscript) {
-        setInput(prev => {
-          const cleanPrev = prev.endsWith(' ') ? prev : prev + ' '
-          return (cleanPrev + finalTranscript).trim()
-        })
+        confirmedTextRef.current = (confirmedTextRef.current + ' ' + finalTranscript).trim()
+        // Aggiorna l'input con il testo confermato (senza l'interim precedente)
+        setInput(confirmedTextRef.current)
+        // Resetta l'interim
+        setInterimText('')
       } else if (interimTranscript) {
-        // Mostra preview mentre parla (senza sporcare con [...])
-        setInput(prev => {
-          // Se c'era già testo, mantienilo e aggiungi l'interim
-          const baseText = prev.replace(/\s*\.\.\.$/, '').trim()
-          return baseText + ' ' + interimTranscript.trim()
-        })
+        // Mostra preview mentre parla (aggiunto al testo confermato)
+        setInterimText(interimTranscript)
+        // Aggiorna l'input visualizzato: confermato + interim
+        const displayText = confirmedTextRef.current 
+          ? confirmedTextRef.current + ' ' + interimTranscript 
+          : interimTranscript
+        setInput(displayText.trim())
       }
     }
 
@@ -346,8 +353,13 @@ export default function AssistantChat({ mode = 'popup' }) {
     if (isListening) {
       recognitionRef.current?.stop()
       setIsListening(false)
+      // Assicurati che l'input contenga solo il testo confermato
+      setInput(confirmedTextRef.current)
+      setInterimText('')
     } else {
-      setInput('') // Clear input per nuovo messaggio vocale
+      // Non cancellare l'input esistente, continua da dove eri
+      confirmedTextRef.current = input.trim()
+      setInterimText('')
       setVoiceError(null)
       try {
         recognitionRef.current?.start()
@@ -974,7 +986,7 @@ export default function AssistantChat({ mode = 'popup' }) {
               handleSend()
             }
           }}
-          placeholder={isListening ? (t('voiceListening') || 'Sto ascoltando...') : (t('typeMessage') || 'Scrivi un messaggio...')}
+          placeholder={isListening ? (t('voiceListening') || 'Sto ascoltando... Parla ora') : (t('typeMessage') || 'Scrivi un messaggio...')}
           disabled={loading || isListening}
           style={{
             flex: 1,
@@ -986,7 +998,7 @@ export default function AssistantChat({ mode = 'popup' }) {
               ? '2px solid rgba(255, 59, 48, 0.6)' 
               : '1px solid rgba(255, 255, 255, 0.2)',
             borderRadius: '10px',
-            color: isListening ? '#FFB4B4' : 'white',
+            color: isListening && interimText ? '#FFB4B4' : 'white',
             fontSize: '14px',
             outline: 'none',
             transition: 'all 0.2s',
