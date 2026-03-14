@@ -538,18 +538,28 @@ export default function AssistantChat({ mode = 'popup' }) {
     )
   }
   
+  // Sfondo chat: immagine centrata (bicycle kick neon) + overlay per leggibilità
+  const chatBgImage = "url('/backgrounds/chat-bicycle.png')"
+  const chatBgOverlay = 'linear-gradient(180deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.88) 100%)'
+  const chatBgCommon = {
+    backgroundImage: `${chatBgOverlay}, ${chatBgImage}`,
+    backgroundPosition: 'center',
+    backgroundSize: 'cover',
+    backgroundRepeat: 'no-repeat'
+  }
+
   // Stile per modalità page (full-screen) vs popup
-  const containerStyle = mode === 'page' 
+  const containerStyle = mode === 'page'
     ? {
         width: '100%',
         height: '100%',
-        background: '#03050c',
         border: 'none',
         borderRadius: '0',
         boxShadow: 'none',
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        ...chatBgCommon
       }
     : {
         position: 'fixed',
@@ -557,14 +567,14 @@ export default function AssistantChat({ mode = 'popup' }) {
         right: '20px',
         width: 'clamp(320px, 90vw, 400px)',
         height: 'clamp(500px, 70vh, 600px)',
-        background: 'rgba(0, 0, 0, 0.95)',
         border: '2px solid var(--neon-blue)',
         borderRadius: '16px',
         boxShadow: 'var(--glow-blue)',
         display: 'flex',
         flexDirection: 'column',
         zIndex: 1000,
-        overflow: 'hidden'
+        overflow: 'hidden',
+        ...chatBgCommon
       }
   
   return (

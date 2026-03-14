@@ -13,7 +13,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="it">
-      <body className="bg-[#02040a] text-[#FFFFFF]">
+      <body className="text-[#FFFFFF]">
         <LanguageProviderWrapper>
           <div className="flex h-screen overflow-hidden">
             {/* Sidebar */}
