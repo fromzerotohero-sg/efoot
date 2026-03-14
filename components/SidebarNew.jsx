@@ -464,36 +464,37 @@ export default function SidebarNew() {
           </div>
         </nav>
 
-        {/* Bottom section - solo Logout */}
-        <div className="p-4 border-t border-[rgba(0,212,255,0.15)] bg-[rgba(5,8,20,0.8)] relative z-10 before:absolute before:inset-0 before:bg-[url('/stars-bg.png')] before:opacity-20 before:pointer-events-none before:z-[-1]">
+        {/* Bottom section - Logout */}
+        <div className="p-4 border-t border-[rgba(0,212,255,0.15)] bg-[rgba(5,8,20,0.8)]">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 p-3 rounded-xl transition-all duration-300 relative overflow-hidden group"
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg transition-all duration-300 group"
             style={{ 
-              background: 'rgba(5, 8, 20, 0.8)',
-              border: '1px solid rgba(239, 68, 68, 0.4)',
-              color: 'rgba(239, 68, 68, 0.9)',
-              fontWeight: 600,
-              boxShadow: 'inset 0 0 10px rgba(0,0,0,0.5)'
+              background: 'transparent',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              color: 'rgba(255, 255, 255, 0.5)',
+              fontWeight: 500,
+              fontSize: '14px',
+              letterSpacing: '0.3px'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(15, 5, 5, 0.9)';
-              e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.8)';
-              e.currentTarget.style.color = '#fff';
-              e.currentTarget.style.boxShadow = '0 0 15px rgba(239, 68, 68, 0.4), inset 0 0 10px rgba(239, 68, 68, 0.2)';
-              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.background = 'rgba(0, 212, 255, 0.05)';
+              e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.3)';
+              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.9)';
+              e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 212, 255, 0.1)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(5, 8, 20, 0.8)';
-              e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.4)';
-              e.currentTarget.style.color = 'rgba(239, 68, 68, 0.9)';
-              e.currentTarget.style.boxShadow = 'inset 0 0 10px rgba(0,0,0,0.5)';
-              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.5)';
+              e.currentTarget.style.boxShadow = 'none';
             }}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-red-500/0 via-red-500/10 to-red-500/0 translate-x-[-100%] group-hover:animate-[shimmer_1.5s_infinite]"></div>
-            <LogOut size={18} style={{ filter: 'drop-shadow(0 0 4px rgba(239,68,68,0.5))' }} />
-            <span style={{ textShadow: '0 0 8px rgba(239,68,68,0.3)', letterSpacing: '0.5px' }}>{t('logout')}</span>
+            <LogOut size={16} style={{ 
+              transition: 'all 0.3s ease',
+              opacity: 0.6 
+            }} className="group-hover:opacity-100" />
+            <span>{t('logout')}</span>
           </button>
         </div>
       </aside>
