@@ -254,43 +254,142 @@ export default function AssistantChat({ mode = 'popup' }) {
     if (mode === 'page') return null
     
     return (
-      <button
-        onClick={() => setIsOpen(true)}
-        style={{
-          position: 'fixed',
-          bottom: '20px',
-          right: '20px',
-          width: '64px',
-          height: '64px',
-          borderRadius: '50%',
-          background: '#050814',
-          border: '2px solid rgba(0, 212, 255, 0.8)',
-          cursor: 'pointer',
-          boxShadow: '0 0 20px rgba(0, 212, 255, 0.5), inset 0 0 10px rgba(0, 212, 255, 0.3)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          overflow: 'hidden',
-          padding: 0
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.1) translateY(-4px)'
-          e.currentTarget.style.boxShadow = '0 0 30px rgba(0, 212, 255, 0.8), inset 0 0 15px rgba(0, 212, 255, 0.4)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'scale(1) translateY(0)'
-          e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 212, 255, 0.5), inset 0 0 10px rgba(0, 212, 255, 0.3)'
-        }}
-        aria-label={t('openAssistant') || 'Apri assistente'}
-      >
-        <img 
-          src="/coach.jpg" 
-          alt="AI Coach" 
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-        />
-      </button>
+      <>
+        <style jsx>{`
+          @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.15); opacity: 0.4; }
+            100% { transform: scale(1.3); opacity: 0; }
+          }
+          @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+          }
+          .pulse-ring {
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 2px solid rgba(0, 212, 255, 0.6);
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            pointer-events: none;
+          }
+          .pulse-ring:nth-child(2) {
+            animation-delay: 0.5s;
+          }
+          .ai-badge {
+            animation: pulse-dot 2s ease-in-out infinite;
+          }
+        `}</style>
+        <button
+          onClick={() => setIsOpen(true)}
+          className="chat-launcher"
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            width: '64px',
+            height: '64px',
+            borderRadius: '50%',
+            background: '#050814',
+            border: '2px solid rgba(0, 212, 255, 0.8)',
+            cursor: 'pointer',
+            boxShadow: '0 0 20px rgba(0, 212, 255, 0.5), inset 0 0 10px rgba(0, 212, 255, 0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            overflow: 'visible',
+            padding: 0
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.width = '180px'
+            e.currentTarget.style.borderRadius = '32px'
+            e.currentTarget.style.boxShadow = '0 0 40px rgba(0, 212, 255, 0.8), inset 0 0 20px rgba(0, 212, 255, 0.4)'
+            const label = e.currentTarget.querySelector('.chat-label')
+            if (label) {
+              label.style.opacity = '1'
+              label.style.transform = 'translateX(0)'
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.width = '64px'
+            e.currentTarget.style.borderRadius = '50%'
+            e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 212, 255, 0.5), inset 0 0 10px rgba(0, 212, 255, 0.3)'
+            const label = e.currentTarget.querySelector('.chat-label')
+            if (label) {
+              label.style.opacity = '0'
+              label.style.transform = 'translateX(-10px)'
+            }
+          }}
+          aria-label={t('openAssistant') || 'Apri assistente'}
+        >
+          {/* Anelli pulse */}
+          <div className="pulse-ring" />
+          <div className="pulse-ring" />
+          
+          {/* Container immagine */}
+          <div style={{
+            position: 'relative',
+            width: '56px',
+            height: '56px',
+            borderRadius: '50%',
+            overflow: 'hidden',
+            flexShrink: 0
+          }}>
+            <img 
+              src="/coach.jpg" 
+              alt="AI Coach" 
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+            />
+          </div>
+          
+          {/* Label che appare on hover */}
+          <span 
+            className="chat-label"
+            style={{
+              position: 'absolute',
+              left: '68px',
+              whiteSpace: 'nowrap',
+              color: '#fff',
+              fontSize: '14px',
+              fontWeight: 600,
+              opacity: 0,
+              transform: 'translateX(-10px)',
+              transition: 'all 0.3s ease',
+              pointerEvents: 'none',
+              textShadow: '0 0 10px rgba(0, 212, 255, 0.8)'
+            }}
+          >
+            {t('askCoach') || 'Chiedi al Coach'}
+          </span>
+          
+          {/* Badge AI */}
+          <div 
+            className="ai-badge"
+            style={{
+              position: 'absolute',
+              top: '-2px',
+              right: '-2px',
+              width: '20px',
+              height: '20px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #00d4ff 0%, #00a1a6 100%)',
+              border: '2px solid #050814',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '9px',
+              fontWeight: 700,
+              color: '#000',
+              boxShadow: '0 0 10px rgba(0, 212, 255, 0.8)',
+              zIndex: 2
+            }}
+          >
+            AI
+          </div>
+        </button>
+      </>
     )
   }
   
