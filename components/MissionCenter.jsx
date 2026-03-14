@@ -256,14 +256,12 @@ const styles = {
   card: {
     background: '#050814',
     borderRadius: '16px',
-    padding: '28px',
+    padding: '24px',
     border: '2px solid #00d4ff',
     boxShadow: '0 0 20px rgba(0, 212, 255, 0.5)',
     display: 'flex',
     flexDirection: 'column',
-    gap: '24px',
-    height: '100%',
-    minHeight: '280px',
+    gap: '16px',
     position: 'relative',
     overflow: 'hidden'
   },
@@ -290,7 +288,7 @@ const styles = {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
-    gap: '8px'
+    gap: '6px'
   },
   title: {
     margin: 0,
@@ -316,7 +314,7 @@ const styles = {
   progressContainer: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '8px'
+    gap: '6px'
   },
   progressLabel: {
     display: 'flex',
@@ -345,8 +343,8 @@ const styles = {
   actions: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '10px',
-    marginTop: 'auto'
+    gap: '8px',
+    marginTop: '12px'
   },
   primaryButton: {
     display: 'flex',
