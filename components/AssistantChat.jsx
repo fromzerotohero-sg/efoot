@@ -483,7 +483,7 @@ export default function AssistantChat({ mode = 'popup' }) {
             flexShrink: 0
           }}>
             <img 
-              src="/coach.jpg" 
+              src="/chat-button.png" 
               alt="AI Coach" 
               style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
             />
@@ -602,7 +602,7 @@ export default function AssistantChat({ mode = 'popup' }) {
             boxShadow: '0 0 10px rgba(0, 212, 255, 0.5)',
             flexShrink: 0
           }}>
-            <img src="/coach.jpg" alt="AI Coach" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img src="/chat-button.png" alt="AI Coach" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, color: 'var(--neon-cyan)', fontSize: '16px', textShadow: '0 0 8px rgba(0, 212, 255, 0.4)' }}>
@@ -667,7 +667,7 @@ export default function AssistantChat({ mode = 'popup' }) {
               border: '2px solid rgba(0, 212, 255, 0.8)',
               boxShadow: '0 0 20px rgba(0, 212, 255, 0.4)'
             }}>
-              <img src="/coach.jpg" alt="AI Coach" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src="/chat-button.png" alt="AI Coach" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
             <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--neon-cyan)', marginBottom: '8px' }}>
               {userProfile?.first_name 
@@ -709,7 +709,7 @@ export default function AssistantChat({ mode = 'popup' }) {
                 flexShrink: 0,
                 marginTop: '4px'
               }}>
-                <img src="/coach.jpg" alt="AI Coach" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src="/chat-button.png" alt="AI Coach" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
             )}
             <div
