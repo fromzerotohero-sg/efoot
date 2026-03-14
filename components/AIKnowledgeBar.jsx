@@ -195,48 +195,51 @@ export default function AIKnowledgeBar() {
     }
   }
 
-  // Level configuration with colors and icons
-  const levelConfig = {
-    beginner: {
-      color: '#FF9500',
-      gradient: 'linear-gradient(135deg, #FF9500 0%, #FFB347 100%)',
-      glow: 'rgba(255, 149, 0, 0.5)',
-      icon: Target,
-      label: t('aiKnowledgeBeginner') || 'Principiante',
-      description: 'Inizia il tuo percorso'
-    },
-    intermediate: {
-      color: '#00D4FF',
-      gradient: 'linear-gradient(135deg, #00A3CC 0%, #00D4FF 100%)',
-      glow: 'rgba(0, 212, 255, 0.5)',
-      icon: Zap,
-      label: t('aiKnowledgeIntermediate') || 'Intermedio',
-      description: 'Stai migliorando'
-    },
-    advanced: {
-      color: '#9D4EDD',
-      gradient: 'linear-gradient(135deg, #7B2CBF 0%, #C77DFF 100%)',
-      glow: 'rgba(157, 78, 221, 0.5)',
-      icon: Trophy,
-      label: t('aiKnowledgeAdvanced') || 'Avanzato',
-      description: 'Competenza elevata'
-    },
-    expert: {
-      color: '#FFD700',
-      gradient: 'linear-gradient(135deg, #B8860B 0%, #FFD700 100%)',
-      glow: 'rgba(255, 215, 0, 0.6)',
-      icon: Crown,
-      label: t('aiKnowledgeExpert') || 'Esperto',
-      description: 'Maestro del gioco'
+  // Level configuration with colors and icons - using translations
+  const getLevelConfig = (levelKey) => {
+    const configs = {
+      beginner: {
+        color: '#FF9500',
+        gradient: 'linear-gradient(135deg, #FF9500 0%, #FFB347 100%)',
+        glow: 'rgba(255, 149, 0, 0.5)',
+        icon: Target,
+        label: t('aiKnowledgeBeginner') || 'Principiante',
+        description: t('aiKnowledgeBeginnerShort') || 'Inizia il tuo percorso'
+      },
+      intermediate: {
+        color: '#00D4FF',
+        gradient: 'linear-gradient(135deg, #00A3CC 0%, #00D4FF 100%)',
+        glow: 'rgba(0, 212, 255, 0.5)',
+        icon: Zap,
+        label: t('aiKnowledgeIntermediate') || 'Intermedio',
+        description: t('aiKnowledgeIntermediateShort') || 'Stai migliorando'
+      },
+      advanced: {
+        color: '#9D4EDD',
+        gradient: 'linear-gradient(135deg, #7B2CBF 0%, #C77DFF 100%)',
+        glow: 'rgba(157, 78, 221, 0.5)',
+        icon: Trophy,
+        label: t('aiKnowledgeAdvanced') || 'Avanzato',
+        description: t('aiKnowledgeAdvancedShort') || 'Competenza elevata'
+      },
+      expert: {
+        color: '#FFD700',
+        gradient: 'linear-gradient(135deg, #B8860B 0%, #FFD700 100%)',
+        glow: 'rgba(255, 215, 0, 0.6)',
+        icon: Crown,
+        label: t('aiKnowledgeExpert') || 'Esperto',
+        description: t('aiKnowledgeExpertShort') || 'Maestro del gioco'
+      }
     }
+    return configs[levelKey] || configs.beginner
   }
 
-  const currentLevel = levelConfig[level] || levelConfig.beginner
+  const currentLevel = getLevelConfig(level)
   const LevelIcon = currentLevel.icon
 
   if (loading) {
     return (
-      <div style={styles.card}>
+      <div style={styles.card} className="ai-knowledge-card">
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div style={styles.avatarPulse}>
             <RefreshCw size={24} color="var(--neon-cyan)" style={{ animation: 'spin 1s linear infinite' }} />
@@ -246,7 +249,7 @@ export default function AIKnowledgeBar() {
               {t('loading')}
             </div>
             <div style={{ fontSize: '18px', fontWeight: '600', color: 'rgba(255,255,255,0.8)' }}>
-              Analisi profilo...
+              {t('loadingShort') || 'Loading...'}
             </div>
           </div>
         </div>
@@ -270,19 +273,19 @@ export default function AIKnowledgeBar() {
       {/* Animated border glow effect */}
       <div style={{ ...styles.cardGlow, background: currentLevel.gradient }} />
       
-      <div style={styles.content}>
+      <div style={styles.content} className="ai-knowledge-content">
         {/* Header row: Title + Avatar */}
-        <div style={styles.header}>
+        <div style={styles.header} className="ai-knowledge-header">
           <div style={styles.titleSection}>
             <div style={styles.badgeRow}>
               <Sparkles size={14} color="var(--neon-cyan)" />
-              <span style={styles.badgeText}>AI COACH INSIGHT</span>
+              <span style={styles.badgeText}>{t('aiKnowledgeBadge') || 'AI COACH INSIGHT'}</span>
             </div>
-            <h2 style={styles.title}>{t('aiKnowledge')}</h2>
+            <h2 style={styles.title} className="ai-knowledge-title">{t('aiKnowledge')}</h2>
           </div>
           
-          {/* Avatar with level ring */}
-          <div style={{ ...styles.avatarContainer, boxShadow: `0 0 30px ${currentLevel.glow}` }}>
+          {/* Avatar with level ring - hidden on small mobile */}
+          <div style={{ ...styles.avatarContainer, boxShadow: `0 0 30px ${currentLevel.glow}` }} className="ai-knowledge-avatar">
             <div style={{ ...styles.avatarRing, borderColor: currentLevel.color }}>
               <img 
                 src="/coach.jpg" 
@@ -295,9 +298,9 @@ export default function AIKnowledgeBar() {
         </div>
 
         {/* Score display */}
-        <div style={styles.scoreSection}>
-          <span style={styles.scoreValue}>{Math.round(animatedScore)}</span>
-          <span style={styles.scorePercent}>%</span>
+        <div style={styles.scoreSection} className="ai-knowledge-score-section">
+          <span style={styles.scoreValue} className="ai-knowledge-score">{Math.round(animatedScore)}</span>
+          <span style={styles.scorePercent} className="ai-knowledge-percent">%</span>
         </div>
 
         {/* Premium Progress Bar */}
@@ -333,23 +336,24 @@ export default function AIKnowledgeBar() {
         </div>
 
         {/* Level badge */}
-        <div style={styles.levelSection}>
+        <div style={styles.levelSection} className="ai-knowledge-level-section">
           <div style={{ ...styles.levelBadge, background: `${currentLevel.color}20`, borderColor: currentLevel.color }}>
             <LevelIcon size={16} color={currentLevel.color} />
             <span style={{ ...styles.levelText, color: currentLevel.color }}>
               {currentLevel.label}
             </span>
           </div>
-          <span style={styles.levelDescription}>{currentLevel.description}</span>
+          <span style={styles.levelDescription} className="ai-knowledge-level-desc">{currentLevel.description}</span>
         </div>
 
         {/* Footer info */}
         <div style={styles.footer}>
           <Brain size={12} color="rgba(255,255,255,0.4)" />
-          <span style={styles.footerText}>Powered by Coach AI Engine</span>
+          <span style={styles.footerText}>{t('poweredByCoachAI') || 'Powered by Coach AI Engine'}</span>
         </div>
       </div>
 
+      {/* CSS Animations & Responsive */}
       <style jsx>{`
         @keyframes shimmer {
           0% { transform: translateX(-100%); }
@@ -358,6 +362,45 @@ export default function AIKnowledgeBar() {
         @keyframes pulse-glow {
           0%, 100% { opacity: 0.5; }
           50% { opacity: 1; }
+        }
+        
+        /* Mobile responsive */
+        @media (max-width: 480px) {
+          .ai-knowledge-card {
+            border-radius: 16px;
+          }
+          .ai-knowledge-content {
+            padding: 16px;
+          }
+          .ai-knowledge-header {
+            margin-bottom: 12px;
+          }
+          .ai-knowledge-title {
+            font-size: 18px;
+          }
+          .ai-knowledge-avatar {
+            width: 44px;
+            height: 44px;
+          }
+          .ai-knowledge-score {
+            font-size: 40px;
+          }
+          .ai-knowledge-percent {
+            font-size: 20px;
+          }
+          .ai-knowledge-level-section {
+            gap: 8px;
+          }
+          .ai-knowledge-level-desc {
+            font-size: 12px;
+            width: 100%;
+          }
+        }
+        
+        @media (max-width: 360px) {
+          .ai-knowledge-avatar {
+            display: none;
+          }
         }
       `}</style>
     </div>
@@ -393,11 +436,15 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: '16px',
+    gap: '12px',
+    flexWrap: 'wrap',
   },
   titleSection: {
     display: 'flex',
     flexDirection: 'column',
     gap: '6px',
+    flex: 1,
+    minWidth: '0',
   },
   badgeRow: {
     display: 'flex',
@@ -424,6 +471,7 @@ const styles = {
     height: '56px',
     borderRadius: '50%',
     transition: 'all 0.3s ease',
+    flexShrink: 0,
   },
   avatarPulse: {
     width: '48px',
@@ -530,6 +578,7 @@ const styles = {
     alignItems: 'center',
     gap: '12px',
     marginBottom: '16px',
+    flexWrap: 'wrap',
   },
   levelBadge: {
     display: 'flex',
@@ -540,6 +589,7 @@ const styles = {
     border: '1px solid',
     fontSize: '13px',
     fontWeight: '600',
+    whiteSpace: 'nowrap',
   },
   levelText: {
     fontWeight: '700',
