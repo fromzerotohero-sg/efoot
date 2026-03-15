@@ -94,6 +94,31 @@ Documento di riepilogo bug segnalati / individuati, per intervento del programma
 
 ---
 
+## 5. Callback MetalGate — 404 e "body stream already read" (RISOLTO)
+
+### Sintomo
+- Dopo login SSO MetalGate, in console:
+  - `POST .../api/auth/metalgate-callback 404 (Not Found)`
+  - `TypeError: Failed to execute 'json' on 'Response': body stream already read`
+- Messaggio utente: «User not found. Please register first.»
+
+### Cause
+1. **404:** L’API `POST /api/auth/metalgate-callback` restituisce **404** con `details: 'user_not_found'` quando l’utente MetalGate non ha ancora un profilo in `user_profiles` (primo accesso).
+2. **body stream already read:** In **`app/auth/callback/page.jsx`** si chiamava `response.json()` due volte (una per il successo, una nel branch errore) → il body della Response può essere letto una sola volta.
+
+### Fix applicati
+- **Un solo `response.json()`:** il body viene parsato una volta in `data` e usato sia per successo che per errore; in caso di risposta non JSON si gestisce con try/catch.
+- **Gestione 404 user_not_found:** messaggio chiaro «User not found. Please register first.» (e per 404 generico «Login endpoint not available. Check deployment.»).
+- **Auto-register:** se la prima chiamata è con `action: 'login'` e la risposta è 404 con `user_not_found`, la pagina ritenta automaticamente con `action: 'register'`; se la registrazione va a buon fine l’utente viene loggato senza passi aggiuntivi.
+
+### File
+- **`app/auth/callback/page.jsx`** — `handleMetalgateCallback`: parsing unico, gestione 404, retry con register.
+
+### Stato
+- **Risolto.**
+
+---
+
 ## Riferimenti rapidi
 
 | Bug | File principale | Stato |
@@ -102,6 +127,7 @@ Documento di riepilogo bug segnalati / individuati, per intervento del programma
 | Chat launcher touch null | `components/AssistantChat.jsx` | Risolto |
 | Profilo UX ≠ Supabase (nome/squadra) | token + authHelper + profile/save-profile | Documentato / da verificare se persiste |
 | Rate limit 429 refresh-diagnostic | `lib/rateLimiter.js`, `app/api/refresh-diagnostic/route.js` | Risolto |
+| Callback MetalGate 404 / body stream | `app/auth/callback/page.jsx` | Risolto |
 
 ---
 
@@ -112,4 +138,4 @@ Documento di riepilogo bug segnalati / individuati, per intervento del programma
 
 ---
 
-*Ultimo aggiornamento: 15 marzo 2026.*
+*Ultimo aggiornamento: 14 marzo 2026.*

@@ -35,7 +35,24 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 })
     }
 
-    const user_id = userData.user.id
+    let user_id = userData.user.id
+
+    const admin = createClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    })
+
+    if (userData.user.user_metadata?.is_metalgate_user) {
+      const { data: existingProfile } = await admin
+        .from('user_profiles')
+        .select('user_id')
+        .eq('metalgate_user_id', user_id)
+        .single()
+      if (existingProfile?.user_id) {
+        user_id = existingProfile.user_id
+      } else {
+        return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
+      }
+    }
 
     // 2. Rate limiting
     const rateLimit = await checkRateLimit(user_id, '/api/tasks/generate')
