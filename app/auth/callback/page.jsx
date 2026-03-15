@@ -76,12 +76,9 @@ function AuthCallbackContent() {
         console.log('[Metalgate Callback] Action:', action)
       }
 
-      // Call our API route
-      const response = await fetch('/api/auth/metalgate-callback', {
+      let response = await fetch('/api/auth/metalgate-callback', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, action })
       })
 
@@ -93,16 +90,29 @@ function AuthCallbackContent() {
       }
 
       if (!response.ok) {
-        if (response.status === 404 && data?.details === 'user_not_found') {
+        if (response.status === 404 && data?.details === 'user_not_found' && action !== 'register') {
+          response = await fetch('/api/auth/metalgate-callback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, action: 'register' })
+          })
+          try {
+            data = await response.json()
+          } catch (_) {
+            throw new Error('User not found. Please register first.')
+          }
+          if (!response.ok) {
+            throw new Error(data?.error || 'Registration failed. Please try again.')
+          }
+        } else if (response.status === 404 && data?.details === 'user_not_found') {
           throw new Error('User not found. Please register first.')
-        }
-        if (response.status === 404) {
+        } else if (response.status === 404) {
           throw new Error('Login endpoint not available. Check deployment.')
-        }
-        if (data?.details === 'auth_setup_failed') {
+        } else if (data?.details === 'auth_setup_failed') {
           throw new Error('Account setup in progress. Please try again in a moment.')
+        } else {
+          throw new Error(data?.error || `Callback failed (${response.status})`)
         }
-        throw new Error(data?.error || `Callback failed (${response.status})`)
       }
 
       // Store user data in localStorage and redirect
