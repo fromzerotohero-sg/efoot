@@ -713,7 +713,7 @@ function HomePage() {
                     e.currentTarget.style.transform = 'translateY(0)'
                   }}
                 >
-                  <FileImage size={24} />
+                  <FileImage size={24} style={{ color: '#fbbf24', filter: 'drop-shadow(0 0 6px rgba(251, 191, 36, 0.6))' }} />
                   <span style={{ fontWeight: 500 }}>{t('addMatch')}</span>
                 </button>
 
@@ -747,7 +747,7 @@ function HomePage() {
                     e.currentTarget.style.transform = 'translateY(0)'
                   }}
                 >
-                  <Users size={24} />
+                  <Users size={24} style={{ color: '#22c55e', filter: 'drop-shadow(0 0 6px rgba(34, 197, 94, 0.6))' }} />
                   <span style={{ fontWeight: 500 }}>{t('manageFormation')}</span>
                 </button>
 
@@ -781,7 +781,7 @@ function HomePage() {
                     e.currentTarget.style.transform = 'translateY(0)'
                   }}
                 >
-                  <BarChart3 size={24} />
+                  <BarChart3 size={24} style={{ color: '#a855f7', filter: 'drop-shadow(0 0 6px rgba(168, 85, 247, 0.6))' }} />
                   <span style={{ fontWeight: 500, textAlign: 'center' }}>{t('gameAnalysisTitle')}</span>
                 </button>
 
@@ -815,7 +815,7 @@ function HomePage() {
                     e.currentTarget.style.transform = 'translateY(0)'
                   }}
                 >
-                  <UserCheck size={24} />
+                  <UserCheck size={24} style={{ color: '#f97316', filter: 'drop-shadow(0 0 6px rgba(249, 115, 22, 0.6))' }} />
                   <span style={{ fontWeight: 500 }}>{t('coachesLink')}</span>
                 </button>
               </div>
