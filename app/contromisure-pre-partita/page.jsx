@@ -284,7 +284,7 @@ export default function CountermeasuresPreMatchPage() {
       {!extractedFormation && (
         <div data-tour-id="tour-counter-upload" className="neon-card" style={{ padding: 'clamp(16px, 4vw, 24px)', marginBottom: '24px' }}>
           <h2 style={{ fontSize: 'clamp(18px, 4vw, 20px)', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Shield size={24} color="var(--neon-orange)" />
+            <Shield size={24} style={{ color: '#fbbf24', filter: 'drop-shadow(0 0 8px rgba(251, 191, 36, 0.8))' }} />
             {t('uploadOpponentFormation')}
           </h2>
           
@@ -298,30 +298,34 @@ export default function CountermeasuresPreMatchPage() {
                 disabled={extracting}
               />
               <div
+                className="upload-area"
                 style={{
                   padding: 'clamp(24px, 6vw, 48px)',
-                  background: 'rgba(255, 165, 0, 0.1)',
-                  border: '2px dashed rgba(255, 165, 0, 0.3)',
+                  background: 'radial-gradient(ellipse at center, rgba(251, 191, 36, 0.15) 0%, rgba(251, 191, 36, 0.05) 70%)',
+                  border: '2px dashed rgba(251, 191, 36, 0.5)',
                   borderRadius: '12px',
                   textAlign: 'center',
                   cursor: extracting ? 'not-allowed' : 'pointer',
                   opacity: extracting ? 0.5 : 1,
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.3s ease',
+                  position: 'relative'
                 }}
                 onMouseEnter={(e) => {
                   if (!extracting) {
-                    e.currentTarget.style.background = 'rgba(255, 165, 0, 0.15)'
-                    e.currentTarget.style.borderColor = 'rgba(255, 165, 0, 0.5)'
+                    e.currentTarget.style.background = 'radial-gradient(ellipse at center, rgba(251, 191, 36, 0.25) 0%, rgba(251, 191, 36, 0.1) 70%)'
+                    e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.8)'
+                    e.currentTarget.style.transform = 'scale(1.02)'
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!extracting) {
-                    e.currentTarget.style.background = 'rgba(255, 165, 0, 0.1)'
-                    e.currentTarget.style.borderColor = 'rgba(255, 165, 0, 0.3)'
+                    e.currentTarget.style.background = 'radial-gradient(ellipse at center, rgba(251, 191, 36, 0.15) 0%, rgba(251, 191, 36, 0.05) 70%)'
+                    e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.5)'
+                    e.currentTarget.style.transform = 'scale(1)'
                   }
                 }}
               >
-                <Camera size={48} style={{ marginBottom: '16px', color: 'var(--neon-orange)' }} />
+                <Camera size={48} style={{ marginBottom: '16px', color: '#fbbf24', filter: 'drop-shadow(0 0 12px rgba(251, 191, 36, 0.9))' }} />
                 <div style={{ fontSize: 'clamp(14px, 3vw, 16px)', fontWeight: 600, marginBottom: '8px' }}>
                   {t('uploadPhoto')}
                 </div>
@@ -763,6 +767,16 @@ export default function CountermeasuresPreMatchPage() {
       <style jsx>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+        @keyframes pulse-border {
+          0%, 100% { border-color: rgba(251, 191, 36, 0.5); box-shadow: 0 0 0 rgba(251, 191, 36, 0); }
+          50% { border-color: rgba(251, 191, 36, 0.8); box-shadow: 0 0 20px rgba(251, 191, 36, 0.3); }
+        }
+        .upload-area {
+          animation: pulse-border 2s infinite;
+        }
+        .upload-area:hover {
+          animation: none;
         }
       `}</style>
     </main>
