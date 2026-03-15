@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
 import { supabase } from '@/lib/supabaseClient'
-import { Lock, AlertCircle, CheckCircle } from 'lucide-react'
+import { Lock, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react'
 
 export default function ResetPasswordPage() {
   const { t } = useTranslation()
