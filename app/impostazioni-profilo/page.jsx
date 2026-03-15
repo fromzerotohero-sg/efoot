@@ -92,9 +92,12 @@ export default function ImpostazioniProfiloPage() {
     }
   }, [t])
 
+  // Carica profilo solo al mount. Non rifare fetch a ogni cambio di fetchProfile (es. re-render con t diverso)
+  // altrimenti si sovrascrivono le modifiche non salvate (es. nome cambiato in "attilio" → refetch → torna "Giovanni").
   React.useEffect(() => {
     fetchProfile()
-  }, [fetchProfile])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Salva profilo (incrementale)
   const handleSave = async (sectionName) => {
