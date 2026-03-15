@@ -93,8 +93,11 @@ function AuthCallbackContent() {
       }
 
       if (!response.ok) {
+        if (response.status === 404 && data?.details === 'user_not_found') {
+          throw new Error('User not found. Please register first.')
+        }
         if (response.status === 404) {
-          throw new Error('Login endpoint not available (404). Check that /api/auth/metalgate-callback is deployed.')
+          throw new Error('Login endpoint not available. Check deployment.')
         }
         if (data?.details === 'auth_setup_failed') {
           throw new Error('Account setup in progress. Please try again in a moment.')
