@@ -46,15 +46,10 @@ export async function GET(request) {
       }
     }
 
+    // select('*') per evitare errori se una colonna non esiste o viene rinominata
     const { data: profile, error } = await supabase
       .from('user_profiles')
-      .select(`
-        id, user_id, metalgate_user_id, first_name, last_name, nickname,
-        current_division, favorite_team, team_name, ai_name, how_to_remember,
-        hours_per_week, common_problems, leaderboard_consent,
-        profile_completion_score, profile_completion_level,
-        created_at, updated_at
-      `)
+      .select('*')
       .eq('user_id', userId)
       .maybeSingle()
 
