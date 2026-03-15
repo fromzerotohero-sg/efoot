@@ -119,6 +119,61 @@ Documento di riepilogo bug segnalati / individuati, per intervento del programma
 
 ---
 
+## 6. Tasks generate — utenti MetalGate (RISOLTO)
+
+### Sintomo
+- Per utenti loggati con MetalGate, la route **`POST /api/tasks/generate`** usava l’id MetalGate come `user_id` invece dell’UUID Supabase. I task venivano creati/associati all’identità sbagliata (nessuna riga in `user_profiles` con quel id come `user_id`).
+
+### Causa
+- In **`app/api/tasks/generate/route.js`** mancava il **lookup MetalGate**: dopo `validateToken`, per gli utenti con `user_metadata.is_metalgate_user` non veniva risolto il `user_id` da `user_profiles` tramite `metalgate_user_id`.
+
+### Fix applicato
+- Aggiunto lo stesso blocco usato nelle altre route (profile, save-profile, tasks/list, dashboard, ecc.): creazione client admin, query su `user_profiles` con `.eq('metalgate_user_id', user_id)`, sostituzione di `user_id` con `existingProfile.user_id`; se profilo non trovato, 404.
+
+### File
+- **`app/api/tasks/generate/route.js`**
+
+### Stato
+- **Risolto.**
+
+---
+
+## 7. Dettaglio partita — 404 "Match not found" (utenti MetalGate)
+
+### Sintomo
+- Con login MetalGate (token verificato in console: "Metalgate token verified successfully"), aprendo il dettaglio di una partita dalla lista si ottiene:
+  - **404** su `GET /api/matches?id=<match_id>`
+  - In console: `[MatchDetail] Error: Error: Match not found`
+
+### Possibili cause
+- **Token:** le pagine **lista partite** (`app/match/page.jsx`) e **dettaglio partita** (`app/match/[id]/page.jsx`) usano `auth_token` e, se assente, il fallback `supabase.auth.getSession()`. Per un utente MetalGate, se per qualche motivo viene inviato il token Supabase invece di quello MetalGate, il backend risolve un altro `user_id` e la query `.eq('user_id', userId).eq('id', id)` non trova la partita (salvata con il `user_id` del profilo MetalGate).
+- **Coerenza identità:** la route `GET /api/matches` fa già il lookup MetalGate (metalgate_user_id → user_id); non usa l’header `X-Metalgate-Session` / `forbidSupabaseFallback`. Se `validateToken` fa fallback su Supabase, l’identità usata per le query è diversa da quella con cui le partite sono state create.
+- **Dati:** la partita con quell’id potrebbe essere stata creata con un altro account (es. prima del passaggio a MetalGate) e quindi avere un `user_id` diverso; in quel caso il 404 è coerente (la partita non appartiene all’utente corrente).
+
+### Cosa verificare (per Tommaso / debug)
+1. **Network:** per `GET /api/matches?id=<id>` controllare l’header `Authorization` e, in risposta, se si riceve 404. Verificare in Supabase nella tabella `matches` che la riga con quell’`id` esista e quale `user_id` ha; confrontare con il `user_id` che il backend usa dopo il lookup MetalGate (vedi `user_profiles` per `metalgate_user_id` → `user_id`).
+2. **Frontend:** in sessione MetalGate verificare che le pagine match non usino `getSession()` al posto di `auth_token` (per non inviare per sbaglio il token Supabase). Valutare l’invio di `X-Metalgate-Session: 1` e l’uso di `forbidSupabaseFallback` in `app/api/matches/route.js` e `app/api/dashboard/route.js` per allineamento al flusso profilo.
+
+### File coinvolti
+- **`app/match/[id]/page.jsx`** — fetch dettaglio partita.
+- **`app/match/page.jsx`** — fetch lista (dashboard).
+- **`app/api/matches/route.js`** — GET singola partita / lista.
+- **`app/api/dashboard/route.js`** — dati dashboard (include matches).
+
+### Stato
+- **Segnalato / da risolvere.**
+
+---
+
+## Modifiche recenti (stato codice)
+
+- **Profilo / MetalGate:** `GET /api/user/profile` e `POST /api/supabase/save-profile` leggono l’header `X-Metalgate-Session` e usano `forbidSupabaseFallback` per evitare il fallback Supabase in sessione MetalGate. Frontend (Impostazioni Profilo, chat, Palestra Coach) invia l’header quando è presente `metalgate_user` in localStorage.
+- **Callback MetalGate:** parsing unico di `response.json()`, gestione 404 `user_not_found`, retry automatico con `action: 'register'` al primo accesso.
+- **Tasks generate:** aggiunto lookup MetalGate in `POST /api/tasks/generate`.
+- **Audit route:** tutte le API che usano `validateToken` e leggono/scrivono per utente fanno il lookup `metalgate_user_id` → `user_id` (vedi **`docs/AUDIT_ROUTE_LOGICHE_FLUSSI_SUPABASE.md`**).
+
+---
+
 ## Riferimenti rapidi
 
 | Bug | File principale | Stato |
@@ -128,6 +183,8 @@ Documento di riepilogo bug segnalati / individuati, per intervento del programma
 | Profilo UX ≠ Supabase (nome/squadra) | token + authHelper + profile/save-profile | Documentato / da verificare se persiste |
 | Rate limit 429 refresh-diagnostic | `lib/rateLimiter.js`, `app/api/refresh-diagnostic/route.js` | Risolto |
 | Callback MetalGate 404 / body stream | `app/auth/callback/page.jsx` | Risolto |
+| Tasks generate MetalGate | `app/api/tasks/generate/route.js` | Risolto |
+| Match not found 404 (MetalGate) | `app/match/[id]/page.jsx`, `app/api/matches/route.js` | Segnalato |
 
 ---
 
@@ -135,7 +192,9 @@ Documento di riepilogo bug segnalati / individuati, per intervento del programma
 
 - **`docs/FUNZIONAMENTO_PROFILO_E_PALESTRA_ATTUALE.md`** — Funzionamento esatto del codice (token, API, Impostazioni Profilo, Palestra Coach).
 - **`docs/MODIFICHE_FLUSSO_PROFILO_EFOOT.md`** — Elenco modifiche al flusso profilo e commit di riferimento.
+- **`docs/AUDIT_ROUTE_LOGICHE_FLUSSI_SUPABASE.md`** — Audit route, logiche, flussi e allineamento Supabase (identità MetalGate, lookup user_id).
+- **`docs/CONFRONTO_SUPABASE_UX_INFO_ATTILA_LAB.md`** — Confronto dati Supabase vs UX per il profilo info@attila-lab.net.
 
 ---
 
-*Ultimo aggiornamento: 14 marzo 2026.*
+*Ultimo aggiornamento: 15 marzo 2026.*
