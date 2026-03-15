@@ -55,6 +55,7 @@ export default function ImpostazioniProfiloPage() {
 
       if (!token) {
         setLoading(false)
+        router.push('/login')
         return
       }
 
@@ -62,6 +63,29 @@ export default function ImpostazioniProfiloPage() {
         headers: { 'Authorization': `Bearer ${token}` }
       })
 
+      if (res.status === 401) {
+        setLoading(false)
+        router.push('/login')
+        return
+      }
+      if (res.status === 404) {
+        setProfileData(null)
+        setProfile({
+          first_name: '',
+          last_name: '',
+          current_division: '',
+          favorite_team: '',
+          team_name: '',
+          ai_name: '',
+          how_to_remember: '',
+          hours_per_week: null,
+          common_problems: [],
+          leaderboard_consent: false,
+          nickname: ''
+        })
+        setLoading(false)
+        return
+      }
       if (!res.ok) {
         throw new Error(t('errorProfileLoad'))
       }
@@ -130,6 +154,10 @@ export default function ImpostazioniProfiloPage() {
       })
 
       if (response.type === 'opaqueredirect' || (response.status >= 301 && response.status <= 303)) {
+        router.push('/login')
+        return
+      }
+      if (response.status === 401) {
         router.push('/login')
         return
       }
