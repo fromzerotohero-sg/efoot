@@ -56,6 +56,15 @@ function toTextArray(v) {
  *   }
  * }
  */
+
+/** GET non supportato: usare POST per salvare. Evita 405 quando qualcosa (es. redirect) invia GET. */
+export async function GET() {
+  return NextResponse.json(
+    { error: 'Method not allowed. Use POST to save profile.' },
+    { status: 405, headers: { Allow: 'POST' } }
+  )
+}
+
 export async function POST(req) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL

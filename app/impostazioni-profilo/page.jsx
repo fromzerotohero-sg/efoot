@@ -118,21 +118,31 @@ export default function ImpostazioniProfiloPage() {
         return
       }
 
-      const response = await fetch('/api/supabase/save-profile', {
+      const saveProfileUrl = '/api/supabase/save-profile'
+      const response = await fetch(saveProfileUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(profile)
+        body: JSON.stringify(profile),
+        redirect: 'manual'
       })
 
+      if (response.type === 'opaqueredirect' || (response.status >= 301 && response.status <= 303)) {
+        router.push('/login')
+        return
+      }
       if (!response.ok) {
         let errMsg = t('errorProfileSave')
-        try {
-          const errorData = await response.json()
-          if (errorData?.error) errMsg = errorData.error
-        } catch (_) { /* risposta non JSON */ }
+        if (response.status === 405) {
+          errMsg = 'Salvataggio non disponibile con questo tipo di richiesta. Usa il pulsante Salva.'
+        } else {
+          try {
+            const errorData = await response.json()
+            if (errorData?.error) errMsg = errorData.error
+          } catch (_) { /* risposta non JSON */ }
+        }
         throw new Error(errMsg)
       }
 
