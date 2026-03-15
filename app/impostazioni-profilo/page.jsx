@@ -45,8 +45,9 @@ export default function ImpostazioniProfiloPage() {
 
     try {
       let token = localStorage.getItem('auth_token')
+      const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
 
-      if (!token && supabase) {
+      if (!token && supabase && !isMetalgateSession) {
         const { data: session } = await supabase.auth.getSession()
         if (session?.session) {
           token = session.session.access_token
@@ -59,8 +60,9 @@ export default function ImpostazioniProfiloPage() {
         return
       }
 
-      const res = await fetch('/api/user/profile', {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const res = await fetch(`/api/user/profile?t=${Date.now()}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        cache: 'no-store'
       })
 
       if (res.status === 401) {
@@ -131,8 +133,9 @@ export default function ImpostazioniProfiloPage() {
 
     try {
       let token = localStorage.getItem('auth_token')
-      
-      if (!token && supabase) {
+      const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
+
+      if (!token && supabase && !isMetalgateSession) {
         const { data: session } = await supabase.auth.getSession()
         token = session?.session?.access_token
       }
@@ -474,6 +477,14 @@ export default function ImpostazioniProfiloPage() {
           <p style={{ fontSize: 'clamp(13px, 2.5vw, 14px)', color: '#888', lineHeight: 1.45, margin: 0 }}>
             {t('coachDataSettingsDesc') || 'Per modificare piattaforma, connessione, livello passaggio e punto debole, usa la Palestra Coach.'}
           </p>
+          {profileData && (profileData.platform || profileData.connection_quality || profileData.pass_level || profileData.ai_weak_point) && (
+            <div style={{ marginTop: '10px', fontSize: '12px', color: 'rgba(255,255,255,0.7)', display: 'flex', flexWrap: 'wrap', gap: '8px 12px' }}>
+              {profileData.platform && <span>{t('platform') || 'Piattaforma'}: <strong>{profileData.platform}</strong></span>}
+              {profileData.connection_quality && <span>{t('connection') || 'Connessione'}: <strong>{profileData.connection_quality}</strong></span>}
+              {profileData.pass_level && <span>Pass: <strong>{profileData.pass_level}</strong></span>}
+              {profileData.ai_weak_point && <span>{t('weakPoint') || 'Punto debole'}: <strong>{profileData.ai_weak_point}</strong></span>}
+            </div>
+          )}
         </div>
         <button 
           onClick={() => setShowCoachGym(true)}
@@ -976,7 +987,10 @@ export default function ImpostazioniProfiloPage() {
       </button>
       <CoachFeedbackChat 
         show={showCoachGym}
-        onClose={() => setShowCoachGym(false)}
+        onClose={() => {
+          setShowCoachGym(false)
+          fetchProfile()
+        }}
         userProfile={profileData}
         lastMatch={null}
       />

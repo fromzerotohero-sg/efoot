@@ -49,35 +49,28 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
   const inputRef = useRef(null)
   const sendAbortRef = useRef(null)
 
-  // Carica profilo sempre ad ogni apertura per avere dati freschi
+  // Carica profilo sempre ad ogni apertura: stessi criteri token di Impostazioni Profilo
   useEffect(() => {
     if (!show) return
     const load = async () => {
       try {
         let token = localStorage.getItem('auth_token')
-        let userId = null
-        
-        if (token) {
-           const userData = localStorage.getItem('metalgate_user')
-           if (userData) {
-             userId = JSON.parse(userData).id
-           }
-        } else {
-           const { data: session } = await supabase.auth.getSession()
-           if (session?.session) {
-             token = session.session.access_token
-             userId = session.session.user.id
-           }
+        const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
+
+        if (!token && supabase && !isMetalgateSession) {
+          const { data: session } = await supabase.auth.getSession()
+          if (session?.session) token = session.session.access_token
         }
 
-        if (!token || !userId) {
+        if (!token) {
           if (externalProfile) setLoadedProfile(externalProfile)
           return
         }
-        
+
         try {
-          const res = await fetch('/api/user/profile', {
-            headers: { 'Authorization': `Bearer ${token}` }
+          const res = await fetch(`/api/user/profile?t=${Date.now()}`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            cache: 'no-store'
           })
           if (res.ok) {
             const data = await res.json()
@@ -95,7 +88,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
       }
     }
     load()
-  }, [show]) // Rimosso externalProfile dalle deps per evitare overwrite involontari
+  }, [show])
 
   const userProfile = loadedProfile || externalProfile
 
@@ -110,17 +103,22 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     return 'update'
   }, [userProfile, lastMatch])
 
-  // Inizializza form e stato quando si apre
+  const formJustOpenedRef = useRef(false)
+  // Inizializza form quando si apre; aggiorna form quando userProfile cambia senza resettare formSaved
   useEffect(() => {
-    if (!show) return
-    setFormSaved(false)
-    // Apri form automaticamente se profilo incompleto
+    if (!show) {
+      formJustOpenedRef.current = false
+      return
+    }
+    if (!formJustOpenedRef.current) {
+      formJustOpenedRef.current = true
+      setFormSaved(false)
+    }
     const profileFields = [
       userProfile?.platform, userProfile?.connection_quality, userProfile?.pass_level,
       userProfile?.smart_assist, userProfile?.input_delay, userProfile?.ai_weak_point
     ].filter(v => v != null && String(v).trim() !== '').length
     setFormExpanded(profileFields < 3)
-    // Pre-popola form con dati esistenti
     setFormData({
       connection_quality: userProfile?.connection_quality || '',
       slow_opponent_connection_issues: userProfile?.slow_opponent_connection_issues || '',
@@ -141,11 +139,11 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     setFormSaving(true)
     try {
       let token = localStorage.getItem('auth_token')
-      if (!token && supabase) {
+      const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
+      if (!token && supabase && !isMetalgateSession) {
         const { data: session } = await supabase.auth.getSession()
         token = session?.session?.access_token
       }
-      
       if (!token) return
 
       const body = {}
@@ -190,35 +188,39 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     return ['Ho cambiato qualcosa nel mio gioco', 'Ho difficolta con qualcosa', 'Altro feedback']
   }, [sessionMode, lang])
 
-  // Messaggio iniziale automatico
+  const messagesJustOpenedRef = useRef(false)
+  // Messaggio iniziale solo all'apertura: non resettare messaggi quando userProfile cambia (es. dopo save)
   useEffect(() => {
-    if (!show) return
-    setMessages([])
-    setSaved(false)
-
-    const firstName = userProfile?.first_name || (lang === 'en' ? 'friend' : 'amico')
-
-    let greeting = ''
-    if (sessionMode === 'feedback' && lastMatch) {
-      const opp = lastMatch.opponent_name || (lang === 'en' ? 'your opponent' : 'il tuo avversario')
-      const form = lastMatch.formation_played || '?'
-      const result = lastMatch.result || '?'
-      greeting = lang === 'en'
-        ? `Hi ${firstName}! I see you played ${form} vs ${opp} \u2014 ${result}. Tell me how it went!`
-        : `Ciao ${firstName}! Vedo che hai giocato ${form} contro ${opp} \u2014 ${result}. Raccontami com'\u00e8 andata!`
-    } else if (sessionMode === 'profile_setup') {
-      greeting = lang === 'en'
-        ? `Hi ${firstName}! Fill in your details above, then we can chat.`
-        : `Ciao ${firstName}! Compila i tuoi dati qui sopra, poi possiamo parlare.`
-    } else {
-      greeting = lang === 'en'
-        ? `Hi ${firstName}! Is there anything new you want to tell me?`
-        : `Ciao ${firstName}! C'\u00e8 qualcosa di nuovo che vuoi dirmi?`
+    if (!show) {
+      messagesJustOpenedRef.current = false
+      return
     }
-
-    setTimeout(() => {
-      setMessages([{ role: 'assistant', content: greeting }])
-    }, 300)
+    if (!messagesJustOpenedRef.current) {
+      messagesJustOpenedRef.current = true
+      setMessages([])
+      setSaved(false)
+      const firstName = userProfile?.first_name || (lang === 'en' ? 'friend' : 'amico')
+      let greeting = ''
+      if (sessionMode === 'feedback' && lastMatch) {
+        const opp = lastMatch.opponent_name || (lang === 'en' ? 'your opponent' : 'il tuo avversario')
+        const form = lastMatch.formation_played || '?'
+        const result = lastMatch.result || '?'
+        greeting = lang === 'en'
+          ? `Hi ${firstName}! I see you played ${form} vs ${opp} \u2014 ${result}. Tell me how it went!`
+          : `Ciao ${firstName}! Vedo che hai giocato ${form} contro ${opp} \u2014 ${result}. Raccontami com'\u00e8 andata!`
+      } else if (sessionMode === 'profile_setup') {
+        greeting = lang === 'en'
+          ? `Hi ${firstName}! Fill in your details above, then we can chat.`
+          : `Ciao ${firstName}! Compila i tuoi dati qui sopra, poi possiamo parlare.`
+      } else {
+        greeting = lang === 'en'
+          ? `Hi ${firstName}! Is there anything new you want to tell me?`
+          : `Ciao ${firstName}! C'\u00e8 qualcosa di nuovo che vuoi dirmi?`
+      }
+      setTimeout(() => {
+        setMessages([{ role: 'assistant', content: greeting }])
+      }, 300)
+    }
   }, [show, sessionMode, userProfile, lastMatch, lang])
 
   // Auto-scroll
@@ -253,12 +255,11 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
       const signal = sendAbortRef.current.signal
 
       let token = localStorage.getItem('auth_token')
-      
-      if (!token && supabase) {
+      const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
+      if (!token && supabase && !isMetalgateSession) {
         const { data: session } = await supabase.auth.getSession()
         token = session?.session?.access_token
       }
-
       if (!token) throw new Error('Session expired')
       
       if (signal.aborted) return
@@ -322,11 +323,11 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     setSaving(true)
     try {
       let token = localStorage.getItem('auth_token')
-      if (!token && supabase) {
+      const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
+      if (!token && supabase && !isMetalgateSession) {
         const { data: session } = await supabase.auth.getSession()
         token = session?.session?.access_token
       }
-
       if (!token) {
         onClose?.()
         return
