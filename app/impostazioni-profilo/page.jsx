@@ -125,8 +125,12 @@ export default function ImpostazioniProfiloPage() {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || t('errorProfileSave'))
+        let errMsg = t('errorProfileSave')
+        try {
+          const errorData = await response.json()
+          if (errorData?.error) errMsg = errorData.error
+        } catch (_) { /* risposta non JSON */ }
+        throw new Error(errMsg)
       }
 
       const data = await response.json()
@@ -504,7 +508,7 @@ export default function ImpostazioniProfiloPage() {
           </label>
           <input
             type="text"
-            value={profile.first_name}
+            value={profile.first_name ?? ''}
             onChange={(e) => setProfile(prev => ({ ...prev, first_name: e.target.value }))}
             placeholder={t('placeholderYourName')}
             maxLength={255}
@@ -527,7 +531,7 @@ export default function ImpostazioniProfiloPage() {
           </label>
           <input
             type="text"
-            value={profile.last_name}
+            value={profile.last_name ?? ''}
             onChange={(e) => setProfile(prev => ({ ...prev, last_name: e.target.value }))}
             placeholder={t('yourLastName')}
             maxLength={255}
@@ -603,7 +607,7 @@ export default function ImpostazioniProfiloPage() {
 
         <div style={{ marginBottom: '16px' }}>
           <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#888' }}>
-            Divisione attuale
+            {t('currentDivision')}
           </label>
           <select
             value={profile.current_division ?? ''}
@@ -813,7 +817,7 @@ export default function ImpostazioniProfiloPage() {
           </label>
           <input
             type="text"
-            value={profile.ai_name}
+            value={profile.ai_name ?? ''}
             onChange={(e) => setProfile(prev => ({ ...prev, ai_name: e.target.value }))}
             placeholder={t('aiNamePlaceholder')}
             maxLength={255}
@@ -834,7 +838,7 @@ export default function ImpostazioniProfiloPage() {
             {t('howToRemember')}
           </label>
           <textarea
-            value={profile.how_to_remember}
+            value={profile.how_to_remember ?? ''}
             onChange={(e) => setProfile(prev => ({ ...prev, how_to_remember: e.target.value }))}
             placeholder={t('howToRememberPlaceholder')}
             maxLength={1000}
