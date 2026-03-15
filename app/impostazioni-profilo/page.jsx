@@ -606,7 +606,7 @@ export default function ImpostazioniProfiloPage() {
             Divisione attuale
           </label>
           <select
-            value={profile.current_division}
+            value={profile.current_division ?? ''}
             onChange={(e) => setProfile(prev => ({ ...prev, current_division: e.target.value }))}
             style={{
               width: '100%',
@@ -631,7 +631,7 @@ export default function ImpostazioniProfiloPage() {
           </label>
           <input
             type="text"
-            value={profile.favorite_team}
+            value={profile.favorite_team ?? ''}
             onChange={(e) => setProfile(prev => ({ ...prev, favorite_team: e.target.value }))}
             placeholder={t('favoriteTeamPlaceholder')}
             maxLength={255}
@@ -668,7 +668,7 @@ export default function ImpostazioniProfiloPage() {
           </div>
           <input
             type="text"
-            value={profile.team_name}
+            value={profile.team_name ?? ''}
             onChange={(e) => setProfile(prev => ({ ...prev, team_name: e.target.value }))}
             placeholder={t('placeholderTeamExample')}
             maxLength={255}
@@ -756,7 +756,7 @@ export default function ImpostazioniProfiloPage() {
           </label>
           <input
             type="text"
-            value={profile.nickname}
+            value={profile.nickname ?? ''}
             onChange={(e) => setProfile(prev => ({ ...prev, nickname: e.target.value.trim().slice(0, 255) }))}
             placeholder={t('nicknamePlaceholder')}
             maxLength={255}
