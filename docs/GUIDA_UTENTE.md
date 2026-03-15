@@ -17,7 +17,7 @@ eFootball AI Coach è un assistente tattico personale che:
 ## 📋 Primo Accesso (3 Step)
 
 ### Step 1: Completa il Profilo
-Vai su **Palestra Coach** (icona 💪)
+Vai su **Impostazioni Profilo** (icona ⚙️)
 
 Compila:
 - Piattaforma (Console/PC/Mobile)
@@ -94,6 +94,7 @@ Dopo ogni partita, entra nella Palestra Coach e racconta:
 | Analisi partita (1 sezione) | 2 HP |
 | Contromisure | 3 HP |
 | Analisi completa | 4 HP |
+| Generazione obiettivi | 2 HP |
 
 ---
 
@@ -117,19 +118,21 @@ Partecipi automaticamente se hai impostato un **nickname** nel profilo.
 Misura quanto l'AI ti conosce (0-100%).
 
 Componenti:
-- Profilo: 15%
-- Rosa: 25%
-- Partite: 25%
-- Pattern: 15%
-- Allenatore: 10%
-- Palestra Coach: 10%
+- Profilo: 16%
+- Rosa: 20%
+- Partite: 24%
+- Pattern: 12%
+- Allenatore: 8%
+- Utilizzo Sistema: 4%
+- Successi: 8%
+- Palestra Coach: 8%
 
 **Come salire velocemente**:
-1. Compila profilo (+15%)
-2. Carica 11 titolari (+25%)
-3. Inserisci 10 partite (+40%)
-4. Imposta allenatore (+10%)
-5. Usa Palestra Coach (+10%)
+1. Compila profilo (+16%)
+2. Carica 11 titolari (+20%)
+3. Inserisci 10 partite (+24%)
+4. Imposta allenatore (+8%)
+5. Usa Palestra Coach (+8%)
 
 ---
 
@@ -139,7 +142,7 @@ Componenti:
 → Imposta un nickname in Profilo
 
 **L'AI suggerisce cose strane**
-→ Completa il profilo in Palestra Coach con dati veritieri
+→ Completa il profilo in Impostazioni Profilo con dati veritieri
 
 **HP finiti**
 → Acquista nuovi pacchetti in "I miei crediti"
@@ -155,4 +158,4 @@ Email: support@efootballaicoach.com
 
 ---
 
-*Guida aggiornata: 14/02/2026*
+*Guida aggiornata: 15/03/2026*
