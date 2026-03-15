@@ -85,17 +85,21 @@ function AuthCallbackContent() {
         body: JSON.stringify({ token, action })
       })
 
-      const data = await response.json()
+      let data
+      try {
+        data = await response.json()
+      } catch (_) {
+        throw new Error(response.status === 404 ? 'Login endpoint not available. Please try again later.' : 'Invalid response from server.')
+      }
 
       if (!response.ok) {
-        const errorData = await response.json()
-        
-        // Handle specific auth setup errors
-        if (errorData.details === 'auth_setup_failed') {
+        if (response.status === 404) {
+          throw new Error('Login endpoint not available (404). Check that /api/auth/metalgate-callback is deployed.')
+        }
+        if (data?.details === 'auth_setup_failed') {
           throw new Error('Account setup in progress. Please try again in a moment.')
         }
-        
-        throw new Error(errorData.error || 'Callback failed')
+        throw new Error(data?.error || `Callback failed (${response.status})`)
       }
 
       // Store user data in localStorage and redirect

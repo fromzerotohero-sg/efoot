@@ -229,20 +229,8 @@ export default function ImpostazioniProfiloPage() {
           leaderboard_consent: p.leaderboard_consent ?? false,
           nickname: p.nickname ?? null
         })
-        setProfile(prev => ({
-          ...prev,
-          first_name: p.first_name != null ? p.first_name : prev.first_name,
-          last_name: p.last_name != null ? p.last_name : prev.last_name,
-          current_division: p.current_division != null ? p.current_division : prev.current_division,
-          favorite_team: p.favorite_team != null ? p.favorite_team : prev.favorite_team,
-          team_name: p.team_name != null ? p.team_name : prev.team_name,
-          ai_name: p.ai_name != null ? p.ai_name : prev.ai_name,
-          how_to_remember: p.how_to_remember != null ? p.how_to_remember : prev.how_to_remember,
-          hours_per_week: p.hours_per_week != null ? p.hours_per_week : prev.hours_per_week,
-          common_problems: Array.isArray(p.common_problems) ? p.common_problems : prev.common_problems,
-          leaderboard_consent: p.leaderboard_consent != null ? p.leaderboard_consent : prev.leaderboard_consent,
-          nickname: p.nickname != null ? p.nickname : prev.nickname
-        }))
+        // Form mostra subito ciò che l'utente ha inviato (evita che risposta/refetch sovrascrivano con dati vecchi)
+        setProfile(profile)
       }
       const successMsg = data.profile
         ? `${sectionName} ${t('profileSectionSaved')}`
@@ -255,7 +243,7 @@ export default function ImpostazioniProfiloPage() {
         setTimeout(() => window.dispatchEvent(new CustomEvent('leaderboard-updated')), 1500)
       }
 
-      // Refetch profilo da API: UX mostra esattamente ciò che è salvato (server = fonte di verità)
+      // Refetch: aggiorna solo profileData (completion score ecc.), non il form: il form mostra già ciò che è stato inviato (setProfile(profile) sopra)
       try {
         const refetchHeaders = { 'Authorization': `Bearer ${token}` }
         if (isMetalgateSession) refetchHeaders['X-Metalgate-Session'] = '1'
@@ -267,19 +255,6 @@ export default function ImpostazioniProfiloPage() {
           const refetched = await refetchRes.json()
           if (refetched && typeof refetched === 'object') {
             setProfileData(refetched)
-            setProfile({
-              first_name: refetched.first_name ?? '',
-              last_name: refetched.last_name ?? '',
-              current_division: refetched.current_division ?? '',
-              favorite_team: refetched.favorite_team ?? '',
-              team_name: refetched.team_name ?? '',
-              ai_name: refetched.ai_name ?? '',
-              how_to_remember: refetched.how_to_remember ?? '',
-              hours_per_week: refetched.hours_per_week ?? null,
-              common_problems: refetched.common_problems ?? [],
-              leaderboard_consent: Boolean(refetched.leaderboard_consent),
-              nickname: refetched.nickname ?? ''
-            })
           }
         }
       } catch (_) { /* non bloccare UI se refetch fallisce */ }
