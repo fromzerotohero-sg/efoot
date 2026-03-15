@@ -38,71 +38,63 @@ export default function ImpostazioniProfiloPage() {
   // Divisioni disponibili
   const divisions = ['Division 1', 'Division 2', 'Division 3', 'Division 4', 'Division 5', 'Division 6', 'Division 7', 'Division 8', 'Division 9', 'Division 10']
 
-  // Carica profilo esistente
-  React.useEffect(() => {
-    const fetchProfile = async () => {
-      setLoading(true)
-      setError(null)
+  // Carica profilo esistente (richiamabile per ricarica manuale)
+  const fetchProfile = React.useCallback(async () => {
+    setLoading(true)
+    setError(null)
 
-      try {
-        let token = localStorage.getItem('auth_token')
-        let userId = null
-        
-        if (token) {
-           const userData = localStorage.getItem('metalgate_user')
-           if (userData) {
-             userId = JSON.parse(userData).id
-           }
-        } else if (supabase) {
-           const { data: session } = await supabase.auth.getSession()
-           if (session?.session) {
-             token = session.session.access_token
-             userId = session.session.user.id
-           }
-        }
-        
-        if (!token) {
-          // AuthWrapper gestirà redirect
-          setLoading(false)
-          return
-        }
+    try {
+      let token = localStorage.getItem('auth_token')
 
-        // Carica profilo - usa sempre API server-side per sicurezza e consistenza
-        const res = await fetch('/api/user/profile', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-        
-        if (!res.ok) {
-          throw new Error(t('errorProfileLoad'))
+      if (!token && supabase) {
+        const { data: session } = await supabase.auth.getSession()
+        if (session?.session) {
+          token = session.session.access_token
         }
-        
-        const profileData = await res.json()
-        
-        if (profileData) {
-           setProfileData(profileData)
-           setProfile({
-             first_name: profileData.first_name || '',
-             last_name: profileData.last_name || '',
-             current_division: profileData.current_division || '',
-             favorite_team: profileData.favorite_team || '',
-             team_name: profileData.team_name || '',
-             ai_name: profileData.ai_name || '',
-             how_to_remember: profileData.how_to_remember || '',
-             hours_per_week: profileData.hours_per_week || null,
-             common_problems: profileData.common_problems || [],
-             leaderboard_consent: Boolean(profileData.leaderboard_consent),
-             nickname: profileData.nickname || ''
-           })
-        }
-      } catch (err) {
-        console.error('[Impostazioni Profilo] Error loading profile:', err)
-      } finally {
-        setLoading(false)
       }
-    }
 
+      if (!token) {
+        setLoading(false)
+        return
+      }
+
+      const res = await fetch('/api/user/profile', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      if (!res.ok) {
+        throw new Error(t('errorProfileLoad'))
+      }
+
+      const profileData = await res.json()
+
+      if (profileData && typeof profileData === 'object') {
+        setProfileData(profileData)
+        setProfile({
+          first_name: profileData.first_name || '',
+          last_name: profileData.last_name || '',
+          current_division: profileData.current_division || '',
+          favorite_team: profileData.favorite_team || '',
+          team_name: profileData.team_name || '',
+          ai_name: profileData.ai_name || '',
+          how_to_remember: profileData.how_to_remember || '',
+          hours_per_week: profileData.hours_per_week || null,
+          common_problems: profileData.common_problems || [],
+          leaderboard_consent: Boolean(profileData.leaderboard_consent),
+          nickname: profileData.nickname || ''
+        })
+      }
+    } catch (err) {
+      console.error('[Impostazioni Profilo] Error loading profile:', err)
+      setError(err?.message || t('errorProfileLoad'))
+    } finally {
+      setLoading(false)
+    }
+  }, [t])
+
+  React.useEffect(() => {
     fetchProfile()
-  }, [router])
+  }, [fetchProfile])
 
   // Salva profilo (incrementale)
   const handleSave = async (sectionName) => {
@@ -239,7 +231,8 @@ export default function ImpostazioniProfiloPage() {
     }
   }
 
-  if (loading) {
+  // Full-page loading solo al primo caricamento (senza dati profilo)
+  if (loading && !profileData) {
     return (
       <main style={{ padding: '32px 24px', minHeight: '100vh', textAlign: 'center' }}>
         <RefreshCw size={32} style={{ animation: 'spin 1s linear infinite', marginBottom: '16px', color: 'var(--neon-blue)' }} />
@@ -251,7 +244,7 @@ export default function ImpostazioniProfiloPage() {
   return (
     <main data-tour-id="tour-profile-intro" className="p-6 max-w-3xl mx-auto">
       {/* Page Header */}
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold neon-text mb-8">
             <User size={24} color="var(--primary-cyan)" />
@@ -261,23 +254,47 @@ export default function ImpostazioniProfiloPage() {
             {t('completeYourProfile')}
           </p>
         </div>
-        <Link
-          href="/gestione-profilo"
-          className="neon-button"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '8px 14px',
-            backgroundColor: 'rgba(255, 149, 0, 0.1)',
-            borderColor: 'var(--border-orange)',
-            color: 'var(--primary-orange)',
-            fontSize: '14px'
-          }}
-        >
-          <Wallet size={16} />
-          {t('goToHeroPoints')}
-        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button
+            type="button"
+            onClick={() => fetchProfile()}
+            disabled={loading}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 14px',
+              background: 'rgba(0, 212, 255, 0.1)',
+              border: '1px solid rgba(0, 212, 255, 0.4)',
+              borderRadius: '8px',
+              color: 'var(--primary-cyan)',
+              fontSize: '14px',
+              cursor: loading ? 'wait' : 'pointer',
+              opacity: loading ? 0.7 : 1
+            }}
+            aria-label={t('refresh') || 'Ricarica profilo'}
+          >
+            <RefreshCw size={16} style={loading ? { animation: 'spin 1s linear infinite' } : undefined} />
+            {t('refresh') || 'Ricarica'}
+          </button>
+          <Link
+            href="/gestione-profilo"
+            className="neon-button"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 14px',
+              backgroundColor: 'rgba(255, 149, 0, 0.1)',
+              borderColor: 'var(--border-orange)',
+              color: 'var(--primary-orange)',
+              fontSize: '14px'
+            }}
+          >
+            <Wallet size={16} />
+            {t('goToHeroPoints')}
+          </Link>
+        </div>
       </div>
 
       {/* Toast: feedback vicino all'azione (visibile anche se la sezione è in basso) */}
