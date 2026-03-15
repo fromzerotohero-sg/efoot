@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from '@/lib/i18n'
 import { supabase, getValidAccessToken } from '@/lib/supabaseClient'
 import { safeJsonResponse } from '@/lib/fetchHelper'
-import { Zap, RefreshCw, AlertCircle, Info, ChevronDown } from 'lucide-react'
+import { Zap, RefreshCw, AlertCircle, Info, ChevronDown, ExternalLink, Settings } from 'lucide-react'
 
 const POPOVER_WIDTH = 360
 const POPOVER_Z_INDEX = 10001
@@ -319,6 +319,41 @@ export default function CreditsBar() {
                   <span>{t('creditsOverageHint')}</span>
                 </div>
               )}
+
+              {/* Link a gestione crediti */}
+              <a
+                href="https://home.fromzerotohero.io/dashboard"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  marginTop: '16px',
+                  padding: '12px',
+                  background: 'rgba(0, 212, 255, 0.1)',
+                  border: '1px solid rgba(0, 212, 255, 0.3)',
+                  borderRadius: '8px',
+                  color: 'var(--neon-cyan)',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  textDecoration: 'none',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(0, 212, 255, 0.2)'
+                  e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.5)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(0, 212, 255, 0.1)'
+                  e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.3)'
+                }}
+              >
+                <Settings size={16} />
+                {lang === 'en' ? 'Manage Credits' : 'Gestisci Crediti'}
+                <ExternalLink size={14} style={{ opacity: 0.7 }} />
+              </a>
             </>
           )}
         </div>,
