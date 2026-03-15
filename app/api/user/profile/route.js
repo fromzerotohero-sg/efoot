@@ -53,7 +53,7 @@ export async function GET(request) {
         current_division, favorite_team, team_name, ai_name, how_to_remember,
         hours_per_week, common_problems, leaderboard_consent,
         profile_completion_score, profile_completion_level,
-        created_at, updated_at, user_metadata
+        created_at, updated_at
       `)
       .eq('user_id', userId)
       .maybeSingle()
