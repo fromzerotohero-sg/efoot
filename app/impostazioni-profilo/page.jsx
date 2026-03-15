@@ -125,6 +125,22 @@ export default function ImpostazioniProfiloPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Refetch quando si torna sulla tab (modal chiusa): allinea a quanto restituisce l'API ed evita mismatch chat = attilio / form = Giovanni
+  const refetchOnVisibleRef = React.useRef(false)
+  React.useEffect(() => {
+    refetchOnVisibleRef.current = !showCoachGym
+  }, [showCoachGym])
+  React.useEffect(() => {
+    if (typeof document === 'undefined') return
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && localStorage.getItem('auth_token') && refetchOnVisibleRef.current) {
+        fetchProfile()
+      }
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [fetchProfile])
+
   // Salva profilo (incrementale)
   const handleSave = async (sectionName) => {
     setSaving(true)
