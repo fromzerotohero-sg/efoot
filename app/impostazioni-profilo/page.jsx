@@ -45,9 +45,8 @@ export default function ImpostazioniProfiloPage() {
 
     try {
       let token = localStorage.getItem('auth_token')
-      const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
 
-      if (!token && supabase && !isMetalgateSession) {
+      if (!token && supabase) {
         const { data: session } = await supabase.auth.getSession()
         if (session?.session) {
           token = session.session.access_token
@@ -60,9 +59,8 @@ export default function ImpostazioniProfiloPage() {
         return
       }
 
-      const res = await fetch(`/api/user/profile?t=${Date.now()}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-        cache: 'no-store'
+      const res = await fetch('/api/user/profile', {
+        headers: { 'Authorization': `Bearer ${token}` }
       })
 
       if (res.status === 401) {
@@ -133,9 +131,8 @@ export default function ImpostazioniProfiloPage() {
 
     try {
       let token = localStorage.getItem('auth_token')
-      const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
-
-      if (!token && supabase && !isMetalgateSession) {
+      
+      if (!token && supabase) {
         const { data: session } = await supabase.auth.getSession()
         token = session?.session?.access_token
       }

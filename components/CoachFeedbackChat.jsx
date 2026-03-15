@@ -49,29 +49,35 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
   const inputRef = useRef(null)
   const sendAbortRef = useRef(null)
 
-  // Carica profilo sempre ad ogni apertura: stessi criteri token di Impostazioni Profilo
-  // (auth_token; se metalgate_user presente non usare getSession così si vede il profilo salvato in Supabase)
+  // Carica profilo sempre ad ogni apertura per avere dati freschi
   useEffect(() => {
     if (!show) return
     const load = async () => {
       try {
         let token = localStorage.getItem('auth_token')
-        const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
-
-        if (!token && supabase && !isMetalgateSession) {
-          const { data: session } = await supabase.auth.getSession()
-          if (session?.session) token = session.session.access_token
+        let userId = null
+        
+        if (token) {
+           const userData = localStorage.getItem('metalgate_user')
+           if (userData) {
+             userId = JSON.parse(userData).id
+           }
+        } else {
+           const { data: session } = await supabase.auth.getSession()
+           if (session?.session) {
+             token = session.session.access_token
+             userId = session.session.user.id
+           }
         }
 
-        if (!token) {
+        if (!token || !userId) {
           if (externalProfile) setLoadedProfile(externalProfile)
           return
         }
-
+        
         try {
-          const res = await fetch(`/api/user/profile?t=${Date.now()}`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-            cache: 'no-store'
+          const res = await fetch('/api/user/profile', {
+            headers: { 'Authorization': `Bearer ${token}` }
           })
           if (res.ok) {
             const data = await res.json()
@@ -83,13 +89,13 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
           console.error('[CoachFeedbackChat] Error fetching profile via API:', e)
           if (externalProfile) setLoadedProfile(externalProfile)
         }
-      } catch (e) {
+      } catch (e) { 
         console.error('[CoachFeedbackChat] Profile load error:', e)
         if (externalProfile) setLoadedProfile(externalProfile)
       }
     }
     load()
-  }, [show])
+  }, [show]) // Rimosso externalProfile dalle deps per evitare overwrite involontari
 
   const userProfile = loadedProfile || externalProfile
 
@@ -135,11 +141,11 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     setFormSaving(true)
     try {
       let token = localStorage.getItem('auth_token')
-      const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
-      if (!token && supabase && !isMetalgateSession) {
+      if (!token && supabase) {
         const { data: session } = await supabase.auth.getSession()
         token = session?.session?.access_token
       }
+      
       if (!token) return
 
       const body = {}
@@ -247,12 +253,14 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
       const signal = sendAbortRef.current.signal
 
       let token = localStorage.getItem('auth_token')
-      const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
-      if (!token && supabase && !isMetalgateSession) {
+      
+      if (!token && supabase) {
         const { data: session } = await supabase.auth.getSession()
         token = session?.session?.access_token
       }
+
       if (!token) throw new Error('Session expired')
+      
       if (signal.aborted) return
 
       const history = messages
@@ -314,11 +322,11 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     setSaving(true)
     try {
       let token = localStorage.getItem('auth_token')
-      const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
-      if (!token && supabase && !isMetalgateSession) {
+      if (!token && supabase) {
         const { data: session } = await supabase.auth.getSession()
         token = session?.session?.access_token
       }
+
       if (!token) {
         onClose?.()
         return

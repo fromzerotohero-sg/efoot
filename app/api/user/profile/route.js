@@ -58,9 +58,7 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 })
     }
 
-    return NextResponse.json(profile || {}, {
-      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
-    })
+    return NextResponse.json(profile || {})
 
   } catch (error) {
     console.error('Profile API error:', error)
