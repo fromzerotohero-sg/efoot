@@ -79,8 +79,9 @@ export async function POST(req) {
     if (!token) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
-    
-    const { userData, error: authError } = await validateToken(token, supabaseUrl, anonKey)
+
+    const metalgateSession = req.headers.get('x-metalgate-session') === '1'
+    const { userData, error: authError } = await validateToken(token, supabaseUrl, anonKey, { forbidSupabaseFallback: metalgateSession })
     
     if (authError || !userData?.user?.id) {
       return NextResponse.json({ error: 'Invalid or expired authentication' }, { status: 401 })

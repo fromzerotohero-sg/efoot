@@ -20,7 +20,8 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { userData, error: authError } = await validateToken(token, supabaseUrl, anonKey)
+    const metalgateSession = request.headers.get('x-metalgate-session') === '1'
+    const { userData, error: authError } = await validateToken(token, supabaseUrl, anonKey, { forbidSupabaseFallback: metalgateSession })
     if (authError || !userData?.user?.id) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }

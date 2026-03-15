@@ -68,8 +68,10 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         }
 
         try {
+          const headers = { 'Authorization': `Bearer ${token}` }
+          if (isMetalgateSession) headers['X-Metalgate-Session'] = '1'
           const res = await fetch(`/api/user/profile?t=${Date.now()}`, {
-            headers: { 'Authorization': `Bearer ${token}` },
+            headers,
             cache: 'no-store'
           })
           if (res.ok) {

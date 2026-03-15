@@ -56,13 +56,60 @@ Documento di riepilogo bug segnalati / individuati, per intervento del programma
 
 ---
 
+## 3. Profilo in UX non allineato a Supabase (nome / squadra preferita)
+
+### Sintomo
+- In **Impostazioni Profilo** o nella **Palestra Coach** l’utente vede nome/cognome o **Squadra del cuore** diversi da quelli salvati in Supabase (es. "Giovanni Guida" invece di "attilio" / squadra vuota invece di "Milan").
+
+### Possibili cause
+- **Doppio profilo:** in `user_profiles` esistono più righe (es. una con `metalgate_user_id` e una senza); il token può essere validato prima da MetalGate o da Supabase e viene usato un `user_id` diverso → si legge/salva la riga sbagliata.
+- **Token:** se l’utente ha fatto login MetalGate ma `auth_token` manca o non viene inviato, il frontend può usare `getSession()` e inviare un token Supabase (altro account) → le API restituiscono il profilo di quell’account.
+- **Cache:** risposta GET profilo cachata dal browser (mitigata da `?t=Date.now()` e `Cache-Control: no-store`; se il problema persiste, verificare in Network che la richiesta non sia servita da cache).
+
+### Cosa verificare (per Tommaso / debug)
+1. **Network:** per la richiesta `GET /api/user/profile` controllare header `Authorization` (quale token) e il **body della risposta** (`first_name`, `last_name`, `favorite_team`). Se il body è corretto ma l’UI no, il bug è in frontend; se il body è sbagliato, il problema è lato backend (quale `user_id` viene usato dopo `validateToken`).
+2. **localStorage:** in console `localStorage.getItem('auth_token')` e `localStorage.getItem('metalgate_user')`. Dopo login MetalGate entrambi devono essere valorizzati; se manca `auth_token`, con la logica attuale si va a login (se c’è `metalgate_user`) o si usa getSession (se non c’è metalgate_user).
+3. **Supabase:** in `user_profiles` verificare quale riga ha `metalgate_user_id` uguale all’id restituito da MetalGate `/sso/verify` e che i campi di quella riga siano quelli attesi.
+
+### Riferimento implementazione
+- Flusso attuale (token, route, pagina profilo, Palestra Coach): **`docs/FUNZIONAMENTO_PROFILO_E_PALESTRA_ATTUALE.md`**.
+- Modifiche applicate al flusso profilo: **`docs/MODIFICHE_FLUSSO_PROFILO_EFOOT.md`**.
+- **Analisi enterprise cause radice (“perché non funziona”):** **`docs/ANALISI_ENTERPRISE_PERCHE_NON_FUNZIONA.md`**.
+
+### Stato
+- Comportamento documentato; fix applicati (MetalGate prima in `validateToken`, cache busting, `isMetalgateSession` per non usare getSession). Se il problema persiste in produzione, usare i punti sopra per il debug.
+
+---
+
+## 4. Rate limit 429 su `/api/refresh-diagnostic` (RISOLTO)
+
+### Sintomo
+- Dopo alcuni refresh della diagnostica, la chiamata a `/api/refresh-diagnostic` risponde **429 Too Many Requests**.
+
+### Fix applicato
+- Aumentato il limite in `lib/rateLimiter.js` (config per `/api/refresh-diagnostic`): `maxRequests` portato a 8 richieste per finestra. Route aggiornata per usare `RATE_LIMIT_CONFIG` e messaggio utente generico.
+
+### Stato
+- **Risolto.**
+
+---
+
 ## Riferimenti rapidi
 
 | Bug | File principale | Stato |
 |-----|-----------------|--------|
 | Profile API 500 | `app/api/user/profile/route.js` | Risolto |
 | Chat launcher touch null | `components/AssistantChat.jsx` | Risolto |
+| Profilo UX ≠ Supabase (nome/squadra) | token + authHelper + profile/save-profile | Documentato / da verificare se persiste |
+| Rate limit 429 refresh-diagnostic | `lib/rateLimiter.js`, `app/api/refresh-diagnostic/route.js` | Risolto |
 
 ---
 
-*Ultimo aggiornamento: marzo 2026.*
+## Documentazione correlata
+
+- **`docs/FUNZIONAMENTO_PROFILO_E_PALESTRA_ATTUALE.md`** — Funzionamento esatto del codice (token, API, Impostazioni Profilo, Palestra Coach).
+- **`docs/MODIFICHE_FLUSSO_PROFILO_EFOOT.md`** — Elenco modifiche al flusso profilo e commit di riferimento.
+
+---
+
+*Ultimo aggiornamento: 15 marzo 2026.*

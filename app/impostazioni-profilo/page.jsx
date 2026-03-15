@@ -60,8 +60,10 @@ export default function ImpostazioniProfiloPage() {
         return
       }
 
+      const headers = { 'Authorization': `Bearer ${token}` }
+      if (isMetalgateSession) headers['X-Metalgate-Session'] = '1'
       const res = await fetch(`/api/user/profile?t=${Date.now()}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers,
         cache: 'no-store'
       })
 
@@ -161,13 +163,14 @@ export default function ImpostazioniProfiloPage() {
         return
       }
 
-      const saveProfileUrl = '/api/supabase/save-profile'
-      const response = await fetch(saveProfileUrl, {
+      const saveHeaders = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+      if (isMetalgateSession) saveHeaders['X-Metalgate-Session'] = '1'
+      const response = await fetch('/api/supabase/save-profile', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: saveHeaders,
         body: JSON.stringify(profile),
         redirect: 'manual'
       })
@@ -251,6 +254,35 @@ export default function ImpostazioniProfiloPage() {
         window.dispatchEvent(new CustomEvent('knowledge-should-refresh'))
         setTimeout(() => window.dispatchEvent(new CustomEvent('leaderboard-updated')), 1500)
       }
+
+      // Refetch profilo da API: UX mostra esattamente ciò che è salvato (server = fonte di verità)
+      try {
+        const refetchHeaders = { 'Authorization': `Bearer ${token}` }
+        if (isMetalgateSession) refetchHeaders['X-Metalgate-Session'] = '1'
+        const refetchRes = await fetch(`/api/user/profile?t=${Date.now()}`, {
+          headers: refetchHeaders,
+          cache: 'no-store'
+        })
+        if (refetchRes.ok) {
+          const refetched = await refetchRes.json()
+          if (refetched && typeof refetched === 'object') {
+            setProfileData(refetched)
+            setProfile({
+              first_name: refetched.first_name ?? '',
+              last_name: refetched.last_name ?? '',
+              current_division: refetched.current_division ?? '',
+              favorite_team: refetched.favorite_team ?? '',
+              team_name: refetched.team_name ?? '',
+              ai_name: refetched.ai_name ?? '',
+              how_to_remember: refetched.how_to_remember ?? '',
+              hours_per_week: refetched.hours_per_week ?? null,
+              common_problems: refetched.common_problems ?? [],
+              leaderboard_consent: Boolean(refetched.leaderboard_consent),
+              nickname: refetched.nickname ?? ''
+            })
+          }
+        }
+      } catch (_) { /* non bloccare UI se refetch fallisce */ }
 
       // Aggiorna riassunto analisi (diagnostic) per la chat
       try {

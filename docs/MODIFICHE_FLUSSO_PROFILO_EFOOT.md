@@ -137,6 +137,7 @@ Documenti di supporto:
 
 - `docs/AUDIT_PAGINA_PROFILO_EFOOT.md` – audit iniziale e correzioni
 - `docs/MODIFICHE_FLUSSO_PROFILO_EFOOT.md` – questo documento
+- **`docs/FUNZIONAMENTO_PROFILO_E_PALESTRA_ATTUALE.md`** – descrizione esatta del funzionamento attuale del codice (token, route, pagina profilo, Palestra Coach)
 
 ---
 
