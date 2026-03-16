@@ -121,7 +121,7 @@ export default function ImpostazioniProfiloPage() {
           team_name: profileData.team_name || '',
           ai_name: profileData.ai_name || '',
           how_to_remember: profileData.how_to_remember || '',
-          hours_per_week: profileData.hours_per_week || null,
+          hours_per_week: profileData.hours_per_week ?? null,
           common_problems: profileData.common_problems || [],
           leaderboard_consent: Boolean(profileData.leaderboard_consent),
           nickname: profileData.nickname || ''

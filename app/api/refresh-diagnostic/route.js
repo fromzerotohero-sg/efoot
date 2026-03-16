@@ -44,8 +44,16 @@ export async function POST(req) {
     )
   }
 
-  const { userData, error: authError } = await validateToken(token, supabaseUrl, anonKey)
+  const metalgateSession = req.headers.get('x-metalgate-session') === '1'
+  const claimedMetalgateUserId = req.headers.get('x-metalgate-user-id')
+  const { userData, error: authError } = await validateToken(token, supabaseUrl, anonKey, { forbidSupabaseFallback: metalgateSession })
   if (authError || !userData?.user?.id) {
+    return NextResponse.json(
+      { error: lang === 'en' ? 'Invalid or expired authentication.' : 'Autenticazione non valida o scaduta.' },
+      { status: 401, headers: { 'Content-Language': lang } }
+    )
+  }
+  if (metalgateSession && claimedMetalgateUserId && claimedMetalgateUserId !== userData.user.id) {
     return NextResponse.json(
       { error: lang === 'en' ? 'Invalid or expired authentication.' : 'Autenticazione non valida o scaduta.' },
       { status: 401, headers: { 'Content-Language': lang } }
