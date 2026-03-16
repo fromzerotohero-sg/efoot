@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useTranslation } from '@/lib/i18n'
-import { getValidAccessToken } from '@/lib/supabaseClient'
+import { supabase } from '@/lib/supabaseClient'
 import { Dumbbell, X, Send, Save } from 'lucide-react'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 
@@ -49,53 +49,35 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
   const inputRef = useRef(null)
   const sendAbortRef = useRef(null)
 
-  const getStoredMetalgateUserId = useCallback(() => {
-    if (typeof window === 'undefined') return null
-    try {
-      const raw = localStorage.getItem('metalgate_user')
-      if (!raw) return null
-      const parsed = JSON.parse(raw)
-      return parsed?.metalgate_user_id || null
-    } catch {
-      return null
-    }
-  }, [])
-
-  const resolveAuthToken = useCallback(async () => {
-    if (typeof window !== 'undefined') {
-      const customToken = localStorage.getItem('auth_token')
-      if (customToken) return customToken
-    }
-    return await getValidAccessToken()
-  }, [])
-
-  const buildAuthHeaders = useCallback((token) => {
-    const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
-    const headers = { Authorization: `Bearer ${token}` }
-    if (isMetalgateSession) {
-      headers['X-Metalgate-Session'] = '1'
-      const metalgateUserId = getStoredMetalgateUserId()
-      if (metalgateUserId) headers['X-Metalgate-User-Id'] = metalgateUserId
-    }
-    return headers
-  }, [getStoredMetalgateUserId])
-
-  // Carica profilo sempre ad ogni apertura: stessi criteri token di Impostazioni Profilo
+  // Carica profilo sempre ad ogni apertura per avere dati freschi
   useEffect(() => {
     if (!show) return
     const load = async () => {
       try {
-        const token = await resolveAuthToken()
+        let token = localStorage.getItem('auth_token')
+        let userId = null
+        
+        if (token) {
+           const userData = localStorage.getItem('metalgate_user')
+           if (userData) {
+             userId = JSON.parse(userData).id
+           }
+        } else {
+           const { data: session } = await supabase.auth.getSession()
+           if (session?.session) {
+             token = session.session.access_token
+             userId = session.session.user.id
+           }
+        }
 
-        if (!token) {
+        if (!token || !userId) {
           if (externalProfile) setLoadedProfile(externalProfile)
           return
         }
-
+        
         try {
-          const headers = buildAuthHeaders(token)
-          const res = await fetch(`/api/user/profile?t=${Date.now()}`, {
-            headers,
+          const res = await fetch('/api/user/profile', {
+            headers: { 'Authorization': `Bearer ${token}` },
             cache: 'no-store'
           })
           if (res.ok) {
@@ -114,7 +96,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
       }
     }
     load()
-  }, [show, externalProfile, resolveAuthToken, buildAuthHeaders])
+  }, [show]) // Rimosso externalProfile dalle deps per evitare overwrite involontari
 
   const userProfile = loadedProfile || externalProfile
 
@@ -129,22 +111,17 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     return 'update'
   }, [userProfile, lastMatch])
 
-  const formJustOpenedRef = useRef(false)
-  // Inizializza form quando si apre; aggiorna form quando userProfile cambia senza resettare formSaved
+  // Inizializza form e stato quando si apre
   useEffect(() => {
-    if (!show) {
-      formJustOpenedRef.current = false
-      return
-    }
-    if (!formJustOpenedRef.current) {
-      formJustOpenedRef.current = true
-      setFormSaved(false)
-    }
+    if (!show) return
+    setFormSaved(false)
+    // Apri form automaticamente se profilo incompleto
     const profileFields = [
       userProfile?.platform, userProfile?.connection_quality, userProfile?.pass_level,
       userProfile?.smart_assist, userProfile?.input_delay, userProfile?.ai_weak_point
     ].filter(v => v != null && String(v).trim() !== '').length
     setFormExpanded(profileFields < 3)
+    // Pre-popola form con dati esistenti
     setFormData({
       connection_quality: userProfile?.connection_quality || '',
       slow_opponent_connection_issues: userProfile?.slow_opponent_connection_issues || '',
@@ -160,11 +137,27 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     })
   }, [show, userProfile])
 
+  // Whitelists per validazione locale
+  const WHITELISTS = {
+    platform: ['console', 'pc', 'mobile', 'other'],
+    connection_quality: ['good', 'unstable', 'lag'],
+    slow_opponent_connection_issues: ['yes', 'no', 'sometimes'],
+    input_delay: ['yes', 'no', 'sometimes'],
+    pass_level: ['pa1', 'pa2', 'pa3'],
+    smart_assist: ['yes', 'no'],
+    ai_weak_point: ['defence', 'attack', 'set_pieces', 'transitions', 'final_minutes']
+  }
+
   // Salva form dati tecnici via save-ai-info (0 HP, nessuna chiamata OpenAI)
   const handleFormSave = useCallback(async () => {
     setFormSaving(true)
     try {
-      const token = await resolveAuthToken()
+      let token = localStorage.getItem('auth_token')
+      if (!token && supabase) {
+        const { data: session } = await supabase.auth.getSession()
+        token = session?.session?.access_token
+      }
+      
       if (!token) return
 
       const body = {}
@@ -172,6 +165,17 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         if (k === 'hours_per_week') {
           const n = v !== '' ? parseInt(String(v), 10) : null
           body[k] = Number.isFinite(n) ? n : null
+        } else if (WHITELISTS[k]) {
+          // Sanitize fields against whitelist
+          const val = v !== '' ? String(v).trim() : null
+          if (val && WHITELISTS[k].includes(val.toLowerCase())) {
+             body[k] = val.toLowerCase()
+          } else if (k === 'ai_weak_point') {
+             // Weak point allows free text if not in whitelist (handled by API, but we pass it)
+             body[k] = val
+          } else {
+             body[k] = null // Invalid value becomes null
+          }
         } else {
           body[k] = v !== '' ? String(v).trim() : null
         }
@@ -181,13 +185,13 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...buildAuthHeaders(token)
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(body)
       })
 
       if (res.ok) {
-        setLoadedProfile(prev => (prev ? { ...prev, ...body } : { ...body }))
+        setLoadedProfile(prev => ({ ...prev, ...body }))
         setFormSaved(true)
         setFormExpanded(false)
         if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('knowledge-should-refresh'))
@@ -197,7 +201,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     } finally {
       setFormSaving(false)
     }
-  }, [formData, resolveAuthToken, buildAuthHeaders])
+  }, [formData])
 
   // Suggerimenti iniziali adattivi (solo per chat step)
   const initialSuggestions = useMemo(() => {
@@ -209,39 +213,35 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     return ['Ho cambiato qualcosa nel mio gioco', 'Ho difficolta con qualcosa', 'Altro feedback']
   }, [sessionMode, lang])
 
-  const messagesJustOpenedRef = useRef(false)
-  // Messaggio iniziale solo all'apertura: non resettare messaggi quando userProfile cambia (es. dopo save)
+  // Messaggio iniziale automatico
   useEffect(() => {
-    if (!show) {
-      messagesJustOpenedRef.current = false
-      return
+    if (!show) return
+    setMessages([])
+    setSaved(false)
+
+    const firstName = userProfile?.first_name || (lang === 'en' ? 'friend' : 'amico')
+
+    let greeting = ''
+    if (sessionMode === 'feedback' && lastMatch) {
+      const opp = lastMatch.opponent_name || (lang === 'en' ? 'your opponent' : 'il tuo avversario')
+      const form = lastMatch.formation_played || '?'
+      const result = lastMatch.result || '?'
+      greeting = lang === 'en'
+        ? `Hi ${firstName}! I see you played ${form} vs ${opp} \u2014 ${result}. Tell me how it went!`
+        : `Ciao ${firstName}! Vedo che hai giocato ${form} contro ${opp} \u2014 ${result}. Raccontami com'\u00e8 andata!`
+    } else if (sessionMode === 'profile_setup') {
+      greeting = lang === 'en'
+        ? `Hi ${firstName}! Fill in your details above, then we can chat.`
+        : `Ciao ${firstName}! Compila i tuoi dati qui sopra, poi possiamo parlare.`
+    } else {
+      greeting = lang === 'en'
+        ? `Hi ${firstName}! Is there anything new you want to tell me?`
+        : `Ciao ${firstName}! C'\u00e8 qualcosa di nuovo che vuoi dirmi?`
     }
-    if (!messagesJustOpenedRef.current) {
-      messagesJustOpenedRef.current = true
-      setMessages([])
-      setSaved(false)
-      const firstName = userProfile?.first_name || (lang === 'en' ? 'friend' : 'amico')
-      let greeting = ''
-      if (sessionMode === 'feedback' && lastMatch) {
-        const opp = lastMatch.opponent_name || (lang === 'en' ? 'your opponent' : 'il tuo avversario')
-        const form = lastMatch.formation_played || '?'
-        const result = lastMatch.result || '?'
-        greeting = lang === 'en'
-          ? `Hi ${firstName}! I see you played ${form} vs ${opp} \u2014 ${result}. Tell me how it went!`
-          : `Ciao ${firstName}! Vedo che hai giocato ${form} contro ${opp} \u2014 ${result}. Raccontami com'\u00e8 andata!`
-      } else if (sessionMode === 'profile_setup') {
-        greeting = lang === 'en'
-          ? `Hi ${firstName}! Fill in your details above, then we can chat.`
-          : `Ciao ${firstName}! Compila i tuoi dati qui sopra, poi possiamo parlare.`
-      } else {
-        greeting = lang === 'en'
-          ? `Hi ${firstName}! Is there anything new you want to tell me?`
-          : `Ciao ${firstName}! C'\u00e8 qualcosa di nuovo che vuoi dirmi?`
-      }
-      setTimeout(() => {
-        setMessages([{ role: 'assistant', content: greeting }])
-      }, 300)
-    }
+
+    setTimeout(() => {
+      setMessages([{ role: 'assistant', content: greeting }])
+    }, 300)
   }, [show, sessionMode, userProfile, lastMatch, lang])
 
   // Auto-scroll
@@ -275,7 +275,13 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
       sendAbortRef.current = new AbortController()
       const signal = sendAbortRef.current.signal
 
-      const token = await resolveAuthToken()
+      let token = localStorage.getItem('auth_token')
+      
+      if (!token && supabase) {
+        const { data: session } = await supabase.auth.getSession()
+        token = session?.session?.access_token
+      }
+
       if (!token) throw new Error('Session expired')
       
       if (signal.aborted) return
@@ -289,7 +295,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         signal,
         headers: {
           'Content-Type': 'application/json',
-          ...buildAuthHeaders(token)
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ message: userMessage, history, language: lang })
       })
@@ -319,7 +325,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
       setLoading(false)
       inputRef.current?.focus()
     }
-  }, [input, loading, saving, messages, lang, resolveAuthToken, buildAuthHeaders])
+  }, [input, loading, saving, messages, lang])
 
   const handleQuickAction = useCallback((text) => {
     setInput(text)
@@ -338,7 +344,12 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
 
     setSaving(true)
     try {
-      const token = await resolveAuthToken()
+      let token = localStorage.getItem('auth_token')
+      if (!token && supabase) {
+        const { data: session } = await supabase.auth.getSession()
+        token = session?.session?.access_token
+      }
+
       if (!token) {
         onClose?.()
         return
@@ -349,7 +360,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...buildAuthHeaders(token)
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           conversation,
@@ -368,9 +379,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         try {
           await fetch('/api/refresh-diagnostic', {
             method: 'POST',
-            headers: {
-              ...buildAuthHeaders(token)
-            }
+            headers: { Authorization: `Bearer ${token}` }
           })
         } catch (_) { /* non bloccare chiusura */ }
         setTimeout(() => onClose?.(), 1500)
@@ -384,7 +393,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     } finally {
       setSaving(false)
     }
-  }, [saving, messages, sessionMode, lastMatch, onClose, resolveAuthToken, buildAuthHeaders])
+  }, [saving, messages, sessionMode, lastMatch, onClose])
 
   if (!show) return null
 
@@ -543,6 +552,18 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                   </select>
                 </div>
               </div>
+              
+              {/* Riga 2b: Slow Opponent (Nuova riga per etichetta lunga) */}
+              <div style={{ marginTop: '8px' }}>
+                <label style={formLabelStyle}>{lang === 'en' ? 'Opponent connection issues?' : 'Problemi connessione avversario?'}</label>
+                <select className="coach-form-select" style={formSelectStyle} value={formData.slow_opponent_connection_issues || ''} onChange={e => setFormData(p => ({ ...p, slow_opponent_connection_issues: e.target.value }))}>
+                  <option value="">--</option>
+                  <option value="yes">{lang === 'en' ? 'Yes, often' : 'Sì, spesso'}</option>
+                  <option value="no">{lang === 'en' ? 'No, rare' : 'No, raramente'}</option>
+                  <option value="sometimes">{lang === 'en' ? 'Sometimes' : 'A volte'}</option>
+                </select>
+              </div>
+
               {/* Riga 3: Divisione + Ore */}
               <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '8px', marginTop: '8px' }}>
                 <div>
