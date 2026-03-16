@@ -167,8 +167,13 @@ export async function POST(req) {
     // 2. Auth
     const token = extractBearerToken(req)
     if (!token) return NextResponse.json({ error: ERRORS.AUTH_REQUIRED[lang] }, { status: 401 })
-    const { userData, error: authError } = await validateToken(token, supabaseUrl, anonKey)
+    const metalgateSession = req.headers.get('x-metalgate-session') === '1'
+    const claimedMetalgateUserId = req.headers.get('x-metalgate-user-id')
+    const { userData, error: authError } = await validateToken(token, supabaseUrl, anonKey, { forbidSupabaseFallback: metalgateSession })
     if (authError || !userData?.user?.id) return NextResponse.json({ error: ERRORS.AUTH_INVALID[lang] }, { status: 401 })
+    if (metalgateSession && claimedMetalgateUserId && claimedMetalgateUserId !== userData.user.id) {
+      return NextResponse.json({ error: ERRORS.AUTH_INVALID[lang] }, { status: 401 })
+    }
     let userId = userData.user.id
 
     const admin = createClient(supabaseUrl, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } })

@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
+import { supabase, getValidAccessToken } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
 import { Save, SkipForward, RefreshCw, User, Gamepad2, Brain, CheckCircle2, AlertCircle, BarChart3, X, Wallet, Trophy, Zap } from 'lucide-react'
 import Link from 'next/link'
@@ -34,75 +34,129 @@ export default function ImpostazioniProfiloPage() {
   const [success, setSuccess] = React.useState(null)
   const [toast, setToast] = React.useState(null) // { message, type: 'success' | 'error' }
   const [showCoachGym, setShowCoachGym] = React.useState(false) // Stato per CoachFeedbackChat
+
+  const getStoredMetalgateUserId = () => {
+    if (typeof window === 'undefined') return null
+    try {
+      const raw = localStorage.getItem('metalgate_user')
+      if (!raw) return null
+      const parsed = JSON.parse(raw)
+      return parsed?.metalgate_user_id || null
+    } catch {
+      return null
+    }
+  }
+
+  const resolveAuthToken = async () => {
+    if (typeof window !== 'undefined') {
+      const customToken = localStorage.getItem('auth_token')
+      if (customToken) return customToken
+    }
+    return await getValidAccessToken()
+  }
   
   // Divisioni disponibili
   const divisions = ['Division 1', 'Division 2', 'Division 3', 'Division 4', 'Division 5', 'Division 6', 'Division 7', 'Division 8', 'Division 9', 'Division 10']
 
-  // Carica profilo esistente
-  React.useEffect(() => {
-    const fetchProfile = async () => {
-      setLoading(true)
-      setError(null)
+  // Carica profilo esistente (richiamabile per ricarica manuale)
+  const fetchProfile = React.useCallback(async () => {
+    setLoading(true)
+    setError(null)
 
-      try {
-        let token = localStorage.getItem('auth_token')
-        let userId = null
-        
-        if (token) {
-           const userData = localStorage.getItem('metalgate_user')
-           if (userData) {
-             userId = JSON.parse(userData).id
-           }
-        } else if (supabase) {
-           const { data: session } = await supabase.auth.getSession()
-           if (session?.session) {
-             token = session.session.access_token
-             userId = session.session.user.id
-           }
-        }
-        
-        if (!token) {
-          // AuthWrapper gestirà redirect
-          setLoading(false)
-          return
-        }
+    try {
+      const token = await resolveAuthToken()
+      const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
 
-        // Carica profilo - usa sempre API server-side per sicurezza e consistenza
-        const res = await fetch('/api/user/profile', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-        
-        if (!res.ok) {
-          throw new Error(t('errorProfileLoad'))
-        }
-        
-        const profileData = await res.json()
-        
-        if (profileData) {
-           setProfileData(profileData)
-           setProfile({
-             first_name: profileData.first_name || '',
-             last_name: profileData.last_name || '',
-             current_division: profileData.current_division || '',
-             favorite_team: profileData.favorite_team || '',
-             team_name: profileData.team_name || '',
-             ai_name: profileData.ai_name || '',
-             how_to_remember: profileData.how_to_remember || '',
-             hours_per_week: profileData.hours_per_week || null,
-             common_problems: profileData.common_problems || [],
-             leaderboard_consent: Boolean(profileData.leaderboard_consent),
-             nickname: profileData.nickname || ''
-           })
-        }
-      } catch (err) {
-        console.error('[Impostazioni Profilo] Error loading profile:', err)
-      } finally {
+      if (!token) {
         setLoading(false)
+        router.push('/login')
+        return
+      }
+
+      const headers = { 'Authorization': `Bearer ${token}` }
+      if (isMetalgateSession) headers['X-Metalgate-Session'] = '1'
+      const metalgateUserId = getStoredMetalgateUserId()
+      if (isMetalgateSession && metalgateUserId) headers['X-Metalgate-User-Id'] = metalgateUserId
+      const res = await fetch(`/api/user/profile?t=${Date.now()}`, {
+        headers,
+        cache: 'no-store'
+      })
+
+      if (res.status === 401) {
+        setLoading(false)
+        router.push('/login')
+        return
+      }
+      if (res.status === 404) {
+        setProfileData(null)
+        setProfile({
+          first_name: '',
+          last_name: '',
+          current_division: '',
+          favorite_team: '',
+          team_name: '',
+          ai_name: '',
+          how_to_remember: '',
+          hours_per_week: null,
+          common_problems: [],
+          leaderboard_consent: false,
+          nickname: ''
+        })
+        setLoading(false)
+        return
+      }
+      if (!res.ok) {
+        throw new Error(t('errorProfileLoad'))
+      }
+
+      const profileData = await res.json()
+
+      if (profileData && typeof profileData === 'object') {
+        setProfileData(profileData)
+        setProfile({
+          first_name: profileData.first_name || '',
+          last_name: profileData.last_name || '',
+          current_division: profileData.current_division || '',
+          favorite_team: profileData.favorite_team || '',
+          team_name: profileData.team_name || '',
+          ai_name: profileData.ai_name || '',
+          how_to_remember: profileData.how_to_remember || '',
+          hours_per_week: profileData.hours_per_week ?? null,
+          common_problems: profileData.common_problems || [],
+          leaderboard_consent: Boolean(profileData.leaderboard_consent),
+          nickname: profileData.nickname || ''
+        })
+      }
+    } catch (err) {
+      console.error('[Impostazioni Profilo] Error loading profile:', err)
+      setError(err?.message || t('errorProfileLoad'))
+    } finally {
+      setLoading(false)
+    }
+  }, [t])
+
+  // Carica profilo solo al mount. Non rifare fetch a ogni cambio di fetchProfile (es. re-render con t diverso)
+  // altrimenti si sovrascrivono le modifiche non salvate.
+  React.useEffect(() => {
+    fetchProfile()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Refetch quando si torna sulla tab
+  const refetchOnVisibleRef = React.useRef(false)
+  React.useEffect(() => {
+    refetchOnVisibleRef.current = !showCoachGym
+  }, [showCoachGym])
+  React.useEffect(() => {
+    if (typeof document === 'undefined') return
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && refetchOnVisibleRef.current) {
+        fetchProfile()
       }
     }
-
-    fetchProfile()
-  }, [router])
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [fetchProfile])
 
   // Salva profilo (incrementale)
   const handleSave = async (sectionName) => {
@@ -111,30 +165,47 @@ export default function ImpostazioniProfiloPage() {
     setSuccess(null)
 
     try {
-      let token = localStorage.getItem('auth_token')
-      
-      if (!token && supabase) {
-        const { data: session } = await supabase.auth.getSession()
-        token = session?.session?.access_token
-      }
+      const token = await resolveAuthToken()
+      const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
 
       if (!token) {
         router.push('/login')
         return
       }
 
+      const saveHeaders = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+      if (isMetalgateSession) saveHeaders['X-Metalgate-Session'] = '1'
+      const metalgateUserId = getStoredMetalgateUserId()
+      if (isMetalgateSession && metalgateUserId) saveHeaders['X-Metalgate-User-Id'] = metalgateUserId
       const response = await fetch('/api/supabase/save-profile', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(profile)
+        headers: saveHeaders,
+        body: JSON.stringify(profile),
+        redirect: 'manual'
       })
 
+      if (response.type === 'opaqueredirect' || (response.status >= 301 && response.status <= 303)) {
+        router.push('/login')
+        return
+      }
+      if (response.status === 401) {
+        router.push('/login')
+        return
+      }
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || t('errorProfileSave'))
+        let errMsg = t('errorProfileSave')
+        if (response.status === 405) {
+          errMsg = 'Salvataggio non disponibile con questo tipo di richiesta. Usa il pulsante Salva.'
+        } else {
+          try {
+            const errorData = await response.json()
+            if (errorData?.error) errMsg = errorData.error
+          } catch (_) { /* risposta non JSON */ }
+        }
+        throw new Error(errMsg)
       }
 
       const data = await response.json()
@@ -170,20 +241,8 @@ export default function ImpostazioniProfiloPage() {
           leaderboard_consent: p.leaderboard_consent ?? false,
           nickname: p.nickname ?? null
         })
-        setProfile(prev => ({
-          ...prev,
-          first_name: p.first_name != null ? p.first_name : prev.first_name,
-          last_name: p.last_name != null ? p.last_name : prev.last_name,
-          current_division: p.current_division != null ? p.current_division : prev.current_division,
-          favorite_team: p.favorite_team != null ? p.favorite_team : prev.favorite_team,
-          team_name: p.team_name != null ? p.team_name : prev.team_name,
-          ai_name: p.ai_name != null ? p.ai_name : prev.ai_name,
-          how_to_remember: p.how_to_remember != null ? p.how_to_remember : prev.how_to_remember,
-          hours_per_week: p.hours_per_week != null ? p.hours_per_week : prev.hours_per_week,
-          common_problems: Array.isArray(p.common_problems) ? p.common_problems : prev.common_problems,
-          leaderboard_consent: p.leaderboard_consent != null ? p.leaderboard_consent : prev.leaderboard_consent,
-          nickname: p.nickname != null ? p.nickname : prev.nickname
-        }))
+        // Form mostra subito cio che l'utente ha inviato
+        setProfile(profile)
       }
       const successMsg = data.profile
         ? `${sectionName} ${t('profileSectionSaved')}`
@@ -195,6 +254,23 @@ export default function ImpostazioniProfiloPage() {
         window.dispatchEvent(new CustomEvent('knowledge-should-refresh'))
         setTimeout(() => window.dispatchEvent(new CustomEvent('leaderboard-updated')), 1500)
       }
+
+      // Refetch: aggiorna solo profileData (completion score ecc.), non il form
+      try {
+        const refetchHeaders = { 'Authorization': `Bearer ${token}` }
+        if (isMetalgateSession) refetchHeaders['X-Metalgate-Session'] = '1'
+        if (isMetalgateSession && metalgateUserId) refetchHeaders['X-Metalgate-User-Id'] = metalgateUserId
+        const refetchRes = await fetch(`/api/user/profile?t=${Date.now()}`, {
+          headers: refetchHeaders,
+          cache: 'no-store'
+        })
+        if (refetchRes.ok) {
+          const refetched = await refetchRes.json()
+          if (refetched && typeof refetched === 'object') {
+            setProfileData(refetched)
+          }
+        }
+      } catch (_) { /* non bloccare UI se refetch fallisce */ }
 
       // Aggiorna riassunto analisi (diagnostic) per la chat
       try {
@@ -239,7 +315,8 @@ export default function ImpostazioniProfiloPage() {
     }
   }
 
-  if (loading) {
+  // Full-page loading solo al primo caricamento (senza dati profilo)
+  if (loading && !profileData) {
     return (
       <main style={{ padding: '32px 24px', minHeight: '100vh', textAlign: 'center' }}>
         <RefreshCw size={32} style={{ animation: 'spin 1s linear infinite', marginBottom: '16px', color: 'var(--neon-blue)' }} />
@@ -914,7 +991,10 @@ export default function ImpostazioniProfiloPage() {
       </button>
       <CoachFeedbackChat 
         show={showCoachGym}
-        onClose={() => setShowCoachGym(false)}
+        onClose={() => {
+          setShowCoachGym(false)
+          fetchProfile()
+        }}
         userProfile={profileData}
         lastMatch={null}
       />

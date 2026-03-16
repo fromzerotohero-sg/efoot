@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
-import { checkRateLimit } from '@/lib/rateLimiter'
+import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { buildDiagnostic } from '@/lib/diagnosticBuilder'
 
 export const runtime = 'nodejs'
@@ -14,8 +14,8 @@ function getPreferredLanguage(req) {
 }
 
 const RATE_LIMIT_MESSAGES = {
-  it: "Puoi aggiornare l'analisi al massimo 2 volte al minuto. Riprova tra X secondi.",
-  en: 'You can refresh the analysis at most 2 times per minute. Try again in X seconds.'
+  it: "Troppi aggiornamenti analisi in poco tempo. Riprova tra X secondi.",
+  en: 'Too many analysis refreshes. Try again in X seconds.'
 }
 
 /** Solo POST ammesso; GET/altri metodi → 405 (allineamento con altri endpoint protetti). */
@@ -44,8 +44,16 @@ export async function POST(req) {
     )
   }
 
-  const { userData, error: authError } = await validateToken(token, supabaseUrl, anonKey)
+  const metalgateSession = req.headers.get('x-metalgate-session') === '1'
+  const claimedMetalgateUserId = req.headers.get('x-metalgate-user-id')
+  const { userData, error: authError } = await validateToken(token, supabaseUrl, anonKey, { forbidSupabaseFallback: metalgateSession })
   if (authError || !userData?.user?.id) {
+    return NextResponse.json(
+      { error: lang === 'en' ? 'Invalid or expired authentication.' : 'Autenticazione non valida o scaduta.' },
+      { status: 401, headers: { 'Content-Language': lang } }
+    )
+  }
+  if (metalgateSession && claimedMetalgateUserId && claimedMetalgateUserId !== userData.user.id) {
     return NextResponse.json(
       { error: lang === 'en' ? 'Invalid or expired authentication.' : 'Autenticazione non valida o scaduta.' },
       { status: 401, headers: { 'Content-Language': lang } }
@@ -73,8 +81,8 @@ export async function POST(req) {
     }
   }
 
-  // Rate limit: 2 richieste per minuto
-  const rateLimit = await checkRateLimit(userId, '/api/refresh-diagnostic', 2, 60000)
+  const rlConfig = RATE_LIMIT_CONFIG['/api/refresh-diagnostic'] || { maxRequests: 8, windowMs: 60000 }
+  const rateLimit = await checkRateLimit(userId, '/api/refresh-diagnostic', rlConfig.maxRequests, rlConfig.windowMs)
   if (!rateLimit.allowed) {
     const retryAfterSeconds = Math.max(1, Math.ceil((rateLimit.resetAt - new Date()) / 1000))
     const message = (RATE_LIMIT_MESSAGES[lang] || RATE_LIMIT_MESSAGES.en).replace('X', String(retryAfterSeconds))

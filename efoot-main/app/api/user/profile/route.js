@@ -5,6 +5,51 @@ import { validateToken, extractBearerToken } from '@/lib/authHelper'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+const PROFILE_SELECT_FIELDS = [
+  // Identita e metadati
+  'id',
+  'user_id',
+  'metalgate_user_id',
+  'is_metalgate_user',
+  'created_at',
+  'updated_at',
+  // Dati personali
+  'first_name',
+  'last_name',
+  // Dati gioco
+  'current_division',
+  'favorite_team',
+  'team_name',
+  // Preferenze IA
+  'ai_name',
+  'how_to_remember',
+  // Esperienza gioco
+  'hours_per_week',
+  'common_problems',
+  // Classifica
+  'leaderboard_consent',
+  'nickname',
+  // Profilazione
+  'profile_completion_score',
+  'profile_completion_level',
+  'ai_knowledge_score',
+  'ai_knowledge_level',
+  'ai_knowledge_breakdown',
+  'ai_knowledge_last_calculated',
+  'initial_division',
+  // Dati tecnici coach
+  'platform',
+  'connection_quality',
+  'slow_opponent_connection_issues',
+  'input_delay',
+  'pass_level',
+  'smart_assist',
+  'favourite_player_name',
+  'ai_weak_point',
+  'ai_learn_goals',
+  'ai_notes'
+].join(', ')
+
 export async function GET(request) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -20,9 +65,15 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { userData, error: authError } = await validateToken(token, supabaseUrl, anonKey)
+    const metalgateSession = request.headers.get('x-metalgate-session') === '1'
+    const claimedMetalgateUserId = request.headers.get('x-metalgate-user-id')
+    const { userData, error: authError } = await validateToken(token, supabaseUrl, anonKey, { forbidSupabaseFallback: metalgateSession })
     if (authError || !userData?.user?.id) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
+
+    if (metalgateSession && claimedMetalgateUserId && claimedMetalgateUserId !== userData.user.id) {
+      return NextResponse.json({ error: 'Session mismatch. Please login again.' }, { status: 401 })
     }
 
     let userId = userData.user.id
@@ -48,13 +99,7 @@ export async function GET(request) {
 
     const { data: profile, error } = await supabase
       .from('user_profiles')
-      .select(`
-        id, user_id, metalgate_user_id, first_name, last_name, nickname,
-        current_division, favorite_team, team_name, ai_name, how_to_remember,
-        hours_per_week, common_problems, leaderboard_consent,
-        profile_completion_score, profile_completion_level,
-        created_at, updated_at, user_metadata
-      `)
+      .select(PROFILE_SELECT_FIELDS)
       .eq('user_id', userId)
       .maybeSingle()
 
@@ -63,7 +108,9 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 })
     }
 
-    return NextResponse.json(profile || {})
+    return NextResponse.json(profile || {}, {
+      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
+    })
 
   } catch (error) {
     console.error('Profile API error:', error)
