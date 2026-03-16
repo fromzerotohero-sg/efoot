@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useTranslation } from '@/lib/i18n'
-import { supabase } from '@/lib/supabaseClient'
+import { getValidAccessToken } from '@/lib/supabaseClient'
 import { Dumbbell, X, Send, Save } from 'lucide-react'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 
@@ -54,13 +54,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     if (!show) return
     const load = async () => {
       try {
-        let token = localStorage.getItem('auth_token')
-        const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
-
-        if (!token && supabase && !isMetalgateSession) {
-          const { data: session } = await supabase.auth.getSession()
-          if (session?.session) token = session.session.access_token
-        }
+        const token = await getValidAccessToken()
 
         if (!token) {
           if (externalProfile) setLoadedProfile(externalProfile)
@@ -69,7 +63,6 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
 
         try {
           const headers = { 'Authorization': `Bearer ${token}` }
-          if (isMetalgateSession) headers['X-Metalgate-Session'] = '1'
           const res = await fetch(`/api/user/profile?t=${Date.now()}`, {
             headers,
             cache: 'no-store'
@@ -140,12 +133,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
   const handleFormSave = useCallback(async () => {
     setFormSaving(true)
     try {
-      let token = localStorage.getItem('auth_token')
-      const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
-      if (!token && supabase && !isMetalgateSession) {
-        const { data: session } = await supabase.auth.getSession()
-        token = session?.session?.access_token
-      }
+      const token = await getValidAccessToken()
       if (!token) return
 
       const body = {}
@@ -256,12 +244,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
       sendAbortRef.current = new AbortController()
       const signal = sendAbortRef.current.signal
 
-      let token = localStorage.getItem('auth_token')
-      const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
-      if (!token && supabase && !isMetalgateSession) {
-        const { data: session } = await supabase.auth.getSession()
-        token = session?.session?.access_token
-      }
+      const token = await getValidAccessToken()
       if (!token) throw new Error('Session expired')
       
       if (signal.aborted) return
@@ -324,12 +307,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
 
     setSaving(true)
     try {
-      let token = localStorage.getItem('auth_token')
-      const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
-      if (!token && supabase && !isMetalgateSession) {
-        const { data: session } = await supabase.auth.getSession()
-        token = session?.session?.access_token
-      }
+      const token = await getValidAccessToken()
       if (!token) {
         onClose?.()
         return
