@@ -5,6 +5,41 @@ import { validateToken, extractBearerToken } from '@/lib/authHelper'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+const PROFILE_SELECT_FIELDS = [
+  // Identita e metadati
+  'id',
+  'user_id',
+  'metalgate_user_id',
+  'is_metalgate_user',
+  'created_at',
+  'updated_at',
+  // Dati personali
+  'first_name',
+  'last_name',
+  // Dati gioco
+  'current_division',
+  'favorite_team',
+  'team_name',
+  // Preferenze IA
+  'ai_name',
+  'how_to_remember',
+  // Esperienza gioco
+  'hours_per_week',
+  'common_problems',
+  // Classifica
+  'leaderboard_consent',
+  'nickname',
+  // Profilazione
+  'profile_completion_score',
+  'profile_completion_level',
+  'ai_knowledge_score',
+  // Dati tecnici coach
+  'platform',
+  'connection_quality',
+  'pass_level',
+  'ai_weak_point'
+].join(', ')
+
 export async function GET(request) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -52,10 +87,9 @@ export async function GET(request) {
       }
     }
 
-    // select('*') per evitare errori se una colonna non esiste o viene rinominata
     const { data: profile, error } = await supabase
       .from('user_profiles')
-      .select('*')
+      .select(PROFILE_SELECT_FIELDS)
       .eq('user_id', userId)
       .maybeSingle()
 
