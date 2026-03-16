@@ -2,24 +2,30 @@
 
 import React from 'react'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
 import { Save, SkipForward, RefreshCw, User, Gamepad2, Brain, CheckCircle2, AlertCircle, BarChart3, X, Wallet, Trophy, Zap } from 'lucide-react'
 import Link from 'next/link'
 import CoachFeedbackChat from '@/components/CoachFeedbackChat'
-import {
-  EMPTY_PROFILE_FORM,
-  mapApiProfileToForm,
-  resolveAuthToken,
-  buildAuthHeaders,
-  fetchProfileFromApi
-} from '@/lib/profileUxHelpers'
 
 export default function ImpostazioniProfiloPage() {
   const { t } = useTranslation()
   const router = useRouter()
   
   // Stato profilo
-  const [profile, setProfile] = React.useState({ ...EMPTY_PROFILE_FORM })
+  const [profile, setProfile] = React.useState({
+    first_name: '',
+    last_name: '',
+    current_division: '',
+    favorite_team: '',
+    team_name: '',
+    ai_name: '',
+    how_to_remember: '',
+    hours_per_week: null,
+    common_problems: [],
+    leaderboard_consent: false,
+    nickname: ''
+  })
   
   const [profileData, setProfileData] = React.useState(null) // Dati completi dal server
   const [loading, setLoading] = React.useState(true)
@@ -28,119 +34,109 @@ export default function ImpostazioniProfiloPage() {
   const [success, setSuccess] = React.useState(null)
   const [toast, setToast] = React.useState(null) // { message, type: 'success' | 'error' }
   const [showCoachGym, setShowCoachGym] = React.useState(false) // Stato per CoachFeedbackChat
-
+  
   // Divisioni disponibili
   const divisions = ['Division 1', 'Division 2', 'Division 3', 'Division 4', 'Division 5', 'Division 6', 'Division 7', 'Division 8', 'Division 9', 'Division 10']
 
-  // Carica profilo esistente (richiamabile per ricarica manuale)
-  const fetchProfile = React.useCallback(async () => {
-    setLoading(true)
-    setError(null)
-
-    try {
-      const token = await resolveAuthToken()
-
-      if (!token) {
-        setLoading(false)
-        router.push('/login')
-        return
-      }
-
-      const res = await fetchProfileFromApi(token)
-
-      if (res.status === 401) {
-        setLoading(false)
-        router.push('/login')
-        return
-      }
-      if (res.status === 404) {
-        setProfileData(null)
-        setProfile({ ...EMPTY_PROFILE_FORM })
-        setLoading(false)
-        return
-      }
-      if (!res.ok) {
-        throw new Error(t('errorProfileLoad'))
-      }
-
-      const profileData = await res.json()
-
-      if (profileData && typeof profileData === 'object') {
-        setProfileData(profileData)
-        setProfile(mapApiProfileToForm(profileData))
-      }
-    } catch (err) {
-      console.error('[Impostazioni Profilo] Error loading profile:', err)
-      setError(err?.message || t('errorProfileLoad'))
-    } finally {
-      setLoading(false)
-    }
-  }, [t, router])
-
-  // Carica profilo solo al mount. Non rifare fetch a ogni cambio di fetchProfile (es. re-render con t diverso)
-  // altrimenti si sovrascrivono le modifiche non salvate (es. nome cambiato in "attilio" → refetch → torna "Giovanni").
+  // Carica profilo esistente
   React.useEffect(() => {
+    const fetchProfile = async () => {
+      setLoading(true)
+      setError(null)
+
+      try {
+        let token = localStorage.getItem('auth_token')
+        let userId = null
+        
+        if (token) {
+           const userData = localStorage.getItem('metalgate_user')
+           if (userData) {
+             userId = JSON.parse(userData).id
+           }
+        } else if (supabase) {
+           const { data: session } = await supabase.auth.getSession()
+           if (session?.session) {
+             token = session.session.access_token
+             userId = session.session.user.id
+           }
+        }
+        
+        if (!token) {
+          // AuthWrapper gestirà redirect
+          setLoading(false)
+          return
+        }
+
+        // Carica profilo - usa sempre API server-side per sicurezza e consistenza
+        const res = await fetch('/api/user/profile', {
+          headers: { 'Authorization': `Bearer ${token}` },
+          cache: 'no-store'
+        })
+        
+        if (!res.ok) {
+          throw new Error(t('errorProfileLoad'))
+        }
+        
+        const profileData = await res.json()
+        console.log('[Impostazioni Profilo] Loaded profile data:', profileData)
+        
+        if (profileData) {
+           setProfileData(profileData)
+           setProfile({
+             first_name: profileData.first_name || '',
+             last_name: profileData.last_name || '',
+             current_division: profileData.current_division || '',
+             favorite_team: profileData.favorite_team || '',
+             team_name: profileData.team_name || '',
+             ai_name: profileData.ai_name || '',
+             how_to_remember: profileData.how_to_remember || '',
+             hours_per_week: profileData.hours_per_week || null,
+             common_problems: profileData.common_problems || [],
+             leaderboard_consent: Boolean(profileData.leaderboard_consent),
+             nickname: profileData.nickname || ''
+           })
+        }
+      } catch (err) {
+        console.error('[Impostazioni Profilo] Error loading profile:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
     fetchProfile()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // Refetch quando si torna sulla tab (modal chiusa): allinea a quanto restituisce l'API ed evita mismatch chat = attilio / form = Giovanni
-  const refetchOnVisibleRef = React.useRef(false)
-  React.useEffect(() => {
-    refetchOnVisibleRef.current = !showCoachGym
-  }, [showCoachGym])
-  React.useEffect(() => {
-    if (typeof document === 'undefined') return
-    const onVisible = () => {
-      if (document.visibilityState === 'visible' && refetchOnVisibleRef.current) {
-        fetchProfile()
-      }
-    }
-    document.addEventListener('visibilitychange', onVisible)
-    return () => document.removeEventListener('visibilitychange', onVisible)
-  }, [fetchProfile])
+  }, [router])
 
   // Salva profilo (incrementale)
   const handleSave = async (sectionName) => {
     setSaving(true)
     setError(null)
     setSuccess(null)
-    let isSaved = false
 
     try {
-      const token = await resolveAuthToken()
+      let token = localStorage.getItem('auth_token')
+      
+      if (!token && supabase) {
+        const { data: session } = await supabase.auth.getSession()
+        token = session?.session?.access_token
+      }
 
       if (!token) {
         router.push('/login')
-        return false
+        return
       }
 
       const response = await fetch('/api/supabase/save-profile', {
         method: 'POST',
-        headers: buildAuthHeaders(token, { json: true }),
-        body: JSON.stringify(profile),
-        redirect: 'manual'
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(profile)
       })
 
-      if (response.type === 'opaqueredirect' || (response.status >= 301 && response.status <= 303)) {
-        router.push('/login')
-        return false
-      }
-      if (response.status === 401) {
-        router.push('/login')
-        return false
-      }
       if (!response.ok) {
-        let errMsg = t('errorProfileSave')
-        if (response.status === 405) {
-          errMsg = 'Salvataggio non disponibile con questo tipo di richiesta. Usa il pulsante Salva.'
-        } else {
-          try {
-            const errorData = await response.json()
-            if (errorData?.error) errMsg = errorData.error
-          } catch (_) { /* risposta non JSON */ }
-        }
-        throw new Error(errMsg)
+        const errorData = await response.json()
+        throw new Error(errorData.error || t('errorProfileSave'))
       }
 
       const data = await response.json()
@@ -176,10 +172,21 @@ export default function ImpostazioniProfiloPage() {
           leaderboard_consent: p.leaderboard_consent ?? false,
           nickname: p.nickname ?? null
         })
-        // Form mostra subito ciò che l'utente ha inviato (evita che risposta/refetch sovrascrivano con dati vecchi)
-        setProfile(profile)
+        setProfile(prev => ({
+          ...prev,
+          first_name: p.first_name != null ? p.first_name : prev.first_name,
+          last_name: p.last_name != null ? p.last_name : prev.last_name,
+          current_division: p.current_division != null ? p.current_division : prev.current_division,
+          favorite_team: p.favorite_team != null ? p.favorite_team : prev.favorite_team,
+          team_name: p.team_name != null ? p.team_name : prev.team_name,
+          ai_name: p.ai_name != null ? p.ai_name : prev.ai_name,
+          how_to_remember: p.how_to_remember != null ? p.how_to_remember : prev.how_to_remember,
+          hours_per_week: p.hours_per_week != null ? p.hours_per_week : prev.hours_per_week,
+          common_problems: Array.isArray(p.common_problems) ? p.common_problems : prev.common_problems,
+          leaderboard_consent: p.leaderboard_consent != null ? p.leaderboard_consent : prev.leaderboard_consent,
+          nickname: p.nickname != null ? p.nickname : prev.nickname
+        }))
       }
-      isSaved = true
       const successMsg = data.profile
         ? `${sectionName} ${t('profileSectionSaved')}`
         : t('profileSectionSaved')
@@ -190,19 +197,6 @@ export default function ImpostazioniProfiloPage() {
         window.dispatchEvent(new CustomEvent('knowledge-should-refresh'))
         setTimeout(() => window.dispatchEvent(new CustomEvent('leaderboard-updated')), 1500)
       }
-
-      // Refetch: aggiorna solo profileData (completion score ecc.), non il form: il form mostra già ciò che è stato inviato (setProfile(profile) sopra)
-      try {
-        const refetchRes = await fetchProfileFromApi(token)
-        if (refetchRes.ok) {
-          const refetched = await refetchRes.json()
-          if (refetched && typeof refetched === 'object') {
-            setProfileData(refetched)
-            // Hard sync del form con i dati realmente letti da DB
-            setProfile(mapApiProfileToForm(refetched))
-          }
-        }
-      } catch (_) { /* non bloccare UI se refetch fallisce */ }
 
       // Aggiorna riassunto analisi (diagnostic) per la chat
       try {
@@ -220,7 +214,6 @@ export default function ImpostazioniProfiloPage() {
     } finally {
       setSaving(false)
     }
-    return isSaved
   }
 
   React.useEffect(() => {
@@ -248,8 +241,7 @@ export default function ImpostazioniProfiloPage() {
     }
   }
 
-  // Full-page loading solo al primo caricamento (senza dati profilo)
-  if (loading && !profileData) {
+  if (loading) {
     return (
       <main style={{ padding: '32px 24px', minHeight: '100vh', textAlign: 'center' }}>
         <RefreshCw size={32} style={{ animation: 'spin 1s linear infinite', marginBottom: '16px', color: 'var(--neon-blue)' }} />
@@ -261,7 +253,7 @@ export default function ImpostazioniProfiloPage() {
   return (
     <main data-tour-id="tour-profile-intro" className="p-6 max-w-3xl mx-auto">
       {/* Page Header */}
-      <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
+      <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold neon-text mb-8">
             <User size={24} color="var(--primary-cyan)" />
@@ -271,47 +263,23 @@ export default function ImpostazioniProfiloPage() {
             {t('completeYourProfile')}
           </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <button
-            type="button"
-            onClick={() => fetchProfile()}
-            disabled={loading}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 14px',
-              background: 'rgba(0, 212, 255, 0.1)',
-              border: '1px solid rgba(0, 212, 255, 0.4)',
-              borderRadius: '8px',
-              color: 'var(--primary-cyan)',
-              fontSize: '14px',
-              cursor: loading ? 'wait' : 'pointer',
-              opacity: loading ? 0.7 : 1
-            }}
-            aria-label={t('refresh') || 'Ricarica profilo'}
-          >
-            <RefreshCw size={16} style={loading ? { animation: 'spin 1s linear infinite' } : undefined} />
-            {t('refresh') || 'Ricarica'}
-          </button>
-          <Link
-            href="/gestione-profilo"
-            className="neon-button"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 14px',
-              backgroundColor: 'rgba(255, 149, 0, 0.1)',
-              borderColor: 'var(--border-orange)',
-              color: 'var(--primary-orange)',
-              fontSize: '14px'
-            }}
-          >
-            <Wallet size={16} />
-            {t('goToHeroPoints')}
-          </Link>
-        </div>
+        <Link
+          href="/gestione-profilo"
+          className="neon-button"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px 14px',
+            backgroundColor: 'rgba(255, 149, 0, 0.1)',
+            borderColor: 'var(--border-orange)',
+            color: 'var(--primary-orange)',
+            fontSize: '14px'
+          }}
+        >
+          <Wallet size={16} />
+          {t('goToHeroPoints')}
+        </Link>
       </div>
 
       {/* Toast: feedback vicino all'azione (visibile anche se la sezione è in basso) */}
@@ -620,7 +588,7 @@ export default function ImpostazioniProfiloPage() {
 
         <div style={{ marginBottom: '16px' }}>
           <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#888' }}>
-            {t('currentDivision')}
+            Divisione attuale
           </label>
           <select
             value={profile.current_division}
@@ -921,11 +889,9 @@ export default function ImpostazioniProfiloPage() {
       {/* Bottone Completa Profilo */}
       <button
         data-tour-id="tour-profile-complete"
-        onClick={async () => {
-          const ok = await handleSave(t('completeProfile'))
-          if (ok) {
-            setTimeout(() => router.push('/'), 1200)
-          }
+        onClick={() => {
+          handleSave(t('completeProfile'))
+          setTimeout(() => router.push('/'), 2000)
         }}
         disabled={saving}
         style={{
@@ -950,13 +916,11 @@ export default function ImpostazioniProfiloPage() {
       </button>
       <CoachFeedbackChat 
         show={showCoachGym}
-        onClose={() => {
-          setShowCoachGym(false)
-          fetchProfile()
-        }}
+        onClose={() => setShowCoachGym(false)}
         userProfile={profileData}
         lastMatch={null}
       />
     </main>
   )
 }
+
