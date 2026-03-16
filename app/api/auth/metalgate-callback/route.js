@@ -121,8 +121,10 @@ export async function POST(request) {
         } catch (authError) {
           console.error('Auth user creation failed:', authError.message)
           return NextResponse.json({ 
-            error: 'Authentication setup failed. Please try again.', 
-            details: 'auth_setup_failed'
+            error: `Authentication setup failed: ${authError.message}`, 
+            details: 'auth_setup_failed',
+            debug_error: authError.message 
+          
           }, { status: 500 })
         }
 
