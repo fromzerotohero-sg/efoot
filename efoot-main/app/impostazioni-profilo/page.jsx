@@ -35,6 +35,20 @@ export default function ImpostazioniProfiloPage() {
   const [toast, setToast] = React.useState(null) // { message, type: 'success' | 'error' }
   const [showCoachGym, setShowCoachGym] = React.useState(false) // Stato per CoachFeedbackChat
 
+  const mapApiProfileToForm = React.useCallback((apiProfile) => ({
+    first_name: apiProfile?.first_name || '',
+    last_name: apiProfile?.last_name || '',
+    current_division: apiProfile?.current_division || '',
+    favorite_team: apiProfile?.favorite_team || '',
+    team_name: apiProfile?.team_name || '',
+    ai_name: apiProfile?.ai_name || '',
+    how_to_remember: apiProfile?.how_to_remember || '',
+    hours_per_week: apiProfile?.hours_per_week ?? null,
+    common_problems: apiProfile?.common_problems || [],
+    leaderboard_consent: Boolean(apiProfile?.leaderboard_consent),
+    nickname: apiProfile?.nickname || ''
+  }), [])
+
   const getStoredMetalgateUserId = () => {
     if (typeof window === 'undefined') return null
     try {
@@ -113,19 +127,7 @@ export default function ImpostazioniProfiloPage() {
 
       if (profileData && typeof profileData === 'object') {
         setProfileData(profileData)
-        setProfile({
-          first_name: profileData.first_name || '',
-          last_name: profileData.last_name || '',
-          current_division: profileData.current_division || '',
-          favorite_team: profileData.favorite_team || '',
-          team_name: profileData.team_name || '',
-          ai_name: profileData.ai_name || '',
-          how_to_remember: profileData.how_to_remember || '',
-          hours_per_week: profileData.hours_per_week ?? null,
-          common_problems: profileData.common_problems || [],
-          leaderboard_consent: Boolean(profileData.leaderboard_consent),
-          nickname: profileData.nickname || ''
-        })
+        setProfile(mapApiProfileToForm(profileData))
       }
     } catch (err) {
       console.error('[Impostazioni Profilo] Error loading profile:', err)
@@ -133,7 +135,7 @@ export default function ImpostazioniProfiloPage() {
     } finally {
       setLoading(false)
     }
-  }, [t])
+  }, [t, mapApiProfileToForm])
 
   // Carica profilo solo al mount. Non rifare fetch a ogni cambio di fetchProfile (es. re-render con t diverso)
   // altrimenti si sovrascrivono le modifiche non salvate.
@@ -268,6 +270,8 @@ export default function ImpostazioniProfiloPage() {
           const refetched = await refetchRes.json()
           if (refetched && typeof refetched === 'object') {
             setProfileData(refetched)
+            // Hard sync del form con i dati realmente letti da DB
+            setProfile(mapApiProfileToForm(refetched))
           }
         }
       } catch (_) { /* non bloccare UI se refetch fallisce */ }
