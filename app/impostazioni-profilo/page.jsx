@@ -2,30 +2,24 @@
 
 import React from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase, getValidAccessToken } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
 import { Save, SkipForward, RefreshCw, User, Gamepad2, Brain, CheckCircle2, AlertCircle, BarChart3, X, Wallet, Trophy, Zap } from 'lucide-react'
 import Link from 'next/link'
 import CoachFeedbackChat from '@/components/CoachFeedbackChat'
+import {
+  EMPTY_PROFILE_FORM,
+  mapApiProfileToForm,
+  resolveAuthToken,
+  buildAuthHeaders,
+  fetchProfileFromApi
+} from '@/lib/profileUxHelpers'
 
 export default function ImpostazioniProfiloPage() {
   const { t } = useTranslation()
   const router = useRouter()
   
   // Stato profilo
-  const [profile, setProfile] = React.useState({
-    first_name: '',
-    last_name: '',
-    current_division: '',
-    favorite_team: '',
-    team_name: '',
-    ai_name: '',
-    how_to_remember: '',
-    hours_per_week: null,
-    common_problems: [],
-    leaderboard_consent: false,
-    nickname: ''
-  })
+  const [profile, setProfile] = React.useState({ ...EMPTY_PROFILE_FORM })
   
   const [profileData, setProfileData] = React.useState(null) // Dati completi dal server
   const [loading, setLoading] = React.useState(true)
@@ -34,40 +28,6 @@ export default function ImpostazioniProfiloPage() {
   const [success, setSuccess] = React.useState(null)
   const [toast, setToast] = React.useState(null) // { message, type: 'success' | 'error' }
   const [showCoachGym, setShowCoachGym] = React.useState(false) // Stato per CoachFeedbackChat
-
-  const mapApiProfileToForm = React.useCallback((apiProfile) => ({
-    first_name: apiProfile?.first_name || '',
-    last_name: apiProfile?.last_name || '',
-    current_division: apiProfile?.current_division || '',
-    favorite_team: apiProfile?.favorite_team || '',
-    team_name: apiProfile?.team_name || '',
-    ai_name: apiProfile?.ai_name || '',
-    how_to_remember: apiProfile?.how_to_remember || '',
-    hours_per_week: apiProfile?.hours_per_week ?? null,
-    common_problems: apiProfile?.common_problems || [],
-    leaderboard_consent: Boolean(apiProfile?.leaderboard_consent),
-    nickname: apiProfile?.nickname || ''
-  }), [])
-
-  const getStoredMetalgateUserId = () => {
-    if (typeof window === 'undefined') return null
-    try {
-      const raw = localStorage.getItem('metalgate_user')
-      if (!raw) return null
-      const parsed = JSON.parse(raw)
-      return parsed?.metalgate_user_id || null
-    } catch {
-      return null
-    }
-  }
-
-  const resolveAuthToken = async () => {
-    if (typeof window !== 'undefined') {
-      const customToken = localStorage.getItem('auth_token')
-      if (customToken) return customToken
-    }
-    return await getValidAccessToken()
-  }
 
   // Divisioni disponibili
   const divisions = ['Division 1', 'Division 2', 'Division 3', 'Division 4', 'Division 5', 'Division 6', 'Division 7', 'Division 8', 'Division 9', 'Division 10']
@@ -79,7 +39,6 @@ export default function ImpostazioniProfiloPage() {
 
     try {
       const token = await resolveAuthToken()
-      const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
 
       if (!token) {
         setLoading(false)
@@ -87,14 +46,7 @@ export default function ImpostazioniProfiloPage() {
         return
       }
 
-      const headers = { 'Authorization': `Bearer ${token}` }
-      if (isMetalgateSession) headers['X-Metalgate-Session'] = '1'
-      const metalgateUserId = getStoredMetalgateUserId()
-      if (isMetalgateSession && metalgateUserId) headers['X-Metalgate-User-Id'] = metalgateUserId
-      const res = await fetch(`/api/user/profile?t=${Date.now()}`, {
-        headers,
-        cache: 'no-store'
-      })
+      const res = await fetchProfileFromApi(token)
 
       if (res.status === 401) {
         setLoading(false)
@@ -103,19 +55,7 @@ export default function ImpostazioniProfiloPage() {
       }
       if (res.status === 404) {
         setProfileData(null)
-        setProfile({
-          first_name: '',
-          last_name: '',
-          current_division: '',
-          favorite_team: '',
-          team_name: '',
-          ai_name: '',
-          how_to_remember: '',
-          hours_per_week: null,
-          common_problems: [],
-          leaderboard_consent: false,
-          nickname: ''
-        })
+        setProfile({ ...EMPTY_PROFILE_FORM })
         setLoading(false)
         return
       }
@@ -135,7 +75,7 @@ export default function ImpostazioniProfiloPage() {
     } finally {
       setLoading(false)
     }
-  }, [t, mapApiProfileToForm])
+  }, [t, router])
 
   // Carica profilo solo al mount. Non rifare fetch a ogni cambio di fetchProfile (es. re-render con t diverso)
   // altrimenti si sovrascrivono le modifiche non salvate (es. nome cambiato in "attilio" → refetch → torna "Giovanni").
@@ -165,37 +105,30 @@ export default function ImpostazioniProfiloPage() {
     setSaving(true)
     setError(null)
     setSuccess(null)
+    let isSaved = false
 
     try {
       const token = await resolveAuthToken()
-      const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
 
       if (!token) {
         router.push('/login')
-        return
+        return false
       }
 
-      const saveHeaders = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      }
-      if (isMetalgateSession) saveHeaders['X-Metalgate-Session'] = '1'
-      const metalgateUserId = getStoredMetalgateUserId()
-      if (isMetalgateSession && metalgateUserId) saveHeaders['X-Metalgate-User-Id'] = metalgateUserId
       const response = await fetch('/api/supabase/save-profile', {
         method: 'POST',
-        headers: saveHeaders,
+        headers: buildAuthHeaders(token, { json: true }),
         body: JSON.stringify(profile),
         redirect: 'manual'
       })
 
       if (response.type === 'opaqueredirect' || (response.status >= 301 && response.status <= 303)) {
         router.push('/login')
-        return
+        return false
       }
       if (response.status === 401) {
         router.push('/login')
-        return
+        return false
       }
       if (!response.ok) {
         let errMsg = t('errorProfileSave')
@@ -246,6 +179,7 @@ export default function ImpostazioniProfiloPage() {
         // Form mostra subito ciò che l'utente ha inviato (evita che risposta/refetch sovrascrivano con dati vecchi)
         setProfile(profile)
       }
+      isSaved = true
       const successMsg = data.profile
         ? `${sectionName} ${t('profileSectionSaved')}`
         : t('profileSectionSaved')
@@ -259,13 +193,7 @@ export default function ImpostazioniProfiloPage() {
 
       // Refetch: aggiorna solo profileData (completion score ecc.), non il form: il form mostra già ciò che è stato inviato (setProfile(profile) sopra)
       try {
-        const refetchHeaders = { 'Authorization': `Bearer ${token}` }
-        if (isMetalgateSession) refetchHeaders['X-Metalgate-Session'] = '1'
-        if (isMetalgateSession && metalgateUserId) refetchHeaders['X-Metalgate-User-Id'] = metalgateUserId
-        const refetchRes = await fetch(`/api/user/profile?t=${Date.now()}`, {
-          headers: refetchHeaders,
-          cache: 'no-store'
-        })
+        const refetchRes = await fetchProfileFromApi(token)
         if (refetchRes.ok) {
           const refetched = await refetchRes.json()
           if (refetched && typeof refetched === 'object') {
@@ -292,6 +220,7 @@ export default function ImpostazioniProfiloPage() {
     } finally {
       setSaving(false)
     }
+    return isSaved
   }
 
   React.useEffect(() => {
@@ -517,14 +446,6 @@ export default function ImpostazioniProfiloPage() {
           <p style={{ fontSize: 'clamp(13px, 2.5vw, 14px)', color: '#888', lineHeight: 1.45, margin: 0 }}>
             {t('coachDataSettingsDesc') || 'Per modificare piattaforma, connessione, livello passaggio e punto debole, usa la Palestra Coach.'}
           </p>
-          {profileData && (profileData.platform || profileData.connection_quality || profileData.pass_level || profileData.ai_weak_point) && (
-            <div style={{ marginTop: '10px', fontSize: '12px', color: 'rgba(255,255,255,0.7)', display: 'flex', flexWrap: 'wrap', gap: '8px 12px' }}>
-              {profileData.platform && <span>{t('platform') || 'Piattaforma'}: <strong>{profileData.platform}</strong></span>}
-              {profileData.connection_quality && <span>{t('connection') || 'Connessione'}: <strong>{profileData.connection_quality}</strong></span>}
-              {profileData.pass_level && <span>Pass: <strong>{profileData.pass_level}</strong></span>}
-              {profileData.ai_weak_point && <span>{t('weakPoint') || 'Punto debole'}: <strong>{profileData.ai_weak_point}</strong></span>}
-            </div>
-          )}
         </div>
         <button 
           onClick={() => setShowCoachGym(true)}
@@ -600,7 +521,7 @@ export default function ImpostazioniProfiloPage() {
           </label>
           <input
             type="text"
-            value={profile.first_name ?? ''}
+            value={profile.first_name}
             onChange={(e) => setProfile(prev => ({ ...prev, first_name: e.target.value }))}
             placeholder={t('placeholderYourName')}
             maxLength={255}
@@ -623,7 +544,7 @@ export default function ImpostazioniProfiloPage() {
           </label>
           <input
             type="text"
-            value={profile.last_name ?? ''}
+            value={profile.last_name}
             onChange={(e) => setProfile(prev => ({ ...prev, last_name: e.target.value }))}
             placeholder={t('yourLastName')}
             maxLength={255}
@@ -702,7 +623,7 @@ export default function ImpostazioniProfiloPage() {
             {t('currentDivision')}
           </label>
           <select
-            value={profile.current_division ?? ''}
+            value={profile.current_division}
             onChange={(e) => setProfile(prev => ({ ...prev, current_division: e.target.value }))}
             style={{
               width: '100%',
@@ -727,7 +648,7 @@ export default function ImpostazioniProfiloPage() {
           </label>
           <input
             type="text"
-            value={profile.favorite_team ?? ''}
+            value={profile.favorite_team}
             onChange={(e) => setProfile(prev => ({ ...prev, favorite_team: e.target.value }))}
             placeholder={t('favoriteTeamPlaceholder')}
             maxLength={255}
@@ -764,7 +685,7 @@ export default function ImpostazioniProfiloPage() {
           </div>
           <input
             type="text"
-            value={profile.team_name ?? ''}
+            value={profile.team_name}
             onChange={(e) => setProfile(prev => ({ ...prev, team_name: e.target.value }))}
             placeholder={t('placeholderTeamExample')}
             maxLength={255}
@@ -852,7 +773,7 @@ export default function ImpostazioniProfiloPage() {
           </label>
           <input
             type="text"
-            value={profile.nickname ?? ''}
+            value={profile.nickname}
             onChange={(e) => setProfile(prev => ({ ...prev, nickname: e.target.value.trim().slice(0, 255) }))}
             placeholder={t('nicknamePlaceholder')}
             maxLength={255}
@@ -909,7 +830,7 @@ export default function ImpostazioniProfiloPage() {
           </label>
           <input
             type="text"
-            value={profile.ai_name ?? ''}
+            value={profile.ai_name}
             onChange={(e) => setProfile(prev => ({ ...prev, ai_name: e.target.value }))}
             placeholder={t('aiNamePlaceholder')}
             maxLength={255}
@@ -930,7 +851,7 @@ export default function ImpostazioniProfiloPage() {
             {t('howToRemember')}
           </label>
           <textarea
-            value={profile.how_to_remember ?? ''}
+            value={profile.how_to_remember}
             onChange={(e) => setProfile(prev => ({ ...prev, how_to_remember: e.target.value }))}
             placeholder={t('howToRememberPlaceholder')}
             maxLength={1000}
@@ -1000,9 +921,11 @@ export default function ImpostazioniProfiloPage() {
       {/* Bottone Completa Profilo */}
       <button
         data-tour-id="tour-profile-complete"
-        onClick={() => {
-          handleSave(t('completeProfile'))
-          setTimeout(() => router.push('/'), 2000)
+        onClick={async () => {
+          const ok = await handleSave(t('completeProfile'))
+          if (ok) {
+            setTimeout(() => router.push('/'), 1200)
+          }
         }}
         disabled={saving}
         style={{
@@ -1037,4 +960,3 @@ export default function ImpostazioniProfiloPage() {
     </main>
   )
 }
-

@@ -2,12 +2,13 @@
 
 import React from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase, getValidAccessToken } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
-import { RefreshCw, Wallet, BarChart3, Award, Calendar, Zap, Camera, User, Trophy, Gift } from 'lucide-react'
+import LanguageSwitch from '@/components/LanguageSwitch'
+import { ArrowLeft, RefreshCw, Wallet, BarChart3, Award, Calendar, Zap, Camera, User, Trophy, Gift, CheckCircle2, AlertCircle } from 'lucide-react'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react';
+import { resolveAuthToken, buildAuthHeaders } from '@/lib/profileUxHelpers'
+
 export default function GestioneProfiloPage() {
   const { t, lang } = useTranslation()
   const router = useRouter()
@@ -22,68 +23,65 @@ export default function GestioneProfiloPage() {
   const fetchData = React.useCallback(async () => {
     setLoading(true)
     setError(null)
-    
     try {
-      let token = localStorage.getItem('auth_token')
-      
-      if (!token && supabase) {
-        const { data: session } = await supabase.auth.getSession()
-        token = session?.session?.access_token
-      }
-      
+      const token = await resolveAuthToken()
       if (!token) {
-        // AuthWrapper gestirà redirect
-        setLoading(false)
+        router.push('/login')
         return
       }
+
+      const headers = buildAuthHeaders(token, { json: true })
+      const getHeaders = buildAuthHeaders(token)
 
       const [usageRes, txRes, leaderboardRes, leaderboardMeRes, prizesRes] = await Promise.all([
         fetch('/api/credits/usage', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          headers,
           body: JSON.stringify({}),
           cache: 'no-store'
         }),
-        fetch('/api/credits/transactions', { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' }),
-        fetch('/api/leaderboard', { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' }),
-        fetch('/api/leaderboard/me', { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' }),
-        fetch('/api/user/prizes', { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
+        fetch('/api/credits/transactions', { headers: getHeaders, cache: 'no-store' }),
+        fetch('/api/leaderboard', { headers: getHeaders, cache: 'no-store' }),
+        fetch('/api/leaderboard/me', { headers: getHeaders, cache: 'no-store' }),
+        fetch('/api/user/prizes', { headers: getHeaders, cache: 'no-store' }) // Assuming an endpoint exists or we use supabase direct if permitted
       ])
-      
+
       const usagePayload = await safeJsonResponse(usageRes, t('errorLoadingUsage'))
       const txPayload = await txRes.json().catch(() => ({}))
       const leaderboardPayload = await leaderboardRes.json().catch(() => ({}))
       const leaderboardMePayload = await leaderboardMeRes.json().catch(() => ({}))
-      const prizesPayload = await prizesRes.json().catch(() => ([]))
       
       if (usagePayload && !usagePayload.error) setUsage(usagePayload)
       if (txPayload.transactions) setTransactions(Array.isArray(txPayload.transactions) ? txPayload.transactions : [])
       if (Number.isFinite(txPayload.total_analyses)) setTotalAnalyses(txPayload.total_analyses)
       if (leaderboardPayload.currentUser) setLeaderboardMe(prev => ({ ...prev, currentUser: leaderboardPayload.currentUser }))
       if (leaderboardMePayload.history) setLeaderboardMe(prev => ({ ...prev, history: leaderboardMePayload.history || [] }))
-      setPrizes(Array.isArray(prizesPayload) ? prizesPayload : [])
       
+      const prizesPayload = await prizesRes.json().catch(() => [])
+      if (Array.isArray(prizesPayload)) setPrizes(prizesPayload)
+
     } catch (e) {
       console.error('[GestioneProfilo]', e)
       setError(t('errorLoadingUsage'))
     } finally {
       setLoading(false)
     }
-  }, [router, t, supabase])
+  }, [router, t])
 
   React.useEffect(() => {
     fetchData()
   }, [fetchData])
 
   React.useEffect(() => {
-    if (typeof window === 'undefined' || !supabase) return
+    if (typeof window === 'undefined') return
     const onLeaderboardUpdated = async () => {
-      const token = await getValidAccessToken()
+      const token = await resolveAuthToken()
       if (!token) return
       try {
+        const headers = buildAuthHeaders(token)
         const [lbRes, meRes] = await Promise.all([
-          fetch('/api/leaderboard', { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' }),
-          fetch('/api/leaderboard/me', { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
+          fetch('/api/leaderboard', { headers, cache: 'no-store' }),
+          fetch('/api/leaderboard/me', { headers, cache: 'no-store' })
         ])
         const lb = await lbRes.json().catch(() => ({}))
         const me = await meRes.json().catch(() => ({}))
@@ -93,7 +91,7 @@ export default function GestioneProfiloPage() {
     }
     window.addEventListener('leaderboard-updated', onLeaderboardUpdated)
     return () => window.removeEventListener('leaderboard-updated', onLeaderboardUpdated)
-  }, [supabase])
+  }, [])
 
   const balance = usage?.balance_remaining ?? (usage ? Math.max(0, (usage.credits_included || 0) - (usage.credits_used || 0)) : 0)
   const rankLabel = balance >= 150 ? t('rankPlatinum') : balance >= 80 ? t('rankGold') : balance >= 30 ? t('rankSilver') : t('rankBronze')
@@ -121,8 +119,6 @@ export default function GestioneProfiloPage() {
     return t('transactionUsage')
   }
 
-  if (!supabase) return null
-
   return (
     <main data-tour-id="tour-gestione-profilo-intro" style={{
       padding: 'clamp(12px, 4vw, 24px)',
@@ -130,7 +126,7 @@ export default function GestioneProfiloPage() {
       maxWidth: '1200px',
       margin: '0 auto'
     }}>
-      {/* Header: stesso pattern di impostazioni-profilo e dashboard */}
+      {/* Header */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
@@ -183,6 +179,7 @@ export default function GestioneProfiloPage() {
             <User size={16} />
             {t('editProfileData')}
           </Link>
+          <LanguageSwitch />
         </div>
       </div>
 
@@ -207,7 +204,7 @@ export default function GestioneProfiloPage() {
           <button
             type="button"
             onClick={() => { setError(null); fetchData() }}
-            className="neon-button"
+            className="btn"
             style={{ padding: '6px 12px', fontSize: '14px' }}
           >
             {t('retry')}
@@ -222,8 +219,8 @@ export default function GestioneProfiloPage() {
         </div>
       ) : (
         <>
-          {/* Box Crediti residui + Acquista - CTA principale (stile coerente con CreditsBar/theme) */}
-          <div data-tour-id="tour-gestione-profilo-balance" className="neon-card" style={{
+          {/* Box Crediti residui + Acquista */}
+          <div data-tour-id="tour-gestione-profilo-balance" className="card" style={{
             background: 'linear-gradient(135deg, rgba(255,140,0,0.12), rgba(200,100,0,0.06))',
             borderColor: 'rgba(255,165,0,0.4)',
             marginBottom: '24px',
@@ -239,7 +236,7 @@ export default function GestioneProfiloPage() {
             </div>
             <button
               onClick={() => {}}
-              className="neon-button"
+              className="btn"
               style={{
                 background: 'var(--neon-orange)',
                 color: '#000',
@@ -255,8 +252,8 @@ export default function GestioneProfiloPage() {
             </button>
           </div>
 
-          {/* 4 card: Hero Points, Analisi totali, Rank, Membro dal - stessa card della dashboard */}
-          <div className="neon-card" style={{ padding: '24px', marginBottom: '24px' }}>
+          {/* 4 card: Hero Points, Analisi totali, Rank, Membro dal */}
+          <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 160px), 1fr))',
@@ -286,7 +283,7 @@ export default function GestioneProfiloPage() {
           </div>
 
           {/* Classifica mensile + Risultati + Premi */}
-          <section data-tour-id="tour-gestione-profilo-leaderboard" className="neon-card" style={{ padding: '24px', marginBottom: '24px' }}>
+          <section data-tour-id="tour-gestione-profilo-leaderboard" className="card" style={{ padding: '24px', marginBottom: '24px' }}>
             <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Trophy size={20} color="var(--neon-orange)" />
               {t('classificaMensile')}
@@ -344,7 +341,7 @@ export default function GestioneProfiloPage() {
           </section>
 
           {prizes.length > 0 && (
-            <section className="neon-card" style={{ padding: '24px', marginBottom: '24px' }}>
+            <section className="card" style={{ padding: '24px', marginBottom: '24px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Gift size={20} color="#22c55e" />
                 {t('iMieiPremi')}
@@ -365,7 +362,7 @@ export default function GestioneProfiloPage() {
                       {p.status === 'redeemed' ? (
                         <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>{t('riscattato')}</span>
                       ) : (
-                        <button type="button" className="neon-button" style={{ padding: '6px 12px', fontSize: '13px' }}>{t('riscatta')}</button>
+                        <button type="button" className="btn" style={{ padding: '6px 12px', fontSize: '13px' }}>{t('riscatta')}</button>
                       )}
                     </div>
                   </li>
@@ -374,8 +371,8 @@ export default function GestioneProfiloPage() {
             </section>
           )}
 
-          {/* Attività recente - card come dashboard */}
-          <section data-tour-id="tour-gestione-profilo-transactions" className="neon-card" style={{ padding: '24px', marginBottom: '24px' }}>
+          {/* Attività recente */}
+          <section data-tour-id="tour-gestione-profilo-transactions" className="card" style={{ padding: '24px', marginBottom: '24px' }}>
             <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <BarChart3 size={20} color="var(--neon-blue)" />
               {t('attivitaRecente')}
@@ -422,7 +419,7 @@ export default function GestioneProfiloPage() {
             </div>
           </section>
 
-          {/* 2 CTA cards - responsive, stessa griglia della dashboard */}
+          {/* 2 CTA cards */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))',
@@ -431,7 +428,7 @@ export default function GestioneProfiloPage() {
             <button
               type="button"
               onClick={() => {}}
-              className="neon-card"
+              className="card"
               style={{
                 background: 'rgba(34,197,94,0.08)',
                 borderColor: 'rgba(34,197,94,0.4)',
@@ -453,7 +450,7 @@ export default function GestioneProfiloPage() {
             <button
               type="button"
               onClick={() => {}}
-              className="neon-card"
+              className="card"
               style={{
                 background: 'rgba(0,212,255,0.06)',
                 borderColor: 'rgba(0,212,255,0.3)',
