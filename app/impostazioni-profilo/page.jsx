@@ -41,7 +41,7 @@ export default function ImpostazioniProfiloPage() {
       const raw = localStorage.getItem('metalgate_user')
       if (!raw) return null
       const parsed = JSON.parse(raw)
-      return parsed?.metalgate_user_id || parsed?.id || null
+      return parsed?.metalgate_user_id || null
     } catch {
       return null
     }

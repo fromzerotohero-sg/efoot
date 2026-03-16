@@ -33,11 +33,21 @@ const PROFILE_SELECT_FIELDS = [
   'profile_completion_score',
   'profile_completion_level',
   'ai_knowledge_score',
+  'ai_knowledge_level',
+  'ai_knowledge_breakdown',
+  'ai_knowledge_last_calculated',
+  'initial_division',
   // Dati tecnici coach
   'platform',
   'connection_quality',
+  'slow_opponent_connection_issues',
+  'input_delay',
   'pass_level',
-  'ai_weak_point'
+  'smart_assist',
+  'favourite_player_name',
+  'ai_weak_point',
+  'ai_learn_goals',
+  'ai_notes'
 ].join(', ')
 
 export async function GET(request) {
