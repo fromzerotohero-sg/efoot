@@ -115,9 +115,14 @@ function AuthCallbackContent() {
         }
       }
 
-      // Store user data in localStorage and redirect
+      // Store canonical Metalgate identity in localStorage and redirect.
+      // data.user.id is the user_profiles row id, not the external Metalgate id.
+      const resolvedMetalgateUserId = data?.user?.metalgate_user_id || null
       localStorage.setItem('metalgate_user', JSON.stringify({
-        id: data.user.id,
+        id: resolvedMetalgateUserId || data.user.id,
+        metalgate_user_id: resolvedMetalgateUserId,
+        profile_id: data.user.id,
+        supabase_user_id: data.user.user_id || null,
         email: data.email,
         username: data.user.first_name,
         isMetalgateUser: data.user.is_metalgate_user

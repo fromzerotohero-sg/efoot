@@ -21,9 +21,14 @@ export async function GET(request) {
     }
 
     const metalgateSession = request.headers.get('x-metalgate-session') === '1'
+    const claimedMetalgateUserId = request.headers.get('x-metalgate-user-id')
     const { userData, error: authError } = await validateToken(token, supabaseUrl, anonKey, { forbidSupabaseFallback: metalgateSession })
     if (authError || !userData?.user?.id) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
+
+    if (metalgateSession && claimedMetalgateUserId && claimedMetalgateUserId !== userData.user.id) {
+      return NextResponse.json({ error: 'Session mismatch. Please login again.' }, { status: 401 })
     }
 
     let userId = userData.user.id

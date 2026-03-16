@@ -14,6 +14,15 @@ export function withAuth(WrappedComponent) {
         try {
           // Check for custom Metalgate session
           const authToken = localStorage.getItem('auth_token')
+          const metalgateUser = localStorage.getItem('metalgate_user')
+
+          // Strict Metalgate mode: never fallback to a random Supabase session
+          // when a Metalgate identity is present but its token is missing.
+          if (metalgateUser && !authToken) {
+            localStorage.removeItem('metalgate_user')
+            router.push('/login')
+            return
+          }
           
           if (authToken) {
             console.log('Verifying Metalgate token with backend...')
@@ -34,6 +43,7 @@ export function withAuth(WrappedComponent) {
                   // Update user data in localStorage to keep it fresh
                   localStorage.setItem('metalgate_user', JSON.stringify({
                     id: data.user.id,
+                    metalgate_user_id: data.user.id,
                     email: data.user.email,
                     username: data.user.username,
                     isMetalgateUser: true
@@ -67,7 +77,7 @@ export function withAuth(WrappedComponent) {
             }
           }
 
-          // Fallback: Check for Supabase session
+          // Fallback: Check for Supabase session (only for non-Metalgate flows)
           const { supabase } = await import('@/lib/supabaseClient')
           if (supabase) {
             const { data: { session }, error } = await supabase.auth.getSession()
