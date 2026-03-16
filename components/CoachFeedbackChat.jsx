@@ -49,12 +49,33 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
   const inputRef = useRef(null)
   const sendAbortRef = useRef(null)
 
+  const getStoredMetalgateUserId = useCallback(() => {
+    if (typeof window === 'undefined') return null
+    try {
+      const raw = localStorage.getItem('metalgate_user')
+      if (!raw) return null
+      const parsed = JSON.parse(raw)
+      return parsed?.metalgate_user_id || parsed?.id || null
+    } catch {
+      return null
+    }
+  }, [])
+
+  const resolveAuthToken = useCallback(async () => {
+    if (typeof window !== 'undefined') {
+      const customToken = localStorage.getItem('auth_token')
+      if (customToken) return customToken
+    }
+    return await getValidAccessToken()
+  }, [])
+
   // Carica profilo sempre ad ogni apertura: stessi criteri token di Impostazioni Profilo
   useEffect(() => {
     if (!show) return
     const load = async () => {
       try {
-        const token = await getValidAccessToken()
+        const token = await resolveAuthToken()
+        const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
 
         if (!token) {
           if (externalProfile) setLoadedProfile(externalProfile)
@@ -63,6 +84,9 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
 
         try {
           const headers = { 'Authorization': `Bearer ${token}` }
+          if (isMetalgateSession) headers['X-Metalgate-Session'] = '1'
+          const metalgateUserId = getStoredMetalgateUserId()
+          if (isMetalgateSession && metalgateUserId) headers['X-Metalgate-User-Id'] = metalgateUserId
           const res = await fetch(`/api/user/profile?t=${Date.now()}`, {
             headers,
             cache: 'no-store'
@@ -83,7 +107,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
       }
     }
     load()
-  }, [show])
+  }, [show, externalProfile, getStoredMetalgateUserId, resolveAuthToken])
 
   const userProfile = loadedProfile || externalProfile
 
@@ -133,7 +157,8 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
   const handleFormSave = useCallback(async () => {
     setFormSaving(true)
     try {
-      const token = await getValidAccessToken()
+      const token = await resolveAuthToken()
+      const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
       if (!token) return
 
       const body = {}
@@ -150,7 +175,9 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          ...(isMetalgateSession ? { 'X-Metalgate-Session': '1' } : {}),
+          ...(isMetalgateSession && getStoredMetalgateUserId() ? { 'X-Metalgate-User-Id': getStoredMetalgateUserId() } : {})
         },
         body: JSON.stringify(body)
       })
@@ -166,7 +193,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     } finally {
       setFormSaving(false)
     }
-  }, [formData])
+  }, [formData, getStoredMetalgateUserId, resolveAuthToken])
 
   // Suggerimenti iniziali adattivi (solo per chat step)
   const initialSuggestions = useMemo(() => {
@@ -244,7 +271,8 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
       sendAbortRef.current = new AbortController()
       const signal = sendAbortRef.current.signal
 
-      const token = await getValidAccessToken()
+      const token = await resolveAuthToken()
+      const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
       if (!token) throw new Error('Session expired')
       
       if (signal.aborted) return
@@ -258,7 +286,9 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         signal,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          ...(isMetalgateSession ? { 'X-Metalgate-Session': '1' } : {}),
+          ...(isMetalgateSession && getStoredMetalgateUserId() ? { 'X-Metalgate-User-Id': getStoredMetalgateUserId() } : {})
         },
         body: JSON.stringify({ message: userMessage, history, language: lang })
       })
@@ -288,7 +318,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
       setLoading(false)
       inputRef.current?.focus()
     }
-  }, [input, loading, saving, messages, lang])
+  }, [input, loading, saving, messages, lang, getStoredMetalgateUserId, resolveAuthToken])
 
   const handleQuickAction = useCallback((text) => {
     setInput(text)
@@ -307,7 +337,8 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
 
     setSaving(true)
     try {
-      const token = await getValidAccessToken()
+      const token = await resolveAuthToken()
+      const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
       if (!token) {
         onClose?.()
         return
@@ -318,7 +349,9 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          ...(isMetalgateSession ? { 'X-Metalgate-Session': '1' } : {}),
+          ...(isMetalgateSession && getStoredMetalgateUserId() ? { 'X-Metalgate-User-Id': getStoredMetalgateUserId() } : {})
         },
         body: JSON.stringify({
           conversation,
@@ -337,7 +370,11 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         try {
           await fetch('/api/refresh-diagnostic', {
             method: 'POST',
-            headers: { Authorization: `Bearer ${token}` }
+            headers: {
+              Authorization: `Bearer ${token}`,
+              ...(isMetalgateSession ? { 'X-Metalgate-Session': '1' } : {}),
+              ...(isMetalgateSession && getStoredMetalgateUserId() ? { 'X-Metalgate-User-Id': getStoredMetalgateUserId() } : {})
+            }
           })
         } catch (_) { /* non bloccare chiusura */ }
         setTimeout(() => onClose?.(), 1500)
@@ -351,7 +388,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     } finally {
       setSaving(false)
     }
-  }, [saving, messages, sessionMode, lastMatch, onClose])
+  }, [saving, messages, sessionMode, lastMatch, onClose, getStoredMetalgateUserId, resolveAuthToken])
 
   if (!show) return null
 

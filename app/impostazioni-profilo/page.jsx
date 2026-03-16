@@ -35,6 +35,26 @@ export default function ImpostazioniProfiloPage() {
   const [toast, setToast] = React.useState(null) // { message, type: 'success' | 'error' }
   const [showCoachGym, setShowCoachGym] = React.useState(false) // Stato per CoachFeedbackChat
 
+  const getStoredMetalgateUserId = () => {
+    if (typeof window === 'undefined') return null
+    try {
+      const raw = localStorage.getItem('metalgate_user')
+      if (!raw) return null
+      const parsed = JSON.parse(raw)
+      return parsed?.metalgate_user_id || parsed?.id || null
+    } catch {
+      return null
+    }
+  }
+
+  const resolveAuthToken = async () => {
+    if (typeof window !== 'undefined') {
+      const customToken = localStorage.getItem('auth_token')
+      if (customToken) return customToken
+    }
+    return await getValidAccessToken()
+  }
+
   // Divisioni disponibili
   const divisions = ['Division 1', 'Division 2', 'Division 3', 'Division 4', 'Division 5', 'Division 6', 'Division 7', 'Division 8', 'Division 9', 'Division 10']
 
@@ -44,7 +64,8 @@ export default function ImpostazioniProfiloPage() {
     setError(null)
 
     try {
-      const token = await getValidAccessToken()
+      const token = await resolveAuthToken()
+      const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
 
       if (!token) {
         setLoading(false)
@@ -53,6 +74,9 @@ export default function ImpostazioniProfiloPage() {
       }
 
       const headers = { 'Authorization': `Bearer ${token}` }
+      if (isMetalgateSession) headers['X-Metalgate-Session'] = '1'
+      const metalgateUserId = getStoredMetalgateUserId()
+      if (isMetalgateSession && metalgateUserId) headers['X-Metalgate-User-Id'] = metalgateUserId
       const res = await fetch(`/api/user/profile?t=${Date.now()}`, {
         headers,
         cache: 'no-store'
@@ -141,7 +165,8 @@ export default function ImpostazioniProfiloPage() {
     setSuccess(null)
 
     try {
-      const token = await getValidAccessToken()
+      const token = await resolveAuthToken()
+      const isMetalgateSession = typeof window !== 'undefined' && !!localStorage.getItem('metalgate_user')
 
       if (!token) {
         router.push('/login')
@@ -152,6 +177,9 @@ export default function ImpostazioniProfiloPage() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       }
+      if (isMetalgateSession) saveHeaders['X-Metalgate-Session'] = '1'
+      const metalgateUserId = getStoredMetalgateUserId()
+      if (isMetalgateSession && metalgateUserId) saveHeaders['X-Metalgate-User-Id'] = metalgateUserId
       const response = await fetch('/api/supabase/save-profile', {
         method: 'POST',
         headers: saveHeaders,
@@ -230,6 +258,8 @@ export default function ImpostazioniProfiloPage() {
       // Refetch: aggiorna solo profileData (completion score ecc.), non il form: il form mostra già ciò che è stato inviato (setProfile(profile) sopra)
       try {
         const refetchHeaders = { 'Authorization': `Bearer ${token}` }
+        if (isMetalgateSession) refetchHeaders['X-Metalgate-Session'] = '1'
+        if (isMetalgateSession && metalgateUserId) refetchHeaders['X-Metalgate-User-Id'] = metalgateUserId
         const refetchRes = await fetch(`/api/user/profile?t=${Date.now()}`, {
           headers: refetchHeaders,
           cache: 'no-store'
