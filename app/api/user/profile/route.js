@@ -4,51 +4,7 @@ import { validateToken, extractBearerToken } from '@/lib/authHelper'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-
-const PROFILE_SELECT_FIELDS = [
-  // Identita e metadati
-  'id',
-  'user_id',
-  'metalgate_user_id',
-  'is_metalgate_user',
-  'created_at',
-  'updated_at',
-  // Dati personali
-  'first_name',
-  'last_name',
-  // Dati gioco
-  'current_division',
-  'favorite_team',
-  'team_name',
-  // Preferenze IA
-  'ai_name',
-  'how_to_remember',
-  // Esperienza gioco
-  'hours_per_week',
-  'common_problems',
-  // Classifica
-  'leaderboard_consent',
-  'nickname',
-  // Profilazione
-  'profile_completion_score',
-  'profile_completion_level',
-  'ai_knowledge_score',
-  'ai_knowledge_level',
-  'ai_knowledge_breakdown',
-  'ai_knowledge_last_calculated',
-  'initial_division',
-  // Dati tecnici coach
-  'platform',
-  'connection_quality',
-  'slow_opponent_connection_issues',
-  'input_delay',
-  'pass_level',
-  'smart_assist',
-  'favourite_player_name',
-  'ai_weak_point',
-  'ai_learn_goals',
-  'ai_notes'
-].join(', ')
+export const revalidate = 0
 
 export async function GET(request) {
   try {
@@ -65,41 +21,58 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const metalgateSession = request.headers.get('x-metalgate-session') === '1'
-    const claimedMetalgateUserId = request.headers.get('x-metalgate-user-id')
-    const { userData, error: authError } = await validateToken(token, supabaseUrl, anonKey, { forbidSupabaseFallback: metalgateSession })
+    const { userData, error: authError } = await validateToken(token, supabaseUrl, anonKey)
     if (authError || !userData?.user?.id) {
+      console.error('Token validation failed:', authError)
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    if (metalgateSession && claimedMetalgateUserId && claimedMetalgateUserId !== userData.user.id) {
-      return NextResponse.json({ error: 'Session mismatch. Please login again.' }, { status: 401 })
-    }
-
     let userId = userData.user.id
+    console.log('Profile API: Authenticated user:', userId, 'Is Metalgate:', userData.user.user_metadata?.is_metalgate_user)
 
     const supabase = createClient(supabaseUrl, serviceKey, {
-      auth: { autoRefreshToken: false, persistSession: false }
+      auth: { autoRefreshToken: false, persistSession: false },
+      global: {
+        headers: { 'Cache-Control': 'no-store' },
+        fetch: (url, options) => {
+          return fetch(url, { ...options, cache: 'no-store' })
+        }
+      }
     })
 
     // Metalgate ID lookup
     if (userData.user.user_metadata?.is_metalgate_user) {
-      const { data: existingProfile } = await supabase
+      const { data: existingProfile, error: lookupError } = await supabase
         .from('user_profiles')
         .select('user_id')
         .eq('metalgate_user_id', userId)
         .single()
       
+      if (lookupError) {
+        console.error('Profile API: Metalgate lookup error:', lookupError)
+      }
+
       if (existingProfile?.user_id) {
+        console.log('Profile API: Mapped Metalgate ID', userId, 'to UUID', existingProfile.user_id)
         userId = existingProfile.user_id
       } else {
+        console.warn('Profile API: Metalgate user profile not found for ID:', userId)
         return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
       }
     }
 
     const { data: profile, error } = await supabase
       .from('user_profiles')
-      .select(PROFILE_SELECT_FIELDS)
+      .select(`
+        id, user_id, first_name, last_name, nickname,
+        current_division, favorite_team, team_name, ai_name, how_to_remember,
+        hours_per_week, common_problems, leaderboard_consent,
+        profile_completion_score, profile_completion_level,
+        platform, connection_quality, slow_opponent_connection_issues,
+        input_delay, pass_level, smart_assist, ai_weak_point,
+        ai_learn_goals, ai_notes, favourite_player_name,
+        created_at, updated_at
+      `)
       .eq('user_id', userId)
       .maybeSingle()
 
@@ -107,10 +80,15 @@ export async function GET(request) {
       console.error('Error fetching profile:', error)
       return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 })
     }
+    
+    console.log('Profile API: Returning profile for user:', userId, 'Division:', profile?.current_division)
 
-    return NextResponse.json(profile || {}, {
-      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
-    })
+    const response = NextResponse.json(profile || {})
+    response.headers.set('X-User-Id', userId)
+    if (profile?.id) response.headers.set('X-Profile-Id', profile.id)
+    if (profile?.current_division) response.headers.set('X-Division', profile.current_division)
+    
+    return response
 
   } catch (error) {
     console.error('Profile API error:', error)
