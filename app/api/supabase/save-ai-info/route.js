@@ -66,16 +66,8 @@ export async function GET(req) {
         { status: 401, headers: { 'Content-Language': lang } }
       )
     }
-    const metalgateSession = req.headers.get('x-metalgate-session') === '1'
-    const claimedMetalgateUserId = req.headers.get('x-metalgate-user-id')
-    const { userData, error: authError } = await validateToken(token, supabaseUrl, anonKey, { forbidSupabaseFallback: metalgateSession })
+    const { userData, error: authError } = await validateToken(token, supabaseUrl, anonKey)
     if (authError || !userData?.user?.id) {
-      return NextResponse.json(
-        { error: ERRORS.auth_invalid[lang] },
-        { status: 401, headers: { 'Content-Language': lang } }
-      )
-    }
-    if (metalgateSession && claimedMetalgateUserId && claimedMetalgateUserId !== userData.user.id) {
       return NextResponse.json(
         { error: ERRORS.auth_invalid[lang] },
         { status: 401, headers: { 'Content-Language': lang } }
@@ -152,16 +144,8 @@ export async function POST(req) {
         { status: 401, headers: { 'Content-Language': lang } }
       )
     }
-    const metalgateSession = req.headers.get('x-metalgate-session') === '1'
-    const claimedMetalgateUserId = req.headers.get('x-metalgate-user-id')
-    const { userData, error: authError } = await validateToken(token, supabaseUrl, anonKey, { forbidSupabaseFallback: metalgateSession })
+    const { userData, error: authError } = await validateToken(token, supabaseUrl, anonKey)
     if (authError || !userData?.user?.id) {
-      return NextResponse.json(
-        { error: ERRORS.auth_invalid[lang] },
-        { status: 401, headers: { 'Content-Language': lang } }
-      )
-    }
-    if (metalgateSession && claimedMetalgateUserId && claimedMetalgateUserId !== userData.user.id) {
       return NextResponse.json(
         { error: ERRORS.auth_invalid[lang] },
         { status: 401, headers: { 'Content-Language': lang } }
@@ -198,12 +182,14 @@ export async function POST(req) {
     }
 
     const body = await req.json().catch(() => ({}))
+    console.log('[save-ai-info] Received body:', JSON.stringify(body))
     const update = { user_id: userId }
 
     // Campi anche in profilo (opzionali)
     if (body.first_name !== undefined) {
       const v = toText(body.first_name)
       if (v && v.length > MAX_TEXT) {
+        console.warn('[save-ai-info] first_name too long:', v.length)
         return NextResponse.json(
           { error: ERRORS.too_long[lang] },
           { status: 400, headers: { 'Content-Language': lang } }
@@ -214,6 +200,7 @@ export async function POST(req) {
     if (body.ai_name !== undefined) {
       const v = toText(body.ai_name)
       if (v && v.length > MAX_TEXT) {
+        console.warn('[save-ai-info] ai_name too long:', v.length)
         return NextResponse.json(
           { error: ERRORS.too_long[lang] },
           { status: 400, headers: { 'Content-Language': lang } }
@@ -224,6 +211,7 @@ export async function POST(req) {
     if (body.current_division !== undefined) {
       const v = toText(body.current_division)
       if (v && v.length > MAX_TEXT) {
+        console.warn('[save-ai-info] current_division too long:', v.length)
         return NextResponse.json(
           { error: ERRORS.too_long[lang] },
           { status: 400, headers: { 'Content-Language': lang } }
@@ -234,6 +222,7 @@ export async function POST(req) {
     if (body.hours_per_week !== undefined) {
       const v = toInt(body.hours_per_week)
       if (v !== null && (v < 0 || v > 168)) {
+        console.warn('[save-ai-info] hours_per_week invalid:', v)
         return NextResponse.json(
           { error: ERRORS.invalid_value[lang] },
           { status: 400, headers: { 'Content-Language': lang } }
@@ -256,6 +245,7 @@ export async function POST(req) {
         continue
       }
       if (!allowed.includes(v)) {
+        console.warn(`[save-ai-info] Invalid whitelist value for ${key}: '${v}'. Allowed:`, allowed)
         return NextResponse.json(
           { error: ERRORS.invalid_value[lang] },
           { status: 400, headers: { 'Content-Language': lang } }
