@@ -69,9 +69,10 @@ export default function RosaTutorialModal({ onClose }) {
           maxWidth: '560px',
           width: '100%',
           minWidth: 0,
-          maxHeight: '90vh',
+          maxHeight: 'calc(100vh - 100px)',
           overflowY: 'auto',
           padding: 'clamp(16px, 4vw, 24px)',
+          paddingBottom: 'calc(24px + 64px + env(safe-area-inset-bottom, 0px))',
           background: 'rgba(10, 14, 39, 0.98)',
           border: '2px solid var(--neon-blue)',
           borderRadius: '16px'

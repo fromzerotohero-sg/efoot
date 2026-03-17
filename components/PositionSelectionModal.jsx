@@ -125,9 +125,10 @@ export default function PositionSelectionModal({
           backgroundColor: 'var(--bg-primary, #1a1a1a)',
           borderRadius: '12px',
           padding: '24px',
+          paddingBottom: 'calc(24px + 64px + env(safe-area-inset-bottom, 0px))',
           maxWidth: '600px',
           width: '100%',
-          maxHeight: '90vh',
+          maxHeight: 'calc(100vh - 100px)',
           overflowY: 'auto',
           border: '1px solid var(--border-color, #333)',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)'

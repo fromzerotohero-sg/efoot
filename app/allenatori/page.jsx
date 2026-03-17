@@ -750,7 +750,7 @@ export default function AllenatoriPage() {
           zIndex: 1000,
           padding: '20px'
         }}>
-          <div className="neon-card" style={{ maxWidth: '600px', width: '100%', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
+          <div className="neon-card" style={{ maxWidth: '600px', width: '100%', maxHeight: 'calc(100vh - 100px)', overflowY: 'auto', paddingBottom: 'calc(24px + 64px + env(safe-area-inset-bottom, 0px))', position: 'relative' }}>
             <button
               onClick={() => {
                 setShowDetailsModal(false)

@@ -195,7 +195,7 @@ export default function AiInfoModal({ show, onClose }) {
     borderRadius: '12px',
     maxWidth: '560px',
     width: '100%',
-    maxHeight: '90vh',
+    maxHeight: 'calc(100vh - 100px)',
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column'

@@ -928,9 +928,10 @@ export default function NewMatchPage() {
             border: '1px solid rgba(255, 255, 255, 0.2)',
             borderRadius: '12px',
             padding: 'clamp(16px, 4vw, 24px)',
+            paddingBottom: 'calc(24px + 64px + env(safe-area-inset-bottom, 0px))',
             maxWidth: '600px',
             width: '100%',
-            maxHeight: '90vh',
+            maxHeight: 'calc(100vh - 100px)',
             overflowY: 'auto',
             position: 'relative'
           }}
