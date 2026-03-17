@@ -2,13 +2,15 @@
 
 import React from 'react'
 import { useRouter } from 'next/navigation'
-import { ShoppingCart } from 'lucide-react'
+import { Menu, X, ShoppingCart } from 'lucide-react'
 import CreditsBar from '@/components/CreditsBar'
 import LanguageSwitch from '@/components/LanguageSwitch'
 import GuideTour from '@/components/GuideTour'
+import { useSidebar } from '@/components/SidebarContext'
 
 export default function TopBar() {
   const router = useRouter()
+  const { isOpen, setIsOpen } = useSidebar()
 
   return (
     <header 
@@ -31,7 +33,28 @@ export default function TopBar() {
           background: 'linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.5), transparent)'
         }}
       />
-      <div className="topbar-inner h-full px-4 lg:px-6 flex items-center justify-end gap-2 lg:gap-4 w-full relative z-10">
+      <div className="topbar-inner h-full px-4 lg:px-6 flex items-center justify-between lg:justify-end gap-2 lg:gap-4 w-full relative z-10">
+        {/* Hamburger - mobile only, dentro TopBar (niente overlay sui contenuti) */}
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="lg:hidden"
+          aria-label="Menu"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '42px',
+            height: '42px',
+            borderRadius: '10px',
+            background: 'rgba(0, 212, 255, 0.1)',
+            border: '1px solid rgba(0, 212, 255, 0.35)',
+            color: 'var(--neon-cyan)',
+            flexShrink: 0
+          }}
+        >
+          {isOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
         
         {/* GuideTour - spostato a destra su mobile */}
         <div className="lg:order-1" style={{ flexShrink: 0 }}>
@@ -83,10 +106,6 @@ export default function TopBar() {
         @media (max-width: 1023px) {
           header {
             height: 56px !important;
-          }
-          /* Riserva spazio per l'hamburger fixed a sinistra (SidebarNew) */
-          .topbar-inner {
-            padding-left: 72px !important;
           }
         }
       `}</style>

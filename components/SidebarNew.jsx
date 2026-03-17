@@ -18,12 +18,13 @@ import {
   X,
   MessageSquare
 } from 'lucide-react'
+import { useSidebar } from '@/components/SidebarContext'
 
 export default function SidebarNew() {
   const { t } = useTranslation()
   const pathname = usePathname()
   const router = useRouter()
-  const [isOpen, setIsOpen] = React.useState(false)
+  const { isOpen, setIsOpen } = useSidebar()
   const [expandedMenus, setExpandedMenus] = React.useState({ home: true, profile: false, matches: false })
 
   const handleLogout = () => {
@@ -39,20 +40,6 @@ export default function SidebarNew() {
 
   return (
     <>
-      {/* Mobile menu button - resta solo hamburger in alto a sx */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed left-4 p-2 rounded-lg bg-[var(--bg-elevated)] border border-[rgba(0, 212, 255, 0.3)] text-[#FFFFFF] shadow-lg"
-        aria-label={t('toggleMenu')}
-        style={{
-          top: 'calc(env(safe-area-inset-top, 0px) + 8px)',
-          zIndex: 2000,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
-        }}
-      >
-        {isOpen ? <X size={24} /> : <Menu size={24} />}
-      </button>
-
       {/* Overlay for mobile */}
       {isOpen && (
         <div
