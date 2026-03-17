@@ -58,6 +58,29 @@ export default function TacticalSettingsPanel({
     }
   }
 
+  const getCompatiblePlayersForSelectedInstruction = React.useCallback((category, instruction, players) => {
+    const list = Array.isArray(players) ? players : []
+    const base = INDIVIDUAL_INSTRUCTIONS_CONFIG?.[category]?.filterPlayers
+      ? INDIVIDUAL_INSTRUCTIONS_CONFIG[category].filterPlayers(list)
+      : list
+
+    const inst = (instruction || '').trim()
+    if (!inst) return base
+
+    // Regole prodotto: compatibilità per istruzione (non solo per categoria)
+    if ((category === 'attacco_1' || category === 'attacco_2') && inst === 'offensivo') {
+      const disallowed = new Set(['ESA', 'EDA', 'SP', 'P'])
+      return base.filter(p => !disallowed.has(String(p?.position || '').toUpperCase().trim()))
+    }
+
+    if ((category === 'difesa_1' || category === 'difesa_2') && inst === 'linea_bassa') {
+      const disallowed = new Set(['DC', 'TD', 'TS'])
+      return base.filter(p => !disallowed.has(String(p?.position || '').toUpperCase().trim()))
+    }
+
+    return base
+  }, [])
+
   return (
     <div className="neon-card" style={{
       marginBottom: '24px',
@@ -192,7 +215,11 @@ export default function TacticalSettingsPanel({
       }}>
         {Object.entries(INDIVIDUAL_INSTRUCTIONS_CONFIG).map(([category, config]) => {
           const currentSetting = individualInstructions[category] || {}
-          const compatiblePlayers = config.filterPlayers(titolari || [])
+          const compatiblePlayers = getCompatiblePlayersForSelectedInstruction(
+            category,
+            currentSetting.instruction,
+            titolari || []
+          )
           
           return (
             <div 

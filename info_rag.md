@@ -238,13 +238,13 @@ Comportamento quando IA controlla giocatore in possesso:
 
 ### Slot Offensive (in possesso palla)
 - **Difensivo**: Giocatore non si spinge troppo in avanti
-- **Offensivo**: Giocatore si spinge in avanti, partecipa ad attacco
-- **Ancoraggio (Anchoring)**: Resta ancorato in zona (es. mediano davanti difesa). **Regola di gioco: massimo 2 giocatori in squadra** possono avere Ancoraggio. Consigliare solo per 1-2 mediani davanti alla difesa; non assegnare a 5 giocatori.
+- **Offensivo**: Giocatore si spinge in avanti, partecipa ad attacco (**non assegnabile a ESA/EDA/SP/P**)
+- **Ancoraggio (Anchoring)**: Resta ancorato in zona (es. mediano davanti difesa)
 
 ### Slot Difensive (senza possesso palla)
 - **Marcatura stretta**: Marca avversario da vicino, riduce spazio
 - **Marcatura uomo**: Marca avversario specifico (man marking)
-- **Contropiede**: Giocatore è riferimento per contropiede (solo CC e attaccanti)
+- **Contropiede**: Giocatore è riferimento per contropiede
 - **Linea bassa (Deep line)**: Resta più arretrato (non assegnabile a difensori)
 
 ### Impostazioni Squadra
