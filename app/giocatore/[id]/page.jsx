@@ -25,6 +25,8 @@ export default function PlayerDetailPage() {
   const [uploadType, setUploadType] = React.useState(null) // 'stats', 'skills', 'booster'
   const [images, setImages] = React.useState([])
   const [confirmModal, setConfirmModal] = React.useState(null) // { show, extractedData, nameMismatch, teamMismatch, positionMismatch, onConfirm, onCancel }
+  const [showManualBoostersModal, setShowManualBoostersModal] = React.useState(false)
+  const [manualBoosters, setManualBoosters] = React.useState([])
   const [expandedSections, setExpandedSections] = React.useState({
     stats: true,
     skills: true,
@@ -330,6 +332,62 @@ export default function PlayerDetailPage() {
     }
   }
 
+  const openManualBoosters = React.useCallback(() => {
+    if (!player) return
+    const existing = Array.isArray(player.available_boosters) ? player.available_boosters : []
+    setManualBoosters(existing.length > 0 ? existing : [{ name: '', effect: '', condition: '' }])
+    setShowManualBoostersModal(true)
+  }, [player])
+
+  const saveManualBoosters = React.useCallback(async () => {
+    if (!player) return
+    setUploading(true)
+    setError(null)
+    try {
+      let token = localStorage.getItem('auth_token')
+      if (!token && supabase) {
+        const { data: session } = await supabase.auth.getSession()
+        token = session?.session?.access_token
+      }
+      if (!token) throw new Error(t('sessionExpired'))
+
+      const cleaned = (Array.isArray(manualBoosters) ? manualBoosters : [])
+        .map(b => ({
+          name: typeof b?.name === 'string' ? b.name.trim() : '',
+          effect: typeof b?.effect === 'string' ? b.effect.trim() : '',
+          condition: typeof b?.condition === 'string' ? b.condition.trim() : ''
+        }))
+        .filter(b => b.name || b.effect || b.condition)
+
+      const photoSlots = player.photo_slots && typeof player.photo_slots === 'object' ? { ...player.photo_slots } : {}
+      photoSlots.booster = true
+
+      const res = await fetch(`/api/players/${playerId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          available_boosters: cleaned,
+          photo_slots: photoSlots
+        })
+      })
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || t('errorUpdatingPlayer'))
+      }
+      const { player: updatedPlayer } = await res.json()
+      setPlayer(updatedPlayer)
+      setShowManualBoostersModal(false)
+    } catch (err) {
+      console.error('[PlayerDetail] Manual boosters save error:', err)
+      setError(err.message || t('errorUpdatingPlayer'))
+    } finally {
+      setUploading(false)
+    }
+  }, [manualBoosters, player, playerId, t])
+
   if (loading) {
     return (
       <main style={{ padding: '32px 24px', minHeight: '100vh', textAlign: 'center' }}>
@@ -517,6 +575,7 @@ export default function PlayerDetailPage() {
           isExpanded={expandedSections.boosters}
           onToggle={() => toggleSection('boosters')}
           onFileSelect={(e) => handleFileSelect(e, 'booster')}
+          onManualEdit={openManualBoosters}
           uploading={uploading}
         />
       </div>
@@ -643,6 +702,16 @@ export default function PlayerDetailPage() {
           }
         }}
       />
+
+      {showManualBoostersModal && (
+        <ManualBoostersModal
+          boosters={manualBoosters}
+          setBoosters={setManualBoosters}
+          onCancel={() => setShowManualBoostersModal(false)}
+          onSave={saveManualBoosters}
+          saving={uploading}
+        />
+      )}
     </main>
   )
 }
@@ -1029,8 +1098,8 @@ function SkillsSection({ player, photoSlots, isExpanded, onToggle, onFileSelect,
 }
 
 // Componente Sezione Booster (design unificato: skills = Booster, colore neon-orange)
-function BoostersSection({ player, photoSlots, isExpanded, onToggle, onFileSelect, uploading }) {
-  const { t } = useTranslation()
+function BoostersSection({ player, photoSlots, isExpanded, onToggle, onFileSelect, uploading, onManualEdit }) {
+  const { t, lang } = useTranslation()
   const style = getPhotoTypeStyle('skills')
   if (!player) return null
   
@@ -1106,7 +1175,7 @@ function BoostersSection({ player, photoSlots, isExpanded, onToggle, onFileSelec
           )}
 
           {/* Pulsante Carica (galleria / fotocamera / file via picker di sistema) */}
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'stretch' }}>
             <label style={{
               padding: '12px 16px',
               border: `2px solid ${style.borderColor}`,
@@ -1122,6 +1191,31 @@ function BoostersSection({ player, photoSlots, isExpanded, onToggle, onFileSelec
                 <span style={{ fontSize: '14px', fontWeight: 600, color: style.color }}>{photoSlots.booster ? t('updateBoosters') : t('uploadBoosters')}</span>
               </div>
             </label>
+            {typeof onManualEdit === 'function' && (
+              <button
+                type="button"
+                onClick={(e) => { e.preventDefault(); onManualEdit() }}
+                style={{
+                  padding: '12px 16px',
+                  border: `2px solid ${style.borderColor}`,
+                  borderRadius: '8px',
+                  background: 'transparent',
+                  color: style.color,
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: uploading ? 'not-allowed' : 'pointer',
+                  opacity: uploading ? 0.6 : 1,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+                disabled={uploading}
+              >
+                <Pencil size={18} />
+                {lang === 'en' ? 'Manual' : 'Manuale'}
+              </button>
+            )}
           </div>
         </>
       )}
@@ -1277,6 +1371,175 @@ function ConfirmUpdateModal({
             }}
           >
             {hasMismatch ? t('confirmAnyway') : t('confirm')}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ManualBoostersModal({ boosters, setBoosters, onCancel, onSave, saving }) {
+  const { t, lang } = useTranslation()
+
+  const list = Array.isArray(boosters) ? boosters : []
+
+  const add = () => setBoosters([...list, { name: '', effect: '', condition: '' }])
+  const remove = (idx) => setBoosters(list.filter((_, i) => i !== idx))
+  const change = (idx, key, value) => setBoosters(list.map((b, i) => i === idx ? { ...(b || {}), [key]: value } : b))
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.8)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: '24px'
+      }}
+      onClick={onCancel}
+    >
+      <div
+        className="neon-card"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          maxWidth: '720px',
+          width: '100%',
+          maxHeight: 'calc(100vh - 100px)',
+          overflowY: 'auto',
+          padding: '24px',
+          paddingBottom: 'calc(24px + 64px + env(safe-area-inset-bottom, 0px))',
+          background: 'rgba(10, 14, 39, 0.95)',
+          border: '2px solid var(--neon-purple)'
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 800, margin: 0 }}>{t('boostersSection')}</h2>
+          <button onClick={onCancel} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.75)', cursor: 'pointer' }}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', marginBottom: '12px' }}>
+          <div style={{ opacity: 0.75, fontSize: '13px' }}>{t('boostersList')}</div>
+          <button
+            type="button"
+            onClick={add}
+            className="btn secondary"
+            style={{ padding: '10px 12px', fontSize: '13px', borderRadius: '10px' }}
+            disabled={saving}
+          >
+            {t('addBooster')}
+          </button>
+        </div>
+
+        {list.length === 0 ? (
+          <div style={{ padding: '14px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)', opacity: 0.75 }}>
+            {t('boostersNotAvailable')}
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {list.map((b, idx) => (
+              <div key={idx} style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: '12px', padding: '14px', background: 'rgba(255,255,255,0.03)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                  <div style={{ fontWeight: 800, color: 'var(--neon-purple)' }}>
+                    {t('boosters')} #{idx + 1}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => remove(idx)}
+                    className="btn secondary"
+                    style={{ padding: '8px 10px', fontSize: '12px', borderRadius: '10px', borderColor: 'rgba(239, 68, 68, 0.35)', color: '#fecaca' }}
+                    disabled={saving}
+                  >
+                    {lang === 'en' ? 'Remove' : 'Rimuovi'}
+                  </button>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
+                  <div>
+                    <div style={{ fontSize: '12px', opacity: 0.75, marginBottom: '4px' }}>{t('boosterName')}</div>
+                    <input
+                      type="text"
+                      value={String(b?.name ?? '')}
+                      onChange={(e) => change(idx, 'name', e.target.value)}
+                      placeholder={t('boosterName')}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        borderRadius: '10px',
+                        border: '1px solid rgba(255,255,255,0.14)',
+                        background: 'rgba(0,0,0,0.25)',
+                        color: 'white'
+                      }}
+                      disabled={saving}
+                    />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', opacity: 0.75, marginBottom: '4px' }}>{t('boosterEffect')}</div>
+                    <input
+                      type="text"
+                      value={String(b?.effect ?? '')}
+                      onChange={(e) => change(idx, 'effect', e.target.value)}
+                      placeholder={t('boosterEffect')}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        borderRadius: '10px',
+                        border: '1px solid rgba(255,255,255,0.14)',
+                        background: 'rgba(0,0,0,0.25)',
+                        color: 'white'
+                      }}
+                      disabled={saving}
+                    />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', opacity: 0.75, marginBottom: '4px' }}>{t('boosterCondition')}</div>
+                    <input
+                      type="text"
+                      value={String(b?.condition ?? '')}
+                      onChange={(e) => change(idx, 'condition', e.target.value)}
+                      placeholder={t('boosterCondition')}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        borderRadius: '10px',
+                        border: '1px solid rgba(255,255,255,0.14)',
+                        background: 'rgba(0,0,0,0.25)',
+                        color: 'white'
+                      }}
+                      disabled={saving}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '18px' }}>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="btn secondary"
+            style={{ padding: '12px 16px', borderRadius: '10px' }}
+            disabled={saving}
+          >
+            {t('cancel')}
+          </button>
+          <button
+            type="button"
+            onClick={onSave}
+            className="btn primary"
+            style={{ padding: '12px 16px', borderRadius: '10px' }}
+            disabled={saving}
+          >
+            {saving ? t('saving') : t('save')}
           </button>
         </div>
       </div>
