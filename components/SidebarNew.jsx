@@ -42,8 +42,9 @@ export default function SidebarNew() {
       {/* Mobile menu button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-[var(--bg-elevated)] border border-[rgba(0, 212, 255, 0.3)] text-[#FFFFFF]"
+        className="lg:hidden fixed top-[72px] left-4 z-50 p-2 rounded-lg bg-[var(--bg-elevated)] border border-[rgba(0, 212, 255, 0.3)] text-[#FFFFFF] shadow-lg"
         aria-label={t('toggleMenu')}
+        style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}
       >
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
