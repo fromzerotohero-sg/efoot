@@ -40,7 +40,8 @@ export default function AssistantChat({ mode = 'popup' }) {
   // Responsive: traccia viewport mobile per layout popup
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const mq = window.matchMedia('(max-width: 640px)')
+    // Usiamo breakpoint "lg" (Tailwind) così include tutti i device mobile/tablet
+    const mq = window.matchMedia('(max-width: 1023px)')
     const update = () => setIsMobileViewport(!!mq.matches)
     update()
     if (mq.addEventListener) mq.addEventListener('change', update)
@@ -589,6 +590,9 @@ export default function AssistantChat({ mode = 'popup' }) {
             inset: 0,
             width: '100vw',
             height: '100dvh',
+            // Safe areas: evita tagli con notch / gesture bar
+            paddingTop: 'env(safe-area-inset-top, 0px)',
+            paddingBottom: 'env(safe-area-inset-bottom, 0px)',
             border: 'none',
             borderRadius: '0',
             boxShadow: 'none',
