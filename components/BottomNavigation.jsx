@@ -122,12 +122,16 @@ export default function BottomNavigation() {
             return (
               <button
                 key={item.label}
+                type="button"
                 onClick={item.onClick}
+                onTouchStart={item.onClick}
                 style={{
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  padding: 0
+                  padding: 0,
+                  WebkitTapHighlightColor: 'transparent',
+                  touchAction: 'manipulation'
                 }}
               >
                 {content}
