@@ -5,22 +5,28 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
 import {
+  BookOpen,
+  User,
+  LayoutDashboard,
+  Users,
+  Calendar,
+  Trophy,
+  Settings,
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
   Sparkles,
-  Users,
-  Calendar,
-  Trophy,
   Target,
-  BarChart3,
-  Shield,
-  MessageCircle,
-  HelpCircle,
-  ChevronDown,
   Zap,
-  Play,
-  Lightbulb
+  ChevronDown,
+  ChevronUp,
+  Compass,
+  Shield,
+  UserRound,
+  Wallet,
+  Dumbbell,
+  MessageCircle,
+  BarChart3
 } from 'lucide-react'
 
 export default function GuidaPage() {
@@ -28,328 +34,909 @@ export default function GuidaPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState(null)
-  const [expandedSection, setExpandedSection] = useState(null)
+  const [expandedSections, setExpandedSections] = useState({})
 
   useEffect(() => {
     const loadProfile = async () => {
       try {
         let token = localStorage.getItem('auth_token')
+        
         if (!token && supabase) {
           const { data: session } = await supabase.auth.getSession()
           token = session?.session?.access_token
         }
+
         if (!token) {
           setLoading(false)
           return
         }
+
         const res = await fetch('/api/user/profile', {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         })
+
         if (res.ok) {
           const profileData = await res.json()
           setProfile(profileData)
         }
       } catch (error) {
-        console.error('[Guida] Error:', error)
+        console.error('[Guida] Error loading profile:', error)
       } finally {
         setLoading(false)
       }
     }
+
     loadProfile()
-  }, [])
+  }, [router])
 
-  const profileCompletion = profile ? Math.round(
-    ((profile.first_name ? 1 : 0) +
-     (profile.last_name ? 1 : 0) +
-     (profile.team_name ? 1 : 0) +
-     (profile.current_division ? 1 : 0) +
-     (profile.favorite_team ? 1 : 0) +
-     (profile.ai_name ? 1 : 0) +
-     (profile.how_to_remember ? 1 : 0) +
-     (profile.common_problems?.length > 0 ? 1 : 0)) / 8 * 100
-  ) : 0
+  const calculateProfileCompletion = () => {
+    if (!profile) return 0
+    
+    let completed = 0
+    const total = 8
+    
+    if (profile.first_name) completed++
+    if (profile.last_name) completed++
+    if (profile.team_name) completed++
+    if (profile.current_division) completed++
+    if (profile.favorite_team) completed++
+    if (profile.ai_name) completed++
+    if (profile.how_to_remember) completed++
+    if (profile.common_problems && profile.common_problems.length > 0) completed++
+    
+    return Math.round((completed / total) * 100)
+  }
 
-  const steps = [
-    { num: 1, title: lang === 'en' ? 'Complete Profile' : 'Completa Profilo', desc: lang === 'en' ? 'Add your gaming preferences' : 'Aggiungi preferenze di gioco', icon: Target, done: profileCompletion >= 50 },
-    { num: 2, title: lang === 'en' ? 'Upload Squad' : 'Carica Rosa', desc: lang === 'en' ? 'Add your 11 players' : 'Aggiungi i tuoi 11 giocatori', icon: Users, done: false },
-    { num: 3, title: lang === 'en' ? 'Record Matches' : 'Registra Partite', desc: lang === 'en' ? 'Upload match screenshots' : 'Carica screenshot partite', icon: Calendar, done: false },
-    { num: 4, title: lang === 'en' ? 'Get AI Insights' : 'Consigli AI', desc: lang === 'en' ? 'Receive tactical advice' : 'Ricevi consigli tattici', icon: Sparkles, done: false },
-  ]
+  const profileCompletion = calculateProfileCompletion()
 
-  const sections = [
+  const toggleSection = (sectionId) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }))
+  }
+
+  // Guide per ogni pagina - testi aggiornati
+  const pageGuides = [
     {
-      id: 'start',
-      title: lang === 'en' ? 'Getting Started' : 'Per Iniziare',
-      icon: Play,
-      items: [
-        { title: lang === 'en' ? 'Dashboard Overview' : 'Panoramica Dashboard', desc: lang === 'en' ? 'Your command center' : 'Il tuo centro di comando' },
-        { title: lang === 'en' ? 'Using AI Assistant' : 'Usare Assistente AI', desc: lang === 'en' ? 'Chat with your coach' : 'Chatta con il tuo coach' },
-        { title: lang === 'en' ? 'Managing Squad' : 'Gestire la Rosa', desc: lang === 'en' ? 'Upload players' : 'Carica giocatori' },
+      id: 'dashboard',
+      icon: LayoutDashboard,
+      color: 'var(--neon-blue)',
+      path: '/',
+      title: lang === 'en' ? 'Dashboard' : 'Dashboard',
+      description: lang === 'en' 
+        ? 'Your command center: AI Knowledge score, weekly goals, squad overview, and quick navigation to all features.'
+        : 'Il tuo centro di comando: punteggio AI Knowledge, obiettivi settimanali, panoramica squadra e navigazione rapida a tutte le funzioni.',
+      steps: [
+        lang === 'en' ? 'Check your AI Knowledge score (0-100%)' : 'Controlla il tuo punteggio AI Knowledge (0-100%)',
+        lang === 'en' ? 'View weekly goals and track progress' : 'Visualizza obiettivi settimanali e traccia i progressi',
+        lang === 'en' ? 'See your position in monthly leaderboard' : 'Vedi la tua posizione in classifica mensile',
+        lang === 'en' ? 'Access Mission Center for daily challenges' : 'Accedi al Centro Missioni per sfide giornaliere',
+        lang === 'en' ? 'Quick links to add match or manage squad' : 'Link rapidi per aggiungere partita o gestire rosa',
+        lang === 'en' ? 'Check the Setup Banner for missing configuration' : 'Controlla il Banner Setup per configurazioni mancanti',
+        lang === 'en' ? 'View recent matches and edit details' : 'Visualizza partite recenti e modifica dettagli'
       ]
     },
     {
-      id: 'matches',
-      title: lang === 'en' ? 'Matches' : 'Partite',
+      id: 'gestione-formazione',
+      icon: Users,
+      color: 'var(--neon-purple)',
+      path: '/gestione-formazione',
+      title: lang === 'en' ? 'Squad Management' : 'Gestione Rosa',
+      description: lang === 'en'
+        ? 'Manage your 11 starters and 12 reserves on the 2D field. Upload players from screenshots and customize tactical settings.'
+        : 'Gestisci i tuoi 11 titolari e 12 riserve sul campo 2D. Carica giocatori da screenshot e personalizza impostazioni tattiche.',
+      steps: [
+        lang === 'en' ? 'View your 2D tactical field' : 'Visualizza il tuo campo tattico 2D',
+        lang === 'en' ? 'Click empty slots to assign players' : 'Clicca slot vuoti per assegnare giocatori',
+        lang === 'en' ? 'Upload players from screenshots (card/stats/skills)' : 'Carica giocatori da screenshot (card/statistiche/abilità)',
+        lang === 'en' ? 'Manage reserves (max 12 players)' : 'Gestisci riserve (max 12 giocatori)',
+        lang === 'en' ? 'Customize tactical settings per player' : 'Personalizza impostazioni tattiche per giocatore',
+        lang === 'en' ? 'Change formation (14 official eFootball formations)' : 'Cambia formazione (14 formazioni ufficiali eFootball)',
+        lang === 'en' ? 'Set your active coach' : 'Imposta il tuo allenatore attivo'
+      ]
+    },
+    {
+      id: 'aggiungi-partita',
       icon: Calendar,
-      items: [
-        { title: lang === 'en' ? '6-Step Wizard' : 'Wizard 6 Step', desc: lang === 'en' ? 'Upload match data' : 'Carica dati partita' },
-        { title: lang === 'en' ? 'Home vs Away' : 'Casa vs Trasferta', desc: lang === 'en' ? 'Identify your team' : 'Identifica la tua squadra' },
-        { title: lang === 'en' ? 'Match Details' : 'Dettagli Partita', desc: lang === 'en' ? 'Deep performance analysis' : 'Analisi approfondita' },
+      color: 'var(--neon-orange)',
+      path: '/match/new',
+      title: lang === 'en' ? 'Add Match' : 'Aggiungi Partita',
+      description: lang === 'en'
+        ? '6-step wizard to record match data: Home/Away, player ratings, team stats, attack areas, ball recovery, and opponent formation.'
+        : 'Wizard a 6 step per registrare dati partita: Casa/Fuori, pagelle giocatori, statistiche squadra, aree attacco, recuperi palla e formazione avversaria.',
+      steps: [
+        lang === 'en' ? 'Step 1: Select Home or Away' : 'Step 1: Seleziona Casa o Fuori',
+        lang === 'en' ? 'Step 2: Upload player ratings screenshot' : 'Step 2: Carica screenshot pagelle giocatori',
+        lang === 'en' ? 'Step 3: Upload team stats screenshot' : 'Step 3: Carica screenshot statistiche squadra',
+        lang === 'en' ? 'Step 4: Upload attack areas screenshot' : 'Step 4: Carica screenshot aree attacco',
+        lang === 'en' ? 'Step 5: Upload ball recovery zones' : 'Step 5: Carica zone recupero palla',
+        lang === 'en' ? 'Step 6: Upload opponent formation' : 'Step 6: Carica formazione avversaria',
+        lang === 'en' ? 'Review and save match' : 'Rivedi e salva partita'
       ]
     },
     {
-      id: 'tactics',
-      title: lang === 'en' ? 'Tactics' : 'Tattiche',
+      id: 'contromisure-pre-partita',
       icon: Shield,
-      items: [
-        { title: lang === 'en' ? 'Countermeasures' : 'Contromisure', desc: lang === 'en' ? 'Analyze opponents' : 'Analizza avversari' },
-        { title: lang === 'en' ? 'Coach Management' : 'Gestione Allenatori', desc: lang === 'en' ? 'Set active coach' : 'Imposta allenatore' },
-        { title: lang === 'en' ? 'Tactical Settings' : 'Impostazioni Tattiche', desc: lang === 'en' ? 'Customize instructions' : 'Personalizza istruzioni' },
+      color: 'var(--neon-orange)',
+      path: '/contromisure-pre-partita',
+      title: lang === 'en' ? 'Pre-Match Countermeasures' : 'Contromisure Pre-partita',
+      description: lang === 'en'
+        ? 'Upload opponent formation screenshot to get AI-generated tactical countermeasures and instructions.'
+        : 'Carica screenshot formazione avversaria per ricevere contromisure tattiche e istruzioni generate da AI.',
+      steps: [
+        lang === 'en' ? 'Upload opponent formation screenshot' : 'Carica screenshot formazione avversaria',
+        lang === 'en' ? 'AI extracts formation automatically' : 'L\'AI estrae la formazione automaticamente',
+        lang === 'en' ? 'Review extracted formation' : 'Rivedi la formazione estratta',
+        lang === 'en' ? 'Generate countermeasures with AI' : 'Genera contromisure con AI',
+        lang === 'en' ? 'View tactical analysis and instructions' : 'Visualizza analisi tattica e istruzioni'
       ]
     },
-  ]
-
-  const faqs = [
-    { q: lang === 'en' ? 'How do I upload a player?' : 'Come carico un giocatore?', a: lang === 'en' ? 'Go to Your Squad, click an empty slot, select Upload Photo.' : 'Vai su La tua rosa, clicca uno slot vuoto, seleziona Carica Foto.' },
-    { q: lang === 'en' ? 'What screenshots for a match?' : 'Quali screenshot per una partita?', a: lang === 'en' ? 'Wizard guides you: Home/Away, Ratings, Stats, Attack, Recovery, Formation.' : 'Il wizard ti guida: Casa/Fuori, Pagelle, Statistiche, Attacco, Recuperi, Formazione.' },
-    { q: lang === 'en' ? 'How does AI help me?' : 'Come mi aiuta l\'AI?', a: lang === 'en' ? 'Analyzes matches, finds patterns, gives tactical advice.' : 'Analizza partite, trova pattern, dà consigli tattici.' },
+    {
+      id: 'allenatori',
+      icon: UserRound,
+      color: 'var(--neon-cyan)',
+      path: '/allenatori',
+      title: lang === 'en' ? 'Coaches' : 'Allenatori',
+      description: lang === 'en'
+        ? 'Manage your coaches: upload photos, set active coach, and view tactical competences.'
+        : 'Gestisci i tuoi allenatori: carica foto, imposta allenatore attivo e visualizza competenze tattiche.',
+      steps: [
+        lang === 'en' ? 'Upload coach screenshot (main photo)' : 'Carica screenshot allenatore (foto principale)',
+        lang === 'en' ? 'Optionally upload connection style photo' : 'Opzionalmente carica foto stile connessione',
+        lang === 'en' ? 'AI extracts name, team and competences' : 'L\'AI estrae nome, squadra e competenze',
+        lang === 'en' ? 'Set coach as active (star icon)' : 'Imposta allenatore come attivo (icona stella)',
+        lang === 'en' ? 'View coach details and tactical style' : 'Visualizza dettagli allenatore e stile tattico'
+      ]
+    },
+    {
+      id: 'classifica',
+      icon: Trophy,
+      color: 'var(--neon-orange)',
+      path: '/classifica',
+      title: lang === 'en' ? 'Leaderboard' : 'Classifica',
+      description: lang === 'en'
+        ? 'Monthly leaderboard: earn points from matches, AI usage, and profile completion. Compete with other players!'
+        : 'Classifica mensile: guadagna punti da partite, utilizzo AI e completamento profilo. Competi con altri giocatori!',
+      steps: [
+        lang === 'en' ? 'View monthly leaderboard' : 'Visualizza classifica mensile',
+        lang === 'en' ? 'Check your current position' : 'Controlla la tua posizione attuale',
+        lang === 'en' ? 'See points breakdown (matches, AI, profile)' : 'Vedi dettaglio punti (partite, AI, profilo)',
+        lang === 'en' ? 'Check days remaining in month' : 'Controlla giorni rimanenti nel mese',
+        lang === 'en' ? 'View prizes for top finishers' : 'Visualizza premi per i primi classificati'
+      ]
+    },
+    {
+      id: 'gestione-profilo',
+      icon: Wallet,
+      color: 'var(--neon-orange)',
+      path: '/gestione-profilo',
+      title: lang === 'en' ? 'Profile Management' : 'Gestione Profilo',
+      description: lang === 'en'
+        ? 'Manage Hero Points (credits), view transaction history, and check your leaderboard position.'
+        : 'Gestisci Hero Points (crediti), visualizza storico transazioni e controlla posizione in classifica.',
+      steps: [
+        lang === 'en' ? 'View remaining Hero Points balance' : 'Visualizza saldo Hero Points rimanenti',
+        lang === 'en' ? 'See total analyses used' : 'Vedi analisi totali utilizzate',
+        lang === 'en' ? 'Check current rank' : 'Controlla rank attuale',
+        lang === 'en' ? 'View transaction history' : 'Visualizza storico transazioni',
+        lang === 'en' ? 'Link to leaderboard and prizes' : 'Link a classifica e premi'
+      ]
+    }
   ]
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ color: 'var(--neon-cyan)', fontSize: '18px' }}>{t('loading')}</div>
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--bg-darker)'
+      }}>
+        <div style={{
+          textAlign: 'center',
+          color: 'var(--neon-blue)',
+          fontSize: '18px'
+        }}>
+          {t('loading')}
+        </div>
       </div>
     )
   }
 
   return (
-    <div style={{ minHeight: '100vh', padding: '24px', paddingBottom: '100px' }}>
-      {/* Header */}
-      <div style={{ marginBottom: '32px' }}>
-        <button
-          onClick={() => router.push('/')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            color: 'var(--neon-cyan)',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '16px'
-          }}
-        >
-          <ArrowLeft size={20} />
-          {lang === 'en' ? 'Back' : 'Indietro'}
-        </button>
-      </div>
-
-      {/* Hero - Icona AI semplice da Lucide */}
-      <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+    <div data-tour-id="tour-guida-intro" style={{
+      minHeight: '100vh',
+      background: 'var(--bg-darker)',
+      padding: '24px',
+      paddingBottom: '100px'
+    }}>
+      <div style={{
+        maxWidth: '1200px',
+        margin: '0 auto'
+      }}>
+        {/* Header */}
         <div style={{
-          width: '80px',
-          height: '80px',
-          margin: '0 auto 24px',
-          borderRadius: '50%',
-          background: 'linear-gradient(135deg, var(--neon-cyan), var(--neon-blue))',
           display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 0 40px rgba(0, 212, 255, 0.4)'
+          marginBottom: '32px',
+          flexWrap: 'wrap',
+          gap: '16px'
         }}>
-          <Sparkles size={40} color="white" />
-        </div>
-        <h1 style={{ fontSize: '32px', fontWeight: 'bold', color: 'white', marginBottom: '12px' }}>
-          {lang === 'en' ? 'How can we help?' : 'Come possiamo aiutarti?'}
-        </h1>
-        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '16px', maxWidth: '500px', margin: '0 auto' }}>
-          {lang === 'en' ? 'Master the platform step by step' : 'Padroneggia la piattaforma passo dopo passo'}
-        </p>
-      </div>
-
-      {/* Progress */}
-      {profile && (
-        <div
-          onClick={() => router.push('/impostazioni-profilo')}
-          style={{
-            maxWidth: '600px',
-            margin: '0 auto 48px',
-            padding: '20px',
-            borderRadius: '16px',
-            background: 'linear-gradient(135deg, rgba(0,212,255,0.1), rgba(0,128,255,0.1))',
-            border: '1px solid rgba(0,212,255,0.3)',
-            cursor: 'pointer'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <Target color="var(--neon-cyan)" size={24} />
-              <span style={{ fontWeight: 'bold', color: 'white' }}>{lang === 'en' ? 'Profile Progress' : 'Progresso Profilo'}</span>
-            </div>
-            <span style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--neon-cyan)' }}>{profileCompletion}%</span>
-          </div>
-          <div style={{ height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
-            <div style={{
-              height: '100%',
-              width: `${profileCompletion}%`,
-              background: 'linear-gradient(90deg, var(--neon-cyan), var(--neon-blue))',
-              borderRadius: '4px',
-              transition: 'width 0.5s'
-            }} />
-          </div>
-        </div>
-      )}
-
-      {/* Steps */}
-      <div style={{ maxWidth: '800px', margin: '0 auto 48px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: 'white', marginBottom: '24px', textAlign: 'center' }}>
-          {lang === 'en' ? 'Your Journey' : 'Il tuo Percorso'}
-        </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
-          {steps.map((step) => (
-            <div
-              key={step.num}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <button
+              onClick={() => router.push('/')}
               style={{
-                padding: '20px',
-                borderRadius: '16px',
-                background: step.done ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)',
-                border: `2px solid ${step.done ? 'rgba(34,197,94,0.5)' : 'rgba(0,212,255,0.2)'}`,
-                position: 'relative'
-              }}
-            >
-              <div style={{
-                position: 'absolute',
-                top: '-12px',
-                left: '16px',
-                width: '24px',
-                height: '24px',
-                borderRadius: '50%',
-                background: step.done ? '#22c55e' : 'var(--neon-cyan)',
+                background: 'rgba(0, 212, 255, 0.1)',
+                border: '1px solid var(--neon-blue)',
+                borderRadius: '8px',
+                padding: '8px 12px',
+                cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '12px',
-                fontWeight: 'bold',
-                color: step.done ? 'white' : 'black'
-              }}>
-                {step.done ? <CheckCircle2 size={14} /> : step.num}
-              </div>
-              <step.icon size={28} color={step.done ? '#22c55e' : 'var(--neon-cyan)'} style={{ marginBottom: '12px' }} />
-              <h3 style={{ fontWeight: 'bold', color: 'white', marginBottom: '4px' }}>{step.title}</h3>
-              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>{step.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Sections */}
-      <div style={{ maxWidth: '800px', margin: '0 auto 48px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: 'white', marginBottom: '24px', textAlign: 'center' }}>
-          {lang === 'en' ? 'Detailed Guides' : 'Guide Dettagliate'}
-        </h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {sections.map((section) => (
-            <div
-              key={section.id}
-              style={{
-                borderRadius: '12px',
-                background: expandedSection === section.id ? 'rgba(0,212,255,0.1)' : 'rgba(255,255,255,0.05)',
-                border: `1px solid ${expandedSection === section.id ? 'rgba(0,212,255,0.3)' : 'rgba(255,255,255,0.1)'}`,
-                overflow: 'hidden'
+                gap: '8px',
+                color: 'var(--neon-blue)',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(0, 212, 255, 0.2)'
+                e.currentTarget.style.boxShadow = 'var(--glow-blue)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(0, 212, 255, 0.1)'
+                e.currentTarget.style.boxShadow = 'none'
               }}
             >
-              <button
-                onClick={() => setExpandedSection(expandedSection === section.id ? null : section.id)}
-                style={{
-                  width: '100%',
-                  padding: '16px 20px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: 'white'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <section.icon size={24} color={expandedSection === section.id ? 'var(--neon-cyan)' : 'rgba(255,255,255,0.6)'} />
-                  <span style={{ fontWeight: 'bold' }}>{section.title}</span>
-                </div>
-                <ChevronDown
-                  size={20}
-                  color="rgba(255,255,255,0.5)"
-                  style={{ transform: expandedSection === section.id ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }}
-                />
-              </button>
-              {expandedSection === section.id && (
-                <div style={{ padding: '0 20px 20px' }}>
-                  {section.items.map((item, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        padding: '12px',
-                        marginTop: '8px',
-                        borderRadius: '8px',
-                        background: 'rgba(255,255,255,0.05)',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <h4 style={{ fontWeight: '600', color: 'white', marginBottom: '2px' }}>{item.title}</h4>
-                      <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>{item.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <ArrowLeft size={18} />
+              <span>{t('back')}</span>
+            </button>
+            <div>
+              <h1 style={{
+                fontSize: '32px',
+                fontWeight: 700,
+                background: 'linear-gradient(135deg, var(--neon-blue), var(--neon-purple))',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                marginBottom: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                <BookOpen size={32} />
+                {lang === 'en' ? 'Complete Guide' : 'Guida Completa'}
+              </h1>
+              <p style={{
+                fontSize: '16px',
+                opacity: 0.8,
+                color: 'white'
+              }}>
+                {lang === 'en' ? 'Discover how to make the most of the platform' : 'Scopri come usare al meglio la piattaforma'}
+              </p>
             </div>
-          ))}
+          </div>
         </div>
-      </div>
 
-      {/* FAQ */}
-      <div style={{ maxWidth: '800px', margin: '0 auto 48px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: 'white', marginBottom: '24px', textAlign: 'center' }}>
-          {lang === 'en' ? 'FAQ' : 'Domande Frequenti'}
-        </h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {faqs.map((faq, idx) => (
-            <details key={idx} style={{ borderRadius: '12px', background: 'rgba(255,255,255,0.05)', overflow: 'hidden' }}>
-              <summary style={{ padding: '16px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', color: 'white', fontWeight: '500' }}>
-                <HelpCircle size={18} color="var(--neon-cyan)" />
-                {faq.q}
-              </summary>
-              <div style={{ padding: '0 20px 16px 52px', color: 'rgba(255,255,255,0.7)' }}>
-                {faq.a}
+        {/* Hero Section - Completa Profilo */}
+        <div data-tour-id="tour-guida-profile-hero" className="neon-card" style={{
+          padding: '32px',
+          marginBottom: '32px',
+          background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(168, 85, 247, 0.1))',
+          border: '2px solid var(--neon-blue)',
+          boxShadow: 'var(--glow-blue)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+            marginBottom: '20px'
+          }}>
+            <div style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, var(--neon-blue), var(--neon-purple))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: 'var(--glow-blue)'
+            }}>
+              <Target size={32} color="white" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <h2 style={{
+                fontSize: '24px',
+                fontWeight: 700,
+                color: 'white',
+                marginBottom: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                {lang === 'en' ? 'Complete Your Profile' : 'Completa il Tuo Profilo'}
+                {profileCompletion === 100 && <CheckCircle2 size={24} color="var(--neon-blue)" />}
+              </h2>
+              <p style={{
+                fontSize: '16px',
+                opacity: 0.9,
+                color: 'white'
+              }}>
+                {lang === 'en' ? 'The more you complete your profile, the better the AI can help you!' : 'Più completi il profilo, più l\'AI può aiutarti!'}
+              </p>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div style={{ marginBottom: '20px' }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '8px'
+            }}>
+              <span style={{
+                fontSize: '14px',
+                opacity: 0.8,
+                color: 'white'
+              }}>
+                {lang === 'en' ? 'Profile Completion' : 'Completamento Profilo'}
+              </span>
+              <span style={{
+                fontSize: '18px',
+                fontWeight: 700,
+                color: profileCompletion === 100 ? 'var(--neon-blue)' : 'var(--neon-orange)'
+              }}>
+                {profileCompletion}%
+              </span>
+            </div>
+            <div style={{
+              width: '100%',
+              height: '12px',
+              background: 'rgba(255, 255, 255, 0.1)',
+              borderRadius: '6px',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                width: `${profileCompletion}%`,
+                height: '100%',
+                background: profileCompletion === 100
+                  ? 'linear-gradient(90deg, var(--neon-blue), var(--neon-cyan))'
+                  : 'linear-gradient(90deg, var(--neon-orange), var(--neon-pink))',
+                borderRadius: '6px',
+                transition: 'width 0.5s ease'
+              }} />
+            </div>
+          </div>
+
+          <button
+            onClick={() => router.push('/impostazioni-profilo')}
+            className="btn primary"
+            style={{
+              width: '100%',
+              padding: '16px',
+              fontSize: '16px',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '12px',
+              background: profileCompletion === 100
+                ? 'linear-gradient(135deg, var(--neon-blue), var(--neon-cyan))'
+                : 'linear-gradient(135deg, var(--neon-orange), var(--neon-pink))',
+              border: 'none',
+              boxShadow: profileCompletion === 100 ? 'var(--glow-blue)' : 'var(--glow-orange)',
+              borderRadius: '8px',
+              color: 'white',
+              cursor: 'pointer'
+            }}
+          >
+            <Settings size={20} />
+            {profileCompletion === 100
+              ? (lang === 'en' ? 'Profile Complete' : 'Profilo Completo')
+              : (lang === 'en' ? 'Complete Your Profile' : 'Completa il Profilo')}
+            <ArrowRight size={20} />
+          </button>
+        </div>
+
+        {/* Hero Section - AI Assistant */}
+        <div data-tour-id="tour-guida-brain-hero" className="neon-card" style={{
+          padding: '32px',
+          marginBottom: '32px',
+          background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(236, 72, 153, 0.1))',
+          border: '2px solid var(--neon-purple)',
+          boxShadow: 'var(--glow-purple)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+            marginBottom: '20px'
+          }}>
+            <div style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, var(--neon-purple), var(--neon-pink))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: 'var(--glow-purple)'
+            }}>
+              <MessageCircle size={32} color="white" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <h2 style={{
+                fontSize: '24px',
+                fontWeight: 700,
+                color: 'white',
+                marginBottom: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <Sparkles size={24} color="var(--neon-purple)" />
+                {lang === 'en' ? 'AI Assistant' : 'Assistente AI'}
+              </h2>
+              <p style={{
+                fontSize: '16px',
+                opacity: 0.9,
+                color: 'white',
+                lineHeight: '1.6'
+              }}>
+                {lang === 'en' 
+                  ? 'Your personal tactical advisor available 24/7. Ask about formations, player suggestions, match analysis, or how to use any feature.'
+                  : 'Il tuo consulente tattico personale disponibile 24/7. Chiedi informazioni su formazioni, suggerimenti giocatori, analisi partite o come usare qualsiasi funzione.'}
+              </p>
+            </div>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '12px',
+            marginTop: '20px'
+          }}>
+            <div style={{
+              padding: '16px',
+              background: 'rgba(168, 85, 247, 0.1)',
+              borderRadius: '8px',
+              border: '1px solid rgba(168, 85, 247, 0.3)'
+            }}>
+              <Zap size={20} color="var(--neon-purple)" style={{ marginBottom: '8px' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 600,
+                color: 'var(--neon-purple)',
+                marginBottom: '4px'
+              }}>
+                {lang === 'en' ? 'Personal Guide' : 'Guida Personale'}
               </div>
-            </details>
-          ))}
+              <div style={{
+                fontSize: '12px',
+                opacity: 0.8,
+                color: 'white'
+              }}>
+                {lang === 'en' ? 'Accompanies you every step' : 'Ti accompagna in ogni passo'}
+              </div>
+            </div>
+            <div style={{
+              padding: '16px',
+              background: 'rgba(236, 72, 153, 0.1)',
+              borderRadius: '8px',
+              border: '1px solid rgba(236, 72, 153, 0.3)'
+            }}>
+              <Target size={20} color="var(--neon-pink)" style={{ marginBottom: '8px' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 600,
+                color: 'var(--neon-pink)',
+                marginBottom: '4px'
+              }}>
+                {lang === 'en' ? 'Tactical Advice' : 'Consigli Tattici'}
+              </div>
+              <div style={{
+                fontSize: '12px',
+                opacity: 0.8,
+                color: 'white'
+              }}>
+                {lang === 'en' ? 'Based on your squad and matches' : 'Basati sulla tua rosa e partite'}
+              </div>
+            </div>
+            <div style={{
+              padding: '16px',
+              background: 'rgba(0, 212, 255, 0.1)',
+              borderRadius: '8px',
+              border: '1px solid rgba(0, 212, 255, 0.3)'
+            }}>
+              <BarChart3 size={20} color="var(--neon-blue)" style={{ marginBottom: '8px' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 600,
+                color: 'var(--neon-blue)',
+                marginBottom: '4px'
+              }}>
+                {lang === 'en' ? 'Match Analysis' : 'Analisi Partite'}
+              </div>
+              <div style={{
+                fontSize: '12px',
+                opacity: 0.8,
+                color: 'white'
+              }}>
+                {lang === 'en' ? 'Insights on your performance' : 'Insight sulle tue prestazioni'}
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* CTA */}
-      <div style={{ maxWidth: '500px', margin: '0 auto', textAlign: 'center', padding: '32px', borderRadius: '16px', background: 'linear-gradient(135deg, rgba(0,212,255,0.1), rgba(138,43,226,0.1))', border: '1px solid rgba(0,212,255,0.2)' }}>
-        <MessageCircle size={32} color="var(--neon-cyan)" style={{ marginBottom: '12px' }} />
-        <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', marginBottom: '8px' }}>
-          {lang === 'en' ? 'Still have questions?' : 'Hai ancora domande?'}
-        </h3>
-        <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: '20px' }}>
-          {lang === 'en' ? 'Chat with your AI assistant anytime' : 'Chatta con il tuo assistente AI in qualsiasi momento'}
-        </p>
-        <button
-          onClick={() => window.dispatchEvent(new CustomEvent('open-assistant-chat'))}
-          style={{
-            padding: '14px 28px',
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, var(--neon-cyan), var(--neon-blue))',
-            border: 'none',
-            color: 'black',
-            fontWeight: 'bold',
-            cursor: 'pointer'
-          }}
-        >
-          {lang === 'en' ? 'Open AI Assistant' : 'Apri Assistente AI'}
-        </button>
+        {/* Hero Section - Show me how Tour */}
+        <div className="neon-card" style={{
+          padding: '32px',
+          marginBottom: '32px',
+          background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(34, 197, 94, 0.1))',
+          border: '2px solid var(--neon-cyan)',
+          boxShadow: '0 0 24px rgba(0, 245, 255, 0.2)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+            marginBottom: '20px'
+          }}>
+            <div style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, var(--neon-cyan), var(--neon-blue))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 0 20px rgba(0, 245, 255, 0.4)'
+            }}>
+              <Compass size={32} color="white" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <h2 style={{
+                fontSize: '24px',
+                fontWeight: 700,
+                color: 'white',
+                marginBottom: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <Sparkles size={24} color="var(--neon-cyan)" />
+                {lang === 'en' ? 'Interactive Tour' : 'Tour Interattivo'}
+              </h2>
+              <p style={{
+                fontSize: '16px',
+                opacity: 0.9,
+                color: 'white',
+                lineHeight: '1.6'
+              }}>
+                {lang === 'en'
+                  ? 'Step-by-step guide on every page! Click the compass button in the top right for a guided walkthrough.'
+                  : 'Guida passo-passo su ogni pagina! Clicca il pulsante bussola in alto a destra per un tour guidato.'}
+              </p>
+            </div>
+          </div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '12px',
+            marginTop: '20px'
+          }}>
+            <div style={{
+              padding: '16px',
+              background: 'rgba(0, 245, 255, 0.1)',
+              borderRadius: '8px',
+              border: '1px solid rgba(0, 245, 255, 0.3)'
+            }}>
+              <Compass size={20} color="var(--neon-cyan)" style={{ marginBottom: '8px' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 600,
+                color: 'var(--neon-cyan)',
+                marginBottom: '4px'
+              }}>
+                {lang === 'en' ? 'Contextual Tours' : 'Tour Contestuali'}
+              </div>
+              <div style={{
+                fontSize: '12px',
+                opacity: 0.8,
+                color: 'white'
+              }}>
+                {lang === 'en' ? 'Different tour for each page' : 'Un tour diverso per ogni pagina'}
+              </div>
+            </div>
+            <div style={{
+              padding: '16px',
+              background: 'rgba(0, 212, 255, 0.1)',
+              borderRadius: '8px',
+              border: '1px solid rgba(0, 212, 255, 0.3)'
+            }}>
+              <Zap size={20} color="var(--neon-blue)" style={{ marginBottom: '8px' }} />
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 600,
+                color: 'var(--neon-blue)',
+                marginBottom: '4px'
+              }}>
+                {lang === 'en' ? 'Interactive Steps' : 'Step Interattivi'}
+              </div>
+              <div style={{
+                fontSize: '12px',
+                opacity: 0.8,
+                color: 'white'
+              }}>
+                {lang === 'en' ? 'Click highlighted elements' : 'Clicca elementi evidenziati'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Guide per Pagina */}
+        <div data-tour-id="tour-guida-pages" style={{
+          marginBottom: '32px'
+        }}>
+          <h2 style={{
+            fontSize: '28px',
+            fontWeight: 700,
+            color: 'white',
+            marginBottom: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            <BookOpen size={28} color="var(--neon-blue)" />
+            {lang === 'en' ? 'Page Guides' : 'Guide per Pagina'}
+          </h2>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
+            gap: 'clamp(16px, 4vw, 24px)'
+          }}>
+            {pageGuides.map((guide) => {
+              const Icon = guide.icon
+              const isExpanded = expandedSections[guide.id]
+
+              return (
+                <div
+                  key={guide.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={isExpanded}
+                  className="neon-card"
+                  style={{
+                    padding: 'clamp(16px, 4vw, 24px)',
+                    border: `2px solid ${guide.color}`,
+                    background: `rgba(${guide.color === 'var(--neon-blue)' ? '0, 212, 255' : guide.color === 'var(--neon-purple)' ? '168, 85, 247' : guide.color === 'var(--neon-orange)' ? '255, 107, 53' : '0, 245, 255'}, 0.05)`,
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer',
+                    minHeight: '44px',
+                    boxSizing: 'border-box',
+                    borderRadius: '12px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = `0 0 20px ${guide.color}40`
+                    e.currentTarget.style.transform = 'translateY(-4px)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = 'none'
+                    e.currentTarget.style.transform = 'translateY(0)'
+                  }}
+                  onClick={() => toggleSection(guide.id)}
+                >
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 'clamp(12px, 3vw, 16px)',
+                    marginBottom: '16px'
+                  }}>
+                    <div style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '12px',
+                      background: guide.color,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      boxShadow: `0 0 15px ${guide.color}40`
+                    }}>
+                      <Icon size={24} color="white" />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <h3 style={{
+                        fontSize: 'clamp(18px, 4vw, 20px)',
+                        fontWeight: 700,
+                        color: 'white',
+                        marginBottom: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '8px'
+                      }}>
+                        <span>{guide.title}</span>
+                        {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                      </h3>
+                      <p style={{
+                        fontSize: '14px',
+                        opacity: 0.8,
+                        color: 'white',
+                        lineHeight: '1.5'
+                      }}>
+                        {guide.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  {isExpanded && (
+                    <div style={{
+                      marginTop: '20px',
+                      paddingTop: '20px',
+                      borderTop: `1px solid ${guide.color}40`
+                    }}>
+                      <div style={{
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        color: guide.color,
+                        marginBottom: '12px'
+                      }}>
+                        {lang === 'en' ? 'Steps' : 'Step'}
+                      </div>
+                      <ul style={{
+                        listStyle: 'none',
+                        padding: 0,
+                        margin: 0,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px'
+                      }}>
+                        {guide.steps.map((step, idx) => (
+                          <li
+                            key={idx}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              gap: '12px',
+                              padding: '12px',
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              borderRadius: '8px',
+                              border: `1px solid ${guide.color}20`
+                            }}
+                          >
+                            <div style={{
+                              width: '24px',
+                              height: '24px',
+                              borderRadius: '50%',
+                              background: guide.color,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              color: 'white'
+                            }}>
+                              {idx + 1}
+                            </div>
+                            <span style={{
+                              fontSize: '14px',
+                              color: 'white',
+                              lineHeight: '1.6',
+                              flex: 1
+                            }}>
+                              {step}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          router.push(guide.path)
+                        }}
+                        style={{
+                          marginTop: '16px',
+                          width: '100%',
+                          padding: 'clamp(12px, 3vw, 14px)',
+                          minHeight: '44px',
+                          background: guide.color,
+                          border: 'none',
+                          borderRadius: '8px',
+                          color: 'white',
+                          fontSize: 'clamp(13px, 3vw, 14px)',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          transition: 'all 0.2s',
+                          boxSizing: 'border-box'
+                        }}
+                      >
+                        {lang === 'en' ? 'Go to Page' : 'Vai alla Pagina'}
+                        <ArrowRight size={16} />
+                      </button>
+                      {guide.id === 'gestione-formazione' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            router.push('/gestione-formazione?tutorial=1')
+                          }}
+                          style={{
+                            marginTop: '12px',
+                            width: '100%',
+                            padding: '12px',
+                            background: 'rgba(168, 85, 247, 0.2)',
+                            border: '1px solid var(--neon-purple)',
+                            borderRadius: '8px',
+                            color: 'var(--neon-purple)',
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          <BookOpen size={16} />
+                          {lang === 'en' ? 'Roster Tutorial' : 'Tutorial Rosa'}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Footer CTA */}
+        <div data-tour-id="tour-guida-footer" className="neon-card" style={{
+          padding: '32px',
+          textAlign: 'center',
+          background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(168, 85, 247, 0.1))',
+          border: '2px solid var(--neon-blue)',
+          boxShadow: 'var(--glow-blue)'
+        }}>
+          <MessageCircle size={48} color="var(--neon-blue)" style={{
+            marginBottom: '16px'
+          }} />
+          <h3 style={{
+            fontSize: '24px',
+            fontWeight: 700,
+            color: 'white',
+            marginBottom: '12px'
+          }}>
+            {lang === 'en' ? 'Questions?' : 'Domande?'}
+          </h3>
+          <p style={{
+            fontSize: '16px',
+            opacity: 0.9,
+            color: 'white',
+            marginBottom: '24px',
+            lineHeight: '1.6'
+          }}>
+            {lang === 'en' 
+              ? 'Use the AI Assistant or the Interactive Tour on any page.'
+              : 'Usa l\'Assistente AI o il Tour Interattivo su qualsiasi pagina.'}
+          </p>
+        </div>
       </div>
     </div>
   )
