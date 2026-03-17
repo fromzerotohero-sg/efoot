@@ -1064,3 +1064,175 @@ body > * {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.15);
 }
+
+/* ============================================
+   GUIDE TOUR STYLES - Nuovo Sistema Migliorato
+   ============================================ */
+
+/* Animazione pulse per elementi evidenziati dal tour */
+.tour-highlight-pulse {
+  animation: tourPulse 2s ease-in-out;
+}
+
+@keyframes tourPulse {
+  0%, 100% { 
+    box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.4);
+  }
+  50% { 
+    box-shadow: 0 0 20px 10px rgba(0, 212, 255, 0.2);
+  }
+}
+
+/* Badge "NEW" per il launcher tour quando feature flag attivo */
+.guide-tour-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: linear-gradient(135deg, var(--primary-gold), #ff6b35);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.4);
+  animation: badgePulse 2s infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* Miglioramenti Driver.js Popover */
+.driver-popover-neon {
+  background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%) !important;
+  border: 1px solid rgba(0, 212, 255, 0.3) !important;
+  box-shadow: 
+    0 0 30px rgba(0, 212, 255, 0.2), 
+    0 10px 40px rgba(0, 0, 0, 0.4) !important;
+  border-radius: 12px !important;
+  max-width: 400px !important;
+}
+
+.driver-popover-neon .driver-popover-title {
+  color: #fff !important;
+  font-weight: 600 !important;
+  font-size: 18px !important;
+  margin-bottom: 12px !important;
+}
+
+.driver-popover-neon .driver-popover-description {
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}
+
+.driver-popover-neon .driver-popover-progress-text {
+  color: var(--neon-cyan) !important;
+  font-weight: 500 !important;
+}
+
+/* Bottoni di navigazione nel popover */
+.driver-popover-neon .driver-popover-navigation-btns button {
+  background: linear-gradient(135deg, var(--neon-cyan), var(--primary-teal)) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: white !important;
+  padding: 10px 20px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+  text-transform: none !important;
+}
+
+.driver-popover-neon .driver-popover-navigation-btns button:hover:not(:disabled) {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4) !important;
+}
+
+.driver-popover-neon .driver-popover-navigation-btns button:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+.driver-popover-neon .driver-popover-close-btn {
+  color: rgba(255, 255, 255, 0.6) !important;
+  transition: color 0.2s !important;
+  top: 12px !important;
+  right: 12px !important;
+}
+
+.driver-popover-neon .driver-popover-close-btn:hover {
+  color: white !important;
+}
+
+/* Overlay con blur */
+.driver-overlay {
+  backdrop-filter: blur(3px) !important;
+}
+
+.driver-active-element {
+  z-index: 100005 !important;
+}
+
+/* Animazione spin per icona durante caricamento */
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Notifica "Nessun tour" */
+.guide-tour-notice {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  background: rgba(255, 59, 48, 0.95);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  z-index: 10000;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive adjustments per tour su mobile */
+@media (max-width: 640px) {
+  .driver-popover-neon {
+    max-width: calc(100vw - 32px) !important;
+    margin: 16px !important;
+  }
+  
+  .driver-popover-neon .driver-popover-title {
+    font-size: 16px !important;
+  }
+  
+  .driver-popover-neon .driver-popover-description {
+    font-size: 13px !important;
+  }
+  
+  .guide-tour-launcher-label {
+    display: none !important;
+  }
+  
+  .guide-tour-launcher {
+    padding: 10px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+}

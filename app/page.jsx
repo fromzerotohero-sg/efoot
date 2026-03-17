@@ -479,6 +479,7 @@ function HomePage() {
       {/* Banner setup: visibile in UX, icona priorità (rosso/giallo/verde), comunica importanza di completare. */}
       {showSetupBanner && (
         <div
+          data-tour-id="tour-dashboard-setup-banner"
           id="setup-status-banner"
           role="status"
           aria-live="polite"
@@ -753,7 +754,8 @@ function HomePage() {
 
                 {/* Analisi Partita Rapida */}
                 <button
-                  onClick={() => setShowGameAnalysisModal(true)}
+                  data-tour-id="tour-dashboard-game-analysis"
+                onClick={() => setShowGameAnalysisModal(true)}
                   className="neon-button"
                   style={{ 
                     display: 'flex', 
@@ -824,6 +826,7 @@ function HomePage() {
 
           {/* Colonna Destra */}
           <div className="space-y-6">
+            <div data-tour-id="tour-dashboard-mission-center">
             <MissionCenter
               recentMatches={recentMatches}
               stats={stats}
@@ -842,6 +845,7 @@ function HomePage() {
                 }
               }}
             />
+            </div>
 
             {/* Link a Grafici (al posto di Roadmap/AI Insights) */}
             <div className="neon-card" style={{ padding: '24px' }}>

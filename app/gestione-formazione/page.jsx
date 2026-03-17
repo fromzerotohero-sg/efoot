@@ -322,47 +322,51 @@ export default function GestioneFormazionePage() {
     setShowAssignModal(true)
   }
 
-  // Calcola posizione in base alle coordinate x,y sul campo
-  // Se viene passato array di slot in attacco, usa logica relativa per P vs SP
-  const calculatePositionFromCoordinates = (x, y, attackSlots = null) => {
+  const clampPercent = (v, min = 5, max = 95) => Math.max(min, Math.min(max, Number(v)))
+
+  // Calcola ruolo in base alle coordinate x,y sul campo
+  // Nota: per distinguere P vs SP usa la classifica relativa degli slot in attacco, basata su slotIndex (non su match “quasi uguale” di coordinate).
+  const calculatePositionFromCoordinates = (slotIndex, x, y, attackSlots = null) => {
     // y: 0-100 (0 = porta avversaria, 100 = nostra porta)
     // x: 0-100 (0 = sinistra, 100 = destra)
+    const xx = clampPercent(x)
+    const yy = clampPercent(y)
     
     // Portiere: sempre in area porta (y > 80)
-    if (y > 80) {
+    if (yy > 80) {
       return 'PT'
     }
     
     // Difesa: y tra 60-80
-    if (y >= 60 && y <= 80) {
-      if (x < 30) return 'TS'  // Terzino sinistro (sinistra campo)
-      if (x > 70) return 'TD'   // Terzino destro (destra campo)
+    if (yy >= 60 && yy <= 80) {
+      if (xx < 30) return 'TS'  // Terzino sinistro (sinistra campo)
+      if (xx > 70) return 'TD'   // Terzino destro (destra campo)
       return 'DC'              // Centrale difesa
     }
     
     // Centrocampo: y tra 40-60
-    if (y >= 40 && y <= 60) {
-      if (x < 30) return 'CLS'  // Centrocampista laterale sinistro (sinistra campo)
-      if (x > 70) return 'CLD'  // Centrocampista laterale destro (destra campo)
+    if (yy >= 40 && yy <= 60) {
+      if (xx < 30) return 'CLS'  // Centrocampista laterale sinistro (sinistra campo)
+      if (xx > 70) return 'CLD'  // Centrocampista laterale destro (destra campo)
       // CC (Centrocampista Centrale): area centrale del centrocampo (più flessibile)
       // x: 35-65 (area centrale, esclusi laterali CLS/CLD)
       // y: 45-55 (centro del centrocampo, non troppo avanzato né arretrato)
-      if (x >= 35 && x <= 65 && y >= 45 && y <= 55) return 'CC'  // Centrocampista centrale versatile
+      if (xx >= 35 && xx <= 65 && yy >= 45 && yy <= 55) return 'CC'  // Centrocampista centrale versatile
       // TRQ (Trequartista): centrocampo avanzato (y: 40-50, x: 35-65, escludendo centro esatto)
-      if (y >= 40 && y <= 50 && x >= 35 && x <= 65 && !(x >= 48 && x <= 52)) return 'TRQ'  // Trequartista in centrocampo avanzato (esclude centro esatto che è MED)
-      if (y < 50) return 'AMF'  // Trequartista (centro avanzato) - fallback se non TRQ
+      if (yy >= 40 && yy <= 50 && xx >= 35 && xx <= 65 && !(xx >= 48 && xx <= 52)) return 'TRQ'  // Trequartista in centrocampo avanzato (esclude centro esatto che è MED)
+      if (yy < 50) return 'AMF'  // Trequartista (centro avanzato) - fallback se non TRQ
       return 'MED'              // Centrocampista centrale (più arretrato o fuori area CC)
     }
     
     // Attacco: y < 40
-    if (y < 40) {
-      if (x < 30) return 'ESA'  // Estremo sinistro avanzato / Ala sinistra (sinistra campo)
-      if (x > 70) return 'EDE'  // Estremo destro avanzato / Ala destra (destra campo)
+    if (yy < 40) {
+      if (xx < 30) return 'ESA'  // Estremo sinistro avanzato / Ala sinistra (sinistra campo)
+      if (xx > 70) return 'EDE'  // Estremo destro avanzato / Ala destra (destra campo)
       // TRQ (Trequartista): può essere in attacco avanzato (y: 30-40, x: 30-70)
       // Ma esclude centro esatto (x: 48-52) in y: 30-31 per evitare conflitti con CF centrale
-      if (y >= 30 && y <= 40 && x >= 30 && x <= 70) {
+      if (yy >= 30 && yy <= 40 && xx >= 30 && xx <= 70) {
         // Se è in zona centrale (x: 48-52) e molto avanzato (y: 30-31), probabilmente è CF, non TRQ
-        if (y >= 30 && y <= 31 && x >= 48 && x <= 52) {
+        if (yy >= 30 && yy <= 31 && xx >= 48 && xx <= 52) {
           // Lascia che vada a logica CF/SP/P
         } else {
           return 'TRQ'  // Trequartista in attacco
@@ -372,8 +376,12 @@ export default function GestioneFormazionePage() {
       // Logica relativa per P vs SP se ci sono più giocatori in attacco
       if (attackSlots && attackSlots.length > 1) {
         // Ordina per y (dal più avanzato al più arretrato)
-        const sorted = [...attackSlots].sort((a, b) => a.y - b.y)
-        const currentIndex = sorted.findIndex(s => Math.abs(s.x - x) < 5 && Math.abs(s.y - y) < 5)
+        const sorted = [...attackSlots].sort((a, b) => {
+          // y più piccolo = più avanzato; tie-break su x per stabilità
+          if (a.y !== b.y) return a.y - b.y
+          return (a.x ?? 50) - (b.x ?? 50)
+        })
+        const currentIndex = sorted.findIndex(s => Number(s.slotIndex) === Number(slotIndex))
         
         if (currentIndex === 0) {
           return 'P'  // Il più avanzato → Punta
@@ -385,8 +393,8 @@ export default function GestioneFormazionePage() {
       }
       
       // Logica assoluta (fallback)
-      if (y < 25) return 'P'    // Punta (molto avanzato)
-      if (y < 35) return 'CF'   // Centravanti
+      if (yy < 25) return 'P'    // Punta (molto avanzato)
+      if (yy < 35) return 'CF'   // Centravanti
       return 'SP'               // Seconda punta
     }
     
@@ -417,7 +425,8 @@ export default function GestioneFormazionePage() {
     
     // Calcola nuova position in base alle coordinate (con logica relativa se in attacco)
     const newRole = calculatePositionFromCoordinates(
-      newPosition.x, 
+      slotIndex,
+      newPosition.x,
       newPosition.y,
       allSlotsInAttack.length > 1 ? allSlotsInAttack : null
     )
@@ -1486,13 +1495,16 @@ export default function GestioneFormazionePage() {
       Object.entries(customPositions).forEach(([slotIndex, position]) => {
         const slotIdx = Number(slotIndex)
         if (updatedSlotPositions[slotIdx]) {
+          const x = clampPercent(position.x)
+          const y = clampPercent(position.y)
           updatedSlotPositions[slotIdx] = {
             ...updatedSlotPositions[slotIdx],
-            x: position.x,
-            y: position.y,
+            x,
+            y,
             position: position.position || calculatePositionFromCoordinates(
-              position.x, 
-              position.y,
+              slotIdx,
+              x,
+              y,
               allAttackSlots.length > 1 ? allAttackSlots : null
             )  // Aggiorna position in base a coordinate (con logica relativa)
           }
@@ -2935,11 +2947,15 @@ function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChang
     const startX = isTouch ? e.touches[0].clientX : e.clientX
     const startY = isTouch ? e.touches[0].clientY : e.clientY
     
-    const startPercentX = position.x + (offsetX || 0)
-    const startPercentY = position.y + (offsetY || 0)
+    // Importante: offsetX/offsetY è un offset VISIVO anti-collisione.
+    // Non deve finire salvato nelle coordinate; quindi lo usiamo solo per il rendering, non come base di persistenza.
+    const startPercentX = position.x
+    const startPercentY = position.y
+    const startVisualPercentX = position.x + (offsetX || 0)
+    const startVisualPercentY = position.y + (offsetY || 0)
     
     setIsDragging(true)
-    const dragState = { startX, startY, startPercentX, startPercentY, containerRect, isTouch }
+    const dragState = { startX, startY, startPercentX, startPercentY, startVisualPercentX, startVisualPercentY, containerRect, isTouch }
     setDragStart(dragState)
     
     let lastOffset = { x: 0, y: 0 }
@@ -2956,6 +2972,7 @@ function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChang
       const percentX = (deltaX / dragState.containerRect.width) * 100
       const percentY = (deltaY / dragState.containerRect.height) * 100
       
+      // Persistenza: applica delta alla base (senza offset visivo), clamp su 5..95
       const newX = Math.max(5, Math.min(95, dragState.startPercentX + percentX))
       const newY = Math.max(5, Math.min(95, dragState.startPercentY + percentY))
       

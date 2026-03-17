@@ -159,7 +159,7 @@ export default function GuidaPage() {
       id: 'dettaglio-partita',
       icon: Trophy,
       color: 'var(--neon-pink)',
-      path: '/',
+      path: '/match',
       title: t('guideMatchDetailTitle'),
       description: t('guideMatchDetailDesc'),
       steps: [
@@ -180,7 +180,11 @@ export default function GuidaPage() {
         t('guidePlayerDetailStep1'),
         t('guidePlayerDetailStep2'),
         t('guidePlayerDetailStep3')
-      ]
+      ],
+      action: {
+        label: t('goToFormation'),
+        path: '/gestione-formazione'
+      }
     },
     {
       id: 'impostazioni-profilo',
@@ -207,7 +211,11 @@ export default function GuidaPage() {
         t('guidePalestraCoachStep1'),
         t('guidePalestraCoachStep2'),
         t('guidePalestraCoachStep3')
-      ]
+      ],
+      action: {
+        label: t('openPalestraCoach'),
+        hint: 'openCoach=1'
+      }
     },
     {
       id: 'contromisure-pre-partita',
@@ -922,6 +930,49 @@ export default function GuidaPage() {
                         {t('guideGoToPage')}
                         <ArrowRight size={16} />
                       </button>
+                      {/* Action personalizzata per specifiche guide */}
+                      {guide.action && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (guide.action.hint) {
+                              router.push(`${guide.path}?${guide.action.hint}`)
+                            } else {
+                              router.push(guide.action.path || guide.path)
+                            }
+                          }}
+                          style={{
+                            marginTop: '12px',
+                            width: '100%',
+                            padding: '12px',
+                            background: `rgba(${guide.color === 'var(--neon-orange)' ? '255, 107, 53' : '168, 85, 247'}, 0.2)`,
+                            border: `1px solid ${guide.color}`,
+                            borderRadius: '8px',
+                            color: guide.color,
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = `rgba(${guide.color === 'var(--neon-orange)' ? '255, 107, 53' : '168, 85, 247'}, 0.3)`
+                            e.currentTarget.style.boxShadow = `0 0 15px ${guide.color}40`
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = `rgba(${guide.color === 'var(--neon-orange)' ? '255, 107, 53' : '168, 85, 247'}, 0.2)`
+                            e.currentTarget.style.boxShadow = 'none'
+                          }}
+                        >
+                          {guide.id === 'palestra-coach' ? <Dumbbell size={16} /> : <BookOpen size={16} />}
+                          {guide.action.label}
+                        </button>
+                      )}
+                      
+                      {/* Tutorial specifico per formazione */}
                       {guide.id === 'gestione-formazione' && (
                         <button
                           onClick={(e) => {
