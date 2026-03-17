@@ -160,7 +160,7 @@ export default function CreditsBar() {
   if (noSession) return null
 
   const used = Number.isFinite(Number(data?.credits_used)) ? Number(data.credits_used) : 0
-  const included = Number.isFinite(Number(data?.credits_included)) ? Number(data.credits_included) : 200
+  const included = Number.isFinite(Number(data?.credits_included)) ? Number(data.credits_included) : 0
   const overage = Math.max(0, Number(data?.overage) || 0)
   const percentIncluded = included > 0 ? Math.min(100, Math.round((used / included) * 100)) : 0
   const periodLabel = formatPeriod(data?.period_key)

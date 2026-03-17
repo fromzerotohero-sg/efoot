@@ -16,6 +16,7 @@ export default function GestioneProfiloPage() {
   const [error, setError] = React.useState(null)
   const [usage, setUsage] = React.useState(null)
   const [transactions, setTransactions] = React.useState([])
+  const [creditsSummary, setCreditsSummary] = React.useState(null) // { purchased_total, used_total, balance_total, overage_total }
   const [totalAnalyses, setTotalAnalyses] = React.useState(0)
   const [leaderboardMe, setLeaderboardMe] = React.useState({ currentUser: null, history: [] })
   const [prizes, setPrizes] = React.useState([])
@@ -66,6 +67,7 @@ export default function GestioneProfiloPage() {
       
       if (usagePayload && !usagePayload.error) setUsage(usagePayload)
       if (txPayload.transactions) setTransactions(Array.isArray(txPayload.transactions) ? txPayload.transactions : [])
+      if (txPayload.summary && typeof txPayload.summary === 'object') setCreditsSummary(txPayload.summary)
       if (Number.isFinite(txPayload.total_analyses)) setTotalAnalyses(txPayload.total_analyses)
       if (leaderboardPayload.currentUser) setLeaderboardMe(prev => ({ ...prev, currentUser: leaderboardPayload.currentUser }))
       if (leaderboardMePayload.history) setLeaderboardMe(prev => ({ ...prev, history: leaderboardMePayload.history || [] }))
@@ -112,7 +114,9 @@ export default function GestioneProfiloPage() {
     return () => window.removeEventListener('leaderboard-updated', onLeaderboardUpdated)
   }, [])
 
-  const balance = usage?.balance_remaining ?? (usage ? Math.max(0, (usage.credits_included || 0) - (usage.credits_used || 0)) : 0)
+  // UX: saldo "reale" basato su acquisti (non su credits_included)
+  // Fallback: se summary non arriva, mantieni comportamento precedente.
+  const balance = creditsSummary?.balance_total ?? (usage?.balance_remaining ?? (usage ? Math.max(0, (usage.credits_included || 0) - (usage.credits_used || 0)) : 0))
   const rankLabel = balance >= 150 ? t('rankPlatinum') : balance >= 80 ? t('rankGold') : balance >= 30 ? t('rankSilver') : t('rankBronze')
 
   const formatDate = (iso) => {
@@ -252,6 +256,15 @@ export default function GestioneProfiloPage() {
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)', marginBottom: '4px' }}>{t('creditiResidui').toUpperCase()}</div>
               <div style={{ fontSize: 'clamp(22px, 5vw, 28px)', fontWeight: 700, color: '#fff' }}>{balance} {t('heroPoints')}</div>
+              {creditsSummary && (
+                <div style={{ marginTop: '8px', fontSize: '12px', color: 'rgba(255,255,255,0.85)', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                  <span><strong>{t('acquistoCrediti')}:</strong> {creditsSummary.purchased_total ?? 0}</span>
+                  <span><strong>{t('transactionUsage')}:</strong> {creditsSummary.used_total ?? 0}</span>
+                  {(creditsSummary.overage_total ?? 0) > 0 && (
+                    <span style={{ color: '#fca5a5' }}><strong>Overage:</strong> {creditsSummary.overage_total}</span>
+                  )}
+                </div>
+              )}
             </div>
             <button
               onClick={() => window.open('https://home.fromzerotohero.io/dashboard?usage', '_blank')}

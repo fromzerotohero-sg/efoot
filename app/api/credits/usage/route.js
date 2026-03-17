@@ -46,7 +46,7 @@ async function handleCreditsUsage(req) {
 
   const usage = await getCurrentUsage(admin, userId, { currentPeriodOnly: true, metalgateUserId })
   const creditsUsed = Number(usage.credits_used)
-  const creditsIncluded = Number(usage.credits_included) || CREDITS_INCLUDED_DEFAULT
+  const creditsIncluded = Number(usage.credits_included)
   const used = Number.isFinite(creditsUsed) ? creditsUsed : 0
   const included = Number.isFinite(creditsIncluded) ? creditsIncluded : CREDITS_INCLUDED_DEFAULT
   const percentUsed = included > 0 ? Math.round((used / included) * 100) : 0

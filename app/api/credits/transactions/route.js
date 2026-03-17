@@ -53,13 +53,60 @@ export async function GET(req) {
     const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, 50) : 20
     const transactions = await getRecentTransactions(admin, userId, limit)
 
+    // Totali "reali" basati sulle transazioni:
+    // - purchased_total: somma acquisti (amount > 0, type=purchase)
+    // - used_total: somma utilizzi (valore assoluto degli amount negativi, type=usage)
+    // - balance_total: max(0, purchased_total - used_total)
+    // - overage_total: max(0, used_total - purchased_total)
+    let purchasedTotal = 0
+    let usedTotal = 0
+    try {
+      const { data: purchaseAgg, error: purchaseErr } = await admin
+        .from('credit_transactions')
+        .select('amount.sum()')
+        .eq('user_id', userId)
+        .eq('type', 'purchase')
+      
+      if (!purchaseErr) {
+        const v = Number(purchaseAgg?.[0]?.sum ?? purchaseAgg?.[0]?.amount?.sum)
+        if (Number.isFinite(v) && v > 0) purchasedTotal = v
+      }
+    } catch (_) {}
+
+    try {
+      const { data: usageAgg, error: usageErr } = await admin
+        .from('credit_transactions')
+        .select('amount.sum()')
+        .eq('user_id', userId)
+        .eq('type', 'usage')
+      
+      if (!usageErr) {
+        const v = Number(usageAgg?.[0]?.sum ?? usageAgg?.[0]?.amount?.sum)
+        // usage è negativo (es. -58): convertiamo in positivo per "usati"
+        if (Number.isFinite(v) && v < 0) usedTotal = Math.abs(v)
+        else if (Number.isFinite(v) && v > 0) usedTotal = v
+      }
+    } catch (_) {}
+
+    const balanceTotal = Math.max(0, Math.floor(purchasedTotal - usedTotal))
+    const overageTotal = Math.max(0, Math.floor(usedTotal - purchasedTotal))
+
     let totalAnalyses = 0
     try {
       const { count, error } = await admin.from('matches').select('id', { count: 'exact', head: true }).eq('user_id', userId)
       if (!error && Number.isFinite(count)) totalAnalyses = count
     } catch (_) {}
 
-    return NextResponse.json({ transactions, total_analyses: totalAnalyses })
+    return NextResponse.json({
+      transactions,
+      total_analyses: totalAnalyses,
+      summary: {
+        purchased_total: Math.floor(purchasedTotal),
+        used_total: Math.floor(usedTotal),
+        balance_total: balanceTotal,
+        overage_total: overageTotal
+      }
+    })
   } catch (err) {
     console.error('[credits/transactions] GET Error:', err)
     return NextResponse.json({ error: 'Error loading transactions', transactions: [] }, { status: 500 })
