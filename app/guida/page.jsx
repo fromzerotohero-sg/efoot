@@ -209,20 +209,21 @@ export default function GuidaPage() {
       ]
     },
     {
-      id: 'gestione-profilo',
+      id: 'acquisto-crediti',
       icon: Wallet,
       color: 'var(--neon-orange)',
-      path: '/gestione-profilo',
-      title: lang === 'en' ? 'Profile Management' : 'Gestione Profilo',
+      path: 'https://home.fromzerotohero.io/dashboard?usage',
+      external: true,
+      title: lang === 'en' ? 'Purchase Hero Points' : 'Acquista Hero Points',
       description: lang === 'en'
-        ? 'Manage Hero Points (credits), view transaction history, and check your leaderboard position.'
-        : 'Gestisci Hero Points (crediti), visualizza storico transazioni e controlla posizione in classifica.',
+        ? 'Buy Hero Points to use AI features: match analysis, player extraction, chat with coach, and more.'
+        : 'Acquista Hero Points per usare funzionalità AI: analisi partite, estrazione giocatori, chat con coach e altro.',
       steps: [
-        lang === 'en' ? 'View remaining Hero Points balance' : 'Visualizza saldo Hero Points rimanenti',
-        lang === 'en' ? 'See total analyses used' : 'Vedi analisi totali utilizzate',
-        lang === 'en' ? 'Check current rank' : 'Controlla rank attuale',
-        lang === 'en' ? 'View transaction history' : 'Visualizza storico transazioni',
-        lang === 'en' ? 'Link to leaderboard and prizes' : 'Link a classifica e premi'
+        lang === 'en' ? 'Click to open purchase page' : 'Clicca per aprire pagina acquisto',
+        lang === 'en' ? 'Choose Hero Points package' : 'Scegli pacchetto Hero Points',
+        lang === 'en' ? 'Complete payment securely' : 'Completa pagamento in sicurezza',
+        lang === 'en' ? 'Credits added instantly' : 'Crediti aggiunti istantaneamente',
+        lang === 'en' ? 'Start using AI features' : 'Inizia a usare funzionalità AI'
       ]
     }
   ]
@@ -845,7 +846,11 @@ export default function GuidaPage() {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation()
-                          router.push(guide.path)
+                          if (guide.external || guide.path.startsWith('http')) {
+                            window.open(guide.path, '_blank')
+                          } else {
+                            router.push(guide.path)
+                          }
                         }}
                         style={{
                           marginTop: '16px',
@@ -867,7 +872,9 @@ export default function GuidaPage() {
                           boxSizing: 'border-box'
                         }}
                       >
-                        {lang === 'en' ? 'Go to Page' : 'Vai alla Pagina'}
+                        {guide.external || guide.path.startsWith('http') 
+                          ? (lang === 'en' ? 'Open Purchase Page' : 'Apri Pagina Acquisto')
+                          : (lang === 'en' ? 'Go to Page' : 'Vai alla Pagina')}
                         <ArrowRight size={16} />
                       </button>
                       {guide.id === 'gestione-formazione' && (
