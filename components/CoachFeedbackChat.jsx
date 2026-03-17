@@ -516,7 +516,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         </div>
 
         {/* Content Scrollable */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px', paddingBottom: 'calc(20px + 64px + env(safe-area-inset-bottom, 0px))' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '20px', paddingBottom: 'calc(20px + 100px + env(safe-area-inset-bottom, 0px))' }}>
           
           {/* Sezione Profilo Migliorata */}
           <div style={{ ...styles.sectionCard, marginBottom: '20px' }}>
