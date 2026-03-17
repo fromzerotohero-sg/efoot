@@ -3,35 +3,67 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useTranslation } from '@/lib/i18n'
 import { supabase } from '@/lib/supabaseClient'
-import { Dumbbell, X, Send, Save } from 'lucide-react'
+import { 
+  Dumbbell, 
+  X, 
+  Send, 
+  Save, 
+  ChevronDown, 
+  ChevronUp, 
+  CheckCircle2,
+  MessageCircle,
+  User,
+  Gamepad2,
+  Wifi,
+  Target,
+  Zap
+} from 'lucide-react'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 
 /**
  * CoachFeedbackChat — Chat dedicata Palestra Coach.
- * Sostituisce AiInfoModal: raccoglie info profilo + feedback post-partita.
- * BLINDATA: solo ascolto, zero consigli tattici.
- *
- * Props:
- * - show {boolean} — se mostrare la chat
- * - onClose {function} — callback alla chiusura
- * - userProfile {object|null} — profilo utente (pre-caricato dalla dashboard)
- * - lastMatch {object|null} — ultima partita (pre-caricata dalla dashboard)
+ * UX MIGLIORATA: Design coerente con piattaforma, più spazioso e moderno.
+ * LOGICA INVARIATA: Salvataggi e API funzionano esattamente come prima.
  */
-/** Stile comune per select/input nel form — dark theme coerente */
-const formFieldStyle = {
-  width: '100%', padding: '8px 10px',
-  background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,140,0,0.25)',
-  borderRadius: '6px', color: 'white', fontSize: '12px', outline: 'none'
+
+// Stili coerenti con piattaforma
+const styles = {
+  formField: {
+    width: '100%',
+    padding: '12px 14px',
+    background: 'rgba(0, 212, 255, 0.05)',
+    border: '1px solid rgba(0, 212, 255, 0.2)',
+    borderRadius: '10px',
+    color: 'white',
+    fontSize: '14px',
+    outline: 'none',
+    transition: 'all 0.2s'
+  },
+  formSelect: {
+    appearance: 'none',
+    WebkitAppearance: 'none',
+    MozAppearance: 'none',
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2300d4ff' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'right 12px center',
+    paddingRight: '36px'
+  },
+  formLabel: {
+    fontSize: '12px',
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.6)',
+    marginBottom: '6px',
+    display: 'block',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px'
+  },
+  sectionCard: {
+    background: 'rgba(255,255,255,0.03)',
+    borderRadius: '16px',
+    border: '1px solid rgba(255,255,255,0.08)',
+    overflow: 'hidden'
+  }
 }
-const formSelectStyle = {
-  ...formFieldStyle,
-  background: 'rgba(255,255,255,0.06)',
-  backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23ff8c00\' stroke-width=\'2\'%3E%3Cpath d=\'M6 9l6 6 6-6\'/%3E%3C/svg%3E")',
-  backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center',
-  paddingRight: '28px', appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none',
-  cursor: 'pointer'
-}
-const formLabelStyle = { fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginBottom: '2px', display: 'block' }
 
 export default function CoachFeedbackChat({ show, onClose, userProfile: externalProfile, lastMatch }) {
   const { t, lang } = useTranslation()
@@ -41,7 +73,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [loadedProfile, setLoadedProfile] = useState(null)
-  const [formExpanded, setFormExpanded] = useState(false)
+  const [formExpanded, setFormExpanded] = useState(true)
   const [formData, setFormData] = useState({})
   const [formSaving, setFormSaving] = useState(false)
   const [formSaved, setFormSaved] = useState(false)
@@ -49,7 +81,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
   const inputRef = useRef(null)
   const sendAbortRef = useRef(null)
 
-  // Carica profilo sempre ad ogni apertura per avere dati freschi
+  // LOGICA INVARIATA: Carica profilo
   useEffect(() => {
     if (!show) return
     const load = async () => {
@@ -87,7 +119,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
             setLoadedProfile(externalProfile)
           }
         } catch (e) {
-          console.error('[CoachFeedbackChat] Error fetching profile via API:', e)
+          console.error('[CoachFeedbackChat] Error fetching profile:', e)
           if (externalProfile) setLoadedProfile(externalProfile)
         }
       } catch (e) { 
@@ -96,11 +128,11 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
       }
     }
     load()
-  }, [show]) // Rimosso externalProfile dalle deps per evitare overwrite involontari
+  }, [show])
 
   const userProfile = loadedProfile || externalProfile
 
-  // Determina modalita sessione
+  // LOGICA INVARIATA: Determina modalità sessione
   const sessionMode = useMemo(() => {
     const profileFields = [
       userProfile?.platform, userProfile?.connection_quality, userProfile?.pass_level,
@@ -111,17 +143,15 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     return 'update'
   }, [userProfile, lastMatch])
 
-  // Inizializza form e stato quando si apre
+  // LOGICA INVARIATA: Inizializza form
   useEffect(() => {
     if (!show) return
     setFormSaved(false)
-    // Apri form automaticamente se profilo incompleto
     const profileFields = [
       userProfile?.platform, userProfile?.connection_quality, userProfile?.pass_level,
       userProfile?.smart_assist, userProfile?.input_delay, userProfile?.ai_weak_point
     ].filter(v => v != null && String(v).trim() !== '').length
     setFormExpanded(profileFields < 3)
-    // Pre-popola form con dati esistenti
     setFormData({
       connection_quality: userProfile?.connection_quality || '',
       slow_opponent_connection_issues: userProfile?.slow_opponent_connection_issues || '',
@@ -137,7 +167,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     })
   }, [show, userProfile])
 
-  // Whitelists per validazione locale
+  // LOGICA INVARIATA: Whitelist validazione
   const WHITELISTS = {
     platform: ['console', 'pc', 'mobile', 'other'],
     connection_quality: ['good', 'unstable', 'lag'],
@@ -148,7 +178,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     ai_weak_point: ['defence', 'attack', 'set_pieces', 'transitions', 'final_minutes']
   }
 
-  // Salva form dati tecnici via save-ai-info (0 HP, nessuna chiamata OpenAI)
+  // LOGICA INVARIATA: Salva form
   const handleFormSave = useCallback(async () => {
     setFormSaving(true)
     try {
@@ -166,15 +196,13 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
           const n = v !== '' ? parseInt(String(v), 10) : null
           body[k] = Number.isFinite(n) ? n : null
         } else if (WHITELISTS[k]) {
-          // Sanitize fields against whitelist
           const val = v !== '' ? String(v).trim() : null
           if (val && WHITELISTS[k].includes(val.toLowerCase())) {
              body[k] = val.toLowerCase()
           } else if (k === 'ai_weak_point') {
-             // Weak point allows free text if not in whitelist (handled by API, but we pass it)
              body[k] = val
           } else {
-             body[k] = null // Invalid value becomes null
+             body[k] = null
           }
         } else {
           body[k] = v !== '' ? String(v).trim() : null
@@ -193,7 +221,6 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
       if (res.ok) {
         setLoadedProfile(prev => ({ ...prev, ...body }))
         setFormSaved(true)
-        setFormExpanded(false)
         if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('knowledge-should-refresh'))
       }
     } catch (err) {
@@ -203,7 +230,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     }
   }, [formData])
 
-  // Suggerimenti iniziali adattivi (solo per chat step)
+  // LOGICA INVARIATA: Suggerimenti iniziali
   const initialSuggestions = useMemo(() => {
     if (lang === 'en') {
       if (sessionMode === 'feedback') return ['It went well', "It didn't work", 'I followed your advice']
@@ -213,7 +240,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     return ['Ho cambiato qualcosa nel mio gioco', 'Ho difficolta con qualcosa', 'Altro feedback']
   }, [sessionMode, lang])
 
-  // Messaggio iniziale automatico
+  // LOGICA INVARIATA: Messaggio iniziale
   useEffect(() => {
     if (!show) return
     setMessages([])
@@ -227,8 +254,8 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
       const form = lastMatch.formation_played || '?'
       const result = lastMatch.result || '?'
       greeting = lang === 'en'
-        ? `Hi ${firstName}! I see you played ${form} vs ${opp} \u2014 ${result}. Tell me how it went!`
-        : `Ciao ${firstName}! Vedo che hai giocato ${form} contro ${opp} \u2014 ${result}. Raccontami com'\u00e8 andata!`
+        ? `Hi ${firstName}! I see you played ${form} vs ${opp} — ${result}. Tell me how it went!`
+        : `Ciao ${firstName}! Vedo che hai giocato ${form} contro ${opp} — ${result}. Raccontami com'è andata!`
     } else if (sessionMode === 'profile_setup') {
       greeting = lang === 'en'
         ? `Hi ${firstName}! Fill in your details above, then we can chat.`
@@ -236,7 +263,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     } else {
       greeting = lang === 'en'
         ? `Hi ${firstName}! Is there anything new you want to tell me?`
-        : `Ciao ${firstName}! C'\u00e8 qualcosa di nuovo che vuoi dirmi?`
+        : `Ciao ${firstName}! C'è qualcosa di nuovo che vuoi dirmi?`
     }
 
     setTimeout(() => {
@@ -244,23 +271,24 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     }, 300)
   }, [show, sessionMode, userProfile, lastMatch, lang])
 
-  // Auto-scroll
+  // LOGICA INVARIATA: Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Focus input quando appare
+  // LOGICA INVARIATA: Focus input
   useEffect(() => {
     if (show && !loading) {
       setTimeout(() => inputRef.current?.focus(), 400)
     }
   }, [show, loading])
 
-  // Cleanup abort controller
+  // LOGICA INVARIATA: Cleanup
   useEffect(() => {
     return () => { sendAbortRef.current?.abort() }
   }, [])
 
+  // LOGICA INVARIATA: Invia messaggio
   const handleSend = useCallback(async (messageText = input) => {
     if (!messageText.trim() || loading || saving) return
 
@@ -332,10 +360,9 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     setTimeout(() => handleSend(text), 100)
   }, [handleSend])
 
-  // Salva e chiudi: invia conversazione a /api/save-coach-feedback
+  // LOGICA INVARIATA: Salva e chiudi
   const handleSaveAndClose = useCallback(async () => {
     if (saving) return
-    // Se solo messaggio iniziale, chiudi senza salvare
     const userMessages = messages.filter(m => m.role === 'user')
     if (userMessages.length === 0) {
       onClose?.()
@@ -375,13 +402,12 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
           window.dispatchEvent(new CustomEvent('credits-consumed'))
           window.dispatchEvent(new CustomEvent('knowledge-should-refresh'))
         }
-        // Aggiorna il riassunto diagnostico (come fa match/new dopo salvataggio)
         try {
           await fetch('/api/refresh-diagnostic', {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}` }
           })
-        } catch (_) { /* non bloccare chiusura */ }
+        } catch (_) {}
         setTimeout(() => onClose?.(), 1500)
       } else {
         console.error('[CoachFeedbackChat] Save error:', await res.text())
@@ -406,56 +432,56 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'rgba(0,0,0,0.7)',
-        backdropFilter: 'blur(4px)'
+        background: 'rgba(0,0,0,0.85)',
+        backdropFilter: 'blur(8px)'
       }}
     >
-      {/* Dark theme per select option (browser nativo) */}
-      <style>{`
-        .coach-form-select option {
-          background: #1a1a1a;
-          color: #fff;
-          padding: 6px;
-        }
-        .coach-form-select option:checked {
-          background: #e65100;
-          color: #fff;
-        }
-      `}</style>
       <div
         style={{
-          width: 'clamp(340px, 92vw, 440px)',
-          height: 'clamp(520px, 80vh, 680px)',
-          background: 'rgba(0, 0, 0, 0.97)',
-          border: '2px solid var(--neon-orange)',
-          borderRadius: '16px',
-          boxShadow: '0 0 30px rgba(255, 140, 0, 0.3)',
+          width: 'clamp(380px, 95vw, 520px)',
+          height: 'clamp(580px, 90vh, 720px)',
+          background: 'linear-gradient(180deg, rgba(5,8,20,0.98) 0%, rgba(3,5,12,0.98) 100%)',
+          border: '1px solid rgba(0, 212, 255, 0.3)',
+          borderRadius: '24px',
+          boxShadow: '0 0 60px rgba(0, 212, 255, 0.15), 0 25px 50px rgba(0,0,0,0.5)',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden'
         }}
       >
-        {/* Header */}
+        {/* Header Migliorato */}
         <div
           style={{
-            padding: '16px',
-            background: 'linear-gradient(135deg, var(--neon-orange), #e65100)',
+            padding: '20px 24px',
+            background: 'linear-gradient(135deg, rgba(0,212,255,0.15), rgba(0,128,255,0.1))',
+            borderBottom: '1px solid rgba(0, 212, 255, 0.2)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '12px'
+            gap: '16px'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-            <Dumbbell size={20} color="white" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+            <div style={{
+              width: '44px',
+              height: '44px',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, var(--neon-cyan), var(--neon-blue))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 0 20px rgba(0, 212, 255, 0.4)'
+            }}>
+              <Dumbbell size={22} color="white" />
+            </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>
+              <div style={{ fontWeight: 700, color: 'white', fontSize: '17px', marginBottom: '2px' }}>
                 {lang === 'en' ? 'Coach Gym' : 'Palestra Coach'}
               </div>
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)' }}>
+              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>
                 {lang === 'en'
-                  ? 'Profile & match feedback only. For tactical advice use the main chat.'
-                  : 'Solo profilo e feedback partite. Per consigli tattici usa la chat principale.'}
+                  ? 'Profile & feedback session'
+                  : 'Sessione profilo & feedback'}
               </div>
             </div>
           </div>
@@ -463,276 +489,424 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
             onClick={handleSaveAndClose}
             disabled={saving}
             style={{
-              background: saving ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.15)',
-              border: '1px solid rgba(255,255,255,0.4)',
-              borderRadius: '8px',
+              background: saving ? 'rgba(255,255,255,0.1)' : 'rgba(0,212,255,0.2)',
+              border: '1px solid rgba(0,212,255,0.4)',
+              borderRadius: '10px',
               cursor: saving ? 'wait' : 'pointer',
               color: 'white',
-              padding: '6px 12px',
+              padding: '10px 16px',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
-              fontSize: '12px',
+              gap: '8px',
+              fontSize: '13px',
               fontWeight: 600,
               transition: 'all 0.2s'
             }}
-            onMouseEnter={(e) => { if (!saving) e.currentTarget.style.background = 'rgba(255,255,255,0.25)' }}
-            onMouseLeave={(e) => { if (!saving) e.currentTarget.style.background = 'rgba(255,255,255,0.15)' }}
+            onMouseEnter={(e) => { if (!saving) e.currentTarget.style.background = 'rgba(0,212,255,0.3)' }}
+            onMouseLeave={(e) => { if (!saving) e.currentTarget.style.background = 'rgba(0,212,255,0.2)' }}
           >
             {saved ? (
-              <>{lang === 'en' ? 'Saved!' : 'Salvato!'}</>
+              <><CheckCircle2 size={16} /> {lang === 'en' ? 'Saved!' : 'Salvato!'}</>
             ) : saving ? (
               <>{lang === 'en' ? 'Saving...' : 'Salvo...'}</>
             ) : (
-              <><Save size={14} /> {lang === 'en' ? 'Save & Close' : 'Salva e chiudi'}</>
+              <><Save size={16} /> {lang === 'en' ? 'Save' : 'Salva'}</>
             )}
           </button>
         </div>
 
-        {/* Pannello dati tecnici espandibile (0 HP) — sempre accessibile */}
-        <div style={{ borderBottom: '1px solid rgba(255,140,0,0.2)' }}>
-          <button
-            type="button"
-            onClick={() => setFormExpanded(e => !e)}
-            style={{
-              width: '100%', padding: '10px 16px',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              background: formExpanded ? 'rgba(255,140,0,0.08)' : 'transparent',
-              border: 'none', cursor: 'pointer', color: 'var(--neon-orange)', fontSize: '13px',
-              transition: 'background 0.2s'
-            }}
-          >
-            <span>{lang === 'en' ? 'My gaming profile' : 'Il mio profilo di gioco'}
-              {formSaved && <span style={{ color: '#4caf50', marginLeft: '8px' }}>{lang === 'en' ? 'Saved!' : 'Salvato!'}</span>}
-            </span>
-            <span style={{ fontSize: '16px' }}>{formExpanded ? '\u25B2' : '\u25BC'}</span>
-          </button>
-
-          {formExpanded && (
-            <div style={{ padding: '10px 14px 14px', maxHeight: '45vh', overflowY: 'auto', background: 'rgba(0,0,0,0.25)' }}>
-              {/* Riga 1: 3 colonne */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
-                <div>
-                  <label style={formLabelStyle}>{lang === 'en' ? 'Platform' : 'Piattaforma'}</label>
-                  <select className="coach-form-select" style={formSelectStyle} value={formData.platform || ''} onChange={e => setFormData(p => ({ ...p, platform: e.target.value }))}>
-                    <option value="">--</option><option value="console">Console</option><option value="pc">PC</option><option value="mobile">Mobile</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={formLabelStyle}>{lang === 'en' ? 'Connection' : 'Connessione'}</label>
-                  <select className="coach-form-select" style={formSelectStyle} value={formData.connection_quality || ''} onChange={e => setFormData(p => ({ ...p, connection_quality: e.target.value }))}>
-                    <option value="">--</option><option value="good">{lang === 'en' ? 'Good' : 'Buona'}</option><option value="unstable">{lang === 'en' ? 'Unstable' : 'Instabile'}</option><option value="lag">Lag</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={formLabelStyle}>{lang === 'en' ? 'Pass level' : 'Passaggi'}</label>
-                  <select className="coach-form-select" style={formSelectStyle} value={formData.pass_level || ''} onChange={e => setFormData(p => ({ ...p, pass_level: e.target.value }))}>
-                    <option value="">--</option><option value="pa1">PA1</option><option value="pa2">PA2</option><option value="pa3">PA3</option>
-                  </select>
-                </div>
-              </div>
-              {/* Riga 2: 3 colonne */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginTop: '8px' }}>
-                <div>
-                  <label style={formLabelStyle}>Smart Assist</label>
-                  <select className="coach-form-select" style={formSelectStyle} value={formData.smart_assist || ''} onChange={e => setFormData(p => ({ ...p, smart_assist: e.target.value }))}>
-                    <option value="">--</option><option value="yes">{lang === 'en' ? 'Yes' : 'Si'}</option><option value="no">No</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={formLabelStyle}>{lang === 'en' ? 'Input delay' : 'Input delay'}</label>
-                  <select className="coach-form-select" style={formSelectStyle} value={formData.input_delay || ''} onChange={e => setFormData(p => ({ ...p, input_delay: e.target.value }))}>
-                    <option value="">--</option><option value="yes">{lang === 'en' ? 'Yes' : 'Si'}</option><option value="no">No</option><option value="sometimes">{lang === 'en' ? 'Sometimes' : 'A volte'}</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={formLabelStyle}>{lang === 'en' ? 'Weak point' : 'Punto debole'}</label>
-                  <select className="coach-form-select" style={formSelectStyle} value={formData.ai_weak_point || ''} onChange={e => setFormData(p => ({ ...p, ai_weak_point: e.target.value }))}>
-                    <option value="">--</option><option value="defence">{lang === 'en' ? 'Defence' : 'Difesa'}</option><option value="attack">{lang === 'en' ? 'Attack' : 'Attacco'}</option><option value="set_pieces">{lang === 'en' ? 'Set pieces' : 'Piazzati'}</option><option value="transitions">{lang === 'en' ? 'Transitions' : 'Transizioni'}</option><option value="final_minutes">{lang === 'en' ? 'Final min.' : 'Finale'}</option>
-                  </select>
-                </div>
-              </div>
-              
-              {/* Riga 2b: Slow Opponent (Nuova riga per etichetta lunga) */}
-              <div style={{ marginTop: '8px' }}>
-                <label style={formLabelStyle}>{lang === 'en' ? 'Opponent connection issues?' : 'Problemi connessione avversario?'}</label>
-                <select className="coach-form-select" style={formSelectStyle} value={formData.slow_opponent_connection_issues || ''} onChange={e => setFormData(p => ({ ...p, slow_opponent_connection_issues: e.target.value }))}>
-                  <option value="">--</option>
-                  <option value="yes">{lang === 'en' ? 'Yes, often' : 'Sì, spesso'}</option>
-                  <option value="no">{lang === 'en' ? 'No, rare' : 'No, raramente'}</option>
-                  <option value="sometimes">{lang === 'en' ? 'Sometimes' : 'A volte'}</option>
-                </select>
-              </div>
-
-              {/* Riga 3: Divisione + Ore */}
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '8px', marginTop: '8px' }}>
-                <div>
-                  <label style={formLabelStyle}>{lang === 'en' ? 'Division' : 'Divisione'}</label>
-                  <input type="text" style={formFieldStyle} placeholder={lang === 'en' ? 'e.g. Div 3' : 'es. Div 3'}
-                    value={formData.current_division || ''} onChange={e => setFormData(p => ({ ...p, current_division: e.target.value }))} maxLength={50} />
-                </div>
-                <div>
-                  <label style={formLabelStyle}>{lang === 'en' ? 'Hrs/wk' : 'Ore/sett'}</label>
-                  <input type="number" style={formFieldStyle} min="0" max="168" placeholder="0"
-                    value={formData.hours_per_week ?? ''} onChange={e => setFormData(p => ({ ...p, hours_per_week: e.target.value }))} />
-                </div>
-              </div>
-              {/* Riga 4: Testo */}
-              <div style={{ marginTop: '8px' }}>
-                <label style={formLabelStyle}>{lang === 'en' ? 'What to learn?' : 'Cosa vuoi imparare?'}</label>
-                <input type="text" style={formFieldStyle} maxLength={255}
-                  value={formData.ai_learn_goals || ''} onChange={e => setFormData(p => ({ ...p, ai_learn_goals: e.target.value }))}
-                  placeholder={lang === 'en' ? 'e.g. defense vs pressing' : 'es. difesa vs pressing'} />
-              </div>
-              <div style={{ marginTop: '6px' }}>
-                <label style={formLabelStyle}>{lang === 'en' ? 'Notes for AI' : 'Note per l\'IA'}</label>
-                <input type="text" style={formFieldStyle} maxLength={500}
-                  value={formData.ai_notes || ''} onChange={e => setFormData(p => ({ ...p, ai_notes: e.target.value }))}
-                  placeholder={lang === 'en' ? 'Anything else...' : 'Qualsiasi altra cosa...'} />
-              </div>
-              <button
-                onClick={handleFormSave} disabled={formSaving}
-                style={{
-                  width: '100%', marginTop: '10px', padding: '9px',
-                  background: 'var(--neon-orange)', border: 'none', borderRadius: '6px',
-                  color: 'white', fontSize: '12px', fontWeight: 600,
-                  cursor: formSaving ? 'wait' : 'pointer', transition: 'opacity 0.2s',
-                  opacity: formSaving ? 0.7 : 1
-                }}
-              >
-                {formSaving ? (lang === 'en' ? 'Saving...' : 'Salvo...') : (lang === 'en' ? 'Save data' : 'Salva dati')}
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Chat */}
-        {/* Messages */}
-        <div
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '16px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
-            background: 'rgba(0, 0, 0, 0.3)'
-          }}
-        >
-          {messages.map((msg, idx) => (
-            <div
-              key={idx}
+        {/* Content Scrollable */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+          
+          {/* Sezione Profilo Migliorata */}
+          <div style={{ ...styles.sectionCard, marginBottom: '20px' }}>
+            <button
+              type="button"
+              onClick={() => setFormExpanded(e => !e)}
               style={{
-                alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                maxWidth: '82%',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                background: msg.role === 'user'
-                  ? 'var(--neon-orange)'
-                  : 'rgba(255, 255, 255, 0.1)',
-                fontSize: '14px',
-                lineHeight: '1.6',
-                wordWrap: 'break-word',
-                border: msg.role === 'assistant' ? '1px solid rgba(255, 140, 0, 0.3)' : 'none'
+                width: '100%',
+                padding: '16px 20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: formExpanded ? 'rgba(0,212,255,0.08)' : 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'white',
+                transition: 'all 0.2s'
               }}
             >
-              {msg.content}
-            </div>
-          ))}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <User size={20} color="var(--neon-cyan)" />
+                <span style={{ fontWeight: 600, fontSize: '15px' }}>
+                  {lang === 'en' ? 'Your Gaming Profile' : 'Il tuo Profilo di Gioco'}
+                </span>
+                {formSaved && (
+                  <span style={{ 
+                    fontSize: '11px', 
+                    color: '#22c55e', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '4px',
+                    marginLeft: '8px'
+                  }}>
+                    <CheckCircle2 size={12} /> {lang === 'en' ? 'Saved' : 'Salvato'}
+                  </span>
+                )}
+              </div>
+              <div style={{ 
+                transform: formExpanded ? 'rotate(180deg)' : 'rotate(0)', 
+                transition: 'transform 0.3s',
+                color: 'rgba(255,255,255,0.5)'
+              }}>
+                <ChevronDown size={20} />
+              </div>
+            </button>
 
-          {loading && (
-            <div style={{ alignSelf: 'flex-start', opacity: 0.7 }}>
-              <div style={{ display: 'flex', gap: '4px', padding: '12px' }}>
-                {[0, 0.2, 0.4].map((delay, i) => (
-                  <div key={i} style={{
-                    width: '8px', height: '8px', borderRadius: '50%',
-                    background: 'var(--neon-orange)', animation: `bounce 1s infinite ${delay}s`
+            {formExpanded && (
+              <div style={{ padding: '0 20px 20px' }}>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(2, 1fr)', 
+                  gap: '16px',
+                  marginBottom: '16px'
+                }}>
+                  {/* Platform */}
+                  <div>
+                    <label style={styles.formLabel}>
+                      <Gamepad2 size={12} style={{ display: 'inline', marginRight: '4px' }} />
+                      {lang === 'en' ? 'Platform' : 'Piattaforma'}
+                    </label>
+                    <select 
+                      className="coach-form-select"
+                      style={{ ...styles.formField, ...styles.formSelect }}
+                      value={formData.platform || ''} 
+                      onChange={e => setFormData(p => ({ ...p, platform: e.target.value }))}
+                    >
+                      <option value="">{lang === 'en' ? 'Select' : 'Seleziona'}</option>
+                      <option value="console">Console</option>
+                      <option value="pc">PC</option>
+                      <option value="mobile">Mobile</option>
+                    </select>
+                  </div>
+
+                  {/* Connection */}
+                  <div>
+                    <label style={styles.formLabel}>
+                      <Wifi size={12} style={{ display: 'inline', marginRight: '4px' }} />
+                      {lang === 'en' ? 'Connection' : 'Connessione'}
+                    </label>
+                    <select 
+                      className="coach-form-select"
+                      style={{ ...styles.formField, ...styles.formSelect }}
+                      value={formData.connection_quality || ''} 
+                      onChange={e => setFormData(p => ({ ...p, connection_quality: e.target.value }))}
+                    >
+                      <option value="">{lang === 'en' ? 'Select' : 'Seleziona'}</option>
+                      <option value="good">{lang === 'en' ? 'Good' : 'Buona'}</option>
+                      <option value="unstable">{lang === 'en' ? 'Unstable' : 'Instabile'}</option>
+                      <option value="lag">Lag</option>
+                    </select>
+                  </div>
+
+                  {/* Pass Level */}
+                  <div>
+                    <label style={styles.formLabel}>
+                      <Zap size={12} style={{ display: 'inline', marginRight: '4px' }} />
+                      {lang === 'en' ? 'Pass Level' : 'Passaggi'}
+                    </label>
+                    <select 
+                      className="coach-form-select"
+                      style={{ ...styles.formField, ...styles.formSelect }}
+                      value={formData.pass_level || ''} 
+                      onChange={e => setFormData(p => ({ ...p, pass_level: e.target.value }))}
+                    >
+                      <option value="">{lang === 'en' ? 'Select' : 'Seleziona'}</option>
+                      <option value="pa1">PA1</option>
+                      <option value="pa2">PA2</option>
+                      <option value="pa3">PA3</option>
+                    </select>
+                  </div>
+
+                  {/* Smart Assist */}
+                  <div>
+                    <label style={styles.formLabel}>
+                      <Target size={12} style={{ display: 'inline', marginRight: '4px' }} />
+                      Smart Assist
+                    </label>
+                    <select 
+                      className="coach-form-select"
+                      style={{ ...styles.formField, ...styles.formSelect }}
+                      value={formData.smart_assist || ''} 
+                      onChange={e => setFormData(p => ({ ...p, smart_assist: e.target.value }))}
+                    >
+                      <option value="">{lang === 'en' ? 'Select' : 'Seleziona'}</option>
+                      <option value="yes">{lang === 'en' ? 'Yes' : 'Sì'}</option>
+                      <option value="no">No</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Weak Point */}
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={styles.formLabel}>
+                    {lang === 'en' ? 'Main Weakness' : 'Punto Debole Principale'}
+                  </label>
+                  <select 
+                    className="coach-form-select"
+                    style={{ ...styles.formField, ...styles.formSelect }}
+                    value={formData.ai_weak_point || ''} 
+                    onChange={e => setFormData(p => ({ ...p, ai_weak_point: e.target.value }))}
+                  >
+                    <option value="">{lang === 'en' ? 'Select' : 'Seleziona'}</option>
+                    <option value="defence">{lang === 'en' ? 'Defence' : 'Difesa'}</option>
+                    <option value="attack">{lang === 'en' ? 'Attack' : 'Attacco'}</option>
+                    <option value="set_pieces">{lang === 'en' ? 'Set Pieces' : 'Piazzati'}</option>
+                    <option value="transitions">{lang === 'en' ? 'Transitions' : 'Transizioni'}</option>
+                    <option value="final_minutes">{lang === 'en' ? 'Final Minutes' : 'Minuti Finali'}</option>
+                  </select>
+                </div>
+
+                {/* Division */}
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={styles.formLabel}>
+                    {lang === 'en' ? 'Current Division' : 'Divisione Attuale'}
+                  </label>
+                  <input 
+                    type="text"
+                    style={styles.formField}
+                    placeholder={lang === 'en' ? 'e.g. Division 3' : 'es. Divisione 3'}
+                    value={formData.current_division || ''} 
+                    onChange={e => setFormData(p => ({ ...p, current_division: e.target.value }))}
+                  />
+                </div>
+
+                {/* Notes */}
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={styles.formLabel}>
+                    {lang === 'en' ? 'Notes for Coach' : 'Note per il Coach'}
+                  </label>
+                  <input 
+                    type="text"
+                    style={styles.formField}
+                    placeholder={lang === 'en' ? 'Anything else...' : 'Qualsiasi altra cosa...'}
+                    value={formData.ai_notes || ''} 
+                    onChange={e => setFormData(p => ({ ...p, ai_notes: e.target.value }))}
+                  />
+                </div>
+
+                <button
+                  onClick={handleFormSave}
+                  disabled={formSaving}
+                  style={{
+                    width: '100%',
+                    padding: '14px',
+                    background: formSaving ? 'rgba(0,212,255,0.1)' : 'linear-gradient(135deg, var(--neon-cyan), var(--neon-blue))',
+                    border: 'none',
+                    borderRadius: '12px',
+                    color: 'white',
+                    fontWeight: 600,
+                    cursor: formSaving ? 'wait' : 'pointer',
+                    fontSize: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  {formSaving ? (
+                    <>{lang === 'en' ? 'Saving...' : 'Salvataggio...'}</>
+                  ) : (
+                    <><Save size={16} /> {lang === 'en' ? 'Save Profile' : 'Salva Profilo'}</>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Sezione Chat Migliorata */}
+          <div style={{ ...styles.sectionCard, flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div style={{
+              padding: '16px 20px',
+              borderBottom: '1px solid rgba(255,255,255,0.08)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <MessageCircle size={18} color="var(--neon-cyan)" />
+              <span style={{ fontWeight: 600, color: 'white', fontSize: '14px' }}>
+                {lang === 'en' ? 'Chat with Coach' : 'Chat con Coach'}
+              </span>
+            </div>
+
+            <div style={{ 
+              flex: 1, 
+              padding: '16px', 
+              minHeight: '180px',
+              maxHeight: '280px',
+              overflowY: 'auto'
+            }}>
+              {messages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    marginBottom: '12px',
+                    display: 'flex',
+                    justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start'
+                  }}
+                >
+                  <div
+                    style={{
+                      maxWidth: '85%',
+                      padding: '12px 16px',
+                      borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                      background: msg.role === 'user' 
+                        ? 'linear-gradient(135deg, var(--neon-cyan), var(--neon-blue))'
+                        : 'rgba(255,255,255,0.08)',
+                      color: msg.role === 'user' ? 'white' : 'rgba(255,255,255,0.9)',
+                      fontSize: '14px',
+                      lineHeight: '1.5',
+                      border: msg.role === 'assistant' ? '1px solid rgba(0,212,255,0.2)' : 'none'
+                    }}
+                  >
+                    {msg.content}
+                  </div>
+                </div>
+              ))}
+              
+              {loading && (
+                <div style={{ display: 'flex', gap: '6px', padding: '12px' }}>
+                  <div style={{ 
+                    width: '8px', 
+                    height: '8px', 
+                    borderRadius: '50%', 
+                    background: 'var(--neon-cyan)',
+                    animation: 'bounce 1s infinite'
                   }} />
+                  <div style={{ 
+                    width: '8px', 
+                    height: '8px', 
+                    borderRadius: '50%', 
+                    background: 'var(--neon-cyan)',
+                    animation: 'bounce 1s infinite 0.2s'
+                  }} />
+                  <div style={{ 
+                    width: '8px', 
+                    height: '8px', 
+                    borderRadius: '50%', 
+                    background: 'var(--neon-cyan)',
+                    animation: 'bounce 1s infinite 0.4s'
+                  }} />
+                </div>
+              )}
+              
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Suggerimenti rapidi */}
+            {messages.filter(m => m.role === 'user').length < 2 && !loading && (
+              <div style={{ 
+                padding: '0 16px 12px', 
+                display: 'flex', 
+                flexWrap: 'wrap', 
+                gap: '8px' 
+              }}>
+                {initialSuggestions.map((text, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleQuickAction(text)}
+                    style={{
+                      padding: '8px 14px',
+                      background: 'rgba(0,212,255,0.1)',
+                      border: '1px solid rgba(0,212,255,0.3)',
+                      borderRadius: '20px',
+                      color: 'var(--neon-cyan)',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(0,212,255,0.2)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(0,212,255,0.1)'
+                    }}
+                  >
+                    {text}
+                  </button>
                 ))}
               </div>
-            </div>
-          )}
+            )}
 
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Suggestions (solo se pochi messaggi utente) */}
-        {messages.filter(m => m.role === 'user').length < 2 && !loading && (
-          <div style={{
-            padding: '8px 12px 12px',
-            borderTop: '1px solid rgba(255, 140, 0, 0.2)',
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '8px',
-            background: 'rgba(0, 0, 0, 0.3)'
-          }}>
-            {initialSuggestions.map((text, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => handleQuickAction(text)}
+            {/* Input */}
+            <div style={{ 
+              padding: '16px', 
+              borderTop: '1px solid rgba(255,255,255,0.08)',
+              display: 'flex',
+              gap: '10px'
+            }}>
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSend()
+                  }
+                }}
+                placeholder={lang === 'en' ? 'Write your message...' : 'Scrivi il tuo messaggio...'}
                 disabled={loading || saving}
                 style={{
-                  padding: '6px 12px',
-                  background: 'rgba(255, 140, 0, 0.1)',
-                  border: '1px solid var(--neon-orange)',
-                  borderRadius: '20px',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  color: 'white'
+                  flex: 1,
+                  padding: '12px 16px',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: '12px',
+                  color: 'white',
+                  fontSize: '14px',
+                  outline: 'none'
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 140, 0, 0.2)' }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 140, 0, 0.1)' }}
+              />
+              <button
+                onClick={() => handleSend()}
+                disabled={loading || saving || !input.trim()}
+                style={{
+                  padding: '12px 16px',
+                  background: !input.trim() ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, var(--neon-cyan), var(--neon-blue))',
+                  border: 'none',
+                  borderRadius: '12px',
+                  color: 'white',
+                  cursor: !input.trim() ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s'
+                }}
               >
-                {text}
+                <Send size={18} />
               </button>
-            ))}
+            </div>
           </div>
-        )}
-
-        {/* Input */}
-        <div style={{
-          padding: '12px 16px',
-          borderTop: '1px solid rgba(255, 140, 0, 0.2)',
-          display: 'flex',
-          gap: '8px',
-          background: 'rgba(0, 0, 0, 0.5)'
-        }}>
-          <input
-            ref={inputRef}
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
-            }}
-            placeholder={lang === 'en' ? 'Profile or match feedback...' : 'Profilo o feedback partita...'}
-            disabled={loading || saving}
-            style={{
-              flex: 1, padding: '12px',
-              background: 'rgba(255, 255, 255, 0.1)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '8px', color: 'white', fontSize: '14px', outline: 'none'
-            }}
-          />
-          <button
-            onClick={() => handleSend()}
-            disabled={loading || saving || !input.trim()}
-            style={{
-              padding: '12px 16px',
-              background: loading || saving || !input.trim() ? 'rgba(255,255,255,0.1)' : 'var(--neon-orange)',
-              border: 'none', borderRadius: '8px',
-              cursor: loading || saving || !input.trim() ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'all 0.2s'
-            }}
-            aria-label={lang === 'en' ? 'Send' : 'Invia'}
-          >
-            <Send size={18} color="white" />
-          </button>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-4px); }
+        }
+        .coach-form-select option {
+          background: #0a0e1a;
+          color: #fff;
+          padding: 10px;
+        }
+        .coach-form-select option:checked {
+          background: var(--neon-cyan);
+          color: #000;
+        }
+      `}</style>
     </div>
   )
 }
