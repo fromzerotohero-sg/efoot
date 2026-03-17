@@ -2,6 +2,7 @@ import './globals.css'
 import LanguageProviderWrapper from '@/components/LanguageProviderWrapper'
 import SidebarNew from '@/components/SidebarNew'
 import TopBar from '@/components/TopBar'
+import BottomNavigation from '@/components/BottomNavigation'
 
 // Layout unico: usare solo questo file. Non creare layout.tsx (conflitti / layout sbagliato = dashboard non carica).
 // Title/description: default IT; client can set document.title by lang via LanguageProviderWrapper
@@ -20,16 +21,29 @@ export default function RootLayout({ children }) {
             <SidebarNew />
             
             {/* Main content area */}
-            <div className="flex-1 flex flex-col lg:ml-64 overflow-hidden">
+            <div 
+              className="flex-1 flex flex-col lg:ml-64 overflow-hidden"
+              style={{
+                paddingBottom: 'var(--bottom-nav-height, 0px)'
+              }}
+            >
               {/* Top bar */}
               <TopBar />
               
               {/* Page content */}
-              <main className="flex-1 overflow-y-auto">
+              <main 
+                className="flex-1 overflow-y-auto"
+                style={{
+                  paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))'
+                }}
+              >
                 {children}
               </main>
             </div>
           </div>
+          
+          {/* Bottom Navigation - solo mobile */}
+          <BottomNavigation />
         </LanguageProviderWrapper>
       </body>
     </html>
