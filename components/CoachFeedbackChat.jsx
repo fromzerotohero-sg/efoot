@@ -737,6 +737,9 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
               <span style={{ fontWeight: 600, color: 'white', fontSize: '14px' }}>
                 {lang === 'en' ? 'Chat with Coach' : 'Chat con Coach'}
               </span>
+              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginLeft: 'auto' }}>
+                {lang === 'en' ? 'Be specific → better tips' : 'Sii preciso → consigli utili'}
+              </span>
             </div>
 
             <div style={{ 
@@ -856,7 +859,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                     handleSend()
                   }
                 }}
-                placeholder={lang === 'en' ? 'Write your message...' : 'Scrivi il tuo messaggio...'}
+                placeholder={lang === 'en' ? 'Ask me specific things about your game...' : 'Chiedimi cose specifiche sul tuo gioco...'}
                 disabled={loading || saving}
                 style={{
                   flex: 1,
