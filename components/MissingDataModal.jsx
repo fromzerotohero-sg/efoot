@@ -13,11 +13,31 @@ export default function MissingDataModal({
   const { t } = useTranslation()
   const [manualInput, setManualInput] = React.useState({})
 
+  const boosters = React.useMemo(() => {
+    const v = manualInput.boosters ?? playerData?.boosters
+    return Array.isArray(v) ? v : []
+  }, [manualInput.boosters, playerData])
+
   const handleInputChange = (field, value) => {
     setManualInput(prev => ({
       ...prev,
       [field]: value
     }))
+  }
+
+  const handleAddBooster = () => {
+    const next = [...boosters, { name: '', effect: '', condition: '' }]
+    handleInputChange('boosters', next)
+  }
+
+  const handleRemoveBooster = (idx) => {
+    const next = boosters.filter((_, i) => i !== idx)
+    handleInputChange('boosters', next)
+  }
+
+  const handleBoosterChange = (idx, key, value) => {
+    const next = boosters.map((b, i) => (i === idx ? { ...(b || {}), [key]: value } : b))
+    handleInputChange('boosters', next)
   }
 
   const handleSaveManual = () => {
@@ -174,21 +194,150 @@ export default function MissingDataModal({
                   }}>
                     {missing.label}
                   </label>
-                  <input
-                    type={getInputType(missing.field)}
-                    value={getInputValue(missing.field)}
-                    onChange={(e) => handleInputChange(missing.field, e.target.value)}
-                    placeholder={t('enterValueOptional')}
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      borderRadius: '8px',
-                      border: '1px solid var(--border-color, #333)',
-                      backgroundColor: 'var(--bg-secondary, #2a2a2a)',
-                      color: 'var(--text-primary, #fff)',
-                      fontSize: '14px'
-                    }}
-                  />
+                  {missing.field === 'boosters' ? (
+                    <div style={{
+                      padding: '12px',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      background: 'rgba(0,0,0,0.18)'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '10px',
+                        marginBottom: '10px'
+                      }}>
+                        <div style={{ fontSize: '13px', opacity: 0.85 }}>
+                          {t('boostersList')}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleAddBooster}
+                          className="btn secondary"
+                          style={{ padding: '8px 10px', fontSize: '12px', borderRadius: '8px' }}
+                        >
+                          {t('addBooster')}
+                        </button>
+                      </div>
+
+                      {boosters.length === 0 ? (
+                        <div style={{ fontSize: '13px', opacity: 0.65 }}>
+                          {t('boostersNotAvailable')}
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          {boosters.map((b, idx) => (
+                            <div key={idx} style={{
+                              border: '1px solid rgba(255,255,255,0.10)',
+                              borderRadius: '10px',
+                              padding: '10px',
+                              background: 'rgba(255,255,255,0.03)'
+                            }}>
+                              <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                gap: '10px',
+                                marginBottom: '10px'
+                              }}>
+                                <div style={{ fontSize: '12px', opacity: 0.75 }}>
+                                  {t('boosters')} #{idx + 1}
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveBooster(idx)}
+                                  className="btn secondary"
+                                  style={{
+                                    padding: '6px 10px',
+                                    fontSize: '12px',
+                                    borderRadius: '8px',
+                                    borderColor: 'rgba(239, 68, 68, 0.35)',
+                                    color: '#fecaca'
+                                  }}
+                                >
+                                  {t('removeSkill')}
+                                </button>
+                              </div>
+
+                              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
+                                <div>
+                                  <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '4px' }}>{t('boosterName')}</div>
+                                  <input
+                                    type="text"
+                                    value={String(b?.name ?? '')}
+                                    onChange={(e) => handleBoosterChange(idx, 'name', e.target.value)}
+                                    placeholder={t('boosterName')}
+                                    style={{
+                                      width: '100%',
+                                      padding: '10px',
+                                      borderRadius: '8px',
+                                      border: '1px solid var(--border-color, #333)',
+                                      backgroundColor: 'var(--bg-secondary, #2a2a2a)',
+                                      color: 'var(--text-primary, #fff)',
+                                      fontSize: '14px'
+                                    }}
+                                  />
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '4px' }}>{t('boosterEffect')}</div>
+                                  <input
+                                    type="text"
+                                    value={String(b?.effect ?? '')}
+                                    onChange={(e) => handleBoosterChange(idx, 'effect', e.target.value)}
+                                    placeholder={t('boosterEffect')}
+                                    style={{
+                                      width: '100%',
+                                      padding: '10px',
+                                      borderRadius: '8px',
+                                      border: '1px solid var(--border-color, #333)',
+                                      backgroundColor: 'var(--bg-secondary, #2a2a2a)',
+                                      color: 'var(--text-primary, #fff)',
+                                      fontSize: '14px'
+                                    }}
+                                  />
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '4px' }}>{t('boosterCondition')}</div>
+                                  <input
+                                    type="text"
+                                    value={String(b?.condition ?? '')}
+                                    onChange={(e) => handleBoosterChange(idx, 'condition', e.target.value)}
+                                    placeholder={t('boosterCondition')}
+                                    style={{
+                                      width: '100%',
+                                      padding: '10px',
+                                      borderRadius: '8px',
+                                      border: '1px solid var(--border-color, #333)',
+                                      backgroundColor: 'var(--bg-secondary, #2a2a2a)',
+                                      color: 'var(--text-primary, #fff)',
+                                      fontSize: '14px'
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <input
+                      type={getInputType(missing.field)}
+                      value={getInputValue(missing.field)}
+                      onChange={(e) => handleInputChange(missing.field, e.target.value)}
+                      placeholder={t('enterValueOptional')}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color, #333)',
+                        backgroundColor: 'var(--bg-secondary, #2a2a2a)',
+                        color: 'var(--text-primary, #fff)',
+                        fontSize: '14px'
+                      }}
+                    />
+                  )}
                 </div>
               ))}
             </div>
