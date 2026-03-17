@@ -638,7 +638,7 @@ Le policy comportamentali per il Coach AI (errori da evitare, terminologia, anti
 
 ---
 
-**Versione**: 8.5.0 ENTERPRISE | **Data**: 10 Febbraio 2026
+**Versione**: 8.5.1 ENTERPRISE | **Data**: 10 Febbraio 2026
 **Principio**: FISSO vs CONFIGURABILE | **Terminologia**: Ufficiale eFootball
 **Changelog 8.5**: §10 (NOTE CRITICHE) spostato da RAG a system prompt assistant-chat. Policy Coach AI ora in COACH_AI_POLICIES_* (sempre attive). RAG contiene solo meccaniche eFootball (§1-9).
 **Changelog 8.4**: §2.2 Attivazione stile e posizione ("passiva spenta se fuori ruolo"): stile non si attiva fuori competenza; §9.2 cross-ref; regola 5 FUORI RUOLO in NOTE CRITICHE; esempi risposta su giocatore che non rende.
