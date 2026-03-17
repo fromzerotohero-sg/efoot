@@ -37,7 +37,7 @@ export default function TopBar() {
         
         {/* Icona Carrello per acquisto crediti */}
         <button
-          onClick={() => router.push('/gestione-profilo')}
+          onClick={() => window.open('https://home.fromzerotohero.io/dashboard?usage', '_blank')}
           style={{
             display: 'flex',
             alignItems: 'center',

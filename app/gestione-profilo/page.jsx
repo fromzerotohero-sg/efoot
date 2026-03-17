@@ -254,7 +254,7 @@ export default function GestioneProfiloPage() {
               <div style={{ fontSize: 'clamp(22px, 5vw, 28px)', fontWeight: 700, color: '#fff' }}>{balance} {t('heroPoints')}</div>
             </div>
             <button
-              onClick={() => {}}
+              onClick={() => window.open('https://home.fromzerotohero.io/dashboard?usage', '_blank')}
               className="btn"
               style={{
                 background: 'var(--neon-orange)',

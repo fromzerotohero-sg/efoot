@@ -263,8 +263,10 @@ export default function ImpostazioniProfiloPage() {
             {t('completeYourProfile')}
           </p>
         </div>
-        <Link
-          href="/gestione-profilo"
+        <a
+          href="https://home.fromzerotohero.io/dashboard?usage"
+          target="_blank"
+          rel="noopener noreferrer"
           className="neon-button"
           style={{
             display: 'flex',
@@ -274,12 +276,13 @@ export default function ImpostazioniProfiloPage() {
             backgroundColor: 'rgba(255, 149, 0, 0.1)',
             borderColor: 'var(--border-orange)',
             color: 'var(--primary-orange)',
-            fontSize: '14px'
+            fontSize: '14px',
+            textDecoration: 'none'
           }}
         >
           <Wallet size={16} />
           {t('goToHeroPoints')}
-        </Link>
+        </a>
       </div>
 
       {/* Toast: feedback vicino all'azione (visibile anche se la sezione è in basso) */}

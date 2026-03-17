@@ -314,8 +314,24 @@ export default function GestioneFormazionePage() {
     }
   }, [toast])
 
+  // Correzione DX/SX: se un layout salvato ha TD/TS invertiti, normalizziamo in base a X.
+  // DX = x alto, SX = x basso. Solo normalizzazione in memoria (non persiste finché non salvi).
+  const normalizeSlotPositionsDxSx = React.useCallback((slotPositions) => {
+    const out = { ...(slotPositions || {}) }
+    for (const [k, v] of Object.entries(out)) {
+      if (!v) continue
+      const x = v.x != null ? Number(v.x) : null
+      const pos = String(v.position || '').trim().toUpperCase()
+      if (x == null || !Number.isFinite(x)) continue
+      if (pos === 'TD' && x < 50) out[k] = { ...v, position: 'TS' }
+      if (pos === 'TS' && x > 50) out[k] = { ...v, position: 'TD' }
+    }
+    return out
+  }, [])
+
   const handleSlotClick = (slotIndex) => {
-    const slotPos = layout?.slot_positions?.[slotIndex]
+    const normalized = normalizeSlotPositionsDxSx(layout?.slot_positions)
+    const slotPos = normalized?.[slotIndex]
     if (!slotPos) return
 
     setSelectedSlot({ slot_index: slotIndex, ...slotPos })
@@ -391,6 +407,49 @@ export default function GestioneFormazionePage() {
     if (c === 'ESA') return 'LWF'
     if (c === 'EDE') return 'RWF'
     return c
+  }, [lang])
+
+  // Placeholder "umano" per slot vuoti (IT/EN), senza cambiare i codici salvati.
+  const formatRolePlaceholder = React.useCallback((code) => {
+    const c = String(code || '?').trim().toUpperCase()
+    if (!c || c === '?') return lang === 'it' ? 'Slot' : 'Slot'
+
+    const it = {
+      PT: 'Portiere',
+      DC: 'Difensore centrale',
+      TD: 'Terzino DX',
+      TS: 'Terzino SX',
+      MED: 'Mediano',
+      CC: 'Centrocampista',
+      TRQ: 'Trequartista',
+      CLS: 'Esterno SX',
+      CLD: 'Esterno DX',
+      ESA: 'Ala SX',
+      EDE: 'Ala DX',
+      CF: 'Centravanti',
+      SP: 'Seconda punta',
+      P: 'Punta'
+    }
+
+    const en = {
+      PT: 'Goalkeeper',
+      DC: 'Center back',
+      TD: 'Right back',
+      TS: 'Left back',
+      MED: 'Defensive mid',
+      CC: 'Central mid',
+      TRQ: 'Attacking mid',
+      CLS: 'Left mid',
+      CLD: 'Right mid',
+      ESA: 'Left wing',
+      EDE: 'Right wing',
+      CF: 'Center forward',
+      SP: 'Second striker',
+      P: 'Striker'
+    }
+
+    const table = lang === 'it' ? it : en
+    return table[c] || c
   }, [lang])
 
   // Calcola ruolo in base alle coordinate x,y sul campo
@@ -2081,9 +2140,10 @@ export default function GestioneFormazionePage() {
   const noLayoutContent = !layout || !layout.slot_positions
 
   // Genera array slot 0-10 con posizioni (solo se layout esiste)
-  const slots = layout?.slot_positions ? Array.from({ length: 11 }, (_, i) => ({
+  const normalizedSlotPositions = layout?.slot_positions ? normalizeSlotPositionsDxSx(layout.slot_positions) : null
+  const slots = normalizedSlotPositions ? Array.from({ length: 11 }, (_, i) => ({
     slot_index: i,
-    position: layout.slot_positions[i] || { x: 50, y: 50, position: '?' },
+    position: normalizedSlotPositions[i] || { x: 50, y: 50, position: '?' },
     player: titolari.find(p => p.slot_index === i) || null
   })) : []
 
@@ -2656,6 +2716,7 @@ export default function GestioneFormazionePage() {
               onPositionChange={handlePositionChange}
               customPosition={customPos}  // Passa customPosition per mostrare sigla ruolo
               formatRoleLabel={formatRoleLabel}
+              formatRolePlaceholder={formatRolePlaceholder}
             />
           )
         })}
@@ -2954,7 +3015,7 @@ export default function GestioneFormazionePage() {
 
 // Componente Modal Upload
 // Slot Card Component - Badge Minimale (solo nome)
-function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChange, customPosition = null, formatRoleLabel }) {
+function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChange, customPosition = null, formatRoleLabel, formatRolePlaceholder }) {
   const { t } = useTranslation()
   const { slot_index, position, player, offsetX = 0, offsetY = 0, hasNearbyCards = false } = slot
   const isEmpty = !player
@@ -2963,6 +3024,7 @@ function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChang
   const rawPosition = customPosition?.position || position?.position || '?'
   // Label coerente IT/EN: evita mix come AMF + TRQ nella stessa schermata.
   const displayPosition = typeof formatRoleLabel === 'function' ? formatRoleLabel(rawPosition) : rawPosition
+  const displayPlaceholder = typeof formatRolePlaceholder === 'function' ? formatRolePlaceholder(rawPosition) : displayPosition
   
   const [isDragging, setIsDragging] = React.useState(false)
   const [dragStart, setDragStart] = React.useState(null)
@@ -3181,7 +3243,7 @@ function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChang
           textShadow: '0 1px 3px rgba(0, 0, 0, 0.7)'
         }}>
           <Plus size={14} />
-          <span>{displayPosition}</span>
+          <span>{displayPlaceholder}</span>
         </div>
       ) : (
         <div style={{
