@@ -31,13 +31,10 @@ export default function TopBar() {
           background: 'linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.5), transparent)'
         }}
       />
-      <div className="h-full px-4 lg:px-6 flex items-center justify-between lg:justify-end gap-2 lg:gap-4 w-full relative z-10">
-        
-        {/* Spacer per mobile - spinge elementi a destra */}
-        <div className="flex-1 lg:hidden" />
+      <div className="h-full px-4 lg:px-6 flex items-center justify-end gap-2 lg:gap-4 w-full relative z-10">
         
         {/* GuideTour - spostato a destra su mobile */}
-        <div className="lg:order-1">
+        <div className="lg:order-1" style={{ flexShrink: 0 }}>
           <GuideTour />
         </div>
         

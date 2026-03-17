@@ -877,8 +877,8 @@ function HomePage() {
           </div>
         </div>
 
-        {/* Sticky Assistant Chat - posizionato più in alto per evitare bottom nav */}
-        <div style={{ position: 'fixed', bottom: 'calc(200px + env(safe-area-inset-bottom, 0px))', right: '20px', zIndex: 1000 }}>
+        {/* Sticky Assistant Chat - sopra bottom nav su mobile */}
+        <div style={{ position: 'fixed', bottom: 'calc(100px + env(safe-area-inset-bottom, 0px))', right: '20px', zIndex: 1100 }}>
           <AssistantChat mode="popup" />
         </div>
 

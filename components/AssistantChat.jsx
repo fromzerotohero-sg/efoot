@@ -12,6 +12,7 @@ export default function AssistantChat({ mode = 'popup' }) {
   const currentPage = pathname || ''
   const { t, lang } = useTranslation()
   const [isOpen, setIsOpen] = useState(mode === 'page' ? true : false)
+  const [isMobileViewport, setIsMobileViewport] = useState(false)
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -33,6 +34,20 @@ export default function AssistantChat({ mode = 'popup' }) {
       sendAbortRef.current?.abort()
       recognitionRef.current?.stop()
       clearTimeout(voiceTimeoutRef.current)
+    }
+  }, [])
+
+  // Responsive: traccia viewport mobile per layout popup
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mq = window.matchMedia('(max-width: 640px)')
+    const update = () => setIsMobileViewport(!!mq.matches)
+    update()
+    if (mq.addEventListener) mq.addEventListener('change', update)
+    else mq.addListener(update)
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener('change', update)
+      else mq.removeListener(update)
     }
   }, [])
 
@@ -412,11 +427,11 @@ export default function AssistantChat({ mode = 'popup' }) {
           onClick={() => setIsOpen(true)}
           className="chat-launcher"
           style={{
-            position: 'fixed',
-            bottom: '20px',
-            right: '20px',
-            width: '80px',
-            height: '80px',
+            // Il posizionamento (fixed) viene gestito dal parent (es. dashboard).
+            // Qui manteniamo il bottone "layout-safe" e responsivo.
+            position: 'relative',
+            width: isMobileViewport ? '64px' : '80px',
+            height: isMobileViewport ? '64px' : '80px',
             borderRadius: '50%',
             background: '#050814',
             border: '2px solid rgba(0, 212, 255, 0.8)',
@@ -482,8 +497,8 @@ export default function AssistantChat({ mode = 'popup' }) {
           {/* Container immagine */}
           <div style={{
             position: 'relative',
-            width: '72px',
-            height: '72px',
+            width: isMobileViewport ? '56px' : '72px',
+            height: isMobileViewport ? '56px' : '72px',
             borderRadius: '50%',
             overflow: 'hidden',
             flexShrink: 0
@@ -500,7 +515,7 @@ export default function AssistantChat({ mode = 'popup' }) {
             className="chat-label"
             style={{
               position: 'absolute',
-              left: '88px',
+              left: isMobileViewport ? '72px' : '88px',
               whiteSpace: 'nowrap',
               color: '#fff',
               fontSize: '14px',
@@ -567,21 +582,37 @@ export default function AssistantChat({ mode = 'popup' }) {
         overflow: 'hidden',
         ...chatBgCommon
       }
-    : {
-        position: 'fixed',
-        bottom: '20px',
-        right: '20px',
-        width: 'clamp(320px, 90vw, 400px)',
-        height: 'clamp(500px, 70vh, 600px)',
-        border: '2px solid var(--neon-blue)',
-        borderRadius: '16px',
-        boxShadow: 'var(--glow-blue)',
-        display: 'flex',
-        flexDirection: 'column',
-        zIndex: 1000,
-        overflow: 'hidden',
-        ...chatBgCommon
-      }
+    : (isMobileViewport
+        ? {
+            // Mobile: popup diventa fullscreen per essere realmente responsivo
+            position: 'fixed',
+            inset: 0,
+            width: '100vw',
+            height: '100dvh',
+            border: 'none',
+            borderRadius: '0',
+            boxShadow: 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            zIndex: 10050,
+            overflow: 'hidden',
+            ...chatBgCommon
+          }
+        : {
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            width: 'clamp(320px, 90vw, 400px)',
+            height: 'clamp(500px, 70vh, 600px)',
+            border: '2px solid var(--neon-blue)',
+            borderRadius: '16px',
+            boxShadow: 'var(--glow-blue)',
+            display: 'flex',
+            flexDirection: 'column',
+            zIndex: 1000,
+            overflow: 'hidden',
+            ...chatBgCommon
+          })
   
   return (
     <div style={containerStyle}>
