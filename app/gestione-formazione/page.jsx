@@ -490,14 +490,16 @@ export default function GestioneFormazionePage() {
       newPosition.y,
       allSlotsInAttack.length > 1 ? allSlotsInAttack : null
     )
-    const snappedY = snapYToBand(newRole, newPosition.y)
-    const snappedX = clampPercent(newPosition.x)
+    // Durante il drag manteniamo coordinate libere (fluide).
+    // Lo snap "a bande" viene applicato SOLO al salvataggio, per non rendere il movimento rigido.
+    const rawY = clampPercent(newPosition.y)
+    const rawX = clampPercent(newPosition.x)
     
     setCustomPositions(prev => ({
       ...prev,
       [slotIndex]: {
-        x: snappedX,
-        y: snappedY,
+        x: rawX,
+        y: rawY,
         position: newRole  // Aggiorna anche la position
       }
     }))
@@ -1559,7 +1561,7 @@ export default function GestioneFormazionePage() {
         const slotIdx = Number(slotIndex)
         if (updatedSlotPositions[slotIdx]) {
           const x = clampPercent(position.x)
-          const y = clampPercent(position.y)
+          const y = snapYToBand(position.position, position.y)
           updatedSlotPositions[slotIdx] = {
             ...updatedSlotPositions[slotIdx],
             x,
@@ -2999,9 +3001,8 @@ function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChang
     
     // Previeni scroll su mobile durante drag
     const isTouch = e.type.startsWith('touch')
-    if (isTouch) {
-      e.preventDefault()
-    }
+    // Nota: non chiamare preventDefault su onTouchStart (listener spesso passivo).
+    // Usiamo `touch-action: none` sul wrapper per evitare scroll durante drag.
     e.stopPropagation()
     
     const container = e.currentTarget.closest('[data-field-container]')
@@ -3130,7 +3131,9 @@ function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChang
         minWidth: 'auto',
         maxWidth: 'clamp(70px, 10vw, 120px)',
         opacity: isDragging ? 0.7 : 1,
-        userSelect: 'none'
+        userSelect: 'none',
+        // Impedisce lo scroll/pinch su touch durante drag (alternativa a preventDefault su touchstart)
+        touchAction: isEditMode && player ? 'none' : 'manipulation'
       }}
       onMouseEnter={(e) => {
         if (isDragging) return
