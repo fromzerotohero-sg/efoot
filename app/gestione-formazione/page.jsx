@@ -139,6 +139,8 @@ export default function GestioneFormazionePage() {
   const [showPositionSelectionModal, setShowPositionSelectionModal] = React.useState(false)
   const [extractedPlayerData, setExtractedPlayerData] = React.useState(null)
   const [selectedOriginalPositions, setSelectedOriginalPositions] = React.useState([])
+  // Contesto per PositionSelectionModal: nuovo salvataggio (titolare/riserva) oppure modifica competenze player esistente
+  const [positionModalCtx, setPositionModalCtx] = React.useState(null) // { mode: 'new'|'edit', playerId?: string, slotIndex?: number|null, photoSlots?: object }
   const [showMissingDataModal, setShowMissingDataModal] = React.useState(false)
   const [missingData, setMissingData] = React.useState({ required: [], optional: [] })
   const [duplicateConfirmModal, setDuplicateConfirmModal] = React.useState(null) // { show, playerName, playerAge, slotIndex, onConfirm }
@@ -1199,6 +1201,11 @@ export default function GestioneFormazionePage() {
               photo_slots: photoSlots,
               slot_index: selectedSlot.slot_index
             })
+            setPositionModalCtx({
+              mode: 'new',
+              slotIndex: selectedSlot.slot_index,
+              photoSlots
+            })
             setSelectedOriginalPositions([{ position: playerData.position || 'AMF', competence: 'Alta' }])
             setUploadingPlayer(false)
           },
@@ -1229,6 +1236,11 @@ export default function GestioneFormazionePage() {
         photo_slots: photoSlots,
         slot_index: selectedSlot.slot_index
       })
+      setPositionModalCtx({
+        mode: 'new',
+        slotIndex: selectedSlot.slot_index,
+        photoSlots
+      })
       
       setShowUploadPlayerModal(false)
       setShowPositionSelectionModal(true)
@@ -1246,7 +1258,7 @@ export default function GestioneFormazionePage() {
 
   // NUOVO: Salva giocatore con posizioni selezionate (chiamato da modal)
   const handleSavePlayerWithPositions = async () => {
-    if (!extractedPlayerData || !selectedSlot || selectedOriginalPositions.length === 0) return
+    if (!extractedPlayerData || selectedOriginalPositions.length === 0 || !positionModalCtx) return
 
     setUploadingPlayer(true)
     setError(null)
@@ -1259,24 +1271,52 @@ export default function GestioneFormazionePage() {
       }
       if (!token) throw new Error(t('sessionExpired'))
 
-      // Validazione duplicati: verifica se stesso giocatore (nome+età) già presente nei titolari
+      // Modal in modalità EDIT: aggiorna solo original_positions del player esistente
+      if (positionModalCtx.mode === 'edit' && positionModalCtx.playerId) {
+        const patchRes = await fetch(`/api/players/${positionModalCtx.playerId}`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ original_positions: selectedOriginalPositions })
+        })
+        const patchData = await safeJsonResponse(patchRes, t('errorUpdatingPlayer'))
+        setShowPositionSelectionModal(false)
+        setPositionModalCtx(null)
+        setExtractedPlayerData(null)
+        setSelectedOriginalPositions([])
+        showToast(t('competencesUpdated'), 'success')
+        await fetchData()
+        refreshDiagnosticAfterSave()
+        return
+      }
+
+      // Modal in modalità NEW: salvataggio completo via save-player
+      const slotIndexToSave = positionModalCtx.mode === 'new'
+        ? (positionModalCtx.slotIndex ?? extractedPlayerData.slot_index ?? null)
+        : (extractedPlayerData.slot_index ?? null)
+
+      // Validazione duplicati titolari: verifica se stesso giocatore (nome+età) già presente nei titolari
+      // (solo se stiamo salvando un titolare in uno slot 0-10)
       const playerName = String(extractedPlayerData.player_name || '').trim().toLowerCase()
       const playerAge = extractedPlayerData.age != null ? Number(extractedPlayerData.age) : null
-      
-      const duplicatePlayer = titolari.find(p => {
+
+      const isSavingStarter = slotIndexToSave !== null && slotIndexToSave !== undefined
+      const duplicatePlayer = isSavingStarter ? titolari.find(p => {
         const pName = String(p.player_name || '').trim().toLowerCase()
         const pAge = p.age != null ? Number(p.age) : null
-        
+
         // Match esatto se nome+età corrispondono
         if (playerName && pName && playerAge && pAge) {
-          return pName === playerName && pAge === playerAge && p.slot_index !== selectedSlot.slot_index
+          return pName === playerName && pAge === playerAge && p.slot_index !== slotIndexToSave
         }
         // Fallback: solo nome se età non disponibile
         if (playerName && pName) {
-          return pName === playerName && p.slot_index !== selectedSlot.slot_index
+          return pName === playerName && p.slot_index !== slotIndexToSave
         }
         return false
-      })
+      }) : null
 
       if (duplicatePlayer) {
         const playerAgeStr = playerAge ? ` (${playerAge} ${t('years')})` : ''
@@ -1285,7 +1325,6 @@ export default function GestioneFormazionePage() {
         const duplicateSlotIndex = duplicatePlayer.slot_index
         const currentExtractedData = { ...extractedPlayerData }
         const currentSelectedPositions = [...selectedOriginalPositions]
-        const currentSelectedSlot = { ...selectedSlot }
         const currentRiserve = [...riserve]
         
         // Mostra modal conferma invece di window.confirm()
@@ -1350,7 +1389,7 @@ export default function GestioneFormazionePage() {
                   player: {
                     ...currentExtractedData,
                     original_positions: currentSelectedPositions,
-                    slot_index: currentSelectedSlot.slot_index,
+                    slot_index: slotIndexToSave,
                     photo_slots: currentExtractedData.photo_slots
                   }
                 })
@@ -1360,6 +1399,7 @@ export default function GestioneFormazionePage() {
 
               setShowUploadPlayerModal(false)
               setShowPositionSelectionModal(false)
+              setPositionModalCtx(null)
               setUploadImages([])
               setSelectedSlot(null)
               setExtractedPlayerData(null)
@@ -1396,8 +1436,8 @@ export default function GestioneFormazionePage() {
           player: {
             ...extractedPlayerData,
             original_positions: selectedOriginalPositions,  // NUOVO: posizioni selezionate
-            slot_index: selectedSlot.slot_index,
-            photo_slots: extractedPlayerData.photo_slots
+            slot_index: slotIndexToSave,
+            photo_slots: positionModalCtx?.photoSlots || extractedPlayerData.photo_slots
           }
         })
       })
@@ -1406,6 +1446,7 @@ export default function GestioneFormazionePage() {
 
       setShowUploadPlayerModal(false)
       setShowPositionSelectionModal(false)
+      setPositionModalCtx(null)
       setUploadImages([])
       setSelectedSlot(null)
       setExtractedPlayerData(null)
@@ -1457,6 +1498,11 @@ export default function GestioneFormazionePage() {
       competence: 'Alta'
     }])
     setShowUploadPlayerModal(false)
+    setPositionModalCtx({
+      mode: 'new',
+      slotIndex: selectedSlot?.slot_index ?? null,
+      photoSlots: updatedData.photo_slots || null
+    })
     setShowPositionSelectionModal(true)
   }
 
@@ -1483,6 +1529,11 @@ export default function GestioneFormazionePage() {
       competence: 'Alta'
     }])
     setShowUploadPlayerModal(false)
+    setPositionModalCtx({
+      mode: 'new',
+      slotIndex: extractedPlayerData?.slot_index ?? selectedSlot?.slot_index ?? null,
+      photoSlots: extractedPlayerData?.photo_slots || null
+    })
     setShowPositionSelectionModal(true)
   }
 
@@ -2055,95 +2106,25 @@ export default function GestioneFormazionePage() {
         }
       }
 
-      // Salva come riserva (slot_index = null)
-      const saveRes = await fetch('/api/supabase/save-player', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          player: {
-            ...playerData,
-            slot_index: null, // Riserva
-            photo_slots: photoSlots // Includi photo_slots tracciati
-          }
-        })
+      // Dopo estrazione: apri modal posizioni (anche per RISERVE) prima di salvare
+      const mainPosition = playerData.position || 'AMF'
+      const initialPositions = Array.isArray(playerData.original_positions) && playerData.original_positions.length > 0
+        ? playerData.original_positions
+        : [{ position: mainPosition, competence: 'Alta' }]
+      setSelectedOriginalPositions(initialPositions)
+      setExtractedPlayerData({
+        ...playerData,
+        photo_slots: photoSlots,
+        slot_index: null // Riserva
       })
-
-      // Gestione sicura della risposta JSON
-      let saveData
-      try {
-        saveData = await saveRes.json()
-      } catch (jsonError) {
-        throw new Error(`${t('error')}: ${saveRes.status} ${saveRes.statusText}`)
-      }
-      
-      if (!saveRes.ok) {
-        // Se è un errore di duplicato riserva, mostra messaggio chiaro
-        if (saveData.is_reserve && saveData.duplicate_player_id) {
-          const playerAgeStr = playerAge ? ` (${playerAge} ${t('years')})` : ''
-          const confirmMsg = t('duplicateReserveReplaceAlert')
-            .replace('${playerName}', playerData.player_name)
-            .replace('${playerAge}', playerAgeStr)
-          
-          // FIX RC-002: Sostituzione window.confirm con ConfirmModal (feature flag)
-          const confirmed = await showConfirmSafe({
-            fallback: () => window.confirm(confirmMsg),
-            modalConfig: {
-              title: t('duplicateReserveTitle'),
-              message: confirmMsg,
-              variant: 'warning',
-              confirmLabel: t('replace'),
-              cancelLabel: t('cancel')
-            },
-            setConfirmModal
-          })
-          
-          if (confirmed) {
-            // Elimina vecchio giocatore e riprova
-            const deleteRes = await fetch('/api/supabase/delete-player', {
-              method: 'DELETE',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ player_id: saveData.duplicate_player_id })
-            })
-            if (deleteRes.ok) {
-              // Riprova salvataggio
-              const retryRes = await fetch('/api/supabase/save-player', {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                  player: {
-                    ...playerData,
-                    slot_index: null,
-                    photo_slots: photoSlots
-                  }
-                })
-              })
-              const retryData = await safeJsonResponse(retryRes, t('errorSavingPlayerAfterReplace'))
-            } else {
-              throw new Error(t('errorDeletingDuplicateReserveReplace'))
-            }
-          } else {
-            return // Utente ha annullato
-          }
-        } else {
-          throw new Error(saveData.error || t('errorSavingPlayerGeneric'))
-        }
-      }
-
+      setPositionModalCtx({
+        mode: 'new',
+        slotIndex: null,
+        photoSlots
+      })
       setShowUploadReserveModal(false)
       setUploadReserveImages([])
-      
-      // Ricarica dati senza reload pagina
-      await fetchData()
-      refreshDiagnosticAfterSave()
+      setShowPositionSelectionModal(true)
     } catch (err) {
       console.error('[GestioneFormazione] Upload reserve error:', err)
       setError(err.message || t('errorLoadingReserve'))
@@ -2880,6 +2861,23 @@ export default function GestioneFormazionePage() {
           riserve={riserve}
           onAssignFromReserve={handleAssignFromReserve}
           onUploadPhoto={handleUploadPhoto}
+          onEditCompetences={(player) => {
+            if (!player?.id) return
+            const mainPosition = player.position || 'AMF'
+            const positions = Array.isArray(player.original_positions) && player.original_positions.length > 0
+              ? player.original_positions
+              : [{ position: mainPosition, competence: 'Alta' }]
+            setSelectedOriginalPositions(positions)
+            setExtractedPlayerData({
+              ...player,
+              slot_index: player.slot_index ?? null
+            })
+            setPositionModalCtx({ mode: 'edit', playerId: player.id })
+            setShowAssignModal(false)
+            setSelectedSlot(null)
+            setSelectedReserve(null)
+            setShowPositionSelectionModal(true)
+          }}
           onRemove={selectedSlot ? (player => handleRemoveFromSlot(player.id)) : null}
           onDelete={currentPlayer => handleDeletePlayer(currentPlayer.id)}
           onClose={() => {
@@ -2976,11 +2974,12 @@ export default function GestioneFormazionePage() {
           selectedPositions={selectedOriginalPositions}
           onPositionsChange={setSelectedOriginalPositions}
           onConfirm={handleSavePlayerWithPositions}
-          uploading={uploadingPlayer}
+          uploading={uploadingPlayer || uploadingReserve}
           onCancel={() => {
             setShowPositionSelectionModal(false)
             setExtractedPlayerData(null)
             setSelectedOriginalPositions([])
+            setPositionModalCtx(null)
             setShowUploadPlayerModal(false)
             setUploadImages([])
             setSelectedSlot(null)
@@ -3425,7 +3424,7 @@ function ReserveCard({ player, onClick, disabled, onDelete }) {
 }
 
 // Assign Modal Component
-function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUploadPhoto, onRemove, onDelete, onClose, onOpenManualEntry, assigning }) {
+function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUploadPhoto, onEditCompetences, onRemove, onDelete, onClose, onOpenManualEntry, assigning }) {
   const { t, lang } = useTranslation()
   const router = useRouter()
   const [expandedSections, setExpandedSections] = React.useState({
@@ -3495,18 +3494,33 @@ function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUplo
           <h2 style={{ fontSize: '20px', fontWeight: 700, margin: 0 }}>
             {currentPlayer ? t('details') : t('assignPlayer')}
           </h2>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'rgba(255, 255, 255, 0.7)',
-              cursor: 'pointer',
-              padding: '4px'
-            }}
-          >
-            <X size={20} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {currentPlayer && typeof onEditCompetences === 'function' && (
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEditCompetences(currentPlayer) }}
+                className="btn secondary"
+                style={{
+                  padding: '8px 10px',
+                  fontSize: '12px',
+                  borderRadius: '8px'
+                }}
+              >
+                {t('editCompetences')}
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'rgba(255, 255, 255, 0.7)',
+                cursor: 'pointer',
+                padding: '4px'
+              }}
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         <div style={{ marginBottom: '20px', padding: '16px', background: 'rgba(0, 212, 255, 0.1)', borderRadius: '10px', border: '1px solid rgba(0, 212, 255, 0.2)' }}>
