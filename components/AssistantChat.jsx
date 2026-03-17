@@ -571,6 +571,7 @@ export default function AssistantChat({ mode = 'popup' }) {
   }
 
   // Stile per modalità page (full-screen) vs popup
+  const isMobilePopup = mode !== 'page' && isMobileViewport
   const containerStyle = mode === 'page'
     ? {
         width: '100%',
@@ -589,10 +590,8 @@ export default function AssistantChat({ mode = 'popup' }) {
             position: 'fixed',
             inset: 0,
             width: '100vw',
-            height: '100dvh',
-            // Safe areas: evita tagli con notch / gesture bar
-            paddingTop: 'env(safe-area-inset-top, 0px)',
-            paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+            // Fallback compatibilità: base 100vh, poi 100dvh via @supports (vedi style sotto)
+            height: '100vh',
             border: 'none',
             borderRadius: '0',
             boxShadow: 'none',
@@ -619,7 +618,20 @@ export default function AssistantChat({ mode = 'popup' }) {
           })
   
   return (
-    <div style={containerStyle}>
+    <div style={containerStyle} className={isMobilePopup ? 'assistantchat-mobile' : undefined}>
+      {isMobilePopup && (
+        <style jsx global>{`
+          .assistantchat-mobile {
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+          }
+          @supports (height: 100dvh) {
+            .assistantchat-mobile {
+              height: 100dvh !important;
+            }
+          }
+        `}</style>
+      )}
       {/* Header */}
       <div
         style={{
@@ -694,7 +706,10 @@ export default function AssistantChat({ mode = 'popup' }) {
           display: 'flex',
           flexDirection: 'column',
           gap: '12px',
-          background: 'rgba(0, 0, 0, 0.3)'
+          background: 'rgba(0, 0, 0, 0.3)',
+          // Mobile UX: evita che lo scroll "passi" alla pagina sotto
+          overscrollBehavior: 'contain',
+          WebkitOverflowScrolling: 'touch'
         }}
       >
         {messages.length === 0 && (
@@ -941,7 +956,11 @@ export default function AssistantChat({ mode = 'popup' }) {
           borderTop: '1px solid rgba(0, 212, 255, 0.2)',
           display: 'flex',
           gap: '8px',
-          background: 'rgba(0, 0, 0, 0.5)'
+          background: 'rgba(0, 0, 0, 0.5)',
+          // Mobile: non far finire l'input dietro la bottom nav
+          paddingBottom: isMobileViewport
+            ? 'calc(16px + var(--bottom-nav-height, 80px) + env(safe-area-inset-bottom, 0px))'
+            : '16px'
         }}
       >
         {/* Voice Button */}
