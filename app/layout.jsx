@@ -34,10 +34,12 @@ export default function RootLayout({ children }) {
               <main 
                 className="flex-1 overflow-y-auto"
                 style={{
-                  paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))'
+                  paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))'
                 }}
               >
                 {children}
+                {/* Spacer aggiuntivo per mobile - assicura che i bottoni in fondo siano cliccabili */}
+                <div className="lg:hidden" style={{ height: '20px' }} />
               </main>
             </div>
           </div>
