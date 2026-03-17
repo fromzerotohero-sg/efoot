@@ -335,10 +335,15 @@ export default function GestioneFormazionePage() {
     const BANDS = {
       GK: 90,
       DEF: 70,
-      DMF: 56,  // MED/DMF (centrocampo basso)
-      CMF: 52,  // CC/CMF (centrocampo medio) — vicino a DMF
-      AMF: 44,  // TRQ/AMF (trequarti)
-      FWD: 30   // attacco
+      // Centrocampo su sotto-fasce bilanciate: più spazio al CC, meno "vuoto" al TRQ
+      DMF: 58,  // MED/DMF (centrocampo basso)
+      CMF: 52,  // CC/CMF (centrocampo medio)
+      AMF: 46,  // TRQ/AMF (trequarti) più vicino al CC
+      // Attacco su sotto-fasce: SP deve stare un filo più basso (più "spazio" rispetto al CF)
+      CF: 28,
+      SP: 32,
+      WING: 30,
+      FWD: 30
     }
 
     // Se il ruolo è esplicito, preferisci la fascia "giusta"
@@ -347,12 +352,17 @@ export default function GestioneFormazionePage() {
     if (['MED', 'DMF'].includes(role)) return BANDS.DMF
     if (['CC', 'CMF', 'CLS', 'CLD', 'LMF', 'RMF'].includes(role)) return BANDS.CMF
     if (['TRQ', 'AMF', 'SS'].includes(role)) return BANDS.AMF
+    if (role === 'CF') return BANDS.CF
+    if (role === 'SP') return BANDS.SP
+    if (['ESA', 'EDE', 'LWF', 'RWF'].includes(role)) return BANDS.WING
+    if (role === 'P') return 26
     if (['P', 'SP', 'CF', 'ESA', 'EDE', 'LWF', 'RWF'].includes(role)) return BANDS.FWD
 
     // Fallback per sicurezza: usa y grezza con snap su macro-zone
     if (yy > 80) return BANDS.GK
     if (yy >= 60) return BANDS.DEF
-    if (yy >= 48) return BANDS.DMF
+    if (yy >= 54) return BANDS.DMF
+    if (yy >= 48) return BANDS.CMF
     if (yy >= 38) return BANDS.AMF
     return BANDS.FWD
   }

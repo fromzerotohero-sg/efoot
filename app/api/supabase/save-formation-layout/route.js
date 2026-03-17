@@ -101,12 +101,12 @@ export async function POST(req) {
         4: { x: 80, y: 65, position: 'DC' },
         // CENTROCAMPO su sotto-fasce vicine (MED vicino a CC)
         5: { x: 30, y: 52, position: 'CC' },
-        6: { x: 50, y: 56, position: 'MED' },
+        6: { x: 50, y: 58, position: 'MED' },
         7: { x: 70, y: 52, position: 'CC' },
-        // ATTACCO leggermente più basso per consistenza visiva
-        8: { x: 25, y: 28, position: 'SP' },
+        // ATTACCO su sotto-fasce: SP un filo più basso del CF
+        8: { x: 25, y: 32, position: 'SP' },
         9: { x: 50, y: 28, position: 'CF' },
-        10: { x: 75, y: 28, position: 'SP' }
+        10: { x: 75, y: 32, position: 'SP' }
       }
       
       for (let i = 0; i <= 10; i++) {
