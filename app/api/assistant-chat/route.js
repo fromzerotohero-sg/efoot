@@ -289,6 +289,12 @@ async function buildPersonalContext(userId, lang = 'it') {
     }
     const roster = playersData || []
 
+    // Lookup rapido player_id -> nome (per istruzioni individuali)
+    const playerNameById = {}
+    for (const p of roster) {
+      if (p?.id) playerNameById[String(p.id)] = p.player_name || '?'
+    }
+
     // Playing styles lookup
     const { data: stylesData } = await admin.from('playing_styles').select('id, name')
     const stylesLookup = {}
@@ -448,7 +454,26 @@ async function buildPersonalContext(userId, lang = 'it') {
     const teamStyle = tacticalRow?.team_playing_style || L.formationNotSet
     const indInstr = tacticalRow?.individual_instructions
     const numInstructions = Array.isArray(indInstr) ? indInstr.length : (indInstr && typeof indInstr === 'object' ? Object.keys(indInstr).length : 0)
-    const tacticsText = `${L.teamStyle}: ${teamStyle}. ${L.individualInstructions}: ${numInstructions} ${L.instructionsActive}.`
+
+    // Dettaglio istruzioni individuali: necessario per rispondere quando l'utente chiede "quali istruzioni ho?"
+    function formatIndividualInstructions(instr) {
+      if (!instr || typeof instr !== 'object') return ''
+      const entries = Object.entries(instr)
+        .map(([slot, v]) => ({ slot, v }))
+        .filter(({ v }) => v && typeof v === 'object' && v.enabled === true && v.instruction)
+
+      if (entries.length === 0) return ''
+      const lines = entries.slice(0, 8).map(({ slot, v }) => {
+        const pid = v.player_id ? String(v.player_id) : ''
+        const pName = pid && playerNameById[pid] ? playerNameById[pid] : (pid ? `player:${pid.slice(0, 8)}` : '?')
+        const instrName = String(v.instruction || '').trim()
+        return `  - ${slot}: ${instrName} → ${pName}`
+      })
+      const more = entries.length > 8 ? `\n  ... +${entries.length - 8}` : ''
+      return `\n${L.individualInstructions}:\n${lines.join('\n')}${more}`
+    }
+
+    const tacticsText = `${L.teamStyle}: ${teamStyle}. ${L.individualInstructions}: ${numInstructions} ${L.instructionsActive}.${formatIndividualInstructions(indInstr)}`
 
     // Allenatore attivo (con competenze stili per intreccio dati)
     const { data: coachRow } = await admin
@@ -856,10 +881,30 @@ export async function POST(req) {
           const liveStyle = tacticalRow?.team_playing_style?.trim()
           const liveInstr = tacticalRow?.individual_instructions
           const numLive = (liveInstr && typeof liveInstr === 'object') ? Object.keys(liveInstr).length : 0
+          // Risolvi nomi giocatori per istruzioni (serve quando l'utente chiede in chat)
+          let instrLines = ''
+          try {
+            if (liveInstr && typeof liveInstr === 'object') {
+              const { data: players } = await admin.from('players').select('id, player_name').eq('user_id', userId).limit(50)
+              const map = {}
+              ;(players || []).forEach(p => { if (p?.id) map[String(p.id)] = p.player_name || '?' })
+              const entries = Object.entries(liveInstr)
+                .map(([slot, v]) => ({ slot, v }))
+                .filter(({ v }) => v && typeof v === 'object' && v.enabled === true && v.instruction)
+              if (entries.length > 0) {
+                const lines = entries.slice(0, 8).map(({ slot, v }) => {
+                  const pid = v.player_id ? String(v.player_id) : ''
+                  const pName = pid && map[pid] ? map[pid] : (pid ? `player:${pid.slice(0, 8)}` : '?')
+                  return `  - ${slot}: ${String(v.instruction).trim()} → ${pName}`
+                })
+                instrLines = `\n${lang === 'en' ? 'Individual instructions' : 'Istruzioni individuali'}:\n${lines.join('\n')}\n`
+              }
+            }
+          } catch (_) {}
           if (liveStyle || numLive > 0) {
             const liveLine = lang === 'en'
-              ? `[LIVE] Team style: ${liveStyle || 'not set'}. Individual instructions: ${numLive} active.\n\n`
-              : `[AGGIORNAMENTO LIVE] Stile squadra: ${liveStyle || 'non impostato'}. Istruzioni individuali: ${numLive} attive.\n\n`
+              ? `[LIVE] Team style: ${liveStyle || 'not set'}. Individual instructions: ${numLive} active.${instrLines}\n`
+              : `[AGGIORNAMENTO LIVE] Stile squadra: ${liveStyle || 'non impostato'}. Istruzioni individuali: ${numLive} attive.${instrLines}\n`
             personalContextSummary = liveLine + personalContextSummary
           }
         }
