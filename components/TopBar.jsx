@@ -31,7 +31,7 @@ export default function TopBar() {
           background: 'linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.5), transparent)'
         }}
       />
-      <div className="h-full px-4 lg:px-6 flex items-center justify-end gap-2 lg:gap-4 w-full relative z-10">
+      <div className="topbar-inner h-full px-4 lg:px-6 flex items-center justify-end gap-2 lg:gap-4 w-full relative z-10">
         
         {/* GuideTour - spostato a destra su mobile */}
         <div className="lg:order-1" style={{ flexShrink: 0 }}>
@@ -83,6 +83,10 @@ export default function TopBar() {
         @media (max-width: 1023px) {
           header {
             height: 56px !important;
+          }
+          /* Riserva spazio per l'hamburger fixed a sinistra (SidebarNew) */
+          .topbar-inner {
+            padding-left: 72px !important;
           }
         }
       `}</style>
