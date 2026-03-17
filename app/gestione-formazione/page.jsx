@@ -4169,9 +4169,10 @@ function UploadPlayerModal({ slot, images, onImagesChange, onUpload, onClose, up
         style={{
           maxWidth: '600px',
           width: '100%',
-          maxHeight: '90vh',
+          maxHeight: 'calc(100vh - 100px)',
           overflowY: 'auto',
           padding: '24px',
+          paddingBottom: 'calc(24px + 64px + env(safe-area-inset-bottom, 0px))',
           background: 'rgba(10, 14, 39, 0.95)',
           border: '2px solid var(--neon-blue)'
         }}
