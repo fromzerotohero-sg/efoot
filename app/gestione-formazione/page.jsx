@@ -383,6 +383,29 @@ export default function GestioneFormazionePage() {
     return BANDS.FWD
   }
 
+  // Garantisce che slot_positions contenga sempre 0..10 (evita che il server "ricomponga"
+  // slot mancanti con default, causando salti dopo il refresh).
+  const completeSlotPositionsClient = React.useCallback((slots) => {
+    const complete = { ...(slots || {}) }
+    const defaults = {
+      0: { x: 50, y: 90, position: 'PT' },
+      1: { x: 20, y: 65, position: 'DC' },
+      2: { x: 40, y: 65, position: 'DC' },
+      3: { x: 60, y: 65, position: 'DC' },
+      4: { x: 80, y: 65, position: 'DC' },
+      5: { x: 30, y: 52, position: 'CC' },
+      6: { x: 50, y: 58, position: 'MED' },
+      7: { x: 70, y: 52, position: 'CC' },
+      8: { x: 25, y: 34, position: 'SP' },
+      9: { x: 50, y: 28, position: 'CF' },
+      10: { x: 75, y: 34, position: 'SP' }
+    }
+    for (let i = 0; i <= 10; i++) {
+      if (!complete[i]) complete[i] = defaults[i]
+    }
+    return complete
+  }, [])
+
   // Render: mappa codici ruolo verso label coerente IT/EN, senza cambiare ciò che salviamo.
   const formatRoleLabel = React.useCallback((code) => {
     const c = String(code || '?').trim().toUpperCase()
@@ -1609,7 +1632,7 @@ export default function GestioneFormazionePage() {
     
     try {
       // Merge posizioni personalizzate con slot_positions esistenti
-      const updatedSlotPositions = { ...layout.slot_positions }
+      const updatedSlotPositions = completeSlotPositionsClient(layout.slot_positions)
       
       // Raccogli tutti gli slot in attacco per logica relativa P vs SP
       const allAttackSlots = []
@@ -1630,7 +1653,9 @@ export default function GestioneFormazionePage() {
         const slotIdx = Number(slotIndex)
         if (updatedSlotPositions[slotIdx]) {
           const x = clampPercent(position.x)
-          const y = snapYToBand(position.position, position.y)
+          // Importante: non snappare al salvataggio. L'utente ha posizionato manualmente:
+          // salviamo la coordinata reale (solo clamp) per evitare "salti" dopo refresh.
+          const y = clampPercent(position.y)
           updatedSlotPositions[slotIdx] = {
             ...updatedSlotPositions[slotIdx],
             x,

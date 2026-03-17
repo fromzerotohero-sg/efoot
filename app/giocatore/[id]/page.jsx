@@ -258,21 +258,39 @@ export default function PlayerDetailPage() {
       if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('credits-consumed'))
 
       // 2. VALIDAZIONE: Confronta nome + squadra + ruolo (o età)
-      const normalize = (value) => {
+      const normalizeBasic = (value) => {
         if (!value) return ''
         return String(value).toLowerCase().trim().replace(/\s+/g, ' ')
       }
 
-      const extractedName = normalize(extractData.player.player_name)
-      const currentName = normalize(player.player_name)
+      // Normalizzazione "robusta" per confronti soft (es. squadre: "Chelsea B12-13" vs "Chelsea B 12-13")
+      const normalizeTeamKey = (value) => {
+        const s = normalizeBasic(value)
+        if (!s) return ''
+        return s
+          // uniforma trattini e separatori comuni
+          .replace(/[–—]/g, '-')
+          // elimina caratteri non informativi mantenendo lettere/numeri e '-'
+          .replace(/[^a-z0-9\- ]/g, ' ')
+          // collassa spazi
+          .replace(/\s+/g, ' ')
+          // "b 12-13" -> "b12-13"
+          .replace(/\bb\s+(?=\d)/g, 'b')
+          // rimuove spazi attorno ai trattini: "12 - 13" -> "12-13"
+          .replace(/\s*-\s*/g, '-')
+          .trim()
+      }
+
+      const extractedName = normalizeBasic(extractData.player.player_name)
+      const currentName = normalizeBasic(player.player_name)
       const nameMismatch = extractedName !== currentName
 
-      const extractedTeam = normalize(extractData.player.team)
-      const currentTeam = normalize(player.team)
+      const extractedTeam = normalizeTeamKey(extractData.player.team)
+      const currentTeam = normalizeTeamKey(player.team)
       const teamMismatch = extractedTeam !== currentTeam && extractedTeam !== '' && currentTeam !== ''
 
-      const extractedPosition = normalize(extractData.player.position)
-      const currentPosition = normalize(player.position)
+      const extractedPosition = normalizeBasic(extractData.player.position)
+      const currentPosition = normalizeBasic(player.position)
       const positionMismatch = extractedPosition !== currentPosition && extractedPosition !== '' && currentPosition !== ''
 
       // Fallback: confronta età se ruolo non disponibile
@@ -280,7 +298,8 @@ export default function PlayerDetailPage() {
       const currentAge = player.age ? Number(player.age) : null
       const ageMismatch = extractedAge !== null && currentAge !== null && extractedAge !== currentAge
 
-      const hasMismatch = nameMismatch || teamMismatch || positionMismatch || ageMismatch
+      // Policy: la "squadra" è un warning soft (non blocca/non diventa mismatch critico)
+      const hasMismatch = nameMismatch || positionMismatch || ageMismatch
 
       // 3. Mostra modal conferma SEMPRE
       setConfirmModal({
@@ -1129,6 +1148,7 @@ function ConfirmUpdateModal({
     skills: t('skills'),
     booster: t('boosters')
   }
+  const teamIsSoftWarning = Boolean(teamMismatch) && !hasMismatch
 
   return (
     <div 
@@ -1192,9 +1212,9 @@ function ConfirmUpdateModal({
                 {nameMismatch && ' ⚠️'}
               </div>
               {extractedData.team && (
-                <div style={{ color: teamMismatch ? '#ef4444' : 'inherit' }}>
+                <div style={{ color: teamMismatch ? (teamIsSoftWarning ? '#f59e0b' : '#ef4444') : 'inherit' }}>
                   <strong>{t('team')}:</strong> {extractedData.team}
-                  {teamMismatch && ' ⚠️'}
+                  {teamMismatch && (teamIsSoftWarning ? ' ⚠️' : ' ⚠️')}
                 </div>
               )}
               {extractedData.position && (
@@ -1214,17 +1234,17 @@ function ConfirmUpdateModal({
         </div>
 
         {/* Warning se mismatch */}
-        {hasMismatch && (
+        {(hasMismatch || teamIsSoftWarning) && (
           <div style={{ 
             padding: '12px', 
-            background: 'rgba(239, 68, 68, 0.2)',
-            border: '1px solid #ef4444',
+            background: hasMismatch ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.18)',
+            border: `1px solid ${hasMismatch ? '#ef4444' : '#f59e0b'}`,
             borderRadius: '8px',
             marginBottom: '20px',
             fontSize: '13px'
           }}>
-            <div style={{ fontWeight: 700, marginBottom: '4px', color: '#ef4444' }}>
-              ⚠️ {t('dataMismatch')}
+            <div style={{ fontWeight: 700, marginBottom: '4px', color: hasMismatch ? '#ef4444' : '#f59e0b' }}>
+              ⚠️ {hasMismatch ? t('dataMismatch') : t('teamDifferent')}
             </div>
             <div style={{ opacity: 0.9 }}>
               {nameMismatch && <div>• {t('nameDifferent')}</div>}
