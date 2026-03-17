@@ -171,7 +171,7 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
   }
 
   const addBooster = () => {
-    setForm(prev => ({ ...prev, boosters: [...(Array.isArray(prev.boosters) ? prev.boosters : []), { name: '', effect: '', condition: '' }] }))
+    setForm(prev => ({ ...prev, boosters: [...(Array.isArray(prev.boosters) ? prev.boosters : []), { name: '', effect: '' }] }))
   }
   const removeBooster = (idx) => {
     setForm(prev => ({ ...prev, boosters: (Array.isArray(prev.boosters) ? prev.boosters : []).filter((_, i) => i !== idx) }))
@@ -614,12 +614,6 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
                             <input type="text" style={{ ...inputStyle, padding: '8px 10px', fontSize: '13px' }}
                               placeholder={t('boosterEffect')}
                               value={String(b?.effect ?? '')} onChange={e => updateBooster(idx, 'effect', e.target.value)} />
-                          </div>
-                          <div>
-                            <label style={{ ...labelStyle, fontSize: '11px' }}>{t('boosterCondition')}</label>
-                            <input type="text" style={{ ...inputStyle, padding: '8px 10px', fontSize: '13px' }}
-                              placeholder={t('boosterCondition')}
-                              value={String(b?.condition ?? '')} onChange={e => updateBooster(idx, 'condition', e.target.value)} />
                           </div>
                         </div>
                       </div>

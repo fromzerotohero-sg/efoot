@@ -6,7 +6,7 @@ import { X } from 'lucide-react'
 
 /**
  * Modal enterprise per inserimento/modifica manuale dei booster giocatore.
- * Booster eFootball: bonus condizionali (nome, effetto, condizione di attivazione).
+ * Booster eFootball: sempre attivi (nome, effetto).
  * Usato in: pagina giocatore, gestione formazione (AssignModal), MissingDataModal (inline).
  * UX e i18n allineati al resto dell'app.
  */
@@ -14,7 +14,7 @@ export default function ManualBoostersModal({ boosters, setBoosters, onCancel, o
   const { t } = useTranslation()
   const list = Array.isArray(boosters) ? boosters : []
 
-  const add = () => setBoosters([...list, { name: '', effect: '', condition: '' }])
+  const add = () => setBoosters([...list, { name: '', effect: '' }])
   const remove = (idx) => setBoosters(list.filter((_, i) => i !== idx))
   const change = (idx, key, value) =>
     setBoosters(list.map((b, i) => (i === idx ? { ...(b || {}), [key]: value } : b)))
@@ -150,17 +150,6 @@ export default function ManualBoostersModal({ boosters, setBoosters, onCancel, o
                       value={String(b?.effect ?? '')}
                       onChange={(e) => change(idx, 'effect', e.target.value)}
                       placeholder={t('boosterEffect')}
-                      style={inputStyle}
-                      disabled={saving}
-                    />
-                  </div>
-                  <div>
-                    <div style={labelStyle}>{t('boosterCondition')}</div>
-                    <input
-                      type="text"
-                      value={String(b?.condition ?? '')}
-                      onChange={(e) => change(idx, 'condition', e.target.value)}
-                      placeholder={t('boosterCondition')}
                       style={inputStyle}
                       disabled={saving}
                     />

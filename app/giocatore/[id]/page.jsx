@@ -336,7 +336,7 @@ export default function PlayerDetailPage() {
   const openManualBoosters = React.useCallback(() => {
     if (!player) return
     const existing = Array.isArray(player.available_boosters) ? player.available_boosters : []
-    setManualBoosters(existing.length > 0 ? existing : [{ name: '', effect: '', condition: '' }])
+    setManualBoosters(existing.length > 0 ? existing : [{ name: '', effect: '' }])
     setShowManualBoostersModal(true)
   }, [player])
 
@@ -356,9 +356,8 @@ export default function PlayerDetailPage() {
         .map(b => ({
           name: typeof b?.name === 'string' ? b.name.trim() : '',
           effect: typeof b?.effect === 'string' ? b.effect.trim() : '',
-          condition: typeof b?.condition === 'string' ? b.condition.trim() : ''
         }))
-        .filter(b => b.name || b.effect || b.condition)
+        .filter(b => b.name || b.effect)
 
       const photoSlots = player.photo_slots && typeof player.photo_slots === 'object' ? { ...player.photo_slots } : {}
       photoSlots.booster = true
@@ -1152,11 +1151,6 @@ function BoostersSection({ player, photoSlots, isExpanded, onToggle, onFileSelec
                   {booster.effect && (
                     <div style={{ fontSize: '14px', marginBottom: '4px', opacity: 0.9 }}>
                       <strong>{t('effect')}:</strong> {booster.effect}
-                    </div>
-                  )}
-                  {booster.condition && (
-                    <div style={{ fontSize: '13px', opacity: 0.7 }}>
-                      <strong>{t('condition')}:</strong> {booster.condition}
                     </div>
                   )}
                 </div>

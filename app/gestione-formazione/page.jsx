@@ -316,7 +316,7 @@ export default function GestioneFormazionePage() {
   const openManualBoostersForPlayer = React.useCallback((player) => {
     if (!player?.id) return
     const existing = Array.isArray(player.available_boosters) ? player.available_boosters : []
-    setManualBoosters(existing.length > 0 ? existing : [{ name: '', effect: '', condition: '' }])
+    setManualBoosters(existing.length > 0 ? existing : [{ name: '', effect: '' }])
     setManualBoostersPlayerId(player.id)
     setShowManualBoostersModal(true)
   }, [])
@@ -335,10 +335,9 @@ export default function GestioneFormazionePage() {
       const cleaned = (Array.isArray(manualBoosters) ? manualBoosters : [])
         .map(b => ({
           name: typeof b?.name === 'string' ? b.name.trim() : '',
-          effect: typeof b?.effect === 'string' ? b.effect.trim() : '',
-          condition: typeof b?.condition === 'string' ? b.condition.trim() : ''
+          effect: typeof b?.effect === 'string' ? b.effect.trim() : ''
         }))
-        .filter(b => b.name || b.effect || b.condition)
+        .filter(b => b.name || b.effect)
 
       // Merge photo_slots.booster=true
       const resPlayer = await fetch(`/api/players/${manualBoostersPlayerId}`, {
@@ -4056,11 +4055,6 @@ function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUplo
                         {booster.effect && (
                           <div style={{ fontSize: '12px', opacity: 0.9, marginBottom: '6px', lineHeight: '1.5', color: 'rgba(255, 255, 255, 0.9)' }}>
                             <strong>Effetto:</strong> {booster.effect}
-                          </div>
-                        )}
-                        {booster.condition && (
-                          <div style={{ fontSize: '11px', opacity: 0.7, color: 'rgba(255, 255, 255, 0.7)', fontStyle: 'italic' }}>
-                            {t('condition')}: {booster.condition}
                           </div>
                         )}
                       </div>

@@ -26,7 +26,7 @@ export default function MissingDataModal({
   }
 
   const handleAddBooster = () => {
-    const next = [...boosters, { name: '', effect: '', condition: '' }]
+    const next = [...boosters, { name: '', effect: '' }]
     handleInputChange('boosters', next)
   }
 
@@ -286,24 +286,6 @@ export default function MissingDataModal({
                                     value={String(b?.effect ?? '')}
                                     onChange={(e) => handleBoosterChange(idx, 'effect', e.target.value)}
                                     placeholder={t('boosterEffect')}
-                                    style={{
-                                      width: '100%',
-                                      padding: '10px',
-                                      borderRadius: '8px',
-                                      border: '1px solid var(--border-color, #333)',
-                                      backgroundColor: 'var(--bg-secondary, #2a2a2a)',
-                                      color: 'var(--text-primary, #fff)',
-                                      fontSize: '14px'
-                                    }}
-                                  />
-                                </div>
-                                <div>
-                                  <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '4px' }}>{t('boosterCondition')}</div>
-                                  <input
-                                    type="text"
-                                    value={String(b?.condition ?? '')}
-                                    onChange={(e) => handleBoosterChange(idx, 'condition', e.target.value)}
-                                    placeholder={t('boosterCondition')}
                                     style={{
                                       width: '100%',
                                       padding: '10px',
