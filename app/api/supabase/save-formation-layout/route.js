@@ -94,16 +94,19 @@ export async function POST(req) {
       const complete = { ...(slots || {}) }
       const defaultPositions = {
         0: { x: 50, y: 90, position: 'PT' },
-        1: { x: 20, y: 70, position: 'DC' },
-        2: { x: 40, y: 70, position: 'DC' },
-        3: { x: 60, y: 70, position: 'DC' },
-        4: { x: 80, y: 70, position: 'DC' },
-        5: { x: 30, y: 50, position: 'MED' },
-        6: { x: 50, y: 50, position: 'MED' },
-        7: { x: 70, y: 50, position: 'MED' },
-        8: { x: 25, y: 25, position: 'SP' },
-        9: { x: 50, y: 25, position: 'CF' },
-        10: { x: 75, y: 25, position: 'SP' }
+        // DIFESA più compatta per evitare "vuoti" tra linee
+        1: { x: 20, y: 65, position: 'DC' },
+        2: { x: 40, y: 65, position: 'DC' },
+        3: { x: 60, y: 65, position: 'DC' },
+        4: { x: 80, y: 65, position: 'DC' },
+        // CENTROCAMPO su sotto-fasce vicine (MED vicino a CC)
+        5: { x: 30, y: 52, position: 'CC' },
+        6: { x: 50, y: 56, position: 'MED' },
+        7: { x: 70, y: 52, position: 'CC' },
+        // ATTACCO leggermente più basso per consistenza visiva
+        8: { x: 25, y: 28, position: 'SP' },
+        9: { x: 50, y: 28, position: 'CF' },
+        10: { x: 75, y: 28, position: 'SP' }
       }
       
       for (let i = 0; i <= 10; i++) {

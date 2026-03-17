@@ -324,6 +324,65 @@ export default function GestioneFormazionePage() {
 
   const clampPercent = (v, min = 5, max = 95) => Math.max(min, Math.min(max, Number(v)))
 
+  // Snap verticale proporzionato (stile eFootball): oltre alle linee principali,
+  // il centrocampo è diviso in sotto-fasce vicine (MED e CC possono essere molto vicini).
+  // Manteniamo libertà su X; su Y guidiamo per leggibilità e coerenza.
+  const snapYToBand = (roleCode, y) => {
+    const yy = clampPercent(y)
+    const role = String(roleCode || '').trim().toUpperCase()
+
+    // Fasce target (percentuali Y)
+    const BANDS = {
+      GK: 90,
+      DEF: 70,
+      DMF: 56,  // MED/DMF (centrocampo basso)
+      CMF: 52,  // CC/CMF (centrocampo medio) — vicino a DMF
+      AMF: 44,  // TRQ/AMF (trequarti)
+      FWD: 30   // attacco
+    }
+
+    // Se il ruolo è esplicito, preferisci la fascia "giusta"
+    if (role === 'PT') return BANDS.GK
+    if (['DC', 'TD', 'TS'].includes(role)) return BANDS.DEF
+    if (['MED', 'DMF'].includes(role)) return BANDS.DMF
+    if (['CC', 'CMF', 'CLS', 'CLD', 'LMF', 'RMF'].includes(role)) return BANDS.CMF
+    if (['TRQ', 'AMF', 'SS'].includes(role)) return BANDS.AMF
+    if (['P', 'SP', 'CF', 'ESA', 'EDE', 'LWF', 'RWF'].includes(role)) return BANDS.FWD
+
+    // Fallback per sicurezza: usa y grezza con snap su macro-zone
+    if (yy > 80) return BANDS.GK
+    if (yy >= 60) return BANDS.DEF
+    if (yy >= 48) return BANDS.DMF
+    if (yy >= 38) return BANDS.AMF
+    return BANDS.FWD
+  }
+
+  // Render: mappa codici ruolo verso label coerente IT/EN, senza cambiare ciò che salviamo.
+  const formatRoleLabel = React.useCallback((code) => {
+    const c = String(code || '?').trim().toUpperCase()
+    if (!c || c === '?') return '?'
+    // In italiano preferiamo sigle "nostre" (MED/CC/TRQ); in inglese le sigle eFootball (DMF/CMF/AMF).
+    if (lang === 'it') {
+      if (c === 'DMF') return 'MED'
+      if (c === 'CMF') return 'CC'
+      if (c === 'AMF') return 'TRQ'
+      if (c === 'LMF') return 'CLS'
+      if (c === 'RMF') return 'CLD'
+      if (c === 'LWF') return 'ESA'
+      if (c === 'RWF') return 'EDE'
+      return c
+    }
+    // English
+    if (c === 'MED') return 'DMF'
+    if (c === 'CC') return 'CMF'
+    // Keep TRQ as TRQ (avoid AMF label in UI)
+    if (c === 'CLS') return 'LMF'
+    if (c === 'CLD') return 'RMF'
+    if (c === 'ESA') return 'LWF'
+    if (c === 'EDE') return 'RWF'
+    return c
+  }, [lang])
+
   // Calcola ruolo in base alle coordinate x,y sul campo
   // Nota: per distinguere P vs SP usa la classifica relativa degli slot in attacco, basata su slotIndex (non su match “quasi uguale” di coordinate).
   const calculatePositionFromCoordinates = (slotIndex, x, y, attackSlots = null) => {
@@ -354,7 +413,8 @@ export default function GestioneFormazionePage() {
       if (xx >= 35 && xx <= 65 && yy >= 45 && yy <= 55) return 'CC'  // Centrocampista centrale versatile
       // TRQ (Trequartista): centrocampo avanzato (y: 40-50, x: 35-65, escludendo centro esatto)
       if (yy >= 40 && yy <= 50 && xx >= 35 && xx <= 65 && !(xx >= 48 && xx <= 52)) return 'TRQ'  // Trequartista in centrocampo avanzato (esclude centro esatto che è MED)
-      if (yy < 50) return 'AMF'  // Trequartista (centro avanzato) - fallback se non TRQ
+      // Non usare AMF in UI: fallback su TRQ quando siamo in zona avanzata
+      if (yy < 50) return 'TRQ'
       return 'MED'              // Centrocampista centrale (più arretrato o fuori area CC)
     }
     
@@ -430,11 +490,14 @@ export default function GestioneFormazionePage() {
       newPosition.y,
       allSlotsInAttack.length > 1 ? allSlotsInAttack : null
     )
+    const snappedY = snapYToBand(newRole, newPosition.y)
+    const snappedX = clampPercent(newPosition.x)
     
     setCustomPositions(prev => ({
       ...prev,
       [slotIndex]: {
-        ...newPosition,
+        x: snappedX,
+        y: snappedY,
         position: newRole  // Aggiorna anche la position
       }
     }))
@@ -2580,6 +2643,7 @@ export default function GestioneFormazionePage() {
               isEditMode={isEditMode}
               onPositionChange={handlePositionChange}
               customPosition={customPos}  // Passa customPosition per mostrare sigla ruolo
+              formatRoleLabel={formatRoleLabel}
             />
           )
         })}
@@ -2878,13 +2942,15 @@ export default function GestioneFormazionePage() {
 
 // Componente Modal Upload
 // Slot Card Component - Badge Minimale (solo nome)
-function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChange, customPosition = null }) {
+function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChange, customPosition = null, formatRoleLabel }) {
   const { t } = useTranslation()
   const { slot_index, position, player, offsetX = 0, offsetY = 0, hasNearbyCards = false } = slot
   const isEmpty = !player
   
   // Usa position da customPosition se presente (durante drag), altrimenti da slot.position
-  const displayPosition = customPosition?.position || position?.position || '?'
+  const rawPosition = customPosition?.position || position?.position || '?'
+  // Label coerente IT/EN: evita mix come AMF + TRQ nella stessa schermata.
+  const displayPosition = typeof formatRoleLabel === 'function' ? formatRoleLabel(rawPosition) : rawPosition
   
   const [isDragging, setIsDragging] = React.useState(false)
   const [dragStart, setDragStart] = React.useState(null)
@@ -3102,7 +3168,7 @@ function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChang
           textShadow: '0 1px 3px rgba(0, 0, 0, 0.7)'
         }}>
           <Plus size={14} />
-          <span>{position.position || '?'}</span>
+          <span>{displayPosition}</span>
         </div>
       ) : (
         <div style={{
@@ -4268,6 +4334,22 @@ function UploadPlayerModal({ slot, images, onImagesChange, onUpload, onClose, up
 // Formation Selector Modal Component
 function FormationSelectorModal({ onSelect, onClose, loading }) {
   const { t } = useTranslation()
+
+  // Normalizza slot_positions per coerenza:
+  // - TD deve stare a destra (x alto), TS a sinistra (x basso).
+  // Questo evita inversioni nelle formazioni template.
+  const normalizeSlotPositions = (slotPositions) => {
+    const out = { ...(slotPositions || {}) }
+    for (const [k, v] of Object.entries(out)) {
+      if (!v) continue
+      const x = v.x != null ? Number(v.x) : null
+      const pos = String(v.position || '').trim().toUpperCase()
+      if (x == null || !Number.isFinite(x)) continue
+      if (pos === 'TD' && x < 50) out[k] = { ...v, position: 'TS' }
+      if (pos === 'TS' && x > 50) out[k] = { ...v, position: 'TD' }
+    }
+    return out
+  }
   
   // Formazioni ufficiali eFootball con posizioni slot
   const formations = {
@@ -4285,9 +4367,10 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
         5: { x: 35, y: 50, position: 'MED' },
         6: { x: 50, y: 50, position: 'MED' },
         7: { x: 65, y: 50, position: 'MED' },
-        8: { x: 25, y: 25, position: 'SP' },
+        // In eFootball nel 4-3-3 gli esterni sono ali (ESA/EDE), non seconde punte.
+        8: { x: 25, y: 25, position: 'ESA' },
         9: { x: 50, y: 25, position: 'CF' },
-        10: { x: 75, y: 25, position: 'SP' }
+        10: { x: 75, y: 25, position: 'EDE' }
       }
     },
     '4-2-3-1': {
@@ -4337,9 +4420,9 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
         5: { x: 50, y: 60, position: 'MED' },
         6: { x: 35, y: 45, position: 'MED' },
         7: { x: 65, y: 45, position: 'MED' },
-        8: { x: 25, y: 25, position: 'SP' },
+        8: { x: 25, y: 25, position: 'ESA' },
         9: { x: 50, y: 25, position: 'CF' },
-        10: { x: 75, y: 25, position: 'SP' }
+        10: { x: 75, y: 25, position: 'EDE' }
       }
     },
     '4-5-1': {
@@ -4783,6 +4866,13 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
     }
   }
 
+  const handleSelect = (formationKey) => {
+    const f = formations[formationKey]
+    if (!f) return
+    const normalized = normalizeSlotPositions(f.slot_positions)
+    onSelect(f.name || formationKey, normalized)
+  }
+
   // Helper: raggruppa formazioni per base
   const groupFormationsByBase = React.useMemo(() => {
     const grouped = {}
@@ -4819,7 +4909,7 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
 
   const handleConfirm = () => {
     if (selectedFormation && formations[selectedFormation]) {
-      onSelect(formations[selectedFormation].name, formations[selectedFormation].slot_positions)
+      handleSelect(selectedFormation)
     }
   }
 
