@@ -256,7 +256,7 @@ export default function MissingDataModal({
                                     color: '#fecaca'
                                   }}
                                 >
-                                  {t('removeSkill')}
+                                  {t('remove')}
                                 </button>
                               </div>
 

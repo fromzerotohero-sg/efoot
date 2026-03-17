@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { useTranslation } from '@/lib/i18n'
 import { supabase } from '@/lib/supabaseClient'
-import { X, User, ChevronDown, ChevronUp, Zap, Shield, Star, Check } from 'lucide-react'
+import { X, User, ChevronDown, ChevronUp, Zap, Shield, Star, Check, Gift } from 'lucide-react'
 
 /**
  * ManualPlayerModal — Inserimento manuale giocatore (0 HP).
@@ -76,7 +76,7 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
   const isEditMode = !!existingPlayer
 
   // Sezioni espandibili — in edit mode, apri le sezioni con dati mancanti
-  const [expandedSections, setExpandedSections] = useState({ stats: false, skills: false, details: false })
+  const [expandedSections, setExpandedSections] = useState({ stats: false, skills: false, boosters: false, details: false })
 
   // Dati form
   const [form, setForm] = useState({
@@ -84,6 +84,7 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
     playing_style: '', form: 'B',
     speed: '', acceleration: '', finishing: '', passing: '', dribbling: '', defending: '', physical: '',
     skills: [],
+    boosters: [],
     height: '', weight: '', age: '', nationality: '', club_name: ''
   })
 
@@ -110,6 +111,7 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
         dribbling: atk.dribbling || '', defending: def.defensive_awareness || '',
         physical: ath.physical_contact || '',
         skills: Array.isArray(existingPlayer.skills) ? [...existingPlayer.skills] : [],
+        boosters: Array.isArray(existingPlayer.available_boosters) ? [...existingPlayer.available_boosters] : [],
         height: existingPlayer.height || '', weight: existingPlayer.weight || '',
         age: existingPlayer.age || '',
         nationality: existingPlayer.nationality || '', club_name: existingPlayer.club_name || ''
@@ -117,15 +119,17 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
       // Apri sezioni con dati mancanti
       const hasStats = Object.keys(atk).length > 0 || Object.keys(def).length > 0 || Object.keys(ath).length > 0
       const hasSkills = Array.isArray(existingPlayer.skills) && existingPlayer.skills.length > 0
+      const hasBoosters = Array.isArray(existingPlayer.available_boosters) && existingPlayer.available_boosters.length > 0
       setExpandedSections({
         stats: !hasStats,   // apri se mancano stats
         skills: !hasSkills, // apri se mancano skills
+        boosters: !hasBoosters,
         details: false
       })
     } else {
       // CREATE MODE: form vuoto
-      setForm({ player_name: '', position: '', overall_rating: '', card_type: 'Standard', playing_style: '', form: 'B', speed: '', acceleration: '', finishing: '', passing: '', dribbling: '', defending: '', physical: '', skills: [], height: '', weight: '', age: '', nationality: '', club_name: '' })
-      setExpandedSections({ stats: false, skills: false, details: false })
+      setForm({ player_name: '', position: '', overall_rating: '', card_type: 'Standard', playing_style: '', form: 'B', speed: '', acceleration: '', finishing: '', passing: '', dribbling: '', defending: '', physical: '', skills: [], boosters: [], height: '', weight: '', age: '', nationality: '', club_name: '' })
+      setExpandedSections({ stats: false, skills: false, boosters: false, details: false })
     }
 
     const loadStyles = async () => {
@@ -163,6 +167,19 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
       skills: prev.skills.includes(skill)
         ? prev.skills.filter(s => s !== skill)
         : prev.skills.length < 10 ? [...prev.skills, skill] : prev.skills
+    }))
+  }
+
+  const addBooster = () => {
+    setForm(prev => ({ ...prev, boosters: [...(Array.isArray(prev.boosters) ? prev.boosters : []), { name: '', effect: '', condition: '' }] }))
+  }
+  const removeBooster = (idx) => {
+    setForm(prev => ({ ...prev, boosters: (Array.isArray(prev.boosters) ? prev.boosters : []).filter((_, i) => i !== idx) }))
+  }
+  const updateBooster = (idx, key, value) => {
+    setForm(prev => ({
+      ...prev,
+      boosters: (Array.isArray(prev.boosters) ? prev.boosters : []).map((b, i) => i === idx ? { ...(b || {}), [key]: value } : b)
     }))
   }
 
@@ -204,7 +221,8 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
         manuale: true,
         card: true,
         statistiche: (Object.keys(baseStats).length > 0) || (existingPlayer?.photo_slots?.statistiche) || undefined,
-        abilita: (form.skills.length > 0) || (existingPlayer?.photo_slots?.abilita) || undefined
+        abilita: (form.skills.length > 0) || (existingPlayer?.photo_slots?.abilita) || undefined,
+        booster: ((Array.isArray(form.boosters) && form.boosters.length > 0) || (existingPlayer?.photo_slots?.booster)) || undefined
       }
 
       var data = null
@@ -231,6 +249,7 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
           form: form.form || existingPlayer.form || 'B',
           base_stats: Object.keys(mergedBaseStats).length > 0 ? mergedBaseStats : existingPlayer.base_stats || {},
           skills: form.skills.length > 0 ? form.skills : existingPlayer.skills || [],
+          available_boosters: (Array.isArray(form.boosters) && form.boosters.length > 0) ? form.boosters : existingPlayer.available_boosters || [],
           height: form.height ? Number(form.height) : existingPlayer.height,
           weight: form.weight ? Number(form.weight) : existingPlayer.weight,
           age: form.age ? Number(form.age) : existingPlayer.age,
@@ -272,6 +291,7 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
           form: form.form || 'B',
           base_stats: Object.keys(baseStats).length > 0 ? baseStats : {},
           skills: form.skills.length > 0 ? form.skills : [],
+          boosters: (Array.isArray(form.boosters) && form.boosters.length > 0) ? form.boosters : [],
           height_cm: form.height ? Number(form.height) : null,
           weight_kg: form.weight ? Number(form.weight) : null,
           age: form.age ? Number(form.age) : null,
@@ -541,6 +561,71 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
                       value={form.club_name} onChange={e => updateForm('club_name', e.target.value)} />
                   </div>
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* SEZIONE BOOSTER (espandibile) */}
+          <div style={{ marginTop: '10px', border: '1px solid rgba(168,85,247,0.15)', borderRadius: '10px', overflow: 'hidden' }}>
+            <button type="button" onClick={() => toggleSection('boosters')} style={{
+              width: '100%', padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              background: expandedSections.boosters ? 'rgba(168,85,247,0.06)' : 'transparent',
+              border: 'none', cursor: 'pointer', color: 'var(--neon-purple)', fontSize: '13px', fontWeight: 600
+            }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Gift size={14} /> {t('boostersSection')}
+                <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 400 }}>
+                  ({t('optional')})
+                </span>
+              </span>
+              {expandedSections.boosters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
+            {expandedSections.boosters && (
+              <div style={{ padding: '12px 14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                  <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)' }}>{t('boostersList')}</div>
+                  <button type="button" onClick={addBooster} className="btn secondary" style={{ padding: '8px 10px', fontSize: '12px', borderRadius: '10px' }}>
+                    {t('addBooster')}
+                  </button>
+                </div>
+                {(Array.isArray(form.boosters) ? form.boosters : []).length === 0 ? (
+                  <div style={{ fontSize: '13px', opacity: 0.6 }}>{t('boostersNotAvailable')}</div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {(Array.isArray(form.boosters) ? form.boosters : []).map((b, idx) => (
+                      <div key={idx} style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: '12px', padding: '12px', background: 'rgba(255,255,255,0.03)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                          <div style={{ fontWeight: 700, color: 'var(--neon-purple)', fontSize: '12px' }}>
+                            {t('boosters')} #{idx + 1}
+                          </div>
+                          <button type="button" onClick={() => removeBooster(idx)} className="btn secondary" style={{ padding: '6px 10px', fontSize: '12px', borderRadius: '10px', borderColor: 'rgba(239, 68, 68, 0.35)', color: '#fecaca' }}>
+                            {t('remove')}
+                          </button>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
+                          <div>
+                            <label style={{ ...labelStyle, fontSize: '11px' }}>{t('boosterName')}</label>
+                            <input type="text" style={{ ...inputStyle, padding: '8px 10px', fontSize: '13px' }}
+                              placeholder={t('boosterName')}
+                              value={String(b?.name ?? '')} onChange={e => updateBooster(idx, 'name', e.target.value)} />
+                          </div>
+                          <div>
+                            <label style={{ ...labelStyle, fontSize: '11px' }}>{t('boosterEffect')}</label>
+                            <input type="text" style={{ ...inputStyle, padding: '8px 10px', fontSize: '13px' }}
+                              placeholder={t('boosterEffect')}
+                              value={String(b?.effect ?? '')} onChange={e => updateBooster(idx, 'effect', e.target.value)} />
+                          </div>
+                          <div>
+                            <label style={{ ...labelStyle, fontSize: '11px' }}>{t('boosterCondition')}</label>
+                            <input type="text" style={{ ...inputStyle, padding: '8px 10px', fontSize: '13px' }}
+                              placeholder={t('boosterCondition')}
+                              value={String(b?.condition ?? '')} onChange={e => updateBooster(idx, 'condition', e.target.value)} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

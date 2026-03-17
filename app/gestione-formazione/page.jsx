@@ -11,6 +11,7 @@ import PositionSelectionModal from '@/components/PositionSelectionModal'
 import MissingDataModal from '@/components/MissingDataModal'
 import ConfirmModal from '@/components/ConfirmModal'
 import ManualPlayerModal from '@/components/ManualPlayerModal'
+import ManualBoostersModal from '@/components/ManualBoostersModal'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import { PHOTO_TYPE_KEYS, getPhotoTypeConfig } from '@/lib/playerPhotoTypes'
@@ -145,6 +146,10 @@ export default function GestioneFormazionePage() {
   const [missingData, setMissingData] = React.useState({ required: [], optional: [] })
   const [duplicateConfirmModal, setDuplicateConfirmModal] = React.useState(null) // { show, playerName, playerAge, slotIndex, onConfirm }
   const [confirmModal, setConfirmModal] = React.useState(null) // { show, title, message, onConfirm, onCancel, variant }
+  const [showManualBoostersModal, setShowManualBoostersModal] = React.useState(false)
+  const [manualBoosters, setManualBoosters] = React.useState([])
+  const [manualBoostersPlayerId, setManualBoostersPlayerId] = React.useState(null)
+  const [savingManualBoosters, setSavingManualBoosters] = React.useState(false)
 
   // Funzione fetchData riutilizzabile (estratta da useEffect per essere chiamabile)
   const fetchData = React.useCallback(async () => {
@@ -307,6 +312,69 @@ export default function GestioneFormazionePage() {
       }
     } catch (_) { /* non bloccare UI */ }
   }, [supabase])
+
+  const openManualBoostersForPlayer = React.useCallback((player) => {
+    if (!player?.id) return
+    const existing = Array.isArray(player.available_boosters) ? player.available_boosters : []
+    setManualBoosters(existing.length > 0 ? existing : [{ name: '', effect: '', condition: '' }])
+    setManualBoostersPlayerId(player.id)
+    setShowManualBoostersModal(true)
+  }, [])
+
+  const saveManualBoostersForPlayer = React.useCallback(async () => {
+    if (!manualBoostersPlayerId) return
+    setSavingManualBoosters(true)
+    try {
+      let token = localStorage.getItem('auth_token')
+      if (!token && supabase) {
+        const { data: session } = await supabase.auth.getSession()
+        token = session?.session?.access_token
+      }
+      if (!token) throw new Error(t('sessionExpired'))
+
+      const cleaned = (Array.isArray(manualBoosters) ? manualBoosters : [])
+        .map(b => ({
+          name: typeof b?.name === 'string' ? b.name.trim() : '',
+          effect: typeof b?.effect === 'string' ? b.effect.trim() : '',
+          condition: typeof b?.condition === 'string' ? b.condition.trim() : ''
+        }))
+        .filter(b => b.name || b.effect || b.condition)
+
+      // Merge photo_slots.booster=true
+      const resPlayer = await fetch(`/api/players/${manualBoostersPlayerId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      const current = await resPlayer.json().catch(() => ({}))
+      const existingPhotoSlots = current?.player?.photo_slots && typeof current.player.photo_slots === 'object' ? current.player.photo_slots : {}
+      const mergedPhotoSlots = { ...existingPhotoSlots, booster: true }
+
+      const patchRes = await fetch(`/api/players/${manualBoostersPlayerId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          available_boosters: cleaned,
+          photo_slots: mergedPhotoSlots
+        })
+      })
+      await safeJsonResponse(patchRes, t('errorUpdatingPlayer'))
+
+      setShowManualBoostersModal(false)
+      setManualBoosters([])
+      setManualBoostersPlayerId(null)
+      showToast(t('boostersUpdated'), 'success')
+      await fetchData()
+      refreshDiagnosticAfterSave()
+    } catch (err) {
+      console.error('[ManualBoosters] save error:', err)
+      const { message } = mapErrorToUserMessage(err, t('errorUpdatingPlayer'), lang)
+      showToast(message, 'error')
+    } finally {
+      setSavingManualBoosters(false)
+    }
+  }, [manualBoosters, manualBoostersPlayerId, supabase, t, lang, fetchData, refreshDiagnosticAfterSave, showToast])
 
   // Auto-dismiss toast
   React.useEffect(() => {
@@ -2878,6 +2946,13 @@ export default function GestioneFormazionePage() {
             setSelectedReserve(null)
             setShowPositionSelectionModal(true)
           }}
+          onEditBoosters={(player) => {
+            if (!player?.id) return
+            setShowAssignModal(false)
+            setSelectedSlot(null)
+            setSelectedReserve(null)
+            openManualBoostersForPlayer(player)
+          }}
           onRemove={selectedSlot ? (player => handleRemoveFromSlot(player.id)) : null}
           onDelete={currentPlayer => handleDeletePlayer(currentPlayer.id)}
           onClose={() => {
@@ -2890,6 +2965,20 @@ export default function GestioneFormazionePage() {
             setShowManualPlayerModal(true)
           }}
           assigning={assigning}
+        />
+      )}
+
+      {showManualBoostersModal && (
+        <ManualBoostersModal
+          boosters={manualBoosters}
+          setBoosters={setManualBoosters}
+          onCancel={() => {
+            setShowManualBoostersModal(false)
+            setManualBoosters([])
+            setManualBoostersPlayerId(null)
+          }}
+          onSave={saveManualBoostersForPlayer}
+          saving={savingManualBoosters}
         />
       )}
 
@@ -3424,7 +3513,7 @@ function ReserveCard({ player, onClick, disabled, onDelete }) {
 }
 
 // Assign Modal Component
-function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUploadPhoto, onEditCompetences, onRemove, onDelete, onClose, onOpenManualEntry, assigning }) {
+function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUploadPhoto, onEditCompetences, onEditBoosters, onRemove, onDelete, onClose, onOpenManualEntry, assigning }) {
   const { t, lang } = useTranslation()
   const router = useRouter()
   const [expandedSections, setExpandedSections] = React.useState({
@@ -3506,6 +3595,19 @@ function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUplo
                 }}
               >
                 {t('editCompetences')}
+              </button>
+            )}
+            {currentPlayer && typeof onEditBoosters === 'function' && (
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEditBoosters(currentPlayer) }}
+                className="btn secondary"
+                style={{
+                  padding: '8px 10px',
+                  fontSize: '12px',
+                  borderRadius: '8px'
+                }}
+              >
+                {t('editBoosters')}
               </button>
             )}
             <button
