@@ -29,6 +29,25 @@ export default function AssistantChat({ mode = 'popup' }) {
   const voiceTimeoutRef = useRef(null)
   const confirmedTextRef = useRef('') // Testo finale confermato durante la sessione
 
+  // Render minimo Markdown (safe): **bold**, *italic*, newlines → <br/>
+  const renderRichText = React.useCallback((text) => {
+    const raw = text == null ? '' : String(text)
+    const escaped = raw
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+
+    // Non è un markdown completo: è intenzionale (robusto e sicuro).
+    // Ordine importante: bold prima di italic.
+    const withBold = escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    const withItalic = withBold.replace(/(^|[^*])\*([^*]+)\*(?!\*)/g, '$1<em>$2</em>')
+    const withBreaks = withItalic.replace(/\n/g, '<br/>')
+
+    return { __html: withBreaks }
+  }, [])
+
   useEffect(() => {
     return () => { 
       sendAbortRef.current?.abort()
@@ -599,6 +618,8 @@ export default function AssistantChat({ mode = 'popup' }) {
             flexDirection: 'column',
             zIndex: 10050,
             overflow: 'hidden',
+            // Importantissimo per scroll in flex su iOS: permette ai figli scrollabili di ridursi
+            minHeight: 0,
             ...chatBgCommon
           }
         : {
@@ -702,6 +723,7 @@ export default function AssistantChat({ mode = 'popup' }) {
         style={{
           flex: 1,
           overflowY: 'auto',
+          minHeight: 0,
           padding: '16px',
           display: 'flex',
           flexDirection: 'column',
@@ -779,10 +801,14 @@ export default function AssistantChat({ mode = 'popup' }) {
                 lineHeight: '1.6',
                 wordWrap: 'break-word',
                 border: msg.role === 'assistant' ? '1px solid rgba(0, 212, 255, 0.3)' : 'none',
-                color: msg.role === 'user' ? '#fff' : 'rgba(255, 255, 255, 0.9)'
+                color: msg.role === 'user' ? '#fff' : 'rgba(255, 255, 255, 0.9)',
+                maxWidth: '100%'
               }}
             >
-              {msg.content}
+              {msg.role === 'assistant'
+                ? <span style={{ display: 'block', maxWidth: '100%' }} dangerouslySetInnerHTML={renderRichText(msg.content)} />
+                : msg.content
+              }
             </div>
           </div>
         ))}
