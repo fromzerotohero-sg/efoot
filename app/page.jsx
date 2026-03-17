@@ -878,7 +878,7 @@ function HomePage() {
         </div>
 
         {/* Sticky Assistant Chat */}
-        <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 1000 }}>
+        <div style={{ position: 'fixed', bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))', right: '20px', zIndex: 1000 }}>
           <AssistantChat mode="popup" />
         </div>
 
