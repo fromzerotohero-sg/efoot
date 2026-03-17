@@ -877,11 +877,6 @@ function HomePage() {
           </div>
         </div>
 
-        {/* Sticky Assistant Chat - sopra bottom nav su mobile */}
-        <div style={{ position: 'fixed', bottom: 'calc(100px + env(safe-area-inset-bottom, 0px))', right: '20px', zIndex: 1100 }}>
-          <AssistantChat mode="popup" />
-        </div>
-
       <style jsx>{`
         @keyframes spin {
           to { transform: rotate(360deg); }

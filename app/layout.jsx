@@ -4,6 +4,7 @@ import { SidebarProvider } from '@/components/SidebarContext'
 import SidebarNew from '@/components/SidebarNew'
 import TopBar from '@/components/TopBar'
 import BottomNavigation from '@/components/BottomNavigation'
+import AssistantChat from '@/components/AssistantChat'
 
 // Layout unico: usare solo questo file. Non creare layout.tsx (conflitti / layout sbagliato = dashboard non carica).
 // Title/description: default IT; client can set document.title by lang via LanguageProviderWrapper
@@ -49,6 +50,9 @@ export default function RootLayout({ children }) {
           
           {/* Bottom Navigation - solo mobile */}
           <BottomNavigation />
+
+          {/* Assistant Chat (popup) - globale per evento open-assistant-chat */}
+          <AssistantChat mode="popup" />
         </LanguageProviderWrapper>
       </body>
     </html>
