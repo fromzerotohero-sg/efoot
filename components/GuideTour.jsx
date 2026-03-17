@@ -69,8 +69,11 @@ export default function GuideTour() {
   const startTour = useCallback(async () => {
     if (running) return
     
+    console.log('[GuideTour] Starting tour... NEW_GUIDE_SYSTEM:', hasNewGuide)
+    
     // Ottieni gli step per la pagina corrente
     const steps = getTourSteps(pathname || '/', t, { includeOptional: false })
+    console.log('[GuideTour] Steps found:', steps.length)
     
     // Attendi che gli elementi siano nel DOM (utile per componenti asincroni)
     await Promise.all(
@@ -79,6 +82,7 @@ export default function GuideTour() {
     
     // Filtra solo gli step che esistono davvero
     const filtered = filterExistingSteps(steps)
+    console.log('[GuideTour] Steps after filtering:', filtered.length)
 
     if (filtered.length === 0) {
       setNoTourMsg(t('tourNoTour'))
@@ -103,15 +107,9 @@ export default function GuideTour() {
           setRunning(false)
           driverRef.current = null
         },
-        // NUOVO: Callback per ogni step
+        // Callback per ogni step - animazioni disabilitate temporaneamente
         onHighlighted: (element, step) => {
-          // Aggiungi effetto pulse all'elemento evidenziato
-          if (element) {
-            element.classList.add('tour-highlight-pulse')
-            setTimeout(() => {
-              element.classList.remove('tour-highlight-pulse')
-            }, 2000)
-          }
+          // Animazioni rimosse per evitare distrazioni
         }
       }
       
@@ -169,7 +167,7 @@ export default function GuideTour() {
         <span className="guide-tour-launcher-label">
           {running ? (lang === 'en' ? 'Loading...' : 'Caricamento...') : t('tourShowMeHow')}
         </span>
-        {hasNewGuide && <span className="guide-tour-badge">NEW</span>}
+        {/* Badge NEW rimosso temporaneamente per evitare conflitti UI */}
       </button>
       
       {noTourMsg && (
