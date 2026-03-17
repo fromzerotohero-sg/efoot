@@ -39,10 +39,10 @@ export default function SidebarNew() {
 
   return (
     <>
-      {/* Mobile menu button */}
+      {/* Mobile menu button - posizionato a sinistra, sotto la topbar */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-[140px] left-4 z-50 p-2 rounded-lg bg-[var(--bg-elevated)] border border-[rgba(0, 212, 255, 0.3)] text-[#FFFFFF] shadow-lg"
+        className="lg:hidden fixed top-[160px] left-4 z-50 p-2 rounded-lg bg-[var(--bg-elevated)] border border-[rgba(0, 212, 255, 0.3)] text-[#FFFFFF] shadow-lg"
         aria-label={t('toggleMenu')}
         style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}
       >

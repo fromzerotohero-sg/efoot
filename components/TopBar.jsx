@@ -36,8 +36,8 @@ export default function TopBar() {
         {/* Spacer per mobile - spinge elementi a destra */}
         <div className="flex-1 lg:hidden" />
         
-        {/* GuideTour - visibile su desktop, nascosto su mobile */}
-        <div className="hidden lg:block">
+        {/* GuideTour - sempre visibile, su mobile è posizionato a destra */}
+        <div className="order-2 lg:order-1">
           <GuideTour />
         </div>
         
