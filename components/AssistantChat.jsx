@@ -754,7 +754,9 @@ export default function AssistantChat({ mode = 'popup' }) {
               }
             </div>
             <div style={{ fontSize: '13px', opacity: 0.7 }}>
-              Fammi una domanda o usa i suggerimenti qui sotto
+              {lang === 'en' 
+                ? 'Specific questions → better answers. Use suggestions or ask your own!' 
+                : 'Domande specifiche → risposte migliori. Usa i suggerimenti o chiedi tu!'}
             </div>
           </div>
         )}
@@ -763,7 +765,9 @@ export default function AssistantChat({ mode = 'popup' }) {
           const hasOnlyGreeting = messages.length === 1 && messages[0]?.role === 'assistant'
           return hasOnlyGreeting && (
             <div style={{ fontSize: '12px', opacity: 0.7, padding: '4px 0', textAlign: 'center' }}>
-              {lang === 'en' ? 'Ask something or use the suggestions below' : 'Fammi una domanda o usa i suggerimenti qui sotto'}
+              {lang === 'en' 
+                ? 'The more details you give me, the more useful my advice' 
+                : 'Più dettagli mi dai, più utili i miei consigli'}
             </div>
           )
         })()}
