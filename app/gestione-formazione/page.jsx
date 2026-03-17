@@ -350,14 +350,14 @@ export default function GestioneFormazionePage() {
     // Fasce target (percentuali Y)
     const BANDS = {
       GK: 90,
-      DEF: 70,
+      DEF: 66,
       // Centrocampo su sotto-fasce bilanciate: più spazio al CC, meno "vuoto" al TRQ
       DMF: 58,  // MED/DMF (centrocampo basso)
       CMF: 52,  // CC/CMF (centrocampo medio)
       AMF: 46,  // TRQ/AMF (trequarti) più vicino al CC
       // Attacco su sotto-fasce: SP deve stare un filo più basso (più "spazio" rispetto al CF)
       CF: 28,
-      SP: 32,
+      SP: 34,
       WING: 30,
       FWD: 30
     }

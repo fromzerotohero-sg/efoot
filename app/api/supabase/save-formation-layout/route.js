@@ -104,9 +104,9 @@ export async function POST(req) {
         6: { x: 50, y: 58, position: 'MED' },
         7: { x: 70, y: 52, position: 'CC' },
         // ATTACCO su sotto-fasce: SP un filo più basso del CF
-        8: { x: 25, y: 32, position: 'SP' },
+        8: { x: 25, y: 34, position: 'SP' },
         9: { x: 50, y: 28, position: 'CF' },
-        10: { x: 75, y: 32, position: 'SP' }
+        10: { x: 75, y: 34, position: 'SP' }
       }
       
       for (let i = 0; i <= 10; i++) {
