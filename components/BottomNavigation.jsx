@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
 import { 
-  BookOpen,
+  Shield,
   LayoutGrid,
   MessageSquare,
   Users,
@@ -23,9 +23,9 @@ export default function BottomNavigation() {
 
   const navItems = [
     {
-      href: '/guida',
-      icon: BookOpen,
-      label: lang === 'en' ? 'Guide' : 'Guida'
+      href: '/contromisure-pre-partita',
+      icon: Shield,
+      label: lang === 'en' ? 'Counters' : 'Contromisure'
     },
     {
       href: '/',
