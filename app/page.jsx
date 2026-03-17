@@ -12,7 +12,6 @@ import AssistantChat from '@/components/AssistantChat'
 import GameAnalysisModal from '@/components/GameAnalysisModal'
 import TaskWidget from '@/components/TaskWidget'
 import MissionCenter from '@/components/MissionCenter'
-import GuideTour from '@/components/GuideTour'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import { getCurrentMonth } from '@/lib/leaderboardHelper'
 import { withAuth } from '@/components/AuthWrapper'
@@ -878,14 +877,9 @@ function HomePage() {
           </div>
         </div>
 
-        {/* Sticky Assistant Chat */}
-        <div style={{ position: 'fixed', bottom: 'calc(100px + env(safe-area-inset-bottom, 0px))', right: '20px', zIndex: 1000 }}>
+        {/* Sticky Assistant Chat - posizionato più in alto per evitare bottom nav */}
+        <div style={{ position: 'fixed', bottom: 'calc(140px + env(safe-area-inset-bottom, 0px))', right: '20px', zIndex: 1000 }}>
           <AssistantChat mode="popup" />
-        </div>
-
-        {/* GuideTour - posizionato a sinistra in basso su mobile */}
-        <div className="lg:hidden" style={{ position: 'fixed', bottom: 'calc(100px + env(safe-area-inset-bottom, 0px))', left: '20px', zIndex: 1000 }}>
-          <GuideTour />
         </div>
 
       <style jsx>{`
