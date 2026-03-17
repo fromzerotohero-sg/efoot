@@ -749,8 +749,12 @@ export default function AssistantChat({ mode = 'popup' }) {
             </div>
             <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--neon-cyan)', marginBottom: '8px' }}>
               {userProfile?.first_name 
-                ? `Ciao ${userProfile.first_name}! Come posso aiutarti?`
-                : 'Ciao! Come posso aiutarti?'
+                ? (lang === 'en' 
+                    ? `Hi ${userProfile.first_name}! How can I help you?` 
+                    : `Ciao ${userProfile.first_name}! Come posso aiutarti?`)
+                : (lang === 'en' 
+                    ? 'Hi! How can I help you?' 
+                    : 'Ciao! Come posso aiutarti?')
               }
             </div>
             <div style={{ fontSize: '13px', opacity: 0.7 }}>
