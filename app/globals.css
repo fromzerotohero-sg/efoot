@@ -1117,62 +1117,74 @@ body > * {
   50% { transform: scale(1.1); }
 }
 
-/* Miglioramenti Driver.js Popover */
+/* Miglioramenti Driver.js Popover - Palette migliorata */
 .driver-popover-neon {
-  background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%) !important;
-  border: 1px solid rgba(0, 212, 255, 0.3) !important;
+  background: linear-gradient(135deg, #1a1f3a 0%, #252b4a 100%) !important;
+  border: 1px solid rgba(0, 180, 216, 0.4) !important;
   box-shadow: 
-    0 0 30px rgba(0, 212, 255, 0.2), 
-    0 10px 40px rgba(0, 0, 0, 0.4) !important;
-  border-radius: 12px !important;
-  max-width: 400px !important;
+    0 4px 20px rgba(0, 0, 0, 0.5), 
+    0 0 0 1px rgba(0, 180, 216, 0.1) !important;
+  border-radius: 16px !important;
+  max-width: 360px !important;
 }
 
 .driver-popover-neon .driver-popover-title {
-  color: #fff !important;
-  font-weight: 600 !important;
-  font-size: 18px !important;
-  margin-bottom: 12px !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 20px !important;
+  margin-bottom: 10px !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
 }
 
 .driver-popover-neon .driver-popover-description {
-  color: rgba(255, 255, 255, 0.85) !important;
-  font-size: 14px !important;
-  line-height: 1.6 !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+  font-size: 15px !important;
+  line-height: 1.5 !important;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.2) !important;
 }
 
 .driver-popover-neon .driver-popover-progress-text {
-  color: var(--neon-cyan) !important;
-  font-weight: 500 !important;
+  color: #00b4d8 !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
 }
 
-/* Bottoni di navigazione nel popover */
+/* Bottoni di navigazione nel popover - più soft */
 .driver-popover-neon .driver-popover-navigation-btns button {
-  background: linear-gradient(135deg, var(--neon-cyan), var(--primary-teal)) !important;
+  background: linear-gradient(135deg, #00b4d8, #0096c7) !important;
   border: none !important;
-  border-radius: 8px !important;
+  border-radius: 10px !important;
   color: white !important;
-  padding: 10px 20px !important;
+  padding: 12px 24px !important;
   font-weight: 600 !important;
+  font-size: 14px !important;
   transition: all 0.2s ease !important;
   text-transform: none !important;
+  box-shadow: 0 2px 8px rgba(0, 180, 216, 0.3) !important;
 }
 
 .driver-popover-neon .driver-popover-navigation-btns button:hover:not(:disabled) {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 180, 216, 0.4) !important;
+  background: linear-gradient(135deg, #00c8ec, #00b4d8) !important;
 }
 
 .driver-popover-neon .driver-popover-navigation-btns button:disabled {
-  opacity: 0.5 !important;
+  opacity: 0.4 !important;
   cursor: not-allowed !important;
 }
 
 .driver-popover-neon .driver-popover-close-btn {
-  color: rgba(255, 255, 255, 0.6) !important;
-  transition: color 0.2s !important;
-  top: 12px !important;
-  right: 12px !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  transition: all 0.2s !important;
+  top: 16px !important;
+  right: 16px !important;
+  font-size: 20px !important;
+}
+
+.driver-popover-neon .driver-popover-close-btn:hover {
+  color: #ffffff !important;
+  transform: scale(1.1) !important;
 }
 
 .driver-popover-neon .driver-popover-close-btn:hover {

@@ -101,15 +101,21 @@ export default function GuideTour() {
         prevBtnText: t('tourPrev'),
         doneBtnText: t('tourFinish'),
         progressText: t('tourProgress'),
-        overlayColor: 'rgba(5, 8, 21, 0.88)',
+        overlayColor: 'rgba(5, 8, 21, 0.85)',
         popoverClass: 'driver-popover-neon',
+        allowClose: true,
+        overlayClickBehavior: 'close',
         onDestroyed: () => {
           setRunning(false)
           driverRef.current = null
         },
         // Callback per ogni step - animazioni disabilitate temporaneamente
-        onHighlighted: (element, step) => {
-          // Animazioni rimosse per evitare distrazioni
+        onHighlighted: (element, step, options) => {
+          // Primo step: cambia testo bottone in "Inizia"
+          if (options.state.activeIndex === 0) {
+            const nextBtn = document.querySelector('.driver-popover-next-btn')
+            if (nextBtn) nextBtn.textContent = t('tourStart') || 'Inizia'
+          }
         }
       }
       
@@ -117,8 +123,6 @@ export default function GuideTour() {
       if (hasNewGuide) {
         driverConfig.animate = true
         driverConfig.smoothScroll = true
-        driverConfig.allowClose = true
-        driverConfig.overlayClickBehavior = 'close'
       }
       
       const driverObj = driver(driverConfig)
