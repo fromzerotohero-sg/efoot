@@ -93,7 +93,7 @@ function getDefaultSuggestions(lang, currentPage = '') {
 function parseSuggestionsFromContent(content) {
   if (!content || typeof content !== 'string') return { cleanContent: (content || '').trim(), suggestions: [] }
   const normalized = content.trim()
-  const suggMarkerMatch = normalized.match(/\b(SUGGERIMENTI|Suggerimenti|Domande per approfondire)\s*:?\s*/i)
+  const suggMarkerMatch = normalized.match(/\b(SUGGERIMENTI|Suggerimenti|Domande per approfondire|SUGGESTIONS|Suggestions)\s*:?\s*/i)
   const idx = suggMarkerMatch ? normalized.indexOf(suggMarkerMatch[0]) + suggMarkerMatch[0].length : -1
   if (idx <= 0) return { cleanContent: normalized, suggestions: [] }
   const beforeMarker = normalized.slice(0, idx - (suggMarkerMatch ? suggMarkerMatch[0].length : 0)).trim()
@@ -338,9 +338,9 @@ async function buildPersonalContext(userId, lang = 'it') {
     /** Forma (frecce): ↑=su, ↓=giù, -=neutro. Utile: scelta titolari/riserve. */
     function formatFormForContext(form) {
       if (!form || typeof form !== 'string') return ''
-      const f = String(form).toLowerCase()
-      if (f.includes('incrollabile') || f.includes('a')) return 'forma:↑'
-      if (f.includes('ecc') || f.includes('b')) return 'forma:↓'
+      const f = String(form).toLowerCase().trim()
+      if (f === 'a' || f.includes('incrollabile')) return 'forma:↑'
+      if (f === 'b' || f.includes('eccellente')) return 'forma:↓'
       return ''
     }
     /** Altezza/peso: utile duelli aerei, Colpo di testa. Compatto. */
@@ -1004,10 +1004,11 @@ export async function POST(req) {
             const fallbackMsg = lang === 'en' ? "Sorry, I didn't get that. Can you repeat?" : 'Mi dispiace, non ho capito. Puoi ripetere?'
             const raw = fallbackData.choices?.[0]?.message?.content || fallbackMsg
             const { cleanContent: fc, suggestions: fs } = parseSuggestionsFromContent(raw)
+            const sanitizedFallback = sanitizeCoachOutput(fc, lang)
             const finalSuggestions = (Array.isArray(fs) && fs.length > 0) ? fs : getDefaultSuggestions(lang, safeCurrentPage)
             if (process.env.NODE_ENV !== 'production') console.log('[assistant-chat] Success (fallback from model_not_found), model_used: gpt-4o')
             return NextResponse.json({
-              response: fc,
+              response: sanitizedFallback,
               suggestions: finalSuggestions,
               remaining: rateLimit.remaining,
               resetAt: rateLimit.resetAt,
@@ -1040,10 +1041,11 @@ export async function POST(req) {
                 const fallbackMsg = lang === 'en' ? "Sorry, I didn't get that. Can you repeat?" : 'Mi dispiace, non ho capito. Puoi ripetere?'
                 const raw = fallbackData.choices?.[0]?.message?.content || fallbackMsg
                 const { cleanContent: fc, suggestions: fs } = parseSuggestionsFromContent(raw)
+                const sanitizedFallback = sanitizeCoachOutput(fc, lang)
                 const finalSuggestions = (Array.isArray(fs) && fs.length > 0) ? fs : getDefaultSuggestions(lang, safeCurrentPage)
                 if (process.env.NODE_ENV !== 'production') console.log('[assistant-chat] Success (fallback from !response.ok), model_used: gpt-4o')
                 return NextResponse.json({
-                  response: fc,
+                  response: sanitizedFallback,
                   suggestions: finalSuggestions,
                   remaining: rateLimit.remaining,
                   resetAt: rateLimit.resetAt,

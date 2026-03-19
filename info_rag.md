@@ -435,7 +435,7 @@ Fonti: [Efootball Arena – How to Build a Competitive Dream Team](https://efoot
 
 **Squadra bloccata (attacco sterile, sconfitte ripetute)**:
 1. Stile squadra ↔ rosa: verificare fit (es. Opportunista + Contropiede; Fulcro + Passaggio lungo).
-2. Formazione: dalla cronologia, quale formazione avversaria più comune? Applicare contromisure §14.
+2. Formazione: dalla cronologia, quale formazione avversaria più comune? Applicare contromisure specifiche e coerenti con §3-§7.
 3. Connection: Focal Point e Key Man in campo?
 4. Sostituzioni: Riserva di lusso in panchina? Chi far entrare al 60' per recupero svantaggio?
 5. Abilità vs uso comandi: incrocio §7.9; suggerire schierare chi ha abilità adatte o diversificare comandi.

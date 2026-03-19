@@ -5,6 +5,7 @@ import { callOpenAIWithRetry } from '@/lib/openaiHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { generateCountermeasuresPrompt, validateCountermeasuresOutput } from '@/lib/countermeasuresHelper'
 import { deductCredits, AI_COST } from '@/lib/creditService'
+import { validateIndividualInstruction } from '@/lib/tacticalInstructions'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -115,7 +116,7 @@ export async function POST(req) {
     // 2. Recupera rosa cliente completa (con slot_index per titolari/riserve)
     const { data: clientRoster, error: rosterError } = await admin
       .from('players')
-      .select('id, player_name, position, overall_rating, base_stats, skills, com_skills, playing_style_id, slot_index, original_positions')
+      .select('id, player_name, position, overall_rating, base_stats, skills, com_skills, playing_style_id, slot_index, original_positions, photo_slots')
       .eq('user_id', userId)
       .order('overall_rating', { ascending: false })
       .limit(100) // Max 100 giocatori
@@ -165,7 +166,7 @@ export async function POST(req) {
     // 6. Recupera storico match completo (ultime 20 per analisi)
     const { data: matchHistory, error: historyError } = await admin
       .from('matches')
-      .select('id, opponent_name, result, formation_played, playing_style_played, opponent_formation_id, player_ratings, team_stats, match_date')
+      .select('id, opponent_name, result, formation_played, playing_style_played, opponent_formation_id, player_ratings, team_stats, attack_areas, match_date')
       .eq('user_id', userId)
       .order('match_date', { ascending: false })
       .limit(20)
@@ -175,25 +176,36 @@ export async function POST(req) {
     const opponentFormationName = opponentFormation.formation_name || ''
     const opponentPlayingStyle = opponentFormation.playing_style || ''
     
+    // Lookup formazioni avversarie storiche (serve fallback corretto quando manca il match per ID esatto)
+    const historyOppIds = [...new Set((matchHistory || []).map(m => m.opponent_formation_id).filter(Boolean))]
+    const historyOppMap = {}
+    if (historyOppIds.length > 0) {
+      const { data: historyOppRows } = await admin
+        .from('opponent_formations')
+        .select('id, formation_name, playing_style')
+        .in('id', historyOppIds)
+      ;(historyOppRows || []).forEach(o => { historyOppMap[o.id] = o })
+    }
+
     if (matchHistory && matchHistory.length > 0) {
       matchHistory.forEach(match => {
-        // Confronta formazione avversaria vs formazione avversaria del match storico
         const matchOpponentFormationId = match.opponent_formation_id
-        
+
         // Se match ha opponent_formation_id, confronta direttamente
         if (matchOpponentFormationId && matchOpponentFormationId === opponent_formation_id) {
           similarFormationMatches.push(match)
         } else {
-          // Altrimenti confronta per nome formazione (meno preciso ma utile)
-          const matchFormation = match.formation_played || ''
-          const isSimilar = opponentFormationName && matchFormation && (
-            matchFormation.includes(opponentFormationName) || 
-            opponentFormationName.includes(matchFormation) ||
-            // Confronta anche stile di gioco se disponibile
-            (opponentPlayingStyle && match.playing_style_played && 
-             match.playing_style_played.toLowerCase().includes(opponentPlayingStyle.toLowerCase()))
+          // Fallback: confronta usando la FORMAZIONE AVVERSARIA storica (non la formazione giocata dal cliente)
+          const histOpp = matchOpponentFormationId ? historyOppMap[matchOpponentFormationId] : null
+          const histOppFormation = histOpp?.formation_name || ''
+          const histOppStyle = histOpp?.playing_style || ''
+          const isSimilar = opponentFormationName && histOppFormation && (
+            histOppFormation.includes(opponentFormationName) ||
+            opponentFormationName.includes(histOppFormation) ||
+            (opponentPlayingStyle && histOppStyle &&
+             histOppStyle.toLowerCase().includes(opponentPlayingStyle.toLowerCase()))
           )
-          
+
           if (isSimilar) {
             similarFormationMatches.push(match)
           }
@@ -290,7 +302,7 @@ export async function POST(req) {
     // 7. Recupera pattern tattici (opzionale)
     const { data: tacticalPatterns, error: patternsError } = await admin
       .from('team_tactical_patterns')
-      .select('formation_usage, playing_style_usage, recurring_issues')
+      .select('formation_usage, playing_style_usage, recurring_issues, attack_areas_avg, recovery_zones_avg')
       .eq('user_id', userId)
       .maybeSingle()
 
@@ -618,6 +630,37 @@ if (process.env.NODE_ENV !== 'production') {
         }
         countermeasures.warnings.push(
           `${invalidSuggestions.length} suggerimento/i giocatore filtrato/i perché non applicabili (nessuna riserva disponibile o posizione non valida)`
+        )
+      }
+    }
+
+    // 12.2 Valida istruzioni individuali suggerite rispetto alle regole prodotto
+    if (countermeasures.countermeasures?.individual_instructions && Array.isArray(countermeasures.countermeasures.individual_instructions)) {
+      const validInstructions = []
+      const invalidInstructions = []
+      const validSlots = new Set(['attacco_1', 'attacco_2', 'difesa_1', 'difesa_2'])
+
+      for (const instr of countermeasures.countermeasures.individual_instructions) {
+        const slot = typeof instr?.slot === 'string' ? instr.slot.trim() : ''
+        const playerId = typeof instr?.player_id === 'string' ? instr.player_id.trim() : ''
+        const instruction = typeof instr?.instruction === 'string' ? instr.instruction.trim().toLowerCase() : ''
+
+        if (!validSlots.has(slot) || !playerId || !instruction) {
+          invalidInstructions.push({ instr, reason: 'slot/player_id/instruction mancanti o invalidi' })
+          continue
+        }
+
+        const check = validateIndividualInstruction(slot, playerId, instruction, titolari, clientFormation || null)
+        if (check.valid) validInstructions.push(instr)
+        else invalidInstructions.push({ instr, reason: check.error || 'istruzione non valida' })
+      }
+
+      countermeasures.countermeasures.individual_instructions = validInstructions
+
+      if (invalidInstructions.length > 0) {
+        if (!countermeasures.warnings) countermeasures.warnings = []
+        countermeasures.warnings.push(
+          `${invalidInstructions.length} istruzione/i individuale/i filtrata/e perché non applicabili alle regole tattiche`
         )
       }
     }
