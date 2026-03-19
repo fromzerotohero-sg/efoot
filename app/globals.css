@@ -1133,6 +1133,7 @@ body > * {
   font-weight: 700 !important;
   font-size: 20px !important;
   margin-bottom: 10px !important;
+  padding-right: 30px !important;
   text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
 }
 
@@ -1244,11 +1245,18 @@ body > * {
   }
   
   .driver-popover-neon .driver-popover-title {
-    font-size: 16px !important;
+    font-size: 18px !important;
+    padding-right: 40px !important;
   }
   
   .driver-popover-neon .driver-popover-description {
-    font-size: 13px !important;
+    font-size: 14px !important;
+  }
+  
+  .driver-popover-neon .driver-popover-close-btn {
+    top: 12px !important;
+    right: 12px !important;
+    font-size: 18px !important;
   }
   
   .guide-tour-launcher-label {
