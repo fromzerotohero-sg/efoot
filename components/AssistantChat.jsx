@@ -447,11 +447,12 @@ export default function AssistantChat({ mode = 'popup' }) {
           onClick={() => setIsOpen(true)}
           className="chat-launcher"
           style={{
-            // Il posizionamento (fixed) viene gestito dal parent (es. dashboard).
-            // Qui manteniamo il bottone "layout-safe" e responsivo.
-            position: 'relative',
-            width: isMobileViewport ? '64px' : '80px',
-            height: isMobileViewport ? '64px' : '80px',
+            // Posizionamento fisso a destra in basso, sempre visibile
+            position: 'fixed',
+            right: '20px',
+            bottom: isMobileViewport ? '100px' : '20px',
+            width: isMobileViewport ? '56px' : '72px',
+            height: isMobileViewport ? '56px' : '72px',
             borderRadius: '50%',
             background: '#050814',
             border: '2px solid rgba(0, 212, 255, 0.8)',
@@ -466,7 +467,9 @@ export default function AssistantChat({ mode = 'popup' }) {
             padding: 0
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.width = '200px'
+            // Espansione solo su desktop (non su mobile)
+            if (isMobileViewport) return
+            e.currentTarget.style.width = '180px'
             e.currentTarget.style.borderRadius = '40px'
             e.currentTarget.style.animation = 'none'
             e.currentTarget.style.boxShadow = '0 0 40px rgba(0, 212, 255, 0.8), inset 0 0 20px rgba(0, 212, 255, 0.4)'
@@ -477,7 +480,8 @@ export default function AssistantChat({ mode = 'popup' }) {
             }
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.width = '80px'
+            if (isMobileViewport) return
+            e.currentTarget.style.width = '72px'
             e.currentTarget.style.borderRadius = '50%'
             e.currentTarget.style.animation = 'chat-launcher-pulse 2s ease-in-out infinite'
             e.currentTarget.style.boxShadow = '0 0 24px rgba(0, 212, 255, 0.5), inset 0 0 12px rgba(0, 212, 255, 0.3)'
@@ -488,25 +492,13 @@ export default function AssistantChat({ mode = 'popup' }) {
             }
           }}
           onTouchStart={(e) => {
+            // Su mobile: piccola animazione feedback, nessuna espansione
             const el = e.currentTarget
-            el.style.width = '200px'
-            el.style.borderRadius = '40px'
-            el.style.animation = 'none'
-            el.style.boxShadow = '0 0 40px rgba(0, 212, 255, 0.8), inset 0 0 20px rgba(0, 212, 255, 0.4)'
-            const label = el.querySelector('.chat-label')
-            if (label) { label.style.opacity = '1'; label.style.transform = 'translateX(0)' }
+            el.style.transform = 'scale(0.95)'
           }}
           onTouchEnd={(e) => {
             const el = e.currentTarget
-            setTimeout(() => {
-              if (!el || !el.isConnected) return
-              el.style.width = '80px'
-              el.style.borderRadius = '50%'
-              el.style.animation = 'chat-launcher-pulse 2s ease-in-out infinite'
-              el.style.boxShadow = '0 0 24px rgba(0, 212, 255, 0.5), inset 0 0 12px rgba(0, 212, 255, 0.3)'
-              const label = el.querySelector('.chat-label')
-              if (label) { label.style.opacity = '0'; label.style.transform = 'translateX(-10px)' }
-            }, 300)
+            el.style.transform = 'scale(1)'
           }}
           aria-label={t('openAssistant') || 'Apri assistente'}
         >
