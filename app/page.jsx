@@ -12,6 +12,7 @@ import AssistantChat from '@/components/AssistantChat'
 import GameAnalysisModal from '@/components/GameAnalysisModal'
 import TaskWidget from '@/components/TaskWidget'
 import MissionCenter from '@/components/MissionCenter'
+import OnboardingFlow from '@/components/OnboardingFlow'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import { getCurrentMonth } from '@/lib/leaderboardHelper'
 import { withAuth } from '@/components/AuthWrapper'
@@ -452,12 +453,17 @@ function HomePage() {
       
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold neon-text mb-8">
-          {t('dashboard')}
-        </h1>
-        <p className="text-sm text-[rgba(0, 212, 255, 0.7)]">
-          {t('fromZeroToHero')}
-        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+          <div>
+            <h1 className="text-2xl font-bold neon-text mb-2">
+              {t('dashboard')}
+            </h1>
+            <p className="text-sm text-[rgba(0, 212, 255, 0.7)]">
+              {t('fromZeroToHero')}
+            </p>
+          </div>
+          <OnboardingFlow />
+        </div>
       </div>
 
       {/* Error */}
