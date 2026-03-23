@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
 import { 
   Shield,
@@ -15,6 +15,7 @@ import {
 export default function BottomNavigation() {
   const { t, lang } = useTranslation()
   const pathname = usePathname()
+  const router = useRouter()
 
   const isActive = (href) => {
     if (href === '/') return pathname === '/'
@@ -35,7 +36,18 @@ export default function BottomNavigation() {
     {
       href: '/grafici-comparazione',
       icon: Plus,
-      label: lang === 'en' ? 'Stats' : 'Stat'
+      label: lang === 'en' ? 'Stats' : 'Stat',
+      onClick: () => {
+        if (typeof window !== 'undefined') {
+          // Se siamo sulla Dashboard, apri direttamente il modal
+          // Altrimenti naviga alla Dashboard con parametro per aprire il modal
+          if (pathname === '/') {
+            window.dispatchEvent(new CustomEvent('open-game-analysis'))
+          } else {
+            router.push('/?openGameAnalysis=1')
+          }
+        }
+      }
     },
     {
       href: '/gestione-formazione',

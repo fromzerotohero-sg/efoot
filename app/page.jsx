@@ -38,16 +38,20 @@ import {
   Calendar
 } from 'lucide-react'
 
-/** Legge query URL: openCoach=1 → Palestra Coach; openAssistantChat=1 → chat principale (Assistant) con messaggio grafici. */
-function OpenCoachListener({ onOpenCoach, onOpenAssistantChat }) {
+/** Legge query URL: openCoach=1 → Palestra Coach; openAssistantChat=1 → chat principale (Assistant) con messaggio grafici; openGameAnalysis=1 → GameAnalysisModal. */
+function OpenCoachListener({ onOpenCoach, onOpenAssistantChat, onOpenGameAnalysis }) {
   const searchParams = useSearchParams()
   React.useEffect(() => {
+    if (searchParams?.get('openGameAnalysis') === '1') {
+      onOpenGameAnalysis?.()
+      return
+    }
     if (searchParams?.get('openAssistantChat') === '1') {
       onOpenAssistantChat?.()
       return
     }
     if (searchParams?.get('openCoach') === '1') onOpenCoach()
-  }, [searchParams, onOpenCoach, onOpenAssistantChat])
+  }, [searchParams, onOpenCoach, onOpenAssistantChat, onOpenGameAnalysis])
   return null
 }
 
@@ -295,6 +299,14 @@ function HomePage() {
     return () => window.removeEventListener('leaderboard-updated', onLeaderboardUpdated)
   }, [supabase])
 
+  // Listener per aprire GameAnalysisModal dalla bottom nav
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return
+    const onOpenGameAnalysis = () => setShowGameAnalysisModal(true)
+    window.addEventListener('open-game-analysis', onOpenGameAnalysis)
+    return () => window.removeEventListener('open-game-analysis', onOpenGameAnalysis)
+  }, [])
+
   const handleDeleteMatch = async (matchId, e) => {
     e.stopPropagation() // Previeni click sul card
     
@@ -448,6 +460,7 @@ function HomePage() {
               window.dispatchEvent(new CustomEvent('open-assistant-chat', { detail: { message: msg } }))
             }
           }}
+          onOpenGameAnalysis={() => setShowGameAnalysisModal(true)}
         />
       </Suspense>
       
