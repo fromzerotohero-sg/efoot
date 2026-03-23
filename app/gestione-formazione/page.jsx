@@ -2357,7 +2357,7 @@ export default function GestioneFormazionePage() {
           {t('swapFormation')}
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: 'auto', flexWrap: 'wrap' }}>
-          <OnboardingFormation />
+          <OnboardingFormation onOpenTutorial={() => setShowRosaTutorial(true)} />
           <button
             type="button"
             onClick={() => setShowRosaTutorial(true)}

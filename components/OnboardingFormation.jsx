@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { useTranslation } from '@/lib/i18n'
 import { X, ChevronRight, ChevronLeft, Camera, Pencil, AlertTriangle, Save, Gamepad2, Sparkles } from 'lucide-react'
 
-const OnboardingFormation = () => {
+const OnboardingFormation = ({ onOpenTutorial }) => {
   const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
@@ -289,13 +289,34 @@ const OnboardingFormation = () => {
               {!showKeyMessage && <ChevronRight size={20} />}
             </button>
           ) : (
-            <button
-              onClick={closeModal}
-              className="formation-onboarding-btn cta"
-            >
-              {t('formationOnboardingStart')}
-              <Sparkles size={20} />
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
+              <button
+                onClick={closeModal}
+                className="formation-onboarding-btn cta"
+              >
+                {t('formationOnboardingStart')}
+                <Sparkles size={20} />
+              </button>
+              {onOpenTutorial && (
+                <button
+                  onClick={() => {
+                    closeModal()
+                    setTimeout(() => onOpenTutorial(), 300)
+                  }}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'rgba(0, 212, 255, 0.8)',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    padding: '8px 16px'
+                  }}
+                >
+                  {t('formationOnboardingTutorialLink') || 'Vuoi istruzioni e consigli specifici? Clicca qui'}
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>
