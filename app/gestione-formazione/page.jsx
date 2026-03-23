@@ -7,6 +7,7 @@ import { useTranslation } from '@/lib/i18n'
 import { ArrowLeft, Upload, AlertCircle, CheckCircle2, RefreshCw, Info, X, Plus, User, Settings, BarChart3, Zap, Gift, ChevronDown, ChevronUp, Users, Star, Move, Pencil, BookOpen } from 'lucide-react'
 import TacticalSettingsPanel from '@/components/TacticalSettingsPanel'
 import RosaTutorialModal from '@/components/RosaTutorialModal'
+import OnboardingFormation from '@/components/OnboardingFormation'
 import PositionSelectionModal from '@/components/PositionSelectionModal'
 import MissingDataModal from '@/components/MissingDataModal'
 import ConfirmModal from '@/components/ConfirmModal'
@@ -2356,6 +2357,7 @@ export default function GestioneFormazionePage() {
           {t('swapFormation')}
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: 'auto', flexWrap: 'wrap' }}>
+          <OnboardingFormation />
           <button
             type="button"
             onClick={() => setShowRosaTutorial(true)}

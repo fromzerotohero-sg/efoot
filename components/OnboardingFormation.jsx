@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react'
 import { useTranslation } from '@/lib/i18n'
-import { X, ChevronRight, ChevronLeft, Shield, Camera, MessageSquare, Bot, Sparkles } from 'lucide-react'
+import { X, ChevronRight, ChevronLeft, Camera, Pencil, AlertTriangle, Save, Gamepad2, Sparkles } from 'lucide-react'
 
-const OnboardingFlow = () => {
+const OnboardingFormation = () => {
   const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
@@ -13,36 +13,44 @@ const OnboardingFlow = () => {
 
   const steps = [
     {
-      icon: '🛡️',
-      lucideIcon: Shield,
-      title: t('onboardingStep1Title'),
-      description: t('onboardingStep1Desc'),
+      icon: '📸',
+      lucideIcon: Camera,
+      title: t('formationStep1Title'),
+      description: t('formationStep1Desc'),
       color: '#00d4ff',
       bgGradient: 'linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(0, 161, 166, 0.1) 100%)'
     },
     {
-      icon: '📸',
-      lucideIcon: Camera,
-      title: t('onboardingStep2Title'),
-      description: t('onboardingStep2Desc'),
+      icon: '✏️',
+      lucideIcon: Pencil,
+      title: t('formationStep2Title'),
+      description: t('formationStep2Desc'),
       color: '#22c55e',
       bgGradient: 'linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(20, 180, 80, 0.1) 100%)'
     },
     {
-      icon: '💬',
-      lucideIcon: MessageSquare,
-      title: t('onboardingStep3Title'),
-      description: t('onboardingStep3Desc'),
+      icon: '⚠️',
+      lucideIcon: AlertTriangle,
+      title: t('formationStep3Title'),
+      description: t('formationStep3Desc'),
       color: '#f59e0b',
       bgGradient: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.1) 100%)'
     },
     {
-      icon: '🤖',
-      lucideIcon: Bot,
-      title: t('onboardingStep4Title'),
-      description: t('onboardingStep4Desc'),
+      icon: '💾',
+      lucideIcon: Save,
+      title: t('formationStep4Title'),
+      description: t('formationStep4Desc'),
       color: '#a855f7',
       bgGradient: 'linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(126, 34, 206, 0.1) 100%)'
+    },
+    {
+      icon: '🎮',
+      lucideIcon: Gamepad2,
+      title: t('formationStep5Title'),
+      description: t('formationStep5Desc'),
+      color: '#ec4899',
+      bgGradient: 'linear-gradient(135deg, rgba(236, 72, 153, 0.2) 0%, rgba(219, 39, 119, 0.1) 100%)'
     }
   ]
 
@@ -108,13 +116,13 @@ const OnboardingFlow = () => {
     return (
       <button
         onClick={openModal}
-        className="onboarding-trigger"
-        aria-label={t('onboardingTitle')}
+        className="formation-onboarding-trigger"
+        aria-label={t('formationOnboardingTitle')}
       >
-        <span className="onboarding-trigger-emoji">⚽</span>
-        <span className="onboarding-trigger-text">{t('onboardingTitle')}</span>
+        <span className="formation-onboarding-trigger-emoji">🏟️</span>
+        <span className="formation-onboarding-trigger-text">{t('formationOnboardingTitle')}</span>
         <style jsx>{`
-          .onboarding-trigger {
+          .formation-onboarding-trigger {
             display: flex;
             align-items: center;
             gap: 8px;
@@ -136,7 +144,7 @@ const OnboardingFlow = () => {
             text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
           }
           
-          .onboarding-trigger::before {
+          .formation-onboarding-trigger::before {
             content: '';
             position: absolute;
             top: 0;
@@ -147,11 +155,11 @@ const OnboardingFlow = () => {
             transition: left 0.5s ease;
           }
           
-          .onboarding-trigger:hover::before {
+          .formation-onboarding-trigger:hover::before {
             left: 100%;
           }
           
-          .onboarding-trigger:hover {
+          .formation-onboarding-trigger:hover {
             transform: translateY(-2px) scale(1.02);
             border-color: rgba(0, 212, 255, 0.8);
             box-shadow: 
@@ -160,29 +168,33 @@ const OnboardingFlow = () => {
               inset 0 1px 0 rgba(255, 255, 255, 0.2);
           }
           
-          .onboarding-trigger:active {
+          .formation-onboarding-trigger:active {
             transform: translateY(0) scale(0.98);
           }
           
-          .onboarding-trigger-emoji {
+          .formation-onboarding-trigger-emoji {
             font-size: 20px;
-            animation: bounce 2s infinite;
+            animation: stadiumPulse 2s infinite;
             display: inline-block;
           }
           
-          @keyframes bounce {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            25% { transform: translateY(-4px) rotate(-5deg); }
-            50% { transform: translateY(0) rotate(0deg); }
-            75% { transform: translateY(-2px) rotate(5deg); }
+          @keyframes stadiumPulse {
+            0%, 100% { 
+              transform: scale(1);
+              filter: brightness(1);
+            }
+            50% { 
+              transform: scale(1.1);
+              filter: brightness(1.2);
+            }
           }
           
           @media (max-width: 640px) {
-            .onboarding-trigger {
+            .formation-onboarding-trigger {
               padding: 10px 16px;
               font-size: 13px;
             }
-            .onboarding-trigger-emoji {
+            .formation-onboarding-trigger-emoji {
               font-size: 18px;
             }
           }
@@ -194,11 +206,11 @@ const OnboardingFlow = () => {
   const CurrentIcon = showKeyMessage ? Sparkles : steps[currentStep].lucideIcon
 
   return (
-    <div className={`onboarding-overlay ${isAnimating ? 'closing' : ''}`}>
-      <div className="onboarding-modal">
+    <div className={`formation-onboarding-overlay ${isAnimating ? 'closing' : ''}`}>
+      <div className="formation-onboarding-modal">
         {/* Header con progress */}
-        <div className="onboarding-header">
-          <div className="onboarding-progress">
+        <div className="formation-onboarding-header">
+          <div className="formation-onboarding-progress">
             {!showKeyMessage && steps.map((step, index) => (
               <button
                 key={index}
@@ -211,7 +223,7 @@ const OnboardingFlow = () => {
           </div>
           <button 
             onClick={closeModal}
-            className="onboarding-close"
+            className="formation-onboarding-close"
             aria-label={t('onboardingClose')}
           >
             <X size={24} />
@@ -219,14 +231,14 @@ const OnboardingFlow = () => {
         </div>
 
         {/* Contenuto */}
-        <div className="onboarding-content">
+        <div className="formation-onboarding-content">
           {showKeyMessage ? (
             <div className="key-message">
               <div className="key-message-icon">
-                <Sparkles size={48} color="#00d4ff" />
+                <span className="stadium-emoji">🏟️</span>
               </div>
-              <h2 className="key-message-title">{t('onboardingKeyMessage')}</h2>
-              <p className="key-message-subtitle">{t('onboardingSubtitle')}</p>
+              <h2 className="key-message-title">{t('formationOnboardingKeyTitle')}</h2>
+              <p className="key-message-subtitle">{t('formationOnboardingKeySubtitle')}</p>
               <div className="soccer-ball-animation">
                 <span>⚽</span>
               </div>
@@ -258,10 +270,10 @@ const OnboardingFlow = () => {
         </div>
 
         {/* Footer con bottoni */}
-        <div className="onboarding-footer">
+        <div className="formation-onboarding-footer">
           <button
             onClick={prevStep}
-            className={`onboarding-btn secondary ${(showKeyMessage || currentStep === 0) && showKeyMessage ? 'hidden' : ''}`}
+            className={`formation-onboarding-btn secondary ${(showKeyMessage || currentStep === 0) && showKeyMessage ? 'hidden' : ''}`}
             disabled={showKeyMessage}
           >
             <ChevronLeft size={20} />
@@ -271,17 +283,17 @@ const OnboardingFlow = () => {
           {showKeyMessage || currentStep < steps.length - 1 ? (
             <button
               onClick={nextStep}
-              className="onboarding-btn primary"
+              className="formation-onboarding-btn primary"
             >
-              {showKeyMessage ? t('onboardingStart') : t('onboardingNext')}
+              {showKeyMessage ? t('formationOnboardingStart') : t('onboardingNext')}
               {!showKeyMessage && <ChevronRight size={20} />}
             </button>
           ) : (
             <button
               onClick={closeModal}
-              className="onboarding-btn cta"
+              className="formation-onboarding-btn cta"
             >
-              {t('onboardingStart')}
+              {t('formationOnboardingStart')}
               <Sparkles size={20} />
             </button>
           )}
@@ -289,7 +301,7 @@ const OnboardingFlow = () => {
       </div>
 
       <style jsx>{`
-        .onboarding-overlay {
+        .formation-onboarding-overlay {
           position: fixed;
           inset: 0;
           background: rgba(2, 4, 12, 0.85);
@@ -302,7 +314,7 @@ const OnboardingFlow = () => {
           animation: fadeIn 0.3s ease;
         }
         
-        .onboarding-overlay.closing {
+        .formation-onboarding-overlay.closing {
           animation: fadeOut 0.3s ease forwards;
         }
         
@@ -316,7 +328,7 @@ const OnboardingFlow = () => {
           to { opacity: 0; }
         }
         
-        .onboarding-modal {
+        .formation-onboarding-modal {
           background: linear-gradient(145deg, #050814 0%, #02040a 100%);
           border: 2px solid #00d4ff;
           border-radius: 24px;
@@ -333,7 +345,7 @@ const OnboardingFlow = () => {
           flex-direction: column;
         }
         
-        .onboarding-overlay.closing .onboarding-modal {
+        .formation-onboarding-overlay.closing .formation-onboarding-modal {
           animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
         
@@ -359,7 +371,7 @@ const OnboardingFlow = () => {
           }
         }
         
-        .onboarding-header {
+        .formation-onboarding-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -367,7 +379,7 @@ const OnboardingFlow = () => {
           border-bottom: 1px solid rgba(0, 212, 255, 0.2);
         }
         
-        .onboarding-progress {
+        .formation-onboarding-progress {
           display: flex;
           gap: 8px;
         }
@@ -398,7 +410,7 @@ const OnboardingFlow = () => {
           border-color: #22c55e;
         }
         
-        .onboarding-close {
+        .formation-onboarding-close {
           background: rgba(255, 255, 255, 0.05);
           border: 1px solid rgba(0, 212, 255, 0.3);
           border-radius: 10px;
@@ -411,13 +423,13 @@ const OnboardingFlow = () => {
           transition: all 0.2s ease;
         }
         
-        .onboarding-close:hover {
+        .formation-onboarding-close:hover {
           background: rgba(255, 59, 48, 0.2);
           border-color: rgba(255, 59, 48, 0.5);
           color: #FF3B30;
         }
         
-        .onboarding-content {
+        .formation-onboarding-content {
           flex: 1;
           padding: 32px 24px;
           overflow-y: auto;
@@ -463,6 +475,20 @@ const OnboardingFlow = () => {
           50% { 
             transform: scale(1.05);
             box-shadow: 0 0 40px rgba(0, 212, 255, 0.5);
+          }
+        }
+        
+        .stadium-emoji {
+          font-size: 40px;
+          animation: stadiumGlow 2s infinite;
+        }
+        
+        @keyframes stadiumGlow {
+          0%, 100% { 
+            filter: brightness(1) drop-shadow(0 0 5px rgba(0, 212, 255, 0.5));
+          }
+          50% { 
+            filter: brightness(1.3) drop-shadow(0 0 15px rgba(0, 212, 255, 0.8));
           }
         }
         
@@ -578,7 +604,7 @@ const OnboardingFlow = () => {
         }
         
         /* Footer Styles */
-        .onboarding-footer {
+        .formation-onboarding-footer {
           display: flex;
           justify-content: space-between;
           align-items: center;
@@ -587,7 +613,7 @@ const OnboardingFlow = () => {
           gap: 12px;
         }
         
-        .onboarding-btn {
+        .formation-onboarding-btn {
           display: flex;
           align-items: center;
           gap: 8px;
@@ -600,59 +626,59 @@ const OnboardingFlow = () => {
           border: none;
         }
         
-        .onboarding-btn.hidden {
+        .formation-onboarding-btn.hidden {
           visibility: hidden;
         }
         
-        .onboarding-btn:disabled {
+        .formation-onboarding-btn:disabled {
           opacity: 0.5;
           cursor: not-allowed;
         }
         
-        .onboarding-btn.primary {
+        .formation-onboarding-btn.primary {
           background: linear-gradient(135deg, #00d4ff 0%, #00a1a6 100%);
           color: #000;
           margin-left: auto;
           box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
         }
         
-        .onboarding-btn.primary:hover:not(:disabled) {
+        .formation-onboarding-btn.primary:hover:not(:disabled) {
           transform: translateY(-2px);
           box-shadow: 0 8px 25px rgba(0, 212, 255, 0.5);
         }
         
-        .onboarding-btn.secondary {
+        .formation-onboarding-btn.secondary {
           background: rgba(255, 255, 255, 0.05);
           border: 1px solid rgba(0, 212, 255, 0.3);
           color: rgba(255, 255, 255, 0.8);
         }
         
-        .onboarding-btn.secondary:hover:not(:disabled) {
+        .formation-onboarding-btn.secondary:hover:not(:disabled) {
           background: rgba(255, 255, 255, 0.1);
           border-color: rgba(0, 212, 255, 0.5);
           color: #fff;
         }
         
-        .onboarding-btn.cta {
+        .formation-onboarding-btn.cta {
           background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
           color: #fff;
           margin-left: auto;
           box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
         }
         
-        .onboarding-btn.cta:hover {
+        .formation-onboarding-btn.cta:hover {
           transform: translateY(-2px);
           box-shadow: 0 8px 25px rgba(34, 197, 94, 0.5);
         }
         
-        /* Responsive */
+        /* Responsive - con fix per mobile */
         @media (max-width: 640px) {
-          .onboarding-overlay {
+          .formation-onboarding-overlay {
             padding: 0;
             align-items: flex-end;
           }
           
-          .onboarding-modal {
+          .formation-onboarding-modal {
             max-width: 100%;
             max-height: 85vh;
             border-radius: 24px 24px 0 0;
@@ -669,8 +695,8 @@ const OnboardingFlow = () => {
             }
           }
           
-          .onboarding-content {
-            padding: 24px 20px 80px;
+          .formation-onboarding-content {
+            padding: 24px 20px 40px;
             min-height: 240px;
           }
           
@@ -684,22 +710,6 @@ const OnboardingFlow = () => {
           
           .soccer-ball-animation {
             font-size: 36px;
-            margin-bottom: 20px;
-          }
-          
-          @keyframes ballBounce {
-            0%, 100% { 
-              transform: translateY(0) rotate(0deg);
-            }
-            25% { 
-              transform: translateY(-10px) rotate(-5deg);
-            }
-            50% { 
-              transform: translateY(0) rotate(0deg);
-            }
-            75% { 
-              transform: translateY(-5px) rotate(5deg);
-            }
           }
           
           .step-title {
@@ -719,11 +729,11 @@ const OnboardingFlow = () => {
             font-size: 40px;
           }
           
-          .onboarding-footer {
-            padding: 16px 20px;
+          .formation-onboarding-footer {
+            padding: 16px 20px 32px;
           }
           
-          .onboarding-btn {
+          .formation-onboarding-btn {
             padding: 12px 20px;
             font-size: 14px;
           }
@@ -737,10 +747,14 @@ const OnboardingFlow = () => {
           .step-title {
             font-size: 18px;
           }
+          
+          .soccer-ball-animation {
+            font-size: 32px;
+          }
         }
       `}</style>
     </div>
   )
 }
 
-export default OnboardingFlow
+export default OnboardingFormation
