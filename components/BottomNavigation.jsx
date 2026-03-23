@@ -7,7 +7,7 @@ import { useTranslation } from '@/lib/i18n'
 import { 
   Shield,
   LayoutGrid,
-  MessageSquare,
+  Plus,
   Users,
   Calendar
 } from 'lucide-react'
@@ -33,15 +33,9 @@ export default function BottomNavigation() {
       label: lang === 'en' ? 'Dashboard' : 'Dashboard'
     },
     {
-      href: '#',
-      icon: MessageSquare,
-      label: lang === 'en' ? 'Coach AI' : 'Coach AI',
-      onClick: (e) => {
-        e.preventDefault()
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('open-assistant-chat'))
-        }
-      }
+      href: '/match/new',
+      icon: Plus,
+      label: lang === 'en' ? 'Add Match' : 'Aggiungi Partita'
     },
     {
       href: '/gestione-formazione',
