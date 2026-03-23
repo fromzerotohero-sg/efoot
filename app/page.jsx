@@ -854,7 +854,7 @@ function HomePage() {
                 <span className="text-gradient">{t('chartsAndComparisonTitle')}</span>
               </h2>
               <p style={{ fontSize: '14px', color: 'rgba(0, 212, 255, 0.7)', marginBottom: '24px', lineHeight: '1.6' }}>
-                Visualizza l'andamento della tua squadra, le formazioni più efficaci, e compara le statistiche chiave delle tue ultime partite.
+                {t('chartsAndComparisonDesc')}
               </p>
               
               <button
