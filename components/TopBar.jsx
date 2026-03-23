@@ -57,7 +57,7 @@ export default function TopBar() {
         {/* Home icon: riporta alla home principale FromZeroToHero */}
         <button
           type="button"
-          onClick={() => window.open('https://home.fromzerotohero.io/', '_self')}
+          onClick={() => window.open('https://fromzerotohero.io/', '_self')}
           className="mobile-icon-btn lg:absolute lg:left-6"
           aria-label="Vai alla Home FromZeroToHero"
           title="Vai alla Home"
