@@ -870,7 +870,7 @@ function HomePage() {
                   fontSize: '15px'
                 }}
               >
-                Vai ai Grafici e Analisi Dati
+                {t('chartsAndComparisonCtaButton')}
                 <ArrowRight size={18} />
               </button>
             </div>
