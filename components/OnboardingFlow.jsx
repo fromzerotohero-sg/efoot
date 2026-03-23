@@ -646,30 +646,33 @@ const OnboardingFlow = () => {
           box-shadow: 0 8px 25px rgba(34, 197, 94, 0.5);
         }
         
-        /* Responsive Mobile */
+        /* Responsive Mobile - Modal centrato come card */
         @media (max-width: 640px) {
           .onboarding-overlay {
-            padding: 0;
-            align-items: flex-end;
+            padding: 20px 16px;
+            align-items: center;
+            justify-content: center;
           }
           
           .onboarding-modal {
             max-width: 100%;
-            max-height: calc(100vh - 60px);
-            height: 520px;
-            min-height: 400px;
-            border-radius: 20px 20px 0 0;
-            border-bottom: none;
-            margin-bottom: 0;
-            animation: slideUpMobile 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
+            max-height: calc(100vh - 140px);
+            height: auto;
+            border-radius: 20px;
+            border: 2px solid #00d4ff;
+            margin: 0;
+            animation: fadeInScale 0.3s ease;
           }
           
-          @keyframes slideUpMobile {
+          @keyframes fadeInScale {
             from { 
-              transform: translateY(100%);
+              transform: scale(0.9);
+              opacity: 0;
             }
             to { 
-              transform: translateY(0);
+              transform: scale(1);
+              opacity: 1;
             }
           }
           
