@@ -19,6 +19,7 @@ const MAX_PERSONAL_CONTEXT_CHARS = 7200
 /** Limiti validazione input (sicurezza e token) */
 const MAX_MESSAGE_LENGTH = 4000
 const MAX_CURRENT_PAGE_LENGTH = 500
+const DIAGNOSTIC_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 
 /** Messaggi errore API in doppia lingua (IT/EN) */
 const API_ERRORS = {
@@ -55,6 +56,12 @@ function getApiError(key, lang) {
   const entry = API_ERRORS[key]
   if (!entry) return API_ERRORS.GENERIC_ERROR[lang]
   return entry[lang] ?? entry.en
+}
+
+function sanitizeForPrompt(value, maxLen = 240) {
+  if (value == null) return ''
+  const s = String(value).replace(/\r\n|\r|\n/g, ' ').trim()
+  return s.length > maxLen ? s.slice(0, maxLen) + '…' : s
 }
 
 /** Suggerimenti utili: analisi vs rosa, uso comandi/abilità, priorità concrete. Niente meta, niente "perché ho perso", niente "migliorare giocatore". */
@@ -567,13 +574,13 @@ async function buildPersonalContext(userId, lang = 'it') {
  */
 function buildPersonalizedPromptV2(userMessage, context, language = 'it', efootballKnowledge = '', personalContextSummary = '', hasHistory = false, contextBlockLabel = 'ROSA E DATI') {
   const { profile, currentPage, appState } = context || {}
-  const firstName = profile?.first_name || (language === 'en' ? 'friend' : 'amico')
-  const teamName = profile?.team_name || (language === 'en' ? 'your team' : 'il tuo team')
-  const aiName = profile?.ai_name || 'Coach AI'
-  const howToRemember = profile?.how_to_remember || ''
-  const aiWeakPoint = profile?.ai_weak_point || ''
-  const aiLearnGoals = profile?.ai_learn_goals || ''
-  const aiNotes = profile?.ai_notes || ''
+  const firstName = sanitizeForPrompt(profile?.first_name || (language === 'en' ? 'friend' : 'amico'), 40)
+  const teamName = sanitizeForPrompt(profile?.team_name || (language === 'en' ? 'your team' : 'il tuo team'), 60)
+  const aiName = sanitizeForPrompt(profile?.ai_name || 'Coach AI', 40)
+  const howToRemember = sanitizeForPrompt(profile?.how_to_remember || '', 240)
+  const aiWeakPoint = sanitizeForPrompt(profile?.ai_weak_point || '', 60)
+  const aiLearnGoals = sanitizeForPrompt(profile?.ai_learn_goals || '', 240)
+  const aiNotes = sanitizeForPrompt(profile?.ai_notes || '', 280)
   const WEAK_POINT_LABELS = language === 'en'
     ? { defence: 'Defence', attack: 'Attack', set_pieces: 'Set pieces', transitions: 'Transitions', final_minutes: 'Final minutes' }
     : { defence: 'Difesa', attack: 'Attacco', set_pieces: 'Piazzati', transitions: 'Transizioni', final_minutes: 'Finale partita' }
@@ -670,7 +677,7 @@ function buildSystemContentV2(lang) {
   const policies = lang === 'en' ? COACH_AI_POLICIES_EN : COACH_AI_POLICIES_IT
 
   const it = `Sei Coach AI per eFootball.
-LINGUA DI RISPOSTA: DEVI TASSATIVAMENTE RISPONDERE NELLA STESSA LINGUA USATA DALL'UTENTE NEL SUO MESSAGGIO (se l'utente scrive in inglese, rispondi in inglese; se scrive in italiano, rispondi in italiano).
+LINGUA DI RISPOSTA: DEVI TASSATIVAMENTE RISPONDERE IN ${lang === 'en' ? 'INGLESE' : 'ITALIANO'} (lingua UI/parametro "language" dell'app).
 
 ${policies}
 
@@ -689,7 +696,7 @@ PRIORITÀ PROFILO: Se nel RIASSUNTO (sezione Informazioni per l'IA) sono present
 OUTPUT COACH: 2-4 frasi operative, rispondi alla domanda specifica; varia i consigli; "In sintesi" solo se utile.`
 
   const en = `You are Coach AI for eFootball.
-RESPONSE LANGUAGE: YOU MUST STRICTLY REPLY IN THE SAME LANGUAGE USED BY THE USER IN THEIR MESSAGE (if the user writes in Italian, reply in Italian; if they write in English, reply in English).
+RESPONSE LANGUAGE: YOU MUST STRICTLY REPLY IN ${lang === 'en' ? 'ENGLISH' : 'ITALIAN'} (UI language / app "language" parameter).
 
 ${policies}
 
@@ -870,8 +877,16 @@ export async function POST(req) {
     try {
       if (serviceKey && supabaseUrl) {
         const admin = createClient(supabaseUrl, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } })
-        const { data: cacheRow } = await admin.from('user_diagnostic_cache').select('content').eq('user_id', userId).maybeSingle()
-        if (cacheRow?.content && String(cacheRow.content).trim().length > 0) {
+        const { data: cacheRow } = await admin
+          .from('user_diagnostic_cache')
+          .select('content, generated_at')
+          .eq('user_id', userId)
+          .maybeSingle()
+
+        const cacheGeneratedAtMs = cacheRow?.generated_at ? new Date(cacheRow.generated_at).getTime() : 0
+        const cacheIsFresh = Number.isFinite(cacheGeneratedAtMs) && cacheGeneratedAtMs > 0 && (Date.now() - cacheGeneratedAtMs) <= DIAGNOSTIC_CACHE_MAX_AGE_MS
+
+        if (cacheRow?.content && String(cacheRow.content).trim().length > 0 && cacheIsFresh) {
           let raw = String(cacheRow.content).trim()
           personalContextSummary = raw.length > MAX_PERSONAL_CONTEXT_CHARS ? raw.slice(0, MAX_PERSONAL_CONTEXT_CHARS) + '\n... (riassunto troncato).' : raw
           contextBlockLabel = 'RIASSUNTO ANALISI'
@@ -907,6 +922,8 @@ export async function POST(req) {
               : `[AGGIORNAMENTO LIVE] Stile squadra: ${liveStyle || 'non impostato'}. Istruzioni individuali: ${numLive} attive.${instrLines}\n`
             personalContextSummary = liveLine + personalContextSummary
           }
+        } else if (cacheRow?.content && !cacheIsFresh && process.env.NODE_ENV !== 'production') {
+          console.log('[assistant-chat] Diagnostic cache stale: using live context fallback')
         }
       }
       if (!personalContextSummary) {

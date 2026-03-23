@@ -1,15 +1,13 @@
 'use client'
 
 import React from 'react'
-import { useRouter } from 'next/navigation'
-import { Menu, X, ShoppingCart } from 'lucide-react'
+import { Menu, X, ShoppingCart, House } from 'lucide-react'
 import CreditsBar from '@/components/CreditsBar'
 import LanguageSwitch from '@/components/LanguageSwitch'
 import GuideTour from '@/components/GuideTour'
 import { useSidebar } from '@/components/SidebarContext'
 
 export default function TopBar() {
-  const router = useRouter()
   const { isOpen, setIsOpen } = useSidebar()
 
   return (
@@ -54,6 +52,39 @@ export default function TopBar() {
           }}
         >
           {isOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
+
+        {/* Home icon: riporta alla home principale FromZeroToHero */}
+        <button
+          type="button"
+          onClick={() => window.open('https://home.fromzerotohero.io/', '_self')}
+          className="mobile-icon-btn lg:absolute lg:left-6"
+          aria-label="Vai alla Home FromZeroToHero"
+          title="Vai alla Home"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '36px',
+            height: '36px',
+            borderRadius: '8px',
+            background: 'rgba(0, 212, 255, 0.1)',
+            border: '1px solid rgba(0, 212, 255, 0.3)',
+            color: 'var(--neon-cyan)',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            flexShrink: 0
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(0, 212, 255, 0.2)'
+            e.currentTarget.style.boxShadow = '0 0 10px rgba(0, 212, 255, 0.3)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(0, 212, 255, 0.1)'
+            e.currentTarget.style.boxShadow = 'none'
+          }}
+        >
+          <House size={18} />
         </button>
         
         {/* GuideTour - spostato a destra su mobile */}
