@@ -431,9 +431,10 @@ const OnboardingFormation = () => {
         
         .formation-onboarding-content {
           flex: 1;
-          padding: 32px 24px;
+          padding: 20px 24px;
           overflow-y: auto;
-          min-height: 280px;
+          min-height: 0;
+          max-height: calc(100% - 140px);
         }
         
         /* Key Message Styles */
@@ -680,9 +681,10 @@ const OnboardingFormation = () => {
           
           .formation-onboarding-modal {
             max-width: 100%;
-            max-height: calc(100vh - 80px - env(safe-area-inset-bottom, 0px));
-            height: auto;
-            border-radius: 24px 24px 0 0;
+            max-height: calc(100vh - 60px);
+            height: 520px;
+            min-height: 400px;
+            border-radius: 20px 20px 0 0;
             border-bottom: none;
             margin-bottom: 0;
             animation: slideUpMobile 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -698,88 +700,120 @@ const OnboardingFormation = () => {
           }
           
           .formation-onboarding-content {
-            padding: 16px 16px calc(100px + env(safe-area-inset-bottom, 0px));
-            min-height: auto;
+            padding: 12px 16px;
+            min-height: 0;
+            max-height: calc(100% - 120px);
+          }
+          
+          .key-message {
+            padding: 8px 0;
           }
           
           .key-message-icon {
-            width: 60px;
-            height: 60px;
-            margin-bottom: 12px;
+            width: 48px;
+            height: 48px;
+            margin-bottom: 8px;
           }
           
           .key-message-icon svg {
-            width: 32px;
-            height: 32px;
+            width: 24px;
+            height: 24px;
           }
           
           .key-message-title {
-            font-size: 18px;
-            margin-bottom: 8px;
+            font-size: 16px;
+            margin-bottom: 6px;
+            line-height: 1.3;
           }
           
           .key-message-subtitle {
-            font-size: 13px;
-            margin-bottom: 16px;
+            font-size: 12px;
+            margin-bottom: 12px;
+            line-height: 1.4;
           }
           
           .stadium-icon {
-            font-size: 40px;
-            margin-bottom: 8px;
+            font-size: 28px;
+            margin-bottom: 4px;
           }
           
           .step-icon-wrapper {
-            width: 64px;
-            height: 64px;
-            margin: 0 auto 16px;
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 12px;
+            border-width: 2px;
           }
           
           .step-emoji {
-            font-size: 32px;
+            font-size: 28px;
           }
           
           .step-lucide-icon {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
           }
           
           .step-title {
-            font-size: 18px;
-            margin-bottom: 12px;
+            font-size: 16px;
+            margin-bottom: 8px;
+            line-height: 1.3;
           }
           
           .step-description {
-            font-size: 14px;
-            margin-bottom: 16px;
-            line-height: 1.5;
+            font-size: 13px;
+            margin-bottom: 12px;
+            line-height: 1.4;
           }
           
           .step-number {
-            font-size: 12px;
+            font-size: 11px;
           }
           
           .formation-onboarding-footer {
-            padding: 12px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+            padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px));
             gap: 8px;
+            min-height: 60px;
           }
           
           .formation-onboarding-btn {
             padding: 10px 16px;
-            font-size: 14px;
+            font-size: 13px;
+            border-radius: 10px;
+          }
+          
+          .formation-onboarding-header {
+            padding: 10px 16px;
+            min-height: 44px;
+          }
+          
+          .formation-onboarding-close {
+            padding: 4px;
+            width: 32px;
+            height: 32px;
+          }
+          
+          .formation-onboarding-close svg {
+            width: 18px;
+            height: 18px;
+          }
+          
+          .progress-dot {
+            width: 6px;
+            height: 6px;
           }
         }
         
         @media (max-width: 380px) {
           .key-message-title {
-            font-size: 16px;
+            font-size: 15px;
           }
           
           .step-title {
-            font-size: 16px;
+            font-size: 15px;
           }
           
           .step-description {
-            font-size: 13px;
+            font-size: 12px;
           }
         }
       `}</style>
