@@ -35,7 +35,7 @@ export default function BottomNavigation() {
     {
       href: '/match/new',
       icon: Plus,
-      label: lang === 'en' ? 'Add Match' : 'Aggiungi Partita'
+      label: lang === 'en' ? 'Add Stats' : 'Aggiungi Statistiche'
     },
     {
       href: '/gestione-formazione',
