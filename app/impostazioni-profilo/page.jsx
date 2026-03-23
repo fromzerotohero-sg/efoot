@@ -426,10 +426,13 @@ export default function ImpostazioniProfiloPage() {
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            background: 'rgba(0, 212, 255, 0.1)',
-            borderColor: 'rgba(0, 212, 255, 0.3)',
-            color: '#00d4ff',
-            flexShrink: 0
+            background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(0, 180, 216, 0.3))',
+            border: '2px solid #00d4ff',
+            color: '#fff',
+            fontWeight: 600,
+            flexShrink: 0,
+            boxShadow: '0 0 15px rgba(0, 212, 255, 0.4), inset 0 0 10px rgba(0, 212, 255, 0.1)',
+            textShadow: '0 0 8px rgba(0, 212, 255, 0.8)'
           }}
         >
           <Zap size={16} />
