@@ -33,9 +33,9 @@ export default function BottomNavigation() {
       label: lang === 'en' ? 'Dashboard' : 'Dashboard'
     },
     {
-      href: '/match/new',
+      href: '/grafici-comparazione',
       icon: Plus,
-      label: lang === 'en' ? 'Add Stats' : 'Aggiungi Statistiche'
+      label: lang === 'en' ? 'Stats' : 'Stat'
     },
     {
       href: '/gestione-formazione',
