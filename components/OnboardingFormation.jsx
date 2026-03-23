@@ -680,9 +680,11 @@ const OnboardingFormation = () => {
           
           .formation-onboarding-modal {
             max-width: 100%;
-            max-height: 85vh;
+            max-height: calc(100vh - 80px - env(safe-area-inset-bottom, 0px));
+            height: auto;
             border-radius: 24px 24px 0 0;
             border-bottom: none;
+            margin-bottom: 0;
             animation: slideUpMobile 0.4s cubic-bezier(0.4, 0, 0.2, 1);
           }
           
@@ -696,60 +698,88 @@ const OnboardingFormation = () => {
           }
           
           .formation-onboarding-content {
-            padding: 24px 20px 40px;
-            min-height: 240px;
+            padding: 16px 16px calc(100px + env(safe-area-inset-bottom, 0px));
+            min-height: auto;
+          }
+          
+          .key-message-icon {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 12px;
+          }
+          
+          .key-message-icon svg {
+            width: 32px;
+            height: 32px;
           }
           
           .key-message-title {
-            font-size: 20px;
+            font-size: 18px;
+            margin-bottom: 8px;
           }
           
           .key-message-subtitle {
-            font-size: 14px;
+            font-size: 13px;
+            margin-bottom: 16px;
           }
           
-          .soccer-ball-animation {
-            font-size: 36px;
-          }
-          
-          .step-title {
-            font-size: 20px;
-          }
-          
-          .step-description {
-            font-size: 15px;
+          .stadium-icon {
+            font-size: 40px;
+            margin-bottom: 8px;
           }
           
           .step-icon-wrapper {
-            width: 80px;
-            height: 80px;
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px;
           }
           
           .step-emoji {
-            font-size: 40px;
+            font-size: 32px;
+          }
+          
+          .step-lucide-icon {
+            width: 32px;
+            height: 32px;
+          }
+          
+          .step-title {
+            font-size: 18px;
+            margin-bottom: 12px;
+          }
+          
+          .step-description {
+            font-size: 14px;
+            margin-bottom: 16px;
+            line-height: 1.5;
+          }
+          
+          .step-number {
+            font-size: 12px;
           }
           
           .formation-onboarding-footer {
-            padding: 16px 20px 32px;
+            padding: 12px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+            gap: 8px;
           }
           
           .formation-onboarding-btn {
-            padding: 12px 20px;
+            padding: 10px 16px;
             font-size: 14px;
           }
         }
         
         @media (max-width: 380px) {
           .key-message-title {
-            font-size: 18px;
+            font-size: 16px;
           }
           
           .step-title {
-            font-size: 18px;
+            font-size: 16px;
           }
           
-          .soccer-ball-animation {
-            font-size: 32px;
+          .step-description {
+            font-size: 13px;
           }
         }
       `}</style>

@@ -645,7 +645,7 @@ const OnboardingFlow = () => {
           box-shadow: 0 8px 25px rgba(34, 197, 94, 0.5);
         }
         
-        /* Responsive */
+        /* Responsive Mobile */
         @media (max-width: 640px) {
           .onboarding-overlay {
             padding: 0;
@@ -654,9 +654,11 @@ const OnboardingFlow = () => {
           
           .onboarding-modal {
             max-width: 100%;
-            max-height: 85vh;
+            max-height: calc(100vh - 80px - env(safe-area-inset-bottom, 0px));
+            height: auto;
             border-radius: 24px 24px 0 0;
             border-bottom: none;
+            margin-bottom: 0;
             animation: slideUpMobile 0.4s cubic-bezier(0.4, 0, 0.2, 1);
           }
           
@@ -670,61 +672,83 @@ const OnboardingFlow = () => {
           }
           
           .onboarding-content {
-            padding: 24px 20px 80px;
-            min-height: 240px;
+            padding: 16px 16px calc(100px + env(safe-area-inset-bottom, 0px));
+            min-height: auto;
+          }
+          
+          .key-message-icon {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 12px;
+          }
+          
+          .key-message-icon svg {
+            width: 32px;
+            height: 32px;
           }
           
           .key-message-title {
-            font-size: 20px;
+            font-size: 18px;
+            margin-bottom: 8px;
           }
           
           .key-message-subtitle {
-            font-size: 14px;
+            font-size: 13px;
+            margin-bottom: 16px;
           }
           
           .soccer-ball-animation {
-            font-size: 36px;
-            margin-bottom: 20px;
+            font-size: 32px;
+            margin-bottom: 8px;
           }
           
           @keyframes ballBounce {
-            0%, 100% { 
-              transform: translateY(0) rotate(0deg);
-            }
-            25% { 
-              transform: translateY(-10px) rotate(-5deg);
-            }
-            50% { 
-              transform: translateY(0) rotate(0deg);
-            }
-            75% { 
-              transform: translateY(-5px) rotate(5deg);
-            }
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(-5deg); }
           }
           
-          .step-title {
-            font-size: 20px;
-          }
-          
-          .step-description {
-            font-size: 15px;
+          .step-content {
+            padding-top: 0;
           }
           
           .step-icon-wrapper {
-            width: 80px;
-            height: 80px;
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px;
           }
           
           .step-emoji {
-            font-size: 40px;
+            font-size: 32px;
+          }
+          
+          .step-lucide-icon {
+            width: 32px;
+            height: 32px;
+          }
+          
+          .step-title {
+            font-size: 18px;
+            margin-bottom: 12px;
+          }
+          
+          .step-description {
+            font-size: 14px;
+            margin-bottom: 16px;
+            line-height: 1.5;
+          }
+          
+          .step-number {
+            font-size: 12px;
           }
           
           .onboarding-footer {
-            padding: 16px 20px;
+            padding: 12px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+            gap: 8px;
           }
           
           .onboarding-btn {
-            padding: 12px 20px;
+            padding: 10px 16px;
+            font-size: 14px;
             font-size: 14px;
           }
         }
