@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Menu, X, ShoppingCart, House } from 'lucide-react'
+import { Menu, X, ShoppingCart, Home } from 'lucide-react'
 import CreditsBar from '@/components/CreditsBar'
 import LanguageSwitch from '@/components/LanguageSwitch'
 import GuideTour from '@/components/GuideTour'
@@ -84,7 +84,7 @@ export default function TopBar() {
             e.currentTarget.style.boxShadow = 'none'
           }}
         >
-          <House size={18} />
+          <Home size={18} />
         </button>
         
         {/* GuideTour - spostato a destra su mobile */}
