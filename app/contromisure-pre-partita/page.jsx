@@ -1,12 +1,14 @@
 'use client'
 
 import React from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
-import { ArrowLeft, Upload, AlertCircle, CheckCircle2, RefreshCw, X, Camera, Shield, Target, Users, Settings, ChevronDown, ChevronUp, Brain } from 'lucide-react'
+import CoachFeedbackChat from '@/components/CoachFeedbackChat'
+import { ArrowLeft, Upload, AlertCircle, CheckCircle2, RefreshCw, X, Camera, Shield, Target, Users, Settings, ChevronDown, ChevronUp, Brain, MessageCircle, Trophy } from 'lucide-react'
 
 /** Estrae testo in lingua da valore stringa o oggetto bilingue { it, en } (coerente con analyze-match) */
 function pickLang(val, lang) {
@@ -32,6 +34,44 @@ export default function CountermeasuresPreMatchPage() {
     players: false,
     instructions: false
   })
+  const [showPalestraCoach, setShowPalestraCoach] = React.useState(false)
+  const [palestraUserProfile, setPalestraUserProfile] = React.useState(null)
+  const [palestraLastMatch, setPalestraLastMatch] = React.useState(null)
+  const [palestraOpenLoading, setPalestraOpenLoading] = React.useState(false)
+
+  const openPalestraCoach = React.useCallback(async () => {
+    setPalestraOpenLoading(true)
+    try {
+      let token = localStorage.getItem('auth_token')
+      if (!token && supabase) {
+        const { data: session } = await supabase.auth.getSession()
+        token = session?.session?.access_token
+      }
+      if (!token) {
+        router.push('/login')
+        return
+      }
+      const res = await fetch(`/api/dashboard?t=${Date.now()}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Cache-Control': 'no-cache, no-store',
+          Pragma: 'no-cache'
+        },
+        cache: 'no-store'
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setPalestraUserProfile(data.profile || null)
+        setPalestraLastMatch(data.matches?.[0] || null)
+      }
+      setShowPalestraCoach(true)
+    } catch (e) {
+      console.error('[contromisure-pre-partita] Prefetch dashboard for Palestra:', e)
+      setShowPalestraCoach(true)
+    } finally {
+      setPalestraOpenLoading(false)
+    }
+  }, [router])
 
   const handleImageSelect = (e) => {
     const file = e.target.files?.[0]
@@ -761,8 +801,118 @@ export default function CountermeasuresPreMatchPage() {
             </span>
           </div>
 
+          {/* Dopo la partita: flusso post-match coerente con dashboard (aggiungi partita + Palestra) */}
+          <div
+            data-tour-id="tour-counter-postmatch"
+            className="neon-card"
+            style={{
+              padding: 'clamp(16px, 4vw, 22px)',
+              marginBottom: '24px',
+              background: 'rgba(5, 12, 28, 0.75)',
+              border: '1px solid rgba(0, 212, 255, 0.25)',
+              borderRadius: '12px'
+            }}
+          >
+            <h2
+              style={{
+                fontSize: 'clamp(16px, 3.5vw, 18px)',
+                fontWeight: 700,
+                margin: '0 0 14px 0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                color: '#fff'
+              }}
+            >
+              <Trophy size={22} style={{ color: 'var(--neon-orange)', flexShrink: 0 }} aria-hidden />
+              {t('countermeasuresPostMatchTitle')}
+            </h2>
+
+            <div
+              style={{
+                padding: '14px',
+                marginBottom: '14px',
+                background: 'rgba(0, 212, 255, 0.06)',
+                borderRadius: '10px',
+                border: '1px solid rgba(0, 212, 255, 0.15)'
+              }}
+            >
+              <p style={{ margin: '0 0 12px 0', fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: 1.65, color: 'rgba(255,255,255,0.88)' }}>
+                {t('countermeasuresPostMatchPhotosIntro')}
+              </p>
+              <Link
+                href="/match/new"
+                className="btn primary"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  textDecoration: 'none',
+                  width: '100%',
+                  justifyContent: 'center',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <Camera size={18} aria-hidden />
+                {t('countermeasuresPostMatchAddMatchCta')}
+              </Link>
+            </div>
+
+            <div
+              style={{
+                padding: '14px',
+                background: 'rgba(251, 191, 36, 0.06)',
+                borderRadius: '10px',
+                border: '1px solid rgba(251, 191, 36, 0.2)'
+              }}
+            >
+              <p style={{ margin: '0 0 12px 0', fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: 1.65, color: 'rgba(255,255,255,0.88)' }}>
+                {t('countermeasuresPostMatchPalestraIntro')}
+              </p>
+              <button
+                type="button"
+                className="neon-button"
+                disabled={palestraOpenLoading}
+                onClick={openPalestraCoach}
+                style={{
+                  width: '100%',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  minHeight: '44px',
+                  cursor: palestraOpenLoading ? 'wait' : 'pointer',
+                  opacity: palestraOpenLoading ? 0.85 : 1
+                }}
+              >
+                {palestraOpenLoading ? (
+                  <>
+                    <RefreshCw size={18} style={{ animation: 'spin 1s linear infinite' }} aria-hidden />
+                    {t('loading')}
+                  </>
+                ) : (
+                  <>
+                    <MessageCircle size={18} aria-hidden />
+                    {t('openPalestraCoach')}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
         </>
       )}
+
+      <CoachFeedbackChat
+        show={showPalestraCoach}
+        onClose={() => {
+          setShowPalestraCoach(false)
+          setPalestraUserProfile(null)
+          setPalestraLastMatch(null)
+        }}
+        userProfile={palestraUserProfile}
+        lastMatch={palestraLastMatch}
+      />
 
       <style jsx>{`
         @keyframes spin {
