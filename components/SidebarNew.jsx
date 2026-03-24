@@ -454,6 +454,51 @@ export default function SidebarNew() {
               <Shield size={18} style={{ filter: isActive('/contromisure-pre-partita') ? 'drop-shadow(0 0 5px rgba(0, 212, 255, 0.8))' : 'none' }} />
               <span>{t('countermeasures')}</span>
             </Link>
+
+            {/* Divider */}
+            <div style={{ 
+              height: '1px', 
+              background: 'linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.3), transparent)',
+              margin: '16px 0' 
+            }} />
+
+            {/* Logout - Mobile visible */}
+            <button
+              onClick={() => {
+                setIsOpen(false)
+                handleLogout()
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 16px',
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: 600,
+                background: 'transparent',
+                color: 'rgba(255, 100, 100, 0.8)',
+                border: '1px solid rgba(255, 100, 100, 0.3)',
+                boxShadow: 'none',
+                transition: 'all 0.3s ease',
+                cursor: 'pointer',
+                textDecoration: 'none',
+                width: '100%'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 100, 100, 0.1)'
+                e.currentTarget.style.borderColor = 'rgba(255, 100, 100, 0.5)'
+                e.currentTarget.style.color = 'rgba(255, 100, 100, 1)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.borderColor = 'rgba(255, 100, 100, 0.3)'
+                e.currentTarget.style.color = 'rgba(255, 100, 100, 0.8)'
+              }}
+            >
+              <LogOut size={18} />
+              <span>{t('logout')}</span>
+            </button>
           </div>
         </nav>
 
