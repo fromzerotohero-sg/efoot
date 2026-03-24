@@ -10,7 +10,7 @@ import AIKnowledgeBar from '@/components/AIKnowledgeBar'
 import CoachFeedbackChat from '@/components/CoachFeedbackChat'
 import AssistantChat from '@/components/AssistantChat'
 import GameAnalysisModal from '@/components/GameAnalysisModal'
-import { useGameAnalysisModalNav } from '@/components/GameAnalysisModalNavContext'
+import { useGameAnalysisModalNav, OPEN_GAME_ANALYSIS_MODAL_EVENT } from '@/components/GameAnalysisModalNavContext'
 import TaskWidget from '@/components/TaskWidget'
 import MissionCenter from '@/components/MissionCenter'
 import OnboardingFlow from '@/components/OnboardingFlow'
@@ -43,7 +43,8 @@ import {
 function OpenCoachListener({ onOpenCoach, onOpenAssistantChat, onOpenGameAnalysis }) {
   const searchParams = useSearchParams()
   const router = useRouter()
-  React.useEffect(() => {
+  // useLayoutEffect: apre modal prima del paint così non si vede la dashboard “vuota” un frame
+  React.useLayoutEffect(() => {
     if (searchParams?.get('openGameAnalysis') === '1') {
       onOpenGameAnalysis?.()
       router.replace('/', { scroll: false })
@@ -86,6 +87,12 @@ function HomePage() {
   const [showCoachFeedback, setShowCoachFeedback] = React.useState(false)
   const [showGameAnalysisModal, setShowGameAnalysisModal] = React.useState(false)
   const [gameAnalysisLastCapture, setGameAnalysisLastCapture] = React.useState(null)
+  const [hasActiveCoach, setHasActiveCoach] = React.useState(false)
+  const [reminderRotationIndex, setReminderRotationIndex] = React.useState(0)
+  const [leaderboardData, setLeaderboardData] = React.useState({ currentUser: null, daysLeftInMonth: null })
+  const [userProfile, setUserProfile] = React.useState(null)
+  const [confirmModal, setConfirmModal] = React.useState(null) // { show, title, message, onConfirm, onCancel }
+  const [coachChatInitialMessage, setCoachChatInitialMessage] = React.useState(null)
 
   React.useEffect(() => {
     setGameAnalysisNavOpen(showGameAnalysisModal)
@@ -94,12 +101,19 @@ function HomePage() {
   React.useEffect(() => {
     return () => setGameAnalysisNavOpen(false)
   }, [setGameAnalysisNavOpen])
-  const [hasActiveCoach, setHasActiveCoach] = React.useState(false)
-  const [reminderRotationIndex, setReminderRotationIndex] = React.useState(0)
-  const [leaderboardData, setLeaderboardData] = React.useState({ currentUser: null, daysLeftInMonth: null })
-  const [userProfile, setUserProfile] = React.useState(null)
-  const [confirmModal, setConfirmModal] = React.useState(null) // { show, title, message, onConfirm, onCancel }
-  const [coachChatInitialMessage, setCoachChatInitialMessage] = React.useState(null)
+
+  // Bottom nav su /: apre analisi senza Link → ?openGameAnalysis (niente doppia navigazione)
+  React.useEffect(() => {
+    const onOpen = () => setShowGameAnalysisModal(true)
+    if (typeof window !== 'undefined') {
+      window.addEventListener(OPEN_GAME_ANALYSIS_MODAL_EVENT, onOpen)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener(OPEN_GAME_ANALYSIS_MODAL_EVENT, onOpen)
+      }
+    }
+  }, [])
 
   // Banner setup: sempre visibile quando non in loading. Se manca qualcosa: link a rotazione; altrimenti "Setup completo"
   const hasMissingSetup = hasActiveCoach === false || !gameAnalysisLastCapture || stats.titolari < 11

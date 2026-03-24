@@ -4,7 +4,7 @@ import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
-import { useGameAnalysisModalNav } from '@/components/GameAnalysisModalNavContext'
+import { useGameAnalysisModalNav, OPEN_GAME_ANALYSIS_MODAL_EVENT } from '@/components/GameAnalysisModalNavContext'
 import { 
   Shield,
   LayoutGrid,
@@ -98,38 +98,72 @@ export default function BottomNavigation() {
             : isDashboard
               ? pathname === '/' && !gameAnalysisModalOpen
               : isActive(item.href)
-          
+
+          const inner = (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '4px',
+              padding: '8px 12px',
+              borderRadius: '12px',
+              transition: 'all 0.2s',
+              background: active ? 'rgba(0, 212, 255, 0.15)' : 'transparent',
+              color: active ? 'var(--neon-cyan)' : 'rgba(255,255,255,0.5)',
+              minWidth: '60px'
+            }}>
+              <Icon size={22} strokeWidth={active ? 2.5 : 2} />
+              <span style={{
+                fontSize: '11px',
+                fontWeight: active ? 600 : 500,
+                whiteSpace: 'nowrap'
+              }}>
+                {item.label}
+              </span>
+            </div>
+          )
+
+          // Già su /: niente navigazione verso ?openGameAnalysis (evita flash + doppio replace)
+          if (isStatShortcut && pathname === '/') {
+            return (
+              <button
+                key={item.label}
+                type="button"
+                aria-label={item.label}
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent(OPEN_GAME_ANALYSIS_MODAL_EVENT))
+                  }
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  margin: 0,
+                  cursor: 'pointer',
+                  color: 'inherit',
+                  font: 'inherit',
+                  WebkitTapHighlightColor: 'transparent'
+                }}
+              >
+                {inner}
+              </button>
+            )
+          }
+
           return (
             <Link
               key={item.label}
               href={item.href}
+              prefetch={isStatShortcut ? false : undefined}
+              scroll={isStatShortcut ? false : undefined}
               style={{
                 textDecoration: 'none',
                 color: 'inherit'
               }}
             >
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '4px',
-                padding: '8px 12px',
-                borderRadius: '12px',
-                transition: 'all 0.2s',
-                background: active ? 'rgba(0, 212, 255, 0.15)' : 'transparent',
-                color: active ? 'var(--neon-cyan)' : 'rgba(255,255,255,0.5)',
-                minWidth: '60px'
-              }}>
-                <Icon size={22} strokeWidth={active ? 2.5 : 2} />
-                <span style={{
-                  fontSize: '11px',
-                  fontWeight: active ? 600 : 500,
-                  whiteSpace: 'nowrap'
-                }}>
-                  {item.label}
-                </span>
-              </div>
+              {inner}
             </Link>
           )
         })}

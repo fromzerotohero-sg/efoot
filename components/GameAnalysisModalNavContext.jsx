@@ -2,6 +2,9 @@
 
 import React from 'react'
 
+/** Bottom nav su dashboard: apri modal analisi senza navigare (stesso nome evento in page.jsx). */
+export const OPEN_GAME_ANALYSIS_MODAL_EVENT = 'open-game-analysis-modal'
+
 /**
  * Sincronizza la bottom nav con il modal "Statistiche di gioco" sulla dashboard:
  * quando il modal è aperto, evidenziare Stat e non Dashboard (stesso pathname `/`).
