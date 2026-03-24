@@ -4,7 +4,7 @@ import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
-import { useGameAnalysisModalNav, OPEN_GAME_ANALYSIS_MODAL_EVENT } from '@/components/GameAnalysisModalNavContext'
+import { useGameAnalysisModalNav, OPEN_GAME_ANALYSIS_MODAL_EVENT, CLOSE_GAME_ANALYSIS_MODAL_EVENT } from '@/components/GameAnalysisModalNavContext'
 import { 
   Shield,
   LayoutGrid,
@@ -158,6 +158,16 @@ export default function BottomNavigation() {
               href={item.href}
               prefetch={isStatShortcut ? false : undefined}
               scroll={isStatShortcut ? false : undefined}
+              onClick={
+                isDashboard && pathname === '/' && gameAnalysisModalOpen
+                  ? (e) => {
+                      e.preventDefault()
+                      if (typeof window !== 'undefined') {
+                        window.dispatchEvent(new CustomEvent(CLOSE_GAME_ANALYSIS_MODAL_EVENT))
+                      }
+                    }
+                  : undefined
+              }
               style={{
                 textDecoration: 'none',
                 color: 'inherit'

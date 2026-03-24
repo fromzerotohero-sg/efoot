@@ -10,7 +10,7 @@ import AIKnowledgeBar from '@/components/AIKnowledgeBar'
 import CoachFeedbackChat from '@/components/CoachFeedbackChat'
 import AssistantChat from '@/components/AssistantChat'
 import GameAnalysisModal from '@/components/GameAnalysisModal'
-import { useGameAnalysisModalNav, OPEN_GAME_ANALYSIS_MODAL_EVENT } from '@/components/GameAnalysisModalNavContext'
+import { useGameAnalysisModalNav, OPEN_GAME_ANALYSIS_MODAL_EVENT, CLOSE_GAME_ANALYSIS_MODAL_EVENT } from '@/components/GameAnalysisModalNavContext'
 import TaskWidget from '@/components/TaskWidget'
 import MissionCenter from '@/components/MissionCenter'
 import OnboardingFlow from '@/components/OnboardingFlow'
@@ -114,6 +114,22 @@ function HomePage() {
       }
     }
   }, [])
+
+  // Bottom nav: tap Dashboard con modal analisi aperto (stesso `/` → Link non chiude il modal da solo)
+  React.useEffect(() => {
+    const onClose = () => {
+      setShowGameAnalysisModal(false)
+      router.replace('/', { scroll: false })
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener(CLOSE_GAME_ANALYSIS_MODAL_EVENT, onClose)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener(CLOSE_GAME_ANALYSIS_MODAL_EVENT, onClose)
+      }
+    }
+  }, [router])
 
   // Banner setup: sempre visibile quando non in loading. Se manca qualcosa: link a rotazione; altrimenti "Setup completo"
   const hasMissingSetup = hasActiveCoach === false || !gameAnalysisLastCapture || stats.titolari < 11
