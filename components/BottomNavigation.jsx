@@ -34,22 +34,22 @@ export default function BottomNavigation() {
       icon: LayoutGrid,
       label: 'Dashboard'
     },
-    // Non è una pagina: apre il modal "Analisi partita" sulla dashboard (vedi OpenCoachListener in app/page.jsx).
-    // active è sempre false; l’URL query viene ripulita dopo apertura/chiusura modal così ogni tap funziona.
     {
-      href: '/?openGameAnalysis=1',
-      icon: Plus,
-      label: lang === 'en' ? 'Stats' : 'Stat'
+      href: '/match',
+      icon: Calendar,
+      label: lang === 'en' ? 'Matches' : 'Partite'
     },
     {
       href: '/gestione-formazione',
       icon: Users,
       label: lang === 'en' ? 'Squad' : 'Rosa'
     },
+    // Non è una pagina: apre il modal "Analisi partita" sulla dashboard (vedi OpenCoachListener in app/page.jsx).
+    // active è sempre false; l’URL query viene ripulita dopo apertura/chiusura modal così ogni tap funziona.
     {
-      href: '/match',
-      icon: Calendar,
-      label: lang === 'en' ? 'Matches' : 'Partite'
+      href: '/?openGameAnalysis=1',
+      icon: Plus,
+      label: lang === 'en' ? 'Stats' : 'Stat'
     }
   ]
 
