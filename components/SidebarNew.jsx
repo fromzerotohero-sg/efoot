@@ -462,7 +462,7 @@ export default function SidebarNew() {
               margin: '16px 0' 
             }} />
 
-            {/* Logout - Mobile visible */}
+            {/* Logout - Visibile su tutti i device */}
             <button
               onClick={() => {
                 setIsOpen(false)
@@ -476,34 +476,40 @@ export default function SidebarNew() {
                 borderRadius: '12px',
                 fontSize: '14px',
                 fontWeight: 600,
-                background: 'transparent',
-                color: 'rgba(255, 100, 100, 0.8)',
-                border: '1px solid rgba(255, 100, 100, 0.3)',
-                boxShadow: 'none',
+                background: 'rgba(255, 80, 80, 0.15)',
+                color: '#ff6b6b',
+                border: '1px solid rgba(255, 80, 80, 0.4)',
+                boxShadow: '0 0 10px rgba(255, 80, 80, 0.1)',
                 transition: 'all 0.3s ease',
                 cursor: 'pointer',
                 textDecoration: 'none',
-                width: '100%'
+                width: '100%',
+                marginTop: '8px'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 100, 100, 0.1)'
-                e.currentTarget.style.borderColor = 'rgba(255, 100, 100, 0.5)'
-                e.currentTarget.style.color = 'rgba(255, 100, 100, 1)'
+                e.currentTarget.style.background = 'rgba(255, 80, 80, 0.25)'
+                e.currentTarget.style.borderColor = 'rgba(255, 80, 80, 0.6)'
+                e.currentTarget.style.color = '#ff8585'
+                e.currentTarget.style.boxShadow = '0 0 15px rgba(255, 80, 80, 0.2)'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent'
-                e.currentTarget.style.borderColor = 'rgba(255, 100, 100, 0.3)'
-                e.currentTarget.style.color = 'rgba(255, 100, 100, 0.8)'
+                e.currentTarget.style.background = 'rgba(255, 80, 80, 0.15)'
+                e.currentTarget.style.borderColor = 'rgba(255, 80, 80, 0.4)'
+                e.currentTarget.style.color = '#ff6b6b'
+                e.currentTarget.style.boxShadow = '0 0 10px rgba(255, 80, 80, 0.1)'
               }}
             >
-              <LogOut size={18} />
-              <span>{t('logout')}</span>
+              <LogOut size={18} style={{ filter: 'drop-shadow(0 0 3px rgba(255, 80, 80, 0.5))' }} />
+              <span style={{ textShadow: '0 0 5px rgba(255, 80, 80, 0.3)' }}>{t('logout')}</span>
             </button>
+            
+            {/* Spazio extra per mobile */}
+            <div className="lg:hidden" style={{ height: '100px' }} />
           </div>
         </nav>
 
-        {/* Bottom section - Logout */}
-        <div className="p-4 border-t border-[rgba(0,212,255,0.15)] bg-[rgba(5,8,20,0.8)]">
+        {/* Bottom section - Logout - Solo Desktop */}
+        <div className="hidden lg:block p-4 border-t border-[rgba(0,212,255,0.15)] bg-[rgba(5,8,20,0.8)]">
           <button
             onClick={handleLogout}
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg transition-all duration-300 group"
