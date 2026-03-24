@@ -295,6 +295,14 @@ function HomePage() {
     return () => window.removeEventListener('leaderboard-updated', onLeaderboardUpdated)
   }, [supabase])
 
+  // Listener per aprire GameAnalysisModal dal tasto Stat
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return
+    const onOpenGameAnalysis = () => setShowGameAnalysisModal(true)
+    window.addEventListener('open-game-analysis', onOpenGameAnalysis)
+    return () => window.removeEventListener('open-game-analysis', onOpenGameAnalysis)
+  }, [])
+
   const handleDeleteMatch = async (matchId, e) => {
     e.stopPropagation() // Previeni click sul card
     
