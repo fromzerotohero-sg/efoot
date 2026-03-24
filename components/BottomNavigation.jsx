@@ -68,6 +68,8 @@ export default function BottomNavigation() {
       label: lang === 'en' ? 'Stats' : 'Stat',
       onClick: () => {
         if (typeof window !== 'undefined') {
+          // Aggiorna stato immediatamente per illuminare il tasto
+          setGameAnalysisOpen(true)
           // Se siamo sulla Dashboard, apri direttamente il modal
           // Altrimenti naviga alla Dashboard con parametro per aprire il modal
           if (pathname === '/') {
