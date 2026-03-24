@@ -58,6 +58,7 @@ export default function SidebarNew() {
           flex flex-col z-40 transition-transform duration-300 ease-in-out
           shadow-[0_0_40px_rgba(0,161,166,0.15)]
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          pb-20 lg:pb-0
         `}
         style={{
           backdropFilter: 'blur(20px)',
