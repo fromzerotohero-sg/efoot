@@ -16,38 +16,19 @@ export default function BottomNavigation() {
   const { t, lang } = useTranslation()
   const pathname = usePathname()
   const router = useRouter()
-  const [gameAnalysisOpen, setGameAnalysisOpen] = React.useState(false)
+  const [activeButton, setActiveButton] = React.useState(null) // traccia il bottone cliccato
 
-  // Controlla se il modal è aperto tramite query param o evento
-  const isGameAnalysisOpen = () => {
-    if (typeof window === 'undefined') return false
-    // Controlla query param
-    if (window.location.search.includes('openGameAnalysis=1')) return true
-    // Controlla stato locale (settato da eventi)
-    return gameAnalysisOpen
-  }
-
-  // Ascolta quando GameAnalysisModal si apre/chiude
+  // Resetta quando cambia pagina
   React.useEffect(() => {
-    if (typeof window === 'undefined') return
-    const onOpen = () => setGameAnalysisOpen(true)
-    const onClose = () => setGameAnalysisOpen(false)
-    window.addEventListener('open-game-analysis', onOpen)
-    window.addEventListener('close-game-analysis', onClose)
-    // Controlla query param all'avvio
-    if (window.location.search.includes('openGameAnalysis=1')) {
-      setGameAnalysisOpen(true)
-    }
-    return () => {
-      window.removeEventListener('open-game-analysis', onOpen)
-      window.removeEventListener('close-game-analysis', onClose)
-    }
-  }, [])
+    setActiveButton(null)
+  }, [pathname])
 
   const isActive = (href) => {
-    const modalOpen = isGameAnalysisOpen()
-    if (href === '/grafici-comparazione') return modalOpen // Illumina Stat quando modal aperto
-    if (href === '/') return pathname === '/' && !modalOpen
+    // Se un bottone specifico è stato cliccato manualmente, usa quello
+    if (activeButton === href) return true
+    if (activeButton && activeButton !== href) return false
+    // Altrimenti usa il pathname come default
+    if (href === '/') return pathname === '/'
     return pathname?.startsWith(href)
   }
 
@@ -67,11 +48,8 @@ export default function BottomNavigation() {
       icon: Plus,
       label: lang === 'en' ? 'Stats' : 'Stat',
       onClick: () => {
+        setActiveButton('/grafici-comparazione') // Illumina questo tasto, spegni gli altri
         if (typeof window !== 'undefined') {
-          // Aggiorna stato immediatamente per illuminare il tasto
-          setGameAnalysisOpen(true)
-          // Se siamo sulla Dashboard, apri direttamente il modal
-          // Altrimenti naviga alla Dashboard con parametro per aprire il modal
           if (pathname === '/') {
             window.dispatchEvent(new CustomEvent('open-game-analysis'))
           } else {
