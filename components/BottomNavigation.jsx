@@ -17,17 +17,39 @@ export default function BottomNavigation() {
   const pathname = usePathname()
 
   const isActive = (href) => {
-    if (href === '/') return pathname === '/'
-    return pathname?.startsWith(href)
+    // Rimuovi query params per il check
+    const hrefWithoutQuery = href.split('?')[0]
+    if (hrefWithoutQuery === '/') return pathname === '/'
+    return pathname?.startsWith(hrefWithoutQuery)
   }
 
-  const handleStatClick = (e) => {
-    e.preventDefault()
-    // Apre il modal GameAnalysis sulla Dashboard
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('open-game-analysis'))
+  const navItems = [
+    {
+      href: '/contromisure-pre-partita',
+      icon: Shield,
+      label: lang === 'en' ? 'Counters' : 'Contromisure'
+    },
+    {
+      href: '/',
+      icon: LayoutGrid,
+      label: 'Dashboard'
+    },
+    {
+      href: '/?openGameAnalysis=1',
+      icon: Plus,
+      label: lang === 'en' ? 'Stats' : 'Stat'
+    },
+    {
+      href: '/gestione-formazione',
+      icon: Users,
+      label: lang === 'en' ? 'Squad' : 'Rosa'
+    },
+    {
+      href: '/match',
+      icon: Calendar,
+      label: lang === 'en' ? 'Matches' : 'Partite'
     }
-  }
+  ]
 
   return (
     <nav 
@@ -62,50 +84,47 @@ export default function BottomNavigation() {
         maxWidth: '500px',
         margin: '0 auto'
       }}>
-        {/* Contromisure */}
-        <NavLink 
-          href="/contromisure-pre-partita"
-          icon={Shield}
-          label={lang === 'en' ? 'Counters' : 'Contromisure'}
-          active={isActive('/contromisure-pre-partita')}
-        />
-        
-        {/* Dashboard */}
-        <NavLink 
-          href="/"
-          icon={LayoutGrid}
-          label="Dashboard"
-          active={isActive('/')}
-        />
-        
-        {/* Stat - Apre il modal */}
-        <Link
-          href="/"
-          onClick={handleStatClick}
-          style={{ textDecoration: 'none', color: 'inherit' }}
-        >
-          <NavContent 
-            icon={Plus}
-            label={lang === 'en' ? 'Stats' : 'Stat'}
-            active={false}
-          />
-        </Link>
-        
-        {/* Rosa */}
-        <NavLink 
-          href="/gestione-formazione"
-          icon={Users}
-          label={lang === 'en' ? 'Squad' : 'Rosa'}
-          active={isActive('/gestione-formazione')}
-        />
-        
-        {/* Partite */}
-        <NavLink 
-          href="/match"
-          icon={Calendar}
-          label={lang === 'en' ? 'Matches' : 'Partite'}
-          active={isActive('/match')}
-        />
+        {navItems.map((item) => {
+          const Icon = item.icon
+          // Stat non ha uno stato "active" (non è una pagina)
+          const active = item.label === 'Stat' || item.label === 'Stats' 
+            ? false 
+            : isActive(item.href)
+          
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              style={{
+                textDecoration: 'none',
+                color: 'inherit'
+              }}
+            >
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '4px',
+                padding: '8px 12px',
+                borderRadius: '12px',
+                transition: 'all 0.2s',
+                background: active ? 'rgba(0, 212, 255, 0.15)' : 'transparent',
+                color: active ? 'var(--neon-cyan)' : 'rgba(255,255,255,0.5)',
+                minWidth: '60px'
+              }}>
+                <Icon size={22} strokeWidth={active ? 2.5 : 2} />
+                <span style={{
+                  fontSize: '11px',
+                  fontWeight: active ? 600 : 500,
+                  whiteSpace: 'nowrap'
+                }}>
+                  {item.label}
+                </span>
+              </div>
+            </Link>
+          )
+        })}
       </div>
       
       <style jsx>{`
@@ -122,42 +141,5 @@ export default function BottomNavigation() {
         }
       `}</style>
     </nav>
-  )
-}
-
-// Componente Link standard
-function NavLink({ href, icon, label, active }) {
-  return (
-    <Link href={href} style={{ textDecoration: 'none', color: 'inherit' }}>
-      <NavContent icon={icon} label={label} active={active} />
-    </Link>
-  )
-}
-
-// Contenuto visivo dei tasti
-function NavContent({ icon: Icon, label, active }) {
-  return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '4px',
-      padding: '8px 12px',
-      borderRadius: '12px',
-      transition: 'all 0.2s',
-      background: active ? 'rgba(0, 212, 255, 0.15)' : 'transparent',
-      color: active ? 'var(--neon-cyan)' : 'rgba(255,255,255,0.5)',
-      minWidth: '60px'
-    }}>
-      <Icon size={22} strokeWidth={active ? 2.5 : 2} />
-      <span style={{
-        fontSize: '11px',
-        fontWeight: active ? 600 : 500,
-        whiteSpace: 'nowrap'
-      }}>
-        {label}
-      </span>
-    </div>
   )
 }
