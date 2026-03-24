@@ -52,11 +52,11 @@ const overlayStyle = {
   left: 0,
   right: 0,
   bottom: 0,
-  background: 'rgba(0, 0, 0, 0.85)',
+  background: 'rgba(0, 0, 0, 0.8)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  zIndex: 9999,
+  zIndex: 1001,
   padding: 'clamp(16px, 4vw, 24px)',
   boxSizing: 'border-box'
 }

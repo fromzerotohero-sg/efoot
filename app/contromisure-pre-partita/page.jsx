@@ -742,12 +742,15 @@ export default function CountermeasuresPreMatchPage() {
                           borderRadius: '8px'
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '4px' }}>
+                          <span style={{ fontSize: 'clamp(14px, 3.2vw, 15px)', fontWeight: 700, color: 'var(--neon-blue)' }}>
+                            {(instruction.player_name || '?') + (instruction.position ? ` (${instruction.position})` : '')}
+                          </span>
                           <span style={{ fontSize: 'clamp(13px, 3vw, 14px)', fontWeight: 600 }}>
-                            {instruction.slot}: {pickLang(instruction.instruction, lang)}
+                            {instruction.slot} · {pickLang(instruction.instruction, lang)}
                           </span>
                         </div>
-                        <div style={{ fontSize: 'clamp(12px, 2.5vw, 13px)', opacity: 0.8, marginLeft: '24px' }}>
+                        <div style={{ fontSize: 'clamp(12px, 2.5vw, 13px)', opacity: 0.8, marginLeft: '4px' }}>
                           {pickLang(instruction.reason, lang)}
                         </div>
                       </div>

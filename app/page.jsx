@@ -38,20 +38,16 @@ import {
   Calendar
 } from 'lucide-react'
 
-/** Legge query URL: openCoach=1 → Palestra Coach; openAssistantChat=1 → chat principale (Assistant) con messaggio grafici; openGameAnalysis=1 → GameAnalysisModal. */
-function OpenCoachListener({ onOpenCoach, onOpenAssistantChat, onOpenGameAnalysis }) {
+/** Legge query URL: openCoach=1 → Palestra Coach; openAssistantChat=1 → chat principale (Assistant) con messaggio grafici. */
+function OpenCoachListener({ onOpenCoach, onOpenAssistantChat }) {
   const searchParams = useSearchParams()
   React.useEffect(() => {
-    if (searchParams?.get('openGameAnalysis') === '1') {
-      onOpenGameAnalysis?.()
-      return
-    }
     if (searchParams?.get('openAssistantChat') === '1') {
       onOpenAssistantChat?.()
       return
     }
     if (searchParams?.get('openCoach') === '1') onOpenCoach()
-  }, [searchParams, onOpenCoach, onOpenAssistantChat, onOpenGameAnalysis])
+  }, [searchParams, onOpenCoach, onOpenAssistantChat])
   return null
 }
 
@@ -299,14 +295,6 @@ function HomePage() {
     return () => window.removeEventListener('leaderboard-updated', onLeaderboardUpdated)
   }, [supabase])
 
-  // Listener per aprire GameAnalysisModal dalla bottom nav
-  React.useEffect(() => {
-    if (typeof window === 'undefined') return
-    const onOpenGameAnalysis = () => setShowGameAnalysisModal(true)
-    window.addEventListener('open-game-analysis', onOpenGameAnalysis)
-    return () => window.removeEventListener('open-game-analysis', onOpenGameAnalysis)
-  }, [])
-
   const handleDeleteMatch = async (matchId, e) => {
     e.stopPropagation() // Previeni click sul card
     
@@ -460,12 +448,6 @@ function HomePage() {
               window.dispatchEvent(new CustomEvent('open-assistant-chat', { detail: { message: msg } }))
             }
           }}
-          onOpenGameAnalysis={() => {
-            setShowGameAnalysisModal(true)
-            if (typeof window !== 'undefined') {
-              window.dispatchEvent(new CustomEvent('open-game-analysis'))
-            }
-          }}
         />
       </Suspense>
       
@@ -600,12 +582,7 @@ function HomePage() {
       )}
       <GameAnalysisModal 
         show={showGameAnalysisModal} 
-        onClose={() => {
-          setShowGameAnalysisModal(false)
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('close-game-analysis'))
-          }
-        }} 
+        onClose={() => setShowGameAnalysisModal(false)} 
         onSuccess={fetchGameAnalysisCapture} 
         lastCaptureDate={gameAnalysisLastCapture} 
       />

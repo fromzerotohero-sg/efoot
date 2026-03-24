@@ -651,8 +651,18 @@ if (process.env.NODE_ENV !== 'production') {
         }
 
         const check = validateIndividualInstruction(slot, playerId, instruction, titolari, clientFormation || null)
-        if (check.valid) validInstructions.push(instr)
-        else invalidInstructions.push({ instr, reason: check.error || 'istruzione non valida' })
+        if (check.valid) {
+          const rosterPlayer = titolari.find((p) => p.id === playerId)
+          const nameFromRoster = rosterPlayer?.player_name ? String(rosterPlayer.player_name).trim() : ''
+          const posFromRoster = rosterPlayer?.position ? String(rosterPlayer.position).trim() : ''
+          const nameFromModel = typeof instr.player_name === 'string' ? instr.player_name.trim() : ''
+          const posFromModel = typeof instr.position === 'string' ? instr.position.trim() : ''
+          validInstructions.push({
+            ...instr,
+            player_name: nameFromModel || nameFromRoster || null,
+            position: posFromModel || posFromRoster || null
+          })
+        } else invalidInstructions.push({ instr, reason: check.error || 'istruzione non valida' })
       }
 
       countermeasures.countermeasures.individual_instructions = validInstructions
