@@ -255,8 +255,7 @@ export default function CountermeasuresPreMatchPage() {
     switch (priority) {
       case 'high': return 'var(--neon-orange)'
       case 'medium': return 'var(--neon-blue)'
-      case 'low': return '#888'
-      default: return '#888'
+      default: return 'var(--neon-blue)'
     }
   }
 
@@ -264,8 +263,7 @@ export default function CountermeasuresPreMatchPage() {
     switch (priority) {
       case 'high': return `${t('priority')}: ${t('priorityHigh')}`
       case 'medium': return `${t('priority')}: ${t('priorityMedium')}`
-      case 'low': return `${t('priority')}: ${t('priorityLow')}`
-      default: return t('priority')
+      default: return `${t('priority')}: ${t('priorityMedium')}`
     }
   }
 
