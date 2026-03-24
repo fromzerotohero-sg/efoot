@@ -41,17 +41,23 @@ import {
 /** Legge query URL: openCoach=1 → Palestra Coach; openAssistantChat=1 → chat principale (Assistant) con messaggio grafici; openGameAnalysis=1 → GameAnalysisModal. */
 function OpenCoachListener({ onOpenCoach, onOpenAssistantChat, onOpenGameAnalysis }) {
   const searchParams = useSearchParams()
+  const router = useRouter()
   React.useEffect(() => {
     if (searchParams?.get('openGameAnalysis') === '1') {
       onOpenGameAnalysis?.()
+      router.replace('/', { scroll: false })
       return
     }
     if (searchParams?.get('openAssistantChat') === '1') {
       onOpenAssistantChat?.()
+      router.replace('/', { scroll: false })
       return
     }
-    if (searchParams?.get('openCoach') === '1') onOpenCoach()
-  }, [searchParams, onOpenCoach, onOpenAssistantChat, onOpenGameAnalysis])
+    if (searchParams?.get('openCoach') === '1') {
+      onOpenCoach()
+      router.replace('/', { scroll: false })
+    }
+  }, [searchParams, onOpenCoach, onOpenAssistantChat, onOpenGameAnalysis, router])
   return null
 }
 
@@ -587,7 +593,10 @@ function HomePage() {
       )}
       <GameAnalysisModal 
         show={showGameAnalysisModal} 
-        onClose={() => setShowGameAnalysisModal(false)} 
+        onClose={() => {
+          setShowGameAnalysisModal(false)
+          router.replace('/', { scroll: false })
+        }} 
         onSuccess={fetchGameAnalysisCapture} 
         lastCaptureDate={gameAnalysisLastCapture} 
       />

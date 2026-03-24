@@ -34,6 +34,8 @@ export default function BottomNavigation() {
       icon: LayoutGrid,
       label: 'Dashboard'
     },
+    // Non è una pagina: apre il modal "Analisi partita" sulla dashboard (vedi OpenCoachListener in app/page.jsx).
+    // active è sempre false; l’URL query viene ripulita dopo apertura/chiusura modal così ogni tap funziona.
     {
       href: '/?openGameAnalysis=1',
       icon: Plus,
@@ -86,7 +88,7 @@ export default function BottomNavigation() {
       }}>
         {navItems.map((item) => {
           const Icon = item.icon
-          // Stat non ha uno stato "active" (non è una pagina)
+          // Stat/Stats: shortcut al modal analisi su /, non una route → mai evidenziato come tab corrente
           const active = item.label === 'Stat' || item.label === 'Stats' 
             ? false 
             : isActive(item.href)

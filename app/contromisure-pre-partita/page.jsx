@@ -8,6 +8,7 @@ import { useTranslation } from '@/lib/i18n'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import CoachFeedbackChat from '@/components/CoachFeedbackChat'
+import { INDIVIDUAL_INSTRUCTIONS_CONFIG } from '@/lib/tacticalInstructions'
 import { ArrowLeft, Upload, AlertCircle, CheckCircle2, RefreshCw, X, Camera, Shield, Target, Users, Settings, ChevronDown, ChevronUp, Brain, MessageCircle, Trophy } from 'lucide-react'
 
 /** Estrae testo in lingua da valore stringa o oggetto bilingue { it, en } (coerente con analyze-match) */
@@ -21,6 +22,11 @@ function pickLang(val, lang) {
 export default function CountermeasuresPreMatchPage() {
   const { t, lang } = useTranslation()
   const router = useRouter()
+
+  const individualSlotLabel = (slot) => {
+    const nameKey = INDIVIDUAL_INSTRUCTIONS_CONFIG[slot]?.nameKey
+    return nameKey ? t(nameKey) : slot
+  }
   
   const [uploadImage, setUploadImage] = React.useState(null)
   const [extracting, setExtracting] = React.useState(false)
@@ -744,10 +750,11 @@ export default function CountermeasuresPreMatchPage() {
                       >
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '4px' }}>
                           <span style={{ fontSize: 'clamp(14px, 3.2vw, 15px)', fontWeight: 700, color: 'var(--neon-blue)' }}>
-                            {(instruction.player_name || '?') + (instruction.position ? ` (${instruction.position})` : '')}
+                            {(pickLang(instruction.player_name, lang) || '?') +
+                              (instruction.position ? ` (${pickLang(instruction.position, lang)})` : '')}
                           </span>
                           <span style={{ fontSize: 'clamp(13px, 3vw, 14px)', fontWeight: 600 }}>
-                            {instruction.slot} · {pickLang(instruction.instruction, lang)}
+                            {individualSlotLabel(instruction.slot)} · {pickLang(instruction.instruction, lang)}
                           </span>
                         </div>
                         <div style={{ fontSize: 'clamp(12px, 2.5vw, 13px)', opacity: 0.8, marginLeft: '4px' }}>
