@@ -4,6 +4,7 @@ import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
+import { useGameAnalysisModalNav } from '@/components/GameAnalysisModalNavContext'
 import { 
   Shield,
   LayoutGrid,
@@ -15,6 +16,7 @@ import {
 export default function BottomNavigation() {
   const { t, lang } = useTranslation()
   const pathname = usePathname()
+  const { isOpen: gameAnalysisModalOpen } = useGameAnalysisModalNav()
 
   const isActive = (href) => {
     // Rimuovi query params per il check
@@ -44,8 +46,8 @@ export default function BottomNavigation() {
       icon: Users,
       label: lang === 'en' ? 'Squad' : 'Rosa'
     },
-    // Non è una pagina: apre il modal "Analisi partita" sulla dashboard (vedi OpenCoachListener in app/page.jsx).
-    // active è sempre false; l’URL query viene ripulita dopo apertura/chiusura modal così ogni tap funziona.
+    // Shortcut: apre il modal "Statistiche di gioco" sulla dashboard (OpenCoachListener in app/page.jsx).
+    // Evidenza tab: GameAnalysisModalNavContext (sync con showGameAnalysisModal su /).
     {
       href: '/?openGameAnalysis=1',
       icon: Plus,
@@ -88,10 +90,14 @@ export default function BottomNavigation() {
       }}>
         {navItems.map((item) => {
           const Icon = item.icon
-          // Stat/Stats: shortcut al modal analisi su /, non una route → mai evidenziato come tab corrente
-          const active = item.label === 'Stat' || item.label === 'Stats' 
-            ? false 
-            : isActive(item.href)
+          const isStatShortcut = typeof item.href === 'string' && item.href.includes('openGameAnalysis=1')
+          const isDashboard = item.href === '/'
+          // Dashboard e Stat condividono la route `/`: il modal analisi è evidenziato su Stat, non su Dashboard
+          const active = isStatShortcut
+            ? gameAnalysisModalOpen
+            : isDashboard
+              ? pathname === '/' && !gameAnalysisModalOpen
+              : isActive(item.href)
           
           return (
             <Link

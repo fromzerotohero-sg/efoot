@@ -4,6 +4,7 @@ import { SidebarProvider } from '@/components/SidebarContext'
 import SidebarNew from '@/components/SidebarNew'
 import TopBar from '@/components/TopBar'
 import BottomNavigation from '@/components/BottomNavigation'
+import { GameAnalysisModalNavProvider } from '@/components/GameAnalysisModalNavContext'
 import AssistantChat from '@/components/AssistantChat'
 
 // Layout unico: usare solo questo file. Non creare layout.tsx (conflitti / layout sbagliato = dashboard non carica).
@@ -18,6 +19,7 @@ export default function RootLayout({ children }) {
     <html lang="it">
       <body className="text-[#FFFFFF]">
         <LanguageProviderWrapper>
+          <GameAnalysisModalNavProvider>
           <SidebarProvider>
             <div className="flex h-screen overflow-hidden">
               {/* Sidebar */}
@@ -53,6 +55,7 @@ export default function RootLayout({ children }) {
 
           {/* Assistant Chat (popup) - globale per evento open-assistant-chat */}
           <AssistantChat mode="popup" />
+          </GameAnalysisModalNavProvider>
         </LanguageProviderWrapper>
       </body>
     </html>

@@ -10,6 +10,7 @@ import AIKnowledgeBar from '@/components/AIKnowledgeBar'
 import CoachFeedbackChat from '@/components/CoachFeedbackChat'
 import AssistantChat from '@/components/AssistantChat'
 import GameAnalysisModal from '@/components/GameAnalysisModal'
+import { useGameAnalysisModalNav } from '@/components/GameAnalysisModalNavContext'
 import TaskWidget from '@/components/TaskWidget'
 import MissionCenter from '@/components/MissionCenter'
 import OnboardingFlow from '@/components/OnboardingFlow'
@@ -64,6 +65,7 @@ function OpenCoachListener({ onOpenCoach, onOpenAssistantChat, onOpenGameAnalysi
 function HomePage() {
   const { t, lang } = useTranslation()
   const router = useRouter()
+  const { setIsOpen: setGameAnalysisNavOpen } = useGameAnalysisModalNav()
   const mountedRef = React.useRef(true)
   const [retryTrigger, setRetryTrigger] = React.useState(0)
   const [loading, setLoading] = React.useState(true)
@@ -84,6 +86,14 @@ function HomePage() {
   const [showCoachFeedback, setShowCoachFeedback] = React.useState(false)
   const [showGameAnalysisModal, setShowGameAnalysisModal] = React.useState(false)
   const [gameAnalysisLastCapture, setGameAnalysisLastCapture] = React.useState(null)
+
+  React.useEffect(() => {
+    setGameAnalysisNavOpen(showGameAnalysisModal)
+  }, [showGameAnalysisModal, setGameAnalysisNavOpen])
+
+  React.useEffect(() => {
+    return () => setGameAnalysisNavOpen(false)
+  }, [setGameAnalysisNavOpen])
   const [hasActiveCoach, setHasActiveCoach] = React.useState(false)
   const [reminderRotationIndex, setReminderRotationIndex] = React.useState(0)
   const [leaderboardData, setLeaderboardData] = React.useState({ currentUser: null, daysLeftInMonth: null })
