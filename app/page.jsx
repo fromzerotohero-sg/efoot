@@ -460,7 +460,12 @@ function HomePage() {
               window.dispatchEvent(new CustomEvent('open-assistant-chat', { detail: { message: msg } }))
             }
           }}
-          onOpenGameAnalysis={() => setShowGameAnalysisModal(true)}
+          onOpenGameAnalysis={() => {
+            setShowGameAnalysisModal(true)
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('open-game-analysis'))
+            }
+          }}
         />
       </Suspense>
       
@@ -593,7 +598,17 @@ function HomePage() {
           onCancel={confirmModal.onCancel}
         />
       )}
-      <GameAnalysisModal show={showGameAnalysisModal} onClose={() => setShowGameAnalysisModal(false)} onSuccess={fetchGameAnalysisCapture} lastCaptureDate={gameAnalysisLastCapture} />
+      <GameAnalysisModal 
+        show={showGameAnalysisModal} 
+        onClose={() => {
+          setShowGameAnalysisModal(false)
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('close-game-analysis'))
+          }
+        }} 
+        onSuccess={fetchGameAnalysisCapture} 
+        lastCaptureDate={gameAnalysisLastCapture} 
+      />
 
       {/* Credits Bar: montata in layout per aggiornamento immediato dopo ogni API (credits-consumed) */}
 

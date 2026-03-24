@@ -16,9 +16,38 @@ export default function BottomNavigation() {
   const { t, lang } = useTranslation()
   const pathname = usePathname()
   const router = useRouter()
+  const [gameAnalysisOpen, setGameAnalysisOpen] = React.useState(false)
+
+  // Controlla se il modal è aperto tramite query param o evento
+  const isGameAnalysisOpen = () => {
+    if (typeof window === 'undefined') return false
+    // Controlla query param
+    if (window.location.search.includes('openGameAnalysis=1')) return true
+    // Controlla stato locale (settato da eventi)
+    return gameAnalysisOpen
+  }
+
+  // Ascolta quando GameAnalysisModal si apre/chiude
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return
+    const onOpen = () => setGameAnalysisOpen(true)
+    const onClose = () => setGameAnalysisOpen(false)
+    window.addEventListener('open-game-analysis', onOpen)
+    window.addEventListener('close-game-analysis', onClose)
+    // Controlla query param all'avvio
+    if (window.location.search.includes('openGameAnalysis=1')) {
+      setGameAnalysisOpen(true)
+    }
+    return () => {
+      window.removeEventListener('open-game-analysis', onOpen)
+      window.removeEventListener('close-game-analysis', onClose)
+    }
+  }, [])
 
   const isActive = (href) => {
-    if (href === '/') return pathname === '/'
+    const modalOpen = isGameAnalysisOpen()
+    if (href === '/grafici-comparazione') return modalOpen // Illumina Stat quando modal aperto
+    if (href === '/') return pathname === '/' && !modalOpen
     return pathname?.startsWith(href)
   }
 
