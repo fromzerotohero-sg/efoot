@@ -28,6 +28,27 @@ const USE_CONFIRM_MODAL = true
 /** Massimo numero di riserve consentite (eFootball: 11 titolari + 12 in panchina) */
 const MAX_RESERVES = 12
 
+/** Portiere: zona ristretta davanti alla porta (% campo), non tutta la larghezza della rete. */
+const GK_GOAL_AREA = { xMin: 36, xMax: 64, yMin: 83, yMax: 96 }
+
+function clampGkInGoalMouth(x, y) {
+  const nx = Number(x)
+  const ny = Number(y)
+  if (!Number.isFinite(nx) || !Number.isFinite(ny)) return { x: 50, y: 90 }
+  return {
+    x: Math.max(GK_GOAL_AREA.xMin, Math.min(GK_GOAL_AREA.xMax, nx)),
+    y: Math.max(GK_GOAL_AREA.yMin, Math.min(GK_GOAL_AREA.yMax, ny))
+  }
+}
+
+/** Durante il drag: se sei in fascia portiere (y>80), limita a bocca porta; altrimenti campo pieno. */
+function clampPointerForGkSlot(x, y) {
+  const xx = Math.max(5, Math.min(95, x))
+  const yy = Math.max(5, Math.min(95, y))
+  if (yy > 80) return clampGkInGoalMouth(xx, yy)
+  return { x: xx, y: yy }
+}
+
 /**
  * Helper per conferma sicura con feature flag
  * Permette rollback istantaneo cambiando USE_CONFIRM_MODAL a false
@@ -686,15 +707,21 @@ export default function GestioneFormazionePage() {
 
     const newRole = applyMedCcHysteresis(prevRole, computedRole, newPosition.x, newPosition.y)
     // Durante il drag manteniamo coordinate libere (fluide).
-    // Lo snap "a bande" viene applicato SOLO al salvataggio, per non rendere il movimento rigido.
     const rawY = clampPercent(newPosition.y)
     const rawX = clampPercent(newPosition.x)
-    
+    let finalX = rawX
+    let finalY = rawY
+    if (String(newRole || '').toUpperCase() === 'PT') {
+      const gk = clampGkInGoalMouth(rawX, rawY)
+      finalX = gk.x
+      finalY = gk.y
+    }
+
     setCustomPositions(prev => ({
       ...prev,
       [slotIndex]: {
-        x: rawX,
-        y: rawY,
+        x: finalX,
+        y: finalY,
         position: newRole  // Aggiorna anche la position
       }
     }))
@@ -1684,35 +1711,6 @@ export default function GestioneFormazionePage() {
     setError(null)
 
     try {
-      // Validazione limitazioni ruolo prima di salvare (coerente con handleSaveCustomPositions)
-      const { validateFormationLimits } = await import('../../lib/validateFormationLimits')
-      const validation = validateFormationLimits(slotPositions)
-      if (!validation.valid) {
-        // Messaggio semplificato senza dettagli specifici
-        const warningMsg = `${t('formationValidationSimple')}\n\n${t('formationInvalidConfirm')}`
-        setConfirmModal({
-          show: true,
-          title: t('formationInvalidTitle'),
-          message: warningMsg,
-          confirmLabel: t('continue'),
-          cancelLabel: t('cancel'),
-          variant: 'warning',
-          presentation: 'center',
-          onConfirm: () => {
-            setConfirmModal(null)
-            showToast(t('formationSavedWithWarnings'), 'warning')
-            doSelectManualFormation(formation, slotPositions)
-          },
-          onCancel: () => {
-            setConfirmModal(null)
-            setError(t('formationValidationSimple'))
-            showToast(t('saveCancelled'), 'error')
-            setUploadingFormation(false)
-          }
-        })
-        return
-      }
-
       await doSelectManualFormation(formation, slotPositions)
     } catch (err) {
       console.error('[GestioneFormazione] Manual formation error:', err)
@@ -1805,10 +1803,19 @@ export default function GestioneFormazionePage() {
       Object.entries(customPositions).forEach(([slotIndex, position]) => {
         const slotIdx = Number(slotIndex)
         if (updatedSlotPositions[slotIdx]) {
-          const x = clampPercent(position.x)
-          // Importante: non snappare al salvataggio. L'utente ha posizionato manualmente:
-          // salviamo la coordinata reale (solo clamp) per evitare "salti" dopo refresh.
-          const y = clampPercent(position.y)
+          let x = clampPercent(position.x)
+          let y = clampPercent(position.y)
+          const mergedRole = position.position || calculatePositionFromCoordinates(
+            slotIdx,
+            x,
+            y,
+            allAttackSlots.length > 1 ? allAttackSlots : null
+          )
+          if (String(mergedRole || '').toUpperCase() === 'PT') {
+            const gk = clampGkInGoalMouth(x, y)
+            x = gk.x
+            y = gk.y
+          }
           updatedSlotPositions[slotIdx] = {
             ...updatedSlotPositions[slotIdx],
             x,
@@ -1940,37 +1947,6 @@ export default function GestioneFormazionePage() {
             // Non bloccare il salvataggio
           }
         }
-      }
-      
-      // Validazione limitazioni ruolo prima di salvare
-      const { validateFormationLimits } = await import('../../lib/validateFormationLimits')
-      const validation = validateFormationLimits(updatedSlotPositions)
-      if (!validation.valid) {
-        // Messaggio semplificato senza dettagli specifici
-        const warningMsg = `${t('formationValidationSimple')}\n\n${t('formationInvalidConfirm')}`
-        
-        // FIX RC-002: Sostituzione window.confirm con ConfirmModal (feature flag)
-        const confirmed = await showConfirmSafe({
-          fallback: () => window.confirm(warningMsg),
-          modalConfig: {
-            title: t('formationInvalidTitle'),
-            message: warningMsg,
-            variant: 'warning',
-            presentation: 'center',
-            confirmLabel: t('saveAnyway'),
-            cancelLabel: t('cancel')
-          },
-          setConfirmModal
-        })
-        
-        if (!confirmed) {
-          setError(t('formationValidationSimple'))
-          showToast(t('saveCancelled'), 'error')
-          setUploadingFormation(false)
-          return
-        }
-        // Cliente conferma → procedi con salvataggio (warning ma non blocco)
-        showToast(t('formationSavedWithWarnings'), 'warning')
       }
       
       // 1. Salva il layout: il modulo deve riflettere la disposizione reale dopo personalizzazioni
@@ -3266,9 +3242,14 @@ function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChang
       const percentY = (deltaY / dragState.containerRect.height) * 100
       
       // Persistenza: applica delta alla base (senza offset visivo), clamp su 5..95
-      const newX = Math.max(5, Math.min(95, dragState.startPercentX + percentX))
-      const newY = Math.max(5, Math.min(95, dragState.startPercentY + percentY))
-      
+      let newX = Math.max(5, Math.min(95, dragState.startPercentX + percentX))
+      let newY = Math.max(5, Math.min(95, dragState.startPercentY + percentY))
+      if (slot_index === 0) {
+        const c = clampPointerForGkSlot(newX, newY)
+        newX = c.x
+        newY = c.y
+      }
+
       lastOffset = {
         x: newX - dragState.startPercentX,
         y: newY - dragState.startPercentY
