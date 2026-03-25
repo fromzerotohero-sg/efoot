@@ -168,9 +168,22 @@ export default function GuideTour() {
         ) : (
           <Compass size={20} strokeWidth={2} aria-hidden className={running ? 'animate-spin' : ''} />
         )}
-        <span className="guide-tour-launcher-label">
+        <span 
+          className="guide-tour-launcher-label hidden lg:inline"
+          style={{ 
+            display: 'inline',
+            marginLeft: '6px'
+          }}
+        >
           {running ? (lang === 'en' ? 'Loading...' : 'Caricamento...') : t('tourShowMeHow')}
         </span>
+        <style jsx>{`
+          @media (max-width: 1023px) {
+            span {
+              display: none !important;
+            }
+          }
+        `}</style>
         {/* Badge NEW rimosso temporaneamente per evitare conflitti UI */}
       </button>
       

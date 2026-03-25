@@ -236,7 +236,8 @@ export default function AllenatoriPage() {
         })
       } catch (_) { /* non bloccare UI */ }
 
-      // Ricarica lista
+      // Ricarica lista e torna in cima
+      window.scrollTo(0, 0)
       window.location.reload()
     } catch (err) {
       console.error('[Allenatori] Upload error:', err)
@@ -343,7 +344,8 @@ export default function AllenatoriPage() {
             })
           } catch (_) { /* non bloccare UI */ }
 
-          // Ricarica lista
+          // Ricarica lista e torna in cima
+          window.scrollTo(0, 0)
           window.location.reload()
         } catch (err) {
           console.error('[Allenatori] Delete error:', err)
