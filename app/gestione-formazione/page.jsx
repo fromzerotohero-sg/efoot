@@ -421,10 +421,10 @@ export default function GestioneFormazionePage() {
     const BANDS = {
       GK: 90,
       DEF: 66,
-      // Centrocampo su sotto-fasce bilanciate: più spazio al CC, meno "vuoto" al TRQ
-      DMF: 58,  // MED/DMF (centrocampo basso)
-      CMF: 52,  // CC/CMF (centrocampo medio)
-      AMF: 46,  // TRQ/AMF (trequarti) più vicino al CC
+      // Centrocampo: MED e CC hanno più spazio; TRQ più stretto (più vicino al CC)
+      DMF: 57,  // MED/DMF (centrocampo basso)
+      CMF: 51,  // CC/CMF (centrocampo medio)
+      AMF: 46,  // TRQ/AMF (trequarti) — fascia più alta, meno “ovunque”
       // Attacco su sotto-fasce: SP deve stare un filo più basso (più "spazio" rispetto al CF)
       CF: 28,
       SP: 34,
@@ -444,12 +444,12 @@ export default function GestioneFormazionePage() {
     if (role === 'P') return 26
     if (['P', 'SP', 'CF', 'ESA', 'EDA', 'EDE', 'LWF', 'RWF'].includes(role)) return BANDS.FWD
 
-    // Fallback per sicurezza: usa y grezza con snap su macro-zone
+    // Fallback per sicurezza: usa y grezza con snap su macro-zone (med/CC più “pesano” del TRQ)
     if (yy > 80) return BANDS.GK
     if (yy >= 60) return BANDS.DEF
-    if (yy >= 54) return BANDS.DMF
-    if (yy >= 48) return BANDS.CMF
-    if (yy >= 38) return BANDS.AMF
+    if (yy >= 55) return BANDS.DMF
+    if (yy >= 47) return BANDS.CMF
+    if (yy >= 40) return BANDS.AMF
     return BANDS.FWD
   }
 
@@ -554,41 +554,43 @@ export default function GestioneFormazionePage() {
     // x: 0-100 (0 = sinistra, 100 = destra)
     const xx = clampPercent(x)
     const yy = clampPercent(y)
+    // Soglie coerenti: DC più stretto (colonna centrale); MED/CC ampi; TRQ solo striscia sotto l’attacco
+    const CENTER_X_LO = 30
+    const CENTER_X_HI = 70
+    const WING_L = 28
+    const WING_R = 72
     
     // Portiere: sempre in area porta (y > 80)
     if (yy > 80) {
       return 'PT'
     }
     
-    // Difesa: y tra 60-80
+    // Difesa: y tra 60-80 — DC solo colonna centrale più stretta (TS/TD più larghi)
     if (yy >= 60 && yy <= 80) {
-      if (xx < 30) return 'TS'  // Terzino sinistro (sinistra campo)
-      if (xx > 70) return 'TD'   // Terzino destro (destra campo)
+      if (xx < 34) return 'TS'  // Terzino sinistro (sinistra campo)
+      if (xx > 66) return 'TD'   // Terzino destro (destra campo)
       return 'DC'              // Centrale difesa
     }
     
     // Centrocampo: y tra 40-60
     if (yy >= 40 && yy <= 60) {
-      if (xx < 30) return 'CLS'  // Centrocampista laterale sinistro (sinistra campo)
-      if (xx > 70) return 'CLD'  // Centrocampista laterale destro (destra campo)
-      // CC (Centrocampista Centrale): area centrale del centrocampo (più flessibile)
-      // x: 35-65 (area centrale, esclusi laterali CLS/CLD)
-      // y: 45-55 (centro del centrocampo, non troppo avanzato né arretrato)
-      if (xx >= 35 && xx <= 65 && yy >= 45 && yy <= 55) return 'CC'  // Centrocampista centrale versatile
-      // TRQ (Trequartista): centrocampo avanzato (y: 40-50, x: 35-65, escludendo centro esatto)
-      if (yy >= 40 && yy <= 50 && xx >= 35 && xx <= 65 && !(xx >= 48 && xx <= 52)) return 'TRQ'  // Trequartista in centrocampo avanzato (esclude centro esatto che è MED)
-      // Non usare AMF in UI: fallback su TRQ quando siamo in zona avanzata
-      if (yy < 50) return 'TRQ'
-      return 'MED'              // Centrocampista centrale (più arretrato o fuori area CC)
+      if (xx < WING_L) return 'CLS'  // Centrocampista laterale sinistro (sinistra campo)
+      if (xx > WING_R) return 'CLD'  // Centrocampista laterale destro (destra campo)
+      // TRQ: striscia avanzata stretta (solo y 40-44, centro) — non più “tutto il mezzo campo”
+      if (yy >= 40 && yy <= 44 && xx >= CENTER_X_LO && xx <= CENTER_X_HI) return 'TRQ'
+      // CC: cuore centrale (ampio)
+      if (xx >= CENTER_X_LO && xx <= CENTER_X_HI && yy >= 45 && yy <= 56) return 'CC'
+      // MED: resto centrale (medio-basso / più arretrato)
+      if (xx >= CENTER_X_LO && xx <= CENTER_X_HI && yy >= 45 && yy <= 60) return 'MED'
+      return 'MED'
     }
     
     // Attacco: y < 40
     if (yy < 40) {
       if (xx < 30) return 'ESA'  // Estremo sinistro avanzato / Ala sinistra (sinistra campo)
       if (xx > 70) return 'EDA'  // Estremo destro avanzato / Ala destra (destra campo)
-      // TRQ (Trequartista): può essere in attacco avanzato (y: 30-40, x: 30-70)
-      // Ma esclude centro esatto (x: 48-52) in y: 30-31 per evitare conflitti con CF centrale
-      if (yy >= 30 && yy <= 40 && xx >= 30 && xx <= 70) {
+      // TRQ in attacco: solo striscia vicina alla linea centrocampo (più coerente con MED/CC)
+      if (yy >= 36 && yy <= 40 && xx >= 30 && xx <= 70) {
         // Se è in zona centrale (x: 48-52) e molto avanzato (y: 30-31), probabilmente è CF, non TRQ
         if (yy >= 30 && yy <= 31 && xx >= 48 && xx <= 52) {
           // Lascia che vada a logica CF/SP/P
@@ -667,10 +669,9 @@ export default function GestioneFormazionePage() {
       const xx = clampPercent(x)
       const yy = clampPercent(y)
 
-      // Switch a CC solo se "ben dentro" la zona centrale
-      const ccCore = (xx >= 33 && xx <= 67 && yy >= 44 && yy <= 56)
-      // Switch a MED solo se "ben fuori" dalla zona CC (altrimenti tieni il precedente)
-      const outsideCcHold = (xx < 31 || xx > 69 || yy < 42 || yy > 58)
+      // Allineato alle zone CC/MED in calculatePositionFromCoordinates
+      const ccCore = (xx >= 30 && xx <= 70 && yy >= 45 && yy <= 56)
+      const outsideCcHold = (xx < 27 || xx > 73 || yy < 42 || yy > 58)
 
       if (c === 'CC') return ccCore ? 'CC' : p
       if (c === 'MED') return outsideCcHold ? 'MED' : p
