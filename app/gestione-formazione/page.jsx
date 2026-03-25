@@ -1697,7 +1697,7 @@ export default function GestioneFormazionePage() {
           confirmLabel: t('continue'),
           cancelLabel: t('cancel'),
           variant: 'warning',
-          presentation: 'sheet',
+          presentation: 'center',
           onConfirm: () => {
             setConfirmModal(null)
             showToast(t('formationSavedWithWarnings'), 'warning')
@@ -1956,7 +1956,7 @@ export default function GestioneFormazionePage() {
             title: t('formationInvalidTitle'),
             message: warningMsg,
             variant: 'warning',
-            presentation: 'sheet',
+            presentation: 'center',
             confirmLabel: t('saveAnyway'),
             cancelLabel: t('cancel')
           },

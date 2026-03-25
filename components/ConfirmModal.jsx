@@ -75,7 +75,7 @@ export default function ConfirmModal({
         alignItems: isSheet ? 'flex-end' : 'center',
         justifyContent: 'center',
         zIndex: 10000,
-        padding: isSheet ? 0 : '16px',
+        padding: isSheet ? 0 : 'max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left))',
         paddingBottom: isSheet ? 'env(safe-area-inset-bottom, 0)' : undefined,
         animation: 'fadeIn 0.2s ease-out'
       }}
@@ -91,81 +91,106 @@ export default function ConfirmModal({
         style={{
           backgroundColor: 'var(--bg-elevated)',
           borderRadius: isSheet ? '16px 16px 0 0' : '12px',
-          padding: isSheet ? '20px 20px 22px' : '28px',
+          padding: 0,
           maxWidth: isSheet ? '560px' : '480px',
           width: '100%',
-          maxHeight: isSheet ? 'min(52vh, 480px)' : undefined,
-          overflowY: isSheet ? 'auto' : undefined,
-          WebkitOverflowScrolling: isSheet ? 'touch' : undefined,
+          maxHeight: isSheet ? 'min(85vh, 520px)' : 'min(90vh, 560px)',
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
           border: `1px solid ${variant === 'danger' ? 'rgba(255, 59, 48, 0.3)' : 'rgba(0, 212, 255, 0.3)'}`,
           boxShadow: isSheet ? '0 -8px 32px rgba(0, 0, 0, 0.35)' : 'var(--shadow-lg)',
           animation: 'slideUp 0.3s ease-out'
         }}
       >
-        <div style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: '12px',
-          marginBottom: '20px'
-        }}>
-          <Icon style={{ 
-            color: config.iconColor, 
-            width: '24px', 
-            height: '24px',
-            flexShrink: 0,
-            marginTop: '2px'
-          }} />
-          <div style={{ flex: 1 }}>
-            <h2 style={{ 
-              margin: 0,
-              marginBottom: '8px',
-              color: 'var(--text-primary, #fff)',
-              fontSize: '20px',
-              fontWeight: '600'
-            }}>
-              {title || t('confirmAction')}
-            </h2>
-            <p
-              style={{
-                fontSize: '15px',
-                color: 'rgba(0, 212, 255, 0.7)',
-                marginBottom: '24px',
-                lineHeight: 1.5,
-                whiteSpace: 'pre-line'
-              }}
-            >
-              {message}
-            </p>
-            {details && (
-              <p style={{
-                margin: '12px 0 0 0',
-                color: 'var(--text-secondary, #aaa)',
-                fontSize: '13px',
-                lineHeight: '1.5',
-                opacity: 0.9
+        {/* Solo il testo scorre: i pulsanti restano sempre visibili (mobile / testi lunghi) */}
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            padding: isSheet ? '20px 20px 12px' : '24px 24px 12px'
+          }}
+        >
+          <div style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '12px',
+            marginBottom: 0
+          }}>
+            <Icon style={{ 
+              color: config.iconColor, 
+              width: '24px', 
+              height: '24px',
+              flexShrink: 0,
+              marginTop: '2px'
+            }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h2 style={{ 
+                margin: 0,
+                marginBottom: '8px',
+                color: 'var(--text-primary, #fff)',
+                fontSize: 'clamp(17px, 4vw, 20px)',
+                fontWeight: '600'
               }}>
-                {details}
+              {title || t('confirmAction')}
+              </h2>
+              <p
+                style={{
+                  fontSize: 'clamp(14px, 3.5vw, 15px)',
+                  color: 'rgba(0, 212, 255, 0.7)',
+                  marginBottom: 0,
+                  lineHeight: 1.5,
+                  whiteSpace: 'pre-line'
+                }}
+              >
+                {message}
               </p>
-            )}
+              {details && (
+                <p style={{
+                  margin: '12px 0 0 0',
+                  color: 'var(--text-secondary, #aaa)',
+                  fontSize: '13px',
+                  lineHeight: '1.5',
+                  opacity: 0.9
+                }}>
+                  {details}
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+        <div style={{
+          display: 'flex',
+          gap: '10px',
+          justifyContent: 'stretch',
+          flexWrap: 'wrap',
+          flexShrink: 0,
+          padding: isSheet ? '12px 20px 20px' : '16px 24px 24px',
+          paddingBottom: isSheet ? 'max(20px, env(safe-area-inset-bottom))' : 'max(24px, env(safe-area-inset-bottom))',
+          borderTop: '1px solid rgba(255, 255, 255, 0.06)'
+        }}>
           <button
+            type="button"
             onClick={onCancel}
             className="neon-button"
             style={{
-              padding: '10px 20px',
-              fontSize: '14px'
+              padding: '12px 16px',
+              fontSize: '14px',
+              flex: '1 1 120px',
+              minWidth: 0
             }}
           >
             {cancelLabel}
           </button>
           <button
+            type="button"
             onClick={onConfirm}
             className="btn primary"
             style={{
-              padding: '10px 20px',
+              padding: '12px 16px',
               border: `1px solid ${confirmButtonStyle.borderColor}`,
               background: confirmButtonStyle.background,
               color: confirmButtonStyle.color,
@@ -173,7 +198,9 @@ export default function ConfirmModal({
               fontSize: '14px',
               fontWeight: '600',
               opacity: disabled ? 0.5 : 1,
-              transition: 'opacity 0.2s'
+              transition: 'opacity 0.2s',
+              flex: '1 1 120px',
+              minWidth: 0
             }}
           >
             {confirmLabel ?? t('confirm')}
