@@ -27,13 +27,13 @@ const POSITION_GROUPS = [
     icon: Zap,
     color: '#3b82f6',
     positions: [
-      { id: 'CC', labelIt: 'Centrocampista', labelEn: 'Central Mid' },
-      { id: 'CMF', labelIt: 'Centrocampista', labelEn: 'CMF' },
-      { id: 'MED', labelIt: 'Mediano', labelEn: 'Defensive Mid' },
+      // Evita doppioni CC/CMF e TRQ/AMF: salviamo il codice "canonico" (IT),
+      // e mostriamo l'alias eFootball (EN) solo come display.
+      { id: 'CC', displayEn: 'CMF', labelIt: 'Centrocampista', labelEn: 'Central Mid' },
+      { id: 'MED', displayEn: 'DMF', labelIt: 'Mediano', labelEn: 'Defensive Mid' },
       { id: 'CLS', labelIt: 'Esterno Sinistro', labelEn: 'Left Mid' },
       { id: 'CLD', labelIt: 'Esterno Destro', labelEn: 'Right Mid' },
-      { id: 'TRQ', labelIt: 'Trequartista', labelEn: 'Attacking Mid' },
-      { id: 'AMF', labelIt: 'Trequartista', labelEn: 'AMF' }
+      { id: 'TRQ', displayEn: 'AMF', labelIt: 'Trequartista', labelEn: 'Attacking Mid' }
     ]
   },
   {
@@ -44,7 +44,7 @@ const POSITION_GROUPS = [
       { id: 'LWF', labelIt: 'Ala Sinistra', labelEn: 'Left Winger' },
       { id: 'RWF', labelIt: 'Ala Destra', labelEn: 'Right Winger' },
       { id: 'ESA', labelIt: 'Esterno Sinistro', labelEn: 'Left Forward' },
-      { id: 'EDE', labelIt: 'Esterno Destro', labelEn: 'Right Forward' },
+      { id: 'EDA', labelIt: 'Esterno Destro', labelEn: 'Right Forward' },
       { id: 'CF', labelIt: 'Centravanti', labelEn: 'Striker' },
       { id: 'P', labelIt: 'Punta', labelEn: 'Forward' },
       { id: 'SP', labelIt: 'Seconda Punta', labelEn: 'Second Striker' },
@@ -71,31 +71,53 @@ export default function PositionSelectionModal({
 }) {
   const { t, lang } = useTranslation()
 
+  const normalizePositionId = React.useCallback((posId) => {
+    const p = String(posId || '').trim().toUpperCase()
+    if (!p) return p
+    // Alias eFootball (EN) -> canonico (IT) usato internamente
+    if (p === 'CMF') return 'CC'
+    if (p === 'DMF') return 'MED'
+    if (p === 'AMF') return 'TRQ'
+    if (p === 'LWF') return 'ESA'
+    if (p === 'RWF') return 'EDA'
+    // Legacy
+    if (p === 'EDE') return 'EDA'
+    return p
+  }, [])
+
+  const normalizedMainPosition = React.useMemo(
+    () => normalizePositionId(mainPosition),
+    [mainPosition, normalizePositionId]
+  )
+
   const handleTogglePosition = (positionId) => {
-    const exists = selectedPositions.find(p => p.position === positionId)
+    const canonicalId = normalizePositionId(positionId)
+    const exists = selectedPositions.find(p => normalizePositionId(p?.position) === canonicalId)
     
     if (exists) {
       // Rimuovi
-      onPositionsChange(selectedPositions.filter(p => p.position !== positionId))
+      onPositionsChange(selectedPositions.filter(p => normalizePositionId(p?.position) !== canonicalId))
     } else {
       // Aggiungi con competenza default "Alta"
       onPositionsChange([...selectedPositions, {
-        position: positionId,
+        position: canonicalId,
         competence: 'Alta'
       }])
     }
   }
   
   const handleCompetenceChange = (positionId, competence) => {
+    const canonicalId = normalizePositionId(positionId)
     onPositionsChange(selectedPositions.map(p => 
-      p.position === positionId 
+      normalizePositionId(p?.position) === canonicalId
         ? { ...p, competence }
         : p
     ))
   }
 
   const getCompetenceForPosition = (positionId) => {
-    const selected = selectedPositions.find(p => p.position === positionId)
+    const canonicalId = normalizePositionId(positionId)
+    const selected = selectedPositions.find(p => normalizePositionId(p?.position) === canonicalId)
     return selected?.competence || 'Alta'
   }
 
@@ -168,7 +190,7 @@ export default function PositionSelectionModal({
           {POSITION_GROUPS.map(group => {
             const GroupIcon = group.icon
             const selectedCount = group.positions.filter(p => 
-              selectedPositions.find(sp => sp.position === p.id)
+              selectedPositions.find(sp => normalizePositionId(sp?.position) === normalizePositionId(p.id))
             ).length
             
             return (
@@ -220,14 +242,18 @@ export default function PositionSelectionModal({
                   padding: '12px'
                 }}>
                   {group.positions.map(pos => {
-                    const selected = selectedPositions.find(p => p.position === pos.id)
-                    const isMain = pos.id === mainPosition
+                    const canonicalId = normalizePositionId(pos.id)
+                    const selected = selectedPositions.find(p => normalizePositionId(p?.position) === canonicalId)
+                    const isMain = canonicalId === normalizedMainPosition
                     const label = lang === 'it' ? pos.labelIt : pos.labelEn
+                    const displayCode = lang === 'it'
+                      ? pos.id
+                      : (pos.displayEn || pos.id)
                     
                     return (
                       <div 
                         key={pos.id}
-                        onClick={() => handleTogglePosition(pos.id)}
+                        onClick={() => handleTogglePosition(canonicalId)}
                         style={{
                           display: 'flex',
                           flexDirection: 'column',
@@ -271,7 +297,7 @@ export default function PositionSelectionModal({
                             color: isMain ? group.color : '#FFFFFF',
                             fontSize: '13px'
                           }}>
-                            {pos.id}
+                            {displayCode}
                             {isMain && <span style={{ opacity: 0.7, fontSize: '11px' }}> ★</span>}
                           </span>
                         </div>
@@ -285,10 +311,10 @@ export default function PositionSelectionModal({
                         
                         {selected && (
                           <select
-                            value={getCompetenceForPosition(pos.id)}
+                            value={getCompetenceForPosition(canonicalId)}
                             onChange={(e) => {
                               e.stopPropagation()
-                              handleCompetenceChange(pos.id, e.target.value)
+                              handleCompetenceChange(canonicalId, e.target.value)
                             }}
                             onClick={(e) => e.stopPropagation()}
                             style={{

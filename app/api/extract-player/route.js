@@ -255,7 +255,7 @@ POSIZIONI ORIGINALI (NUOVO - Guarda Mini-Campo in Alto a Destra):
   * Zona destra difesa = TD
   * Zona centrale centrocampo = CC/CMF
   * Zona sinistra centrocampo = ESA
-  * Zona destra centrocampo = EDE
+  * Zona destra centrocampo = EDA
   * Zona centrale attacco = AMF/TRQ
   * Zona sinistra attacco = LWF/CLS
   * Zona destra attacco = RWF/CLD

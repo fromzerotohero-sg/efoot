@@ -440,9 +440,9 @@ export default function GestioneFormazionePage() {
     if (['TRQ', 'AMF', 'SS'].includes(role)) return BANDS.AMF
     if (role === 'CF') return BANDS.CF
     if (role === 'SP') return BANDS.SP
-    if (['ESA', 'EDE', 'LWF', 'RWF'].includes(role)) return BANDS.WING
+    if (['ESA', 'EDA', 'EDE', 'LWF', 'RWF'].includes(role)) return BANDS.WING
     if (role === 'P') return 26
-    if (['P', 'SP', 'CF', 'ESA', 'EDE', 'LWF', 'RWF'].includes(role)) return BANDS.FWD
+    if (['P', 'SP', 'CF', 'ESA', 'EDA', 'EDE', 'LWF', 'RWF'].includes(role)) return BANDS.FWD
 
     // Fallback per sicurezza: usa y grezza con snap su macro-zone
     if (yy > 80) return BANDS.GK
@@ -488,7 +488,8 @@ export default function GestioneFormazionePage() {
       if (c === 'LMF') return 'CLS'
       if (c === 'RMF') return 'CLD'
       if (c === 'LWF') return 'ESA'
-      if (c === 'RWF') return 'EDE'
+      if (c === 'RWF') return 'EDA'
+      if (c === 'EDE') return 'EDA'
       return c
     }
     // English
@@ -498,6 +499,7 @@ export default function GestioneFormazionePage() {
     if (c === 'CLS') return 'LMF'
     if (c === 'CLD') return 'RMF'
     if (c === 'ESA') return 'LWF'
+    if (c === 'EDA') return 'RWF'
     if (c === 'EDE') return 'RWF'
     return c
   }, [lang])
@@ -518,7 +520,7 @@ export default function GestioneFormazionePage() {
       CLS: 'Esterno SX',
       CLD: 'Esterno DX',
       ESA: 'Ala SX',
-      EDE: 'Ala DX',
+      EDA: 'Ala DX',
       CF: 'Centravanti',
       SP: 'Seconda punta',
       P: 'Punta'
@@ -535,7 +537,7 @@ export default function GestioneFormazionePage() {
       CLS: 'Left mid',
       CLD: 'Right mid',
       ESA: 'Left wing',
-      EDE: 'Right wing',
+      EDA: 'Right wing',
       CF: 'Center forward',
       SP: 'Second striker',
       P: 'Striker'
@@ -583,7 +585,7 @@ export default function GestioneFormazionePage() {
     // Attacco: y < 40
     if (yy < 40) {
       if (xx < 30) return 'ESA'  // Estremo sinistro avanzato / Ala sinistra (sinistra campo)
-      if (xx > 70) return 'EDE'  // Estremo destro avanzato / Ala destra (destra campo)
+      if (xx > 70) return 'EDA'  // Estremo destro avanzato / Ala destra (destra campo)
       // TRQ (Trequartista): può essere in attacco avanzato (y: 30-40, x: 30-70)
       // Ma esclude centro esatto (x: 48-52) in y: 30-31 per evitare conflitti con CF centrale
       if (yy >= 30 && yy <= 40 && xx >= 30 && xx <= 70) {
@@ -646,12 +648,43 @@ export default function GestioneFormazionePage() {
     }
     
     // Calcola nuova position in base alle coordinate (con logica relativa se in attacco)
-    const newRole = calculatePositionFromCoordinates(
+    const computedRole = calculatePositionFromCoordinates(
       slotIndex,
       newPosition.x,
       newPosition.y,
       allSlotsInAttack.length > 1 ? allSlotsInAttack : null
     )
+
+    // MED/CC hanno poco margine: aggiungiamo una micro-isteresi SOLO tra questi due ruoli
+    // per evitare flip continuo vicino al confine durante drag.
+    const applyMedCcHysteresis = (prev, computed, x, y) => {
+      const p = String(prev || '').trim().toUpperCase()
+      const c = String(computed || '').trim().toUpperCase()
+      if (!(p === 'MED' || p === 'CC')) return computed
+      if (!(c === 'MED' || c === 'CC')) return computed
+      if (p === c) return computed
+
+      const xx = clampPercent(x)
+      const yy = clampPercent(y)
+
+      // Switch a CC solo se "ben dentro" la zona centrale
+      const ccCore = (xx >= 33 && xx <= 67 && yy >= 44 && yy <= 56)
+      // Switch a MED solo se "ben fuori" dalla zona CC (altrimenti tieni il precedente)
+      const outsideCcHold = (xx < 31 || xx > 69 || yy < 42 || yy > 58)
+
+      if (c === 'CC') return ccCore ? 'CC' : p
+      if (c === 'MED') return outsideCcHold ? 'MED' : p
+      return computed
+    }
+
+    const prevRole =
+      customPositions?.[slotIndex]?.position ||
+      customPositions?.[String(slotIndex)]?.position ||
+      layout?.slot_positions?.[slotIndex]?.position ||
+      layout?.slot_positions?.[String(slotIndex)]?.position ||
+      null
+
+    const newRole = applyMedCcHysteresis(prevRole, computedRole, newPosition.x, newPosition.y)
     // Durante il drag manteniamo coordinate libere (fluide).
     // Lo snap "a bande" viene applicato SOLO al salvataggio, per non rendere il movimento rigido.
     const rawY = clampPercent(newPosition.y)
@@ -4581,10 +4614,10 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
         5: { x: 35, y: 50, position: 'MED' },
         6: { x: 50, y: 50, position: 'MED' },
         7: { x: 65, y: 50, position: 'MED' },
-        // In eFootball nel 4-3-3 gli esterni sono ali (ESA/EDE), non seconde punte.
+        // In eFootball nel 4-3-3 gli esterni sono ali (ESA/EDA), non seconde punte.
         8: { x: 25, y: 25, position: 'ESA' },
         9: { x: 50, y: 25, position: 'CF' },
-        10: { x: 75, y: 25, position: 'EDE' }
+        10: { x: 75, y: 25, position: 'EDA' }
       }
     },
     '4-2-3-1': {
@@ -4636,7 +4669,7 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
         7: { x: 65, y: 45, position: 'MED' },
         8: { x: 25, y: 25, position: 'ESA' },
         9: { x: 50, y: 25, position: 'CF' },
-        10: { x: 75, y: 25, position: 'EDE' }
+        10: { x: 75, y: 25, position: 'EDA' }
       }
     },
     '4-5-1': {
