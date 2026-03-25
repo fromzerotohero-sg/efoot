@@ -4,7 +4,6 @@ import React from 'react'
 import { Menu, X, ShoppingCart, Home } from 'lucide-react'
 import CreditsBar from '@/components/CreditsBar'
 import LanguageSwitch from '@/components/LanguageSwitch'
-import GuideTour from '@/components/GuideTour'
 import { useSidebar } from '@/components/SidebarContext'
 
 export default function TopBar() {
@@ -86,10 +85,6 @@ export default function TopBar() {
             <Home size={18} />
           </button>
 
-          {/* GuideTour - spostato a sinistra su mobile */}
-          <div className="lg:hidden" style={{ flexShrink: 0 }}>
-            <GuideTour />
-          </div>
         </div>
 
         {/* CENTER SECTION - vuoto su mobile */}
@@ -103,11 +98,6 @@ export default function TopBar() {
           flexShrink: 0,
           justifyContent: 'flex-end'
         }}>
-          {/* GuideTour - desktop only */}
-          <div className="hidden lg:flex" style={{ flexShrink: 0 }}>
-            <GuideTour />
-          </div>
-          
           {/* CreditsBar - desktop only */}
           <div className="hidden lg:block">
             <CreditsBar />

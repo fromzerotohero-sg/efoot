@@ -16,8 +16,10 @@ import {
   LogOut,
   Menu,
   X,
-  MessageSquare
+  MessageSquare,
+  Compass
 } from 'lucide-react'
+import GuideTour from '@/components/GuideTour'
 import { useSidebar } from '@/components/SidebarContext'
 
 export default function SidebarNew() {
@@ -454,6 +456,30 @@ export default function SidebarNew() {
               <Shield size={18} style={{ filter: isActive('/contromisure-pre-partita') ? 'drop-shadow(0 0 5px rgba(0, 212, 255, 0.8))' : 'none' }} />
               <span>{t('countermeasures')}</span>
             </Link>
+
+            {/* Guida Tour - Mostrami come */}
+            <div
+              onClick={() => setIsOpen(false)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 16px',
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: 600,
+                background: 'transparent',
+                color: 'rgba(255, 255, 255, 0.6)',
+                border: '1px solid transparent',
+                boxShadow: 'none',
+                transition: 'all 0.3s ease',
+                cursor: 'pointer',
+                textDecoration: 'none'
+              }}
+            >
+              <Compass size={18} />
+              <GuideTour />
+            </div>
 
             {/* Divider */}
             <div style={{ 
