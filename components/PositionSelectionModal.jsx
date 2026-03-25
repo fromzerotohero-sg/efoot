@@ -1,55 +1,38 @@
 import React from 'react'
-import { useTranslation } from '@/lib/i18n'
-import { Shield, Target, Zap, User } from 'lucide-react'
+import { useTranslation, getPositionRoleTranslationKey } from '@/lib/i18n'
+import { Shield, Target, Zap } from 'lucide-react'
 
-// 🎨 ENTERPRISE REDESIGN: Posizioni raggruppate per ruolo con icone
+// Posizioni raggruppate per ruolo (etichette: lib/i18n.js + getPositionRoleTranslationKey)
 const POSITION_GROUPS = [
   {
     id: 'goalkeeper',
     icon: Shield,
     color: '#fbbf24',
-    positions: [
-      { id: 'PT', labelIt: 'Portiere', labelEn: 'Goalkeeper' }
-    ]
+    positions: [{ id: 'PT' }]
   },
   {
     id: 'defense',
     icon: Shield,
     color: '#22c55e',
-    positions: [
-      { id: 'DC', labelIt: 'Difensore Centrale', labelEn: 'Center Back' },
-      { id: 'TS', labelIt: 'Terzino Sinistro', labelEn: 'Left Back' },
-      { id: 'TD', labelIt: 'Terzino Destro', labelEn: 'Right Back' }
-    ]
+    positions: [{ id: 'DC' }, { id: 'TS' }, { id: 'TD' }]
   },
   {
     id: 'midfield',
     icon: Zap,
     color: '#3b82f6',
     positions: [
-      // Evita doppioni CC/CMF e TRQ/AMF: salviamo il codice "canonico" (IT),
-      // e mostriamo l'alias eFootball (EN) solo come display.
-      { id: 'CC', displayEn: 'CMF', labelIt: 'Centrocampista', labelEn: 'Central Mid' },
-      { id: 'MED', displayEn: 'DMF', labelIt: 'Mediano', labelEn: 'Defensive Mid' },
-      { id: 'CLS', labelIt: 'Esterno Sinistro', labelEn: 'Left Mid' },
-      { id: 'CLD', labelIt: 'Esterno Destro', labelEn: 'Right Mid' },
-      { id: 'TRQ', displayEn: 'AMF', labelIt: 'Trequartista', labelEn: 'Attacking Mid' }
+      { id: 'CC', displayEn: 'CMF' },
+      { id: 'MED', displayEn: 'DMF' },
+      { id: 'CLS' },
+      { id: 'CLD' }
     ]
   },
   {
     id: 'attack',
     icon: Target,
     color: '#ef4444',
-    positions: [
-      { id: 'LWF', labelIt: 'Ala Sinistra', labelEn: 'Left Winger' },
-      { id: 'RWF', labelIt: 'Ala Destra', labelEn: 'Right Winger' },
-      { id: 'ESA', labelIt: 'Esterno Sinistro', labelEn: 'Left Forward' },
-      { id: 'EDA', labelIt: 'Esterno Destro', labelEn: 'Right Forward' },
-      { id: 'CF', labelIt: 'Centravanti', labelEn: 'Striker' },
-      { id: 'P', labelIt: 'Punta', labelEn: 'Forward' },
-      { id: 'SP', labelIt: 'Seconda Punta', labelEn: 'Second Striker' },
-      { id: 'SS', labelIt: 'Attaccante', labelEn: 'Attacker' }
-    ]
+    // Solo questi ruoli in attacco (niente LWF/RWF/CF/SS duplicati)
+    positions: [{ id: 'ESA' }, { id: 'EDA' }, { id: 'TRQ', displayEn: 'AMF' }, { id: 'SP' }, { id: 'P' }]
   }
 ]
 
@@ -74,14 +57,16 @@ export default function PositionSelectionModal({
   const normalizePositionId = React.useCallback((posId) => {
     const p = String(posId || '').trim().toUpperCase()
     if (!p) return p
-    // Alias eFootball (EN) -> canonico (IT) usato internamente
+    // Alias eFootball (EN) -> canonico
     if (p === 'CMF') return 'CC'
     if (p === 'DMF') return 'MED'
     if (p === 'AMF') return 'TRQ'
     if (p === 'LWF') return 'ESA'
     if (p === 'RWF') return 'EDA'
-    // Legacy
     if (p === 'EDE') return 'EDA'
+    // Legacy attacco: stesso ruolo in UI unica
+    if (p === 'CF') return 'P'
+    if (p === 'SS') return 'SP'
     return p
   }, [])
 
@@ -245,7 +230,7 @@ export default function PositionSelectionModal({
                     const canonicalId = normalizePositionId(pos.id)
                     const selected = selectedPositions.find(p => normalizePositionId(p?.position) === canonicalId)
                     const isMain = canonicalId === normalizedMainPosition
-                    const label = lang === 'it' ? pos.labelIt : pos.labelEn
+                    const label = t(getPositionRoleTranslationKey(canonicalId))
                     const displayCode = lang === 'it'
                       ? pos.id
                       : (pos.displayEn || pos.id)

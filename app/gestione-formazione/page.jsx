@@ -422,8 +422,8 @@ export default function GestioneFormazionePage() {
       GK: 90,
       DEF: 66,
       // Centrocampo: MED e CC hanno più spazio; TRQ più stretto (più vicino al CC)
-      DMF: 57,  // MED/DMF (centrocampo basso)
-      CMF: 51,  // CC/CMF (centrocampo medio)
+      DMF: 58,  // MED/DMF — più vicino alla linea difesa (più spazio mediano)
+      CMF: 50,  // CC/CMF
       AMF: 46,  // TRQ/AMF (trequarti) — fascia più alta, meno “ovunque”
       // Attacco su sotto-fasce: SP deve stare un filo più basso (più "spazio" rispetto al CF)
       CF: 28,
@@ -444,11 +444,11 @@ export default function GestioneFormazionePage() {
     if (role === 'P') return 26
     if (['P', 'SP', 'CF', 'ESA', 'EDA', 'EDE', 'LWF', 'RWF'].includes(role)) return BANDS.FWD
 
-    // Fallback per sicurezza: usa y grezza con snap su macro-zone (med/CC più “pesano” del TRQ)
+    // Fallback: allineato a calculatePositionFromCoordinates (difesa da y≥63)
     if (yy > 80) return BANDS.GK
-    if (yy >= 60) return BANDS.DEF
-    if (yy >= 55) return BANDS.DMF
-    if (yy >= 47) return BANDS.CMF
+    if (yy >= 63) return BANDS.DEF
+    if (yy >= 54) return BANDS.DMF
+    if (yy >= 46) return BANDS.CMF
     if (yy >= 40) return BANDS.AMF
     return BANDS.FWD
   }
@@ -565,23 +565,23 @@ export default function GestioneFormazionePage() {
       return 'PT'
     }
     
-    // Difesa: y tra 60-80 — DC solo colonna centrale più stretta (TS/TD più larghi)
-    if (yy >= 60 && yy <= 80) {
+    // Difesa: y tra 63-80 (la fascia 60-62 è centrocampo — meno DC “verso il centrocampo”)
+    if (yy >= 63 && yy <= 80) {
       if (xx < 34) return 'TS'  // Terzino sinistro (sinistra campo)
       if (xx > 66) return 'TD'   // Terzino destro (destra campo)
       return 'DC'              // Centrale difesa
     }
     
-    // Centrocampo: y tra 40-60
-    if (yy >= 40 && yy <= 60) {
+    // Centrocampo: y tra 40-62 (include ex-fascia 60-62 davanti alla difesa)
+    if (yy >= 40 && yy <= 62) {
       if (xx < WING_L) return 'CLS'  // Centrocampista laterale sinistro (sinistra campo)
       if (xx > WING_R) return 'CLD'  // Centrocampista laterale destro (destra campo)
-      // TRQ: striscia avanzata stretta (solo y 40-44, centro) — non più “tutto il mezzo campo”
+      // TRQ: striscia avanzata stretta (solo y 40-44, centro)
       if (yy >= 40 && yy <= 44 && xx >= CENTER_X_LO && xx <= CENTER_X_HI) return 'TRQ'
-      // CC: cuore centrale (ampio)
-      if (xx >= CENTER_X_LO && xx <= CENTER_X_HI && yy >= 45 && yy <= 56) return 'CC'
-      // MED: resto centrale (medio-basso / più arretrato)
-      if (xx >= CENTER_X_LO && xx <= CENTER_X_HI && yy >= 45 && yy <= 60) return 'MED'
+      // CC: cuore centrale (più compatto — più spazio al MED sotto)
+      if (xx >= CENTER_X_LO && xx <= CENTER_X_HI && yy >= 45 && yy <= 52) return 'CC'
+      // MED: fascia centrale ampia (mediano “respira” fino alla linea difesa)
+      if (xx >= CENTER_X_LO && xx <= CENTER_X_HI && yy >= 50 && yy <= 62) return 'MED'
       return 'MED'
     }
     
@@ -669,9 +669,8 @@ export default function GestioneFormazionePage() {
       const xx = clampPercent(x)
       const yy = clampPercent(y)
 
-      // Allineato alle zone CC/MED in calculatePositionFromCoordinates
-      const ccCore = (xx >= 30 && xx <= 70 && yy >= 45 && yy <= 56)
-      const outsideCcHold = (xx < 27 || xx > 73 || yy < 42 || yy > 58)
+      const ccCore = (xx >= 30 && xx <= 70 && yy >= 45 && yy <= 52)
+      const outsideCcHold = (xx < 27 || xx > 73 || yy < 42 || yy > 60)
 
       if (c === 'CC') return ccCore ? 'CC' : p
       if (c === 'MED') return outsideCcHold ? 'MED' : p
