@@ -784,30 +784,52 @@ export default function AllenatoriPage() {
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 1000,
-          padding: '20px'
+          padding: '16px'
         }}>
-          <div className="neon-card" style={{ maxWidth: '600px', width: '100%', maxHeight: 'calc(100vh - 100px)', overflowY: 'auto', paddingBottom: 'calc(24px + 64px + env(safe-area-inset-bottom, 0px))', position: 'relative' }}>
-            <button
-              onClick={() => {
-                setShowDetailsModal(false)
-                setSelectedCoach(null)
-              }}
-              style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'white',
-                fontSize: '24px'
-              }}
-            >
-              <X size={24} />
-            </button>
+          <div className="neon-card" style={{ 
+            maxWidth: '600px', 
+            width: '100%', 
+            maxHeight: 'calc(100vh - 120px)',
+            display: 'flex',
+            flexDirection: 'column',
+            position: 'relative',
+            marginBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))'
+          }}>
+            {/* Header */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '16px',
+              flexShrink: 0
+            }}>
+              <h2 style={{ fontSize: '20px', margin: 0 }}>{selectedCoach.coach_name}</h2>
+              <button
+                onClick={() => {
+                  setShowDetailsModal(false)
+                  setSelectedCoach(null)
+                }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'white',
+                  fontSize: '24px',
+                  padding: '4px'
+                }}
+              >
+                <X size={24} />
+              </button>
+            </div>
 
-            <h2 style={{ fontSize: '24px', marginBottom: '20px' }}>{selectedCoach.coach_name}</h2>
-
+            {/* Body scrollabile */}
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              marginRight: '-8px',
+              paddingRight: '8px'
+            }}>
             {/* Dati base */}
             <div style={{ marginBottom: '20px' }}>
               <h3 style={{ fontSize: '18px', marginBottom: '12px' }}>{t('informations')}</h3>
@@ -886,8 +908,10 @@ export default function AllenatoriPage() {
                 </div>
               </div>
             )}
+            </div>
 
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
+            {/* Footer */}
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '16px', flexShrink: 0, paddingTop: '8px', borderTop: '1px solid rgba(0, 212, 255, 0.1)' }}>
               {!selectedCoach.is_active && (
                 <button
                   onClick={() => {
