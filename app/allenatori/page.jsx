@@ -565,33 +565,60 @@ export default function AllenatoriPage() {
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 1000,
-          padding: '20px'
+          padding: '16px'
         }}>
-          <div className="neon-card" style={{ maxWidth: '500px', width: '100%', position: 'relative' }}>
-            <button
-              onClick={() => {
-                setShowUploadModal(false)
-                setUploadImages([])
-              }}
-              style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'white',
-                fontSize: '24px'
-              }}
-            >
-              <X size={24} />
-            </button>
-
-            <h2 style={{ fontSize: '24px', marginBottom: '20px' }}>{t('uploadCoach')}</h2>
-            <div style={{ fontSize: '14px', opacity: 0.8, marginBottom: '20px' }}>
-              {t('uploadCoachInstructions')}
+          <div className="neon-card" style={{ 
+            maxWidth: '500px', 
+            width: '100%', 
+            maxHeight: 'calc(100vh - 120px)',
+            display: 'flex',
+            flexDirection: 'column',
+            position: 'relative',
+            marginBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))'
+          }}>
+            {/* Header - fisso */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'flex-start',
+              marginBottom: '16px',
+              flexShrink: 0
+            }}>
+              <div>
+                <h2 style={{ fontSize: '20px', margin: '0 0 8px 0' }}>{t('uploadCoach')}</h2>
+                <div style={{ fontSize: '13px', opacity: 0.8 }}>
+                  {t('uploadCoachInstructions')}
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowUploadModal(false)
+                  setUploadImages([])
+                }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'white',
+                  fontSize: '24px',
+                  padding: '4px',
+                  marginLeft: '8px',
+                  flexShrink: 0
+                }}
+              >
+                <X size={24} />
+              </button>
             </div>
 
+            {/* Body - scrollabile */}
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              marginRight: '-8px',
+              paddingRight: '8px',
+              marginBottom: '16px'
+            }}>
             {/* Drag & Drop Area */}
             <div
               onDrop={handleDrop}
@@ -711,8 +738,17 @@ export default function AllenatoriPage() {
                 disabled={uploading || uploadImages.length >= 2}
               />
             </div>
+            </div>
 
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+            {/* Footer - fisso */}
+            <div style={{ 
+              display: 'flex', 
+              gap: '12px', 
+              justifyContent: 'flex-end',
+              flexShrink: 0,
+              paddingTop: '8px',
+              borderTop: '1px solid rgba(0, 212, 255, 0.1)'
+            }}>
               <button
                 onClick={() => {
                   setShowUploadModal(false)
