@@ -4,7 +4,7 @@ import React, { Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
-import { ArrowLeft, Upload, AlertCircle, CheckCircle2, RefreshCw, Info, X, Plus, User, Settings, BarChart3, Zap, Gift, ChevronDown, ChevronUp, Users, Star, Move, Pencil, BookOpen } from 'lucide-react'
+import { ArrowLeft, Upload, AlertCircle, AlertTriangle, CheckCircle2, RefreshCw, Info, X, Plus, User, Settings, BarChart3, Zap, Gift, ChevronDown, ChevronUp, Users, Star, Move, Pencil, BookOpen } from 'lucide-react'
 import TacticalSettingsPanel from '@/components/TacticalSettingsPanel'
 import RosaTutorialModal from '@/components/RosaTutorialModal'
 import OnboardingFormation from '@/components/OnboardingFormation'
@@ -103,7 +103,7 @@ export default function GestioneFormazionePage() {
   const [riserve, setRiserve] = React.useState([]) // Giocatori con slot_index NULL
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState(null)
-  const [toast, setToast] = React.useState(null) // { message, type: 'success' | 'error' }
+  const [toast, setToast] = React.useState(null) // { message, type: 'success' | 'error' | 'warning' }
   const [selectedSlot, setSelectedSlot] = React.useState(null) // { slot_index, position }
   const [selectedReserve, setSelectedReserve] = React.useState(null) // Player ID per visualizzare statistiche riserva
   const [showAssignModal, setShowAssignModal] = React.useState(false)
@@ -1692,14 +1692,15 @@ export default function GestioneFormazionePage() {
         const warningMsg = `${t('formationValidationSimple')}\n\n${t('formationInvalidConfirm')}`
         setConfirmModal({
           show: true,
-          title: t('confirm'),
+          title: t('formationInvalidTitle'),
           message: warningMsg,
           confirmLabel: t('continue'),
           cancelLabel: t('cancel'),
           variant: 'warning',
+          presentation: 'sheet',
           onConfirm: () => {
             setConfirmModal(null)
-            showToast(t('formationSavedWithWarnings'), 'error')
+            showToast(t('formationSavedWithWarnings'), 'warning')
             doSelectManualFormation(formation, slotPositions)
           },
           onCancel: () => {
@@ -1952,9 +1953,10 @@ export default function GestioneFormazionePage() {
         const confirmed = await showConfirmSafe({
           fallback: () => window.confirm(warningMsg),
           modalConfig: {
-            title: t('formationValidationTitle'),
+            title: t('formationInvalidTitle'),
             message: warningMsg,
             variant: 'warning',
+            presentation: 'sheet',
             confirmLabel: t('saveAnyway'),
             cancelLabel: t('cancel')
           },
@@ -1968,7 +1970,7 @@ export default function GestioneFormazionePage() {
           return
         }
         // Cliente conferma → procedi con salvataggio (warning ma non blocco)
-        showToast(t('formationSavedWithWarnings'), 'error')
+        showToast(t('formationSavedWithWarnings'), 'warning')
       }
       
       // 1. Salva il layout: il modulo deve riflettere la disposizione reale dopo personalizzazioni
@@ -2327,10 +2329,12 @@ export default function GestioneFormazionePage() {
           right: '20px',
           zIndex: 10000,
           padding: '16px 20px',
-          background: toast.type === 'success' 
-            ? 'rgba(34, 197, 94, 0.95)' 
-            : 'rgba(239, 68, 68, 0.95)',
-          border: `2px solid ${toast.type === 'success' ? '#22c55e' : '#ef4444'}`,
+          background: toast.type === 'success'
+            ? 'rgba(34, 197, 94, 0.95)'
+            : toast.type === 'warning'
+              ? 'rgba(245, 158, 11, 0.95)'
+              : 'rgba(239, 68, 68, 0.95)',
+          border: `2px solid ${toast.type === 'success' ? '#22c55e' : toast.type === 'warning' ? '#f59e0b' : '#ef4444'}`,
           borderRadius: '12px',
           boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
           display: 'flex',
@@ -2343,6 +2347,8 @@ export default function GestioneFormazionePage() {
         }}>
           {toast.type === 'success' ? (
             <CheckCircle2 size={20} color="#ffffff" />
+          ) : toast.type === 'warning' ? (
+            <AlertTriangle size={20} color="#ffffff" />
           ) : (
             <AlertCircle size={20} color="#ffffff" />
           )}
@@ -3146,6 +3152,7 @@ export default function GestioneFormazionePage() {
           cancelLabel={confirmModal.cancelLabel}
           variant={confirmModal.variant || 'warning'}
           confirmVariant={confirmModal.confirmVariant || 'primary'}
+          presentation={confirmModal.presentation || 'center'}
           onConfirm={() => {
             confirmModal.onConfirm?.()
             setConfirmModal(null)

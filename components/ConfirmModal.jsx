@@ -19,7 +19,9 @@ export default function ConfirmModal({
   onConfirm,
   onCancel,
   confirmVariant = 'primary',
-  disabled = false
+  disabled = false,
+  /** 'center' = card centrata; 'sheet' = pannello in basso (no effetto “schermo intero”) */
+  presentation = 'center'
 }) {
   const { t } = useTranslation()
 
@@ -46,6 +48,8 @@ export default function ConfirmModal({
   const config = variantConfig[variant] || variantConfig.warning
   const Icon = config.icon
 
+  const isSheet = presentation === 'sheet'
+
   const confirmButtonStyle = confirmVariant === 'danger'
     ? {
         background: 'rgba(255, 59, 48, 0.1)',
@@ -66,12 +70,13 @@ export default function ConfirmModal({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(10, 14, 26, 0.8)',
+        backgroundColor: isSheet ? 'rgba(10, 14, 26, 0.45)' : 'rgba(10, 14, 26, 0.8)',
         display: 'flex',
-        alignItems: 'center',
+        alignItems: isSheet ? 'flex-end' : 'center',
         justifyContent: 'center',
         zIndex: 10000,
-        padding: '16px',
+        padding: isSheet ? 0 : '16px',
+        paddingBottom: isSheet ? 'env(safe-area-inset-bottom, 0)' : undefined,
         animation: 'fadeIn 0.2s ease-out'
       }}
       onClick={(e) => {
@@ -82,14 +87,18 @@ export default function ConfirmModal({
       aria-labelledby="confirm-modal-title"
     >
       <div
+        onClick={(e) => e.stopPropagation()}
         style={{
           backgroundColor: 'var(--bg-elevated)',
-          borderRadius: '12px',
-          padding: '28px',
-          maxWidth: '480px',
+          borderRadius: isSheet ? '16px 16px 0 0' : '12px',
+          padding: isSheet ? '20px 20px 22px' : '28px',
+          maxWidth: isSheet ? '560px' : '480px',
           width: '100%',
+          maxHeight: isSheet ? 'min(52vh, 480px)' : undefined,
+          overflowY: isSheet ? 'auto' : undefined,
+          WebkitOverflowScrolling: isSheet ? 'touch' : undefined,
           border: `1px solid ${variant === 'danger' ? 'rgba(255, 59, 48, 0.3)' : 'rgba(0, 212, 255, 0.3)'}`,
-          boxShadow: 'var(--shadow-lg)',
+          boxShadow: isSheet ? '0 -8px 32px rgba(0, 0, 0, 0.35)' : 'var(--shadow-lg)',
           animation: 'slideUp 0.3s ease-out'
         }}
       >
@@ -121,7 +130,8 @@ export default function ConfirmModal({
                 fontSize: '15px',
                 color: 'rgba(0, 212, 255, 0.7)',
                 marginBottom: '24px',
-                lineHeight: 1.5
+                lineHeight: 1.5,
+                whiteSpace: 'pre-line'
               }}
             >
               {message}
