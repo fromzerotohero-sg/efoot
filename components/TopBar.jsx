@@ -38,7 +38,7 @@ export default function TopBar() {
           gap: '8px'
         }}
       >
-        {/* Left section - Mobile only */}
+        {/* LEFT SECTION - Menu, Home, GuideTour */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
           {/* Hamburger - mobile only */}
           <button
@@ -85,23 +85,17 @@ export default function TopBar() {
           >
             <Home size={18} />
           </button>
+
+          {/* GuideTour - spostato a sinistra su mobile */}
+          <div className="lg:hidden" style={{ flexShrink: 0 }}>
+            <GuideTour />
+          </div>
         </div>
 
-        {/* Center section - GuideTour su mobile */}
-        <div 
-          className="lg:hidden" 
-          style={{ 
-            flex: 1, 
-            display: 'flex', 
-            justifyContent: 'center',
-            minWidth: 0,
-            overflow: 'hidden'
-          }}
-        >
-          <GuideTour />
-        </div>
+        {/* CENTER SECTION - vuoto su mobile */}
+        <div style={{ flex: 1 }} />
 
-        {/* Right section */}
+        {/* RIGHT SECTION - GuideTour desktop, Credits, Carrello, LanguageSwitch */}
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 
@@ -141,8 +135,8 @@ export default function TopBar() {
             <ShoppingCart size={18} />
           </button>
           
-          {/* Language Switch - desktop only */}
-          <div className="hidden lg:block" style={{ flexShrink: 0 }}>
+          {/* Language Switch */}
+          <div style={{ flexShrink: 0 }}>
             <LanguageSwitch />
           </div>
         </div>
@@ -152,13 +146,6 @@ export default function TopBar() {
         @media (max-width: 1023px) {
           header {
             height: 56px !important;
-          }
-        }
-        
-        /* Nascondi testo del GuideTour su mobile */
-        @media (max-width: 1023px) {
-          .guide-tour-launcher-label {
-            display: none !important;
           }
         }
       `}</style>
