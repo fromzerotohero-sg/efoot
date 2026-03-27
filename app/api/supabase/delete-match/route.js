@@ -125,16 +125,6 @@ export async function DELETE(req) {
         console.error('[delete-match] Failed to import aiKnowledgeHelper (non-blocking):', err)
       })
 
-      // Classifica (Leaderboard)
-      import('@/lib/leaderboardHelper').then(({ computeLeaderboardForMonth, saveLeaderboardSnapshot }) => {
-        const now = new Date()
-        const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-        computeLeaderboardForMonth(month, admin)
-          .then((computed) => {
-            if (computed?.length) return saveLeaderboardSnapshot(month, computed, admin)
-          })
-          .catch(err => console.error('[delete-match] Leaderboard recompute error (non-blocking):', err))
-      }).catch(() => {})
     }
 
     // Log senza esporre user_id (privacy/GDPR)

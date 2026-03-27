@@ -15,17 +15,14 @@ import TaskWidget from '@/components/TaskWidget'
 import MissionCenter from '@/components/MissionCenter'
 import OnboardingFlow from '@/components/OnboardingFlow'
 import { safeJsonResponse } from '@/lib/fetchHelper'
-import { getCurrentMonth } from '@/lib/leaderboardHelper'
 import { withAuth } from '@/components/AuthWrapper'
 import { 
   Users, 
   RefreshCw, 
   AlertCircle,
   CheckCircle2,
-  ArrowRight,
   Settings,
   BarChart3,
-  Trophy,
   UserCheck,
   ChevronDown,
   ChevronUp,
@@ -89,7 +86,6 @@ function HomePage() {
   const [gameAnalysisLastCapture, setGameAnalysisLastCapture] = React.useState(null)
   const [hasActiveCoach, setHasActiveCoach] = React.useState(false)
   const [reminderRotationIndex, setReminderRotationIndex] = React.useState(0)
-  const [leaderboardData, setLeaderboardData] = React.useState({ currentUser: null, daysLeftInMonth: null })
   const [userProfile, setUserProfile] = React.useState(null)
   const [confirmModal, setConfirmModal] = React.useState(null) // { show, title, message, onConfirm, onCancel }
   const [coachChatInitialMessage, setCoachChatInitialMessage] = React.useState(null)
@@ -218,23 +214,6 @@ function HomePage() {
         setTacticalPatterns(data.patterns || null)
         setHasActiveCoach(data.hasActiveCoach)
         setUserProfile(data.profile)
-        
-        // Leaderboard fetch via token
-        try {
-          const month = getCurrentMonth()
-          const lbRes = await fetch(`/api/leaderboard?month=${month}`, { 
-            headers: { 'Authorization': `Bearer ${token}` }, 
-            cache: 'no-store' 
-          })
-          const lbPayload = await lbRes.json().catch(() => ({}))
-          if (Array.isArray(lbPayload.rankings)) {
-            setLeaderboardData({
-              currentUser: lbPayload.currentUser || null,
-              daysLeftInMonth: lbPayload.daysLeftInMonth ?? null
-            })
-          }
-        } catch (_) { /* ignore */ }
-        
       } catch (err) {
         console.error('Dashboard fetch error:', err)
         setError(t('coachDataLoadError'))
@@ -317,33 +296,6 @@ function HomePage() {
   React.useEffect(() => {
     if (!loading && supabase) fetchGameAnalysisCapture()
   }, [loading, supabase, fetchGameAnalysisCapture])
-
-  React.useEffect(() => {
-    if (typeof window === 'undefined') return
-    const onLeaderboardUpdated = async () => {
-      try {
-        let token = localStorage.getItem('auth_token')
-        if (!token && supabase) {
-          const { data: session } = await supabase.auth.getSession()
-          token = session?.session?.access_token
-        }
-        
-        if (!token) return
-        
-        const month = getCurrentMonth()
-        const res = await fetch(`/api/leaderboard?month=${month}`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
-        const payload = await res.json().catch(() => ({}))
-        if (Array.isArray(payload.rankings)) {
-          setLeaderboardData({
-            currentUser: payload.currentUser || null,
-            daysLeftInMonth: payload.daysLeftInMonth ?? null
-          })
-        }
-      } catch (_) {}
-    }
-    window.addEventListener('leaderboard-updated', onLeaderboardUpdated)
-    return () => window.removeEventListener('leaderboard-updated', onLeaderboardUpdated)
-  }, [supabase])
 
   const handleDeleteMatch = async (matchId, e) => {
     e.stopPropagation() // Previeni click sul card
@@ -647,52 +599,6 @@ function HomePage() {
       <div data-tour-id="tour-dashboard-task">
         <TaskWidget />
       </div>
-
-      {/* Classifica mensile - in evidenza fuori dalla Navigazione */}
-      <Link
-        href="/classifica"
-        data-tour-id="tour-dashboard-classifica"
-        className="neon-card"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '16px',
-          padding: '20px',
-          marginBottom: '24px',
-          textDecoration: 'none',
-          background: 'rgba(5, 8, 20, 0.8)',
-          border: '1px solid rgba(0, 212, 255, 0.3)',
-          color: '#FFFFFF',
-          borderRadius: '12px',
-          transition: 'all 0.15s ease'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = 'var(--border-orange)'
-          e.currentTarget.style.boxShadow = 'var(--shadow-md)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.3)'
-          e.currentTarget.style.boxShadow = 'var(--shadow-sm)'
-        }}
-      >
-        <div style={{ width: '44px', height: '44px', borderRadius: '8px', background: 'rgba(255, 149, 0, 0.1)', border: '1px solid var(--border-orange)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <Trophy size={22} color="var(--primary-orange)" />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 600, marginBottom: '4px', fontSize: '17px' }}>{t('classificaMensile')}</div>
-          <div style={{ fontSize: '14px', color: 'rgba(0, 212, 255, 0.7)' }}>
-            {leaderboardData.currentUser
-              ? `${t('laTuaPosizione')}: ${leaderboardData.currentUser.rank}° · ${leaderboardData.currentUser.points} ${t('puntiCoach')}`
-              : t('fromZeroToHero')}
-          </div>
-          {leaderboardData.daysLeftInMonth != null && (
-            <div style={{ fontSize: '13px', color: 'rgba(0, 212, 255, 0.5)', marginTop: '4px' }}>
-              {leaderboardData.daysLeftInMonth} {t('giorniAllaFineMese')}
-            </div>
-          )}
-        </div>
-        <ArrowRight size={20} color="var(--primary-orange)" style={{ flexShrink: 0 }} />
-      </Link>
 
         {/* Dashboard Main Grid - Layout aggiornato: 2 colonne */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">

@@ -10,7 +10,6 @@ import {
   LayoutDashboard,
   Users,
   Calendar,
-  Trophy,
   Settings,
   ArrowLeft,
   ArrowRight,
@@ -112,7 +111,7 @@ export default function GuidaPage() {
       steps: [
         lang === 'en' ? 'Check your AI Knowledge score (0-100%)' : 'Controlla il tuo punteggio AI Knowledge (0-100%)',
         lang === 'en' ? 'View weekly goals and track progress' : 'Visualizza obiettivi settimanali e traccia i progressi',
-        lang === 'en' ? 'See your position in monthly leaderboard' : 'Vedi la tua posizione in classifica mensile',
+        lang === 'en' ? 'Monitor weekly goals and app progress' : 'Monitora obiettivi settimanali e progressi nell\'app',
         lang === 'en' ? 'Access Mission Center for daily challenges' : 'Accedi al Centro Missioni per sfide giornaliere',
         lang === 'en' ? 'Quick links to add match or manage squad' : 'Link rapidi per aggiungere partita o gestire rosa',
         lang === 'en' ? 'Check the Setup Banner for missing configuration' : 'Controlla il Banner Setup per configurazioni mancanti',
@@ -189,23 +188,6 @@ export default function GuidaPage() {
         lang === 'en' ? 'AI extracts name, team and competences' : 'L\'AI estrae nome, squadra e competenze',
         lang === 'en' ? 'Set coach as active (star icon)' : 'Imposta allenatore come attivo (icona stella)',
         lang === 'en' ? 'View coach details and tactical style' : 'Visualizza dettagli allenatore e stile tattico'
-      ]
-    },
-    {
-      id: 'classifica',
-      icon: Trophy,
-      color: 'var(--neon-orange)',
-      path: '/classifica',
-      title: lang === 'en' ? 'Leaderboard' : 'Classifica',
-      description: lang === 'en'
-        ? 'Monthly leaderboard: earn points from matches, AI usage, and profile completion. Compete with other players!'
-        : 'Classifica mensile: guadagna punti da partite, utilizzo AI e completamento profilo. Competi con altri giocatori!',
-      steps: [
-        lang === 'en' ? 'View monthly leaderboard' : 'Visualizza classifica mensile',
-        lang === 'en' ? 'Check your current position' : 'Controlla la tua posizione attuale',
-        lang === 'en' ? 'See points breakdown (matches, AI, profile)' : 'Vedi dettaglio punti (partite, AI, profilo)',
-        lang === 'en' ? 'Check days remaining in month' : 'Controlla giorni rimanenti nel mese',
-        lang === 'en' ? 'View prizes for top finishers' : 'Visualizza premi per i primi classificati'
       ]
     },
     {

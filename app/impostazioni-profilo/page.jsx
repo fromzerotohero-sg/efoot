@@ -4,8 +4,7 @@ import React from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
-import { Save, SkipForward, RefreshCw, User, Gamepad2, Brain, CheckCircle2, AlertCircle, BarChart3, X, Wallet, Trophy, Zap } from 'lucide-react'
-import Link from 'next/link'
+import { Save, SkipForward, RefreshCw, User, Gamepad2, Brain, CheckCircle2, AlertCircle, BarChart3, X, Wallet, Zap } from 'lucide-react'
 import CoachFeedbackChat from '@/components/CoachFeedbackChat'
 
 export default function ImpostazioniProfiloPage() {
@@ -22,9 +21,7 @@ export default function ImpostazioniProfiloPage() {
     ai_name: '',
     how_to_remember: '',
     hours_per_week: null,
-    common_problems: [],
-    leaderboard_consent: false,
-    nickname: ''
+    common_problems: []
   })
   
   const [profileData, setProfileData] = React.useState(null) // Dati completi dal server
@@ -91,9 +88,7 @@ export default function ImpostazioniProfiloPage() {
              ai_name: profileData.ai_name || '',
              how_to_remember: profileData.how_to_remember || '',
              hours_per_week: profileData.hours_per_week || null,
-             common_problems: profileData.common_problems || [],
-             leaderboard_consent: Boolean(profileData.leaderboard_consent),
-             nickname: profileData.nickname || ''
+             common_problems: profileData.common_problems || []
            })
         }
       } catch (err) {
@@ -154,9 +149,7 @@ export default function ImpostazioniProfiloPage() {
           ai_name: p.ai_name ?? prev.ai_name,
           how_to_remember: p.how_to_remember ?? prev.how_to_remember,
           hours_per_week: p.hours_per_week ?? prev.hours_per_week,
-          common_problems: p.common_problems ?? prev.common_problems,
-          leaderboard_consent: p.leaderboard_consent ?? prev.leaderboard_consent,
-          nickname: p.nickname ?? prev.nickname
+          common_problems: p.common_problems ?? prev.common_problems
         } : {
           profile_completion_score: p.profile_completion_score,
           profile_completion_level: p.profile_completion_level,
@@ -168,9 +161,7 @@ export default function ImpostazioniProfiloPage() {
           ai_name: p.ai_name ?? null,
           how_to_remember: p.how_to_remember ?? null,
           hours_per_week: p.hours_per_week ?? null,
-          common_problems: p.common_problems ?? null,
-          leaderboard_consent: p.leaderboard_consent ?? false,
-          nickname: p.nickname ?? null
+          common_problems: p.common_problems ?? null
         })
         setProfile(prev => ({
           ...prev,
@@ -182,9 +173,7 @@ export default function ImpostazioniProfiloPage() {
           ai_name: p.ai_name != null ? p.ai_name : prev.ai_name,
           how_to_remember: p.how_to_remember != null ? p.how_to_remember : prev.how_to_remember,
           hours_per_week: p.hours_per_week != null ? p.hours_per_week : prev.hours_per_week,
-          common_problems: Array.isArray(p.common_problems) ? p.common_problems : prev.common_problems,
-          leaderboard_consent: p.leaderboard_consent != null ? p.leaderboard_consent : prev.leaderboard_consent,
-          nickname: p.nickname != null ? p.nickname : prev.nickname
+          common_problems: Array.isArray(p.common_problems) ? p.common_problems : prev.common_problems
         }))
       }
       const successMsg = data.profile
@@ -195,7 +184,6 @@ export default function ImpostazioniProfiloPage() {
       setTimeout(() => setSuccess(null), 3000)
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('knowledge-should-refresh'))
-        setTimeout(() => window.dispatchEvent(new CustomEvent('leaderboard-updated')), 1500)
       }
 
       // Aggiorna riassunto analisi (diagnostic) per la chat
@@ -726,63 +714,6 @@ export default function ImpostazioniProfiloPage() {
             {t('skip')}
           </button>
         </div>
-      </div>
-
-      {/* Sezione: Classifica mensile (From Zero to Hero) */}
-      <div style={{
-        backgroundColor: '#1a1a1a',
-        borderRadius: '12px',
-        padding: '20px',
-        marginBottom: '24px',
-        border: '1px solid #2a2a2a'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-          <Trophy size={20} color="var(--neon-orange)" />
-          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>{t('classificaMensile')}</h2>
-        </div>
-        {/* Consenso classifica rimosso: tutti gli eleggibili entrano in classifica */}
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#888' }}>
-            {t('nickname')}
-          </label>
-          <input
-            type="text"
-            value={profile.nickname}
-            onChange={(e) => setProfile(prev => ({ ...prev, nickname: e.target.value.trim().slice(0, 255) }))}
-            placeholder={t('nicknamePlaceholder')}
-            maxLength={255}
-            style={{
-              width: '100%',
-              padding: '12px',
-              backgroundColor: '#0a0a0a',
-              border: '1px solid #2a2a2a',
-              borderRadius: '8px',
-              color: '#ffffff',
-              fontSize: '16px'
-            }}
-          />
-          <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#666' }}>{t('nicknameHint')}</p>
-        </div>
-        <button
-          onClick={() => handleSave(t('classificaMensile'))}
-          disabled={saving}
-          style={{
-            padding: '12px 20px',
-            backgroundColor: saving ? '#2a2a2a' : 'var(--neon-orange)',
-            color: '#000',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: '600',
-            cursor: saving ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
-          <Save size={18} />
-          {saving ? t('saving') : t('save')}
-        </button>
       </div>
 
       {/* Sezione: Preferenze IA */}

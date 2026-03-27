@@ -163,17 +163,6 @@ export async function POST(req) {
         console.error('[save-coach] Failed to import aiKnowledgeHelper (non-blocking):', err)
       })
 
-      // Aggiorna Classifica (Leaderboard)
-      import('@/lib/leaderboardHelper').then(({ computeLeaderboardForMonth, saveLeaderboardSnapshot }) => {
-        const now = new Date()
-        const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-        const admin = createClient(supabaseUrl, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } })
-        computeLeaderboardForMonth(month, admin)
-          .then((computed) => {
-            if (computed?.length) return saveLeaderboardSnapshot(month, computed, admin)
-          })
-          .catch(err => console.error('[save-coach] Leaderboard recompute error (non-blocking):', err))
-      }).catch(() => {})
     }
 
     return NextResponse.json({

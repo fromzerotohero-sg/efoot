@@ -331,17 +331,6 @@ export async function POST(req) {
       })
     }
 
-    // Ricomputa classifica mensile (profile_completion_score incide sui punti)
-    import('@/lib/leaderboardHelper').then(({ computeLeaderboardForMonth, saveLeaderboardSnapshot }) => {
-      const now = new Date()
-      const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-      computeLeaderboardForMonth(month, admin)
-        .then((computed) => {
-          if (computed?.length) return saveLeaderboardSnapshot(month, computed, admin)
-        })
-        .catch(err => console.error('[save-ai-info] Leaderboard recompute (non-blocking):', err?.message || err))
-    }).catch(() => {})
-
     return NextResponse.json(
       { success: true, profile },
       { headers: { 'Content-Language': lang } }

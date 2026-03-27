@@ -26,9 +26,6 @@ const PROFILE_SELECT_FIELDS = [
   // Esperienza gioco
   'hours_per_week',
   'common_problems',
-  // Classifica
-  'leaderboard_consent',
-  'nickname',
   // Profilazione
   'profile_completion_score',
   'profile_completion_level',

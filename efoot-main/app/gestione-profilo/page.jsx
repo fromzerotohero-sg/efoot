@@ -4,7 +4,7 @@ import React from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
 import LanguageSwitch from '@/components/LanguageSwitch'
-import { ArrowLeft, RefreshCw, Wallet, BarChart3, Award, Calendar, Zap, Camera, User, Trophy, Gift, CheckCircle2, AlertCircle } from 'lucide-react'
+import { ArrowLeft, RefreshCw, Wallet, BarChart3, Award, Calendar, Zap, Camera, User, CheckCircle2, AlertCircle } from 'lucide-react'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import Link from 'next/link'
 import { resolveAuthToken, buildAuthHeaders } from '@/lib/profileUxHelpers'
@@ -17,8 +17,6 @@ export default function GestioneProfiloPage() {
   const [usage, setUsage] = React.useState(null)
   const [transactions, setTransactions] = React.useState([])
   const [totalAnalyses, setTotalAnalyses] = React.useState(0)
-  const [leaderboardMe, setLeaderboardMe] = React.useState({ currentUser: null, history: [] })
-  const [prizes, setPrizes] = React.useState([])
 
   const fetchData = React.useCallback(async () => {
     setLoading(true)
@@ -33,32 +31,22 @@ export default function GestioneProfiloPage() {
       const headers = buildAuthHeaders(token, { json: true })
       const getHeaders = buildAuthHeaders(token)
 
-      const [usageRes, txRes, leaderboardRes, leaderboardMeRes, prizesRes] = await Promise.all([
+      const [usageRes, txRes] = await Promise.all([
         fetch('/api/credits/usage', {
           method: 'POST',
           headers,
           body: JSON.stringify({}),
           cache: 'no-store'
         }),
-        fetch('/api/credits/transactions', { headers: getHeaders, cache: 'no-store' }),
-        fetch('/api/leaderboard', { headers: getHeaders, cache: 'no-store' }),
-        fetch('/api/leaderboard/me', { headers: getHeaders, cache: 'no-store' }),
-        fetch('/api/user/prizes', { headers: getHeaders, cache: 'no-store' }) // Assuming an endpoint exists or we use supabase direct if permitted
+        fetch('/api/credits/transactions', { headers: getHeaders, cache: 'no-store' })
       ])
 
       const usagePayload = await safeJsonResponse(usageRes, t('errorLoadingUsage'))
       const txPayload = await txRes.json().catch(() => ({}))
-      const leaderboardPayload = await leaderboardRes.json().catch(() => ({}))
-      const leaderboardMePayload = await leaderboardMeRes.json().catch(() => ({}))
       
       if (usagePayload && !usagePayload.error) setUsage(usagePayload)
       if (txPayload.transactions) setTransactions(Array.isArray(txPayload.transactions) ? txPayload.transactions : [])
       if (Number.isFinite(txPayload.total_analyses)) setTotalAnalyses(txPayload.total_analyses)
-      if (leaderboardPayload.currentUser) setLeaderboardMe(prev => ({ ...prev, currentUser: leaderboardPayload.currentUser }))
-      if (leaderboardMePayload.history) setLeaderboardMe(prev => ({ ...prev, history: leaderboardMePayload.history || [] }))
-      
-      const prizesPayload = await prizesRes.json().catch(() => [])
-      if (Array.isArray(prizesPayload)) setPrizes(prizesPayload)
 
     } catch (e) {
       console.error('[GestioneProfilo]', e)
@@ -71,27 +59,6 @@ export default function GestioneProfiloPage() {
   React.useEffect(() => {
     fetchData()
   }, [fetchData])
-
-  React.useEffect(() => {
-    if (typeof window === 'undefined') return
-    const onLeaderboardUpdated = async () => {
-      const token = await resolveAuthToken()
-      if (!token) return
-      try {
-        const headers = buildAuthHeaders(token)
-        const [lbRes, meRes] = await Promise.all([
-          fetch('/api/leaderboard', { headers, cache: 'no-store' }),
-          fetch('/api/leaderboard/me', { headers, cache: 'no-store' })
-        ])
-        const lb = await lbRes.json().catch(() => ({}))
-        const me = await meRes.json().catch(() => ({}))
-        if (lb.currentUser) setLeaderboardMe(prev => ({ ...prev, currentUser: lb.currentUser }))
-        if (me.history) setLeaderboardMe(prev => ({ ...prev, history: me.history || [] }))
-      } catch (_) {}
-    }
-    window.addEventListener('leaderboard-updated', onLeaderboardUpdated)
-    return () => window.removeEventListener('leaderboard-updated', onLeaderboardUpdated)
-  }, [])
 
   const balance = usage?.balance_remaining ?? (usage ? Math.max(0, (usage.credits_included || 0) - (usage.credits_used || 0)) : 0)
   const rankLabel = balance >= 150 ? t('rankPlatinum') : balance >= 80 ? t('rankGold') : balance >= 30 ? t('rankSilver') : t('rankBronze')
@@ -281,95 +248,6 @@ export default function GestioneProfiloPage() {
               </div>
             </div>
           </div>
-
-          {/* Classifica mensile + Risultati + Premi */}
-          <section data-tour-id="tour-gestione-profilo-leaderboard" className="card" style={{ padding: '24px', marginBottom: '24px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Trophy size={20} color="var(--neon-orange)" />
-              {t('classificaMensile')}
-            </h2>
-            {leaderboardMe.currentUser ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
-                <div>
-                  <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.8)' }}>{t('laTuaPosizione')}</div>
-                  <div style={{ fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: 700, color: '#fff' }}>
-                    {leaderboardMe.currentUser.rank}° · {leaderboardMe.currentUser.points} {t('puntiCoach')}
-                  </div>
-                </div>
-                <Link
-                  href="/classifica"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '10px 16px',
-                    backgroundColor: 'rgba(255,165,0,0.2)',
-                    border: '1px solid rgba(255,165,0,0.4)',
-                    borderRadius: '8px',
-                    color: 'var(--neon-orange)',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    textDecoration: 'none'
-                  }}
-                >
-                  {t('vediClassifica')}
-                </Link>
-              </div>
-            ) : (
-              <div style={{ marginBottom: '16px' }}>
-                <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.8)', marginBottom: '8px' }}>{t('entraInClassifica')}</p>
-                <Link href="/classifica" style={{ color: 'var(--neon-blue)', fontSize: '14px', fontWeight: 600 }}>{t('vediClassifica')}</Link>
-              </div>
-            )}
-            {leaderboardMe.history?.length > 0 && (
-              <>
-                <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', color: 'rgba(255,255,255,0.9)' }}>{t('risultatiOttenuti')}</div>
-                <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-                  {leaderboardMe.history.slice(0, 6).map((h) => {
-                  const [y, m] = (h.month || '').split('-')
-                  const monthLabel = y && m ? new Date(parseInt(y, 10), parseInt(m, 10) - 1).toLocaleDateString(lang === 'en' ? 'en-GB' : 'it-IT', { month: 'short', year: 'numeric' }) : h.month
-                  return (
-                    <li key={h.month} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                      <span style={{ color: 'rgba(255,255,255,0.9)' }}>{monthLabel}</span>
-                      <span style={{ fontWeight: 600, color: 'var(--neon-orange)' }}>{h.rank}° · {h.points} pt</span>
-                    </li>
-                  )
-                  })}
-                </ul>
-              </>
-            )}
-          </section>
-
-          {prizes.length > 0 && (
-            <section className="card" style={{ padding: '24px', marginBottom: '24px' }}>
-              <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Gift size={20} color="#22c55e" />
-                {t('iMieiPremi')}
-              </h2>
-              <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-                {prizes.map((p) => (
-                  <li key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                    <div>
-                      <span style={{ fontWeight: 600, color: '#fff' }}>{p.month}</span>
-                      <span style={{ marginLeft: '8px', color: 'rgba(255,255,255,0.8)', fontSize: '14px' }}>
-                        {p.prize_type === 'coach_free' && t('prizeCoachFree')}
-                        {p.prize_type === 'credits' && t('prizeCredits')}
-                        {p.prize_type === 'match_ticket' && t('prizeMatchTicket')}
-                        {p.prize_type === 'stampa_3d' && t('prizeStampa3d')}
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {p.status === 'redeemed' ? (
-                        <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>{t('riscattato')}</span>
-                      ) : (
-                        <button type="button" className="btn" style={{ padding: '6px 12px', fontSize: '13px' }}>{t('riscatta')}</button>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
 
           {/* Attività recente */}
           <section data-tour-id="tour-gestione-profilo-transactions" className="card" style={{ padding: '24px', marginBottom: '24px' }}>

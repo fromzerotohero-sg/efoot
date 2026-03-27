@@ -7,7 +7,7 @@ import { Compass, Sparkles } from 'lucide-react'
 import { isEnabled } from '@/lib/featureFlags'
 import { getTourSteps, TOUR_IDS } from '@/lib/guideTours'
 
-const PAGES_WITH_TOUR = ['/', '/gestione-formazione', '/match/new', '/guida', '/impostazioni-profilo', '/contromisure-pre-partita', '/allenatori', '/classifica', '/gestione-profilo']
+const PAGES_WITH_TOUR = ['/', '/gestione-formazione', '/match/new', '/guida', '/impostazioni-profilo', '/contromisure-pre-partita', '/allenatori', '/gestione-profilo']
 
 function hasTourForPath(pathname) {
   const base = (pathname || '/').replace(/\/$/, '') || '/'

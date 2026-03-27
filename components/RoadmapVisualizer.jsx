@@ -6,7 +6,6 @@ import {
   Gamepad2, 
   UserCircle, 
   BarChart3, 
-  Trophy,
   Target,
   MessageSquare,
   CheckCircle2,
@@ -97,18 +96,6 @@ export default function RoadmapVisualizer({
       completed: false, // Non completabile, processo continuo
       progress: 0,
       href: '/?openCoach=true'
-    },
-    {
-      id: 'mastery',
-      icon: Trophy,
-      title: t('roadmapMasteryTitle') || 'Maestro',
-      shortDesc: t('roadmapMasteryShort') || 'Da Zero a Hero',
-      fullDesc: t('roadmapMasteryDesc') || 'Hai 10+ partite, profilo completo, usi la Palestra. L\'AI conosce i tuoi pattern, i tuoi punti deboli, i tuoi punti di forza.',
-      whyImportant: t('roadmapMasteryWhy') || 'A questo livello, i consigli sono specifici al 90%. "Nel tuo 4-3-3 con quella connessione, contro il 5-3-2 usa questo approccio".',
-      unlocked: recentMatches.length >= 5 && userProfile?.ai_weak_point,
-      completed: false, // Meta continua
-      progress: 0,
-      href: '/classifica'
     }
   ]
 

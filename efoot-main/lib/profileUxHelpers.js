@@ -9,9 +9,7 @@ export const EMPTY_PROFILE_FORM = {
   ai_name: '',
   how_to_remember: '',
   hours_per_week: null,
-  common_problems: [],
-  leaderboard_consent: false,
-  nickname: ''
+  common_problems: []
 }
 
 export function mapApiProfileToForm(apiProfile) {
@@ -24,9 +22,7 @@ export function mapApiProfileToForm(apiProfile) {
     ai_name: apiProfile?.ai_name || '',
     how_to_remember: apiProfile?.how_to_remember || '',
     hours_per_week: apiProfile?.hours_per_week ?? null,
-    common_problems: apiProfile?.common_problems || [],
-    leaderboard_consent: Boolean(apiProfile?.leaderboard_consent),
-    nickname: apiProfile?.nickname || ''
+    common_problems: apiProfile?.common_problems || []
   }
 }
 

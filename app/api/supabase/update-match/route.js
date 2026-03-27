@@ -606,15 +606,6 @@ export async function POST(req) {
             await updateTasksProgressAfterMatch(userId, supabaseUrl, serviceKey, updatedMatch)
             if (process.env.NODE_ENV !== 'production') console.log('[update-match] Tasks progress updated successfully')
 
-            // Aggiorna Classifica (Leaderboard) - importante se cambia completezza/qualità
-            const { computeLeaderboardForMonth, saveLeaderboardSnapshot } = await import('@/lib/leaderboardHelper')
-            const now = new Date()
-            const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-            computeLeaderboardForMonth(month, admin)
-              .then((computed) => {
-                if (computed?.length) return saveLeaderboardSnapshot(month, computed, admin)
-              })
-              .catch(err => console.error('[update-match] Leaderboard recompute error:', err))
           } catch (err) {
             console.error('[update-match] Error in sequential updates:', err)
           }

@@ -309,16 +309,6 @@ export async function POST(req) {
         console.error('[save-coach-feedback] Failed to import aiKnowledgeHelper (non-blocking):', err)
       })
 
-      // Classifica (Usage points)
-      import('@/lib/leaderboardHelper').then(({ computeLeaderboardForMonth, saveLeaderboardSnapshot }) => {
-        const now = new Date()
-        const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-        computeLeaderboardForMonth(month, admin)
-          .then((computed) => {
-            if (computed?.length) return saveLeaderboardSnapshot(month, computed, admin)
-          })
-          .catch(err => console.error('[save-coach-feedback] Leaderboard recompute error (non-blocking):', err))
-      }).catch(() => {})
     }
 
     return NextResponse.json({

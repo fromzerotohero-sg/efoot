@@ -12,6 +12,11 @@ import AssistantChat from '@/components/AssistantChat'
 export const metadata = {
   title: 'From Zero to Hero - eFootball AI Coach',
   description: 'Coach AI per eFootball: rosa, partite, analisi e consigli tattici personalizzati.',
+  icons: {
+    icon: '/logo.png',
+    shortcut: '/logo.png',
+    apple: '/logo.png',
+  },
 }
 
 export default function RootLayout({ children }) {

@@ -222,24 +222,13 @@ export async function POST(req) {
       profileUpdate.common_problems = toTextArray(profileData.common_problems)
     }
 
-    // Classifica mensile (From Zero to Hero)
-    if (profileData.leaderboard_consent !== undefined) {
-      profileUpdate.leaderboard_consent = Boolean(profileData.leaderboard_consent)
-    }
-    if (profileData.nickname !== undefined) {
-      const nickname = toText(profileData.nickname)
-      if (nickname && nickname.length > MAX_TEXT_LENGTH) {
-        return NextResponse.json({ error: `Nickname too long. Maximum ${MAX_TEXT_LENGTH} characters.` }, { status: 400 })
-      }
-      profileUpdate.nickname = nickname
-    }
     // Upsert profilo (crea se non esiste, aggiorna se esiste)
     const { data: savedProfile, error: upsertError } = await admin
       .from('user_profiles')
       .upsert(profileUpdate, {
         onConflict: 'user_id'
       })
-      .select('id, profile_completion_score, profile_completion_level, first_name, last_name, current_division, favorite_team, team_name, ai_name, how_to_remember, hours_per_week, common_problems, leaderboard_consent, nickname')
+      .select('id, profile_completion_score, profile_completion_level, first_name, last_name, current_division, favorite_team, team_name, ai_name, how_to_remember, hours_per_week, common_problems')
       .single()
 
     if (upsertError) {
@@ -265,17 +254,6 @@ export async function POST(req) {
       })
     }
 
-    // Ricomputa classifica mensile (profile_completion_score incide sui punti)
-    import('@/lib/leaderboardHelper').then(({ computeLeaderboardForMonth, saveLeaderboardSnapshot }) => {
-      const now = new Date()
-      const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-      computeLeaderboardForMonth(month, admin)
-        .then((computed) => {
-          if (computed?.length) return saveLeaderboardSnapshot(month, computed, admin)
-        })
-        .catch(err => console.error('[save-profile] Leaderboard recompute (non-blocking):', err?.message || err))
-    }).catch(() => {})
-
     return NextResponse.json({
       success: true,
       profile: {
@@ -290,9 +268,7 @@ export async function POST(req) {
         ai_name: savedProfile.ai_name,
         how_to_remember: savedProfile.how_to_remember,
         hours_per_week: savedProfile.hours_per_week,
-        common_problems: savedProfile.common_problems,
-        leaderboard_consent: savedProfile.leaderboard_consent ?? false,
-        nickname: savedProfile.nickname ?? null
+        common_problems: savedProfile.common_problems
       }
     })
 

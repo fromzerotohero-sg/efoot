@@ -64,9 +64,9 @@ export async function GET(request) {
     const { data: profile, error } = await supabase
       .from('user_profiles')
       .select(`
-        id, user_id, first_name, last_name, nickname,
+        id, user_id, first_name, last_name,
         current_division, favorite_team, team_name, ai_name, how_to_remember,
-        hours_per_week, common_problems, leaderboard_consent,
+        hours_per_week, common_problems,
         profile_completion_score, profile_completion_level,
         platform, connection_quality, slow_opponent_connection_issues,
         input_delay, pass_level, smart_assist, ai_weak_point,

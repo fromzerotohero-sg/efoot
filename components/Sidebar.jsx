@@ -7,7 +7,6 @@ import { useTranslation } from '@/lib/i18n'
 import { 
   LayoutDashboard, 
   Users, 
-  Trophy,
   Target,
   BarChart3,
   UserCircle,
@@ -52,11 +51,6 @@ export default function Sidebar() {
       href: '/grafici-comparazione',
       icon: BarChart3,
       label: t('chartsAndComparison') || 'Grafici',
-    },
-    {
-      href: '/classifica',
-      icon: Trophy,
-      label: t('classificaMensile') || 'Classifica',
     },
     {
       href: '/contromisure-pre-partita',
