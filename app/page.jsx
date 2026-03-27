@@ -21,6 +21,7 @@ import {
   RefreshCw, 
   AlertCircle,
   CheckCircle2,
+  ArrowRight,
   Settings,
   BarChart3,
   UserCheck,
