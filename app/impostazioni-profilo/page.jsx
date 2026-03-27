@@ -254,7 +254,6 @@ export default function ImpostazioniProfiloPage() {
         <a
           href="https://home.fromzerotohero.io/dashboard?usage"
           target="_blank"
-          rel="noopener noreferrer"
           className="neon-button"
           style={{
             display: 'flex',
