@@ -114,7 +114,10 @@ export default function AccessPage() {
           padding: 'clamp(24px, 4vw, 40px)',
           boxShadow: '0 20px 60px rgba(0, 0, 0, 0.35)'
         }}>
-          <div style={{ marginBottom: '24px' }}>
+          <a
+            href="https://home.fromzerotohero.io/dashboard"
+            style={{ display: 'inline-flex', marginBottom: '24px' }}
+          >
             <Image
               src="/logo.png"
               alt="From Zero to Hero"
@@ -123,7 +126,7 @@ export default function AccessPage() {
               style={{ width: 'min(100%, 280px)', height: 'auto', objectFit: 'contain' }}
               priority
             />
-          </div>
+          </a>
 
           <span style={{
             display: 'inline-flex',
@@ -169,6 +172,27 @@ export default function AccessPage() {
           }}>
             {t('prelaunchReservedAccessText')}
           </p>
+
+          <a
+            href="https://home.fromzerotohero.io/dashboard"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginTop: '18px',
+              minHeight: '48px',
+              padding: '12px 18px',
+              borderRadius: '14px',
+              background: 'rgba(0, 212, 255, 0.12)',
+              border: '1px solid rgba(0, 212, 255, 0.28)',
+              color: '#FFFFFF',
+              fontSize: '14px',
+              fontWeight: 800,
+              textDecoration: 'none'
+            }}
+          >
+            {t('prelaunchControlPanelButton')}
+          </a>
 
           <div style={{
             marginTop: '28px',
@@ -340,26 +364,6 @@ export default function AccessPage() {
             <p style={{ margin: 0, fontSize: '15px', lineHeight: 1.7, color: 'rgba(255,255,255,0.72)' }}>
               {t('prelaunchNoCodeText')}
             </p>
-            <a
-              href="https://home.fromzerotohero.io/dashboard"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginTop: '18px',
-                minHeight: '48px',
-                padding: '12px 18px',
-                borderRadius: '14px',
-                background: 'rgba(0, 212, 255, 0.12)',
-                border: '1px solid rgba(0, 212, 255, 0.28)',
-                color: '#FFFFFF',
-                fontSize: '14px',
-                fontWeight: 800,
-                textDecoration: 'none'
-              }}
-            >
-              {t('prelaunchControlPanelButton')}
-            </a>
           </div>
         </section>
       </div>
