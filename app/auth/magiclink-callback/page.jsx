@@ -1,13 +1,14 @@
 'use client'
 
 import React from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
+import { useTranslation } from '@/lib/i18n'
 import { CheckCircle, AlertCircle } from 'lucide-react'
 
 function MagiclinkCallbackContent() {
   const router = useRouter()
-  const searchParams = useSearchParams()
+  const { t } = useTranslation()
   
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState(null)
@@ -22,7 +23,7 @@ function MagiclinkCallbackContent() {
       const { data, error: sessionError } = await supabase.auth.getSession()
       
       if (sessionError) {
-        setError('Failed to get session from magic link')
+        setError(t('loginSuccessGenericError'))
         setLoading(false)
         return
       }
@@ -40,12 +41,12 @@ function MagiclinkCallbackContent() {
           })
           
           if (setSessionError) {
-            setError('Failed to set session from magic link')
+            setError(t('loginSuccessGenericError'))
             setLoading(false)
             return
           }
         } else {
-          setError('No valid session found in magic link')
+          setError(t('loginSuccessFailed'))
           setLoading(false)
           return
         }
@@ -68,7 +69,7 @@ function MagiclinkCallbackContent() {
 
     } catch (err) {
       console.error('[MagicLink Callback] Error:', err)
-      setError(err?.message || 'An unexpected error occurred')
+      setError(err?.message || t('loginSuccessGenericError'))
       setLoading(false)
     }
   }
@@ -109,14 +110,14 @@ function MagiclinkCallbackContent() {
               color: 'var(--neon-blue)',
               marginBottom: '16px'
             }}>
-              Completing Login
+              {t('magiclinkCompleting')}
             </h2>
             <p style={{
               fontSize: '16px',
               color: 'rgba(255, 255, 255, 0.7)',
               margin: 0
             }}>
-              Setting up your session...
+              {t('magiclinkPreparing')}
             </p>
           </>
         )}
@@ -130,14 +131,14 @@ function MagiclinkCallbackContent() {
               color: '#22c55e',
               marginBottom: '16px'
             }}>
-              Login Complete!
+              {t('magiclinkDone')}
             </h2>
             <p style={{
               fontSize: '16px',
               color: 'rgba(255, 255, 255, 0.7)',
               margin: 0
             }}>
-              Redirecting to your dashboard...
+              {t('magiclinkRedirecting')}
             </p>
           </>
         )}
@@ -151,7 +152,7 @@ function MagiclinkCallbackContent() {
               color: '#ef4444',
               marginBottom: '16px'
             }}>
-              Login Failed
+              {t('magiclinkFailed')}
             </h2>
             <p style={{
               fontSize: '16px',
@@ -173,7 +174,7 @@ function MagiclinkCallbackContent() {
                 cursor: 'pointer'
               }}
             >
-              Back to Login
+              {t('magiclinkBackToLogin')}
             </button>
           </>
         )}
@@ -199,10 +200,15 @@ export default function MagiclinkCallbackPage() {
         background: '#050814',
         color: 'white'
       }}>
-        Loading...
+        <MagiclinkFallback />
       </div>
     }>
       <MagiclinkCallbackContent />
     </React.Suspense>
   )
+}
+
+function MagiclinkFallback() {
+  const { t } = useTranslation()
+  return t('loadingSimple')
 }

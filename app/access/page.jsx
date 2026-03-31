@@ -7,58 +7,31 @@ import { BarChart3, Brain, Shield, Sparkles, Unlock, Users } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n'
 import { buildAuthHeaders, resolveAuthToken } from '@/lib/profileUxHelpers'
 
-const featureCards = {
-  it: [
-    {
-      icon: BarChart3,
-      title: 'Analisi delle partite',
-      text: 'Una lettura più chiara delle partite, del contesto e di ciò che conta davvero per migliorare.',
-    },
-    {
-      icon: Users,
-      title: 'Gestione rosa e formazione',
-      text: 'Uno spazio strutturato per lavorare su giocatori, ruoli, posizione e organizzazione della squadra.',
-    },
-    {
-      icon: Brain,
-      title: 'Coach AI',
-      text: 'Un supporto costruito per affiancarti con logica, continuità e personalizzazione.',
-    },
-    {
-      icon: Shield,
-      title: 'Contromisure e lettura tattica',
-      text: 'Indicazioni più utili per preparare le partite e ragionare meglio sulle scelte di gioco.',
-    },
-  ],
-  en: [
-    {
-      icon: BarChart3,
-      title: 'Match analysis',
-      text: 'A clearer reading of matches, context and the details that really matter for improvement.',
-    },
-    {
-      icon: Users,
-      title: 'Squad and formation management',
-      text: 'A structured space to work on players, roles, positioning and squad organisation.',
-    },
-    {
-      icon: Brain,
-      title: 'AI Coach',
-      text: 'A support layer designed to guide the player with logic, continuity and personalisation.',
-    },
-    {
-      icon: Shield,
-      title: 'Countermeasures and tactical reading',
-      text: 'More useful direction to prepare matches and reason better about in-game choices.',
-    },
-  ],
-}
-
 export default function AccessPage() {
-  const { lang } = useTranslation()
+  const { t } = useTranslation()
   const router = useRouter()
-  const copy = lang === 'en' ? 'en' : 'it'
-  const cards = featureCards[copy]
+  const featureCards = [
+    {
+      icon: BarChart3,
+      title: t('prelaunchFeatureMatchesTitle'),
+      text: t('prelaunchFeatureMatchesText'),
+    },
+    {
+      icon: Users,
+      title: t('prelaunchFeatureSquadTitle'),
+      text: t('prelaunchFeatureSquadText'),
+    },
+    {
+      icon: Brain,
+      title: t('prelaunchFeatureCoachTitle'),
+      text: t('prelaunchFeatureCoachText'),
+    },
+    {
+      icon: Shield,
+      title: t('prelaunchFeatureCounterTitle'),
+      text: t('prelaunchFeatureCounterText'),
+    },
+  ]
 
   const [code, setCode] = React.useState('')
   const [loading, setLoading] = React.useState(false)
@@ -72,7 +45,7 @@ export default function AccessPage() {
     if (!trimmedCode) {
       setMessage({
         type: 'error',
-        text: copy === 'en' ? 'Enter the access code you received.' : 'Inserisci il codice di accesso che hai ricevuto.',
+        text: t('prelaunchCodeEnterError'),
       })
       return
     }
@@ -93,12 +66,12 @@ export default function AccessPage() {
 
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) {
-        throw new Error(payload?.error || (copy === 'en' ? 'Unable to unlock access.' : 'Impossibile sbloccare l’accesso.'))
+        throw new Error(payload?.error || t('prelaunchCodeUnlockError'))
       }
 
       setMessage({
         type: 'success',
-        text: copy === 'en' ? 'Access unlocked. Entering platform...' : 'Accesso sbloccato. Ti sto portando nella piattaforma...',
+        text: t('prelaunchCodeUnlocked'),
       })
 
       setTimeout(() => {
@@ -107,7 +80,7 @@ export default function AccessPage() {
     } catch (error) {
       setMessage({
         type: 'error',
-        text: error?.message || (copy === 'en' ? 'Invalid access code.' : 'Codice di accesso non valido.'),
+        text: error?.message || t('prelaunchCodeInvalid'),
       })
     } finally {
       setLoading(false)
@@ -160,7 +133,7 @@ export default function AccessPage() {
             marginBottom: '18px'
           }}>
             <Sparkles size={15} />
-            {copy === 'en' ? 'Private access before public launch' : 'Accesso privato prima del lancio pubblico'}
+            {t('prelaunchAccessBadge')}
           </span>
 
           <h1 style={{
@@ -170,7 +143,7 @@ export default function AccessPage() {
             margin: '0 0 14px',
             color: '#FFFFFF'
           }}>
-            {copy === 'en' ? 'Thanks for registering.' : 'Grazie per esserti registrato.'}
+            {t('prelaunchThanksTitle')}
           </h1>
 
           <p style={{
@@ -179,9 +152,7 @@ export default function AccessPage() {
             color: 'rgba(255, 255, 255, 0.78)',
             margin: '0 0 14px'
           }}>
-            {copy === 'en'
-              ? 'Your account has been created successfully. Public access to the platform is not open yet.'
-              : 'Il tuo account è stato creato correttamente. L’accesso pubblico alla piattaforma non è ancora aperto.'}
+            {t('prelaunchAccountCreated')}
           </p>
 
           <p style={{
@@ -190,9 +161,7 @@ export default function AccessPage() {
             color: 'rgba(0, 212, 255, 0.78)',
             margin: 0
           }}>
-            {copy === 'en'
-              ? 'At this stage, full access is reserved for selected partnerships and commercial agreements through dedicated access codes.'
-              : 'In questa fase, l’accesso completo è riservato a partnership selezionate e accordi commerciali tramite codici dedicati.'}
+            {t('prelaunchReservedAccessText')}
           </p>
 
           <div style={{
@@ -201,7 +170,7 @@ export default function AccessPage() {
             gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
             gap: '14px'
           }}>
-            {cards.map(({ icon: Icon, title, text }) => (
+            {featureCards.map(({ icon: Icon, title, text }) => (
               <div
                 key={title}
                 style={{
@@ -241,17 +210,15 @@ export default function AccessPage() {
               marginBottom: '18px'
             }}>
               <Unlock size={15} />
-              {copy === 'en' ? 'Dedicated access code' : 'Codice di accesso dedicato'}
+              {t('prelaunchCodeBadge')}
             </div>
 
             <h2 style={{ fontSize: '28px', lineHeight: 1.1, fontWeight: 800, margin: '0 0 12px', color: '#FFFFFF' }}>
-              {copy === 'en' ? 'Do you already have an access code?' : 'Hai già ricevuto un codice di accesso?'}
+              {t('prelaunchCodeTitle')}
             </h2>
 
             <p style={{ margin: '0 0 22px', color: 'rgba(255,255,255,0.72)', lineHeight: 1.65, fontSize: '15px' }}>
-              {copy === 'en'
-                ? 'If you received a reserved code, enter it below to unlock the full platform for this session.'
-                : 'Se hai ricevuto un codice riservato, inseriscilo qui sotto per sbloccare la piattaforma completa per questa sessione.'}
+              {t('prelaunchCodeText')}
             </p>
 
             <form onSubmit={handleUnlock} style={{ display: 'grid', gap: '14px' }}>
@@ -259,7 +226,7 @@ export default function AccessPage() {
                 type="password"
                 value={code}
                 onChange={(event) => setCode(event.target.value)}
-                placeholder={copy === 'en' ? 'Enter access code' : 'Inserisci il codice di accesso'}
+                placeholder={t('prelaunchCodePlaceholder')}
                 autoComplete="off"
                 style={{
                   width: '100%',
@@ -291,8 +258,8 @@ export default function AccessPage() {
                 }}
               >
                 {loading
-                  ? (copy === 'en' ? 'Unlocking access...' : 'Sto sbloccando l’accesso...')
-                  : (copy === 'en' ? 'Unlock access' : 'Sblocca accesso')}
+                  ? t('prelaunchCodeButtonLoading')
+                  : t('prelaunchCodeButton')}
               </button>
             </form>
 
@@ -312,9 +279,7 @@ export default function AccessPage() {
             )}
 
             <p style={{ margin: '16px 0 0', color: 'rgba(255,255,255,0.56)', fontSize: '13px', lineHeight: 1.55 }}>
-              {copy === 'en'
-                ? 'These early access codes are reserved for selected commercial partners and dedicated collaborations.'
-                : 'Questi codici di accesso anticipato sono riservati a partner commerciali selezionati e collaborazioni dedicate.'}
+              {t('prelaunchCodeHint')}
             </p>
           </div>
 
@@ -327,7 +292,7 @@ export default function AccessPage() {
             <div style={{ position: 'relative', aspectRatio: '1 / 1' }}>
               <Image
                 src="/coach.jpg"
-                alt={copy === 'en' ? 'Platform vision' : 'Visione della piattaforma'}
+                alt={t('prelaunchVisionAlt')}
                 fill
                 style={{ objectFit: 'cover' }}
               />
@@ -348,12 +313,10 @@ export default function AccessPage() {
                 backdropFilter: 'blur(10px)'
               }}>
                 <div style={{ color: '#FFFFFF', fontSize: '20px', fontWeight: 800, marginBottom: '8px' }}>
-                  {copy === 'en' ? 'What will you find inside?' : 'Cosa troverai all’interno?'}
+                  {t('prelaunchInsideTitle')}
                 </div>
                 <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, fontSize: '14px' }}>
-                  {copy === 'en'
-                    ? 'A platform designed to bring together match reading, squad structure, tactical context and AI support in one serious working environment.'
-                    : 'Una piattaforma pensata per unire lettura delle partite, struttura della rosa, contesto tattico e supporto AI in un unico ambiente di lavoro serio.'}
+                  {t('prelaunchInsideText')}
                 </p>
               </div>
             </div>
@@ -366,12 +329,10 @@ export default function AccessPage() {
             border: '1px solid rgba(255,255,255,0.08)'
           }}>
             <h3 style={{ margin: '0 0 10px', fontSize: '22px', fontWeight: 800, color: '#FFFFFF' }}>
-              {copy === 'en' ? 'No code yet?' : 'Non hai ancora un codice?'}
+              {t('prelaunchNoCodeTitle')}
             </h3>
             <p style={{ margin: 0, fontSize: '15px', lineHeight: 1.7, color: 'rgba(255,255,255,0.72)' }}>
-              {copy === 'en'
-                ? 'Your registration is already valid. Public access will be enabled when the platform officially opens, while reserved codes remain dedicated to selected early commercial access.'
-                : 'La tua registrazione è già valida. L’accesso pubblico verrà abilitato all’apertura ufficiale della piattaforma, mentre i codici riservati restano dedicati agli accessi commerciali anticipati selezionati.'}
+              {t('prelaunchNoCodeText')}
             </p>
           </div>
         </section>

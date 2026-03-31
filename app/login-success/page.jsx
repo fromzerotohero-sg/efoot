@@ -2,11 +2,17 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from '@/lib/i18n'
 
 export default function LoginSuccessPage() {
   const router = useRouter()
-  const [message, setMessage] = useState('Completing login...')
+  const { t } = useTranslation()
+  const [message, setMessage] = useState('')
   const [error, setError] = useState(null)
+
+  useEffect(() => {
+    setMessage(t('loginSuccessCompleting'))
+  }, [t])
 
   useEffect(() => {
     const checkLogin = () => {
@@ -17,7 +23,7 @@ export default function LoginSuccessPage() {
         
         if (!userData || !authToken) {
           console.error('No user data found in localStorage')
-          setError('Login failed. Please try again.')
+          setError(t('loginSuccessFailed'))
           setTimeout(() => {
             router.push('/login')
           }, 2000)
@@ -26,7 +32,7 @@ export default function LoginSuccessPage() {
         
         const user = JSON.parse(userData)
         if (process.env.NODE_ENV !== 'production') console.log('User logged in successfully:', user.email)
-        setMessage('Login successful! Redirecting...')
+        setMessage(t('loginSuccessDone'))
         
         // Redirect to home page after successful login
         setTimeout(() => {
@@ -35,7 +41,7 @@ export default function LoginSuccessPage() {
         
       } catch (err) {
         console.error('Login check error:', err)
-        setError('Something went wrong. Please try again.')
+        setError(t('loginSuccessGenericError'))
         setTimeout(() => {
           router.push('/login')
         }, 2000)
@@ -44,7 +50,7 @@ export default function LoginSuccessPage() {
 
     const timer = setTimeout(checkLogin, 1000)
     return () => clearTimeout(timer)
-  }, [router])
+  }, [router, t])
 
   if (error) {
     return (
@@ -82,7 +88,7 @@ export default function LoginSuccessPage() {
             {error}
           </h2>
           <p style={{ margin: 0, color: '#6b7280', fontSize: '0.875rem' }}>
-            Redirecting to login page...
+            {t('loginSuccessBackToLogin')}
           </p>
         </div>
       </div>
@@ -119,7 +125,7 @@ export default function LoginSuccessPage() {
           {message}
         </h2>
         <p style={{ margin: 0, color: '#6b7280', fontSize: '0.875rem' }}>
-          Please wait while we set up your account
+          {t('loginSuccessPreparing')}
         </p>
       </div>
       

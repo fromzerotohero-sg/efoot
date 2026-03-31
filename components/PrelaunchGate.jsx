@@ -2,12 +2,14 @@
 
 import React from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+import { useTranslation } from '@/lib/i18n'
 import { supabase } from '@/lib/supabaseClient'
 import { isPrelaunchPublicPath } from '@/lib/prelaunchRoutes'
 
 export default function PrelaunchGate({ children }) {
   const pathname = usePathname()
   const router = useRouter()
+  const { t } = useTranslation()
   const [state, setState] = React.useState({ checking: true, allowRender: false })
 
   React.useEffect(() => {
@@ -119,9 +121,9 @@ export default function PrelaunchGate({ children }) {
             animation: 'spin 1s linear infinite',
             margin: '0 auto 16px'
           }} />
-          <h2 style={{ margin: '0 0 8px', fontSize: '20px', fontWeight: 700 }}>Verifying Access...</h2>
+          <h2 style={{ margin: '0 0 8px', fontSize: '20px', fontWeight: 700 }}>{t('prelaunchGateCheckingTitle')}</h2>
           <p style={{ margin: 0, color: 'rgba(0, 212, 255, 0.7)', fontSize: '14px' }}>
-            Preparing your session.
+            {t('prelaunchGateCheckingText')}
           </p>
         </div>
 
