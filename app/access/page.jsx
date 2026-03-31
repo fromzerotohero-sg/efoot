@@ -340,6 +340,26 @@ export default function AccessPage() {
             <p style={{ margin: 0, fontSize: '15px', lineHeight: 1.7, color: 'rgba(255,255,255,0.72)' }}>
               {t('prelaunchNoCodeText')}
             </p>
+            <a
+              href="https://home.fromzerotohero.io/dashboard"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginTop: '18px',
+                minHeight: '48px',
+                padding: '12px 18px',
+                borderRadius: '14px',
+                background: 'rgba(0, 212, 255, 0.12)',
+                border: '1px solid rgba(0, 212, 255, 0.28)',
+                color: '#FFFFFF',
+                fontSize: '14px',
+                fontWeight: 800,
+                textDecoration: 'none'
+              }}
+            >
+              {t('prelaunchControlPanelButton')}
+            </a>
           </div>
         </section>
       </div>
