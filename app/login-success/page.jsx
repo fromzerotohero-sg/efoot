@@ -30,7 +30,7 @@ export default function LoginSuccessPage() {
         
         // Redirect to home page after successful login
         setTimeout(() => {
-          router.push('/')
+          router.push('/access')
         }, 1500)
         
       } catch (err) {

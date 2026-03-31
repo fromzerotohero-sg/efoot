@@ -29,6 +29,7 @@ export default function SidebarNew() {
   const [expandedMenus, setExpandedMenus] = React.useState({ home: true, profile: false, matches: false })
 
   const handleLogout = () => {
+    fetch('/api/prelaunch/logout', { method: 'POST' }).catch(() => {})
     localStorage.removeItem('auth_token')
     localStorage.removeItem('metalgate_user')
     router.push('/login')

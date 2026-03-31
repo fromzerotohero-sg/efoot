@@ -25,6 +25,7 @@ export default function Sidebar() {
   const [isOpen, setIsOpen] = React.useState(false)
 
   const handleLogout = () => {
+    fetch('/api/prelaunch/logout', { method: 'POST' }).catch(() => {})
     localStorage.removeItem('auth_token')
     localStorage.removeItem('metalgate_user')
     router.push('/login')

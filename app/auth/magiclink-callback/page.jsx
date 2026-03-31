@@ -62,7 +62,7 @@ function MagiclinkCallbackContent() {
       
       // Redirect to dashboard after success
       setTimeout(() => {
-        router.push('/')
+        router.push('/access')
         router.refresh()
       }, 1000)
 
