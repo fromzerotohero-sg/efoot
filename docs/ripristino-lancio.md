@@ -217,6 +217,46 @@ Comportamento atteso a gate spento:
 - `\/access` non deve bloccare
 - logout/login non deve chiedere nessun codice
 
+## Troubleshooting deploy Vercel
+Se il gate sembra non funzionare ma la env `PRELAUNCH_ACCESS_CODE` esiste, il primo controllo da fare non e' il login: e' verificare che il deployment corrente sia davvero quello che contiene il gate.
+
+### Sintomi tipici di deployment sbagliato
+Se vedi uno o piu' di questi comportamenti:
+
+- fai login e vai ancora direttamente in dashboard
+- `\/access` risponde `404`
+- `\/api/prelaunch/status` risponde `404`
+
+allora il dominio non sta servendo il commit del gate.
+
+### Controlli rapidi da fare
+1. In Vercel verifica quale deployment e' marcato `Current`.
+2. Controlla che il deployment `Current` punti al commit del gate:
+   - `79b5464` `Add prelaunch access gate and launch restore guide.`
+3. Se `Current` e' un redeploy di un commit piu' vecchio, il gate non esistera' online anche se la env e' corretta.
+
+### URL di verifica immediata
+Da deployment corretto:
+
+- `https://efootball.fromzerotohero.io/access`
+  - non deve essere `404`
+- `https://efootball.fromzerotohero.io/api/prelaunch/status`
+  - non deve essere `404`
+
+Se anche uno solo di questi URL da `404`, il deployment attivo non contiene il gate.
+
+### Cosa fare se il deployment corrente e' quello sbagliato
+1. Apri in Vercel il deployment del commit:
+   - `79b5464`
+2. Fai `Promote to Production` oppure redeploy proprio quel deployment.
+3. Non redeployare un commit piu' vecchio, altrimenti il dominio restera' senza `\/access` e senza API prelaunch.
+
+### Test corretto dopo il deploy giusto
+1. Apri una finestra anonima.
+2. Fai login completo via Metalgate.
+3. Dopo il redirect dentro l'app, devi finire su `\/access`.
+4. Solo dopo il codice corretto devi entrare in `\/`.
+
 ## Nota finale
 Se vuoi il ripristino piu' sicuro e veloce:
 
