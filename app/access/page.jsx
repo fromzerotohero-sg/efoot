@@ -4,8 +4,8 @@ import React from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { BarChart3, Brain, Shield, Sparkles, Unlock, Users } from 'lucide-react'
+import LanguageSwitch from '@/components/LanguageSwitch'
 import { useTranslation } from '@/lib/i18n'
-import { buildAuthHeaders, resolveAuthToken } from '@/lib/profileUxHelpers'
 
 export default function AccessPage() {
   const { t } = useTranslation()
@@ -52,15 +52,12 @@ export default function AccessPage() {
 
     setLoading(true)
     try {
-      const token = await resolveAuthToken()
-      if (!token) {
-        router.replace('/login')
-        return
-      }
-
       const response = await fetch('/api/prelaunch/unlock', {
         method: 'POST',
-        headers: buildAuthHeaders(token, { json: true }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin',
         body: JSON.stringify({ code: trimmedCode }),
       })
 
@@ -93,6 +90,15 @@ export default function AccessPage() {
       background: 'radial-gradient(circle at top, rgba(0, 212, 255, 0.12), transparent 35%), #03050c',
       padding: 'clamp(20px, 4vw, 40px)'
     }}>
+      <div style={{
+        maxWidth: '1200px',
+        margin: '0 auto 20px',
+        display: 'flex',
+        justifyContent: 'flex-end'
+      }}>
+        <LanguageSwitch />
+      </div>
+
       <div style={{
         maxWidth: '1200px',
         margin: '0 auto',

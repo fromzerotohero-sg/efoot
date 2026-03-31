@@ -3,7 +3,6 @@
 import React from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
-import { supabase } from '@/lib/supabaseClient'
 import { isPrelaunchPublicPath } from '@/lib/prelaunchRoutes'
 
 export default function PrelaunchGate({ children }) {
@@ -20,13 +19,14 @@ export default function PrelaunchGate({ children }) {
       const isAccessPage = pathname === '/access'
 
       try {
-        const hasMetalgateToken = Boolean(typeof window !== 'undefined' && localStorage.getItem('auth_token'))
-        let isAuthenticated = hasMetalgateToken
-
-        if (!isAuthenticated && supabase) {
-          const { data } = await supabase.auth.getSession()
-          isAuthenticated = Boolean(data?.session)
-        }
+        const response = await fetch('/api/prelaunch/status', {
+          cache: 'no-store',
+          credentials: 'same-origin',
+        })
+        const payload = await response.json().catch(() => ({}))
+        const isAuthenticated = Boolean(payload?.isAuthenticated)
+        const gateEnabled = Boolean(payload?.gateEnabled)
+        const hasAccess = Boolean(payload?.hasAccess)
 
         if (!mounted) return
 
@@ -39,16 +39,6 @@ export default function PrelaunchGate({ children }) {
           setState({ checking: false, allowRender: true })
           return
         }
-
-        const response = await fetch('/api/prelaunch/status', {
-          cache: 'no-store',
-          credentials: 'same-origin',
-        })
-        const payload = await response.json().catch(() => ({}))
-        const gateEnabled = Boolean(payload?.gateEnabled)
-        const hasAccess = Boolean(payload?.hasAccess)
-
-        if (!mounted) return
 
         if (!gateEnabled) {
           if (isAccessPage) {

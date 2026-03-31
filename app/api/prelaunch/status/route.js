@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { hasPrelaunchAccess, isPrelaunchGateEnabled } from '@/lib/prelaunchServer'
+import { hasPrelaunchAccess, hasPrelaunchAuth, isPrelaunchGateEnabled } from '@/lib/prelaunchServer'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -9,6 +9,7 @@ export async function GET(request) {
 
   return NextResponse.json({
     gateEnabled,
+    isAuthenticated: hasPrelaunchAuth(request),
     hasAccess: hasPrelaunchAccess(request),
   })
 }

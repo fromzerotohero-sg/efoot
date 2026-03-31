@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
+import { buildAuthHeaders } from '@/lib/profileUxHelpers'
 
 export default function LoginSuccessPage() {
   const router = useRouter()
@@ -15,7 +16,7 @@ export default function LoginSuccessPage() {
   }, [t])
 
   useEffect(() => {
-    const checkLogin = () => {
+    const checkLogin = async () => {
       try {
         // Check if user data exists in localStorage
         const userData = localStorage.getItem('metalgate_user')
@@ -33,6 +34,16 @@ export default function LoginSuccessPage() {
         const user = JSON.parse(userData)
         if (process.env.NODE_ENV !== 'production') console.log('User logged in successfully:', user.email)
         setMessage(t('loginSuccessDone'))
+
+        const sessionResponse = await fetch('/api/prelaunch/session', {
+          method: 'POST',
+          headers: buildAuthHeaders(authToken),
+          credentials: 'same-origin',
+        })
+
+        if (!sessionResponse.ok) {
+          throw new Error('Failed to initialize prelaunch session')
+        }
         
         // Redirect to home page after successful login
         setTimeout(() => {
@@ -48,7 +59,9 @@ export default function LoginSuccessPage() {
       }
     }
 
-    const timer = setTimeout(checkLogin, 1000)
+    const timer = setTimeout(() => {
+      checkLogin()
+    }, 1000)
     return () => clearTimeout(timer)
   }, [router, t])
 

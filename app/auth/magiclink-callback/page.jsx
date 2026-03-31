@@ -59,6 +59,22 @@ function MagiclinkCallbackContent() {
         if (process.env.NODE_ENV !== 'production') console.log('[MagicLink Callback] Metalgate login completed successfully')
       }
 
+      const { data: refreshedSessionData } = await supabase.auth.getSession()
+      const accessToken = refreshedSessionData?.session?.access_token
+      if (accessToken) {
+        const sessionResponse = await fetch('/api/prelaunch/session', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+          credentials: 'same-origin',
+        })
+
+        if (!sessionResponse.ok) {
+          throw new Error('Failed to initialize prelaunch session')
+        }
+      }
+
       setLoading(false)
       
       // Redirect to dashboard after success

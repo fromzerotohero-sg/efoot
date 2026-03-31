@@ -3,6 +3,7 @@ import { extractBearerToken, validateToken } from '@/lib/authHelper'
 import {
   PRELAUNCH_COOKIE_NAME,
   getPrelaunchCookieOptions,
+  hasPrelaunchAuth,
   isPrelaunchGateEnabled,
 } from '@/lib/prelaunchServer'
 
@@ -11,26 +12,30 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(request) {
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     const accessCode = process.env.PRELAUNCH_ACCESS_CODE?.trim()
+    const isAuthenticated = hasPrelaunchAuth(request)
 
-    if (!supabaseUrl || !anonKey) {
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
-    }
+    if (!isAuthenticated) {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-    const token = extractBearerToken(request)
-    if (!token) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
-    }
+      if (!supabaseUrl || !anonKey) {
+        return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+      }
 
-    const metalgateSession = request.headers.get('x-metalgate-session') === '1'
-    const { userData, error: authError } = await validateToken(token, supabaseUrl, anonKey, {
-      forbidSupabaseFallback: metalgateSession,
-    })
+      const token = extractBearerToken(request)
+      if (!token) {
+        return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+      }
 
-    if (authError || !userData?.user?.id) {
-      return NextResponse.json({ error: 'Invalid or expired authentication' }, { status: 401 })
+      const metalgateSession = request.headers.get('x-metalgate-session') === '1'
+      const { userData, error: authError } = await validateToken(token, supabaseUrl, anonKey, {
+        forbidSupabaseFallback: metalgateSession,
+      })
+
+      if (authError || !userData?.user?.id) {
+        return NextResponse.json({ error: 'Invalid or expired authentication' }, { status: 401 })
+      }
     }
 
     if (!isPrelaunchGateEnabled()) {
