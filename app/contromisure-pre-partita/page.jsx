@@ -491,6 +491,80 @@ export default function CountermeasuresPreMatchPage() {
         </div>
       )}
 
+      <div
+        className="neon-card"
+        style={{
+          padding: 'clamp(18px, 4vw, 24px)',
+          marginBottom: '24px',
+          position: 'relative',
+          overflow: 'hidden',
+          border: '1px solid rgba(255, 215, 100, 0.24)',
+          background: 'linear-gradient(135deg, rgba(28, 21, 10, 0.94), rgba(7, 18, 30, 0.98) 55%, rgba(5, 8, 20, 0.98) 100%)',
+          boxShadow: '0 18px 36px rgba(0, 0, 0, 0.28), 0 0 28px rgba(255, 196, 0, 0.10)'
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'radial-gradient(circle at top right, rgba(255,215,100,0.14), transparent 34%), radial-gradient(circle at bottom left, rgba(0,212,255,0.12), transparent 30%)',
+            pointerEvents: 'none'
+          }}
+        />
+
+        <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '18px', flexWrap: 'wrap' }}>
+          <div style={{ flex: '1 1 320px', minWidth: 0 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '10px', padding: '6px 10px', borderRadius: '999px', background: 'rgba(255,215,100,0.10)', border: '1px solid rgba(255,215,100,0.22)', color: '#FFD76A', fontSize: '12px', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+              <Sparkles size={14} />
+              {t('liveCoachPremiumBadge')}
+            </div>
+            <h2 style={{ margin: 0, fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: 800, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <Radio size={20} color="#FFD76A" />
+              {t('liveCoachDashboardTitle')}
+            </h2>
+            <p style={{ margin: '10px 0 0', maxWidth: '780px', color: 'rgba(255,255,255,0.76)', lineHeight: 1.65, fontSize: 'clamp(13px, 3vw, 14px)' }}>
+              {t('liveCoachDashboardSubtitle')}
+            </p>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '14px' }}>
+              <span style={{ padding: '8px 12px', borderRadius: '999px', background: 'rgba(255,255,255,0.05)', color: '#FFFFFF', fontSize: '12px', fontWeight: 700 }}>
+                {t('liveCoachHpHint')}
+              </span>
+              <span style={{ padding: '8px 12px', borderRadius: '999px', background: 'rgba(0,212,255,0.08)', color: 'var(--neon-cyan)', fontSize: '12px', fontWeight: 700 }}>
+                {t('liveCoachVoiceSubtitle')}
+              </span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('open-live-coach'))
+              }
+            }}
+            className="neon-button"
+            style={{
+              flex: '0 0 auto',
+              minWidth: '220px',
+              minHeight: '60px',
+              borderRadius: '18px',
+              border: '1px solid rgba(255,215,100,0.30)',
+              background: 'linear-gradient(135deg, rgba(255,215,100,0.16), rgba(0,212,255,0.12))',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              fontWeight: 800,
+              fontSize: '15px'
+            }}
+          >
+            <Mic size={18} />
+            {t('liveCoachDashboardCta')}
+          </button>
+        </div>
+      </div>
+
       {/* Contromisure Generate */}
       {countermeasures && (
         <>
@@ -807,80 +881,6 @@ export default function CountermeasuresPreMatchPage() {
             <span>
               <strong>{t('dataQuality')}:</strong> {countermeasures.data_quality || 'N/A'}
             </span>
-          </div>
-
-          <div
-            className="neon-card"
-            style={{
-              padding: 'clamp(18px, 4vw, 24px)',
-              marginBottom: '24px',
-              position: 'relative',
-              overflow: 'hidden',
-              border: '1px solid rgba(255, 215, 100, 0.24)',
-              background: 'linear-gradient(135deg, rgba(28, 21, 10, 0.94), rgba(7, 18, 30, 0.98) 55%, rgba(5, 8, 20, 0.98) 100%)',
-              boxShadow: '0 18px 36px rgba(0, 0, 0, 0.28), 0 0 28px rgba(255, 196, 0, 0.10)'
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'radial-gradient(circle at top right, rgba(255,215,100,0.14), transparent 34%), radial-gradient(circle at bottom left, rgba(0,212,255,0.12), transparent 30%)',
-                pointerEvents: 'none'
-              }}
-            />
-
-            <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '18px', flexWrap: 'wrap' }}>
-              <div style={{ flex: '1 1 320px', minWidth: 0 }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '10px', padding: '6px 10px', borderRadius: '999px', background: 'rgba(255,215,100,0.10)', border: '1px solid rgba(255,215,100,0.22)', color: '#FFD76A', fontSize: '12px', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                  <Sparkles size={14} />
-                  {t('liveCoachPremiumBadge')}
-                </div>
-                <h2 style={{ margin: 0, fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: 800, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                  <Radio size={20} color="#FFD76A" />
-                  {t('liveCoachDashboardTitle')}
-                </h2>
-                <p style={{ margin: '10px 0 0', maxWidth: '780px', color: 'rgba(255,255,255,0.76)', lineHeight: 1.65, fontSize: 'clamp(13px, 3vw, 14px)' }}>
-                  {t('liveCoachDashboardSubtitle')}
-                </p>
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '14px' }}>
-                  <span style={{ padding: '8px 12px', borderRadius: '999px', background: 'rgba(255,255,255,0.05)', color: '#FFFFFF', fontSize: '12px', fontWeight: 700 }}>
-                    {t('liveCoachHpHint')}
-                  </span>
-                  <span style={{ padding: '8px 12px', borderRadius: '999px', background: 'rgba(0,212,255,0.08)', color: 'var(--neon-cyan)', fontSize: '12px', fontWeight: 700 }}>
-                    {t('liveCoachVoiceSubtitle')}
-                  </span>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new CustomEvent('open-live-coach'))
-                  }
-                }}
-                className="neon-button"
-                style={{
-                  flex: '0 0 auto',
-                  minWidth: '220px',
-                  minHeight: '60px',
-                  borderRadius: '18px',
-                  border: '1px solid rgba(255,215,100,0.30)',
-                  background: 'linear-gradient(135deg, rgba(255,215,100,0.16), rgba(0,212,255,0.12))',
-                  color: '#FFFFFF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '10px',
-                  fontWeight: 800,
-                  fontSize: '15px'
-                }}
-              >
-                <Mic size={18} />
-                {t('liveCoachDashboardCta')}
-              </button>
-            </div>
           </div>
 
           {/* Dopo la partita: flusso post-match coerente con dashboard (aggiungi partita + Palestra) */}
