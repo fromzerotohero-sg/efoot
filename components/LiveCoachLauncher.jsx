@@ -872,6 +872,130 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                       <option value="ballad">{t('liveCoachVoiceBallad')}</option>
                     </select>
 
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      padding: '6px 0 2px'
+                    }}>
+                      <div
+                        onClick={!isConnected && !isConnecting ? startRealtime : undefined}
+                        style={{
+                          position: 'relative',
+                          width: '92px',
+                          height: '92px',
+                          cursor: (!isConnected && !isConnecting) ? 'pointer' : 'default',
+                          opacity: isConnecting ? 0.7 : 1
+                        }}
+                      >
+                        <div style={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          width: '52px',
+                          height: '52px',
+                          borderRadius: '50%',
+                          background: isConnected
+                            ? 'radial-gradient(circle at 30% 30%, rgba(0,255,136,0.9), rgba(0,200,100,0.8))'
+                            : isConnecting
+                            ? 'radial-gradient(circle at 30% 30%, rgba(255,170,0,0.9), rgba(200,130,0,0.8))'
+                            : 'radial-gradient(circle at 30% 30%, rgba(0,212,255,0.9), rgba(0,150,200,0.8))',
+                          boxShadow: isConnected
+                            ? '0 0 40px rgba(0,255,136,0.5), 0 0 80px rgba(0,255,136,0.3)'
+                            : '0 0 30px rgba(0,212,255,0.4), 0 0 60px rgba(0,212,255,0.2)',
+                          animation: isConnected
+                            ? 'voiceOrbActive 0.6s ease-in-out infinite'
+                            : isConnecting
+                            ? 'voiceOrbProcess 1s ease-in-out infinite'
+                            : 'voiceOrbBreathe 3s ease-in-out infinite',
+                          zIndex: 10
+                        }}>
+                          <div style={{
+                            position: 'absolute',
+                            top: '20%',
+                            left: '20%',
+                            width: '25%',
+                            height: '25%',
+                            borderRadius: '50%',
+                            background: 'rgba(255,255,255,0.8)',
+                            filter: 'blur(3px)'
+                          }} />
+                        </div>
+
+                        <div style={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          width: '68px',
+                          height: '68px',
+                          borderRadius: '50%',
+                          border: '2px solid transparent',
+                          borderTopColor: isConnected ? 'rgba(0,255,136,0.6)' : 'rgba(0,212,255,0.5)',
+                          borderRightColor: isConnected ? 'rgba(0,255,136,0.2)' : 'rgba(0,212,255,0.2)',
+                          animation: 'voiceOrbRotate 8s linear infinite'
+                        }} />
+
+                        <div style={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          width: '82px',
+                          height: '82px',
+                          borderRadius: '50%',
+                          border: '2px solid transparent',
+                          borderBottomColor: isConnected ? 'rgba(0,255,136,0.4)' : 'rgba(0,212,255,0.4)',
+                          animation: 'voiceOrbRotateReverse 12s linear infinite'
+                        }} />
+
+                        {isConnected && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            width: '92px',
+                            height: '92px',
+                            borderRadius: '50%',
+                            border: '2px solid rgba(0,255,136,0.3)',
+                            animation: 'voiceOrbExpand 1.5s ease-out infinite'
+                          }} />
+                        )}
+
+                        {[...Array(6)].map((_, i) => (
+                          <div key={i} style={{
+                            position: 'absolute',
+                            width: '4px',
+                            height: '4px',
+                            background: isConnected ? '#00ff88' : '#00d4ff',
+                            borderRadius: '50%',
+                            top: '50%',
+                            left: '50%',
+                            boxShadow: `0 0 6px ${isConnected ? '#00ff88' : '#00d4ff'}`,
+                            animation: 'voiceOrbParticleOrbit 3s linear infinite',
+                            animationDelay: `${i * 0.5}s`,
+                            transformOrigin: '0 0'
+                          }} />
+                        ))}
+
+                        <div style={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          zIndex: 20
+                        }}>
+                          {isConnecting ? (
+                            <Loader2 size={22} color="#ffffff" style={{ animation: 'spin 1s linear infinite' }} />
+                          ) : (
+                            <Mic size={22} color="#ffffff" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
                     {!isConnected ? (
                       <button
                         type="button"
