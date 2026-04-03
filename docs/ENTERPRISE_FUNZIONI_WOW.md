@@ -274,41 +274,7 @@ Analisi partite → Pattern negativi → Task specifici
 
 ---
 
-## 🎯 FUNZIONE 9: Classifica Mensile & Leaderboard
-
-### 💎 Titolo Enterprise
-**"Competi con i migliori. Scala la classifica. Diventa una leggenda."**
-
-### 📝 Descrizione Valore
-Sistema **leaderboard mensile** con:
-- Rank globale e per divisione
-- Punti HP guadagnati con vittorie e completamento task
-- Premi per top 10 (crediti bonus, badge esclusivi)
-- Aggiornamento real-time
-
-**Social Proof:** Vedi dove sei rispetto agli altri giocatori.
-
-### ⚙️ Ranking Algorithm
-```sql
-SELECT 
-  user_id,
-  SUM(points) as total_points,
-  RANK() OVER (ORDER BY SUM(points) DESC) as position
-FROM user_activities
-WHERE period = '2026-03'
-GROUP BY user_id
-ORDER BY total_points DESC
-LIMIT 100;
-```
-
-### 💰 Valore Cliente
-- Competizione sana
-- Reward per engagement
-- Community building
-
----
-
-## 🎯 FUNZIONE 10: Dashboard Intelligence
+## 🎯 FUNZIONE 9: Dashboard Intelligence
 
 ### 💎 Titolo Enterprise
 **"Il centro di comando della tua squadra"**
