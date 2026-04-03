@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useTranslation } from '@/lib/i18n'
-import { X, ChevronRight, ChevronLeft, Shield, Camera, MessageSquare, Bot, Sparkles } from 'lucide-react'
+import { X, ChevronRight, ChevronLeft, Shield, Camera, MessageSquare, Bot, Sparkles, Radio } from 'lucide-react'
 
 const OnboardingFlow = () => {
   const { t } = useTranslation()
@@ -43,6 +43,14 @@ const OnboardingFlow = () => {
       description: t('onboardingStep4Desc'),
       color: '#a855f7',
       bgGradient: 'linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(126, 34, 206, 0.1) 100%)'
+    },
+    {
+      icon: '🎙️',
+      lucideIcon: Radio,
+      title: t('onboardingStep5Title'),
+      description: t('onboardingStep5Desc'),
+      color: '#FFD76A',
+      bgGradient: 'linear-gradient(135deg, rgba(255, 215, 100, 0.25) 0%, rgba(0, 212, 255, 0.15) 100%)'
     }
   ]
 
