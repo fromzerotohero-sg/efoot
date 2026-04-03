@@ -7,7 +7,7 @@ import { useTranslation } from '@/lib/i18n'
 import { getValidAccessToken, supabase } from '@/lib/supabaseClient'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 
-const DEFAULT_VOICE = 'cedar'
+const DEFAULT_VOICE = 'marin'
 
 function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -748,12 +748,18 @@ export default function LiveCoachLauncher() {
                 <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handlePhotoPick} />
               </div>
 
-              <div style={{ borderRadius: '20px', border: '1px solid rgba(255,255,255,0.08)', background: 'linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))', padding: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap' }}>
-                  <div>
-                    <div style={{ fontSize: '15px', fontWeight: 700, color: '#FFFFFF' }}>{t('liveCoachVoiceTitle')}</div>
-                    <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.66)' }}>{t('liveCoachVoiceSubtitle')}</div>
-                  </div>
+              {/* Voice Orb Section */}
+              <div style={{ 
+                borderRadius: '24px', 
+                border: '1px solid rgba(255,215,100,0.25)', 
+                background: 'linear-gradient(180deg, rgba(255,215,100,0.08), rgba(0,212,255,0.04))', 
+                padding: '24px',
+                position: 'relative',
+                overflow: 'hidden'
+              }}>
+                {/* Selettore voce */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>{t('liveCoachVoiceTitle')}</div>
                   <select
                     value={voice}
                     onChange={(e) => setVoice(e.target.value)}
@@ -763,7 +769,8 @@ export default function LiveCoachLauncher() {
                       background: 'rgba(255,255,255,0.06)',
                       color: '#FFFFFF',
                       border: '1px solid rgba(255,255,255,0.12)',
-                      padding: '10px 12px'
+                      padding: '8px 12px',
+                      fontSize: '13px'
                     }}
                   >
                     <option value="cedar">{t('liveCoachVoiceCedar')}</option>
@@ -771,29 +778,199 @@ export default function LiveCoachLauncher() {
                   </select>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                {/* Voice Orb Container */}
+                <div style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center',
+                  padding: '20px 0'
+                }}>
+                  {/* Orb Animato */}
+                  <div 
+                    onClick={!isConnected && !isConnecting ? startRealtime : undefined}
+                    style={{
+                      position: 'relative',
+                      width: '140px',
+                      height: '140px',
+                      cursor: (!isConnected && !isConnecting) ? 'pointer' : 'default',
+                      opacity: isConnecting ? 0.7 : 1
+                    }}
+                  >
+                    {/* Core */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '70px',
+                      height: '70px',
+                      borderRadius: '50%',
+                      background: isConnected 
+                        ? 'radial-gradient(circle at 30% 30%, rgba(0,255,136,0.9), rgba(0,200,100,0.8))'
+                        : isConnecting
+                        ? 'radial-gradient(circle at 30% 30%, rgba(255,170,0,0.9), rgba(200,130,0,0.8))'
+                        : 'radial-gradient(circle at 30% 30%, rgba(0,212,255,0.9), rgba(0,150,200,0.8))',
+                      boxShadow: isConnected
+                        ? '0 0 40px rgba(0,255,136,0.5), 0 0 80px rgba(0,255,136,0.3)'
+                        : '0 0 30px rgba(0,212,255,0.4), 0 0 60px rgba(0,212,255,0.2)',
+                      animation: isConnected 
+                        ? 'voiceOrbActive 0.6s ease-in-out infinite'
+                        : isConnecting
+                        ? 'voiceOrbProcess 1s ease-in-out infinite'
+                        : 'voiceOrbBreathe 3s ease-in-out infinite',
+                      zIndex: 10
+                    }}>
+                      <div style={{
+                        position: 'absolute',
+                        top: '20%',
+                        left: '20%',
+                        width: '25%',
+                        height: '25%',
+                        borderRadius: '50%',
+                        background: 'rgba(255,255,255,0.8)',
+                        filter: 'blur(3px)'
+                      }} />
+                    </div>
+
+                    {/* Ring 1 */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '100px',
+                      height: '100px',
+                      borderRadius: '50%',
+                      border: '2px solid transparent',
+                      borderTopColor: isConnected ? 'rgba(0,255,136,0.6)' : 'rgba(0,212,255,0.5)',
+                      borderRightColor: isConnected ? 'rgba(0,255,136,0.2)' : 'rgba(0,212,255,0.2)',
+                      animation: 'voiceOrbRotate 8s linear infinite'
+                    }} />
+
+                    {/* Ring 2 */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '120px',
+                      height: '120px',
+                      borderRadius: '50%',
+                      border: '2px solid transparent',
+                      borderBottomColor: isConnected ? 'rgba(0,255,136,0.4)' : 'rgba(0,212,255,0.4)',
+                      animation: 'voiceOrbRotateReverse 12s linear infinite'
+                    }} />
+
+                    {/* Ring 3 - Espansione quando connesso */}
+                    {isConnected && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: '140px',
+                        height: '140px',
+                        borderRadius: '50%',
+                        border: '2px solid rgba(0,255,136,0.3)',
+                        animation: 'voiceOrbExpand 1.5s ease-out infinite'
+                      }} />
+                    )}
+
+                    {/* Particelle */}
+                    {[...Array(6)].map((_, i) => (
+                      <div key={i} style={{
+                        position: 'absolute',
+                        width: '4px',
+                        height: '4px',
+                        background: isConnected ? '#00ff88' : '#00d4ff',
+                        borderRadius: '50%',
+                        top: '50%',
+                        left: '50%',
+                        boxShadow: `0 0 6px ${isConnected ? '#00ff88' : '#00d4ff'}`,
+                        animation: `voiceOrbParticle 3s ease-out infinite`,
+                        animationDelay: `${i * 0.5}s`,
+                        transform: `rotate(${i * 60}deg) translateX(50px)`
+                      }} />
+                    ))}
+
+                    {/* Icona centrale */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      zIndex: 20
+                    }}>
+                      {isConnecting ? (
+                        <Loader2 size={28} color="#ffffff" style={{ animation: 'spin 1s linear infinite' }} />
+                      ) : isConnected ? (
+                        <Mic size={28} color="#ffffff" />
+                      ) : (
+                        <Mic size={28} color="#ffffff" />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Status Text */}
+                  <div style={{ 
+                    marginTop: '16px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '8px',
+                    padding: '8px 16px',
+                    background: 'rgba(5,8,20,0.8)',
+                    borderRadius: '20px',
+                    border: '1px solid rgba(255,255,255,0.1)'
+                  }}>
+                    <div style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      background: isConnected ? '#00ff88' : isConnecting ? '#ffaa00' : '#00d4ff',
+                      boxShadow: `0 0 8px ${isConnected ? '#00ff88' : isConnecting ? '#ffaa00' : '#00d4ff'}`,
+                      animation: 'voiceOrbDotPulse 2s ease-in-out infinite'
+                    }} />
+                    <span style={{ 
+                      fontSize: '14px', 
+                      fontWeight: 600, 
+                      color: 'rgba(255,255,255,0.9)'
+                    }}>
+                      {isConnected 
+                        ? t('liveCoachStatusLive') 
+                        : isConnecting 
+                        ? t('liveCoachStatusConnecting')
+                        : t('liveCoachStatusIdle')}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Controlli */}
+                <div style={{ display: 'grid', gridTemplateColumns: isConnected ? '1fr 1fr' : '1fr', gap: '10px', marginTop: '16px' }}>
                   {!isConnected ? (
                     <button
                       type="button"
                       onClick={startRealtime}
                       disabled={isConnecting}
                       style={{
-                        gridColumn: '1 / -1',
-                        minHeight: '66px',
-                        borderRadius: '18px',
-                        border: '1px solid rgba(255,215,100,0.35)',
-                        background: 'linear-gradient(135deg, rgba(255,215,100,0.18), rgba(0,212,255,0.12))',
+                        minHeight: '52px',
+                        borderRadius: '14px',
+                        border: '1px solid rgba(255,215,100,0.4)',
+                        background: 'linear-gradient(135deg, rgba(255,215,100,0.2), rgba(0,212,255,0.15))',
                         color: '#FFFFFF',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '10px',
-                        fontSize: '16px',
-                        fontWeight: 800
+                        gap: '8px',
+                        fontSize: '15px',
+                        fontWeight: 700,
+                        cursor: isConnecting ? 'not-allowed' : 'pointer'
                       }}
                     >
-                      {isConnecting ? <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> : <Mic size={18} />}
-                      {isConnecting ? t('liveCoachConnecting') : t('liveCoachStartTalking')}
+                      {isConnecting ? (
+                        <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> {t('liveCoachConnecting')}</>
+                      ) : (
+                        <><Radio size={16} /> {t('liveCoachStartTalking')}</>
+                      )}
                     </button>
                   ) : (
                     <>
@@ -801,55 +978,94 @@ export default function LiveCoachLauncher() {
                         type="button"
                         onClick={toggleMute}
                         style={{
-                          minHeight: '56px',
-                          borderRadius: '16px',
-                          border: '1px solid rgba(255,255,255,0.14)',
-                          background: 'rgba(255,255,255,0.05)',
+                          minHeight: '48px',
+                          borderRadius: '12px',
+                          border: '1px solid rgba(255,255,255,0.15)',
+                          background: isMuted ? 'rgba(255,170,0,0.15)' : 'rgba(255,255,255,0.05)',
                           color: '#FFFFFF',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          gap: '10px',
-                          fontWeight: 700
+                          gap: '8px',
+                          fontWeight: 600,
+                          fontSize: '14px'
                         }}
                       >
-                        {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
+                        {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
                         {isMuted ? t('liveCoachUnmute') : t('liveCoachMute')}
                       </button>
                       <button
                         type="button"
                         onClick={() => stopRealtime(true)}
                         style={{
-                          minHeight: '56px',
-                          borderRadius: '16px',
-                          border: '1px solid rgba(255,59,48,0.28)',
+                          minHeight: '48px',
+                          borderRadius: '12px',
+                          border: '1px solid rgba(255,59,48,0.3)',
                           background: 'rgba(255,59,48,0.12)',
                           color: '#FFFFFF',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          gap: '10px',
-                          fontWeight: 700
+                          gap: '8px',
+                          fontWeight: 600,
+                          fontSize: '14px'
                         }}
                       >
-                        <X size={18} />
+                        <X size={16} />
                         {t('liveCoachStop')}
                       </button>
                     </>
                   )}
                 </div>
 
-                <div style={{ marginTop: '14px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                  <div style={{ padding: '8px 12px', borderRadius: '999px', background: isConnected ? 'rgba(52,199,89,0.12)' : 'rgba(255,215,100,0.1)', color: isConnected ? '#7DFF9A' : '#FFD76A', fontSize: '12px', fontWeight: 700 }}>
-                    {isConnected ? t('liveCoachStatusLive') : t('liveCoachStatusReady')}
+                {/* Info badges */}
+                <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <div style={{ padding: '6px 10px', borderRadius: '999px', background: 'rgba(255,215,100,0.1)', color: '#FFD76A', fontSize: '11px', fontWeight: 700 }}>
+                    2 HP/min
                   </div>
-                  <div style={{ padding: '8px 12px', borderRadius: '999px', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.8)', fontSize: '12px', fontWeight: 700 }}>
-                    {t('liveCoachHpHint')}
-                  </div>
-                  <div style={{ padding: '8px 12px', borderRadius: '999px', background: 'rgba(0,212,255,0.08)', color: 'var(--neon-cyan)', fontSize: '12px', fontWeight: 700 }}>
+                  <div style={{ padding: '6px 10px', borderRadius: '999px', background: 'rgba(0,212,255,0.08)', color: 'var(--neon-cyan)', fontSize: '11px', fontWeight: 700 }}>
                     {voice}
                   </div>
                 </div>
+
+                {/* Animazioni CSS */}
+                <style jsx>{`
+                  @keyframes voiceOrbBreathe {
+                    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+                    50% { transform: translate(-50%, -50%) scale(1.08); }
+                  }
+                  @keyframes voiceOrbActive {
+                    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.9; }
+                    50% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+                  }
+                  @keyframes voiceOrbProcess {
+                    0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+                    25% { transform: translate(-50%, -50%) scale(1.05) rotate(5deg); }
+                    75% { transform: translate(-50%, -50%) scale(1.05) rotate(-5deg); }
+                  }
+                  @keyframes voiceOrbRotate {
+                    from { transform: translate(-50%, -50%) rotate(0deg); }
+                    to { transform: translate(-50%, -50%) rotate(360deg); }
+                  }
+                  @keyframes voiceOrbRotateReverse {
+                    from { transform: translate(-50%, -50%) rotate(360deg); }
+                    to { transform: translate(-50%, -50%) rotate(0deg); }
+                  }
+                  @keyframes voiceOrbExpand {
+                    0% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; }
+                    100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; }
+                  }
+                  @keyframes voiceOrbParticle {
+                    0% { opacity: 0; transform: rotate(var(--rotation, 0deg)) translateX(40px) scale(0); }
+                    20% { opacity: 1; }
+                    80% { opacity: 0.5; }
+                    100% { opacity: 0; transform: rotate(var(--rotation, 0deg)) translateX(80px) scale(0); }
+                  }
+                  @keyframes voiceOrbDotPulse {
+                    0%, 100% { opacity: 1; transform: scale(1); }
+                    50% { opacity: 0.5; transform: scale(1.2); }
+                  }
+                `}</style>
               </div>
 
               <div style={{ borderRadius: '20px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', padding: '16px' }}>

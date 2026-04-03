@@ -9,7 +9,7 @@ import { LIVE_COACH_HEARTBEAT_INTERVAL_MS, LIVE_COACH_MINUTE_COST, LIVE_COACH_ST
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const DEFAULT_VOICE = 'cedar'
+const DEFAULT_VOICE = 'marin'
 const DEFAULT_MODEL = 'gpt-realtime'
 
 async function resolveUser(req) {
