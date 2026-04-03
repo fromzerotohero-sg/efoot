@@ -6,7 +6,8 @@ import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import ConfirmModal from '@/components/ConfirmModal'
-import { ArrowLeft, Upload, AlertCircle, CheckCircle2, X, Trash2, Star, Info, Plus, Zap } from 'lucide-react'
+import { ArrowLeft, Upload, Camera, AlertCircle, CheckCircle2, X, Trash2, Star, Info, Plus, Zap } from 'lucide-react'
+import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 
 export default function AllenatoriPage() {
   const { t, lang } = useTranslation()
@@ -72,7 +73,7 @@ export default function AllenatoriPage() {
     fetchCoaches()
   }, [router])
 
-  const handleImageSelect = (files) => {
+  const handleImageSelect = async (files) => {
     const fileArray = Array.from(files || [])
     if (fileArray.length === 0) return
 
@@ -88,24 +89,38 @@ export default function AllenatoriPage() {
       return
     }
 
-    validFiles.forEach((file, index) => {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const newImage = {
-          id: Date.now() + index,
+    setError(null)
+    const preparedImages = []
+
+    for (const file of validFiles) {
+      try {
+        const optimized = await optimizeImageFile(file)
+        preparedImages.push({
+          id: Date.now() + preparedImages.length,
           file,
-          dataUrl: e.target.result,
-          type: uploadImages.length === 0 ? 'main' : 'connection' // Prima foto = main, seconda = connection
-        }
-        setUploadImages(prev => [...prev, newImage])
+          dataUrl: optimized.dataUrl,
+          type: (uploadImages.length + preparedImages.length) === 0 ? 'main' : 'connection'
+        })
+      } catch (err) {
+        console.error('[Allenatori] image optimization error:', err)
+        setError(t('imageTooLarge'))
+        return
       }
-      reader.readAsDataURL(file)
-    })
+    }
+
+    if (preparedImages.length > 0) {
+      setUploadImages(prev => [...prev, ...preparedImages].slice(0, 2))
+    }
   }
 
-  const handleFileInputChange = (e) => {
-    handleImageSelect(e.target.files)
+  const handleFileInputChange = async (e) => {
+    await handleImageSelect(e.target.files)
     // Reset input per permettere di selezionare lo stesso file di nuovo
+    e.target.value = ''
+  }
+
+  const handleCameraInputChange = async (e) => {
+    await handleImageSelect(e.target.files)
     e.target.value = ''
   }
 
@@ -739,6 +754,15 @@ export default function AllenatoriPage() {
                 style={{ display: 'none' }}
                 disabled={uploading || uploadImages.length >= 2}
               />
+              <input
+                id="coach-camera-input"
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleCameraInputChange}
+                style={{ display: 'none' }}
+                disabled={uploading || uploadImages.length >= 2}
+              />
             </div>
             </div>
 
@@ -751,6 +775,15 @@ export default function AllenatoriPage() {
               paddingTop: '8px',
               borderTop: '1px solid rgba(0, 212, 255, 0.1)'
             }}>
+              <button
+                onClick={() => document.getElementById('coach-camera-input')?.click()}
+                className="neon-button"
+                disabled={uploading || uploadImages.length >= 2}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+              >
+                <Camera size={16} />
+                {t('cameraCaptureTitle')}
+              </button>
               <button
                 onClick={() => {
                   setShowUploadModal(false)

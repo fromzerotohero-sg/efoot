@@ -5,6 +5,7 @@ import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { getRelevantSections, classifyQuestion } from '@/lib/ragHelper'
 import { deductCredits, AI_COST } from '@/lib/creditService'
+import { getCoachPoliciesText, getCoachSharedCoreText } from '@/lib/coachPromptRules'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -649,37 +650,16 @@ ${profileLines.join('\n')}`
  * - Il RAG può escluderle (limite caratteri, ordine sezioni in getRelevantSectionsForContext)
  * - Devono applicarsi SEMPRE, indipendentemente dalla domanda
  */
-const COACH_AI_POLICIES_IT = `POLITICHE OBBLIGATORIE (mai violare):
-• REGOLA ORO: MAI "potenziare/allenare/migliorare" un giocatore. Solo: chi schierare, dove, quali istruzioni. Statistiche e card sono FISSE.
-• TERMINOLOGIA: Niente "esperienza/carriera/maturità". Niente "Resistenza si recupera" (è FISSA). Nomi ufficiali IT: Opportunista (non Poacher), Punta avanzata, Rapace d'area, Classico n° 10, Sviluppo (solo DC), ecc. Passaggio filtrante = ABILITÀ, non statistica.
-• STILI vs ABILITÀ: Opportunista, Box-to-Box, Punta avanzata = stili §2, NON abilità. Mai "abilità di Opportunista". Abilità = Tiro al volo, Passaggio filtrante, Contrasto Aggressivo, Marcatura (§8).
-• FUORI RUOLO: se giocatore fuori competenza, "stile non si attiva" (mai "passiva spenta" con utente). Suggerire posizione corretta o Istruzioni (Deep Line, Anchoring).
-• team_playing_style: SOLO 5 – Possesso palla, Contropiede veloce, Contrattacco, Passaggio lungo, Vie laterali. Niente Pressing Alto, Gegenpressing, Tiki-Taka come stile configurabile.
-• ISTRUZIONI INDIVIDUALI: solo Offensivo, Difensivo, Ancoraggio, Marcatura stretta, Marcatura uomo, Contropiede, Linea bassa. Niente "passaggi corti" o "cross" come istruzioni (usare Stile squadra).
-• ABILITÀ: solo quelle §8. NON inventare. Trending NON riceve abilità aggiuntive. Max 6 abilità per giocatore.
-• ROSA: usare SOLO giocatori dal CONTESTO. NON suggerire "cercare/filtrare per abilità" – l'app non ha quella funzionalità.
-• META: NON spingere un solo stile. Personalizza per rosa + competenza allenatore >=70.
-• NON INFERIRE: win rate, competenze, performance storiche = indicatori. Mai "X perché Y". Solo: descrivi dati + suggerisci.`
-
-const COACH_AI_POLICIES_EN = `MANDATORY POLICIES (never violate):
-• GOLDEN RULE: NEVER "improve/train/boost" a player. Only: who to field, where, which instructions. Stats and card are FIXED.
-• TERMINOLOGY: No "experience/career/maturity". No "Stamina recovers" (it's FIXED). Official names: Goal Poacher, Adv Striker, Fox in the Box, Classic No. 10, Build Up (CB only), etc. Through Ball = SKILL, not stat.
-• STYLES vs SKILLS: Goal Poacher, Box-to-Box, Adv Striker = styles §2, NOT skills. Never "skill of Goal Poacher". Skills = First-time Shot, Through Ball, Aggressive Tackle, Man Marking (§8).
-• OUT OF POSITION: if player out of competence, "style does not activate" (never "passive off" to user). Suggest correct position or Instructions (Deep Line, Anchoring).
-• team_playing_style: ONLY 5 – Possession, Quick Counter, Long Ball Counter, Long Ball, Out Wide. No Gegenpress, Tiki-Taka as configurable style.
-• INDIVIDUAL INSTRUCTIONS: only Offensive, Defensive, Anchoring, Man Marking, Tight Marking, Counter Target, Deep Line. No "short passes" or "crosses" as instructions (use Team style).
-• SKILLS: only those §8. Do NOT invent. Trending does NOT receive extra skills. Max 6 skills per player.
-• ROSTER: use ONLY players from CONTEXT. Do NOT suggest "search/filter by skill" – app lacks that feature.
-• META: Do NOT push one style. Personalize for roster + coach competence >=70.
-• DO NOT INFER: win rate, competences, historical performance = indicators. Never "X because Y". Only: describe data + suggest.`
-
 function buildSystemContentV2(lang) {
-  const policies = lang === 'en' ? COACH_AI_POLICIES_EN : COACH_AI_POLICIES_IT
+  const policies = getCoachPoliciesText(lang)
+  const sharedCore = getCoachSharedCoreText(lang)
 
   const it = `Sei Coach AI per eFootball.
 LINGUA DI RISPOSTA: DEVI TASSATIVAMENTE RISPONDERE IN ${lang === 'en' ? 'INGLESE' : 'ITALIANO'} (lingua UI/parametro "language" dell'app).
 
 ${policies}
+
+${sharedCore}
 
 SCOPE: solo consulenza tattica eFootball basata su ROSA, PARTITE, ALLENATORE, TATTICA e RAG.
 - Gameplay consentito SOLO come "cosa fare" (azioni). VIETATO citare tasti/pulsanti/controller.
@@ -699,6 +679,8 @@ OUTPUT COACH: 2-4 frasi operative, rispondi alla domanda specifica; varia i cons
 RESPONSE LANGUAGE: YOU MUST STRICTLY REPLY IN ${lang === 'en' ? 'ENGLISH' : 'ITALIAN'} (UI language / app "language" parameter).
 
 ${policies}
+
+${sharedCore}
 
 SCOPE: only eFootball tactical advice based on ROSTER, MATCHES, COACH, TACTICS and RAG.
 - Gameplay allowed only as "what to do" (actions). Never mention buttons/inputs/controller.

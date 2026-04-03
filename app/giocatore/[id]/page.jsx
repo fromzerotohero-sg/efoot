@@ -8,6 +8,7 @@ import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import { Upload, AlertCircle, CheckCircle2, RefreshCw, BarChart3, Zap, Gift, ChevronDown, ChevronUp, Award, Pencil, ArrowLeft } from 'lucide-react'
 import { getPhotoTypeStyle } from '@/lib/playerPhotoTypes'
 import { MAX_IMAGE_UPLOAD_BYTES } from '@/lib/uploadConstants'
+import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import ManualPlayerModal from '@/components/ManualPlayerModal'
 import ManualBoostersModal from '@/components/ManualBoostersModal'
 
@@ -86,27 +87,28 @@ export default function PlayerDetailPage() {
     fetchPlayer()
   }, [playerId, router, t])
 
-  const processImageFile = (file, type) => {
+  const processImageFile = async (file, type) => {
     if (!file || !file.type.startsWith('image/')) return
     if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
-      setError(t('imageTooLarge'))
-      return
+      // Continua: proviamo a ottimizzare client-side prima di bloccare l'utente
     }
     setError(null)
-    const reader = new FileReader()
-    reader.onload = (e) => {
+    try {
+      const optimized = await optimizeImageFile(file)
       setImages([{
         file,
-        dataUrl: e.target.result,
+        dataUrl: optimized.dataUrl,
         name: file.name || 'camera.jpg',
         type
       }])
       setUploadType(type)
+    } catch (err) {
+      console.error('[PlayerDetail] image optimization error:', err)
+      setError(t('imageTooLarge'))
     }
-    reader.readAsDataURL(file)
   }
 
-  const handleFileSelect = (e, type) => {
+  const handleFileSelect = async (e, type) => {
     const files = Array.from(e.target.files || [])
     const imageFiles = files.filter(file => file.type.startsWith('image/'))
     if (imageFiles.length === 0) {
@@ -117,7 +119,7 @@ export default function PlayerDetailPage() {
       setError(t('uploadOneImageOnly'))
       return
     }
-    processImageFile(imageFiles[0], type)
+    await processImageFile(imageFiles[0], type)
     e.target.value = ''
   }
 
