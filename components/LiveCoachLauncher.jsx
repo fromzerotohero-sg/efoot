@@ -476,6 +476,41 @@ export default function LiveCoachLauncher() {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.65; transform: scale(1.18); }
         }
+        @keyframes voiceOrbBreathe {
+          0%, 100% { transform: translate(-50%, -50%) scale(1); }
+          50% { transform: translate(-50%, -50%) scale(1.08); }
+        }
+        @keyframes voiceOrbActive {
+          0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.9; }
+          50% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+        }
+        @keyframes voiceOrbProcess {
+          0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+          25% { transform: translate(-50%, -50%) scale(1.05) rotate(5deg); }
+          75% { transform: translate(-50%, -50%) scale(1.05) rotate(-5deg); }
+        }
+        @keyframes voiceOrbRotate {
+          from { transform: translate(-50%, -50%) rotate(0deg); }
+          to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        @keyframes voiceOrbRotateReverse {
+          from { transform: translate(-50%, -50%) rotate(360deg); }
+          to { transform: translate(-50%, -50%) rotate(0deg); }
+        }
+        @keyframes voiceOrbExpand {
+          0% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; }
+          100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; }
+        }
+        @keyframes voiceOrbParticle {
+          0% { opacity: 0; transform: rotate(var(--rotation, 0deg)) translateX(40px) scale(0); }
+          20% { opacity: 1; }
+          80% { opacity: 0.5; }
+          100% { opacity: 0; transform: rotate(var(--rotation, 0deg)) translateX(80px) scale(0); }
+        }
+        @keyframes voiceOrbDotPulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(1.2); }
+        }
       `}</style>
 
       <button
@@ -1028,44 +1063,6 @@ export default function LiveCoachLauncher() {
                   </div>
                 </div>
 
-                {/* Animazioni CSS */}
-                <style jsx>{`
-                  @keyframes voiceOrbBreathe {
-                    0%, 100% { transform: translate(-50%, -50%) scale(1); }
-                    50% { transform: translate(-50%, -50%) scale(1.08); }
-                  }
-                  @keyframes voiceOrbActive {
-                    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.9; }
-                    50% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
-                  }
-                  @keyframes voiceOrbProcess {
-                    0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
-                    25% { transform: translate(-50%, -50%) scale(1.05) rotate(5deg); }
-                    75% { transform: translate(-50%, -50%) scale(1.05) rotate(-5deg); }
-                  }
-                  @keyframes voiceOrbRotate {
-                    from { transform: translate(-50%, -50%) rotate(0deg); }
-                    to { transform: translate(-50%, -50%) rotate(360deg); }
-                  }
-                  @keyframes voiceOrbRotateReverse {
-                    from { transform: translate(-50%, -50%) rotate(360deg); }
-                    to { transform: translate(-50%, -50%) rotate(0deg); }
-                  }
-                  @keyframes voiceOrbExpand {
-                    0% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; }
-                    100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; }
-                  }
-                  @keyframes voiceOrbParticle {
-                    0% { opacity: 0; transform: rotate(var(--rotation, 0deg)) translateX(40px) scale(0); }
-                    20% { opacity: 1; }
-                    80% { opacity: 0.5; }
-                    100% { opacity: 0; transform: rotate(var(--rotation, 0deg)) translateX(80px) scale(0); }
-                  }
-                  @keyframes voiceOrbDotPulse {
-                    0%, 100% { opacity: 1; transform: scale(1); }
-                    50% { opacity: 0.5; transform: scale(1.2); }
-                  }
-                `}</style>
               </div>
 
               <div style={{ borderRadius: '20px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', padding: '16px' }}>
