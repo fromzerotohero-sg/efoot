@@ -14,7 +14,7 @@ const overlayStyle = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  zIndex: 1100,
+  zIndex: 11110,
   padding: 16,
   boxSizing: 'border-box'
 }
