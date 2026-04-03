@@ -209,6 +209,7 @@ export async function POST(req) {
 
     return NextResponse.json({
       sessionId: sessionRow.id,
+      startedAt: sessionRow.created_at,
       clientSecret,
       model: DEFAULT_MODEL,
       voice,

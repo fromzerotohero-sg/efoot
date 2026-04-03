@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Crown, ImagePlus, Loader2, Mic, MicOff, Radio, Sparkles, UploadCloud, X } from 'lucide-react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { usePathname } from 'next/navigation'
+import { Clock3, Crown, ImagePlus, Loader2, Mic, MicOff, Radio, Sparkles, UploadCloud, X, Zap } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n'
 import { getValidAccessToken, supabase } from '@/lib/supabaseClient'
 import { safeJsonResponse } from '@/lib/fetchHelper'
@@ -17,8 +18,20 @@ function fileToDataUrl(file) {
   })
 }
 
+function formatDuration(ms) {
+  const totalSeconds = Math.max(0, Math.floor((ms || 0) / 1000))
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  if (hours > 0) return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+}
+
 export default function LiveCoachLauncher() {
   const { t, lang } = useTranslation()
+  const pathname = usePathname()
+  const isDashboard = pathname === '/'
+
   const [isOpen, setIsOpen] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
   const [isConnected, setIsConnected] = useState(false)
@@ -30,6 +43,10 @@ export default function LiveCoachLauncher() {
   const [coachLine, setCoachLine] = useState('')
   const [sessionInfo, setSessionInfo] = useState(null)
   const [voice, setVoice] = useState(DEFAULT_VOICE)
+  const [creditsData, setCreditsData] = useState(null)
+  const [creditsLoading, setCreditsLoading] = useState(true)
+  const [sessionStartedAt, setSessionStartedAt] = useState(null)
+  const [nowTick, setNowTick] = useState(Date.now())
 
   const fileInputRef = useRef(null)
   const pcRef = useRef(null)
@@ -38,31 +55,97 @@ export default function LiveCoachLauncher() {
   const audioElRef = useRef(null)
   const heartbeatRef = useRef(null)
   const sessionIdRef = useRef(null)
+  const stopInProgressRef = useRef(false)
 
   const premiumLabel = useMemo(() => lang === 'en' ? 'Premium' : 'Premium', [lang])
+  const balanceRemaining = Number.isFinite(Number(creditsData?.balance_remaining)) ? Number(creditsData.balance_remaining) : null
+  const currentSessionSpent = Number.isFinite(Number(sessionInfo?.totalHpCharged)) ? Number(sessionInfo.totalHpCharged) : 0
+  const elapsedMs = sessionStartedAt ? Math.max(0, nowTick - sessionStartedAt) : 0
+  const liveDuration = formatDuration(elapsedMs)
+  const launcherWidth = isDashboard ? 'min(312px, calc(100vw - 28px))' : 'min(268px, calc(100vw - 28px))'
 
-  useEffect(() => {
-    return () => {
-      stopRealtime(false)
-    }
-  }, [])
-
-  const getToken = async () => {
+  const getToken = useCallback(async () => {
     let token = localStorage.getItem('auth_token')
     if (!token && supabase) {
       token = await getValidAccessToken()
     }
     return token
-  }
+  }, [])
 
-  const stopHeartbeat = () => {
+  const fetchCredits = useCallback(async (signal) => {
+    try {
+      const token = await getToken()
+      if (signal?.aborted || !token) {
+        setCreditsLoading(false)
+        return
+      }
+      const res = await fetch('/api/credits/usage', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({}),
+        cache: 'no-store',
+        ...(signal ? { signal } : {})
+      })
+      if (signal?.aborted) return
+      const payload = await safeJsonResponse(res, t('creditsError'))
+      if (signal?.aborted) return
+      setCreditsData(payload)
+    } catch (err) {
+      if (err?.name !== 'AbortError') {
+        console.error('[LiveCoachLauncher] credits error:', err)
+      }
+    } finally {
+      if (!signal?.aborted) setCreditsLoading(false)
+    }
+  }, [getToken, t])
+
+  useEffect(() => {
+    const ac = new AbortController()
+    fetchCredits(ac.signal)
+    const onCreditsConsumed = () => fetchCredits(ac.signal)
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') fetchCredits(ac.signal)
+    }
+    window.addEventListener('credits-consumed', onCreditsConsumed)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      ac.abort()
+      window.removeEventListener('credits-consumed', onCreditsConsumed)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [fetchCredits])
+
+  useEffect(() => {
+    const openLauncher = () => setIsOpen(true)
+    if (typeof window !== 'undefined') {
+      window.addEventListener('open-live-coach', openLauncher)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('open-live-coach', openLauncher)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isConnected || !sessionStartedAt) return
+    const interval = setInterval(() => setNowTick(Date.now()), 1000)
+    return () => clearInterval(interval)
+  }, [isConnected, sessionStartedAt])
+
+  const stopHeartbeat = useCallback(() => {
     if (heartbeatRef.current) {
       clearInterval(heartbeatRef.current)
       heartbeatRef.current = null
     }
-  }
+  }, [])
 
-  const stopRealtime = async (notifyServer = true) => {
+  const stopRealtime = useCallback(async (notifyServer = true) => {
+    if (stopInProgressRef.current) return
+    stopInProgressRef.current = true
     stopHeartbeat()
 
     try {
@@ -108,9 +191,19 @@ export default function LiveCoachLauncher() {
     }
 
     sessionIdRef.current = null
-  }
+    setSessionStartedAt(null)
+    setNowTick(Date.now())
+    await fetchCredits()
+    stopInProgressRef.current = false
+  }, [fetchCredits, getToken, lang, opponentContext, stopHeartbeat, userLine, coachLine])
 
-  const handleRealtimeEvent = (event) => {
+  useEffect(() => {
+    return () => {
+      stopRealtime(false)
+    }
+  }, [stopRealtime])
+
+  const handleRealtimeEvent = useCallback((event) => {
     if (!event || typeof event !== 'object') return
 
     if (event.type === 'conversation.item.input_audio_transcription.completed' && event.transcript) {
@@ -139,9 +232,9 @@ export default function LiveCoachLauncher() {
     if (event.type === 'error') {
       setError(event.error?.message || t('liveCoachRealtimeError'))
     }
-  }
+  }, [t])
 
-  const startHeartbeat = (intervalMs) => {
+  const startHeartbeat = useCallback((intervalMs) => {
     stopHeartbeat()
     heartbeatRef.current = setInterval(async () => {
       if (!sessionIdRef.current) return
@@ -162,10 +255,19 @@ export default function LiveCoachLauncher() {
         if (res.status === 402) {
           const payload = await res.json().catch(() => ({}))
           setError(payload?.error || t('liveCoachEndedNoCredits'))
+          setSessionInfo(prev => ({
+            ...(prev || {}),
+            ended: true
+          }))
           await stopRealtime(false)
           return
         }
         const payload = await safeJsonResponse(res, t('liveCoachBillingError'))
+        setSessionInfo(prev => ({
+          ...(prev || {}),
+          totalHpCharged: payload?.totalHpCharged ?? prev?.totalHpCharged ?? 0,
+          minuteBlocksBilled: payload?.minuteBlocksBilled ?? prev?.minuteBlocksBilled ?? 0
+        }))
         if (payload?.additionalCost > 0 && typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('credits-consumed'))
         }
@@ -177,7 +279,7 @@ export default function LiveCoachLauncher() {
         console.error('[LiveCoachLauncher] heartbeat error:', err)
       }
     }, intervalMs)
-  }
+  }, [getToken, lang, stopHeartbeat, stopRealtime, t])
 
   const startRealtime = async () => {
     if (isConnecting || isConnected) return
@@ -211,7 +313,12 @@ export default function LiveCoachLauncher() {
       }
 
       sessionIdRef.current = sessionId
-      setSessionInfo(sessionPayload)
+      setSessionStartedAt(sessionPayload?.startedAt ? new Date(sessionPayload.startedAt).getTime() : Date.now())
+      setSessionInfo({
+        ...sessionPayload,
+        totalHpCharged: sessionPayload?.pricing?.startHp ?? 0,
+        minuteBlocksBilled: 0
+      })
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('credits-consumed'))
       }
@@ -270,13 +377,13 @@ export default function LiveCoachLauncher() {
         if (pc.connectionState === 'connected') {
           setIsConnected(true)
           setIsConnecting(false)
-          startHeartbeat(sessionPayload?.heartbeatMs || 55000)
+          startHeartbeat(sessionPayload?.heartbeatMs || 30000)
+          return
         }
-        if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected' || pc.connectionState === 'closed') {
-          setIsConnected(false)
-          if (pc.connectionState !== 'connected') {
-            setError(t('liveCoachRealtimeError'))
-          }
+
+        if ((pc.connectionState === 'failed' || pc.connectionState === 'disconnected' || pc.connectionState === 'closed') && sessionIdRef.current && !stopInProgressRef.current) {
+          setError(t('liveCoachRealtimeError'))
+          void stopRealtime(true)
         }
       })
     } catch (err) {
@@ -351,42 +458,164 @@ export default function LiveCoachLauncher() {
     }
   }
 
+  const statCardStyle = {
+    borderRadius: '18px',
+    border: '1px solid rgba(255,255,255,0.08)',
+    background: 'rgba(255,255,255,0.04)',
+    padding: '14px 16px'
+  }
+
   return (
     <>
+      <style jsx>{`
+        @keyframes liveCoachPulse {
+          0%, 100% { box-shadow: 0 0 28px rgba(255,196,0,0.25), 0 0 0 rgba(0,212,255,0.0); transform: translateY(0); }
+          50% { box-shadow: 0 0 40px rgba(255,196,0,0.35), 0 0 20px rgba(0,212,255,0.12); transform: translateY(-1px); }
+        }
+        @keyframes liveDot {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.65; transform: scale(1.18); }
+        }
+      `}</style>
+
       <button
         type="button"
         onClick={() => setIsOpen(true)}
         aria-label={t('liveCoachOpen')}
+        className={isConnected ? 'live-coach-launcher-active' : undefined}
         style={{
           position: 'fixed',
-          left: '20px',
-          bottom: 'calc(92px + env(safe-area-inset-bottom, 0px))',
-          zIndex: 1001,
-          width: '76px',
-          height: '76px',
-          borderRadius: '24px',
-          border: '1px solid rgba(255, 215, 100, 0.55)',
-          background: 'radial-gradient(circle at 30% 30%, rgba(255,224,130,0.35), rgba(15,18,40,0.98) 55%, rgba(8,10,22,1) 100%)',
-          boxShadow: '0 0 32px rgba(255, 196, 0, 0.35), inset 0 0 24px rgba(255,255,255,0.08)',
+          left: '14px',
+          bottom: 'calc(88px + env(safe-area-inset-bottom, 0px))',
+          zIndex: 1002,
+          width: launcherWidth,
+          minHeight: isDashboard ? '102px' : '92px',
+          borderRadius: '26px',
+          border: isConnected ? '1px solid rgba(88,255,181,0.42)' : '1px solid rgba(255, 215, 100, 0.55)',
+          background: isConnected
+            ? 'linear-gradient(135deg, rgba(18,33,42,0.98), rgba(6,15,24,0.98))'
+            : 'radial-gradient(circle at 20% 20%, rgba(255,224,130,0.30), rgba(15,18,40,0.98) 58%, rgba(8,10,22,1) 100%)',
+          boxShadow: isConnected
+            ? '0 0 40px rgba(67, 255, 160, 0.18), inset 0 0 24px rgba(255,255,255,0.06)'
+            : '0 0 34px rgba(255, 196, 0, 0.28), inset 0 0 24px rgba(255,255,255,0.08)',
           display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '4px',
+          alignItems: 'stretch',
+          gap: '14px',
           color: '#FFF4CC',
-          backdropFilter: 'blur(16px)'
+          backdropFilter: 'blur(18px)',
+          padding: '14px 16px',
+          textAlign: 'left',
+          animation: isConnected ? 'liveCoachPulse 2.4s ease-in-out infinite' : 'none'
         }}
       >
         <div style={{
-          position: 'absolute',
-          inset: '-1px',
-          borderRadius: '24px',
-          background: 'linear-gradient(135deg, rgba(255,228,138,0.55), transparent 35%, rgba(0,212,255,0.16) 100%)',
-          pointerEvents: 'none'
-        }} />
-        <Crown size={20} />
-        <Radio size={18} />
-        <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.08em' }}>{premiumLabel}</span>
+          width: isDashboard ? '58px' : '52px',
+          minWidth: isDashboard ? '58px' : '52px',
+          borderRadius: '18px',
+          background: isConnected
+            ? 'linear-gradient(180deg, rgba(60,255,170,0.18), rgba(0,212,255,0.08))'
+            : 'linear-gradient(180deg, rgba(255,215,100,0.18), rgba(0,212,255,0.08))',
+          border: '1px solid rgba(255,255,255,0.08)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          gap: '6px'
+        }}>
+          <Crown size={18} />
+          <Radio size={16} />
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF' }}>{t('liveCoachTitle')}</span>
+                <span style={{
+                  padding: '4px 8px',
+                  borderRadius: '999px',
+                  fontSize: '10px',
+                  letterSpacing: '0.08em',
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  background: 'rgba(255,215,100,0.12)',
+                  border: '1px solid rgba(255,215,100,0.26)',
+                  color: '#FFD76A'
+                }}>
+                  {premiumLabel}
+                </span>
+              </div>
+              <div style={{ marginTop: '4px', fontSize: '12px', color: 'rgba(255,255,255,0.72)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {isConnected ? t('liveCoachLauncherSubtitleActive') : (isDashboard ? t('liveCoachLauncherSubtitleDash') : t('liveCoachLauncherSubtitle'))}
+              </div>
+            </div>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '7px',
+              padding: '6px 9px',
+              borderRadius: '999px',
+              background: isConnected ? 'rgba(52,199,89,0.12)' : 'rgba(255,255,255,0.05)',
+              color: isConnected ? '#7DFF9A' : 'rgba(255,255,255,0.82)',
+              fontSize: '11px',
+              fontWeight: 800
+            }}>
+              <span style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: isConnected ? '#54F5A6' : '#FFD76A',
+                animation: isConnected ? 'liveDot 1.4s ease-in-out infinite' : 'none'
+              }} />
+              {isConnected ? t('liveCoachLiveShort') : t('liveCoachReadyShort')}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 10px',
+              borderRadius: '12px',
+              background: 'rgba(255,255,255,0.05)',
+              color: '#FFFFFF',
+              fontSize: '12px',
+              fontWeight: 700
+            }}>
+              <Zap size={13} color={balanceRemaining !== null && balanceRemaining <= 2 ? '#FFB454' : '#FFD76A'} />
+              {t('liveCoachStatHp')}: {creditsLoading ? '...' : (balanceRemaining ?? '--')}
+            </div>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 10px',
+              borderRadius: '12px',
+              background: isConnected ? 'rgba(0,212,255,0.08)' : 'rgba(255,255,255,0.05)',
+              color: '#FFFFFF',
+              fontSize: '12px',
+              fontWeight: 700
+            }}>
+              <Clock3 size={13} color={isConnected ? 'var(--neon-cyan)' : 'rgba(255,255,255,0.7)'} />
+              {t('liveCoachStatTime')}: {liveDuration}
+            </div>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 10px',
+              borderRadius: '12px',
+              background: 'rgba(255,215,100,0.08)',
+              color: '#FFF2C2',
+              fontSize: '12px',
+              fontWeight: 700
+            }}>
+              <Sparkles size={13} color="#FFD76A" />
+              {t('liveCoachStatSpent')}: {currentSessionSpent}
+            </div>
+          </div>
+        </div>
       </button>
 
       {isOpen && (
@@ -397,7 +626,7 @@ export default function LiveCoachLauncher() {
             position: 'fixed',
             inset: 0,
             zIndex: 10020,
-            background: 'rgba(2, 6, 18, 0.8)',
+            background: 'rgba(2, 6, 18, 0.84)',
             backdropFilter: 'blur(14px)',
             display: 'flex',
             alignItems: 'center',
@@ -407,23 +636,33 @@ export default function LiveCoachLauncher() {
         >
           <div
             style={{
-              width: 'min(100%, 560px)',
-              maxHeight: 'min(90vh, 820px)',
+              width: 'min(100%, 640px)',
+              maxHeight: 'min(92vh, 900px)',
               overflowY: 'auto',
-              borderRadius: '28px',
+              borderRadius: '30px',
               border: '1px solid rgba(255, 215, 100, 0.35)',
-              background: 'linear-gradient(180deg, rgba(9,12,28,0.98), rgba(5,8,20,0.98))',
-              boxShadow: '0 20px 80px rgba(0,0,0,0.55), 0 0 50px rgba(255,196,0,0.12)',
+              background: 'linear-gradient(180deg, rgba(9,12,28,0.99), rgba(5,8,20,0.99))',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.6), 0 0 60px rgba(255,196,0,0.14)',
               padding: '22px'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', alignItems: 'flex-start', marginBottom: '18px' }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: '16px',
+              alignItems: 'flex-start',
+              marginBottom: '18px',
+              padding: '18px',
+              borderRadius: '24px',
+              background: 'linear-gradient(135deg, rgba(255,215,100,0.08), rgba(0,212,255,0.05))',
+              border: '1px solid rgba(255,255,255,0.08)'
+            }}>
               <div>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '8px', padding: '6px 10px', borderRadius: '999px', border: '1px solid rgba(255,215,100,0.28)', background: 'rgba(255,215,100,0.08)', color: '#FFD76A', fontSize: '12px', fontWeight: 700 }}>
                   <Sparkles size={14} />
                   {t('liveCoachPremiumBadge')}
                 </div>
-                <h2 style={{ margin: 0, fontSize: '28px', fontWeight: 800, color: '#FFFFFF' }}>{t('liveCoachTitle')}</h2>
+                <h2 style={{ margin: 0, fontSize: '30px', fontWeight: 800, color: '#FFFFFF' }}>{t('liveCoachTitle')}</h2>
                 <p style={{ margin: '8px 0 0', color: 'rgba(255,255,255,0.72)', lineHeight: 1.5 }}>{t('liveCoachSubtitle')}</p>
               </div>
               <button
@@ -440,14 +679,48 @@ export default function LiveCoachLauncher() {
             </div>
 
             <div style={{ display: 'grid', gap: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px' }}>
+                <div style={statCardStyle}>
+                  <div style={{ fontSize: '11px', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.56)', marginBottom: '8px' }}>{t('liveCoachStatHp')}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Zap size={16} color="#FFD76A" />
+                    <span style={{ fontSize: '26px', fontWeight: 800, color: '#FFFFFF' }}>{creditsLoading ? '...' : (balanceRemaining ?? '--')}</span>
+                  </div>
+                </div>
+                <div style={statCardStyle}>
+                  <div style={{ fontSize: '11px', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.56)', marginBottom: '8px' }}>{t('liveCoachStatTime')}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Clock3 size={16} color="var(--neon-cyan)" />
+                    <span style={{ fontSize: '26px', fontWeight: 800, color: '#FFFFFF' }}>{liveDuration}</span>
+                  </div>
+                </div>
+                <div style={statCardStyle}>
+                  <div style={{ fontSize: '11px', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.56)', marginBottom: '8px' }}>{t('liveCoachStatSpent')}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Sparkles size={16} color="#FFD76A" />
+                    <span style={{ fontSize: '26px', fontWeight: 800, color: '#FFFFFF' }}>{currentSessionSpent}</span>
+                  </div>
+                </div>
+              </div>
+
               <div style={{ borderRadius: '20px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', padding: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
-                  <div style={{ width: '44px', height: '44px', borderRadius: '14px', display: 'grid', placeItems: 'center', background: 'rgba(255,215,100,0.1)', color: '#FFD76A' }}>
+                  <div style={{ width: '46px', height: '46px', borderRadius: '14px', display: 'grid', placeItems: 'center', background: 'rgba(255,215,100,0.1)', color: '#FFD76A' }}>
                     <ImagePlus size={20} />
                   </div>
-                  <div>
+                  <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '15px', fontWeight: 700, color: '#FFFFFF' }}>{t('liveCoachPhotoTitle')}</div>
                     <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.66)' }}>{t('liveCoachPhotoSubtitle')}</div>
+                  </div>
+                  <div style={{
+                    padding: '8px 10px',
+                    borderRadius: '12px',
+                    background: opponentContext?.formation ? 'rgba(0,212,255,0.1)' : 'rgba(255,255,255,0.05)',
+                    color: opponentContext?.formation ? 'var(--neon-cyan)' : 'rgba(255,255,255,0.7)',
+                    fontSize: '12px',
+                    fontWeight: 700
+                  }}>
+                    {opponentContext?.formation ? `${t('liveCoachOpponentReady')} ${opponentContext.formation}` : t('liveCoachOpponentMissing')}
                   </div>
                 </div>
 
@@ -473,19 +746,10 @@ export default function LiveCoachLauncher() {
                   {isUploadingPhoto ? t('liveCoachPhotoUploading') : t('liveCoachPhotoButton')}
                 </button>
                 <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handlePhotoPick} />
-
-                {opponentContext?.formation && (
-                  <div style={{ marginTop: '12px', padding: '12px 14px', borderRadius: '14px', background: 'rgba(0,212,255,0.08)', border: '1px solid rgba(0,212,255,0.2)' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--neon-cyan)' }}>{t('liveCoachPhotoReady')}</div>
-                    <div style={{ marginTop: '4px', color: 'rgba(255,255,255,0.8)', fontSize: '13px' }}>
-                      {t('liveCoachPhotoDetected')}: <strong>{opponentContext.formation}</strong>
-                    </div>
-                  </div>
-                )}
               </div>
 
               <div style={{ borderRadius: '20px', border: '1px solid rgba(255,255,255,0.08)', background: 'linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))', padding: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', marginBottom: '14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap' }}>
                   <div>
                     <div style={{ fontSize: '15px', fontWeight: 700, color: '#FFFFFF' }}>{t('liveCoachVoiceTitle')}</div>
                     <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.66)' }}>{t('liveCoachVoiceSubtitle')}</div>
@@ -515,7 +779,7 @@ export default function LiveCoachLauncher() {
                       disabled={isConnecting}
                       style={{
                         gridColumn: '1 / -1',
-                        minHeight: '62px',
+                        minHeight: '66px',
                         borderRadius: '18px',
                         border: '1px solid rgba(255,215,100,0.35)',
                         background: 'linear-gradient(135deg, rgba(255,215,100,0.18), rgba(0,212,255,0.12))',
@@ -582,16 +846,30 @@ export default function LiveCoachLauncher() {
                   <div style={{ padding: '8px 12px', borderRadius: '999px', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.8)', fontSize: '12px', fontWeight: 700 }}>
                     {t('liveCoachHpHint')}
                   </div>
-                  {sessionInfo?.voice && (
-                    <div style={{ padding: '8px 12px', borderRadius: '999px', background: 'rgba(0,212,255,0.08)', color: 'var(--neon-cyan)', fontSize: '12px', fontWeight: 700 }}>
-                      {sessionInfo.voice}
-                    </div>
-                  )}
+                  <div style={{ padding: '8px 12px', borderRadius: '999px', background: 'rgba(0,212,255,0.08)', color: 'var(--neon-cyan)', fontSize: '12px', fontWeight: 700 }}>
+                    {voice}
+                  </div>
                 </div>
               </div>
 
               <div style={{ borderRadius: '20px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', padding: '16px' }}>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: '#FFFFFF', marginBottom: '12px' }}>{t('liveCoachLiveFeed')}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>{t('liveCoachLiveFeed')}</div>
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 10px',
+                    borderRadius: '999px',
+                    background: 'rgba(255,255,255,0.05)',
+                    color: '#FFFFFF',
+                    fontSize: '12px',
+                    fontWeight: 700
+                  }}>
+                    <Clock3 size={13} color="var(--neon-cyan)" />
+                    {liveDuration}
+                  </div>
+                </div>
                 <div style={{ display: 'grid', gap: '10px' }}>
                   <div style={{ borderRadius: '14px', background: 'rgba(255,255,255,0.03)', padding: '12px 14px' }}>
                     <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(0,212,255,0.9)', marginBottom: '6px' }}>{t('liveCoachYou')}</div>
