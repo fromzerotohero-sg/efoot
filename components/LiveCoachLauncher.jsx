@@ -853,8 +853,12 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                       fontSize: '13px'
                     }}
                   >
-                    <option value="cedar">{t('liveCoachVoiceCedar')}</option>
                     <option value="marin">{t('liveCoachVoiceMarin')}</option>
+                    <option value="cedar">{t('liveCoachVoiceCedar')}</option>
+                    <option value="coral">{t('liveCoachVoiceCoral')}</option>
+                    <option value="verse">{t('liveCoachVoiceVerse')}</option>
+                    <option value="sage">{t('liveCoachVoiceSage')}</option>
+                    <option value="ballad">{t('liveCoachVoiceBallad')}</option>
                   </select>
                 </div>
 

@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic'
 
 const DEFAULT_VOICE = 'marin'
 const DEFAULT_MODEL = 'gpt-realtime'
+const SUPPORTED_VOICES = new Set(['marin', 'cedar', 'coral', 'verse', 'sage', 'ballad'])
 
 async function resolveUser(req) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -52,7 +53,7 @@ async function resolveUser(req) {
 
 function sanitizeVoice(voice) {
   const value = String(voice || '').trim().toLowerCase()
-  return value === 'marin' ? 'marin' : DEFAULT_VOICE
+  return SUPPORTED_VOICES.has(value) ? value : DEFAULT_VOICE
 }
 
 export async function POST(req) {
