@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { usePathname } from 'next/navigation'
 import { Clock3, Crown, ImagePlus, Loader2, Mic, MicOff, Radio, Sparkles, UploadCloud, X, Zap } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n'
 import { getValidAccessToken, supabase } from '@/lib/supabaseClient'
@@ -27,10 +26,8 @@ function formatDuration(ms) {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }
 
-export default function LiveCoachLauncher() {
+export default function LiveCoachLauncher({ showLauncherButton = true }) {
   const { t, lang } = useTranslation()
-  const pathname = usePathname()
-  const isDashboard = pathname === '/'
 
   const [isOpen, setIsOpen] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
@@ -62,7 +59,7 @@ export default function LiveCoachLauncher() {
   const currentSessionSpent = Number.isFinite(Number(sessionInfo?.totalHpCharged)) ? Number(sessionInfo.totalHpCharged) : 0
   const elapsedMs = sessionStartedAt ? Math.max(0, nowTick - sessionStartedAt) : 0
   const liveDuration = formatDuration(elapsedMs)
-  const launcherWidth = isDashboard ? 'min(312px, calc(100vw - 28px))' : 'min(268px, calc(100vw - 28px))'
+  const launcherWidth = 'min(268px, calc(100vw - 28px))'
 
   const getToken = useCallback(async () => {
     let token = localStorage.getItem('auth_token')
@@ -513,145 +510,147 @@ export default function LiveCoachLauncher() {
         }
       `}</style>
 
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        aria-label={t('liveCoachOpen')}
-        className={isConnected ? 'live-coach-launcher-active' : undefined}
-        style={{
-          position: 'fixed',
-          left: '14px',
-          bottom: 'calc(88px + env(safe-area-inset-bottom, 0px))',
-          zIndex: 1002,
-          width: launcherWidth,
-          minHeight: isDashboard ? '102px' : '92px',
-          borderRadius: '26px',
-          border: isConnected ? '1px solid rgba(88,255,181,0.42)' : '1px solid rgba(255, 215, 100, 0.55)',
-          background: isConnected
-            ? 'linear-gradient(135deg, rgba(18,33,42,0.98), rgba(6,15,24,0.98))'
-            : 'radial-gradient(circle at 20% 20%, rgba(255,224,130,0.30), rgba(15,18,40,0.98) 58%, rgba(8,10,22,1) 100%)',
-          boxShadow: isConnected
-            ? '0 0 40px rgba(67, 255, 160, 0.18), inset 0 0 24px rgba(255,255,255,0.06)'
-            : '0 0 34px rgba(255, 196, 0, 0.28), inset 0 0 24px rgba(255,255,255,0.08)',
-          display: 'flex',
-          alignItems: 'stretch',
-          gap: '14px',
-          color: '#FFF4CC',
-          backdropFilter: 'blur(18px)',
-          padding: '14px 16px',
-          textAlign: 'left',
-          animation: isConnected ? 'liveCoachPulse 2.4s ease-in-out infinite' : 'none'
-        }}
-      >
-        <div style={{
-          width: isDashboard ? '58px' : '52px',
-          minWidth: isDashboard ? '58px' : '52px',
-          borderRadius: '18px',
-          background: isConnected
-            ? 'linear-gradient(180deg, rgba(60,255,170,0.18), rgba(0,212,255,0.08))'
-            : 'linear-gradient(180deg, rgba(255,215,100,0.18), rgba(0,212,255,0.08))',
-          border: '1px solid rgba(255,255,255,0.08)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'column',
-          gap: '6px'
-        }}>
-          <Crown size={18} />
-          <Radio size={16} />
-        </div>
+      {showLauncherButton && (
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          aria-label={t('liveCoachOpen')}
+          className={isConnected ? 'live-coach-launcher-active' : undefined}
+          style={{
+            position: 'fixed',
+            left: '14px',
+            bottom: 'calc(88px + env(safe-area-inset-bottom, 0px))',
+            zIndex: 1002,
+            width: launcherWidth,
+            minHeight: '92px',
+            borderRadius: '26px',
+            border: isConnected ? '1px solid rgba(88,255,181,0.42)' : '1px solid rgba(255, 215, 100, 0.55)',
+            background: isConnected
+              ? 'linear-gradient(135deg, rgba(18,33,42,0.98), rgba(6,15,24,0.98))'
+              : 'radial-gradient(circle at 20% 20%, rgba(255,224,130,0.30), rgba(15,18,40,0.98) 58%, rgba(8,10,22,1) 100%)',
+            boxShadow: isConnected
+              ? '0 0 40px rgba(67, 255, 160, 0.18), inset 0 0 24px rgba(255,255,255,0.06)'
+              : '0 0 34px rgba(255, 196, 0, 0.28), inset 0 0 24px rgba(255,255,255,0.08)',
+            display: 'flex',
+            alignItems: 'stretch',
+            gap: '14px',
+            color: '#FFF4CC',
+            backdropFilter: 'blur(18px)',
+            padding: '14px 16px',
+            textAlign: 'left',
+            animation: isConnected ? 'liveCoachPulse 2.4s ease-in-out infinite' : 'none'
+          }}
+        >
+          <div style={{
+            width: '52px',
+            minWidth: '52px',
+            borderRadius: '18px',
+            background: isConnected
+              ? 'linear-gradient(180deg, rgba(60,255,170,0.18), rgba(0,212,255,0.08))'
+              : 'linear-gradient(180deg, rgba(255,215,100,0.18), rgba(0,212,255,0.08))',
+            border: '1px solid rgba(255,255,255,0.08)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'column',
+            gap: '6px'
+          }}>
+            <Crown size={18} />
+            <Radio size={16} />
+          </div>
 
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF' }}>{t('liveCoachTitle')}</span>
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF' }}>{t('liveCoachTitle')}</span>
+                  <span style={{
+                    padding: '4px 8px',
+                    borderRadius: '999px',
+                    fontSize: '10px',
+                    letterSpacing: '0.08em',
+                    fontWeight: 800,
+                    textTransform: 'uppercase',
+                    background: 'rgba(255,215,100,0.12)',
+                    border: '1px solid rgba(255,215,100,0.26)',
+                    color: '#FFD76A'
+                  }}>
+                    {premiumLabel}
+                  </span>
+                </div>
+                <div style={{ marginTop: '4px', fontSize: '12px', color: 'rgba(255,255,255,0.72)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {isConnected ? t('liveCoachLauncherSubtitleActive') : t('liveCoachLauncherSubtitle')}
+                </div>
+              </div>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '7px',
+                padding: '6px 9px',
+                borderRadius: '999px',
+                background: isConnected ? 'rgba(52,199,89,0.12)' : 'rgba(255,255,255,0.05)',
+                color: isConnected ? '#7DFF9A' : 'rgba(255,255,255,0.82)',
+                fontSize: '11px',
+                fontWeight: 800
+              }}>
                 <span style={{
-                  padding: '4px 8px',
-                  borderRadius: '999px',
-                  fontSize: '10px',
-                  letterSpacing: '0.08em',
-                  fontWeight: 800,
-                  textTransform: 'uppercase',
-                  background: 'rgba(255,215,100,0.12)',
-                  border: '1px solid rgba(255,215,100,0.26)',
-                  color: '#FFD76A'
-                }}>
-                  {premiumLabel}
-                </span>
-              </div>
-              <div style={{ marginTop: '4px', fontSize: '12px', color: 'rgba(255,255,255,0.72)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {isConnected ? t('liveCoachLauncherSubtitleActive') : (isDashboard ? t('liveCoachLauncherSubtitleDash') : t('liveCoachLauncherSubtitle'))}
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  background: isConnected ? '#54F5A6' : '#FFD76A',
+                  animation: isConnected ? 'liveDot 1.4s ease-in-out infinite' : 'none'
+                }} />
+                {isConnected ? t('liveCoachLiveShort') : t('liveCoachReadyShort')}
               </div>
             </div>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '7px',
-              padding: '6px 9px',
-              borderRadius: '999px',
-              background: isConnected ? 'rgba(52,199,89,0.12)' : 'rgba(255,255,255,0.05)',
-              color: isConnected ? '#7DFF9A' : 'rgba(255,255,255,0.82)',
-              fontSize: '11px',
-              fontWeight: 800
-            }}>
-              <span style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                background: isConnected ? '#54F5A6' : '#FFD76A',
-                animation: isConnected ? 'liveDot 1.4s ease-in-out infinite' : 'none'
-              }} />
-              {isConnected ? t('liveCoachLiveShort') : t('liveCoachReadyShort')}
-            </div>
-          </div>
 
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 10px',
-              borderRadius: '12px',
-              background: 'rgba(255,255,255,0.05)',
-              color: '#FFFFFF',
-              fontSize: '12px',
-              fontWeight: 700
-            }}>
-              <Zap size={13} color={balanceRemaining !== null && balanceRemaining <= 2 ? '#FFB454' : '#FFD76A'} />
-              {t('liveCoachStatHp')}: {creditsLoading ? '...' : (balanceRemaining ?? '--')}
-            </div>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 10px',
-              borderRadius: '12px',
-              background: isConnected ? 'rgba(0,212,255,0.08)' : 'rgba(255,255,255,0.05)',
-              color: '#FFFFFF',
-              fontSize: '12px',
-              fontWeight: 700
-            }}>
-              <Clock3 size={13} color={isConnected ? 'var(--neon-cyan)' : 'rgba(255,255,255,0.7)'} />
-              {t('liveCoachStatTime')}: {liveDuration}
-            </div>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 10px',
-              borderRadius: '12px',
-              background: 'rgba(255,215,100,0.08)',
-              color: '#FFF2C2',
-              fontSize: '12px',
-              fontWeight: 700
-            }}>
-              <Sparkles size={13} color="#FFD76A" />
-              {t('liveCoachStatSpent')}: {currentSessionSpent}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 10px',
+                borderRadius: '12px',
+                background: 'rgba(255,255,255,0.05)',
+                color: '#FFFFFF',
+                fontSize: '12px',
+                fontWeight: 700
+              }}>
+                <Zap size={13} color={balanceRemaining !== null && balanceRemaining <= 2 ? '#FFB454' : '#FFD76A'} />
+                {t('liveCoachStatHp')}: {creditsLoading ? '...' : (balanceRemaining ?? '--')}
+              </div>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 10px',
+                borderRadius: '12px',
+                background: isConnected ? 'rgba(0,212,255,0.08)' : 'rgba(255,255,255,0.05)',
+                color: '#FFFFFF',
+                fontSize: '12px',
+                fontWeight: 700
+              }}>
+                <Clock3 size={13} color={isConnected ? 'var(--neon-cyan)' : 'rgba(255,255,255,0.7)'} />
+                {t('liveCoachStatTime')}: {liveDuration}
+              </div>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 10px',
+                borderRadius: '12px',
+                background: 'rgba(255,215,100,0.08)',
+                color: '#FFF2C2',
+                fontSize: '12px',
+                fontWeight: 700
+              }}>
+                <Sparkles size={13} color="#FFD76A" />
+                {t('liveCoachStatSpent')}: {currentSessionSpent}
+              </div>
             </div>
           </div>
-        </div>
-      </button>
+        </button>
+      )}
 
       {isOpen && (
         <div

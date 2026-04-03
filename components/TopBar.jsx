@@ -1,13 +1,15 @@
 'use client'
 
 import React from 'react'
-import { Menu, X, ShoppingCart, Home } from 'lucide-react'
+import { Menu, X, ShoppingCart, Home, Radio } from 'lucide-react'
 import CreditsBar from '@/components/CreditsBar'
 import LanguageSwitch from '@/components/LanguageSwitch'
 import { useSidebar } from '@/components/SidebarContext'
+import { useTranslation } from '@/lib/i18n'
 
 export default function TopBar() {
   const { isOpen, setIsOpen } = useSidebar()
+  const { t } = useTranslation()
 
   return (
     <header 
@@ -98,6 +100,30 @@ export default function TopBar() {
           flexShrink: 0,
           justifyContent: 'flex-end'
         }}>
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent('open-live-coach'))}
+            aria-label={t('liveCoachOpen')}
+            title={t('liveCoachTitle')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '36px',
+              height: '36px',
+              borderRadius: '8px',
+              background: 'rgba(255, 215, 100, 0.12)',
+              border: '1px solid rgba(255, 215, 100, 0.32)',
+              color: '#FFD76A',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              flexShrink: 0,
+              boxShadow: '0 0 14px rgba(255, 196, 0, 0.12)'
+            }}
+          >
+            <Radio size={18} />
+          </button>
+
           {/* CreditsBar - desktop only */}
           <div className="hidden lg:block">
             <CreditsBar />

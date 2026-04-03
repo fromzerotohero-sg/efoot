@@ -44,7 +44,7 @@ export default function AppLayoutShell({ children }) {
       </div>
 
       <BottomNavigation />
-      <LiveCoachLauncher />
+      <LiveCoachLauncher showLauncherButton={false} />
       <AssistantChat mode="popup" />
     </>
   )
