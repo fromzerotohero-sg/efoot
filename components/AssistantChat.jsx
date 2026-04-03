@@ -676,7 +676,7 @@ export default function AssistantChat({ mode = 'popup' }) {
             </div>
             {userProfile?.first_name && (
               <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>
-                Ciao {userProfile.first_name}! 👋
+                {t('assistantGreetingShort', { name: userProfile.first_name })}
               </div>
             )}
           </div>
