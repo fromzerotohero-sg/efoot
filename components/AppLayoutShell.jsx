@@ -6,6 +6,7 @@ import SidebarNew from '@/components/SidebarNew'
 import TopBar from '@/components/TopBar'
 import BottomNavigation from '@/components/BottomNavigation'
 import AssistantChat from '@/components/AssistantChat'
+import LiveCoachLauncher from '@/components/LiveCoachLauncher'
 import PrelaunchGate from '@/components/PrelaunchGate'
 import { isPrelaunchPublicPath } from '@/lib/prelaunchRoutes'
 
@@ -43,6 +44,7 @@ export default function AppLayoutShell({ children }) {
       </div>
 
       <BottomNavigation />
+      <LiveCoachLauncher />
       <AssistantChat mode="popup" />
     </>
   )
