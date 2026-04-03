@@ -59,6 +59,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
   const currentSessionSpent = Number.isFinite(Number(sessionInfo?.totalHpCharged)) ? Number(sessionInfo.totalHpCharged) : 0
   const elapsedMs = sessionStartedAt ? Math.max(0, nowTick - sessionStartedAt) : 0
   const liveDuration = formatDuration(elapsedMs)
+  const hasConversation = Boolean(userLine || coachLine || isConnected || isConnecting)
   const launcherWidth = 'min(268px, calc(100vw - 28px))'
 
   const getToken = useCallback(async () => {
@@ -515,9 +516,13 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
           display: grid;
           gap: 14px;
         }
+        .live-coach-bottom-grid {
+          display: grid;
+          gap: 14px;
+        }
         @media (min-width: 920px) {
-          .live-coach-modal-grid {
-            grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+          .live-coach-bottom-grid {
+            grid-template-columns: minmax(0, 1fr) minmax(250px, 290px);
             align-items: start;
           }
         }
@@ -683,14 +688,14 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
         >
           <div
             style={{
-              width: 'min(100%, 640px)',
-              maxHeight: 'min(92vh, 900px)',
+              width: 'min(100%, 760px)',
+              maxHeight: 'min(88vh, 820px)',
               overflowY: 'auto',
-              borderRadius: '30px',
+              borderRadius: '26px',
               border: '1px solid rgba(255, 215, 100, 0.35)',
               background: 'linear-gradient(180deg, rgba(9,12,28,0.99), rgba(5,8,20,0.99))',
               boxShadow: '0 24px 80px rgba(0,0,0,0.6), 0 0 60px rgba(255,196,0,0.14)',
-              padding: '22px'
+              padding: '18px'
             }}
           >
             <div style={{
@@ -698,9 +703,9 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
               justifyContent: 'space-between',
               gap: '16px',
               alignItems: 'flex-start',
-              marginBottom: '18px',
-              padding: '18px',
-              borderRadius: '24px',
+              marginBottom: '14px',
+              padding: '16px',
+              borderRadius: '20px',
               background: 'linear-gradient(135deg, rgba(255,215,100,0.08), rgba(0,212,255,0.05))',
               border: '1px solid rgba(255,255,255,0.08)'
             }}>
@@ -709,7 +714,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                   <Sparkles size={14} />
                   {t('liveCoachPremiumBadge')}
                 </div>
-                <h2 style={{ margin: 0, fontSize: '30px', fontWeight: 800, color: '#FFFFFF' }}>{t('liveCoachTitle')}</h2>
+                <h2 style={{ margin: 0, fontSize: '26px', fontWeight: 800, color: '#FFFFFF' }}>{t('liveCoachTitle')}</h2>
                 <p style={{ margin: '8px 0 0', color: 'rgba(255,255,255,0.72)', lineHeight: 1.5 }}>{t('liveCoachSubtitle')}</p>
               </div>
               <button
@@ -727,16 +732,16 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
 
             <div style={{ display: 'grid', gap: '14px' }}>
               <div style={{
-                borderRadius: '20px',
+                borderRadius: '18px',
                 border: '1px solid rgba(255,255,255,0.08)',
                 background: 'linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,215,100,0.04))',
-                padding: '16px'
+                padding: '14px 16px'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
                   <div>
                     <div style={{ fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>{t('liveCoachTitle')}</div>
                     <div style={{ marginTop: '4px', fontSize: '13px', color: 'rgba(255,255,255,0.66)', lineHeight: 1.5 }}>
-                      {isConnected ? t('liveCoachLauncherSubtitleActive') : t('liveCoachHpHint')}
+                      {t('liveCoachCommercialIntro')}
                     </div>
                   </div>
                   <div style={{
@@ -761,7 +766,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '14px' }}>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 12px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', color: '#FFFFFF', fontSize: '13px', fontWeight: 700 }}>
                     <Zap size={14} color="#FFD76A" />
                     {t('liveCoachStatHp')}: {creditsLoading ? '...' : (balanceRemaining ?? '--')}
@@ -770,30 +775,71 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                     <Clock3 size={14} color="var(--neon-cyan)" />
                     {t('liveCoachStatTime')}: {liveDuration}
                   </div>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 12px', borderRadius: '14px', background: 'rgba(255,215,100,0.08)', color: '#FFF2C2', fontSize: '13px', fontWeight: 700 }}>
-                    <Sparkles size={14} color="#FFD76A" />
-                    {t('liveCoachStatSpent')}: {currentSessionSpent}
-                  </div>
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 12px', borderRadius: '14px', background: opponentContext?.formation ? 'rgba(0,212,255,0.10)' : 'rgba(255,255,255,0.05)', color: opponentContext?.formation ? 'var(--neon-cyan)' : 'rgba(255,255,255,0.78)', fontSize: '13px', fontWeight: 700 }}>
                     <ImagePlus size={14} color={opponentContext?.formation ? 'var(--neon-cyan)' : '#FFD76A'} />
                     {opponentContext?.formation ? `${t('liveCoachOpponentReady')} ${opponentContext.formation}` : t('liveCoachOpponentMissing')}
                   </div>
+                  {currentSessionSpent > 0 && (
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 12px', borderRadius: '14px', background: 'rgba(255,215,100,0.08)', color: '#FFF2C2', fontSize: '13px', fontWeight: 700 }}>
+                      <Sparkles size={14} color="#FFD76A" />
+                      {t('liveCoachStatSpent')}: {currentSessionSpent}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="live-coach-modal-grid">
+              <div style={{ borderRadius: '20px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', padding: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                  <div style={{ width: '46px', height: '46px', borderRadius: '14px', display: 'grid', placeItems: 'center', background: 'rgba(255,215,100,0.1)', color: '#FFD76A' }}>
+                    <ImagePlus size={20} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '15px', fontWeight: 700, color: '#FFFFFF' }}>{t('liveCoachPhotoTitle')}</div>
+                    <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.66)', lineHeight: 1.5 }}>{t('liveCoachPhotoHelper')}</div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingPhoto}
+                  style={{
+                    width: '100%',
+                    borderRadius: '16px',
+                    border: '1px dashed rgba(255,215,100,0.32)',
+                    background: 'rgba(255,215,100,0.06)',
+                    color: '#FFF3CB',
+                    padding: '14px 16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '10px',
+                    fontWeight: 700
+                  }}
+                >
+                  {isUploadingPhoto ? <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> : <UploadCloud size={18} />}
+                  {isUploadingPhoto ? t('liveCoachPhotoUploading') : t('liveCoachPhotoButton')}
+                </button>
+                <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handlePhotoPick} />
+              </div>
+
+              <div className="live-coach-bottom-grid">
                 {/* Voice Orb Section */}
                 <div style={{ 
                   borderRadius: '24px', 
                   border: '1px solid rgba(255,215,100,0.25)', 
                   background: 'linear-gradient(180deg, rgba(255,215,100,0.08), rgba(0,212,255,0.04))', 
-                  padding: '18px',
+                  padding: '16px',
                   position: 'relative',
-                  overflow: 'hidden'
+                  overflow: 'hidden',
+                  order: 2
                 }}>
                 {/* Selettore voce */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '14px', flexWrap: 'wrap' }}>
-                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>{t('liveCoachVoiceTitle')}</div>
+                  <div>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>{t('liveCoachVoiceTitle')}</div>
+                    <div style={{ marginTop: '4px', fontSize: '12px', color: 'rgba(255,255,255,0.66)', lineHeight: 1.5 }}>{t('liveCoachVoiceHelper')}</div>
+                  </div>
                   <select
                     value={voice}
                     onChange={(e) => setVoice(e.target.value)}
@@ -817,15 +863,15 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                   display: 'flex', 
                   flexDirection: 'column', 
                   alignItems: 'center',
-                  padding: '10px 0 6px'
+                  padding: '4px 0 4px'
                 }}>
                   {/* Orb Animato */}
                   <div 
                     onClick={!isConnected && !isConnecting ? startRealtime : undefined}
                     style={{
                       position: 'relative',
-                      width: '120px',
-                      height: '120px',
+                      width: '92px',
+                      height: '92px',
                       cursor: (!isConnected && !isConnecting) ? 'pointer' : 'default',
                       opacity: isConnecting ? 0.7 : 1
                     }}
@@ -836,8 +882,8 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                       top: '50%',
                       left: '50%',
                       transform: 'translate(-50%, -50%)',
-                      width: '64px',
-                      height: '64px',
+                      width: '52px',
+                      height: '52px',
                       borderRadius: '50%',
                       background: isConnected 
                         ? 'radial-gradient(circle at 30% 30%, rgba(0,255,136,0.9), rgba(0,200,100,0.8))'
@@ -872,8 +918,8 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                       top: '50%',
                       left: '50%',
                       transform: 'translate(-50%, -50%)',
-                      width: '88px',
-                      height: '88px',
+                      width: '68px',
+                      height: '68px',
                       borderRadius: '50%',
                       border: '2px solid transparent',
                       borderTopColor: isConnected ? 'rgba(0,255,136,0.6)' : 'rgba(0,212,255,0.5)',
@@ -887,8 +933,8 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                       top: '50%',
                       left: '50%',
                       transform: 'translate(-50%, -50%)',
-                      width: '104px',
-                      height: '104px',
+                      width: '82px',
+                      height: '82px',
                       borderRadius: '50%',
                       border: '2px solid transparent',
                       borderBottomColor: isConnected ? 'rgba(0,255,136,0.4)' : 'rgba(0,212,255,0.4)',
@@ -902,8 +948,8 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                         top: '50%',
                         left: '50%',
                         transform: 'translate(-50%, -50%)',
-                        width: '120px',
-                        height: '120px',
+                        width: '92px',
+                        height: '92px',
                         borderRadius: '50%',
                         border: '2px solid rgba(0,255,136,0.3)',
                         animation: 'voiceOrbExpand 1.5s ease-out infinite'
@@ -936,18 +982,18 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                       zIndex: 20
                     }}>
                       {isConnecting ? (
-                        <Loader2 size={28} color="#ffffff" style={{ animation: 'spin 1s linear infinite' }} />
+                        <Loader2 size={22} color="#ffffff" style={{ animation: 'spin 1s linear infinite' }} />
                       ) : isConnected ? (
-                        <Mic size={28} color="#ffffff" />
+                        <Mic size={22} color="#ffffff" />
                       ) : (
-                        <Mic size={28} color="#ffffff" />
+                        <Mic size={22} color="#ffffff" />
                       )}
                     </div>
                   </div>
 
                   {/* Status Text */}
                   <div style={{ 
-                    marginTop: '16px', 
+                    marginTop: '12px', 
                     display: 'flex', 
                     alignItems: 'center', 
                     gap: '8px',
@@ -1052,7 +1098,6 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                   )}
                 </div>
 
-                {/* Info badges */}
                 <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
                   <div style={{ padding: '6px 10px', borderRadius: '999px', background: 'rgba(255,215,100,0.1)', color: '#FFD76A', fontSize: '11px', fontWeight: 700 }}>
                     2 HP/min
@@ -1063,45 +1108,17 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                 </div>
                 </div>
 
-                <div className="live-coach-main">
-                  <div style={{ borderRadius: '20px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', padding: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
-                      <div style={{ width: '46px', height: '46px', borderRadius: '14px', display: 'grid', placeItems: 'center', background: 'rgba(255,215,100,0.1)', color: '#FFD76A' }}>
-                        <ImagePlus size={20} />
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: '15px', fontWeight: 700, color: '#FFFFFF' }}>{t('liveCoachPhotoTitle')}</div>
-                        <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.66)', lineHeight: 1.5 }}>{t('liveCoachPhotoSubtitle')}</div>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploadingPhoto}
-                      style={{
-                        width: '100%',
-                        borderRadius: '16px',
-                        border: '1px dashed rgba(255,215,100,0.32)',
-                        background: 'rgba(255,215,100,0.06)',
-                        color: '#FFF3CB',
-                        padding: '16px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '10px',
-                        fontWeight: 700
-                      }}
-                    >
-                      {isUploadingPhoto ? <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> : <UploadCloud size={18} />}
-                      {isUploadingPhoto ? t('liveCoachPhotoUploading') : t('liveCoachPhotoButton')}
-                    </button>
-                    <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handlePhotoPick} />
-                  </div>
-
+                <div className="live-coach-main" style={{ order: 1 }}>
                   <div style={{ borderRadius: '20px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', padding: '16px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
-                      <div style={{ fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>{t('liveCoachLiveFeed')}</div>
+                      <div>
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>{t('liveCoachLiveFeed')}</div>
+                        {!hasConversation && (
+                          <div style={{ marginTop: '4px', fontSize: '12px', color: 'rgba(255,255,255,0.66)', lineHeight: 1.5 }}>
+                            {t('liveCoachFeedHelper')}
+                          </div>
+                        )}
+                      </div>
                       <div style={{
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -1118,11 +1135,11 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                       </div>
                     </div>
                     <div style={{ display: 'grid', gap: '10px' }}>
-                      <div style={{ borderRadius: '14px', background: 'rgba(255,255,255,0.03)', padding: '14px', minHeight: '82px' }}>
+                      <div style={{ borderRadius: '14px', background: 'rgba(255,255,255,0.03)', padding: '14px', minHeight: '76px' }}>
                         <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(0,212,255,0.9)', marginBottom: '6px' }}>{t('liveCoachYou')}</div>
                         <div style={{ color: 'rgba(255,255,255,0.82)', minHeight: '20px', lineHeight: 1.6 }}>{userLine || t('liveCoachWaitingYou')}</div>
                       </div>
-                      <div style={{ borderRadius: '14px', background: 'rgba(255,215,100,0.05)', padding: '14px', minHeight: '96px' }}>
+                      <div style={{ borderRadius: '14px', background: 'rgba(255,215,100,0.05)', padding: '14px', minHeight: '88px' }}>
                         <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFD76A', marginBottom: '6px' }}>{t('liveCoachCoach')}</div>
                         <div style={{ color: 'rgba(255,255,255,0.9)', minHeight: '20px', lineHeight: 1.6 }}>{coachLine || t('liveCoachWaitingCoach')}</div>
                       </div>
