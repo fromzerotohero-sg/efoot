@@ -47,6 +47,8 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
   const stopInProgressRef = useRef(false)
   const responseInFlightRef = useRef(false)
   const lastResponseDoneAtRef = useRef(0)
+  const wakeLockRef = useRef(null)
+  const disconnectTimeoutRef = useRef(null)
 
   const premiumLabel = useMemo(() => lang === 'en' ? 'Premium' : 'Premium', [lang])
   const balanceRemaining = Number.isFinite(Number(creditsData?.balance_remaining)) ? Number(creditsData.balance_remaining) : null
@@ -128,6 +130,13 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
     return () => clearInterval(interval)
   }, [isConnected, sessionStartedAt])
 
+  const clearDisconnectTimeout = useCallback(() => {
+    if (disconnectTimeoutRef.current) {
+      clearTimeout(disconnectTimeoutRef.current)
+      disconnectTimeoutRef.current = null
+    }
+  }, [])
+
   const stopHeartbeat = useCallback(() => {
     if (heartbeatRef.current) {
       clearInterval(heartbeatRef.current)
@@ -135,10 +144,34 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
     }
   }, [])
 
+  const releaseWakeLock = useCallback(async () => {
+    try {
+      await wakeLockRef.current?.release?.()
+    } catch (_) {}
+    wakeLockRef.current = null
+  }, [])
+
+  const requestWakeLock = useCallback(async () => {
+    if (typeof window === 'undefined') return
+    if (document.visibilityState !== 'visible') return
+    try {
+      if ('wakeLock' in navigator && navigator.wakeLock?.request) {
+        wakeLockRef.current = await navigator.wakeLock.request('screen')
+        wakeLockRef.current?.addEventListener?.('release', () => {
+          wakeLockRef.current = null
+        })
+      }
+    } catch (err) {
+      console.warn('[LiveCoachLauncher] wake lock unavailable:', err)
+    }
+  }, [])
+
   const stopRealtime = useCallback(async (notifyServer = true) => {
     if (stopInProgressRef.current) return
     stopInProgressRef.current = true
     stopHeartbeat()
+    clearDisconnectTimeout()
+    await releaseWakeLock()
 
     try {
       dcRef.current?.close?.()
@@ -189,13 +222,40 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
     setNowTick(Date.now())
     await fetchCredits()
     stopInProgressRef.current = false
-  }, [fetchCredits, getToken, lang, opponentContext, stopHeartbeat, userLine, coachLine])
+  }, [clearDisconnectTimeout, fetchCredits, getToken, lang, opponentContext, releaseWakeLock, stopHeartbeat, userLine, coachLine])
 
   useEffect(() => {
     return () => {
       stopRealtime(false)
     }
   }, [stopRealtime])
+
+  useEffect(() => {
+    if (!isConnected) {
+      clearDisconnectTimeout()
+      void releaseWakeLock()
+      return
+    }
+
+    void requestWakeLock()
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void requestWakeLock()
+        if (pcRef.current?.connectionState === 'connected') {
+          clearDisconnectTimeout()
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+      if (document.visibilityState === 'visible') {
+        void releaseWakeLock()
+      }
+    }
+  }, [clearDisconnectTimeout, isConnected, releaseWakeLock, requestWakeLock])
 
   const requestModelResponse = useCallback((transcript = '') => {
     const text = String(transcript || '').trim()
@@ -413,13 +473,21 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
         if (pc.connectionState === 'connected') {
           setIsConnected(true)
           setIsConnecting(false)
+          clearDisconnectTimeout()
+          void requestWakeLock()
           startHeartbeat(sessionPayload?.heartbeatMs || 30000)
           return
         }
 
         if ((pc.connectionState === 'failed' || pc.connectionState === 'disconnected' || pc.connectionState === 'closed') && sessionIdRef.current && !stopInProgressRef.current) {
-          setError(t('liveCoachRealtimeError'))
-          void stopRealtime(true)
+          clearDisconnectTimeout()
+          const delayMs = document.visibilityState === 'visible' ? 8000 : 45000
+          disconnectTimeoutRef.current = setTimeout(() => {
+            if (sessionIdRef.current && !stopInProgressRef.current) {
+              setError(t('liveCoachRealtimeError'))
+              void stopRealtime(true)
+            }
+          }, delayMs)
         }
       })
     } catch (err) {
