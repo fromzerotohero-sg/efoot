@@ -5,6 +5,7 @@ import { useTranslation } from '@/lib/i18n'
 import { supabase } from '@/lib/supabaseClient'
 import { BarChart3, X, Upload, Image as ImageIcon, RefreshCw, CheckCircle2 } from 'lucide-react'
 import { MAX_IMAGE_UPLOAD_BYTES } from '@/lib/uploadConstants'
+import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 
 const SLOTS = [
   { key: 'slot1', labelKey: 'gameAnalysisSlot1', descKey: 'gameAnalysisSlot1Desc' },
@@ -13,38 +14,6 @@ const SLOTS = [
 
 const MAX_DATAURL_BYTES = 1.8 * 1024 * 1024 // ~1.8MB per immagine per stare sotto limite body con 2 foto
 const RESIZE_MAX_WIDTH = 1200
-const RESIZE_QUALITY = 0.82
-
-function resizeDataUrlIfNeeded(dataUrl) {
-  if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image')) return Promise.resolve(dataUrl)
-  const base64 = dataUrl.split(',')[1]
-  if (!base64 || (base64.length * 3) / 4 <= MAX_DATAURL_BYTES) return Promise.resolve(dataUrl)
-  return new Promise((resolve) => {
-    const img = new Image()
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      let w = img.width
-      let h = img.height
-      if (w > RESIZE_MAX_WIDTH) {
-        h = Math.round((h * RESIZE_MAX_WIDTH) / w)
-        w = RESIZE_MAX_WIDTH
-      }
-      canvas.width = w
-      canvas.height = h
-      const ctx = canvas.getContext('2d')
-      if (!ctx) { resolve(dataUrl); return }
-      ctx.drawImage(img, 0, 0, w, h)
-      try {
-        const resized = canvas.toDataURL('image/jpeg', RESIZE_QUALITY)
-        resolve(resized)
-      } catch {
-        resolve(dataUrl)
-      }
-    }
-    img.onerror = () => resolve(dataUrl)
-    img.src = dataUrl
-  })
-}
 
 const overlayStyle = {
   position: 'fixed',
@@ -90,25 +59,28 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
   const getSlot = (key) => (key === 'slot1' ? slot1 : slot2)
   const setSlot = (key, value) => (key === 'slot1' ? setSlot1(value) : setSlot2(value))
 
-  const processImageFile = (file, key) => {
+  const processImageFile = async (file, key) => {
     if (!file || !file.type.startsWith('image/')) return
     if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
-      setError(t('imageTooLarge'))
-      return
+      // Continua: proviamo ad ottimizzare lato client prima di bloccare l'utente
     }
     setError(null)
-    const reader = new FileReader()
-    reader.onload = async (ev) => {
-      let dataUrl = ev.target.result
-      dataUrl = await resizeDataUrlIfNeeded(dataUrl)
+    try {
+      const optimized = await optimizeImageFile(file, {
+        maxBytes: MAX_DATAURL_BYTES,
+        maxLongSide: RESIZE_MAX_WIDTH
+      })
+      const dataUrl = optimized.dataUrl
       setSlot(key, { file, dataUrl, name: file.name || 'camera.jpg' })
+    } catch (err) {
+      console.error('[GameAnalysisModal] image optimization error:', err)
+      setError(t('imageTooLarge'))
     }
-    reader.readAsDataURL(file)
   }
 
-  const handleFileSelect = (e, key) => {
+  const handleFileSelect = async (e, key) => {
     const file = e.target.files?.[0]
-    if (file) processImageFile(file, key)
+    if (file) await processImageFile(file, key)
     e.target.value = ''
   }
 

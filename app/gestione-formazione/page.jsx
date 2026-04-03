@@ -16,6 +16,7 @@ import ManualBoostersModal from '@/components/ManualBoostersModal'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import { PHOTO_TYPE_KEYS, getPhotoTypeConfig } from '@/lib/playerPhotoTypes'
+import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 
 // =====================================================
 // FEATURE FLAG - Sicurezza modifiche window.confirm
@@ -4248,15 +4249,15 @@ function UploadPlayerModal({ slot, images, onImagesChange, onUpload, onClose, up
     Icon: UPLOAD_MODAL_ICONS[key]
   }))
 
-  const handleFileSelect = (e, type) => {
+  const handleFileSelect = async (e, type) => {
     const file = e.target.files?.[0]
     if (!file || !file.type.startsWith('image/')) {
       return
     }
 
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const dataUrl = e.target.result
+    try {
+      const optimized = await optimizeImageFile(file)
+      const dataUrl = optimized.dataUrl
       const existingIndex = images.findIndex(img => img.type === type)
       
       if (existingIndex >= 0) {
@@ -4268,8 +4269,10 @@ function UploadPlayerModal({ slot, images, onImagesChange, onUpload, onClose, up
         // Aggiungi nuova immagine
         onImagesChange([...images, { file, dataUrl, type, name: file.name }])
       }
+    } catch (err) {
+      console.error('[UploadPlayerModal] image optimization error:', err)
     }
-    reader.readAsDataURL(file)
+    e.target.value = ''
   }
 
   const removeImage = (type) => {

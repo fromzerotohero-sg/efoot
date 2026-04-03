@@ -5,17 +5,9 @@ import { Clock3, Crown, ImagePlus, Loader2, Mic, MicOff, Radio, Sparkles, Upload
 import { useTranslation } from '@/lib/i18n'
 import { getValidAccessToken, supabase } from '@/lib/supabaseClient'
 import { safeJsonResponse } from '@/lib/fetchHelper'
+import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 
 const DEFAULT_VOICE = 'marin'
-
-function fileToDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(reader.result)
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
-}
 
 function formatDuration(ms) {
   const totalSeconds = Math.max(0, Math.floor((ms || 0) / 1000))
@@ -458,7 +450,8 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
     try {
       const token = await getToken()
       if (!token) throw new Error(t('sessionExpired'))
-      const imageDataUrl = await fileToDataUrl(file)
+      const optimized = await optimizeImageFile(file)
+      const imageDataUrl = optimized.dataUrl
 
       const extractRes = await fetch('/api/extract-formation', {
         method: 'POST',

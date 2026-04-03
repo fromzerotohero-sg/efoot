@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
 import { ArrowLeft, Upload, AlertCircle, CheckCircle2, RefreshCw, X, SkipForward, Save, Camera, Trophy } from 'lucide-react'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
+import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 
 // STEPS sarà definito dentro il componente per avere accesso a t()
 
@@ -104,22 +105,16 @@ export default function NewMatchPage() {
     }
   }
 
-  const handleImageSelect = (section, slotIndex = null) => (e) => {
+  const handleImageSelect = (section, slotIndex = null) => async (e) => {
     const file = e.target.files?.[0]
     if (!file || !file.type.startsWith('image/')) {
       setError(t('selectValidImage'))
       return
     }
 
-    // Validazione dimensione (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      setError(t('imageTooLarge'))
-      return
-    }
-
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      const dataUrl = ev.target.result
+    try {
+      const optimized = await optimizeImageFile(file)
+      const dataUrl = optimized.dataUrl
       setStepImages(prev => {
         if (section === 'player_ratings' && (slotIndex === 0 || slotIndex === 1)) {
           const arr = Array.isArray(prev.player_ratings) ? [...prev.player_ratings] : []
@@ -129,8 +124,10 @@ export default function NewMatchPage() {
         return { ...prev, [section]: dataUrl }
       })
       setError(null)
+    } catch (err) {
+      console.error('[match/new] image optimization error:', err)
+      setError(t('imageTooLarge'))
     }
-    reader.readAsDataURL(file)
     e.target.value = ''
   }
 

@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import { Upload, AlertCircle, CheckCircle2, RefreshCw, X, Camera, Calendar, Trophy, ChevronDown, ChevronUp, Users, Target, TrendingUp, TrendingDown, Shield, ArrowLeft } from 'lucide-react'
+import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 
 // STEPS sarà definito dentro il componente per avere accesso a t()
 
@@ -84,25 +85,23 @@ export default function MatchDetailPage() {
     fetchMatch()
   }, [matchId, router])
 
-  const handleImageSelect = (section) => (e) => {
+  const handleImageSelect = (section) => async (e) => {
     const file = e.target.files?.[0]
     if (!file || !file.type.startsWith('image/')) {
       setError(t('selectValidImage'))
       return
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      setError(t('imageTooLarge'))
-      return
-    }
-
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      setUploadImage(e.target.result)
+    try {
+      const optimized = await optimizeImageFile(file)
+      setUploadImage(optimized.dataUrl)
       setUploadSection(section)
       setError(null)
+    } catch (err) {
+      console.error('[match/[id]] image optimization error:', err)
+      setError(t('imageTooLarge'))
     }
-    reader.readAsDataURL(file)
+    e.target.value = ''
   }
 
   const handleExtractAndUpdate = async () => {

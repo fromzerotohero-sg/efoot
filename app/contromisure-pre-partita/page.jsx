@@ -9,6 +9,7 @@ import { safeJsonResponse } from '@/lib/fetchHelper'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import CoachFeedbackChat from '@/components/CoachFeedbackChat'
 import { INDIVIDUAL_INSTRUCTIONS_CONFIG } from '@/lib/tacticalInstructions'
+import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import { ArrowLeft, Upload, AlertCircle, CheckCircle2, RefreshCw, X, Camera, Shield, Target, Users, Settings, ChevronDown, ChevronUp, Brain, MessageCircle, Trophy, Radio, Sparkles, Mic } from 'lucide-react'
 
 /** Estrae testo in lingua da valore stringa o oggetto bilingue { it, en } (coerente con analyze-match) */
@@ -79,15 +80,9 @@ export default function CountermeasuresPreMatchPage() {
     }
   }, [router])
 
-  const handleImageSelect = (e) => {
+  const handleImageSelect = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-
-    // Validazione dimensione (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      setError(t('errorImageTooLarge'))
-      return
-    }
 
     // Validazione tipo
     if (!file.type.startsWith('image/')) {
@@ -95,17 +90,19 @@ export default function CountermeasuresPreMatchPage() {
       return
     }
 
-    const reader = new FileReader()
-    reader.onload = async (event) => {
-      const imageDataUrl = event.target?.result
-      if (!imageDataUrl) return
+    try {
+      const optimized = await optimizeImageFile(file)
+      const imageDataUrl = optimized.dataUrl
       setUploadImage(imageDataUrl)
       setError(null)
       setExtractedFormation(null)
       setCountermeasures(null)
       await runFullPipeline(imageDataUrl)
+    } catch (err) {
+      console.error('[contromisure-pre-partita] image optimization error:', err)
+      setError(t('errorImageTooLarge'))
     }
-    reader.readAsDataURL(file)
+    e.target.value = ''
   }
 
   /** Pipeline completo: estrazione + generazione contromisure (avvio automatico al caricamento) */
