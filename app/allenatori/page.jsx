@@ -676,9 +676,12 @@ export default function AllenatoriPage() {
                   <div style={{ fontSize: '12px', opacity: 0.6 }}>
                     {t('maxTwoPhotosFormat')}
                   </div>
+                  <div style={{ fontSize: '12px', opacity: 0.75, marginTop: '12px', color: 'rgba(255,255,255,0.85)' }}>
+                    {lang === 'en' ? 'Tap here to upload screenshots from gallery or files.' : 'Tocca qui per caricare screenshot da galleria o file.'}
+                  </div>
                 </>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
                   {uploadImages.map((img) => (
                     <div key={img.id} style={{ position: 'relative' }}>
                       <img
@@ -688,7 +691,7 @@ export default function AllenatoriPage() {
                           width: '100%',
                           borderRadius: '8px',
                           border: '2px solid rgba(0, 212, 255, 0.3)',
-                          maxHeight: '200px',
+                          maxHeight: '180px',
                           objectFit: 'contain'
                         }}
                       />
@@ -732,7 +735,7 @@ export default function AllenatoriPage() {
                         justifyContent: 'center',
                         cursor: 'pointer',
                         background: 'rgba(0, 212, 255, 0.03)',
-                        minHeight: '200px'
+                        minHeight: '160px'
                       }}
                       onClick={(e) => {
                         e.stopPropagation()
@@ -771,6 +774,7 @@ export default function AllenatoriPage() {
               display: 'flex', 
               gap: '12px', 
               justifyContent: 'flex-end',
+              flexWrap: 'wrap',
               flexShrink: 0,
               paddingTop: '8px',
               borderTop: '1px solid rgba(0, 212, 255, 0.1)'
@@ -779,10 +783,19 @@ export default function AllenatoriPage() {
                 onClick={() => document.getElementById('coach-camera-input')?.click()}
                 className="neon-button"
                 disabled={uploading || uploadImages.length >= 2}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flex: '1 1 150px', minHeight: '52px' }}
               >
                 <Camera size={16} />
                 {t('cameraCaptureTitle')}
+              </button>
+              <button
+                onClick={() => document.getElementById('coach-file-input')?.click()}
+                className="neon-button"
+                disabled={uploading || uploadImages.length >= 2}
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flex: '1 1 150px', minHeight: '52px' }}
+              >
+                <Upload size={16} />
+                {t('upload')}
               </button>
               <button
                 onClick={() => {
@@ -791,6 +804,7 @@ export default function AllenatoriPage() {
                 }}
                 className="neon-button"
                 disabled={uploading}
+                style={{ flex: '1 1 150px', minHeight: '52px' }}
               >
                 {t('cancel')}
               </button>
@@ -798,6 +812,7 @@ export default function AllenatoriPage() {
                 onClick={handleUploadCoach}
                 className="btn primary"
                 disabled={uploadImages.length === 0 || uploading}
+                style={{ flex: '1 1 150px', minHeight: '52px' }}
               >
                 {uploading ? t('loading') : t('upload')}
               </button>

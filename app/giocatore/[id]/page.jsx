@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
-import { Upload, AlertCircle, CheckCircle2, RefreshCw, BarChart3, Zap, Gift, ChevronDown, ChevronUp, Award, Pencil, ArrowLeft } from 'lucide-react'
+import { Upload, Camera, AlertCircle, CheckCircle2, RefreshCw, BarChart3, Zap, Gift, ChevronDown, ChevronUp, Award, Pencil, ArrowLeft } from 'lucide-react'
 import { getPhotoTypeStyle } from '@/lib/playerPhotoTypes'
 import { MAX_IMAGE_UPLOAD_BYTES } from '@/lib/uploadConstants'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
@@ -867,8 +867,8 @@ function StatsSection({ player, photoSlots, isExpanded, onToggle, onFileSelect, 
           {/* Pulsante Carica (galleria / fotocamera / file via picker di sistema) */}
           <div style={{ display: 'flex', gap: '12px', alignItems: 'stretch', flexWrap: 'wrap' }}>
             <label style={{
-              flex: '1',
-              minWidth: '120px',
+              flex: '1 1 150px',
+              minWidth: '150px',
               padding: '12px 16px',
               border: `2px solid ${style.borderColor}`,
               borderRadius: '8px',
@@ -891,6 +891,32 @@ function StatsSection({ player, photoSlots, isExpanded, onToggle, onFileSelect, 
                 </span>
               </div>
             </label>
+            <label style={{
+              flex: '1 1 150px',
+              minWidth: '150px',
+              padding: '12px 16px',
+              border: `2px solid ${style.borderColor}`,
+              borderRadius: '8px',
+              textAlign: 'center',
+              cursor: uploading ? 'not-allowed' : 'pointer',
+              background: 'transparent',
+              opacity: uploading ? 0.6 : 1
+            }}>
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={onFileSelect}
+                style={{ display: 'none' }}
+                disabled={uploading}
+              />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <Camera size={18} color={style.color} />
+                <span style={{ fontSize: '14px', fontWeight: 600, color: style.color }}>
+                  {t('cameraCaptureTitle')}
+                </span>
+              </div>
+            </label>
             {typeof onEdit === 'function' && (
               <button
                 type="button"
@@ -903,6 +929,7 @@ function StatsSection({ player, photoSlots, isExpanded, onToggle, onFileSelect, 
                   color: 'var(--neon-blue)',
                   fontSize: '14px',
                   fontWeight: 600,
+                  minWidth: '150px',
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -1053,8 +1080,8 @@ function SkillsSection({ player, photoSlots, isExpanded, onToggle, onFileSelect,
           {/* Pulsante Carica (galleria / fotocamera / file) + Modifica */}
           <div style={{ display: 'flex', gap: '12px', alignItems: 'stretch', flexWrap: 'wrap' }}>
             <label style={{
-              flex: '1',
-              minWidth: '120px',
+              flex: '1 1 150px',
+              minWidth: '150px',
               padding: '12px 16px',
               border: `2px solid ${style.borderColor}`,
               borderRadius: '8px',
@@ -1069,6 +1096,23 @@ function SkillsSection({ player, photoSlots, isExpanded, onToggle, onFileSelect,
                 <span style={{ fontSize: '14px', fontWeight: 600, color: style.color }}>{photoSlots.abilita ? t('updateSkills') : t('uploadSkills')}</span>
               </div>
             </label>
+            <label style={{
+              flex: '1 1 150px',
+              minWidth: '150px',
+              padding: '12px 16px',
+              border: `2px solid ${style.borderColor}`,
+              borderRadius: '8px',
+              textAlign: 'center',
+              cursor: uploading ? 'not-allowed' : 'pointer',
+              background: 'transparent',
+              opacity: uploading ? 0.6 : 1
+            }}>
+              <input type="file" accept="image/*" capture="environment" onChange={onFileSelect} style={{ display: 'none' }} disabled={uploading} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <Camera size={18} color={style.color} />
+                <span style={{ fontSize: '14px', fontWeight: 600, color: style.color }}>{t('cameraCaptureTitle')}</span>
+              </div>
+            </label>
             {typeof onEdit === 'function' && (
               <button
                 type="button"
@@ -1081,6 +1125,7 @@ function SkillsSection({ player, photoSlots, isExpanded, onToggle, onFileSelect,
                   color: style.color,
                   fontSize: '14px',
                   fontWeight: 600,
+                  minWidth: '150px',
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -1174,6 +1219,8 @@ function BoostersSection({ player, photoSlots, isExpanded, onToggle, onFileSelec
           {/* Pulsante Carica (galleria / fotocamera / file via picker di sistema) */}
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'stretch' }}>
             <label style={{
+              flex: '1 1 150px',
+              minWidth: '150px',
               padding: '12px 16px',
               border: `2px solid ${style.borderColor}`,
               borderRadius: '8px',
@@ -1188,6 +1235,23 @@ function BoostersSection({ player, photoSlots, isExpanded, onToggle, onFileSelec
                 <span style={{ fontSize: '14px', fontWeight: 600, color: style.color }}>{photoSlots.booster ? t('updateBoosters') : t('uploadBoosters')}</span>
               </div>
             </label>
+            <label style={{
+              flex: '1 1 150px',
+              minWidth: '150px',
+              padding: '12px 16px',
+              border: `2px solid ${style.borderColor}`,
+              borderRadius: '8px',
+              textAlign: 'center',
+              cursor: uploading ? 'not-allowed' : 'pointer',
+              background: 'transparent',
+              opacity: uploading ? 0.6 : 1
+            }}>
+              <input type="file" accept="image/*" capture="environment" onChange={onFileSelect} style={{ display: 'none' }} disabled={uploading} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <Camera size={18} color={style.color} />
+                <span style={{ fontSize: '14px', fontWeight: 600, color: style.color }}>{t('cameraCaptureTitle')}</span>
+              </div>
+            </label>
             {typeof onManualEdit === 'function' && (
               <button
                 type="button"
@@ -1200,6 +1264,7 @@ function BoostersSection({ player, photoSlots, isExpanded, onToggle, onFileSelec
                   color: style.color,
                   fontSize: '14px',
                   fontWeight: 600,
+                  minWidth: '150px',
                   cursor: uploading ? 'not-allowed' : 'pointer',
                   opacity: uploading ? 0.6 : 1,
                   display: 'inline-flex',

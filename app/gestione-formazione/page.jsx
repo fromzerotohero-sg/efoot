@@ -4,7 +4,7 @@ import React, { Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
-import { ArrowLeft, Upload, AlertCircle, AlertTriangle, CheckCircle2, RefreshCw, Info, X, Plus, User, Settings, BarChart3, Zap, Gift, ChevronDown, ChevronUp, Users, Star, Move, Pencil, BookOpen } from 'lucide-react'
+import { ArrowLeft, Upload, Camera, AlertCircle, AlertTriangle, CheckCircle2, RefreshCw, Info, X, Plus, User, Settings, BarChart3, Zap, Gift, ChevronDown, ChevronUp, Users, Star, Move, Pencil, BookOpen } from 'lucide-react'
 import TacticalSettingsPanel from '@/components/TacticalSettingsPanel'
 import RosaTutorialModal from '@/components/RosaTutorialModal'
 import OnboardingFormation from '@/components/OnboardingFormation'
@@ -4449,19 +4449,8 @@ function UploadPlayerModal({ slot, images, onImagesChange, onUpload, onClose, up
                     </div>
                   </>
                 ) : (
-                  <label style={{
-                    display: 'block',
-                    cursor: 'pointer',
-                    padding: '8px'
-                  }}>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleFileSelect(e, key)}
-                      style={{ display: 'none' }}
-                      disabled={uploading}
-                    />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ padding: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         {Icon && <Icon size={22} color={color} style={{ flexShrink: 0 }} />}
                         <div>
@@ -4480,7 +4469,60 @@ function UploadPlayerModal({ slot, images, onImagesChange, onUpload, onClose, up
                         {required ? '!' : '+'}
                       </div>
                     </div>
-                  </label>
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                      <label style={{
+                        flex: '1 1 150px',
+                        minHeight: '48px',
+                        borderRadius: '10px',
+                        border: `2px solid ${borderColor}`,
+                        background: bgColor,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        cursor: uploading ? 'not-allowed' : 'pointer',
+                        fontSize: '14px',
+                        fontWeight: 700,
+                        color
+                      }}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileSelect(e, key)}
+                          style={{ display: 'none' }}
+                          disabled={uploading}
+                        />
+                        <Upload size={16} color={color} />
+                        {t('upload')}
+                      </label>
+                      <label style={{
+                        flex: '1 1 150px',
+                        minHeight: '48px',
+                        borderRadius: '10px',
+                        border: `2px solid ${borderColor}`,
+                        background: 'transparent',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        cursor: uploading ? 'not-allowed' : 'pointer',
+                        fontSize: '14px',
+                        fontWeight: 700,
+                        color
+                      }}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          onChange={(e) => handleFileSelect(e, key)}
+                          style={{ display: 'none' }}
+                          disabled={uploading}
+                        />
+                        <Camera size={16} color={color} />
+                        {t('cameraCaptureTitle')}
+                      </label>
+                    </div>
+                  </div>
                 )}
               </div>
             )

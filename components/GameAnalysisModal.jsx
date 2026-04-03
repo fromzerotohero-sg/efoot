@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react'
 import { useTranslation } from '@/lib/i18n'
 import { supabase } from '@/lib/supabaseClient'
-import { BarChart3, X, Upload, Image as ImageIcon, RefreshCw, CheckCircle2 } from 'lucide-react'
+import { BarChart3, X, Upload, Camera, Image as ImageIcon, RefreshCw, CheckCircle2 } from 'lucide-react'
 import { MAX_IMAGE_UPLOAD_BYTES } from '@/lib/uploadConstants'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 
@@ -248,11 +248,13 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
                     </>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'stretch', gap: '12px', flexWrap: 'wrap' }}>
                         <label style={{ 
                           display: 'inline-flex', 
+                          flex: '1 1 180px',
                           cursor: loading ? 'not-allowed' : 'pointer', 
                           alignItems: 'center', 
+                          justifyContent: 'center',
                           gap: '10px', 
                           padding: '12px 20px', 
                           border: `1px solid ${color}`, 
@@ -265,7 +267,24 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
                           <Upload size={20} style={{ color, flexShrink: 0, filter: 'drop-shadow(0 0 5px rgba(0,212,255,0.5))' }} />
                           <span style={{ fontSize: '15px', fontWeight: 600, color, textShadow: '0 0 10px rgba(0,212,255,0.3)' }}>{t('gameAnalysisChooseFile')}</span>
                         </label>
-                        <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Non caricata</span>
+                        <label style={{ 
+                          display: 'inline-flex',
+                          flex: '1 1 180px',
+                          cursor: loading ? 'not-allowed' : 'pointer',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '10px',
+                          padding: '12px 20px',
+                          border: `1px solid ${color}`,
+                          borderRadius: '12px',
+                          background: 'transparent',
+                          transition: 'all 0.3s ease'
+                        }}>
+                          <input type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={(e) => handleFileSelect(e, key)} disabled={loading} />
+                          <Camera size={20} style={{ color, flexShrink: 0, filter: 'drop-shadow(0 0 5px rgba(0,212,255,0.35))' }} />
+                          <span style={{ fontSize: '15px', fontWeight: 600, color }}>{t('cameraCaptureTitle')}</span>
+                        </label>
+                        <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)', fontWeight: 500, width: '100%' }}>Non caricata</span>
                       </div>
                       <div style={{ marginTop: '8px' }}>
                         <div style={{ fontSize: '16px', fontWeight: 700, color, marginBottom: '4px', textShadow: '0 0 10px rgba(0,212,255,0.2)' }}>{t(labelKey)}</div>

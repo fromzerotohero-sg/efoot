@@ -330,10 +330,20 @@ export default function CountermeasuresPreMatchPage() {
           </h2>
           
           {!uploadImage ? (
-            <label style={{ display: 'block' }}>
+            <div>
               <input
+                id="counter-upload-input"
                 type="file"
                 accept="image/*"
+                onChange={handleImageSelect}
+                style={{ display: 'none' }}
+                disabled={extracting}
+              />
+              <input
+                id="counter-camera-input"
+                type="file"
+                accept="image/*"
+                capture="environment"
                 onChange={handleImageSelect}
                 style={{ display: 'none' }}
                 disabled={extracting}
@@ -350,6 +360,9 @@ export default function CountermeasuresPreMatchPage() {
                   opacity: extracting ? 0.5 : 1,
                   transition: 'all 0.3s ease',
                   position: 'relative'
+                }}
+                onClick={() => {
+                  if (!extracting) document.getElementById('counter-upload-input')?.click()
                 }}
                 onMouseEnter={(e) => {
                   if (!extracting) {
@@ -377,7 +390,29 @@ export default function CountermeasuresPreMatchPage() {
                   {t('countermeasuresAutoStart')}
                 </div>
               </div>
-            </label>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '14px' }}>
+                <button
+                  type="button"
+                  onClick={() => document.getElementById('counter-upload-input')?.click()}
+                  className="neon-button"
+                  disabled={extracting}
+                  style={{ flex: '1 1 180px', minHeight: '48px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                >
+                  <Upload size={16} />
+                  {t('upload')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => document.getElementById('counter-camera-input')?.click()}
+                  className="neon-button"
+                  disabled={extracting}
+                  style={{ flex: '1 1 180px', minHeight: '48px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                >
+                  <Camera size={16} />
+                  {t('cameraCaptureTitle')}
+                </button>
+              </div>
+            </div>
           ) : (
             <div>
               <div style={{ marginBottom: '16px', textAlign: 'center' }}>
