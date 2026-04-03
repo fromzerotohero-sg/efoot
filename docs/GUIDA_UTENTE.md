@@ -106,7 +106,7 @@ La nuova funzione **Live Coach** ti permette di parlare direttamente con l'AI co
 ### Costi
 
 - **Avvio**: 2 HP
-- **Ogni minuto**: 2 HP/minuto
+- **Ogni minuto**: 5 HP/minuto
 - **Upload screenshot avversario**: 2 HP
 
 > 💡 **Consiglio**: Usa il Live Coach prima delle partite importanti per ricevere contromisure personalizzate in pochi secondi.
