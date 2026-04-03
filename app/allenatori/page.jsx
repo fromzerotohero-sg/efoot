@@ -6,9 +6,8 @@ import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import ConfirmModal from '@/components/ConfirmModal'
-import CameraCaptureModal from '@/components/CameraCaptureModal'
 import { ArrowLeft, Upload, Camera, AlertCircle, CheckCircle2, X, Trash2, Star, Info, Plus, Zap } from 'lucide-react'
-import { optimizeImageBlob, optimizeImageFile } from '@/lib/imageUploadOptimizer'
+import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 
 export default function AllenatoriPage() {
   const { t, lang } = useTranslation()
@@ -23,7 +22,6 @@ export default function AllenatoriPage() {
   const [selectedCoach, setSelectedCoach] = React.useState(null)
   const [showDetailsModal, setShowDetailsModal] = React.useState(false)
   const [deleteConfirmModal, setDeleteConfirmModal] = React.useState(null) // { show, coachId, coachName }
-  const [showCameraCapture, setShowCameraCapture] = React.useState(false)
 
   // Carica allenatori
   React.useEffect(() => {
@@ -121,6 +119,11 @@ export default function AllenatoriPage() {
     e.target.value = ''
   }
 
+  const handleCameraInputChange = async (e) => {
+    await handleImageSelect(e.target.files)
+    e.target.value = ''
+  }
+
   const handleDrop = (e) => {
     e.preventDefault()
     handleImageSelect(e.dataTransfer.files)
@@ -133,33 +136,6 @@ export default function AllenatoriPage() {
   const removeImage = (id) => {
     setUploadImages(prev => prev.filter(img => img.id !== id))
   }
-
-  const appendPreparedImage = React.useCallback((file, dataUrl) => {
-    setUploadImages(prev => {
-      if (prev.length >= 2) return prev
-      return [
-        ...prev,
-        {
-          id: Date.now() + prev.length,
-          file,
-          dataUrl,
-          type: prev.length === 0 ? 'main' : 'connection'
-        }
-      ]
-    })
-  }, [])
-
-  const handleCameraCapture = React.useCallback(async (blob) => {
-    try {
-      setError(null)
-      const optimized = await optimizeImageBlob(blob, { fileName: `coach-camera-${Date.now()}.jpg` })
-      const file = new File([optimized.blob], `coach-camera-${Date.now()}.jpg`, { type: optimized.blob.type || 'image/jpeg' })
-      appendPreparedImage(file, optimized.dataUrl)
-    } catch (err) {
-      console.error('[Allenatori] camera capture optimization error:', err)
-      setError(t('imageTooLarge'))
-    }
-  }, [appendPreparedImage, t])
 
   const handleUploadCoach = async () => {
     if (uploadImages.length === 0) return
@@ -766,6 +742,15 @@ export default function AllenatoriPage() {
                 style={{ display: 'none' }}
                 disabled={uploading || uploadImages.length >= 2}
               />
+              <input
+                id="coach-camera-input"
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleCameraInputChange}
+                style={{ display: 'none' }}
+                disabled={uploading || uploadImages.length >= 2}
+              />
             </div>
             </div>
 
@@ -789,7 +774,7 @@ export default function AllenatoriPage() {
                 {t('upload')}
               </button>
               <button
-                onClick={() => setShowCameraCapture(true)}
+                onClick={() => document.getElementById('coach-camera-input')?.click()}
                 className="neon-button"
                 disabled={uploading || uploadImages.length >= 2}
                 style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flex: '1 1 150px', minHeight: '52px' }}
@@ -820,18 +805,6 @@ export default function AllenatoriPage() {
           </div>
         </div>
       )}
-
-      <CameraCaptureModal
-        show={showCameraCapture}
-        onClose={() => setShowCameraCapture(false)}
-        onCapture={handleCameraCapture}
-        title={t('cameraCaptureTitle')}
-        captureLabel={t('cameraCaptureButton')}
-        closeLabel={t('cameraClose')}
-        startingLabel={t('cameraStarting')}
-        errorMessage={t('cameraNotAvailable')}
-        captureFailedMessage={t('cameraCaptureFailed')}
-      />
 
       {/* Modal Dettagli */}
       {showDetailsModal && selectedCoach && (
