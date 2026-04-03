@@ -53,6 +53,8 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
   const heartbeatRef = useRef(null)
   const sessionIdRef = useRef(null)
   const stopInProgressRef = useRef(false)
+  const responseInFlightRef = useRef(false)
+  const lastResponseDoneAtRef = useRef(0)
 
   const premiumLabel = useMemo(() => lang === 'en' ? 'Premium' : 'Premium', [lang])
   const balanceRemaining = Number.isFinite(Number(creditsData?.balance_remaining)) ? Number(creditsData.balance_remaining) : null
@@ -189,6 +191,8 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
     }
 
     sessionIdRef.current = null
+    responseInFlightRef.current = false
+    lastResponseDoneAtRef.current = 0
     setSessionStartedAt(null)
     setNowTick(Date.now())
     await fetchCredits()
@@ -201,11 +205,31 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
     }
   }, [stopRealtime])
 
+  const requestModelResponse = useCallback((transcript = '') => {
+    const text = String(transcript || '').trim()
+    const now = Date.now()
+    if (!dcRef.current || dcRef.current.readyState !== 'open') return
+    if (!text || text.length < 2) return
+    if (responseInFlightRef.current) return
+    if (now - lastResponseDoneAtRef.current < 2500) return
+
+    responseInFlightRef.current = true
+    setCoachLine('')
+    dcRef.current.send(JSON.stringify({
+      type: 'response.create',
+      response: {
+        modalities: ['audio', 'text']
+      }
+    }))
+  }, [])
+
   const handleRealtimeEvent = useCallback((event) => {
     if (!event || typeof event !== 'object') return
 
     if (event.type === 'conversation.item.input_audio_transcription.completed' && event.transcript) {
-      setUserLine(event.transcript)
+      const transcript = String(event.transcript || '').trim()
+      setUserLine(transcript)
+      requestModelResponse(transcript)
       return
     }
 
@@ -220,6 +244,8 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
     }
 
     if (event.type === 'response.done' && event.response?.usage) {
+      responseInFlightRef.current = false
+      lastResponseDoneAtRef.current = Date.now()
       setSessionInfo(prev => ({
         ...(prev || {}),
         usage: event.response.usage
@@ -228,9 +254,10 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
     }
 
     if (event.type === 'error') {
+      responseInFlightRef.current = false
       setError(event.error?.message || t('liveCoachRealtimeError'))
     }
-  }, [t])
+  }, [requestModelResponse, t])
 
   const startHeartbeat = useCallback((intervalMs) => {
     stopHeartbeat()
@@ -343,6 +370,25 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
 
       const dc = pc.createDataChannel('oai-events')
       dcRef.current = dc
+      dc.addEventListener('open', () => {
+        try {
+          dc.send(JSON.stringify({
+            type: 'session.update',
+            session: {
+              audio: {
+                input: {
+                  turn_detection: {
+                    type: 'semantic_vad',
+                    eagerness: 'medium',
+                    interrupt_response: false,
+                    create_response: false
+                  }
+                }
+              }
+            }
+          }))
+        } catch (_) {}
+      })
       dc.addEventListener('message', (e) => {
         try {
           handleRealtimeEvent(JSON.parse(e.data))
@@ -731,61 +777,25 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
             </div>
 
             <div style={{ display: 'grid', gap: '14px' }}>
-              <div style={{
-                borderRadius: '18px',
-                border: '1px solid rgba(255,255,255,0.08)',
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,215,100,0.04))',
-                padding: '14px 16px'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
-                  <div>
-                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>{t('liveCoachTitle')}</div>
-                    <div style={{ marginTop: '4px', fontSize: '13px', color: 'rgba(255,255,255,0.66)', lineHeight: 1.5 }}>
-                      {t('liveCoachCommercialIntro')}
-                    </div>
-                  </div>
-                  <div style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '7px',
-                    padding: '8px 10px',
-                    borderRadius: '999px',
-                    background: isConnected ? 'rgba(52,199,89,0.12)' : 'rgba(255,255,255,0.05)',
-                    color: isConnected ? '#7DFF9A' : 'rgba(255,255,255,0.82)',
-                    fontSize: '12px',
-                    fontWeight: 800
-                  }}>
-                    <span style={{
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      background: isConnected ? '#54F5A6' : '#FFD76A',
-                      animation: isConnected ? 'liveDot 1.4s ease-in-out infinite' : 'none'
-                    }} />
-                    {isConnected ? t('liveCoachStatusLive') : isConnecting ? t('liveCoachStatusConnecting') : t('liveCoachStatusReady')}
-                  </div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 12px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', color: '#FFFFFF', fontSize: '13px', fontWeight: 700 }}>
+                  <Zap size={14} color="#FFD76A" />
+                  {t('liveCoachStatHp')}: {creditsLoading ? '...' : (balanceRemaining ?? '--')}
                 </div>
-
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 12px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', color: '#FFFFFF', fontSize: '13px', fontWeight: 700 }}>
-                    <Zap size={14} color="#FFD76A" />
-                    {t('liveCoachStatHp')}: {creditsLoading ? '...' : (balanceRemaining ?? '--')}
-                  </div>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 12px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', color: '#FFFFFF', fontSize: '13px', fontWeight: 700 }}>
-                    <Clock3 size={14} color="var(--neon-cyan)" />
-                    {t('liveCoachStatTime')}: {liveDuration}
-                  </div>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 12px', borderRadius: '14px', background: opponentContext?.formation ? 'rgba(0,212,255,0.10)' : 'rgba(255,255,255,0.05)', color: opponentContext?.formation ? 'var(--neon-cyan)' : 'rgba(255,255,255,0.78)', fontSize: '13px', fontWeight: 700 }}>
-                    <ImagePlus size={14} color={opponentContext?.formation ? 'var(--neon-cyan)' : '#FFD76A'} />
-                    {opponentContext?.formation ? `${t('liveCoachOpponentReady')} ${opponentContext.formation}` : t('liveCoachOpponentMissing')}
-                  </div>
-                  {currentSessionSpent > 0 && (
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 12px', borderRadius: '14px', background: 'rgba(255,215,100,0.08)', color: '#FFF2C2', fontSize: '13px', fontWeight: 700 }}>
-                      <Sparkles size={14} color="#FFD76A" />
-                      {t('liveCoachStatSpent')}: {currentSessionSpent}
-                    </div>
-                  )}
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 12px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', color: '#FFFFFF', fontSize: '13px', fontWeight: 700 }}>
+                  <Clock3 size={14} color="var(--neon-cyan)" />
+                  {t('liveCoachStatTime')}: {liveDuration}
                 </div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 12px', borderRadius: '14px', background: opponentContext?.formation ? 'rgba(0,212,255,0.10)' : 'rgba(255,255,255,0.05)', color: opponentContext?.formation ? 'var(--neon-cyan)' : 'rgba(255,255,255,0.78)', fontSize: '13px', fontWeight: 700 }}>
+                  <ImagePlus size={14} color={opponentContext?.formation ? 'var(--neon-cyan)' : '#FFD76A'} />
+                  {opponentContext?.formation ? `${t('liveCoachOpponentReady')} ${opponentContext.formation}` : t('liveCoachOpponentMissing')}
+                </div>
+                {currentSessionSpent > 0 && (
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 12px', borderRadius: '14px', background: 'rgba(255,215,100,0.08)', color: '#FFF2C2', fontSize: '13px', fontWeight: 700 }}>
+                    <Sparkles size={14} color="#FFD76A" />
+                    {t('liveCoachStatSpent')}: {currentSessionSpent}
+                  </div>
+                )}
               </div>
 
               <div style={{ borderRadius: '20px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', padding: '16px' }}>
