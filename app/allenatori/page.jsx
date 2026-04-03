@@ -814,7 +814,7 @@ export default function AllenatoriPage() {
                 disabled={uploadImages.length === 0 || uploading}
                 style={{ flex: '1 1 150px', minHeight: '52px' }}
               >
-                {uploading ? t('loading') : t('upload')}
+                {uploading ? t('extracting') : t('analyzing')}
               </button>
             </div>
           </div>
