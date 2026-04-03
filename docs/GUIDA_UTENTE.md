@@ -77,6 +77,47 @@ Dopo ogni partita, entra nella Palestra Coach e racconta:
 
 ---
 
+## 🎙️ Live Coach (Chat Vocale Realtime)
+
+La nuova funzione **Live Coach** ti permette di parlare direttamente con l'AI come se fosse un vero allenatore al telefono.
+
+### Come funziona
+
+1. **Tocca la sfera** sul launcher "Live Coach" in dashboard
+2. **Concedi il microfono** quando richiesto dal browser
+3. **Parla naturalmente** - l'AI ti risponde con voce umana in tempo reale
+4. **Mostra screenshot** dell'avversario prima della partita per consigli tattici
+
+### Stati della sfera animata
+
+| Stato | Colore | Significato |
+|-------|--------|-------------|
+| 🔵 **Cyan pulsante** | Idle | Pronto, tocca per iniziare |
+| 🟠 **Arancio rotante** | Connessione | Sto connettendo al server vocale |
+| 🟢 **Verde attivo** | Live | Sto ascoltando e rispondendo |
+
+### Cosa puoi chiedere in voce
+
+- *"Analizza la formazione che ti ho mandato"* (dopo upload screenshot)
+- *"Che modulo mi consigli contro questo avversario?"*
+- *"Ho problemi con la difesa, cosa cambio?"*
+- *"Dai un'occhiata alle mie statistiche ultime partite"*
+
+### Costi
+
+- **Avvio**: 2 HP
+- **Ogni minuto**: 2 HP/minuto
+- **Upload screenshot avversario**: 2 HP
+
+> 💡 **Consiglio**: Usa il Live Coach prima delle partite importanti per ricevere contromisure personalizzate in pochi secondi.
+
+### Controlli durante la chiamata
+
+- **Silenzia**: Disattiva il tuo microfono
+- **Chiudi**: Termina la sessione (viene addebitato solo il tempo effettivo usato)
+
+---
+
 ## 💰 Sistema Crediti (Hero Points)
 
 ### Acquisto
@@ -158,4 +199,4 @@ Email: support@efootballaicoach.com
 
 ---
 
-*Guida aggiornata: 15/03/2026*
+*Guida aggiornata: 19/03/2026*
