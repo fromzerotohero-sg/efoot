@@ -210,20 +210,7 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
                     background: value ? 'rgba(34, 197, 94, 0.08)' : 'rgba(0, 212, 255, 0.05)',
                     border: `1px solid ${value ? 'rgba(34, 197, 94, 0.35)' : 'rgba(0, 212, 255, 0.2)'}`,
                     borderRadius: '12px',
-                    cursor: loading ? 'default' : 'pointer',
                     transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!loading && !value) {
-                      e.currentTarget.style.background = 'rgba(0, 212, 255, 0.1)'
-                      e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.4)'
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!value) {
-                      e.currentTarget.style.background = 'rgba(0, 212, 255, 0.05)'
-                      e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.2)'
-                    }
                   }}
                 >
                   {value ? (

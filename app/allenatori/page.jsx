@@ -581,7 +581,7 @@ export default function AllenatoriPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1000,
+          zIndex: 10110,
           padding: '16px'
         }}>
           <div className="neon-card" style={{ 
@@ -787,15 +787,6 @@ export default function AllenatoriPage() {
               >
                 <Camera size={16} />
                 {t('cameraCaptureTitle')}
-              </button>
-              <button
-                onClick={() => document.getElementById('coach-file-input')?.click()}
-                className="neon-button"
-                disabled={uploading || uploadImages.length >= 2}
-                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flex: '1 1 150px', minHeight: '52px' }}
-              >
-                <Upload size={16} />
-                {t('upload')}
               </button>
               <button
                 onClick={() => {

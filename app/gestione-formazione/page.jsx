@@ -4392,16 +4392,7 @@ function UploadPlayerModal({ slot, images, onImagesChange, onUpload, onClose, up
                 background: image ? bgColor : 'rgba(0, 212, 255, 0.05)',
                 border: `1px solid ${image ? borderColor : 'rgba(0, 212, 255, 0.2)'}`,
                 borderRadius: '12px',
-                cursor: 'pointer',
                 transition: 'all 0.3s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)'
-                e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 212, 255, 0.25)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = 'none'
               }}
               >
                 {image ? (

@@ -356,27 +356,10 @@ export default function CountermeasuresPreMatchPage() {
                   border: '2px dashed rgba(251, 191, 36, 0.5)',
                   borderRadius: '12px',
                   textAlign: 'center',
-                  cursor: extracting ? 'not-allowed' : 'pointer',
+                  cursor: 'default',
                   opacity: extracting ? 0.5 : 1,
                   transition: 'all 0.3s ease',
                   position: 'relative'
-                }}
-                onClick={() => {
-                  if (!extracting) document.getElementById('counter-upload-input')?.click()
-                }}
-                onMouseEnter={(e) => {
-                  if (!extracting) {
-                    e.currentTarget.style.background = 'radial-gradient(ellipse at center, rgba(251, 191, 36, 0.25) 0%, rgba(251, 191, 36, 0.1) 70%)'
-                    e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.8)'
-                    e.currentTarget.style.transform = 'scale(1.02)'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!extracting) {
-                    e.currentTarget.style.background = 'radial-gradient(ellipse at center, rgba(251, 191, 36, 0.15) 0%, rgba(251, 191, 36, 0.05) 70%)'
-                    e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.5)'
-                    e.currentTarget.style.transform = 'scale(1)'
-                  }
                 }}
               >
                 <Camera size={48} style={{ marginBottom: '16px', color: '#fbbf24', filter: 'drop-shadow(0 0 12px rgba(251, 191, 36, 0.9))' }} />

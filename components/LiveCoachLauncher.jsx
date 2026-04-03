@@ -38,6 +38,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
   const [nowTick, setNowTick] = useState(Date.now())
 
   const fileInputRef = useRef(null)
+  const cameraInputRef = useRef(null)
   const pcRef = useRef(null)
   const dcRef = useRef(null)
   const mediaStreamRef = useRef(null)
@@ -846,29 +847,55 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploadingPhoto}
-                    style={{
-                      width: '100%',
-                      borderRadius: '16px',
-                      border: '1px dashed rgba(255,215,100,0.32)',
-                      background: 'rgba(255,215,100,0.06)',
-                      color: '#FFF3CB',
-                      padding: '14px 16px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '10px',
-                      fontWeight: 700
-                    }}
-                  >
-                    {isUploadingPhoto ? <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> : <UploadCloud size={18} />}
-                    {isUploadingPhoto ? t('liveCoachPhotoUploading') : t('liveCoachPhotoButton')}
-                  </button>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingPhoto}
+                      style={{
+                        flex: '1 1 180px',
+                        minHeight: '52px',
+                        borderRadius: '16px',
+                        border: '1px dashed rgba(255,215,100,0.32)',
+                        background: 'rgba(255,215,100,0.06)',
+                        color: '#FFF3CB',
+                        padding: '14px 16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '10px',
+                        fontWeight: 700
+                      }}
+                    >
+                      {isUploadingPhoto ? <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> : <UploadCloud size={18} />}
+                      {t('upload')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => cameraInputRef.current?.click()}
+                      disabled={isUploadingPhoto}
+                      style={{
+                        flex: '1 1 180px',
+                        minHeight: '52px',
+                        borderRadius: '16px',
+                        border: '1px solid rgba(255,255,255,0.14)',
+                        background: 'rgba(255,255,255,0.03)',
+                        color: '#FFFFFF',
+                        padding: '14px 16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '10px',
+                        fontWeight: 700
+                      }}
+                    >
+                      <ImagePlus size={18} />
+                      {t('cameraCaptureTitle')}
+                    </button>
+                  </div>
 
                   <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handlePhotoPick} />
+                  <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" hidden onChange={handlePhotoPick} />
 
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '9px 11px', borderRadius: '999px', background: opponentContext?.formation ? 'rgba(0,212,255,0.10)' : 'rgba(255,255,255,0.05)', color: opponentContext?.formation ? 'var(--neon-cyan)' : 'rgba(255,255,255,0.78)', fontSize: '12px', fontWeight: 700 }}>
