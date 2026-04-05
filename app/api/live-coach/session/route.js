@@ -5,6 +5,7 @@ import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { checkCredits, deductCredits } from '@/lib/creditService'
 import { buildLiveCoachContext } from '@/lib/liveCoachContext'
 import { LIVE_COACH_HEARTBEAT_INTERVAL_MS, LIVE_COACH_MINUTE_COST, LIVE_COACH_START_COST } from '@/lib/liveCoachPricing'
+import { hasLiveCoachBetaAccess } from '@/lib/liveCoachBetaServer'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -79,6 +80,17 @@ export async function POST(req) {
     const rateLimit = await checkRateLimit(userId, '/api/live-coach/session', rateLimitConfig.maxRequests, rateLimitConfig.windowMs)
     if (!rateLimit.allowed) {
       return NextResponse.json({ error: lang === 'en' ? 'Too many attempts. Try again shortly.' : 'Troppe richieste. Riprova tra poco.' }, { status: 429 })
+    }
+
+    if (!hasLiveCoachBetaAccess(req)) {
+      return NextResponse.json(
+        {
+          error: lang === 'en'
+            ? 'Live Coach beta is currently reserved for authorized technical testers.'
+            : 'Coach Live beta e al momento riservato ai tecnici autorizzati.'
+        },
+        { status: 403 }
+      )
     }
 
     const hasCredits = await checkCredits(admin, userId, LIVE_COACH_START_COST)

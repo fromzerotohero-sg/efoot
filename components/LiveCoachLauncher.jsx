@@ -36,6 +36,10 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
   const [creditsLoading, setCreditsLoading] = useState(true)
   const [sessionStartedAt, setSessionStartedAt] = useState(null)
   const [nowTick, setNowTick] = useState(Date.now())
+  const [betaGateStatus, setBetaGateStatus] = useState({ checking: true, gateEnabled: false, hasAccess: false })
+  const [betaCode, setBetaCode] = useState('')
+  const [betaUnlocking, setBetaUnlocking] = useState(false)
+  const [betaError, setBetaError] = useState(null)
 
   const fileInputRef = useRef(null)
   const cameraInputRef = useRef(null)
@@ -122,6 +126,34 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
       if (typeof window !== 'undefined') {
         window.removeEventListener('open-live-coach', openLauncher)
       }
+    }
+  }, [])
+
+  useEffect(() => {
+    let mounted = true
+    const loadBetaStatus = async () => {
+      try {
+        const res = await fetch('/api/live-coach/beta/status', {
+          cache: 'no-store',
+          credentials: 'same-origin',
+        })
+        const payload = await res.json().catch(() => ({}))
+        if (!mounted) return
+        setBetaGateStatus({
+          checking: false,
+          gateEnabled: Boolean(payload?.gateEnabled),
+          hasAccess: Boolean(payload?.hasAccess),
+        })
+      } catch (err) {
+        console.error('[LiveCoachLauncher] beta status error:', err)
+        if (!mounted) return
+        setBetaGateStatus({ checking: false, gateEnabled: false, hasAccess: true })
+      }
+    }
+
+    loadBetaStatus()
+    return () => {
+      mounted = false
     }
   }, [])
 
@@ -564,6 +596,46 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
     }
   }
 
+  const handleUnlockBeta = async () => {
+    setBetaError(null)
+    const trimmed = betaCode.trim()
+    if (!trimmed) {
+      setBetaError(t('liveCoachBetaEnterError'))
+      return
+    }
+
+    try {
+      setBetaUnlocking(true)
+      const token = await getToken()
+      if (!token) throw new Error(t('sessionExpired'))
+
+      const res = await fetch('/api/live-coach/beta/unlock', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({ code: trimmed })
+      })
+      const payload = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(payload?.error || t('liveCoachBetaUnlockError'))
+      }
+      setBetaGateStatus({
+        checking: false,
+        gateEnabled: Boolean(payload?.gateEnabled),
+        hasAccess: true,
+      })
+      setBetaCode('')
+      setBetaError(null)
+    } catch (err) {
+      setBetaError(err?.message || t('liveCoachBetaInvalid'))
+    } finally {
+      setBetaUnlocking(false)
+    }
+  }
+
   return (
     <>
       <style jsx>{`
@@ -847,52 +919,113 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploadingPhoto}
-                      style={{
-                        flex: '1 1 180px',
-                        minHeight: '52px',
-                        borderRadius: '16px',
-                        border: '1px dashed rgba(255,215,100,0.32)',
-                        background: 'rgba(255,215,100,0.06)',
-                        color: '#FFF3CB',
-                        padding: '14px 16px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '10px',
-                        fontWeight: 700
-                      }}
-                    >
-                      {isUploadingPhoto ? <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> : <UploadCloud size={18} />}
-                      {t('upload')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => cameraInputRef.current?.click()}
-                      disabled={isUploadingPhoto}
-                      style={{
-                        flex: '1 1 180px',
-                        minHeight: '52px',
-                        borderRadius: '16px',
-                        border: '1px solid rgba(255,255,255,0.14)',
-                        background: 'rgba(255,255,255,0.03)',
-                        color: '#FFFFFF',
-                        padding: '14px 16px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '10px',
-                        fontWeight: 700
-                      }}
-                    >
-                      <ImagePlus size={18} />
-                      {t('cameraCaptureTitle')}
-                    </button>
-                  </div>
+                  {betaGateStatus.gateEnabled && !betaGateStatus.hasAccess ? (
+                    <div style={{
+                      display: 'grid',
+                      gap: '12px',
+                      borderRadius: '16px',
+                      border: '1px solid rgba(255,215,100,0.22)',
+                      background: 'rgba(255,215,100,0.04)',
+                      padding: '14px'
+                    }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 10px', borderRadius: '999px', background: 'rgba(255,215,100,0.1)', color: '#FFD76A', fontSize: '12px', fontWeight: 700 }}>
+                        <Sparkles size={14} />
+                        {t('liveCoachBetaBadge')}
+                      </div>
+                      <div style={{ fontSize: '16px', fontWeight: 700, color: '#FFFFFF' }}>{t('liveCoachBetaTitle')}</div>
+                      <div style={{ fontSize: '13px', lineHeight: 1.6, color: 'rgba(255,255,255,0.72)' }}>
+                        {t('liveCoachBetaText')}
+                      </div>
+                      <input
+                        type="password"
+                        value={betaCode}
+                        onChange={(e) => setBetaCode(e.target.value)}
+                        placeholder={t('liveCoachBetaCodePlaceholder')}
+                        autoComplete="off"
+                        style={{
+                          minHeight: '46px',
+                          borderRadius: '12px',
+                          background: 'rgba(255,255,255,0.06)',
+                          color: '#FFFFFF',
+                          border: '1px solid rgba(255,255,255,0.12)',
+                          padding: '10px 12px',
+                          fontSize: '14px'
+                        }}
+                      />
+                      {betaError && (
+                        <div style={{ fontSize: '12px', color: '#FF8A8A' }}>
+                          {betaError}
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleUnlockBeta}
+                        disabled={betaUnlocking || betaGateStatus.checking}
+                        style={{
+                          minHeight: '48px',
+                          borderRadius: '12px',
+                          border: '1px solid rgba(255,215,100,0.38)',
+                          background: 'linear-gradient(135deg, rgba(255,215,100,0.18), rgba(0,212,255,0.10))',
+                          color: '#FFFFFF',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          fontWeight: 700
+                        }}
+                      >
+                        {betaUnlocking ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Sparkles size={16} />}
+                        {betaUnlocking ? t('liveCoachBetaUnlockLoading') : t('liveCoachBetaUnlockButton')}
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploadingPhoto || betaGateStatus.checking}
+                        style={{
+                          flex: '1 1 180px',
+                          minHeight: '52px',
+                          borderRadius: '16px',
+                          border: '1px dashed rgba(255,215,100,0.32)',
+                          background: 'rgba(255,215,100,0.06)',
+                          color: '#FFF3CB',
+                          padding: '14px 16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '10px',
+                          fontWeight: 700
+                        }}
+                      >
+                        {isUploadingPhoto ? <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> : <UploadCloud size={18} />}
+                        {t('upload')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => cameraInputRef.current?.click()}
+                        disabled={isUploadingPhoto || betaGateStatus.checking}
+                        style={{
+                          flex: '1 1 180px',
+                          minHeight: '52px',
+                          borderRadius: '16px',
+                          border: '1px solid rgba(255,255,255,0.14)',
+                          background: 'rgba(255,255,255,0.03)',
+                          color: '#FFFFFF',
+                          padding: '14px 16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '10px',
+                          fontWeight: 700
+                        }}
+                      >
+                        <ImagePlus size={18} />
+                        {t('cameraCaptureTitle')}
+                      </button>
+                    </div>
+                  )}
 
                   <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handlePhotoPick} />
                   <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" hidden onChange={handlePhotoPick} />
