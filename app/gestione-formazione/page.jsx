@@ -17,6 +17,7 @@ import { safeJsonResponse } from '@/lib/fetchHelper'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import { PHOTO_TYPE_KEYS, getPhotoTypeConfig } from '@/lib/playerPhotoTypes'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
+import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 
 // =====================================================
 // FEATURE FLAG - Sicurezza modifiche window.confirm
@@ -3020,6 +3021,10 @@ export default function GestioneFormazionePage() {
             setUploadReserveImages([])
           }}
           uploading={uploadingReserve}
+          onOptimizeError={(msg) => {
+            setError(msg)
+            showToast(msg, 'error')
+          }}
         />
       )}
 
@@ -3049,6 +3054,10 @@ export default function GestioneFormazionePage() {
             setShowManualPlayerModal(true)
           }}
           uploading={uploadingPlayer}
+          onOptimizeError={(msg) => {
+            setError(msg)
+            showToast(msg, 'error')
+          }}
         />
       )}
 
@@ -4230,7 +4239,7 @@ const UPLOAD_MODAL_ICONS = { card: BarChart3, stats: Zap, skills: Gift }
 
 // 🎨 Upload Player Modal - Design unificato (stessi colori/icone della pagina giocatore)
 // onSwitchToManual: opzionale; se presente e slot è per il campo (slot_index != null), mostra link per passare a inserimento manuale
-function UploadPlayerModal({ slot, images, onImagesChange, onUpload, onClose, uploading, onSwitchToManual }) {
+function UploadPlayerModal({ slot, images, onImagesChange, onUpload, onClose, uploading, onSwitchToManual, onOptimizeError }) {
   const { t, lang } = useTranslation()
   const labelByKey = {
     card: t('photoStats'),
@@ -4271,6 +4280,8 @@ function UploadPlayerModal({ slot, images, onImagesChange, onUpload, onClose, up
       }
     } catch (err) {
       console.error('[UploadPlayerModal] image optimization error:', err)
+      const msg = getImageOptimizeUserMessage(err, t)
+      if (onOptimizeError) onOptimizeError(msg)
     }
     e.target.value = ''
   }

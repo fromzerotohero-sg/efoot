@@ -10,6 +10,7 @@ import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import CoachFeedbackChat from '@/components/CoachFeedbackChat'
 import { INDIVIDUAL_INSTRUCTIONS_CONFIG } from '@/lib/tacticalInstructions'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
+import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 import { ArrowLeft, Upload, AlertCircle, CheckCircle2, RefreshCw, X, Camera, Shield, Target, Users, Settings, ChevronDown, ChevronUp, Brain, MessageCircle, Trophy, Radio, Sparkles, Mic } from 'lucide-react'
 
 /** Estrae testo in lingua da valore stringa o oggetto bilingue { it, en } (coerente con analyze-match) */
@@ -100,7 +101,7 @@ export default function CountermeasuresPreMatchPage() {
       await runFullPipeline(imageDataUrl)
     } catch (err) {
       console.error('[contromisure-pre-partita] image optimization error:', err)
-      setError(t('errorImageTooLarge'))
+      setError(getImageOptimizeUserMessage(err, t))
     }
     e.target.value = ''
   }

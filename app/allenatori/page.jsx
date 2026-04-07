@@ -8,6 +8,7 @@ import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import ConfirmModal from '@/components/ConfirmModal'
 import { ArrowLeft, Upload, Camera, AlertCircle, CheckCircle2, X, Trash2, Star, Info, Plus, Zap } from 'lucide-react'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
+import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 
 export default function AllenatoriPage() {
   const { t, lang } = useTranslation()
@@ -103,7 +104,7 @@ export default function AllenatoriPage() {
         })
       } catch (err) {
         console.error('[Allenatori] image optimization error:', err)
-        setError(t('imageTooLarge'))
+        setError(getImageOptimizeUserMessage(err, t))
         return
       }
     }

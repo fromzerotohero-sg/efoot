@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { BarChart3, X, Upload, Camera, Image as ImageIcon, RefreshCw, CheckCircle2 } from 'lucide-react'
 import { MAX_IMAGE_UPLOAD_BYTES } from '@/lib/uploadConstants'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
+import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 
 const SLOTS = [
   { key: 'slot1', labelKey: 'gameAnalysisSlot1', descKey: 'gameAnalysisSlot1Desc' },
@@ -74,7 +75,7 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
       setSlot(key, { file, dataUrl, name: file.name || 'camera.jpg' })
     } catch (err) {
       console.error('[GameAnalysisModal] image optimization error:', err)
-      setError(t('imageTooLarge'))
+      setError(getImageOptimizeUserMessage(err, t))
     }
   }
 

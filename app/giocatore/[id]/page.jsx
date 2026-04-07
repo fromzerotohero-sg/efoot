@@ -9,6 +9,7 @@ import { Upload, Camera, AlertCircle, CheckCircle2, RefreshCw, BarChart3, Zap, G
 import { getPhotoTypeStyle } from '@/lib/playerPhotoTypes'
 import { MAX_IMAGE_UPLOAD_BYTES } from '@/lib/uploadConstants'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
+import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 import ManualPlayerModal from '@/components/ManualPlayerModal'
 import ManualBoostersModal from '@/components/ManualBoostersModal'
 
@@ -104,7 +105,7 @@ export default function PlayerDetailPage() {
       setUploadType(type)
     } catch (err) {
       console.error('[PlayerDetail] image optimization error:', err)
-      setError(t('imageTooLarge'))
+      setError(getImageOptimizeUserMessage(err, t))
     }
   }
 

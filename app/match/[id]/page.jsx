@@ -7,6 +7,7 @@ import { useTranslation } from '@/lib/i18n'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import { Upload, AlertCircle, CheckCircle2, RefreshCw, X, Camera, Calendar, Trophy, ChevronDown, ChevronUp, Users, Target, TrendingUp, TrendingDown, Shield, ArrowLeft } from 'lucide-react'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
+import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 
 // STEPS sarà definito dentro il componente per avere accesso a t()
 
@@ -99,7 +100,7 @@ export default function MatchDetailPage() {
       setError(null)
     } catch (err) {
       console.error('[match/[id]] image optimization error:', err)
-      setError(t('imageTooLarge'))
+      setError(getImageOptimizeUserMessage(err, t))
     }
     e.target.value = ''
   }

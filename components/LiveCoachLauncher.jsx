@@ -6,6 +6,7 @@ import { useTranslation } from '@/lib/i18n'
 import { getValidAccessToken, supabase } from '@/lib/supabaseClient'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
+import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 
 const DEFAULT_VOICE = 'marin'
 
@@ -551,8 +552,15 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
     try {
       const token = await getToken()
       if (!token) throw new Error(t('sessionExpired'))
-      const optimized = await optimizeImageFile(file)
-      const imageDataUrl = optimized.dataUrl
+      let imageDataUrl
+      try {
+        const optimized = await optimizeImageFile(file)
+        imageDataUrl = optimized.dataUrl
+      } catch (optErr) {
+        console.error('[LiveCoachLauncher] image optimization error:', optErr)
+        setError(getImageOptimizeUserMessage(optErr, t))
+        return
+      }
 
       const extractRes = await fetch('/api/extract-formation', {
         method: 'POST',
