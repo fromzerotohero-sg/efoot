@@ -14,6 +14,52 @@ const DEFAULT_MODEL = 'gpt-realtime'
 const SUPPORTED_VOICES = new Set(['marin'])
 const CONTEXT_TIMEOUT_MS = 3400
 
+function normalizeOpponentContext(raw) {
+  if (!raw || typeof raw !== 'object') return null
+
+  const formation = raw.formation || raw.formation_name || raw?.extracted_data?.formation || null
+  const playingStyle = raw.playing_style || raw?.extracted_data?.playing_style || null
+  const tacticalStyle = raw.tactical_style || raw?.extracted_data?.tactical_style || null
+  const players = Array.isArray(raw.players)
+    ? raw.players
+    : Array.isArray(raw?.extracted_data?.players)
+      ? raw.extracted_data.players
+      : []
+  const coach = raw.coach && typeof raw.coach === 'object'
+    ? raw.coach
+    : raw?.extracted_data?.coach && typeof raw.extracted_data.coach === 'object'
+      ? raw.extracted_data.coach
+      : null
+
+  if (!formation && players.length === 0 && !playingStyle && !tacticalStyle) return null
+
+  return {
+    formation,
+    players: players.slice(0, 11),
+    playing_style: playingStyle,
+    tactical_style: tacticalStyle,
+    ...(coach ? { coach } : {})
+  }
+}
+
+async function fetchLatestOpponentContext(admin, userId) {
+  try {
+    const { data, error } = await admin
+      .from('opponent_formations')
+      .select('formation_name, playing_style, tactical_style, players, extracted_data, updated_at')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (error || !data) return null
+    return normalizeOpponentContext(data)
+  } catch (error) {
+    console.error('[live-coach/session] latest opponent fetch error:', error)
+    return null
+  }
+}
+
 function getFallbackLiveCoachContext(lang = 'it', { liveState = null, opponentContext = null } = {}) {
   const isEn = lang === 'en'
   const stateBits = []
@@ -33,12 +79,14 @@ function getFallbackLiveCoachContext(lang = 'it', { liveState = null, opponentCo
 Rules: action first, max one tactical question, no invented facts, no app instructions.
 Response format (mandatory): 1) Now in-play 2) Next break 3) Question only if decision-critical.
 Substitutions: minute-aware (0-55 avoid automatic changes, 56-70 primary window, 71-85 scoreline-driven, 86+ control only). Defenders are changed rarely by default.
+If opponent context is missing, do not invent opponent lineup/matchups. Ask one targeted question about opponent shape or main threat and keep advice conservative.
 If context is incomplete, give the safest correction now and ask one high-value closed tactical question.
 Live hints: ${stateLine}`
       : `Sei un coach live enterprise di eFootball. Dai solo indicazioni pratiche e brevi.
 Regole: prima azione, massimo una domanda tattica, niente fatti inventati, niente istruzioni d'uso app.
 Formato risposta (obbligatorio): 1) Adesso in-play 2) Prossima pausa 3) Domanda solo se decisiva.
 Sostituzioni: logica per minutaggio (0-55 evita cambi automatici, 56-70 finestra principale, 71-85 guidate dal risultato, 86+ solo controllo). I difensori si cambiano raramente di default.
+Se manca il contesto avversario, non inventare modulo o matchup avversari. Fai una sola domanda mirata su modulo/minaccia principale e tieni la correzione prudente.
 Se il contesto e incompleto, dai subito la correzione piu sicura e fai una sola domanda tattica chiusa ad alto valore.
 Indizi live: ${stateLine}`,
     snapshot: {
@@ -126,9 +174,12 @@ export async function POST(req) {
     const body = await req.json().catch(() => ({}))
     const lang = body?.lang === 'en' ? 'en' : 'it'
     const voice = sanitizeVoice(body?.voice)
-    const opponentContext = body?.opponentContext && typeof body.opponentContext === 'object'
-      ? body.opponentContext
-      : null
+    const providedOpponentContext = normalizeOpponentContext(
+      body?.opponentContext && typeof body.opponentContext === 'object'
+        ? body.opponentContext
+        : null
+    )
+    const opponentContext = providedOpponentContext || await fetchLatestOpponentContext(admin, userId)
     const liveState = body?.liveState && typeof body.liveState === 'object'
       ? body.liveState
       : null
@@ -166,6 +217,7 @@ export async function POST(req) {
         session_meta: {
           source: 'premium_launcher',
           mode: 'webrtc_ephemeral',
+          opponentContextSource: providedOpponentContext ? 'request' : (opponentContext ? 'supabase_latest' : 'missing'),
           liveState: liveState || null
         }
       })

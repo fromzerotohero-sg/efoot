@@ -13,6 +13,7 @@ const SESSION_INIT_TIMEOUT_MS = 12000
 const SDP_EXCHANGE_TIMEOUT_MS = 12000
 const CONNECT_WATCHDOG_TIMEOUT_MS = 18000
 const START_ABORTED_ERROR = '__LIVE_COACH_START_ABORTED__'
+const LIVE_STATE_STORAGE_KEYS = ['live_state', 'liveState', 'match_live_state', 'matchLiveState']
 
 function formatDuration(ms) {
   const totalSeconds = Math.max(0, Math.floor((ms || 0) / 1000))
@@ -21,6 +22,60 @@ function formatDuration(ms) {
   const seconds = totalSeconds % 60
   if (hours > 0) return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+}
+
+function sanitizeLiveState(raw) {
+  if (!raw || typeof raw !== 'object') return null
+
+  const minute = Number.parseInt(raw.minute, 10)
+  const scoreFor = Number.parseInt(raw.scoreFor, 10)
+  const scoreAgainst = Number.parseInt(raw.scoreAgainst, 10)
+  const subsLeft = Number.parseInt(raw.subsLeft, 10)
+  const windowsLeft = Number.parseInt(raw.windowsLeft, 10)
+  const phase = typeof raw.phase === 'string' ? raw.phase.trim() : ''
+
+  const clean = {}
+  if (Number.isFinite(minute) && minute >= 0 && minute <= 140) clean.minute = minute
+  if (Number.isFinite(scoreFor) && scoreFor >= 0 && scoreFor <= 30) clean.scoreFor = scoreFor
+  if (Number.isFinite(scoreAgainst) && scoreAgainst >= 0 && scoreAgainst <= 30) clean.scoreAgainst = scoreAgainst
+  if (Number.isFinite(subsLeft) && subsLeft >= 0 && subsLeft <= 10) clean.subsLeft = subsLeft
+  if (Number.isFinite(windowsLeft) && windowsLeft >= 0 && windowsLeft <= 6) clean.windowsLeft = windowsLeft
+  if (phase) clean.phase = phase.slice(0, 24)
+
+  return Object.keys(clean).length > 0 ? clean : null
+}
+
+function readLiveStateFromStorage() {
+  if (typeof window === 'undefined') return null
+  const stores = [window.sessionStorage, window.localStorage]
+
+  for (const store of stores) {
+    for (const key of LIVE_STATE_STORAGE_KEYS) {
+      const raw = store?.getItem?.(key)
+      if (!raw) continue
+      try {
+        const parsed = JSON.parse(raw)
+        const clean = sanitizeLiveState(parsed)
+        if (clean) return clean
+      } catch (_) {}
+    }
+  }
+
+  return null
+}
+
+function readLiveStateFromWindow() {
+  if (typeof window === 'undefined') return null
+  const candidates = [
+    window.__EFOOT_LIVE_STATE__,
+    window.__LIVE_MATCH_STATE__,
+    window.__LIVE_COACH_STATE__
+  ]
+  for (const candidate of candidates) {
+    const clean = sanitizeLiveState(candidate)
+    if (clean) return clean
+  }
+  return null
 }
 
 export default function LiveCoachLauncher({ showLauncherButton = true }) {
@@ -60,6 +115,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
   const stopRealtimeRef = useRef(null)
   const latestLangRef = useRef(lang)
   const latestOpponentContextRef = useRef(opponentContext)
+  const latestLiveStateRef = useRef(null)
   const latestUserLineRef = useRef(userLine)
   const latestCoachLineRef = useRef(coachLine)
 
@@ -176,6 +232,30 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
   useEffect(() => {
     latestOpponentContextRef.current = opponentContext
   }, [opponentContext])
+
+  const getLiveStateSnapshot = useCallback(() => {
+    const fromWindow = readLiveStateFromWindow()
+    if (fromWindow) return fromWindow
+    return readLiveStateFromStorage()
+  }, [])
+
+  useEffect(() => {
+    const refresh = (event) => {
+      const fromEvent = sanitizeLiveState(event?.detail)
+      latestLiveStateRef.current = fromEvent || getLiveStateSnapshot()
+    }
+    refresh()
+    if (typeof window !== 'undefined') {
+      window.addEventListener('live-state-updated', refresh)
+      window.addEventListener('efoot-live-state', refresh)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('live-state-updated', refresh)
+        window.removeEventListener('efoot-live-state', refresh)
+      }
+    }
+  }, [getLiveStateSnapshot])
 
   useEffect(() => {
     latestUserLineRef.current = userLine
@@ -460,6 +540,8 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
       if (!token) throw new Error(t('sessionExpired'))
 
       sessionTimeout = setTimeout(() => startAbort.abort(), SESSION_INIT_TIMEOUT_MS)
+      const liveState = latestLiveStateRef.current || getLiveStateSnapshot()
+
       const sessionRes = await fetch('/api/live-coach/session', {
         method: 'POST',
         headers: {
@@ -469,7 +551,8 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
         body: JSON.stringify({
           lang,
           voice,
-          opponentContext
+          opponentContext,
+          liveState
         }),
         signal: startAbort.signal
       })

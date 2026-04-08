@@ -17,10 +17,11 @@ import { X, ChevronRight, BarChart3, Dumbbell, AlertCircle, CheckCircle } from '
  */
 
 const COACH_STATE_KEY = 'coach_suggestions_state_v2'
-const COACH_COOLDOWN_HOURS = 8
+const COACH_COOLDOWN_HOURS = 4
 const CRITICAL_COOLDOWN_HOURS = 3
 const POST_MATCH_COOLDOWN_HOURS = 4
 const INITIAL_SUGGESTION_DELAY_MS = 1500
+const REMINDER_INTERVAL_MS = 10 * 60 * 1000
 
 export default function CoachSuggestions({ 
   userProfile, 
@@ -230,16 +231,23 @@ export default function CoachSuggestions({
       return null
     }
 
-    // Delay iniziale per non disturbare subito
-    const timer = setTimeout(() => {
+    const tryShowSuggestion = () => {
+      if (isVisible || currentMessage) return
       const message = checkTriggers()
       if (message) {
         setCurrentMessage(message)
         setIsVisible(true)
       }
-    }, INITIAL_SUGGESTION_DELAY_MS)
+    }
 
-    return () => clearTimeout(timer)
+    // Primo check rapido + reminder periodici mentre l'utente usa la pagina.
+    const timer = setTimeout(tryShowSuggestion, INITIAL_SUGGESTION_DELAY_MS)
+    const recurring = setInterval(tryShowSuggestion, REMINDER_INTERVAL_MS)
+
+    return () => {
+      clearTimeout(timer)
+      clearInterval(recurring)
+    }
   }, [userProfile, matches, isVisible, currentMessage, t, isInCooldown, onOpenGameAnalysis, onOpenCoachFeedback, getCoachState, saveCoachState])
 
   const dismiss = useCallback(() => {
