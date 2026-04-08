@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Clock3, Crown, ImagePlus, Loader2, Mic, MicOff, Radio, Sparkles, UploadCloud, X, Zap } from 'lucide-react'
+import { Clock3, Crown, ImagePlus, Loader2, Radio, Sparkles, UploadCloud, X, Zap } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n'
 import { getValidAccessToken, supabase } from '@/lib/supabaseClient'
 import { safeJsonResponse } from '@/lib/fetchHelper'
@@ -25,7 +25,6 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
   const [isOpen, setIsOpen] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
   const [isConnected, setIsConnected] = useState(false)
-  const [isMuted, setIsMuted] = useState(false)
   const [error, setError] = useState(null)
   const [opponentContext, setOpponentContext] = useState(null)
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
@@ -49,7 +48,6 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
   const sessionIdRef = useRef(null)
   const stopInProgressRef = useRef(false)
   const responseInFlightRef = useRef(false)
-  const lastResponseDoneAtRef = useRef(0)
   const wakeLockRef = useRef(null)
   const disconnectTimeoutRef = useRef(null)
 
@@ -218,7 +216,6 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
 
     setIsConnected(false)
     setIsConnecting(false)
-    setIsMuted(false)
 
     if (notifyServer && sessionIdRef.current) {
       try {
@@ -246,7 +243,6 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
 
     sessionIdRef.current = null
     responseInFlightRef.current = false
-    lastResponseDoneAtRef.current = 0
     setSessionStartedAt(null)
     setNowTick(Date.now())
     await fetchCredits()
@@ -286,21 +282,6 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
     }
   }, [clearDisconnectTimeout, isConnected, releaseWakeLock, requestWakeLock])
 
-  const requestModelResponse = useCallback((transcript = '') => {
-    const text = String(transcript || '').trim()
-    const now = Date.now()
-    if (!dcRef.current || dcRef.current.readyState !== 'open') return
-    if (!text || text.length < 2) return
-    if (responseInFlightRef.current) return
-    if (now - lastResponseDoneAtRef.current < 2500) return
-
-    responseInFlightRef.current = true
-    setCoachLine('')
-    dcRef.current.send(JSON.stringify({
-      type: 'response.create'
-    }))
-  }, [])
-
   const handleRealtimeEvent = useCallback((event) => {
     if (!event || typeof event !== 'object') return
 
@@ -333,20 +314,8 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
       return
     }
 
-    if (event.type === 'input_audio_buffer.speech_stopped') {
-      if (!responseInFlightRef.current && dcRef.current?.readyState === 'open') {
-        responseInFlightRef.current = true
-        setCoachLine('')
-        dcRef.current.send(JSON.stringify({
-          type: 'response.create'
-        }))
-      }
-      return
-    }
-
     if (event.type === 'response.done' && event.response?.usage) {
       responseInFlightRef.current = false
-      lastResponseDoneAtRef.current = Date.now()
       setSessionInfo(prev => ({
         ...(prev || {}),
         usage: event.response.usage
@@ -526,6 +495,13 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
           clearDisconnectTimeout()
           void requestWakeLock()
           startHeartbeat(sessionPayload?.heartbeatMs || 30000)
+          if (!responseInFlightRef.current && dcRef.current?.readyState === 'open') {
+            responseInFlightRef.current = true
+            setCoachLine('')
+            dcRef.current.send(JSON.stringify({
+              type: 'response.create'
+            }))
+          }
           return
         }
 
@@ -547,15 +523,6 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
     } finally {
       setIsConnecting(false)
     }
-  }
-
-  const toggleMute = () => {
-    const tracks = mediaStreamRef.current?.getAudioTracks?.() || []
-    const nextMuted = !isMuted
-    tracks.forEach(track => {
-      track.enabled = !nextMuted
-    })
-    setIsMuted(nextMuted)
   }
 
   const handlePhotoPick = async (event) => {
@@ -1163,27 +1130,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                         )}
                       </button>
                     ) : (
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                        <button
-                          type="button"
-                          onClick={toggleMute}
-                          style={{
-                            minHeight: '48px',
-                            borderRadius: '12px',
-                            border: '1px solid rgba(255,255,255,0.15)',
-                            background: isMuted ? 'rgba(255,170,0,0.15)' : 'rgba(255,255,255,0.05)',
-                            color: '#FFFFFF',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px',
-                            fontWeight: 600,
-                            fontSize: '14px'
-                          }}
-                        >
-                          {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
-                          {isMuted ? t('liveCoachUnmute') : t('liveCoachMute')}
-                        </button>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
                         <button
                           type="button"
                           onClick={() => stopRealtime(true)}
