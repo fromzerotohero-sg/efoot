@@ -488,6 +488,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
           dc.send(JSON.stringify({
             type: 'session.update',
             session: {
+              type: 'realtime',
               audio: {
                 input: {
                   turn_detection: {
@@ -1121,8 +1122,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                         gap: '12px'
                       }}
                     >
-                      <span style={{ fontWeight: 700 }}>{t('liveCoachVoiceMarin')}</span>
-                      <span style={{ color: 'rgba(255,255,255,0.62)', fontSize: '12px' }}>{voice}</span>
+                      <span style={{ fontWeight: 700 }}>{t('liveCoachVoiceTitle', { coachName: coachDisplayName })}</span>
                     </div>
 
                     <div style={{
@@ -1355,7 +1355,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                   </div>
                   <div style={{ borderRadius: '14px', background: 'rgba(255,215,100,0.05)', padding: '14px', minHeight: '88px' }}>
                     <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFD76A', marginBottom: '6px' }}>{coachDisplayName}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.9)', minHeight: '20px', lineHeight: 1.6 }}>{coachLine || t('liveCoachWaitingCoach', { coachName: coachDisplayName })}</div>
+                    <div style={{ color: 'rgba(255,255,255,0.9)', minHeight: '20px', lineHeight: 1.6 }}>{coachLine || '...'}</div>
                   </div>
                 </div>
               </div>
