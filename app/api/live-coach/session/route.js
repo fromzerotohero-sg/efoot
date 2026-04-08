@@ -12,6 +12,36 @@ export const dynamic = 'force-dynamic'
 const DEFAULT_VOICE = 'marin'
 const DEFAULT_MODEL = 'gpt-realtime'
 const SUPPORTED_VOICES = new Set(['marin'])
+const CONTEXT_TIMEOUT_MS = 2200
+
+function getFallbackLiveCoachContext(lang = 'it') {
+  const isEn = lang === 'en'
+  return {
+    instructions: isEn
+      ? 'You are an eFootball live coach. Give short, direct tactical fixes in spoken style.'
+      : 'Sei un coach live di eFootball. Dai correzioni tattiche brevi, dirette e naturali.',
+    snapshot: {}
+  }
+}
+
+async function buildContextWithTimeout({ userId, lang, opponentContext }) {
+  const fallback = getFallbackLiveCoachContext(lang)
+  let timeoutHandle = null
+  const timeoutPromise = new Promise(resolve => {
+    timeoutHandle = setTimeout(() => resolve(fallback), CONTEXT_TIMEOUT_MS)
+  })
+  try {
+    return await Promise.race([
+      buildLiveCoachContext({ userId, lang, opponentContext }),
+      timeoutPromise
+    ])
+  } catch (error) {
+    console.error('[live-coach/session] context build error:', error)
+    return fallback
+  } finally {
+    if (timeoutHandle) clearTimeout(timeoutHandle)
+  }
+}
 
 async function resolveUser(req) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -89,7 +119,8 @@ export async function POST(req) {
       )
     }
 
-    const context = await buildLiveCoachContext({ userId, lang, opponentContext })
+    const contextPromise = buildContextWithTimeout({ userId, lang, opponentContext })
+    const context = await contextPromise
 
     const { data: sessionRow, error: sessionError } = await admin
       .from('live_coach_sessions')

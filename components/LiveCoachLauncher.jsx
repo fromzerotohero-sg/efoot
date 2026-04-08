@@ -9,6 +9,10 @@ import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 
 const DEFAULT_VOICE = 'marin'
+const SESSION_INIT_TIMEOUT_MS = 12000
+const SDP_EXCHANGE_TIMEOUT_MS = 12000
+const CONNECT_WATCHDOG_TIMEOUT_MS = 18000
+const START_ABORTED_ERROR = '__LIVE_COACH_START_ABORTED__'
 
 function formatDuration(ms) {
   const totalSeconds = Math.max(0, Math.floor((ms || 0) / 1000))
@@ -50,6 +54,9 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
   const responseInFlightRef = useRef(false)
   const wakeLockRef = useRef(null)
   const disconnectTimeoutRef = useRef(null)
+  const connectWatchdogRef = useRef(null)
+  const startAttemptRef = useRef(0)
+  const startAbortRef = useRef(null)
 
   const premiumLabel = useMemo(() => lang === 'en' ? 'Premium' : 'Premium', [lang])
   const balanceRemaining = Number.isFinite(Number(creditsData?.balance_remaining)) ? Number(creditsData.balance_remaining) : null
@@ -164,6 +171,13 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
     }
   }, [])
 
+  const clearConnectWatchdog = useCallback(() => {
+    if (connectWatchdogRef.current) {
+      clearTimeout(connectWatchdogRef.current)
+      connectWatchdogRef.current = null
+    }
+  }, [])
+
   const stopHeartbeat = useCallback(() => {
     if (heartbeatRef.current) {
       clearInterval(heartbeatRef.current)
@@ -196,8 +210,14 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
   const stopRealtime = useCallback(async (notifyServer = true) => {
     if (stopInProgressRef.current) return
     stopInProgressRef.current = true
+    startAttemptRef.current += 1
+    try {
+      startAbortRef.current?.abort?.()
+    } catch (_) {}
+    startAbortRef.current = null
     stopHeartbeat()
     clearDisconnectTimeout()
+    clearConnectWatchdog()
     await releaseWakeLock()
 
     try {
@@ -247,13 +267,14 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
     setNowTick(Date.now())
     await fetchCredits()
     stopInProgressRef.current = false
-  }, [clearDisconnectTimeout, fetchCredits, getToken, lang, opponentContext, releaseWakeLock, stopHeartbeat, userLine, coachLine])
+  }, [clearConnectWatchdog, clearDisconnectTimeout, fetchCredits, getToken, lang, opponentContext, releaseWakeLock, stopHeartbeat, userLine, coachLine])
 
   useEffect(() => {
     return () => {
+      clearConnectWatchdog()
       stopRealtime(false)
     }
-  }, [stopRealtime])
+  }, [clearConnectWatchdog, stopRealtime])
 
   useEffect(() => {
     if (!isConnected) {
@@ -284,6 +305,12 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
 
   const handleRealtimeEvent = useCallback((event) => {
     if (!event || typeof event !== 'object') return
+
+    if (event.type === 'response.created') {
+      responseInFlightRef.current = true
+      setCoachLine('')
+      return
+    }
 
     if (event.type === 'conversation.item.input_audio_transcription.completed') {
       const transcript =
@@ -378,15 +405,34 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
 
   const startRealtime = async () => {
     if (isConnecting || isConnected) return
+    const attemptId = startAttemptRef.current + 1
+    startAttemptRef.current = attemptId
+    const startAbort = new AbortController()
+    startAbortRef.current = startAbort
+
     setError(null)
     setIsConnecting(true)
     setCoachLine('')
     setUserLine('')
+    clearConnectWatchdog()
+    connectWatchdogRef.current = setTimeout(() => {
+      if (startAttemptRef.current !== attemptId || stopInProgressRef.current) return
+      setError(t('liveCoachRealtimeError'))
+      void stopRealtime(Boolean(sessionIdRef.current))
+    }, CONNECT_WATCHDOG_TIMEOUT_MS)
 
     try {
+      const throwIfStartAborted = () => {
+        if (startAbort.signal.aborted || startAttemptRef.current !== attemptId) {
+          throw new Error(START_ABORTED_ERROR)
+        }
+      }
+
       const token = await getToken()
+      throwIfStartAborted()
       if (!token) throw new Error(t('sessionExpired'))
 
+      const sessionTimeout = setTimeout(() => startAbort.abort(), SESSION_INIT_TIMEOUT_MS)
       const sessionRes = await fetch('/api/live-coach/session', {
         method: 'POST',
         headers: {
@@ -397,8 +443,11 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
           lang,
           voice,
           opponentContext
-        })
+        }),
+        signal: startAbort.signal
       })
+      clearTimeout(sessionTimeout)
+      throwIfStartAborted()
       const sessionPayload = await safeJsonResponse(sessionRes, t('liveCoachStartError'))
       const clientSecret = sessionPayload?.clientSecret
       const sessionId = sessionPayload?.sessionId
@@ -408,6 +457,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
       }
 
       sessionIdRef.current = sessionId
+      throwIfStartAborted()
       setSessionStartedAt(sessionPayload?.startedAt ? new Date(sessionPayload.startedAt).getTime() : Date.now())
       setSessionInfo({
         ...sessionPayload,
@@ -436,6 +486,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
         }
       })
       mediaStreamRef.current = mediaStream
+      throwIfStartAborted()
       mediaStream.getTracks().forEach(track => pc.addTrack(track, mediaStream))
 
       const dc = pc.createDataChannel('oai-events')
@@ -451,7 +502,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                   turn_detection: {
                     type: 'semantic_vad',
                     eagerness: 'medium',
-                    interrupt_response: false,
+                    interrupt_response: true,
                     create_response: true
                   }
                 }
@@ -467,16 +518,22 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
       })
 
       const offer = await pc.createOffer()
+      throwIfStartAborted()
       await pc.setLocalDescription(offer)
+      throwIfStartAborted()
 
+      const sdpTimeout = setTimeout(() => startAbort.abort(), SDP_EXCHANGE_TIMEOUT_MS)
       const sdpRes = await fetch('https://api.openai.com/v1/realtime/calls', {
         method: 'POST',
         body: offer.sdp,
         headers: {
           Authorization: `Bearer ${clientSecret}`,
           'Content-Type': 'application/sdp'
-        }
+        },
+        signal: startAbort.signal
       })
+      clearTimeout(sdpTimeout)
+      throwIfStartAborted()
 
       const answerSdp = await sdpRes.text()
       if (!sdpRes.ok) {
@@ -493,15 +550,9 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
           setIsConnected(true)
           setIsConnecting(false)
           clearDisconnectTimeout()
+          clearConnectWatchdog()
           void requestWakeLock()
           startHeartbeat(sessionPayload?.heartbeatMs || 30000)
-          if (!responseInFlightRef.current && dcRef.current?.readyState === 'open') {
-            responseInFlightRef.current = true
-            setCoachLine('')
-            dcRef.current.send(JSON.stringify({
-              type: 'response.create'
-            }))
-          }
           return
         }
 
@@ -518,9 +569,15 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
       })
     } catch (err) {
       console.error('[LiveCoachLauncher] start error:', err)
-      setError(err.message || t('liveCoachStartError'))
+      if (String(err?.message || '') !== START_ABORTED_ERROR && err?.name !== 'AbortError') {
+        setError(err.message || t('liveCoachStartError'))
+      }
       await stopRealtime(Boolean(sessionIdRef.current))
     } finally {
+      clearConnectWatchdog()
+      if (startAbortRef.current === startAbort) {
+        startAbortRef.current = null
+      }
       setIsConnecting(false)
     }
   }
