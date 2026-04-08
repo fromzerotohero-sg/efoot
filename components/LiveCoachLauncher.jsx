@@ -41,6 +41,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
   const [betaCode, setBetaCode] = useState('')
   const [betaUnlocking, setBetaUnlocking] = useState(false)
   const [betaError, setBetaError] = useState(null)
+  const [userProfile, setUserProfile] = useState(null)
 
   const fileInputRef = useRef(null)
   const cameraInputRef = useRef(null)
@@ -63,6 +64,10 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
   const liveDuration = formatDuration(elapsedMs)
   const hasConversation = Boolean(userLine || coachLine || isConnected || isConnecting)
   const launcherWidth = 'min(268px, calc(100vw - 28px))'
+  const coachDisplayName = useMemo(() => {
+    const custom = userProfile?.ai_name && String(userProfile.ai_name).trim()
+    return custom || (lang === 'en' ? 'your coach' : 'il tuo coach')
+  }, [lang, userProfile?.ai_name])
 
   const getToken = useCallback(async () => {
     let token = localStorage.getItem('auth_token')
@@ -129,6 +134,28 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
       }
     }
   }, [])
+
+  useEffect(() => {
+    let mounted = true
+    const loadProfile = async () => {
+      try {
+        const token = await getToken()
+        if (!token) return
+        const res = await fetch('/api/dashboard', {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store'
+        })
+        if (!res.ok) return
+        const data = await res.json().catch(() => ({}))
+        if (!mounted) return
+        if (data?.profile) setUserProfile(data.profile)
+      } catch (err) {
+        console.error('[LiveCoachLauncher] profile error:', err)
+      }
+    }
+    loadProfile()
+    return () => { mounted = false }
+  }, [getToken])
 
   useEffect(() => {
     let mounted = true
@@ -765,7 +792,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF' }}>{t('liveCoachTitle')}</span>
+                  <span style={{ fontSize: '15px', fontWeight: 800, color: '#FFFFFF' }}>{t('liveCoachTitle', { coachName: coachDisplayName })}</span>
                   <span style={{
                     padding: '4px 8px',
                     borderRadius: '999px',
@@ -898,8 +925,8 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                   <Sparkles size={14} />
                   {t('liveCoachPremiumBadge')}
                 </div>
-                <h2 style={{ margin: 0, fontSize: '26px', fontWeight: 800, color: '#FFFFFF' }}>{t('liveCoachTitle')}</h2>
-                <p style={{ margin: '8px 0 0', color: 'rgba(255,255,255,0.72)', lineHeight: 1.5 }}>{t('liveCoachSubtitle')}</p>
+                <h2 style={{ margin: 0, fontSize: '26px', fontWeight: 800, color: '#FFFFFF' }}>{t('liveCoachTitle', { coachName: coachDisplayName })}</h2>
+                <p style={{ margin: '8px 0 0', color: 'rgba(255,255,255,0.72)', lineHeight: 1.5 }}>{t('liveCoachSubtitle', { coachName: coachDisplayName })}</p>
               </div>
               <button
                 type="button"
@@ -1053,8 +1080,8 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                 <div style={{ borderRadius: '20px', border: '1px solid rgba(255,215,100,0.20)', background: 'linear-gradient(180deg, rgba(255,215,100,0.08), rgba(0,212,255,0.04))', padding: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap', marginBottom: '12px' }}>
                     <div>
-                      <div style={{ fontSize: '16px', fontWeight: 700, color: '#FFFFFF' }}>{t('liveCoachVoiceTitle')}</div>
-                      <div style={{ marginTop: '4px', fontSize: '13px', color: 'rgba(255,255,255,0.66)', lineHeight: 1.5 }}>{t('liveCoachVoiceHelper')}</div>
+                      <div style={{ fontSize: '16px', fontWeight: 700, color: '#FFFFFF' }}>{t('liveCoachVoiceTitle', { coachName: coachDisplayName })}</div>
+                      <div style={{ marginTop: '4px', fontSize: '13px', color: 'rgba(255,255,255,0.66)', lineHeight: 1.5 }}>{t('liveCoachVoiceHelper', { coachName: coachDisplayName })}</div>
                     </div>
                     <div style={{
                       display: 'inline-flex',
@@ -1302,7 +1329,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                     <div style={{ fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>{t('liveCoachLiveFeed')}</div>
                     {!hasConversation && (
                       <div style={{ marginTop: '4px', fontSize: '12px', color: 'rgba(255,255,255,0.66)', lineHeight: 1.5 }}>
-                        {t('liveCoachFeedHelper')}
+                        {t('liveCoachFeedHelper', { coachName: coachDisplayName })}
                       </div>
                     )}
                   </div>
@@ -1327,8 +1354,8 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                     <div style={{ color: 'rgba(255,255,255,0.82)', minHeight: '20px', lineHeight: 1.6 }}>{userLine || t('liveCoachWaitingYou')}</div>
                   </div>
                   <div style={{ borderRadius: '14px', background: 'rgba(255,215,100,0.05)', padding: '14px', minHeight: '88px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFD76A', marginBottom: '6px' }}>{t('liveCoachCoach')}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.9)', minHeight: '20px', lineHeight: 1.6 }}>{coachLine || t('liveCoachWaitingCoach')}</div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFD76A', marginBottom: '6px' }}>{coachDisplayName}</div>
+                    <div style={{ color: 'rgba(255,255,255,0.9)', minHeight: '20px', lineHeight: 1.6 }}>{coachLine || t('liveCoachWaitingCoach', { coachName: coachDisplayName })}</div>
                   </div>
                 </div>
               </div>
