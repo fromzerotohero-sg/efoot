@@ -14,6 +14,7 @@ import { useGameAnalysisModalNav, OPEN_GAME_ANALYSIS_MODAL_EVENT, CLOSE_GAME_ANA
 import TaskWidget from '@/components/TaskWidget'
 import MissionCenter from '@/components/MissionCenter'
 import OnboardingFlow from '@/components/OnboardingFlow'
+import CoachLive from '@/components/CoachLive'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import { withAuth } from '@/components/AuthWrapper'
 import { 
@@ -877,6 +878,14 @@ function HomePage() {
             </div>
           </div>
         </div>
+
+      {/* Coach Live - AI Proactive Alerts */}
+      <CoachLive 
+        userProfile={userProfile}
+        matches={recentMatches}
+        onOpenGameAnalysis={() => setShowGameAnalysisModal(true)}
+        onOpenCoachFeedback={() => setShowCoachFeedback(true)}
+      />
 
       <style jsx>{`
         @keyframes spin {
