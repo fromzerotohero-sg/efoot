@@ -12,27 +12,52 @@ export const dynamic = 'force-dynamic'
 const DEFAULT_VOICE = 'marin'
 const DEFAULT_MODEL = 'gpt-realtime'
 const SUPPORTED_VOICES = new Set(['marin'])
-const CONTEXT_TIMEOUT_MS = 2200
+const CONTEXT_TIMEOUT_MS = 3400
 
-function getFallbackLiveCoachContext(lang = 'it') {
+function getFallbackLiveCoachContext(lang = 'it', { liveState = null, opponentContext = null } = {}) {
   const isEn = lang === 'en'
+  const stateBits = []
+  const minute = Number.parseInt(liveState?.minute, 10)
+  const scoreFor = Number.parseInt(liveState?.scoreFor, 10)
+  const scoreAgainst = Number.parseInt(liveState?.scoreAgainst, 10)
+  const windowsLeft = Number.parseInt(liveState?.windowsLeft, 10)
+  if (Number.isFinite(minute)) stateBits.push(isEn ? `minute ${minute}` : `minuto ${minute}`)
+  if (Number.isFinite(scoreFor) && Number.isFinite(scoreAgainst)) stateBits.push(isEn ? `score ${scoreFor}-${scoreAgainst}` : `risultato ${scoreFor}-${scoreAgainst}`)
+  if (Number.isFinite(windowsLeft)) stateBits.push(isEn ? `windows left ${windowsLeft}` : `finestre residue ${windowsLeft}`)
+  const opponentFormation = opponentContext?.formation || opponentContext?.formation_name
+  if (opponentFormation) stateBits.push(isEn ? `opponent shape ${opponentFormation}` : `modulo avversario ${opponentFormation}`)
+  const stateLine = stateBits.length ? stateBits.join(' | ') : (isEn ? 'live state missing' : 'stato live mancante')
   return {
     instructions: isEn
-      ? 'You are an eFootball live coach. Give short, direct tactical fixes in spoken style.'
-      : 'Sei un coach live di eFootball. Dai correzioni tattiche brevi, dirette e naturali.',
-    snapshot: {}
+      ? `You are an enterprise eFootball live coach. Use short practical guidance only.
+Rules: action first, max one tactical question, no invented facts, no app instructions.
+Response format (mandatory): 1) Now in-play 2) Next break 3) Question only if decision-critical.
+Substitutions: minute-aware (0-55 avoid automatic changes, 56-70 primary window, 71-85 scoreline-driven, 86+ control only). Defenders are changed rarely by default.
+If context is incomplete, give the safest correction now and ask one high-value closed tactical question.
+Live hints: ${stateLine}`
+      : `Sei un coach live enterprise di eFootball. Dai solo indicazioni pratiche e brevi.
+Regole: prima azione, massimo una domanda tattica, niente fatti inventati, niente istruzioni d'uso app.
+Formato risposta (obbligatorio): 1) Adesso in-play 2) Prossima pausa 3) Domanda solo se decisiva.
+Sostituzioni: logica per minutaggio (0-55 evita cambi automatici, 56-70 finestra principale, 71-85 guidate dal risultato, 86+ solo controllo). I difensori si cambiano raramente di default.
+Se il contesto e incompleto, dai subito la correzione piu sicura e fai una sola domanda tattica chiusa ad alto valore.
+Indizi live: ${stateLine}`,
+    snapshot: {
+      liveState: liveState || null,
+      opponent: opponentContext || null,
+      contextQuality: 'fallback-smart'
+    }
   }
 }
 
-async function buildContextWithTimeout({ userId, lang, opponentContext }) {
-  const fallback = getFallbackLiveCoachContext(lang)
+async function buildContextWithTimeout({ userId, lang, opponentContext, liveState }) {
+  const fallback = getFallbackLiveCoachContext(lang, { liveState, opponentContext })
   let timeoutHandle = null
   const timeoutPromise = new Promise(resolve => {
     timeoutHandle = setTimeout(() => resolve(fallback), CONTEXT_TIMEOUT_MS)
   })
   try {
     return await Promise.race([
-      buildLiveCoachContext({ userId, lang, opponentContext }),
+      buildLiveCoachContext({ userId, lang, opponentContext, liveState }),
       timeoutPromise
     ])
   } catch (error) {
@@ -104,6 +129,9 @@ export async function POST(req) {
     const opponentContext = body?.opponentContext && typeof body.opponentContext === 'object'
       ? body.opponentContext
       : null
+    const liveState = body?.liveState && typeof body.liveState === 'object'
+      ? body.liveState
+      : null
 
     const rateLimitConfig = RATE_LIMIT_CONFIG['/api/live-coach/session'] || { maxRequests: 6, windowMs: 60000 }
     const rateLimit = await checkRateLimit(userId, '/api/live-coach/session', rateLimitConfig.maxRequests, rateLimitConfig.windowMs)
@@ -119,7 +147,7 @@ export async function POST(req) {
       )
     }
 
-    const contextPromise = buildContextWithTimeout({ userId, lang, opponentContext })
+    const contextPromise = buildContextWithTimeout({ userId, lang, opponentContext, liveState })
     const context = await contextPromise
 
     const { data: sessionRow, error: sessionError } = await admin
@@ -137,7 +165,8 @@ export async function POST(req) {
         opponent_context: opponentContext || {},
         session_meta: {
           source: 'premium_launcher',
-          mode: 'webrtc_ephemeral'
+          mode: 'webrtc_ephemeral',
+          liveState: liveState || null
         }
       })
       .select('id, created_at')
