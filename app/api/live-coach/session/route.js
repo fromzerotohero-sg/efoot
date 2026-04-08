@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'
 
 const DEFAULT_VOICE = 'marin'
 const DEFAULT_MODEL = 'gpt-realtime'
-const SUPPORTED_VOICES = new Set(['marin', 'cedar', 'coral', 'verse', 'sage', 'ballad'])
+const SUPPORTED_VOICES = new Set(['marin'])
 
 async function resolveUser(req) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL

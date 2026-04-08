@@ -1079,27 +1079,24 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                   </div>
 
                   <div style={{ display: 'grid', gap: '10px' }}>
-                    <select
-                      value={voice}
-                      onChange={(e) => setVoice(e.target.value)}
-                      disabled={isConnected || isConnecting}
+                    <div
                       style={{
                         minHeight: '44px',
                         borderRadius: '12px',
                         background: 'rgba(255,255,255,0.06)',
                         color: '#FFFFFF',
                         border: '1px solid rgba(255,255,255,0.12)',
-                        padding: '8px 12px',
-                        fontSize: '13px'
+                        padding: '10px 12px',
+                        fontSize: '13px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '12px'
                       }}
                     >
-                      <option value="marin">{t('liveCoachVoiceMarin')}</option>
-                      <option value="cedar">{t('liveCoachVoiceCedar')}</option>
-                      <option value="coral">{t('liveCoachVoiceCoral')}</option>
-                      <option value="verse">{t('liveCoachVoiceVerse')}</option>
-                      <option value="sage">{t('liveCoachVoiceSage')}</option>
-                      <option value="ballad">{t('liveCoachVoiceBallad')}</option>
-                    </select>
+                      <span style={{ fontWeight: 700 }}>{t('liveCoachVoiceMarin')}</span>
+                      <span style={{ color: 'rgba(255,255,255,0.62)', fontSize: '12px' }}>{voice}</span>
+                    </div>
 
                     <div style={{
                       display: 'flex',
