@@ -25,6 +25,7 @@ const COACH_COOLDOWN_HOURS = 24
 export default function CoachLive({ 
   userProfile, 
   matches = [], 
+  gameAnalysisLastCapture,
   onOpenGameAnalysis, 
   onOpenCoachFeedback 
 }) {
@@ -78,7 +79,7 @@ export default function CoachLive({
       const now = new Date()
       
       // Dati necessari
-      const hasStats = userProfile.has_game_analysis === true || userProfile.game_analysis_data != null
+      const hasStats = !!gameAnalysisLastCapture || userProfile?.game_analysis_data != null
       const hasCoach = userProfile.has_active_coach === true
       const matchesCount = matches.length
       const lastMatch = matches[0]

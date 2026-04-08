@@ -883,6 +883,7 @@ function HomePage() {
       <CoachLive 
         userProfile={userProfile}
         matches={recentMatches}
+        gameAnalysisLastCapture={gameAnalysisLastCapture}
         onOpenGameAnalysis={() => setShowGameAnalysisModal(true)}
         onOpenCoachFeedback={() => setShowCoachFeedback(true)}
       />
