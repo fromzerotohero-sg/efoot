@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Clock3, Crown, ImagePlus, Loader2, Radio, Sparkles, UploadCloud, X, Zap } from 'lucide-react'
+import { Clock3, Crown, ImagePlus, Loader2, Mic, Radio, Sparkles, UploadCloud, X, Zap } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n'
 import { getValidAccessToken, supabase } from '@/lib/supabaseClient'
 import { safeJsonResponse } from '@/lib/fetchHelper'
