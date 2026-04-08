@@ -5,18 +5,15 @@ import { useTranslation } from '@/lib/i18n'
 import { X, ChevronRight, BarChart3, Dumbbell, AlertCircle, CheckCircle } from 'lucide-react'
 
 /**
- * CoachLive - AI Coach Proattivo
- * 
- * Sistema di alert conversazionali che guida l'utente verso:
- * 1. Caricamento statistiche di gioco
- * 2. Utilizzo Palestra Coach
- * 
- * Non sostituisce la Chat IA, è un canale monodirezionale (IA -> Utente)
- * 
- * Stati:
- * - idle: Invisibile o micro-icona
- * - alert: Bottom sheet (mobile) / Toast (desktop) attivo
- * - dismissed: Chiuso dall'utente (cooldown 24h)
+ * CoachSuggestions - Suggeritore contestuale del coach
+ *
+ * Obiettivo UX:
+ * - proporre UNA sola prossima azione utile
+ * - aiutare il cliente a ottenere più valore dal coach
+ * - evitare tono da alert/funnel aggressivo
+ *
+ * Le Statistiche di gioco sono una sezione autonoma e importante:
+ * possono essere suggerite anche senza partite salvate.
  */
 
 const COACH_STATE_KEY = 'coach_live_state'
@@ -80,10 +77,10 @@ export default function CoachSuggestions({
       
       // Dati necessari
       const hasStats = !!gameAnalysisLastCapture || userProfile?.game_analysis_data != null
-      const hasCoach = userProfile.has_active_coach === true
       const matchesCount = matches.length
       const lastMatch = matches[0]
-      const lastMatchDate = lastMatch?.created_at ? new Date(lastMatch.created_at) : null
+      const lastMatchRaw = lastMatch?.created_at || lastMatch?.match_date || null
+      const lastMatchDate = lastMatchRaw ? new Date(lastMatchRaw) : null
       
       // Controllo Palestra (ultimi 7 giorni)
       const lastPalestra = userProfile.last_coach_feedback_at 
@@ -94,18 +91,22 @@ export default function CoachSuggestions({
         : 999
       const needsPalestra = daysSincePalestra > 7 && matchesCount >= 3
 
-      // 1. ALLARME ROSSO: Molte partite, zero dati
-      if (!hasStats && matchesCount >= 5 && !isInCooldown('critical_no_data')) {
+      // 1. PRIORITA ALTA: mancano Statistiche di gioco (anche senza partite)
+      if (!hasStats && !isInCooldown('critical_no_data')) {
         return {
           id: 'critical_no_data',
           priority: 3,
-          icon: AlertCircle,
-          iconColor: '#FF3B30',
-          bgGradient: 'linear-gradient(135deg, rgba(255, 59, 48, 0.15) 0%, rgba(255, 59, 48, 0.05) 100%)',
+          icon: BarChart3,
+          iconColor: '#00d4ff',
+          bgGradient: 'linear-gradient(135deg, rgba(0, 212, 255, 0.16) 0%, rgba(0, 161, 166, 0.05) 100%)',
           title: t('coachSuggestionCriticalTitle'),
-          message: t('coachSuggestionCriticalMessage'),
+          message: t(
+            matchesCount > 0
+              ? 'coachSuggestionCriticalMessageWithMatches'
+              : 'coachSuggestionCriticalMessage'
+          ),
           primaryAction: {
-            label: t('coachSuggestionActionSetup'),
+            label: t('coachSuggestionActionStats'),
             onClick: () => {
               saveCoachState({ 
                 cooldowns: { 
@@ -159,9 +160,9 @@ export default function CoachSuggestions({
         }
       }
 
-      // 3. PRIMO ACCESSO: Mancano statistiche (score basso)
+      // 3. PRIMO ACCESSO: accompagnamento leggero verso Statistiche
       const aiScore = userProfile.ai_knowledge_score || 0
-      if (!hasStats && aiScore < 30 && matchesCount >= 2 && !isInCooldown('first_time_stats')) {
+      if (!hasStats && aiScore < 30 && matchesCount === 0 && !isInCooldown('first_time_stats')) {
         return {
           id: 'first_time_stats',
           priority: 1,
@@ -259,7 +260,7 @@ export default function CoachSuggestions({
   if (!isVisible || !currentMessage) return null
 
   const IconComponent = currentMessage.icon
-  const isCritical = currentMessage.priority === 3
+  const isHighPriority = currentMessage.priority >= 3
 
   return (
     <div className={`coach-live-overlay ${isAnimating ? 'closing' : ''}`}>
@@ -301,8 +302,8 @@ export default function CoachSuggestions({
                 color={currentMessage.iconColor}
                 strokeWidth={2}
               />
-              {/* Animazione pulsing per critico */}
-              {isCritical && <div className="coach-avatar-pulse" style={{ borderColor: currentMessage.iconColor }} />}
+              {/* Animazione leggera solo per suggerimenti ad alta priorità */}
+              {isHighPriority && <div className="coach-avatar-pulse" style={{ borderColor: currentMessage.iconColor }} />}
             </div>
             
             <div className="coach-live-title-section">

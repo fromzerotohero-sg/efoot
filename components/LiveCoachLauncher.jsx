@@ -62,7 +62,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
   const currentSessionSpent = Number.isFinite(Number(sessionInfo?.totalHpCharged)) ? Number(sessionInfo.totalHpCharged) : 0
   const elapsedMs = sessionStartedAt ? Math.max(0, nowTick - sessionStartedAt) : 0
   const liveDuration = formatDuration(elapsedMs)
-  const hasConversation = Boolean(userLine || coachLine || isConnected || isConnecting)
+  const hasConversation = Boolean(userLine || isConnected || isConnecting)
   const launcherWidth = 'min(268px, calc(100vw - 28px))'
   const coachDisplayName = useMemo(() => {
     const custom = userProfile?.ai_name && String(userProfile.ai_name).trim()
@@ -329,10 +329,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
     responseInFlightRef.current = true
     setCoachLine('')
     dcRef.current.send(JSON.stringify({
-      type: 'response.create',
-      response: {
-        modalities: ['audio', 'text']
-      }
+      type: 'response.create'
     }))
   }, [])
 
@@ -373,10 +370,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
         responseInFlightRef.current = true
         setCoachLine('')
         dcRef.current.send(JSON.stringify({
-          type: 'response.create',
-          response: {
-            modalities: ['audio', 'text']
-          }
+          type: 'response.create'
         }))
       }
       return
@@ -1378,10 +1372,6 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                   <div style={{ borderRadius: '14px', background: 'rgba(255,255,255,0.03)', padding: '14px', minHeight: '76px' }}>
                     <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(0,212,255,0.9)', marginBottom: '6px' }}>{t('liveCoachYou')}</div>
                     <div style={{ color: 'rgba(255,255,255,0.82)', minHeight: '20px', lineHeight: 1.6 }}>{userLine || t('liveCoachWaitingYou')}</div>
-                  </div>
-                  <div style={{ borderRadius: '14px', background: 'rgba(255,215,100,0.05)', padding: '14px', minHeight: '88px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFD76A', marginBottom: '6px' }}>{coachDisplayName}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.9)', minHeight: '20px', lineHeight: 1.6 }}>{coachLine || '...'}</div>
                   </div>
                 </div>
               </div>
