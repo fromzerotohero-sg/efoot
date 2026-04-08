@@ -17,7 +17,10 @@ import { X, ChevronRight, BarChart3, Dumbbell, AlertCircle, CheckCircle } from '
  */
 
 const COACH_STATE_KEY = 'coach_suggestions_state_v2'
-const COACH_COOLDOWN_HOURS = 24
+const COACH_COOLDOWN_HOURS = 8
+const CRITICAL_COOLDOWN_HOURS = 3
+const POST_MATCH_COOLDOWN_HOURS = 4
+const INITIAL_SUGGESTION_DELAY_MS = 1500
 
 export default function CoachSuggestions({ 
   userProfile, 
@@ -112,7 +115,7 @@ export default function CoachSuggestions({
               saveCoachState({ 
                 cooldowns: { 
                   ...getCoachState().cooldowns, 
-                  critical_no_data: new Date(now.getTime() + COACH_COOLDOWN_HOURS * 60 * 60 * 1000).toISOString()
+                  critical_no_data: new Date(now.getTime() + CRITICAL_COOLDOWN_HOURS * 60 * 60 * 1000).toISOString()
                 }
               })
               if (onOpenGameAnalysis) onOpenGameAnalysis()
@@ -147,7 +150,7 @@ export default function CoachSuggestions({
               saveCoachState({ 
                 cooldowns: { 
                   ...getCoachState().cooldowns, 
-                  post_match_palestra: new Date(now.getTime() + 12 * 60 * 60 * 1000).toISOString()
+                  post_match_palestra: new Date(now.getTime() + POST_MATCH_COOLDOWN_HOURS * 60 * 60 * 1000).toISOString()
                 },
                 lastCoachFeedbackAt: now.toISOString()
               })
@@ -234,7 +237,7 @@ export default function CoachSuggestions({
         setCurrentMessage(message)
         setIsVisible(true)
       }
-    }, 3000)
+    }, INITIAL_SUGGESTION_DELAY_MS)
 
     return () => clearTimeout(timer)
   }, [userProfile, matches, isVisible, currentMessage, t, isInCooldown, onOpenGameAnalysis, onOpenCoachFeedback, getCoachState, saveCoachState])
