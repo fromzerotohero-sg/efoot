@@ -339,20 +339,46 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
   const handleRealtimeEvent = useCallback((event) => {
     if (!event || typeof event !== 'object') return
 
-    if (event.type === 'conversation.item.input_audio_transcription.completed' && event.transcript) {
-      const transcript = String(event.transcript || '').trim()
-      setUserLine(transcript)
-      requestModelResponse(transcript)
+    if (event.type === 'conversation.item.input_audio_transcription.completed') {
+      const transcript =
+        String(event.transcript || event.item?.content?.[0]?.transcript || event.item?.content?.[0]?.text || '').trim()
+      if (transcript) setUserLine(transcript)
       return
     }
 
-    if ((event.type === 'response.audio_transcript.delta' || event.type === 'response.output_text.delta') && event.delta) {
+    if (event.type === 'response.output_audio_transcript.delta' && event.delta) {
       setCoachLine(prev => `${prev}${event.delta}`)
       return
     }
 
-    if ((event.type === 'response.audio_transcript.done' || event.type === 'response.output_text.done') && event.transcript) {
-      setCoachLine(event.transcript)
+    if (event.type === 'response.output_audio_transcript.done') {
+      const transcript = String(event.transcript || event.delta || '').trim()
+      if (transcript) setCoachLine(transcript)
+      return
+    }
+
+    if (event.type === 'response.output_text.delta' && event.delta) {
+      setCoachLine(prev => `${prev}${event.delta}`)
+      return
+    }
+
+    if (event.type === 'response.output_text.done') {
+      const transcript = String(event.text || event.transcript || '').trim()
+      if (transcript) setCoachLine(transcript)
+      return
+    }
+
+    if (event.type === 'input_audio_buffer.speech_stopped') {
+      if (!responseInFlightRef.current && dcRef.current?.readyState === 'open') {
+        responseInFlightRef.current = true
+        setCoachLine('')
+        dcRef.current.send(JSON.stringify({
+          type: 'response.create',
+          response: {
+            modalities: ['audio', 'text']
+          }
+        }))
+      }
       return
     }
 
@@ -370,7 +396,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
       responseInFlightRef.current = false
       setError(event.error?.message || t('liveCoachRealtimeError'))
     }
-  }, [requestModelResponse, t])
+  }, [t])
 
   const startHeartbeat = useCallback((intervalMs) => {
     stopHeartbeat()
@@ -495,7 +521,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                     type: 'semantic_vad',
                     eagerness: 'medium',
                     interrupt_response: false,
-                    create_response: false
+                    create_response: true
                   }
                 }
               }
