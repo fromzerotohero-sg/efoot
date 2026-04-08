@@ -14,7 +14,7 @@ import { useGameAnalysisModalNav, OPEN_GAME_ANALYSIS_MODAL_EVENT, CLOSE_GAME_ANA
 import TaskWidget from '@/components/TaskWidget'
 import MissionCenter from '@/components/MissionCenter'
 import OnboardingFlow from '@/components/OnboardingFlow'
-import CoachLive from '@/components/CoachLive'
+import CoachSuggestions from '@/components/CoachSuggestions'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import { withAuth } from '@/components/AuthWrapper'
 import { 
@@ -879,8 +879,8 @@ function HomePage() {
           </div>
         </div>
 
-      {/* Coach Live - AI Proactive Alerts */}
-      <CoachLive 
+      {/* Coach Suggestions - AI Proactive Alerts */}
+      <CoachSuggestions 
         userProfile={userProfile}
         matches={recentMatches}
         gameAnalysisLastCapture={gameAnalysisLastCapture}

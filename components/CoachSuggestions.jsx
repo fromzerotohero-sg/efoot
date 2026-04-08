@@ -22,7 +22,7 @@ import { X, ChevronRight, BarChart3, Dumbbell, AlertCircle, CheckCircle } from '
 const COACH_STATE_KEY = 'coach_live_state'
 const COACH_COOLDOWN_HOURS = 24
 
-export default function CoachLive({ 
+export default function CoachSuggestions({ 
   userProfile, 
   matches = [], 
   gameAnalysisLastCapture,
@@ -102,10 +102,10 @@ export default function CoachLive({
           icon: AlertCircle,
           iconColor: '#FF3B30',
           bgGradient: 'linear-gradient(135deg, rgba(255, 59, 48, 0.15) 0%, rgba(255, 59, 48, 0.05) 100%)',
-          title: t('coachLiveCriticalTitle'),
-          message: t('coachLiveCriticalMessage'),
+          title: t('coachSuggestionCriticalTitle'),
+          message: t('coachSuggestionCriticalMessage'),
           primaryAction: {
-            label: t('coachLiveActionSetup'),
+            label: t('coachSuggestionActionSetup'),
             onClick: () => {
               saveCoachState({ 
                 cooldowns: { 
@@ -118,7 +118,7 @@ export default function CoachLive({
             }
           },
           secondaryAction: {
-            label: t('coachLiveLater'),
+            label: t('coachSuggestionLater'),
             onClick: () => dismissWithCooldown('critical_no_data')
           }
         }
@@ -137,10 +137,10 @@ export default function CoachLive({
           icon: Dumbbell,
           iconColor: '#00d4ff',
           bgGradient: 'linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 161, 166, 0.05) 100%)',
-          title: t('coachLivePostMatchTitle'),
-          message: t('coachLivePostMatchMessage'),
+          title: t('coachSuggestionPostMatchTitle'),
+          message: t('coachSuggestionPostMatchMessage'),
           primaryAction: {
-            label: t('coachLiveActionPalestra'),
+            label: t('coachSuggestionActionPalestra'),
             onClick: () => {
               saveCoachState({ 
                 cooldowns: { 
@@ -153,7 +153,7 @@ export default function CoachLive({
             }
           },
           secondaryAction: {
-            label: t('coachLiveLater'),
+            label: t('coachSuggestionLater'),
             onClick: () => dismissWithCooldown('post_match_palestra')
           }
         }
@@ -168,10 +168,10 @@ export default function CoachLive({
           icon: BarChart3,
           iconColor: '#FFD76A',
           bgGradient: 'linear-gradient(135deg, rgba(255, 215, 106, 0.15) 0%, rgba(255, 215, 106, 0.05) 100%)',
-          title: t('coachLiveFirstTimeTitle'),
-          message: t('coachLiveFirstTimeMessage'),
+          title: t('coachSuggestionFirstTimeTitle'),
+          message: t('coachSuggestionFirstTimeMessage'),
           primaryAction: {
-            label: t('coachLiveActionStats'),
+            label: t('coachSuggestionActionStats'),
             onClick: () => {
               saveCoachState({ 
                 cooldowns: { 
@@ -184,7 +184,7 @@ export default function CoachLive({
             }
           },
           secondaryAction: {
-            label: t('coachLiveLater'),
+            label: t('coachSuggestionLater'),
             onClick: () => dismissWithCooldown('first_time_stats')
           }
         }
@@ -198,10 +198,10 @@ export default function CoachLive({
           icon: Dumbbell,
           iconColor: '#a855f7',
           bgGradient: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(168, 85, 247, 0.05) 100%)',
-          title: t('coachLivePalestraTitle'),
-          message: t('coachLivePalestraMessage'),
+          title: t('coachSuggestionPalestraTitle'),
+          message: t('coachSuggestionPalestraMessage'),
           primaryAction: {
-            label: t('coachLiveActionPalestra'),
+            label: t('coachSuggestionActionPalestra'),
             onClick: () => {
               saveCoachState({ 
                 cooldowns: { 
@@ -214,7 +214,7 @@ export default function CoachLive({
             }
           },
           secondaryAction: {
-            label: t('coachLiveLater'),
+            label: t('coachSuggestionLater'),
             onClick: () => dismissWithCooldown('palestra_reminder')
           }
         }
@@ -306,7 +306,7 @@ export default function CoachLive({
             </div>
             
             <div className="coach-live-title-section">
-              <span className="coach-live-label">{t('coachLiveLabel')}</span>
+              <span className="coach-live-label">{t('coachSuggestionLabel')}</span>
               <h3 className="coach-live-title" style={{ color: currentMessage.iconColor }}>
                 {currentMessage.title}
               </h3>
