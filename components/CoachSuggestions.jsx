@@ -16,7 +16,7 @@ import { X, ChevronRight, BarChart3, Dumbbell, AlertCircle, CheckCircle } from '
  * possono essere suggerite anche senza partite salvate.
  */
 
-const COACH_STATE_KEY = 'coach_live_state'
+const COACH_STATE_KEY = 'coach_suggestions_state_v2'
 const COACH_COOLDOWN_HOURS = 24
 
 export default function CoachSuggestions({ 
@@ -76,15 +76,16 @@ export default function CoachSuggestions({
       const now = new Date()
       
       // Dati necessari
-      const hasStats = !!gameAnalysisLastCapture || userProfile?.game_analysis_data != null
+      const hasStats = !!gameAnalysisLastCapture
       const matchesCount = matches.length
       const lastMatch = matches[0]
       const lastMatchRaw = lastMatch?.created_at || lastMatch?.match_date || null
       const lastMatchDate = lastMatchRaw ? new Date(lastMatchRaw) : null
       
       // Controllo Palestra (ultimi 7 giorni)
-      const lastPalestra = userProfile.last_coach_feedback_at 
-        ? new Date(userProfile.last_coach_feedback_at)
+      const coachState = getCoachState()
+      const lastPalestra = coachState.lastCoachFeedbackAt
+        ? new Date(coachState.lastCoachFeedbackAt)
         : null
       const daysSincePalestra = lastPalestra 
         ? (now - lastPalestra) / (1000 * 60 * 60 * 24)
@@ -147,7 +148,8 @@ export default function CoachSuggestions({
                 cooldowns: { 
                   ...getCoachState().cooldowns, 
                   post_match_palestra: new Date(now.getTime() + 12 * 60 * 60 * 1000).toISOString()
-                }
+                },
+                lastCoachFeedbackAt: now.toISOString()
               })
               if (onOpenCoachFeedback) onOpenCoachFeedback()
               dismiss()
@@ -208,7 +210,8 @@ export default function CoachSuggestions({
                 cooldowns: { 
                   ...getCoachState().cooldowns, 
                   palestra_reminder: new Date(now.getTime() + COACH_COOLDOWN_HOURS * 60 * 60 * 1000).toISOString()
-                }
+                },
+                lastCoachFeedbackAt: now.toISOString()
               })
               if (onOpenCoachFeedback) onOpenCoachFeedback()
               dismiss()
