@@ -1295,63 +1295,19 @@ export default function GestioneFormazionePage() {
         playerData.overall_rating = Math.max(...allRatings)
       }
 
-      // NUOVO: Check finale dati mancanti dopo estrazione
+      // Check dati mancanti: UX non bloccante (solo warning, si puo completare dopo)
       const missing = checkMissingData(playerData)
-      
-      // Se ci sono campi OBBLIGATORI mancanti, mostra modal per inserimento manuale o ricarica
-      if (missing.required.length > 0) {
-        setMissingData(missing)
-        setExtractedPlayerData({
-          ...playerData,
-          photo_slots: photoSlots,
-          slot_index: selectedSlot.slot_index
-        })
-        setShowMissingDataModal(true)
-        setUploadingPlayer(false)
-        return // Blocca salvataggio finché non vengono inseriti dati obbligatori
-      }
-      
-      // Se ci sono solo campi OPZIONALI mancanti, mostra warning ma permette continuare
-      if (missing.optional.length > 0) {
+      if (missing.required.length > 0 || missing.optional.length > 0) {
+        const requiredFields = missing.required.map(m => m.label).join(', ')
         const optionalFields = missing.optional.map(m => m.label).join(', ')
-        const msg = `${t('missingOptionalData')}: ${optionalFields}.\n\n${t('continueWithoutOptionalData')}`
-        setConfirmModal({
-          show: true,
-          title: t('confirm'),
-          message: msg,
-          confirmLabel: t('continue'),
-          cancelLabel: t('cancel'),
-          variant: 'warning',
-          onConfirm: () => {
-            setConfirmModal(null)
-            setShowUploadPlayerModal(false)
-            setShowPositionSelectionModal(true)
-            setExtractedPlayerData({
-              ...playerData,
-              photo_slots: photoSlots,
-              slot_index: selectedSlot.slot_index
-            })
-            setPositionModalCtx({
-              mode: 'new',
-              slotIndex: selectedSlot.slot_index,
-              photoSlots
-            })
-            setSelectedOriginalPositions([{ position: playerData.position || 'AMF', competence: 'Alta' }])
-            setUploadingPlayer(false)
-          },
-          onCancel: () => {
-            setConfirmModal(null)
-            setMissingData(missing)
-            setExtractedPlayerData({
-              ...playerData,
-              photo_slots: photoSlots,
-              slot_index: selectedSlot.slot_index
-            })
-            setShowMissingDataModal(true)
-            setUploadingPlayer(false)
-          }
-        })
-        return
+        const chunks = []
+        if (requiredFields) chunks.push(`${t('requiredFields')}: ${requiredFields}`)
+        if (optionalFields) chunks.push(`${t('optionalFields')}: ${optionalFields}`)
+        const fallbackLater = lang === 'en'
+          ? 'You can complete missing info later from player details.'
+          : 'Puoi completare i dati mancanti in seguito dai dettagli giocatore.'
+        const msg = `${chunks.join(' • ')}. ${fallbackLater}`
+        showToast(msg, 'warning')
       }
 
       // NUOVO: Dopo estrazione dati, mostra modal selezione posizioni
@@ -3182,8 +3138,8 @@ function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChang
     return name.substring(0, 10) + '...'
   }
 
-  // Calcola colore bordo basato su completamento profilazione (con fallback su dati reali)
-  function getProfileBorderColor(photoSlots, p) {
+  // Stato completamento profilazione (con fallback su dati reali)
+  function getProfileCompletionStatus(photoSlots, p) {
     const ps = photoSlots && typeof photoSlots === 'object' ? photoSlots : {}
     const baseStats = p?.base_stats || {}
     const skills = Array.isArray(p?.skills) ? p.skills : []
@@ -3192,10 +3148,16 @@ function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChang
     const hasStatsData = baseStats && Object.keys(baseStats).length > 0
     const hasAbilitaData = skills.length > 0 || comSkills.length > 0
     const hasBoosterData = boosters.length > 0
-    const hasCard = ps.card === true || ps.card === 'true' || hasStatsData
-    const hasStats = ps.statistiche === true || ps.statistiche === 'true' || hasStatsData
-    const hasSkills = (ps.abilita === true || ps.abilita === 'true' || ps.booster === true || ps.booster === 'true') || hasAbilitaData || hasBoosterData
-    const count = [hasCard, hasStats, hasSkills].filter(Boolean).length
+    const hasCardSection = (ps.card === true || ps.card === 'true' || ps.statistiche === true || ps.statistiche === 'true') || hasStatsData
+    const hasSkillsSection = (ps.abilita === true || ps.abilita === 'true') || hasAbilitaData
+    const hasBoosterSection = (ps.booster === true || ps.booster === 'true') || hasBoosterData
+    const count = [hasCardSection, hasSkillsSection, hasBoosterSection].filter(Boolean).length
+    return { hasCardSection, hasSkillsSection, hasBoosterSection, count }
+  }
+
+  // Calcola colore bordo basato su completamento profilazione
+  function getProfileBorderColor(photoSlots, p) {
+    const { count } = getProfileCompletionStatus(photoSlots, p)
     if (count === 3) return 'rgba(34, 197, 94, 0.8)'
     if (count === 2) return 'rgba(251, 191, 36, 0.8)'
     return 'rgba(239, 68, 68, 0.8)'
@@ -3317,6 +3279,14 @@ function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChang
   const profileBorderColorHover = isEmpty
     ? 'rgba(148, 163, 184, 0.7)'
     : getProfileBorderColorHover(player.photo_slots, player)
+  const completion = !isEmpty ? getProfileCompletionStatus(player.photo_slots, player) : null
+  const completedSections = completion?.count || 0
+  const statusChipColor = completedSections === 3 ? '#22c55e' : '#ef4444'
+  const statusItems = completion ? [
+    { key: 'stats', icon: BarChart3, ok: completion.hasCardSection, label: t('statsSection') || 'Statistiche' },
+    { key: 'skills', icon: Zap, ok: completion.hasSkillsSection, label: t('skillsSection') || 'Abilita' },
+    { key: 'boosters', icon: Gift, ok: completion.hasBoosterSection, label: t('boostersSection') || 'Booster' }
+  ] : []
 
   return (
     <div
@@ -3328,25 +3298,25 @@ function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChang
         left: `${position.x + (offsetX || 0) + currentOffset.x}%`,
         top: `${position.y + (offsetY || 0) + currentOffset.y}%`,
         transform: 'translate(-50%, -50%)',
-        padding: isEmpty ? '6px 12px' : '5px 12px',
+        padding: isEmpty ? '6px 12px' : '6px 8px 7px',
         background: isEmpty 
           ? 'rgba(15, 23, 42, 0.85)' 
-          : 'rgba(59, 130, 246, 0.75)',
+          : 'linear-gradient(180deg, rgba(11, 41, 94, 0.93) 0%, rgba(8, 25, 66, 0.95) 100%)',
         border: `1.5px solid ${profileBorderColor}`,
-        borderRadius: '20px',
+        borderRadius: isEmpty ? '20px' : '14px',
         cursor: isEditMode && player ? 'move' : 'pointer',
         transition: isDragging ? 'none' : 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-        display: 'inline-flex',
+        display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        whiteSpace: 'nowrap',
+        whiteSpace: isEmpty ? 'nowrap' : 'normal',
         boxShadow: isEmpty
           ? '0 4px 12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05)'
-          : '0 4px 16px rgba(59, 130, 246, 0.4), 0 0 20px rgba(147, 51, 234, 0.3)',
+          : '0 6px 18px rgba(0, 212, 255, 0.28), 0 0 18px rgba(8, 145, 178, 0.28)',
         backdropFilter: 'blur(8px)',
         zIndex: isDragging ? 1000 : (hasNearbyCards ? 2 : 1),
-        minWidth: 'auto',
-        maxWidth: 'clamp(70px, 10vw, 120px)',
+        minWidth: isEmpty ? 'auto' : 'clamp(78px, 9.2vw, 116px)',
+        maxWidth: isEmpty ? 'clamp(70px, 10vw, 120px)' : 'clamp(96px, 12vw, 138px)',
         opacity: isDragging ? 0.7 : 1,
         userSelect: 'none',
         // Impedisce lo scroll/pinch su touch durante drag (alternativa a preventDefault su touchstart)
@@ -3357,24 +3327,24 @@ function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChang
         e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1.1)'
         e.currentTarget.style.boxShadow = isEmpty
           ? '0 6px 20px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1)'
-          : '0 6px 24px rgba(59, 130, 246, 0.6), 0 0 30px rgba(147, 51, 234, 0.5)'
+          : '0 8px 24px rgba(0, 212, 255, 0.45), 0 0 28px rgba(8, 145, 178, 0.45)'
         e.currentTarget.style.zIndex = '100'
         e.currentTarget.style.borderColor = profileBorderColorHover
         e.currentTarget.style.background = isEmpty
           ? 'rgba(15, 23, 42, 0.95)'
-          : 'rgba(59, 130, 246, 0.9)'
+          : 'linear-gradient(180deg, rgba(11, 58, 128, 0.96) 0%, rgba(9, 38, 92, 0.98) 100%)'
       }}
       onMouseLeave={(e) => {
         if (isDragging) return
         e.currentTarget.style.transform = 'translate(-50%, -50%) scale(1)'
         e.currentTarget.style.boxShadow = isEmpty
           ? '0 4px 12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05)'
-          : '0 4px 16px rgba(59, 130, 246, 0.4), 0 0 20px rgba(147, 51, 234, 0.3)'
+          : '0 6px 18px rgba(0, 212, 255, 0.28), 0 0 18px rgba(8, 145, 178, 0.28)'
         e.currentTarget.style.zIndex = hasNearbyCards ? '2' : '1'
         e.currentTarget.style.borderColor = profileBorderColor
         e.currentTarget.style.background = isEmpty
           ? 'rgba(15, 23, 42, 0.85)'
-          : 'rgba(59, 130, 246, 0.75)'
+          : 'linear-gradient(180deg, rgba(11, 41, 94, 0.93) 0%, rgba(8, 25, 66, 0.95) 100%)'
       }}
     >
       {isEmpty ? (
@@ -3395,28 +3365,87 @@ function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChang
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: '2px'
+          gap: '4px',
+          width: '100%',
+          minWidth: 0
         }}>
-          {/* Sigla ruolo sopra il nome */}
           <div style={{
-            fontSize: 'clamp(8px, 0.9vw, 10px)',
-            fontWeight: 600,
-            color: 'rgba(255, 255, 255, 0.7)',
-            textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)',
-            letterSpacing: '0.5px',
-            textTransform: 'uppercase'
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            width: '100%',
+            gap: '6px'
           }}>
-            {displayPosition}
+            <div style={{
+              fontSize: 'clamp(8px, 0.85vw, 10px)',
+              fontWeight: 700,
+              color: 'rgba(255, 255, 255, 0.82)',
+              textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)',
+              letterSpacing: '0.45px',
+              textTransform: 'uppercase'
+            }}>
+              {displayPosition}
+            </div>
+            <div
+              title={`${completedSections}/3 ${t('sectionsCompleted') || 'sezioni completate'}`}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '3px',
+                padding: '1px 6px',
+                borderRadius: '999px',
+                fontSize: 'clamp(8px, 0.9vw, 10px)',
+                fontWeight: 700,
+                color: '#fff',
+                background: completedSections === 3 ? 'rgba(34, 197, 94, 0.25)' : 'rgba(239, 68, 68, 0.22)',
+                border: `1px solid ${statusChipColor}`
+              }}
+            >
+              <span>{completedSections}/3</span>
+              {completedSections === 3 ? <CheckCircle2 size={10} color="#22c55e" /> : <AlertCircle size={10} color="#ef4444" />}
+            </div>
           </div>
+
           {/* Nome giocatore */}
           <div style={{
-            fontSize: 'clamp(10px, 1.1vw, 13px)',
+            fontSize: 'clamp(10px, 1.05vw, 13px)',
             fontWeight: 700,
             color: '#ffffff',
             textShadow: '0 2px 6px rgba(0, 0, 0, 0.8), 0 0 12px rgba(59, 130, 246, 0.5)',
-            letterSpacing: '0.3px'
+            letterSpacing: '0.25px',
+            textAlign: 'center',
+            width: '100%',
+            lineHeight: 1.1
           }}>
             {getDisplayName(player.player_name)}
+          </div>
+
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            width: '100%'
+          }}>
+            {statusItems.map(({ key, icon: Icon, ok, label }) => (
+              <div
+                key={key}
+                title={`${label}: ${ok ? (t('profileComplete') || 'ok') : (t('missingDataTitle') || 'manca')}`}
+                style={{
+                  width: '16px',
+                  height: '16px',
+                  borderRadius: '999px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: `1px solid ${ok ? '#22c55e' : '#ef4444'}`,
+                  background: ok ? 'rgba(34, 197, 94, 0.22)' : 'rgba(239, 68, 68, 0.2)',
+                  boxShadow: ok ? '0 0 8px rgba(34, 197, 94, 0.35)' : '0 0 8px rgba(239, 68, 68, 0.28)'
+                }}
+              >
+                <Icon size={9} color={ok ? '#22c55e' : '#ef4444'} />
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -3573,13 +3602,12 @@ function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUplo
   const hasSkills = skills.length > 0 || comSkills.length > 0
   const hasBoosters = boosters && boosters.length > 0
 
-  // Fallback: usa dati reali se photo_slots inconsistente
-  const hasCardStatistiche = (photoSlots.card || photoSlots.statistiche) || hasStats
-  const hasAbilitaBooster = (photoSlots.abilita || photoSlots.booster) || hasSkills || hasBoosters
-
-  // Profilo completo solo con dati reali (coerente con scheda giocatore: non dire "Profilo Completo" se stats/skills sono vuoti)
-  const isProfileComplete = hasStats && (hasSkills || hasBoosters)
-  const completedSections = [hasCardStatistiche, hasSkills || photoSlots.abilita, hasBoosters || photoSlots.booster].filter(Boolean).length
+  // Stato sezioni coerente con card nel campo 2D
+  const hasCardSection = (photoSlots.card || photoSlots.statistiche) || hasStats
+  const hasSkillsSection = photoSlots.abilita || hasSkills
+  const hasBoosterSection = photoSlots.booster || hasBoosters
+  const completedSections = [hasCardSection, hasSkillsSection, hasBoosterSection].filter(Boolean).length
+  const isProfileComplete = completedSections === 3
 
   return (
     <div style={{
