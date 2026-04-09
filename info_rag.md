@@ -465,6 +465,15 @@ Obiettivo: usare tecniche avanzate in modo professionale, ripetibile e coerente 
 - **Double Touch**: skill 1v1 per cambio direzione corto.
 - **Double Touch + cancel** (alias community): variazione ad alto rischio/alto rendimento; da suggerire solo se il cliente ha giocatori tecnici e timing stabile.
 
+**Micro-tabella operativa (croqueta interrotta / double touch cancel)**:
+
+| Variante | Nome da usare in risposta | Requisiti abilita (community) | Note coach enterprise |
+|---|---|---|---|
+| Base / Controlled | **Double Touch** (croqueta interrotta) | **Double Touch + Sole Control** | Più stabile; usare in 1v1 laterale o uscita pressione corta. |
+| Special / Fast | **Double Touch speciale** (croqueta interrotta avanzata) | **Double Touch + Sole Control + Flip Flap (Elastico)** | Più esplosiva ma più rischiosa; evitare spam e usarla solo con timing/connessione buoni. |
+
+Nota affidabilita: "special double touch" e varianti "tess/croqueta interrotta" sono naming community; Konami documenta i comandi ufficiali, non sempre queste etichette.
+
 **Policy anti-exploit (obbligatorie)**:
 1. Non suggerire spam continuo della stessa skill ("fai sempre croqueta/tess").
 2. Non suggerire macro, script, automazioni input, o abuso di bug.
