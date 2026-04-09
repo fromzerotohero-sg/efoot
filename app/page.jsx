@@ -882,10 +882,12 @@ function HomePage() {
       {/* Coach Suggestions - AI Proactive Alerts */}
       <CoachSuggestions 
         userProfile={userProfile}
+        hasActiveCoach={hasActiveCoach}
         matches={recentMatches}
         gameAnalysisLastCapture={gameAnalysisLastCapture}
         onOpenGameAnalysis={() => setShowGameAnalysisModal(true)}
         onOpenCoachFeedback={() => setShowCoachFeedback(true)}
+        onOpenCoaches={() => router.push('/allenatori')}
       />
 
       <style jsx>{`

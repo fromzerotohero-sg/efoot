@@ -25,10 +25,12 @@ const REMINDER_INTERVAL_MS = 10 * 60 * 1000
 
 export default function CoachSuggestions({ 
   userProfile, 
+  hasActiveCoach = true,
   matches = [], 
   gameAnalysisLastCapture,
   onOpenGameAnalysis, 
-  onOpenCoachFeedback 
+  onOpenCoachFeedback,
+  onOpenCoaches
 }) {
   const { t } = useTranslation()
   const [isVisible, setIsVisible] = useState(false)
@@ -166,7 +168,37 @@ export default function CoachSuggestions({
         }
       }
 
-      // 3. PRIMO ACCESSO: accompagnamento leggero verso Statistiche
+      // 3. PRIORITA MEDIA: manca coach attivo (coerenza stile/consigli)
+      if (!hasActiveCoach && !isInCooldown('missing_active_coach')) {
+        return {
+          id: 'missing_active_coach',
+          priority: 2,
+          icon: AlertCircle,
+          iconColor: '#FFD76A',
+          bgGradient: 'linear-gradient(135deg, rgba(255, 215, 106, 0.15) 0%, rgba(255, 215, 106, 0.05) 100%)',
+          title: t('coachSuggestionCoachMissingTitle'),
+          message: t('coachSuggestionCoachMissingMessage'),
+          primaryAction: {
+            label: t('coachSuggestionActionCoaches'),
+            onClick: () => {
+              saveCoachState({ 
+                cooldowns: { 
+                  ...getCoachState().cooldowns, 
+                  missing_active_coach: new Date(now.getTime() + COACH_COOLDOWN_HOURS * 60 * 60 * 1000).toISOString()
+                }
+              })
+              if (onOpenCoaches) onOpenCoaches()
+              dismiss()
+            }
+          },
+          secondaryAction: {
+            label: t('coachSuggestionLater'),
+            onClick: () => dismissWithCooldown('missing_active_coach')
+          }
+        }
+      }
+
+      // 4. PRIMO ACCESSO: accompagnamento leggero verso Statistiche
       const aiScore = userProfile.ai_knowledge_score || 0
       if (!hasStats && aiScore < 30 && matchesCount === 0 && !isInCooldown('first_time_stats')) {
         return {
@@ -197,7 +229,7 @@ export default function CoachSuggestions({
         }
       }
 
-      // 4. PROMEMORIA PALESTRA: Non usa da settimane ma ha statistiche
+      // 5. PROMEMORIA PALESTRA: Non usa da settimane ma ha statistiche
       if (hasStats && needsPalestra && !isInCooldown('palestra_reminder')) {
         return {
           id: 'palestra_reminder',
@@ -248,7 +280,7 @@ export default function CoachSuggestions({
       clearTimeout(timer)
       clearInterval(recurring)
     }
-  }, [userProfile, matches, isVisible, currentMessage, t, isInCooldown, onOpenGameAnalysis, onOpenCoachFeedback, getCoachState, saveCoachState])
+  }, [userProfile, hasActiveCoach, matches, isVisible, currentMessage, t, isInCooldown, onOpenGameAnalysis, onOpenCoachFeedback, onOpenCoaches, getCoachState, saveCoachState])
 
   const dismiss = useCallback(() => {
     setIsAnimating(true)

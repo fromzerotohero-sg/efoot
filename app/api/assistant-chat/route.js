@@ -149,6 +149,60 @@ function sanitizeCoachOutput(content, lang = 'it') {
   return merged.length > 0 ? merged : content.trim()
 }
 
+function detectContextGaps(summary = '') {
+  const s = String(summary || '').toLowerCase()
+  return {
+    missingFormation: s.includes('modulo salvato: mancante') || s.includes('saved formation: missing') || s.includes('formation: not set'),
+    missingCoach: s.includes('allenatore attivo: mancante') || s.includes('active coach: missing'),
+    missingStats: s.includes('statistiche analisi efootball: mancanti') || s.includes('latest game-analysis stats: missing') || s.includes('game-analysis stats: missing')
+  }
+}
+
+function getMicroReminderText(lang = 'it', summary = '') {
+  const gaps = detectContextGaps(summary)
+  if (gaps.missingFormation) {
+    return lang === 'en'
+      ? 'Quick reminder: complete your formation setup to get more precise coaching.'
+      : 'Promemoria rapido: completa la formazione per avere consigli molto più precisi.'
+  }
+  if (gaps.missingCoach) {
+    return lang === 'en'
+      ? 'Quick reminder: set your active coach to align advice with your team style.'
+      : 'Promemoria rapido: imposta un coach attivo per allineare meglio i consigli al tuo stile squadra.'
+  }
+  if (gaps.missingStats) {
+    return lang === 'en'
+      ? 'Quick reminder: updating game stats makes tactical corrections much more accurate.'
+      : 'Promemoria rapido: aggiornare le statistiche rende le correzioni tattiche molto più accurate.'
+  }
+  return ''
+}
+
+function shouldAttachMicroReminder({ history = [], summary = '', message = '' }) {
+  if (!summary) return false
+  if (!getMicroReminderText('it', summary) && !getMicroReminderText('en', summary)) return false
+
+  const userTurns = Array.isArray(history) ? history.filter(h => h?.role === 'user').length + 1 : 1
+  const frequencyGate = userTurns > 1 && userTurns % 8 === 0
+  if (!frequencyGate) return false
+
+  const text = String(message || '').toLowerCase()
+  if (!text) return true
+  if (text.includes('promemoria') || text.includes('ricord') || text.includes('guide') || text.includes('mostrami come') || text.includes('help') || text.includes('how')) {
+    return false
+  }
+  return true
+}
+
+function appendMicroReminder(content = '', reminder = '') {
+  const base = String(content || '').trim()
+  const tail = String(reminder || '').trim()
+  if (!tail) return base
+  if (!base) return tail
+  if (base.toLowerCase().includes(tail.toLowerCase())) return base
+  return `${base}\n\n${tail}`
+}
+
 /**
  * Normalizza e valida history conversazione (enterprise: limiti e sanitizzazione).
  * @param {unknown} raw - Array da body (può essere undefined o non-array)
@@ -664,6 +718,7 @@ ${sharedCore}
 SCOPE: solo consulenza tattica eFootball basata su ROSA, PARTITE, ALLENATORE, TATTICA e RAG.
 - Gameplay consentito SOLO come "cosa fare" (azioni). VIETATO citare tasti/pulsanti/controller.
 - Uso app (wizard, click, menu, upload): NON spiegare. Se chiesto, rispondi solo: "Sono qui solo per consigli tattici: formazione, rosa, modulo, sostituzioni, stile. Esplora il menu per le altre funzioni."
+- MICRO-REMINDER consentito: se mancano dati critici (formazione/coach/statistiche), puoi aggiungere UNA frase breve di promemoria dopo il consiglio tattico. Non spiegare passaggi UI, non fare tutorial.
 
 FONTI: Nomi/rosa/partite/allenatore/tattica = solo dal blocco contesto sotto (ROSA E DATI o RIASSUNTO ANALISI). Regole eFootball = solo dal blocco RAG. Se manca un dato, non inventare.
 MECCANICHE CANCEL/SKILL AVANZATE: segui RAG §7.12. Usa prima i termini ufficiali (Super Cancel, Kick Cancel, Kick Feint, Double Touch) e tratta "tess/croqueta interrotta" solo come alias community tra parentesi.
@@ -687,6 +742,7 @@ ${sharedCore}
 SCOPE: only eFootball tactical advice based on ROSTER, MATCHES, COACH, TACTICS and RAG.
 - Gameplay allowed only as "what to do" (actions). Never mention buttons/inputs/controller.
 - App usage (wizard, clicks, menus, upload): do not explain. If asked, reply only: "I'm here only for tactical advice: formation, roster, module, substitutions, style. Explore the menu for other features."
+- MICRO-REMINDER allowed: if critical data is missing (formation/coach/stats), you may add ONE short reminder sentence after tactical advice. Do not explain UI steps and do not provide tutorials.
 
 SOURCES: Names/roster/matches/coach/tactics only from the context block below (ROSTER & DATA or ANALYSIS SUMMARY). eFootball rules only from the RAG block. If data is missing, do not invent.
 CANCEL/SKILL ADVANCED MECHANICS: follow RAG §7.12. Use official names first (Super Cancel, Kick Cancel, Kick Feint, Double Touch) and treat "tess/croqueta interrupted" only as community aliases in parentheses.
@@ -926,6 +982,11 @@ export async function POST(req) {
       }
     }
 
+    const microReminder =
+      shouldAttachMicroReminder({ history, summary: personalContextSummary, message })
+        ? getMicroReminderText(lang, personalContextSummary)
+        : ''
+
     // Costruisci prompt personalizzato (con eventuali blocchi RAG eFootball e contesto personale)
     let prompt
     try {
@@ -1008,10 +1069,11 @@ export async function POST(req) {
             const raw = fallbackData.choices?.[0]?.message?.content || fallbackMsg
             const { cleanContent: fc, suggestions: fs } = parseSuggestionsFromContent(raw)
             const sanitizedFallback = sanitizeCoachOutput(fc, lang)
+            const responseWithReminder = appendMicroReminder(sanitizedFallback, microReminder)
             const finalSuggestions = (Array.isArray(fs) && fs.length > 0) ? fs : getDefaultSuggestions(lang, safeCurrentPage)
             if (process.env.NODE_ENV !== 'production') console.log('[assistant-chat] Success (fallback from model_not_found), model_used: gpt-4o')
             return NextResponse.json({
-              response: sanitizedFallback,
+              response: responseWithReminder,
               suggestions: finalSuggestions,
               remaining: rateLimit.remaining,
               resetAt: rateLimit.resetAt,
@@ -1045,10 +1107,11 @@ export async function POST(req) {
                 const raw = fallbackData.choices?.[0]?.message?.content || fallbackMsg
                 const { cleanContent: fc, suggestions: fs } = parseSuggestionsFromContent(raw)
                 const sanitizedFallback = sanitizeCoachOutput(fc, lang)
+                const responseWithReminder = appendMicroReminder(sanitizedFallback, microReminder)
                 const finalSuggestions = (Array.isArray(fs) && fs.length > 0) ? fs : getDefaultSuggestions(lang, safeCurrentPage)
                 if (process.env.NODE_ENV !== 'production') console.log('[assistant-chat] Success (fallback from !response.ok), model_used: gpt-4o')
                 return NextResponse.json({
-                  response: sanitizedFallback,
+                  response: responseWithReminder,
                   suggestions: finalSuggestions,
                   remaining: rateLimit.remaining,
                   resetAt: rateLimit.resetAt,
@@ -1086,6 +1149,7 @@ export async function POST(req) {
     // Estrai 3 suggerimenti cliccabili dal blocco SUGGERIMENTI (se presente) e pulisci il testo mostrato
     const { cleanContent, suggestions } = parseSuggestionsFromContent(rawContent)
     const sanitizedContent = sanitizeCoachOutput(cleanContent, lang)
+    const responseWithReminder = appendMicroReminder(sanitizedContent, microReminder)
     
     // Validazione base: verifica che la risposta non contenga riferimenti a funzionalità inventate
     if (sanitizedContent.toLowerCase().includes('funzionalità non disponibile') || 
@@ -1098,7 +1162,7 @@ export async function POST(req) {
     if (process.env.NODE_ENV !== 'production') console.log(`[assistant-chat] Success, model_used: ${model}`)
     return NextResponse.json(
       {
-        response: sanitizedContent,
+        response: responseWithReminder,
         suggestions: finalSuggestions,
         remaining: rateLimit.remaining,
         resetAt: rateLimit.resetAt,
