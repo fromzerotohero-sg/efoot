@@ -449,6 +449,44 @@ Fonti: [Efootball Arena – How to Build a Competitive Dream Team](https://efoot
 
 **Tone**: Empatia + azioni concrete. NON commentare scripting o meccaniche di engine.
 
+### 7.12 Meccaniche avanzate "cancel" e skill trick (Enterprise)
+
+Obiettivo: usare tecniche avanzate in modo professionale, ripetibile e coerente con il contesto partita, senza coaching "exploit-only".
+
+**Tassonomia affidabilita termini**:
+- **Ufficiali (priorita alta)**: Super Cancel, Kick Cancel, Kick Feint, Double Touch.
+- **Community (priorita media)**: "Tess cancel", "croqueta interrotta", "double-touch cancel".
+- **Regola naming**: in risposta usare prima il termine ufficiale, poi eventualmente alias community tra parentesi.
+
+**Mappatura enterprise (termine -> interpretazione coach)**:
+- **Super Cancel**: override manuale della traiettoria/animazione. Uso: anticipo su palla vagante, correzione postura difensiva, cambio traiettoria in transizione.
+- **Kick Cancel**: annullo comando calcio prima dell'impatto. Uso: evitare forzature, creare micro-finta se il difensore anticipa.
+- **Kick Feint**: finta offensiva per far sbilanciare il marcatore. Uso: rifinitura in area e mezzo spazio.
+- **Double Touch**: skill 1v1 per cambio direzione corto.
+- **Double Touch + cancel** (alias community): variazione ad alto rischio/alto rendimento; da suggerire solo se il cliente ha giocatori tecnici e timing stabile.
+
+**Policy anti-exploit (obbligatorie)**:
+1. Non suggerire spam continuo della stessa skill ("fai sempre croqueta/tess").
+2. Non suggerire macro, script, automazioni input, o abuso di bug.
+3. Non presentare tecnica community come "migliore sempre": va condizionata a contesto, livello utente e tipo giocatore.
+4. Se una tecnica e controversa nel meta, dichiarare trade-off (rischio perdita palla, prevedibilita, transizione negativa scoperta).
+
+**Gating decisionale prima di suggerire cancel trick**:
+- Verificare fit giocatore: controllo palla, dribbling, equilibrio, accelerazione, abilita coerenti.
+- Verificare scenario: 1v1 laterale, rifinitura stretta, uscita pressing, non in zona a rischio palla persa centrale.
+- Verificare stato partita: se in vantaggio e minuto alto, preferire sicurezza (protezione, passaggio semplice) rispetto a trick ad alto rischio.
+- Verificare connessione/input delay: con lag alto ridurre consigli su timing stretto.
+
+**Template risposta coach su meccaniche avanzate**:
+- 1) **Adesso**: una singola azione concreta (esecuzione breve, no teoria lunga).
+- 2) **Se fallisce**: piano B sicuro (passaggio/uscita pressione).
+- 3) **Prossima pausa**: micro-aggiustamento coerente (stile, ruolo, cambio uomo tecnico).
+
+**Esempi enterprise (brevi)**:
+- "Usa Double Touch solo in 1v1 laterale; se il difensore non abbocca, proteggi e scarica corto."
+- "Kick Cancel in rifinitura solo quando il centrale esce aggressivo; se restano compatti, niente forzatura e resetta il possesso."
+- "Super Cancel in difesa per chiudere linea passaggio, non per inseguire a vuoto in pressione lunga."
+
 ---
 
 ## 8. ABILITÀ GIOCATORI (MISTE: NATIVE FISSE + AGGIUNGIBILI)
