@@ -89,6 +89,7 @@ function HomePage() {
   const [gameAnalysisLastCapture, setGameAnalysisLastCapture] = React.useState(null)
   const [hasActiveCoach, setHasActiveCoach] = React.useState(false)
   const [reminderRotationIndex, setReminderRotationIndex] = React.useState(0)
+  const [hideSetupBanner, setHideSetupBanner] = React.useState(false)
   const [userProfile, setUserProfile] = React.useState(null)
   const [confirmModal, setConfirmModal] = React.useState(null) // { show, title, message, onConfirm, onCancel }
   const [coachChatInitialMessage, setCoachChatInitialMessage] = React.useState(null)
@@ -132,21 +133,65 @@ function HomePage() {
 
   // Banner setup: sempre visibile quando non in loading. Se manca qualcosa: link a rotazione; altrimenti "Setup completo"
   const hasMissingSetup = hasActiveCoach === false || !gameAnalysisLastCapture || stats.titolari < 11
-  const showSetupBanner = !loading
+  const showSetupBanner = !loading && !hideSetupBanner
+  const setupBannerStorageKey = 'dashboard_setup_banner_hidden_v1'
   React.useEffect(() => {
-    if (!showSetupBanner || !hasMissingSetup) return
+    if (typeof window === 'undefined') return
+    try {
+      const hidden = localStorage.getItem(setupBannerStorageKey) === '1'
+      setHideSetupBanner(hidden)
+    } catch {
+      setHideSetupBanner(false)
+    }
+  }, [])
+
+  const dismissSetupBanner = React.useCallback(() => {
+    setHideSetupBanner(true)
+    try {
+      localStorage.setItem(setupBannerStorageKey, '1')
+    } catch {}
+  }, [])
+
+  const bannerTips = React.useMemo(() => {
+    const tips = [
+      {
+        key: 'stats_refresh',
+        label: gameAnalysisLastCapture ? t('setupTipStatsRefresh') : t('setupReminderMissingStats'),
+        onClick: () => setShowGameAnalysisModal(true),
+        isMissing: !gameAnalysisLastCapture
+      },
+      {
+        key: 'coach_gym',
+        label: t('setupTipCoachGymCheckin'),
+        onClick: () => setShowCoachFeedback(true),
+        isMissing: false
+      },
+      {
+        key: 'coach_status',
+        label: hasActiveCoach ? t('setupTipCoachReview') : t('setupReminderMissingCoach'),
+        onClick: () => router.push('/allenatori'),
+        isMissing: !hasActiveCoach
+      },
+      {
+        key: 'roster_review',
+        label: stats.titolari < 11 ? t('setupReminderMissingRoster') : t('setupTipRosterReview'),
+        onClick: () => router.push('/gestione-formazione'),
+        isMissing: stats.titolari < 11
+      }
+    ]
+    return tips
+  }, [gameAnalysisLastCapture, hasActiveCoach, stats.titolari, t, router])
+
+  React.useEffect(() => {
+    if (!showSetupBanner) return
     const interval = setInterval(() => {
       setReminderRotationIndex((i) => i + 1)
-    }, 3000)
+    }, 10000)
     return () => clearInterval(interval)
-  }, [showSetupBanner, hasMissingSetup])
+  }, [showSetupBanner])
 
   // Reset indice quando cambiano gli elementi mancanti
-  const reminderItems = [
-    !hasActiveCoach && { key: 'coach', label: t('setupReminderMissingCoach'), onClick: () => router.push('/allenatori') },
-    !gameAnalysisLastCapture && { key: 'stats', label: t('setupReminderMissingStats'), onClick: () => setShowGameAnalysisModal(true) },
-    stats.titolari < 11 && { key: 'roster', label: t('setupReminderMissingRoster'), onClick: () => router.push('/gestione-formazione') }
-  ].filter(Boolean)
+  const reminderItems = bannerTips.filter(item => item.isMissing)
   const missingCount = reminderItems.length
   // Notifica setup: priorità (rosso = alta, giallo = media, verde = completo). Non invasiva, icona responsive, messaggio = importanza di completare.
   const setupStatus = missingCount >= 2 ? 'critical' : missingCount === 1 ? 'partial' : 'complete'
@@ -159,6 +204,10 @@ function HomePage() {
   React.useEffect(() => {
     setReminderRotationIndex(0)
   }, [missingCount])
+
+  const currentBannerTip = bannerTips.length > 0
+    ? bannerTips[((reminderRotationIndex * 7) + 3) % bannerTips.length]
+    : null
 
   React.useEffect(() => {
     mountedRef.current = true
@@ -561,32 +610,41 @@ function HomePage() {
               </span>
             )
           })()}
-          <span key={missingCount > 0 ? reminderRotationIndex : 'complete'} style={{ flex: '1 1 auto', minWidth: 0 }}>
+          <span key={reminderRotationIndex} style={{ flex: '1 1 auto', minWidth: 0 }}>
             {t('setupReminderIntro')}
-            {missingCount > 0 ? (
+            {currentBannerTip ? (
               <>
                 {' '}
-                {lang === 'en' ? 'Missing:' : 'Manca:'}{' '}
-                {(() => {
-                  const idx = reminderRotationIndex % Math.max(missingCount, 1)
-                  const item = reminderItems[idx]
-                  if (!item) return null
-                  return (
-                    <button
-                      key={`${reminderRotationIndex}-${item.key}`}
-                      type="button"
-                      onClick={item.onClick}
-                      style={{ background: 'none', border: 'none', color: 'var(--neon-blue)', textDecoration: 'underline', cursor: 'pointer', padding: 0, fontSize: 'inherit' }}
-                    >
-                      {item.label}
-                    </button>
-                  )
-                })()}
+                {currentBannerTip.isMissing ? (lang === 'en' ? 'Missing:' : 'Manca:') : (lang === 'en' ? 'Tip:' : 'Consiglio:')}{' '}
+                <button
+                  key={`${reminderRotationIndex}-${currentBannerTip.key}`}
+                  type="button"
+                  onClick={currentBannerTip.onClick}
+                  style={{ background: 'none', border: 'none', color: 'var(--neon-blue)', textDecoration: 'underline', cursor: 'pointer', padding: 0, fontSize: 'inherit' }}
+                >
+                  {currentBannerTip.label}
+                </button>
               </>
             ) : (
               <> · {t('setupReminderComplete')}</>
             )}
           </span>
+          <button
+            type="button"
+            onClick={dismissSetupBanner}
+            style={{
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.18)',
+              color: 'rgba(255,255,255,0.82)',
+              borderRadius: '8px',
+              padding: '6px 10px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              flexShrink: 0
+            }}
+          >
+            {t('setupReminderDismiss')}
+          </button>
         </div>
       )}
 
