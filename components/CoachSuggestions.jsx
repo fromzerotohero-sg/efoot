@@ -17,11 +17,11 @@ import { X, ChevronRight, BarChart3, Dumbbell, AlertCircle, CheckCircle } from '
  */
 
 const COACH_STATE_KEY = 'coach_suggestions_state_v2'
-const COACH_COOLDOWN_HOURS = 4
-const CRITICAL_COOLDOWN_HOURS = 3
-const POST_MATCH_COOLDOWN_HOURS = 4
-const INITIAL_SUGGESTION_DELAY_MS = 1500
-const REMINDER_INTERVAL_MS = 10 * 60 * 1000
+const COACH_COOLDOWN_HOURS = 2
+const CRITICAL_COOLDOWN_HOURS = 2
+const POST_MATCH_COOLDOWN_HOURS = 2
+const INITIAL_SUGGESTION_DELAY_MS = 1000
+const REMINDER_INTERVAL_MS = 4 * 60 * 1000
 
 export default function CoachSuggestions({ 
   userProfile, 
@@ -256,6 +256,77 @@ export default function CoachSuggestions({
           secondaryAction: {
             label: t('coachSuggestionLater'),
             onClick: () => dismissWithCooldown('palestra_reminder')
+          }
+        }
+      }
+
+      // 6. FALLBACK: consigli coach frequenti a rotazione (anche senza trigger critici)
+      const fallbackPool = [
+        {
+          id: 'rotation_stats_tip',
+          icon: BarChart3,
+          iconColor: '#00d4ff',
+          bgGradient: 'linear-gradient(135deg, rgba(0, 212, 255, 0.16) 0%, rgba(0, 161, 166, 0.05) 100%)',
+          title: t('coachSuggestionCriticalTitle'),
+          message: t(hasStats ? 'coachSuggestionCriticalMessageWithMatches' : 'coachSuggestionCriticalMessage'),
+          actionLabel: t('coachSuggestionActionStats'),
+          action: () => {
+            if (onOpenGameAnalysis) onOpenGameAnalysis()
+          }
+        },
+        {
+          id: 'rotation_palestra_tip',
+          icon: Dumbbell,
+          iconColor: '#a855f7',
+          bgGradient: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(168, 85, 247, 0.05) 100%)',
+          title: t('coachSuggestionPalestraTitle'),
+          message: t('coachSuggestionPalestraMessage'),
+          actionLabel: t('coachSuggestionActionPalestra'),
+          action: () => {
+            if (onOpenCoachFeedback) onOpenCoachFeedback()
+          }
+        },
+        {
+          id: 'rotation_coach_tip',
+          icon: AlertCircle,
+          iconColor: '#FFD76A',
+          bgGradient: 'linear-gradient(135deg, rgba(255, 215, 106, 0.15) 0%, rgba(255, 215, 106, 0.05) 100%)',
+          title: t('coachSuggestionCoachMissingTitle'),
+          message: t('coachSuggestionCoachMissingMessage'),
+          actionLabel: t('coachSuggestionActionCoaches'),
+          action: () => {
+            if (onOpenCoaches) onOpenCoaches()
+          }
+        }
+      ].filter(item => !isInCooldown(item.id))
+
+      if (fallbackPool.length > 0) {
+        const rotationSeed = Math.floor(now.getTime() / (7 * 60 * 1000))
+        const selected = fallbackPool[rotationSeed % fallbackPool.length]
+        return {
+          id: selected.id,
+          priority: 1,
+          icon: selected.icon,
+          iconColor: selected.iconColor,
+          bgGradient: selected.bgGradient,
+          title: selected.title,
+          message: selected.message,
+          primaryAction: {
+            label: selected.actionLabel,
+            onClick: () => {
+              saveCoachState({
+                cooldowns: {
+                  ...getCoachState().cooldowns,
+                  [selected.id]: new Date(now.getTime() + COACH_COOLDOWN_HOURS * 60 * 60 * 1000).toISOString()
+                }
+              })
+              selected.action()
+              dismiss()
+            }
+          },
+          secondaryAction: {
+            label: t('coachSuggestionLater'),
+            onClick: () => dismissWithCooldown(selected.id)
           }
         }
       }
