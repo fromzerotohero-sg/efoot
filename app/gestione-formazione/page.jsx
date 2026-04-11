@@ -206,12 +206,12 @@ export default function GestioneFormazionePage() {
       })
       
       if (!res.ok) {
-        if (res.status === 401) {
+       // if (res.status === 401) {
            // Token scaduto
-           localStorage.removeItem('auth_token')
-           router.push('/login')
-           return
-        }
+          // localStorage.removeItem('auth_token')
+           //router.push('/login')
+           //return
+       // }
         throw new Error('Failed to load formation data')
       }
       
