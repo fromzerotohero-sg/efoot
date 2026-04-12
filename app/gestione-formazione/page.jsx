@@ -3671,11 +3671,25 @@ function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUplo
           border: '2px solid var(--neon-blue)'
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: 700, margin: 0 }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: '10px',
+          flexWrap: 'wrap',
+          marginBottom: '20px'
+        }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 700, margin: 0, paddingRight: '8px', flex: '1 1 220px' }}>
             {currentPlayer ? t('details') : t('assignPlayer')}
           </h2>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            gap: '8px',
+            flex: '1 1 320px',
+            flexWrap: 'wrap'
+          }}>
             {currentPlayer && typeof onEditCompetences === 'function' && (
               <button
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEditCompetences(currentPlayer) }}
@@ -3683,7 +3697,9 @@ function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUplo
                 style={{
                   padding: '8px 10px',
                   fontSize: '12px',
-                  borderRadius: '8px'
+                  borderRadius: '8px',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0
                 }}
               >
                 {t('editCompetences')}
@@ -3696,7 +3712,9 @@ function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUplo
                 style={{
                   padding: '8px 10px',
                   fontSize: '12px',
-                  borderRadius: '8px'
+                  borderRadius: '8px',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0
                 }}
               >
                 {t('editBoosters')}
@@ -3709,7 +3727,8 @@ function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUplo
                 border: 'none',
                 color: 'rgba(255, 255, 255, 0.7)',
                 cursor: 'pointer',
-                padding: '4px'
+                padding: '4px',
+                flexShrink: 0
               }}
             >
               <X size={20} />

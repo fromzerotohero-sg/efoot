@@ -203,6 +203,81 @@ function appendMicroReminder(content = '', reminder = '') {
   return `${base}\n\n${tail}`
 }
 
+function isLinkUpQuestion(message = '') {
+  const s = String(message || '').toLowerCase()
+  if (!s) return false
+  return (
+    s.includes('link-up') ||
+    s.includes('link up') ||
+    s.includes('linkup') ||
+    s.includes('collegamento')
+  )
+}
+
+function extractLinkUpFacts(summary = '') {
+  const text = String(summary || '')
+  if (!text) return null
+  const nameMatch = text.match(/Connection:\s*([^\n.]+)\./i)
+  if (!nameMatch?.[1]) return null
+
+  const focalMatch = text.match(/Focal Point[^:]*:\s*([^\n.]+)\./i)
+  const keyManMatch = text.match(/Key Man[^:]*:\s*([^\n.]+)\./i)
+
+  return {
+    name: String(nameMatch[1] || '').trim(),
+    focal: String(focalMatch?.[1] || '').trim(),
+    keyMan: String(keyManMatch?.[1] || '').trim()
+  }
+}
+
+function buildLinkUpGroundedReply(lang = 'it', facts = null) {
+  if (!facts?.name) return ''
+  if (lang === 'en') {
+    const focalLine = facts.focal ? `Focal Point: ${facts.focal}.` : ''
+    const keyLine = facts.keyMan ? `Key Man: ${facts.keyMan}.` : ''
+    return [
+      `Your active Link-up is ${facts.name}.`,
+      focalLine,
+      keyLine
+    ].filter(Boolean).join(' ')
+  }
+  const focalLine = facts.focal ? `Focal Point: ${facts.focal}.` : ''
+  const keyLine = facts.keyMan ? `Key Man: ${facts.keyMan}.` : ''
+  return [
+    `Il tuo Link-up attivo è ${facts.name}.`,
+    focalLine,
+    keyLine
+  ].filter(Boolean).join(' ')
+}
+
+function enforceLinkUpGrounding({ message = '', summary = '', content = '', lang = 'it' }) {
+  if (!isLinkUpQuestion(message)) return String(content || '').trim()
+  const facts = extractLinkUpFacts(summary)
+  if (!facts?.name) return String(content || '').trim()
+
+  const out = String(content || '').trim()
+  const low = out.toLowerCase()
+  const hasName = low.includes(String(facts.name).toLowerCase())
+  const contradictsKnownData = (
+    low.includes('non risulta') ||
+    low.includes('non lo vedo') ||
+    low.includes('vedo solo') ||
+    low.includes('not in your context') ||
+    low.includes("i don't see") ||
+    low.includes('i only see')
+  )
+
+  if (contradictsKnownData || !hasName) {
+    return buildLinkUpGroundedReply(lang, facts)
+  }
+  return out
+}
+
+function finalizeCoachReply({ content = '', message = '', summary = '', lang = 'it', reminder = '' }) {
+  const grounded = enforceLinkUpGrounding({ message, summary, content, lang })
+  return appendMicroReminder(grounded, reminder)
+}
+
 /**
  * Normalizza e valida history conversazione (enterprise: limiti e sanitizzazione).
  * @param {unknown} raw - Array da body (può essere undefined o non-array)
@@ -721,6 +796,7 @@ SCOPE: solo consulenza tattica eFootball basata su ROSA, PARTITE, ALLENATORE, TA
 - MICRO-REMINDER consentito: se mancano dati critici (formazione/coach/statistiche), puoi aggiungere UNA frase breve di promemoria dopo il consiglio tattico. Non spiegare passaggi UI, non fare tutorial.
 
 FONTI: Nomi/rosa/partite/allenatore/tattica = solo dal blocco contesto sotto (ROSA E DATI o RIASSUNTO ANALISI). Regole eFootball = solo dal blocco RAG. Se manca un dato, non inventare.
+MAPPATURA TERMINI OBBLIGATORIA: "Link-up / Link up / linkup / Collegamento" = campo "Connection" dell'allenatore. Se nel RIASSUNTO è presente "Connection:", NON dire mai che manca: cita nome connection e, se presenti, Focal Point e Key Man.
 MECCANICHE CANCEL/SKILL AVANZATE: segui RAG §7.12. Usa prima i termini ufficiali (Super Cancel, Kick Cancel, Kick Feint, Double Touch) e tratta "tess/croqueta interrotta" solo come alias community tra parentesi.
 ANTI-EXPLOIT: vietato coaching basato su macro/script/bug abuse; non suggerire spam continuo della stessa skill. Dai sempre una variante sicura se il timing non riesce.
 INCROCI: Usa tutto il riassunto (Rosa con stile giocatore+fin/pas/tac+abilità, Statistiche di gioco, Andamento/voti, Tattica=stile squadra, Allenatore e competenze, Build, Sinergie, Leve) e RAG §2 (stili giocatore: quando serve quale, es. Punta avanzata per finalizzazione), §4 (stile squadra), §8 (abilità). Lo stile giocatore è molto importante per fit e sostituzioni.
@@ -745,6 +821,7 @@ SCOPE: only eFootball tactical advice based on ROSTER, MATCHES, COACH, TACTICS a
 - MICRO-REMINDER allowed: if critical data is missing (formation/coach/stats), you may add ONE short reminder sentence after tactical advice. Do not explain UI steps and do not provide tutorials.
 
 SOURCES: Names/roster/matches/coach/tactics only from the context block below (ROSTER & DATA or ANALYSIS SUMMARY). eFootball rules only from the RAG block. If data is missing, do not invent.
+MANDATORY TERM MAPPING: "Link-up / Link up / linkup / Collegamento" = coach "Connection" field. If the SUMMARY contains "Connection:", never say it's missing: cite the connection name and, when available, Focal Point and Key Man.
 CANCEL/SKILL ADVANCED MECHANICS: follow RAG §7.12. Use official names first (Super Cancel, Kick Cancel, Kick Feint, Double Touch) and treat "tess/croqueta interrupted" only as community aliases in parentheses.
 ANTI-EXPLOIT: never coach macro/script/bug abuse, and do not recommend continuous spam of one skill. Always provide a safer fallback option if timing is unstable.
 CROSS-CHECKS: Use the full summary (Roster with player style+fin/pas/tac+skills, Game stats, Form/ratings, Tactics=team style, Coach and competences, Build, Synergies, Levers) and RAG §2 (player styles: when to use which, e.g. Adv Striker for finishing), §4 (team style), §8 (skills). Player style is very important for fit and substitutions.
@@ -1069,7 +1146,13 @@ export async function POST(req) {
             const raw = fallbackData.choices?.[0]?.message?.content || fallbackMsg
             const { cleanContent: fc, suggestions: fs } = parseSuggestionsFromContent(raw)
             const sanitizedFallback = sanitizeCoachOutput(fc, lang)
-            const responseWithReminder = appendMicroReminder(sanitizedFallback, microReminder)
+            const responseWithReminder = finalizeCoachReply({
+              content: sanitizedFallback,
+              message,
+              summary: personalContextSummary,
+              lang,
+              reminder: microReminder
+            })
             const finalSuggestions = (Array.isArray(fs) && fs.length > 0) ? fs : getDefaultSuggestions(lang, safeCurrentPage)
             if (process.env.NODE_ENV !== 'production') console.log('[assistant-chat] Success (fallback from model_not_found), model_used: gpt-4o')
             return NextResponse.json({
@@ -1107,7 +1190,13 @@ export async function POST(req) {
                 const raw = fallbackData.choices?.[0]?.message?.content || fallbackMsg
                 const { cleanContent: fc, suggestions: fs } = parseSuggestionsFromContent(raw)
                 const sanitizedFallback = sanitizeCoachOutput(fc, lang)
-                const responseWithReminder = appendMicroReminder(sanitizedFallback, microReminder)
+                const responseWithReminder = finalizeCoachReply({
+                  content: sanitizedFallback,
+                  message,
+                  summary: personalContextSummary,
+                  lang,
+                  reminder: microReminder
+                })
                 const finalSuggestions = (Array.isArray(fs) && fs.length > 0) ? fs : getDefaultSuggestions(lang, safeCurrentPage)
                 if (process.env.NODE_ENV !== 'production') console.log('[assistant-chat] Success (fallback from !response.ok), model_used: gpt-4o')
                 return NextResponse.json({
@@ -1149,7 +1238,13 @@ export async function POST(req) {
     // Estrai 3 suggerimenti cliccabili dal blocco SUGGERIMENTI (se presente) e pulisci il testo mostrato
     const { cleanContent, suggestions } = parseSuggestionsFromContent(rawContent)
     const sanitizedContent = sanitizeCoachOutput(cleanContent, lang)
-    const responseWithReminder = appendMicroReminder(sanitizedContent, microReminder)
+    const responseWithReminder = finalizeCoachReply({
+      content: sanitizedContent,
+      message,
+      summary: personalContextSummary,
+      lang,
+      reminder: microReminder
+    })
     
     // Validazione base: verifica che la risposta non contenga riferimenti a funzionalità inventate
     if (sanitizedContent.toLowerCase().includes('funzionalità non disponibile') || 
