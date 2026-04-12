@@ -593,9 +593,10 @@ export default function GestioneFormazionePage() {
     // x: 0-100 (0 = sinistra, 100 = destra)
     const xx = clampPercent(x)
     const yy = clampPercent(y)
-    // Soglie coerenti: DC più stretto (colonna centrale); MED/CC ampi; TRQ solo striscia sotto l’attacco
-    const CENTER_X_LO = 30
-    const CENTER_X_HI = 70
+    // Soglie coerenti: DC più ampio (piu liberta in zona centrale),
+    // terzini davvero laterali; MED/CC ampi; TRQ solo striscia sotto l’attacco
+    const CENTER_X_LO = 26
+    const CENTER_X_HI = 74
     const WING_L = 28
     const WING_R = 72
     
@@ -606,8 +607,8 @@ export default function GestioneFormazionePage() {
     
     // Difesa: y tra 63-80 (la fascia 60-62 è centrocampo — meno DC “verso il centrocampo”)
     if (yy >= 63 && yy <= 80) {
-      if (xx < 34) return 'TS'  // Terzino sinistro (sinistra campo)
-      if (xx > 66) return 'TD'   // Terzino destro (destra campo)
+      if (xx < 24) return 'TS'  // Terzino sinistro (piu laterale)
+      if (xx > 76) return 'TD'  // Terzino destro (piu laterale)
       return 'DC'              // Centrale difesa
     }
     
@@ -2208,10 +2209,8 @@ export default function GestioneFormazionePage() {
 
   // Calcola collisioni e offset per evitare sovrapposizioni
   const calculateCardOffsets = (slots) => {
-    const CARD_WIDTH_PX = 150 // Larghezza approssimativa card in px
-    const CARD_HEIGHT_PX = 160 // Altezza approssimativa card in px
-    const MIN_DISTANCE_X = 12 // Distanza minima in % per evitare collisioni
-    const MIN_DISTANCE_Y = 15 // Distanza minima in % per evitare collisioni
+    const MIN_DISTANCE_X = 8 // Intervento solo con collisioni davvero strette
+    const MIN_DISTANCE_Y = 10
     
     return slots.map((slot, index) => {
       let offsetX = 0
@@ -2230,9 +2229,9 @@ export default function GestioneFormazionePage() {
           hasNearbyCards = true
           // Sposta leggermente verso l'esterno
           if (slot.position.x < otherSlot.position.x) {
-            offsetX -= 1.5 // Sposta a sinistra
+            offsetX -= 0.75 // Sposta a sinistra
           } else {
-            offsetX += 1.5 // Sposta a destra
+            offsetX += 0.75 // Sposta a destra
           }
         }
         
@@ -2240,9 +2239,9 @@ export default function GestioneFormazionePage() {
         if (dx < MIN_DISTANCE_X && dy < MIN_DISTANCE_Y && dy > 0) {
           hasNearbyCards = true
           if (slot.position.y < otherSlot.position.y) {
-            offsetY -= 1.5 // Sposta in alto
+            offsetY -= 0.75 // Sposta in alto
           } else {
-            offsetY += 1.5 // Sposta in basso
+            offsetY += 0.75 // Sposta in basso
           }
         }
       })
@@ -2256,7 +2255,9 @@ export default function GestioneFormazionePage() {
     })
   }
 
-  const slotsWithOffsets = layout?.slot_positions ? calculateCardOffsets(slots) : []
+  const slotsWithOffsets = layout?.slot_positions
+    ? (isEditMode ? slots : calculateCardOffsets(slots))
+    : []
 
   return (
     <main data-tour-id="tour-formation-intro" className="p-6 max-w-7xl mx-auto">
