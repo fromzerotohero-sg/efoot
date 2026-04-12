@@ -72,6 +72,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [loadedProfile, setLoadedProfile] = useState(null)
   const [formExpanded, setFormExpanded] = useState(true)
   const [formData, setFormData] = useState({})
@@ -178,17 +179,29 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     ai_weak_point: ['defence', 'attack', 'set_pieces', 'transitions', 'final_minutes']
   }
 
+  const getAccessToken = useCallback(async () => {
+    let token = localStorage.getItem('auth_token')
+    if (!token && supabase) {
+      const { data: session } = await supabase.auth.getSession()
+      token = session?.session?.access_token
+    }
+    return token || null
+  }, [])
+
   // LOGICA INVARIATA: Salva form
-  const handleFormSave = useCallback(async () => {
+  const handleFormSave = useCallback(async (options = {}) => {
+    const { silent = false, tokenOverride = null } = options
+    setSaveError('')
+    setSaved(false)
     setFormSaving(true)
     try {
-      let token = localStorage.getItem('auth_token')
-      if (!token && supabase) {
-        const { data: session } = await supabase.auth.getSession()
-        token = session?.session?.access_token
+      const token = tokenOverride || await getAccessToken()
+      if (!token) {
+        if (!silent) {
+          setSaveError(lang === 'en' ? 'Session expired. Please log in again.' : 'Sessione scaduta. Accedi di nuovo.')
+        }
+        return false
       }
-      
-      if (!token) return
 
       const body = {}
       for (const [k, v] of Object.entries(formData)) {
@@ -222,13 +235,25 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         setLoadedProfile(prev => ({ ...prev, ...body }))
         setFormSaved(true)
         if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('knowledge-should-refresh'))
+        return true
       }
+
+      const errorText = await res.text()
+      console.error('[CoachFeedbackChat] Form save error:', errorText)
+      if (!silent) {
+        setSaveError(lang === 'en' ? 'Unable to save profile data.' : 'Impossibile salvare i dati profilo.')
+      }
+      return false
     } catch (err) {
       console.error('[CoachFeedbackChat] Form save error:', err)
+      if (!silent) {
+        setSaveError(lang === 'en' ? 'Unable to save profile data.' : 'Impossibile salvare i dati profilo.')
+      }
+      return false
     } finally {
       setFormSaving(false)
     }
-  }, [formData])
+  }, [formData, getAccessToken, lang])
 
   // LOGICA INVARIATA: Suggerimenti iniziali
   const initialSuggestions = useMemo(() => {
@@ -245,6 +270,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     if (!show) return
     setMessages([])
     setSaved(false)
+    setSaveError('')
 
     const firstName = userProfile?.first_name || (lang === 'en' ? 'friend' : 'amico')
 
@@ -362,23 +388,29 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
 
   // LOGICA INVARIATA: Salva e chiudi
   const handleSaveAndClose = useCallback(async () => {
-    if (saving) return
-    const userMessages = messages.filter(m => m.role === 'user')
-    if (userMessages.length === 0) {
-      onClose?.()
-      return
-    }
+    if (saving || formSaving) return
+    setSaveError('')
+    setSaved(false)
 
     setSaving(true)
     try {
-      let token = localStorage.getItem('auth_token')
-      if (!token && supabase) {
-        const { data: session } = await supabase.auth.getSession()
-        token = session?.session?.access_token
+      const token = await getAccessToken()
+      if (!token) {
+        setSaveError(lang === 'en' ? 'Session expired. Please log in again.' : 'Sessione scaduta. Accedi di nuovo.')
+        return
       }
 
-      if (!token) {
-        onClose?.()
+      const profileSaved = await handleFormSave({ silent: true, tokenOverride: token })
+      if (!profileSaved) {
+        setSaveError(lang === 'en' ? 'Unable to save profile data.' : 'Impossibile salvare i dati profilo.')
+        return
+      }
+
+      const userMessages = messages.filter(m => m.role === 'user')
+      if (userMessages.length === 0) {
+        setSaved(true)
+        if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('knowledge-should-refresh'))
+        setTimeout(() => onClose?.(), 900)
         return
       }
 
@@ -410,16 +442,17 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         } catch (_) {}
         setTimeout(() => onClose?.(), 1500)
       } else {
-        console.error('[CoachFeedbackChat] Save error:', await res.text())
-        onClose?.()
+        const errorText = await res.text()
+        console.error('[CoachFeedbackChat] Save error:', errorText)
+        setSaveError(lang === 'en' ? 'Unable to save chat feedback.' : 'Impossibile salvare il feedback chat.')
       }
     } catch (err) {
       console.error('[CoachFeedbackChat] Save error:', err)
-      onClose?.()
+      setSaveError(lang === 'en' ? 'Unable to save changes. Please try again.' : 'Impossibile salvare le modifiche. Riprova.')
     } finally {
       setSaving(false)
     }
-  }, [saving, messages, sessionMode, lastMatch, onClose])
+  }, [saving, formSaving, getAccessToken, handleFormSave, messages, sessionMode, lastMatch, onClose, lang])
 
   if (!show) return null
 
@@ -480,8 +513,8 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
               </div>
               <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>
                 {lang === 'en'
-                  ? 'Profile & feedback session'
-                  : 'Sessione profilo & feedback'}
+                  ? 'Profile + chat feedback'
+                  : 'Profilo + feedback chat'}
               </div>
             </div>
           </div>
@@ -510,10 +543,26 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
             ) : saving ? (
               <>{lang === 'en' ? 'Saving...' : 'Salvo...'}</>
             ) : (
-              <><Save size={16} /> {lang === 'en' ? 'Save' : 'Salva'}</>
+              <><Save size={16} /> {lang === 'en' ? 'Save All' : 'Salva tutto'}</>
             )}
           </button>
         </div>
+        {saveError && (
+          <div
+            style={{
+              margin: '10px 20px 0',
+              padding: '10px 12px',
+              borderRadius: '10px',
+              border: '1px solid rgba(255, 99, 99, 0.4)',
+              background: 'rgba(255, 99, 99, 0.12)',
+              color: 'rgba(255, 210, 210, 0.95)',
+              fontSize: '12px',
+              lineHeight: '1.4'
+            }}
+          >
+            {saveError}
+          </div>
+        )}
 
         {/* Content Scrollable */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px', paddingBottom: 'calc(20px + 100px + env(safe-area-inset-bottom, 0px))' }}>
