@@ -174,6 +174,22 @@ export default function GestioneFormazionePage() {
   const [manualBoosters, setManualBoosters] = React.useState([])
   const [manualBoostersPlayerId, setManualBoostersPlayerId] = React.useState(null)
   const [savingManualBoosters, setSavingManualBoosters] = React.useState(false)
+  const [isCompactFieldMobile, setIsCompactFieldMobile] = React.useState(false)
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return
+    const media = window.matchMedia('(max-width: 768px)')
+    const sync = () => setIsCompactFieldMobile(media.matches)
+    sync()
+
+    if (typeof media.addEventListener === 'function') {
+      media.addEventListener('change', sync)
+      return () => media.removeEventListener('change', sync)
+    }
+
+    media.addListener(sync)
+    return () => media.removeListener(sync)
+  }, [])
 
   // Funzione fetchData riutilizzabile (estratta da useEffect per essere chiamabile)
   const fetchData = React.useCallback(async () => {
@@ -2763,6 +2779,7 @@ export default function GestioneFormazionePage() {
               isEditMode={isEditMode}
               onPositionChange={handlePositionChange}
               customPosition={customPos}  // Passa customPosition per mostrare sigla ruolo
+              isCompactFieldMobile={isCompactFieldMobile}
               formatRoleLabel={formatRoleLabel}
               formatRolePlaceholder={formatRolePlaceholder}
             />
@@ -3111,7 +3128,7 @@ export default function GestioneFormazionePage() {
 
 // Componente Modal Upload
 // Slot Card Component - Badge Minimale (solo nome)
-function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChange, customPosition = null, formatRoleLabel, formatRolePlaceholder }) {
+function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChange, customPosition = null, isCompactFieldMobile = false, formatRoleLabel, formatRolePlaceholder }) {
   const { t } = useTranslation()
   const { slot_index, position, player, offsetX = 0, offsetY = 0, hasNearbyCards = false } = slot
   const isEmpty = !player
@@ -3125,6 +3142,11 @@ function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChang
   const [isDragging, setIsDragging] = React.useState(false)
   const [dragStart, setDragStart] = React.useState(null)
   const [currentOffset, setCurrentOffset] = React.useState({ x: 0, y: 0 })
+  const [showStatusDetails, setShowStatusDetails] = React.useState(false)
+
+  React.useEffect(() => {
+    if (!isCompactFieldMobile) setShowStatusDetails(false)
+  }, [isCompactFieldMobile])
 
   // Abbrevia nome se troppo lungo
   const getDisplayName = (name) => {
@@ -3388,6 +3410,12 @@ function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChang
             </div>
             <div
               title={`${completedSections}/3 ${t('sectionsCompleted') || 'sezioni completate'}`}
+              onClick={(e) => {
+                if (!isCompactFieldMobile) return
+                e.preventDefault()
+                e.stopPropagation()
+                setShowStatusDetails(prev => !prev)
+              }}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -3398,7 +3426,8 @@ function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChang
                 fontWeight: 700,
                 color: '#fff',
                 background: completedSections === 3 ? 'rgba(34, 197, 94, 0.25)' : 'rgba(239, 68, 68, 0.22)',
-                border: `1px solid ${statusChipColor}`
+                border: `1px solid ${statusChipColor}`,
+                cursor: isCompactFieldMobile ? 'pointer' : 'default'
               }}
             >
               <span>{completedSections}/3</span>
@@ -3420,33 +3449,35 @@ function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChang
             {getDisplayName(player.player_name)}
           </div>
 
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-            width: '100%'
-          }}>
-            {statusItems.map(({ key, icon: Icon, ok, label }) => (
-              <div
-                key={key}
-                title={`${label}: ${ok ? (t('profileComplete') || 'ok') : (t('missingDataTitle') || 'manca')}`}
-                style={{
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '999px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: `1px solid ${ok ? '#22c55e' : '#ef4444'}`,
-                  background: ok ? 'rgba(34, 197, 94, 0.22)' : 'rgba(239, 68, 68, 0.2)',
-                  boxShadow: ok ? '0 0 8px rgba(34, 197, 94, 0.35)' : '0 0 8px rgba(239, 68, 68, 0.28)'
-                }}
-              >
-                <Icon size={9} color={ok ? '#22c55e' : '#ef4444'} />
-              </div>
-            ))}
-          </div>
+          {(!isCompactFieldMobile || showStatusDetails) && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              width: '100%'
+            }}>
+              {statusItems.map(({ key, icon: Icon, ok, label }) => (
+                <div
+                  key={key}
+                  title={`${label}: ${ok ? (t('profileComplete') || 'ok') : (t('missingDataTitle') || 'manca')}`}
+                  style={{
+                    width: '16px',
+                    height: '16px',
+                    borderRadius: '999px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: `1px solid ${ok ? '#22c55e' : '#ef4444'}`,
+                    background: ok ? 'rgba(34, 197, 94, 0.22)' : 'rgba(239, 68, 68, 0.2)',
+                    boxShadow: ok ? '0 0 8px rgba(34, 197, 94, 0.35)' : '0 0 8px rgba(239, 68, 68, 0.28)'
+                  }}
+                >
+                  <Icon size={9} color={ok ? '#22c55e' : '#ef4444'} />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
