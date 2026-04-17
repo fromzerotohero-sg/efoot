@@ -13,6 +13,22 @@ const DEFAULT_VOICE = 'marin'
 const DEFAULT_MODEL = 'gpt-realtime'
 const SUPPORTED_VOICES = new Set(['marin'])
 const CONTEXT_TIMEOUT_MS = 3400
+const LIVE_POST_INSTRUCTIONS_TOKEN_LIMIT = 10000
+
+function normalizeMicroLoop(raw) {
+  if (!raw || typeof raw !== 'object') return null
+  const compact = (value, maxLen = 180) => {
+    if (value == null) return ''
+    const clean = String(value).replace(/\s+/g, ' ').trim()
+    return clean.length > maxLen ? `${clean.slice(0, maxLen)}...` : clean
+  }
+  const lastCorrection = compact(raw.lastCorrection || raw.last_correction || '', 180)
+  const outcomeRaw = String(raw.outcome || raw.userOutcome || raw.user_outcome || '').toLowerCase().trim()
+  const nextLever = compact(raw.nextLever || raw.next_lever || '', 140)
+  const outcome = outcomeRaw === 'ok' || outcomeRaw === 'non_ok' ? outcomeRaw : ''
+  if (!lastCorrection && !outcome && !nextLever) return null
+  return { lastCorrection, outcome, nextLever }
+}
 
 function normalizeOpponentContext(raw) {
   if (!raw || typeof raw !== 'object') return null
@@ -97,7 +113,7 @@ Indizi live: ${stateLine}`,
   }
 }
 
-async function buildContextWithTimeout({ userId, lang, opponentContext, liveState }) {
+async function buildContextWithTimeout({ userId, lang, opponentContext, liveState, microLoop }) {
   const fallback = getFallbackLiveCoachContext(lang, { liveState, opponentContext })
   let timeoutHandle = null
   const timeoutPromise = new Promise(resolve => {
@@ -105,7 +121,7 @@ async function buildContextWithTimeout({ userId, lang, opponentContext, liveStat
   })
   try {
     return await Promise.race([
-      buildLiveCoachContext({ userId, lang, opponentContext, liveState }),
+      buildLiveCoachContext({ userId, lang, opponentContext, liveState, microLoop }),
       timeoutPromise
     ])
   } catch (error) {
@@ -183,6 +199,7 @@ export async function POST(req) {
     const liveState = body?.liveState && typeof body.liveState === 'object'
       ? body.liveState
       : null
+    const microLoop = normalizeMicroLoop(body?.microLoop)
 
     const rateLimitConfig = RATE_LIMIT_CONFIG['/api/live-coach/session'] || { maxRequests: 6, windowMs: 60000 }
     const rateLimit = await checkRateLimit(userId, '/api/live-coach/session', rateLimitConfig.maxRequests, rateLimitConfig.windowMs)
@@ -198,7 +215,7 @@ export async function POST(req) {
       )
     }
 
-    const contextPromise = buildContextWithTimeout({ userId, lang, opponentContext, liveState })
+    const contextPromise = buildContextWithTimeout({ userId, lang, opponentContext, liveState, microLoop })
     const context = await contextPromise
 
     const { data: sessionRow, error: sessionError } = await admin
@@ -218,7 +235,8 @@ export async function POST(req) {
           source: 'premium_launcher',
           mode: 'webrtc_ephemeral',
           opponentContextSource: providedOpponentContext ? 'request' : (opponentContext ? 'supabase_latest' : 'missing'),
-          liveState: liveState || null
+          liveState: liveState || null,
+          microLoop: microLoop || null
         }
       })
       .select('id, created_at')
@@ -255,7 +273,7 @@ export async function POST(req) {
             type: 'retention_ratio',
             retention_ratio: 0.8,
             token_limits: {
-              post_instructions: 8000
+              post_instructions: LIVE_POST_INSTRUCTIONS_TOKEN_LIMIT
             }
           }
         }
