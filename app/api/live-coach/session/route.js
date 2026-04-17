@@ -30,6 +30,35 @@ function normalizeMicroLoop(raw) {
   return { lastCorrection, outcome, nextLever }
 }
 
+async function fetchLatestSessionMicroLoop(admin, userId) {
+  try {
+    const { data } = await admin
+      .from('live_coach_sessions')
+      .select('session_meta, user_context, updated_at')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false })
+      .limit(8)
+
+    if (!Array.isArray(data) || data.length === 0) return null
+
+    for (const row of data) {
+      const candidates = [
+        row?.session_meta?.microLoop,
+        row?.session_meta?.clientState?.microLoop,
+        row?.user_context?.microLoop
+      ]
+      for (const candidate of candidates) {
+        const normalized = normalizeMicroLoop(candidate)
+        if (normalized) return normalized
+      }
+    }
+    return null
+  } catch (error) {
+    console.error('[live-coach/session] latest micro-loop fetch error:', error)
+    return null
+  }
+}
+
 function normalizeOpponentContext(raw) {
   if (!raw || typeof raw !== 'object') return null
 
@@ -199,7 +228,9 @@ export async function POST(req) {
     const liveState = body?.liveState && typeof body.liveState === 'object'
       ? body.liveState
       : null
-    const microLoop = normalizeMicroLoop(body?.microLoop)
+    const requestMicroLoop = normalizeMicroLoop(body?.microLoop)
+    const fallbackMicroLoop = requestMicroLoop ? null : await fetchLatestSessionMicroLoop(admin, userId)
+    const microLoop = requestMicroLoop || fallbackMicroLoop
 
     const rateLimitConfig = RATE_LIMIT_CONFIG['/api/live-coach/session'] || { maxRequests: 6, windowMs: 60000 }
     const rateLimit = await checkRateLimit(userId, '/api/live-coach/session', rateLimitConfig.maxRequests, rateLimitConfig.windowMs)
@@ -236,7 +267,8 @@ export async function POST(req) {
           mode: 'webrtc_ephemeral',
           opponentContextSource: providedOpponentContext ? 'request' : (opponentContext ? 'supabase_latest' : 'missing'),
           liveState: liveState || null,
-          microLoop: microLoop || null
+          microLoop: microLoop || null,
+          microLoopSource: requestMicroLoop ? 'request' : (fallbackMicroLoop ? 'session_history' : 'missing')
         }
       })
       .select('id, created_at')

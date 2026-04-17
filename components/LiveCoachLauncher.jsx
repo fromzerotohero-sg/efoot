@@ -14,6 +14,7 @@ const SDP_EXCHANGE_TIMEOUT_MS = 12000
 const CONNECT_WATCHDOG_TIMEOUT_MS = 18000
 const START_ABORTED_ERROR = '__LIVE_COACH_START_ABORTED__'
 const LIVE_STATE_STORAGE_KEYS = ['live_state', 'liveState', 'match_live_state', 'matchLiveState']
+const LIVE_MICRO_LOOP_STORAGE_KEY = 'live_coach_micro_loop_v1'
 
 function formatDuration(ms) {
   const totalSeconds = Math.max(0, Math.floor((ms || 0) / 1000))
@@ -78,6 +79,65 @@ function readLiveStateFromWindow() {
   return null
 }
 
+function compactMicroLoopText(value, maxLen = 180) {
+  if (value == null) return ''
+  const clean = String(value).replace(/\s+/g, ' ').trim()
+  if (!clean) return ''
+  return clean.length > maxLen ? `${clean.slice(0, maxLen)}...` : clean
+}
+
+function normalizeMicroLoop(raw) {
+  if (!raw || typeof raw !== 'object') return null
+  const lastCorrection = compactMicroLoopText(raw.lastCorrection || raw.last_correction || '', 180)
+  const outcomeRaw = String(raw.outcome || raw.userOutcome || raw.user_outcome || '').toLowerCase().trim()
+  const nextLever = compactMicroLoopText(raw.nextLever || raw.next_lever || '', 140)
+  const outcome = outcomeRaw === 'ok' || outcomeRaw === 'non_ok' ? outcomeRaw : ''
+  if (!lastCorrection && !outcome && !nextLever) return null
+  return { lastCorrection, outcome, nextLever }
+}
+
+function inferOutcomeFromUserLine(userLine = '') {
+  const text = String(userLine || '').toLowerCase()
+  if (!text) return ''
+  const okHints = ['ok', 'meglio', 'funziona', 'funzionato', 'better', 'works', 'worked', 'good']
+  const nonOkHints = ['non', 'peggio', 'non va', 'non funziona', 'not', "doesn't", 'does not', 'worse']
+  if (okHints.some(hint => text.includes(hint))) return 'ok'
+  if (nonOkHints.some(hint => text.includes(hint))) return 'non_ok'
+  return ''
+}
+
+function buildMicroLoopFromTranscript({ userLine = '', coachLine = '' } = {}) {
+  const lastCorrection = compactMicroLoopText(coachLine, 180)
+  const outcome = inferOutcomeFromUserLine(userLine)
+  if (!lastCorrection && !outcome) return null
+  return normalizeMicroLoop({
+    lastCorrection,
+    outcome
+  })
+}
+
+function loadMicroLoopFromStorage() {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.localStorage.getItem(LIVE_MICRO_LOOP_STORAGE_KEY)
+    if (!raw) return null
+    return normalizeMicroLoop(JSON.parse(raw))
+  } catch (_) {
+    return null
+  }
+}
+
+function saveMicroLoopToStorage(microLoop) {
+  if (typeof window === 'undefined') return
+  try {
+    if (!microLoop) {
+      window.localStorage.removeItem(LIVE_MICRO_LOOP_STORAGE_KEY)
+      return
+    }
+    window.localStorage.setItem(LIVE_MICRO_LOOP_STORAGE_KEY, JSON.stringify(microLoop))
+  } catch (_) {}
+}
+
 export default function LiveCoachLauncher({ showLauncherButton = true }) {
   const { t, lang } = useTranslation()
 
@@ -118,6 +178,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
   const latestLiveStateRef = useRef(null)
   const latestUserLineRef = useRef(userLine)
   const latestCoachLineRef = useRef(coachLine)
+  const latestMicroLoopRef = useRef(null)
 
   const premiumLabel = useMemo(() => lang === 'en' ? 'Premium' : 'Premium', [lang])
   const balanceRemaining = Number.isFinite(Number(creditsData?.balance_remaining)) ? Number(creditsData.balance_remaining) : null
@@ -265,6 +326,10 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
     latestCoachLineRef.current = coachLine
   }, [coachLine])
 
+  useEffect(() => {
+    latestMicroLoopRef.current = loadMicroLoopFromStorage()
+  }, [])
+
   const clearDisconnectTimeout = useCallback(() => {
     if (disconnectTimeoutRef.current) {
       clearTimeout(disconnectTimeoutRef.current)
@@ -338,6 +403,14 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
     setIsConnected(false)
     setIsConnecting(false)
 
+    const derivedMicroLoop = buildMicroLoopFromTranscript({
+      userLine: latestUserLineRef.current,
+      coachLine: latestCoachLineRef.current
+    })
+    const microLoopForNextSession = derivedMicroLoop || latestMicroLoopRef.current || null
+    latestMicroLoopRef.current = microLoopForNextSession
+    saveMicroLoopToStorage(microLoopForNextSession)
+
     if (notifyServer && sessionIdRef.current) {
       try {
         const token = await getToken()
@@ -354,7 +427,8 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
               opponentContext: latestOpponentContextRef.current,
               clientState: {
                 userLine: latestUserLineRef.current,
-                coachLine: latestCoachLineRef.current
+                coachLine: latestCoachLineRef.current,
+                microLoop: microLoopForNextSession
               }
             })
           })
@@ -541,6 +615,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
 
       sessionTimeout = setTimeout(() => startAbort.abort(), SESSION_INIT_TIMEOUT_MS)
       const liveState = latestLiveStateRef.current || getLiveStateSnapshot()
+      const microLoop = latestMicroLoopRef.current || loadMicroLoopFromStorage()
 
       const sessionRes = await fetch('/api/live-coach/session', {
         method: 'POST',
@@ -552,7 +627,8 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
           lang,
           voice,
           opponentContext,
-          liveState
+          liveState,
+          microLoop
         }),
         signal: startAbort.signal
       })
