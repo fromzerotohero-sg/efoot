@@ -182,6 +182,18 @@ export async function PATCH(req, { params }) {
       return NextResponse.json({ error: updateError.message }, { status: 500 })
     }
 
+    // Trigger esplicito del ricalcolo AI Knowledge dopo update player.
+    // Questo endpoint viene usato spesso per slot_index/original_positions:
+    // senza ricalcolo qui, la barra può restare stale anche con rosa completa.
+    try {
+      const { updateAIKnowledgeScore } = await import('@/lib/aiKnowledgeHelper')
+      await updateAIKnowledgeScore(userId, supabaseUrl, serviceKey)
+    } catch (knowledgeErr) {
+      // Non blocchiamo l'update player se il ricalcolo knowledge fallisce:
+      // il client ha comunque salvato dati corretti e può ritentare refresh.
+      console.error('[API] Warning: AI Knowledge recalculation failed after player PATCH:', knowledgeErr)
+    }
+
     return NextResponse.json({ player: updatedPlayer })
 
   } catch (error) {
