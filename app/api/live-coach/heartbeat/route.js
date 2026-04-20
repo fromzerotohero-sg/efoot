@@ -96,7 +96,7 @@ export async function POST(req) {
           .eq('user_id', userId)
 
         return NextResponse.json(
-          { ok: false, ended: true, reason: 'insufficient_credits', error: lang === 'en' ? 'Live Coach stopped: insufficient Hero Points.' : 'Coach Live fermato: Hero Points insufficienti.' },
+          { ok: false, ended: true, reason: 'insufficient_credits', error: lang === 'en' ? 'Insufficient credits. Please recharge to continue.' : 'Crediti insufficienti. Ricarica per continuare.' },
           { status: 402 }
         )
       }

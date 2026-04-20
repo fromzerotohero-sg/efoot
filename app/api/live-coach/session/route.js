@@ -241,7 +241,7 @@ export async function POST(req) {
     const hasCredits = await checkCredits(admin, userId, LIVE_COACH_START_COST)
     if (!hasCredits) {
       return NextResponse.json(
-        { error: lang === 'en' ? 'Insufficient Hero Points for Live Coach.' : 'Hero Points insufficienti per Coach Live.' },
+        { error: lang === 'en' ? 'Insufficient credits. Please recharge to continue.' : 'Crediti insufficienti. Ricarica per continuare.' },
         { status: 402 }
       )
     }
@@ -354,7 +354,7 @@ export async function POST(req) {
         .eq('user_id', userId)
 
       return NextResponse.json(
-        { error: lang === 'en' ? 'Insufficient Hero Points for Live Coach.' : 'Hero Points insufficienti per Coach Live.' },
+        { error: lang === 'en' ? 'Insufficient credits. Please recharge to continue.' : 'Crediti insufficienti. Ricarica per continuare.' },
         { status: 402 }
       )
     }

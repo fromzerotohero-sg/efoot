@@ -712,6 +712,7 @@ export default function NewMatchPage() {
                     <input
                       type="file"
                       accept="image/*"
+                      capture="environment"
                       onChange={handleImageSelect(currentSection, slot)}
                       style={{ display: 'none' }}
                       disabled={extracting || saving}
@@ -749,6 +750,7 @@ export default function NewMatchPage() {
               <input
                 type="file"
                 accept="image/*"
+                capture="environment"
                 onChange={handleImageSelect(currentSection)}
                 style={{ display: 'none' }}
                 disabled={extracting || saving}

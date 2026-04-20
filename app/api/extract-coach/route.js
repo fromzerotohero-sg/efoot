@@ -164,7 +164,7 @@ export async function POST(req) {
     const deduction = await deductCredits(admin, userId, token, AI_COST, 'extract-coach')
     if (!deduction.success) {
       return NextResponse.json(
-        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica.' : 'Insufficient credits. Please recharge.' },
+        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : 'Insufficient credits. Please recharge to continue.' },
         { status: 402, headers: { 'Content-Language': lang } }
       )
     }

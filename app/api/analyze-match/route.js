@@ -1169,7 +1169,7 @@ export async function POST(req) {
     const deduction = await deductCredits(admin, userId, token, AI_COST, 'analyze-match')
     if (!deduction.success) {
       return NextResponse.json(
-        { error: 'Crediti insufficienti. Ricarica.' },
+        { error: 'Crediti insufficienti. Ricarica per continuare.' },
         { status: 402 }
       )
     }

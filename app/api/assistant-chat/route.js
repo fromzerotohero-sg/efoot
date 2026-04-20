@@ -1095,7 +1095,7 @@ export async function POST(req) {
         console.warn(`[assistant-chat] Credit deduction failed for user ${userId}: ${deduction.error}`)
         return NextResponse.json(
           { 
-            error: lang === 'en' ? 'Insufficient credits. Please recharge.' : 'Crediti insufficienti. Ricarica per continuare.',
+            error: lang === 'en' ? 'Insufficient credits. Please recharge to continue.' : 'Crediti insufficienti. Ricarica per continuare.',
             details: deduction.error 
           },
           { status: 402, headers: { 'Content-Language': lang } }

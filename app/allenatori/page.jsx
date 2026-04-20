@@ -214,6 +214,20 @@ export default function AllenatoriPage() {
       // Verifica che almeno la prima foto abbia estratto dati
       if (!coachData || !coachData.coach_name) {
         if (errors.length > 0) {
+          const insufficientCreditsError = errors.find((e) => {
+            const msg = String(e || '').toLowerCase()
+            return (
+              msg.includes('credit') ||
+              msg.includes('crediti') ||
+              msg.includes('credito') ||
+              msg.includes('hero points') ||
+              msg.includes('recharge') ||
+              msg.includes('ricarica')
+            )
+          })
+          if (insufficientCreditsError) {
+            throw new Error(insufficientCreditsError)
+          }
           const quotaError = errors.find(e => e.includes('quota') || e.includes('billing'))
           if (quotaError) {
             throw new Error(t('openAQuotaError'))
