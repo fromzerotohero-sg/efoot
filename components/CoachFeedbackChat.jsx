@@ -81,6 +81,8 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
   const sendAbortRef = useRef(null)
+  const introTimeoutRef = useRef(null)
+  const focusTimeoutRef = useRef(null)
 
   // LOGICA INVARIATA: Carica profilo
   useEffect(() => {
@@ -292,7 +294,8 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         : `Ciao ${firstName}! C'è qualcosa di nuovo che vuoi dirmi?`
     }
 
-    setTimeout(() => {
+    if (introTimeoutRef.current) clearTimeout(introTimeoutRef.current)
+    introTimeoutRef.current = setTimeout(() => {
       setMessages([{ role: 'assistant', content: greeting }])
     }, 300)
   }, [show, sessionMode, userProfile, lastMatch, lang])
@@ -305,13 +308,39 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
   // LOGICA INVARIATA: Focus input
   useEffect(() => {
     if (show && !loading) {
-      setTimeout(() => inputRef.current?.focus(), 400)
+      if (focusTimeoutRef.current) clearTimeout(focusTimeoutRef.current)
+      focusTimeoutRef.current = setTimeout(() => inputRef.current?.focus(), 400)
     }
   }, [show, loading])
 
+  useEffect(() => {
+    if (!show || typeof document === 'undefined') return undefined
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [show])
+
+  useEffect(() => {
+    if (!show || typeof window === 'undefined') return undefined
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape' && !saving && !formSaving) {
+        onClose?.()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [show, saving, formSaving, onClose])
+
   // LOGICA INVARIATA: Cleanup
   useEffect(() => {
-    return () => { sendAbortRef.current?.abort() }
+    return () => {
+      sendAbortRef.current?.abort()
+      if (introTimeoutRef.current) clearTimeout(introTimeoutRef.current)
+      if (focusTimeoutRef.current) clearTimeout(focusTimeoutRef.current)
+    }
   }, [])
 
   // LOGICA INVARIATA: Invia messaggio
@@ -459,6 +488,9 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
   return (
     <div
       className="coach-feedback-overlay"
+      onClick={() => {
+        if (!saving && !formSaving) onClose?.()
+      }}
       style={{
         position: 'fixed',
         inset: 0,
@@ -467,14 +499,17 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         alignItems: 'center',
         justifyContent: 'center',
         background: 'rgba(0,0,0,0.85)',
-        backdropFilter: 'blur(8px)'
+        backdropFilter: 'blur(8px)',
+        padding: '10px'
       }}
     >
       <div
         className="coach-feedback-modal"
+        onClick={(e) => e.stopPropagation()}
         style={{
-          width: 'min(520px, calc(100vw - 20px))',
-          height: 'min(720px, calc(100dvh - 20px))',
+          width: 'min(560px, calc(100vw - 20px))',
+          height: 'min(760px, calc(100dvh - 20px))',
+          maxHeight: 'calc(100dvh - 20px)',
           background: 'linear-gradient(180deg, rgba(5,8,20,0.98) 0%, rgba(3,5,12,0.98) 100%)',
           border: '1px solid rgba(0, 212, 255, 0.3)',
           borderRadius: '24px',
@@ -496,7 +531,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
             gap: '16px'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
             <div style={{
               width: '44px',
               height: '44px',
@@ -509,7 +544,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
             }}>
               <Dumbbell size={22} color="white" />
             </div>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 700, color: 'white', fontSize: '17px', marginBottom: '2px' }}>
                 {lang === 'en' ? 'Coach Gym' : 'Palestra Coach'}
               </div>
@@ -548,6 +583,29 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
               <><Save size={16} /> {lang === 'en' ? 'Save All' : 'Salva tutto'}</>
             )}
           </button>
+          <button
+            type="button"
+            aria-label={lang === 'en' ? 'Close coach gym' : 'Chiudi palestra coach'}
+            onClick={() => {
+              if (!saving && !formSaving) onClose?.()
+            }}
+            disabled={saving || formSaving}
+            style={{
+              width: '40px',
+              height: '40px',
+              minWidth: '40px',
+              borderRadius: '10px',
+              border: '1px solid rgba(255,255,255,0.2)',
+              background: 'rgba(255,255,255,0.06)',
+              color: 'rgba(255,255,255,0.92)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: saving || formSaving ? 'not-allowed' : 'pointer'
+            }}
+          >
+            <X size={18} />
+          </button>
         </div>
         {saveError && (
           <div
@@ -567,7 +625,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         )}
 
         {/* Content Scrollable */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px', paddingBottom: 'calc(20px + 100px + env(safe-area-inset-bottom, 0px))' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '20px', paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))' }}>
           
           {/* Sezione Profilo Migliorata */}
           <div style={{ ...styles.sectionCard, marginBottom: '20px' }}>
@@ -904,7 +962,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyPress={(e) => {
+                onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault()
                     handleSend()
@@ -953,11 +1011,13 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         }
         @media (max-width: 640px) {
           .coach-feedback-overlay {
+            padding: 0 !important;
             align-items: flex-end !important;
           }
           .coach-feedback-modal {
             width: 100% !important;
-            height: min(100dvh, 760px) !important;
+            height: 100dvh !important;
+            max-height: 100dvh !important;
             border-radius: 18px 18px 0 0 !important;
             border-left: none !important;
             border-right: none !important;
