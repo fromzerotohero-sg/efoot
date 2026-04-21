@@ -150,7 +150,26 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Invalid or expired authentication' }, { status: 401 })
     }
 
-    const userId = userData.user.id
+    let userId = userData.user.id
+    const admin = createClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    })
+
+    // Metalgate ID lookup
+    if (userData.user.user_metadata?.is_metalgate_user) {
+      const { data: existingProfile } = await admin
+        .from('user_profiles')
+        .select('user_id')
+        .eq('metalgate_user_id', userId)
+        .single()
+
+      if (existingProfile?.user_id) {
+        userId = existingProfile.user_id
+      } else {
+        return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
+      }
+    }
+
     const { user_id: requestedUserId } = await req.json().catch(() => ({}))
 
     // Verifica che l'utente possa calcolare solo i propri pattern
@@ -167,6 +186,15 @@ export async function POST(req) {
         message: 'No matches found or error calculating patterns' 
       }, { status: 404 })
     }
+
+    // I pattern contribuiscono alla barra: aggiorna score dopo ricalcolo pattern
+    import('@/lib/aiKnowledgeHelper').then(({ updateAIKnowledgeScore }) => {
+      updateAIKnowledgeScore(userId, supabaseUrl, serviceKey).catch(err => {
+        console.error('[recalculate-patterns] Failed to update AI knowledge score (non-blocking):', err)
+      })
+    }).catch(err => {
+      console.error('[recalculate-patterns] Failed to import aiKnowledgeHelper (non-blocking):', err)
+    })
 
     return NextResponse.json({
       success: true,

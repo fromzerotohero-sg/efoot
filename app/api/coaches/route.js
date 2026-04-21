@@ -93,11 +93,26 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    const userId = userData.user.id
+    let userId = userData.user.id
 
     const supabase = createClient(supabaseUrl, serviceKey, {
       auth: { autoRefreshToken: false, persistSession: false }
     })
+
+    // Allinea la risoluzione userId con GET per utenti MetalGate
+    if (userData.user.user_metadata?.is_metalgate_user) {
+      const { data: existingProfile } = await supabase
+        .from('user_profiles')
+        .select('user_id')
+        .eq('metalgate_user_id', userId)
+        .single()
+
+      if (existingProfile?.user_id) {
+        userId = existingProfile.user_id
+      } else {
+        return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
+      }
+    }
 
     const { error: deleteError } = await supabase
       .from('coaches')
