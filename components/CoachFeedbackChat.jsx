@@ -671,13 +671,15 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
             WebkitOverflowScrolling: 'touch',
             overscrollBehavior: 'contain',
             touchAction: 'pan-y',
-            padding: isMobile ? '12px' : '20px',
-            paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))'
+            padding: isMobile ? '8px' : '20px',
+            paddingBottom: isMobile
+              ? 'calc(10px + env(safe-area-inset-bottom, 0px))'
+              : 'calc(20px + env(safe-area-inset-bottom, 0px))'
           }}
         >
           
           {/* Sezione Profilo Migliorata */}
-          <div style={{ ...styles.sectionCard, marginBottom: '20px' }}>
+          <div style={{ ...styles.sectionCard, marginBottom: isMobile ? '10px' : '20px' }}>
             <button
               type="button"
               onClick={() => setFormExpanded(e => !e)}
@@ -885,7 +887,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
           {/* Sezione Chat Migliorata */}
           <div style={{ ...styles.sectionCard, flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div style={{
-              padding: '16px 20px',
+              padding: isMobile ? '12px 14px' : '16px 20px',
               borderBottom: '1px solid rgba(255,255,255,0.08)',
               display: 'flex',
               alignItems: 'center',
@@ -902,9 +904,9 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
 
             <div style={{ 
               flex: 1, 
-              padding: '16px', 
-              minHeight: '180px',
-              maxHeight: '280px',
+              padding: isMobile ? '12px' : '16px', 
+              minHeight: isMobile ? '46vh' : '180px',
+              maxHeight: isMobile ? 'none' : '280px',
               overflowY: 'auto',
               WebkitOverflowScrolling: 'touch',
               overscrollBehavior: 'contain'
@@ -969,7 +971,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
             {/* Suggerimenti rapidi */}
             {messages.filter(m => m.role === 'user').length < 2 && !loading && (
               <div style={{ 
-                padding: '0 16px 12px', 
+                padding: isMobile ? '0 12px 8px' : '0 16px 12px', 
                 display: 'flex', 
                 flexWrap: 'wrap', 
                 gap: '8px' 
@@ -1003,7 +1005,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
 
             {/* Input */}
             <div style={{ 
-              padding: '16px', 
+              padding: isMobile ? '10px 12px' : '16px', 
               borderTop: '1px solid rgba(255,255,255,0.08)',
               display: 'flex',
               gap: '10px',
