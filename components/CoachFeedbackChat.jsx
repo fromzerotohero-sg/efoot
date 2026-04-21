@@ -9,7 +9,6 @@ import {
   Send, 
   Save, 
   ChevronDown, 
-  ChevronUp, 
   CheckCircle2,
   MessageCircle,
   User,
@@ -519,27 +518,32 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         inset: 0,
         zIndex: 30000,
         display: 'flex',
-        alignItems: 'center',
+        alignItems: isMobile ? 'flex-end' : 'center',
         justifyContent: 'center',
-        background: 'rgba(0,0,0,0.85)',
-        backdropFilter: 'blur(8px)',
-        padding: isMobile ? '0' : 'clamp(10px, 2vw, 24px)'
+        background: isMobile ? 'rgba(0,0,0,0.48)' : 'rgba(0,0,0,0.75)',
+        backdropFilter: isMobile ? 'blur(2px)' : 'blur(8px)',
+        padding: isMobile ? '8px' : 'clamp(10px, 2vw, 24px)'
       }}
     >
       <div
         className="coach-feedback-modal"
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: isMobile ? '100%' : 'min(680px, calc(100vw - clamp(24px, 5vw, 64px)))',
-          height: isMobile ? 'calc(var(--coach-vh, 1vh) * 100)' : 'min(860px, calc(100dvh - clamp(24px, 5vw, 64px)))',
-          maxHeight: isMobile ? 'calc(var(--coach-vh, 1vh) * 100)' : 'calc(100dvh - clamp(24px, 5vw, 64px))',
+          width: isMobile ? 'calc(100vw - 16px)' : 'min(680px, calc(100vw - clamp(24px, 5vw, 64px)))',
+          height: isMobile
+            ? 'auto'
+            : 'min(860px, calc(100dvh - clamp(24px, 5vw, 64px)))',
+          maxHeight: isMobile
+            ? 'calc((var(--coach-vh, 1vh) * 100) - var(--bottom-nav-height, 64px) - env(safe-area-inset-bottom, 0px) - 16px)'
+            : 'calc(100dvh - clamp(24px, 5vw, 64px))',
           background: 'linear-gradient(180deg, rgba(5,8,20,0.98) 0%, rgba(3,5,12,0.98) 100%)',
           border: '1px solid rgba(0, 212, 255, 0.3)',
-          borderRadius: isMobile ? 0 : '24px',
+          borderRadius: isMobile ? '18px' : '24px',
           boxShadow: '0 0 60px rgba(0, 212, 255, 0.15), 0 25px 50px rgba(0,0,0,0.5)',
           display: 'flex',
           flexDirection: 'column',
           minHeight: 0,
+          marginBottom: isMobile ? 'calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px))' : 0,
           overflow: 'hidden'
         }}
       >
@@ -691,6 +695,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
               style={{
                 width: '100%',
                 padding: isMobile ? '12px 14px' : '16px 20px',
+                minHeight: isMobile ? '44px' : undefined,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -890,7 +895,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
           </div>
 
           {/* Sezione Chat Migliorata */}
-          <div style={{ ...styles.sectionCard, flex: 1, minHeight: isMobile ? '360px' : '420px', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ ...styles.sectionCard, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
             <div style={{
               padding: isMobile ? '10px 12px' : '16px 20px',
               borderBottom: '1px solid rgba(255,255,255,0.08)',
@@ -910,8 +915,8 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
             <div style={{ 
               flex: 1, 
               padding: isMobile ? '12px' : '16px', 
-              minHeight: isMobile ? '220px' : '260px',
-              maxHeight: isMobile ? '45dvh' : '52dvh',
+              minHeight: 0,
+              maxHeight: 'none',
               overflowY: 'auto',
               WebkitOverflowScrolling: 'touch',
               overscrollBehavior: 'contain'
@@ -981,6 +986,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                 display: 'flex', 
                 flexWrap: isMobile ? 'nowrap' : 'wrap',
                 overflowX: isMobile ? 'auto' : 'visible',
+                scrollSnapType: isMobile ? 'x mandatory' : undefined,
                 scrollbarWidth: 'thin',
                 gap: '8px' 
               }}>
@@ -996,7 +1002,9 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                       color: 'var(--neon-cyan)',
                       fontSize: '12px',
                       cursor: 'pointer',
+                      minHeight: isMobile ? '44px' : undefined,
                       flexShrink: 0,
+                      scrollSnapAlign: isMobile ? 'start' : undefined,
                       transition: 'all 0.2s'
                     }}
                     onMouseEnter={(e) => {
@@ -1076,19 +1084,10 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         }
         @media (max-width: 640px) {
           .coach-feedback-overlay {
-            padding: 0 !important;
+            padding: 8px !important;
             align-items: flex-end !important;
           }
           .coach-feedback-modal {
-            position: fixed !important;
-            inset: 0 !important;
-            width: 100% !important;
-            height: calc(var(--coach-vh, 1vh) * 100) !important;
-            max-height: calc(var(--coach-vh, 1vh) * 100) !important;
-            border-radius: 0 !important;
-            border-left: none !important;
-            border-right: none !important;
-            border-bottom: none !important;
             overscroll-behavior: contain !important;
           }
           .coach-feedback-scroll {
