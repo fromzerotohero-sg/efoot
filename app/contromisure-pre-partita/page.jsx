@@ -587,6 +587,20 @@ export default function CountermeasuresPreMatchPage() {
           <p style={{ fontSize: 'clamp(13px, 2.5vw, 14px)', color: 'rgba(255,255,255,0.7)', marginBottom: '20px', marginTop: 0 }}>
             {t('countermeasuresPreMatchContext')}
           </p>
+          <div
+            style={{
+              marginBottom: '20px',
+              padding: '12px 14px',
+              borderRadius: '10px',
+              border: '1px solid rgba(251, 191, 36, 0.35)',
+              background: 'rgba(251, 191, 36, 0.10)',
+              color: 'rgba(255,255,255,0.92)',
+              fontSize: 'clamp(12px, 2.4vw, 13px)',
+              lineHeight: 1.6
+            }}
+          >
+            Valuta sempre la forma attuale dei giocatori (frecce). Se hai dubbi, usa Contromisure Live.
+          </div>
           {/* Analisi Formazione Avversaria */}
           <div data-tour-id="tour-counter-result" className="neon-card" style={{ padding: 'clamp(16px, 4vw, 24px)', marginBottom: '24px' }}>
             <div 
