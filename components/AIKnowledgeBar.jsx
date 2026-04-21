@@ -69,7 +69,7 @@ export default function AIKnowledgeBar() {
     if (typeof window === 'undefined') return
 
     const ac = new AbortController()
-    fetchAIKnowledge(ac.signal)
+    fetchAIKnowledge(ac.signal, true)
 
     const doRefresh = (useRefreshParam = false) => {
       previousScoreRef.current = scoreRef.current
@@ -147,7 +147,7 @@ export default function AIKnowledgeBar() {
     }
   }, [])
 
-  const fetchAIKnowledge = async (signal) => {
+  const fetchAIKnowledge = async (signal, forceRefresh = false) => {
     try {
       setError(null)
 
@@ -170,7 +170,7 @@ export default function AIKnowledgeBar() {
       
       if (signal?.aborted) return
       
-      const res = await fetch('/api/ai-knowledge', {
+      const res = await fetch(forceRefresh ? '/api/ai-knowledge?refresh=1' : '/api/ai-knowledge', {
         method: 'GET',
         ...(signal && { signal }),
         headers: {
