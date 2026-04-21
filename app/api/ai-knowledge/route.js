@@ -107,8 +107,9 @@ export async function GET(req) {
     }
 
     // Forza ricalcolo se ?refresh=1 (es. dopo salvataggio profilo/rosa da UI)
-    const url = new URL(req.url || '', 'http://localhost')
-    const forceRefresh = url.searchParams.get('refresh') === '1' || url.searchParams.get('refresh') === 'true'
+    // Usa nextUrl quando disponibile (NextRequest) per evitare parsing ambiguo.
+    const searchParams = req?.nextUrl?.searchParams || new URL(req.url || '', 'http://localhost').searchParams
+    const forceRefresh = searchParams.get('refresh') === '1' || searchParams.get('refresh') === 'true'
 
     // Se score esiste e è stato calcolato di recente (< 5 minuti) e non è richiesto refresh, restituisci cached
     const now = new Date()
@@ -131,6 +132,7 @@ export async function GET(req) {
       }, {
         headers: {
           'Cache-Control': 'private, max-age=300', // 5 minuti
+          'X-Resolved-User-Id': userId,
           'X-RateLimit-Limit': rateLimitConfig.maxRequests.toString(),
           'X-RateLimit-Remaining': rateLimit.remaining.toString(),
           'X-RateLimit-Reset': rateLimit.resetAt.toString()
@@ -169,6 +171,7 @@ export async function GET(req) {
       }, {
         headers: {
           'Cache-Control': 'private, max-age=300', // 5 minuti
+          'X-Resolved-User-Id': userId,
           'X-RateLimit-Limit': rateLimitConfig.maxRequests.toString(),
           'X-RateLimit-Remaining': rateLimit.remaining.toString(),
           'X-RateLimit-Reset': rateLimit.resetAt.toString()
@@ -189,6 +192,7 @@ export async function GET(req) {
         }, {
           headers: {
             'Cache-Control': 'private, max-age=60', // 1 minuto (fallback)
+            'X-Resolved-User-Id': userId,
             'X-RateLimit-Limit': rateLimitConfig.maxRequests.toString(),
             'X-RateLimit-Remaining': rateLimit.remaining.toString(),
             'X-RateLimit-Reset': rateLimit.resetAt.toString()
@@ -215,6 +219,7 @@ export async function GET(req) {
         status: 200, // 200 OK anche se errore (fallback graceful)
         headers: {
           'Cache-Control': 'private, max-age=60',
+          'X-Resolved-User-Id': userId,
           'X-RateLimit-Limit': rateLimitConfig.maxRequests.toString(),
           'X-RateLimit-Remaining': rateLimit.remaining.toString(),
           'X-RateLimit-Reset': rateLimit.resetAt.toString()

@@ -45,6 +45,64 @@ export default function AIKnowledgeBar() {
   const retryTimeoutRef = React.useRef(null)
   scoreRef.current = score
 
+  const requestAIKnowledge = async (signal, forceRefresh = false) => {
+    if (!supabase) {
+      throw new Error('Supabase not configured')
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession()
+    const sessionToken = sessionData?.session?.access_token || null
+    const sessionUserId = sessionData?.session?.user?.id || null
+    const localToken = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+
+    const candidates = []
+    if (sessionToken) candidates.push({ source: 'supabase_session', token: sessionToken })
+    if (localToken && localToken !== sessionToken) candidates.push({ source: 'local_storage', token: localToken })
+
+    if (candidates.length === 0) {
+      return { unauthenticated: true }
+    }
+
+    const url = forceRefresh ? '/api/ai-knowledge?refresh=1' : '/api/ai-knowledge'
+    let hadUnauthorized = false
+    let lastError = null
+
+    for (const candidate of candidates) {
+      const res = await fetch(url, {
+        method: 'GET',
+        ...(signal && { signal }),
+        headers: {
+          'Authorization': `Bearer ${candidate.token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (res.status === 401) {
+        hadUnauthorized = true
+        continue
+      }
+
+      if (!res.ok) {
+        lastError = new Error(`AI knowledge request failed (${res.status})`)
+        continue
+      }
+
+      const resolvedUserId = res.headers.get('x-resolved-user-id')
+      // Se usiamo la sessione Supabase corrente e l'API risolve un user differente,
+      // scartiamo la risposta per evitare mostrare score di un account sbagliato.
+      if (candidate.source === 'supabase_session' && sessionUserId && resolvedUserId && resolvedUserId !== sessionUserId) {
+        continue
+      }
+
+      const data = await safeJsonResponse(res, 'Failed to fetch AI knowledge')
+      return { data }
+    }
+
+    if (hadUnauthorized) return { unauthorized: true }
+    if (lastError) throw lastError
+    return { unauthorized: true }
+  }
+
   // Animate score on load
   useEffect(() => {
     if (!loading && score > 0) {
@@ -81,30 +139,10 @@ export default function AIKnowledgeBar() {
         if (ac.signal.aborted) return
         attempt++
         try {
-          let token = null
-          if (supabase) {
-            const { data: session } = await supabase.auth.getSession()
-            token = session?.session?.access_token || null
-          }
-          // Fallback legacy: alcuni flussi salvano ancora auth_token
-          if (!token) token = localStorage.getItem('auth_token')
-          
-          if (!token) return
+          const result = await requestAIKnowledge(ac.signal, useRefreshParam)
           if (ac.signal.aborted) return
-          const url = useRefreshParam ? '/api/ai-knowledge?refresh=1' : '/api/ai-knowledge'
-          const res = await fetch(url, {
-            method: 'GET',
-            signal: ac.signal,
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          })
-          if (ac.signal.aborted) return
-          
-          if (!res.ok) throw new Error('Fetch failed')
-          
-          const data = await res.json()
+          if (!result?.data) return
+          const data = result.data
           const newScore = data.score || 0
           
           if (ac.signal.aborted) return
@@ -132,13 +170,13 @@ export default function AIKnowledgeBar() {
       retryTimeoutRef.current = setTimeout(attemptRefresh, retryDelays[0])
     }
 
-    const onMatchSaved = () => doRefresh(false)
+    const onMatchSaved = () => doRefresh(true)
     const onKnowledgeRefresh = () => doRefresh(true)
 
     window.addEventListener('match-saved', onMatchSaved)
     window.addEventListener('knowledge-should-refresh', onKnowledgeRefresh)
 
-    const interval = setInterval(() => { fetchAIKnowledge(ac.signal) }, 1 * 60 * 1000)
+    const interval = setInterval(() => { fetchAIKnowledge(ac.signal, true) }, 1 * 60 * 1000)
 
     return () => {
       ac.abort()
@@ -153,44 +191,22 @@ export default function AIKnowledgeBar() {
     try {
       setError(null)
 
-      if (!supabase) {
-        setError('Supabase not configured')
-        return
-      }
-      const { data: session } = await supabase.auth.getSession()
-      // Priorita alla sessione corrente Supabase per evitare token stale in localStorage
-      let token = session?.session?.access_token || null
-      if (!token) token = localStorage.getItem('auth_token')
+      const result = await requestAIKnowledge(signal, forceRefresh)
+      if (signal?.aborted) return
 
-      if (!token) {
+      if (result?.unauthenticated) {
         setLoading(false)
         router.push('/login')
         return
       }
-      
-      if (signal?.aborted) return
-      
-      const res = await fetch(forceRefresh ? '/api/ai-knowledge?refresh=1' : '/api/ai-knowledge', {
-        method: 'GET',
-        ...(signal && { signal }),
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-      if (signal?.aborted) return
-      if (res.status === 401) {
-        if (!session?.session?.access_token && !localStorage.getItem('auth_token')) {
-          setLoading(false)
-          router.push('/login')
-        } else {
-          setError(t('sessionExpired') || 'Session check failed')
-          setLoading(false)
-        }
+
+      if (result?.unauthorized || !result?.data) {
+        setLoading(false)
+        router.push('/login')
         return
       }
-      const data = await safeJsonResponse(res, 'Failed to fetch AI knowledge')
-      if (signal?.aborted) return
+
+      const data = result.data
       setScore(data.score || 0)
       setLevel(data.level || 'beginner')
       setBreakdown(data.breakdown || {})
