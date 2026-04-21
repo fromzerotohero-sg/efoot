@@ -458,6 +458,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
 
   return (
     <div
+      className="coach-feedback-overlay"
       style={{
         position: 'fixed',
         inset: 0,
@@ -470,9 +471,10 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
       }}
     >
       <div
+        className="coach-feedback-modal"
         style={{
-          width: 'clamp(380px, 95vw, 520px)',
-          height: 'clamp(580px, 90vh, 720px)',
+          width: 'min(520px, calc(100vw - 20px))',
+          height: 'min(720px, calc(100dvh - 20px))',
           background: 'linear-gradient(180deg, rgba(5,8,20,0.98) 0%, rgba(3,5,12,0.98) 100%)',
           border: '1px solid rgba(0, 212, 255, 0.3)',
           borderRadius: '24px',
@@ -616,7 +618,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
               <div style={{ padding: '0 20px 20px' }}>
                 <div style={{ 
                   display: 'grid', 
-                  gridTemplateColumns: 'repeat(2, 1fr)', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
                   gap: '16px',
                   marginBottom: '16px'
                 }}>
@@ -948,6 +950,19 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         @keyframes bounce {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-4px); }
+        }
+        @media (max-width: 640px) {
+          .coach-feedback-overlay {
+            align-items: flex-end !important;
+          }
+          .coach-feedback-modal {
+            width: 100% !important;
+            height: min(100dvh, 760px) !important;
+            border-radius: 18px 18px 0 0 !important;
+            border-left: none !important;
+            border-right: none !important;
+            border-bottom: none !important;
+          }
         }
         .coach-form-select option {
           background: #0a0e1a;
