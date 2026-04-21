@@ -4192,6 +4192,44 @@ function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUplo
               </div>
             )}
 
+            {/* Swap diretto: consenti sostituzione con riserva anche a panchina piena */}
+            {slot && riserve.length > 0 && (
+              <div style={{
+                background: 'rgba(0, 212, 255, 0.08)',
+                border: '1px solid rgba(0, 212, 255, 0.2)',
+                borderRadius: '10px',
+                padding: '14px'
+              }}>
+                <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '10px' }}>
+                  {t('orSelectFromReserves')}:
+                </div>
+                <div style={{ maxHeight: '180px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {riserve.map((player) => (
+                    <button
+                      key={player.id}
+                      onClick={() => onAssignFromReserve(player.id)}
+                      disabled={assigning}
+                      className="neon-button"
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '10px 12px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        opacity: assigning ? 0.6 : 1
+                      }}
+                    >
+                      <span>{player.player_name}</span>
+                      {player.overall_rating && (
+                        <span style={{ fontSize: '12px', opacity: 0.8 }}>{player.overall_rating}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Azioni */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px', paddingTop: '16px', borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
               <button
