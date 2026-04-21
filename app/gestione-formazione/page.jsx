@@ -2181,7 +2181,9 @@ export default function GestioneFormazionePage() {
       setShowPositionSelectionModal(true)
     } catch (err) {
       console.error('[GestioneFormazione] Upload reserve error:', err)
-      setError(err.message || t('errorLoadingReserve'))
+      const { message } = mapErrorToUserMessage(err, t('errorLoadingReserve'), lang)
+      setError(message)
+      showToast(message, 'error')
     } finally {
       setUploadingReserve(false)
     }
