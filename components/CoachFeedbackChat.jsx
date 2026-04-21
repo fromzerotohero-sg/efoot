@@ -515,7 +515,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 2000,
+        zIndex: 30000,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -537,6 +537,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
           boxShadow: '0 0 60px rgba(0, 212, 255, 0.15), 0 25px 50px rgba(0,0,0,0.5)',
           display: 'flex',
           flexDirection: 'column',
+          minHeight: 0,
           overflow: 'hidden'
         }}
       >
@@ -646,7 +647,19 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         )}
 
         {/* Content Scrollable */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px', paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))' }}>
+        <div
+          className="coach-feedback-scroll"
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
+            touchAction: 'pan-y',
+            padding: '20px',
+            paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))'
+          }}
+        >
           
           {/* Sezione Profilo Migliorata */}
           <div style={{ ...styles.sectionCard, marginBottom: '20px' }}>
@@ -877,7 +890,9 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
               padding: '16px', 
               minHeight: '180px',
               maxHeight: '280px',
-              overflowY: 'auto'
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
+              overscrollBehavior: 'contain'
             }}>
               {messages.map((msg, idx) => (
                 <div
@@ -1043,10 +1058,15 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
             border-left: none !important;
             border-right: none !important;
             border-bottom: none !important;
+            overscroll-behavior: contain !important;
           }
           .coach-feedback-modal > div:first-child {
             padding: 14px 12px !important;
             gap: 8px !important;
+          }
+          .coach-feedback-scroll {
+            -webkit-overflow-scrolling: touch !important;
+            touch-action: pan-y !important;
           }
         }
         @media (max-width: 420px) {
