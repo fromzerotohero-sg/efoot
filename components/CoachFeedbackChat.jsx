@@ -157,7 +157,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
       userProfile?.platform, userProfile?.connection_quality, userProfile?.pass_level,
       userProfile?.smart_assist, userProfile?.input_delay, userProfile?.ai_weak_point
     ].filter(v => v != null && String(v).trim() !== '').length
-    setFormExpanded(isMobile ? false : profileFields < 3)
+    setFormExpanded(profileFields < 3)
     setFormData({
       connection_quality: userProfile?.connection_quality || '',
       slow_opponent_connection_issues: userProfile?.slow_opponent_connection_issues || '',
@@ -171,7 +171,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
       ai_learn_goals: userProfile?.ai_learn_goals || '',
       ai_notes: userProfile?.ai_notes || ''
     })
-  }, [show, userProfile, isMobile])
+  }, [show, userProfile])
 
   // LOGICA INVARIATA: Whitelist validazione
   const WHITELISTS = {
@@ -984,9 +984,8 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
               <div style={{ 
                 padding: isMobile ? '0 12px 8px' : '0 16px 12px', 
                 display: 'flex', 
-                flexWrap: isMobile ? 'nowrap' : 'wrap',
-                overflowX: isMobile ? 'auto' : 'visible',
-                scrollSnapType: isMobile ? 'x mandatory' : undefined,
+                flexWrap: 'wrap',
+                overflowX: 'visible',
                 scrollbarWidth: 'thin',
                 gap: '8px' 
               }}>
@@ -1004,7 +1003,6 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                       cursor: 'pointer',
                       minHeight: isMobile ? '44px' : undefined,
                       flexShrink: 0,
-                      scrollSnapAlign: isMobile ? 'start' : undefined,
                       transition: 'all 0.2s'
                     }}
                     onMouseEnter={(e) => {
