@@ -81,11 +81,13 @@ export default function AIKnowledgeBar() {
         if (ac.signal.aborted) return
         attempt++
         try {
-          let token = localStorage.getItem('auth_token')
-          if (!token && supabase) {
+          let token = null
+          if (supabase) {
             const { data: session } = await supabase.auth.getSession()
-            token = session?.session?.access_token
+            token = session?.session?.access_token || null
           }
+          // Fallback legacy: alcuni flussi salvano ancora auth_token
+          if (!token) token = localStorage.getItem('auth_token')
           
           if (!token) return
           if (ac.signal.aborted) return
@@ -151,16 +153,14 @@ export default function AIKnowledgeBar() {
     try {
       setError(null)
 
-      let token = localStorage.getItem('auth_token')
-      
-      if (!token) {
-        if (!supabase) {
-          setError('Supabase not configured')
-          return
-        }
-        const { data: session } = await supabase.auth.getSession()
-        token = session?.session?.access_token
+      if (!supabase) {
+        setError('Supabase not configured')
+        return
       }
+      const { data: session } = await supabase.auth.getSession()
+      // Priorita alla sessione corrente Supabase per evitare token stale in localStorage
+      let token = session?.session?.access_token || null
+      if (!token) token = localStorage.getItem('auth_token')
 
       if (!token) {
         setLoading(false)
@@ -180,7 +180,7 @@ export default function AIKnowledgeBar() {
       })
       if (signal?.aborted) return
       if (res.status === 401) {
-        if (!localStorage.getItem('auth_token')) {
+        if (!session?.session?.access_token && !localStorage.getItem('auth_token')) {
           setLoading(false)
           router.push('/login')
         } else {
