@@ -69,7 +69,7 @@ export default function AIKnowledgeBar() {
     if (typeof window === 'undefined') return
 
     const ac = new AbortController()
-    fetchAIKnowledge(ac.signal)
+    fetchAIKnowledge(ac.signal, true)
 
     const doRefresh = (useRefreshParam = false) => {
       previousScoreRef.current = scoreRef.current
@@ -81,11 +81,9 @@ export default function AIKnowledgeBar() {
         if (ac.signal.aborted) return
         attempt++
         try {
-          let token = localStorage.getItem('auth_token')
-          if (!token && supabase) {
-            const { data: session } = await supabase.auth.getSession()
-            token = session?.session?.access_token
-          }
+          if (!supabase) return
+          const { data: session } = await supabase.auth.getSession()
+          const token = session?.session?.access_token
           
           if (!token) return
           if (ac.signal.aborted) return
@@ -147,20 +145,16 @@ export default function AIKnowledgeBar() {
     }
   }, [])
 
-  const fetchAIKnowledge = async (signal) => {
+  const fetchAIKnowledge = async (signal, forceRefresh = false) => {
     try {
       setError(null)
-      
-      let token = localStorage.getItem('auth_token')
-      
-      if (!token) {
-        if (!supabase) {
-          setError('Supabase not configured')
-          return
-        }
-        const { data: session } = await supabase.auth.getSession()
-        token = session?.session?.access_token
+
+      if (!supabase) {
+        setError('Supabase not configured')
+        return
       }
+      const { data: session } = await supabase.auth.getSession()
+      const token = session?.session?.access_token
 
       if (!token) {
         setLoading(false)
@@ -170,7 +164,7 @@ export default function AIKnowledgeBar() {
       
       if (signal?.aborted) return
       
-      const res = await fetch('/api/ai-knowledge', {
+      const res = await fetch(forceRefresh ? '/api/ai-knowledge?refresh=1' : '/api/ai-knowledge', {
         method: 'GET',
         ...(signal && { signal }),
         headers: {
@@ -180,13 +174,8 @@ export default function AIKnowledgeBar() {
       })
       if (signal?.aborted) return
       if (res.status === 401) {
-        if (!localStorage.getItem('auth_token')) {
-          setLoading(false)
-          router.push('/login')
-        } else {
-          setError(t('sessionExpired') || 'Session check failed')
-          setLoading(false)
-        }
+        setLoading(false)
+        router.push('/login')
         return
       }
       const data = await safeJsonResponse(res, 'Failed to fetch AI knowledge')
