@@ -30,7 +30,6 @@ import {
   ChevronUp,
   Trash2,
   Shield,
-  FileImage,
   BookOpen,
   Zap,
   User,
@@ -744,75 +743,6 @@ function HomePage() {
                 {t('navigation')}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Nuova Partita */}
-                <button
-                  data-tour-id="tour-dashboard-add-match"
-                  onClick={() => router.push('/match/new')}
-                  className="neon-button"
-                  style={{ 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '12px',
-                    padding: '20px',
-                    background: 'rgba(13, 25, 48, 0.9)',
-                    borderColor: 'rgba(0, 212, 255, 0.15)',
-                    color: '#FFFFFF',
-                    height: '100%',
-                    borderRadius: '12px'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(221, 166, 47, 0.1)'
-                    e.currentTarget.style.borderColor = 'var(--border-gold)'
-                    e.currentTarget.style.color = 'var(--primary-gold)'
-                    e.currentTarget.style.transform = 'translateY(-2px)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'var(--bg-elevated)'
-                    e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.15)'
-                    e.currentTarget.style.color = '#FFFFFF'
-                    e.currentTarget.style.transform = 'translateY(0)'
-                  }}
-                >
-                  <FileImage size={24} style={{ color: '#fbbf24', filter: 'drop-shadow(0 0 6px rgba(251, 191, 36, 0.6))' }} />
-                  <span style={{ fontWeight: 500 }}>{t('addMatch')}</span>
-                </button>
-
-                {/* Gestione Rosa */}
-                <button
-                  onClick={() => router.push('/gestione-formazione')}
-                  className="neon-button"
-                  style={{ 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '12px',
-                    padding: '20px',
-                    background: 'rgba(13, 25, 48, 0.9)',
-                    borderColor: 'rgba(0, 212, 255, 0.15)',
-                    color: '#FFFFFF',
-                    height: '100%',
-                    borderRadius: '12px'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(0, 161, 166, 0.1)'
-                    e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.5)'
-                    e.currentTarget.style.color = 'var(--neon-cyan)'
-                    e.currentTarget.style.transform = 'translateY(-2px)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'var(--bg-elevated)'
-                    e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.15)'
-                    e.currentTarget.style.color = '#FFFFFF'
-                    e.currentTarget.style.transform = 'translateY(0)'
-                  }}
-                >
-                  <Users size={24} style={{ color: '#22c55e', filter: 'drop-shadow(0 0 6px rgba(34, 197, 94, 0.6))' }} />
-                  <span style={{ fontWeight: 500 }}>{t('manageFormation')}</span>
-                </button>
-
                 {/* Analisi Partita Rapida */}
                 <button
                   data-tour-id="tour-dashboard-game-analysis"
