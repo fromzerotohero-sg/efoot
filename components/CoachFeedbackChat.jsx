@@ -83,6 +83,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
   const sendAbortRef = useRef(null)
   const introTimeoutRef = useRef(null)
   const focusTimeoutRef = useRef(null)
+  const [viewportWidth, setViewportWidth] = useState(1024)
 
   // LOGICA INVARIATA: Carica profilo
   useEffect(() => {
@@ -324,6 +325,25 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
   }, [show])
 
   useEffect(() => {
+    if (!show || typeof window === 'undefined' || typeof document === 'undefined') return undefined
+
+    const updateViewportVars = () => {
+      const vh = window.innerHeight * 0.01
+      document.documentElement.style.setProperty('--coach-vh', `${vh}px`)
+      setViewportWidth(window.innerWidth || 1024)
+    }
+
+    updateViewportVars()
+    window.addEventListener('resize', updateViewportVars)
+    window.addEventListener('orientationchange', updateViewportVars)
+
+    return () => {
+      window.removeEventListener('resize', updateViewportVars)
+      window.removeEventListener('orientationchange', updateViewportVars)
+    }
+  }, [show])
+
+  useEffect(() => {
     if (!show || typeof window === 'undefined') return undefined
     const onKeyDown = (event) => {
       if (event.key === 'Escape' && !saving && !formSaving) {
@@ -484,6 +504,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
   }, [saving, formSaving, getAccessToken, handleFormSave, messages, sessionMode, lastMatch, onClose, lang])
 
   if (!show) return null
+  const isNarrowMobile = viewportWidth <= 420
 
   return (
     <div
@@ -564,11 +585,11 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
               borderRadius: '10px',
               cursor: saving ? 'wait' : 'pointer',
               color: 'white',
-              padding: '10px 16px',
+              padding: isNarrowMobile ? '10px 12px' : '10px 16px',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              fontSize: '13px',
+              fontSize: isNarrowMobile ? '12px' : '13px',
               fontWeight: 600,
               transition: 'all 0.2s'
             }}
@@ -576,11 +597,11 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
             onMouseLeave={(e) => { if (!saving) e.currentTarget.style.background = 'rgba(0,212,255,0.2)' }}
           >
             {saved ? (
-              <><CheckCircle2 size={16} /> {lang === 'en' ? 'Saved!' : 'Salvato!'}</>
+              <><CheckCircle2 size={16} /> {isNarrowMobile ? (lang === 'en' ? 'Saved' : 'Salvato') : (lang === 'en' ? 'Saved!' : 'Salvato!')}</>
             ) : saving ? (
-              <>{lang === 'en' ? 'Saving...' : 'Salvo...'}</>
+              <>{isNarrowMobile ? (lang === 'en' ? 'Saving' : 'Salvo') : (lang === 'en' ? 'Saving...' : 'Salvo...')}</>
             ) : (
-              <><Save size={16} /> {lang === 'en' ? 'Save All' : 'Salva tutto'}</>
+              <><Save size={16} /> {isNarrowMobile ? (lang === 'en' ? 'Save' : 'Salva') : (lang === 'en' ? 'Save All' : 'Salva tutto')}</>
             )}
           </button>
           <button
@@ -846,7 +867,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
               <span style={{ fontWeight: 600, color: 'white', fontSize: '14px' }}>
                 {lang === 'en' ? 'Chat with Coach' : 'Chat con Coach'}
               </span>
-              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginLeft: 'auto' }}>
+              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginLeft: 'auto', display: isNarrowMobile ? 'none' : 'inline' }}>
                 {lang === 'en' ? 'Be specific → better tips' : 'Sii preciso → consigli utili'}
               </span>
             </div>
@@ -1016,12 +1037,26 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
           }
           .coach-feedback-modal {
             width: 100% !important;
-            height: 100dvh !important;
-            max-height: 100dvh !important;
+            height: calc(var(--coach-vh, 1vh) * 100) !important;
+            max-height: calc(var(--coach-vh, 1vh) * 100) !important;
             border-radius: 18px 18px 0 0 !important;
             border-left: none !important;
             border-right: none !important;
             border-bottom: none !important;
+          }
+          .coach-feedback-modal > div:first-child {
+            padding: 14px 12px !important;
+            gap: 8px !important;
+          }
+        }
+        @media (max-width: 420px) {
+          .coach-feedback-modal {
+            border-radius: 14px 14px 0 0 !important;
+          }
+          .coach-feedback-modal :global(input),
+          .coach-feedback-modal :global(select),
+          .coach-feedback-modal :global(button) {
+            min-height: 44px;
           }
         }
         .coach-form-select option {
