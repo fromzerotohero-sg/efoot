@@ -36,7 +36,8 @@ import {
   User,
   Brain,
   Calendar,
-  Radio
+  Radio,
+  Dumbbell
 } from 'lucide-react'
 
 /** Legge query URL: openCoach=1 → Palestra Coach; openAssistantChat=1 → chat principale (Assistant) con messaggio grafici; openGameAnalysis=1 → GameAnalysisModal. */
@@ -879,6 +880,40 @@ function HomePage() {
                 >
                   <UserCheck size={24} style={{ color: '#f97316', filter: 'drop-shadow(0 0 6px rgba(249, 115, 22, 0.6))' }} />
                   <span style={{ fontWeight: 500 }}>{t('coachesLink')}</span>
+                </button>
+
+                {/* Palestra Coach */}
+                <button
+                  onClick={() => setShowCoachFeedback(true)}
+                  className="neon-button"
+                  style={{ 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '12px',
+                    padding: '20px',
+                    background: 'rgba(13, 25, 48, 0.9)',
+                    borderColor: 'rgba(0, 212, 255, 0.15)',
+                    color: '#FFFFFF',
+                    height: '100%',
+                    borderRadius: '12px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(0, 161, 166, 0.1)'
+                    e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.5)'
+                    e.currentTarget.style.color = 'var(--neon-cyan)'
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'var(--bg-elevated)'
+                    e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.15)'
+                    e.currentTarget.style.color = '#FFFFFF'
+                    e.currentTarget.style.transform = 'translateY(0)'
+                  }}
+                >
+                  <Dumbbell size={24} style={{ color: '#00d4ff', filter: 'drop-shadow(0 0 6px rgba(0, 212, 255, 0.6))' }} />
+                  <span style={{ fontWeight: 500 }}>{t('palestraCoachTitle')}</span>
                 </button>
               </div>
             </div>
