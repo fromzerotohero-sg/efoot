@@ -504,6 +504,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
   }, [saving, formSaving, getAccessToken, handleFormSave, messages, sessionMode, lastMatch, onClose, lang])
 
   if (!show) return null
+  const isMobile = viewportWidth <= 640
   const isNarrowMobile = viewportWidth <= 420
 
   return (
@@ -544,90 +545,104 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         {/* Header Migliorato */}
         <div
           style={{
-            padding: '20px 24px',
+            padding: isMobile ? '12px 14px' : '20px 24px',
             background: 'linear-gradient(135deg, rgba(0,212,255,0.15), rgba(0,128,255,0.1))',
             borderBottom: '1px solid rgba(0, 212, 255, 0.2)',
             display: 'flex',
-            alignItems: 'center',
+            flexDirection: isMobile ? 'column' : 'row',
+            alignItems: isMobile ? 'stretch' : 'center',
             justifyContent: 'space-between',
-            gap: '16px'
+            gap: isMobile ? '10px' : '16px'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '10px' : '12px', flex: 1, minWidth: 0 }}>
             <div style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '12px',
+              width: isMobile ? '36px' : '44px',
+              height: isMobile ? '36px' : '44px',
+              borderRadius: isMobile ? '10px' : '12px',
               background: 'linear-gradient(135deg, var(--neon-cyan), var(--neon-blue))',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               boxShadow: '0 0 20px rgba(0, 212, 255, 0.4)'
             }}>
-              <Dumbbell size={22} color="white" />
+              <Dumbbell size={isMobile ? 18 : 22} color="white" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 700, color: 'white', fontSize: '17px', marginBottom: '2px' }}>
+              <div
+                style={{
+                  fontWeight: 700,
+                  color: 'white',
+                  fontSize: isMobile ? '15px' : '17px',
+                  marginBottom: isMobile ? '0' : '2px',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}
+              >
                 {lang === 'en' ? 'Coach Gym' : 'Palestra Coach'}
               </div>
-              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>
+              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', display: isMobile ? 'none' : 'block' }}>
                 {lang === 'en'
                   ? 'Profile + chat feedback'
                   : 'Profilo + feedback chat'}
               </div>
             </div>
           </div>
-          <button
-            onClick={handleSaveAndClose}
-            disabled={saving}
-            style={{
-              background: saving ? 'rgba(255,255,255,0.1)' : 'rgba(0,212,255,0.2)',
-              border: '1px solid rgba(0,212,255,0.4)',
-              borderRadius: '10px',
-              cursor: saving ? 'wait' : 'pointer',
-              color: 'white',
-              padding: isNarrowMobile ? '10px 12px' : '10px 16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: isNarrowMobile ? '12px' : '13px',
-              fontWeight: 600,
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => { if (!saving) e.currentTarget.style.background = 'rgba(0,212,255,0.3)' }}
-            onMouseLeave={(e) => { if (!saving) e.currentTarget.style.background = 'rgba(0,212,255,0.2)' }}
-          >
-            {saved ? (
-              <><CheckCircle2 size={16} /> {isNarrowMobile ? (lang === 'en' ? 'Saved' : 'Salvato') : (lang === 'en' ? 'Saved!' : 'Salvato!')}</>
-            ) : saving ? (
-              <>{isNarrowMobile ? (lang === 'en' ? 'Saving' : 'Salvo') : (lang === 'en' ? 'Saving...' : 'Salvo...')}</>
-            ) : (
-              <><Save size={16} /> {isNarrowMobile ? (lang === 'en' ? 'Save' : 'Salva') : (lang === 'en' ? 'Save All' : 'Salva tutto')}</>
-            )}
-          </button>
-          <button
-            type="button"
-            aria-label={lang === 'en' ? 'Close coach gym' : 'Chiudi palestra coach'}
-            onClick={() => {
-              if (!saving && !formSaving) onClose?.()
-            }}
-            disabled={saving || formSaving}
-            style={{
-              width: '40px',
-              height: '40px',
-              minWidth: '40px',
-              borderRadius: '10px',
-              border: '1px solid rgba(255,255,255,0.2)',
-              background: 'rgba(255,255,255,0.06)',
-              color: 'rgba(255,255,255,0.92)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: saving || formSaving ? 'not-allowed' : 'pointer'
-            }}
-          >
-            <X size={18} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', flexShrink: 0 }}>
+            <button
+              onClick={handleSaveAndClose}
+              disabled={saving}
+              style={{
+                background: saving ? 'rgba(255,255,255,0.1)' : 'rgba(0,212,255,0.2)',
+                border: '1px solid rgba(0,212,255,0.4)',
+                borderRadius: '10px',
+                cursor: saving ? 'wait' : 'pointer',
+                color: 'white',
+                padding: isNarrowMobile ? '8px 10px' : '10px 16px',
+                minHeight: isMobile ? '38px' : '40px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: isNarrowMobile ? '12px' : '13px',
+                fontWeight: 600,
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => { if (!saving) e.currentTarget.style.background = 'rgba(0,212,255,0.3)' }}
+              onMouseLeave={(e) => { if (!saving) e.currentTarget.style.background = 'rgba(0,212,255,0.2)' }}
+            >
+              {saved ? (
+                <><CheckCircle2 size={16} /> {isNarrowMobile ? (lang === 'en' ? 'Saved' : 'Salvato') : (lang === 'en' ? 'Saved!' : 'Salvato!')}</>
+              ) : saving ? (
+                <>{isNarrowMobile ? (lang === 'en' ? 'Saving' : 'Salvo') : (lang === 'en' ? 'Saving...' : 'Salvo...')}</>
+              ) : (
+                <><Save size={16} /> {isNarrowMobile ? (lang === 'en' ? 'Save' : 'Salva') : (lang === 'en' ? 'Save All' : 'Salva tutto')}</>
+              )}
+            </button>
+            <button
+              type="button"
+              aria-label={lang === 'en' ? 'Close coach gym' : 'Chiudi palestra coach'}
+              onClick={() => {
+                if (!saving && !formSaving) onClose?.()
+              }}
+              disabled={saving || formSaving}
+              style={{
+                width: isMobile ? '38px' : '40px',
+                height: isMobile ? '38px' : '40px',
+                minWidth: isMobile ? '38px' : '40px',
+                borderRadius: '10px',
+                border: '1px solid rgba(255,255,255,0.2)',
+                background: 'rgba(255,255,255,0.06)',
+                color: 'rgba(255,255,255,0.92)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: saving || formSaving ? 'not-allowed' : 'pointer'
+              }}
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
         {saveError && (
           <div
@@ -656,7 +671,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
             WebkitOverflowScrolling: 'touch',
             overscrollBehavior: 'contain',
             touchAction: 'pan-y',
-            padding: '20px',
+            padding: isMobile ? '12px' : '20px',
             paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))'
           }}
         >
@@ -991,7 +1006,11 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
               padding: '16px', 
               borderTop: '1px solid rgba(255,255,255,0.08)',
               display: 'flex',
-              gap: '10px'
+              gap: '10px',
+              position: 'sticky',
+              bottom: 0,
+              zIndex: 3,
+              background: 'linear-gradient(180deg, rgba(5,8,20,0.94) 0%, rgba(5,8,20,0.99) 100%)'
             }}>
               <input
                 ref={inputRef}
@@ -1051,18 +1070,16 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
             align-items: flex-end !important;
           }
           .coach-feedback-modal {
+            position: fixed !important;
+            inset: 0 !important;
             width: 100% !important;
             height: calc(var(--coach-vh, 1vh) * 100) !important;
             max-height: calc(var(--coach-vh, 1vh) * 100) !important;
-            border-radius: 18px 18px 0 0 !important;
+            border-radius: 0 !important;
             border-left: none !important;
             border-right: none !important;
             border-bottom: none !important;
             overscroll-behavior: contain !important;
-          }
-          .coach-feedback-modal > div:first-child {
-            padding: 14px 12px !important;
-            gap: 8px !important;
           }
           .coach-feedback-scroll {
             -webkit-overflow-scrolling: touch !important;
