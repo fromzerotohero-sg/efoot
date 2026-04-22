@@ -1,4 +1,5 @@
 import './globals.css'
+import Script from 'next/script'
 import LanguageProviderWrapper from '@/components/LanguageProviderWrapper'
 import { SidebarProvider } from '@/components/SidebarContext'
 import AppLayoutShell from '@/components/AppLayoutShell'
@@ -19,6 +20,20 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="it">
+      <head>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-X69T3QE3GG"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-X69T3QE3GG');
+          `}
+        </Script>
+      </head>
       <body className="text-[#FFFFFF]">
         <LanguageProviderWrapper>
           <GameAnalysisModalNavProvider>
