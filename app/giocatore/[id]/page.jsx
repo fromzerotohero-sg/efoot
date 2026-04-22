@@ -675,6 +675,18 @@ export default function PlayerDetailPage() {
         </div>
       </div>
 
+      <PlayerDetailUploadPanel
+        player={player}
+        images={images}
+        isUiBusy={isUiBusy}
+        queueStatus={queueStatus}
+        queueStatusContent={queueStatusContent}
+        onFileSelect={handleFileSelect}
+        onUpload={handleUploadAndUpdate}
+        onOpenManualEdit={() => setShowEditModal(true)}
+        onOpenManualBoosters={openManualBoosters}
+      />
+
       {/* Upload Sections */}
       <div style={{ display: 'grid', gap: '24px' }}>
         {/* Statistiche */}
@@ -710,204 +722,6 @@ export default function PlayerDetailPage() {
           uploading={isUiBusy}
         />
       </div>
-
-      {queueStatusContent && (
-        <div style={{
-          marginTop: '24px',
-          padding: '14px 16px',
-          borderRadius: '12px',
-          border: `1px solid ${
-            queueStatusContent.tone === 'warning'
-              ? 'rgba(245, 158, 11, 0.35)'
-              : queueStatusContent.tone === 'success'
-              ? 'rgba(34, 197, 94, 0.35)'
-              : queueStatusContent.tone === 'info'
-              ? 'rgba(0, 212, 255, 0.35)'
-              : 'rgba(255,255,255,0.12)'
-          }`,
-          background: `${
-            queueStatusContent.tone === 'warning'
-              ? 'rgba(245, 158, 11, 0.10)'
-              : queueStatusContent.tone === 'success'
-              ? 'rgba(34, 197, 94, 0.10)'
-              : queueStatusContent.tone === 'info'
-              ? 'rgba(0, 212, 255, 0.10)'
-              : 'rgba(255,255,255,0.04)'
-          }`
-        }}>
-          <div style={{
-            fontSize: '15px',
-            fontWeight: 700,
-            marginBottom: '4px',
-            color:
-              queueStatusContent.tone === 'warning'
-                ? '#fbbf24'
-                : queueStatusContent.tone === 'success'
-                ? '#86efac'
-                : queueStatusContent.tone === 'info'
-                ? '#7dd3fc'
-                : '#fff'
-          }}>
-            {queueStatusContent.title}
-          </div>
-          <div style={{ fontSize: '13px', lineHeight: 1.45, opacity: 0.82 }}>
-            {queueStatusContent.description}
-          </div>
-        </div>
-      )}
-
-      {/* Errore in-context quando c'è upload in corso */}
-      {error && images.length > 0 && (
-        <div
-          role="alert"
-          style={{
-            marginTop: '24px',
-            marginBottom: '0',
-            padding: '12px',
-            background: 'rgba(239, 68, 68, 0.15)',
-            border: '1px solid rgba(239, 68, 68, 0.4)',
-            borderRadius: '8px',
-            color: '#fca5a5',
-            fontSize: '14px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
-          <AlertCircle size={18} />
-          {error}
-        </div>
-      )}
-      {/* Upload Button */}
-      {images.length > 0 && (
-        <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'center' }}>
-          <button
-            onClick={handleUploadAndUpdate}
-            disabled={isUiBusy}
-            className="btn primary"
-            style={{
-              width: 'min(100%, 420px)',
-              minHeight: '48px',
-              padding: '14px 24px',
-              fontSize: 'clamp(15px, 3.5vw, 16px)',
-              fontWeight: 700,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              justifyContent: 'center',
-              opacity: isUiBusy ? 0.6 : 1,
-              cursor: isUiBusy ? 'not-allowed' : 'pointer'
-            }}
-          >
-            {queueStatus.phase === 'extracting' ? (
-              <>
-                <RefreshCw size={20} style={{ animation: 'spin 0.6s linear infinite' }} />
-                {lang === 'en'
-                  ? `Analyzing ${queueStatus.currentIndex}/${queueStatus.total}`
-                  : `Analisi ${queueStatus.currentIndex}/${queueStatus.total}`}
-              </>
-            ) : queueStatus.phase === 'confirming' ? (
-              <>
-                <AlertCircle size={20} />
-                {lang === 'en'
-                  ? `Waiting confirmation ${queueStatus.currentIndex}/${queueStatus.total}`
-                  : `In attesa di conferma ${queueStatus.currentIndex}/${queueStatus.total}`}
-              </>
-            ) : uploading ? (
-              <>
-                <RefreshCw size={20} style={{ animation: 'spin 0.6s linear infinite' }} />
-                {lang === 'en'
-                  ? `Saving ${queueStatus.currentIndex || 1}/${queueStatus.total || images.length}`
-                  : `Salvataggio ${queueStatus.currentIndex || 1}/${queueStatus.total || images.length}`}
-              </>
-            ) : (
-              <>
-                <CheckCircle2 size={20} />
-                {images.length > 1
-                  ? (lang === 'en' ? `Save and update ${images.length} photos` : `Salva e aggiorna ${images.length} foto`)
-                  : t('saveAndUpdate')}
-              </>
-            )}
-          </button>
-        </div>
-      )}
-
-      {/* Preview Images */}
-      {images.length > 0 && (
-        <div style={{ marginTop: '24px', display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-          {images.map((img, index) => (
-            <div
-              key={img.type}
-              style={{
-                padding: '12px',
-                borderRadius: '10px',
-                border: '1px solid rgba(255,255,255,0.1)',
-                background: 'rgba(255,255,255,0.03)'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                <div style={{ fontSize: '13px', fontWeight: 700, opacity: 0.9 }}>
-                  {pendingUploadLabels[img.type] || img.type}
-                </div>
-                <div style={{
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  padding: '4px 8px',
-                  borderRadius: '999px',
-                  background:
-                    queueStatus.phase === 'idle'
-                      ? 'rgba(255,255,255,0.08)'
-                      : queueStatus.activeType === img.type
-                      ? queueStatus.phase === 'confirming'
-                        ? 'rgba(245, 158, 11, 0.18)'
-                        : 'rgba(0, 212, 255, 0.18)'
-                      : (queueStatus.currentIndex > index + 1)
-                      ? 'rgba(34, 197, 94, 0.18)'
-                      : 'rgba(255,255,255,0.08)',
-                  color:
-                    queueStatus.phase === 'idle'
-                      ? 'rgba(255,255,255,0.75)'
-                      : queueStatus.activeType === img.type
-                      ? queueStatus.phase === 'confirming'
-                        ? '#fbbf24'
-                        : '#7dd3fc'
-                      : (queueStatus.currentIndex > index + 1)
-                      ? '#86efac'
-                      : 'rgba(255,255,255,0.75)'
-                }}>
-                  {queueStatus.phase === 'idle'
-                    ? (lang === 'en' ? 'Ready' : 'Pronta')
-                    : queueStatus.activeType === img.type
-                    ? queueStatus.phase === 'extracting'
-                      ? (lang === 'en' ? 'Analyzing' : 'In analisi')
-                      : queueStatus.phase === 'confirming'
-                      ? (lang === 'en' ? 'Confirm now' : 'Conferma ora')
-                      : (lang === 'en' ? 'Saving' : 'Salvataggio')
-                    : (queueStatus.currentIndex > index + 1)
-                    ? (lang === 'en' ? 'Done' : 'Fatta')
-                    : (lang === 'en' ? 'Queued' : 'In coda')}
-                </div>
-              </div>
-              <div style={{ fontSize: '12px', opacity: 0.72, marginBottom: '10px' }}>
-                {lang === 'en'
-                  ? `Photo ${index + 1} of ${images.length}`
-                  : `Foto ${index + 1} di ${images.length}`}
-              </div>
-              <img
-                src={img.dataUrl}
-                alt="Preview"
-                style={{
-                  width: '100%',
-                  maxHeight: '260px',
-                  objectFit: 'cover',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255,255,255,0.1)'
-                }}
-              />
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* Modal Conferma Aggiornamento */}
       {confirmModal && confirmModal.show && (
@@ -986,7 +800,7 @@ const SECTION_CARD_STYLE = (style) => ({
 
 // Componente Sezione Statistiche (design unificato: card = Statistiche, colore neon-blue)
 function StatsSection({ player, photoSlots, isExpanded, onToggle, onFileSelect, uploading, onEdit }) {
-  const { t, lang } = useTranslation()
+  const { t } = useTranslation()
   const style = getPhotoTypeStyle('card')
   if (!player) return null
   
@@ -1122,84 +936,6 @@ function StatsSection({ player, photoSlots, isExpanded, onToggle, onFileSelect, 
             </div>
           )}
 
-          {/* Pulsante Carica (galleria / fotocamera / file via picker di sistema) */}
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'stretch', flexWrap: 'wrap' }}>
-            <label style={{
-              flex: '1 1 150px',
-              minWidth: '150px',
-              padding: '12px 16px',
-              border: `2px solid ${style.borderColor}`,
-              borderRadius: '8px',
-              textAlign: 'center',
-              cursor: uploading ? 'not-allowed' : 'pointer',
-              background: style.bgColor,
-              opacity: uploading ? 0.6 : 1
-            }}>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={onFileSelect}
-                style={{ display: 'none' }}
-                disabled={uploading}
-              />
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                <Upload size={18} color={style.color} />
-                <span style={{ fontSize: '14px', fontWeight: 600, color: style.color }}>
-                  {photoSlots.statistiche ? t('updateStats') : t('uploadStats')}
-                </span>
-              </div>
-            </label>
-            <label style={{
-              flex: '1 1 150px',
-              minWidth: '150px',
-              padding: '12px 16px',
-              border: `2px solid ${style.borderColor}`,
-              borderRadius: '8px',
-              textAlign: 'center',
-              cursor: uploading ? 'not-allowed' : 'pointer',
-              background: 'transparent',
-              opacity: uploading ? 0.6 : 1
-            }}>
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={onFileSelect}
-                style={{ display: 'none' }}
-                disabled={uploading}
-              />
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                <Camera size={18} color={style.color} />
-                <span style={{ fontSize: '14px', fontWeight: 600, color: style.color }}>
-                  {t('cameraCaptureTitle')}
-                </span>
-              </div>
-            </label>
-            {typeof onEdit === 'function' && (
-              <button
-                type="button"
-                onClick={(e) => { e.preventDefault(); onEdit() }}
-                style={{
-                  padding: '12px 16px',
-                  border: '2px solid var(--neon-blue)',
-                  borderRadius: '8px',
-                  background: 'transparent',
-                  color: 'var(--neon-blue)',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  minWidth: '150px',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}
-              >
-                <Pencil size={18} />
-                {lang === 'en' ? 'Edit' : 'Modifica'}
-              </button>
-            )}
-          </div>
         </>
       )}
     </div>
@@ -1208,7 +944,7 @@ function StatsSection({ player, photoSlots, isExpanded, onToggle, onFileSelect, 
 
 // Componente Sezione Abilità (design unificato: stats = Abilità, colore neon-purple)
 function SkillsSection({ player, photoSlots, isExpanded, onToggle, onFileSelect, uploading, onEdit }) {
-  const { t, lang } = useTranslation()
+  const { t } = useTranslation()
   const style = getPhotoTypeStyle('stats')
   if (!player) return null
   
@@ -1335,67 +1071,6 @@ function SkillsSection({ player, photoSlots, isExpanded, onToggle, onFileSelect,
             </div>
           )}
 
-          {/* Pulsante Carica (galleria / fotocamera / file) + Modifica */}
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'stretch', flexWrap: 'wrap' }}>
-            <label style={{
-              flex: '1 1 150px',
-              minWidth: '150px',
-              padding: '12px 16px',
-              border: `2px solid ${style.borderColor}`,
-              borderRadius: '8px',
-              textAlign: 'center',
-              cursor: uploading ? 'not-allowed' : 'pointer',
-              background: style.bgColor,
-              opacity: uploading ? 0.6 : 1
-            }}>
-              <input type="file" accept="image/*" onChange={onFileSelect} style={{ display: 'none' }} disabled={uploading} />
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                <Upload size={18} color={style.color} />
-                <span style={{ fontSize: '14px', fontWeight: 600, color: style.color }}>{photoSlots.abilita ? t('updateSkills') : t('uploadSkills')}</span>
-              </div>
-            </label>
-            <label style={{
-              flex: '1 1 150px',
-              minWidth: '150px',
-              padding: '12px 16px',
-              border: `2px solid ${style.borderColor}`,
-              borderRadius: '8px',
-              textAlign: 'center',
-              cursor: uploading ? 'not-allowed' : 'pointer',
-              background: 'transparent',
-              opacity: uploading ? 0.6 : 1
-            }}>
-              <input type="file" accept="image/*" capture="environment" onChange={onFileSelect} style={{ display: 'none' }} disabled={uploading} />
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                <Camera size={18} color={style.color} />
-                <span style={{ fontSize: '14px', fontWeight: 600, color: style.color }}>{t('cameraCaptureTitle')}</span>
-              </div>
-            </label>
-            {typeof onEdit === 'function' && (
-              <button
-                type="button"
-                onClick={(e) => { e.preventDefault(); onEdit() }}
-                style={{
-                  padding: '12px 16px',
-                  border: `2px solid ${style.borderColor}`,
-                  borderRadius: '8px',
-                  background: 'transparent',
-                  color: style.color,
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  minWidth: '150px',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}
-              >
-                <Pencil size={18} />
-                {lang === 'en' ? 'Edit' : 'Modifica'}
-              </button>
-            )}
-          </div>
         </>
       )}
     </div>
@@ -1404,7 +1079,7 @@ function SkillsSection({ player, photoSlots, isExpanded, onToggle, onFileSelect,
 
 // Componente Sezione Booster (design unificato: skills = Booster, colore neon-orange)
 function BoostersSection({ player, photoSlots, isExpanded, onToggle, onFileSelect, uploading, onManualEdit }) {
-  const { t, lang } = useTranslation()
+  const { t } = useTranslation()
   const style = getPhotoTypeStyle('skills')
   if (!player) return null
   
@@ -1474,71 +1149,421 @@ function BoostersSection({ player, photoSlots, isExpanded, onToggle, onFileSelec
             </div>
           )}
 
-          {/* Pulsante Carica (galleria / fotocamera / file via picker di sistema) */}
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'stretch' }}>
-            <label style={{
-              flex: '1 1 150px',
-              minWidth: '150px',
-              padding: '12px 16px',
-              border: `2px solid ${style.borderColor}`,
-              borderRadius: '8px',
-              textAlign: 'center',
-              cursor: uploading ? 'not-allowed' : 'pointer',
-              background: style.bgColor,
-              opacity: uploading ? 0.6 : 1
-            }}>
-              <input type="file" accept="image/*" onChange={onFileSelect} style={{ display: 'none' }} disabled={uploading} />
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                <Upload size={18} color={style.color} />
-                <span style={{ fontSize: '14px', fontWeight: 600, color: style.color }}>{photoSlots.booster ? t('updateBoosters') : t('uploadBoosters')}</span>
-              </div>
-            </label>
-            <label style={{
-              flex: '1 1 150px',
-              minWidth: '150px',
-              padding: '12px 16px',
-              border: `2px solid ${style.borderColor}`,
-              borderRadius: '8px',
-              textAlign: 'center',
-              cursor: uploading ? 'not-allowed' : 'pointer',
-              background: 'transparent',
-              opacity: uploading ? 0.6 : 1
-            }}>
-              <input type="file" accept="image/*" capture="environment" onChange={onFileSelect} style={{ display: 'none' }} disabled={uploading} />
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                <Camera size={18} color={style.color} />
-                <span style={{ fontSize: '14px', fontWeight: 600, color: style.color }}>{t('cameraCaptureTitle')}</span>
-              </div>
-            </label>
-            {typeof onManualEdit === 'function' && (
-              <button
-                type="button"
-                onClick={(e) => { e.preventDefault(); onManualEdit() }}
-                style={{
-                  padding: '12px 16px',
-                  border: `2px solid ${style.borderColor}`,
-                  borderRadius: '8px',
-                  background: 'transparent',
-                  color: style.color,
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  minWidth: '150px',
-                  cursor: uploading ? 'not-allowed' : 'pointer',
-                  opacity: uploading ? 0.6 : 1,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}
-                disabled={uploading}
-              >
-                <Pencil size={18} />
-                {lang === 'en' ? 'Manual' : 'Manuale'}
-              </button>
-            )}
-          </div>
         </>
       )}
+    </div>
+  )
+}
+
+function PlayerDetailUploadPanel({
+  player,
+  images,
+  isUiBusy,
+  queueStatus,
+  queueStatusContent,
+  onFileSelect,
+  onUpload,
+  onOpenManualEdit,
+  onOpenManualBoosters
+}) {
+  const { t, lang } = useTranslation()
+  const imageTypes = [
+    {
+      key: 'stats',
+      label: t('photoStats'),
+      description: t('photoStatsDesc'),
+      Icon: BarChart3,
+      required: true,
+      ...getPhotoTypeStyle('card')
+    },
+    {
+      key: 'skills',
+      label: t('photoSkills'),
+      description: t('photoSkillsDesc'),
+      Icon: Zap,
+      required: true,
+      ...getPhotoTypeStyle('stats')
+    },
+    {
+      key: 'booster',
+      label: t('photoBooster'),
+      description: t('photoBoosterDesc'),
+      Icon: Gift,
+      required: false,
+      ...getPhotoTypeStyle('skills')
+    }
+  ]
+
+  const getImageForType = (type) => images.find(img => img.type === type)
+  const hasExistingSection = (type) => {
+    const photoSlots = player?.photo_slots || {}
+    if (type === 'stats') {
+      return Boolean(photoSlots.statistiche) || Boolean(player?.base_stats && Object.keys(player.base_stats).length > 0)
+    }
+    if (type === 'skills') {
+      return Boolean(photoSlots.abilita) || Boolean((player?.skills || []).length > 0 || (player?.com_skills || []).length > 0)
+    }
+    if (type === 'booster') {
+      return Boolean(photoSlots.booster) || Boolean(Array.isArray(player?.available_boosters) && player.available_boosters.length > 0)
+    }
+    return false
+  }
+
+  const selectedCount = images.length
+
+  return (
+    <div className="neon-card" style={{
+      marginBottom: '24px',
+      padding: 'clamp(16px, 4vw, 24px)',
+      background: 'rgba(10, 14, 39, 0.95)',
+      border: '2px solid rgba(0, 212, 255, 0.55)'
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
+        <div>
+          <h2 style={{ fontSize: 'clamp(20px, 5vw, 24px)', fontWeight: 700, margin: 0 }}>
+            {lang === 'en' ? 'Update Player Photos' : 'Aggiorna Foto Giocatore'}
+          </h2>
+          <div style={{ fontSize: '14px', opacity: 0.82, marginTop: '8px', lineHeight: 1.5 }}>
+            {lang === 'en'
+              ? 'Use the same guided flow as the first upload: choose the sections to update, then save once.'
+              : 'Usa lo stesso flusso guidato del primo caricamento: scegli le sezioni da aggiornare, poi salva una sola volta.'}
+          </div>
+        </div>
+        {typeof onOpenManualEdit === 'function' && (
+          <button
+            type="button"
+            onClick={() => { if (!isUiBusy) onOpenManualEdit() }}
+            disabled={isUiBusy}
+            className="neon-button"
+            style={{
+              padding: '10px 14px',
+              borderColor: 'var(--neon-blue)',
+              color: 'var(--neon-blue)',
+              background: 'transparent',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              minHeight: '44px',
+              opacity: isUiBusy ? 0.6 : 1
+            }}
+          >
+            <Pencil size={16} />
+            {lang === 'en' ? 'Edit player data' : 'Modifica dati giocatore'}
+          </button>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '24px' }}>
+        {imageTypes.map((type, idx) => {
+          const image = getImageForType(type.key)
+          const isComplete = !!image
+          return (
+            <div key={type.key} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                background: isComplete ? type.color : 'rgba(255,255,255,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '14px',
+                fontWeight: 700,
+                color: isComplete ? '#000' : 'rgba(255,255,255,0.5)',
+                border: `2px solid ${isComplete ? type.color : 'rgba(255,255,255,0.2)'}`,
+                transition: 'all 0.3s ease'
+              }}>
+                {isComplete ? '✓' : idx + 1}
+              </div>
+              {idx < imageTypes.length - 1 && (
+                <div style={{
+                  width: '40px',
+                  height: '2px',
+                  background: isComplete ? type.color : 'rgba(255,255,255,0.1)'
+                }} />
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {queueStatusContent && (
+        <div style={{
+          marginBottom: '20px',
+          padding: '14px 16px',
+          borderRadius: '12px',
+          border: `1px solid ${
+            queueStatusContent.tone === 'warning'
+              ? 'rgba(245, 158, 11, 0.35)'
+              : queueStatusContent.tone === 'success'
+              ? 'rgba(34, 197, 94, 0.35)'
+              : queueStatusContent.tone === 'info'
+              ? 'rgba(0, 212, 255, 0.35)'
+              : 'rgba(255,255,255,0.12)'
+          }`,
+          background: `${
+            queueStatusContent.tone === 'warning'
+              ? 'rgba(245, 158, 11, 0.10)'
+              : queueStatusContent.tone === 'success'
+              ? 'rgba(34, 197, 94, 0.10)'
+              : queueStatusContent.tone === 'info'
+              ? 'rgba(0, 212, 255, 0.10)'
+              : 'rgba(255,255,255,0.04)'
+          }`
+        }}>
+          <div style={{
+            fontSize: '15px',
+            fontWeight: 700,
+            marginBottom: '4px',
+            color:
+              queueStatusContent.tone === 'warning'
+                ? '#fbbf24'
+                : queueStatusContent.tone === 'success'
+                ? '#86efac'
+                : queueStatusContent.tone === 'info'
+                ? '#7dd3fc'
+                : '#fff'
+          }}>
+            {queueStatusContent.title}
+          </div>
+          <div style={{ fontSize: '13px', lineHeight: 1.45, opacity: 0.82 }}>
+            {queueStatusContent.description}
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+        {imageTypes.map(({ key, label, description, color, bgColor, borderColor, required, Icon }) => {
+          const image = getImageForType(key)
+          const alreadyPresent = hasExistingSection(key)
+          const isActive = queueStatus.activeType === key && queueStatus.phase !== 'idle'
+          return (
+            <div key={key} style={{
+              padding: '16px',
+              background: image ? bgColor : 'rgba(0, 212, 255, 0.05)',
+              border: `1px solid ${image ? borderColor : 'rgba(0, 212, 255, 0.2)'}`,
+              borderRadius: '12px',
+              transition: 'all 0.3s ease'
+            }}>
+              {image ? (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', gap: '12px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <Icon size={24} color={color} style={{ flexShrink: 0 }} />
+                      <span style={{ fontSize: '16px', fontWeight: 700, color }}>{label}</span>
+                    </div>
+                    <div style={{
+                      fontSize: '11px',
+                      padding: '4px 8px',
+                      background: isActive ? 'rgba(0, 212, 255, 0.18)' : 'rgba(34, 197, 94, 0.18)',
+                      color: isActive ? '#7dd3fc' : '#86efac',
+                      borderRadius: '999px',
+                      fontWeight: 700
+                    }}>
+                      {isActive
+                        ? (queueStatus.phase === 'confirming'
+                          ? (lang === 'en' ? 'Confirm now' : 'Conferma ora')
+                          : queueStatus.phase === 'saving'
+                          ? (lang === 'en' ? 'Saving' : 'Salvataggio')
+                          : (lang === 'en' ? 'Analyzing' : 'In analisi'))
+                        : (lang === 'en' ? 'Ready' : 'Pronta')}
+                    </div>
+                  </div>
+                  <img
+                    src={image.dataUrl}
+                    alt={label}
+                    style={{
+                      width: '100%',
+                      maxHeight: '180px',
+                      objectFit: 'cover',
+                      borderRadius: '8px',
+                      marginBottom: '8px'
+                    }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '13px', opacity: 0.8 }}>{t('uploadedPhotoLabel')}</span>
+                    <span style={{ fontSize: '11px', padding: '2px 8px', background: color, color: '#000', borderRadius: '4px', fontWeight: 700 }}>
+                      ✓
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <div style={{ padding: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <Icon size={22} color={color} style={{ flexShrink: 0 }} />
+                      <div>
+                        <div style={{ fontSize: '16px', fontWeight: 700, marginBottom: '4px', color }}>
+                          {label}
+                        </div>
+                        <div style={{ fontSize: '14px', opacity: 0.8 }}>{description}</div>
+                      </div>
+                    </div>
+                    <div style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      padding: '4px 8px',
+                      borderRadius: '999px',
+                      color: alreadyPresent ? '#86efac' : (required ? '#fca5a5' : color),
+                      background: alreadyPresent ? 'rgba(34, 197, 94, 0.18)' : 'rgba(255,255,255,0.08)'
+                    }}>
+                      {alreadyPresent
+                        ? (lang === 'en' ? 'Already present' : 'Gia presente')
+                        : required
+                        ? (lang === 'en' ? 'Required' : 'Obbligatoria')
+                        : (lang === 'en' ? 'Optional' : 'Opzionale')}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    <label style={{
+                      flex: '1 1 150px',
+                      minHeight: '48px',
+                      borderRadius: '10px',
+                      border: `2px solid ${borderColor}`,
+                      background: bgColor,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      cursor: isUiBusy ? 'not-allowed' : 'pointer',
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      color,
+                      opacity: isUiBusy ? 0.6 : 1
+                    }}>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => onFileSelect(e, key)}
+                        style={{ display: 'none' }}
+                        disabled={isUiBusy}
+                      />
+                      <Upload size={16} color={color} />
+                      {t('upload')}
+                    </label>
+                    <label style={{
+                      flex: '1 1 150px',
+                      minHeight: '48px',
+                      borderRadius: '10px',
+                      border: `2px solid ${borderColor}`,
+                      background: 'transparent',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      cursor: isUiBusy ? 'not-allowed' : 'pointer',
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      color,
+                      opacity: isUiBusy ? 0.6 : 1
+                    }}>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={(e) => onFileSelect(e, key)}
+                        style={{ display: 'none' }}
+                        disabled={isUiBusy}
+                      />
+                      <Camera size={16} color={color} />
+                      {t('cameraCaptureTitle')}
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      <div style={{
+        display: 'flex',
+        gap: '12px',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        borderTop: '1px solid rgba(255,255,255,0.1)',
+        paddingTop: '20px'
+      }}>
+        <div style={{ marginRight: 'auto', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          {typeof onOpenManualBoosters === 'function' && (
+            <button
+              type="button"
+              onClick={() => { if (!isUiBusy) onOpenManualBoosters() }}
+              disabled={isUiBusy}
+              className="neon-button"
+              style={{
+                padding: '8px 14px',
+                borderColor: 'var(--neon-orange)',
+                color: 'var(--neon-orange)',
+                background: 'transparent',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '13px',
+                opacity: isUiBusy ? 0.6 : 1
+              }}
+            >
+              <Pencil size={14} />
+              {lang === 'en' ? 'Manual booster' : 'Booster manuale'}
+            </button>
+          )}
+          <span style={{ fontSize: '13px', opacity: 0.7 }}>
+            {selectedCount === 0 ? (
+              t('noPhotosSelected')
+            ) : (
+              <span style={{ color: 'var(--neon-green)' }}>
+                {selectedCount} {selectedCount === 1 ? t('photoSelected') : t('photosSelected')}
+              </span>
+            )}
+          </span>
+        </div>
+        {selectedCount > 0 && (
+          <button
+            onClick={onUpload}
+            className="btn primary"
+            disabled={isUiBusy}
+            style={{
+              minHeight: '48px',
+              padding: '12px 24px',
+              opacity: isUiBusy ? 0.6 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            {queueStatus.phase === 'extracting' ? (
+              <>
+                <RefreshCw size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                {lang === 'en'
+                  ? `Analyzing ${queueStatus.currentIndex}/${queueStatus.total}`
+                  : `Analisi ${queueStatus.currentIndex}/${queueStatus.total}`}
+              </>
+            ) : queueStatus.phase === 'confirming' ? (
+              <>
+                <AlertCircle size={18} />
+                {lang === 'en'
+                  ? `Waiting confirmation ${queueStatus.currentIndex}/${queueStatus.total}`
+                  : `In attesa di conferma ${queueStatus.currentIndex}/${queueStatus.total}`}
+              </>
+            ) : queueStatus.phase === 'saving' || isUiBusy ? (
+              <>
+                <RefreshCw size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                {lang === 'en'
+                  ? `Saving ${queueStatus.currentIndex || 1}/${queueStatus.total || selectedCount}`
+                  : `Salvataggio ${queueStatus.currentIndex || 1}/${queueStatus.total || selectedCount}`}
+              </>
+            ) : (
+              <>
+                <CheckCircle2 size={18} />
+                {selectedCount > 1
+                  ? (lang === 'en' ? `Save and update ${selectedCount} photos` : `Salva e aggiorna ${selectedCount} foto`)
+                  : t('saveAndUpdate')}
+              </>
+            )}
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -1560,9 +1585,9 @@ function ConfirmUpdateModal({
 }) {
   const { t, lang } = useTranslation()
   const uploadTypeLabels = {
-    stats: t('stats'),
-    skills: t('skills'),
-    booster: t('boosters')
+    stats: t('statsSection'),
+    skills: t('skillsSection'),
+    booster: t('boostersSection')
   }
   const teamIsSoftWarning = Boolean(teamMismatch) && !hasMismatch
 
@@ -1576,10 +1601,10 @@ function ConfirmUpdateModal({
         bottom: 0,
         background: 'rgba(0, 0, 0, 0.8)',
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         justifyContent: 'center',
         zIndex: 1000,
-        padding: '24px'
+        padding: 'max(12px, env(safe-area-inset-top, 0px)) 12px max(12px, env(safe-area-inset-bottom, 0px))'
       }}
       onClick={onCancel}
     >
@@ -1587,20 +1612,26 @@ function ConfirmUpdateModal({
         className="neon-card"
         onClick={(e) => e.stopPropagation()}
         style={{
-          maxWidth: '500px',
+          maxWidth: '560px',
           width: '100%',
-          padding: '24px',
+          maxHeight: 'calc(100vh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))',
+          overflowY: 'auto',
+          padding: 'clamp(16px, 4vw, 24px)',
+          paddingBottom: 'calc(16px + 72px + env(safe-area-inset-bottom, 0px))',
           background: 'rgba(10, 14, 39, 0.95)',
-          border: `2px solid ${hasMismatch ? '#ef4444' : 'var(--neon-blue)'}`
+          border: `2px solid ${hasMismatch ? '#ef4444' : 'var(--neon-blue)'}`,
+          borderRadius: '16px',
+          marginTop: 'auto',
+          marginBottom: 'auto',
+          position: 'relative'
         }}
       >
-        <h2 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '20px', marginTop: 0 }}>
+        <h2 style={{ fontSize: 'clamp(20px, 5vw, 24px)', fontWeight: 700, marginBottom: '16px', marginTop: 0, lineHeight: 1.2 }}>
           {t('confirmUpdate')} {uploadTypeLabels[uploadType] || ''}
         </h2>
         <div style={{
-          marginTop: '-8px',
-          marginBottom: '20px',
-          padding: '10px 12px',
+          marginBottom: '16px',
+          padding: '12px',
           borderRadius: '10px',
           background: 'rgba(0, 212, 255, 0.10)',
           border: '1px solid rgba(0, 212, 255, 0.24)',
@@ -1621,14 +1652,14 @@ function ConfirmUpdateModal({
         </div>
 
         {/* Confronto Dati */}
-        <div style={{ marginBottom: '20px' }}>
+        <div style={{ marginBottom: '16px' }}>
           <div style={{ 
             padding: '12px', 
             background: 'rgba(0, 212, 255, 0.1)', 
             borderRadius: '8px',
             marginBottom: '12px'
           }}>
-            <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>{t('currentPlayer')}:</div>
+            <div style={{ fontSize: '14px', fontWeight: 700, marginBottom: '8px' }}>{t('currentPlayerInfo')}:</div>
             <div style={{ fontSize: '13px', opacity: 0.9 }}>
               <div><strong>{t('name')}:</strong> {currentPlayer.player_name || t('nA')}</div>
               {currentPlayer.team && <div><strong>{t('team')}:</strong> {currentPlayer.team}</div>}
@@ -1643,7 +1674,7 @@ function ConfirmUpdateModal({
             borderRadius: '8px',
             border: `1px solid ${hasMismatch ? '#ef4444' : '#22c55e'}`
           }}>
-            <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>{t('extractedData')}:</div>
+            <div style={{ fontSize: '14px', fontWeight: 700, marginBottom: '8px' }}>{t('extractedDataFromPhoto')}:</div>
             <div style={{ fontSize: '13px', opacity: 0.9 }}>
               <div style={{ color: nameMismatch ? '#ef4444' : 'inherit' }}>
                 <strong>{t('name')}:</strong> {extractedData.player_name || 'N/A'}
@@ -1678,7 +1709,7 @@ function ConfirmUpdateModal({
             background: hasMismatch ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.18)',
             border: `1px solid ${hasMismatch ? '#ef4444' : '#f59e0b'}`,
             borderRadius: '8px',
-            marginBottom: '20px',
+            marginBottom: '16px',
             fontSize: '13px'
           }}>
             <div style={{ fontWeight: 700, marginBottom: '4px', color: hasMismatch ? '#ef4444' : '#f59e0b' }}>
@@ -1697,11 +1728,29 @@ function ConfirmUpdateModal({
         )}
 
         {/* Bottoni */}
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+        <div style={{
+          position: 'sticky',
+          bottom: 'calc(-1 * (16px + env(safe-area-inset-bottom, 0px)))',
+          marginLeft: 'calc(-1 * clamp(16px, 4vw, 24px))',
+          marginRight: 'calc(-1 * clamp(16px, 4vw, 24px))',
+          marginBottom: 'calc(-1 * clamp(16px, 4vw, 24px))',
+          padding: '12px clamp(16px, 4vw, 24px) calc(12px + env(safe-area-inset-bottom, 0px))',
+          display: 'flex',
+          gap: '12px',
+          justifyContent: 'stretch',
+          flexWrap: 'wrap',
+          background: 'rgba(10, 14, 39, 0.98)',
+          borderTop: '1px solid rgba(255,255,255,0.08)'
+        }}>
           <button 
             onClick={onCancel} 
             className="neon-button"
-            style={{ padding: '10px 20px' }}
+            style={{
+              flex: '1 1 160px',
+              minHeight: '48px',
+              padding: '12px 16px',
+              justifyContent: 'center'
+            }}
           >
             {t('cancel')}
           </button>
@@ -1709,9 +1758,12 @@ function ConfirmUpdateModal({
             onClick={onConfirm} 
             className="btn primary"
             style={{ 
-              padding: '10px 20px',
+              flex: '1 1 160px',
+              minHeight: '48px',
+              padding: '12px 16px',
               background: hasMismatch ? '#ef4444' : 'var(--neon-blue)',
-              borderColor: hasMismatch ? '#ef4444' : 'var(--neon-blue)'
+              borderColor: hasMismatch ? '#ef4444' : 'var(--neon-blue)',
+              justifyContent: 'center'
             }}
           >
             {hasMismatch ? t('confirmAnyway') : t('confirm')}
