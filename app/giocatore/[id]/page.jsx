@@ -30,6 +30,12 @@ export default function PlayerDetailPage() {
   const [confirmModal, setConfirmModal] = React.useState(null) // { show, extractedData, nameMismatch, teamMismatch, positionMismatch, onConfirm, onCancel }
   const [showManualBoostersModal, setShowManualBoostersModal] = React.useState(false)
   const [manualBoosters, setManualBoosters] = React.useState([])
+  const [queueStatus, setQueueStatus] = React.useState({
+    phase: 'idle', // idle | extracting | confirming | saving
+    activeType: null,
+    currentIndex: 0,
+    total: 0
+  })
   const [expandedSections, setExpandedSections] = React.useState({
     stats: true,
     skills: true,
@@ -40,6 +46,56 @@ export default function PlayerDetailPage() {
     skills: t('skillsSection'),
     booster: t('boostersSection')
   }), [t])
+  const isQueueActive = queueStatus.phase !== 'idle'
+  const isUiBusy = uploading || isQueueActive
+  const queueStatusContent = React.useMemo(() => {
+    if (images.length === 0) return null
+
+    const activeLabel = queueStatus.activeType ? (pendingUploadLabels[queueStatus.activeType] || queueStatus.activeType) : null
+    const stepLabel = queueStatus.total > 0 ? `${queueStatus.currentIndex}/${queueStatus.total}` : null
+
+    if (queueStatus.phase === 'extracting') {
+      return {
+        tone: 'info',
+        title: lang === 'en' ? `Analyzing ${activeLabel} (${stepLabel})` : `Sto analizzando ${activeLabel} (${stepLabel})`,
+        description: lang === 'en'
+          ? 'Please wait. The app is reading the selected screenshot before asking for confirmation.'
+          : 'Attendi un attimo. L’app sta leggendo lo screenshot selezionato prima di chiederti conferma.'
+      }
+    }
+
+    if (queueStatus.phase === 'confirming') {
+      return {
+        tone: 'warning',
+        title: lang === 'en' ? `Confirm ${activeLabel} (${stepLabel})` : `Conferma ${activeLabel} (${stepLabel})`,
+        description: lang === 'en'
+          ? 'Review the extracted data in the modal. After confirming, the app will continue with the next queued photo.'
+          : 'Controlla i dati estratti nel modal. Dopo la conferma, l’app continuera con la foto successiva in coda.'
+      }
+    }
+
+    if (queueStatus.phase === 'saving') {
+      return {
+        tone: 'success',
+        title: lang === 'en' ? `Saving ${activeLabel} (${stepLabel})` : `Sto salvando ${activeLabel} (${stepLabel})`,
+        description: lang === 'en'
+          ? 'Do not close this page. The current section is being updated now.'
+          : 'Non chiudere questa pagina. La sezione corrente si sta aggiornando adesso.'
+      }
+    }
+
+    const countLabel = images.length === 1
+      ? (lang === 'en' ? '1 photo ready' : '1 foto pronta')
+      : (lang === 'en' ? `${images.length} photos ready` : `${images.length} foto pronte`)
+
+    return {
+      tone: 'neutral',
+      title: countLabel,
+      description: lang === 'en'
+        ? 'Selected photos are queued by section. Tap "Save and update" once to process them in order.'
+        : 'Le foto selezionate sono in coda per sezione. Tocca una sola volta "Salva e aggiorna" per processarle in ordine.'
+    }
+  }, [images.length, lang, pendingUploadLabels, queueStatus.activeType, queueStatus.currentIndex, queueStatus.phase, queueStatus.total])
 
   // Carica dati giocatore
   React.useEffect(() => {
@@ -321,6 +377,12 @@ export default function PlayerDetailPage() {
 
       const openConfirmationForIndex = async (index, currentPlayerData) => {
         if (index >= pendingImages.length) {
+          setQueueStatus({
+            phase: 'idle',
+            activeType: null,
+            currentIndex: 0,
+            total: 0
+          })
           setImages([])
           setUploadType(null)
           setConfirmModal(null)
@@ -328,6 +390,12 @@ export default function PlayerDetailPage() {
         }
 
         const img = pendingImages[index]
+        setQueueStatus({
+          phase: 'extracting',
+          activeType: img.type,
+          currentIndex: index + 1,
+          total: pendingImages.length
+        })
         const validation = await extractAndValidateImage(img, currentPlayerData, token)
 
         setConfirmModal({
@@ -339,9 +407,23 @@ export default function PlayerDetailPage() {
           ageMismatch: validation.ageMismatch,
           hasMismatch: validation.hasMismatch,
           uploadType: img.type,
+          currentStep: index + 1,
+          totalSteps: pendingImages.length,
           onConfirm: async () => {
+            setQueueStatus({
+              phase: 'saving',
+              activeType: img.type,
+              currentIndex: index + 1,
+              total: pendingImages.length
+            })
             const updatedPlayer = await performUpdate(validation.extractedData, img.type, currentPlayerData)
             if (!updatedPlayer) {
+              setQueueStatus({
+                phase: 'idle',
+                activeType: null,
+                currentIndex: 0,
+                total: 0
+              })
               setConfirmModal(null)
               return
             }
@@ -349,10 +431,22 @@ export default function PlayerDetailPage() {
             await openConfirmationForIndex(index + 1, updatedPlayer)
           },
           onCancel: () => {
+            setQueueStatus({
+              phase: 'idle',
+              activeType: null,
+              currentIndex: 0,
+              total: 0
+            })
             setImages([])
             setUploadType(null)
             setConfirmModal(null)
           }
+        })
+        setQueueStatus({
+          phase: 'confirming',
+          activeType: img.type,
+          currentIndex: index + 1,
+          total: pendingImages.length
         })
       }
 
@@ -361,6 +455,12 @@ export default function PlayerDetailPage() {
       console.error('[PlayerDetail] Upload error:', err)
       const { message } = mapErrorToUserMessage(err, t('errorUploadingPhoto'), lang)
       setError(message)
+      setQueueStatus({
+        phase: 'idle',
+        activeType: null,
+        currentIndex: 0,
+        total: 0
+      })
     }
   }
 
@@ -584,7 +684,7 @@ export default function PlayerDetailPage() {
           isExpanded={expandedSections.stats}
           onToggle={() => toggleSection('stats')}
           onFileSelect={(e) => handleFileSelect(e, 'stats')}
-          uploading={uploading}
+          uploading={isUiBusy}
           onEdit={() => setShowEditModal(true)}
         />
 
@@ -595,7 +695,7 @@ export default function PlayerDetailPage() {
           isExpanded={expandedSections.skills}
           onToggle={() => toggleSection('skills')}
           onFileSelect={(e) => handleFileSelect(e, 'skills')}
-          uploading={uploading}
+          uploading={isUiBusy}
           onEdit={() => setShowEditModal(true)}
         />
 
@@ -607,9 +707,54 @@ export default function PlayerDetailPage() {
           onToggle={() => toggleSection('boosters')}
           onFileSelect={(e) => handleFileSelect(e, 'booster')}
           onManualEdit={openManualBoosters}
-          uploading={uploading}
+          uploading={isUiBusy}
         />
       </div>
+
+      {queueStatusContent && (
+        <div style={{
+          marginTop: '24px',
+          padding: '14px 16px',
+          borderRadius: '12px',
+          border: `1px solid ${
+            queueStatusContent.tone === 'warning'
+              ? 'rgba(245, 158, 11, 0.35)'
+              : queueStatusContent.tone === 'success'
+              ? 'rgba(34, 197, 94, 0.35)'
+              : queueStatusContent.tone === 'info'
+              ? 'rgba(0, 212, 255, 0.35)'
+              : 'rgba(255,255,255,0.12)'
+          }`,
+          background: `${
+            queueStatusContent.tone === 'warning'
+              ? 'rgba(245, 158, 11, 0.10)'
+              : queueStatusContent.tone === 'success'
+              ? 'rgba(34, 197, 94, 0.10)'
+              : queueStatusContent.tone === 'info'
+              ? 'rgba(0, 212, 255, 0.10)'
+              : 'rgba(255,255,255,0.04)'
+          }`
+        }}>
+          <div style={{
+            fontSize: '15px',
+            fontWeight: 700,
+            marginBottom: '4px',
+            color:
+              queueStatusContent.tone === 'warning'
+                ? '#fbbf24'
+                : queueStatusContent.tone === 'success'
+                ? '#86efac'
+                : queueStatusContent.tone === 'info'
+                ? '#7dd3fc'
+                : '#fff'
+          }}>
+            {queueStatusContent.title}
+          </div>
+          <div style={{ fontSize: '13px', lineHeight: 1.45, opacity: 0.82 }}>
+            {queueStatusContent.description}
+          </div>
+        </div>
+      )}
 
       {/* Errore in-context quando c'è upload in corso */}
       {error && images.length > 0 && (
@@ -638,28 +783,49 @@ export default function PlayerDetailPage() {
         <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'center' }}>
           <button
             onClick={handleUploadAndUpdate}
-            disabled={uploading}
+            disabled={isUiBusy}
             className="btn primary"
             style={{
-              padding: '14px 32px',
-              fontSize: '16px',
+              width: 'min(100%, 420px)',
+              minHeight: '48px',
+              padding: '14px 24px',
+              fontSize: 'clamp(15px, 3.5vw, 16px)',
               fontWeight: 700,
               display: 'inline-flex',
               alignItems: 'center',
               gap: '8px',
-              opacity: uploading ? 0.6 : 1,
-              cursor: uploading ? 'not-allowed' : 'pointer'
+              justifyContent: 'center',
+              opacity: isUiBusy ? 0.6 : 1,
+              cursor: isUiBusy ? 'not-allowed' : 'pointer'
             }}
           >
-            {uploading ? (
+            {queueStatus.phase === 'extracting' ? (
               <>
                 <RefreshCw size={20} style={{ animation: 'spin 0.6s linear infinite' }} />
-                {t('loading')}
+                {lang === 'en'
+                  ? `Analyzing ${queueStatus.currentIndex}/${queueStatus.total}`
+                  : `Analisi ${queueStatus.currentIndex}/${queueStatus.total}`}
+              </>
+            ) : queueStatus.phase === 'confirming' ? (
+              <>
+                <AlertCircle size={20} />
+                {lang === 'en'
+                  ? `Waiting confirmation ${queueStatus.currentIndex}/${queueStatus.total}`
+                  : `In attesa di conferma ${queueStatus.currentIndex}/${queueStatus.total}`}
+              </>
+            ) : uploading ? (
+              <>
+                <RefreshCw size={20} style={{ animation: 'spin 0.6s linear infinite' }} />
+                {lang === 'en'
+                  ? `Saving ${queueStatus.currentIndex || 1}/${queueStatus.total || images.length}`
+                  : `Salvataggio ${queueStatus.currentIndex || 1}/${queueStatus.total || images.length}`}
               </>
             ) : (
               <>
                 <CheckCircle2 size={20} />
-                {t('saveAndUpdate')}
+                {images.length > 1
+                  ? (lang === 'en' ? `Save and update ${images.length} photos` : `Salva e aggiorna ${images.length} foto`)
+                  : t('saveAndUpdate')}
               </>
             )}
           </button>
@@ -669,7 +835,7 @@ export default function PlayerDetailPage() {
       {/* Preview Images */}
       {images.length > 0 && (
         <div style={{ marginTop: '24px', display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-          {images.map(img => (
+          {images.map((img, index) => (
             <div
               key={img.type}
               style={{
@@ -679,8 +845,53 @@ export default function PlayerDetailPage() {
                 background: 'rgba(255,255,255,0.03)'
               }}
             >
-              <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '8px', opacity: 0.9 }}>
-                {pendingUploadLabels[img.type] || img.type}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                <div style={{ fontSize: '13px', fontWeight: 700, opacity: 0.9 }}>
+                  {pendingUploadLabels[img.type] || img.type}
+                </div>
+                <div style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  padding: '4px 8px',
+                  borderRadius: '999px',
+                  background:
+                    queueStatus.phase === 'idle'
+                      ? 'rgba(255,255,255,0.08)'
+                      : queueStatus.activeType === img.type
+                      ? queueStatus.phase === 'confirming'
+                        ? 'rgba(245, 158, 11, 0.18)'
+                        : 'rgba(0, 212, 255, 0.18)'
+                      : (queueStatus.currentIndex > index + 1)
+                      ? 'rgba(34, 197, 94, 0.18)'
+                      : 'rgba(255,255,255,0.08)',
+                  color:
+                    queueStatus.phase === 'idle'
+                      ? 'rgba(255,255,255,0.75)'
+                      : queueStatus.activeType === img.type
+                      ? queueStatus.phase === 'confirming'
+                        ? '#fbbf24'
+                        : '#7dd3fc'
+                      : (queueStatus.currentIndex > index + 1)
+                      ? '#86efac'
+                      : 'rgba(255,255,255,0.75)'
+                }}>
+                  {queueStatus.phase === 'idle'
+                    ? (lang === 'en' ? 'Ready' : 'Pronta')
+                    : queueStatus.activeType === img.type
+                    ? queueStatus.phase === 'extracting'
+                      ? (lang === 'en' ? 'Analyzing' : 'In analisi')
+                      : queueStatus.phase === 'confirming'
+                      ? (lang === 'en' ? 'Confirm now' : 'Conferma ora')
+                      : (lang === 'en' ? 'Saving' : 'Salvataggio')
+                    : (queueStatus.currentIndex > index + 1)
+                    ? (lang === 'en' ? 'Done' : 'Fatta')
+                    : (lang === 'en' ? 'Queued' : 'In coda')}
+                </div>
+              </div>
+              <div style={{ fontSize: '12px', opacity: 0.72, marginBottom: '10px' }}>
+                {lang === 'en'
+                  ? `Photo ${index + 1} of ${images.length}`
+                  : `Foto ${index + 1} di ${images.length}`}
               </div>
               <img
                 src={img.dataUrl}
@@ -709,6 +920,8 @@ export default function PlayerDetailPage() {
           ageMismatch={confirmModal.ageMismatch}
           hasMismatch={confirmModal.hasMismatch}
           uploadType={confirmModal.uploadType}
+          currentStep={confirmModal.currentStep}
+          totalSteps={confirmModal.totalSteps}
           onConfirm={confirmModal.onConfirm}
           onCancel={confirmModal.onCancel}
         />
@@ -1340,10 +1553,12 @@ function ConfirmUpdateModal({
   ageMismatch,
   hasMismatch,
   uploadType,
+  currentStep,
+  totalSteps,
   onConfirm, 
   onCancel 
 }) {
-  const { t } = useTranslation()
+  const { t, lang } = useTranslation()
   const uploadTypeLabels = {
     stats: t('stats'),
     skills: t('skills'),
@@ -1382,6 +1597,28 @@ function ConfirmUpdateModal({
         <h2 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '20px', marginTop: 0 }}>
           {t('confirmUpdate')} {uploadTypeLabels[uploadType] || ''}
         </h2>
+        <div style={{
+          marginTop: '-8px',
+          marginBottom: '20px',
+          padding: '10px 12px',
+          borderRadius: '10px',
+          background: 'rgba(0, 212, 255, 0.10)',
+          border: '1px solid rgba(0, 212, 255, 0.24)',
+          fontSize: '13px',
+          lineHeight: 1.45,
+          color: '#7dd3fc'
+        }}>
+          <div style={{ fontWeight: 700, marginBottom: '4px' }}>
+            {lang === 'en'
+              ? `Step ${currentStep || 1} of ${totalSteps || 1}`
+              : `Passaggio ${currentStep || 1} di ${totalSteps || 1}`}
+          </div>
+          <div style={{ opacity: 0.9 }}>
+            {lang === 'en'
+              ? 'Confirm this update to continue with the next queued photo.'
+              : 'Conferma questo aggiornamento per continuare con la foto successiva in coda.'}
+          </div>
+        </div>
 
         {/* Confronto Dati */}
         <div style={{ marginBottom: '20px' }}>
