@@ -124,6 +124,11 @@ export default function NewMatchPage() {
         }
         return { ...prev, [section]: dataUrl }
       })
+      setStepData(prev => {
+        const next = { ...prev }
+        delete next[section]
+        return next
+      })
       setError(null)
     } catch (err) {
       console.error('[match/new] image optimization error:', err)
@@ -394,6 +399,10 @@ export default function NewMatchPage() {
   const currentData = stepData[currentSection]
   const progress = ((currentStep + 1) / STEPS.length) * 100
   const extractedResult = stepData.result || null
+  const uploadStepTitle = lang === 'en' ? '1. Upload photo' : '1. Carica foto'
+  const uploadStepHint = lang === 'en'
+    ? 'First upload the screenshot for this section, then extract the data.'
+    : 'Prima carica lo screenshot di questa sezione, poi estrai i dati.'
 
   if (!mounted) {
     return null
@@ -695,6 +704,29 @@ export default function NewMatchPage() {
               <span>{error}</span>
             </div>
           )}
+          <div style={{
+            marginBottom: '16px',
+            padding: '14px',
+            background: 'rgba(0, 212, 255, 0.08)',
+            border: '1px solid rgba(0, 212, 255, 0.22)',
+            borderRadius: '10px'
+          }}>
+            <div style={{
+              fontSize: '15px',
+              fontWeight: 700,
+              color: '#7dd3fc',
+              marginBottom: '4px'
+            }}>
+              {uploadStepTitle}
+            </div>
+            <div style={{
+              fontSize: '13px',
+              lineHeight: 1.45,
+              opacity: 0.82
+            }}>
+              {uploadStepHint}
+            </div>
+          </div>
           {/* Image Preview(s) */}
           {isPlayerRatingsStep ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '16px' }}>
@@ -708,33 +740,61 @@ export default function NewMatchPage() {
                       <img src={playerRatingsImages[slot]} alt="" style={{ width: '100%', height: 'auto', display: 'block' }} />
                     </div>
                   ) : null}
-                  <label style={{ display: 'block' }}>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      onChange={handleImageSelect(currentSection, slot)}
-                      style={{ display: 'none' }}
-                      disabled={extracting || saving}
-                    />
-                    <div style={{
-                      background: playerRatingsImages[slot] ? 'rgba(0, 212, 255, 0.1)' : 'rgba(0, 212, 255, 0.2)',
-                      border: `1px solid ${playerRatingsImages[slot] ? 'rgba(0, 212, 255, 0.5)' : 'rgba(0, 212, 255, 0.3)'}`,
-                      borderRadius: '8px',
-                      padding: '12px',
-                      textAlign: 'center',
-                      cursor: extracting || saving ? 'not-allowed' : 'pointer',
-                      opacity: extracting || saving ? 0.5 : 1,
-                      display: 'flex',
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    <label style={{
+                      flex: '1 1 150px',
+                      minHeight: '48px',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(0, 212, 255, 0.35)',
+                      background: 'rgba(0, 212, 255, 0.18)',
+                      display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '8px',
-                      color: '#00d4ff'
+                      cursor: extracting || saving ? 'not-allowed' : 'pointer',
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      color: '#00d4ff',
+                      opacity: extracting || saving ? 0.5 : 1
                     }}>
-                      <Camera size={18} />
-                      <span>{playerRatingsImages[slot] ? t('changeImage') : t('loadImage')}</span>
-                    </div>
-                  </label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageSelect(currentSection, slot)}
+                        style={{ display: 'none' }}
+                        disabled={extracting || saving}
+                      />
+                      <Upload size={16} />
+                      {t('upload')}
+                    </label>
+                    <label style={{
+                      flex: '1 1 150px',
+                      minHeight: '48px',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(0, 212, 255, 0.35)',
+                      background: 'transparent',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      cursor: extracting || saving ? 'not-allowed' : 'pointer',
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      color: '#00d4ff',
+                      opacity: extracting || saving ? 0.5 : 1
+                    }}>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={handleImageSelect(currentSection, slot)}
+                        style={{ display: 'none' }}
+                        disabled={extracting || saving}
+                      />
+                      <Camera size={16} />
+                      {t('cameraCaptureTitle')}
+                    </label>
+                  </div>
                 </div>
               ))}
             </div>
@@ -746,34 +806,61 @@ export default function NewMatchPage() {
 
           {/* Upload Button (solo per step non pagelle) */}
           {!isPlayerRatingsStep && (
-            <label style={{ display: 'block', width: '100%', marginBottom: '12px' }}>
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={handleImageSelect(currentSection)}
-                style={{ display: 'none' }}
-                disabled={extracting || saving}
-              />
-              <div style={{
-                background: currentImage ? 'rgba(0, 212, 255, 0.1)' : 'rgba(0, 212, 255, 0.2)',
-                border: `1px solid ${currentImage ? 'rgba(0, 212, 255, 0.5)' : 'rgba(0, 212, 255, 0.3)'}`,
-                borderRadius: '8px',
-                padding: '16px',
-                textAlign: 'center',
-                cursor: extracting || saving ? 'not-allowed' : 'pointer',
-                opacity: extracting || saving ? 0.5 : 1,
-                transition: 'all 0.2s ease',
-                display: 'flex',
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
+              <label style={{
+                flex: '1 1 150px',
+                minHeight: '48px',
+                borderRadius: '10px',
+                border: '1px solid rgba(0, 212, 255, 0.35)',
+                background: 'rgba(0, 212, 255, 0.18)',
+                display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                color: '#00d4ff'
+                cursor: extracting || saving ? 'not-allowed' : 'pointer',
+                fontSize: '14px',
+                fontWeight: 700,
+                color: '#00d4ff',
+                opacity: extracting || saving ? 0.5 : 1
               }}>
-                <Camera size={20} />
-                <span>{currentImage ? t('changeImage') : t('loadImage')}</span>
-              </div>
-            </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageSelect(currentSection)}
+                  style={{ display: 'none' }}
+                  disabled={extracting || saving}
+                />
+                <Upload size={16} />
+                {t('upload')}
+              </label>
+              <label style={{
+                flex: '1 1 150px',
+                minHeight: '48px',
+                borderRadius: '10px',
+                border: '1px solid rgba(0, 212, 255, 0.35)',
+                background: 'transparent',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                cursor: extracting || saving ? 'not-allowed' : 'pointer',
+                fontSize: '14px',
+                fontWeight: 700,
+                color: '#00d4ff',
+                opacity: extracting || saving ? 0.5 : 1
+              }}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleImageSelect(currentSection)}
+                  style={{ display: 'none' }}
+                  disabled={extracting || saving}
+                />
+                <Camera size={16} />
+                {t('cameraCaptureTitle')}
+              </label>
+            </div>
           )}
 
           {/* Action Buttons */}
