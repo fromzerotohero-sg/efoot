@@ -105,13 +105,14 @@ function DuplicatePlayerConfirmModal({ state, t }) {
       title={t('duplicatePlayerTitle')}
       message={t('duplicateInFormationMessage', {
         playerName: state.playerName || '',
-        playerAge: state.playerAge || '',
-        slotIndex: state.slotIndex || ''
-      }) || `Il giocatore "${state.playerName || ''}"${state.playerAge || ''} è già presente in formazione nello slot ${state.slotIndex || ''}.`}
+        playerAge: '',
+        slotIndex: ''
+      }) || `Il giocatore "${state.playerName || ''}" sembra già presente in formazione.`}
       details={t('duplicateInFormationDetails')}
       variant="warning"
       confirmLabel={t('replace')}
       cancelLabel={t('cancel')}
+      presentation="sheet"
       onConfirm={state.onConfirm || (() => {})}
       onCancel={state.onCancel || (() => {})}
     />
@@ -333,6 +334,36 @@ export default function GestioneFormazionePage() {
   const showToast = React.useCallback((message, type = 'success') => {
     setToast({ message, type })
   }, [])
+
+  const buildDuplicateGuidance = React.useCallback((playerName) => ({
+    title: t('duplicatePlayerTitle'),
+    message: lang === 'en'
+      ? `Player "${playerName || t('thisPlayer')}" seems already present in your roster.`
+      : `Il giocatore "${playerName || t('thisPlayer')}" sembra già presente nella tua rosa.`,
+    details: lang === 'en'
+      ? 'To avoid duplicates, you can continue and replace the saved copy, or cancel and keep the current one.'
+      : 'Per evitare duplicati, puoi continuare e sostituire quello già salvato oppure annullare e mantenere quello attuale.'
+  }), [lang, t])
+
+  const buildOutOfRoleGuidance = React.useCallback((playerName, slotPosition) => ({
+    title: lang === 'en' ? 'Confirm role change' : 'Conferma cambio ruolo',
+    message: lang === 'en'
+      ? `${playerName || t('thisPlayer')} is not usually used in ${slotPosition}.`
+      : `${playerName || t('thisPlayer')} non viene usato di solito in ${slotPosition}.`,
+    details: lang === 'en'
+      ? 'You can still continue and adjust the formation later if needed.'
+      : 'Puoi comunque continuare e correggere la formazione in seguito, se serve.'
+  }), [lang, t])
+
+  const buildReserveDuplicateFieldGuidance = React.useCallback((playerName) => ({
+    title: t('duplicatePlayerTitle'),
+    message: lang === 'en'
+      ? `Player "${playerName || t('thisPlayer')}" seems already present among your starters.`
+      : `Il giocatore "${playerName || t('thisPlayer')}" sembra già presente tra i tuoi titolari.`,
+    details: lang === 'en'
+      ? 'To avoid duplicates, update the saved player instead of loading a new reserve copy.'
+      : 'Per evitare duplicati, aggiorna il giocatore già salvato invece di caricare una nuova copia in riserva.'
+  }), [lang, t])
 
   /** Aggiorna il riassunto analisi (diagnostic) in cache dopo un salvataggio che modifica rosa/tattica/formazione. Fire-and-forget. */
   const refreshDiagnosticAfterSave = React.useCallback(async () => {
@@ -789,28 +820,19 @@ export default function GestioneFormazionePage() {
 
       // Se ci sono duplicati, gestisci
       if (duplicateInField || duplicateInReserves.length > 0) {
-        const playerAgeStr = playerAge ? ` (${playerAge} ${t('years')})` : ''
-        let errorMsg = t('duplicatePlayerAlert')
-          .replace('${playerName}', playerToAssign.player_name)
-          .replace('${playerAge}', playerAgeStr)
-        
-        if (duplicateInField) {
-          errorMsg += `\n- ${t('duplicateInField').replace('${slotIndex}', duplicateInField.slot_index)}`
-        }
-        if (duplicateInReserves.length > 0) {
-          errorMsg += `\n- ${t('duplicateInReserves').replace('${count}', duplicateInReserves.length)}`
-        }
-        errorMsg += `\n\n${t('deleteDuplicatesAndProceed')}`
+        const duplicateGuidance = buildDuplicateGuidance(playerToAssign.player_name)
         
         // FIX RC-002: Sostituzione window.confirm con ConfirmModal (feature flag)
         const confirmed = await showConfirmSafe({
-          fallback: () => window.confirm(errorMsg),
+          fallback: () => window.confirm(duplicateGuidance.message),
           modalConfig: {
-            title: t('duplicatePlayerTitle'),
-            message: errorMsg,
+            title: duplicateGuidance.title,
+            message: duplicateGuidance.message,
+            details: duplicateGuidance.details,
             variant: 'warning',
-            confirmLabel: t('deleteAndProceed'),
-            cancelLabel: t('cancel')
+            confirmLabel: t('replace'),
+            cancelLabel: t('cancel'),
+            presentation: 'sheet'
           },
           setConfirmModal
         })
@@ -860,43 +882,19 @@ export default function GestioneFormazionePage() {
 
       // Se NON è originale, chiedi conferma con competenza
       if (!isOriginalPosition && originalPositions.length > 0 && slotPosition) {
-        const originalPosList = originalPositions.map(op => op.position).join(', ')
-        const stats = playerToAssign.base_stats || {}
-        
-        // Cerca competenza per posizione slot
-        const competenceInfo = originalPositions.find(
-          op => op.position && op.position.toUpperCase() === slotPosition.toUpperCase()
-        )
-        const competence = competenceInfo?.competence || t('competenceLow')
-        
-        // Costruisci messaggio con statistiche rilevanti
-        let statsWarning = ''
-        if (slotPosition === 'DC' && stats.difesa) {
-          statsWarning = `\n${t('positionNotOriginal').replace('${slotPosition}', slotPosition)}\n- ${t('defending')}: ${stats.difesa} (${t('required')}: 80+)\n`
-        } else if (slotPosition === 'P' && stats.finalizzazione) {
-          statsWarning = `\n${t('positionNotOriginal').replace('${slotPosition}', slotPosition)}\n- ${t('finishing')}: ${stats.finalizzazione} (${t('required')}: 85+)\n`
-        } else {
-          statsWarning = `\n${t('positionNotOriginal').replace('${slotPosition}', slotPosition)}\n`
-        }
-        
-        // Alert con warning e competenza (i18n - sostituzione manuale template)
-        const competenceLabel = competence === 'Alta' ? t('competenceHigh') : competence === 'Intermedia' ? t('competenceMedium') : t('competenceLow')
-        const confirmMessage = t('confirmPositionChange')
-          .replace('${playerName}', playerToAssign.player_name)
-          .replace('${originalPositions}', originalPosList)
-          .replace('${slotPosition}', slotPosition)
-          .replace('${competence}', competenceLabel)
-          .replace('${statsWarning}', statsWarning)
+        const roleGuidance = buildOutOfRoleGuidance(playerToAssign.player_name, slotPosition)
         
         // FIX RC-002: Sostituzione window.confirm con ConfirmModal (feature flag)
         const confirmed = await showConfirmSafe({
-          fallback: () => window.confirm(confirmMessage),
+          fallback: () => window.confirm(roleGuidance.message),
           modalConfig: {
-            title: t('confirmPositionChangeTitle'),
-            message: confirmMessage,
+            title: roleGuidance.title,
+            message: roleGuidance.message,
+            details: roleGuidance.details,
             variant: 'warning',
             confirmLabel: t('confirm'),
-            cancelLabel: t('cancel')
+            cancelLabel: t('cancel'),
+            presentation: 'sheet'
           },
           setConfirmModal
         })
@@ -990,19 +988,18 @@ export default function GestioneFormazionePage() {
       if (!res.ok) {
         // Se è errore di duplicato riserva, gestisci
         if (data.duplicate_reserve_id) {
-          const playerAgeStr = data.duplicate_player_age ? ` (${data.duplicate_player_age} ${t('years')})` : ''
-          const confirmMsg = t('duplicateReserveAlert')
-            .replace('${playerName}', data.duplicate_player_name || t('thisPlayer'))
-            .replace('${playerAge}', playerAgeStr)
+          const duplicateGuidance = buildDuplicateGuidance(data.duplicate_player_name || t('thisPlayer'))
           // FIX RC-002: Sostituzione window.confirm con ConfirmModal (feature flag)
           const confirmed = await showConfirmSafe({
-            fallback: () => window.confirm(confirmMsg),
+            fallback: () => window.confirm(duplicateGuidance.message),
             modalConfig: {
-              title: t('duplicatePlayerTitle'),
-              message: confirmMsg,
+              title: duplicateGuidance.title,
+              message: duplicateGuidance.message,
+              details: duplicateGuidance.details,
               variant: 'warning',
-              confirmLabel: t('deleteAndProceed'),
-              cancelLabel: t('cancel')
+              confirmLabel: t('replace'),
+              cancelLabel: t('cancel'),
+              presentation: 'sheet'
             },
             setConfirmModal
           })
@@ -1032,7 +1029,13 @@ export default function GestioneFormazionePage() {
               throw new Error(t('errorDeletingDuplicateReserve'))
             }
           } else {
-            throw new Error(t('operationCancelledDuplicateReserve'))
+            showToast(
+              lang === 'en'
+                ? 'No changes made. The current player remains in place.'
+                : 'Nessuna modifica effettuata. Il giocatore attuale rimane dov’è.',
+              'warning'
+            )
+            return
           }
         } else {
           throw new Error(data.error || t('errorRemoving'))
@@ -1107,7 +1110,8 @@ export default function GestioneFormazionePage() {
       message: t('confirmDeletePlayer'),
       confirmLabel: t('delete'),
       cancelLabel: t('cancel'),
-      variant: 'danger',
+      variant: 'warning',
+      presentation: 'sheet',
       onConfirm: () => {
         setConfirmModal(null)
         handleDeletePlayerConfirm(playerId)
@@ -1124,7 +1128,8 @@ export default function GestioneFormazionePage() {
       message: t('confirmDeleteReserve'),
       confirmLabel: t('delete'),
       cancelLabel: t('cancel'),
-      variant: 'danger',
+      variant: 'warning',
+      presentation: 'sheet',
       onConfirm: () => {
         setConfirmModal(null)
         handleDeletePlayerConfirm(playerId)
@@ -1420,6 +1425,37 @@ export default function GestioneFormazionePage() {
         }
         return false
       }) : null
+
+      const duplicateStarterWhileSavingReserve = !isSavingStarter ? titolari.find(p => {
+        const pName = String(p.player_name || '').trim().toLowerCase()
+        const pAge = p.age != null ? Number(p.age) : null
+
+        if (playerName && pName && playerAge && pAge) {
+          return pName === playerName && pAge === playerAge
+        }
+        if (playerName && pName) {
+          return pName === playerName
+        }
+        return false
+      }) : null
+
+      if (duplicateStarterWhileSavingReserve) {
+        const duplicateGuidance = buildReserveDuplicateFieldGuidance(extractedPlayerData.player_name)
+        setUploadingPlayer(false)
+        setConfirmModal({
+          show: true,
+          title: duplicateGuidance.title,
+          message: duplicateGuidance.message,
+          details: duplicateGuidance.details,
+          confirmLabel: lang === 'en' ? 'Got it' : 'Ho capito',
+          cancelLabel: t('cancel'),
+          variant: 'warning',
+          presentation: 'sheet',
+          onConfirm: () => setConfirmModal(null),
+          onCancel: () => setConfirmModal(null)
+        })
+        return
+      }
 
       if (duplicatePlayer) {
         const playerAgeStr = playerAge ? ` (${playerAge} ${t('years')})` : ''
