@@ -90,6 +90,48 @@ export default function GestioneProfiloPage() {
     return t('transactionUsage')
   }
 
+  const servicePricing = lang === 'en'
+    ? [
+        { name: 'AI assistant chat', hp: '2 HP', detail: 'for each coach response' },
+        { name: 'Match analysis', hp: '2 HP', detail: 'for each complete analysis' },
+        { name: 'Player/coach extraction', hp: '2 HP', detail: 'for each extracted screenshot' },
+        { name: 'Game statistics extraction', hp: '2-4 HP', detail: '2 HP per screenshot (up to 2)' },
+        { name: 'Pre-match countermeasures', hp: '4 HP', detail: 'full flow before kickoff' },
+        { name: 'Live Coach voice', hp: '2 + 5 HP/min', detail: '2 HP start, then 5 HP for each extra minute' }
+      ]
+    : [
+        { name: 'Chat assistente AI', hp: '2 HP', detail: 'per ogni risposta del coach' },
+        { name: 'Analisi partita', hp: '2 HP', detail: 'per ogni analisi completa' },
+        { name: 'Estrazione giocatore/allenatore', hp: '2 HP', detail: 'per ogni screenshot estratto' },
+        { name: 'Estrazione statistiche di gioco', hp: '2-4 HP', detail: '2 HP per screenshot (fino a 2)' },
+        { name: 'Contromisure pre-partita', hp: '4 HP', detail: 'flusso completo prima del match' },
+        { name: 'Live Coach vocale', hp: '2 + 5 HP/min', detail: '2 HP all’avvio, poi 5 HP per ogni minuto extra' }
+      ]
+
+  const billingRules = lang === 'en'
+    ? [
+        'HP are consumed when a paid AI service starts.',
+        'If your remaining balance is not enough, the service is blocked before use.',
+        'Your balance and recent activity are updated automatically after each usage.'
+      ]
+    : [
+        'Gli HP vengono consumati quando parte un servizio AI a pagamento.',
+        'Se il saldo residuo non e sufficiente, il servizio viene bloccato prima dell\'uso.',
+        'Saldo e attivita recente si aggiornano automaticamente dopo ogni utilizzo.'
+      ]
+
+  const usageExamples = lang === 'en'
+    ? [
+        { title: 'Quick coaching chat', text: '5 coach replies -> 10 HP' },
+        { title: 'Pre-match setup', text: 'Countermeasures full flow -> 4 HP' },
+        { title: 'Live Coach session', text: '8 minutes voice session -> 42 HP (2 + 8x5)' }
+      ]
+    : [
+        { title: 'Sessione chat veloce', text: '5 risposte del coach -> 10 HP' },
+        { title: 'Preparazione pre-partita', text: 'Flusso completo contromisure -> 4 HP' },
+        { title: 'Sessione Live Coach', text: '8 minuti vocali -> 42 HP (2 + 8x5)' }
+      ]
+
   return (
     <main data-tour-id="tour-gestione-profilo-intro" style={{
       padding: 'clamp(12px, 4vw, 24px)',
@@ -231,6 +273,171 @@ export default function GestioneProfiloPage() {
               {t('acquista')}
             </button>
           </div>
+
+          {/* Guida servizio HP cliente */}
+          <section id="hp-service-guide" className="card" style={{ padding: 'clamp(16px, 3vw, 24px)', marginBottom: '24px' }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              gap: '12px',
+              marginBottom: '14px',
+              flexWrap: 'wrap'
+            }}>
+              <div style={{ minWidth: 0 }}>
+                <h2 style={{
+                  margin: 0,
+                  fontSize: 'clamp(18px, 3.2vw, 22px)',
+                  fontWeight: 700,
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  flexWrap: 'wrap'
+                }}>
+                  <Wallet size={20} color="var(--neon-blue)" />
+                  {lang === 'en' ? 'How Hero Points work' : 'Come funzionano gli Hero Points'}
+                </h2>
+                <p style={{
+                  margin: '8px 0 0 0',
+                  fontSize: 'clamp(13px, 2.6vw, 14px)',
+                  color: 'rgba(255,255,255,0.78)',
+                  maxWidth: '780px'
+                }}>
+                  {lang === 'en'
+                    ? 'Clear pricing by service, simple rules, and practical examples before you start.'
+                    : 'Costo chiaro per servizio, regole semplici ed esempi pratici prima di iniziare.'}
+                </p>
+              </div>
+              <span style={{
+                fontSize: '12px',
+                color: 'rgba(0,212,255,0.9)',
+                background: 'rgba(0,212,255,0.12)',
+                border: '1px solid rgba(0,212,255,0.3)',
+                borderRadius: '999px',
+                padding: '6px 10px',
+                minHeight: '32px',
+                display: 'inline-flex',
+                alignItems: 'center'
+              }}>
+                {lang === 'en' ? 'Client view' : 'Vista cliente'}
+              </span>
+            </div>
+
+            <div style={{
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              marginBottom: '16px'
+            }}>
+              {servicePricing.map((item, index) => (
+                <div
+                  key={`${item.name}-${index}`}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'minmax(0, 1fr) auto',
+                    gap: '12px',
+                    padding: 'clamp(12px, 2.5vw, 14px) clamp(12px, 3vw, 16px)',
+                    borderBottom: index < servicePricing.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+                    alignItems: 'center'
+                  }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{
+                      fontSize: 'clamp(14px, 2.7vw, 15px)',
+                      fontWeight: 600,
+                      color: '#fff',
+                      overflowWrap: 'anywhere'
+                    }}>
+                      {item.name}
+                    </div>
+                    <div style={{
+                      fontSize: 'clamp(12px, 2.5vw, 13px)',
+                      color: 'rgba(255,255,255,0.68)',
+                      marginTop: '3px',
+                      overflowWrap: 'anywhere'
+                    }}>
+                      {item.detail}
+                    </div>
+                  </div>
+                  <span style={{
+                    justifySelf: 'end',
+                    fontSize: 'clamp(13px, 2.8vw, 14px)',
+                    fontWeight: 700,
+                    color: 'var(--neon-blue)',
+                    background: 'rgba(0,212,255,0.08)',
+                    border: '1px solid rgba(0,212,255,0.28)',
+                    borderRadius: '8px',
+                    padding: '6px 10px',
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {item.hp}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))',
+              gap: '12px',
+              marginBottom: '14px'
+            }}>
+              <div style={{
+                border: '1px solid rgba(34,197,94,0.35)',
+                background: 'rgba(34,197,94,0.08)',
+                borderRadius: '10px',
+                padding: '12px'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '8px',
+                  color: '#86efac',
+                  fontWeight: 600,
+                  fontSize: '14px'
+                }}>
+                  <CheckCircle2 size={16} />
+                  {lang === 'en' ? 'Billing rules' : 'Regole di addebito'}
+                </div>
+                <ul style={{ margin: 0, paddingLeft: '18px', color: 'rgba(255,255,255,0.85)', fontSize: '13px', lineHeight: 1.45 }}>
+                  {billingRules.map((rule, index) => (
+                    <li key={`rule-${index}`} style={{ marginBottom: index < billingRules.length - 1 ? '6px' : 0 }}>
+                      {rule}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div style={{
+                border: '1px solid rgba(251,146,60,0.35)',
+                background: 'rgba(251,146,60,0.08)',
+                borderRadius: '10px',
+                padding: '12px'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '8px',
+                  color: '#fdba74',
+                  fontWeight: 600,
+                  fontSize: '14px'
+                }}>
+                  <AlertCircle size={16} />
+                  {lang === 'en' ? 'Useful examples' : 'Esempi utili'}
+                </div>
+                <ul style={{ margin: 0, paddingLeft: '18px', color: 'rgba(255,255,255,0.85)', fontSize: '13px', lineHeight: 1.45 }}>
+                  {usageExamples.map((example, index) => (
+                    <li key={`example-${index}`} style={{ marginBottom: index < usageExamples.length - 1 ? '6px' : 0 }}>
+                      <strong>{example.title}:</strong> {example.text}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </section>
 
           {/* 4 card: Hero Points, Analisi totali, Rank, Membro dal */}
           <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
