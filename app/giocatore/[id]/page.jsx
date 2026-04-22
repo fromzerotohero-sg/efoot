@@ -35,6 +35,11 @@ export default function PlayerDetailPage() {
     skills: true,
     boosters: true
   })
+  const pendingUploadLabels = React.useMemo(() => ({
+    stats: t('statsSection'),
+    skills: t('skillsSection'),
+    booster: t('boostersSection')
+  }), [t])
 
   // Carica dati giocatore
   React.useEffect(() => {
@@ -96,12 +101,21 @@ export default function PlayerDetailPage() {
     setError(null)
     try {
       const optimized = await optimizeImageFile(file)
-      setImages([{
-        file,
-        dataUrl: optimized.dataUrl,
-        name: file.name || 'camera.jpg',
-        type
-      }])
+      setImages(prev => {
+        const nextImage = {
+          file,
+          dataUrl: optimized.dataUrl,
+          name: file.name || 'camera.jpg',
+          type
+        }
+        const existingIndex = prev.findIndex(img => img.type === type)
+        if (existingIndex >= 0) {
+          const next = [...prev]
+          next[existingIndex] = nextImage
+          return next
+        }
+        return [...prev, nextImage]
+      })
       setUploadType(type)
     } catch (err) {
       console.error('[PlayerDetail] image optimization error:', err)
@@ -125,10 +139,10 @@ export default function PlayerDetailPage() {
   }
 
   // Funzione per aggiornare il giocatore con i dati estratti
-  const performUpdate = async (extractedPlayerData, type) => {
-    if (!player) {
+  const performUpdate = async (extractedPlayerData, type, currentPlayerData = player) => {
+    if (!currentPlayerData) {
       setError(t('playerNotFound'))
-      return
+      return null
     }
     
     setUploading(true)
@@ -136,7 +150,9 @@ export default function PlayerDetailPage() {
 
     try {
       const updateData = {}
-      const photoSlots = player.photo_slots || {}
+      const photoSlots = currentPlayerData.photo_slots && typeof currentPlayerData.photo_slots === 'object'
+        ? { ...currentPlayerData.photo_slots }
+        : {}
 
       if (type === 'stats') {
         if (extractedPlayerData.base_stats) {
@@ -153,7 +169,7 @@ export default function PlayerDetailPage() {
         // Stili di gioco IA: salva in metadata se estratti (non c'è colonna dedicata)
         if (extractedPlayerData.ai_playstyles && Array.isArray(extractedPlayerData.ai_playstyles) && extractedPlayerData.ai_playstyles.length > 0) {
           updateData.metadata = {
-            ...(player.metadata && typeof player.metadata === 'object' ? player.metadata : {}),
+            ...(currentPlayerData.metadata && typeof currentPlayerData.metadata === 'object' ? currentPlayerData.metadata : {}),
             ai_playstyles: extractedPlayerData.ai_playstyles
           }
         }
@@ -198,28 +214,95 @@ export default function PlayerDetailPage() {
       const { player: updatedPlayer } = await res.json()
 
       setPlayer(updatedPlayer)
-      setImages([])
-      setUploadType(null)
-      
-      // Success message
       setTimeout(() => {
         setError(null)
       }, 3000)
+      return updatedPlayer
     } catch (err) {
       console.error('[PlayerDetail] Update error:', err)
       setError(err.message || t('errorUpdatingPlayer'))
+      return null
     } finally {
       setUploading(false)
     }
   }
 
+  const extractAndValidateImage = async (img, currentPlayerData, token) => {
+    const extractRes = await fetch('/api/extract-player', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'Accept-Language': lang === 'en' ? 'en' : 'it'
+      },
+      body: JSON.stringify({ imageDataUrl: img.dataUrl })
+    })
+
+    let extractData
+    try {
+      extractData = await extractRes.json()
+    } catch (_) {
+      throw new Error(mapErrorToUserMessage('500', t('errorExtractingData'), lang).message)
+    }
+    if (!extractRes.ok) {
+      const { message } = mapErrorToUserMessage(extractData?.error || '', t('errorExtractingData'), lang)
+      throw new Error(message)
+    }
+
+    if (!extractData.player) {
+      throw new Error(t('unableToExtractData'))
+    }
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('credits-consumed'))
+
+    const normalizeBasic = (value) => {
+      if (!value) return ''
+      return String(value).toLowerCase().trim().replace(/\s+/g, ' ')
+    }
+
+    const normalizeTeamKey = (value) => {
+      const s = normalizeBasic(value)
+      if (!s) return ''
+      return s
+        .replace(/[–—]/g, '-')
+        .replace(/[^a-z0-9\- ]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .replace(/\bb\s+(?=\d)/g, 'b')
+        .replace(/\s*-\s*/g, '-')
+        .trim()
+    }
+
+    const extractedName = normalizeBasic(extractData.player.player_name)
+    const currentName = normalizeBasic(currentPlayerData.player_name)
+    const nameMismatch = extractedName !== currentName
+
+    const extractedTeam = normalizeTeamKey(extractData.player.team)
+    const currentTeam = normalizeTeamKey(currentPlayerData.team)
+    const teamMismatch = extractedTeam !== currentTeam && extractedTeam !== '' && currentTeam !== ''
+
+    const extractedPosition = normalizeBasic(extractData.player.position)
+    const currentPosition = normalizeBasic(currentPlayerData.position)
+    const positionMismatch = extractedPosition !== currentPosition && extractedPosition !== '' && currentPosition !== ''
+
+    const extractedAge = extractData.player.age ? Number(extractData.player.age) : null
+    const currentAge = currentPlayerData.age ? Number(currentPlayerData.age) : null
+    const ageMismatch = extractedAge !== null && currentAge !== null && extractedAge !== currentAge
+
+    return {
+      extractedData: extractData.player,
+      nameMismatch,
+      teamMismatch,
+      positionMismatch,
+      ageMismatch,
+      hasMismatch: nameMismatch || positionMismatch || ageMismatch
+    }
+  }
+
   const handleUploadAndUpdate = async () => {
-    if (images.length === 0 || !uploadType || !player) {
+    if (images.length === 0 || !player) {
       setError(t('selectOneImage'))
       return
     }
 
-    setUploading(true)
     setError(null)
 
     try {
@@ -234,105 +317,50 @@ export default function PlayerDetailPage() {
         throw new Error(t('sessionExpired'))
       }
 
-      const img = images[0]
+      const pendingImages = [...images]
 
-      // 1. Estrai dati dall'immagine
-      const extractRes = await fetch('/api/extract-player', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'Accept-Language': lang === 'en' ? 'en' : 'it'
-        },
-        body: JSON.stringify({ imageDataUrl: img.dataUrl })
-      })
-
-      let extractData
-      try {
-        extractData = await extractRes.json()
-      } catch (_) {
-        throw new Error(mapErrorToUserMessage('500', t('errorExtractingData'), lang).message)
-      }
-      if (!extractRes.ok) {
-        const { message } = mapErrorToUserMessage(extractData?.error || '', t('errorExtractingData'), lang)
-        throw new Error(message)
-      }
-
-      if (!extractData.player) {
-        throw new Error(t('unableToExtractData'))
-      }
-      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('credits-consumed'))
-
-      // 2. VALIDAZIONE: Confronta nome + squadra + ruolo (o età)
-      const normalizeBasic = (value) => {
-        if (!value) return ''
-        return String(value).toLowerCase().trim().replace(/\s+/g, ' ')
-      }
-
-      // Normalizzazione "robusta" per confronti soft (es. squadre: "Chelsea B12-13" vs "Chelsea B 12-13")
-      const normalizeTeamKey = (value) => {
-        const s = normalizeBasic(value)
-        if (!s) return ''
-        return s
-          // uniforma trattini e separatori comuni
-          .replace(/[–—]/g, '-')
-          // elimina caratteri non informativi mantenendo lettere/numeri e '-'
-          .replace(/[^a-z0-9\- ]/g, ' ')
-          // collassa spazi
-          .replace(/\s+/g, ' ')
-          // "b 12-13" -> "b12-13"
-          .replace(/\bb\s+(?=\d)/g, 'b')
-          // rimuove spazi attorno ai trattini: "12 - 13" -> "12-13"
-          .replace(/\s*-\s*/g, '-')
-          .trim()
-      }
-
-      const extractedName = normalizeBasic(extractData.player.player_name)
-      const currentName = normalizeBasic(player.player_name)
-      const nameMismatch = extractedName !== currentName
-
-      const extractedTeam = normalizeTeamKey(extractData.player.team)
-      const currentTeam = normalizeTeamKey(player.team)
-      const teamMismatch = extractedTeam !== currentTeam && extractedTeam !== '' && currentTeam !== ''
-
-      const extractedPosition = normalizeBasic(extractData.player.position)
-      const currentPosition = normalizeBasic(player.position)
-      const positionMismatch = extractedPosition !== currentPosition && extractedPosition !== '' && currentPosition !== ''
-
-      // Fallback: confronta età se ruolo non disponibile
-      const extractedAge = extractData.player.age ? Number(extractData.player.age) : null
-      const currentAge = player.age ? Number(player.age) : null
-      const ageMismatch = extractedAge !== null && currentAge !== null && extractedAge !== currentAge
-
-      // Policy: la "squadra" è un warning soft (non blocca/non diventa mismatch critico)
-      const hasMismatch = nameMismatch || positionMismatch || ageMismatch
-
-      // 3. Mostra modal conferma SEMPRE
-      setConfirmModal({
-        show: true,
-        extractedData: extractData.player,
-        nameMismatch,
-        teamMismatch,
-        positionMismatch,
-        ageMismatch,
-        hasMismatch,
-        uploadType,
-        onConfirm: async () => {
-          await performUpdate(extractData.player, uploadType)
-          setConfirmModal(null)
-        },
-        onCancel: () => {
+      const openConfirmationForIndex = async (index, currentPlayerData) => {
+        if (index >= pendingImages.length) {
           setImages([])
           setUploadType(null)
           setConfirmModal(null)
+          return
         }
-      })
-      setUploading(false)
+
+        const img = pendingImages[index]
+        const validation = await extractAndValidateImage(img, currentPlayerData, token)
+
+        setConfirmModal({
+          show: true,
+          extractedData: validation.extractedData,
+          nameMismatch: validation.nameMismatch,
+          teamMismatch: validation.teamMismatch,
+          positionMismatch: validation.positionMismatch,
+          ageMismatch: validation.ageMismatch,
+          hasMismatch: validation.hasMismatch,
+          uploadType: img.type,
+          onConfirm: async () => {
+            const updatedPlayer = await performUpdate(validation.extractedData, img.type, currentPlayerData)
+            if (!updatedPlayer) {
+              setConfirmModal(null)
+              return
+            }
+            setConfirmModal(null)
+            await openConfirmationForIndex(index + 1, updatedPlayer)
+          },
+          onCancel: () => {
+            setImages([])
+            setUploadType(null)
+            setConfirmModal(null)
+          }
+        })
+      }
+
+      await openConfirmationForIndex(0, player)
     } catch (err) {
       console.error('[PlayerDetail] Upload error:', err)
       const { message } = mapErrorToUserMessage(err, t('errorUploadingPhoto'), lang)
       setError(message)
-      setUploading(false)
     }
   }
 
@@ -638,19 +666,35 @@ export default function PlayerDetailPage() {
         </div>
       )}
 
-      {/* Preview Image */}
+      {/* Preview Images */}
       {images.length > 0 && (
-        <div style={{ marginTop: '24px', textAlign: 'center' }}>
-          <img
-            src={images[0].dataUrl}
-            alt="Preview"
-            style={{
-              maxWidth: '100%',
-              maxHeight: '400px',
-              borderRadius: '8px',
-              border: '1px solid rgba(255,255,255,0.1)'
-            }}
-          />
+        <div style={{ marginTop: '24px', display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+          {images.map(img => (
+            <div
+              key={img.type}
+              style={{
+                padding: '12px',
+                borderRadius: '10px',
+                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'rgba(255,255,255,0.03)'
+              }}
+            >
+              <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '8px', opacity: 0.9 }}>
+                {pendingUploadLabels[img.type] || img.type}
+              </div>
+              <img
+                src={img.dataUrl}
+                alt="Preview"
+                style={{
+                  width: '100%',
+                  maxHeight: '260px',
+                  objectFit: 'cover',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255,255,255,0.1)'
+                }}
+              />
+            </div>
+          ))}
         </div>
       )}
 
