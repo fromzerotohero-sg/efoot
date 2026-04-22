@@ -9,6 +9,7 @@ import {
   BookOpen,
   LayoutGrid,
   User,
+  Wallet,
   Users as UsersIcon,
   Calendar,
   BarChart3,
@@ -271,6 +272,52 @@ export default function SidebarNew() {
             >
               <User size={18} style={{ filter: isActive('/impostazioni-profilo') ? 'drop-shadow(0 0 5px rgba(0, 212, 255, 0.8))' : 'none' }} />
               <span>{t('profile')}</span>
+            </Link>
+
+            {/* Hero Points / Gestione profilo */}
+            <Link
+              href="/gestione-profilo"
+              onClick={() => setIsOpen(false)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 16px',
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: 600,
+                background: isActive('/gestione-profilo')
+                  ? 'linear-gradient(145deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 161, 166, 0.1) 100%)'
+                  : 'transparent',
+                color: isActive('/gestione-profilo') ? '#00d4ff' : 'rgba(255, 255, 255, 0.6)',
+                border: isActive('/gestione-profilo')
+                  ? '1px solid rgba(0, 212, 255, 0.4)'
+                  : '1px solid transparent',
+                boxShadow: isActive('/gestione-profilo')
+                  ? '0 0 20px rgba(0, 212, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                  : 'none',
+                transition: 'all 0.3s ease',
+                cursor: 'pointer',
+                textDecoration: 'none',
+                textShadow: isActive('/gestione-profilo') ? '0 0 10px rgba(0, 212, 255, 0.5)' : 'none'
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive('/gestione-profilo')) {
+                  e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)'
+                  e.currentTarget.style.color = '#00d4ff'
+                  e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.25)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive('/gestione-profilo')) {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)'
+                  e.currentTarget.style.borderColor = 'transparent'
+                }
+              }}
+            >
+              <Wallet size={18} style={{ filter: isActive('/gestione-profilo') ? 'drop-shadow(0 0 5px rgba(0, 212, 255, 0.8))' : 'none' }} />
+              <span>{t('gestioneProfilo')}</span>
             </Link>
 
             {/* La tua squadra */}

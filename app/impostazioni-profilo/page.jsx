@@ -252,8 +252,7 @@ export default function ImpostazioniProfiloPage() {
           </p>
         </div>
         <a
-          href="https://home.fromzerotohero.io/dashboard?usage"
-          target="_blank"
+          href="/gestione-profilo"
           className="neon-button"
           style={{
             display: 'flex',
