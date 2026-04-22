@@ -4,7 +4,7 @@ import { callOpenAIWithRetry } from '@/lib/openaiHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { getRelevantSections, classifyQuestion } from '@/lib/ragHelper'
-import { deductCredits, AI_COST } from '@/lib/creditService'
+import { deductCredits, AI_COST, handleCreditOperationError } from '@/lib/creditService'
 import { getCoachPoliciesText, getCoachSharedCoreText } from '@/lib/coachPromptRules'
 
 export const runtime = 'nodejs'
@@ -839,6 +839,7 @@ COACH OUTPUT: 2-4 imperative sentences; answer the specific question; vary advic
 }
 
 export async function POST(req) {
+  let creditChargeContext = null
   try {
     // Autenticazione
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -1101,6 +1102,7 @@ export async function POST(req) {
           { status: 402, headers: { 'Content-Language': lang } }
         )
       }
+      creditChargeContext = { admin, userId, cost: AI_COST, operationType: 'assistant-chat', functionName: 'assistant-chat:POST' }
     }
     
     // Modello: OPENAI_MODEL in env (es. gpt-5.2, gpt-5.1) oppure default gpt-5.2 (alias gpt-5 deprecato da OpenAI).
@@ -1272,6 +1274,18 @@ export async function POST(req) {
     const errType = error && error.type
     console.error('[assistant-chat] Error:', errType || msg || error)
     if (error && error.stack) console.error('[assistant-chat] Stack:', error.stack)
+
+    if (creditChargeContext?.admin && creditChargeContext?.userId) {
+      await handleCreditOperationError(creditChargeContext.admin, {
+        userId: creditChargeContext.userId,
+        cost: creditChargeContext.cost,
+        operationType: creditChargeContext.operationType,
+        functionName: creditChargeContext.functionName,
+        error,
+        errorType: errType || null,
+        metadata: { endpoint: '/api/assistant-chat' }
+      })
+    }
 
     if (errType === 'rate_limit' || /rate limit|429/i.test(msg)) {
       return NextResponse.json(

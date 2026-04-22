@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { extractBearerToken, validateToken } from '@/lib/authHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
-import { deductCredits } from '@/lib/creditService'
+import { deductCredits, handleCreditOperationError } from '@/lib/creditService'
 import { getLiveCoachMinuteBlocks, LIVE_COACH_MINUTE_COST } from '@/lib/liveCoachPricing'
 
 export const runtime = 'nodejs'
@@ -39,6 +39,7 @@ async function resolveUser(req) {
 }
 
 export async function POST(req) {
+  let creditChargeContext = null
   try {
     const auth = await resolveUser(req)
     if (auth.error) return NextResponse.json({ error: auth.error }, { status: auth.status })
@@ -100,13 +101,14 @@ export async function POST(req) {
           { status: 402 }
         )
       }
+      creditChargeContext = { admin, userId, cost: additionalCost, operationType: 'live-coach-minute', functionName: 'live-coach-heartbeat:POST' }
     }
 
     const nextHeartbeatCount = (Number(sessionRow.heartbeat_count) || 0) + 1
     const nextMinuteBlocks = minuteBlocksBilled + missingBlocks
     const nextTotalCost = (Number(sessionRow.total_hp_charged) || 0) + additionalCost
 
-    await admin
+    const { error: updateError } = await admin
       .from('live_coach_sessions')
       .update({
         status: 'active',
@@ -118,6 +120,9 @@ export async function POST(req) {
       })
       .eq('id', sessionId)
       .eq('user_id', userId)
+    if (updateError) {
+      throw new Error(`Failed to persist heartbeat session state: ${updateError.message}`)
+    }
 
     return NextResponse.json({
       ok: true,
@@ -127,6 +132,17 @@ export async function POST(req) {
     })
   } catch (error) {
     console.error('[live-coach/heartbeat] Error:', error)
+    if (creditChargeContext?.admin && creditChargeContext?.userId) {
+      await handleCreditOperationError(creditChargeContext.admin, {
+        userId: creditChargeContext.userId,
+        cost: creditChargeContext.cost,
+        operationType: creditChargeContext.operationType,
+        functionName: creditChargeContext.functionName,
+        error,
+        errorType: 'server_error',
+        metadata: { endpoint: '/api/live-coach/heartbeat' }
+      })
+    }
     return NextResponse.json({ error: 'Heartbeat failed.' }, { status: 500 })
   }
 }

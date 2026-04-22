@@ -4,13 +4,14 @@ import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { callOpenAIWithRetry } from '@/lib/openaiHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { generateCountermeasuresPrompt, validateCountermeasuresOutput } from '@/lib/countermeasuresHelper'
-import { deductCredits, AI_COST } from '@/lib/creditService'
+import { deductCredits, AI_COST, handleCreditOperationError } from '@/lib/creditService'
 import { validateIndividualInstruction } from '@/lib/tacticalInstructions'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function POST(req) {
+  let creditChargeContext = null
   try {
     // Autenticazione
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -404,6 +405,7 @@ if (process.env.NODE_ENV !== 'production') {
         { status: 402 }
       )
     }
+    creditChargeContext = { admin, userId, cost: AI_COST, operationType: 'generate-countermeasures', functionName: 'generate-countermeasures:POST' }
 
     // 10. Default gpt-5.2 (alias gpt-5 deprecato), override con OPENAI_MODEL; fallback gpt-4o, gpt-4-turbo, gpt-4
     const apiKey = process.env.OPENAI_API_KEY
@@ -456,6 +458,18 @@ if (process.env.NODE_ENV !== 'production') {
             errorData.error?.type === 'invalid_request_error' ||
             response.status === 400) {
           console.error(`[generate-countermeasures] Invalid request error:`, errorData)
+          if (creditChargeContext?.admin && creditChargeContext?.userId) {
+            await handleCreditOperationError(creditChargeContext.admin, {
+              userId: creditChargeContext.userId,
+              cost: creditChargeContext.cost,
+              operationType: creditChargeContext.operationType,
+              functionName: creditChargeContext.functionName,
+              error: errorData?.error?.message || 'Invalid request error',
+              statusCode: 500,
+              errorType: 'provider_error',
+              metadata: { endpoint: '/api/generate-countermeasures', stage: 'invalid_request_error' }
+            })
+          }
           return NextResponse.json(
             { error: errorData.error?.message || 'Invalid request. Please check your input and try again.' },
             { status: 400 }
@@ -493,6 +507,17 @@ if (process.env.NODE_ENV !== 'production') {
                           'Unable to generate countermeasures. Please try again.'
       
       console.error('[generate-countermeasures] All models failed. Last error:', lastErrorDetails || lastError)
+      if (creditChargeContext?.admin && creditChargeContext?.userId) {
+        await handleCreditOperationError(creditChargeContext.admin, {
+          userId: creditChargeContext.userId,
+          cost: creditChargeContext.cost,
+          operationType: creditChargeContext.operationType,
+          functionName: creditChargeContext.functionName,
+          error: errorMessage,
+          errorType: 'provider_error',
+          metadata: { endpoint: '/api/generate-countermeasures', stage: 'all_models_failed' }
+        })
+      }
       
       return NextResponse.json(
         { error: errorMessage },
@@ -505,6 +530,17 @@ if (process.env.NODE_ENV !== 'production') {
     const content = data.choices?.[0]?.message?.content
 
     if (!content) {
+      if (creditChargeContext?.admin && creditChargeContext?.userId) {
+        await handleCreditOperationError(creditChargeContext.admin, {
+          userId: creditChargeContext.userId,
+          cost: creditChargeContext.cost,
+          operationType: creditChargeContext.operationType,
+          functionName: creditChargeContext.functionName,
+          error: 'No content in AI response',
+          errorType: 'server_error',
+          metadata: { endpoint: '/api/generate-countermeasures', stage: 'empty_content' }
+        })
+      }
       return NextResponse.json(
         { error: 'No content in response' },
         { status: 500 }
@@ -516,6 +552,17 @@ if (process.env.NODE_ENV !== 'production') {
       countermeasures = JSON.parse(content)
     } catch (parseErr) {
       console.error('[generate-countermeasures] JSON parse error:', parseErr)
+      if (creditChargeContext?.admin && creditChargeContext?.userId) {
+        await handleCreditOperationError(creditChargeContext.admin, {
+          userId: creditChargeContext.userId,
+          cost: creditChargeContext.cost,
+          operationType: creditChargeContext.operationType,
+          functionName: creditChargeContext.functionName,
+          error: parseErr,
+          errorType: 'server_error',
+          metadata: { endpoint: '/api/generate-countermeasures', stage: 'parse_response' }
+        })
+      }
       return NextResponse.json(
         { error: 'Invalid response format from AI' },
         { status: 500 }
@@ -526,6 +573,17 @@ if (process.env.NODE_ENV !== 'production') {
     const validation = validateCountermeasuresOutput(countermeasures)
     if (!validation.valid) {
       console.error('[generate-countermeasures] Validation error:', validation.error)
+      if (creditChargeContext?.admin && creditChargeContext?.userId) {
+        await handleCreditOperationError(creditChargeContext.admin, {
+          userId: creditChargeContext.userId,
+          cost: creditChargeContext.cost,
+          operationType: creditChargeContext.operationType,
+          functionName: creditChargeContext.functionName,
+          error: validation.error || 'Invalid AI output',
+          errorType: 'server_error',
+          metadata: { endpoint: '/api/generate-countermeasures', stage: 'validate_output' }
+        })
+      }
       return NextResponse.json(
         { error: `Invalid countermeasures format: ${validation.error}` },
         { status: 500 }
@@ -722,6 +780,17 @@ if (process.env.NODE_ENV !== 'production') {
     })
   } catch (err) {
     console.error('[generate-countermeasures] Error:', err)
+    if (creditChargeContext?.admin && creditChargeContext?.userId) {
+      await handleCreditOperationError(creditChargeContext.admin, {
+        userId: creditChargeContext.userId,
+        cost: creditChargeContext.cost,
+        operationType: creditChargeContext.operationType,
+        functionName: creditChargeContext.functionName,
+        error: err,
+        errorType: err?.type || null,
+        metadata: { endpoint: '/api/generate-countermeasures', stage: 'outer_catch' }
+      })
+    }
     
     let errorMessage = 'Error generating countermeasures'
     let statusCode = 500

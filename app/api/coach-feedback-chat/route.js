@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { callOpenAIWithRetry } from '@/lib/openaiHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
-import { deductCredits, AI_COST } from '@/lib/creditService'
+import { deductCredits, AI_COST, handleCreditOperationError } from '@/lib/creditService'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -178,6 +178,7 @@ function buildMatchContext(match) {
 
 export async function POST(req) {
   const lang = getLang(req)
+  let creditChargeContext = null
 
   try {
     // 1. Config
@@ -276,6 +277,7 @@ export async function POST(req) {
         { status: 402 }
       )
     }
+    creditChargeContext = { admin, userId, cost: AI_COST, operationType: 'coach-feedback-chat', functionName: 'coach-feedback-chat:POST' }
 
     // 7. Call OpenAI (default gpt-5.2, come assistant-chat; fallback a gpt-4o se modello non disponibile)
     const model = process.env.OPENAI_MODEL || 'gpt-5.2'
@@ -318,6 +320,17 @@ export async function POST(req) {
 
   } catch (error) {
     console.error('[coach-feedback-chat] Error:', error?.message || error, 'type:', error?.type)
+    if (creditChargeContext?.admin && creditChargeContext?.userId) {
+      await handleCreditOperationError(creditChargeContext.admin, {
+        userId: creditChargeContext.userId,
+        cost: creditChargeContext.cost,
+        operationType: creditChargeContext.operationType,
+        functionName: creditChargeContext.functionName,
+        error,
+        errorType: error?.type || null,
+        metadata: { endpoint: '/api/coach-feedback-chat' }
+      })
+    }
     return NextResponse.json({ error: ERRORS.SERVER[lang] }, { status: 500 })
   }
 }

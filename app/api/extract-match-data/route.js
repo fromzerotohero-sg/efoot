@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { callOpenAIWithRetry, parseOpenAIResponse } from '@/lib/openaiHelper'
-import { deductCredits, AI_COST } from '@/lib/creditService'
+import { deductCredits, AI_COST, handleCreditOperationError } from '@/lib/creditService'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 
 export const runtime = 'nodejs'
@@ -407,6 +407,7 @@ Restituisci SOLO JSON valido, senza altro testo.`
 export async function POST(req) {
   const lang = getLang(req)
   const L = ERRORS[lang] || ERRORS.en
+  let creditChargeContext = null
 
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -479,15 +480,6 @@ export async function POST(req) {
       )
     }
 
-    // Check and deduct credits upfront
-    const deduction = await deductCredits(admin, userId, token, AI_COST, 'extract-match-data')
-    if (!deduction.success) {
-      return NextResponse.json(
-        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : 'Insufficient credits. Please recharge to continue.' },
-        { status: 402, headers: { 'Content-Language': lang } }
-      )
-    }
-
     // Recupera informazioni utente per identificare squadra cliente
     let userTeamInfo = null
     try {
@@ -535,6 +527,15 @@ export async function POST(req) {
       }
     }
 
+    const deduction = await deductCredits(admin, userId, token, AI_COST, 'extract-match-data')
+    if (!deduction.success) {
+      return NextResponse.json(
+        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : 'Insufficient credits. Please recharge to continue.' },
+        { status: 402, headers: { 'Content-Language': lang } }
+      )
+    }
+    creditChargeContext = { admin, userId, cost: AI_COST, operationType: 'extract-match-data', functionName: 'extract-match-data:POST' }
+
     // Genera prompt per sezione (con info utente se disponibili o is_home)
     const prompt = getPromptForSection(section, userTeamInfo, isHome)
 
@@ -569,6 +570,17 @@ export async function POST(req) {
       extractedData = parsedData
     } catch (error) {
       console.error(`[extract-match-data] OpenAI error for section ${section}:`, error)
+      if (creditChargeContext?.admin && creditChargeContext?.userId) {
+        await handleCreditOperationError(creditChargeContext.admin, {
+          userId: creditChargeContext.userId,
+          cost: creditChargeContext.cost,
+          operationType: creditChargeContext.operationType,
+          functionName: creditChargeContext.functionName,
+          error,
+          errorType: error?.type || null,
+          metadata: { endpoint: '/api/extract-match-data', section }
+        })
+      }
 
       let errorMessage = L.extraction
       let statusCode = 500
@@ -649,6 +661,17 @@ export async function POST(req) {
     })
   } catch (err) {
     console.error('[extract-match-data] Error:', err)
+    if (creditChargeContext?.admin && creditChargeContext?.userId) {
+      await handleCreditOperationError(creditChargeContext.admin, {
+        userId: creditChargeContext.userId,
+        cost: creditChargeContext.cost,
+        operationType: creditChargeContext.operationType,
+        functionName: creditChargeContext.functionName,
+        error: err,
+        errorType: err?.type || null,
+        metadata: { endpoint: '/api/extract-match-data', stage: 'outer_catch' }
+      })
+    }
     return NextResponse.json(
       { error: L.extraction },
       { status: 500, headers: { 'Content-Language': lang } }

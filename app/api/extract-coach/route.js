@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { callOpenAIWithRetry } from '@/lib/openaiHelper'
-import { deductCredits, AI_COST } from '@/lib/creditService'
+import { deductCredits, AI_COST, handleCreditOperationError } from '@/lib/creditService'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -92,6 +92,7 @@ function normalizeCoach(coach) {
 export async function POST(req) {
   const lang = getLang(req)
   const L = ERRORS[lang] || ERRORS.en
+  let creditChargeContext = null
 
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -160,15 +161,6 @@ export async function POST(req) {
       )
     }
 
-    // Check and deduct credits upfront
-    const deduction = await deductCredits(admin, userId, token, AI_COST, 'extract-coach')
-    if (!deduction.success) {
-      return NextResponse.json(
-        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : 'Insufficient credits. Please recharge to continue.' },
-        { status: 402, headers: { 'Content-Language': lang } }
-      )
-    }
-
     const apiKey = process.env.OPENAI_API_KEY
 
     if (!apiKey) {
@@ -190,6 +182,15 @@ export async function POST(req) {
         }
       }
     }
+
+    const deduction = await deductCredits(admin, userId, token, AI_COST, 'extract-coach')
+    if (!deduction.success) {
+      return NextResponse.json(
+        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : 'Insufficient credits. Please recharge to continue.' },
+        { status: 402, headers: { 'Content-Language': lang } }
+      )
+    }
+    creditChargeContext = { admin, userId, cost: AI_COST, operationType: 'extract-coach', functionName: 'extract-coach:POST' }
 
     // Prompt per estrazione dati allenatore
     const prompt = `Analizza questo screenshot di eFootball e estrai TUTTI i dati visibili dell'allenatore/manager.
@@ -297,6 +298,18 @@ Restituisci SOLO JSON valido, senza altro testo.`
         if (status === 429) msg = L.quota
         else if (status === 408 || status === 504) msg = L.timeout
         else if (status >= 500) msg = L.server
+        if (creditChargeContext?.admin && creditChargeContext?.userId) {
+          await handleCreditOperationError(creditChargeContext.admin, {
+            userId: creditChargeContext.userId,
+            cost: creditChargeContext.cost,
+            operationType: creditChargeContext.operationType,
+            functionName: creditChargeContext.functionName,
+            error: errorData?.error?.message || msg,
+            statusCode: status,
+            errorType: status >= 500 ? 'server_error' : status === 429 ? 'rate_limit' : 'provider_error',
+            metadata: { endpoint: '/api/extract-coach', stage: 'openai_response', providerStatus: status }
+          })
+        }
         return NextResponse.json(
           { error: msg },
           { status: status >= 400 ? status : 500, headers: { 'Content-Language': lang } }
@@ -306,6 +319,17 @@ Restituisci SOLO JSON valido, senza altro testo.`
       openaiData = await openaiRes.json()
     } catch (err) {
       console.error('[extract-coach] Call error:', err)
+      if (creditChargeContext?.admin && creditChargeContext?.userId) {
+        await handleCreditOperationError(creditChargeContext.admin, {
+          userId: creditChargeContext.userId,
+          cost: creditChargeContext.cost,
+          operationType: creditChargeContext.operationType,
+          functionName: creditChargeContext.functionName,
+          error: err,
+          errorType: 'server_error',
+          metadata: { endpoint: '/api/extract-coach', stage: 'openai_call' }
+        })
+      }
       return NextResponse.json(
         { error: L.server },
         { status: 500, headers: { 'Content-Language': lang } }
@@ -331,6 +355,17 @@ Restituisci SOLO JSON valido, senza altro testo.`
       }
     } catch (parseErr) {
       console.error('[extract-coach] JSON parse error:', parseErr)
+      if (creditChargeContext?.admin && creditChargeContext?.userId) {
+        await handleCreditOperationError(creditChargeContext.admin, {
+          userId: creditChargeContext.userId,
+          cost: creditChargeContext.cost,
+          operationType: creditChargeContext.operationType,
+          functionName: creditChargeContext.functionName,
+          error: parseErr,
+          errorType: 'server_error',
+          metadata: { endpoint: '/api/extract-coach', stage: 'parse_response' }
+        })
+      }
       return NextResponse.json(
         { error: L.extraction },
         { status: 500, headers: { 'Content-Language': lang } }
@@ -383,6 +418,17 @@ Restituisci SOLO JSON valido, senza altro testo.`
     })
   } catch (err) {
     console.error('[extract-coach] Error:', err)
+    if (creditChargeContext?.admin && creditChargeContext?.userId) {
+      await handleCreditOperationError(creditChargeContext.admin, {
+        userId: creditChargeContext.userId,
+        cost: creditChargeContext.cost,
+        operationType: creditChargeContext.operationType,
+        functionName: creditChargeContext.functionName,
+        error: err,
+        errorType: err?.type || null,
+        metadata: { endpoint: '/api/extract-coach', stage: 'outer_catch' }
+      })
+    }
     return NextResponse.json(
       { error: L.extraction },
       { status: 500, headers: { 'Content-Language': lang } }

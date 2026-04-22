@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { extractBearerToken, validateToken } from '@/lib/authHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
-import { checkCredits, deductCredits } from '@/lib/creditService'
+import { checkCredits, deductCredits, handleCreditOperationError } from '@/lib/creditService'
 import { buildLiveCoachContext } from '@/lib/liveCoachContext'
 import { LIVE_COACH_HEARTBEAT_INTERVAL_MS, LIVE_COACH_MINUTE_COST, LIVE_COACH_START_COST } from '@/lib/liveCoachPricing'
 
@@ -205,6 +205,7 @@ function sanitizeVoice(voice) {
 }
 
 export async function POST(req) {
+  let creditChargeContext = null
   try {
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json({ error: 'OpenAI API key missing.' }, { status: 500 })
@@ -358,8 +359,9 @@ export async function POST(req) {
         { status: 402 }
       )
     }
+    creditChargeContext = { admin, userId, cost: LIVE_COACH_START_COST, operationType: 'live-coach-start', functionName: 'live-coach-session:POST' }
 
-    await admin
+    const { error: activateSessionError } = await admin
       .from('live_coach_sessions')
       .update({
         status: 'active',
@@ -369,6 +371,9 @@ export async function POST(req) {
       })
       .eq('id', sessionRow.id)
       .eq('user_id', userId)
+    if (activateSessionError) {
+      throw new Error(`Failed to activate live session: ${activateSessionError.message}`)
+    }
 
     return NextResponse.json({
       sessionId: sessionRow.id,
@@ -384,6 +389,17 @@ export async function POST(req) {
     })
   } catch (error) {
     console.error('[live-coach/session] Error:', error)
+    if (creditChargeContext?.admin && creditChargeContext?.userId) {
+      await handleCreditOperationError(creditChargeContext.admin, {
+        userId: creditChargeContext.userId,
+        cost: creditChargeContext.cost,
+        operationType: creditChargeContext.operationType,
+        functionName: creditChargeContext.functionName,
+        error,
+        errorType: 'server_error',
+        metadata: { endpoint: '/api/live-coach/session' }
+      })
+    }
     return NextResponse.json({ error: 'Failed to initialize Live Coach.' }, { status: 500 })
   }
 }

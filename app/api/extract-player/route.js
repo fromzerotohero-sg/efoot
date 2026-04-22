@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { callOpenAIWithRetry, parseOpenAIResponse } from '@/lib/openaiHelper'
-import { deductCredits, AI_COST } from '@/lib/creditService'
+import { deductCredits, AI_COST, handleCreditOperationError } from '@/lib/creditService'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 
 export const runtime = 'nodejs'
@@ -124,6 +124,7 @@ function normalizePlayer(player) {
 export async function POST(req) {
   const lang = getLang(req)
   const L = ERRORS[lang] || ERRORS.en
+  let creditChargeContext = null
 
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -176,15 +177,6 @@ export async function POST(req) {
       return NextResponse.json({ error: L.rateLimit, resetAt: rateLimit.resetAt }, { status: 429 })
     }
 
-    // Check and deduct credits upfront
-    const deduction = await deductCredits(admin, userId, token, AI_COST, 'extract-player')
-    if (!deduction.success) {
-      return NextResponse.json(
-        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : 'Insufficient credits. Please recharge to continue.' },
-        { status: 402, headers: { 'Content-Language': lang } }
-      )
-    }
-
     const apiKey = process.env.OPENAI_API_KEY
 
     if (!apiKey) {
@@ -212,6 +204,16 @@ export async function POST(req) {
         }
       }
     }
+
+    // Addebita solo dopo validazione input (errori utente non vengono addebitati)
+    const deduction = await deductCredits(admin, userId, token, AI_COST, 'extract-player')
+    if (!deduction.success) {
+      return NextResponse.json(
+        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : 'Insufficient credits. Please recharge to continue.' },
+        { status: 402, headers: { 'Content-Language': lang } }
+      )
+    }
+    creditChargeContext = { admin, userId, cost: AI_COST, operationType: 'extract-player', functionName: 'extract-player:POST' }
 
     // Prompt per estrazione dati giocatore
     const prompt = `Analizza questo screenshot di eFootball e estrai TUTTI i dati visibili del giocatore.
@@ -346,6 +348,17 @@ Restituisci SOLO JSON valido, senza altro testo.`
         : parsedData
     } catch (error) {
       console.error('[extract-player] OpenAI error:', error)
+      if (creditChargeContext?.admin && creditChargeContext?.userId) {
+        await handleCreditOperationError(creditChargeContext.admin, {
+          userId: creditChargeContext.userId,
+          cost: creditChargeContext.cost,
+          operationType: creditChargeContext.operationType,
+          functionName: creditChargeContext.functionName,
+          error,
+          errorType: error?.type || null,
+          metadata: { endpoint: '/api/extract-player' }
+        })
+      }
 
       let errorMessage = L.extraction
       let statusCode = 500
@@ -405,6 +418,17 @@ Restituisci SOLO JSON valido, senza altro testo.`
     })
   } catch (err) {
     console.error('[extract-player] Error:', err)
+    if (creditChargeContext?.admin && creditChargeContext?.userId) {
+      await handleCreditOperationError(creditChargeContext.admin, {
+        userId: creditChargeContext.userId,
+        cost: creditChargeContext.cost,
+        operationType: creditChargeContext.operationType,
+        functionName: creditChargeContext.functionName,
+        error: err,
+        errorType: err?.type || null,
+        metadata: { endpoint: '/api/extract-player', stage: 'outer_catch' }
+      })
+    }
     return NextResponse.json(
       { error: L.extraction },
       { status: 500, headers: { 'Content-Language': lang } }
