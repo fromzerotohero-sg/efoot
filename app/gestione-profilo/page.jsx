@@ -11,6 +11,12 @@ export default function GestioneProfiloPage() {
   const buyLabel = lang === 'en' ? 'Buy Hero Points' : 'Acquista Hero Points'
   const tableHeaderService = lang === 'en' ? 'Service' : 'Servizio'
   const tableHeaderCost = lang === 'en' ? 'Cost' : 'Costo'
+  const refundDisclaimerLine1 = lang === 'en'
+    ? 'Credits refund: if consumption fails due to a platform or AI provider technical error, credits are automatically refunded.'
+    : 'Rimborso crediti: se il consumo fallisce per errore tecnico della piattaforma o del provider AI, i crediti vengono riaccreditati automaticamente.'
+  const refundDisclaimerLine2 = lang === 'en'
+    ? 'No refund for invalid input or user-side interruptions.'
+    : 'Nessun rimborso per errori dovuti a input non validi o interruzioni lato utente.'
 
   const rows = lang === 'en'
     ? [
@@ -84,6 +90,19 @@ export default function GestioneProfiloPage() {
             </div>
           ))}
         </div>
+        <p
+          style={{
+            marginTop: '12px',
+            marginBottom: 0,
+            color: 'rgba(255,255,255,0.72)',
+            fontSize: 'clamp(12px, 2.4vw, 13px)',
+            lineHeight: 1.45
+          }}
+        >
+          {refundDisclaimerLine1}
+          <br />
+          {refundDisclaimerLine2}
+        </p>
 
         <a
           href="https://home.fromzerotohero.io/dashboard?usage"
