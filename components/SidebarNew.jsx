@@ -23,7 +23,7 @@ import SidebarGuideTour from '@/components/SidebarGuideTour'
 import { useSidebar } from '@/components/SidebarContext'
 
 export default function SidebarNew() {
-  const { t } = useTranslation()
+  const { t, lang } = useTranslation()
   const pathname = usePathname()
   const router = useRouter()
   const { isOpen, setIsOpen } = useSidebar()
@@ -317,7 +317,7 @@ export default function SidebarNew() {
               }}
             >
               <Wallet size={18} style={{ filter: isActive('/gestione-profilo') ? 'drop-shadow(0 0 5px rgba(0, 212, 255, 0.8))' : 'none' }} />
-              <span>{t('gestioneProfilo')}</span>
+              <span>{lang === 'en' ? 'Analysis cost' : 'Costo analisi'}</span>
             </Link>
 
             {/* La tua squadra */}
