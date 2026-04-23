@@ -6,7 +6,8 @@ import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
 import { ArrowLeft, Upload, AlertCircle, CheckCircle2, RefreshCw, X, SkipForward, Save, Camera, Trophy } from 'lucide-react'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
-import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
+import CameraCaptureModal from '@/components/CameraCaptureModal'
+import { optimizeImageBlob, optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 
 // STEPS sarà definito dentro il componente per avere accesso a t()
@@ -38,6 +39,7 @@ export default function NewMatchPage() {
   const [showSummary, setShowSummary] = React.useState(false)
   const [opponentName, setOpponentName] = React.useState('')
   const [isHome, setIsHome] = React.useState(true) // Default: Casa
+  const [cameraTarget, setCameraTarget] = React.useState(null)
 
   // Carica progresso salvato al mount
   React.useEffect(() => {
@@ -106,15 +108,17 @@ export default function NewMatchPage() {
     }
   }
 
-  const handleImageSelect = (section, slotIndex = null) => async (e) => {
-    const file = e.target.files?.[0]
+  const processSelectedImage = React.useCallback(async ({ section, slotIndex = null, file, fileName }) => {
     if (!file || !file.type.startsWith('image/')) {
       setError(t('selectValidImage'))
-      return
+      return false
     }
 
     try {
-      const optimized = await optimizeImageFile(file)
+      const isBlobOnly = typeof File !== 'undefined' ? !(file instanceof File) && file instanceof Blob : file instanceof Blob
+      const optimized = isBlobOnly
+        ? await optimizeImageBlob(file, { fileName })
+        : await optimizeImageFile(file)
       const dataUrl = optimized.dataUrl
       setStepImages(prev => {
         if (section === 'player_ratings' && (slotIndex === 0 || slotIndex === 1)) {
@@ -130,12 +134,39 @@ export default function NewMatchPage() {
         return next
       })
       setError(null)
+      return true
     } catch (err) {
       console.error('[match/new] image optimization error:', err)
       setError(getImageOptimizeUserMessage(err, t))
+      return false
     }
+  }, [t])
+
+  const handleImageSelect = (section, slotIndex = null) => async (e) => {
+    const file = e.target.files?.[0]
+    await processSelectedImage({ section, slotIndex, file })
     e.target.value = ''
   }
+
+  const handleOpenCamera = React.useCallback((section, slotIndex = null) => {
+    if (extracting || saving) return
+    setError(null)
+    setCameraTarget({ section, slotIndex })
+  }, [extracting, saving])
+
+  const handleCameraCapture = React.useCallback(async (blob) => {
+    if (!cameraTarget) return
+    const slotSuffix = cameraTarget.slotIndex === 0 || cameraTarget.slotIndex === 1
+      ? `-${cameraTarget.slotIndex + 1}`
+      : ''
+    await processSelectedImage({
+      section: cameraTarget.section,
+      slotIndex: cameraTarget.slotIndex,
+      file: blob,
+      fileName: `${cameraTarget.section}${slotSuffix}-camera.jpg`
+    })
+    setCameraTarget(null)
+  }, [cameraTarget, processSelectedImage])
 
   /** Merge due (o più) oggetti player_ratings da extract-match-data in uno solo (titolari + riserve). */
   const mergePlayerRatings = (listOfData) => {
@@ -767,7 +798,11 @@ export default function NewMatchPage() {
                       <Upload size={16} />
                       {t('upload')}
                     </label>
-                    <label style={{
+                    <button
+                      type="button"
+                      onClick={() => handleOpenCamera(currentSection, slot)}
+                      disabled={extracting || saving}
+                      style={{
                       flex: '1 1 150px',
                       minHeight: '48px',
                       borderRadius: '10px',
@@ -782,18 +817,11 @@ export default function NewMatchPage() {
                       fontWeight: 700,
                       color: '#00d4ff',
                       opacity: extracting || saving ? 0.5 : 1
-                    }}>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        onChange={handleImageSelect(currentSection, slot)}
-                        style={{ display: 'none' }}
-                        disabled={extracting || saving}
-                      />
+                    }}
+                    >
                       <Camera size={16} />
                       {t('cameraCaptureTitle')}
-                    </label>
+                    </button>
                   </div>
                 </div>
               ))}
@@ -833,7 +861,11 @@ export default function NewMatchPage() {
                 <Upload size={16} />
                 {t('upload')}
               </label>
-              <label style={{
+              <button
+                type="button"
+                onClick={() => handleOpenCamera(currentSection)}
+                disabled={extracting || saving}
+                style={{
                 flex: '1 1 150px',
                 minHeight: '48px',
                 borderRadius: '10px',
@@ -848,18 +880,11 @@ export default function NewMatchPage() {
                 fontWeight: 700,
                 color: '#00d4ff',
                 opacity: extracting || saving ? 0.5 : 1
-              }}>
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={handleImageSelect(currentSection)}
-                  style={{ display: 'none' }}
-                  disabled={extracting || saving}
-                />
+              }}
+              >
                 <Camera size={16} />
                 {t('cameraCaptureTitle')}
-              </label>
+              </button>
             </div>
           )}
 
@@ -1297,6 +1322,18 @@ export default function NewMatchPage() {
           </div>
         </div>
       )}
+
+      <CameraCaptureModal
+        show={!!cameraTarget}
+        onClose={() => setCameraTarget(null)}
+        onCapture={handleCameraCapture}
+        title={t('cameraCaptureTitle')}
+        captureLabel={t('cameraCaptureButton')}
+        closeLabel={t('cameraClose')}
+        startingLabel={t('cameraStarting')}
+        errorMessage={t('cameraNotAvailable')}
+        captureFailedMessage={t('cameraCaptureFailed')}
+      />
 
       <style jsx>{`
         @keyframes spin {
