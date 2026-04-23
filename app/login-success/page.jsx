@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
-import { buildAuthHeaders } from '@/lib/profileUxHelpers'
 
 export default function LoginSuccessPage() {
   const router = useRouter()
@@ -35,19 +34,9 @@ export default function LoginSuccessPage() {
         if (process.env.NODE_ENV !== 'production') console.log('User logged in successfully:', user.email)
         setMessage(t('loginSuccessDone'))
 
-        const sessionResponse = await fetch('/api/prelaunch/session', {
-          method: 'POST',
-          headers: buildAuthHeaders(authToken),
-          credentials: 'same-origin',
-        })
-
-        if (!sessionResponse.ok) {
-          throw new Error('Failed to initialize prelaunch session')
-        }
-        
         // Redirect to home page after successful login
         setTimeout(() => {
-          router.push('/access')
+          router.push('/')
         }, 1500)
         
       } catch (err) {
