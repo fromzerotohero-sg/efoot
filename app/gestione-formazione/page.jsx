@@ -4905,11 +4905,11 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
         3: { x: 60, y: 75, position: 'DC' },
         4: { x: 75, y: 75, position: 'TS' },
         5: { x: 25, y: 50, position: 'MED' },
-        6: { x: 50, y: 50, position: 'MED' },
-        7: { x: 75, y: 50, position: 'MED' },
+        6: { x: 40, y: 50, position: 'MED' },
+        7: { x: 60, y: 50, position: 'MED' },
         8: { x: 40, y: 25, position: 'CF' },
         9: { x: 60, y: 25, position: 'CF' },
-        10: { x: 50, y: 50, position: 'MED' }
+        10: { x: 75, y: 50, position: 'MED' }
       }
     },
     '4-1-2-3': {
@@ -4959,11 +4959,11 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
         3: { x: 60, y: 75, position: 'DC' },
         4: { x: 75, y: 75, position: 'TS' },
         5: { x: 25, y: 50, position: 'MED' },
-        6: { x: 50, y: 50, position: 'MED' },
-        7: { x: 75, y: 50, position: 'MED' },
+        6: { x: 40, y: 50, position: 'MED' },
+        7: { x: 60, y: 50, position: 'MED' },
         8: { x: 50, y: 35, position: 'TRQ' },
         9: { x: 50, y: 25, position: 'CF' },
-        10: { x: 50, y: 50, position: 'MED' }
+        10: { x: 75, y: 50, position: 'MED' }
       }
     },
     '4-2-2-2': {
@@ -5083,11 +5083,11 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
         3: { x: 50, y: 75, position: 'DC' },
         4: { x: 65, y: 75, position: 'DC' },
         5: { x: 80, y: 75, position: 'TS' },
-        6: { x: 35, y: 50, position: 'MED' },
-        7: { x: 50, y: 50, position: 'MED' },
-        8: { x: 65, y: 50, position: 'MED' },
+        6: { x: 25, y: 50, position: 'MED' },
+        7: { x: 40, y: 50, position: 'MED' },
+        8: { x: 60, y: 50, position: 'MED' },
         9: { x: 50, y: 25, position: 'CF' },
-        10: { x: 50, y: 50, position: 'MED' }
+        10: { x: 75, y: 50, position: 'MED' }
       }
     },
     '5-2-3': {
