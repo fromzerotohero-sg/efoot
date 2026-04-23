@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useMemo, useCallback, useId } from 'react'
 import { useTranslation } from '@/lib/i18n'
 import { supabase } from '@/lib/supabaseClient'
 import { 
@@ -66,6 +66,7 @@ const styles = {
 
 export default function CoachFeedbackChat({ show, onClose, userProfile: externalProfile, lastMatch }) {
   const { t, lang } = useTranslation()
+  const dialogId = useId()
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -77,15 +78,29 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
   const [formData, setFormData] = useState({})
   const [formSaving, setFormSaving] = useState(false)
   const [formSaved, setFormSaved] = useState(false)
+  const modalRef = useRef(null)
+  const closeButtonRef = useRef(null)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
   const sendAbortRef = useRef(null)
   const introTimeoutRef = useRef(null)
   const focusTimeoutRef = useRef(null)
+  const lastFocusedElementRef = useRef(null)
   const [viewportWidth, setViewportWidth] = useState(1024)
   const isMobile = viewportWidth <= 640
   const isNarrowMobile = viewportWidth <= 420
   const isVerySmallMobile = viewportWidth <= 360
+  const dialogTitleId = `${dialogId}-title`
+  const dialogDescriptionId = `${dialogId}-description`
+  const profileSectionId = `${dialogId}-profile-section`
+  const platformFieldId = `${dialogId}-platform`
+  const connectionFieldId = `${dialogId}-connection`
+  const passLevelFieldId = `${dialogId}-pass-level`
+  const smartAssistFieldId = `${dialogId}-smart-assist`
+  const weakPointFieldId = `${dialogId}-weak-point`
+  const divisionFieldId = `${dialogId}-division`
+  const notesFieldId = `${dialogId}-notes`
+  const chatInputId = `${dialogId}-chat-input`
 
   // LOGICA INVARIATA: Carica profilo
   useEffect(() => {
@@ -308,13 +323,44 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // LOGICA INVARIATA: Focus input
+  const getFocusableElements = useCallback(() => {
+    if (!modalRef.current) return []
+    const selectors = [
+      'button:not([disabled])',
+      '[href]',
+      'input:not([disabled])',
+      'select:not([disabled])',
+      'textarea:not([disabled])',
+      '[tabindex]:not([tabindex="-1"])'
+    ].join(', ')
+
+    return Array.from(modalRef.current.querySelectorAll(selectors)).filter((element) => {
+      if (!(element instanceof HTMLElement)) return false
+      if (element.getAttribute('aria-hidden') === 'true') return false
+      return true
+    })
+  }, [])
+
+  // Dialog focus management: focus the dialog shell first to avoid
+  // opening the virtual keyboard immediately on mobile.
   useEffect(() => {
-    if (show && !loading) {
+    if (!show || typeof document === 'undefined') return undefined
+
+    lastFocusedElementRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+
+    if (focusTimeoutRef.current) clearTimeout(focusTimeoutRef.current)
+    focusTimeoutRef.current = setTimeout(() => {
+      closeButtonRef.current?.focus()
+    }, 60)
+
+    return () => {
       if (focusTimeoutRef.current) clearTimeout(focusTimeoutRef.current)
-      focusTimeoutRef.current = setTimeout(() => inputRef.current?.focus(), 400)
+      const previousElement = lastFocusedElementRef.current
+      if (previousElement?.focus) {
+        setTimeout(() => previousElement.focus(), 0)
+      }
     }
-  }, [show, loading])
+  }, [show])
 
   useEffect(() => {
     if (!show || typeof document === 'undefined') return undefined
@@ -346,15 +392,48 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
   }, [show])
 
   useEffect(() => {
-    if (!show || typeof window === 'undefined') return undefined
+    if (!show || typeof document === 'undefined') return undefined
+
     const onKeyDown = (event) => {
-      if (event.key === 'Escape' && !saving && !formSaving) {
-        onClose?.()
+      if (event.key === 'Escape') {
+        if (!saving && !formSaving) {
+          event.preventDefault()
+          onClose?.()
+        }
+        return
+      }
+
+      if (event.key !== 'Tab') return
+
+      const focusableElements = getFocusableElements()
+      if (focusableElements.length === 0) {
+        event.preventDefault()
+        modalRef.current?.focus()
+        return
+      }
+
+      const firstElement = focusableElements[0]
+      const lastElement = focusableElements[focusableElements.length - 1]
+      const activeElement = document.activeElement
+
+      if (!modalRef.current?.contains(activeElement)) {
+        event.preventDefault()
+        firstElement.focus()
+        return
+      }
+
+      if (event.shiftKey && activeElement === firstElement) {
+        event.preventDefault()
+        lastElement.focus()
+      } else if (!event.shiftKey && activeElement === lastElement) {
+        event.preventDefault()
+        firstElement.focus()
       }
     }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [show, saving, formSaving, onClose])
+
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [show, saving, formSaving, onClose, getFocusableElements])
 
   // LOGICA INVARIATA: Cleanup
   useEffect(() => {
@@ -527,6 +606,12 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     >
       <div
         className="coach-feedback-modal"
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={dialogTitleId}
+        aria-describedby={dialogDescriptionId}
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         style={{
           width: isMobile ? 'calc(100vw - 16px)' : 'min(680px, calc(100vw - clamp(24px, 5vw, 64px)))',
@@ -573,7 +658,8 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
               <Dumbbell size={isMobile ? 18 : 22} color="white" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div
+              <h2
+                id={dialogTitleId}
                 style={{
                   fontWeight: 700,
                   color: 'white',
@@ -585,7 +671,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                 }}
               >
                 {lang === 'en' ? 'Coach Gym' : 'Palestra Coach'}
-              </div>
+              </h2>
               <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', display: isMobile ? 'none' : 'block' }}>
                 {lang === 'en'
                   ? 'Profile + chat feedback'
@@ -624,6 +710,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
               )}
             </button>
             <button
+              ref={closeButtonRef}
               type="button"
               aria-label={lang === 'en' ? 'Close coach gym' : 'Chiudi palestra coach'}
               onClick={() => {
@@ -664,6 +751,24 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
             {saveError}
           </div>
         )}
+        <p
+          id={dialogDescriptionId}
+          style={{
+            position: 'absolute',
+            width: '1px',
+            height: '1px',
+            padding: 0,
+            margin: '-1px',
+            overflow: 'hidden',
+            clip: 'rect(0, 0, 0, 0)',
+            whiteSpace: 'nowrap',
+            border: 0
+          }}
+        >
+          {lang === 'en'
+            ? 'Coach Gym dialog. Update your gaming profile and leave chat feedback without leaving the current page.'
+            : 'Finestra Palestra Coach. Aggiorna il tuo profilo di gioco e lascia feedback in chat senza uscire dalla pagina corrente.'}
+        </p>
 
         {/* Content Scrollable */}
         <div
@@ -691,6 +796,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
               type="button"
               onClick={() => setFormExpanded(e => !e)}
               aria-expanded={formExpanded}
+              aria-controls={profileSectionId}
               aria-label={lang === 'en' ? 'Toggle gaming profile form' : 'Mostra o nascondi il profilo di gioco'}
               style={{
                 width: '100%',
@@ -734,7 +840,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
             </button>
 
             {formExpanded && (
-              <div style={{ padding: isMobile ? '0 14px 14px' : '0 20px 20px' }}>
+              <div id={profileSectionId} style={{ padding: isMobile ? '0 14px 14px' : '0 20px 20px' }}>
                 <div style={{ 
                   display: 'grid', 
                   gridTemplateColumns: `repeat(auto-fit, minmax(${isMobile ? '130px' : '150px'}, 1fr))`,
@@ -743,11 +849,12 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                 }}>
                   {/* Platform */}
                   <div>
-                    <label style={styles.formLabel}>
+                    <label htmlFor={platformFieldId} style={styles.formLabel}>
                       <Gamepad2 size={12} style={{ display: 'inline', marginRight: '4px' }} />
                       {lang === 'en' ? 'Platform' : 'Piattaforma'}
                     </label>
                     <select 
+                      id={platformFieldId}
                       className="coach-form-select"
                       style={{ ...styles.formField, ...styles.formSelect }}
                       value={formData.platform || ''} 
@@ -762,11 +869,12 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
 
                   {/* Connection */}
                   <div>
-                    <label style={styles.formLabel}>
+                    <label htmlFor={connectionFieldId} style={styles.formLabel}>
                       <Wifi size={12} style={{ display: 'inline', marginRight: '4px' }} />
                       {lang === 'en' ? 'Connection' : 'Connessione'}
                     </label>
                     <select 
+                      id={connectionFieldId}
                       className="coach-form-select"
                       style={{ ...styles.formField, ...styles.formSelect }}
                       value={formData.connection_quality || ''} 
@@ -781,11 +889,12 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
 
                   {/* Pass Level */}
                   <div>
-                    <label style={styles.formLabel}>
+                    <label htmlFor={passLevelFieldId} style={styles.formLabel}>
                       <Zap size={12} style={{ display: 'inline', marginRight: '4px' }} />
                       {lang === 'en' ? 'Pass Level' : 'Passaggi'}
                     </label>
                     <select 
+                      id={passLevelFieldId}
                       className="coach-form-select"
                       style={{ ...styles.formField, ...styles.formSelect }}
                       value={formData.pass_level || ''} 
@@ -800,11 +909,12 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
 
                   {/* Smart Assist */}
                   <div>
-                    <label style={styles.formLabel}>
+                    <label htmlFor={smartAssistFieldId} style={styles.formLabel}>
                       <Target size={12} style={{ display: 'inline', marginRight: '4px' }} />
                       Smart Assist
                     </label>
                     <select 
+                      id={smartAssistFieldId}
                       className="coach-form-select"
                       style={{ ...styles.formField, ...styles.formSelect }}
                       value={formData.smart_assist || ''} 
@@ -819,10 +929,11 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
 
                 {/* Weak Point */}
                 <div style={{ marginBottom: '16px' }}>
-                  <label style={styles.formLabel}>
+                  <label htmlFor={weakPointFieldId} style={styles.formLabel}>
                     {lang === 'en' ? 'Main Weakness' : 'Punto Debole Principale'}
                   </label>
                   <select 
+                    id={weakPointFieldId}
                     className="coach-form-select"
                     style={{ ...styles.formField, ...styles.formSelect }}
                     value={formData.ai_weak_point || ''} 
@@ -839,10 +950,11 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
 
                 {/* Division */}
                 <div style={{ marginBottom: '16px' }}>
-                  <label style={styles.formLabel}>
+                  <label htmlFor={divisionFieldId} style={styles.formLabel}>
                     {lang === 'en' ? 'Current Division' : 'Divisione Attuale'}
                   </label>
                   <input 
+                    id={divisionFieldId}
                     type="text"
                     style={styles.formField}
                     placeholder={lang === 'en' ? 'e.g. Division 3' : 'es. Divisione 3'}
@@ -853,10 +965,11 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
 
                 {/* Notes */}
                 <div style={{ marginBottom: '16px' }}>
-                  <label style={styles.formLabel}>
+                  <label htmlFor={notesFieldId} style={styles.formLabel}>
                     {lang === 'en' ? 'Notes for Coach' : 'Note per il Coach'}
                   </label>
                   <input 
+                    id={notesFieldId}
                     type="text"
                     style={styles.formField}
                     placeholder={lang === 'en' ? 'Anything else...' : 'Qualsiasi altra cosa...'}
@@ -1026,7 +1139,24 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
               gap: '10px',
               background: 'rgba(5,8,20,0.98)'
             }}>
+              <label
+                htmlFor={chatInputId}
+                style={{
+                  position: 'absolute',
+                  width: '1px',
+                  height: '1px',
+                  padding: 0,
+                  margin: '-1px',
+                  overflow: 'hidden',
+                  clip: 'rect(0, 0, 0, 0)',
+                  whiteSpace: 'nowrap',
+                  border: 0
+                }}
+              >
+                {lang === 'en' ? 'Chat input for Coach Gym' : 'Campo chat della Palestra Coach'}
+              </label>
               <input
+                id={chatInputId}
                 ref={inputRef}
                 type="text"
                 value={input}
@@ -1108,6 +1238,13 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         .coach-form-select option:checked {
           background: var(--neon-cyan);
           color: #000;
+        }
+        .coach-feedback-modal :global(button:focus-visible),
+        .coach-feedback-modal :global(input:focus-visible),
+        .coach-feedback-modal :global(select:focus-visible) {
+          outline: 2px solid rgba(0, 212, 255, 0.9);
+          outline-offset: 2px;
+          box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
         }
       `}</style>
     </div>
