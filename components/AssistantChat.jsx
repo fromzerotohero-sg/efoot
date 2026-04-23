@@ -12,6 +12,7 @@ export default function AssistantChat({ mode = 'popup' }) {
   const currentPage = pathname || ''
   const { t, lang } = useTranslation()
   const [isOpen, setIsOpen] = useState(mode === 'page' ? true : false)
+  const [isBlockedByCoachFeedback, setIsBlockedByCoachFeedback] = useState(false)
   const [isMobileViewport, setIsMobileViewport] = useState(false)
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
@@ -158,13 +159,29 @@ export default function AssistantChat({ mode = 'popup' }) {
   // Apertura da Mission Center / link esterni: apri chat principale con messaggio precompilato
   useEffect(() => {
     const handler = (e) => {
+      if (isBlockedByCoachFeedback) return
       const message = (e.detail && e.detail.message) ? String(e.detail.message) : ''
       setIsOpen(true)
       if (message) setInput(message)
     }
     window.addEventListener('open-assistant-chat', handler)
     return () => window.removeEventListener('open-assistant-chat', handler)
-  }, [])
+  }, [isBlockedByCoachFeedback])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const handleCoachFeedbackVisibility = (event) => {
+      const nextIsOpen = !!event?.detail?.isOpen
+      setIsBlockedByCoachFeedback(nextIsOpen)
+      if (nextIsOpen && mode !== 'page') {
+        setIsOpen(false)
+      }
+    }
+
+    window.addEventListener('coach-feedback-visibility-change', handleCoachFeedbackVisibility)
+    return () => window.removeEventListener('coach-feedback-visibility-change', handleCoachFeedbackVisibility)
+  }, [mode])
 
   // Suggerimenti utili: analisi vs rosa, uso comandi/abilità, priorità concrete
   const initialSuggestions = useMemo(() => {
@@ -408,6 +425,7 @@ export default function AssistantChat({ mode = 'popup' }) {
   if (!isOpen) {
     // In modalità page, non mostrare il bottone fluttuante
     if (mode === 'page') return null
+    if (isBlockedByCoachFeedback) return null
     
     return (
       <>

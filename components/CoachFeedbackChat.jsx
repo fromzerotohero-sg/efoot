@@ -373,6 +373,20 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
   }, [show])
 
   useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    window.dispatchEvent(new CustomEvent('coach-feedback-visibility-change', {
+      detail: { isOpen: !!show }
+    }))
+
+    return () => {
+      window.dispatchEvent(new CustomEvent('coach-feedback-visibility-change', {
+        detail: { isOpen: false }
+      }))
+    }
+  }, [show])
+
+  useEffect(() => {
     if (!show || typeof window === 'undefined' || typeof document === 'undefined') return undefined
 
     const updateViewportVars = () => {
