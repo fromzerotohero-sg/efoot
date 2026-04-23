@@ -2508,6 +2508,74 @@ export default function GestioneFormazionePage() {
         </div>
       </div>
 
+      <div
+        style={{
+          marginBottom: '24px',
+          padding: '14px 16px',
+          borderRadius: '14px',
+          border: '1px solid rgba(245, 158, 11, 0.65)',
+          background: 'linear-gradient(135deg, rgba(120, 53, 15, 0.32) 0%, rgba(245, 158, 11, 0.14) 55%, rgba(251, 191, 36, 0.12) 100%)',
+          boxShadow: '0 10px 26px rgba(120, 53, 15, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+          flexWrap: 'wrap'
+        }}
+      >
+        <div style={{ minWidth: 0, flex: '1 1 320px' }}>
+          <div
+            style={{
+              fontSize: 'clamp(14px, 1.4vw, 16px)',
+              fontWeight: 700,
+              color: '#fef3c7',
+              marginBottom: '4px'
+            }}
+          >
+            {lang === 'en'
+              ? 'Need a quick walkthrough of this page?'
+              : 'Se hai difficolta con questa schermata,'}
+          </div>
+          <div
+            style={{
+              fontSize: 'clamp(13px, 1.2vw, 14px)',
+              color: 'rgba(255, 251, 235, 0.88)',
+              lineHeight: 1.5
+            }}
+          >
+            {lang === 'en'
+              ? 'Watch the short video guide to understand roster, starters, reserves, and formation setup.'
+              : 'guarda il breve video di spiegazione per capire meglio rosa, titolari, riserve e modulo.'}
+          </div>
+        </div>
+
+        <a
+          href="https://www.youtube.com/watch?v=vXv3mhiPQGs"
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            minHeight: '44px',
+            padding: '10px 16px',
+            borderRadius: '999px',
+            background: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)',
+            color: '#1f2937',
+            fontWeight: 800,
+            fontSize: '14px',
+            textDecoration: 'none',
+            whiteSpace: 'nowrap',
+            boxShadow: '0 10px 24px rgba(245, 158, 11, 0.35)'
+          }}
+          aria-label={lang === 'en' ? 'Open the video guide on YouTube' : 'Apri il video guida su YouTube'}
+        >
+          <BookOpen size={16} />
+          {lang === 'en' ? 'Watch Video Guide' : 'Guarda il video guida'}
+        </a>
+      </div>
+
       {/* Info Allenatore Attivo */}
       {activeCoach && (
         <div data-tour-id="tour-formation-active-coach" className="neon-card" style={{ 
