@@ -3557,7 +3557,9 @@ function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChang
     return name.substring(0, 10) + '...'
   }
 
-  // Stato completamento profilazione (con fallback su dati reali)
+  // Stato completamento profilazione basato su dati reali estratti.
+  // I flag photo_slots indicano foto caricate, ma NON garantiscono che l'estrazione
+  // abbia prodotto contenuto utile per ogni sezione.
   function getProfileCompletionStatus(photoSlots, p) {
     const ps = photoSlots && typeof photoSlots === 'object' ? photoSlots : {}
     const baseStats = p?.base_stats || {}
@@ -3567,11 +3569,24 @@ function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChang
     const hasStatsData = baseStats && Object.keys(baseStats).length > 0
     const hasAbilitaData = skills.length > 0 || comSkills.length > 0
     const hasBoosterData = boosters.length > 0
-    const hasCardSection = (ps.card === true || ps.card === 'true' || ps.statistiche === true || ps.statistiche === 'true') || hasStatsData
-    const hasSkillsSection = (ps.abilita === true || ps.abilita === 'true') || hasAbilitaData
-    const hasBoosterSection = (ps.booster === true || ps.booster === 'true') || hasBoosterData
+    const hasCardUpload = (ps.card === true || ps.card === 'true' || ps.statistiche === true || ps.statistiche === 'true')
+    const hasSkillsUpload = (ps.abilita === true || ps.abilita === 'true')
+    const hasBoosterUpload = (ps.booster === true || ps.booster === 'true')
+
+    // Completezza sezione = dati reali presenti (non solo upload/flag)
+    const hasCardSection = hasStatsData
+    const hasSkillsSection = hasAbilitaData
+    const hasBoosterSection = hasBoosterData
     const count = [hasCardSection, hasSkillsSection, hasBoosterSection].filter(Boolean).length
-    return { hasCardSection, hasSkillsSection, hasBoosterSection, count }
+    return {
+      hasCardSection,
+      hasSkillsSection,
+      hasBoosterSection,
+      hasCardUpload,
+      hasSkillsUpload,
+      hasBoosterUpload,
+      count
+    }
   }
 
   // Calcola colore bordo basato su completamento profilazione
@@ -4031,9 +4046,9 @@ function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUplo
   const hasBoosters = boosters && boosters.length > 0
 
   // Stato sezioni coerente con card nel campo 2D
-  const hasCardSection = (photoSlots.card || photoSlots.statistiche) || hasStats
-  const hasSkillsSection = photoSlots.abilita || hasSkills
-  const hasBoosterSection = photoSlots.booster || hasBoosters
+  const hasCardSection = hasStats
+  const hasSkillsSection = hasSkills
+  const hasBoosterSection = hasBoosters
   const completedSections = [hasCardSection, hasSkillsSection, hasBoosterSection].filter(Boolean).length
   const isProfileComplete = completedSections === 3
 
