@@ -33,6 +33,51 @@ const MAX_RESERVES = 12
 /** Portiere: zona ristretta davanti alla porta (% campo), non tutta la larghezza della rete. */
 const GK_GOAL_AREA = { xMin: 36, xMax: 64, yMin: 83, yMax: 96 }
 
+// Preset base per import da screenshot 2D: usati solo come fallback geometrico
+// quando /api/extract-formation non restituisce slot_positions complete.
+const FORMATION_IMPORT_PRESETS = {
+  '4-3-3': {
+    0: { x: 50, y: 90, position: 'PT' }, 1: { x: 25, y: 75, position: 'TS' }, 2: { x: 40, y: 75, position: 'DC' }, 3: { x: 60, y: 75, position: 'DC' }, 4: { x: 75, y: 75, position: 'TD' },
+    5: { x: 35, y: 50, position: 'CC' }, 6: { x: 50, y: 50, position: 'MED' }, 7: { x: 65, y: 50, position: 'CC' }, 8: { x: 25, y: 25, position: 'ESA' }, 9: { x: 50, y: 25, position: 'P' }, 10: { x: 75, y: 25, position: 'EDA' }
+  },
+  '4-2-3-1': {
+    0: { x: 50, y: 90, position: 'PT' }, 1: { x: 25, y: 75, position: 'TS' }, 2: { x: 40, y: 75, position: 'DC' }, 3: { x: 60, y: 75, position: 'DC' }, 4: { x: 75, y: 75, position: 'TD' },
+    5: { x: 40, y: 60, position: 'MED' }, 6: { x: 60, y: 60, position: 'MED' }, 7: { x: 30, y: 35, position: 'CLS' }, 8: { x: 50, y: 35, position: 'TRQ' }, 9: { x: 70, y: 35, position: 'CLD' }, 10: { x: 50, y: 15, position: 'P' }
+  },
+  '4-4-2': {
+    0: { x: 50, y: 90, position: 'PT' }, 1: { x: 25, y: 75, position: 'TS' }, 2: { x: 40, y: 75, position: 'DC' }, 3: { x: 60, y: 75, position: 'DC' }, 4: { x: 75, y: 75, position: 'TD' },
+    5: { x: 25, y: 50, position: 'CLS' }, 6: { x: 40, y: 50, position: 'CC' }, 7: { x: 60, y: 50, position: 'CC' }, 8: { x: 40, y: 25, position: 'P' }, 9: { x: 60, y: 25, position: 'P' }, 10: { x: 75, y: 50, position: 'CLD' }
+  },
+  '4-1-2-3': {
+    0: { x: 50, y: 90, position: 'PT' }, 1: { x: 25, y: 75, position: 'TS' }, 2: { x: 40, y: 75, position: 'DC' }, 3: { x: 60, y: 75, position: 'DC' }, 4: { x: 75, y: 75, position: 'TD' },
+    5: { x: 50, y: 60, position: 'MED' }, 6: { x: 40, y: 45, position: 'TRQ' }, 7: { x: 60, y: 45, position: 'TRQ' }, 8: { x: 25, y: 25, position: 'ESA' }, 9: { x: 50, y: 25, position: 'P' }, 10: { x: 75, y: 25, position: 'EDA' }
+  },
+  '4-5-1': {
+    0: { x: 50, y: 90, position: 'PT' }, 1: { x: 25, y: 75, position: 'TS' }, 2: { x: 40, y: 75, position: 'DC' }, 3: { x: 60, y: 75, position: 'DC' }, 4: { x: 75, y: 75, position: 'TD' },
+    5: { x: 25, y: 50, position: 'CLS' }, 6: { x: 40, y: 50, position: 'CC' }, 7: { x: 50, y: 50, position: 'CC' }, 8: { x: 60, y: 50, position: 'CC' }, 9: { x: 75, y: 50, position: 'CLD' }, 10: { x: 50, y: 25, position: 'P' }
+  },
+  '4-4-1-1': {
+    0: { x: 50, y: 90, position: 'PT' }, 1: { x: 25, y: 75, position: 'TS' }, 2: { x: 40, y: 75, position: 'DC' }, 3: { x: 60, y: 75, position: 'DC' }, 4: { x: 75, y: 75, position: 'TD' },
+    5: { x: 25, y: 50, position: 'CLS' }, 6: { x: 40, y: 50, position: 'CC' }, 7: { x: 60, y: 50, position: 'CC' }, 8: { x: 50, y: 35, position: 'TRQ' }, 9: { x: 50, y: 25, position: 'P' }, 10: { x: 75, y: 50, position: 'CLD' }
+  },
+  '4-2-2-2': {
+    0: { x: 50, y: 90, position: 'PT' }, 1: { x: 25, y: 75, position: 'TS' }, 2: { x: 40, y: 75, position: 'DC' }, 3: { x: 60, y: 75, position: 'DC' }, 4: { x: 75, y: 75, position: 'TD' },
+    5: { x: 40, y: 60, position: 'MED' }, 6: { x: 60, y: 60, position: 'MED' }, 7: { x: 30, y: 35, position: 'TRQ' }, 8: { x: 70, y: 35, position: 'TRQ' }, 9: { x: 40, y: 25, position: 'P' }, 10: { x: 60, y: 25, position: 'P' }
+  },
+  '4-2-1-3': {
+    0: { x: 50, y: 90, position: 'PT' }, 1: { x: 25, y: 75, position: 'TS' }, 2: { x: 40, y: 75, position: 'DC' }, 3: { x: 60, y: 75, position: 'DC' }, 4: { x: 75, y: 75, position: 'TD' },
+    5: { x: 40, y: 50, position: 'MED' }, 6: { x: 60, y: 50, position: 'MED' }, 7: { x: 50, y: 38, position: 'TRQ' }, 8: { x: 25, y: 25, position: 'ESA' }, 9: { x: 50, y: 25, position: 'P' }, 10: { x: 75, y: 25, position: 'EDA' }
+  },
+  '4-3-2-1': {
+    0: { x: 50, y: 90, position: 'PT' }, 1: { x: 25, y: 75, position: 'TS' }, 2: { x: 40, y: 75, position: 'DC' }, 3: { x: 60, y: 75, position: 'DC' }, 4: { x: 75, y: 75, position: 'TD' },
+    5: { x: 35, y: 50, position: 'CC' }, 6: { x: 50, y: 50, position: 'MED' }, 7: { x: 65, y: 50, position: 'CC' }, 8: { x: 35, y: 30, position: 'TRQ' }, 9: { x: 65, y: 30, position: 'TRQ' }, 10: { x: 50, y: 15, position: 'P' }
+  },
+  '4-3-1-2': {
+    0: { x: 50, y: 90, position: 'PT' }, 1: { x: 25, y: 75, position: 'TS' }, 2: { x: 40, y: 75, position: 'DC' }, 3: { x: 60, y: 75, position: 'DC' }, 4: { x: 75, y: 75, position: 'TD' },
+    5: { x: 35, y: 55, position: 'CC' }, 6: { x: 50, y: 55, position: 'MED' }, 7: { x: 65, y: 55, position: 'CC' }, 8: { x: 50, y: 35, position: 'TRQ' }, 9: { x: 40, y: 20, position: 'P' }, 10: { x: 60, y: 20, position: 'P' }
+  }
+}
+
 function clampGkInGoalMouth(x, y) {
   const nx = Number(x)
   const ny = Number(y)
@@ -1797,74 +1842,30 @@ export default function GestioneFormazionePage() {
     }
   }
 
-  const handleFormationImportImageChange = async (e) => {
-    const file = e.target?.files?.[0]
-    e.target.value = ''
-    if (!file) return
-    if (!file.type?.startsWith('image/')) {
-      setError(t('selectValidImage'))
-      showToast(t('selectValidImage'), 'error')
-      return
-    }
-
-    try {
-      const optimized = await optimizeImageFile(file)
-      setFormationImportImage(optimized.dataUrl)
-      setFormationImportSummary(null)
-      setError(null)
-    } catch (err) {
-      const msg = getImageOptimizeUserMessage(err, t)
-      setError(msg)
-      showToast(msg, 'error')
-    }
-  }
-
-  const buildSlotsFromExtractedFormation = React.useCallback((extractData) => {
-    const base = completeSlotPositionsClient(layout?.slot_positions || {})
-    let appliedCount = 0
-
-    const extractedSlots = extractData?.slot_positions
-    if (extractedSlots && typeof extractedSlots === 'object') {
-      Object.entries(extractedSlots).forEach(([rawIdx, rawPos]) => {
-        const slotIdx = Number(rawIdx)
-        if (!Number.isInteger(slotIdx) || slotIdx < 0 || slotIdx > 10 || !rawPos) return
-
-        const parsedX = Number(rawPos.x)
-        const parsedY = Number(rawPos.y)
-        if (!Number.isFinite(parsedX) || !Number.isFinite(parsedY)) return
-
-        const normalizedRole = normalizeRoleCodeForUi(rawPos.position || base[slotIdx]?.position || '?')
-        base[slotIdx] = {
-          ...base[slotIdx],
-          x: clampPercent(parsedX),
-          y: clampPercent(parsedY),
-          position: normalizedRole && normalizedRole !== '?' ? normalizedRole : base[slotIdx]?.position || '?'
-        }
-        appliedCount += 1
-      })
-    }
-
-    if (appliedCount === 0 && Array.isArray(extractData?.players)) {
-      extractData.players.forEach((p) => {
-        const slotIdx = Number(p?.slot_index)
-        if (!Number.isInteger(slotIdx) || slotIdx < 0 || slotIdx > 10) return
-        const normalizedRole = normalizeRoleCodeForUi(p?.position || base[slotIdx]?.position || '?')
-        base[slotIdx] = {
-          ...base[slotIdx],
-          position: normalizedRole && normalizedRole !== '?' ? normalizedRole : base[slotIdx]?.position || '?'
-        }
-        appliedCount += 1
-      })
-    }
-
-    return { slotPositions: base, appliedCount }
-  }, [completeSlotPositionsClient, layout?.slot_positions, normalizeRoleCodeForUi])
-
-  const handleImportFormationFromScreenshot = async () => {
-    if (!formationImportImage) {
+  const runFormationImport = async (imageDataUrl, { askOverwriteConfirm = true } = {}) => {
+    if (!imageDataUrl) {
       setError(t('loadImageFirst'))
       showToast(t('loadImageFirst'), 'error')
       return
+    }
+
+    const hasExistingLayout = !!(layout?.slot_positions && Object.keys(layout.slot_positions).length > 0)
+    if (askOverwriteConfirm && hasExistingLayout) {
+      const overwriteMessage = lang === 'en'
+        ? 'This will update your current formation layout based on the uploaded screenshot. Continue?'
+        : 'Questa operazione aggiornera il layout formazione attuale in base allo screenshot caricato. Continuare?'
+      const confirmed = await showConfirmSafe({
+        fallback: () => window.confirm(overwriteMessage),
+        modalConfig: {
+          title: t('confirm'),
+          message: overwriteMessage,
+          variant: 'warning',
+          confirmLabel: t('continue'),
+          cancelLabel: t('cancel')
+        },
+        setConfirmModal
+      })
+      if (!confirmed) return
     }
 
     setExtractingFormationImport(true)
@@ -1885,7 +1886,7 @@ export default function GestioneFormazionePage() {
           'Authorization': `Bearer ${token}`,
           'Accept-Language': lang === 'en' ? 'en' : 'it'
         },
-        body: JSON.stringify({ imageDataUrl: formationImportImage })
+        body: JSON.stringify({ imageDataUrl })
       })
 
       const extractData = await safeJsonResponse(extractRes, t('errorExtractingFormation'))
@@ -1900,25 +1901,6 @@ export default function GestioneFormazionePage() {
         throw new Error(lang === 'en'
           ? 'No formation slots were detected from this screenshot.'
           : 'Non sono riuscito a rilevare gli slot della formazione da questo screenshot.')
-      }
-
-      const hasExistingLayout = !!(layout?.slot_positions && Object.keys(layout.slot_positions).length > 0)
-      if (hasExistingLayout) {
-        const overwriteMessage = lang === 'en'
-          ? 'This will update your current formation layout based on the uploaded screenshot. Continue?'
-          : 'Questa operazione aggiornera il layout formazione attuale in base allo screenshot caricato. Continuare?'
-        const confirmed = await showConfirmSafe({
-          fallback: () => window.confirm(overwriteMessage),
-          modalConfig: {
-            title: t('confirm'),
-            message: overwriteMessage,
-            variant: 'warning',
-            confirmLabel: t('continue'),
-            cancelLabel: t('cancel')
-          },
-          setConfirmModal
-        })
-        if (!confirmed) return
       }
 
       setUploadingFormation(true)
@@ -1939,6 +1921,78 @@ export default function GestioneFormazionePage() {
       setExtractingFormationImport(false)
     }
   }
+
+  const handleFormationImportImageChange = async (e) => {
+    const file = e.target?.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (!file.type?.startsWith('image/')) {
+      setError(t('selectValidImage'))
+      showToast(t('selectValidImage'), 'error')
+      return
+    }
+
+    try {
+      const optimized = await optimizeImageFile(file)
+      setFormationImportImage(optimized.dataUrl)
+      setFormationImportSummary(null)
+      setError(null)
+      await runFormationImport(optimized.dataUrl, { askOverwriteConfirm: true })
+    } catch (err) {
+      const msg = getImageOptimizeUserMessage(err, t)
+      setError(msg)
+      showToast(msg, 'error')
+    }
+  }
+
+  const buildSlotsFromExtractedFormation = React.useCallback((extractData) => {
+    const detectedFormation = String(extractData?.formation || '').trim()
+    const presetBase = FORMATION_IMPORT_PRESETS[detectedFormation] || null
+    const base = completeSlotPositionsClient(presetBase || layout?.slot_positions || {})
+    let appliedCount = 0
+
+    const extractedSlots = extractData?.slot_positions
+    if (extractedSlots && typeof extractedSlots === 'object') {
+      Object.entries(extractedSlots).forEach(([rawIdx, rawPos]) => {
+        const slotIdx = Number(rawIdx)
+        if (!Number.isInteger(slotIdx) || slotIdx < 0 || slotIdx > 10 || !rawPos) return
+
+        const parsedX = Number(rawPos.x)
+        const parsedY = Number(rawPos.y)
+        if (!Number.isFinite(parsedX) || !Number.isFinite(parsedY)) return
+        const x = Math.abs(parsedX) <= 1 ? parsedX * 100 : parsedX
+        const y = Math.abs(parsedY) <= 1 ? parsedY * 100 : parsedY
+
+        const normalizedRole = normalizeRoleCodeForUi(rawPos.position || base[slotIdx]?.position || '?')
+        base[slotIdx] = {
+          ...base[slotIdx],
+          x: clampPercent(x),
+          y: clampPercent(y),
+          position: normalizedRole && normalizedRole !== '?' ? normalizedRole : base[slotIdx]?.position || '?'
+        }
+        appliedCount += 1
+      })
+    }
+
+    if (appliedCount === 0 && Array.isArray(extractData?.players)) {
+      extractData.players.forEach((p) => {
+        const slotIdx = Number(p?.slot_index)
+        if (!Number.isInteger(slotIdx) || slotIdx < 0 || slotIdx > 10) return
+        const normalizedRole = normalizeRoleCodeForUi(p?.position || base[slotIdx]?.position || '?')
+        base[slotIdx] = {
+          ...base[slotIdx],
+          position: normalizedRole && normalizedRole !== '?' ? normalizedRole : base[slotIdx]?.position || '?'
+        }
+        appliedCount += 1
+      })
+    }
+
+    if (appliedCount === 0 && presetBase) {
+      appliedCount = 11
+    }
+
+    return { slotPositions: base, appliedCount }
+  }, [completeSlotPositionsClient, layout?.slot_positions, normalizeRoleCodeForUi])
 
   const handleSaveCustomPositions = async () => {
     if (!layout || Object.keys(customPositions).length === 0) {
@@ -2598,6 +2652,15 @@ export default function GestioneFormazionePage() {
             style={{ display: 'none' }}
             disabled={uploadingFormation || extractingFormationImport}
           />
+          <input
+            id="formation-layout-import-camera"
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleFormationImportImageChange}
+            style={{ display: 'none' }}
+            disabled={uploadingFormation || extractingFormationImport}
+          />
           <button
             type="button"
             onClick={() => document.getElementById('formation-layout-import-input')?.click()}
@@ -2616,14 +2679,16 @@ export default function GestioneFormazionePage() {
               cursor: uploadingFormation || extractingFormationImport ? 'not-allowed' : 'pointer'
             }}
           >
-            <Upload size={16} />
-            {t('importFromScreenshot')}
+            {extractingFormationImport ? <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Upload size={16} />}
+            {extractingFormationImport
+              ? t('extracting')
+              : (lang === 'en' ? 'Import from 2D screenshot' : 'Importa da screenshot 2D')}
           </button>
           <button
             type="button"
-            onClick={handleImportFormationFromScreenshot}
+            onClick={() => document.getElementById('formation-layout-import-camera')?.click()}
             className="neon-button"
-            disabled={!formationImportImage || uploadingFormation || extractingFormationImport}
+            disabled={uploadingFormation || extractingFormationImport}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -2633,12 +2698,12 @@ export default function GestioneFormazionePage() {
               borderColor: 'rgba(251, 191, 36, 0.55)',
               color: '#fef3c7',
               background: 'rgba(251, 191, 36, 0.12)',
-              opacity: !formationImportImage || uploadingFormation || extractingFormationImport ? 0.6 : 1,
-              cursor: !formationImportImage || uploadingFormation || extractingFormationImport ? 'not-allowed' : 'pointer'
+              opacity: uploadingFormation || extractingFormationImport ? 0.6 : 1,
+              cursor: uploadingFormation || extractingFormationImport ? 'not-allowed' : 'pointer'
             }}
           >
-            {extractingFormationImport ? <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Camera size={16} />}
-            {extractingFormationImport ? t('extracting') : t('extractFormation')}
+            <Camera size={16} />
+            {t('cameraCaptureTitle')}
           </button>
           {formationImportSummary?.formation && (
             <div
