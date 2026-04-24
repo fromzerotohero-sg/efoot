@@ -38,6 +38,7 @@ export default function NewMatchPage() {
   const [showSummary, setShowSummary] = React.useState(false)
   const [opponentName, setOpponentName] = React.useState('')
   const [isHome, setIsHome] = React.useState(true) // Default: Casa
+  const [extractingFormation2d, setExtractingFormation2d] = React.useState(false)
 
   // Carica progresso salvato al mount
   React.useEffect(() => {
@@ -242,6 +243,69 @@ export default function NewMatchPage() {
     }
   }
 
+  const handleExtractFormation2d = async () => {
+    const imageDataUrl = stepImages.formation_2d_seed
+    if (!imageDataUrl) {
+      setError(t('loadImageFirst'))
+      return
+    }
+
+    setExtractingFormation2d(true)
+    setError(null)
+
+    try {
+      let token = localStorage.getItem('auth_token')
+
+      if (!token && supabase) {
+        const { data: session } = await supabase.auth.getSession()
+        token = session?.session?.access_token
+      }
+
+      if (!token) {
+        throw new Error(t('sessionExpiredRedirect'))
+      }
+
+      const res = await fetch('/api/extract-formation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept-Language': lang === 'en' ? 'en' : 'it'
+        },
+        body: JSON.stringify({ imageDataUrl })
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        const { message } = mapErrorToUserMessage(data?.error || '', t('errorExtractingFormation'), lang)
+        throw new Error(message)
+      }
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('credits-consumed'))
+
+      const formationPlayed = typeof data?.formation === 'string' ? data.formation.trim() : null
+      const playersDetected = Array.isArray(data?.players) ? data.players.length : 0
+
+      setStepData(prev => ({
+        ...prev,
+        formation_style: {
+          ...(prev.formation_style || {}),
+          ...(formationPlayed ? { formation_played: formationPlayed } : {})
+        },
+        formation_2d_seed: {
+          imported: true,
+          formation_played: formationPlayed || null,
+          players_detected: playersDetected
+        }
+      }))
+    } catch (err) {
+      console.error('[NewMatch] 2D formation extract error:', err)
+      const { message } = mapErrorToUserMessage(err, t('errorExtractingFormation'), lang)
+      setError(message)
+    } finally {
+      setExtractingFormation2d(false)
+    }
+  }
+
   const handleSkip = (section) => {
     // Salva null per indicare che è stato saltato
     setStepData(prev => ({
@@ -405,6 +469,7 @@ export default function NewMatchPage() {
   const currentData = stepData[currentSection]
   const progress = ((currentStep + 1) / STEPS.length) * 100
   const extractedResult = stepData.result || null
+  const formation2dSeed = stepData.formation_2d_seed || null
   const uploadStepTitle = lang === 'en' ? '1. Upload photo' : '1. Carica foto'
   const uploadStepHint = lang === 'en'
     ? 'First upload the screenshot for this section, then extract the data.'
@@ -502,6 +567,113 @@ export default function NewMatchPage() {
           }}>
             <Trophy size={16} />
             <span><strong>{t('resultExtracted')}:</strong> {extractedResult}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Optional 2D Formation Import */}
+      <div style={{
+        marginBottom: '24px',
+        padding: '14px',
+        background: 'rgba(251, 191, 36, 0.1)',
+        border: '1px solid rgba(251, 191, 36, 0.35)',
+        borderRadius: '12px'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+          flexWrap: 'wrap'
+        }}>
+          <div style={{ minWidth: 0, flex: '1 1 320px' }}>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: '#fde68a', marginBottom: '4px' }}>
+              {t('importFormation2dOptional')}
+            </div>
+            <div style={{ fontSize: '13px', opacity: 0.9, lineHeight: 1.45 }}>
+              {t('importFormation2dHint')}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <input
+              id="match-formation-2d-upload"
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect('formation_2d_seed')}
+              style={{ display: 'none' }}
+              disabled={extracting || extractingFormation2d || saving}
+            />
+            <button
+              type="button"
+              onClick={() => document.getElementById('match-formation-2d-upload')?.click()}
+              disabled={extracting || extractingFormation2d || saving}
+              style={{
+                minHeight: '44px',
+                padding: '10px 14px',
+                borderRadius: '10px',
+                border: '1px solid rgba(251, 191, 36, 0.45)',
+                background: 'rgba(251, 191, 36, 0.16)',
+                color: '#fde68a',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: extracting || extractingFormation2d || saving ? 'not-allowed' : 'pointer',
+                opacity: extracting || extractingFormation2d || saving ? 0.55 : 1
+              }}
+            >
+              <Upload size={16} />
+              {t('upload')}
+            </button>
+            <button
+              type="button"
+              onClick={handleExtractFormation2d}
+              disabled={!stepImages.formation_2d_seed || extracting || extractingFormation2d || saving}
+              style={{
+                minHeight: '44px',
+                padding: '10px 14px',
+                borderRadius: '10px',
+                border: '1px solid rgba(251, 191, 36, 0.45)',
+                background: 'rgba(120, 53, 15, 0.35)',
+                color: '#fef3c7',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: !stepImages.formation_2d_seed || extracting || extractingFormation2d || saving ? 'not-allowed' : 'pointer',
+                opacity: !stepImages.formation_2d_seed || extracting || extractingFormation2d || saving ? 0.55 : 1
+              }}
+            >
+              {extractingFormation2d ? <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Camera size={16} />}
+              {extractingFormation2d ? t('importFormation2dExtracting') : t('importFormation2dExtract')}
+            </button>
+          </div>
+        </div>
+
+        {stepImages.formation_2d_seed && (
+          <div style={{ marginTop: '12px', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, 0.18)' }}>
+            <img src={stepImages.formation_2d_seed} alt="" style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '220px', objectFit: 'cover' }} />
+          </div>
+        )}
+
+        {formation2dSeed?.imported && (
+          <div style={{
+            marginTop: '12px',
+            borderRadius: '8px',
+            padding: '10px 12px',
+            background: 'rgba(34, 197, 94, 0.16)',
+            border: '1px solid rgba(34, 197, 94, 0.35)',
+            color: '#bbf7d0',
+            fontSize: '13px',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}>
+            <span>{t('importFormation2dSuccess')}</span>
+            {formation2dSeed?.formation_played && (
+              <span><strong>{t('importFormation2dDetected')}:</strong> {formation2dSeed.formation_played}</span>
+            )}
+            <span><strong>{t('importFormation2dPlayersDetected')}:</strong> {formation2dSeed.players_detected ?? 0}</span>
           </div>
         )}
       </div>
