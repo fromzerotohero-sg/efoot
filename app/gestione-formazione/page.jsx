@@ -140,6 +140,9 @@ export default function GestioneFormazionePage() {
   const [showManualPlayerModal, setShowManualPlayerModal] = React.useState(false)
   const [uploadImages, setUploadImages] = React.useState([])
   const [uploadReserveImages, setUploadReserveImages] = React.useState([])
+  const [formationImportImage, setFormationImportImage] = React.useState(null)
+  const [extractingFormationImport, setExtractingFormationImport] = React.useState(false)
+  const [formationImportSummary, setFormationImportSummary] = React.useState(null) // { formation, playersDetected }
   const [uploadingPlayer, setUploadingPlayer] = React.useState(false)
   const [showRosaTutorial, setShowRosaTutorial] = React.useState(false)
   const [activeCoach, setActiveCoach] = React.useState(null)
@@ -1782,13 +1785,158 @@ export default function GestioneFormazionePage() {
       // Ricarica dati senza reload pagina
       await fetchData()
       refreshDiagnosticAfterSave()
+      return true
     } catch (err) {
       console.error('[GestioneFormazione] Manual formation error:', err)
       const { message } = mapErrorToUserMessage(err, t('errorSavingFormation'), lang)
       setError(message)
       showToast(message, 'error')
+      return false
     } finally {
       setUploadingFormation(false)
+    }
+  }
+
+  const handleFormationImportImageChange = async (e) => {
+    const file = e.target?.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (!file.type?.startsWith('image/')) {
+      setError(t('selectValidImage'))
+      showToast(t('selectValidImage'), 'error')
+      return
+    }
+
+    try {
+      const optimized = await optimizeImageFile(file)
+      setFormationImportImage(optimized.dataUrl)
+      setFormationImportSummary(null)
+      setError(null)
+    } catch (err) {
+      const msg = getImageOptimizeUserMessage(err, t)
+      setError(msg)
+      showToast(msg, 'error')
+    }
+  }
+
+  const buildSlotsFromExtractedFormation = React.useCallback((extractData) => {
+    const base = completeSlotPositionsClient(layout?.slot_positions || {})
+    let appliedCount = 0
+
+    const extractedSlots = extractData?.slot_positions
+    if (extractedSlots && typeof extractedSlots === 'object') {
+      Object.entries(extractedSlots).forEach(([rawIdx, rawPos]) => {
+        const slotIdx = Number(rawIdx)
+        if (!Number.isInteger(slotIdx) || slotIdx < 0 || slotIdx > 10 || !rawPos) return
+
+        const parsedX = Number(rawPos.x)
+        const parsedY = Number(rawPos.y)
+        if (!Number.isFinite(parsedX) || !Number.isFinite(parsedY)) return
+
+        const normalizedRole = normalizeRoleCodeForUi(rawPos.position || base[slotIdx]?.position || '?')
+        base[slotIdx] = {
+          ...base[slotIdx],
+          x: clampPercent(parsedX),
+          y: clampPercent(parsedY),
+          position: normalizedRole && normalizedRole !== '?' ? normalizedRole : base[slotIdx]?.position || '?'
+        }
+        appliedCount += 1
+      })
+    }
+
+    if (appliedCount === 0 && Array.isArray(extractData?.players)) {
+      extractData.players.forEach((p) => {
+        const slotIdx = Number(p?.slot_index)
+        if (!Number.isInteger(slotIdx) || slotIdx < 0 || slotIdx > 10) return
+        const normalizedRole = normalizeRoleCodeForUi(p?.position || base[slotIdx]?.position || '?')
+        base[slotIdx] = {
+          ...base[slotIdx],
+          position: normalizedRole && normalizedRole !== '?' ? normalizedRole : base[slotIdx]?.position || '?'
+        }
+        appliedCount += 1
+      })
+    }
+
+    return { slotPositions: base, appliedCount }
+  }, [completeSlotPositionsClient, layout?.slot_positions, normalizeRoleCodeForUi])
+
+  const handleImportFormationFromScreenshot = async () => {
+    if (!formationImportImage) {
+      setError(t('loadImageFirst'))
+      showToast(t('loadImageFirst'), 'error')
+      return
+    }
+
+    setExtractingFormationImport(true)
+    setError(null)
+
+    try {
+      let token = localStorage.getItem('auth_token')
+      if (!token && supabase) {
+        const { data: session } = await supabase.auth.getSession()
+        token = session?.session?.access_token
+      }
+      if (!token) throw new Error(t('sessionExpired'))
+
+      const extractRes = await fetch('/api/extract-formation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept-Language': lang === 'en' ? 'en' : 'it'
+        },
+        body: JSON.stringify({ imageDataUrl: formationImportImage })
+      })
+
+      const extractData = await safeJsonResponse(extractRes, t('errorExtractingFormation'))
+
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('credits-consumed'))
+
+      const detectedFormation = String(extractData?.formation || '').trim() || layout?.formation || t('formationCustom')
+      const playersDetected = Array.isArray(extractData?.players) ? extractData.players.length : 0
+      const { slotPositions, appliedCount } = buildSlotsFromExtractedFormation(extractData)
+
+      if (appliedCount === 0) {
+        throw new Error(lang === 'en'
+          ? 'No formation slots were detected from this screenshot.'
+          : 'Non sono riuscito a rilevare gli slot della formazione da questo screenshot.')
+      }
+
+      const hasExistingLayout = !!(layout?.slot_positions && Object.keys(layout.slot_positions).length > 0)
+      if (hasExistingLayout) {
+        const overwriteMessage = lang === 'en'
+          ? 'This will update your current formation layout based on the uploaded screenshot. Continue?'
+          : 'Questa operazione aggiornera il layout formazione attuale in base allo screenshot caricato. Continuare?'
+        const confirmed = await showConfirmSafe({
+          fallback: () => window.confirm(overwriteMessage),
+          modalConfig: {
+            title: t('confirm'),
+            message: overwriteMessage,
+            variant: 'warning',
+            confirmLabel: t('continue'),
+            cancelLabel: t('cancel')
+          },
+          setConfirmModal
+        })
+        if (!confirmed) return
+      }
+
+      setUploadingFormation(true)
+      const saved = await doSelectManualFormation(detectedFormation, slotPositions)
+      if (!saved) return
+
+      setFormationImportSummary({
+        formation: detectedFormation,
+        playersDetected
+      })
+      showToast(t('formationExtracted'), 'success')
+    } catch (err) {
+      console.error('[GestioneFormazione] Import from screenshot error:', err)
+      const { message } = mapErrorToUserMessage(err, t('errorExtractingFormation'), lang)
+      setError(message)
+      showToast(message, 'error')
+    } finally {
+      setExtractingFormationImport(false)
     }
   }
 
@@ -2428,17 +2576,84 @@ export default function GestioneFormazionePage() {
           <button
             onClick={() => setShowFormationSelectorModal(true)}
             className="neon-button"
+            disabled={extractingFormationImport}
             style={{ 
               display: 'inline-flex', 
               alignItems: 'center', 
               gap: '8px',
               fontSize: '14px',
-              padding: '8px 16px'
+              padding: '8px 16px',
+              opacity: extractingFormationImport ? 0.6 : 1,
+              cursor: extractingFormationImport ? 'not-allowed' : 'pointer'
             }}
           >
             <Settings size={16} />
             {layout?.formation ? t('changeFormation') : (t('selectFormation') || t('createFormationBtn'))}
           </button>
+          <input
+            id="formation-layout-import-input"
+            type="file"
+            accept="image/*"
+            onChange={handleFormationImportImageChange}
+            style={{ display: 'none' }}
+            disabled={uploadingFormation || extractingFormationImport}
+          />
+          <button
+            type="button"
+            onClick={() => document.getElementById('formation-layout-import-input')?.click()}
+            className="neon-button"
+            disabled={uploadingFormation || extractingFormationImport}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '14px',
+              padding: '8px 16px',
+              borderColor: 'rgba(251, 191, 36, 0.65)',
+              color: '#fde68a',
+              background: 'rgba(120, 53, 15, 0.2)',
+              opacity: uploadingFormation || extractingFormationImport ? 0.6 : 1,
+              cursor: uploadingFormation || extractingFormationImport ? 'not-allowed' : 'pointer'
+            }}
+          >
+            <Upload size={16} />
+            {t('importFromScreenshot')}
+          </button>
+          <button
+            type="button"
+            onClick={handleImportFormationFromScreenshot}
+            className="neon-button"
+            disabled={!formationImportImage || uploadingFormation || extractingFormationImport}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '14px',
+              padding: '8px 16px',
+              borderColor: 'rgba(251, 191, 36, 0.55)',
+              color: '#fef3c7',
+              background: 'rgba(251, 191, 36, 0.12)',
+              opacity: !formationImportImage || uploadingFormation || extractingFormationImport ? 0.6 : 1,
+              cursor: !formationImportImage || uploadingFormation || extractingFormationImport ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {extractingFormationImport ? <RefreshCw size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Camera size={16} />}
+            {extractingFormationImport ? t('extracting') : t('extractFormation')}
+          </button>
+          {formationImportSummary?.formation && (
+            <div
+              style={{
+                fontSize: '13px',
+                color: '#fde68a',
+                padding: '8px 12px',
+                borderRadius: '999px',
+                border: '1px solid rgba(251, 191, 36, 0.35)',
+                background: 'rgba(120, 53, 15, 0.2)'
+              }}
+            >
+              {formationImportSummary.formation} • {formationImportSummary.playersDetected ?? 0}
+            </div>
+          )}
           {/* Matita e personalizza: solo se c'è già un layout */}
           {layout?.formation && layout?.slot_positions && Object.keys(layout.slot_positions).length > 0 && (
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
