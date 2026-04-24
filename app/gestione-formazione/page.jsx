@@ -537,7 +537,7 @@ export default function GestioneFormazionePage() {
       6: { x: 50, y: 58, position: 'MED' },
       7: { x: 70, y: 52, position: 'CC' },
       8: { x: 25, y: 34, position: 'SP' },
-      9: { x: 50, y: 28, position: 'CF' },
+      9: { x: 50, y: 28, position: 'P' },
       10: { x: 75, y: 34, position: 'SP' }
     }
     for (let i = 0; i <= 10; i++) {
@@ -546,20 +546,29 @@ export default function GestioneFormazionePage() {
     return complete
   }, [])
 
+  // Normalizza alias ruolo in un set canonico UI (coerente con PositionSelectionModal / i18n).
+  // Non cambia mai ciò che salviamo a DB: agisce solo sulla resa a schermo.
+  const normalizeRoleCodeForUi = React.useCallback((code) => {
+    const c = String(code || '?').trim().toUpperCase()
+    if (!c || c === '?') return '?'
+    if (c === 'CMF') return 'CC'
+    if (c === 'DMF') return 'MED'
+    if (c === 'AMF') return 'TRQ'
+    if (c === 'LMF') return 'CLS'
+    if (c === 'RMF') return 'CLD'
+    if (c === 'LWF') return 'ESA'
+    if (c === 'RWF' || c === 'EDE') return 'EDA'
+    if (c === 'CF') return 'P'
+    if (c === 'SS') return 'SP'
+    return c
+  }, [])
+
   // Render: mappa codici ruolo verso label coerente IT/EN, senza cambiare ciò che salviamo.
   const formatRoleLabel = React.useCallback((code) => {
-    const c = String(code || '?').trim().toUpperCase()
+    const c = normalizeRoleCodeForUi(code)
     if (!c || c === '?') return '?'
     // In italiano preferiamo sigle "nostre" (MED/CC/TRQ); in inglese le sigle eFootball (DMF/CMF/AMF).
     if (lang === 'it') {
-      if (c === 'DMF') return 'MED'
-      if (c === 'CMF') return 'CC'
-      if (c === 'AMF') return 'TRQ'
-      if (c === 'LMF') return 'CLS'
-      if (c === 'RMF') return 'CLD'
-      if (c === 'LWF') return 'ESA'
-      if (c === 'RWF') return 'EDA'
-      if (c === 'EDE') return 'EDA'
       return c
     }
     // English
@@ -570,13 +579,14 @@ export default function GestioneFormazionePage() {
     if (c === 'CLD') return 'RMF'
     if (c === 'ESA') return 'LWF'
     if (c === 'EDA') return 'RWF'
-    if (c === 'EDE') return 'RWF'
+    if (c === 'P') return 'CF'
+    if (c === 'SP') return 'SS'
     return c
-  }, [lang])
+  }, [lang, normalizeRoleCodeForUi])
 
   // Placeholder "umano" per slot vuoti (IT/EN), senza cambiare i codici salvati.
   const formatRolePlaceholder = React.useCallback((code) => {
-    const c = String(code || '?').trim().toUpperCase()
+    const c = normalizeRoleCodeForUi(code)
     if (!c || c === '?') return lang === 'it' ? 'Slot' : 'Slot'
 
     const it = {
@@ -615,7 +625,7 @@ export default function GestioneFormazionePage() {
 
     const table = lang === 'it' ? it : en
     return table[c] || c
-  }, [lang])
+  }, [lang, normalizeRoleCodeForUi])
 
   // Calcola ruolo in base alle coordinate x,y sul campo
   // Nota: per distinguere P vs SP usa la classifica relativa degli slot in attacco, basata su slotIndex (non su match “quasi uguale” di coordinate).
@@ -4865,16 +4875,16 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
       baseFormation: '4-3-3',
       slot_positions: {
         0: { x: 50, y: 90, position: 'PT' },
-        1: { x: 25, y: 75, position: 'TD' },
+        1: { x: 25, y: 75, position: 'TS' },
         2: { x: 40, y: 75, position: 'DC' },
         3: { x: 60, y: 75, position: 'DC' },
-        4: { x: 75, y: 75, position: 'TS' },
-        5: { x: 35, y: 50, position: 'MED' },
+        4: { x: 75, y: 75, position: 'TD' },
+        5: { x: 35, y: 50, position: 'CC' },
         6: { x: 50, y: 50, position: 'MED' },
-        7: { x: 65, y: 50, position: 'MED' },
+        7: { x: 65, y: 50, position: 'CC' },
         // In eFootball nel 4-3-3 gli esterni sono ali (ESA/EDA), non seconde punte.
         8: { x: 25, y: 25, position: 'ESA' },
-        9: { x: 50, y: 25, position: 'CF' },
+        9: { x: 50, y: 25, position: 'P' },
         10: { x: 75, y: 25, position: 'EDA' }
       }
     },
@@ -4882,16 +4892,16 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
       name: '4-2-3-1',
       slot_positions: {
         0: { x: 50, y: 90, position: 'PT' },
-        1: { x: 25, y: 75, position: 'TD' },
+        1: { x: 25, y: 75, position: 'TS' },
         2: { x: 40, y: 75, position: 'DC' },
         3: { x: 60, y: 75, position: 'DC' },
-        4: { x: 75, y: 75, position: 'TS' },
+        4: { x: 75, y: 75, position: 'TD' },
         5: { x: 40, y: 60, position: 'MED' },
         6: { x: 60, y: 60, position: 'MED' },
-        7: { x: 30, y: 35, position: 'TRQ' },
+        7: { x: 30, y: 35, position: 'CLS' },
         8: { x: 50, y: 35, position: 'TRQ' },
-        9: { x: 70, y: 35, position: 'TRQ' },
-        10: { x: 50, y: 15, position: 'CF' }
+        9: { x: 70, y: 35, position: 'CLD' },
+        10: { x: 50, y: 15, position: 'P' }
       }
     },
     '4-4-2': {
@@ -4900,16 +4910,16 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
       baseFormation: '4-4-2',
       slot_positions: {
         0: { x: 50, y: 90, position: 'PT' },
-        1: { x: 25, y: 75, position: 'TD' },
+        1: { x: 25, y: 75, position: 'TS' },
         2: { x: 40, y: 75, position: 'DC' },
         3: { x: 60, y: 75, position: 'DC' },
-        4: { x: 75, y: 75, position: 'TS' },
-        5: { x: 25, y: 50, position: 'MED' },
-        6: { x: 40, y: 50, position: 'MED' },
-        7: { x: 60, y: 50, position: 'MED' },
-        8: { x: 40, y: 25, position: 'CF' },
-        9: { x: 60, y: 25, position: 'CF' },
-        10: { x: 75, y: 50, position: 'MED' }
+        4: { x: 75, y: 75, position: 'TD' },
+        5: { x: 25, y: 50, position: 'CLS' },
+        6: { x: 40, y: 50, position: 'CC' },
+        7: { x: 60, y: 50, position: 'CC' },
+        8: { x: 40, y: 25, position: 'P' },
+        9: { x: 60, y: 25, position: 'P' },
+        10: { x: 75, y: 50, position: 'CLD' }
       }
     },
     '4-1-2-3': {
@@ -4918,15 +4928,15 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
       baseFormation: '4-1-2-3',
       slot_positions: {
         0: { x: 50, y: 90, position: 'PT' },
-        1: { x: 25, y: 75, position: 'TD' },
+        1: { x: 25, y: 75, position: 'TS' },
         2: { x: 40, y: 75, position: 'DC' },
         3: { x: 60, y: 75, position: 'DC' },
-        4: { x: 75, y: 75, position: 'TS' },
+        4: { x: 75, y: 75, position: 'TD' },
         5: { x: 50, y: 60, position: 'MED' },
-        6: { x: 35, y: 45, position: 'MED' },
-        7: { x: 65, y: 45, position: 'MED' },
+        6: { x: 40, y: 45, position: 'TRQ' },
+        7: { x: 60, y: 45, position: 'TRQ' },
         8: { x: 25, y: 25, position: 'ESA' },
-        9: { x: 50, y: 25, position: 'CF' },
+        9: { x: 50, y: 25, position: 'P' },
         10: { x: 75, y: 25, position: 'EDA' }
       }
     },
@@ -4936,16 +4946,16 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
       baseFormation: '4-5-1',
       slot_positions: {
         0: { x: 50, y: 90, position: 'PT' },
-        1: { x: 25, y: 75, position: 'TD' },
+        1: { x: 25, y: 75, position: 'TS' },
         2: { x: 40, y: 75, position: 'DC' },
         3: { x: 60, y: 75, position: 'DC' },
-        4: { x: 75, y: 75, position: 'TS' },
-        5: { x: 25, y: 50, position: 'MED' },
-        6: { x: 40, y: 50, position: 'MED' },
-        7: { x: 50, y: 50, position: 'MED' },
-        8: { x: 60, y: 50, position: 'MED' },
-        9: { x: 75, y: 50, position: 'MED' },
-        10: { x: 50, y: 25, position: 'CF' }
+        4: { x: 75, y: 75, position: 'TD' },
+        5: { x: 25, y: 50, position: 'CLS' },
+        6: { x: 40, y: 50, position: 'CC' },
+        7: { x: 50, y: 50, position: 'CC' },
+        8: { x: 60, y: 50, position: 'CC' },
+        9: { x: 75, y: 50, position: 'CLD' },
+        10: { x: 50, y: 25, position: 'P' }
       }
     },
     '4-4-1-1': {
@@ -4954,32 +4964,32 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
       baseFormation: '4-4-1-1',
       slot_positions: {
         0: { x: 50, y: 90, position: 'PT' },
-        1: { x: 25, y: 75, position: 'TD' },
+        1: { x: 25, y: 75, position: 'TS' },
         2: { x: 40, y: 75, position: 'DC' },
         3: { x: 60, y: 75, position: 'DC' },
-        4: { x: 75, y: 75, position: 'TS' },
-        5: { x: 25, y: 50, position: 'MED' },
-        6: { x: 40, y: 50, position: 'MED' },
-        7: { x: 60, y: 50, position: 'MED' },
+        4: { x: 75, y: 75, position: 'TD' },
+        5: { x: 25, y: 50, position: 'CLS' },
+        6: { x: 40, y: 50, position: 'CC' },
+        7: { x: 60, y: 50, position: 'CC' },
         8: { x: 50, y: 35, position: 'TRQ' },
-        9: { x: 50, y: 25, position: 'CF' },
-        10: { x: 75, y: 50, position: 'MED' }
+        9: { x: 50, y: 25, position: 'P' },
+        10: { x: 75, y: 50, position: 'CLD' }
       }
     },
     '4-2-2-2': {
       name: '4-2-2-2',
       slot_positions: {
         0: { x: 50, y: 90, position: 'PT' },
-        1: { x: 25, y: 75, position: 'TD' },
+        1: { x: 25, y: 75, position: 'TS' },
         2: { x: 40, y: 75, position: 'DC' },
         3: { x: 60, y: 75, position: 'DC' },
-        4: { x: 75, y: 75, position: 'TS' },
+        4: { x: 75, y: 75, position: 'TD' },
         5: { x: 40, y: 60, position: 'MED' },
         6: { x: 60, y: 60, position: 'MED' },
         7: { x: 30, y: 35, position: 'TRQ' },
         8: { x: 70, y: 35, position: 'TRQ' },
-        9: { x: 40, y: 25, position: 'CF' },
-        10: { x: 60, y: 25, position: 'CF' }
+        9: { x: 40, y: 25, position: 'P' },
+        10: { x: 60, y: 25, position: 'P' }
       }
     },
     // Moduli con 3 Difensori
@@ -4992,13 +5002,13 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
         1: { x: 35, y: 75, position: 'DC' },
         2: { x: 50, y: 75, position: 'DC' },
         3: { x: 65, y: 75, position: 'DC' },
-        4: { x: 20, y: 50, position: 'TD' },
-        5: { x: 40, y: 50, position: 'MED' },
+        4: { x: 20, y: 50, position: 'TS' },
+        5: { x: 40, y: 50, position: 'CC' },
         6: { x: 50, y: 50, position: 'MED' },
-        7: { x: 60, y: 50, position: 'MED' },
-        8: { x: 80, y: 50, position: 'TS' },
-        9: { x: 40, y: 25, position: 'CF' },
-        10: { x: 60, y: 25, position: 'CF' }
+        7: { x: 60, y: 50, position: 'CC' },
+        8: { x: 80, y: 50, position: 'TD' },
+        9: { x: 40, y: 25, position: 'P' },
+        10: { x: 60, y: 25, position: 'P' }
       }
     },
     '3-4-3': {
@@ -5010,13 +5020,13 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
         1: { x: 35, y: 75, position: 'DC' },
         2: { x: 50, y: 75, position: 'DC' },
         3: { x: 65, y: 75, position: 'DC' },
-        4: { x: 25, y: 50, position: 'TD' },
-        5: { x: 40, y: 50, position: 'MED' },
-        6: { x: 60, y: 50, position: 'MED' },
-        7: { x: 75, y: 50, position: 'TS' },
-        8: { x: 25, y: 25, position: 'SP' },
-        9: { x: 50, y: 25, position: 'CF' },
-        10: { x: 75, y: 25, position: 'SP' }
+        4: { x: 25, y: 50, position: 'CLS' },
+        5: { x: 40, y: 50, position: 'CC' },
+        6: { x: 60, y: 50, position: 'CC' },
+        7: { x: 75, y: 50, position: 'CLD' },
+        8: { x: 25, y: 25, position: 'ESA' },
+        9: { x: 50, y: 25, position: 'P' },
+        10: { x: 75, y: 25, position: 'EDA' }
       }
     },
     '3-1-4-2': {
@@ -5029,12 +5039,12 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
         2: { x: 50, y: 75, position: 'DC' },
         3: { x: 65, y: 75, position: 'DC' },
         4: { x: 50, y: 60, position: 'MED' },
-        5: { x: 25, y: 50, position: 'TD' },
-        6: { x: 40, y: 50, position: 'MED' },
-        7: { x: 60, y: 50, position: 'MED' },
-        8: { x: 75, y: 50, position: 'TS' },
-        9: { x: 40, y: 25, position: 'CF' },
-        10: { x: 60, y: 25, position: 'CF' }
+        5: { x: 25, y: 50, position: 'CLS' },
+        6: { x: 40, y: 50, position: 'CC' },
+        7: { x: 60, y: 50, position: 'CC' },
+        8: { x: 75, y: 50, position: 'CLD' },
+        9: { x: 40, y: 25, position: 'P' },
+        10: { x: 60, y: 25, position: 'P' }
       }
     },
     '3-4-1-2': {
@@ -5046,13 +5056,13 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
         1: { x: 35, y: 75, position: 'DC' },
         2: { x: 50, y: 75, position: 'DC' },
         3: { x: 65, y: 75, position: 'DC' },
-        4: { x: 25, y: 50, position: 'TD' },
-        5: { x: 40, y: 50, position: 'MED' },
-        6: { x: 60, y: 50, position: 'MED' },
-        7: { x: 75, y: 50, position: 'TS' },
+        4: { x: 25, y: 50, position: 'CLS' },
+        5: { x: 40, y: 50, position: 'CC' },
+        6: { x: 60, y: 50, position: 'CC' },
+        7: { x: 75, y: 50, position: 'CLD' },
         8: { x: 50, y: 35, position: 'TRQ' },
-        9: { x: 40, y: 25, position: 'CF' },
-        10: { x: 60, y: 25, position: 'CF' }
+        9: { x: 40, y: 25, position: 'P' },
+        10: { x: 60, y: 25, position: 'P' }
       }
     },
     // Moduli con 5 Difensori
@@ -5062,32 +5072,32 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
       baseFormation: '5-3-2',
       slot_positions: {
         0: { x: 50, y: 90, position: 'PT' },
-        1: { x: 20, y: 75, position: 'TD' },
+        1: { x: 20, y: 75, position: 'TS' },
         2: { x: 35, y: 75, position: 'DC' },
         3: { x: 50, y: 75, position: 'DC' },
         4: { x: 65, y: 75, position: 'DC' },
-        5: { x: 80, y: 75, position: 'TS' },
-        6: { x: 40, y: 50, position: 'MED' },
+        5: { x: 80, y: 75, position: 'TD' },
+        6: { x: 40, y: 50, position: 'CC' },
         7: { x: 50, y: 50, position: 'MED' },
-        8: { x: 60, y: 50, position: 'MED' },
-        9: { x: 40, y: 25, position: 'CF' },
-        10: { x: 60, y: 25, position: 'CF' }
+        8: { x: 60, y: 50, position: 'CC' },
+        9: { x: 40, y: 25, position: 'P' },
+        10: { x: 60, y: 25, position: 'P' }
       }
     },
     '5-4-1': {
       name: '5-4-1',
       slot_positions: {
         0: { x: 50, y: 90, position: 'PT' },
-        1: { x: 20, y: 75, position: 'TD' },
+        1: { x: 20, y: 75, position: 'TS' },
         2: { x: 35, y: 75, position: 'DC' },
         3: { x: 50, y: 75, position: 'DC' },
         4: { x: 65, y: 75, position: 'DC' },
-        5: { x: 80, y: 75, position: 'TS' },
-        6: { x: 25, y: 50, position: 'MED' },
-        7: { x: 40, y: 50, position: 'MED' },
-        8: { x: 60, y: 50, position: 'MED' },
-        9: { x: 50, y: 25, position: 'CF' },
-        10: { x: 75, y: 50, position: 'MED' }
+        5: { x: 80, y: 75, position: 'TD' },
+        6: { x: 25, y: 50, position: 'CLS' },
+        7: { x: 40, y: 50, position: 'CC' },
+        8: { x: 60, y: 50, position: 'CC' },
+        9: { x: 50, y: 25, position: 'P' },
+        10: { x: 75, y: 50, position: 'CLD' }
       }
     },
     '5-2-3': {
@@ -5096,16 +5106,16 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
       baseFormation: '5-2-3',
       slot_positions: {
         0: { x: 50, y: 90, position: 'PT' },
-        1: { x: 20, y: 75, position: 'TD' },
+        1: { x: 20, y: 75, position: 'TS' },
         2: { x: 35, y: 75, position: 'DC' },
         3: { x: 50, y: 75, position: 'DC' },
         4: { x: 65, y: 75, position: 'DC' },
-        5: { x: 80, y: 75, position: 'TS' },
+        5: { x: 80, y: 75, position: 'TD' },
         6: { x: 40, y: 50, position: 'MED' },
         7: { x: 60, y: 50, position: 'MED' },
-        8: { x: 25, y: 25, position: 'SP' },
-        9: { x: 50, y: 25, position: 'CF' },
-        10: { x: 75, y: 25, position: 'SP' }
+        8: { x: 25, y: 25, position: 'ESA' },
+        9: { x: 50, y: 25, position: 'P' },
+        10: { x: 75, y: 25, position: 'EDA' }
       }
     },
     // Formazioni mancanti ufficiali eFootball
@@ -5119,12 +5129,12 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
         2: { x: 40, y: 75, position: 'DC' },
         3: { x: 60, y: 75, position: 'DC' },
         4: { x: 75, y: 75, position: 'TD' },
-        5: { x: 50, y: 60, position: 'MED' },
-        6: { x: 40, y: 50, position: 'TRQ' },
-        7: { x: 60, y: 50, position: 'CC' },
-        8: { x: 25, y: 25, position: 'P' },
-        9: { x: 50, y: 25, position: 'SP' },
-        10: { x: 75, y: 25, position: 'SP' }
+        5: { x: 40, y: 50, position: 'MED' },
+        6: { x: 60, y: 50, position: 'MED' },
+        7: { x: 50, y: 38, position: 'TRQ' },
+        8: { x: 25, y: 25, position: 'ESA' },
+        9: { x: 50, y: 25, position: 'P' },
+        10: { x: 75, y: 25, position: 'EDA' }
       }
     },
     '4-3-2-1': {
@@ -5133,16 +5143,16 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
       baseFormation: '4-3-2-1',
       slot_positions: {
         0: { x: 50, y: 90, position: 'PT' },
-        1: { x: 25, y: 75, position: 'TD' },
+        1: { x: 25, y: 75, position: 'TS' },
         2: { x: 40, y: 75, position: 'DC' },
         3: { x: 60, y: 75, position: 'DC' },
-        4: { x: 75, y: 75, position: 'TS' },
-        5: { x: 35, y: 50, position: 'MED' },
+        4: { x: 75, y: 75, position: 'TD' },
+        5: { x: 35, y: 50, position: 'CC' },
         6: { x: 50, y: 50, position: 'MED' },
-        7: { x: 65, y: 50, position: 'MED' },
+        7: { x: 65, y: 50, position: 'CC' },
         8: { x: 35, y: 30, position: 'TRQ' },
         9: { x: 65, y: 30, position: 'TRQ' },
-        10: { x: 50, y: 15, position: 'CF' }
+        10: { x: 50, y: 15, position: 'P' }
       }
     },
     '4-3-1-2': {
@@ -5151,16 +5161,16 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
       baseFormation: '4-3-1-2',
       slot_positions: {
         0: { x: 50, y: 90, position: 'PT' },
-        1: { x: 25, y: 75, position: 'TD' },
+        1: { x: 25, y: 75, position: 'TS' },
         2: { x: 40, y: 75, position: 'DC' },
         3: { x: 60, y: 75, position: 'DC' },
-        4: { x: 75, y: 75, position: 'TS' },
-        5: { x: 35, y: 55, position: 'MED' },
+        4: { x: 75, y: 75, position: 'TD' },
+        5: { x: 35, y: 55, position: 'CC' },
         6: { x: 50, y: 55, position: 'MED' },
-        7: { x: 65, y: 55, position: 'MED' },
+        7: { x: 65, y: 55, position: 'CC' },
         8: { x: 50, y: 35, position: 'TRQ' },
-        9: { x: 40, y: 20, position: 'CF' },
-        10: { x: 60, y: 20, position: 'CF' }
+        9: { x: 40, y: 20, position: 'P' },
+        10: { x: 60, y: 20, position: 'P' }
       }
     },
     '4-1-4-1': {
@@ -5169,16 +5179,16 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
       baseFormation: '4-1-4-1',
       slot_positions: {
         0: { x: 50, y: 90, position: 'PT' },
-        1: { x: 25, y: 75, position: 'TD' },
+        1: { x: 25, y: 75, position: 'TS' },
         2: { x: 40, y: 75, position: 'DC' },
         3: { x: 60, y: 75, position: 'DC' },
-        4: { x: 75, y: 75, position: 'TS' },
+        4: { x: 75, y: 75, position: 'TD' },
         5: { x: 50, y: 60, position: 'MED' },
-        6: { x: 25, y: 45, position: 'MED' },
-        7: { x: 40, y: 45, position: 'MED' },
-        8: { x: 60, y: 45, position: 'MED' },
-        9: { x: 75, y: 45, position: 'MED' },
-        10: { x: 50, y: 20, position: 'CF' }
+        6: { x: 25, y: 45, position: 'CLS' },
+        7: { x: 40, y: 45, position: 'CC' },
+        8: { x: 60, y: 45, position: 'CC' },
+        9: { x: 75, y: 45, position: 'CLD' },
+        10: { x: 50, y: 20, position: 'P' }
       }
     },
     '3-2-4-1': {
@@ -5192,11 +5202,11 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
         3: { x: 65, y: 75, position: 'DC' },
         4: { x: 40, y: 60, position: 'MED' },
         5: { x: 60, y: 60, position: 'MED' },
-        6: { x: 25, y: 40, position: 'MED' },
-        7: { x: 40, y: 40, position: 'MED' },
-        8: { x: 60, y: 40, position: 'MED' },
-        9: { x: 75, y: 40, position: 'MED' },
-        10: { x: 50, y: 15, position: 'CF' }
+        6: { x: 25, y: 40, position: 'CLS' },
+        7: { x: 40, y: 40, position: 'TRQ' },
+        8: { x: 60, y: 40, position: 'TRQ' },
+        9: { x: 75, y: 40, position: 'CLD' },
+        10: { x: 50, y: 15, position: 'P' }
       }
     },
     '3-2-3-2': {
@@ -5210,11 +5220,11 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
         3: { x: 65, y: 75, position: 'DC' },
         4: { x: 40, y: 60, position: 'MED' },
         5: { x: 60, y: 60, position: 'MED' },
-        6: { x: 30, y: 40, position: 'TRQ' },
+        6: { x: 30, y: 40, position: 'CLS' },
         7: { x: 50, y: 40, position: 'TRQ' },
-        8: { x: 70, y: 40, position: 'TRQ' },
-        9: { x: 40, y: 20, position: 'CF' },
-        10: { x: 60, y: 20, position: 'CF' }
+        8: { x: 70, y: 40, position: 'CLD' },
+        9: { x: 40, y: 20, position: 'P' },
+        10: { x: 60, y: 20, position: 'P' }
       }
     },
     '5-2-2-1': {
@@ -5223,16 +5233,16 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
       baseFormation: '5-2-2-1',
       slot_positions: {
         0: { x: 50, y: 90, position: 'PT' },
-        1: { x: 20, y: 75, position: 'TD' },
+        1: { x: 20, y: 75, position: 'TS' },
         2: { x: 35, y: 75, position: 'DC' },
         3: { x: 50, y: 75, position: 'DC' },
         4: { x: 65, y: 75, position: 'DC' },
-        5: { x: 80, y: 75, position: 'TS' },
+        5: { x: 80, y: 75, position: 'TD' },
         6: { x: 40, y: 55, position: 'MED' },
         7: { x: 60, y: 55, position: 'MED' },
-        8: { x: 35, y: 35, position: 'TRQ' },
-        9: { x: 65, y: 35, position: 'TRQ' },
-        10: { x: 50, y: 15, position: 'CF' }
+        8: { x: 35, y: 35, position: 'CLS' },
+        9: { x: 65, y: 35, position: 'CLD' },
+        10: { x: 50, y: 15, position: 'P' }
       }
     },
     '5-2-1-2': {
@@ -5241,16 +5251,16 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
       baseFormation: '5-2-1-2',
       slot_positions: {
         0: { x: 50, y: 90, position: 'PT' },
-        1: { x: 20, y: 75, position: 'TD' },
+        1: { x: 20, y: 75, position: 'TS' },
         2: { x: 35, y: 75, position: 'DC' },
         3: { x: 50, y: 75, position: 'DC' },
         4: { x: 65, y: 75, position: 'DC' },
-        5: { x: 80, y: 75, position: 'TS' },
+        5: { x: 80, y: 75, position: 'TD' },
         6: { x: 40, y: 55, position: 'MED' },
         7: { x: 60, y: 55, position: 'MED' },
         8: { x: 50, y: 35, position: 'TRQ' },
-        9: { x: 40, y: 20, position: 'CF' },
-        10: { x: 60, y: 20, position: 'CF' }
+        9: { x: 40, y: 20, position: 'P' },
+        10: { x: 60, y: 20, position: 'P' }
       }
     },
     // Variazioni 4-3-3
@@ -5261,16 +5271,16 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
       variation: 'wide',
       slot_positions: {
         0: { x: 50, y: 90, position: 'PT' },
-        1: { x: 20, y: 75, position: 'TD' },
+        1: { x: 20, y: 75, position: 'TS' },
         2: { x: 40, y: 75, position: 'DC' },
         3: { x: 60, y: 75, position: 'DC' },
-        4: { x: 80, y: 75, position: 'TS' },
+        4: { x: 80, y: 75, position: 'TD' },
         5: { x: 30, y: 50, position: 'MED' },
         6: { x: 50, y: 50, position: 'MED' },
         7: { x: 70, y: 50, position: 'MED' },
-        8: { x: 20, y: 25, position: 'SP' },
-        9: { x: 50, y: 25, position: 'CF' },
-        10: { x: 80, y: 25, position: 'SP' }
+        8: { x: 20, y: 25, position: 'ESA' },
+        9: { x: 50, y: 25, position: 'P' },
+        10: { x: 80, y: 25, position: 'EDA' }
       }
     },
     '4-3-3-compact': {
@@ -5287,9 +5297,9 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
         5: { x: 42, y: 50, position: 'MED' },
         6: { x: 50, y: 50, position: 'MED' },
         7: { x: 58, y: 50, position: 'MED' },
-        8: { x: 25, y: 25, position: 'SP' },
-        9: { x: 50, y: 25, position: 'CF' },
-        10: { x: 75, y: 25, position: 'SP' }
+        8: { x: 25, y: 25, position: 'ESA' },
+        9: { x: 50, y: 25, position: 'P' },
+        10: { x: 75, y: 25, position: 'EDA' }
       }
     },
     '4-3-3-offensive': {
@@ -5306,9 +5316,9 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
         5: { x: 35, y: 50, position: 'MED' },
         6: { x: 50, y: 50, position: 'MED' },
         7: { x: 65, y: 50, position: 'MED' },
-        8: { x: 25, y: 20, position: 'SP' },
-        9: { x: 50, y: 20, position: 'CF' },
-        10: { x: 75, y: 20, position: 'SP' }
+        8: { x: 25, y: 20, position: 'ESA' },
+        9: { x: 50, y: 20, position: 'P' },
+        10: { x: 75, y: 20, position: 'EDA' }
       }
     },
     '4-3-3-defensive': {
@@ -5325,9 +5335,9 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
         5: { x: 35, y: 55, position: 'MED' },
         6: { x: 50, y: 55, position: 'MED' },
         7: { x: 65, y: 55, position: 'MED' },
-        8: { x: 25, y: 30, position: 'SP' },
-        9: { x: 50, y: 30, position: 'CF' },
-        10: { x: 75, y: 30, position: 'SP' }
+        8: { x: 25, y: 30, position: 'ESA' },
+        9: { x: 50, y: 30, position: 'P' },
+        10: { x: 75, y: 30, position: 'EDA' }
       }
     },
     // Variazioni 4-2-1-3
