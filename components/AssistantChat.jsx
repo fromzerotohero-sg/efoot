@@ -7,7 +7,14 @@ import { supabase } from '@/lib/supabaseClient'
 import { Brain, X, Send, Sparkles, ChevronDown, ChevronUp, Mic, MicOff } from 'lucide-react'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 
-export default function AssistantChat({ mode = 'popup', apiEndpoint = '/api/assistant-chat', initialSuggestionsOverride = null, currentPageOverride = null }) {
+export default function AssistantChat({
+  mode = 'popup',
+  apiEndpoint = '/api/assistant-chat',
+  initialSuggestionsOverride = null,
+  currentPageOverride = null,
+  titleOverride = null,
+  subtitleOverride = null
+}) {
   const pathname = usePathname()
   const currentPage = currentPageOverride || pathname || ''
   const { t, lang } = useTranslation()
@@ -695,11 +702,11 @@ export default function AssistantChat({ mode = 'popup', apiEndpoint = '/api/assi
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, color: 'var(--neon-cyan)', fontSize: '16px', textShadow: '0 0 8px rgba(0, 212, 255, 0.4)' }}>
-              {userProfile?.ai_name || t('yourCoach') || t('yourCoachAI')}
+              {titleOverride || userProfile?.ai_name || t('yourCoach') || t('yourCoachAI')}
             </div>
-            {userProfile?.first_name && (
+            {(subtitleOverride || userProfile?.first_name) && (
               <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>
-                {t('assistantGreetingShort', { name: userProfile.first_name })}
+                {subtitleOverride || t('assistantGreetingShort', { name: userProfile.first_name })}
               </div>
             )}
           </div>

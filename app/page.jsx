@@ -156,20 +156,12 @@ function HomePage() {
     } catch {}
   }, [])
 
-  const coachModeModalStorageKey = 'dashboard_coach_mode_modal_seen_v1'
-
   const openSmartMode = React.useCallback(() => {
-    try {
-      localStorage.setItem(coachModeModalStorageKey, '1')
-    } catch {}
     setShowCoachModeModal(false)
     router.push('/smart')
   }, [router])
 
   const openProMode = React.useCallback(() => {
-    try {
-      localStorage.setItem(coachModeModalStorageKey, '1')
-    } catch {}
     setShowCoachModeModal(false)
     router.push('/gestione-formazione')
   }, [router])
@@ -230,15 +222,7 @@ function HomePage() {
   React.useEffect(() => {
     if (!smartEntryEnabled) return
     if (loading) return
-    if (typeof window === 'undefined') return
-    try {
-      const alreadySeen = localStorage.getItem(coachModeModalStorageKey) === '1'
-      if (!alreadySeen) {
-        setShowCoachModeModal(true)
-      }
-    } catch {
-      setShowCoachModeModal(true)
-    }
+    setShowCoachModeModal(true)
   }, [loading, smartEntryEnabled])
 
   const currentBannerTip = bannerTips.length > 0

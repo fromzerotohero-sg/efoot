@@ -913,6 +913,8 @@ export default withAuth(function SmartPage() {
             apiEndpoint="/api/smart/chat"
             currentPageOverride="/smart"
             initialSuggestionsOverride={smartChatSuggestions}
+                    titleOverride={lang === 'en' ? 'AI Assistant - Smart Version' : 'AI Assistant - Versione Smart'}
+                    subtitleOverride={lang === 'en' ? 'Pre-match Smart coaching' : 'Coaching Smart pre-partita'}
           />
         </>
       )}
@@ -921,7 +923,6 @@ export default withAuth(function SmartPage() {
 })
 
 function SmartSummaryBlock({ data, lang }) {
-  const players = Array.isArray(data?.players) ? data.players : []
   const coach = data?.coach && typeof data.coach === 'object' ? data.coach : null
 
   return (
@@ -929,9 +930,6 @@ function SmartSummaryBlock({ data, lang }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
         <div>
           <strong>{lang === 'en' ? 'Formation' : 'Modulo'}:</strong> {data?.formation || 'N/A'}
-        </div>
-        <div>
-          <strong>{lang === 'en' ? 'Detected starters' : 'Titolari rilevati'}:</strong> {players.length}
         </div>
       </div>
       {coach?.coach_name && (
@@ -949,33 +947,21 @@ function SmartSummaryBlock({ data, lang }) {
           {coach.age ? ` (${coach.age} ${lang === 'en' ? 'years' : 'anni'})` : ''}
         </div>
       )}
-      {players.length > 0 && (
-        <div style={{ display: 'grid', gap: '10px', maxHeight: '320px', overflowY: 'auto', paddingRight: '4px' }}>
-          {players.map((player, index) => (
-            <div
-              key={`${player.player_name || 'player'}-${index}`}
-              style={{
-                padding: '12px 14px',
-                borderRadius: '12px',
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                gap: '12px',
-                alignItems: 'center'
-              }}
-            >
-              <div style={{ minWidth: 0 }}>
-                <div style={{ color: '#fff', fontWeight: 600 }}>{player.player_name || (lang === 'en' ? 'Unknown player' : 'Giocatore sconosciuto')}</div>
-                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.65)' }}>{player.position || '?'}</div>
-              </div>
-              <div style={{ color: '#FFD76A', fontWeight: 700, whiteSpace: 'nowrap' }}>
-                {player.overall_rating != null ? player.overall_rating : (lang === 'en' ? 'n/a' : 'n/d')}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <div
+        style={{
+          padding: '14px',
+          borderRadius: '10px',
+          background: 'rgba(255,255,255,0.03)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          fontSize: 'clamp(13px, 3vw, 14px)',
+          lineHeight: 1.65,
+          color: 'rgba(255,255,255,0.84)'
+        }}
+      >
+        {lang === 'en'
+          ? 'Your current formation is ready to be used by Smart Coach for pre-match analysis and opponent countermeasures.'
+          : 'La tua formazione attuale è pronta per essere usata da Smart Coach nell’analisi pre-partita e nelle contromisure contro l’avversario.'}
+      </div>
     </div>
   )
 }
