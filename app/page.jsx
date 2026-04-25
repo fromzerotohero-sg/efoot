@@ -839,12 +839,12 @@ function HomePage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: '18px', fontWeight: 700, color: '#FFFFFF', marginBottom: '6px' }}>
-                {lang === 'en' ? 'Coach Modes' : 'Modalità Coach'}
+                {lang === 'en' ? 'Try your coach in 30 seconds' : 'Prova il tuo coach in 30 secondi'}
               </div>
               <div style={{ fontSize: '14px', lineHeight: 1.6, color: 'rgba(255,255,255,0.74)' }}>
                 {lang === 'en'
-                  ? 'Start fast with Smart or open the full Pro experience.'
-                  : 'Inizia veloce con Smart oppure apri l’esperienza completa Pro.'}
+                  ? 'Analyze your team and get instant countermeasures.'
+                  : 'Analizza la tua squadra e ricevi contromisure istantanee.'}
               </div>
             </div>
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
@@ -866,22 +866,6 @@ function HomePage() {
               >
                 <Brain size={16} />
                 {lang === 'en' ? 'Open Smart' : 'Apri Smart'}
-              </button>
-              <button
-                type="button"
-                onClick={openProMode}
-                className="btn primary"
-                style={{
-                  minHeight: '48px',
-                  padding: '10px 18px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}
-              >
-                <Users size={16} />
-                {lang === 'en' ? 'Open Pro' : 'Apri Pro'}
               </button>
             </div>
           </div>
