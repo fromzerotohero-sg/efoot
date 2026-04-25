@@ -558,6 +558,12 @@ export default withAuth(function SmartPage() {
                       <img src={opponentUploadImage} alt="Opponent preview" style={{ maxWidth: '100%', maxHeight: '400px', borderRadius: '8px' }} />
                     </div>
                   )}
+                  {uploadingOpponent && (
+                    <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', minHeight: '44px', justifyContent: 'center' }}>
+                      <RefreshCw size={20} style={{ animation: 'spin 1s linear infinite', color: 'var(--neon-orange)' }} />
+                      <span>{lang === 'en' ? 'Extracting opponent formation and generating countermeasures...' : 'Sto estraendo la formazione avversaria e generando le contromisure...'}</span>
+                    </div>
+                  )}
                   {hasOpponentFormation && (
                     <div style={{ padding: '12px 14px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', marginBottom: '16px' }}>
                       <strong>{lang === 'en' ? 'Opponent formation extracted' : 'Formazione avversaria estratta'}:</strong> {currentContext.opponent_formation || 'N/A'}
@@ -610,6 +616,13 @@ export default withAuth(function SmartPage() {
                       ? 'Contromisure based on the uploaded formation and the Smart context available.'
                       : 'Contromisure basate sulla formazione caricata e sul contesto Smart disponibile.'}
                   </p>
+
+                  {counterLoading && (
+                    <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', minHeight: '44px' }}>
+                      <RefreshCw size={20} style={{ animation: 'spin 1s linear infinite', color: 'var(--neon-orange)' }} />
+                      <span>{lang === 'en' ? 'Generating pre-match countermeasures...' : 'Sto generando le contromisure pre-partita...'}</span>
+                    </div>
+                  )}
 
                   {hasOpponentFormation && currentCountermeasure ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -748,6 +761,22 @@ export default withAuth(function SmartPage() {
                       }}>
                         <span><strong>{t('confidence')}:</strong> {currentCountermeasure.confidence ?? 'N/A'}%</span>
                         <span><strong>{t('dataQuality')}:</strong> {currentCountermeasure.data_quality || 'N/A'}</span>
+                      </div>
+
+                      <div
+                        style={{
+                          padding: '14px',
+                          background: 'rgba(251, 191, 36, 0.08)',
+                          border: '1px solid rgba(251, 191, 36, 0.22)',
+                          borderRadius: '10px',
+                          fontSize: 'clamp(13px, 3vw, 14px)',
+                          lineHeight: 1.65,
+                          color: 'rgba(255,255,255,0.9)'
+                        }}
+                      >
+                        {lang === 'en'
+                          ? 'Smart version: for detailed and more precise advice, use the Pro version.'
+                          : 'Versione Smart: per consigli dettagliati e più precisi usa la versione Pro.'}
                       </div>
                     </div>
                   ) : hasOpponentFormation ? (
