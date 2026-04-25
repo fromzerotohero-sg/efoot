@@ -17,6 +17,8 @@ import OnboardingFlow from '@/components/OnboardingFlow'
 import CoachSuggestions from '@/components/CoachSuggestions'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import { withAuth } from '@/components/AuthWrapper'
+import { isEnabled } from '@/lib/featureFlags'
+import { SMART_COACH_FLAG } from '@/lib/smartCoach'
 import { 
   Users, 
   RefreshCw, 
@@ -66,6 +68,7 @@ function OpenCoachListener({ onOpenCoach, onOpenAssistantChat, onOpenGameAnalysi
 function HomePage() {
   const { t, lang } = useTranslation()
   const router = useRouter()
+  const smartEntryEnabled = isEnabled(SMART_COACH_FLAG)
   const { setIsOpen: setGameAnalysisNavOpen } = useGameAnalysisModalNav()
   const mountedRef = React.useRef(true)
   const [retryTrigger, setRetryTrigger] = React.useState(0)
@@ -743,6 +746,45 @@ function HomePage() {
                 {t('navigation')}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {smartEntryEnabled && (
+                  <button
+                    onClick={() => router.push('/smart')}
+                    className="neon-button"
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '12px',
+                      padding: '20px',
+                      background: 'rgba(13, 25, 48, 0.9)',
+                      borderColor: 'rgba(255, 215, 106, 0.28)',
+                      color: '#FFFFFF',
+                      height: '100%',
+                      borderRadius: '12px'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(255, 215, 106, 0.10)'
+                      e.currentTarget.style.borderColor = 'rgba(255, 215, 106, 0.55)'
+                      e.currentTarget.style.color = '#FFD76A'
+                      e.currentTarget.style.transform = 'translateY(-2px)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'var(--bg-elevated)'
+                      e.currentTarget.style.borderColor = 'rgba(255, 215, 106, 0.28)'
+                      e.currentTarget.style.color = '#FFFFFF'
+                      e.currentTarget.style.transform = 'translateY(0)'
+                    }}
+                  >
+                    <Brain size={24} style={{ color: '#FFD76A', filter: 'drop-shadow(0 0 6px rgba(255, 215, 106, 0.5))' }} />
+                    <span style={{ fontWeight: 600, textAlign: 'center' }}>
+                      {lang === 'en' ? 'Smart Coach Trial' : 'Prova Smart Coach'}
+                    </span>
+                    <span style={{ fontSize: '12px', opacity: 0.8, textAlign: 'center' }}>
+                      {lang === 'en' ? '1 chat + 2 countermeasures' : '1 chat + 2 contromisure'}
+                    </span>
+                  </button>
+                )}
                 {/* Analisi Partita Rapida */}
                 <button
                   data-tour-id="tour-dashboard-game-analysis"
