@@ -97,6 +97,7 @@ function HomePage() {
   const [userProfile, setUserProfile] = React.useState(null)
   const [confirmModal, setConfirmModal] = React.useState(null) // { show, title, message, onConfirm, onCancel }
   const [coachChatInitialMessage, setCoachChatInitialMessage] = React.useState(null)
+  const coachModeSessionKey = 'dashboard_coach_mode_modal_seen_session_v1'
 
   React.useEffect(() => {
     setGameAnalysisNavOpen(showGameAnalysisModal)
@@ -157,11 +158,17 @@ function HomePage() {
   }, [])
 
   const openSmartMode = React.useCallback(() => {
+    try {
+      sessionStorage.setItem(coachModeSessionKey, '1')
+    } catch {}
     setShowCoachModeModal(false)
     router.push('/smart')
   }, [router])
 
   const openProMode = React.useCallback(() => {
+    try {
+      sessionStorage.setItem(coachModeSessionKey, '1')
+    } catch {}
     setShowCoachModeModal(false)
     router.push('/gestione-formazione')
   }, [router])
@@ -222,7 +229,13 @@ function HomePage() {
   React.useEffect(() => {
     if (!smartEntryEnabled) return
     if (loading) return
-    setShowCoachModeModal(true)
+    if (typeof window === 'undefined') return
+    try {
+      const alreadySeenThisSession = sessionStorage.getItem(coachModeSessionKey) === '1'
+      setShowCoachModeModal(!alreadySeenThisSession)
+    } catch {
+      setShowCoachModeModal(true)
+    }
   }, [loading, smartEntryEnabled])
 
   const currentBannerTip = bannerTips.length > 0
