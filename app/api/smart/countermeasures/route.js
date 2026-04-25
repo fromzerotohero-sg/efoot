@@ -84,6 +84,101 @@ function buildFallbackCountermeasure(lang, smartContext, variant = 'default') {
   }
 }
 
+function ensureRichSmartCountermeasure(countermeasure, lang) {
+  if (!countermeasure || typeof countermeasure !== 'object') return countermeasure
+
+  if (!countermeasure.analysis || typeof countermeasure.analysis !== 'object') {
+    countermeasure.analysis = {}
+  }
+  if (!Array.isArray(countermeasure.analysis.strengths)) countermeasure.analysis.strengths = []
+  if (!Array.isArray(countermeasure.analysis.weaknesses)) countermeasure.analysis.weaknesses = []
+  if (!countermeasure.analysis.why_weaknesses) {
+    countermeasure.analysis.why_weaknesses = lang === 'en'
+      ? 'Read the opponent shape through central access, width, and support distances.'
+      : 'Leggi la struttura avversaria attraverso accesso centrale, ampiezza e distanze di supporto.'
+  }
+
+  const defaultStrengths = lang === 'en'
+    ? ['Compact central structure', 'Clear support around the attacking hub']
+    : ['Compattezza centrale', 'Supporto chiaro attorno al fulcro offensivo']
+  const defaultWeaknesses = lang === 'en'
+    ? ['Width can become fragile', 'Cross defence can open if shape stretches']
+    : ['L\'ampiezza può diventare fragile', 'La difesa ai cross può aprirsi se la struttura si allunga']
+
+  while (countermeasure.analysis.strengths.length < 2) {
+    const next = defaultStrengths[countermeasure.analysis.strengths.length]
+    if (!next) break
+    countermeasure.analysis.strengths.push(next)
+  }
+  while (countermeasure.analysis.weaknesses.length < 2) {
+    const next = defaultWeaknesses[countermeasure.analysis.weaknesses.length]
+    if (!next) break
+    countermeasure.analysis.weaknesses.push(next)
+  }
+
+  if (!countermeasure.countermeasures || typeof countermeasure.countermeasures !== 'object') {
+    countermeasure.countermeasures = {}
+  }
+  if (!Array.isArray(countermeasure.countermeasures.formation_adjustments)) countermeasure.countermeasures.formation_adjustments = []
+  if (!Array.isArray(countermeasure.countermeasures.tactical_adjustments)) countermeasure.countermeasures.tactical_adjustments = []
+  if (!Array.isArray(countermeasure.countermeasures.player_suggestions)) countermeasure.countermeasures.player_suggestions = []
+  if (!Array.isArray(countermeasure.countermeasures.individual_instructions)) countermeasure.countermeasures.individual_instructions = []
+
+  const tacticalAdjustments = countermeasure.countermeasures.tactical_adjustments
+  const existingTypes = new Set(tacticalAdjustments.map((adj) => adj?.type).filter(Boolean))
+
+  const defaults = lang === 'en'
+    ? [
+        {
+          type: 'pressing',
+          suggestion: 'Use selective pressing in central lanes',
+          reason: 'Reduce the influence of the opponent playmaker before the final pass.',
+          priority: 'high'
+        },
+        {
+          type: 'defensive_line',
+          suggestion: 'Keep a slightly lower defensive line',
+          reason: 'Protect depth first if the opponent can attack quickly between lines.',
+          priority: 'high'
+        },
+        {
+          type: 'possession_strategy',
+          suggestion: 'Open the ball toward the freer side before forcing vertical play',
+          reason: 'Attack the weaker lane instead of entering the densest zone too early.',
+          priority: 'medium'
+        }
+      ]
+    : [
+        {
+          type: 'pressing',
+          suggestion: 'Usa pressing selettivo nelle corsie centrali',
+          reason: 'Riduci l’influenza del regista avversario prima dell’ultimo passaggio.',
+          priority: 'high'
+        },
+        {
+          type: 'defensive_line',
+          suggestion: 'Mantieni una linea difensiva leggermente più bassa',
+          reason: 'Proteggi prima la profondità se l’avversario può attaccare rapidamente tra le linee.',
+          priority: 'high'
+        },
+        {
+          type: 'possession_strategy',
+          suggestion: 'Apri il gioco sul lato più libero prima di forzare la verticalità',
+          reason: 'Attacca la corsia più debole invece di entrare subito nella zona più densa.',
+          priority: 'medium'
+        }
+      ]
+
+  for (const adj of defaults) {
+    if (tacticalAdjustments.length >= 3) break
+    if (existingTypes.has(adj.type)) continue
+    tacticalAdjustments.push(adj)
+    existingTypes.add(adj.type)
+  }
+
+  return countermeasure
+}
+
 export async function POST(req) {
   const auth = await getAuthenticatedSmartRequest(req)
   if (auth.errorResponse) return auth.errorResponse
@@ -161,9 +256,10 @@ export async function POST(req) {
     }
 
     const validation = validateCountermeasuresOutput(payload)
-    const countermeasure = validation.valid
+    const baseCountermeasure = validation.valid
       ? { ...payload, variant, generated_at: new Date().toISOString() }
       : { ...buildFallbackCountermeasure(lang, smartContext, variant), variant, generated_at: new Date().toISOString() }
+    const countermeasure = ensureRichSmartCountermeasure(baseCountermeasure, lang)
 
     const nextCount = used + 1
     const previous = Array.isArray(smartContext.last_countermeasures) ? smartContext.last_countermeasures : []

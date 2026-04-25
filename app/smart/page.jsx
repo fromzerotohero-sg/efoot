@@ -356,11 +356,12 @@ export default withAuth(function SmartPage() {
           <input id="smart-opponent-upload-input" type="file" accept="image/*" onChange={handleSelectOpponentImage} style={{ display: 'none' }} disabled={uploadingOpponent} />
           <input id="smart-opponent-camera-input" type="file" accept="image/*" capture="environment" onChange={handleSelectOpponentImage} style={{ display: 'none' }} disabled={uploadingOpponent} />
 
-          {!hasClientFormation && (
           <div className="neon-card" style={{ padding: 'clamp(16px, 4vw, 24px)', marginBottom: '24px' }}>
             <h2 style={{ fontSize: 'clamp(18px, 4vw, 20px)', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Shield size={24} style={{ color: '#fbbf24', filter: 'drop-shadow(0 0 8px rgba(251, 191, 36, 0.8))' }} />
-              {lang === 'en' ? 'Upload your formation' : 'Carica la tua formazione'}
+              {hasClientFormation
+                ? (lang === 'en' ? 'Your current formation' : 'La tua formazione attuale')
+                : (lang === 'en' ? 'Upload your formation' : 'Carica la tua formazione')}
             </h2>
 
             {!uploadImage ? (
@@ -381,13 +382,26 @@ export default withAuth(function SmartPage() {
                 >
                   <Camera size={48} style={{ marginBottom: '16px', color: '#fbbf24', filter: 'drop-shadow(0 0 12px rgba(251, 191, 36, 0.9))' }} />
                   <div style={{ fontSize: 'clamp(14px, 3vw, 16px)', fontWeight: 600, marginBottom: '8px' }}>
-                    {t('uploadPhoto')}
+                      {hasClientFormation
+                        ? (lang === 'en' ? 'Update your 2D formation' : 'Aggiorna la tua formazione 2D')
+                        : t('uploadPhoto')}
                   </div>
                   <div style={{ fontSize: 'clamp(12px, 2.5vw, 14px)', opacity: 0.8 }}>
-                    {lang === 'en'
-                      ? 'Load your 2D squad screenshot to unlock Smart Coach and contromisure.'
-                      : 'Carica la schermata 2D della tua squadra per sbloccare Smart Coach e contromisure.'}
+                      {hasClientFormation
+                        ? (lang === 'en'
+                            ? 'Load a new 2D screenshot to replace the formation currently used by Smart Coach.'
+                            : 'Carica una nuova schermata 2D per sostituire la formazione attualmente usata da Smart Coach.')
+                        : (lang === 'en'
+                            ? 'Load your 2D squad screenshot to unlock Smart Coach and contromisure.'
+                            : 'Carica la schermata 2D della tua squadra per sbloccare Smart Coach e contromisure.')}
                   </div>
+                    {hasClientFormation && (
+                      <div style={{ fontSize: '12px', opacity: 0.62, marginTop: '8px' }}>
+                        {lang === 'en'
+                          ? `Current module: ${currentContext?.formation || 'N/A'}`
+                          : `Modulo attuale: ${currentContext?.formation || 'N/A'}`}
+                      </div>
+                    )}
                 </div>
 
                 <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '14px' }}>
@@ -411,6 +425,18 @@ export default withAuth(function SmartPage() {
                     <Camera size={16} />
                     {t('cameraCaptureTitle')}
                   </button>
+                  {hasClientFormation && (
+                    <button
+                      type="button"
+                      onClick={handleResetSmart}
+                      className="neon-button"
+                      disabled={uploading}
+                      style={{ flex: '1 1 180px', minHeight: '48px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                    >
+                      <X size={16} />
+                      {lang === 'en' ? 'Reset Smart context' : 'Resetta Smart'}
+                    </button>
+                  )}
                 </div>
               </>
             ) : (
@@ -422,7 +448,11 @@ export default withAuth(function SmartPage() {
                   {uploading ? (
                     <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px', minHeight: '44px' }}>
                       <RefreshCw size={20} style={{ animation: 'spin 1s linear infinite', color: 'var(--neon-orange)' }} />
-                      <span>{t('extracting')}</span>
+                      <span>
+                        {lang === 'en'
+                          ? 'Extracting your formation and updating Smart context...'
+                          : 'Sto estraendo la tua formazione e aggiornando il contesto Smart...'}
+                      </span>
                     </div>
                   ) : (
                     <button
@@ -446,10 +476,25 @@ export default withAuth(function SmartPage() {
                     {t('cancel')}
                   </button>
                 </div>
+                {uploading && (
+                  <div style={{
+                    padding: '12px 14px',
+                    marginTop: '12px',
+                    background: 'rgba(0, 212, 255, 0.08)',
+                    border: '1px solid rgba(0, 212, 255, 0.18)',
+                    borderRadius: '10px',
+                    fontSize: '13px',
+                    lineHeight: 1.6,
+                    color: 'rgba(255,255,255,0.88)'
+                  }}>
+                    {lang === 'en'
+                      ? 'Smart is updating your saved formation. Wait until extraction completes before loading the opponent.'
+                      : 'Smart sta aggiornando la tua formazione salvata. Attendi la fine dell’estrazione prima di caricare l’avversario.'}
+                  </div>
+                )}
               </>
             )}
           </div>
-          )}
 
           {hasClientFormation && (
             <div className="neon-card" style={{ padding: 'clamp(16px, 4vw, 24px)', marginBottom: '24px' }}>
