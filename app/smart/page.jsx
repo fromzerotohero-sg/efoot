@@ -30,7 +30,6 @@ function SmartPage() {
   const [enabled, setEnabled] = React.useState(false)
   const [loadingContext, setLoadingContext] = React.useState(true)
   const [contextData, setContextData] = React.useState(null)
-  const [previewData, setPreviewData] = React.useState(null)
   const [selectedImageName, setSelectedImageName] = React.useState('')
   const [uploading, setUploading] = React.useState(false)
   const [error, setError] = React.useState('')
@@ -96,7 +95,6 @@ function SmartPage() {
 
     setUploading(true)
     setError('')
-    setPreviewData(null)
     setSelectedImageName(file.name)
 
     try {
@@ -120,39 +118,20 @@ function SmartPage() {
         body: JSON.stringify({ imageDataUrl: optimized.dataUrl })
       })
 
-      const data = await safeJsonResponse(res, lang === 'en' ? 'Unable to read Smart formation' : 'Impossibile leggere la formazione Smart')
-      setPreviewData(data)
-    } catch (err) {
-      setError(err.message || (lang === 'en' ? 'Upload failed' : 'Upload fallito'))
-      setSelectedImageName('')
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  const handleConfirmPreview = async () => {
-    if (!previewData) return
-    setUploading(true)
-    setError('')
-
-    try {
-      const token = await getToken()
-      if (!token) throw new Error(lang === 'en' ? 'Session expired' : 'Sessione scaduta')
-
-      const res = await fetch('/api/smart/context', {
+      const extracted = await safeJsonResponse(res, lang === 'en' ? 'Unable to read Smart formation' : 'Impossibile leggere la formazione Smart')
+      const saveRes = await fetch('/api/smart/context', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(previewData)
+        body: JSON.stringify(extracted)
       })
-
-      const data = await safeJsonResponse(res, lang === 'en' ? 'Unable to save Smart context' : 'Impossibile salvare Smart')
-      setContextData(data)
-      setPreviewData(null)
+      const saved = await safeJsonResponse(saveRes, lang === 'en' ? 'Unable to save Smart context' : 'Impossibile salvare Smart')
+      setContextData(saved)
     } catch (err) {
-      setError(err.message || (lang === 'en' ? 'Unable to continue' : 'Impossibile continuare'))
+      setError(err.message || (lang === 'en' ? 'Upload failed' : 'Upload fallito'))
+      setSelectedImageName('')
     } finally {
       setUploading(false)
     }
@@ -170,7 +149,6 @@ function SmartPage() {
         headers: { Authorization: `Bearer ${token}` }
       })
       await safeJsonResponse(res, lang === 'en' ? 'Unable to reset Smart context' : 'Impossibile resettare Smart')
-      setPreviewData(null)
       setSelectedImageName('')
       await loadContext()
     } catch (err) {
@@ -290,8 +268,8 @@ function SmartPage() {
             </h2>
             <p style={{ margin: 0, fontSize: '15px', lineHeight: 1.6, color: 'rgba(255,255,255,0.78)' }}>
               {lang === 'en'
-                ? 'Upload one 2D squad screenshot, confirm what we detect, then use 2 countermeasures and 1 Smart coach chat. Your Pro experience stays untouched.'
-                : 'Carica una schermata 2D della tua squadra, conferma il riconoscimento e usa 2 contromisure e 1 chat Smart. La tua versione Pro resta intatta.'}
+                ? 'Upload one 2D squad screenshot and start immediately with 2 countermeasures and 1 Smart coach chat. Your Pro experience stays untouched.'
+                : 'Carica una schermata 2D della tua squadra e parti subito con 2 contromisure e 1 chat Smart. La tua versione Pro resta intatta.'}
             </p>
           </div>
           <button
@@ -323,7 +301,7 @@ function SmartPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
                 <Camera size={20} color="var(--neon-cyan)" />
                 <h3 style={{ margin: 0, fontSize: '20px', color: '#fff' }}>
-                  {lang === 'en' ? 'Step 1: upload your 2D formation' : 'Step 1: carica la tua formazione 2D'}
+                  {lang === 'en' ? 'Your 2D formation' : 'La tua formazione 2D'}
                 </h3>
               </div>
               <p style={{ color: 'rgba(255,255,255,0.74)', lineHeight: 1.6, marginBottom: '18px' }}>
@@ -383,26 +361,17 @@ function SmartPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
                 <CheckCircle2 size={20} color={readiness === 'good' ? '#22c55e' : readiness === 'partial' ? '#f59e0b' : 'var(--neon-cyan)'} />
                 <h3 style={{ margin: 0, fontSize: '20px', color: '#fff' }}>
-                  {lang === 'en' ? 'Step 2: confirm the read' : 'Step 2: conferma la lettura'}
+                  {lang === 'en' ? 'Detected squad' : 'Squadra rilevata'}
                 </h3>
               </div>
 
-              {previewData ? (
-                <>
-                  <SmartSummaryBlock data={previewData} lang={lang} />
-                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '18px' }}>
-                    <button type="button" className="btn primary" onClick={handleConfirmPreview} disabled={uploading}>
-                      {lang === 'en' ? 'Confirm and continue' : 'Conferma e continua'}
-                    </button>
-                  </div>
-                </>
-              ) : currentContext ? (
+              {currentContext ? (
                 <SmartSummaryBlock data={currentContext} lang={lang} />
               ) : (
                 <div style={{ color: 'rgba(255,255,255,0.66)', lineHeight: 1.6 }}>
                   {lang === 'en'
-                    ? 'Upload a screenshot to unlock preview, Smart countermeasures, and the coach.'
-                    : 'Carica uno screenshot per sbloccare preview, contromisure Smart e coach.'}
+                    ? 'Upload a screenshot to populate this area, then use countermeasures and chat immediately.'
+                    : 'Carica uno screenshot per popolare quest\'area, poi usa subito contromisure e chat.'}
                 </div>
               )}
             </div>
@@ -503,6 +472,24 @@ function SmartPage() {
                       ? 'Ask one focused question about your current formation. Smart answers from team structure, not from a full Pro roster.'
                       : 'Fai una domanda mirata sulla tua formazione attuale. Smart risponde dalla struttura squadra, non da una rosa Pro completa.'}
                   </p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
+                    {[
+                      lang === 'en' ? 'What is my main structural weakness?' : 'Qual è il mio punto debole strutturale?',
+                      lang === 'en' ? 'How should I defend the center?' : 'Come devo proteggere il centro?',
+                      lang === 'en' ? 'What is my first attacking priority?' : 'Qual è la mia prima priorità offensiva?'
+                    ].map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        className="neon-button"
+                        style={{ fontSize: '12px', padding: '8px 12px' }}
+                        onClick={() => setChatInput(suggestion)}
+                        disabled={chatLoading}
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
                   <textarea
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}

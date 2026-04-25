@@ -21,6 +21,31 @@ function normalizeSuggestions(lang, suggestions) {
     : ['Apri il Pro per piu dettagli sui singoli', 'Chiedi una priorita pre-partita', 'Rivedi il punto debole strutturale']
 }
 
+function buildFallbackSmartChatAnswer(lang, smartContext, profile, message) {
+  const formation = smartContext?.formation || (lang === 'en' ? 'your current setup' : 'il tuo assetto attuale')
+  const playerCount = Array.isArray(smartContext?.players) ? smartContext.players.length : 0
+  const weakPoint = profile?.ai_weak_point ? String(profile.ai_weak_point) : ''
+  const lowerMessage = String(message || '').toLowerCase()
+
+  if (lang === 'en') {
+    if (lowerMessage.includes('defend') || lowerMessage.includes('pressure') || lowerMessage.includes('weakness')) {
+      return `With ${formation} and ${playerCount} detected starters, keep your first focus on structure and distances between lines. Protect the center first, then react to wide threats only when the pass is already travelling. If you want player-by-player precision, open Pro.`
+    }
+    if (lowerMessage.includes('attack') || lowerMessage.includes('score') || lowerMessage.includes('offensive')) {
+      return `With ${formation}, your first attacking priority should be one clear route instead of forcing every lane. Attack the space your shape naturally opens and avoid rushing vertical actions if the center is crowded. If you want deeper individual advice, open Pro.`
+    }
+    return `From this Smart view I can already guide you on structure, priorities, and matchup logic with ${formation}. Your best next step is to protect your main weak zone first and play from a clear team plan instead of individual improvisation. If you need deeper player-level guidance, open Pro.`
+  }
+
+  if (lowerMessage.includes('dif') || lowerMessage.includes('pression') || lowerMessage.includes('debole')) {
+    return `Con ${formation} e ${playerCount} titolari rilevati, la prima priorità è tenere struttura e distanze tra i reparti. Proteggi prima il centro e reagisci sulle corsie solo quando il passaggio sta già viaggiando. Se vuoi precisione sui singoli, apri il Pro.`
+  }
+  if (lowerMessage.includes('attac') || lowerMessage.includes('gol') || lowerMessage.includes('offens')) {
+    return `Con ${formation}, la tua prima priorità offensiva deve essere una via chiara invece di forzare tutte le linee. Attacca lo spazio che il modulo ti apre in modo naturale ed evita verticalizzazioni affrettate quando il centro è intasato. Se vuoi un consiglio più profondo sui singoli, apri il Pro.`
+  }
+  return `Da questa vista Smart posso già guidarti su struttura, priorità e logica del matchup con ${formation}. Il passo migliore adesso è proteggere prima la tua zona più fragile e giocare con un piano di squadra chiaro, non con improvvisazione sui singoli. Se vuoi profondità sui giocatori, apri il Pro.`
+}
+
 async function loadSharedContext(admin, userId) {
   const [
     { data: smartContext },
@@ -105,7 +130,7 @@ export async function POST(req) {
     })
 
     const requestBody = {
-      model: (process.env.OPENAI_MODEL || 'gpt-5.2').trim(),
+      model: 'gpt-4o',
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: 'json_object' },
       temperature: 0.5,
@@ -122,7 +147,10 @@ export async function POST(req) {
         const response = await callOpenAIWithRetry(apiKey, fallbackBody, 'smart-chat')
         payload = await parseOpenAIResponse(response, 'smart-chat')
       } else {
-        throw error
+        payload = {
+          answer: buildFallbackSmartChatAnswer(lang, smartContext, profile, message),
+          suggestions: normalizeSuggestions(lang)
+        }
       }
     }
 

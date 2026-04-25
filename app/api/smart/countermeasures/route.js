@@ -40,6 +40,29 @@ async function loadSharedContext(admin, userId) {
   return { smartContext, profile, matches: matches || [], patterns, gameAnalysis }
 }
 
+function buildFallbackCountermeasure(lang, smartContext, variant = 'default') {
+  const formation = smartContext?.formation || (lang === 'en' ? 'your current shape' : 'il tuo assetto attuale')
+  const toneHeadline = variant === 'alternative'
+    ? (lang === 'en' ? 'Alternative Smart angle' : 'Lettura Smart alternativa')
+    : (lang === 'en' ? 'Immediate Smart read' : 'Lettura Smart immediata')
+
+  if (lang === 'en') {
+    return {
+      headline: toneHeadline,
+      protect: `With ${formation}, protect central access first and keep your midfield compact before chasing wide pressure.`,
+      attack: `Use the lane your shape opens naturally and attack with one clear route instead of forcing every vertical pass.`,
+      avoid: 'Do not break your structure too early just to press one player.'
+    }
+  }
+
+  return {
+    headline: toneHeadline,
+    protect: `Con ${formation}, proteggi prima l'accesso centrale e tieni compatto il centrocampo prima di inseguire pressione laterale.`,
+    attack: `Usa la corsia che il tuo assetto apre in modo naturale e attacca con una sola via chiara invece di forzare ogni verticalizzazione.`,
+    avoid: 'Non rompere la struttura troppo presto solo per andare a pressare un singolo uomo.'
+  }
+}
+
 export async function POST(req) {
   const auth = await getAuthenticatedSmartRequest(req)
   if (auth.errorResponse) return auth.errorResponse
@@ -90,7 +113,7 @@ export async function POST(req) {
     })
 
     const requestBody = {
-      model: (process.env.OPENAI_MODEL || 'gpt-5.2').trim(),
+      model: 'gpt-4o',
       messages: [{ role: 'user', content: prompt }],
       response_format: { type: 'json_object' },
       temperature: 0.4,
@@ -107,7 +130,7 @@ export async function POST(req) {
         const response = await callOpenAIWithRetry(apiKey, fallbackBody, 'smart-countermeasures')
         payload = await parseOpenAIResponse(response, 'smart-countermeasures')
       } else {
-        throw error
+        payload = buildFallbackCountermeasure(lang, smartContext, variant)
       }
     }
 
