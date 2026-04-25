@@ -27,6 +27,13 @@ import {
   X,
 } from 'lucide-react'
 
+function pickLang(val, lang) {
+  if (val == null) return ''
+  if (typeof val === 'string') return val
+  if (typeof val === 'object' && (val.it !== undefined || val.en !== undefined)) return val[lang] || val.it || val.en || ''
+  return String(val)
+}
+
 export default withAuth(function SmartPage() {
   const router = useRouter()
   const { lang, t } = useTranslation()
@@ -332,15 +339,17 @@ export default withAuth(function SmartPage() {
         </div>
       ) : (
         <>
+          <input id="smart-upload-input" type="file" accept="image/*" onChange={handleSelectImage} style={{ display: 'none' }} disabled={uploading} />
+          <input id="smart-camera-input" type="file" accept="image/*" capture="environment" onChange={handleSelectImage} style={{ display: 'none' }} disabled={uploading} />
+          <input id="smart-opponent-upload-input" type="file" accept="image/*" onChange={handleSelectOpponentImage} style={{ display: 'none' }} disabled={uploadingOpponent} />
+          <input id="smart-opponent-camera-input" type="file" accept="image/*" capture="environment" onChange={handleSelectOpponentImage} style={{ display: 'none' }} disabled={uploadingOpponent} />
+
           {!hasClientFormation && (
           <div className="neon-card" style={{ padding: 'clamp(16px, 4vw, 24px)', marginBottom: '24px' }}>
             <h2 style={{ fontSize: 'clamp(18px, 4vw, 20px)', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Shield size={24} style={{ color: '#fbbf24', filter: 'drop-shadow(0 0 8px rgba(251, 191, 36, 0.8))' }} />
               {lang === 'en' ? 'Upload your formation' : 'Carica la tua formazione'}
             </h2>
-
-            <input id="smart-upload-input" type="file" accept="image/*" onChange={handleSelectImage} style={{ display: 'none' }} disabled={uploading} />
-            <input id="smart-camera-input" type="file" accept="image/*" capture="environment" onChange={handleSelectImage} style={{ display: 'none' }} disabled={uploading} />
 
             {!uploadImage ? (
               <>
@@ -443,7 +452,33 @@ export default withAuth(function SmartPage() {
                 {expandedSections.extracted ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
               </div>
 
-              {expandedSections.extracted && <SmartSummaryBlock data={currentContext} lang={lang} />}
+              {expandedSections.extracted && (
+                <>
+                  <SmartSummaryBlock data={currentContext} lang={lang} />
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '16px' }}>
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('smart-upload-input')?.click()}
+                      className="btn primary"
+                      disabled={uploading}
+                      style={{ flex: '1 1 220px' }}
+                    >
+                      <RefreshCw size={16} />
+                      {lang === 'en' ? 'Update my formation' : 'Aggiorna la mia formazione'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('smart-camera-input')?.click()}
+                      className="neon-button"
+                      disabled={uploading}
+                      style={{ flex: '1 1 220px' }}
+                    >
+                      <Camera size={16} />
+                      {lang === 'en' ? 'Take a new photo' : 'Scatta una nuova foto'}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -453,9 +488,6 @@ export default withAuth(function SmartPage() {
                 <Target size={24} style={{ color: '#fbbf24', filter: 'drop-shadow(0 0 8px rgba(251, 191, 36, 0.8))' }} />
                 {lang === 'en' ? 'Upload opponent formation' : 'Carica la formazione avversaria'}
               </h2>
-
-              <input id="smart-opponent-upload-input" type="file" accept="image/*" onChange={handleSelectOpponentImage} style={{ display: 'none' }} disabled={uploadingOpponent} />
-              <input id="smart-opponent-camera-input" type="file" accept="image/*" capture="environment" onChange={handleSelectOpponentImage} style={{ display: 'none' }} disabled={uploadingOpponent} />
 
               {!opponentUploadImage && !hasOpponentFormation ? (
                 <>
@@ -568,53 +600,142 @@ export default withAuth(function SmartPage() {
                   </p>
 
                   {hasOpponentFormation && currentCountermeasure ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      <div
-                        style={{
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                      <div className="neon-card" style={{ padding: 'clamp(16px, 4vw, 24px)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                          <h3 style={{ fontSize: 'clamp(18px, 4vw, 20px)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                            <Target size={24} color="var(--neon-blue)" />
+                            {lang === 'en' ? 'Opponent formation analysis' : t('opponentFormationAnalysis')}
+                          </h3>
+                        </div>
+
+                        {currentCountermeasure.analysis?.is_meta_formation && (
+                          <div style={{
+                            padding: '12px',
+                            background: 'rgba(255, 165, 0, 0.1)',
+                            border: '1px solid rgba(255, 165, 0, 0.3)',
+                            borderRadius: '8px',
+                            marginBottom: '16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                          }}>
+                            <AlertCircle size={18} color="var(--neon-orange)" />
+                            <strong>{t('metaFormation')}:</strong> {pickLang(currentCountermeasure.analysis.meta_type, lang)}
+                          </div>
+                        )}
+
+                        <div style={{ marginBottom: '16px', lineHeight: '1.7' }}>
+                          {pickLang(currentCountermeasure.analysis?.opponent_formation_analysis, lang)}
+                        </div>
+
+                        {currentCountermeasure.analysis?.strengths?.length > 0 && (
+                          <div style={{ marginBottom: '16px' }}>
+                            <strong style={{ color: 'var(--neon-orange)' }}>{t('formationStrengths')}:</strong>
+                            <ul style={{ marginTop: '8px', paddingLeft: '20px' }}>
+                              {currentCountermeasure.analysis.strengths.map((strength, idx) => (
+                                <li key={idx} style={{ marginBottom: '4px' }}>{pickLang(strength, lang)}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {currentCountermeasure.analysis?.weaknesses?.length > 0 && (
+                          <div>
+                            <strong style={{ color: 'var(--neon-blue)' }}>{t('formationWeaknesses')}:</strong>
+                            <ul style={{ marginTop: '8px', paddingLeft: '20px' }}>
+                              {currentCountermeasure.analysis.weaknesses.map((weakness, idx) => (
+                                <li key={idx} style={{ marginBottom: '4px' }}>{pickLang(weakness, lang)}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {currentCountermeasure.analysis?.why_weaknesses && (
+                          <div style={{ marginTop: '16px', padding: '12px', background: 'rgba(0, 212, 255, 0.1)', borderRadius: '8px', fontSize: 'clamp(13px, 3vw, 14px)' }}>
+                            <strong>{t('reason')}:</strong> {pickLang(currentCountermeasure.analysis.why_weaknesses, lang)}
+                          </div>
+                        )}
+                      </div>
+
+                      {((currentCountermeasure.countermeasures?.formation_adjustments?.length || 0) > 0 ||
+                        (currentCountermeasure.countermeasures?.tactical_adjustments?.length || 0) > 0) && (
+                        <div className="neon-card" style={{ padding: 'clamp(16px, 4vw, 24px)' }}>
+                          <h3 style={{ fontSize: 'clamp(18px, 4vw, 20px)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 16px 0' }}>
+                            <Shield size={24} color="var(--neon-orange)" />
+                            {t('tacticalCountermeasures')}
+                          </h3>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            {(currentCountermeasure.countermeasures?.formation_adjustments || []).map((adj, idx) => (
+                              <div key={`formation-${idx}`} style={{
+                                padding: 'clamp(12px, 3vw, 16px)',
+                                background: 'rgba(255, 165, 0, 0.1)',
+                                border: '1px solid var(--neon-orange)',
+                                borderRadius: '8px'
+                              }}>
+                                <div style={{ fontWeight: 600, marginBottom: '8px', fontSize: 'clamp(14px, 3vw, 16px)' }}>
+                                  {adj.type === 'formation_change' ? t('changeFormation') : t('changePlayingStyle')}: {pickLang(adj.suggestion, lang)}
+                                </div>
+                                <div style={{ fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: '1.6', opacity: 0.9 }}>
+                                  {pickLang(adj.reason, lang)}
+                                </div>
+                              </div>
+                            ))}
+
+                            {(currentCountermeasure.countermeasures?.tactical_adjustments || []).map((adj, idx) => (
+                              <div key={`tactical-${idx}`} style={{
+                                padding: 'clamp(12px, 3vw, 16px)',
+                                background: 'rgba(0, 212, 255, 0.1)',
+                                border: '1px solid var(--neon-blue)',
+                                borderRadius: '8px'
+                              }}>
+                                <div style={{ fontWeight: 600, marginBottom: '8px', fontSize: 'clamp(14px, 3vw, 16px)' }}>
+                                  {adj.type === 'defensive_line' ? t('adjustDefensiveLine') :
+                                   adj.type === 'pressing' ? t('adjustPressing') :
+                                   adj.type === 'possession_strategy' ? t('adjustPossession') :
+                                   t('changePlayingStyle')}: {pickLang(adj.suggestion, lang)}
+                                </div>
+                                <div style={{ fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: '1.6', opacity: 0.9 }}>
+                                  {pickLang(adj.reason, lang)}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {currentCountermeasure.warnings?.length > 0 && (
+                        <div style={{
                           padding: 'clamp(12px, 3vw, 16px)',
                           background: 'rgba(255, 165, 0, 0.1)',
-                          border: '1px solid var(--neon-orange)',
+                          border: '1px solid rgba(255, 165, 0, 0.3)',
                           borderRadius: '8px'
-                        }}
-                      >
-                        <div style={{ fontWeight: 600, marginBottom: '8px', fontSize: 'clamp(14px, 3vw, 16px)' }}>
-                          {currentCountermeasure.headline || (lang === 'en' ? 'Current structural read' : 'Lettura strutturale attuale')}
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontWeight: 600 }}>
+                            <AlertCircle size={18} color="var(--neon-orange)" />
+                            {t('warnings')}
+                          </div>
+                          <ul style={{ marginLeft: '24px' }}>
+                            {currentCountermeasure.warnings.map((warning, idx) => (
+                              <li key={idx} style={{ marginBottom: '4px', fontSize: 'clamp(13px, 3vw, 14px)' }}>{pickLang(warning, lang)}</li>
+                            ))}
+                          </ul>
                         </div>
-                        <div style={{ fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: '1.6', opacity: 0.9 }}>
-                          {currentCountermeasure.protect}
-                        </div>
-                      </div>
+                      )}
 
-                      <div
-                        style={{
-                          padding: 'clamp(12px, 3vw, 16px)',
-                          background: 'rgba(0, 212, 255, 0.1)',
-                          border: '1px solid var(--neon-blue)',
-                          borderRadius: '8px'
-                        }}
-                      >
-                        <div style={{ fontWeight: 600, marginBottom: '8px', fontSize: 'clamp(14px, 3vw, 16px)' }}>
-                          {lang === 'en' ? 'Attacking route' : 'Via offensiva'}
-                        </div>
-                        <div style={{ fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: '1.6', opacity: 0.9 }}>
-                          {currentCountermeasure.attack}
-                        </div>
-                      </div>
-
-                      <div
-                        style={{
-                          padding: 'clamp(12px, 3vw, 16px)',
-                          background: 'rgba(34, 197, 94, 0.1)',
-                          border: '1px solid #22c55e',
-                          borderRadius: '8px'
-                        }}
-                      >
-                        <div style={{ fontWeight: 600, marginBottom: '8px', fontSize: 'clamp(14px, 3vw, 16px)' }}>
-                          {lang === 'en' ? 'Main mistake to avoid' : 'Errore da evitare'}
-                        </div>
-                        <div style={{ fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: '1.6', opacity: 0.9 }}>
-                          {currentCountermeasure.avoid}
-                        </div>
+                      <div style={{
+                        padding: 'clamp(10px, 2.5vw, 12px)',
+                        background: 'rgba(0, 212, 255, 0.1)',
+                        border: '1px solid rgba(0, 212, 255, 0.3)',
+                        borderRadius: '8px',
+                        fontSize: 'clamp(12px, 2.5vw, 13px)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: '8px'
+                      }}>
+                        <span><strong>{t('confidence')}:</strong> {currentCountermeasure.confidence ?? 'N/A'}%</span>
+                        <span><strong>{t('dataQuality')}:</strong> {currentCountermeasure.data_quality || 'N/A'}</span>
                       </div>
                     </div>
                   ) : hasOpponentFormation ? (
