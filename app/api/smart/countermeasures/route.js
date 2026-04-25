@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { callOpenAIWithRetry, parseOpenAIResponse } from '@/lib/openaiHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { getRelevantSectionsForContext } from '@/lib/ragHelper'
+import { validateCountermeasuresOutput } from '@/lib/countermeasuresHelper'
 import { buildSmartCountermeasurePrompt } from '@/lib/smartCoachPrompts'
 import { getAuthenticatedSmartRequest } from '@/lib/smartCoachServer'
 
@@ -41,24 +42,45 @@ async function loadSharedContext(admin, userId) {
 
 function buildFallbackCountermeasure(lang, smartContext, variant = 'default') {
   const formation = smartContext?.formation || (lang === 'en' ? 'your current shape' : 'il tuo assetto attuale')
-  const toneHeadline = variant === 'alternative'
-    ? (lang === 'en' ? 'Alternative Smart suggestion' : 'Suggerimento Smart alternativo')
-    : (lang === 'en' ? 'Immediate Smart suggestion' : 'Suggerimento Smart immediato')
-
-  if (lang === 'en') {
-    return {
-      headline: toneHeadline,
-      protect: `With ${formation}, protect central access first and keep your midfield compact before chasing wide pressure.`,
-      attack: `Use the lane your shape opens naturally and attack with one clear route instead of forcing every vertical pass.`,
-      avoid: 'Do not break your structure too early just to press one player.'
-    }
-  }
+  const analysis = lang === 'en'
+    ? `The opponent shape should be read against ${formation}. Use Smart mode as a structural pre-match read, then open Pro if you need deeper player-level precision.`
+    : `La struttura avversaria va letta contro ${formation}. Usa la Smart come lettura strutturale pre-partita, poi apri il Pro se ti serve una precisione più profonda sui singoli.`
 
   return {
-    headline: toneHeadline,
-    protect: `Con ${formation}, proteggi prima l'accesso centrale e tieni compatto il centrocampo prima di inseguire pressione laterale.`,
-    attack: `Usa la corsia che il tuo assetto apre in modo naturale e attacca con una sola via chiara invece di forzare ogni verticalizzazione.`,
-    avoid: 'Non rompere la struttura troppo presto solo per andare a pressare un singolo uomo.'
+    analysis: {
+      is_meta_formation: false,
+      meta_type: null,
+      opponent_formation_analysis: analysis,
+      strengths: [],
+      weaknesses: [],
+      why_weaknesses: lang === 'en' ? 'Structural read generated with limited Smart data.' : 'Lettura strutturale generata con dati Smart limitati.'
+    },
+    countermeasures: {
+      formation_adjustments: [],
+      tactical_adjustments: [
+        {
+          type: 'pressing',
+          suggestion: lang === 'en' ? 'Protect the center first' : 'Proteggi prima il centro',
+          reason: lang === 'en' ? 'Keep your shape compact before chasing the ball wide.' : 'Mantieni la struttura compatta prima di inseguire la palla sulle fasce.',
+          priority: 'high'
+        },
+        {
+          type: 'possession_strategy',
+          suggestion: lang === 'en' ? 'Attack the natural lane of your shape' : 'Attacca la corsia naturale del tuo assetto',
+          reason: lang === 'en' ? 'Use the route your current structure opens most clearly.' : 'Sfrutta la via che la tua struttura apre in modo più chiaro.',
+          priority: 'medium'
+        }
+      ],
+      player_suggestions: [],
+      individual_instructions: []
+    },
+    confidence: 62,
+    data_quality: 'medium',
+    warnings: [
+      lang === 'en'
+        ? 'Smart countermeasures are based on lightweight pre-match context.'
+        : 'Le contromisure Smart sono basate su un contesto pre-partita leggero.'
+    ]
   }
 }
 
@@ -93,6 +115,9 @@ export async function POST(req) {
     if (!smartContext) {
       return NextResponse.json({ error: 'Smart context not found' }, { status: 400 })
     }
+    if (!smartContext.opponent_players || !Array.isArray(smartContext.opponent_players) || smartContext.opponent_players.length === 0) {
+      return NextResponse.json({ error: 'Opponent formation is required for countermeasures' }, { status: 400 })
+    }
 
     const used = Number(smartContext.countermeasures_used) || 0
 
@@ -100,6 +125,11 @@ export async function POST(req) {
     const prompt = buildSmartCountermeasurePrompt({
       lang,
       context: smartContext,
+      opponentContext: {
+        formation: smartContext.opponent_formation,
+        players: smartContext.opponent_players,
+        coach: smartContext.opponent_coach
+      },
       profile,
       matches,
       patterns,
@@ -130,14 +160,10 @@ export async function POST(req) {
       }
     }
 
-    const countermeasure = {
-      headline: typeof payload.headline === 'string' ? payload.headline.trim() : (lang === 'en' ? 'Smart read' : 'Lettura Smart'),
-      protect: typeof payload.protect === 'string' ? payload.protect.trim() : '',
-      attack: typeof payload.attack === 'string' ? payload.attack.trim() : '',
-      avoid: typeof payload.avoid === 'string' ? payload.avoid.trim() : '',
-      variant,
-      generated_at: new Date().toISOString()
-    }
+    const validation = validateCountermeasuresOutput(payload)
+    const countermeasure = validation.valid
+      ? { ...payload, variant, generated_at: new Date().toISOString() }
+      : { ...buildFallbackCountermeasure(lang, smartContext, variant), variant, generated_at: new Date().toISOString() }
 
     const nextCount = used + 1
     const previous = Array.isArray(smartContext.last_countermeasures) ? smartContext.last_countermeasures : []

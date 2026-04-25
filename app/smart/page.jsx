@@ -35,7 +35,10 @@ export default withAuth(function SmartPage() {
   const [contextData, setContextData] = React.useState(null)
   const [selectedImageName, setSelectedImageName] = React.useState('')
   const [uploadImage, setUploadImage] = React.useState(null)
+  const [opponentUploadImage, setOpponentUploadImage] = React.useState(null)
+  const [selectedOpponentImageName, setSelectedOpponentImageName] = React.useState('')
   const [uploading, setUploading] = React.useState(false)
+  const [uploadingOpponent, setUploadingOpponent] = React.useState(false)
   const [error, setError] = React.useState('')
   const [counterLoading, setCounterLoading] = React.useState(false)
   const [expandedSections, setExpandedSections] = React.useState({
@@ -45,6 +48,8 @@ export default withAuth(function SmartPage() {
   })
 
   const currentContext = contextData?.context || null
+  const hasClientFormation = !!currentContext?.formation && Array.isArray(currentContext?.players) && currentContext.players.length > 0
+  const hasOpponentFormation = !!currentContext?.opponent_formation && Array.isArray(currentContext?.opponent_players) && currentContext.opponent_players.length > 0
   const currentCountermeasure = Array.isArray(currentContext?.last_countermeasures) && currentContext.last_countermeasures.length > 0
     ? currentContext.last_countermeasures[currentContext.last_countermeasures.length - 1]
     : null
@@ -153,6 +158,57 @@ export default withAuth(function SmartPage() {
     }
   }
 
+  const handleSelectOpponentImage = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+
+    setUploadingOpponent(true)
+    setError('')
+    setSelectedOpponentImageName(file.name)
+
+    try {
+      const token = await getToken()
+      if (!token) throw new Error(lang === 'en' ? 'Session expired' : 'Sessione scaduta')
+
+      let optimized
+      try {
+        optimized = await optimizeImageFile(file)
+        setOpponentUploadImage(optimized.dataUrl)
+      } catch (optErr) {
+        throw new Error(getImageOptimizeUserMessage(optErr, t))
+      }
+
+      const extractRes = await fetch('/api/smart/extract-formation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          'Accept-Language': lang === 'en' ? 'en' : 'it'
+        },
+        body: JSON.stringify({ imageDataUrl: optimized.dataUrl })
+      })
+      const extracted = await safeJsonResponse(extractRes, lang === 'en' ? 'Unable to read opponent formation' : 'Impossibile leggere la formazione avversaria')
+
+      const saveRes = await fetch('/api/smart/context', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ ...extracted, mode: 'opponent' })
+      })
+      const saved = await safeJsonResponse(saveRes, lang === 'en' ? 'Unable to save opponent context' : 'Impossibile salvare il contesto avversario')
+      setContextData(saved)
+    } catch (err) {
+      setError(err.message || (lang === 'en' ? 'Opponent upload failed' : 'Upload avversario fallito'))
+      setSelectedOpponentImageName('')
+      setOpponentUploadImage(null)
+    } finally {
+      setUploadingOpponent(false)
+    }
+  }
+
   const handleGenerateCountermeasure = async (variant = 'default') => {
     setCounterLoading(true)
     setError('')
@@ -191,6 +247,8 @@ export default withAuth(function SmartPage() {
       await safeJsonResponse(res, lang === 'en' ? 'Unable to reset Smart context' : 'Impossibile resettare Smart')
       setSelectedImageName('')
       setUploadImage(null)
+      setSelectedOpponentImageName('')
+      setOpponentUploadImage(null)
       setContextData(null)
     } catch (err) {
       setError(err.message || (lang === 'en' ? 'Unable to reset' : 'Impossibile resettare'))
@@ -198,6 +256,16 @@ export default withAuth(function SmartPage() {
       setUploading(false)
     }
   }
+
+  const openSmartCoachChat = React.useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('open-assistant-chat', {
+        detail: {
+          message: smartChatSuggestions[0] || ''
+        }
+      }))
+    }
+  }, [smartChatSuggestions])
 
   if (!enabled) {
     return (
@@ -264,6 +332,7 @@ export default withAuth(function SmartPage() {
         </div>
       ) : (
         <>
+          {!hasClientFormation && (
           <div className="neon-card" style={{ padding: 'clamp(16px, 4vw, 24px)', marginBottom: '24px' }}>
             <h2 style={{ fontSize: 'clamp(18px, 4vw, 20px)', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Shield size={24} style={{ color: '#fbbf24', filter: 'drop-shadow(0 0 8px rgba(251, 191, 36, 0.8))' }} />
@@ -359,8 +428,9 @@ export default withAuth(function SmartPage() {
               </>
             )}
           </div>
+          )}
 
-          {currentContext && (
+          {hasClientFormation && (
             <div className="neon-card" style={{ padding: 'clamp(16px, 4vw, 24px)', marginBottom: '24px' }}>
               <div
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', cursor: 'pointer' }}
@@ -374,6 +444,105 @@ export default withAuth(function SmartPage() {
               </div>
 
               {expandedSections.extracted && <SmartSummaryBlock data={currentContext} lang={lang} />}
+            </div>
+          )}
+
+          {hasClientFormation && (
+            <div className="neon-card" style={{ padding: 'clamp(16px, 4vw, 24px)', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: 'clamp(18px, 4vw, 20px)', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Target size={24} style={{ color: '#fbbf24', filter: 'drop-shadow(0 0 8px rgba(251, 191, 36, 0.8))' }} />
+                {lang === 'en' ? 'Upload opponent formation' : 'Carica la formazione avversaria'}
+              </h2>
+
+              <input id="smart-opponent-upload-input" type="file" accept="image/*" onChange={handleSelectOpponentImage} style={{ display: 'none' }} disabled={uploadingOpponent} />
+              <input id="smart-opponent-camera-input" type="file" accept="image/*" capture="environment" onChange={handleSelectOpponentImage} style={{ display: 'none' }} disabled={uploadingOpponent} />
+
+              {!opponentUploadImage && !hasOpponentFormation ? (
+                <>
+                  <div
+                    className="upload-area"
+                    style={{
+                      padding: 'clamp(24px, 6vw, 48px)',
+                      background: 'radial-gradient(ellipse at center, rgba(251, 191, 36, 0.15) 0%, rgba(251, 191, 36, 0.05) 70%)',
+                      border: '2px dashed rgba(251, 191, 36, 0.5)',
+                      borderRadius: '12px',
+                      textAlign: 'center',
+                      cursor: 'default',
+                      opacity: uploadingOpponent ? 0.5 : 1,
+                      transition: 'all 0.3s ease',
+                      position: 'relative'
+                    }}
+                  >
+                    <Camera size={48} style={{ marginBottom: '16px', color: '#fbbf24', filter: 'drop-shadow(0 0 12px rgba(251, 191, 36, 0.9))' }} />
+                    <div style={{ fontSize: 'clamp(14px, 3vw, 16px)', fontWeight: 600, marginBottom: '8px' }}>
+                      {lang === 'en' ? 'Upload opponent photo' : 'Carica la foto avversaria'}
+                    </div>
+                    <div style={{ fontSize: 'clamp(12px, 2.5vw, 14px)', opacity: 0.8 }}>
+                      {lang === 'en'
+                        ? 'Load the opponent 2D formation to unlock true pre-match countermeasures.'
+                        : 'Carica la formazione 2D avversaria per sbloccare contromisure pre-partita reali.'}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '14px' }}>
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('smart-opponent-upload-input')?.click()}
+                      className="neon-button"
+                      disabled={uploadingOpponent}
+                      style={{ flex: '1 1 180px', minHeight: '48px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                    >
+                      <Upload size={16} />
+                      {t('upload')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('smart-opponent-camera-input')?.click()}
+                      className="neon-button"
+                      disabled={uploadingOpponent}
+                      style={{ flex: '1 1 180px', minHeight: '48px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                    >
+                      <Camera size={16} />
+                      {t('cameraCaptureTitle')}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {opponentUploadImage && (
+                    <div style={{ marginBottom: '16px', textAlign: 'center' }}>
+                      <img src={opponentUploadImage} alt="Opponent preview" style={{ maxWidth: '100%', maxHeight: '400px', borderRadius: '8px' }} />
+                    </div>
+                  )}
+                  {hasOpponentFormation && (
+                    <div style={{ padding: '12px 14px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)', marginBottom: '16px' }}>
+                      <strong>{lang === 'en' ? 'Opponent formation extracted' : 'Formazione avversaria estratta'}:</strong> {currentContext.opponent_formation || 'N/A'}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <button
+                      onClick={() => document.getElementById('smart-opponent-upload-input')?.click()}
+                      className="btn primary"
+                      style={{ flex: 1, minWidth: '200px' }}
+                      disabled={uploadingOpponent}
+                    >
+                      <RefreshCw size={16} />
+                      {lang === 'en' ? 'Load another opponent image' : 'Carica un\'altra immagine avversaria'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setOpponentUploadImage(null)
+                        setSelectedOpponentImageName('')
+                      }}
+                      className="neon-button"
+                      disabled={uploadingOpponent}
+                    >
+                      <X size={16} />
+                      {t('cancel')}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -398,7 +567,7 @@ export default withAuth(function SmartPage() {
                       : 'Contromisure basate sulla formazione caricata e sul contesto Smart disponibile.'}
                   </p>
 
-                  {currentCountermeasure ? (
+                  {hasOpponentFormation && currentCountermeasure ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                       <div
                         style={{
@@ -448,7 +617,7 @@ export default withAuth(function SmartPage() {
                         </div>
                       </div>
                     </div>
-                  ) : (
+                  ) : hasOpponentFormation ? (
                     <button
                       type="button"
                       className="btn primary"
@@ -468,6 +637,12 @@ export default withAuth(function SmartPage() {
                         </>
                       )}
                     </button>
+                  ) : (
+                    <div style={{ color: 'rgba(255,255,255,0.66)', lineHeight: 1.6 }}>
+                      {lang === 'en'
+                        ? 'Upload the opponent formation to unlock true pre-match countermeasures.'
+                        : 'Carica la formazione avversaria per sbloccare le vere contromisure pre-partita.'}
+                    </div>
                   )}
                 </>
               )}
@@ -486,13 +661,38 @@ export default withAuth(function SmartPage() {
               </div>
 
               {expandedSections.coach && (
-                <div style={{ height: '720px', minHeight: '520px' }}>
-                  <AssistantChat
-                    mode="page"
-                    apiEndpoint="/api/smart/chat"
-                    currentPageOverride="/smart"
-                    initialSuggestionsOverride={smartChatSuggestions}
-                  />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <p style={{ fontSize: 'clamp(13px, 2.5vw, 14px)', color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.6 }}>
+                    {lang === 'en'
+                      ? 'Open the Smart Coach chat to reason on your current setup and the uploaded match context.'
+                      : 'Apri la chat Smart Coach per ragionare sul tuo assetto attuale e sul contesto partita caricato.'}
+                  </p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                    {smartChatSuggestions.map((item) => (
+                      <button
+                        key={item}
+                        type="button"
+                        className="neon-button"
+                        style={{ fontSize: '12px', padding: '8px 12px' }}
+                        onClick={() => {
+                          if (typeof window !== 'undefined') {
+                            window.dispatchEvent(new CustomEvent('open-assistant-chat', { detail: { message: item } }))
+                          }
+                        }}
+                      >
+                        {item}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    className="btn primary"
+                    onClick={openSmartCoachChat}
+                    style={{ width: '100%' }}
+                  >
+                    <Brain size={18} />
+                    {lang === 'en' ? 'Open Coach IA' : 'Apri Coach IA'}
+                  </button>
                 </div>
               )}
             </div>
@@ -501,6 +701,12 @@ export default withAuth(function SmartPage() {
           <style jsx>{`
             @keyframes spin { to { transform: rotate(360deg); } }
           `}</style>
+          <AssistantChat
+            mode="popup"
+            apiEndpoint="/api/smart/chat"
+            currentPageOverride="/smart"
+            initialSuggestionsOverride={smartChatSuggestions}
+          />
         </>
       )}
     </main>

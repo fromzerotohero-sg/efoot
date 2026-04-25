@@ -12,12 +12,17 @@ function normalizeContextRow(row) {
   if (!row) return null
 
   const players = normalizeSmartPlayers(row.players)
+  const opponentPlayers = normalizeSmartPlayers(row.opponent_players)
   return {
     id: row.id,
     formation: typeof row.formation === 'string' ? row.formation.trim() : null,
     players,
     coach: row.coach && typeof row.coach === 'object' ? row.coach : null,
     extraction_meta: row.extraction_meta && typeof row.extraction_meta === 'object' ? row.extraction_meta : {},
+    opponent_formation: typeof row.opponent_formation === 'string' ? row.opponent_formation.trim() : null,
+    opponent_players: opponentPlayers,
+    opponent_coach: row.opponent_coach && typeof row.opponent_coach === 'object' ? row.opponent_coach : null,
+    opponent_extraction_meta: row.opponent_extraction_meta && typeof row.opponent_extraction_meta === 'object' ? row.opponent_extraction_meta : {},
     chat_used: !!row.chat_used,
     chat_count: Number(row.chat_count) || 0,
     countermeasures_used: Number(row.countermeasures_used) || 0,
@@ -59,36 +64,76 @@ export async function POST(req) {
 
   const { admin, userId } = auth
   const body = await req.json().catch(() => ({}))
+  const mode = body.mode === 'opponent' ? 'opponent' : 'client'
 
-  const players = normalizeSmartPlayers(body.players)
-  const formation = typeof body.formation === 'string' && body.formation.trim().length > 0
-    ? body.formation.trim().slice(0, 50)
-    : null
-  const coach = body.coach && typeof body.coach === 'object' ? body.coach : null
-  const extractionMeta = body.extraction_meta && typeof body.extraction_meta === 'object'
-    ? body.extraction_meta
-    : {}
+  const { data: existing } = await admin
+    .from('smart_coach_contexts')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle()
 
-  if (players.length < 1) {
-    return NextResponse.json({ error: 'At least one detected player is required' }, { status: 400 })
+  const existingRow = existing || {}
+  const payload = {
+    user_id: userId,
+    formation: existingRow.formation || null,
+    players: existingRow.players || [],
+    coach: existingRow.coach || null,
+    extraction_meta: existingRow.extraction_meta || {},
+    opponent_formation: existingRow.opponent_formation || null,
+    opponent_players: existingRow.opponent_players || [],
+    opponent_coach: existingRow.opponent_coach || null,
+    opponent_extraction_meta: existingRow.opponent_extraction_meta || {},
+    chat_used: !!existingRow.chat_used,
+    chat_count: Number(existingRow.chat_count) || 0,
+    countermeasures_used: Number(existingRow.countermeasures_used) || 0,
+    last_countermeasures: Array.isArray(existingRow.last_countermeasures) ? existingRow.last_countermeasures : [],
+    last_chat_answer: typeof existingRow.last_chat_answer === 'string' ? existingRow.last_chat_answer : null,
+    last_chat_suggestions: Array.isArray(existingRow.last_chat_suggestions) ? existingRow.last_chat_suggestions : [],
+    updated_at: new Date().toISOString()
+  }
+
+  if (mode === 'client') {
+    const players = normalizeSmartPlayers(body.players)
+    const formation = typeof body.formation === 'string' && body.formation.trim().length > 0
+      ? body.formation.trim().slice(0, 50)
+      : null
+    const coach = body.coach && typeof body.coach === 'object' ? body.coach : null
+    const extractionMeta = body.extraction_meta && typeof body.extraction_meta === 'object'
+      ? body.extraction_meta
+      : {}
+
+    if (players.length < 1) {
+      return NextResponse.json({ error: 'At least one detected player is required' }, { status: 400 })
+    }
+
+    payload.formation = formation
+    payload.players = players
+    payload.coach = coach
+    payload.extraction_meta = extractionMeta
+  } else {
+    const opponentPlayers = normalizeSmartPlayers(body.players)
+    const opponentFormation = typeof body.formation === 'string' && body.formation.trim().length > 0
+      ? body.formation.trim().slice(0, 50)
+      : null
+    const opponentCoach = body.coach && typeof body.coach === 'object' ? body.coach : null
+    const opponentMeta = body.extraction_meta && typeof body.extraction_meta === 'object'
+      ? body.extraction_meta
+      : {}
+
+    if (opponentPlayers.length < 1) {
+      return NextResponse.json({ error: 'At least one detected opponent player is required' }, { status: 400 })
+    }
+
+    payload.opponent_formation = opponentFormation
+    payload.opponent_players = opponentPlayers
+    payload.opponent_coach = opponentCoach
+    payload.opponent_extraction_meta = opponentMeta
+    payload.last_countermeasures = []
   }
 
   const { data, error } = await admin
     .from('smart_coach_contexts')
-    .upsert({
-      user_id: userId,
-      formation,
-      players,
-      coach,
-      extraction_meta: extractionMeta,
-      chat_used: false,
-      chat_count: 0,
-      countermeasures_used: 0,
-      last_countermeasures: [],
-      last_chat_answer: null,
-      last_chat_suggestions: [],
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'user_id' })
+    .upsert(payload, { onConflict: 'user_id' })
     .select('*')
     .single()
 
