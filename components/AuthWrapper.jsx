@@ -20,6 +20,9 @@ export function withAuth(WrappedComponent) {
           // when a Metalgate identity is present but its token is missing.
           if (metalgateUser && !authToken) {
             localStorage.removeItem('metalgate_user')
+            try {
+              sessionStorage.removeItem('dashboard_coach_mode_modal_seen_session_v1')
+            } catch {}
             router.push('/login')
             return
           }
@@ -59,6 +62,9 @@ export function withAuth(WrappedComponent) {
                   console.log('Token rejected by server, clearing')
                   localStorage.removeItem('auth_token')
                   localStorage.removeItem('metalgate_user')
+                  try {
+                    sessionStorage.removeItem('dashboard_coach_mode_modal_seen_session_v1')
+                  } catch {}
                 }
               }
             } catch (verifyError) {
@@ -86,16 +92,25 @@ export function withAuth(WrappedComponent) {
               setIsAuthenticated(true)
             } else {
               console.log('No valid session found, redirecting to login')
+              try {
+                sessionStorage.removeItem('dashboard_coach_mode_modal_seen_session_v1')
+              } catch {}
               router.push('/login')
             }
           } else {
             console.log('No Supabase client, redirecting to login')
+            try {
+              sessionStorage.removeItem('dashboard_coach_mode_modal_seen_session_v1')
+            } catch {}
             router.push('/login')
           }
           setIsLoading(false)
 
         } catch (error) {
           console.error('Auth check error:', error)
+          try {
+            sessionStorage.removeItem('dashboard_coach_mode_modal_seen_session_v1')
+          } catch {}
           router.push('/login')
           setIsLoading(false)
         }

@@ -28,6 +28,9 @@ export default function Sidebar() {
     fetch('/api/prelaunch/logout', { method: 'POST' }).catch(() => {})
     localStorage.removeItem('auth_token')
     localStorage.removeItem('metalgate_user')
+    try {
+      sessionStorage.removeItem('dashboard_coach_mode_modal_seen_session_v1')
+    } catch {}
     router.push('/login')
   }
 
