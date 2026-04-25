@@ -207,11 +207,23 @@ export default withAuth(function SmartPage() {
       })
       const saved = await safeJsonResponse(saveRes, lang === 'en' ? 'Unable to save opponent context' : 'Impossibile salvare il contesto avversario')
       setContextData(saved)
+      setCounterLoading(true)
+      const generateRes = await fetch('/api/smart/countermeasures', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ variant: 'default' })
+      })
+      await safeJsonResponse(generateRes, lang === 'en' ? 'Unable to generate Smart countermeasure' : 'Impossibile generare contromisura Smart')
+      await loadContext()
     } catch (err) {
       setError(err.message || (lang === 'en' ? 'Opponent upload failed' : 'Upload avversario fallito'))
       setSelectedOpponentImageName('')
       setOpponentUploadImage(null)
     } finally {
+      setCounterLoading(false)
       setUploadingOpponent(false)
     }
   }
