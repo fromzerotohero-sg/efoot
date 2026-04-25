@@ -93,6 +93,7 @@ function HomePage() {
   const [hasActiveCoach, setHasActiveCoach] = React.useState(false)
   const [reminderRotationIndex, setReminderRotationIndex] = React.useState(0)
   const [hideSetupBanner, setHideSetupBanner] = React.useState(false)
+  const [showCoachModeModal, setShowCoachModeModal] = React.useState(false)
   const [userProfile, setUserProfile] = React.useState(null)
   const [confirmModal, setConfirmModal] = React.useState(null) // { show, title, message, onConfirm, onCancel }
   const [coachChatInitialMessage, setCoachChatInitialMessage] = React.useState(null)
@@ -155,6 +156,24 @@ function HomePage() {
     } catch {}
   }, [])
 
+  const coachModeModalStorageKey = 'dashboard_coach_mode_modal_seen_v1'
+
+  const openSmartMode = React.useCallback(() => {
+    try {
+      localStorage.setItem(coachModeModalStorageKey, '1')
+    } catch {}
+    setShowCoachModeModal(false)
+    router.push('/smart')
+  }, [router])
+
+  const openProMode = React.useCallback(() => {
+    try {
+      localStorage.setItem(coachModeModalStorageKey, '1')
+    } catch {}
+    setShowCoachModeModal(false)
+    router.push('/gestione-formazione')
+  }, [router])
+
   const bannerTips = React.useMemo(() => {
     const tips = [
       {
@@ -207,6 +226,20 @@ function HomePage() {
   React.useEffect(() => {
     setReminderRotationIndex(0)
   }, [missingCount])
+
+  React.useEffect(() => {
+    if (!smartEntryEnabled) return
+    if (loading) return
+    if (typeof window === 'undefined') return
+    try {
+      const alreadySeen = localStorage.getItem(coachModeModalStorageKey) === '1'
+      if (!alreadySeen) {
+        setShowCoachModeModal(true)
+      }
+    } catch {
+      setShowCoachModeModal(true)
+    }
+  }, [loading, smartEntryEnabled])
 
   const currentBannerTip = bannerTips.length > 0
     ? bannerTips[((reminderRotationIndex * 7) + 3) % bannerTips.length]
@@ -651,6 +684,123 @@ function HomePage() {
         </div>
       )}
 
+      {smartEntryEnabled && showCoachModeModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(3, 7, 18, 0.82)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 1200,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+        >
+          <div
+            className="neon-card"
+            style={{
+              width: 'min(900px, 100%)',
+              padding: '24px',
+              border: '1px solid rgba(0, 212, 255, 0.24)',
+              background: 'rgba(5, 12, 28, 0.95)'
+            }}
+          >
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: 'clamp(24px, 5vw, 32px)', fontWeight: 800, color: '#FFFFFF', margin: '0 0 10px 0' }}>
+                {lang === 'en' ? 'How do you want to start today?' : 'Come vuoi iniziare oggi?'}
+              </h2>
+              <p style={{ margin: 0, fontSize: 'clamp(14px, 2.6vw, 16px)', color: 'rgba(255,255,255,0.78)', lineHeight: 1.6 }}>
+                {lang === 'en'
+                  ? 'You can start immediately with a quick analysis or open the full coach experience.'
+                  : 'Puoi iniziare subito con un’analisi rapida oppure aprire la versione completa del coach.'}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={openSmartMode}
+                className="neon-button"
+                style={{
+                  textAlign: 'left',
+                  padding: '20px',
+                  minHeight: '190px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
+                  gap: '16px',
+                  background: 'rgba(255, 215, 106, 0.08)',
+                  borderColor: 'rgba(255, 215, 106, 0.35)',
+                  color: '#FFFFFF'
+                }}
+              >
+                <div>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(255, 215, 106, 0.14)', marginBottom: '14px' }}>
+                    <Brain size={20} style={{ color: '#FFD76A' }} />
+                  </div>
+                  <div style={{ fontSize: '20px', fontWeight: 800, marginBottom: '8px' }}>
+                    {lang === 'en' ? 'Start fast' : 'Inizia veloce'}
+                  </div>
+                  <div style={{ fontSize: '14px', lineHeight: 1.6, color: 'rgba(255,255,255,0.8)' }}>
+                    {lang === 'en'
+                      ? 'Upload your 2D formation and immediately get AI coaching and pre-match countermeasures.'
+                      : 'Carica la tua formazione 2D e ricevi subito coach IA e contromisure pre-partita.'}
+                  </div>
+                </div>
+                <span style={{ fontSize: '14px', fontWeight: 700, color: '#FFD76A' }}>
+                  {lang === 'en' ? 'Use Smart' : 'Usa Smart'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={openProMode}
+                className="neon-button"
+                style={{
+                  textAlign: 'left',
+                  padding: '20px',
+                  minHeight: '190px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
+                  gap: '16px',
+                  background: 'rgba(0, 212, 255, 0.08)',
+                  borderColor: 'rgba(0, 212, 255, 0.30)',
+                  color: '#FFFFFF'
+                }}
+              >
+                <div>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(0, 212, 255, 0.14)', marginBottom: '14px' }}>
+                    <Users size={20} style={{ color: 'var(--neon-cyan)' }} />
+                  </div>
+                  <div style={{ fontSize: '20px', fontWeight: 800, marginBottom: '8px' }}>
+                    {lang === 'en' ? 'Go deeper' : 'Vai in profondità'}
+                  </div>
+                  <div style={{ fontSize: '14px', lineHeight: 1.6, color: 'rgba(255,255,255,0.8)' }}>
+                    {lang === 'en'
+                      ? 'Manage roster, reserves, player details, and advanced coaching.'
+                      : 'Gestisci rosa, riserve, dettagli giocatori e coaching avanzato.'}
+                  </div>
+                </div>
+                <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--neon-cyan)' }}>
+                  {lang === 'en' ? 'Use Pro' : 'Usa Pro'}
+                </span>
+              </button>
+            </div>
+
+            <div style={{ marginTop: '16px', textAlign: 'center', fontSize: '13px', color: 'rgba(255,255,255,0.66)' }}>
+              {lang === 'en'
+                ? 'You can switch modes anytime from the dashboard.'
+                : 'Potrai cambiare modalità in qualsiasi momento dalla dashboard.'}
+            </div>
+          </div>
+        </div>
+      )}
+
       <CoachFeedbackChat 
         show={showCoachFeedback} 
         onClose={() => {
@@ -686,6 +836,60 @@ function HomePage() {
       />
 
       {/* Credits Bar: montata in layout per aggiornamento immediato dopo ogni API (credits-consumed) */}
+
+      {smartEntryEnabled && (
+        <div className="neon-card" style={{ padding: '20px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: '18px', fontWeight: 700, color: '#FFFFFF', marginBottom: '6px' }}>
+                {lang === 'en' ? 'Coach Modes' : 'Modalità Coach'}
+              </div>
+              <div style={{ fontSize: '14px', lineHeight: 1.6, color: 'rgba(255,255,255,0.74)' }}>
+                {lang === 'en'
+                  ? 'Start fast with Smart or open the full Pro experience.'
+                  : 'Inizia veloce con Smart oppure apri l’esperienza completa Pro.'}
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={openSmartMode}
+                className="neon-button"
+                style={{
+                  minHeight: '48px',
+                  padding: '10px 18px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  background: 'rgba(255, 215, 106, 0.08)',
+                  borderColor: 'rgba(255, 215, 106, 0.35)',
+                  color: '#FFD76A'
+                }}
+              >
+                <Brain size={16} />
+                {lang === 'en' ? 'Open Smart' : 'Apri Smart'}
+              </button>
+              <button
+                type="button"
+                onClick={openProMode}
+                className="btn primary"
+                style={{
+                  minHeight: '48px',
+                  padding: '10px 18px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                <Users size={16} />
+                {lang === 'en' ? 'Open Pro' : 'Apri Pro'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Task Widget (Obiettivi Settimanali) */}
       <div data-tour-id="tour-dashboard-task">
@@ -746,45 +950,6 @@ function HomePage() {
                 {t('navigation')}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {smartEntryEnabled && (
-                  <button
-                    onClick={() => router.push('/smart')}
-                    className="neon-button"
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '12px',
-                      padding: '20px',
-                      background: 'rgba(13, 25, 48, 0.9)',
-                      borderColor: 'rgba(255, 215, 106, 0.28)',
-                      color: '#FFFFFF',
-                      height: '100%',
-                      borderRadius: '12px'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 215, 106, 0.10)'
-                      e.currentTarget.style.borderColor = 'rgba(255, 215, 106, 0.55)'
-                      e.currentTarget.style.color = '#FFD76A'
-                      e.currentTarget.style.transform = 'translateY(-2px)'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'var(--bg-elevated)'
-                      e.currentTarget.style.borderColor = 'rgba(255, 215, 106, 0.28)'
-                      e.currentTarget.style.color = '#FFFFFF'
-                      e.currentTarget.style.transform = 'translateY(0)'
-                    }}
-                  >
-                    <Brain size={24} style={{ color: '#FFD76A', filter: 'drop-shadow(0 0 6px rgba(255, 215, 106, 0.5))' }} />
-                    <span style={{ fontWeight: 600, textAlign: 'center' }}>
-                      {lang === 'en' ? 'Smart Coach Trial' : 'Prova Smart Coach'}
-                    </span>
-                    <span style={{ fontSize: '12px', opacity: 0.8, textAlign: 'center' }}>
-                      {lang === 'en' ? 'Fast 2D formation coaching' : 'Coaching rapido da formazione 2D'}
-                    </span>
-                  </button>
-                )}
                 {/* Analisi Partita Rapida */}
                 <button
                   data-tour-id="tour-dashboard-game-analysis"
