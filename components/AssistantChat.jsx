@@ -7,9 +7,9 @@ import { supabase } from '@/lib/supabaseClient'
 import { Brain, X, Send, Sparkles, ChevronDown, ChevronUp, Mic, MicOff } from 'lucide-react'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 
-export default function AssistantChat({ mode = 'popup' }) {
+export default function AssistantChat({ mode = 'popup', apiEndpoint = '/api/assistant-chat', initialSuggestionsOverride = null, currentPageOverride = null }) {
   const pathname = usePathname()
-  const currentPage = pathname || ''
+  const currentPage = currentPageOverride || pathname || ''
   const { t, lang } = useTranslation()
   const [isOpen, setIsOpen] = useState(mode === 'page' ? true : false)
   const [isBlockedByCoachFeedback, setIsBlockedByCoachFeedback] = useState(false)
@@ -185,6 +185,9 @@ export default function AssistantChat({ mode = 'popup' }) {
 
   // Suggerimenti utili: analisi vs rosa, uso comandi/abilità, priorità concrete
   const initialSuggestions = useMemo(() => {
+    if (Array.isArray(initialSuggestionsOverride) && initialSuggestionsOverride.length > 0) {
+      return initialSuggestionsOverride
+    }
     const page = (currentPage || '').toLowerCase()
     if (lang === 'en') {
       if (page.includes('gestione-formazione')) return ['Do my analysis stats match the roster I have?', 'Am I using passing and shooting in line with my players\' skills?', 'Based on roster and matches, what should I work on first?']
@@ -200,7 +203,7 @@ export default function AssistantChat({ mode = 'popup' }) {
     if (page.includes('contromisure')) return ['Come contrastare formazioni aggressive con la mia rosa?', 'Quali priorità in difesa e attacco?', 'Cosa preparare sui piazzati con i miei giocatori?']
     if (page.includes('allenatori')) return ['Quale stile abbinare al mio allenatore con la rosa?', 'Le mie statistiche di gioco sono adatte ai giocatori che ho?', 'Quali priorità con questo allenatore?']
     return ['Le mie statistiche di analisi sono adatte alla rosa che ho?', 'Uso i comandi (passaggio, tiro, difesa) in modo coerente con le abilità della rosa?', 'In base a partite e dati, su cosa mi conviene lavorare prima?']
-  }, [currentPage, lang])
+  }, [currentPage, lang, initialSuggestionsOverride])
   
   // Carica profilo utente al mount
   useEffect(() => {
@@ -326,7 +329,7 @@ export default function AssistantChat({ mode = 'popup' }) {
         .slice(-10)
         .map(({ role, content }) => ({ role, content: typeof content === 'string' ? content : String(content) }))
       
-      const res = await fetch('/api/assistant-chat', {
+      const res = await fetch(apiEndpoint, {
         method: 'POST',
         signal,
         headers: {
@@ -360,8 +363,10 @@ export default function AssistantChat({ mode = 'popup' }) {
       })
       if (signal.aborted) return
 
+      const responseContent = data?.response || data?.answer || ''
+
       // Verifica che data.response esista
-      if (!data || !data.response) {
+      if (!data || !responseContent) {
         console.error('[AssistantChat] Invalid response data:', data)
         throw new Error('Invalid response format')
       }
@@ -370,7 +375,7 @@ export default function AssistantChat({ mode = 'popup' }) {
       const fallbackNoResponse = lang === 'en' ? "Sorry, I didn't receive a valid response." : 'Mi dispiace, non ho ricevuto una risposta valida.'
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: data.response || fallbackNoResponse,
+        content: responseContent || fallbackNoResponse,
         timestamp: new Date(),
         model_used: data.model_used || null
       }])

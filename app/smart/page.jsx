@@ -3,6 +3,7 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
 import { withAuth } from '@/components/AuthWrapper'
+import AssistantChat from '@/components/AssistantChat'
 import { useTranslation } from '@/lib/i18n'
 import { isEnabled } from '@/lib/featureFlags'
 import { SMART_COACH_FLAG } from '@/lib/smartCoach'
@@ -11,34 +12,56 @@ import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 import { getValidAccessToken, supabase } from '@/lib/supabaseClient'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import {
+  AlertCircle,
   ArrowLeft,
+  Brain,
   Camera,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   Loader2,
-  MessageSquare,
   RefreshCw,
   Shield,
-  Sparkles,
   Target,
   Upload,
-  Zap,
+  X,
 } from 'lucide-react'
 
-function SmartPage() {
+export default withAuth(function SmartPage() {
   const router = useRouter()
   const { lang, t } = useTranslation()
   const [enabled, setEnabled] = React.useState(false)
   const [loadingContext, setLoadingContext] = React.useState(true)
   const [contextData, setContextData] = React.useState(null)
   const [selectedImageName, setSelectedImageName] = React.useState('')
+  const [uploadImage, setUploadImage] = React.useState(null)
   const [uploading, setUploading] = React.useState(false)
   const [error, setError] = React.useState('')
   const [counterLoading, setCounterLoading] = React.useState(false)
-  const [chatLoading, setChatLoading] = React.useState(false)
-  const [chatInput, setChatInput] = React.useState('')
+  const [expandedSections, setExpandedSections] = React.useState({
+    extracted: true,
+    tactical: true,
+    coach: true
+  })
 
   const currentContext = contextData?.context || null
-  const readiness = contextData?.readiness?.level || 'weak'
+  const currentCountermeasure = Array.isArray(currentContext?.last_countermeasures) && currentContext.last_countermeasures.length > 0
+    ? currentContext.last_countermeasures[currentContext.last_countermeasures.length - 1]
+    : null
+
+  const smartChatSuggestions = React.useMemo(() => (
+    lang === 'en'
+      ? [
+          'What is my main structural weakness?',
+          'How should I attack with this setup?',
+          'What should I protect first in game?'
+        ]
+      : [
+          'Qual è il mio punto debole strutturale?',
+          'Come devo attaccare con questo assetto?',
+          'Cosa devo proteggere per prima in partita?'
+        ]
+  ), [lang])
 
   const getToken = React.useCallback(async () => {
     const customToken = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
@@ -55,7 +78,6 @@ function SmartPage() {
   const loadContext = React.useCallback(async () => {
     setLoadingContext(true)
     setError('')
-
     try {
       const token = await getToken()
       if (!token) throw new Error(lang === 'en' ? 'Session expired' : 'Sessione scaduta')
@@ -76,16 +98,13 @@ function SmartPage() {
   React.useEffect(() => {
     const active = isEnabled(SMART_COACH_FLAG)
     setEnabled(active)
-    if (active) {
-      loadContext()
-    } else {
-      setLoadingContext(false)
-    }
+    if (active) loadContext()
+    else setLoadingContext(false)
   }, [loadContext])
 
-  const handleSelectImage = async (event) => {
-    const file = event.target.files?.[0]
-    event.target.value = ''
+  const handleSelectImage = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
     if (!file) return
 
     setUploading(true)
@@ -99,11 +118,12 @@ function SmartPage() {
       let optimized
       try {
         optimized = await optimizeImageFile(file)
+        setUploadImage(optimized.dataUrl)
       } catch (optErr) {
         throw new Error(getImageOptimizeUserMessage(optErr, t))
       }
 
-      const res = await fetch('/api/smart/extract-formation', {
+      const extractRes = await fetch('/api/smart/extract-formation', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -112,8 +132,8 @@ function SmartPage() {
         },
         body: JSON.stringify({ imageDataUrl: optimized.dataUrl })
       })
+      const extracted = await safeJsonResponse(extractRes, lang === 'en' ? 'Unable to read Smart formation' : 'Impossibile leggere la formazione Smart')
 
-      const extracted = await safeJsonResponse(res, lang === 'en' ? 'Unable to read Smart formation' : 'Impossibile leggere la formazione Smart')
       const saveRes = await fetch('/api/smart/context', {
         method: 'POST',
         headers: {
@@ -127,27 +147,7 @@ function SmartPage() {
     } catch (err) {
       setError(err.message || (lang === 'en' ? 'Upload failed' : 'Upload fallito'))
       setSelectedImageName('')
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  const handleResetSmart = async () => {
-    setUploading(true)
-    setError('')
-    try {
-      const token = await getToken()
-      if (!token) throw new Error(lang === 'en' ? 'Session expired' : 'Sessione scaduta')
-
-      const res = await fetch('/api/smart/context', {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      await safeJsonResponse(res, lang === 'en' ? 'Unable to reset Smart context' : 'Impossibile resettare Smart')
-      setSelectedImageName('')
-      await loadContext()
-    } catch (err) {
-      setError(err.message || (lang === 'en' ? 'Unable to reset' : 'Impossibile resettare'))
+      setUploadImage(null)
     } finally {
       setUploading(false)
     }
@@ -177,29 +177,25 @@ function SmartPage() {
     }
   }
 
-  const handleSendChat = async () => {
-    if (!chatInput.trim()) return
-    setChatLoading(true)
+  const handleResetSmart = async () => {
+    setUploading(true)
     setError('')
     try {
       const token = await getToken()
       if (!token) throw new Error(lang === 'en' ? 'Session expired' : 'Sessione scaduta')
 
-      const res = await fetch('/api/smart/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ message: chatInput.trim() })
+      const res = await fetch('/api/smart/context', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
       })
-      await safeJsonResponse(res, lang === 'en' ? 'Unable to use Smart chat' : 'Impossibile usare la chat Smart')
-      setChatInput('')
-      await loadContext()
+      await safeJsonResponse(res, lang === 'en' ? 'Unable to reset Smart context' : 'Impossibile resettare Smart')
+      setSelectedImageName('')
+      setUploadImage(null)
+      setContextData(null)
     } catch (err) {
-      setError(err.message || (lang === 'en' ? 'Unable to use Smart chat' : 'Impossibile usare la chat Smart'))
+      setError(err.message || (lang === 'en' ? 'Unable to reset' : 'Impossibile resettare'))
     } finally {
-      setChatLoading(false)
+      setUploading(false)
     }
   }
 
@@ -208,13 +204,8 @@ function SmartPage() {
       <main className="max-w-4xl mx-auto p-6">
         <div className="neon-card" style={{ padding: '32px', textAlign: 'center' }}>
           <h1 className="neon-text" style={{ fontSize: '28px', marginBottom: '12px' }}>
-            {lang === 'en' ? 'Smart trial is not enabled' : 'La versione Smart non è attiva'}
+            {lang === 'en' ? 'Smart Coach is not enabled' : 'La versione Smart non è attiva'}
           </h1>
-          <p style={{ opacity: 0.8, marginBottom: '20px' }}>
-            {lang === 'en'
-              ? 'Open the full Pro experience instead.'
-              : 'Apri direttamente la versione Pro completa.'}
-          </p>
           <button className="btn primary" onClick={() => router.push('/gestione-formazione')}>
             {lang === 'en' ? 'Open Pro' : 'Apri il Pro'}
           </button>
@@ -224,296 +215,287 @@ function SmartPage() {
   }
 
   return (
-    <main className="max-w-5xl mx-auto p-6">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
-        <button
-          onClick={() => router.push('/')}
-          className="neon-button"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
-        >
-          <ArrowLeft size={16} />
-          Dashboard
-        </button>
-        <h1 className="neon-text" style={{ fontSize: 'clamp(28px, 5vw, 38px)', margin: 0 }}>
-          {lang === 'en' ? 'Smart Coach' : 'Smart Coach'}
-        </h1>
-      </div>
-
-      <div className="neon-card" style={{ padding: '24px', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ maxWidth: '680px' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: '#FFD76A' }}>
-              <Sparkles size={18} />
-              <span style={{ fontWeight: 700 }}>{lang === 'en' ? 'Quick premium trial' : 'Prova premium rapida'}</span>
-            </div>
-            <h2 style={{ fontSize: 'clamp(24px, 4vw, 34px)', lineHeight: 1.2, margin: '0 0 12px 0', color: '#fff' }}>
-              {lang === 'en'
-                ? 'Try the coach in under a minute'
-                : 'Prova il coach in meno di un minuto'}
-            </h2>
-            <p style={{ margin: 0, fontSize: '15px', lineHeight: 1.6, color: 'rgba(255,255,255,0.78)' }}>
-              {lang === 'en'
-                ? 'Upload one 2D squad screenshot and start immediately with Smart coaching based on your current setup. Your Pro experience stays untouched.'
-                : 'Carica una schermata 2D della tua squadra e parti subito con coaching Smart basato sul tuo assetto attuale. La tua versione Pro resta intatta.'}
-            </p>
-          </div>
+    <main style={{ minHeight: '100vh', padding: 'clamp(16px, 4vw, 24px)', paddingTop: '80px', color: '#fff' }}>
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 50,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '12px',
+          padding: '12px clamp(16px, 4vw, 24px)',
+          background: 'linear-gradient(180deg, rgba(10,10,10,0.98) 0%, rgba(10,10,10,0.95) 70%, transparent 100%)',
+          backdropFilter: 'saturate(180%) blur(12px)',
+          borderBottom: '1px solid rgba(255, 140, 0, 0.2)',
+          boxSizing: 'border-box'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
           <button
-            onClick={() => router.push('/gestione-formazione')}
-            className="btn primary"
-            style={{ whiteSpace: 'nowrap' }}
+            onClick={() => router.push('/')}
+            className="neon-button"
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}
           >
-            {lang === 'en' ? 'Open Pro' : 'Apri il Pro'}
+            <ArrowLeft size={18} />
+            {t('back')}
           </button>
+          <h1 className="neon-text" style={{ fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 700, margin: 0 }}>
+            Smart Coach
+          </h1>
         </div>
       </div>
 
       {error && (
         <div className="error" style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Shield size={18} />
+          <AlertCircle size={18} />
           {error}
         </div>
       )}
 
       {loadingContext ? (
-        <div className="neon-card" style={{ padding: '36px', textAlign: 'center' }}>
+        <div className="neon-card" style={{ padding: '32px', textAlign: 'center' }}>
           <Loader2 size={28} style={{ animation: 'spin 1s linear infinite', marginBottom: '12px', color: 'var(--neon-cyan)' }} />
-          <div>{lang === 'en' ? 'Loading Smart experience...' : 'Carico l\'esperienza Smart...'}</div>
+          <div>{lang === 'en' ? 'Loading...' : t('loading')}</div>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <div className="neon-card" style={{ padding: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-                <Camera size={20} color="var(--neon-cyan)" />
-                <h3 style={{ margin: 0, fontSize: '20px', color: '#fff' }}>
-                  {lang === 'en' ? 'Your 2D formation' : 'La tua formazione 2D'}
-                </h3>
-              </div>
-              <p style={{ color: 'rgba(255,255,255,0.74)', lineHeight: 1.6, marginBottom: '18px' }}>
-                {lang === 'en'
-                  ? 'Best result: 11 starters visible, clear module, coach visible if possible.'
-                  : 'Risultato migliore: 11 titolari visibili, modulo chiaro, allenatore visibile se possibile.'}
-              </p>
+          <div className="neon-card" style={{ padding: 'clamp(16px, 4vw, 24px)', marginBottom: '24px' }}>
+            <h2 style={{ fontSize: 'clamp(18px, 4vw, 20px)', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Shield size={24} style={{ color: '#fbbf24', filter: 'drop-shadow(0 0 8px rgba(251, 191, 36, 0.8))' }} />
+              {lang === 'en' ? 'Upload your formation' : 'Carica la tua formazione'}
+            </h2>
 
-              <label
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '12px',
-                  minHeight: '220px',
-                  border: '1px dashed rgba(0,212,255,0.35)',
-                  borderRadius: '16px',
-                  cursor: uploading ? 'wait' : 'pointer',
-                  background: 'rgba(0, 161, 166, 0.05)',
-                  textAlign: 'center',
-                  padding: '24px'
-                }}
-              >
-                <Upload size={32} color="var(--neon-cyan)" />
-                <div style={{ fontSize: '16px', fontWeight: 700, color: '#fff' }}>
-                  {uploading
-                    ? (lang === 'en' ? 'Reading your squad...' : 'Sto leggendo la tua squadra...')
-                    : (lang === 'en' ? 'Choose screenshot' : 'Scegli screenshot')}
-                </div>
-                <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.68)', maxWidth: '360px' }}>
-                  {lang === 'en'
-                    ? 'Smart does not modify your Pro roster. It only creates a separate trial context.'
-                    : 'La Smart non modifica la tua rosa Pro. Crea solo un contesto di prova separato.'}
-                </div>
-                {selectedImageName && (
-                  <div style={{ fontSize: '12px', color: '#FFD76A' }}>{selectedImageName}</div>
-                )}
-                <input type="file" accept="image/*" onChange={handleSelectImage} disabled={uploading} style={{ display: 'none' }} />
-              </label>
+            <input id="smart-upload-input" type="file" accept="image/*" onChange={handleSelectImage} style={{ display: 'none' }} disabled={uploading} />
+            <input id="smart-camera-input" type="file" accept="image/*" capture="environment" onChange={handleSelectImage} style={{ display: 'none' }} disabled={uploading} />
 
-              {currentContext && (
-                <button
-                  type="button"
-                  onClick={handleResetSmart}
-                  className="neon-button"
-                  style={{ marginTop: '16px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
-                  disabled={uploading}
+            {!uploadImage ? (
+              <>
+                <div
+                  className="upload-area"
+                  style={{
+                    padding: 'clamp(24px, 6vw, 48px)',
+                    background: 'radial-gradient(ellipse at center, rgba(251, 191, 36, 0.15) 0%, rgba(251, 191, 36, 0.05) 70%)',
+                    border: '2px dashed rgba(251, 191, 36, 0.5)',
+                    borderRadius: '12px',
+                    textAlign: 'center',
+                    cursor: 'default',
+                    opacity: uploading ? 0.5 : 1,
+                    transition: 'all 0.3s ease',
+                    position: 'relative'
+                  }}
                 >
-                  <RefreshCw size={16} />
-                  {lang === 'en' ? 'Reset Smart context' : 'Resetta contesto Smart'}
-                </button>
-              )}
-            </div>
-
-            <div className="neon-card" style={{ padding: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-                <CheckCircle2 size={20} color={readiness === 'good' ? '#22c55e' : readiness === 'partial' ? '#f59e0b' : 'var(--neon-cyan)'} />
-                <h3 style={{ margin: 0, fontSize: '20px', color: '#fff' }}>
-                  {lang === 'en' ? 'Detected squad' : 'Squadra rilevata'}
-                </h3>
-              </div>
-
-              {currentContext ? (
-                <SmartSummaryBlock data={currentContext} lang={lang} />
-              ) : (
-                <div style={{ color: 'rgba(255,255,255,0.66)', lineHeight: 1.6 }}>
-                  {lang === 'en'
-                    ? 'Upload a screenshot to populate this area, then use tactical suggestions and chat immediately.'
-                    : 'Carica uno screenshot per popolare quest\'area, poi usa subito suggerimenti tattici e chat.'}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <div className="neon-card" style={{ padding: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '14px', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Target size={20} color="#FFD76A" />
-                  <h3 style={{ margin: 0, fontSize: '20px', color: '#fff' }}>
-                    {lang === 'en' ? 'Tactical suggestions' : 'Suggerimenti tattici'}
-                  </h3>
-                </div>
-              </div>
-              <p style={{ color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, marginBottom: '18px' }}>
-                {lang === 'en'
-                  ? 'Two fast tactical suggestions based on your 2D formation and your shared account context.'
-                  : 'Due suggerimenti tattici rapidi basati sulla tua formazione 2D e sul contesto condiviso del profilo.'}
-              </p>
-
-              {Array.isArray(currentContext?.last_countermeasures) && currentContext.last_countermeasures.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '18px' }}>
-                  {currentContext.last_countermeasures.map((item, index) => (
-                    <div key={`${item.generated_at || index}`} style={{ padding: '16px', border: '1px solid rgba(255,215,106,0.2)', borderRadius: '14px', background: 'rgba(255,215,106,0.05)' }}>
-                      <div style={{ fontWeight: 700, color: '#FFD76A', marginBottom: '12px' }}>
-                        {item.headline || `${lang === 'en' ? 'Suggestion' : 'Suggerimento'} ${index + 1}`}
-                      </div>
-                      <ul style={{ margin: 0, paddingLeft: '18px', display: 'grid', gap: '8px', color: 'rgba(255,255,255,0.82)' }}>
-                        <li><strong>{lang === 'en' ? 'Protect:' : 'Proteggi:'}</strong> {item.protect}</li>
-                        <li><strong>{lang === 'en' ? 'Attack:' : 'Attacca:'}</strong> {item.attack}</li>
-                        <li><strong>{lang === 'en' ? 'Avoid:' : 'Evita:'}</strong> {item.avoid}</li>
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  className="btn primary"
-                  onClick={() => handleGenerateCountermeasure(currentContext?.last_countermeasures?.length ? 'alternative' : 'default')}
-                  disabled={!currentContext || counterLoading}
-                >
-                  {counterLoading
-                    ? (lang === 'en' ? 'Generating...' : 'Genero...')
-                    : currentContext?.last_countermeasures?.length
-                      ? (lang === 'en' ? 'Generate alternative read' : 'Genera lettura alternativa')
-                      : (lang === 'en' ? 'Generate suggestions' : 'Genera suggerimenti')}
-                </button>
-              </div>
-            </div>
-
-            <div className="neon-card" style={{ padding: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '14px', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <MessageSquare size={20} color="var(--neon-cyan)" />
-                  <h3 style={{ margin: 0, fontSize: '20px', color: '#fff' }}>
-                    {lang === 'en' ? 'Coach IA' : 'Coach IA'}
-                  </h3>
-                </div>
-              </div>
-
-              {currentContext?.last_chat_answer ? (
-                <div style={{ display: 'grid', gap: '14px' }}>
-                  <div style={{ padding: '16px', borderRadius: '14px', background: 'rgba(0,212,255,0.06)', border: '1px solid rgba(0,212,255,0.2)', color: 'rgba(255,255,255,0.84)', lineHeight: 1.65 }}>
-                    {currentContext.last_chat_answer}
+                  <Camera size={48} style={{ marginBottom: '16px', color: '#fbbf24', filter: 'drop-shadow(0 0 12px rgba(251, 191, 36, 0.9))' }} />
+                  <div style={{ fontSize: 'clamp(14px, 3vw, 16px)', fontWeight: 600, marginBottom: '8px' }}>
+                    {t('uploadPhoto')}
                   </div>
-                  {Array.isArray(currentContext.last_chat_suggestions) && currentContext.last_chat_suggestions.length > 0 && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                      {currentContext.last_chat_suggestions.map((item) => (
-                        <span key={item} style={{ padding: '8px 12px', borderRadius: '999px', border: '1px solid rgba(0,212,255,0.2)', color: 'var(--neon-cyan)', fontSize: '13px' }}>
-                          {item}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <button type="button" className="btn primary" onClick={() => router.push('/gestione-formazione')}>
-                    {lang === 'en' ? 'Open Pro for deeper coaching' : 'Apri il Pro per coaching più profondo'}
+                  <div style={{ fontSize: 'clamp(12px, 2.5vw, 14px)', opacity: 0.8 }}>
+                    {lang === 'en'
+                      ? 'Load your 2D squad screenshot to unlock Smart Coach and contromisure.'
+                      : 'Carica la schermata 2D della tua squadra per sbloccare Smart Coach e contromisure.'}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '14px' }}>
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById('smart-upload-input')?.click()}
+                    className="neon-button"
+                    disabled={uploading}
+                    style={{ flex: '1 1 180px', minHeight: '48px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                  >
+                    <Upload size={16} />
+                    {t('upload')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById('smart-camera-input')?.click()}
+                    className="neon-button"
+                    disabled={uploading}
+                    style={{ flex: '1 1 180px', minHeight: '48px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                  >
+                    <Camera size={16} />
+                    {t('cameraCaptureTitle')}
                   </button>
                 </div>
-              ) : (
-                <>
-                  <p style={{ color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, marginBottom: '18px' }}>
-                    {lang === 'en'
-                      ? 'Ask one focused question about your current formation. Smart answers from team structure, not from a full Pro roster.'
-                      : 'Fai una domanda mirata sulla tua formazione attuale. Smart risponde dalla struttura squadra, non da una rosa Pro completa.'}
-                  </p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
-                    {[
-                      lang === 'en' ? 'What is my main structural weakness?' : 'Qual è il mio punto debole strutturale?',
-                      lang === 'en' ? 'How should I defend the center?' : 'Come devo proteggere il centro?',
-                      lang === 'en' ? 'What is my first attacking priority?' : 'Qual è la mia prima priorità offensiva?'
-                    ].map((suggestion) => (
-                      <button
-                        key={suggestion}
-                        type="button"
-                        className="neon-button"
-                        style={{ fontSize: '12px', padding: '8px 12px' }}
-                        onClick={() => setChatInput(suggestion)}
-                        disabled={chatLoading}
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
-                  </div>
-                  <textarea
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    rows={5}
-                    disabled={!currentContext || chatLoading}
-                    placeholder={lang === 'en'
-                      ? 'Example: what is my main structural weakness against a 4-3-3?'
-                      : 'Esempio: qual è il mio punto debole strutturale contro un 4-3-3?'}
-                    style={{
-                      width: '100%',
-                      borderRadius: '14px',
-                      border: '1px solid rgba(0,212,255,0.2)',
-                      padding: '14px 16px',
-                      background: 'rgba(0,0,0,0.22)',
-                      color: '#fff',
-                      resize: 'vertical',
-                      minHeight: '140px',
-                      marginBottom: '16px'
+              </>
+            ) : (
+              <>
+                <div style={{ marginBottom: '16px', textAlign: 'center' }}>
+                  <img src={uploadImage} alt="Preview" style={{ maxWidth: '100%', maxHeight: '400px', borderRadius: '8px' }} />
+                </div>
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  {uploading ? (
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px', minHeight: '44px' }}>
+                      <RefreshCw size={20} style={{ animation: 'spin 1s linear infinite', color: 'var(--neon-orange)' }} />
+                      <span>{t('extracting')}</span>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => document.getElementById('smart-upload-input')?.click()}
+                      className="btn primary"
+                      style={{ flex: 1, minWidth: '200px' }}
+                    >
+                      <RefreshCw size={16} />
+                      {lang === 'en' ? 'Load another image' : 'Carica un\'altra immagine'}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setUploadImage(null)
+                      setSelectedImageName('')
                     }}
-                  />
-                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    className="neon-button"
+                    disabled={uploading}
+                  >
+                    <X size={16} />
+                    {t('cancel')}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {currentContext && (
+            <div className="neon-card" style={{ padding: 'clamp(16px, 4vw, 24px)', marginBottom: '24px' }}>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', cursor: 'pointer' }}
+                onClick={() => setExpandedSections(prev => ({ ...prev, extracted: !prev.extracted }))}
+              >
+                <h2 style={{ fontSize: 'clamp(18px, 4vw, 20px)', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <CheckCircle2 size={24} color="#22C55E" />
+                  {t('formationExtracted')}
+                </h2>
+                {expandedSections.extracted ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              </div>
+
+              {expandedSections.extracted && <SmartSummaryBlock data={currentContext} lang={lang} />}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div className="neon-card" style={{ padding: 'clamp(16px, 4vw, 24px)', marginBottom: '24px' }}>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', cursor: 'pointer' }}
+                onClick={() => setExpandedSections(prev => ({ ...prev, tactical: !prev.tactical }))}
+              >
+                <h2 style={{ fontSize: 'clamp(18px, 4vw, 20px)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                  <Shield size={24} color="var(--neon-orange)" />
+                  Contromisure
+                </h2>
+                {expandedSections.tactical ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              </div>
+
+              {expandedSections.tactical && (
+                <>
+                  <p style={{ fontSize: 'clamp(13px, 2.5vw, 14px)', color: 'rgba(255,255,255,0.7)', marginBottom: '20px', marginTop: 0 }}>
+                    {lang === 'en'
+                      ? 'Contromisure based on the uploaded formation and the Smart context available.'
+                      : 'Contromisure basate sulla formazione caricata e sul contesto Smart disponibile.'}
+                  </p>
+
+                  {currentCountermeasure ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <div
+                        style={{
+                          padding: 'clamp(12px, 3vw, 16px)',
+                          background: 'rgba(255, 165, 0, 0.1)',
+                          border: '1px solid var(--neon-orange)',
+                          borderRadius: '8px'
+                        }}
+                      >
+                        <div style={{ fontWeight: 600, marginBottom: '8px', fontSize: 'clamp(14px, 3vw, 16px)' }}>
+                          {currentCountermeasure.headline || (lang === 'en' ? 'Current structural read' : 'Lettura strutturale attuale')}
+                        </div>
+                        <div style={{ fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: '1.6', opacity: 0.9 }}>
+                          {currentCountermeasure.protect}
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          padding: 'clamp(12px, 3vw, 16px)',
+                          background: 'rgba(0, 212, 255, 0.1)',
+                          border: '1px solid var(--neon-blue)',
+                          borderRadius: '8px'
+                        }}
+                      >
+                        <div style={{ fontWeight: 600, marginBottom: '8px', fontSize: 'clamp(14px, 3vw, 16px)' }}>
+                          {lang === 'en' ? 'Attacking route' : 'Via offensiva'}
+                        </div>
+                        <div style={{ fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: '1.6', opacity: 0.9 }}>
+                          {currentCountermeasure.attack}
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          padding: 'clamp(12px, 3vw, 16px)',
+                          background: 'rgba(34, 197, 94, 0.1)',
+                          border: '1px solid #22c55e',
+                          borderRadius: '8px'
+                        }}
+                      >
+                        <div style={{ fontWeight: 600, marginBottom: '8px', fontSize: 'clamp(14px, 3vw, 16px)' }}>
+                          {lang === 'en' ? 'Main mistake to avoid' : 'Errore da evitare'}
+                        </div>
+                        <div style={{ fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: '1.6', opacity: 0.9 }}>
+                          {currentCountermeasure.avoid}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
                     <button
                       type="button"
                       className="btn primary"
-                      onClick={handleSendChat}
-                      disabled={!currentContext || chatLoading || !chatInput.trim()}
+                      onClick={() => handleGenerateCountermeasure('default')}
+                      disabled={!currentContext || counterLoading}
+                      style={{ width: '100%' }}
                     >
-                      {chatLoading ? (lang === 'en' ? 'Sending...' : 'Invio...') : (lang === 'en' ? 'Use Smart chat' : 'Usa la chat Smart')}
+                      {counterLoading ? (
+                        <>
+                          <RefreshCw size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                          {lang === 'en' ? 'Generating countermeasures' : 'Genero contromisure'}
+                        </>
+                      ) : (
+                        <>
+                          <Brain size={18} />
+                          {lang === 'en' ? 'Generate countermeasures' : 'Genera contromisure'}
+                        </>
+                      )}
                     </button>
-                  </div>
+                  )}
                 </>
               )}
             </div>
-          </div>
 
-          <div className="neon-card" style={{ padding: '22px', marginTop: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontWeight: 700, color: '#fff', marginBottom: '6px' }}>
-                {lang === 'en' ? 'Ready for the full product?' : 'Pronto per il prodotto completo?'}
+            <div className="neon-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', cursor: 'pointer' }}
+                onClick={() => setExpandedSections(prev => ({ ...prev, coach: !prev.coach }))}
+              >
+                <h2 style={{ fontSize: 'clamp(18px, 4vw, 20px)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                  <Brain size={24} color="var(--neon-blue)" />
+                  Coach IA
+                </h2>
+                {expandedSections.coach ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
               </div>
-              <div style={{ color: 'rgba(255,255,255,0.72)', lineHeight: 1.6 }}>
-                {lang === 'en'
-                  ? 'Use Pro for full roster management, reserves, player detail, and deeper coaching.'
-                  : 'Usa il Pro per rosa completa, riserve, dettagli giocatori e coaching più profondo.'}
-              </div>
+
+              {expandedSections.coach && (
+                <div style={{ height: '720px', minHeight: '520px' }}>
+                  <AssistantChat
+                    mode="page"
+                    apiEndpoint="/api/smart/chat"
+                    currentPageOverride="/smart"
+                    initialSuggestionsOverride={smartChatSuggestions}
+                  />
+                </div>
+              )}
             </div>
-            <button type="button" className="btn primary" onClick={() => router.push('/gestione-formazione')}>
-              <Zap size={16} style={{ marginRight: '8px' }} />
-              {lang === 'en' ? 'Open Pro' : 'Apri il Pro'}
-            </button>
           </div>
 
           <style jsx>{`
@@ -523,7 +505,7 @@ function SmartPage() {
       )}
     </main>
   )
-}
+})
 
 function SmartSummaryBlock({ data, lang }) {
   const players = Array.isArray(data?.players) ? data.players : []
@@ -531,15 +513,45 @@ function SmartSummaryBlock({ data, lang }) {
 
   return (
     <div style={{ display: 'grid', gap: '14px' }}>
-      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-        <InfoPill label={lang === 'en' ? 'Formation' : 'Modulo'} value={data?.formation || (lang === 'en' ? 'Not detected' : 'Non rilevato')} />
-        <InfoPill label={lang === 'en' ? 'Starters' : 'Titolari'} value={String(players.length)} />
-        <InfoPill label={lang === 'en' ? 'Coach' : 'Allenatore'} value={coach?.coach_name || (lang === 'en' ? 'Not detected' : 'Non rilevato')} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+        <div>
+          <strong>{lang === 'en' ? 'Formation' : 'Modulo'}:</strong> {data?.formation || 'N/A'}
+        </div>
+        <div>
+          <strong>{lang === 'en' ? 'Detected starters' : 'Titolari rilevati'}:</strong> {players.length}
+        </div>
       </div>
+      {coach?.coach_name && (
+        <div
+          style={{
+            marginTop: '12px',
+            padding: '10px',
+            background: 'rgba(0, 212, 255, 0.1)',
+            border: '1px solid rgba(0, 212, 255, 0.3)',
+            borderRadius: '6px',
+            fontSize: 'clamp(12px, 2.5vw, 14px)'
+          }}
+        >
+          <strong style={{ color: 'var(--neon-blue)' }}>✓ {lang === 'en' ? 'Coach detected' : 'Allenatore estratto'}:</strong> {coach.coach_name}
+          {coach.age ? ` (${coach.age} ${lang === 'en' ? 'years' : 'anni'})` : ''}
+        </div>
+      )}
       {players.length > 0 && (
         <div style={{ display: 'grid', gap: '10px', maxHeight: '320px', overflowY: 'auto', paddingRight: '4px' }}>
           {players.map((player, index) => (
-            <div key={`${player.player_name || 'player'}-${index}`} style={{ padding: '12px 14px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center' }}>
+            <div
+              key={`${player.player_name || 'player'}-${index}`}
+              style={{
+                padding: '12px 14px',
+                borderRadius: '12px',
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                gap: '12px',
+                alignItems: 'center'
+              }}
+            >
               <div style={{ minWidth: 0 }}>
                 <div style={{ color: '#fff', fontWeight: 600 }}>{player.player_name || (lang === 'en' ? 'Unknown player' : 'Giocatore sconosciuto')}</div>
                 <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.65)' }}>{player.position || '?'}</div>
@@ -554,14 +566,3 @@ function SmartSummaryBlock({ data, lang }) {
     </div>
   )
 }
-
-function InfoPill({ label, value }) {
-  return (
-    <div style={{ padding: '10px 14px', borderRadius: '999px', background: 'rgba(0,212,255,0.08)', border: '1px solid rgba(0,212,255,0.18)' }}>
-      <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.62)', marginRight: '8px' }}>{label}</span>
-      <span style={{ color: '#fff', fontWeight: 700 }}>{value}</span>
-    </div>
-  )
-}
-
-export default withAuth(SmartPage)
