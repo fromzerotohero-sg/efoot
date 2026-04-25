@@ -13,6 +13,7 @@ import { isPrelaunchPublicPath } from '@/lib/prelaunchRoutes'
 export default function AppLayoutShell({ children }) {
   const pathname = usePathname()
   const isPublicPath = isPrelaunchPublicPath(pathname || '/')
+  const hideDefaultAssistantLauncher = (pathname || '').startsWith('/smart')
 
   if (isPublicPath) {
     return <PrelaunchGate>{children}</PrelaunchGate>
@@ -45,7 +46,7 @@ export default function AppLayoutShell({ children }) {
 
       <BottomNavigation />
       <LiveCoachLauncher showLauncherButton={false} />
-      <AssistantChat mode="popup" />
+      {!hideDefaultAssistantLauncher && <AssistantChat mode="popup" />}
     </>
   )
 }
