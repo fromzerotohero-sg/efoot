@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAuthenticatedSmartRequest } from '@/lib/smartCoachServer'
 import {
-  getSmartUiQuotaState,
   getSmartReadiness,
   normalizeSmartPlayers,
 } from '@/lib/smartCoach'
@@ -20,6 +19,7 @@ function normalizeContextRow(row) {
     coach: row.coach && typeof row.coach === 'object' ? row.coach : null,
     extraction_meta: row.extraction_meta && typeof row.extraction_meta === 'object' ? row.extraction_meta : {},
     chat_used: !!row.chat_used,
+    chat_count: Number(row.chat_count) || 0,
     countermeasures_used: Number(row.countermeasures_used) || 0,
     last_countermeasures: Array.isArray(row.last_countermeasures) ? row.last_countermeasures : [],
     last_chat_answer: typeof row.last_chat_answer === 'string' ? row.last_chat_answer : '',
@@ -49,7 +49,6 @@ export async function GET(req) {
   const context = normalizeContextRow(data)
   return NextResponse.json({
     context,
-    quota: getSmartUiQuotaState(context),
     readiness: getSmartReadiness(context)
   })
 }
@@ -83,6 +82,7 @@ export async function POST(req) {
       coach,
       extraction_meta: extractionMeta,
       chat_used: false,
+      chat_count: 0,
       countermeasures_used: 0,
       last_countermeasures: [],
       last_chat_answer: null,
@@ -101,7 +101,6 @@ export async function POST(req) {
   return NextResponse.json({
     success: true,
     context,
-    quota: getSmartUiQuotaState(context),
     readiness: getSmartReadiness(context)
   })
 }

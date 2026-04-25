@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { callOpenAIWithRetry, parseOpenAIResponse } from '@/lib/openaiHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { getRelevantSections } from '@/lib/ragHelper'
-import { SMART_CHAT_LIMIT } from '@/lib/smartCoach'
 import { buildSmartChatPrompt } from '@/lib/smartCoachPrompts'
 import { getAuthenticatedSmartRequest } from '@/lib/smartCoachServer'
 
@@ -113,10 +112,6 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Smart context not found' }, { status: 400 })
     }
 
-    if (smartContext.chat_used) {
-      return NextResponse.json({ error: 'Smart chat limit reached', quota_exhausted: true }, { status: 403 })
-    }
-
     const ragKnowledge = getRelevantSections(message, 10000)
     const prompt = buildSmartChatPrompt({
       lang,
@@ -162,7 +157,8 @@ export async function POST(req) {
     const { error: updateError } = await admin
       .from('smart_coach_contexts')
       .update({
-        chat_used: SMART_CHAT_LIMIT > 0,
+        chat_used: true,
+        chat_count: (Number(smartContext.chat_count) || 0) + 1,
         last_chat_answer: answer,
         last_chat_suggestions: suggestions,
         updated_at: new Date().toISOString()
@@ -177,8 +173,7 @@ export async function POST(req) {
     return NextResponse.json({
       success: true,
       answer,
-      suggestions,
-      remaining: 0
+      suggestions
     })
   } catch (error) {
     console.error('[smart/chat] Error:', error)

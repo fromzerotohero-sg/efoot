@@ -781,7 +781,7 @@ function HomePage() {
                       {lang === 'en' ? 'Smart Coach Trial' : 'Prova Smart Coach'}
                     </span>
                     <span style={{ fontSize: '12px', opacity: 0.8, textAlign: 'center' }}>
-                      {lang === 'en' ? '1 chat + 2 countermeasures' : '1 chat + 2 contromisure'}
+                      {lang === 'en' ? '1 chat + 2 tactical suggestions' : '1 chat + 2 suggerimenti tattici'}
                     </span>
                   </button>
                 )}

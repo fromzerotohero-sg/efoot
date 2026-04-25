@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { withAuth } from '@/components/AuthWrapper'
 import { useTranslation } from '@/lib/i18n'
 import { isEnabled } from '@/lib/featureFlags'
-import { SMART_CHAT_LIMIT, SMART_COUNTERMEASURE_LIMIT, SMART_COACH_FLAG } from '@/lib/smartCoach'
+import { SMART_COACH_FLAG } from '@/lib/smartCoach'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 import { getValidAccessToken, supabase } from '@/lib/supabaseClient'
@@ -36,11 +36,6 @@ function SmartPage() {
   const [counterLoading, setCounterLoading] = React.useState(false)
   const [chatLoading, setChatLoading] = React.useState(false)
   const [chatInput, setChatInput] = React.useState('')
-
-  const quota = contextData?.quota || {
-    remainingChat: SMART_CHAT_LIMIT,
-    remainingCountermeasures: SMART_COUNTERMEASURE_LIMIT
-  }
 
   const currentContext = contextData?.context || null
   const readiness = contextData?.readiness?.level || 'weak'
@@ -242,16 +237,6 @@ function SmartPage() {
         <h1 className="neon-text" style={{ fontSize: 'clamp(28px, 5vw, 38px)', margin: 0 }}>
           {lang === 'en' ? 'Smart Coach' : 'Smart Coach'}
         </h1>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <div className="neon-card" style={{ padding: '10px 14px', minWidth: '120px' }}>
-            <div style={{ fontSize: '12px', opacity: 0.7 }}>{lang === 'en' ? 'Chat left' : 'Chat rimaste'}</div>
-            <div style={{ fontSize: '22px', fontWeight: 700, color: 'var(--neon-cyan)' }}>{quota.remainingChat}</div>
-          </div>
-          <div className="neon-card" style={{ padding: '10px 14px', minWidth: '140px' }}>
-            <div style={{ fontSize: '12px', opacity: 0.7 }}>{lang === 'en' ? 'Countermeasures left' : 'Contromisure rimaste'}</div>
-            <div style={{ fontSize: '22px', fontWeight: 700, color: 'var(--neon-cyan)' }}>{quota.remainingCountermeasures}</div>
-          </div>
-        </div>
       </div>
 
       <div className="neon-card" style={{ padding: '24px', marginBottom: '24px' }}>
@@ -268,8 +253,8 @@ function SmartPage() {
             </h2>
             <p style={{ margin: 0, fontSize: '15px', lineHeight: 1.6, color: 'rgba(255,255,255,0.78)' }}>
               {lang === 'en'
-                ? 'Upload one 2D squad screenshot and start immediately with 2 countermeasures and 1 Smart coach chat. Your Pro experience stays untouched.'
-                : 'Carica una schermata 2D della tua squadra e parti subito con 2 contromisure e 1 chat Smart. La tua versione Pro resta intatta.'}
+                ? 'Upload one 2D squad screenshot and start immediately with 2 tactical suggestions and 1 Smart coach chat. Your Pro experience stays untouched.'
+                : 'Carica una schermata 2D della tua squadra e parti subito con 2 suggerimenti tattici e 1 chat Smart. La tua versione Pro resta intatta.'}
             </p>
           </div>
           <button
@@ -370,8 +355,8 @@ function SmartPage() {
               ) : (
                 <div style={{ color: 'rgba(255,255,255,0.66)', lineHeight: 1.6 }}>
                   {lang === 'en'
-                    ? 'Upload a screenshot to populate this area, then use countermeasures and chat immediately.'
-                    : 'Carica uno screenshot per popolare quest\'area, poi usa subito contromisure e chat.'}
+                    ? 'Upload a screenshot to populate this area, then use tactical suggestions and chat immediately.'
+                    : 'Carica uno screenshot per popolare quest\'area, poi usa subito suggerimenti tattici e chat.'}
                 </div>
               )}
             </div>
@@ -383,17 +368,14 @@ function SmartPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <Target size={20} color="#FFD76A" />
                   <h3 style={{ margin: 0, fontSize: '20px', color: '#fff' }}>
-                    {lang === 'en' ? 'Countermeasures' : 'Contromisure'}
+                    {lang === 'en' ? 'Tactical suggestions' : 'Suggerimenti tattici'}
                   </h3>
-                </div>
-                <div style={{ color: '#FFD76A', fontWeight: 700 }}>
-                  {quota.remainingCountermeasures}/{SMART_COUNTERMEASURE_LIMIT}
                 </div>
               </div>
               <p style={{ color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, marginBottom: '18px' }}>
                 {lang === 'en'
-                  ? 'Two fast tactical reads based on your 2D formation and shared account context.'
-                  : 'Due letture tattiche rapide basate sulla tua formazione 2D e sul contesto condiviso del profilo.'}
+                  ? 'Two fast tactical suggestions based on your 2D formation and your shared account context.'
+                  : 'Due suggerimenti tattici rapidi basati sulla tua formazione 2D e sul contesto condiviso del profilo.'}
               </p>
 
               {Array.isArray(currentContext?.last_countermeasures) && currentContext.last_countermeasures.length > 0 && (
@@ -401,7 +383,7 @@ function SmartPage() {
                   {currentContext.last_countermeasures.map((item, index) => (
                     <div key={`${item.generated_at || index}`} style={{ padding: '16px', border: '1px solid rgba(255,215,106,0.2)', borderRadius: '14px', background: 'rgba(255,215,106,0.05)' }}>
                       <div style={{ fontWeight: 700, color: '#FFD76A', marginBottom: '12px' }}>
-                        {item.headline || `${lang === 'en' ? 'Countermeasure' : 'Contromisura'} ${index + 1}`}
+                        {item.headline || `${lang === 'en' ? 'Suggestion' : 'Suggerimento'} ${index + 1}`}
                       </div>
                       <ul style={{ margin: 0, paddingLeft: '18px', display: 'grid', gap: '8px', color: 'rgba(255,255,255,0.82)' }}>
                         <li><strong>{lang === 'en' ? 'Protect:' : 'Proteggi:'}</strong> {item.protect}</li>
@@ -418,19 +400,14 @@ function SmartPage() {
                   type="button"
                   className="btn primary"
                   onClick={() => handleGenerateCountermeasure(currentContext?.last_countermeasures?.length ? 'alternative' : 'default')}
-                  disabled={!currentContext || quota.remainingCountermeasures <= 0 || counterLoading}
+                  disabled={!currentContext || counterLoading}
                 >
                   {counterLoading
                     ? (lang === 'en' ? 'Generating...' : 'Genero...')
-                    : quota.remainingCountermeasures === SMART_COUNTERMEASURE_LIMIT
-                      ? (lang === 'en' ? 'Generate countermeasure' : 'Genera contromisura')
-                      : (lang === 'en' ? 'Generate alternative angle' : 'Genera lettura alternativa')}
+                    : currentContext?.last_countermeasures?.length
+                      ? (lang === 'en' ? 'Generate alternative read' : 'Genera lettura alternativa')
+                      : (lang === 'en' ? 'Generate suggestions' : 'Genera suggerimenti')}
                 </button>
-                {quota.remainingCountermeasures <= 0 && (
-                  <button type="button" className="neon-button" onClick={() => router.push('/gestione-formazione')}>
-                    {lang === 'en' ? 'Open Pro' : 'Apri il Pro'}
-                  </button>
-                )}
               </div>
             </div>
 
@@ -441,9 +418,6 @@ function SmartPage() {
                   <h3 style={{ margin: 0, fontSize: '20px', color: '#fff' }}>
                     {lang === 'en' ? 'Coach IA' : 'Coach IA'}
                   </h3>
-                </div>
-                <div style={{ color: 'var(--neon-cyan)', fontWeight: 700 }}>
-                  {quota.remainingChat}/{SMART_CHAT_LIMIT}
                 </div>
               </div>
 
@@ -494,7 +468,7 @@ function SmartPage() {
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     rows={5}
-                    disabled={!currentContext || quota.remainingChat <= 0 || chatLoading}
+                    disabled={!currentContext || chatLoading}
                     placeholder={lang === 'en'
                       ? 'Example: what is my main structural weakness against a 4-3-3?'
                       : 'Esempio: qual è il mio punto debole strutturale contro un 4-3-3?'}
@@ -515,15 +489,10 @@ function SmartPage() {
                       type="button"
                       className="btn primary"
                       onClick={handleSendChat}
-                      disabled={!currentContext || quota.remainingChat <= 0 || chatLoading || !chatInput.trim()}
+                      disabled={!currentContext || chatLoading || !chatInput.trim()}
                     >
                       {chatLoading ? (lang === 'en' ? 'Sending...' : 'Invio...') : (lang === 'en' ? 'Use Smart chat' : 'Usa la chat Smart')}
                     </button>
-                    {quota.remainingChat <= 0 && (
-                      <button type="button" className="neon-button" onClick={() => router.push('/gestione-formazione')}>
-                        {lang === 'en' ? 'Open Pro' : 'Apri il Pro'}
-                      </button>
-                    )}
                   </div>
                 </>
               )}

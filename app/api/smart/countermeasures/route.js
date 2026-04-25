@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { callOpenAIWithRetry, parseOpenAIResponse } from '@/lib/openaiHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { getRelevantSectionsForContext } from '@/lib/ragHelper'
-import { SMART_COUNTERMEASURE_LIMIT } from '@/lib/smartCoach'
 import { buildSmartCountermeasurePrompt } from '@/lib/smartCoachPrompts'
 import { getAuthenticatedSmartRequest } from '@/lib/smartCoachServer'
 
@@ -43,8 +42,8 @@ async function loadSharedContext(admin, userId) {
 function buildFallbackCountermeasure(lang, smartContext, variant = 'default') {
   const formation = smartContext?.formation || (lang === 'en' ? 'your current shape' : 'il tuo assetto attuale')
   const toneHeadline = variant === 'alternative'
-    ? (lang === 'en' ? 'Alternative Smart angle' : 'Lettura Smart alternativa')
-    : (lang === 'en' ? 'Immediate Smart read' : 'Lettura Smart immediata')
+    ? (lang === 'en' ? 'Alternative Smart suggestion' : 'Suggerimento Smart alternativo')
+    : (lang === 'en' ? 'Immediate Smart suggestion' : 'Suggerimento Smart immediato')
 
   if (lang === 'en') {
     return {
@@ -96,9 +95,6 @@ export async function POST(req) {
     }
 
     const used = Number(smartContext.countermeasures_used) || 0
-    if (used >= SMART_COUNTERMEASURE_LIMIT) {
-      return NextResponse.json({ error: 'Smart countermeasures limit reached', quota_exhausted: true }, { status: 403 })
-    }
 
     const ragKnowledge = getRelevantSectionsForContext('countermeasures', 9000)
     const prompt = buildSmartCountermeasurePrompt({
@@ -161,8 +157,7 @@ export async function POST(req) {
 
     return NextResponse.json({
       success: true,
-      countermeasure,
-      remaining: Math.max(0, SMART_COUNTERMEASURE_LIMIT - nextCount)
+      countermeasure
     })
   } catch (error) {
     console.error('[smart/countermeasures] Error:', error)
