@@ -253,8 +253,8 @@ function SmartPage() {
             </h2>
             <p style={{ margin: 0, fontSize: '15px', lineHeight: 1.6, color: 'rgba(255,255,255,0.78)' }}>
               {lang === 'en'
-                ? 'Upload one 2D squad screenshot and start immediately with 2 tactical suggestions and 1 Smart coach chat. Your Pro experience stays untouched.'
-                : 'Carica una schermata 2D della tua squadra e parti subito con 2 suggerimenti tattici e 1 chat Smart. La tua versione Pro resta intatta.'}
+                ? 'Upload one 2D squad screenshot and start immediately with Smart coaching based on your current setup. Your Pro experience stays untouched.'
+                : 'Carica una schermata 2D della tua squadra e parti subito con coaching Smart basato sul tuo assetto attuale. La tua versione Pro resta intatta.'}
             </p>
           </div>
           <button
