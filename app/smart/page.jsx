@@ -351,6 +351,30 @@ export default withAuth(function SmartPage() {
         </div>
       ) : (
         <>
+          <div
+            className="neon-card"
+            style={{
+              padding: '16px 18px',
+              marginBottom: '20px',
+              border: '1px solid rgba(0, 212, 255, 0.24)',
+              background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.10), rgba(168, 85, 247, 0.08))'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+              <Brain size={20} style={{ color: 'var(--neon-cyan)', flexShrink: 0, marginTop: '2px' }} />
+              <div>
+                <div style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>
+                  {lang === 'en' ? 'Smart version active' : 'Versione Smart attiva'}
+                </div>
+                <div style={{ fontSize: '14px', lineHeight: 1.6, color: 'rgba(255,255,255,0.80)' }}>
+                  {lang === 'en'
+                    ? 'Smart gives you a fast structural read of your team, chat, and pre-match countermeasures from 2D screenshots. For deeper and more precise advice based on full roster, player, and coach data, switch to Pro.'
+                    : 'La Smart ti offre lettura strutturale rapida della squadra, chat e contromisure pre-partita da schermate 2D. Per consigli piu dettagliati e precisi basati su rosa completa, giocatori e allenatore, passa alla versione Pro.'}
+                </div>
+              </div>
+            </div>
+          </div>
+
           <input id="smart-upload-input" type="file" accept="image/*" onChange={handleSelectImage} style={{ display: 'none' }} disabled={uploading} />
           <input id="smart-camera-input" type="file" accept="image/*" capture="environment" onChange={handleSelectImage} style={{ display: 'none' }} disabled={uploading} />
           <input id="smart-opponent-upload-input" type="file" accept="image/*" onChange={handleSelectOpponentImage} style={{ display: 'none' }} disabled={uploadingOpponent} />

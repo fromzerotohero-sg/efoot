@@ -110,6 +110,7 @@ export default function GuidaPage() {
         : 'Il tuo centro di comando: punteggio AI Knowledge, obiettivi settimanali, panoramica squadra e navigazione rapida a tutte le funzioni.',
       steps: [
         lang === 'en' ? 'Check your AI Knowledge score (0-100%)' : 'Controlla il tuo punteggio AI Knowledge (0-100%)',
+        lang === 'en' ? 'Choose Smart or Pro from the coach mode entry' : 'Scegli Smart o Pro dall\'ingresso modalita coach',
         lang === 'en' ? 'View weekly goals and track progress' : 'Visualizza obiettivi settimanali e traccia i progressi',
         lang === 'en' ? 'Monitor weekly goals and app progress' : 'Monitora obiettivi settimanali e progressi nell\'app',
         lang === 'en' ? 'Access Mission Center for daily challenges' : 'Accedi al Centro Missioni per sfide giornaliere',
@@ -135,6 +136,23 @@ export default function GuidaPage() {
         lang === 'en' ? 'Customize tactical settings per player' : 'Personalizza impostazioni tattiche per giocatore',
         lang === 'en' ? 'Change formation (14 official eFootball formations)' : 'Cambia formazione (14 formazioni ufficiali eFootball)',
         lang === 'en' ? 'Set your active coach' : 'Imposta il tuo allenatore attivo'
+      ]
+    },
+    {
+      id: 'smart-coach',
+      icon: Sparkles,
+      color: 'var(--neon-cyan)',
+      path: '/smart',
+      title: lang === 'en' ? 'Smart Coach' : 'Smart Coach',
+      description: lang === 'en'
+        ? 'Fast entry experience: upload 2D screenshots of your team and opponent to get chat support and pre-match countermeasures without loading the full Pro setup.'
+        : 'Esperienza di ingresso rapida: carica schermate 2D della tua squadra e dell\'avversario per ottenere chat e contromisure pre-partita senza caricare tutta la configurazione Pro.',
+      steps: [
+        lang === 'en' ? 'Upload your 2D team screenshot to create the Smart context' : 'Carica la schermata 2D della tua squadra per creare il contesto Smart',
+        lang === 'en' ? 'Upload the opponent 2D screenshot to generate real countermeasures' : 'Carica la schermata 2D avversaria per generare contromisure reali',
+        lang === 'en' ? 'Use Smart chat for immediate tactical priorities' : 'Usa la chat Smart per priorita tattiche immediate',
+        lang === 'en' ? 'Use Smart when you want speed, then switch to Pro for deeper precision' : 'Usa Smart quando vuoi velocita, poi passa a Pro per una precisione piu profonda',
+        lang === 'en' ? 'Smart costs: chat 1 HP, extraction 2 HP, countermeasures 2 HP' : 'Costi Smart: chat 1 HP, estrazione 2 HP, contromisure 2 HP'
       ]
     },
     {

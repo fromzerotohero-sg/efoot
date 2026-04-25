@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { callOpenAIWithRetry, parseOpenAIResponse } from '@/lib/openaiHelper'
+import { deductCredits, refundCredits } from '@/lib/creditService'
 import { getAuthenticatedSmartRequest } from '@/lib/smartCoachServer'
 import { normalizeSmartPlayers } from '@/lib/smartCoach'
 
@@ -26,8 +27,11 @@ export async function POST(req) {
   const auth = await getAuthenticatedSmartRequest(req)
   if (auth.errorResponse) return auth.errorResponse
 
-  const { userId, lang } = auth
+  const { admin, userId, token, lang } = auth
   const L = ERRORS[lang] || ERRORS.it
+  let charged = false
+  const operationType = 'smart-extract-formation'
+  const cost = 2
 
   try {
     const rateLimitConfig = RATE_LIMIT_CONFIG['/api/smart/extract-formation']
@@ -61,6 +65,15 @@ export async function POST(req) {
         }
       }
     }
+
+    const deduction = await deductCredits(admin, userId, token, cost, operationType)
+    if (!deduction.success) {
+      return NextResponse.json(
+        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : 'Insufficient credits. Please recharge to continue.' },
+        { status: 402 }
+      )
+    }
+    charged = true
 
     const prompt = `Analizza questo screenshot di eFootball che mostra la squadra del cliente in vista 2D.
 
@@ -148,6 +161,9 @@ Rispondi SOLO con JSON valido:
     })
   } catch (error) {
     console.error('[smart/extract-formation] Error:', error)
+    if (charged) {
+      await refundCredits(admin, userId, cost, operationType)
+    }
     return NextResponse.json({ error: L.extraction }, { status: 500 })
   }
 }

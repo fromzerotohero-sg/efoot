@@ -3,6 +3,7 @@ import { callOpenAIWithRetry, parseOpenAIResponse } from '@/lib/openaiHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { getRelevantSectionsForContext } from '@/lib/ragHelper'
 import { validateCountermeasuresOutput } from '@/lib/countermeasuresHelper'
+import { deductCredits, refundCredits } from '@/lib/creditService'
 import { buildSmartCountermeasurePrompt } from '@/lib/smartCoachPrompts'
 import { getAuthenticatedSmartRequest } from '@/lib/smartCoachServer'
 
@@ -183,8 +184,11 @@ export async function POST(req) {
   const auth = await getAuthenticatedSmartRequest(req)
   if (auth.errorResponse) return auth.errorResponse
 
-  const { admin, userId, lang } = auth
+  const { admin, userId, token, lang } = auth
   const rateLimitConfig = RATE_LIMIT_CONFIG['/api/smart/countermeasures']
+  let charged = false
+  const operationType = 'smart-countermeasures'
+  const cost = 2
   const rateLimit = await checkRateLimit(
     userId,
     '/api/smart/countermeasures',
@@ -213,6 +217,15 @@ export async function POST(req) {
     if (!smartContext.opponent_players || !Array.isArray(smartContext.opponent_players) || smartContext.opponent_players.length === 0) {
       return NextResponse.json({ error: 'Opponent formation is required for countermeasures' }, { status: 400 })
     }
+
+    const deduction = await deductCredits(admin, userId, token, cost, operationType)
+    if (!deduction.success) {
+      return NextResponse.json(
+        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : 'Insufficient credits. Please recharge to continue.' },
+        { status: 402 }
+      )
+    }
+    charged = true
 
     const used = Number(smartContext.countermeasures_used) || 0
 
@@ -274,6 +287,9 @@ export async function POST(req) {
 
     if (updateError) {
       console.error('[smart/countermeasures] Update error:', updateError.message)
+      if (charged) {
+        await refundCredits(admin, userId, cost, operationType)
+      }
       return NextResponse.json({ error: 'Failed to persist Smart countermeasure' }, { status: 500 })
     }
 
@@ -283,6 +299,9 @@ export async function POST(req) {
     })
   } catch (error) {
     console.error('[smart/countermeasures] Error:', error)
+    if (charged) {
+      await refundCredits(admin, userId, cost, operationType)
+    }
     return NextResponse.json({ error: 'Unable to generate Smart countermeasure' }, { status: 500 })
   }
 }

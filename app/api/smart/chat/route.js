@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { callOpenAIWithRetry, parseOpenAIResponse } from '@/lib/openaiHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { getRelevantSections } from '@/lib/ragHelper'
+import { deductCredits, refundCredits } from '@/lib/creditService'
 import { buildSmartChatPrompt } from '@/lib/smartCoachPrompts'
 import { getAuthenticatedSmartRequest } from '@/lib/smartCoachServer'
 
@@ -80,8 +81,11 @@ export async function POST(req) {
   const auth = await getAuthenticatedSmartRequest(req)
   if (auth.errorResponse) return auth.errorResponse
 
-  const { admin, userId, lang } = auth
+  const { admin, userId, token, lang } = auth
   const rateLimitConfig = RATE_LIMIT_CONFIG['/api/smart/chat']
+  let charged = false
+  const operationType = 'smart-chat'
+  const cost = 1
   const rateLimit = await checkRateLimit(
     userId,
     '/api/smart/chat',
@@ -111,6 +115,15 @@ export async function POST(req) {
     if (!smartContext) {
       return NextResponse.json({ error: 'Smart context not found' }, { status: 400 })
     }
+
+    const deduction = await deductCredits(admin, userId, token, cost, operationType)
+    if (!deduction.success) {
+      return NextResponse.json(
+        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : 'Insufficient credits. Please recharge to continue.' },
+        { status: 402 }
+      )
+    }
+    charged = true
 
     const ragKnowledge = getRelevantSections(message, 10000)
     const prompt = buildSmartChatPrompt({
@@ -167,6 +180,9 @@ export async function POST(req) {
 
     if (updateError) {
       console.error('[smart/chat] Update error:', updateError.message)
+      if (charged) {
+        await refundCredits(admin, userId, cost, operationType)
+      }
       return NextResponse.json({ error: 'Failed to persist Smart chat result' }, { status: 500 })
     }
 
@@ -177,6 +193,9 @@ export async function POST(req) {
     })
   } catch (error) {
     console.error('[smart/chat] Error:', error)
+    if (charged) {
+      await refundCredits(admin, userId, cost, operationType)
+    }
     return NextResponse.json({ error: 'Unable to generate Smart coach answer' }, { status: 500 })
   }
 }
