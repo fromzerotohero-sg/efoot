@@ -48,6 +48,7 @@ export default withAuth(function SmartPage() {
   const [uploadingOpponent, setUploadingOpponent] = React.useState(false)
   const [error, setError] = React.useState('')
   const [counterLoading, setCounterLoading] = React.useState(false)
+  const [showSmartDisclaimer, setShowSmartDisclaimer] = React.useState(true)
   const [expandedSections, setExpandedSections] = React.useState({
     extracted: true,
     tactical: true,
@@ -344,6 +345,76 @@ export default withAuth(function SmartPage() {
         </div>
       )}
 
+      {showSmartDisclaimer && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(3, 7, 18, 0.82)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 1200,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+        >
+          <div
+            className="neon-card"
+            style={{
+              width: 'min(760px, 100%)',
+              padding: '24px',
+              border: '1px solid rgba(0, 212, 255, 0.24)',
+              background: 'rgba(5, 12, 28, 0.95)'
+            }}
+          >
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <h2 style={{ fontSize: 'clamp(24px, 5vw, 32px)', fontWeight: 800, color: '#FFFFFF', margin: '0 0 10px 0' }}>
+                {lang === 'en' ? 'Want more precise suggestions?' : 'Vuoi suggerimenti piu precisi?'}
+              </h2>
+              <p style={{ margin: 0, fontSize: 'clamp(14px, 2.6vw, 16px)', color: 'rgba(255,255,255,0.78)', lineHeight: 1.6 }}>
+                {lang === 'en'
+                  ? 'Smart gives you a quick tactical read of your team. For more precise, personalized, and reliable suggestions, upload your roster and coaches and use the platform in the full version.'
+                  : 'La Smart ti offre una lettura tattica rapida della tua squadra. Per suggerimenti piu precisi, personalizzati e affidabili, carica la tua rosa, i tuoi allenatori e usa la piattaforma nella versione completa.'}
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <button
+                type="button"
+                className="neon-button"
+                onClick={() => setShowSmartDisclaimer(false)}
+                style={{
+                  minHeight: '48px',
+                  padding: '10px 20px',
+                  minWidth: '200px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                {lang === 'en' ? 'Continue in Smart' : 'Continua in Smart'}
+              </button>
+              <button
+                type="button"
+                className="btn primary"
+                onClick={() => router.push('/gestione-formazione')}
+                style={{
+                  minHeight: '48px',
+                  padding: '10px 20px',
+                  minWidth: '220px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                {lang === 'en' ? 'Go to full version' : 'Vai alla versione completa'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {loadingContext ? (
         <div className="neon-card" style={{ padding: '32px', textAlign: 'center' }}>
           <Loader2 size={28} style={{ animation: 'spin 1s linear infinite', marginBottom: '12px', color: 'var(--neon-cyan)' }} />
@@ -351,30 +422,6 @@ export default withAuth(function SmartPage() {
         </div>
       ) : (
         <>
-          <div
-            className="neon-card"
-            style={{
-              padding: '16px 18px',
-              marginBottom: '20px',
-              border: '1px solid rgba(0, 212, 255, 0.24)',
-              background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.10), rgba(168, 85, 247, 0.08))'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-              <Brain size={20} style={{ color: 'var(--neon-cyan)', flexShrink: 0, marginTop: '2px' }} />
-              <div>
-                <div style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>
-                  {lang === 'en' ? 'Smart version active' : 'Versione Smart attiva'}
-                </div>
-                <div style={{ fontSize: '14px', lineHeight: 1.6, color: 'rgba(255,255,255,0.80)' }}>
-                  {lang === 'en'
-                    ? 'Smart gives you a fast structural read of your team, chat, and pre-match countermeasures from 2D screenshots. For deeper and more precise advice based on full roster, player, and coach data, switch to Pro.'
-                    : 'La Smart ti offre lettura strutturale rapida della squadra, chat e contromisure pre-partita da schermate 2D. Per consigli piu dettagliati e precisi basati su rosa completa, giocatori e allenatore, passa alla versione Pro.'}
-                </div>
-              </div>
-            </div>
-          </div>
-
           <input id="smart-upload-input" type="file" accept="image/*" onChange={handleSelectImage} style={{ display: 'none' }} disabled={uploading} />
           <input id="smart-camera-input" type="file" accept="image/*" capture="environment" onChange={handleSelectImage} style={{ display: 'none' }} disabled={uploading} />
           <input id="smart-opponent-upload-input" type="file" accept="image/*" onChange={handleSelectOpponentImage} style={{ display: 'none' }} disabled={uploadingOpponent} />
