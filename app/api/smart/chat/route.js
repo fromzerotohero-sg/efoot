@@ -17,8 +17,8 @@ function normalizeSuggestions(lang, suggestions) {
   if (list.length >= 3) return list.slice(0, 3)
 
   return lang === 'en'
-    ? ['Open Pro for deeper player detail', 'Ask for a pre-match priority', 'Review the structural weak point']
-    : ['Apri il Pro per piu dettagli sui singoli', 'Chiedi una priorita pre-partita', 'Rivedi il punto debole strutturale']
+    ? ['Open the full version for deeper player detail', 'Ask for a pre-match priority', 'Review the structural weak point']
+    : ['Apri la versione completa per piu dettagli sui singoli', 'Chiedi una priorita pre-partita', 'Rivedi il punto debole strutturale']
 }
 
 function buildFallbackSmartChatAnswer(lang, smartContext, profile, message) {
@@ -29,21 +29,21 @@ function buildFallbackSmartChatAnswer(lang, smartContext, profile, message) {
 
   if (lang === 'en') {
     if (lowerMessage.includes('defend') || lowerMessage.includes('pressure') || lowerMessage.includes('weakness')) {
-      return `With ${formation} and ${playerCount} detected starters, keep your first focus on structure and distances between lines. Protect the center first, then react to wide threats only when the pass is already travelling. If you want player-by-player precision, open Pro.`
+      return `With ${formation} and ${playerCount} detected starters, keep your first focus on structure and distances between lines. Protect the center first, then react to wide threats only when the pass is already travelling. If you want player-by-player precision, open the full version.`
     }
     if (lowerMessage.includes('attack') || lowerMessage.includes('score') || lowerMessage.includes('offensive')) {
-      return `With ${formation}, your first attacking priority should be one clear route instead of forcing every lane. Attack the space your shape naturally opens and avoid rushing vertical actions if the center is crowded. If you want deeper individual advice, open Pro.`
+      return `With ${formation}, your first attacking priority should be one clear route instead of forcing every lane. Attack the space your shape naturally opens and avoid rushing vertical actions if the center is crowded. If you want deeper individual advice, open the full version.`
     }
-    return `From this Smart view I can already guide you on structure, priorities, and matchup logic with ${formation}. Your best next step is to protect your main weak zone first and play from a clear team plan instead of individual improvisation. If you need deeper player-level guidance, open Pro.`
+    return `From this Smart view I can already guide you on structure, priorities, and matchup logic with ${formation}. Your best next step is to protect your main weak zone first and play from a clear team plan instead of individual improvisation. If you need deeper player-level guidance, open the full version.`
   }
 
   if (lowerMessage.includes('dif') || lowerMessage.includes('pression') || lowerMessage.includes('debole')) {
-    return `Con ${formation} e ${playerCount} titolari rilevati, la prima priorità è tenere struttura e distanze tra i reparti. Proteggi prima il centro e reagisci sulle corsie solo quando il passaggio sta già viaggiando. Se vuoi precisione sui singoli, apri il Pro.`
+    return `Con ${formation} e ${playerCount} titolari rilevati, la prima priorità è tenere struttura e distanze tra i reparti. Proteggi prima il centro e reagisci sulle corsie solo quando il passaggio sta già viaggiando. Se vuoi precisione sui singoli, apri la versione completa.`
   }
   if (lowerMessage.includes('attac') || lowerMessage.includes('gol') || lowerMessage.includes('offens')) {
-    return `Con ${formation}, la tua prima priorità offensiva deve essere una via chiara invece di forzare tutte le linee. Attacca lo spazio che il modulo ti apre in modo naturale ed evita verticalizzazioni affrettate quando il centro è intasato. Se vuoi un consiglio più profondo sui singoli, apri il Pro.`
+    return `Con ${formation}, la tua prima priorità offensiva deve essere una via chiara invece di forzare tutte le linee. Attacca lo spazio che il modulo ti apre in modo naturale ed evita verticalizzazioni affrettate quando il centro è intasato. Se vuoi un consiglio più profondo sui singoli, apri la versione completa.`
   }
-  return `Da questa vista Smart posso già guidarti su struttura, priorità e logica del matchup con ${formation}. Il passo migliore adesso è proteggere prima la tua zona più fragile e giocare con un piano di squadra chiaro, non con improvvisazione sui singoli. Se vuoi profondità sui giocatori, apri il Pro.`
+  return `Da questa vista Smart posso già guidarti su struttura, priorità e logica del matchup con ${formation}. Il passo migliore adesso è proteggere prima la tua zona più fragile e giocare con un piano di squadra chiaro, non con improvvisazione sui singoli. Se vuoi profondità sui giocatori, apri la versione completa.`
 }
 
 async function loadSharedContext(admin, userId) {
@@ -164,7 +164,7 @@ export async function POST(req) {
 
     const answer = typeof payload.answer === 'string' && payload.answer.trim().length > 0
       ? payload.answer.trim()
-      : (lang === 'en' ? 'Use Pro if you need deeper player-level advice.' : 'Usa il Pro se ti serve un consiglio più profondo sui singoli.')
+      : (lang === 'en' ? 'Use the full version if you need deeper player-level advice.' : 'Usa la versione completa se ti serve un consiglio più profondo sui singoli.')
     const suggestions = normalizeSuggestions(lang, payload.suggestions)
 
     const { error: updateError } = await admin

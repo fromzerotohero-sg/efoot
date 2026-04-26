@@ -13,7 +13,8 @@ export default function AssistantChat({
   initialSuggestionsOverride = null,
   currentPageOverride = null,
   titleOverride = null,
-  subtitleOverride = null
+  subtitleOverride = null,
+  requestHeadersOverride = null
 }) {
   const pathname = usePathname()
   const currentPage = currentPageOverride || pathname || ''
@@ -341,7 +342,8 @@ export default function AssistantChat({
         signal,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          ...(requestHeadersOverride && typeof requestHeadersOverride === 'object' ? requestHeadersOverride : {})
         },
         body: JSON.stringify({
           message: userMessage,

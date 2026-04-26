@@ -213,7 +213,9 @@ export default withAuth(function SmartPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
+          'Accept-Language': lang === 'en' ? 'en' : 'it',
+          'X-App-Language': lang === 'en' ? 'en' : 'it'
         },
         body: JSON.stringify({ variant: 'default' })
       })
@@ -240,7 +242,9 @@ export default withAuth(function SmartPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
+          'Accept-Language': lang === 'en' ? 'en' : 'it',
+          'X-App-Language': lang === 'en' ? 'en' : 'it'
         },
         body: JSON.stringify({ variant })
       })
@@ -984,8 +988,12 @@ export default withAuth(function SmartPage() {
             apiEndpoint="/api/smart/chat"
             currentPageOverride="/smart"
             initialSuggestionsOverride={smartChatSuggestions}
-                    titleOverride={lang === 'en' ? 'AI Assistant - Smart Version' : 'AI Assistant - Versione Smart'}
-                    subtitleOverride={lang === 'en' ? 'Pre-match Smart coaching' : 'Coaching Smart pre-partita'}
+            requestHeadersOverride={{
+              'Accept-Language': lang === 'en' ? 'en' : 'it',
+              'X-App-Language': lang === 'en' ? 'en' : 'it'
+            }}
+            titleOverride={lang === 'en' ? 'AI Assistant - Smart Version' : 'AI Assistant - Versione Smart'}
+            subtitleOverride={lang === 'en' ? 'Pre-match Smart coaching' : 'Coaching Smart pre-partita'}
           />
         </>
       )}

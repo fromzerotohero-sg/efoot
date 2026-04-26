@@ -44,8 +44,8 @@ async function loadSharedContext(admin, userId) {
 function buildFallbackCountermeasure(lang, smartContext, variant = 'default') {
   const formation = smartContext?.formation || (lang === 'en' ? 'your current shape' : 'il tuo assetto attuale')
   const analysis = lang === 'en'
-    ? `The opponent shape should be read against ${formation}. Use Smart mode as a structural pre-match read, then open Pro if you need deeper player-level precision.`
-    : `La struttura avversaria va letta contro ${formation}. Usa la Smart come lettura strutturale pre-partita, poi apri il Pro se ti serve una precisione più profonda sui singoli.`
+    ? `The opponent shape should be read against ${formation}. Use Smart mode as a structural pre-match read, then open the full version if you need deeper player-level precision.`
+    : `La struttura avversaria va letta contro ${formation}. Usa la Smart come lettura strutturale pre-partita, poi apri la versione completa se ti serve una precisione più profonda sui singoli.`
 
   return {
     analysis: {
