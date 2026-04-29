@@ -16,6 +16,7 @@ import MissionCenter from '@/components/MissionCenter'
 import OnboardingFlow from '@/components/OnboardingFlow'
 import CoachSuggestions from '@/components/CoachSuggestions'
 import { safeJsonResponse } from '@/lib/fetchHelper'
+import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import { withAuth } from '@/components/AuthWrapper'
 import { isEnabled } from '@/lib/featureFlags'
 import { SMART_COACH_FLAG } from '@/lib/smartCoach'
@@ -97,6 +98,7 @@ function HomePage() {
   const [userProfile, setUserProfile] = React.useState(null)
   const [confirmModal, setConfirmModal] = React.useState(null) // { show, title, message, onConfirm, onCancel }
   const [coachChatInitialMessage, setCoachChatInitialMessage] = React.useState(null)
+  const [importingStarterPack, setImportingStarterPack] = React.useState(false)
   const coachModeSessionKey = 'dashboard_coach_mode_modal_seen_session_v1'
 
   React.useEffect(() => {
@@ -170,7 +172,6 @@ function HomePage() {
       sessionStorage.setItem(coachModeSessionKey, '1')
     } catch {}
     setShowCoachModeModal(false)
-    router.push('/gestione-formazione')
   }, [router])
 
   const bannerTips = React.useMemo(() => {
@@ -348,6 +349,58 @@ function HomePage() {
     setLoading(true)
     setRetryTrigger((n) => n + 1)
   }, [])
+
+  const showDashboardStarterPackCta = !loading && stats.totalPlayers <= 5
+
+  const handleImportStarterPack = React.useCallback(() => {
+    setConfirmModal({
+      show: true,
+      title: lang === 'en' ? 'Temporary formation' : 'Formazione provvisoria',
+      message: lang === 'en'
+        ? 'This is a formation that lets you test the platform without uploading your own players.\n\nRECOMMENDATION: take the time you need and upload or replace the pre-loaded players with your real squad when you are ready.'
+        : 'Questa è una formazione per permetterti di testare la piattaforma senza caricare i tuoi giocatori.\n\nCONSIGLIO: prenditi il tempo necessario e carica o sostituisci i giocatori pre-caricati con quelli della tua rosa reale quando sei pronto.',
+      confirmLabel: lang === 'en' ? 'I understand' : 'Ho capito',
+      cancelLabel: t('cancel'),
+      variant: 'info',
+      confirmVariant: 'primary',
+      onConfirm: async () => {
+        setConfirmModal(null)
+        setImportingStarterPack(true)
+        setError(null)
+
+        try {
+          let token = localStorage.getItem('auth_token')
+
+          if (!token && supabase) {
+            const { data: session } = await supabase.auth.getSession()
+            token = session?.session?.access_token
+          }
+
+          if (!token) {
+            throw new Error(t('sessionExpired'))
+          }
+
+          const res = await fetch('/api/starter-pack/import', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Accept-Language': lang === 'en' ? 'en' : 'it'
+            }
+          })
+
+          await safeJsonResponse(res, t('starterPackImportError'))
+          setRetryTrigger((n) => n + 1)
+        } catch (err) {
+          console.error('[Dashboard] starter pack import error:', err)
+          const { message } = mapErrorToUserMessage(err, t('starterPackImportError'), lang)
+          setError(message)
+        } finally {
+          setImportingStarterPack(false)
+        }
+      },
+      onCancel: () => setConfirmModal(null)
+    })
+  }, [lang, supabase, t])
 
   const fetchGameAnalysisCapture = React.useCallback(async () => {
     try {
@@ -681,6 +734,61 @@ function HomePage() {
         </div>
       )}
 
+      {showDashboardStarterPackCta && (
+        <div
+          className="neon-card"
+          style={{
+            padding: '20px',
+            marginBottom: '20px',
+            border: '1px solid rgba(0, 212, 255, 0.28)',
+            background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.10), rgba(168, 85, 247, 0.08))'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            <div style={{ minWidth: 0, flex: '1 1 260px' }}>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: '#FFFFFF', marginBottom: '6px' }}>
+                {lang === 'en' ? 'Start with a temporary formation' : 'Inizia con una formazione provvisoria'}
+              </div>
+              <div style={{ fontSize: '14px', lineHeight: 1.6, color: 'rgba(255,255,255,0.76)' }}>
+                {lang === 'en'
+                  ? 'Click here if you want to test the platform before uploading your real players.'
+                  : 'Clicca qui per iniziare con una formazione provvisoria e provare la piattaforma prima di caricare i tuoi giocatori.'}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleImportStarterPack}
+              disabled={importingStarterPack}
+              className="neon-button"
+              style={{
+                minHeight: '48px',
+                padding: '12px 18px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                color: 'var(--neon-cyan)',
+                cursor: importingStarterPack ? 'wait' : 'pointer',
+                opacity: importingStarterPack ? 0.75 : 1,
+                flexShrink: 0
+              }}
+            >
+              {importingStarterPack ? (
+                <>
+                  <RefreshCw size={16} className="animate-spin" />
+                  {t('starterPackImportLoading')}
+                </>
+              ) : (
+                <>
+                  <Zap size={16} />
+                  {lang === 'en' ? 'Click here to start' : 'Clicca qui per iniziare'}
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
       {smartEntryEnabled && showCoachModeModal && (
         <div
           style={{
@@ -815,9 +923,10 @@ function HomePage() {
           show={confirmModal.show}
           title={confirmModal.title}
           message={confirmModal.message}
-          confirmLabel={t('delete')}
-          cancelLabel={t('cancel')}
-          variant="danger"
+          confirmLabel={confirmModal.confirmLabel || t('delete')}
+          cancelLabel={confirmModal.cancelLabel || t('cancel')}
+          variant={confirmModal.variant || 'danger'}
+          confirmVariant={confirmModal.confirmVariant || 'danger'}
           onConfirm={confirmModal.onConfirm}
           onCancel={confirmModal.onCancel}
         />
