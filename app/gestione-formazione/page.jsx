@@ -4780,6 +4780,91 @@ function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUplo
 // Mappa chiave → componente icona Lucide (design unificato con pagina giocatore)
 const UPLOAD_MODAL_ICONS = { card: BarChart3, stats: Zap, skills: Gift }
 
+const PLAYER_UPLOAD_EXAMPLES = [
+  {
+    key: 'stats',
+    src: '/examples/player-upload/thuram-statistiche.png',
+    labelIt: 'Statistiche',
+    labelEn: 'Stats'
+  },
+  {
+    key: 'skills',
+    src: '/examples/player-upload/thuram-abilita.png',
+    labelIt: 'Abilità',
+    labelEn: 'Skills'
+  },
+  {
+    key: 'booster',
+    src: '/examples/player-upload/thuram-booster.png',
+    labelIt: 'Booster',
+    labelEn: 'Booster'
+  }
+]
+
+function PlayerUploadExamples({ lang }) {
+  return (
+    <div style={{
+      marginBottom: '24px',
+      padding: '14px',
+      borderRadius: '14px',
+      border: '1px solid rgba(0, 212, 255, 0.22)',
+      background: 'rgba(0, 212, 255, 0.06)'
+    }}>
+      <div style={{ fontSize: '14px', fontWeight: 800, color: '#FFFFFF', marginBottom: '4px' }}>
+        {lang === 'en' ? 'Real screenshot examples' : 'Esempi reali di screenshot'}
+      </div>
+      <div style={{ fontSize: '12px', lineHeight: 1.5, color: 'rgba(255,255,255,0.72)', marginBottom: '12px' }}>
+        {lang === 'en'
+          ? 'Use these exact screens as a reference: stats, skills and boosters must be readable.'
+          : 'Usa queste schermate come riferimento: statistiche, abilità e booster devono essere leggibili.'}
+      </div>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(118px, 1fr))',
+        gap: '10px'
+      }}>
+        {PLAYER_UPLOAD_EXAMPLES.map(example => (
+          <a
+            key={example.key}
+            href={example.src}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              display: 'block',
+              textDecoration: 'none',
+              color: '#FFFFFF',
+              borderRadius: '10px',
+              overflow: 'hidden',
+              border: '1px solid rgba(255,255,255,0.14)',
+              background: 'rgba(0,0,0,0.18)'
+            }}
+          >
+            <img
+              src={example.src}
+              alt={lang === 'en' ? example.labelEn : example.labelIt}
+              style={{
+                width: '100%',
+                height: 'clamp(72px, 18vw, 104px)',
+                objectFit: 'cover',
+                display: 'block'
+              }}
+            />
+            <div style={{
+              padding: '7px 6px',
+              textAlign: 'center',
+              fontSize: '11px',
+              fontWeight: 700,
+              color: 'rgba(255,255,255,0.9)'
+            }}>
+              {lang === 'en' ? example.labelEn : example.labelIt}
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // 🎨 Upload Player Modal - Design unificato (stessi colori/icone della pagina giocatore)
 // onSwitchToManual: opzionale; se presente e slot è per il campo (slot_index != null), mostra link per passare a inserimento manuale
 function UploadPlayerModal({ slot, images, onImagesChange, onUpload, onClose, uploading, onSwitchToManual, onOptimizeError }) {
@@ -4935,6 +5020,8 @@ function UploadPlayerModal({ slot, images, onImagesChange, onUpload, onClose, up
         <div style={{ fontSize: '14px', opacity: 0.8, marginBottom: '24px', textAlign: 'center' }}>
           {t('uploadPlayerInstructions')}
         </div>
+
+        <PlayerUploadExamples lang={lang} />
 
         {/* Design unificato: stesse card della pagina giocatore (icone Lucide, colori condivisi) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
