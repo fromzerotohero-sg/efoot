@@ -146,6 +146,17 @@ export async function PATCH(req, { params }) {
     }
 
     const body = await req.json()
+
+    const { data: existingPlayer, error: existingPlayerError } = await supabase
+      .from('players')
+      .select('id, base_stats, skills, com_skills, available_boosters, photo_slots, metadata, original_positions')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single()
+
+    if (existingPlayerError || !existingPlayer) {
+      return NextResponse.json({ error: 'Player not found' }, { status: 404 })
+    }
     
     // Sanitize body: allow only specific fields for update
     const allowedFields = [
@@ -158,6 +169,55 @@ export async function PATCH(req, { params }) {
       if (body[field] !== undefined) {
         updateData[field] = body[field]
       }
+    }
+
+    const hasObjectValue = (value) => value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length > 0
+    const hasArrayValue = (value) => Array.isArray(value) && value.length > 0
+
+    // PATCH is often used for partial updates (boosters only, positions only, slot moves).
+    // Never let an empty payload wipe data extracted earlier from screenshots.
+    if (body.base_stats !== undefined) {
+      updateData.base_stats = hasObjectValue(body.base_stats)
+        ? { ...(existingPlayer.base_stats || {}), ...body.base_stats }
+        : existingPlayer.base_stats
+    }
+
+    if (body.skills !== undefined) {
+      const existing = Array.isArray(existingPlayer.skills) ? existingPlayer.skills : []
+      updateData.skills = hasArrayValue(body.skills)
+        ? [...existing, ...body.skills].filter((value, index, array) => array.indexOf(value) === index)
+        : existing
+    }
+
+    if (body.com_skills !== undefined) {
+      const existing = Array.isArray(existingPlayer.com_skills) ? existingPlayer.com_skills : []
+      updateData.com_skills = hasArrayValue(body.com_skills)
+        ? [...existing, ...body.com_skills].filter((value, index, array) => array.indexOf(value) === index)
+        : existing
+    }
+
+    if (body.available_boosters !== undefined) {
+      updateData.available_boosters = hasArrayValue(body.available_boosters)
+        ? body.available_boosters
+        : existingPlayer.available_boosters
+    }
+
+    if (body.photo_slots !== undefined) {
+      updateData.photo_slots = hasObjectValue(body.photo_slots)
+        ? { ...(existingPlayer.photo_slots || {}), ...body.photo_slots }
+        : existingPlayer.photo_slots
+    }
+
+    if (body.metadata !== undefined) {
+      updateData.metadata = hasObjectValue(body.metadata)
+        ? { ...(existingPlayer.metadata || {}), ...body.metadata }
+        : existingPlayer.metadata
+    }
+
+    if (body.original_positions !== undefined) {
+      updateData.original_positions = hasArrayValue(body.original_positions)
+        ? body.original_positions
+        : existingPlayer.original_positions
     }
     
     // Always update updated_at
