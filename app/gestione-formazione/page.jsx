@@ -176,6 +176,9 @@ export default function GestioneFormazionePage() {
   const [manualBoostersPlayerId, setManualBoostersPlayerId] = React.useState(null)
   const [savingManualBoosters, setSavingManualBoosters] = React.useState(false)
   const [isCompactFieldMobile, setIsCompactFieldMobile] = React.useState(false)
+  const [importingStarterPack, setImportingStarterPack] = React.useState(false)
+  const [starterPackDismissed, setStarterPackDismissed] = React.useState(false)
+  const starterPackDismissStorageKey = 'formation_starter_pack_hidden_session_v1'
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return
@@ -190,6 +193,15 @@ export default function GestioneFormazionePage() {
 
     media.addListener(sync)
     return () => media.removeListener(sync)
+  }, [])
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      setStarterPackDismissed(window.sessionStorage.getItem(starterPackDismissStorageKey) === '1')
+    } catch {
+      setStarterPackDismissed(false)
+    }
   }, [])
 
   // Funzione fetchData riutilizzabile (estratta da useEffect per essere chiamabile)
@@ -335,6 +347,13 @@ export default function GestioneFormazionePage() {
     setToast({ message, type })
   }, [])
 
+  const dismissStarterPackCta = React.useCallback(() => {
+    setStarterPackDismissed(true)
+    try {
+      window.sessionStorage.setItem(starterPackDismissStorageKey, '1')
+    } catch {}
+  }, [])
+
   const buildDuplicateGuidance = React.useCallback((playerName) => ({
     title: t('duplicatePlayerTitle'),
     message: lang === 'en'
@@ -383,6 +402,50 @@ export default function GestioneFormazionePage() {
       }
     } catch (_) { /* non bloccare UI */ }
   }, [supabase])
+
+  const handleImportStarterPack = React.useCallback(async () => {
+    try {
+      setImportingStarterPack(true)
+      let token = localStorage.getItem('auth_token')
+
+      if (!token && supabase) {
+        const { data: session } = await supabase.auth.getSession()
+        token = session?.session?.access_token
+      }
+
+      if (!token) {
+        throw new Error(t('sessionExpired'))
+      }
+
+      const res = await fetch('/api/starter-pack/import', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept-Language': lang === 'en' ? 'en' : 'it'
+        }
+      })
+
+      const data = await safeJsonResponse(res, t('starterPackImportError'))
+      await fetchData()
+      refreshDiagnosticAfterSave()
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('knowledge-should-refresh'))
+      }
+      dismissStarterPackCta()
+      showToast(
+        data?.mode === 'starter_fill_missing'
+          ? t('starterPackFillSuccess')
+          : t('starterPackImportSuccess'),
+        'success'
+      )
+    } catch (err) {
+      console.error('[GestioneFormazione] starter pack import error:', err)
+      const { message } = mapErrorToUserMessage(err, t('starterPackImportError'), lang)
+      showToast(message, 'error')
+    } finally {
+      setImportingStarterPack(false)
+    }
+  }, [dismissStarterPackCta, fetchData, lang, refreshDiagnosticAfterSave, showToast, supabase, t])
 
   const openManualBoostersForPlayer = React.useCallback((player) => {
     if (!player?.id) return
@@ -2246,6 +2309,8 @@ export default function GestioneFormazionePage() {
 
   // Se non c'è layout, mostra messaggio con opzioni
   const noLayoutContent = !layout || !layout.slot_positions
+  const totalRosterPlayers = titolari.length + riserve.length
+  const showStarterPackCta = !isEditMode && !starterPackDismissed && totalRosterPlayers <= 5
 
   // Genera array slot 0-10 con posizioni (solo se layout esiste)
   const normalizedSlotPositions = layout?.slot_positions ? normalizeSlotPositionsDxSx(layout.slot_positions) : null
@@ -2650,6 +2715,91 @@ export default function GestioneFormazionePage() {
               {t('createFormationBtn')}
             </button>
           </div>
+
+          {showStarterPackCta && (
+            <div
+              style={{
+                maxWidth: '560px',
+                margin: '20px auto 0',
+                padding: '18px',
+                borderRadius: '18px',
+                border: '1px solid rgba(0, 212, 255, 0.24)',
+                background: 'linear-gradient(180deg, rgba(5, 12, 28, 0.86), rgba(4, 8, 18, 0.92))',
+                boxShadow: '0 14px 32px rgba(0, 0, 0, 0.24), 0 0 18px rgba(0, 212, 255, 0.1)',
+                position: 'relative'
+              }}
+            >
+              <button
+                type="button"
+                onClick={dismissStarterPackCta}
+                aria-label={t('starterPackDismiss')}
+                style={{
+                  position: 'absolute',
+                  top: '10px',
+                  right: '10px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '999px',
+                  border: '1px solid rgba(255,255,255,0.14)',
+                  background: 'rgba(255,255,255,0.05)',
+                  color: 'rgba(255,255,255,0.74)',
+                  cursor: 'pointer'
+                }}
+              >
+                <X size={16} />
+              </button>
+
+              <div
+                style={{
+                  fontSize: 'clamp(13px, 2.8vw, 15px)',
+                  lineHeight: 1.6,
+                  color: 'rgba(255,255,255,0.86)',
+                  marginBottom: '14px',
+                  padding: '0 18px'
+                }}
+              >
+                {t('starterPackEmptyMessage')}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleImportStarterPack}
+                disabled={importingStarterPack}
+                className="neon-button"
+                style={{
+                  width: '100%',
+                  minHeight: '56px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  fontSize: 'clamp(14px, 3vw, 16px)',
+                  fontWeight: 800,
+                  borderRadius: '16px',
+                  background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.22), rgba(255, 215, 106, 0.18))',
+                  borderColor: 'rgba(0, 212, 255, 0.45)',
+                  color: '#FFFFFF',
+                  opacity: importingStarterPack ? 0.8 : 1,
+                  cursor: importingStarterPack ? 'wait' : 'pointer'
+                }}
+              >
+                {importingStarterPack ? (
+                  <>
+                    <RefreshCw size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                    {t('starterPackImportLoading')}
+                  </>
+                ) : (
+                  <>
+                    <Brain size={18} />
+                    {t('starterPackImportCta')}
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -2872,6 +3022,96 @@ export default function GestioneFormazionePage() {
           background: 'rgba(255, 255, 255, 0.25)',
           boxShadow: '0 0 6px rgba(255, 255, 255, 0.15)'
         }} />
+
+        {showStarterPackCta && (
+          <div
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: '48%',
+              transform: 'translate(-50%, -50%)',
+              width: 'min(88%, 420px)',
+              zIndex: 30,
+              padding: 'clamp(16px, 3vw, 22px)',
+              borderRadius: '20px',
+              border: '1px solid rgba(0, 212, 255, 0.28)',
+              background: 'linear-gradient(180deg, rgba(5, 12, 28, 0.92), rgba(4, 8, 18, 0.94))',
+              boxShadow: '0 18px 40px rgba(0, 0, 0, 0.38), 0 0 24px rgba(0, 212, 255, 0.12)',
+              backdropFilter: 'blur(10px)',
+              textAlign: 'center'
+            }}
+          >
+            <button
+              type="button"
+              onClick={dismissStarterPackCta}
+              aria-label={t('starterPackDismiss')}
+              style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '32px',
+                height: '32px',
+                borderRadius: '999px',
+                border: '1px solid rgba(255,255,255,0.14)',
+                background: 'rgba(255,255,255,0.05)',
+                color: 'rgba(255,255,255,0.74)',
+                cursor: 'pointer'
+              }}
+            >
+              <X size={16} />
+            </button>
+
+            <div style={{
+              fontSize: 'clamp(13px, 2.7vw, 15px)',
+              lineHeight: 1.55,
+              color: 'rgba(255,255,255,0.86)',
+              marginBottom: '14px',
+              padding: '0 18px'
+            }}>
+              {totalRosterPlayers === 0
+                ? t('starterPackEmptyMessage')
+                : t('starterPackPartialMessage')}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleImportStarterPack}
+              disabled={importingStarterPack}
+              className="neon-button"
+              style={{
+                width: '100%',
+                minHeight: '56px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
+                fontSize: 'clamp(14px, 3vw, 16px)',
+                fontWeight: 800,
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.22), rgba(255, 215, 106, 0.18))',
+                borderColor: 'rgba(0, 212, 255, 0.45)',
+                color: '#FFFFFF',
+                opacity: importingStarterPack ? 0.8 : 1,
+                cursor: importingStarterPack ? 'wait' : 'pointer'
+              }}
+            >
+              {importingStarterPack ? (
+                <>
+                  <RefreshCw size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                  {t('starterPackImportLoading')}
+                </>
+              ) : (
+                <>
+                  <Brain size={18} />
+                  {t('starterPackImportCta')}
+                </>
+              )}
+            </button>
+          </div>
+        )}
 
         {/* Card giocatori posizionate */}
         {slots.map((slot) => {
