@@ -204,6 +204,17 @@ export default function GestioneFormazionePage() {
     }
   }, [])
 
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return
+    const totalPlayers = titolari.length + riserve.length
+    if (totalPlayers <= 5) {
+      setStarterPackDismissed(false)
+      try {
+        window.sessionStorage.removeItem(starterPackDismissStorageKey)
+      } catch {}
+    }
+  }, [titolari.length, riserve.length])
+
   // Funzione fetchData riutilizzabile (estratta da useEffect per essere chiamabile)
   const fetchData = React.useCallback(async () => {
     setLoading(true)
