@@ -201,8 +201,8 @@ export async function POST(req) {
       admin.from('players').select('id, player_name, slot_index, position').eq('user_id', userId),
       admin.from('formation_layout').select('id, formation, slot_positions').eq('user_id', userId).maybeSingle(),
       admin.from('coaches').select('id, coach_name, is_active').eq('user_id', userId).eq('is_active', true).maybeSingle(),
-      admin.from('team_tactical_settings').select('id, team_playing_style').eq('user_id', userId).maybeSingle(),
-      admin.from('user_game_analysis').select('user_id').eq('user_id', userId).maybeSingle(),
+      admin.from('team_tactical_settings').select('id, team_playing_style, individual_instructions').eq('user_id', userId).maybeSingle(),
+      admin.from('user_game_analysis').select('user_id, stats').eq('user_id', userId).maybeSingle(),
       admin.from('playing_styles').select('id, name')
     ])
 
@@ -345,7 +345,15 @@ export async function POST(req) {
       }
     }
 
-    if (!existingTactics) {
+    const hasMeaningfulTactics = !!(
+      existingTactics &&
+      (
+        (typeof existingTactics.team_playing_style === 'string' && existingTactics.team_playing_style.trim()) ||
+        (existingTactics.individual_instructions && typeof existingTactics.individual_instructions === 'object' && Object.keys(existingTactics.individual_instructions).length > 0)
+      )
+    )
+
+    if (!hasMeaningfulTactics) {
       const { error: tacticsError } = await admin
         .from('team_tactical_settings')
         .upsert({
@@ -359,7 +367,14 @@ export async function POST(req) {
       }
     }
 
-    if (!existingStats) {
+    const hasMeaningfulStats = !!(
+      existingStats &&
+      existingStats.stats &&
+      typeof existingStats.stats === 'object' &&
+      Object.keys(existingStats.stats).length > 0
+    )
+
+    if (!hasMeaningfulStats) {
       const { error: statsError } = await admin
         .from('user_game_analysis')
         .upsert({
