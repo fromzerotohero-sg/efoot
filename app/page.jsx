@@ -388,8 +388,30 @@ function HomePage() {
             }
           })
 
-          await safeJsonResponse(res, t('starterPackImportError'))
+          const data = await safeJsonResponse(res, t('starterPackImportError'))
           setRetryTrigger((n) => n + 1)
+          const insertedPlayers = Number(data?.insertedPlayers || 0)
+          const isPartialStarterPack = insertedPlayers > 0 && insertedPlayers < 11
+          setConfirmModal({
+            show: true,
+            title: lang === 'en' ? 'Players loaded' : 'Giocatori caricati',
+            message: isPartialStarterPack
+              ? (lang === 'en'
+                  ? `We loaded ${insertedPlayers} temporary players. Some formation slots may still be empty: open your squad, take your time, and complete or replace the pre-loaded players with your real ones.`
+                  : `Abbiamo caricato ${insertedPlayers} giocatori provvisori. Alcuni slot della formazione potrebbero essere ancora vuoti: apri la rosa, prenditi il tempo necessario e completa o sostituisci i giocatori pre-caricati con quelli reali.`)
+              : (lang === 'en'
+                  ? `We loaded ${insertedPlayers} temporary players. Open your squad to review them and replace them whenever you are ready.`
+                  : `Abbiamo caricato ${insertedPlayers} giocatori provvisori. Apri la rosa per controllarli e sostituirli quando sei pronto.`),
+            confirmLabel: lang === 'en' ? 'Open squad' : 'Apri rosa',
+            cancelLabel: lang === 'en' ? 'Stay here' : 'Resta qui',
+            variant: isPartialStarterPack ? 'warning' : 'info',
+            confirmVariant: 'primary',
+            onConfirm: () => {
+              setConfirmModal(null)
+              router.push('/gestione-formazione')
+            },
+            onCancel: () => setConfirmModal(null)
+          })
         } catch (err) {
           console.error('[Dashboard] starter pack import error:', err)
           const { message } = mapErrorToUserMessage(err, t('starterPackImportError'), lang)
@@ -400,7 +422,7 @@ function HomePage() {
       },
       onCancel: () => setConfirmModal(null)
     })
-  }, [lang, supabase, t])
+  }, [lang, router, supabase, t])
 
   const fetchGameAnalysisCapture = React.useCallback(async () => {
     try {

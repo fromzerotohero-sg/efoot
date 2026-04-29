@@ -3144,6 +3144,7 @@ export default function GestioneFormazionePage() {
               slot={finalSlot}
               onClick={() => handleSlotClick(slot.slot_index)}
               onRemove={slot.player ? () => handleRemoveFromSlot(slot.player.id) : null}
+              onDelete={slot.player ? () => handleDeletePlayer(slot.player.id) : null}
               isEditMode={isEditMode}
               onPositionChange={handlePositionChange}
               customPosition={customPos}  // Passa customPosition per mostrare sigla ruolo
@@ -3496,7 +3497,7 @@ export default function GestioneFormazionePage() {
 
 // Componente Modal Upload
 // Slot Card Component - Badge Minimale (solo nome)
-function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChange, customPosition = null, isCompactFieldMobile = false, formatRoleLabel, formatRolePlaceholder }) {
+function SlotCard({ slot, onClick, onRemove, onDelete, isEditMode = false, onPositionChange, customPosition = null, isCompactFieldMobile = false, formatRoleLabel, formatRolePlaceholder }) {
   const { t } = useTranslation()
   const { slot_index, position, player, offsetX = 0, offsetY = 0, hasNearbyCards = false } = slot
   const isEmpty = !player
@@ -3862,6 +3863,49 @@ function SlotCard({ slot, onClick, onRemove, isEditMode = false, onPositionChang
             </div>
           )}
         </div>
+      )}
+
+      {!isEmpty && onDelete && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onDelete()
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          style={{
+            position: 'absolute',
+            top: '-10px',
+            right: '-10px',
+            width: '24px',
+            height: '24px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.4) 100%)',
+            border: '1px solid rgba(239, 68, 68, 0.6)',
+            color: '#ffffff',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.3s ease',
+            boxShadow: '0 2px 8px rgba(239, 68, 68, 0.4)',
+            zIndex: 3
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.5) 0%, rgba(220, 38, 38, 0.6) 100%)'
+            e.currentTarget.style.transform = 'scale(1.15) rotate(90deg)'
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.6)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.4) 100%)'
+            e.currentTarget.style.transform = 'scale(1) rotate(0deg)'
+            e.currentTarget.style.boxShadow = '0 2px 8px rgba(239, 68, 68, 0.4)'
+          }}
+          aria-label={t('delete')}
+          title={t('delete')}
+        >
+          <X size={14} />
+        </button>
       )}
     </div>
   )
