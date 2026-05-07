@@ -23,8 +23,8 @@ const copy = {
   it: {
     eyebrow: 'Nuove carte',
     title: 'Card Advisor',
-    subtitle: 'Valuta le nuove carte prima di spendere coins: prima giudizio generale, poi fit con la tua rosa quando sara caricata.',
-    dataBadge: 'Analisi carta + fit squadra',
+    subtitle: 'Valuta le nuove carte prima di spendere coins con una lettura reale su ruolo, roster, coach e priorita tattica.',
+    dataBadge: 'Analisi reale carta + sistema squadra',
     notPublic: 'Scegli una carta e scopri se vale davvero per te.',
     releaseTitle: 'Uscite recenti',
     sourceNote: 'Seleziona un pack: mostriamo solo le carte di quella uscita, con ricerca e filtri per evitare una pagina infinita.',
@@ -86,13 +86,13 @@ const copy = {
     mainLever: 'Leva principale',
     coachLinkup: 'Coach e Link-up',
     recommendedUse: 'Uso consigliato',
-    noNativeSkills: 'In arrivo con i dati completi della carta',
+    noNativeSkills: 'Profilo tecnico non ancora disponibile per questa carta',
   },
   en: {
     eyebrow: 'New cards',
     title: 'Card Advisor',
-    subtitle: 'Evaluate new cards before spending coins: general verdict first, team fit once the roster is loaded.',
-    dataBadge: 'Card analysis + team fit',
+    subtitle: 'Evaluate new cards before spending coins with a real read on role, roster, coach, and tactical priority.',
+    dataBadge: 'Real card and system fit analysis',
     notPublic: 'Choose a card and see if it is really worth it for you.',
     releaseTitle: 'Recent releases',
     sourceNote: 'Select one pack: only that release is shown, with search and filters to avoid an endless page.',
@@ -154,7 +154,7 @@ const copy = {
     mainLever: 'Main lever',
     coachLinkup: 'Coach and Link-up',
     recommendedUse: 'Recommended use',
-    noNativeSkills: 'Coming with complete card data',
+    noNativeSkills: 'Technical profile not available for this card yet',
   }
 }
 
@@ -650,6 +650,12 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
   const effectiveAlternatives = serverEval?.alternatives || fitSummary.alternatives
   const effectiveCoachText = serverEval?.coachLinkup || coachLinkText
   const effectiveRisk = serverEval?.technicalRisk ? [serverEval.technicalRisk] : listFor(card, 'risks', lang)
+  const strengthItems = serverEval?.strengths?.length ? serverEval.strengths : listFor(card, 'strengths', lang)
+  const fitReadLines = serverEval?.rosterRead?.length
+    ? serverEval.rosterRead
+    : effectiveFitText
+      ? [effectiveFitText]
+      : []
   const effectiveCta = serverEval?.nextCta || (fitSummary.cta ? { label: fitSummary.cta, target: fitSummary.ctaTarget } : null)
   return (
     <section className="detail-panel">
@@ -710,7 +716,7 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
         <article>
           <h3><Star size={18} /> {labels.strengths}</h3>
           <ul>
-            {listFor(card, 'strengths', lang).map(item => <li key={item}>{item}</li>)}
+            {strengthItems.map(item => <li key={item}>{item}</li>)}
           </ul>
         </article>
 
@@ -737,11 +743,16 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
       <div className="fit-panel">
         <div>
           <h3><Users size={18} /> {labels.teamFit}</h3>
-          <p>{effectiveFitText}</p>
+          <p>{fitReadLines[0] || effectiveFitText}</p>
+          {fitReadLines.length > 1 && (
+            <ul>
+              {fitReadLines.slice(1).map(item => <li key={item}>{item}</li>)}
+            </ul>
+          )}
           <div className="fit-summary-grid">
             <div>
               <span>{labels.priorityVerdict}</span>
-              <strong>{fitSummary.priority}</strong>
+              <strong>{effectivePriority}</strong>
             </div>
             <div>
               <span>{labels.similarPlayers}</span>
@@ -752,11 +763,13 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
               </strong>
             </div>
           </div>
-          <div className="fit-logic-list">
-            <span>{labels.replacementLogic}</span>
-            <span>{labels.duplicateLogic}</span>
-            <span>{labels.priorityLogic}</span>
-          </div>
+          {!serverEval && (
+            <div className="fit-logic-list">
+              <span>{labels.replacementLogic}</span>
+              <span>{labels.duplicateLogic}</span>
+              <span>{labels.priorityLogic}</span>
+            </div>
+          )}
         </div>
         {effectiveCta && (
           <button
