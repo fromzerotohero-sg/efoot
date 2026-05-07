@@ -626,11 +626,12 @@ function RosterStatusPanel({ labels, rosterSummary, onLoadRoster, onOpenCoach })
   )
 }
 
-function DetailPanel({ card, labels, lang, rosterSummary, onOpenFormation, onOpenCoach, onClose }) {
+function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating, onOpenFormation, onOpenCoach, onClose }) {
   const verdict = getVerdictMeta(card.verdict, labels)
   const fitSummary = getFitSummary(card, rosterSummary, labels, lang)
-  const lever = lang === 'en' ? (card.leverEn || card.lever) : card.lever
-  const recommendedUse = lang === 'en' ? (card.useEn || card.use) : card.use
+  const serverEval = evaluation || null
+  const lever = serverEval?.mainLever || (lang === 'en' ? (card.leverEn || card.lever) : card.lever)
+  const recommendedUse = serverEval?.recommendedUse || (lang === 'en' ? (card.useEn || card.use) : card.use)
   const connectionLabel = getCoachConnectionLabel(rosterSummary?.activeCoach)
   const coachLinkText = connectionLabel
     ? (lang === 'en'
@@ -643,6 +644,13 @@ function DetailPanel({ card, labels, lang, rosterSummary, onOpenFormation, onOpe
         : (lang === 'en'
             ? 'Add the active coach to include Link-up and style competences.'
             : 'Aggiungi il coach attivo per includere Link-up e competenze stile.'))
+  const effectiveTitle = serverEval?.title || fitSummary.title
+  const effectivePriority = serverEval?.synergyLevel || fitSummary.priority
+  const effectiveFitText = serverEval?.whyItMatters?.length ? serverEval.whyItMatters.join(' ') : fitSummary.text
+  const effectiveAlternatives = serverEval?.alternatives || fitSummary.alternatives
+  const effectiveCoachText = serverEval?.coachLinkup || coachLinkText
+  const effectiveRisk = serverEval?.technicalRisk ? [serverEval.technicalRisk] : listFor(card, 'risks', lang)
+  const effectiveCta = serverEval?.nextCta || (fitSummary.cta ? { label: fitSummary.cta, target: fitSummary.ctaTarget } : null)
   return (
     <section className="detail-panel">
       {onClose && (
@@ -664,7 +672,7 @@ function DetailPanel({ card, labels, lang, rosterSummary, onOpenFormation, onOpe
           <div className="detail-metrics">
             <div>
               <span>{labels.cardScore}</span>
-              <strong>{fitSummary.priority}</strong>
+              <strong>{evaluating ? '...' : effectivePriority}</strong>
             </div>
             <div>
               <span>OVR</span>
@@ -677,7 +685,7 @@ function DetailPanel({ card, labels, lang, rosterSummary, onOpenFormation, onOpe
           </div>
           <div className="verdict-banner" style={{ borderColor: verdict.color }}>
             <CheckCircle2 size={18} style={{ color: verdict.color }} />
-            <span>{labels.verdict}: <strong style={{ color: verdict.color }}>{fitSummary.title}</strong></span>
+            <span>{labels.verdict}: <strong style={{ color: verdict.color }}>{effectiveTitle}</strong></span>
           </div>
         </div>
       </div>
@@ -693,8 +701,8 @@ function DetailPanel({ card, labels, lang, rosterSummary, onOpenFormation, onOpe
         <article>
           <h3><Sparkles size={18} /> {labels.nativeSkills}</h3>
           <div className="pill-row">
-            {card.skills.length > 0
-              ? card.skills.map(item => <StatPill key={item}>{item}</StatPill>)
+            {(serverEval?.technicalProfile || card.skills).length > 0
+              ? (serverEval?.technicalProfile || card.skills).map(item => <StatPill key={item}>{item}</StatPill>)
               : <StatPill>{labels.noNativeSkills}</StatPill>}
           </div>
         </article>
@@ -709,7 +717,7 @@ function DetailPanel({ card, labels, lang, rosterSummary, onOpenFormation, onOpe
         <article>
           <h3><AlertTriangle size={18} /> {labels.risks}</h3>
           <ul>
-            {listFor(card, 'risks', lang).map(item => <li key={item}>{item}</li>)}
+            {effectiveRisk.map(item => <li key={item}>{item}</li>)}
           </ul>
         </article>
       </div>
@@ -717,7 +725,7 @@ function DetailPanel({ card, labels, lang, rosterSummary, onOpenFormation, onOpe
       <div className="detail-grid detail-grid-secondary">
         <article>
           <h3><Users size={18} /> {labels.coachLinkup}</h3>
-          <p>{coachLinkText}</p>
+          <p>{effectiveCoachText}</p>
         </article>
 
         <article>
@@ -729,7 +737,7 @@ function DetailPanel({ card, labels, lang, rosterSummary, onOpenFormation, onOpe
       <div className="fit-panel">
         <div>
           <h3><Users size={18} /> {labels.teamFit}</h3>
-          <p>{fitSummary.text}</p>
+          <p>{effectiveFitText}</p>
           <div className="fit-summary-grid">
             <div>
               <span>{labels.priorityVerdict}</span>
@@ -738,8 +746,8 @@ function DetailPanel({ card, labels, lang, rosterSummary, onOpenFormation, onOpe
             <div>
               <span>{labels.similarPlayers}</span>
               <strong>
-                {fitSummary.alternatives.length > 0
-                  ? fitSummary.alternatives.map(player => `${player.player_name}${player.overall_rating ? ` ${player.overall_rating}` : ''}`).join(', ')
+                {effectiveAlternatives.length > 0
+                  ? effectiveAlternatives.map(player => `${player.player_name || player.name}${player.overall_rating || player.overall ? ` ${player.overall_rating || player.overall}` : ''}`).join(', ')
                   : '-'}
               </strong>
             </div>
@@ -750,12 +758,12 @@ function DetailPanel({ card, labels, lang, rosterSummary, onOpenFormation, onOpe
             <span>{labels.priorityLogic}</span>
           </div>
         </div>
-        {fitSummary.cta && (
+        {effectiveCta && (
           <button
             type="button"
-            onClick={fitSummary.ctaTarget === 'coach' ? onOpenCoach : onOpenFormation}
+            onClick={effectiveCta.target === 'coach' ? onOpenCoach : onOpenFormation}
           >
-            {fitSummary.cta}
+            {effectiveCta.label}
             <ArrowRight size={16} />
           </button>
         )}
@@ -765,7 +773,7 @@ function DetailPanel({ card, labels, lang, rosterSummary, onOpenFormation, onOpe
   )
 }
 
-function CardDetailsModal({ card, labels, lang, rosterSummary, onOpenFormation, onOpenCoach, onClose }) {
+function CardDetailsModal({ card, labels, lang, rosterSummary, evaluation, evaluating, onOpenFormation, onOpenCoach, onClose }) {
   React.useEffect(() => {
     if (!card) return
     const previousOverflow = document.body.style.overflow
@@ -798,6 +806,8 @@ function CardDetailsModal({ card, labels, lang, rosterSummary, onOpenFormation, 
           labels={labels}
           lang={lang}
           rosterSummary={rosterSummary}
+          evaluation={evaluation}
+          evaluating={evaluating}
           onOpenFormation={onOpenFormation}
           onOpenCoach={onOpenCoach}
           onClose={onClose}
@@ -818,6 +828,8 @@ export default withAuth(function CardAdvisorLabPage() {
   const [releaseId, setReleaseId] = React.useState(releases[0].id)
   const [rosterSummary, setRosterSummary] = React.useState({ status: 'loading', totalPlayers: 0, starters: 0, formation: '-' })
   const [searchQuery, setSearchQuery] = React.useState('')
+  const [evaluationsByCard, setEvaluationsByCard] = React.useState({})
+  const [evaluatingCardId, setEvaluatingCardId] = React.useState(null)
   const cards = React.useMemo(() => {
     const baseCards = releaseId === 'all'
       ? activeReleases.flatMap(release => release.cards.map(card => ({ ...card, releaseName: release.name, releaseStatus: release.status })))
@@ -870,6 +882,10 @@ export default withAuth(function CardAdvisorLabPage() {
     }
   }, [])
 
+  const selectedCard = cards.find(card => card.id === selectedId) || cards[0]
+  const detailsCard = cards.find(card => card.id === detailsCardId) || null
+  const detailsEvaluation = detailsCard ? evaluationsByCard[detailsCard.id] : null
+
   React.useEffect(() => {
     let active = true
 
@@ -921,8 +937,43 @@ export default withAuth(function CardAdvisorLabPage() {
     }
   }, [])
 
-  const selectedCard = cards.find(card => card.id === selectedId) || cards[0]
-  const detailsCard = cards.find(card => card.id === detailsCardId) || null
+  React.useEffect(() => {
+    let active = true
+
+    async function loadEvaluation() {
+      if (!detailsCard?.id) return
+      if (evaluationsByCard[detailsCard.id]) return
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+      if (!token) return
+
+      setEvaluatingCardId(detailsCard.id)
+      try {
+        const response = await fetch('/api/card-advisor-lab/evaluate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ card: detailsCard, lang: lang === 'en' ? 'en' : 'it' })
+        })
+        if (!response.ok) throw new Error('Evaluation failed')
+        const data = await response.json()
+        if (active && data?.evaluation) {
+          setEvaluationsByCard(prev => ({ ...prev, [detailsCard.id]: data.evaluation }))
+        }
+      } catch (error) {
+        console.warn('[card-advisor-lab] evaluation unavailable:', error)
+      } finally {
+        if (active) setEvaluatingCardId(null)
+      }
+    }
+
+    loadEvaluation()
+    return () => {
+      active = false
+    }
+  }, [detailsCard, evaluationsByCard, lang])
+
   const selectedRelease = releaseId === 'all'
     ? { name: labels.allCards, cards: activeReleases.flatMap(release => release.cards), status: 'active' }
     : activeReleases.find(release => release.id === releaseId) || activeReleases[0]
@@ -1025,6 +1076,8 @@ export default withAuth(function CardAdvisorLabPage() {
         labels={labels}
         lang={lang === 'en' ? 'en' : 'it'}
         rosterSummary={rosterSummary}
+        evaluation={detailsEvaluation}
+        evaluating={detailsCard?.id === evaluatingCardId}
         onOpenFormation={() => router.push('/gestione-formazione')}
         onOpenCoach={() => router.push('/allenatori')}
         onClose={() => setDetailsCardId(null)}
