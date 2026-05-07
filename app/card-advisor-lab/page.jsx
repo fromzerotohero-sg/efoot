@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   ChevronRight,
   X,
-  ImageOff,
   ShieldCheck,
   Sparkles,
   Star,
@@ -56,7 +55,6 @@ const copy = {
     cardsAvailable: 'carte disponibili',
     noCardsFound: 'Nessuna carta trovata con questi filtri.',
     needsSourceReview: 'In aggiornamento',
-    imageFallback: 'Immagine in arrivo',
     similarPlayers: 'Alternative in rosa',
     priorityVerdict: 'Priorità per te',
     checkingRoster: 'Controllo rosa...',
@@ -111,7 +109,6 @@ const copy = {
     cardsAvailable: 'cards available',
     noCardsFound: 'No cards found with these filters.',
     needsSourceReview: 'Updating',
-    imageFallback: 'Image coming soon',
     similarPlayers: 'Roster alternatives',
     priorityVerdict: 'Priority for you',
     checkingRoster: 'Checking roster...',
@@ -134,10 +131,24 @@ const copy = {
 }
 
 const imageByName = {
+  'Gianluigi Donnarumma': 'https://pesdb.net/assets/img/card/f105692702811895.png',
+  'Achraf Hakimi': 'https://pesdb.net/assets/img/card/f105692702817576.png',
+  'Federico Valverde': 'https://pesdb.net/assets/img/card/f52895743589623.png',
+  'Antoine Griezmann': 'https://pesdb.net/assets/img/card/f52895743518028.png',
+  Zico: 'https://pesdb.net/assets/img/card/f88035555413486.png',
   'Lamine Yamal': 'https://pesdb.net/assets/img/card/f89135067068738.png',
   'Robert Lewandowski': 'https://pesdb.net/assets/img/card/f52896011951170.png',
   'Takefusa Kubo': 'https://pesdb.net/assets/img/card/f88039581932552.png',
   Pedri: 'https://pesdb.net/assets/img/card/f89135067039781.png',
+  'Bruno Fernandes': 'https://pesdb.net/assets/img/card/f52898696326240.png',
+  Jorginho: 'https://pesdb.net/assets/img/card/f106730474235970.png',
+  'P. E. Aubameyang': 'https://pesdb.net/assets/img/card/f70375186668931.png',
+  Marcelo: 'https://pesdb.net/assets/img/card/f70374649792604.png',
+  'Lucas Moura': 'https://pesdb.net/assets/img/card/f70374649800594.png',
+  'Gareth Bale': 'https://pesdb.net/assets/img/card/f89133724764840.png',
+  'Thiago Silva': 'https://pesdb.net/assets/img/card/f106652896368901.png',
+  'Jonas Hofmann': 'https://pesdb.net/assets/img/card/f105563853795563.png',
+  'Neymar Jr': 'https://pesdb.net/assets/img/card/f89133993205152.png',
   'Ousmane Dembele': 'https://pesdb.net/assets/img/card/f89135067017250.png',
   'Ousmane Dembélé': 'https://pesdb.net/assets/img/card/f89135067017250.png',
   'Rafael Leao': 'https://pesdb.net/assets/img/card/f89131308929393.png',
@@ -309,8 +320,13 @@ function CardImage({ card, labels, large = false }) {
         />
       ) : (
         <div className="card-art-fallback">
-          <ImageOff size={large ? 34 : 24} />
-          <span>{labels.imageFallback}</span>
+          <div className="player-silhouette" aria-hidden="true">
+            <span className="player-head" />
+            <span className="player-body" />
+            <span className="player-leg player-leg-left" />
+            <span className="player-leg player-leg-right" />
+            <span className="player-ball" />
+          </div>
         </div>
       )}
       <div className="card-art-top">
@@ -1301,14 +1317,73 @@ export default withAuth(function CardAdvisorLabPage() {
         .card-art-fallback {
           height: 100%;
           display: flex;
-          flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 10px;
-          padding: 18px;
-          text-align: center;
-          color: rgba(255,255,255,0.7);
-          font-size: 12px;
+          background:
+            radial-gradient(circle at 50% 30%, rgba(0,212,255,0.22), transparent 22%),
+            linear-gradient(155deg, rgba(24,18,54,0.95), rgba(6,10,26,0.98));
+        }
+
+        .player-silhouette {
+          position: relative;
+          width: 58%;
+          height: 62%;
+          filter: drop-shadow(0 0 20px rgba(0,212,255,0.28));
+        }
+
+        .player-head,
+        .player-body,
+        .player-leg,
+        .player-ball {
+          position: absolute;
+          display: block;
+          background: linear-gradient(180deg, rgba(255,255,255,0.90), rgba(0,212,255,0.50));
+        }
+
+        .player-head {
+          top: 2%;
+          left: 42%;
+          width: 18%;
+          aspect-ratio: 1;
+          border-radius: 50%;
+        }
+
+        .player-body {
+          top: 20%;
+          left: 34%;
+          width: 31%;
+          height: 38%;
+          border-radius: 45% 45% 35% 35%;
+          transform: rotate(-8deg);
+        }
+
+        .player-leg {
+          top: 54%;
+          width: 13%;
+          height: 36%;
+          border-radius: 999px;
+          transform-origin: top center;
+        }
+
+        .player-leg-left {
+          left: 36%;
+          transform: rotate(18deg);
+        }
+
+        .player-leg-right {
+          left: 53%;
+          transform: rotate(-24deg);
+        }
+
+        .player-ball {
+          right: 4%;
+          bottom: 7%;
+          width: 18%;
+          aspect-ratio: 1;
+          border-radius: 50%;
+          background:
+            radial-gradient(circle at 35% 35%, #fff, rgba(255,255,255,0.7) 34%, rgba(0,212,255,0.55) 35%, rgba(0,212,255,0.55));
+          border: 1px solid rgba(255,255,255,0.55);
         }
 
         .card-art-top {
