@@ -132,7 +132,7 @@ const releases = [
         overall: 95,
         category: 'Collaboration',
         style: 'Prolific Winger',
-        imageUrl: 'https://www.efootballhub.net/pes21-mobile/images/iconicmoments/123236838963522.jpg',
+        imageUrl: 'https://pesdb.net/assets/img/card/f89135067068738.png',
         score: 88,
         verdict: 'top',
         build: ['Speed', 'Dribbling', 'Low Pass'],
@@ -151,7 +151,7 @@ const releases = [
         overall: 95,
         category: 'Collaboration',
         style: 'Fox in the Box',
-        imageUrl: 'https://www.efootballhub.net/pes21-mobile/images/iconicmoments/123236838841410.jpg',
+        imageUrl: 'https://pesdb.net/assets/img/card/f52896011951170.png',
         score: 85,
         verdict: 'good',
         build: ['Finishing', 'Physical Contact', 'Offensive Awareness'],
@@ -164,13 +164,13 @@ const releases = [
         missingEn: ['Max build compatibility', 'Official booster data']
       },
       {
-        id: 'raphinha-95',
-        name: 'Raphinha',
-        position: 'ESA',
+        id: 'kubo-95',
+        name: 'Takefusa Kubo',
+        position: 'CLD',
         overall: 95,
         category: 'Collaboration',
         style: 'Roaming Flank',
-        imageUrl: 'https://www.efootballhub.net/pes21-mobile/images/iconicmoments/123236838912052.jpg',
+        imageUrl: 'https://pesdb.net/assets/img/card/f88039581932552.png',
         score: 90,
         verdict: 'top',
         build: ['Dribbling', 'Tight Possession', 'Finishing'],
@@ -190,13 +190,13 @@ const releases = [
     date: 'May 2026',
     cards: [
       {
-        id: 'bellingham-87',
-        name: 'Jude Bellingham',
-        position: 'TRQ',
+        id: 'pedri-87',
+        name: 'Pedri',
+        position: 'CC',
         overall: 87,
         category: 'Standout',
         style: 'Hole Player',
-        imageUrl: 'https://www.efootballhub.net/pes21-mobile/images/iconicmoments/52871852853061.jpg',
+        imageUrl: 'https://pesdb.net/assets/img/card/f89135067039781.png',
         score: 79,
         verdict: 'situational',
         build: ['Low Pass', 'Kicking Power', 'Stamina'],
@@ -209,13 +209,13 @@ const releases = [
         missingEn: ['Complete max stats', 'Verified secondary roles']
       },
       {
-        id: 'vinicius-87',
-        name: 'Vinícius Júnior',
-        position: 'ESA',
+        id: 'rafael-leao-87',
+        name: 'Rafael Leão',
+        position: 'CLS',
         overall: 87,
         category: 'Standout',
         style: 'Prolific Winger',
-        imageUrl: 'https://www.efootballhub.net/pes21-mobile/images/iconicmoments/52880442771767.jpg',
+        imageUrl: 'https://pesdb.net/assets/img/card/f89131308929393.png',
         score: 83,
         verdict: 'good',
         build: ['Speed', 'Acceleration', 'Dribbling'],
@@ -234,7 +234,7 @@ const releases = [
         overall: 87,
         category: 'Standout',
         style: 'Goal Poacher',
-        imageUrl: 'https://www.efootballhub.net/pes21-mobile/images/iconicmoments/52851451736190.jpg',
+        imageUrl: 'https://pesdb.net/assets/img/card/f89068226588798.png',
         score: 76,
         verdict: 'situational',
         build: ['Speed', 'Finishing', 'Balance'],
@@ -266,7 +266,7 @@ function CardImage({ card, labels, large = false }) {
     <div className={`card-art ${large ? 'card-art-large' : ''}`}>
       {!failed ? (
         <img
-          src={card.imageUrl}
+          src={proxiedImageUrl(card.imageUrl)}
           alt={card.name}
           onError={() => setFailed(true)}
         />
@@ -292,6 +292,11 @@ function StatPill({ children }) {
 function listFor(card, key, lang) {
   if (lang === 'en' && Array.isArray(card[`${key}En`])) return card[`${key}En`]
   return card[key] || []
+}
+
+function proxiedImageUrl(src) {
+  if (!src) return ''
+  return `/api/card-advisor-lab/image?src=${encodeURIComponent(src)}`
 }
 
 function buildRosterSummary(data) {
