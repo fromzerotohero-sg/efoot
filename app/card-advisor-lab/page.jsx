@@ -10,6 +10,7 @@ import {
   BarChart3,
   CheckCircle2,
   ChevronRight,
+  X,
   ImageOff,
   ShieldCheck,
   Sparkles,
@@ -67,7 +68,8 @@ const copy = {
     replacementLogic: 'confronto con chi gioca nello stesso ruolo',
     duplicateLogic: 'controllo doppioni in rosa',
     priorityLogic: 'priorita rispetto ai buchi squadra',
-    loadRoster: 'Carica o completa la rosa'
+    loadRoster: 'Carica o completa la rosa',
+    closeDetails: 'Chiudi dettagli'
   },
   en: {
     eyebrow: 'Internal lab',
@@ -115,7 +117,8 @@ const copy = {
     replacementLogic: 'comparison with same-role players',
     duplicateLogic: 'duplicate check in roster',
     priorityLogic: 'priority against team gaps',
-    loadRoster: 'Load or complete roster'
+    loadRoster: 'Load or complete roster',
+    closeDetails: 'Close details'
   }
 }
 
@@ -387,11 +390,21 @@ function RosterStatusPanel({ labels, rosterSummary, onLoadRoster }) {
   )
 }
 
-function DetailPanel({ card, labels, lang, rosterSummary, onLoadRoster }) {
+function DetailPanel({ card, labels, lang, rosterSummary, onLoadRoster, onClose }) {
   const verdict = getVerdictMeta(card.verdict, labels)
   const hasRoster = rosterSummary?.status === 'ready'
   return (
     <section className="detail-panel">
+      {onClose && (
+        <button
+          type="button"
+          className="detail-close-button"
+          onClick={onClose}
+          aria-label={labels.closeDetails}
+        >
+          <X size={18} />
+        </button>
+      )}
       <div className="detail-hero">
         <CardImage card={card} labels={labels} large />
         <div className="detail-copy">
@@ -478,6 +491,47 @@ function DetailPanel({ card, labels, lang, rosterSummary, onLoadRoster }) {
   )
 }
 
+function CardDetailsModal({ card, labels, lang, rosterSummary, onLoadRoster, onClose }) {
+  React.useEffect(() => {
+    if (!card) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKeyDown)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [card, onClose])
+
+  if (!card) return null
+
+  return (
+    <div
+      className="card-details-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${card.name} ${labels.verdict}`}
+      onClick={onClose}
+    >
+      <div className="card-details-modal-inner" onClick={(event) => event.stopPropagation()}>
+        <DetailPanel
+          card={card}
+          labels={labels}
+          lang={lang}
+          rosterSummary={rosterSummary}
+          onLoadRoster={onLoadRoster}
+          onClose={onClose}
+        />
+      </div>
+    </div>
+  )
+}
+
 export default withAuth(function CardAdvisorLabPage() {
   const router = useRouter()
   const { lang } = useTranslation()
@@ -489,6 +543,7 @@ export default withAuth(function CardAdvisorLabPage() {
     return releases.find(release => release.id === releaseId)?.cards || releases[0].cards
   }, [releaseId])
   const [selectedId, setSelectedId] = React.useState(cards[0]?.id)
+  const [detailsCardId, setDetailsCardId] = React.useState(null)
 
   React.useEffect(() => {
     setSelectedId(cards[0]?.id)
@@ -529,6 +584,7 @@ export default withAuth(function CardAdvisorLabPage() {
   }, [])
 
   const selectedCard = cards.find(card => card.id === selectedId) || cards[0]
+  const detailsCard = cards.find(card => card.id === detailsCardId) || null
 
   return (
     <main className="card-advisor-page">
@@ -593,23 +649,25 @@ export default withAuth(function CardAdvisorLabPage() {
                   card={card}
                   labels={labels}
                   selected={selectedCard?.id === card.id}
-                  onSelect={() => setSelectedId(card.id)}
+                  onSelect={() => {
+                    setSelectedId(card.id)
+                    setDetailsCardId(card.id)
+                  }}
                 />
               ))}
             </div>
           </aside>
-
-          {selectedCard && (
-            <DetailPanel
-              card={selectedCard}
-              labels={labels}
-              lang={lang === 'en' ? 'en' : 'it'}
-              rosterSummary={rosterSummary}
-              onLoadRoster={() => router.push('/gestione-formazione')}
-            />
-          )}
         </div>
       </section>
+
+      <CardDetailsModal
+        card={detailsCard}
+        labels={labels}
+        lang={lang === 'en' ? 'en' : 'it'}
+        rosterSummary={rosterSummary}
+        onLoadRoster={() => router.push('/gestione-formazione')}
+        onClose={() => setDetailsCardId(null)}
+      />
 
       <style jsx global>{`
         .card-advisor-page {
@@ -752,7 +810,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .lab-grid {
           display: grid;
-          grid-template-columns: minmax(300px, 0.95fr) minmax(0, 1.45fr);
+          grid-template-columns: 1fr;
           gap: 20px;
           align-items: start;
         }
@@ -856,8 +914,52 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .cards-grid {
           display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
           gap: 14px;
+        }
+
+        .card-details-modal {
+          position: fixed;
+          inset: 0;
+          z-index: 1300;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: clamp(12px, 3vw, 28px);
+          background: rgba(2, 4, 12, 0.82);
+          backdrop-filter: blur(10px);
+        }
+
+        .card-details-modal-inner {
+          width: min(1040px, 100%);
+          max-height: min(880px, calc(100vh - 32px));
+          overflow-y: auto;
+          border-radius: 24px;
+          box-shadow: 0 0 50px rgba(0, 212, 255, 0.22);
+        }
+
+        .card-details-modal .detail-panel {
+          position: relative;
+          top: auto;
+        }
+
+        .detail-close-button {
+          position: sticky;
+          top: 0;
+          margin-left: auto;
+          margin-bottom: 10px;
+          z-index: 3;
+          width: 40px;
+          height: 40px;
+          border-radius: 12px;
+          border: 1px solid rgba(255,255,255,0.18);
+          background: rgba(2,4,12,0.76);
+          color: #fff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          box-shadow: 0 0 18px rgba(0,0,0,0.35);
         }
 
         .release-card {
@@ -1174,10 +1276,6 @@ export default withAuth(function CardAdvisorLabPage() {
             grid-template-columns: 1fr;
           }
 
-          .detail-panel {
-            position: static;
-          }
-
           .cards-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
           }
@@ -1212,6 +1310,21 @@ export default withAuth(function CardAdvisorLabPage() {
           .cards-grid,
           .detail-grid {
             grid-template-columns: 1fr;
+          }
+
+          .card-details-modal {
+            align-items: flex-end;
+            padding: 8px;
+          }
+
+          .card-details-modal-inner {
+            width: 100%;
+            max-height: calc(100vh - 16px);
+            border-radius: 22px 22px 12px 12px;
+          }
+
+          .card-details-modal .detail-panel {
+            padding: 14px;
           }
 
           .release-card {
