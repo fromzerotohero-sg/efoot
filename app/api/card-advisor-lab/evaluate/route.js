@@ -102,6 +102,25 @@ function styleName(player, stylesLookup) {
   return (player?.playing_style_id && stylesLookup[player.playing_style_id]) || player?.role || ''
 }
 
+function positionLabel(position = '', lang = 'it') {
+  const labels = {
+    PT: { it: 'portiere', en: 'goalkeeper' },
+    DC: { it: 'difensore centrale', en: 'centre-back' },
+    TD: { it: 'terzino destro', en: 'right-back' },
+    TS: { it: 'terzino sinistro', en: 'left-back' },
+    MED: { it: 'mediano', en: 'defensive midfielder' },
+    CC: { it: 'centrocampista', en: 'central midfielder' },
+    TRQ: { it: 'trequartista', en: 'attacking midfielder' },
+    CLS: { it: 'esterno sinistro', en: 'left midfielder' },
+    CLD: { it: 'esterno destro', en: 'right midfielder' },
+    P: { it: 'punta', en: 'striker' },
+    SP: { it: 'seconda punta', en: 'second striker' },
+    ESA: { it: 'ala sinistra', en: 'left winger' },
+    EDA: { it: 'ala destra', en: 'right winger' }
+  }
+  return labels[position]?.[lang === 'en' ? 'en' : 'it'] || position
+}
+
 function sanitizeIlike(value = '') {
   return String(value).replace(/[%_]/g, '').trim()
 }
@@ -184,6 +203,7 @@ const EFHUB_STYLE_LABELS = {
   extraFrontman: { it: 'Difensore offensivo', en: 'Extra Frontman' },
   offensiveFullBack: { it: 'Terzino offensivo', en: 'Offensive Full-back' },
   defensiveFullBack: { it: 'Terzino difensivo', en: 'Defensive Full-back' },
+  fullBackFinisher: { it: 'Terzino finalizzatore', en: 'Full-back Finisher' },
   anchorMan: { it: 'Collante', en: 'Anchor Man' },
   boxToBox: { it: 'Box-to-Box', en: 'Box-to-Box' },
   orchestrator: { it: 'Regista', en: 'Orchestrator' },
@@ -206,6 +226,9 @@ const EFHUB_SKILL_LABELS = {
   oneTouchPass: { it: 'Passaggio di prima', en: 'One-touch Pass' },
   throughPassing: { it: 'Passaggio filtrante', en: 'Through Passing' },
   pinpointCrossing: { it: 'Cross calibrato', en: 'Pinpoint Crossing' },
+  scissorsFeint: { it: 'Finta doppio passo', en: 'Scissors Feint' },
+  crossOverTurn: { it: 'Svolta secca', en: 'Cross Over Turn' },
+  cutBehindTurn: { it: 'Taglia alle spalle e gira', en: 'Cut Behind & Turn' },
   firstTimeShot: { it: 'Tiro di prima', en: 'First-time Shot' },
   longRangeShooting: { it: 'Tiro dalla distanza', en: 'Long Range Shooting' },
   fightingSpirit: { it: 'Spirito combattivo', en: 'Fighting Spirit' },
@@ -230,6 +253,14 @@ function labelFromMap(map, value, lang) {
     Object.entries(map).find(([key]) => key.toLowerCase() === normalized.toLowerCase() || key.toLowerCase() === asciiKey)?.[1]
   if (entry) return lang === 'en' ? entry.en : entry.it
   return humanizeCamelCase(raw)
+}
+
+function styleLabel(value, lang) {
+  return labelFromMap(EFHUB_STYLE_LABELS, value, lang)
+}
+
+function skillLabel(value, lang) {
+  return labelFromMap(EFHUB_SKILL_LABELS, value, lang)
 }
 
 async function fetchEfhubCardDetail(card) {
@@ -314,6 +345,19 @@ function scoreByKeywords(numericMap, keywords) {
   return Math.round(avg)
 }
 
+function signalsFromStats(stats) {
+  const statMap = collectNumbers(stats)
+  return {
+    pace: scoreByKeywords(statMap, ['speed', 'accel', 'pace']),
+    pass: scoreByKeywords(statMap, ['pass', 'cross', 'curl']),
+    defend: scoreByKeywords(statMap, ['defen', 'tackl', 'intercept', 'aggression']),
+    finish: scoreByKeywords(statMap, ['finish', 'kicking', 'shot', 'offens', 'heading']),
+    physical: scoreByKeywords(statMap, ['stamina', 'phys', 'balance', 'jump', 'strength']),
+    gk: scoreByKeywords(statMap, ['gk', 'keeper', 'saving', 'catch']),
+    aerial: scoreByKeywords(statMap, ['jump', 'heading', 'aerial'])
+  }
+}
+
 async function fetchCatalogCandidates(admin, card) {
   const tasks = []
   if (card.sourcePlayerId && card.source === 'pesdb') {
@@ -393,28 +437,15 @@ function cardTechnicalSignals(card, catalogCard) {
     .filter((item, index, arr) => arr.indexOf(item) === index)
 
   const style = String(card.style || catalogCard?.playing_style || '').trim()
-  const statMap = {
-    ...collectNumbers(catalogCard?.base_stats),
-    ...collectNumbers(catalogCard?.max_stats)
-  }
-  const pace = scoreByKeywords(statMap, ['speed', 'accel', 'pace'])
-  const pass = scoreByKeywords(statMap, ['pass', 'cross', 'curl'])
-  const defend = scoreByKeywords(statMap, ['defen', 'tackl', 'intercept', 'aggression'])
-  const finish = scoreByKeywords(statMap, ['finish', 'kicking', 'shot', 'offens', 'heading'])
-  const physical = scoreByKeywords(statMap, ['stamina', 'phys', 'balance', 'jump'])
-  const gk = scoreByKeywords(statMap, ['gk', 'keeper', 'saving', 'catch'])
-  const aerial = scoreByKeywords(statMap, ['jump', 'heading', 'aerial'])
+  const statSignals = signalsFromStats({
+    ...(catalogCard?.base_stats || {}),
+    ...(catalogCard?.max_stats || {})
+  })
 
   return {
     style,
     mergedSkills,
-    pace,
-    pass,
-    defend,
-    finish,
-    physical,
-    gk,
-    aerial,
+    ...statSignals,
     cardOverall: Number(card.overall) || Number(catalogCard?.overall_level_1) || Number(catalogCard?.rating) || 0,
     hasCompleteCardData: Boolean(catalogCard?.base_stats || catalogCard?.max_stats),
     dataSource: catalogCard?.source || card.source || 'unknown'
@@ -423,16 +454,52 @@ function cardTechnicalSignals(card, catalogCard) {
 
 function sameRolePlayers(card, players, stylesLookup) {
   return (players || [])
-    .filter(player => player?.position === card.position)
-    .map(player => ({
-      name: player.player_name,
-      overall: player.overall_rating,
-      style: styleName(player, stylesLookup),
-      skills: [...(Array.isArray(player.skills) ? player.skills : []), ...(Array.isArray(player.com_skills) ? player.com_skills : [])].slice(0, 6),
-      slotIndex: player.slot_index
-    }))
-    .sort((a, b) => (Number(b.overall) || 0) - (Number(a.overall) || 0))
+    .filter(player => player?.position === card.position || playerSupportsPosition(player, card.position))
+    .map(player => {
+      const skills = [...(Array.isArray(player.skills) ? player.skills : []), ...(Array.isArray(player.com_skills) ? player.com_skills : [])].slice(0, 8)
+      return {
+        name: player.player_name,
+        position: player.position,
+        overall: player.overall_rating,
+        style: styleName(player, stylesLookup),
+        skills,
+        skillLabels: skills.map(skill => skillLabel(skill, 'it')).filter(Boolean),
+        signals: signalsFromStats(player.base_stats || {}),
+        slotIndex: player.slot_index,
+        competence: getPositionCompetence(player, card.position),
+        isNativePosition: player?.position === card.position
+      }
+    })
+    .sort((a, b) => {
+      const slotA = Number(a.slotIndex)
+      const slotB = Number(b.slotIndex)
+      const starterA = Number.isFinite(slotA) && slotA >= 0 && slotA <= 10 ? 1 : 0
+      const starterB = Number.isFinite(slotB) && slotB >= 0 && slotB <= 10 ? 1 : 0
+      if (starterA !== starterB) return starterB - starterA
+      if (a.isNativePosition !== b.isNativePosition) return a.isNativePosition ? -1 : 1
+      return (Number(b.overall) || 0) - (Number(a.overall) || 0)
+    })
     .slice(0, 4)
+}
+
+function getPositionCompetence(player, targetPosition) {
+  const positions = Array.isArray(player?.original_positions) ? player.original_positions : []
+  const match = positions.find(entry => {
+    const position = typeof entry === 'string' ? entry : entry?.position
+    return position === targetPosition
+  })
+  if (!match) return ''
+  if (typeof match === 'string') return 'Alta'
+  return String(match.competence || '').trim()
+}
+
+function playerSupportsPosition(player, targetPosition) {
+  const positions = Array.isArray(player?.original_positions) ? player.original_positions : []
+  return positions.some(entry => {
+    const position = typeof entry === 'string' ? entry : entry?.position
+    const competence = typeof entry === 'object' ? String(entry?.competence || '').toLowerCase() : ''
+    return position === targetPosition && (!competence || competence.includes('alta') || competence.includes('high'))
+  })
 }
 
 function connectionName(connection) {
@@ -563,7 +630,35 @@ function gameSignals(gameAnalysis = {}) {
 }
 
 function joinedAlternatives(sameRole = []) {
-  return sameRole.slice(0, 3).map(player => player.name).filter(Boolean).join(', ')
+  return sameRole
+    .slice(0, 3)
+    .map(player => {
+      if (!player?.name) return ''
+      return player.overall ? `${player.name} ${player.overall}` : player.name
+    })
+    .filter(Boolean)
+    .join(', ')
+}
+
+function describeAlternative(player, targetPosition, lang) {
+  if (!player?.name) return ''
+  const parts = [`${player.name}${player.overall ? ` ${player.overall}` : ''}`]
+  if (player.position && player.position !== targetPosition && player.competence) {
+    parts.push(lang === 'en'
+      ? `also ${targetPosition} ${player.competence}`
+      : `competenza anche ${targetPosition} ${player.competence}`)
+  } else if (player.style) {
+    parts.push(player.style)
+  }
+  return parts.length > 1 ? `${parts[0]} (${parts.slice(1).join(', ')})` : parts[0]
+}
+
+function topAlternativeDescriptions(sameRole, targetPosition, lang) {
+  return sameRole
+    .slice(0, 3)
+    .map(player => describeAlternative(player, targetPosition, lang))
+    .filter(Boolean)
+    .join(', ')
 }
 
 function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, duplicate, starterBlocked, lang }) {
@@ -584,8 +679,8 @@ function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, dupl
   if (duplicate || starterBlocked) {
     return {
       level: 'avoid',
-      label: lang === 'en' ? 'Avoid unless planned' : 'Evita se non hai un piano',
-      title: lang === 'en' ? 'Risk of wasting coins' : 'Rischio spreco coins'
+      label: lang === 'en' ? 'Duplicate risk' : 'Rischio doppione',
+      title: lang === 'en' ? 'Not a priority: role already covered' : 'Non prioritario: ruolo già coperto'
     }
   }
   if (roleGap || score >= 74) {
@@ -637,6 +732,132 @@ function cardValueBullets(card, technical, lang) {
     : [lang === 'en'
         ? `${card.name} is readable by role and overall, but the technical detail is still limited.`
         : `${card.name} è leggibile per ruolo e overall, ma il dettaglio tecnico è ancora limitato.`]
+}
+
+function tacticalUseLine(card, technical, tacticalStyle, lang) {
+  const family = roleFamily(card.position)
+  const style = toAscii(tacticalStyle)
+  const cardStyle = toAscii(technical.style)
+  const skillsText = toAscii(technical.mergedSkills.join(' '))
+  const hasCross = /(cross|pinpoint|calibrato|lofted)/.test(skillsText) || technical.pass >= 74
+  const hasDefensiveSkill = /(interception|intercett|marking|marcat|block|muro|tackle|scivolata)/.test(skillsText)
+  const hasDribbleSkill = /(double|scissors|turn|feint|finta|svolta|taglia)/.test(skillsText)
+  if (family === 'def') {
+    if ((cardStyle.includes('full back finisher') || cardStyle.includes('terzino finalizzatore')) && hasCross) {
+      return lang === 'en'
+        ? `Its real value is the forward movement: overlap, arrive high and turn the action into a cross or low ball.`
+        : `Il valore reale è il movimento in avanti: accompagna, arriva alto e trasforma l’azione in cross o palla rasoterra.`
+    }
+    if (technical.pace >= 74 && (card.position === 'TD' || card.position === 'TS')) {
+      return lang === 'en'
+        ? `It makes sense only if you want a full-back who can push the exit and still recover space.`
+        : `Ha senso solo se vuoi un terzino che accompagni l’uscita e possa comunque recuperare campo.`
+    }
+    if (hasDefensiveSkill) {
+      return lang === 'en'
+        ? `Its value is defensive control: duels, interceptions and safer coverage, not a major attacking change.`
+        : `Il suo valore è controllo difensivo: duelli, intercetti e copertura più sicura, non una grande svolta offensiva.`
+    }
+    return lang === 'en'
+      ? `Its useful case is defensive stability, not changing your attacking production.`
+      : `Il caso d’uso utile è stabilità difensiva, non cambiare davvero la produzione offensiva.`
+  }
+  if (family === 'mid') {
+    if (hasDefensiveSkill && technical.pass >= 74) {
+      return lang === 'en'
+        ? `Use case: win the first duel, then play simple passes to restart the action.`
+        : `Uso reale: vincere il primo duello e poi giocare semplice per riavviare l’azione.`
+    }
+    return lang === 'en'
+      ? `It makes sense if you need cleaner build-up and safer support between the lines.`
+      : `Ha senso se ti serve più pulizia in costruzione e supporto sicuro tra le linee.`
+  }
+  if (family === 'gk') {
+    return lang === 'en'
+      ? `It makes sense only if your current goalkeeper is costing you rebounds or close-range saves.`
+      : `Ha senso solo se il tuo portiere attuale ti costa rimbalzi o parate ravvicinate.`
+  }
+  if (style.includes('contropiede') || style.includes('counter')) {
+    return lang === 'en'
+      ? `It makes sense if you use him to attack depth early, not as another static forward.`
+      : `Ha senso se lo usi per attaccare profondità subito, non come un altro attaccante statico.`
+  }
+  if (hasDribbleSkill && technical.pace >= 78) {
+    return lang === 'en'
+      ? `Its useful case is one-v-one creation: receive wide or between lines, beat the first man, then finish or assist.`
+      : `Il caso utile è creare 1 contro 1: ricevere largo o tra le linee, saltare il primo uomo e poi chiudere o assistere.`
+  }
+  return lang === 'en'
+    ? `It makes sense only if this role is where your attacks currently lose quality.`
+    : `Ha senso solo se questo ruolo è dove oggi perdi qualità in attacco.`
+}
+
+function topNumericKey(input) {
+  const values = collectNumbers(input)
+  return Object.entries(values)
+    .sort((a, b) => Number(b[1]) - Number(a[1]))
+    .find(([, value]) => Number(value) > 0)?.[0] || ''
+}
+
+function tacticalMapLine(patterns, cardPosition, lang) {
+  const attackKey = topNumericKey(patterns?.attack_areas_avg)
+  const recoveryKey = topNumericKey(patterns?.recovery_zones_avg)
+  if (!attackKey && !recoveryKey) return ''
+  const sideRole = ['TD', 'CLD', 'EDA'].includes(cardPosition)
+    ? 'right'
+    : ['TS', 'CLS', 'ESA'].includes(cardPosition)
+      ? 'left'
+      : 'central'
+  const mapText = `${attackKey} ${recoveryKey}`.toLowerCase()
+  const sameSide = sideRole === 'right'
+    ? /(right|destra|dx)/.test(mapText)
+    : sideRole === 'left'
+      ? /(left|sinistra|sx)/.test(mapText)
+      : /(central|center|centro)/.test(mapText)
+  if (!sameSide) return ''
+  return lang === 'en'
+    ? 'Your tactical maps already point toward this zone, so the card is relevant only if it improves that lane.'
+    : 'Le tue mappe tattiche puntano già su questa zona, quindi la carta è rilevante solo se migliora davvero quella corsia.'
+}
+
+function buildRosterRead({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, technical, tacticalStyle, patterns, lang }) {
+  const role = positionLabel(card.position, lang)
+  const alternatives = topAlternativeDescriptions(sameRole, card.position, lang)
+  const bestName = describeAlternative(bestAlternative, card.position, lang)
+  const useLine = tacticalUseLine(card, technical, tacticalStyle, lang)
+  const mapLine = tacticalMapLine(patterns, card.position, lang)
+  const secondLine = mapLine ? `${useLine} ${mapLine}` : useLine
+
+  if (roleGap) {
+    return [
+      lang === 'en'
+        ? `${card.name} has a clear case because your roster does not have a direct ${role} alternative. The read uses his style, native skills and card stats, not a generic overall comparison.`
+        : `${card.name} ha un caso chiaro perché nella tua rosa non c’è un’alternativa diretta da ${role}. La lettura usa stile, abilità native e statistiche carta, non solo overall.`,
+      lang === 'en'
+        ? `${secondLine} This is the kind of card that can save coins later because it closes a real squad gap.`
+        : `${secondLine} È il tipo di carta che può farti risparmiare coins dopo, perché chiude un buco reale della rosa.`
+    ]
+  }
+
+  if (duplicate || starterBlocked) {
+    return [
+      lang === 'en'
+        ? `${card.name} is not a priority because ${alternatives || bestName || 'your current options'} already cover ${card.position}.`
+        : `${card.name} non è prioritario perché ${alternatives || bestName || 'le opzioni attuali'} coprono già ${card.position}.`,
+      lang === 'en'
+        ? `${secondLine} Otherwise you risk adding a duplicate without changing your team output.`
+        : `${secondLine} Altrimenti rischi di aggiungere un doppione senza cambiare davvero il rendimento della squadra.`
+    ]
+  }
+
+  return [
+    lang === 'en'
+      ? `${card.name} improves the ${card.position} lane compared with ${bestName || 'your current option'}, but it is not automatically a must-buy.`
+      : `${card.name} migliora la corsia ${card.position} rispetto a ${bestName || 'l’opzione attuale'}, ma non è automaticamente da prendere.`,
+    lang === 'en'
+      ? `${secondLine} Put him on the shortlist only if that role is where you want to spend coins now.`
+      : `${secondLine} Tienilo in lista solo se quel ruolo è dove vuoi spendere coins adesso.`
+  ]
 }
 
 function evaluate({ card, catalogCard, players, formation, coach, tacticalSettings, profile, patterns, gameAnalysis, stylesLookup, lang }) {
@@ -693,7 +914,6 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   const synergyLevel = decision.label
   const title = decision.title
   const lever = mainLever(card, technical, roleGap, upgrade, lang)
-  const alternativesText = joinedAlternatives(sameRole)
   const rosterRead = !hasRoster
     ? [
         lang === 'en'
@@ -703,32 +923,18 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
           ? 'Load your roster to see if this card saves coins or duplicates a role you already cover.'
           : 'Carica la rosa per capire se questa carta ti fa risparmiare coins o duplica un ruolo già coperto.'
       ]
-    : roleGap
-      ? [
-          lang === 'en'
-            ? `${card.name} covers ${card.position}, a role where your roster has no direct alternative.`
-            : `${card.name} copre ${card.position}, un ruolo dove la tua rosa non ha alternativa diretta.`,
-          lang === 'en'
-            ? 'This is the clearest purchase case: it solves a real squad gap.'
-            : 'Questo è il caso d’acquisto più chiaro: risolve un buco reale della squadra.'
-        ]
-      : duplicate
-        ? [
-            lang === 'en'
-              ? `${card.name} is mostly rotation in ${card.position}; ${alternativesText || 'your current options'} already cover this lane.`
-              : `${card.name} è soprattutto rotazione in ${card.position}; ${alternativesText || 'le opzioni attuali'} coprono già questa corsia.`,
-            lang === 'en'
-              ? 'The coin risk is duplication: buy only if you already planned that rotation.'
-              : 'Il rischio coins è il doppione: prendila solo se avevi già pianificato quella rotazione.'
-          ]
-        : [
-            lang === 'en'
-              ? `${card.name} improves your ${card.position} lane versus ${bestAlternative?.name || 'current option'}.`
-              : `${card.name} migliora la corsia ${card.position} rispetto a ${bestAlternative?.name || 'l’opzione attuale'}.`,
-            lang === 'en'
-              ? 'The decision depends on whether this role is a current priority for your coins.'
-              : 'La decisione dipende da quanto questo ruolo è prioritario per i tuoi coins.'
-          ]
+    : buildRosterRead({
+        card,
+        sameRole,
+        bestAlternative,
+        roleGap,
+        duplicate,
+        starterBlocked,
+        technical,
+        tacticalStyle,
+        patterns,
+        lang
+      })
 
   const strengths = cardValueBullets(card, technical, lang)
   const whyItMatters = strengths.slice(0, 3)
@@ -739,18 +945,18 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
       : !hasRoster
         ? 'Without your roster, this is a card read only: the real risk is buying a duplicate.'
         : duplicate
-          ? 'Coin risk: this card overlaps with roles already covered in your roster.'
+          ? `Coin risk: ${joinedAlternatives(sameRole) || 'your current options'} already cover this role.`
           : starterBlocked
-            ? 'Coin risk: the starter lane is already occupied at similar level.'
+            ? `Coin risk: ${bestAlternative?.name || 'the starter'} already occupies this lane at a similar or higher level.`
             : 'Coin risk is controlled if this role is one of your current priorities.'
     : !technical.hasCompleteCardData
       ? 'Non prendere decisioni coins finché non è disponibile il dettaglio completo EFHub della carta.'
       : !hasRoster
         ? 'Senza rosa questa è solo lettura carta: il rischio reale è comprare un doppione.'
         : duplicate
-          ? 'Rischio coins: questa carta si sovrappone a ruoli già coperti nella tua rosa.'
+          ? `Rischio coins: ${joinedAlternatives(sameRole) || 'le opzioni attuali'} coprono già questo ruolo.`
           : starterBlocked
-            ? 'Rischio coins: la corsia titolare è già occupata a livello simile.'
+            ? `Rischio coins: ${bestAlternative?.name || 'il titolare'} occupa già questa corsia a livello simile o superiore.`
             : 'Rischio coins controllato se questo ruolo è una priorità reale.'
 
   const purchaseAdvice = lang === 'en'
@@ -759,14 +965,14 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
       : decision.level === 'buy'
         ? `Prioritize ${card.name} if you want to spend coins on ${card.position}.`
         : decision.level === 'avoid'
-          ? `Do not spend coins on ${card.name} unless you need that exact rotation.`
+          ? `${card.name} does not change your priorities enough: save coins for an uncovered role or a clearer upgrade.`
           : `Keep ${card.name} on your shortlist only if ${card.position} is a priority.`
     : !hasRoster
       ? 'Carica la rosa per trasformare questa lettura carta in un verdetto personale compra/evita.'
       : decision.level === 'buy'
         ? `Dai priorità a ${card.name} se vuoi spendere coins su ${card.position}.`
         : decision.level === 'avoid'
-          ? `Non spendere coins su ${card.name} a meno che ti serva proprio quella rotazione.`
+          ? `${card.name} non cambia abbastanza le priorità: meglio tenere coins per un ruolo scoperto o un upgrade più netto.`
           : `Tieni ${card.name} in lista solo se ${card.position} è una priorità.`
 
   const legacyTechnicalRisk = lang === 'en'
