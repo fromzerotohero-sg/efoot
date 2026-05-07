@@ -23,13 +23,13 @@ import {
 
 const copy = {
   it: {
-    eyebrow: 'Lab interno',
+    eyebrow: 'Nuove carte',
     title: 'Card Advisor',
     subtitle: 'Valuta le nuove carte prima di spendere coins: prima giudizio generale, poi fit con la tua rosa quando sara caricata.',
-    dataBadge: 'Demo UI - fonte eFHUB da collegare',
-    notPublic: 'Pagina separata: non e collegata a Smart, sidebar o flussi pubblici.',
+    dataBadge: 'Analisi carta + fit squadra',
+    notPublic: 'Scegli una carta e scopri se vale davvero per te.',
     releaseTitle: 'Uscite recenti',
-    sourceNote: 'Nel prodotto finale qui arrivano pack e immagini cacheati da eFHUB. Questa pagina serve per validare esperienza, proporzioni e logica.',
+    sourceNote: 'Seleziona un pack: mostriamo solo le carte di quella uscita, con ricerca e filtri per evitare una pagina infinita.',
     cardScore: 'Valutazione',
     role: 'Ruolo',
     style: 'Stile',
@@ -41,9 +41,9 @@ const copy = {
     teamFit: 'Fit con la squadra',
     noRosterTitle: 'Senza rosa diamo comunque valore',
     noRosterText: 'La valutazione generale funziona anche senza rosa. Quando la rosa e caricata, aggiungiamo chi sostituisce, doppioni e priorita reali.',
-    missingData: 'Dati da verificare',
-    sourcePlan: 'Piano fonte dati',
-    sourcePlanText: 'Import eFHUB -> staging -> controllo qualita -> cache immagini nostra -> pubblicazione solo carte ready.',
+    missingData: 'Nota valutazione',
+    sourcePlan: 'Come funziona',
+    sourcePlanText: 'Scegli una carta, leggi il verdetto generale e completa la rosa per ricevere il consiglio personalizzato.',
     selectedHint: 'Clicca una carta per vedere il dettaglio.',
     topPick: 'Top',
     goodPick: 'Buona',
@@ -52,19 +52,24 @@ const copy = {
     compareCta: 'Carica la rosa per il verdetto personale',
     currentRelease: 'Pack corrente',
     allCards: 'Tutte',
-    imageFallback: 'Immagine in cache da collegare',
-    responsiveCheck: 'Layout responsive desktop/mobile',
+    activePacks: 'Pack attivi',
+    searchPlaceholder: 'Cerca giocatore, ruolo o pack...',
+    cardsAvailable: 'carte disponibili',
+    noCardsFound: 'Nessuna carta trovata con questi filtri.',
+    needsSourceReview: 'In aggiornamento',
+    imageFallback: 'Immagine in arrivo',
+    responsiveCheck: 'Pensato per mobile',
     checkingRoster: 'Controllo rosa...',
-    rosterReadyTitle: 'Rosa trovata: fit personale attivabile',
-    rosterReadyText: 'Quando collegheremo il motore, questa carta verra confrontata con titolari, riserve, modulo e priorita reali della tua squadra.',
+    rosterReadyTitle: 'Rosa trovata: consiglio personalizzato disponibile',
+    rosterReadyText: 'Questa carta verra confrontata con titolari, riserve, modulo e priorita reali della tua squadra.',
     rosterMissingTitle: 'Rosa non ancora caricata',
     rosterMissingText: 'La pagina continua a dare valutazione generale. Per sapere se la carta entra davvero nella tua squadra, serve caricare almeno la rosa base.',
-    rosterUnavailableTitle: 'Controllo rosa non disponibile',
-    rosterUnavailableText: 'Il lab resta utilizzabile: la valutazione generale non dipende dalla rosa. Il fit personale verra riattivato quando il controllo dati e disponibile.',
+    rosterUnavailableTitle: 'Valutazione generale disponibile',
+    rosterUnavailableText: 'Puoi comunque valutare la carta. Completa la rosa per ricevere anche il consiglio personalizzato.',
     rosterPlayers: 'Giocatori',
     rosterStarters: 'Titolari',
     rosterFormation: 'Modulo',
-    personalFitPreview: 'Anteprima logica fit',
+    personalFitPreview: 'Fit squadra',
     replacementLogic: 'confronto con chi gioca nello stesso ruolo',
     duplicateLogic: 'controllo doppioni in rosa',
     priorityLogic: 'priorita rispetto ai buchi squadra',
@@ -72,13 +77,13 @@ const copy = {
     closeDetails: 'Chiudi dettagli'
   },
   en: {
-    eyebrow: 'Internal lab',
+    eyebrow: 'New cards',
     title: 'Card Advisor',
     subtitle: 'Evaluate new cards before spending coins: general verdict first, team fit once the roster is loaded.',
-    dataBadge: 'UI demo - eFHUB source to connect',
-    notPublic: 'Separate page: not connected to Smart, sidebar, or public flows.',
+    dataBadge: 'Card analysis + team fit',
+    notPublic: 'Choose a card and see if it is really worth it for you.',
     releaseTitle: 'Recent releases',
-    sourceNote: 'In production this area will receive packs and cached images from eFHUB. This page validates UX, proportions, and logic.',
+    sourceNote: 'Select one pack: only that release is shown, with search and filters to avoid an endless page.',
     cardScore: 'Rating',
     role: 'Role',
     style: 'Style',
@@ -90,9 +95,9 @@ const copy = {
     teamFit: 'Team fit',
     noRosterTitle: 'Still useful without a roster',
     noRosterText: 'The general card evaluation works without a roster. Once the roster is loaded, we add replacement, duplicate, and priority logic.',
-    missingData: 'Data to verify',
-    sourcePlan: 'Data source plan',
-    sourcePlanText: 'eFHUB import -> staging -> quality check -> own image cache -> publish ready cards only.',
+    missingData: 'Evaluation note',
+    sourcePlan: 'How it works',
+    sourcePlanText: 'Choose a card, read the general verdict, and complete your roster for a personalized recommendation.',
     selectedHint: 'Click a card to inspect details.',
     topPick: 'Top',
     goodPick: 'Good',
@@ -101,19 +106,24 @@ const copy = {
     compareCta: 'Load roster for personal verdict',
     currentRelease: 'Current pack',
     allCards: 'All',
-    imageFallback: 'Image cache to connect',
-    responsiveCheck: 'Desktop/mobile responsive layout',
+    activePacks: 'Active packs',
+    searchPlaceholder: 'Search player, role, or pack...',
+    cardsAvailable: 'cards available',
+    noCardsFound: 'No cards found with these filters.',
+    needsSourceReview: 'Updating',
+    imageFallback: 'Image coming soon',
+    responsiveCheck: 'Built for mobile',
     checkingRoster: 'Checking roster...',
-    rosterReadyTitle: 'Roster found: personal fit can be enabled',
-    rosterReadyText: 'Once the engine is connected, this card will be compared with starters, bench, formation, and real team priorities.',
+    rosterReadyTitle: 'Roster found: personalized advice available',
+    rosterReadyText: 'This card will be compared with starters, bench, formation, and real team priorities.',
     rosterMissingTitle: 'Roster not loaded yet',
     rosterMissingText: 'The page still gives general evaluation. To know if the card really fits your team, the base roster must be loaded.',
-    rosterUnavailableTitle: 'Roster check unavailable',
-    rosterUnavailableText: 'The lab remains usable: general evaluation does not depend on roster data. Personal fit will be restored when the data check is available.',
+    rosterUnavailableTitle: 'General evaluation available',
+    rosterUnavailableText: 'You can still evaluate the card. Complete the roster to also receive the personalized recommendation.',
     rosterPlayers: 'Players',
     rosterStarters: 'Starters',
     rosterFormation: 'Formation',
-    personalFitPreview: 'Fit logic preview',
+    personalFitPreview: 'Team fit',
     replacementLogic: 'comparison with same-role players',
     duplicateLogic: 'duplicate check in roster',
     priorityLogic: 'priority against team gaps',
@@ -122,135 +132,158 @@ const copy = {
   }
 }
 
-const releases = [
-  {
-    id: 'naruto-collab-2026',
-    name: 'NARUTO SHIPPUDEN Collaboration Campaign 2026',
-    date: 'May 2026',
-    cards: [
-      {
-        id: 'lamine-yamal-95',
-        name: 'Lamine Yamal',
-        position: 'EDA',
-        overall: 95,
-        category: 'Collaboration',
-        style: 'Prolific Winger',
-        imageUrl: 'https://pesdb.net/assets/img/card/f89135067068738.png',
-        score: 88,
-        verdict: 'top',
-        build: ['Speed', 'Dribbling', 'Low Pass'],
-        skills: ['Double Touch', 'Through Passing', 'Pinpoint Crossing'],
-        strengths: ['Accelerazione e cambio direzione', 'Ottimo per fascia e mezzo spazio', 'Aiuta squadre che mancano creativita laterale'],
-        strengthsEn: ['Acceleration and change of direction', 'Strong wide and in the half-space', 'Helps teams lacking wide creativity'],
-        risks: ['Meno prioritario se hai gia ali creative top', 'Da verificare fisico e resistenza nei dati finali'],
-        risksEn: ['Less urgent if you already have elite creative wingers', 'Physical contact and stamina must be verified in final data'],
-        missing: ['Overall/build esatta da fonte live', 'Immagine cache interna'],
-        missingEn: ['Exact overall/build from live source', 'Internal cached image']
-      },
-      {
-        id: 'lewandowski-95',
-        name: 'Robert Lewandowski',
-        position: 'P',
-        overall: 95,
-        category: 'Collaboration',
-        style: 'Fox in the Box',
-        imageUrl: 'https://pesdb.net/assets/img/card/f52896011951170.png',
-        score: 85,
-        verdict: 'good',
-        build: ['Finishing', 'Physical Contact', 'Offensive Awareness'],
-        skills: ['First-time Shot', 'Heading', 'Aerial Superiority'],
-        strengths: ['Finalizzatore puro', 'Forte in area e sulle palle alte', 'Ottimo se la squadra crea cross o rifiniture corte'],
-        strengthsEn: ['Pure finisher', 'Strong in the box and on aerial balls', 'Excellent if the team creates crosses or short cutbacks'],
-        risks: ['Puo essere statico in squadre che attaccano spazio', 'Non risolve problemi di costruzione'],
-        risksEn: ['Can be static in teams attacking space', 'Does not solve build-up issues'],
-        missing: ['Compatibilita build max', 'Dati booster ufficiali'],
-        missingEn: ['Max build compatibility', 'Official booster data']
-      },
-      {
-        id: 'kubo-95',
-        name: 'Takefusa Kubo',
-        position: 'CLD',
-        overall: 95,
-        category: 'Collaboration',
-        style: 'Roaming Flank',
-        imageUrl: 'https://pesdb.net/assets/img/card/f88039581932552.png',
-        score: 90,
-        verdict: 'top',
-        build: ['Dribbling', 'Tight Possession', 'Finishing'],
-        skills: ['Double Touch', 'Sole Control', 'Long-Range Curler'],
-        strengths: ['Carta da creazione e rifinitura', 'Perfetta tra le linee', 'Aumenta imprevedibilita offensiva'],
-        strengthsEn: ['Creation and finishing card', 'Excellent between the lines', 'Adds attacking unpredictability'],
-        risks: ['Richiede controllo palla e timing', 'Se hai lag/input delay rende meno'],
-        risksEn: ['Requires ball control and timing', 'Less effective with lag/input delay'],
-        missing: ['Immagine ufficiale pack', 'Forma e dettagli release'],
-        missingEn: ['Official pack image', 'Form and release details']
-      }
-    ]
-  },
-  {
-    id: 'standout-attackers-season-best',
-    name: "Standout Attackers 25-26 Season's Best",
-    date: 'May 2026',
-    cards: [
-      {
-        id: 'pedri-87',
-        name: 'Pedri',
-        position: 'CC',
-        overall: 87,
-        category: 'Standout',
-        style: 'Hole Player',
-        imageUrl: 'https://pesdb.net/assets/img/card/f89135067039781.png',
-        score: 79,
-        verdict: 'situational',
-        build: ['Low Pass', 'Kicking Power', 'Stamina'],
-        skills: ['Through Passing', 'One-touch Pass', 'Long Range Shooting'],
-        strengths: ['Buon TRQ per passaggio e inserimenti', 'Utile se manca rifinitura centrale', 'Puo alzare qualita sui tiri da fuori'],
-        strengthsEn: ['Good AMF for passing and runs into the box', 'Useful if central chance creation is missing', 'Can improve long-range shot threat'],
-        risks: ['Non e upgrade universale', 'Dipende molto da stile squadra e modulo'],
-        risksEn: ['Not a universal upgrade', 'Highly dependent on team style and formation'],
-        missing: ['Stats max complete', 'Ruoli secondari verificati'],
-        missingEn: ['Complete max stats', 'Verified secondary roles']
-      },
-      {
-        id: 'rafael-leao-87',
-        name: 'Rafael Leão',
-        position: 'CLS',
-        overall: 87,
-        category: 'Standout',
-        style: 'Prolific Winger',
-        imageUrl: 'https://pesdb.net/assets/img/card/f89131308929393.png',
-        score: 83,
-        verdict: 'good',
-        build: ['Speed', 'Acceleration', 'Dribbling'],
-        skills: ['Double Touch', 'Sole Control', 'Gamesmanship'],
-        strengths: ['Minaccia costante in fascia', 'Ottimo per transizioni e 1v1', 'Da valutare se manca profondita a sinistra'],
-        strengthsEn: ['Constant wide threat', 'Excellent for transitions and 1v1s', 'Worth evaluating if left-side depth is missing'],
-        risks: ['Meno utile se giochi molto centrale', 'Serve finalizzazione verificata'],
-        risksEn: ['Less useful if you mostly attack centrally', 'Finishing must be verified'],
-        missing: ['Overall max', 'Piede debole e injury'],
-        missingEn: ['Max overall', 'Weak foot and injury resistance']
-      },
-      {
-        id: 'mbappe-87',
-        name: 'Kylian Mbappé',
-        position: 'P',
-        overall: 87,
-        category: 'Standout',
-        style: 'Goal Poacher',
-        imageUrl: 'https://pesdb.net/assets/img/card/f89068226588798.png',
-        score: 76,
-        verdict: 'situational',
-        build: ['Speed', 'Finishing', 'Balance'],
-        skills: ['First-time Shot', 'Double Touch', 'Outside Curler'],
-        strengths: ['Attaccante mobile', 'Interessante se vuoi profondita', 'Puo coprire piu ruoli offensivi'],
-        strengthsEn: ['Mobile forward', 'Interesting if you need depth runs', 'Can cover multiple attacking roles'],
-        risks: ['Da confrontare con punte gia in rosa', 'Puo essere doppione se hai gia finalizzatori veloci'],
-        risksEn: ['Must be compared with your current forwards', 'Can become a duplicate if you already have fast finishers'],
-        missing: ['Compatibilita ruoli completa', 'Immagine fonte'],
-        missingEn: ['Full role compatibility', 'Source image']
-      }
-    ]
+const imageByName = {
+  'Lamine Yamal': 'https://pesdb.net/assets/img/card/f89135067068738.png',
+  'Robert Lewandowski': 'https://pesdb.net/assets/img/card/f52896011951170.png',
+  'Takefusa Kubo': 'https://pesdb.net/assets/img/card/f88039581932552.png',
+  Pedri: 'https://pesdb.net/assets/img/card/f89135067039781.png',
+  'Ousmane Dembele': 'https://pesdb.net/assets/img/card/f89135067017250.png',
+  'Ousmane Dembélé': 'https://pesdb.net/assets/img/card/f89135067017250.png',
+  'Rafael Leao': 'https://pesdb.net/assets/img/card/f89131308929393.png',
+  'Rafael Leão': 'https://pesdb.net/assets/img/card/f89131308929393.png',
+  'Kylian Mbappe': 'https://pesdb.net/assets/img/card/f89068226588798.png',
+  'Kylian Mbappé': 'https://pesdb.net/assets/img/card/f89068226588798.png',
+  'Sadio Mane': 'https://pesdb.net/assets/img/card/f89137029898200.png',
+  'Sadio Mané': 'https://pesdb.net/assets/img/card/f89137029898200.png'
+}
+
+function normalizeKey(value) {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+}
+
+function roleFamily(position) {
+  if (['PT'].includes(position)) return 'gk'
+  if (['DC', 'TD', 'TS'].includes(position)) return 'def'
+  if (['MED', 'CC', 'TRQ', 'CLS', 'CLD'].includes(position)) return 'mid'
+  return 'att'
+}
+
+function buildAdvice(position) {
+  const family = roleFamily(position)
+  if (family === 'gk') {
+    return {
+      build: ['GK Awareness', 'Reflexes', 'Reach'],
+      skills: ['GK Low Punt', 'GK Long Throw'],
+      strengths: ['Buona base per stabilizzare la porta', 'Utile se subisci molto in area', 'Da valutare con altezza e riflessi'],
+      strengthsEn: ['Good base to stabilize the goal', 'Useful if you concede often in the box', 'Must be checked with height and reflexes'],
+      risks: ['Poco prioritario se hai gia un portiere top', 'Overall non basta: servono stats GK reali'],
+      risksEn: ['Less urgent if you already have a top goalkeeper', 'Overall is not enough: real GK stats matter']
+    }
   }
+  if (family === 'def') {
+    return {
+      build: ['Defensive Awareness', 'Tackling', 'Physical Contact'],
+      skills: ['Man Marking', 'Interception', 'Blocker'],
+      strengths: ['Rinforza copertura e duelli', 'Utile contro attacchi diretti', 'Interessante se mancano difensori rapidi o fisici'],
+      strengthsEn: ['Improves coverage and duels', 'Useful against direct attacks', 'Interesting if fast or physical defenders are missing'],
+      risks: ['Controlla se ha abbastanza velocita per la tua linea difensiva', 'Puo essere doppione se hai gia centrali completi'],
+      risksEn: ['Check whether he has enough speed for your defensive line', 'Can be a duplicate if you already have complete defenders']
+    }
+  }
+  if (family === 'mid') {
+    return {
+      build: ['Low Pass', 'Stamina', 'Ball Control'],
+      skills: ['One-touch Pass', 'Through Passing', 'Interception'],
+      strengths: ['Aumenta qualita tra costruzione e rifinitura', 'Utile se manca equilibrio a centrocampo', 'Buona carta per collegare reparti'],
+      strengthsEn: ['Improves build-up and chance creation', 'Useful if midfield balance is missing', 'Good card to connect team lines'],
+      risks: ['Non sempre cambia la squadra da sola', 'Va confrontata con stile squadra e modulo'],
+      risksEn: ['Does not always change the team alone', 'Must be compared with team style and formation']
+    }
+  }
+  return {
+    build: ['Speed', 'Finishing', 'Dribbling'],
+    skills: ['First-time Shot', 'Double Touch', 'Long Range Shooting'],
+    strengths: ['Porta minaccia offensiva immediata', 'Utile se ti manca profondita o finalizzazione', 'Buona per decidere partite chiuse'],
+    strengthsEn: ['Adds immediate attacking threat', 'Useful if depth or finishing is missing', 'Good for deciding tight matches'],
+    risks: ['Puo essere solo hype se hai gia attaccanti simili', 'Controlla piede debole e fisico prima di spendere'],
+    risksEn: ['Can be pure hype if you already have similar attackers', 'Check weak foot and physical profile before spending']
+  }
+}
+
+function scoreFor(overall, position) {
+  const familyBoost = roleFamily(position) === 'att' ? 2 : roleFamily(position) === 'def' ? 1 : 0
+  return Math.min(94, Math.max(68, overall - 4 + familyBoost))
+}
+
+function verdictFor(score) {
+  if (score >= 88) return 'top'
+  if (score >= 81) return 'good'
+  if (score >= 74) return 'situational'
+  return 'skip'
+}
+
+function makeCard(name, overall, position, category, style = 'Profilo da analizzare') {
+  const score = scoreFor(overall, position)
+  return {
+    id: `${normalizeKey(category)}-${normalizeKey(name)}-${position}-${overall}`,
+    name,
+    position,
+    overall,
+    category,
+    style,
+    imageUrl: imageByName[name] || '',
+    score,
+    verdict: verdictFor(score),
+    ...buildAdvice(position),
+    missing: ['Valutazione indicativa: controlla sempre se la carta risponde al tuo modo di giocare.'],
+    missingEn: ['Indicative evaluation: always check whether the card fits your playing style.']
+  }
+}
+
+function makeRelease(id, name, date, category, rows, status = 'active') {
+  return {
+    id,
+    name,
+    date,
+    status,
+    cards: rows.map(([playerName, overall, position, style]) => makeCard(playerName, overall, position, category, style))
+  }
+}
+
+const releases = [
+  makeRelease('standout-guardians-season-best', "Standout Guardians 25-26 Season's Best", 'May 2026', 'Standout', [
+    ['Gabriel Magalhaes', 86, 'DC'], ['Gianluigi Donnarumma', 86, 'PT'], ['Achraf Hakimi', 86, 'TD'],
+    ['Leonardo Spinazzola', 80, 'TS'], ['Ramy Bensebaini', 80, 'DC'], ['Nordi Mukiele', 84, 'TD'],
+    ['Boubacar Kamara', 82, 'MED'], ['Clinton Mata', 79, 'DC'], ['Jakub Kiwior', 83, 'DC'],
+    ['Robin Risser', 80, 'PT'], ['Sidny Cabral', 77, 'TD']
+  ]),
+  makeRelease('standout-midfielders-season-best', "Standout Midfielders 25-26 Season's Best", 'May 2026', 'Standout', [
+    ['Antoine Semenyo', 86, 'CLS'], ['Federico Valverde', 86, 'CC'], ['Elliot Anderson', 85, 'MED'],
+    ['Pierre Hojbjerg', 81, 'CC'], ['Kouadio Kone', 81, 'CC'], ['Vitaly Janelt', 80, 'MED'],
+    ['Ismael Saibari', 80, 'TRQ'], ['Martin Baturina', 82, 'CC'], ['Valentin Barco', 81, 'CC'],
+    ['Tyler Morton', 80, 'MED'], ['Darko Nejasmic', 78, 'MED']
+  ]),
+  makeRelease('highlight-9-may-26', "Highlight 9 May '26", '9 May 2026', 'Highlight', [
+    ['Antoine Griezmann', 85, 'P'], ['Geoffrey Kondogbia', 81, 'MED'], ['Stefan Savic', 80, 'DC'], ['Lucas Hernandez', 82, 'DC']
+  ]),
+  makeRelease('j1-league-selection-7-may-26', "J1 LEAGUE Selection 7 May '26", '7 May 2026', 'Selection', [
+    ['Hiroki Sakai', 83, 'TD'], ['Zico', 84, 'TRQ'], ['Genta Miura', 77, 'DC'], ['Koya Kitagawa', 76, 'P'],
+    ['Motohiko Nakajima', 76, 'SP'], ['Shunya Yoneda', 75, 'TS'], ['Shintaro Nago', 76, 'TRQ'],
+    ['Tetsushi Yamakawa', 77, 'DC'], ['Reon Yamahara', 76, 'TS'], ['Akito Suzuki', 78, 'P'],
+    ['George Onaiwu', 74, 'CLD'], ['Eiji Miyamoto', 76, 'CC'], ['Soichiro Mori', 74, 'TD'], ['Yoon Sung-Jun', 75, 'CC']
+  ]),
+  makeRelease('brasileirao-selection-7-may-26', "Brasileirao Betano Selection 7 May '26", '7 May 2026', 'Selection', [
+    ['Alvaro Barreal', 80, 'CLS'], ['Vitor Roque', 82, 'P'], ['Damian Bobadilla', 81, 'CC'], ['Lucas Moura', 81, 'SP'],
+    ['Jorginho', 81, 'MED'], ['Ze Ivaldo', 79, 'DC'], ['Luan Peres', 79, 'DC'], ['Ademir', 80, 'ESA'],
+    ['Bruno Fuchs', 79, 'DC'], ['Raniele', 80, 'MED'], ['Viery', 77, 'DC'], ['Gustavo Henrique', 81, 'DC']
+  ]),
+  makeRelease('naruto-collab-2026', 'NARUTO SHIPPUDEN Collaboration Campaign 2026', 'May 2026', 'Collaboration', [
+    ['Takefusa Kubo', 95, 'CLD', 'Roaming Flank'], ['Robert Lewandowski', 95, 'P', 'Fox in the Box'],
+    ['Neymar Jr', 95, 'SP'], ['Martin Odegaard', 95, 'TRQ'], ['Luka Modric', 94, 'CC'],
+    ['Christian Pulisic', 95, 'SP'], ['Rafael Leao', 95, 'ESA'], ['Alexis Saelemaekers', 94, 'CLD']
+  ]),
+  makeRelease('standout-attackers-season-best', "Standout Attackers 25-26 Season's Best", 'May 2026', 'Standout', [
+    ['Bruno Fernandes', 87, 'TRQ'], ['Vinicius Junior', 87, 'ESA'], ['Ousmane Dembele', 87, 'P', 'Goal Poacher'],
+    ['Gerard Moreno', 82, 'P'], ['Dennis Man', 78, 'EDA'], ['Luis Suarez', 80, 'P'],
+    ['Igor Paixao', 81, 'ESA'], ['Charles De Ketelaere', 82, 'SP'], ['Ferran Jutgla', 78, 'P'],
+    ['Jonathan Burkardt', 83, 'P'], ['Anis Hadj Moussa', 79, 'EDA']
+  ]),
+  makeRelease('worldwide-clubs-selection-30-apr-26', "Worldwide Clubs Selection 30 Apr '26", '30 Apr 2026', 'Selection', [
+    ['P. E. Aubameyang', 86, 'P'], ['Marcelo', 86, 'TS'], ['Gareth Bale', 88, 'EDA'], ['Thiago Silva', 81, 'DC'],
+    ['Isco', 82, 'TRQ'], ['Hamari Traore', 80, 'TD'], ['Jonas Hofmann', 80, 'TRQ'], ['Santi Comesana', 80, 'CC'],
+    ['Jorgen Strand Larsen', 81, 'P'], ['Andreas Schjelderup', 81, 'ESA'], ['Lucas Beraldo', 83, 'DC']
+  ]),
+  makeRelease('encore-new-year-2026', 'Encore New Year 2026', '2026', 'Encore', [], 'needs_review')
 ]
 
 function getVerdictMeta(verdict, labels) {
@@ -538,10 +571,24 @@ export default withAuth(function CardAdvisorLabPage() {
   const labels = copy[lang === 'en' ? 'en' : 'it']
   const [releaseId, setReleaseId] = React.useState(releases[0].id)
   const [rosterSummary, setRosterSummary] = React.useState({ status: 'loading', totalPlayers: 0, starters: 0, formation: '-' })
+  const [searchQuery, setSearchQuery] = React.useState('')
   const cards = React.useMemo(() => {
-    if (releaseId === 'all') return releases.flatMap(release => release.cards)
-    return releases.find(release => release.id === releaseId)?.cards || releases[0].cards
-  }, [releaseId])
+    const baseCards = releaseId === 'all'
+      ? releases.flatMap(release => release.cards.map(card => ({ ...card, releaseName: release.name, releaseStatus: release.status })))
+      : (releases.find(release => release.id === releaseId)?.cards || []).map(card => ({
+          ...card,
+          releaseName: releases.find(release => release.id === releaseId)?.name,
+          releaseStatus: releases.find(release => release.id === releaseId)?.status
+        }))
+    const query = searchQuery.trim().toLowerCase()
+    if (!query) return baseCards
+    return baseCards.filter(card => (
+      card.name.toLowerCase().includes(query) ||
+      card.position.toLowerCase().includes(query) ||
+      card.category.toLowerCase().includes(query) ||
+      String(card.releaseName || '').toLowerCase().includes(query)
+    ))
+  }, [releaseId, searchQuery])
   const [selectedId, setSelectedId] = React.useState(cards[0]?.id)
   const [detailsCardId, setDetailsCardId] = React.useState(null)
 
@@ -585,6 +632,9 @@ export default withAuth(function CardAdvisorLabPage() {
 
   const selectedCard = cards.find(card => card.id === selectedId) || cards[0]
   const detailsCard = cards.find(card => card.id === detailsCardId) || null
+  const selectedRelease = releaseId === 'all'
+    ? { name: labels.allCards, cards: releases.flatMap(release => release.cards), status: 'active' }
+    : releases.find(release => release.id === releaseId) || releases[0]
 
   return (
     <main className="card-advisor-page">
@@ -599,38 +649,52 @@ export default withAuth(function CardAdvisorLabPage() {
             <span><Target size={15} /> {labels.dataBadge}</span>
           </div>
         </div>
-        <div className="source-card">
-          <span>{labels.sourcePlan}</span>
-          <p>{labels.sourcePlanText}</p>
-        </div>
       </section>
 
       <section className="release-shell">
         <div className="release-header">
           <div>
             <span className="mini-kicker">{labels.releaseTitle}</span>
-            <h2>{labels.currentRelease}</h2>
+            <h2>{selectedRelease.name}</h2>
             <p>{labels.sourceNote}</p>
           </div>
-          <div className="release-tabs" role="tablist" aria-label={labels.releaseTitle}>
-            <button
-              type="button"
-              className={releaseId === 'all' ? 'active' : ''}
-              onClick={() => setReleaseId('all')}
-            >
-              {labels.allCards}
-            </button>
-            {releases.map(release => (
-              <button
-                key={release.id}
-                type="button"
-                className={releaseId === release.id ? 'active' : ''}
-                onClick={() => setReleaseId(release.id)}
-              >
-                {release.name.split(' ').slice(0, 2).join(' ')}
-              </button>
-            ))}
+          <div className="release-toolbar">
+            <label className="release-search">
+              <span>{labels.activePacks}</span>
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder={labels.searchPlaceholder}
+              />
+            </label>
+            <div className="release-count">
+              <strong>{cards.length}</strong>
+              <span>{labels.cardsAvailable}</span>
+            </div>
           </div>
+        </div>
+
+        <div className="release-tabs" role="tablist" aria-label={labels.releaseTitle}>
+          <button
+            type="button"
+            className={releaseId === 'all' ? 'active' : ''}
+            onClick={() => setReleaseId('all')}
+          >
+            <strong>{labels.allCards}</strong>
+            <span>{releases.reduce((sum, release) => sum + release.cards.length, 0)}</span>
+          </button>
+          {releases.map(release => (
+            <button
+              key={release.id}
+              type="button"
+              className={releaseId === release.id ? 'active' : ''}
+              onClick={() => setReleaseId(release.id)}
+            >
+              <strong>{release.name}</strong>
+              <span>{release.status === 'needs_review' ? labels.needsSourceReview : `${release.cards.length} ${labels.cardsAvailable}`}</span>
+            </button>
+          ))}
         </div>
 
         <RosterStatusPanel
@@ -643,7 +707,7 @@ export default withAuth(function CardAdvisorLabPage() {
           <aside className="cards-column">
             <p className="selected-hint">{labels.selectedHint}</p>
             <div className="cards-grid">
-              {cards.map(card => (
+              {cards.length > 0 ? cards.map(card => (
                 <ReleaseCard
                   key={card.id}
                   card={card}
@@ -654,7 +718,12 @@ export default withAuth(function CardAdvisorLabPage() {
                     setDetailsCardId(card.id)
                   }}
                 />
-              ))}
+              )) : (
+                <div className="empty-card-state">
+                  <AlertTriangle size={20} />
+                  <span>{selectedRelease.status === 'needs_review' ? labels.needsSourceReview : labels.noCardsFound}</span>
+                </div>
+              )}
             </div>
           </aside>
         </div>
@@ -689,10 +758,7 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .lab-hero {
-          display: grid;
-          grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
-          gap: 20px;
-          align-items: stretch;
+          display: block;
           padding: clamp(22px, 4vw, 36px);
           margin-bottom: 22px;
           overflow: hidden;
@@ -788,17 +854,84 @@ export default withAuth(function CardAdvisorLabPage() {
           color: #fff;
         }
 
+        .release-toolbar {
+          display: flex;
+          align-items: flex-end;
+          justify-content: flex-end;
+          gap: 12px;
+          min-width: min(520px, 100%);
+        }
+
+        .release-search {
+          display: flex;
+          flex-direction: column;
+          gap: 7px;
+          min-width: min(360px, 100%);
+        }
+
+        .release-search span {
+          color: rgba(255,255,255,0.58);
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .release-search input {
+          width: 100%;
+          min-height: 44px;
+          border: 1px solid rgba(0,212,255,0.24);
+          border-radius: 14px;
+          background: rgba(2,4,12,0.42);
+          color: #fff;
+          padding: 0 14px;
+          outline: none;
+        }
+
+        .release-search input:focus {
+          border-color: rgba(0,212,255,0.58);
+          box-shadow: 0 0 18px rgba(0,212,255,0.12);
+        }
+
+        .release-count {
+          min-width: 112px;
+          border: 1px solid rgba(255,255,255,0.10);
+          border-radius: 14px;
+          background: rgba(255,255,255,0.05);
+          padding: 9px 12px;
+        }
+
+        .release-count strong {
+          display: block;
+          color: #fff;
+          font-size: 22px;
+          line-height: 1;
+        }
+
+        .release-count span {
+          display: block;
+          margin-top: 4px;
+          color: rgba(255,255,255,0.58);
+          font-size: 11px;
+        }
+
         .release-tabs {
           display: flex;
-          flex-wrap: wrap;
-          justify-content: flex-end;
-          gap: 8px;
-          min-width: min(460px, 100%);
+          overflow-x: auto;
+          gap: 10px;
+          margin: 0 0 18px;
+          padding: 2px 2px 10px;
+          scrollbar-width: thin;
         }
 
         .release-tabs button {
           cursor: pointer;
           color: rgba(255,255,255,0.74);
+          flex: 0 0 min(260px, 78vw);
+          justify-content: space-between;
+          text-align: left;
+          white-space: normal;
+          min-height: 54px;
         }
 
         .release-tabs button.active {
@@ -806,6 +939,18 @@ export default withAuth(function CardAdvisorLabPage() {
           border-color: rgba(0,212,255,0.48);
           color: #fff;
           box-shadow: 0 0 18px rgba(0,212,255,0.16);
+        }
+
+        .release-tabs button strong {
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .release-tabs button span {
+          color: rgba(255,255,255,0.60);
+          font-size: 11px;
+          flex-shrink: 0;
         }
 
         .lab-grid {
@@ -916,6 +1061,21 @@ export default withAuth(function CardAdvisorLabPage() {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
           gap: 14px;
+        }
+
+        .empty-card-state {
+          border: 1px solid rgba(251,191,36,0.24);
+          border-radius: 18px;
+          background: rgba(251,191,36,0.08);
+          color: rgba(255,255,255,0.82);
+          min-height: 130px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          padding: 18px;
+          text-align: center;
+          grid-column: 1 / -1;
         }
 
         .card-details-modal {
