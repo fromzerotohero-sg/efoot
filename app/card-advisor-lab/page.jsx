@@ -15,7 +15,6 @@ import {
   ShieldCheck,
   Sparkles,
   Star,
-  Target,
   TrendingUp,
   Users,
   Zap
@@ -58,7 +57,8 @@ const copy = {
     noCardsFound: 'Nessuna carta trovata con questi filtri.',
     needsSourceReview: 'In aggiornamento',
     imageFallback: 'Immagine in arrivo',
-    responsiveCheck: 'Pensato per mobile',
+    similarPlayers: 'Alternative in rosa',
+    priorityVerdict: 'Priorità per te',
     checkingRoster: 'Controllo rosa...',
     rosterReadyTitle: 'Rosa trovata: consiglio personalizzato disponibile',
     rosterReadyText: 'Questa carta verra confrontata con titolari, riserve, modulo e priorita reali della tua squadra.',
@@ -112,7 +112,8 @@ const copy = {
     noCardsFound: 'No cards found with these filters.',
     needsSourceReview: 'Updating',
     imageFallback: 'Image coming soon',
-    responsiveCheck: 'Built for mobile',
+    similarPlayers: 'Roster alternatives',
+    priorityVerdict: 'Priority for you',
     checkingRoster: 'Checking roster...',
     rosterReadyTitle: 'Roster found: personalized advice available',
     rosterReadyText: 'This card will be compared with starters, bench, formation, and real team priorities.',
@@ -225,8 +226,8 @@ function makeCard(name, overall, position, category, style = 'Profilo da analizz
     score,
     verdict: verdictFor(score),
     ...buildAdvice(position),
-    missing: ['Valutazione indicativa: controlla sempre se la carta risponde al tuo modo di giocare.'],
-    missingEn: ['Indicative evaluation: always check whether the card fits your playing style.']
+    missing: ['Con la rosa completa il verdetto tiene conto di ruolo, doppioni e priorita squadra.'],
+    missingEn: ['With a complete roster, the verdict considers role, duplicates, and team priorities.']
   }
 }
 
@@ -338,11 +339,68 @@ function proxiedImageUrl(src) {
 function buildRosterSummary(data) {
   const players = Array.isArray(data?.players) ? data.players : []
   const starters = players.filter(player => player?.slot_index != null && Number(player.slot_index) >= 0 && Number(player.slot_index) <= 10)
+  const roleCounts = players.reduce((acc, player) => {
+    const position = player?.position || '?'
+    acc[position] = (acc[position] || 0) + 1
+    return acc
+  }, {})
   return {
     status: players.length > 0 ? 'ready' : 'missing',
     totalPlayers: players.length,
     starters: starters.length,
-    formation: data?.layout?.formation || '-'
+    formation: data?.layout?.formation || '-',
+    players,
+    startersList: starters,
+    roleCounts,
+    profile: data?.profile || {},
+    hasActiveCoach: !!data?.hasActiveCoach,
+    hasGameAnalysis: !!data?.gameAnalysis?.stats
+  }
+}
+
+function getSameRolePlayers(rosterSummary, position) {
+  const players = Array.isArray(rosterSummary?.players) ? rosterSummary.players : []
+  return players
+    .filter(player => player?.position === position)
+    .sort((a, b) => (Number(b.overall_rating) || 0) - (Number(a.overall_rating) || 0))
+    .slice(0, 3)
+}
+
+function getFitSummary(card, rosterSummary, labels, lang) {
+  const sameRole = getSameRolePlayers(rosterSummary, card.position)
+  const isReady = rosterSummary?.status === 'ready'
+  if (!isReady) {
+    return {
+      title: labels.rosterMissingTitle,
+      text: lang === 'en'
+        ? 'You can read the card verdict now. Add your roster to compare it with your starters and bench.'
+        : 'Puoi leggere subito il verdetto carta. Aggiungi la rosa per confrontarla con titolari e panchina.',
+      priority: '-',
+      alternatives: []
+    }
+  }
+
+  const best = sameRole[0]
+  const bestRating = Number(best?.overall_rating) || 0
+  const gap = Number(card.overall) - bestRating
+  const roleCount = rosterSummary.roleCounts?.[card.position] || 0
+  let priority = lang === 'en' ? 'Medium' : 'Media'
+  if (roleCount === 0 || gap >= 4) priority = lang === 'en' ? 'High' : 'Alta'
+  if (roleCount >= 2 && gap <= 1) priority = lang === 'en' ? 'Low' : 'Bassa'
+
+  const text = lang === 'en'
+    ? best
+      ? `${card.name} is compared first with ${best.player_name} in ${card.position}. Priority depends on whether you need an upgrade or just another option in the same role.`
+      : `${card.name} covers a role where your roster has no direct alternative yet.`
+    : best
+      ? `${card.name} viene confrontato prima con ${best.player_name} nel ruolo ${card.position}. La priorita dipende se ti serve un upgrade o solo un'alternativa nello stesso ruolo.`
+      : `${card.name} copre un ruolo dove la tua rosa non ha ancora alternative dirette.`
+
+  return {
+    title: labels.rosterReadyTitle,
+    text,
+    priority,
+    alternatives: sameRole
   }
 }
 
@@ -426,6 +484,7 @@ function RosterStatusPanel({ labels, rosterSummary, onLoadRoster }) {
 function DetailPanel({ card, labels, lang, rosterSummary, onLoadRoster, onClose }) {
   const verdict = getVerdictMeta(card.verdict, labels)
   const hasRoster = rosterSummary?.status === 'ready'
+  const fitSummary = getFitSummary(card, rosterSummary, labels, lang)
   return (
     <section className="detail-panel">
       {onClose && (
@@ -498,7 +557,21 @@ function DetailPanel({ card, labels, lang, rosterSummary, onLoadRoster, onClose 
       <div className="fit-panel">
         <div>
           <h3><Users size={18} /> {labels.teamFit}</h3>
-          <p>{hasRoster ? labels.rosterReadyText : labels.noRosterText}</p>
+          <p>{fitSummary.text}</p>
+          <div className="fit-summary-grid">
+            <div>
+              <span>{labels.priorityVerdict}</span>
+              <strong>{fitSummary.priority}</strong>
+            </div>
+            <div>
+              <span>{labels.similarPlayers}</span>
+              <strong>
+                {fitSummary.alternatives.length > 0
+                  ? fitSummary.alternatives.map(player => `${player.player_name}${player.overall_rating ? ` ${player.overall_rating}` : ''}`).join(', ')
+                  : '-'}
+              </strong>
+            </div>
+          </div>
           <div className="fit-logic-list">
             <span>{labels.replacementLogic}</span>
             <span>{labels.duplicateLogic}</span>
@@ -645,8 +718,7 @@ export default withAuth(function CardAdvisorLabPage() {
           <p>{labels.subtitle}</p>
           <div className="hero-badges">
             <span><ShieldCheck size={15} /> {labels.notPublic}</span>
-            <span><BarChart3 size={15} /> {labels.responsiveCheck}</span>
-            <span><Target size={15} /> {labels.dataBadge}</span>
+            <span><BarChart3 size={15} /> {labels.dataBadge}</span>
           </div>
         </div>
       </section>
@@ -747,8 +819,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .lab-hero,
         .release-shell,
-        .detail-panel,
-        .source-card {
+        .detail-panel {
           border: 1px solid rgba(0, 212, 255, 0.22);
           background:
             radial-gradient(circle at top right, rgba(138, 43, 226, 0.18), transparent 36%),
@@ -787,7 +858,6 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .hero-copy p,
         .release-header p,
-        .source-card p,
         .fit-panel p,
         .data-warning p {
           color: rgba(255,255,255,0.72);
@@ -820,20 +890,6 @@ export default withAuth(function CardAdvisorLabPage() {
           padding: 8px 12px;
           font-size: 12px;
           font-weight: 700;
-        }
-
-        .source-card {
-          padding: 22px;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          min-height: 180px;
-        }
-
-        .source-card span {
-          color: #fbbf24;
-          font-weight: 900;
-          margin-bottom: 8px;
         }
 
         .release-shell {
@@ -1061,6 +1117,38 @@ export default withAuth(function CardAdvisorLabPage() {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
           gap: 14px;
+        }
+
+        .fit-summary-grid {
+          display: grid;
+          grid-template-columns: minmax(110px, 0.35fr) minmax(0, 1fr);
+          gap: 10px;
+          margin-top: 12px;
+        }
+
+        .fit-summary-grid div {
+          border: 1px solid rgba(34,197,94,0.18);
+          background: rgba(34,197,94,0.07);
+          border-radius: 14px;
+          padding: 10px;
+          min-width: 0;
+        }
+
+        .fit-summary-grid span {
+          display: block;
+          color: rgba(255,255,255,0.56);
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+        }
+
+        .fit-summary-grid strong {
+          display: block;
+          margin-top: 4px;
+          color: #fff;
+          font-size: 13px;
+          line-height: 1.4;
         }
 
         .empty-card-state {
@@ -1451,6 +1539,21 @@ export default withAuth(function CardAdvisorLabPage() {
             flex-direction: column;
           }
 
+          .release-toolbar {
+            width: 100%;
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .release-search {
+            min-width: 0;
+            width: 100%;
+          }
+
+          .release-count {
+            width: 100%;
+          }
+
           .release-tabs {
             justify-content: flex-start;
             min-width: 0;
@@ -1464,12 +1567,28 @@ export default withAuth(function CardAdvisorLabPage() {
 
         @media (max-width: 720px) {
           .card-advisor-page {
-            padding: 14px;
+            padding: 10px;
+          }
+
+          .lab-hero,
+          .release-shell {
+            border-radius: 18px;
+            padding: 16px;
+          }
+
+          .hero-copy h1 {
+            font-size: clamp(34px, 13vw, 48px);
+            letter-spacing: -0.05em;
+          }
+
+          .hero-badges span {
+            width: 100%;
+            justify-content: center;
           }
 
           .cards-grid,
           .detail-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
           }
 
           .card-details-modal {
@@ -1488,17 +1607,33 @@ export default withAuth(function CardAdvisorLabPage() {
           }
 
           .release-card {
-            display: grid;
-            grid-template-columns: minmax(96px, 34%) minmax(0, 1fr);
-            gap: 10px;
-            align-items: stretch;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
           }
 
           .release-card-body {
-            padding: 2px 2px 2px 0;
+            padding: 10px 2px 2px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+          }
+
+          .release-card h3 {
+            font-size: 13px;
+          }
+
+          .release-card p {
+            font-size: 11px;
+          }
+
+          .card-art-name {
+            font-size: 11px;
+            padding: 7px 6px;
+          }
+
+          .card-art-top span {
+            font-size: 28px;
           }
 
           .detail-metrics {
@@ -1513,6 +1648,10 @@ export default withAuth(function CardAdvisorLabPage() {
             width: 100%;
           }
 
+          .fit-summary-grid {
+            grid-template-columns: 1fr;
+          }
+
           .roster-metrics {
             grid-template-columns: repeat(3, minmax(0, 1fr));
           }
@@ -1525,7 +1664,7 @@ export default withAuth(function CardAdvisorLabPage() {
           }
 
           .release-card {
-            grid-template-columns: 1fr;
+            display: flex;
           }
         }
       `}</style>
