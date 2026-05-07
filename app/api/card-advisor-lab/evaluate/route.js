@@ -178,6 +178,60 @@ function normalizeEfhubPosition(position = '') {
   return EFHUB_POSITION_MAP[value] || value
 }
 
+const EFHUB_STYLE_LABELS = {
+  destroyer: { it: 'Distruttore', en: 'Destroyer' },
+  buildUp: { it: 'Sviluppo', en: 'Build Up' },
+  extraFrontman: { it: 'Difensore offensivo', en: 'Extra Frontman' },
+  offensiveFullBack: { it: 'Terzino offensivo', en: 'Offensive Full-back' },
+  defensiveFullBack: { it: 'Terzino difensivo', en: 'Defensive Full-back' },
+  anchorMan: { it: 'Collante', en: 'Anchor Man' },
+  boxToBox: { it: 'Box-to-Box', en: 'Box-to-Box' },
+  orchestrator: { it: 'Regista', en: 'Orchestrator' },
+  holePlayer: { it: 'Giocatore chiave', en: 'Hole Player' },
+  creativePlaymaker: { it: 'Regista creativo', en: 'Creative Playmaker' },
+  goalPoacher: { it: 'Opportunista', en: 'Goal Poacher' },
+  foxInTheBox: { it: 'Rapace d’area', en: 'Fox in the Box' },
+  deepLyingForward: { it: 'Fulcro di gioco', en: 'Deep-Lying Forward' },
+  roamingFlank: { it: 'Taglio al centro', en: 'Roaming Flank' }
+}
+
+const EFHUB_SKILL_LABELS = {
+  heading: { it: 'Colpo di testa', en: 'Heading' },
+  manMarking: { it: 'Marcatura a uomo', en: 'Man Marking' },
+  interception: { it: 'Intercettazione', en: 'Interception' },
+  blocker: { it: 'Blocco', en: 'Blocker' },
+  aerialSuperiority: { it: 'Dominio aereo', en: 'Aerial Superiority' },
+  slidingTackle: { it: 'Scivolata', en: 'Sliding Tackle' },
+  acrobaticClearance: { it: 'Rinvio acrobatico', en: 'Acrobatic Clearance' },
+  oneTouchPass: { it: 'Passaggio di prima', en: 'One-touch Pass' },
+  throughPassing: { it: 'Passaggio filtrante', en: 'Through Passing' },
+  pinpointCrossing: { it: 'Cross calibrato', en: 'Pinpoint Crossing' },
+  firstTimeShot: { it: 'Tiro di prima', en: 'First-time Shot' },
+  longRangeShooting: { it: 'Tiro dalla distanza', en: 'Long Range Shooting' },
+  fightingSpirit: { it: 'Spirito combattivo', en: 'Fighting Spirit' },
+  doubleTouch: { it: 'Doppio tocco', en: 'Double Touch' }
+}
+
+function humanizeCamelCase(value = '') {
+  return String(value || '')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, char => char.toUpperCase())
+}
+
+function labelFromMap(map, value, lang) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  const normalized = raw.replace(/\s+/g, '')
+  const asciiKey = toAscii(raw).replace(/\s+/g, '')
+  const entry = map[raw] ||
+    map[normalized] ||
+    Object.entries(map).find(([key]) => key.toLowerCase() === normalized.toLowerCase() || key.toLowerCase() === asciiKey)?.[1]
+  if (entry) return lang === 'en' ? entry.en : entry.it
+  return humanizeCamelCase(raw)
+}
+
 async function fetchEfhubCardDetail(card) {
   if (!card.sourcePlayerId || card.source !== 'efhub') return null
   try {
@@ -386,32 +440,6 @@ function connectionName(connection) {
   return connection.name || connection.connection || connection.title || connection.label || ''
 }
 
-function connectionFit(card, coach) {
-  const name = connectionName(coach?.connection)
-  if (!name) return { label: '', impact: 'missing', textIt: '', textEn: '' }
-  const family = roleFamily(card.position)
-  const lower = name.toLowerCase()
-  const supportAtt = ['spazio', 'over', 'profond', 'cross', 'testa', 'header', 'switch']
-  const supportBuild = ['possesso', 'pass', 'regia', 'build', 'palleggio', 'controllo']
-  const supportDef = ['press', 'duel', 'recuper', 'compact', 'copertura', 'mark']
-  let impact = 'medium'
-  if (supportAtt.some(key => lower.includes(key)) && family === 'att') impact = 'high'
-  if (supportBuild.some(key => lower.includes(key)) && family === 'mid') impact = 'high'
-  if (supportDef.some(key => lower.includes(key)) && (family === 'def' || family === 'mid')) impact = 'high'
-  if (supportAtt.some(key => lower.includes(key)) && family === 'def') impact = 'low'
-  const textIt = impact === 'high'
-    ? `Il Link-up ${name} entra bene su ${card.name}: aggiunge valore diretto nel tuo assetto.`
-    : impact === 'low'
-      ? `Il Link-up ${name} pesa poco su ${card.name}: la carta rende soprattutto per il ruolo base.`
-      : `Il Link-up ${name} lavora come supporto su ${card.name}: il valore principale resta il fit ruolo.`
-  const textEn = impact === 'high'
-    ? `Link-up ${name} fits ${card.name} well: it adds direct value to your setup.`
-    : impact === 'low'
-      ? `Link-up ${name} has low impact on ${card.name}: the card value stays on the base role.`
-      : `Link-up ${name} works as support on ${card.name}: the main value is still role fit.`
-  return { label: name, impact, textIt, textEn }
-}
-
 function technicalProfile(card, signals, lang) {
   const family = roleFamily(card.position)
   const tags = []
@@ -435,11 +463,15 @@ function technicalProfile(card, signals, lang) {
     if (signals.pass >= 75) tags.push(lang === 'en' ? 'Final pass quality' : 'Qualita ultimo passaggio')
     if (signals.aerial >= 78) tags.push(lang === 'en' ? 'Aerial threat' : 'Minaccia aerea')
   }
-  const styleTag = signals.style
-    ? (lang === 'en' ? `Style: ${signals.style}` : `Stile: ${signals.style}`)
+  const styleLabel = labelFromMap(EFHUB_STYLE_LABELS, signals.style, lang)
+  const styleTag = styleLabel
+    ? (lang === 'en' ? `Style: ${styleLabel}` : `Stile: ${styleLabel}`)
     : null
   if (styleTag) tags.unshift(styleTag)
-  const skillTags = signals.mergedSkills.slice(0, 2).map(skill => String(skill))
+  const skillTags = signals.mergedSkills
+    .slice(0, 2)
+    .map(skill => labelFromMap(EFHUB_SKILL_LABELS, skill, lang))
+    .filter(Boolean)
   return [...tags, ...skillTags].slice(0, 5).filter(Boolean)
 }
 
@@ -511,10 +543,7 @@ function profileSignals(profile = {}, lang = 'it') {
     needDef: /(difes|duel|copert|recuper|conced)/.test(all),
     needFinishing: /(finish|finaliz|gol|shot|tiro|attacco)/.test(all),
     networkRisk: /(high|alto|unstable|instab|poor|basso)/.test(`${inputDelay} ${connection}`),
-    inputDelayLabel: profile?.input_delay || null,
-    note: lang === 'en'
-      ? (profile?.ai_weak_point ? `Profile priority: ${profile.ai_weak_point}` : '')
-      : (profile?.ai_weak_point ? `Priorita profilo: ${profile.ai_weak_point}` : '')
+    inputDelayLabel: profile?.input_delay || null
   }
 }
 
@@ -584,7 +613,8 @@ function cardValueBullets(card, technical, lang) {
   const family = roleFamily(card.position)
   const bullets = []
   if (technical.style) {
-    bullets.push(lang === 'en' ? `Native style: ${technical.style}.` : `Stile nativo: ${technical.style}.`)
+    const styleLabel = labelFromMap(EFHUB_STYLE_LABELS, technical.style, lang)
+    bullets.push(lang === 'en' ? `Native style: ${styleLabel}.` : `Stile nativo: ${styleLabel}.`)
   }
   if (family === 'gk') {
     if (technical.gk >= 75) bullets.push(lang === 'en' ? 'Raises reliability inside the box.' : 'Alza affidabilità dentro l’area.')
@@ -614,7 +644,6 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   const hasRoster = players.length > 0
   const hasFormation = Boolean(formation?.formation) && players.some(player => player.slot_index != null && player.slot_index >= 0 && player.slot_index <= 10)
   const hasCoach = Boolean(coach?.coach_name)
-  const conn = connectionFit(card, coach)
   const tacticalStyle = tacticalSettings?.team_playing_style || ''
   const technical = cardTechnicalSignals(card, catalogCard)
   const issues = issuesRead(patterns)
@@ -638,8 +667,6 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   else score -= 6
   if (duplicate) score -= 14
   if (starterBlocked) score -= 8
-  if (conn.impact === 'high') score += 8
-  if (conn.impact === 'low') score -= 5
   if (issues.needDefence && (roleFamily(card.position) === 'def' || roleFamily(card.position) === 'gk')) score += 7
   if (issues.needBuild && roleFamily(card.position) === 'mid') score += 7
   if (issues.needDepth && roleFamily(card.position) === 'att') score += 7
@@ -704,7 +731,6 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
           ]
 
   const strengths = cardValueBullets(card, technical, lang)
-  if (profileRead.note) strengths.push(profileRead.note)
   const whyItMatters = strengths.slice(0, 3)
 
   const technicalRisk = lang === 'en'
@@ -760,7 +786,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
     : !hasFormation
       ? { label: lang === 'en' ? 'Save formation for starter fit' : 'Salva formazione per il fit titolari', target: 'formation' }
       : !hasCoach
-        ? { label: lang === 'en' ? 'Add coach for Link-up fit' : 'Aggiungi coach per il fit Link-up', target: 'coach' }
+        ? { label: lang === 'en' ? 'Add coach for team-style fit' : 'Aggiungi coach per il fit stile squadra', target: 'coach' }
         : null
   return {
     title,
@@ -771,7 +797,6 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
     strengths,
     rosterRead,
     whyItMatters,
-    coachLinkup: conn.textEn && lang === 'en' ? conn.textEn : conn.textIt,
     recommendedUse: hasRoster && technical.hasCompleteCardData ? recommendedUse(card, lang, tacticalStyle) : '',
     technicalRisk,
     legacyTechnicalRisk,
@@ -791,7 +816,9 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
       tacticalStyle: tacticalSettings?.team_playing_style || null,
       cardDataSource: technical.dataSource,
       hasCompleteCardData: technical.hasCompleteCardData,
-      catalogSource: catalogCard?.source || null
+      catalogSource: catalogCard?.source || null,
+      activeCoachName: hasCoach ? coach.coach_name : null,
+      coachConnectionName: connectionName(coach?.connection) || null
     }
   }
 }

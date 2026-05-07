@@ -63,9 +63,9 @@ const copy = {
     systemSynergy: 'Sinergia sistema',
     noFormationTitle: 'Formazione non salvata',
     noFormationText: 'Hai giocatori in rosa: posso valutare ruolo, doppioni e alternative, ma per sapere se entra nei titolari serve una formazione salvata.',
-    noCoachText: 'Aggiungi il coach attivo per leggere stile squadra, competenze e Link-up.',
+    noCoachText: 'Aggiungi il coach attivo per leggere stile squadra e competenze.',
     saveFormationCta: 'Salva formazione per il fit titolari',
-    addCoachCta: 'Aggiungi coach per sinergia completa',
+    addCoachCta: 'Aggiungi coach per lettura completa',
     analyzeSynergy: 'Analizza sinergia',
     checkingRoster: 'Controllo rosa...',
     rosterReadyTitle: 'Rosa trovata: consiglio personalizzato disponibile',
@@ -84,7 +84,7 @@ const copy = {
     loadRoster: 'Carica o completa la rosa',
     closeDetails: 'Chiudi dettagli',
     mainLever: 'Leva principale',
-    coachLinkup: 'Coach e Link-up',
+    coachContext: 'Contesto coach',
     recommendedUse: 'Uso consigliato',
     coinRisk: 'Rischio coins',
     purchaseAdvice: 'Consiglio finale',
@@ -135,9 +135,9 @@ const copy = {
     systemSynergy: 'System synergy',
     noFormationTitle: 'Formation not saved',
     noFormationText: 'You have players in the roster: I can read role, duplicates, and alternatives, but a saved formation is needed to know if the card enters the starters.',
-    noCoachText: 'Add the active coach to read team style, competences, and Link-up.',
+    noCoachText: 'Add the active coach to read team style and competences.',
     saveFormationCta: 'Save formation for starter fit',
-    addCoachCta: 'Add coach for full synergy',
+    addCoachCta: 'Add coach for full read',
     analyzeSynergy: 'Analyze synergy',
     checkingRoster: 'Checking roster...',
     rosterReadyTitle: 'Roster found: personalized advice available',
@@ -156,7 +156,7 @@ const copy = {
     loadRoster: 'Load or complete roster',
     closeDetails: 'Close details',
     mainLever: 'Main lever',
-    coachLinkup: 'Coach and Link-up',
+    coachContext: 'Coach context',
     recommendedUse: 'Recommended use',
     coinRisk: 'Coin risk',
     purchaseAdvice: 'Final advice',
@@ -541,8 +541,8 @@ function getFitSummary(card, rosterSummary, labels, lang) {
   return {
     title: labels.systemSynergy,
     text: lang === 'en'
-      ? `${baseText} Coach and tactics are available, so the read includes team style, coach competences${getCoachConnectionLabel(rosterSummary.activeCoach) ? ` and Link-up ${getCoachConnectionLabel(rosterSummary.activeCoach)}` : ' and Link-up'}.`
-      : `${baseText} Coach e tattica sono presenti: la lettura include stile squadra, competenze coach${getCoachConnectionLabel(rosterSummary.activeCoach) ? ` e Link-up ${getCoachConnectionLabel(rosterSummary.activeCoach)}` : ' e Link-up'}.`,
+      ? `${baseText} Coach and tactics are available, so the read includes team style and coach competences.`
+      : `${baseText} Coach e tattica sono presenti: la lettura include stile squadra e competenze coach.`,
     priority,
     alternatives: sameRole,
     cta: null,
@@ -642,23 +642,15 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
   const fitSummary = getFitSummary(card, rosterSummary, labels, lang)
   const serverEval = evaluation || null
   const lever = serverEval?.mainLever || (lang === 'en' ? (card.leverEn || card.lever) : card.lever)
-  const connectionLabel = getCoachConnectionLabel(rosterSummary?.activeCoach)
-  const coachLinkText = connectionLabel
-    ? (lang === 'en'
-        ? `Link-up ${connectionLabel} is part of this read: the card is evaluated inside your coach setup.`
-        : `Il Link-up ${connectionLabel} entra nella lettura: la carta viene valutata dentro il tuo assetto coach.`)
-    : (rosterSummary?.hasActiveCoach
-        ? (lang === 'en'
-            ? 'Coach and tactics are part of this read.'
-            : 'Coach e tattica entrano nella lettura.')
-        : (lang === 'en'
-            ? 'Add the active coach to include Link-up and style competences.'
-            : 'Aggiungi il coach attivo per includere Link-up e competenze stile.'))
   const effectiveTitle = evaluating ? labels.loadingDecision : (serverEval?.title || fitSummary.title)
   const effectivePriority = evaluating ? '...' : (serverEval?.decision?.label || serverEval?.synergyLevel || fitSummary.priority)
   const effectiveFitText = serverEval?.whyItMatters?.length ? serverEval.whyItMatters.join(' ') : fitSummary.text
   const effectiveAlternatives = serverEval?.alternatives || fitSummary.alternatives
-  const effectiveCoachText = serverEval?.coachLinkup || coachLinkText
+  const effectiveCoachText = serverEval?.context?.activeCoachName
+    ? (lang === 'en'
+        ? `Coach active: ${serverEval.context.activeCoachName}. The verdict uses team style and coach competences.`
+        : `Coach attivo: ${serverEval.context.activeCoachName}. Il verdetto usa stile squadra e competenze coach.`)
+    : ''
   const effectiveRisk = serverEval?.coinsRisk || serverEval?.technicalRisk
     ? [serverEval.coinsRisk || serverEval.technicalRisk]
     : listFor(card, 'risks', lang)
@@ -789,7 +781,7 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
           )}
           {serverEval?.context?.hasCoach && effectiveCoachText && (
             <div className="fit-logic-list">
-              <span>{labels.coachLinkup}: {effectiveCoachText}</span>
+              <span>{labels.coachContext}: {effectiveCoachText}</span>
             </div>
           )}
         </div>
