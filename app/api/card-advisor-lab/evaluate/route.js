@@ -751,15 +751,47 @@ function tacticalStyleFit(technical, position, tacticalStyle, profileRead, lang)
   return ''
 }
 
-function statEdgeLine(technical, bestAlternative, lang) {
-  if (!bestAlternative?.signals) return ''
-  const edges = [
+function roleRelevantStatEdges(position, technical, bestAlternative, lang) {
+  const family = roleFamily(position)
+  const common = [
     ['pace', technical.pace - bestAlternative.signals.pace, lang === 'en' ? 'speed/recovery' : 'velocità/recupero'],
     ['pass', technical.pass - bestAlternative.signals.pass, lang === 'en' ? 'passing' : 'passaggio'],
-    ['defend', technical.defend - bestAlternative.signals.defend, lang === 'en' ? 'defending' : 'difesa'],
-    ['aerial', technical.aerial - bestAlternative.signals.aerial, lang === 'en' ? 'aerial game' : 'gioco aereo'],
-    ['finish', technical.finish - bestAlternative.signals.finish, lang === 'en' ? 'finishing' : 'finalizzazione']
-  ].filter(([, value]) => Number.isFinite(value) && Math.abs(value) >= 5)
+    ['physical', technical.physical - bestAlternative.signals.physical, lang === 'en' ? 'physical duels' : 'duelli fisici']
+  ]
+  if (family === 'gk') {
+    return [
+      ['gk', technical.gk - bestAlternative.signals.gk, lang === 'en' ? 'goalkeeping' : 'parate'],
+      ['pass', technical.pass - bestAlternative.signals.pass, lang === 'en' ? 'build-up from goal' : 'uscita palla dal basso'],
+      ['physical', technical.physical - bestAlternative.signals.physical, lang === 'en' ? 'box presence' : 'presenza in area']
+    ]
+  }
+  if (family === 'def') {
+    return [
+      ['defend', technical.defend - bestAlternative.signals.defend, lang === 'en' ? 'defensive timing' : 'tempo difensivo'],
+      ['aerial', technical.aerial - bestAlternative.signals.aerial, lang === 'en' ? 'aerial game' : 'gioco aereo'],
+      ...common
+    ]
+  }
+  if (family === 'mid') {
+    return [
+      ['pass', technical.pass - bestAlternative.signals.pass, lang === 'en' ? 'passing' : 'passaggio'],
+      ['defend', technical.defend - bestAlternative.signals.defend, lang === 'en' ? 'defensive balance' : 'equilibrio difensivo'],
+      ['pace', technical.pace - bestAlternative.signals.pace, lang === 'en' ? 'transition speed' : 'velocità nelle transizioni'],
+      ['physical', technical.physical - bestAlternative.signals.physical, lang === 'en' ? 'midfield duels' : 'duelli in mezzo']
+    ]
+  }
+  return [
+    ['finish', technical.finish - bestAlternative.signals.finish, lang === 'en' ? 'finishing' : 'finalizzazione'],
+    ['pace', technical.pace - bestAlternative.signals.pace, lang === 'en' ? 'depth speed' : 'velocità in profondità'],
+    ['pass', technical.pass - bestAlternative.signals.pass, lang === 'en' ? 'final pass' : 'ultimo passaggio'],
+    ['aerial', technical.aerial - bestAlternative.signals.aerial, lang === 'en' ? 'aerial threat' : 'minaccia aerea']
+  ]
+}
+
+function statEdgeLine(position, technical, bestAlternative, lang) {
+  if (!bestAlternative?.signals) return ''
+  const edges = roleRelevantStatEdges(position, technical, bestAlternative, lang)
+    .filter(([, value]) => Number.isFinite(value) && Math.abs(value) >= 5)
     .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
 
   if (edges.length === 0) return ''
@@ -980,7 +1012,7 @@ function buildRosterRead({ card, sameRole, bestAlternative, roleGap, duplicate, 
   const useLine = tacticalUseLine(card, technical, tacticalStyle, lang)
   const mapLine = tacticalMapLine(patterns, card.position, lang)
   const fitLine = tacticalStyleFit(technical, card.position, tacticalStyle, profileRead, lang)
-  const edgeLine = statEdgeLine(technical, bestAlternative, lang)
+  const edgeLine = statEdgeLine(card.position, technical, bestAlternative, lang)
   const secondLine = [useLine, fitLine, mapLine, edgeLine].filter(Boolean).slice(0, 2).join(' ')
   const movement = movementProfile(technical, card.position, lang)
 
