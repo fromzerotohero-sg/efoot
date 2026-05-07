@@ -52,7 +52,22 @@ const copy = {
     currentRelease: 'Pack corrente',
     allCards: 'Tutte',
     imageFallback: 'Immagine in cache da collegare',
-    responsiveCheck: 'Layout responsive desktop/mobile'
+    responsiveCheck: 'Layout responsive desktop/mobile',
+    checkingRoster: 'Controllo rosa...',
+    rosterReadyTitle: 'Rosa trovata: fit personale attivabile',
+    rosterReadyText: 'Quando collegheremo il motore, questa carta verra confrontata con titolari, riserve, modulo e priorita reali della tua squadra.',
+    rosterMissingTitle: 'Rosa non ancora caricata',
+    rosterMissingText: 'La pagina continua a dare valutazione generale. Per sapere se la carta entra davvero nella tua squadra, serve caricare almeno la rosa base.',
+    rosterUnavailableTitle: 'Controllo rosa non disponibile',
+    rosterUnavailableText: 'Il lab resta utilizzabile: la valutazione generale non dipende dalla rosa. Il fit personale verra riattivato quando il controllo dati e disponibile.',
+    rosterPlayers: 'Giocatori',
+    rosterStarters: 'Titolari',
+    rosterFormation: 'Modulo',
+    personalFitPreview: 'Anteprima logica fit',
+    replacementLogic: 'confronto con chi gioca nello stesso ruolo',
+    duplicateLogic: 'controllo doppioni in rosa',
+    priorityLogic: 'priorita rispetto ai buchi squadra',
+    loadRoster: 'Carica o completa la rosa'
   },
   en: {
     eyebrow: 'Internal lab',
@@ -85,7 +100,22 @@ const copy = {
     currentRelease: 'Current pack',
     allCards: 'All',
     imageFallback: 'Image cache to connect',
-    responsiveCheck: 'Desktop/mobile responsive layout'
+    responsiveCheck: 'Desktop/mobile responsive layout',
+    checkingRoster: 'Checking roster...',
+    rosterReadyTitle: 'Roster found: personal fit can be enabled',
+    rosterReadyText: 'Once the engine is connected, this card will be compared with starters, bench, formation, and real team priorities.',
+    rosterMissingTitle: 'Roster not loaded yet',
+    rosterMissingText: 'The page still gives general evaluation. To know if the card really fits your team, the base roster must be loaded.',
+    rosterUnavailableTitle: 'Roster check unavailable',
+    rosterUnavailableText: 'The lab remains usable: general evaluation does not depend on roster data. Personal fit will be restored when the data check is available.',
+    rosterPlayers: 'Players',
+    rosterStarters: 'Starters',
+    rosterFormation: 'Formation',
+    personalFitPreview: 'Fit logic preview',
+    replacementLogic: 'comparison with same-role players',
+    duplicateLogic: 'duplicate check in roster',
+    priorityLogic: 'priority against team gaps',
+    loadRoster: 'Load or complete roster'
   }
 }
 
@@ -96,13 +126,13 @@ const releases = [
     date: 'May 2026',
     cards: [
       {
-        id: 'kubo-95',
-        name: 'Takefusa Kubo',
-        position: 'CLD',
+        id: 'lamine-yamal-95',
+        name: 'Lamine Yamal',
+        position: 'EDA',
         overall: 95,
         category: 'Collaboration',
         style: 'Prolific Winger',
-        imageUrl: '',
+        imageUrl: 'https://www.efootballhub.net/pes21-mobile/images/iconicmoments/123236838963522.jpg',
         score: 88,
         verdict: 'top',
         build: ['Speed', 'Dribbling', 'Low Pass'],
@@ -134,13 +164,13 @@ const releases = [
         missingEn: ['Max build compatibility', 'Official booster data']
       },
       {
-        id: 'neymar-95',
-        name: 'Neymar Jr',
-        position: 'SP',
+        id: 'raphinha-95',
+        name: 'Raphinha',
+        position: 'ESA',
         overall: 95,
         category: 'Collaboration',
-        style: 'Creative Playmaker',
-        imageUrl: '',
+        style: 'Roaming Flank',
+        imageUrl: 'https://www.efootballhub.net/pes21-mobile/images/iconicmoments/123236838912052.jpg',
         score: 90,
         verdict: 'top',
         build: ['Dribbling', 'Tight Possession', 'Finishing'],
@@ -160,13 +190,13 @@ const releases = [
     date: 'May 2026',
     cards: [
       {
-        id: 'bruno-87',
-        name: 'Bruno Fernandes',
+        id: 'bellingham-87',
+        name: 'Jude Bellingham',
         position: 'TRQ',
         overall: 87,
         category: 'Standout',
         style: 'Hole Player',
-        imageUrl: '',
+        imageUrl: 'https://www.efootballhub.net/pes21-mobile/images/iconicmoments/52871852853061.jpg',
         score: 79,
         verdict: 'situational',
         build: ['Low Pass', 'Kicking Power', 'Stamina'],
@@ -180,12 +210,12 @@ const releases = [
       },
       {
         id: 'vinicius-87',
-        name: 'Vinicius Junior',
+        name: 'Vinícius Júnior',
         position: 'ESA',
         overall: 87,
         category: 'Standout',
         style: 'Prolific Winger',
-        imageUrl: '',
+        imageUrl: 'https://www.efootballhub.net/pes21-mobile/images/iconicmoments/52880442771767.jpg',
         score: 83,
         verdict: 'good',
         build: ['Speed', 'Acceleration', 'Dribbling'],
@@ -198,13 +228,13 @@ const releases = [
         missingEn: ['Max overall', 'Weak foot and injury resistance']
       },
       {
-        id: 'dembele-87',
-        name: 'Ousmane Dembele',
+        id: 'mbappe-87',
+        name: 'Kylian Mbappé',
         position: 'P',
         overall: 87,
         category: 'Standout',
         style: 'Goal Poacher',
-        imageUrl: '',
+        imageUrl: 'https://www.efootballhub.net/pes21-mobile/images/iconicmoments/52851451736190.jpg',
         score: 76,
         verdict: 'situational',
         build: ['Speed', 'Finishing', 'Balance'],
@@ -264,6 +294,17 @@ function listFor(card, key, lang) {
   return card[key] || []
 }
 
+function buildRosterSummary(data) {
+  const players = Array.isArray(data?.players) ? data.players : []
+  const starters = players.filter(player => player?.slot_index != null && Number(player.slot_index) >= 0 && Number(player.slot_index) <= 10)
+  return {
+    status: players.length > 0 ? 'ready' : 'missing',
+    totalPlayers: players.length,
+    starters: starters.length,
+    formation: data?.layout?.formation || '-'
+  }
+}
+
 function ReleaseCard({ card, selected, labels, onSelect }) {
   const verdict = getVerdictMeta(card.verdict, labels)
   return (
@@ -290,8 +331,60 @@ function ReleaseCard({ card, selected, labels, onSelect }) {
   )
 }
 
-function DetailPanel({ card, labels, lang, onLoadRoster }) {
+function RosterStatusPanel({ labels, rosterSummary, onLoadRoster }) {
+  const isLoading = rosterSummary.status === 'loading'
+  const isReady = rosterSummary.status === 'ready'
+  const isUnavailable = rosterSummary.status === 'unavailable'
+  const title = isLoading
+    ? labels.checkingRoster
+    : isReady
+      ? labels.rosterReadyTitle
+      : isUnavailable
+        ? labels.rosterUnavailableTitle
+        : labels.rosterMissingTitle
+  const text = isReady
+    ? labels.rosterReadyText
+    : isUnavailable
+      ? labels.rosterUnavailableText
+      : labels.rosterMissingText
+
+  return (
+    <section className={`roster-status-panel ${isReady ? 'ready' : ''}`}>
+      <div className="roster-status-main">
+        <span className="mini-kicker">{labels.teamFit}</span>
+        <h3>{title}</h3>
+        <p>{text}</p>
+      </div>
+
+      <div className="roster-status-side">
+        <div className="roster-metrics">
+          <div>
+            <span>{labels.rosterPlayers}</span>
+            <strong>{isLoading ? '...' : rosterSummary.totalPlayers ?? 0}</strong>
+          </div>
+          <div>
+            <span>{labels.rosterStarters}</span>
+            <strong>{isLoading ? '...' : rosterSummary.starters ?? 0}</strong>
+          </div>
+          <div>
+            <span>{labels.rosterFormation}</span>
+            <strong>{isLoading ? '...' : rosterSummary.formation || '-'}</strong>
+          </div>
+        </div>
+        {!isReady && (
+          <button type="button" onClick={onLoadRoster}>
+            {labels.loadRoster}
+            <ArrowRight size={16} />
+          </button>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function DetailPanel({ card, labels, lang, rosterSummary, onLoadRoster }) {
   const verdict = getVerdictMeta(card.verdict, labels)
+  const hasRoster = rosterSummary?.status === 'ready'
   return (
     <section className="detail-panel">
       <div className="detail-hero">
@@ -354,12 +447,19 @@ function DetailPanel({ card, labels, lang, onLoadRoster }) {
       <div className="fit-panel">
         <div>
           <h3><Users size={18} /> {labels.teamFit}</h3>
-          <p>{labels.noRosterText}</p>
+          <p>{hasRoster ? labels.rosterReadyText : labels.noRosterText}</p>
+          <div className="fit-logic-list">
+            <span>{labels.replacementLogic}</span>
+            <span>{labels.duplicateLogic}</span>
+            <span>{labels.priorityLogic}</span>
+          </div>
         </div>
-        <button type="button" onClick={onLoadRoster}>
-          {labels.compareCta}
-          <ArrowRight size={16} />
-        </button>
+        {!hasRoster && (
+          <button type="button" onClick={onLoadRoster}>
+            {labels.compareCta}
+            <ArrowRight size={16} />
+          </button>
+        )}
       </div>
 
       <div className="data-warning">
@@ -378,6 +478,7 @@ export default withAuth(function CardAdvisorLabPage() {
   const { lang } = useTranslation()
   const labels = copy[lang === 'en' ? 'en' : 'it']
   const [releaseId, setReleaseId] = React.useState(releases[0].id)
+  const [rosterSummary, setRosterSummary] = React.useState({ status: 'loading', totalPlayers: 0, starters: 0, formation: '-' })
   const cards = React.useMemo(() => {
     if (releaseId === 'all') return releases.flatMap(release => release.cards)
     return releases.find(release => release.id === releaseId)?.cards || releases[0].cards
@@ -387,6 +488,40 @@ export default withAuth(function CardAdvisorLabPage() {
   React.useEffect(() => {
     setSelectedId(cards[0]?.id)
   }, [cards])
+
+  React.useEffect(() => {
+    let active = true
+
+    async function loadRosterSummary() {
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+        if (!token) {
+          if (active) setRosterSummary({ status: 'missing', totalPlayers: 0, starters: 0, formation: '-' })
+          return
+        }
+
+        const response = await fetch(`/api/dashboard?t=${Date.now()}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Cache-Control': 'no-cache, no-store'
+          },
+          cache: 'no-store'
+        })
+
+        if (!response.ok) throw new Error('Unable to load roster status')
+        const data = await response.json()
+        if (active) setRosterSummary(buildRosterSummary(data))
+      } catch (error) {
+        console.warn('[card-advisor-lab] roster status unavailable:', error)
+        if (active) setRosterSummary({ status: 'unavailable', totalPlayers: 0, starters: 0, formation: '-' })
+      }
+    }
+
+    loadRosterSummary()
+    return () => {
+      active = false
+    }
+  }, [])
 
   const selectedCard = cards.find(card => card.id === selectedId) || cards[0]
 
@@ -437,6 +572,12 @@ export default withAuth(function CardAdvisorLabPage() {
           </div>
         </div>
 
+        <RosterStatusPanel
+          labels={labels}
+          rosterSummary={rosterSummary}
+          onLoadRoster={() => router.push('/gestione-formazione')}
+        />
+
         <div className="lab-grid">
           <aside className="cards-column">
             <p className="selected-hint">{labels.selectedHint}</p>
@@ -458,6 +599,7 @@ export default withAuth(function CardAdvisorLabPage() {
               card={selectedCard}
               labels={labels}
               lang={lang === 'en' ? 'en' : 'it'}
+              rosterSummary={rosterSummary}
               onLoadRoster={() => router.push('/gestione-formazione')}
             />
           )}
@@ -608,6 +750,97 @@ export default withAuth(function CardAdvisorLabPage() {
           grid-template-columns: minmax(300px, 0.95fr) minmax(0, 1.45fr);
           gap: 20px;
           align-items: start;
+        }
+
+        .roster-status-panel {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(300px, 420px);
+          gap: 16px;
+          align-items: stretch;
+          margin: 0 0 20px;
+          padding: 16px;
+          border: 1px solid rgba(251,191,36,0.22);
+          border-radius: 20px;
+          background:
+            radial-gradient(circle at top left, rgba(251,191,36,0.14), transparent 28%),
+            rgba(255,255,255,0.045);
+        }
+
+        .roster-status-panel.ready {
+          border-color: rgba(34,197,94,0.35);
+          background:
+            radial-gradient(circle at top left, rgba(34,197,94,0.16), transparent 28%),
+            rgba(255,255,255,0.045);
+        }
+
+        .roster-status-main h3 {
+          margin: 8px 0;
+          color: #fff;
+          font-size: clamp(18px, 2.4vw, 24px);
+        }
+
+        .roster-status-main p {
+          margin: 0;
+          color: rgba(255,255,255,0.72);
+          line-height: 1.6;
+        }
+
+        .roster-status-side {
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
+        .roster-metrics {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 8px;
+        }
+
+        .roster-metrics div {
+          border: 1px solid rgba(255,255,255,0.10);
+          border-radius: 14px;
+          padding: 10px;
+          background: rgba(2,4,12,0.34);
+          min-width: 0;
+        }
+
+        .roster-metrics span {
+          display: block;
+          color: rgba(255,255,255,0.52);
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .roster-metrics strong {
+          display: block;
+          margin-top: 3px;
+          color: #fff;
+          font-size: clamp(18px, 3vw, 24px);
+          line-height: 1.1;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .roster-status-side button {
+          border: 1px solid rgba(0,212,255,0.42);
+          border-radius: 14px;
+          background: linear-gradient(135deg, rgba(0,212,255,0.18), rgba(138,43,226,0.20));
+          color: #fff;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          min-height: 44px;
+          padding: 10px 14px;
+          font-weight: 800;
+          cursor: pointer;
+          width: 100%;
         }
 
         .selected-hint {
@@ -881,6 +1114,24 @@ export default withAuth(function CardAdvisorLabPage() {
           gap: 16px;
         }
 
+        .fit-logic-list {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 12px;
+        }
+
+        .fit-logic-list span {
+          display: inline-flex;
+          border: 1px solid rgba(34,197,94,0.20);
+          background: rgba(34,197,94,0.08);
+          color: rgba(255,255,255,0.82);
+          border-radius: 999px;
+          padding: 7px 10px;
+          font-size: 12px;
+          font-weight: 700;
+        }
+
         .fit-panel button {
           border: 1px solid rgba(0,212,255,0.42);
           border-radius: 14px;
@@ -931,7 +1182,8 @@ export default withAuth(function CardAdvisorLabPage() {
           .lab-hero,
           .release-header,
           .detail-hero,
-          .fit-panel {
+          .fit-panel,
+          .roster-status-panel {
             grid-template-columns: 1fr;
             flex-direction: column;
           }
@@ -957,6 +1209,20 @@ export default withAuth(function CardAdvisorLabPage() {
             grid-template-columns: 1fr;
           }
 
+          .release-card {
+            display: grid;
+            grid-template-columns: minmax(96px, 34%) minmax(0, 1fr);
+            gap: 10px;
+            align-items: stretch;
+          }
+
+          .release-card-body {
+            padding: 2px 2px 2px 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+          }
+
           .detail-metrics {
             grid-template-columns: repeat(3, minmax(0, 1fr));
           }
@@ -968,10 +1234,19 @@ export default withAuth(function CardAdvisorLabPage() {
           .fit-panel button {
             width: 100%;
           }
+
+          .roster-metrics {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
         }
 
         @media (max-width: 420px) {
-          .detail-metrics {
+          .detail-metrics,
+          .roster-metrics {
+            grid-template-columns: 1fr;
+          }
+
+          .release-card {
             grid-template-columns: 1fr;
           }
         }
