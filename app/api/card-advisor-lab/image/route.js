@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic'
 
 const ALLOWED_HOSTS = new Set([
   'pesdb.net',
+  'efimg.com',
   'www.efootballhub.net',
   'efootballhub.net'
 ])

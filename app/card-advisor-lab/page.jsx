@@ -224,9 +224,27 @@ function verdictFor(score) {
   return 'skip'
 }
 
+function enrichCard(card) {
+  const normalized = {
+    style: 'Profilo da analizzare',
+    ...card,
+    imageUrl: card.imageUrl || imageByName[card.name] || ''
+  }
+  const score = scoreFor(normalized.overall, normalized.position)
+  return {
+    ...normalized,
+    id: normalized.id || `${normalizeKey(normalized.category)}-${normalizeKey(normalized.name)}-${normalized.position}-${normalized.overall}`,
+    score: normalized.score ?? score,
+    verdict: normalized.verdict || verdictFor(score),
+    ...buildAdvice(normalized.position),
+    missing: normalized.missing || ['Con la rosa completa il verdetto tiene conto di ruolo, doppioni e priorita squadra.'],
+    missingEn: normalized.missingEn || ['With a complete roster, the verdict considers role, duplicates, and team priorities.']
+  }
+}
+
 function makeCard(name, overall, position, category, style = 'Profilo da analizzare') {
   const score = scoreFor(overall, position)
-  return {
+  return enrichCard({
     id: `${normalizeKey(category)}-${normalizeKey(name)}-${position}-${overall}`,
     name,
     position,
@@ -235,11 +253,8 @@ function makeCard(name, overall, position, category, style = 'Profilo da analizz
     style,
     imageUrl: imageByName[name] || '',
     score,
-    verdict: verdictFor(score),
-    ...buildAdvice(position),
-    missing: ['Con la rosa completa il verdetto tiene conto di ruolo, doppioni e priorita squadra.'],
-    missingEn: ['With a complete roster, the verdict considers role, duplicates, and team priorities.']
-  }
+    verdict: verdictFor(score)
+  })
 }
 
 function makeRelease(id, name, date, category, rows, status = 'active') {
@@ -297,6 +312,13 @@ const releases = [
   ]),
   makeRelease('encore-new-year-2026', 'Encore New Year 2026', '2026', 'Encore', [], 'needs_review')
 ]
+
+function normalizeRelease(release) {
+  return {
+    ...release,
+    cards: Array.isArray(release.cards) ? release.cards.map(enrichCard) : []
+  }
+}
 
 function getVerdictMeta(verdict, labels) {
   const map = {
@@ -658,16 +680,20 @@ export default withAuth(function CardAdvisorLabPage() {
   const router = useRouter()
   const { lang } = useTranslation()
   const labels = copy[lang === 'en' ? 'en' : 'it']
+  const [liveReleases, setLiveReleases] = React.useState(null)
+  const activeReleases = React.useMemo(() => (
+    Array.isArray(liveReleases) && liveReleases.length > 0 ? liveReleases : releases
+  ), [liveReleases])
   const [releaseId, setReleaseId] = React.useState(releases[0].id)
   const [rosterSummary, setRosterSummary] = React.useState({ status: 'loading', totalPlayers: 0, starters: 0, formation: '-' })
   const [searchQuery, setSearchQuery] = React.useState('')
   const cards = React.useMemo(() => {
     const baseCards = releaseId === 'all'
-      ? releases.flatMap(release => release.cards.map(card => ({ ...card, releaseName: release.name, releaseStatus: release.status })))
-      : (releases.find(release => release.id === releaseId)?.cards || []).map(card => ({
+      ? activeReleases.flatMap(release => release.cards.map(card => ({ ...card, releaseName: release.name, releaseStatus: release.status })))
+      : (activeReleases.find(release => release.id === releaseId)?.cards || []).map(card => ({
           ...card,
-          releaseName: releases.find(release => release.id === releaseId)?.name,
-          releaseStatus: releases.find(release => release.id === releaseId)?.status
+          releaseName: activeReleases.find(release => release.id === releaseId)?.name,
+          releaseStatus: activeReleases.find(release => release.id === releaseId)?.status
         }))
     const query = searchQuery.trim().toLowerCase()
     if (!query) return baseCards
@@ -677,13 +703,41 @@ export default withAuth(function CardAdvisorLabPage() {
       card.category.toLowerCase().includes(query) ||
       String(card.releaseName || '').toLowerCase().includes(query)
     ))
-  }, [releaseId, searchQuery])
+  }, [activeReleases, releaseId, searchQuery])
   const [selectedId, setSelectedId] = React.useState(cards[0]?.id)
   const [detailsCardId, setDetailsCardId] = React.useState(null)
 
   React.useEffect(() => {
     setSelectedId(cards[0]?.id)
   }, [cards])
+
+  React.useEffect(() => {
+    let active = true
+
+    async function loadReleases() {
+      try {
+        const response = await fetch('/api/card-advisor-lab/releases', { cache: 'no-store' })
+        if (!response.ok) throw new Error('Unable to load card releases')
+        const data = await response.json()
+        const normalized = Array.isArray(data?.releases)
+          ? data.releases.map(normalizeRelease).filter(release => release.cards.length > 0)
+          : []
+
+        if (!active) return
+        if (normalized.length > 0) {
+          setLiveReleases(normalized)
+          setReleaseId(normalized[0].id)
+        }
+      } catch (error) {
+        console.warn('[card-advisor-lab] live releases unavailable:', error)
+      }
+    }
+
+    loadReleases()
+    return () => {
+      active = false
+    }
+  }, [])
 
   React.useEffect(() => {
     let active = true
@@ -722,8 +776,8 @@ export default withAuth(function CardAdvisorLabPage() {
   const selectedCard = cards.find(card => card.id === selectedId) || cards[0]
   const detailsCard = cards.find(card => card.id === detailsCardId) || null
   const selectedRelease = releaseId === 'all'
-    ? { name: labels.allCards, cards: releases.flatMap(release => release.cards), status: 'active' }
-    : releases.find(release => release.id === releaseId) || releases[0]
+    ? { name: labels.allCards, cards: activeReleases.flatMap(release => release.cards), status: 'active' }
+    : activeReleases.find(release => release.id === releaseId) || activeReleases[0]
 
   return (
     <main className="card-advisor-page">
@@ -770,9 +824,9 @@ export default withAuth(function CardAdvisorLabPage() {
             onClick={() => setReleaseId('all')}
           >
             <strong>{labels.allCards}</strong>
-            <span>{releases.reduce((sum, release) => sum + release.cards.length, 0)}</span>
+            <span>{activeReleases.reduce((sum, release) => sum + release.cards.length, 0)}</span>
           </button>
-          {releases.map(release => (
+          {activeReleases.map(release => (
             <button
               key={release.id}
               type="button"
