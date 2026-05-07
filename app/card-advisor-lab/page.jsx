@@ -466,7 +466,13 @@ function getSameRolePlayers(rosterSummary, position) {
   const players = Array.isArray(rosterSummary?.players) ? rosterSummary.players : []
   return players
     .filter(player => player?.position === position)
-    .sort((a, b) => (Number(b.overall_rating) || 0) - (Number(a.overall_rating) || 0))
+    .sort((a, b) => {
+      const slotA = Number(a.slot_index)
+      const slotB = Number(b.slot_index)
+      const starterA = Number.isFinite(slotA) && slotA >= 0 && slotA <= 10 ? 1 : 0
+      const starterB = Number.isFinite(slotB) && slotB >= 0 && slotB <= 10 ? 1 : 0
+      return starterB - starterA
+    })
     .slice(0, 3)
 }
 
@@ -493,12 +499,10 @@ function getFitSummary(card, rosterSummary, labels, lang) {
   }
 
   const best = sameRole[0]
-  const bestRating = Number(best?.overall_rating) || 0
-  const gap = Number(card.overall) - bestRating
   const roleCount = rosterSummary.roleCounts?.[card.position] || 0
   let priority = labels.synergyMedium
-  if (roleCount === 0 || gap >= 4) priority = labels.synergyHigh
-  if (roleCount >= 2 && gap <= 1) priority = labels.synergyLow
+  if (roleCount === 0) priority = labels.synergyHigh
+  if (roleCount >= 2) priority = labels.synergyLow
 
   if (depth === 'roster_only') {
     const text = lang === 'en'
@@ -696,7 +700,7 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
               <strong>{effectivePriority}</strong>
             </div>
             <div>
-              <span>OVR</span>
+              <span>OVR base</span>
               <strong>{card.overall}</strong>
             </div>
             <div>
@@ -767,7 +771,7 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
               <span>{labels.similarPlayers}</span>
               <strong>
                 {effectiveAlternatives.length > 0
-                  ? effectiveAlternatives.map(player => `${player.player_name || player.name}${player.overall_rating || player.overall ? ` ${player.overall_rating || player.overall}` : ''}`).join(', ')
+                  ? effectiveAlternatives.map(player => `${player.player_name || player.name}`).join(', ')
                   : '-'}
               </strong>
             </div>

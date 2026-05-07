@@ -54,6 +54,19 @@ function roleFamily(position = '') {
   return 'att'
 }
 
+const TEAM_STYLE_LABELS = {
+  possesso: { it: 'Possesso palla', en: 'Possession' },
+  possession: { it: 'Possesso palla', en: 'Possession' },
+  contropiede_veloce: { it: 'Contropiede veloce', en: 'Quick Counter' },
+  quick_counter: { it: 'Contropiede veloce', en: 'Quick Counter' },
+  contrattacco: { it: 'Contrattacco', en: 'Long Ball Counter' },
+  long_ball_counter: { it: 'Contrattacco', en: 'Long Ball Counter' },
+  passaggio_lungo: { it: 'Passaggio lungo', en: 'Long Ball' },
+  long_ball: { it: 'Passaggio lungo', en: 'Long Ball' },
+  vie_laterali: { it: 'Vie laterali', en: 'Out Wide' },
+  out_wide: { it: 'Vie laterali', en: 'Out Wide' }
+}
+
 function toAscii(value = '') {
   return String(value)
     .normalize('NFD')
@@ -261,6 +274,10 @@ function styleLabel(value, lang) {
 
 function skillLabel(value, lang) {
   return labelFromMap(EFHUB_SKILL_LABELS, value, lang)
+}
+
+function teamStyleLabel(value, lang) {
+  return labelFromMap(TEAM_STYLE_LABELS, value, lang)
 }
 
 async function fetchEfhubCardDetail(card) {
@@ -477,7 +494,9 @@ function sameRolePlayers(card, players, stylesLookup) {
       const starterB = Number.isFinite(slotB) && slotB >= 0 && slotB <= 10 ? 1 : 0
       if (starterA !== starterB) return starterB - starterA
       if (a.isNativePosition !== b.isNativePosition) return a.isNativePosition ? -1 : 1
-      return (Number(b.overall) || 0) - (Number(a.overall) || 0)
+      const techA = Math.max(a.signals.defend, a.signals.pass, a.signals.pace, a.signals.finish, a.signals.gk)
+      const techB = Math.max(b.signals.defend, b.signals.pass, b.signals.pace, b.signals.finish, b.signals.gk)
+      return techB - techA
     })
     .slice(0, 4)
 }
@@ -542,9 +561,8 @@ function technicalProfile(card, signals, lang) {
   return [...tags, ...skillTags].slice(0, 5).filter(Boolean)
 }
 
-function mainLever(card, signals, roleGap, upgrade, lang) {
+function mainLever(card, signals, roleGap, lang) {
   if (roleGap) return lang === 'en' ? `Role coverage on ${card.position}` : `Copertura ruolo ${card.position}`
-  if (upgrade >= 3) return lang === 'en' ? `Level jump in ${card.position}` : `Salto livello in ${card.position}`
   const family = roleFamily(card.position)
   if (family === 'def') {
     if (signals.defend >= 80) return lang === 'en' ? 'Defensive timing and duels' : 'Tempo difensivo e duelli'
@@ -634,7 +652,7 @@ function joinedAlternatives(sameRole = []) {
     .slice(0, 3)
     .map(player => {
       if (!player?.name) return ''
-      return player.overall ? `${player.name} ${player.overall}` : player.name
+      return player.name
     })
     .filter(Boolean)
     .join(', ')
@@ -642,7 +660,7 @@ function joinedAlternatives(sameRole = []) {
 
 function describeAlternative(player, targetPosition, lang) {
   if (!player?.name) return ''
-  const parts = [`${player.name}${player.overall ? ` ${player.overall}` : ''}`]
+  const parts = [player.name]
   if (player.position && player.position !== targetPosition && player.competence) {
     parts.push(lang === 'en'
       ? `also ${targetPosition} ${player.competence}`
@@ -659,6 +677,101 @@ function topAlternativeDescriptions(sameRole, targetPosition, lang) {
     .map(player => describeAlternative(player, targetPosition, lang))
     .filter(Boolean)
     .join(', ')
+}
+
+function skillGroups(technical) {
+  const text = toAscii(technical.mergedSkills.join(' '))
+  return {
+    crossing: /(cross|pinpoint|calibrato|lofted|passaggio calibrato)/.test(text) || technical.pass >= 76,
+    defensive: /(interception|intercett|marking|marcat|block|muro|tackle|scivolata|caposaldo)/.test(text) || technical.defend >= 78,
+    aerial: /(heading|colpo di testa|aerial|dominio|svettante)/.test(text) || technical.aerial >= 78,
+    dribble: /(double|scissors|turn|feint|finta|svolta|taglia|gira)/.test(text),
+    passing: /(one touch|through|filtrante|passaggio)/.test(text) || technical.pass >= 78,
+    finishing: /(first time|long range|finishing|tiro|finalizzazione)/.test(text) || technical.finish >= 80,
+    fighting: /(fighting|spirito|leader)/.test(text)
+  }
+}
+
+function movementProfile(technical, position, lang) {
+  const style = toAscii(technical.style)
+  const family = roleFamily(position)
+  if (style.includes('full back finisher')) {
+    return lang === 'en'
+      ? 'forward full-back movement'
+      : 'movimento da terzino che attacca alto'
+  }
+  if (style.includes('offensive full back')) return lang === 'en' ? 'wide overlap support' : 'spinta larga in sovrapposizione'
+  if (style.includes('defensive full back')) return lang === 'en' ? 'safer full-back positioning' : 'posizionamento più prudente da terzino'
+  if (style.includes('destroyer')) return lang === 'en' ? 'aggressive duel and interception movement' : 'movimento aggressivo su duelli e intercetti'
+  if (style.includes('build up')) return lang === 'en' ? 'build-up defender movement' : 'movimento da difensore di costruzione'
+  if (style.includes('box to box')) return lang === 'en' ? 'box-to-box support movement' : 'movimento continuo box-to-box'
+  if (style.includes('orchestrator')) return lang === 'en' ? 'central build-up control' : 'controllo centrale della costruzione'
+  if (style.includes('goal poacher')) return lang === 'en' ? 'depth attack movement' : 'movimento ad attaccare la profondità'
+  if (family === 'gk') return lang === 'en' ? 'goal stability profile' : 'profilo di stabilità porta'
+  if (family === 'def') return lang === 'en' ? 'defensive control profile' : 'profilo di controllo difensivo'
+  if (family === 'mid') return lang === 'en' ? 'midfield connection profile' : 'profilo di connessione a centrocampo'
+  return lang === 'en' ? 'final-third profile' : 'profilo da ultimi metri'
+}
+
+function tacticalStyleFit(technical, position, tacticalStyle, profileRead, lang) {
+  const style = toAscii(tacticalStyle)
+  const groups = skillGroups(technical)
+  const family = roleFamily(position)
+  const teamStyle = teamStyleLabel(tacticalStyle, lang)
+  if ((style.includes('vie laterali') || style.includes('out wide')) && ['TD', 'TS', 'CLD', 'CLS', 'EDA', 'ESA'].includes(position) && groups.crossing) {
+    return lang === 'en'
+      ? `Fits ${teamStyle}: wide movement plus crossing can turn the lane into a real chance source.`
+      : `Si lega a ${teamStyle}: movimento largo e cross possono trasformare quella corsia in una fonte reale di occasioni.`
+  }
+  if ((style.includes('contropiede') || style.includes('counter')) && (technical.pace >= 78 || family === 'att')) {
+    return lang === 'en'
+      ? `Fits ${teamStyle}: the value is early vertical attack, not slow possession.`
+      : `Si lega a ${teamStyle}: il valore è attaccare verticale presto, non il possesso lento.`
+  }
+  if ((style.includes('possesso') || style.includes('possession')) && technical.pass >= 76) {
+    return lang === 'en'
+      ? `Fits ${teamStyle}: cleaner passing makes the card useful in controlled build-up.`
+      : `Si lega a ${teamStyle}: passaggio più pulito rende la carta utile nella costruzione controllata.`
+  }
+  if (profileRead.needDef && (family === 'def' || groups.defensive)) {
+    return lang === 'en'
+      ? 'It also matches your defensive priority, but only as role coverage, not as a universal fix.'
+      : 'Si allinea anche alla tua priorità difensiva, ma solo come copertura ruolo, non come soluzione universale.'
+  }
+  if (profileRead.needBuild && technical.pass >= 76) {
+    return lang === 'en'
+      ? 'It supports your build-up priority with safer passing lanes.'
+      : 'Supporta la tua priorità di costruzione con linee di passaggio più sicure.'
+  }
+  if (profileRead.needFinishing && family === 'att') {
+    return lang === 'en'
+      ? 'It fits your attacking priority only if you use the card in its native final-third role.'
+      : 'Si lega alla tua priorità offensiva solo se usi la carta nel suo ruolo naturale negli ultimi metri.'
+  }
+  return ''
+}
+
+function statEdgeLine(technical, bestAlternative, lang) {
+  if (!bestAlternative?.signals) return ''
+  const edges = [
+    ['pace', technical.pace - bestAlternative.signals.pace, lang === 'en' ? 'speed/recovery' : 'velocità/recupero'],
+    ['pass', technical.pass - bestAlternative.signals.pass, lang === 'en' ? 'passing' : 'passaggio'],
+    ['defend', technical.defend - bestAlternative.signals.defend, lang === 'en' ? 'defending' : 'difesa'],
+    ['aerial', technical.aerial - bestAlternative.signals.aerial, lang === 'en' ? 'aerial game' : 'gioco aereo'],
+    ['finish', technical.finish - bestAlternative.signals.finish, lang === 'en' ? 'finishing' : 'finalizzazione']
+  ].filter(([, value]) => Number.isFinite(value) && Math.abs(value) >= 5)
+    .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+
+  if (edges.length === 0) return ''
+  const [key, value, label] = edges[0]
+  if (value > 0) {
+    return lang === 'en'
+      ? `Compared with ${bestAlternative.name}, the clearest technical edge is ${label}.`
+      : `Rispetto a ${bestAlternative.name}, il vantaggio tecnico più chiaro è ${label}.`
+  }
+  return lang === 'en'
+    ? `Compared with ${bestAlternative.name}, there is no clear technical edge in ${label}.`
+    : `Rispetto a ${bestAlternative.name}, non emerge un vantaggio tecnico chiaro in ${label}.`
 }
 
 function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, duplicate, starterBlocked, lang }) {
@@ -730,20 +843,17 @@ function cardValueBullets(card, technical, lang) {
   return bullets.length > 0
     ? bullets.slice(0, 3)
     : [lang === 'en'
-        ? `${card.name} is readable by role and overall, but the technical detail is still limited.`
-        : `${card.name} è leggibile per ruolo e overall, ma il dettaglio tecnico è ancora limitato.`]
+        ? `${card.name} is readable by role and style, but the technical detail is still limited.`
+        : `${card.name} è leggibile per ruolo e stile, ma il dettaglio tecnico è ancora limitato.`]
 }
 
 function tacticalUseLine(card, technical, tacticalStyle, lang) {
   const family = roleFamily(card.position)
   const style = toAscii(tacticalStyle)
+  const groups = skillGroups(technical)
   const cardStyle = toAscii(technical.style)
-  const skillsText = toAscii(technical.mergedSkills.join(' '))
-  const hasCross = /(cross|pinpoint|calibrato|lofted)/.test(skillsText) || technical.pass >= 74
-  const hasDefensiveSkill = /(interception|intercett|marking|marcat|block|muro|tackle|scivolata)/.test(skillsText)
-  const hasDribbleSkill = /(double|scissors|turn|feint|finta|svolta|taglia)/.test(skillsText)
   if (family === 'def') {
-    if ((cardStyle.includes('full back finisher') || cardStyle.includes('terzino finalizzatore')) && hasCross) {
+    if ((cardStyle.includes('full back finisher') || cardStyle.includes('terzino finalizzatore')) && groups.crossing) {
       return lang === 'en'
         ? `Its real value is the forward movement: overlap, arrive high and turn the action into a cross or low ball.`
         : `Il valore reale è il movimento in avanti: accompagna, arriva alto e trasforma l’azione in cross o palla rasoterra.`
@@ -753,7 +863,7 @@ function tacticalUseLine(card, technical, tacticalStyle, lang) {
         ? `It makes sense only if you want a full-back who can push the exit and still recover space.`
         : `Ha senso solo se vuoi un terzino che accompagni l’uscita e possa comunque recuperare campo.`
     }
-    if (hasDefensiveSkill) {
+    if (groups.defensive) {
       return lang === 'en'
         ? `Its value is defensive control: duels, interceptions and safer coverage, not a major attacking change.`
         : `Il suo valore è controllo difensivo: duelli, intercetti e copertura più sicura, non una grande svolta offensiva.`
@@ -782,7 +892,7 @@ function tacticalUseLine(card, technical, tacticalStyle, lang) {
       ? `It makes sense if you use him to attack depth early, not as another static forward.`
       : `Ha senso se lo usi per attaccare profondità subito, non come un altro attaccante statico.`
   }
-  if (hasDribbleSkill && technical.pace >= 78) {
+  if (groups.dribble && technical.pace >= 78) {
     return lang === 'en'
       ? `Its useful case is one-v-one creation: receive wide or between lines, beat the first man, then finish or assist.`
       : `Il caso utile è creare 1 contro 1: ricevere largo o tra le linee, saltare il primo uomo e poi chiudere o assistere.`
@@ -820,19 +930,65 @@ function tacticalMapLine(patterns, cardPosition, lang) {
     : 'Le tue mappe tattiche puntano già su questa zona, quindi la carta è rilevante solo se migliora davvero quella corsia.'
 }
 
-function buildRosterRead({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, technical, tacticalStyle, patterns, lang }) {
+function decisionEvidence({ technical, sameRole, roleGap, duplicate, starterBlocked, tacticalStyle, profileRead, patterns, position }) {
+  const groups = skillGroups(technical)
+  const family = roleFamily(position)
+  const style = toAscii(tacticalStyle)
+  const hasMapFit = Boolean(tacticalMapLine(patterns, position, 'it'))
+  const hasTacticalFit = Boolean(tacticalStyleFit(technical, position, tacticalStyle, profileRead, 'it'))
+  const hasNativeEdge = (
+    groups.crossing ||
+    groups.defensive ||
+    groups.aerial ||
+    groups.dribble ||
+    groups.passing ||
+    groups.finishing ||
+    technical.pace >= 82 ||
+    technical.pass >= 82 ||
+    technical.defend >= 82 ||
+    technical.finish >= 82 ||
+    technical.gk >= 82
+  )
+  const profileNeedFit = (
+    (profileRead.needDef && (family === 'def' || groups.defensive)) ||
+    (profileRead.needBuild && (family === 'mid' || groups.passing)) ||
+    (profileRead.needFinishing && (family === 'att' || groups.finishing))
+  )
+  const teamStyleFit = (
+    ((style.includes('vie laterali') || style.includes('out wide')) && groups.crossing) ||
+    ((style.includes('contropiede') || style.includes('counter')) && (technical.pace >= 78 || family === 'att')) ||
+    ((style.includes('possesso') || style.includes('possession')) && technical.pass >= 76)
+  )
+
+  return {
+    roleGap,
+    duplicate,
+    starterBlocked,
+    hasNativeEdge,
+    hasTacticalFit,
+    hasMapFit,
+    profileNeedFit,
+    teamStyleFit,
+    alternativesCount: sameRole.length
+  }
+}
+
+function buildRosterRead({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, technical, tacticalStyle, patterns, profileRead, lang }) {
   const role = positionLabel(card.position, lang)
   const alternatives = topAlternativeDescriptions(sameRole, card.position, lang)
   const bestName = describeAlternative(bestAlternative, card.position, lang)
   const useLine = tacticalUseLine(card, technical, tacticalStyle, lang)
   const mapLine = tacticalMapLine(patterns, card.position, lang)
-  const secondLine = mapLine ? `${useLine} ${mapLine}` : useLine
+  const fitLine = tacticalStyleFit(technical, card.position, tacticalStyle, profileRead, lang)
+  const edgeLine = statEdgeLine(technical, bestAlternative, lang)
+  const secondLine = [useLine, fitLine, mapLine, edgeLine].filter(Boolean).slice(0, 2).join(' ')
+  const movement = movementProfile(technical, card.position, lang)
 
   if (roleGap) {
     return [
       lang === 'en'
-        ? `${card.name} has a clear case because your roster does not have a direct ${role} alternative. The read uses his style, native skills and card stats, not a generic overall comparison.`
-        : `${card.name} ha un caso chiaro perché nella tua rosa non c’è un’alternativa diretta da ${role}. La lettura usa stile, abilità native e statistiche carta, non solo overall.`,
+        ? `${card.name} has a clear case because your roster does not have a direct ${role} alternative. The key profile is ${movement}.`
+        : `${card.name} ha un caso chiaro perché nella tua rosa non c’è un’alternativa diretta da ${role}. Il profilo chiave è ${movement}.`,
       lang === 'en'
         ? `${secondLine} This is the kind of card that can save coins later because it closes a real squad gap.`
         : `${secondLine} È il tipo di carta che può farti risparmiare coins dopo, perché chiude un buco reale della rosa.`
@@ -842,8 +998,8 @@ function buildRosterRead({ card, sameRole, bestAlternative, roleGap, duplicate, 
   if (duplicate || starterBlocked) {
     return [
       lang === 'en'
-        ? `${card.name} is not a priority because ${alternatives || bestName || 'your current options'} already cover ${card.position}.`
-        : `${card.name} non è prioritario perché ${alternatives || bestName || 'le opzioni attuali'} coprono già ${card.position}.`,
+        ? `${card.name} is not a priority because ${alternatives || bestName || 'your current options'} already cover ${card.position}. His profile is ${movement}.`
+        : `${card.name} non è prioritario perché ${alternatives || bestName || 'le opzioni attuali'} coprono già ${card.position}. Il suo profilo è ${movement}.`,
       lang === 'en'
         ? `${secondLine} Otherwise you risk adding a duplicate without changing your team output.`
         : `${secondLine} Altrimenti rischi di aggiungere un doppione senza cambiare davvero il rendimento della squadra.`
@@ -852,8 +1008,8 @@ function buildRosterRead({ card, sameRole, bestAlternative, roleGap, duplicate, 
 
   return [
     lang === 'en'
-      ? `${card.name} improves the ${card.position} lane compared with ${bestName || 'your current option'}, but it is not automatically a must-buy.`
-      : `${card.name} migliora la corsia ${card.position} rispetto a ${bestName || 'l’opzione attuale'}, ma non è automaticamente da prendere.`,
+      ? `${card.name} can help the ${card.position} lane compared with ${bestName || 'your current option'}, but the decision depends on profile fit, not rating.`
+      : `${card.name} può aiutare la corsia ${card.position} rispetto a ${bestName || 'l’opzione attuale'}, ma la decisione dipende dal fit del profilo, non dal rating.`,
     lang === 'en'
       ? `${secondLine} Put him on the shortlist only if that role is where you want to spend coins now.`
       : `${secondLine} Tienilo in lista solo se quel ruolo è dove vuoi spendere coins adesso.`
@@ -871,23 +1027,32 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   const profileRead = profileSignals(profile, lang)
   const gameRead = gameSignals(gameAnalysis)
   const bestAlternative = sameRole[0]
-  const bestOverall = Number(bestAlternative?.overall) || 0
-  const currentOverall = Number(technical.cardOverall) || 0
-  const upgrade = currentOverall - bestOverall
   const roleGap = hasRoster && sameRole.length === 0
-  const duplicate = hasRoster && sameRole.length >= 2 && upgrade <= 1
-  const starterBlocked = hasFormation && sameRole.some(player => Number(player.slotIndex) >= 0 && Number(player.slotIndex) <= 10) && upgrade <= 0
+  const hasCoveredRole = hasRoster && sameRole.length > 0
+  const duplicate = hasCoveredRole && sameRole.length >= 2
+  const starterBlocked = hasFormation && sameRole.some(player => Number(player.slotIndex) >= 0 && Number(player.slotIndex) <= 10)
+  const evidence = decisionEvidence({
+    technical,
+    sameRole,
+    roleGap,
+    duplicate,
+    starterBlocked,
+    tacticalStyle,
+    profileRead,
+    patterns,
+    position: card.position
+  })
 
-  let score = 54
-  if (!hasRoster) score = 50
-  if (roleGap) score += 18
-  if (upgrade >= 4) score += 16
-  else if (upgrade >= 2) score += 10
-  else if (upgrade >= 0) score += 4
-  else if (upgrade <= -3) score -= 14
-  else score -= 6
-  if (duplicate) score -= 14
-  if (starterBlocked) score -= 8
+  let score = technical.hasCompleteCardData ? 58 : 46
+  if (!hasRoster) score = technical.hasCompleteCardData ? 52 : 46
+  if (evidence.roleGap) score += 22
+  if (evidence.duplicate) score -= 12
+  if (evidence.starterBlocked) score -= 8
+  if (evidence.hasNativeEdge) score += 6
+  if (evidence.hasTacticalFit) score += 6
+  if (evidence.teamStyleFit) score += 5
+  if (evidence.profileNeedFit) score += 5
+  if (evidence.hasMapFit) score += 4
   if (issues.needDefence && (roleFamily(card.position) === 'def' || roleFamily(card.position) === 'gk')) score += 7
   if (issues.needBuild && roleFamily(card.position) === 'mid') score += 7
   if (issues.needDepth && roleFamily(card.position) === 'att') score += 7
@@ -895,8 +1060,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   if (profileRead.needDef && roleFamily(card.position) === 'def') score += 6
   if (profileRead.needBuild && roleFamily(card.position) === 'mid') score += 6
   if (profileRead.needFinishing && roleFamily(card.position) === 'att') score += 6
-  if (technical.cardOverall >= 95) score += 6
-  else if (technical.cardOverall >= 92) score += 3
+  if (technical.pace >= 82 || technical.pass >= 82 || technical.defend >= 82 || technical.finish >= 82 || technical.gk >= 82) score += 5
   if (profileRead.networkRisk && roleFamily(card.position) === 'att') score -= 4
   if (gameRead.passAccuracy != null && gameRead.passAccuracy < 78 && roleFamily(card.position) === 'mid') score += 5
   if (gameRead.shotsConceded != null && gameRead.shotsConceded >= 7 && roleFamily(card.position) === 'def') score += 6
@@ -913,7 +1077,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   })
   const synergyLevel = decision.label
   const title = decision.title
-  const lever = mainLever(card, technical, roleGap, upgrade, lang)
+  const lever = mainLever(card, technical, roleGap, lang)
   const rosterRead = !hasRoster
     ? [
         lang === 'en'
@@ -933,6 +1097,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
         technical,
         tacticalStyle,
         patterns,
+        profileRead,
         lang
       })
 
@@ -1022,6 +1187,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
       tacticalStyle: tacticalSettings?.team_playing_style || null,
       cardDataSource: technical.dataSource,
       hasCompleteCardData: technical.hasCompleteCardData,
+      evidence,
       catalogSource: catalogCard?.source || null,
       activeCoachName: hasCoach ? coach.coach_name : null,
       coachConnectionName: connectionName(coach?.connection) || null
