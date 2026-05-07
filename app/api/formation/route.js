@@ -75,7 +75,7 @@ export async function GET(request) {
         .order('created_at', { ascending: false }),
       // Active Coach
       supabase.from('coaches')
-        .select('id, user_id, coach_name, team, extracted_data, is_active, created_at, updated_at')
+        .select('id, user_id, coach_name, team, playing_style_competence, stat_boosters, connection, extracted_data, is_active, created_at, updated_at')
         .eq('user_id', userId)
         .eq('is_active', true)
         .maybeSingle(),

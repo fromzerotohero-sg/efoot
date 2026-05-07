@@ -28,26 +28,26 @@ const copy = {
     notPublic: 'Scegli una carta e scopri se vale davvero per te.',
     releaseTitle: 'Uscite recenti',
     sourceNote: 'Seleziona un pack: mostriamo solo le carte di quella uscita, con ricerca e filtri per evitare una pagina infinita.',
-    cardScore: 'Valutazione',
+    cardScore: 'Sinergia',
     role: 'Ruolo',
     style: 'Stile',
     build: 'Build consigliata',
-    verdict: 'Verdetto',
+    verdict: 'Lettura',
     strengths: 'Punti forti',
     risks: 'Rischi',
     nativeSkills: 'Abilita native',
     teamFit: 'Fit con la squadra',
-    noRosterTitle: 'Senza rosa diamo comunque valore',
-    noRosterText: 'La valutazione generale funziona anche senza rosa. Quando la rosa e caricata, aggiungiamo chi sostituisce, doppioni e priorita reali.',
+    noRosterTitle: 'Analisi carta disponibile',
+    noRosterText: 'Senza rosa leggiamo stile, ruolo e profilo tecnico. Con la rosa aggiungiamo doppioni, alternative e priorita reali.',
     missingData: 'Nota valutazione',
     sourcePlan: 'Come funziona',
     sourcePlanText: 'Scegli una carta, leggi il verdetto generale e completa la rosa per ricevere il consiglio personalizzato.',
     selectedHint: 'Clicca una carta per vedere il dettaglio.',
-    topPick: 'Top',
-    goodPick: 'Buona',
-    situationalPick: 'Situazionale',
-    skipPick: 'Skip',
-    compareCta: 'Carica la rosa per il verdetto personale',
+    topPick: 'Sinergia alta',
+    goodPick: 'Sinergia buona',
+    situationalPick: 'Sinergia parziale',
+    skipPick: 'Da contestualizzare',
+    compareCta: 'Completa i dati per la sinergia',
     currentRelease: 'Pack corrente',
     allCards: 'Tutte',
     activePacks: 'Pack attivi',
@@ -56,7 +56,20 @@ const copy = {
     noCardsFound: 'Nessuna carta trovata con questi filtri.',
     needsSourceReview: 'In aggiornamento',
     similarPlayers: 'Alternative in rosa',
-    priorityVerdict: 'Priorità per te',
+    priorityVerdict: 'Lettura per te',
+    synergyHigh: 'Sinergia alta',
+    synergyMedium: 'Sinergia media',
+    synergyLow: 'Sinergia bassa',
+    cardProfileOnly: 'Profilo carta',
+    rosterSynergy: 'Sinergia rosa',
+    moduleFit: 'Fit modulo',
+    systemSynergy: 'Sinergia sistema',
+    noFormationTitle: 'Formazione non salvata',
+    noFormationText: 'Hai giocatori in rosa: posso valutare ruolo, doppioni e alternative, ma per sapere se entra nei titolari serve una formazione salvata.',
+    noCoachText: 'Aggiungi il coach attivo per leggere stile squadra, competenze e Link-up.',
+    saveFormationCta: 'Salva formazione per il fit titolari',
+    addCoachCta: 'Aggiungi coach per sinergia completa',
+    analyzeSynergy: 'Analizza sinergia',
     checkingRoster: 'Controllo rosa...',
     rosterReadyTitle: 'Rosa trovata: consiglio personalizzato disponibile',
     rosterReadyText: 'Questa carta verra confrontata con titolari, riserve, modulo e priorita reali della tua squadra.',
@@ -82,26 +95,26 @@ const copy = {
     notPublic: 'Choose a card and see if it is really worth it for you.',
     releaseTitle: 'Recent releases',
     sourceNote: 'Select one pack: only that release is shown, with search and filters to avoid an endless page.',
-    cardScore: 'Rating',
+    cardScore: 'Synergy',
     role: 'Role',
     style: 'Style',
     build: 'Recommended build',
-    verdict: 'Verdict',
+    verdict: 'Read',
     strengths: 'Strengths',
     risks: 'Risks',
     nativeSkills: 'Native skills',
     teamFit: 'Team fit',
-    noRosterTitle: 'Still useful without a roster',
-    noRosterText: 'The general card evaluation works without a roster. Once the roster is loaded, we add replacement, duplicate, and priority logic.',
+    noRosterTitle: 'Card profile available',
+    noRosterText: 'Without a roster we read style, role, and technical profile. With the roster we add duplicates, alternatives, and real priorities.',
     missingData: 'Evaluation note',
     sourcePlan: 'How it works',
     sourcePlanText: 'Choose a card, read the general verdict, and complete your roster for a personalized recommendation.',
     selectedHint: 'Click a card to inspect details.',
-    topPick: 'Top',
-    goodPick: 'Good',
-    situationalPick: 'Situational',
-    skipPick: 'Skip',
-    compareCta: 'Load roster for personal verdict',
+    topPick: 'High synergy',
+    goodPick: 'Good synergy',
+    situationalPick: 'Partial synergy',
+    skipPick: 'Needs context',
+    compareCta: 'Complete data for synergy',
     currentRelease: 'Current pack',
     allCards: 'All',
     activePacks: 'Active packs',
@@ -110,7 +123,20 @@ const copy = {
     noCardsFound: 'No cards found with these filters.',
     needsSourceReview: 'Updating',
     similarPlayers: 'Roster alternatives',
-    priorityVerdict: 'Priority for you',
+    priorityVerdict: 'Read for you',
+    synergyHigh: 'High synergy',
+    synergyMedium: 'Medium synergy',
+    synergyLow: 'Low synergy',
+    cardProfileOnly: 'Card profile',
+    rosterSynergy: 'Roster synergy',
+    moduleFit: 'Module fit',
+    systemSynergy: 'System synergy',
+    noFormationTitle: 'Formation not saved',
+    noFormationText: 'You have players in the roster: I can read role, duplicates, and alternatives, but a saved formation is needed to know if the card enters the starters.',
+    noCoachText: 'Add the active coach to read team style, competences, and Link-up.',
+    saveFormationCta: 'Save formation for starter fit',
+    addCoachCta: 'Add coach for full synergy',
+    analyzeSynergy: 'Analyze synergy',
     checkingRoster: 'Checking roster...',
     rosterReadyTitle: 'Roster found: personalized advice available',
     rosterReadyText: 'This card will be compared with starters, bench, formation, and real team priorities.',
@@ -377,13 +403,18 @@ function proxiedImageUrl(src) {
 function buildRosterSummary(data) {
   const players = Array.isArray(data?.players) ? data.players : []
   const starters = players.filter(player => player?.slot_index != null && Number(player.slot_index) >= 0 && Number(player.slot_index) <= 10)
+  const hasRoster = players.length > 0
+  const hasFormation = Boolean(data?.layout?.formation) && starters.length > 0
+  const hasActiveCoach = Boolean(data?.activeCoach || data?.hasActiveCoach)
+  const hasTacticalSettings = Boolean(data?.tacticalSettings?.team_playing_style)
   const roleCounts = players.reduce((acc, player) => {
     const position = player?.position || '?'
     acc[position] = (acc[position] || 0) + 1
     return acc
   }, {})
   return {
-    status: players.length > 0 ? 'ready' : 'missing',
+    status: hasRoster ? 'ready' : 'missing',
+    depth: !hasRoster ? 'card_only' : !hasFormation ? 'roster_only' : hasActiveCoach ? 'system' : 'formation',
     totalPlayers: players.length,
     starters: starters.length,
     formation: data?.layout?.formation || '-',
@@ -391,7 +422,12 @@ function buildRosterSummary(data) {
     startersList: starters,
     roleCounts,
     profile: data?.profile || {},
-    hasActiveCoach: !!data?.hasActiveCoach,
+    activeCoach: data?.activeCoach || null,
+    tacticalSettings: data?.tacticalSettings || null,
+    hasRoster,
+    hasFormation,
+    hasActiveCoach,
+    hasTacticalSettings,
     hasGameAnalysis: !!data?.gameAnalysis?.stats
   }
 }
@@ -404,17 +440,25 @@ function getSameRolePlayers(rosterSummary, position) {
     .slice(0, 3)
 }
 
+function getCoachConnectionLabel(activeCoach) {
+  const connection = activeCoach?.connection
+  if (!connection || typeof connection !== 'object') return ''
+  return connection.name || connection.connection || connection.title || connection.label || ''
+}
+
 function getFitSummary(card, rosterSummary, labels, lang) {
   const sameRole = getSameRolePlayers(rosterSummary, card.position)
-  const isReady = rosterSummary?.status === 'ready'
-  if (!isReady) {
+  const depth = rosterSummary?.depth || 'card_only'
+  if (depth === 'card_only') {
     return {
       title: labels.rosterMissingTitle,
       text: lang === 'en'
-        ? 'You can read the card verdict now. Add your roster to compare it with your starters and bench.'
-        : 'Puoi leggere subito il verdetto carta. Aggiungi la rosa per confrontarla con titolari e panchina.',
-      priority: '-',
-      alternatives: []
+        ? `${card.name} is read as a technical profile: role, style and native skills. Add your roster to unlock the team synergy read.`
+        : `${card.name} viene letto come profilo tecnico: ruolo, stile e abilita native. Aggiungi la rosa per sbloccare la sinergia squadra.`,
+      priority: labels.cardProfileOnly,
+      alternatives: [],
+      cta: labels.loadRoster,
+      ctaTarget: 'roster'
     }
   }
 
@@ -422,23 +466,57 @@ function getFitSummary(card, rosterSummary, labels, lang) {
   const bestRating = Number(best?.overall_rating) || 0
   const gap = Number(card.overall) - bestRating
   const roleCount = rosterSummary.roleCounts?.[card.position] || 0
-  let priority = lang === 'en' ? 'Medium' : 'Media'
-  if (roleCount === 0 || gap >= 4) priority = lang === 'en' ? 'High' : 'Alta'
-  if (roleCount >= 2 && gap <= 1) priority = lang === 'en' ? 'Low' : 'Bassa'
+  let priority = labels.synergyMedium
+  if (roleCount === 0 || gap >= 4) priority = labels.synergyHigh
+  if (roleCount >= 2 && gap <= 1) priority = labels.synergyLow
 
-  const text = lang === 'en'
+  if (depth === 'roster_only') {
+    const text = lang === 'en'
+      ? best
+        ? `${card.name} is compared with ${best.player_name} in ${card.position}. This is still roster synergy: save a formation to know if the card enters your starters.`
+        : `${card.name} covers ${card.position}, a role where your roster has no direct alternative yet. Save a formation to read the starter fit.`
+      : best
+        ? `${card.name} viene confrontato con ${best.player_name} nel ruolo ${card.position}. Questa e ancora sinergia rosa: salva una formazione per sapere se entra nei titolari.`
+        : `${card.name} copre ${card.position}, un ruolo dove la tua rosa non ha alternative dirette. Salva una formazione per leggere il fit titolari.`
+
+    return {
+      title: labels.noFormationTitle,
+      text,
+      priority: labels.rosterSynergy,
+      alternatives: sameRole,
+      cta: labels.saveFormationCta,
+      ctaTarget: 'formation'
+    }
+  }
+
+  const baseText = lang === 'en'
     ? best
-      ? `${card.name} is compared first with ${best.player_name} in ${card.position}. Priority depends on whether you need an upgrade or just another option in the same role.`
-      : `${card.name} covers a role where your roster has no direct alternative yet.`
+      ? `${card.name} is compared first with ${best.player_name} in ${card.position}. Formation data lets us read if this is a starter fit, rotation, or duplicate.`
+      : `${card.name} covers ${card.position}, a role not directly covered in your saved formation.`
     : best
-      ? `${card.name} viene confrontato prima con ${best.player_name} nel ruolo ${card.position}. La priorita dipende se ti serve un upgrade o solo un'alternativa nello stesso ruolo.`
-      : `${card.name} copre un ruolo dove la tua rosa non ha ancora alternative dirette.`
+      ? `${card.name} viene confrontato prima con ${best.player_name} nel ruolo ${card.position}. La formazione permette di capire se e fit titolare, rotazione o doppione.`
+      : `${card.name} copre ${card.position}, un ruolo non coperto direttamente nella formazione salvata.`
+
+  if (depth === 'formation') {
+    return {
+      title: labels.moduleFit,
+      text: `${baseText} ${labels.noCoachText}`,
+      priority: labels.moduleFit,
+      alternatives: sameRole,
+      cta: labels.addCoachCta,
+      ctaTarget: 'coach'
+    }
+  }
 
   return {
-    title: labels.rosterReadyTitle,
-    text,
+    title: labels.systemSynergy,
+    text: lang === 'en'
+      ? `${baseText} Coach and tactics are available, so the read includes team style, coach competences${getCoachConnectionLabel(rosterSummary.activeCoach) ? ` and Link-up ${getCoachConnectionLabel(rosterSummary.activeCoach)}` : ' and Link-up'}.`
+      : `${baseText} Coach e tattica sono presenti: la lettura include stile squadra, competenze coach${getCoachConnectionLabel(rosterSummary.activeCoach) ? ` e Link-up ${getCoachConnectionLabel(rosterSummary.activeCoach)}` : ' e Link-up'}.`,
     priority,
-    alternatives: sameRole
+    alternatives: sameRole,
+    cta: null,
+    ctaTarget: null
   }
 }
 
@@ -461,26 +539,34 @@ function ReleaseCard({ card, selected, labels, onSelect }) {
         </div>
         <div className="score-row">
           <span style={{ background: verdict.bg, color: verdict.color }}>{verdict.label}</span>
-          <strong>{card.score}/100</strong>
+          <strong>{labels.analyzeSynergy}</strong>
         </div>
       </div>
     </button>
   )
 }
 
-function RosterStatusPanel({ labels, rosterSummary, onLoadRoster }) {
+function RosterStatusPanel({ labels, rosterSummary, onLoadRoster, onOpenCoach }) {
   const isLoading = rosterSummary.status === 'loading'
   const isReady = rosterSummary.status === 'ready'
   const isUnavailable = rosterSummary.status === 'unavailable'
+  const isRosterOnly = rosterSummary.depth === 'roster_only'
+  const isFormationOnly = rosterSummary.depth === 'formation'
   const title = isLoading
     ? labels.checkingRoster
     : isReady
-      ? labels.rosterReadyTitle
+      ? isRosterOnly
+        ? labels.noFormationTitle
+        : labels.rosterReadyTitle
       : isUnavailable
         ? labels.rosterUnavailableTitle
         : labels.rosterMissingTitle
   const text = isReady
-    ? labels.rosterReadyText
+    ? isRosterOnly
+      ? labels.noFormationText
+      : isFormationOnly
+        ? `${labels.rosterReadyText} ${labels.noCoachText}`
+        : labels.rosterReadyText
     : isUnavailable
       ? labels.rosterUnavailableText
       : labels.rosterMissingText
@@ -508,9 +594,9 @@ function RosterStatusPanel({ labels, rosterSummary, onLoadRoster }) {
             <strong>{isLoading ? '...' : rosterSummary.formation || '-'}</strong>
           </div>
         </div>
-        {!isReady && (
-          <button type="button" onClick={onLoadRoster}>
-            {labels.loadRoster}
+        {(!isReady || isRosterOnly || isFormationOnly) && (
+          <button type="button" onClick={isFormationOnly ? onOpenCoach : onLoadRoster}>
+            {isRosterOnly ? labels.saveFormationCta : isFormationOnly ? labels.addCoachCta : labels.loadRoster}
             <ArrowRight size={16} />
           </button>
         )}
@@ -519,7 +605,7 @@ function RosterStatusPanel({ labels, rosterSummary, onLoadRoster }) {
   )
 }
 
-function DetailPanel({ card, labels, lang, rosterSummary, onLoadRoster, onClose }) {
+function DetailPanel({ card, labels, lang, rosterSummary, onOpenFormation, onOpenCoach, onClose }) {
   const verdict = getVerdictMeta(card.verdict, labels)
   const hasRoster = rosterSummary?.status === 'ready'
   const fitSummary = getFitSummary(card, rosterSummary, labels, lang)
@@ -544,7 +630,7 @@ function DetailPanel({ card, labels, lang, rosterSummary, onLoadRoster, onClose 
           <div className="detail-metrics">
             <div>
               <span>{labels.cardScore}</span>
-              <strong>{card.score}</strong>
+              <strong>{fitSummary.priority}</strong>
             </div>
             <div>
               <span>OVR</span>
@@ -557,7 +643,7 @@ function DetailPanel({ card, labels, lang, rosterSummary, onLoadRoster, onClose 
           </div>
           <div className="verdict-banner" style={{ borderColor: verdict.color }}>
             <CheckCircle2 size={18} style={{ color: verdict.color }} />
-            <span>{labels.verdict}: <strong style={{ color: verdict.color }}>{verdict.label}</strong></span>
+            <span>{labels.verdict}: <strong style={{ color: verdict.color }}>{fitSummary.title}</strong></span>
           </div>
         </div>
       </div>
@@ -616,9 +702,12 @@ function DetailPanel({ card, labels, lang, rosterSummary, onLoadRoster, onClose 
             <span>{labels.priorityLogic}</span>
           </div>
         </div>
-        {!hasRoster && (
-          <button type="button" onClick={onLoadRoster}>
-            {labels.compareCta}
+        {fitSummary.cta && (
+          <button
+            type="button"
+            onClick={fitSummary.ctaTarget === 'coach' ? onOpenCoach : onOpenFormation}
+          >
+            {fitSummary.cta}
             <ArrowRight size={16} />
           </button>
         )}
@@ -635,7 +724,7 @@ function DetailPanel({ card, labels, lang, rosterSummary, onLoadRoster, onClose 
   )
 }
 
-function CardDetailsModal({ card, labels, lang, rosterSummary, onLoadRoster, onClose }) {
+function CardDetailsModal({ card, labels, lang, rosterSummary, onOpenFormation, onOpenCoach, onClose }) {
   React.useEffect(() => {
     if (!card) return
     const previousOverflow = document.body.style.overflow
@@ -668,7 +757,8 @@ function CardDetailsModal({ card, labels, lang, rosterSummary, onLoadRoster, onC
           labels={labels}
           lang={lang}
           rosterSummary={rosterSummary}
-          onLoadRoster={onLoadRoster}
+          onOpenFormation={onOpenFormation}
+          onOpenCoach={onOpenCoach}
           onClose={onClose}
         />
       </div>
@@ -750,16 +840,33 @@ export default withAuth(function CardAdvisorLabPage() {
           return
         }
 
-        const response = await fetch(`/api/dashboard?t=${Date.now()}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Cache-Control': 'no-cache, no-store'
-          },
-          cache: 'no-store'
-        })
+        const [formationResponse, dashboardResponse] = await Promise.all([
+          fetch(`/api/formation?t=${Date.now()}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Cache-Control': 'no-cache, no-store'
+            },
+            cache: 'no-store'
+          }),
+          fetch(`/api/dashboard?t=${Date.now()}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Cache-Control': 'no-cache, no-store'
+            },
+            cache: 'no-store'
+          })
+        ])
 
-        if (!response.ok) throw new Error('Unable to load roster status')
-        const data = await response.json()
+        if (!formationResponse.ok) throw new Error('Unable to load formation status')
+        const formationData = await formationResponse.json()
+        const dashboardData = dashboardResponse.ok ? await dashboardResponse.json() : {}
+        const data = {
+          ...dashboardData,
+          ...formationData,
+          profile: dashboardData.profile,
+          gameAnalysis: dashboardData.gameAnalysis
+        }
+
         if (active) setRosterSummary(buildRosterSummary(data))
       } catch (error) {
         console.warn('[card-advisor-lab] roster status unavailable:', error)
@@ -843,6 +950,7 @@ export default withAuth(function CardAdvisorLabPage() {
           labels={labels}
           rosterSummary={rosterSummary}
           onLoadRoster={() => router.push('/gestione-formazione')}
+          onOpenCoach={() => router.push('/allenatori')}
         />
 
         <div className="lab-grid">
@@ -876,7 +984,8 @@ export default withAuth(function CardAdvisorLabPage() {
         labels={labels}
         lang={lang === 'en' ? 'en' : 'it'}
         rosterSummary={rosterSummary}
-        onLoadRoster={() => router.push('/gestione-formazione')}
+        onOpenFormation={() => router.push('/gestione-formazione')}
+        onOpenCoach={() => router.push('/allenatori')}
         onClose={() => setDetailsCardId(null)}
       />
 
@@ -1761,8 +1870,22 @@ export default withAuth(function CardAdvisorLabPage() {
             padding: 7px 6px;
           }
 
+          .card-art-top {
+            top: 8px;
+            left: 8px;
+            width: 36%;
+            align-items: flex-start;
+          }
+
           .card-art-top span {
-            font-size: 28px;
+            font-size: clamp(24px, 11vw, 34px);
+            line-height: 0.9;
+            max-width: 100%;
+          }
+
+          .card-art-top small {
+            font-size: clamp(10px, 3.4vw, 13px);
+            margin-top: 2px;
           }
 
           .detail-metrics {
