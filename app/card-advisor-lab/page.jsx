@@ -86,6 +86,10 @@ const copy = {
     mainLever: 'Leva principale',
     coachLinkup: 'Coach e Link-up',
     recommendedUse: 'Uso consigliato',
+    coinRisk: 'Rischio coins',
+    purchaseAdvice: 'Consiglio finale',
+    cardValue: 'Cosa offre la carta',
+    loadingDecision: 'Sto leggendo la carta completa...',
     noNativeSkills: 'Profilo tecnico non ancora disponibile per questa carta',
   },
   en: {
@@ -154,6 +158,10 @@ const copy = {
     mainLever: 'Main lever',
     coachLinkup: 'Coach and Link-up',
     recommendedUse: 'Recommended use',
+    coinRisk: 'Coin risk',
+    purchaseAdvice: 'Final advice',
+    cardValue: 'What the card offers',
+    loadingDecision: 'Reading the full card...',
     noNativeSkills: 'Technical profile not available for this card yet',
   }
 }
@@ -543,6 +551,9 @@ function getFitSummary(card, rosterSummary, labels, lang) {
 }
 
 function ReleaseCard({ card, selected, labels, onSelect }) {
+  const readableStyle = card.style && card.style !== 'Profilo da analizzare'
+    ? card.style
+    : labels.analyzeSynergy
   return (
     <button
       type="button"
@@ -554,7 +565,7 @@ function ReleaseCard({ card, selected, labels, onSelect }) {
         <div className="release-card-heading">
           <div>
             <h3>{card.name}</h3>
-            <p>{card.category} · {card.style}</p>
+            <p>{card.category} · {card.position} · {readableStyle}</p>
           </div>
           <ChevronRight size={18} />
         </div>
@@ -631,7 +642,6 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
   const fitSummary = getFitSummary(card, rosterSummary, labels, lang)
   const serverEval = evaluation || null
   const lever = serverEval?.mainLever || (lang === 'en' ? (card.leverEn || card.lever) : card.lever)
-  const recommendedUse = serverEval?.recommendedUse || (lang === 'en' ? (card.useEn || card.use) : card.use)
   const connectionLabel = getCoachConnectionLabel(rosterSummary?.activeCoach)
   const coachLinkText = connectionLabel
     ? (lang === 'en'
@@ -644,12 +654,14 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
         : (lang === 'en'
             ? 'Add the active coach to include Link-up and style competences.'
             : 'Aggiungi il coach attivo per includere Link-up e competenze stile.'))
-  const effectiveTitle = serverEval?.title || fitSummary.title
-  const effectivePriority = serverEval?.synergyLevel || fitSummary.priority
+  const effectiveTitle = evaluating ? labels.loadingDecision : (serverEval?.title || fitSummary.title)
+  const effectivePriority = evaluating ? '...' : (serverEval?.decision?.label || serverEval?.synergyLevel || fitSummary.priority)
   const effectiveFitText = serverEval?.whyItMatters?.length ? serverEval.whyItMatters.join(' ') : fitSummary.text
   const effectiveAlternatives = serverEval?.alternatives || fitSummary.alternatives
   const effectiveCoachText = serverEval?.coachLinkup || coachLinkText
-  const effectiveRisk = serverEval?.technicalRisk ? [serverEval.technicalRisk] : listFor(card, 'risks', lang)
+  const effectiveRisk = serverEval?.coinsRisk || serverEval?.technicalRisk
+    ? [serverEval.coinsRisk || serverEval.technicalRisk]
+    : listFor(card, 'risks', lang)
   const strengthItems = serverEval?.strengths?.length ? serverEval.strengths : listFor(card, 'strengths', lang)
   const fitReadLines = serverEval?.rosterRead?.length
     ? serverEval.rosterRead
@@ -657,6 +669,17 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
       ? [effectiveFitText]
       : []
   const effectiveCta = serverEval?.nextCta || (fitSummary.cta ? { label: fitSummary.cta, target: fitSummary.ctaTarget } : null)
+  const purchaseAdvice = serverEval?.purchaseAdvice || serverEval?.recommendedUse || (effectiveCta
+    ? (lang === 'en'
+        ? 'Complete your team data to turn this into a personal buy/skip verdict.'
+        : 'Completa i dati squadra per trasformarlo in un verdetto personale compra/evita.')
+    : effectiveFitText)
+  const heroProfile = serverEval?.technicalProfile?.find(item => item.toLowerCase().startsWith(lang === 'en' ? 'style:' : 'stile:'))
+  const readableStyle = heroProfile
+    ? heroProfile.replace(/^Style:\s*/i, '').replace(/^Stile:\s*/i, '')
+    : card.style && card.style !== 'Profilo da analizzare'
+      ? card.style
+      : labels.analyzeSynergy
   return (
     <section className="detail-panel">
       {onClose && (
@@ -674,11 +697,11 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
         <div className="detail-copy">
           <span className="mini-kicker">{labels.currentRelease}</span>
           <h2>{card.name}</h2>
-          <p>{card.category} · {card.position} · {card.style}</p>
+          <p>{card.category} · {card.position} · {readableStyle}</p>
           <div className="detail-metrics">
             <div>
               <span>{labels.cardScore}</span>
-              <strong>{evaluating ? '...' : effectivePriority}</strong>
+              <strong>{effectivePriority}</strong>
             </div>
             <div>
               <span>OVR</span>
@@ -714,29 +737,23 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
         </article>
 
         <article>
-          <h3><Star size={18} /> {labels.strengths}</h3>
+          <h3><Star size={18} /> {labels.cardValue}</h3>
           <ul>
             {strengthItems.map(item => <li key={item}>{item}</li>)}
           </ul>
         </article>
 
-        <article>
-          <h3><AlertTriangle size={18} /> {labels.risks}</h3>
-          <ul>
-            {effectiveRisk.map(item => <li key={item}>{item}</li>)}
-          </ul>
-        </article>
       </div>
 
       <div className="detail-grid detail-grid-secondary">
         <article>
-          <h3><Users size={18} /> {labels.coachLinkup}</h3>
-          <p>{effectiveCoachText}</p>
+          <h3><AlertTriangle size={18} /> {labels.coinRisk}</h3>
+          <p>{effectiveRisk[0]}</p>
         </article>
 
         <article>
-          <h3><CheckCircle2 size={18} /> {labels.recommendedUse}</h3>
-          <p>{recommendedUse}</p>
+          <h3><CheckCircle2 size={18} /> {labels.purchaseAdvice}</h3>
+          <p>{purchaseAdvice}</p>
         </article>
       </div>
 
@@ -768,6 +785,11 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
               <span>{labels.replacementLogic}</span>
               <span>{labels.duplicateLogic}</span>
               <span>{labels.priorityLogic}</span>
+            </div>
+          )}
+          {serverEval?.context?.hasCoach && effectiveCoachText && (
+            <div className="fit-logic-list">
+              <span>{labels.coachLinkup}: {effectiveCoachText}</span>
             </div>
           )}
         </div>

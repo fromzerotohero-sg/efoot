@@ -12,6 +12,24 @@ const POSITION_GROUPS = {
   att: ['P', 'SP', 'ESA', 'EDA']
 }
 
+const EFHUB_PLAYER_URL = 'https://efhub.com/players'
+
+const EFHUB_POSITION_MAP = {
+  GK: 'PT',
+  CB: 'DC',
+  RB: 'TD',
+  LB: 'TS',
+  DMF: 'MED',
+  CMF: 'CC',
+  AMF: 'TRQ',
+  LMF: 'CLS',
+  RMF: 'CLD',
+  CF: 'P',
+  SS: 'SP',
+  LWF: 'ESA',
+  RWF: 'EDA'
+}
+
 const CATALOG_SELECT = [
   'source',
   'source_player_id',
@@ -88,6 +106,131 @@ function sanitizeIlike(value = '') {
   return String(value).replace(/[%_]/g, '').trim()
 }
 
+function decodeFlightMarkup(markup = '') {
+  return String(markup)
+    .replace(/\\"/g, '"')
+    .replace(/\\u0026/g, '&')
+    .replace(/\\u003c/g, '<')
+    .replace(/\\u003e/g, '>')
+}
+
+function extractJsonObject(markup, key) {
+  const marker = `"${key}":{`
+  const start = markup.indexOf(marker)
+  if (start < 0) return null
+  const objectStart = start + marker.indexOf('{')
+  let depth = 0
+  let inString = false
+  let escaped = false
+
+  for (let index = objectStart; index < markup.length; index += 1) {
+    const char = markup[index]
+    if (escaped) {
+      escaped = false
+      continue
+    }
+    if (char === '\\') {
+      escaped = true
+      continue
+    }
+    if (char === '"') {
+      inString = !inString
+      continue
+    }
+    if (inString) continue
+    if (char === '{') depth += 1
+    if (char === '}') {
+      depth -= 1
+      if (depth === 0) {
+        const slice = markup.slice(objectStart, index + 1)
+        try {
+          return JSON.parse(slice)
+        } catch {
+          return null
+        }
+      }
+    }
+  }
+  return null
+}
+
+function extractString(markup, key) {
+  const match = markup.match(new RegExp(`"${key}":"([^"]*)"`, 'i'))
+  return match ? match[1] : ''
+}
+
+function extractNumber(markup, key) {
+  const match = markup.match(new RegExp(`"${key}":(\\d+)`, 'i'))
+  return match ? Number(match[1]) : null
+}
+
+function extractStringArray(markup, key) {
+  const match = markup.match(new RegExp(`"${key}":\\[(.*?)\\]`, 'i'))
+  if (!match) return []
+  return match[1]
+    .split(',')
+    .map(item => item.replace(/^"|"$/g, '').trim())
+    .filter(Boolean)
+}
+
+function normalizeEfhubPosition(position = '') {
+  const value = String(position || '').trim().toUpperCase()
+  return EFHUB_POSITION_MAP[value] || value
+}
+
+async function fetchEfhubCardDetail(card) {
+  if (!card.sourcePlayerId || card.source !== 'efhub') return null
+  try {
+    const sourceUrl = `${EFHUB_PLAYER_URL}/${encodeURIComponent(card.sourcePlayerId)}`
+    const response = await fetch(sourceUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; FromZeroToHeroCardAdvisor/1.0)',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+      },
+      cache: 'no-store'
+    })
+    if (!response.ok) return null
+
+    const markup = decodeFlightMarkup(await response.text())
+    const playerDataStart = markup.indexOf('"baseStats":')
+    const playerDataMarkup = playerDataStart >= 0 ? markup.slice(playerDataStart) : markup
+    const baseStats = extractJsonObject(markup, 'baseStats')
+    const maxStats = extractJsonObject(markup, 'maxStats')
+    const player = extractJsonObject(markup, 'player')
+    const playingStyle = extractString(playerDataMarkup, 'playingStyle')
+    const levelCap = extractNumber(playerDataMarkup, 'initialLevelCap')
+    const skills = extractStringArray(playerDataMarkup, 'skills')
+    const position = normalizeEfhubPosition(player?.position || extractString(playerDataMarkup, 'position') || card.position)
+
+    if (!baseStats && !playingStyle && !player) return null
+
+    return {
+      source: 'efhub',
+      source_player_id: card.sourcePlayerId,
+      source_url: sourceUrl,
+      player_name: player?.name || card.name,
+      position,
+      card_type: card.category || 'Live',
+      overall_level_1: Number(player?.overallRating || card.overall) || null,
+      overall_max_level: Number(player?.maxOverall || player?.overallRating || card.overall) || null,
+      playing_style: player?.playingStyle || playingStyle || '',
+      player_skills: skills,
+      base_stats: baseStats || null,
+      max_stats: maxStats || baseStats || null,
+      team_name: player?.team || '',
+      league: player?.league || '',
+      height: player?.height || null,
+      max_level: levelCap,
+      data_quality: baseStats ? 'complete' : 'partial',
+      catalog_ready: Boolean(baseStats),
+      needs_review: !baseStats
+    }
+  } catch (error) {
+    console.warn('[card-advisor-lab:evaluate] EFHub detail unavailable:', error)
+    return null
+  }
+}
+
 function collectNumbers(input, bucket = {}, path = '') {
   if (input == null) return bucket
   if (typeof input === 'number' && Number.isFinite(input)) {
@@ -119,12 +262,15 @@ function scoreByKeywords(numericMap, keywords) {
 
 async function fetchCatalogCandidates(admin, card) {
   const tasks = []
-  if (card.sourcePlayerId) {
+  if (card.sourcePlayerId && card.source === 'pesdb') {
     tasks.push(
       admin
         .from('player_catalog')
         .select(CATALOG_SELECT)
+        .eq('source', 'pesdb')
         .eq('source_player_id', card.sourcePlayerId)
+        .eq('catalog_ready', true)
+        .eq('needs_review', false)
         .limit(8)
     )
   }
@@ -135,8 +281,10 @@ async function fetchCatalogCandidates(admin, card) {
         .from('player_catalog')
         .select(CATALOG_SELECT)
         .ilike('player_name', `%${safeName}%`)
+        .eq('source', 'pesdb')
         .eq('position', card.position)
         .eq('catalog_ready', true)
+        .eq('needs_review', false)
         .limit(12)
     )
   }
@@ -213,7 +361,9 @@ function cardTechnicalSignals(card, catalogCard) {
     physical,
     gk,
     aerial,
-    cardOverall: Number(card.overall) || Number(catalogCard?.overall_level_1) || Number(catalogCard?.rating) || 0
+    cardOverall: Number(card.overall) || Number(catalogCard?.overall_level_1) || Number(catalogCard?.rating) || 0,
+    hasCompleteCardData: Boolean(catalogCard?.base_stats || catalogCard?.max_stats),
+    dataSource: catalogCard?.source || card.source || 'unknown'
   }
 }
 
@@ -383,14 +533,80 @@ function gameSignals(gameAnalysis = {}) {
   }
 }
 
-function synergyBand(score, lang) {
-  if (score >= 74) return lang === 'en' ? 'High synergy' : 'Sinergia alta'
-  if (score >= 58) return lang === 'en' ? 'Medium synergy' : 'Sinergia media'
-  return lang === 'en' ? 'Low synergy' : 'Sinergia bassa'
-}
-
 function joinedAlternatives(sameRole = []) {
   return sameRole.slice(0, 3).map(player => player.name).filter(Boolean).join(', ')
+}
+
+function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, duplicate, starterBlocked, lang }) {
+  if (!hasCompleteCardData) {
+    return {
+      level: 'needs-card-data',
+      label: lang === 'en' ? 'Card data loading' : 'Dati carta da completare',
+      title: lang === 'en' ? 'Read the full card before deciding' : 'Leggi la carta completa prima di decidere'
+    }
+  }
+  if (!hasRoster) {
+    return {
+      level: 'needs-roster',
+      label: lang === 'en' ? 'Card value only' : 'Valore carta',
+      title: lang === 'en' ? 'Good card read, not your purchase verdict yet' : 'Buona lettura carta, non ancora verdetto per te'
+    }
+  }
+  if (duplicate || starterBlocked) {
+    return {
+      level: 'avoid',
+      label: lang === 'en' ? 'Avoid unless planned' : 'Evita se non hai un piano',
+      title: lang === 'en' ? 'Risk of wasting coins' : 'Rischio spreco coins'
+    }
+  }
+  if (roleGap || score >= 74) {
+    return {
+      level: 'buy',
+      label: lang === 'en' ? 'Strong target' : 'Target forte',
+      title: lang === 'en' ? 'Worth serious consideration for your team' : 'Da valutare seriamente per la tua squadra'
+    }
+  }
+  if (score >= 58) {
+    return {
+      level: 'watch',
+      label: lang === 'en' ? 'Evaluate' : 'Da valutare',
+      title: lang === 'en' ? 'Useful only if the role is a priority' : 'Utile solo se quel ruolo è prioritario'
+    }
+  }
+  return {
+    level: 'skip',
+    label: lang === 'en' ? 'Low priority' : 'Bassa priorità',
+    title: lang === 'en' ? 'Save coins for a clearer upgrade' : 'Risparmia coins per un upgrade più chiaro'
+  }
+}
+
+function cardValueBullets(card, technical, lang) {
+  const family = roleFamily(card.position)
+  const bullets = []
+  if (technical.style) {
+    bullets.push(lang === 'en' ? `Native style: ${technical.style}.` : `Stile nativo: ${technical.style}.`)
+  }
+  if (family === 'gk') {
+    if (technical.gk >= 75) bullets.push(lang === 'en' ? 'Raises reliability inside the box.' : 'Alza affidabilità dentro l’area.')
+    if (technical.pass >= 70) bullets.push(lang === 'en' ? 'Can support safer build-up from the back.' : 'Può aiutare una costruzione più pulita dal basso.')
+  } else if (family === 'def') {
+    if (technical.defend >= 78) bullets.push(lang === 'en' ? 'Strong defensive base for duels and interceptions.' : 'Base difensiva forte per duelli e intercetti.')
+    if (technical.aerial >= 78) bullets.push(lang === 'en' ? 'Adds aerial value on crosses and set pieces.' : 'Aggiunge valore aereo su cross e palle ferme.')
+    if (technical.pace >= 74) bullets.push(lang === 'en' ? 'Has enough recovery speed to protect space.' : 'Ha velocità di recupero per proteggere campo.')
+  } else if (family === 'mid') {
+    if (technical.pass >= 76) bullets.push(lang === 'en' ? 'Improves connection between build-up and final third.' : 'Migliora il collegamento tra costruzione e ultimo terzo.')
+    if (technical.defend >= 72) bullets.push(lang === 'en' ? 'Adds useful balance when possession is lost.' : 'Aggiunge equilibrio utile dopo perdita palla.')
+    if (technical.physical >= 74) bullets.push(lang === 'en' ? 'Can hold midfield duels.' : 'Può reggere i duelli in mezzo.')
+  } else {
+    if (technical.finish >= 78) bullets.push(lang === 'en' ? 'Brings a real finishing threat.' : 'Porta una minaccia concreta in finalizzazione.')
+    if (technical.pace >= 78) bullets.push(lang === 'en' ? 'Attacks depth and creates separation.' : 'Attacca profondità e crea separazione.')
+    if (technical.pass >= 74) bullets.push(lang === 'en' ? 'Can also connect the last pass.' : 'Può collegare anche l’ultimo passaggio.')
+  }
+  return bullets.length > 0
+    ? bullets.slice(0, 3)
+    : [lang === 'en'
+        ? `${card.name} is readable by role and overall, but the technical detail is still limited.`
+        : `${card.name} è leggibile per ruolo e overall, ma il dettaglio tecnico è ancora limitato.`]
 }
 
 function evaluate({ card, catalogCard, players, formation, coach, tacticalSettings, profile, patterns, gameAnalysis, stylesLookup, lang }) {
@@ -438,65 +654,96 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   if (gameRead.shotsConceded != null && gameRead.shotsConceded >= 7 && roleFamily(card.position) === 'def') score += 6
   score = clamp(score, 20, 95)
 
-  const synergyLevel = hasRoster ? synergyBand(score, lang) : (lang === 'en' ? 'Card profile' : 'Profilo carta')
-  const title = !hasRoster
-    ? (lang === 'en' ? 'Card technical read' : 'Lettura tecnica carta')
-    : score >= 74
-      ? (lang === 'en' ? 'High priority for your setup' : 'Priorita alta nel tuo assetto')
-      : score >= 58
-        ? (lang === 'en' ? 'Useful integration' : 'Inserimento utile')
-        : (lang === 'en' ? 'Low purchase priority' : 'Priorita acquisto bassa')
+  const decision = purchaseDecision({
+    score,
+    hasRoster,
+    hasCompleteCardData: technical.hasCompleteCardData,
+    roleGap,
+    duplicate,
+    starterBlocked,
+    lang
+  })
+  const synergyLevel = decision.label
+  const title = decision.title
   const lever = mainLever(card, technical, roleGap, upgrade, lang)
   const alternativesText = joinedAlternatives(sameRole)
   const rosterRead = !hasRoster
     ? [
         lang === 'en'
-          ? `${card.name} is evaluated as a standalone profile in ${card.position}, without roster overlap checks.`
-          : `${card.name} viene valutato come profilo standalone in ${card.position}, senza confronto con la tua rosa.`,
+          ? `${card.name} can be evaluated as a card, but not yet as a purchase for your team.`
+          : `${card.name} può essere valutato come carta, ma non ancora come acquisto per la tua squadra.`,
         lang === 'en'
-          ? 'Load your roster to unlock starter fit, duplicates, and real purchase priority.'
-          : 'Carica la rosa per sbloccare fit titolari, doppioni e priorita reale di acquisto.'
+          ? 'Load your roster to see if this card saves coins or duplicates a role you already cover.'
+          : 'Carica la rosa per capire se questa carta ti fa risparmiare coins o duplica un ruolo già coperto.'
       ]
     : roleGap
       ? [
           lang === 'en'
-            ? `${card.name} covers ${card.position} immediately because your roster has no direct alternative in this role.`
-            : `${card.name} copre subito ${card.position} perche la tua rosa non ha alternativa diretta in questo ruolo.`,
+            ? `${card.name} covers ${card.position}, a role where your roster has no direct alternative.`
+            : `${card.name} copre ${card.position}, un ruolo dove la tua rosa non ha alternativa diretta.`,
           lang === 'en'
-            ? `This card opens a missing tactical slot and raises your structural balance.`
-            : 'Questa carta apre uno slot tattico mancante e alza l equilibrio strutturale della squadra.'
+            ? 'This is the clearest purchase case: it solves a real squad gap.'
+            : 'Questo è il caso d’acquisto più chiaro: risolve un buco reale della squadra.'
         ]
       : duplicate
         ? [
             lang === 'en'
-              ? `${card.name} enters as rotation in ${card.position}; ${alternativesText || 'your current options'} already cover this lane.`
-              : `${card.name} entra come rotazione in ${card.position}; ${alternativesText || 'le opzioni attuali'} coprono gia questa corsia.`,
+              ? `${card.name} is mostly rotation in ${card.position}; ${alternativesText || 'your current options'} already cover this lane.`
+              : `${card.name} è soprattutto rotazione in ${card.position}; ${alternativesText || 'le opzioni attuali'} coprono già questa corsia.`,
             lang === 'en'
-              ? 'The upgrade is marginal, so purchase priority stays behind uncovered roles.'
-              : 'L upgrade e marginale, quindi la priorita acquisto resta dietro ai ruoli scoperti.'
+              ? 'The coin risk is duplication: buy only if you already planned that rotation.'
+              : 'Il rischio coins è il doppione: prendila solo se avevi già pianificato quella rotazione.'
           ]
         : [
             lang === 'en'
-              ? `${card.name} improves your ${card.position} lane versus ${bestAlternative?.name || 'current starter'} with a concrete quality jump.`
-              : `${card.name} migliora la corsia ${card.position} rispetto a ${bestAlternative?.name || 'il titolare attuale'} con un salto qualita concreto.`,
+              ? `${card.name} improves your ${card.position} lane versus ${bestAlternative?.name || 'current option'}.`
+              : `${card.name} migliora la corsia ${card.position} rispetto a ${bestAlternative?.name || 'l’opzione attuale'}.`,
             lang === 'en'
-              ? 'The value is role impact inside your setup, not an isolated overall number.'
-              : 'Il valore e impatto ruolo nel tuo assetto, non un numero overall isolato.'
+              ? 'The decision depends on whether this role is a current priority for your coins.'
+              : 'La decisione dipende da quanto questo ruolo è prioritario per i tuoi coins.'
           ]
 
-  const tacticalRead = issues.recurring.length > 0
-    ? (lang === 'en'
-        ? `Pattern alignment: ${issues.recurring.slice(0, 2).join(' · ')}.`
-        : `Allineamento pattern: ${issues.recurring.slice(0, 2).join(' · ')}.`)
-    : (lang === 'en'
-        ? 'Pattern alignment uses your current tactical structure and role distribution.'
-        : 'Allineamento pattern calcolato su struttura tattica attuale e distribuzione ruoli.')
-
-  const strengths = [...rosterRead, tacticalRead]
+  const strengths = cardValueBullets(card, technical, lang)
   if (profileRead.note) strengths.push(profileRead.note)
   const whyItMatters = strengths.slice(0, 3)
 
   const technicalRisk = lang === 'en'
+    ? !technical.hasCompleteCardData
+      ? 'Do not make a coins decision until the full EFHub card detail is available.'
+      : !hasRoster
+        ? 'Without your roster, this is a card read only: the real risk is buying a duplicate.'
+        : duplicate
+          ? 'Coin risk: this card overlaps with roles already covered in your roster.'
+          : starterBlocked
+            ? 'Coin risk: the starter lane is already occupied at similar level.'
+            : 'Coin risk is controlled if this role is one of your current priorities.'
+    : !technical.hasCompleteCardData
+      ? 'Non prendere decisioni coins finché non è disponibile il dettaglio completo EFHub della carta.'
+      : !hasRoster
+        ? 'Senza rosa questa è solo lettura carta: il rischio reale è comprare un doppione.'
+        : duplicate
+          ? 'Rischio coins: questa carta si sovrappone a ruoli già coperti nella tua rosa.'
+          : starterBlocked
+            ? 'Rischio coins: la corsia titolare è già occupata a livello simile.'
+            : 'Rischio coins controllato se questo ruolo è una priorità reale.'
+
+  const purchaseAdvice = lang === 'en'
+    ? !hasRoster
+      ? 'Load your roster to turn this from a card read into a personal buy/skip verdict.'
+      : decision.level === 'buy'
+        ? `Prioritize ${card.name} if you want to spend coins on ${card.position}.`
+        : decision.level === 'avoid'
+          ? `Do not spend coins on ${card.name} unless you need that exact rotation.`
+          : `Keep ${card.name} on your shortlist only if ${card.position} is a priority.`
+    : !hasRoster
+      ? 'Carica la rosa per trasformare questa lettura carta in un verdetto personale compra/evita.'
+      : decision.level === 'buy'
+        ? `Dai priorità a ${card.name} se vuoi spendere coins su ${card.position}.`
+        : decision.level === 'avoid'
+          ? `Non spendere coins su ${card.name} a meno che ti serva proprio quella rotazione.`
+          : `Tieni ${card.name} in lista solo se ${card.position} è una priorità.`
+
+  const legacyTechnicalRisk = lang === 'en'
     ? duplicate
       ? 'Technical duplicate in your roster: keep this card as controlled rotation, not as first purchase target.'
       : starterBlocked
@@ -525,8 +772,12 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
     rosterRead,
     whyItMatters,
     coachLinkup: conn.textEn && lang === 'en' ? conn.textEn : conn.textIt,
-    recommendedUse: recommendedUse(card, lang, tacticalStyle),
+    recommendedUse: hasRoster && technical.hasCompleteCardData ? recommendedUse(card, lang, tacticalStyle) : '',
     technicalRisk,
+    legacyTechnicalRisk,
+    purchaseAdvice,
+    coinsRisk: technicalRisk,
+    decision,
     alternatives: sameRole,
     nextCta,
     context: {
@@ -538,6 +789,8 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
       weakPoint: profile?.ai_weak_point || null,
       recurringIssues: Array.isArray(patterns?.recurring_issues) ? patterns.recurring_issues.slice(0, 3) : [],
       tacticalStyle: tacticalSettings?.team_playing_style || null,
+      cardDataSource: technical.dataSource,
+      hasCompleteCardData: technical.hasCompleteCardData,
       catalogSource: catalogCard?.source || null
     }
   }
@@ -563,8 +816,9 @@ export async function POST(req) {
     }
     const admin = createClient(supabaseUrl, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } })
     const userId = await buildUserId(userData, admin)()
-    const catalogCandidates = await fetchCatalogCandidates(admin, card).catch(() => [])
-    const catalogCard = pickCatalogCard(card, catalogCandidates)
+    const efhubDetail = await fetchEfhubCardDetail(card)
+    const catalogCandidates = efhubDetail ? [] : await fetchCatalogCandidates(admin, card).catch(() => [])
+    const catalogCard = efhubDetail || pickCatalogCard(card, catalogCandidates)
     const [
       profileRes,
       formationRes,
