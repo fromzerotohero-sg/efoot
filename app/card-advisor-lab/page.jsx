@@ -31,17 +31,14 @@ const copy = {
     cardScore: 'Sinergia',
     role: 'Ruolo',
     style: 'Stile',
-    build: 'Build consigliata',
+    build: 'Cosa aggiunge',
     verdict: 'Lettura',
-    strengths: 'Punti forti',
-    risks: 'Rischi',
-    nativeSkills: 'Abilita native',
-    teamFit: 'Fit con la squadra',
+    strengths: 'Perché conta',
+    risks: 'Rischio tecnico',
+    nativeSkills: 'Profilo tecnico',
+    teamFit: 'Sinergia con la tua squadra',
     noRosterTitle: 'Analisi carta disponibile',
     noRosterText: 'Senza rosa leggiamo stile, ruolo e profilo tecnico. Con la rosa aggiungiamo doppioni, alternative e priorita reali.',
-    missingData: 'Nota valutazione',
-    sourcePlan: 'Come funziona',
-    sourcePlanText: 'Scegli una carta, leggi il verdetto generale e completa la rosa per ricevere il consiglio personalizzato.',
     selectedHint: 'Clicca una carta per vedere il dettaglio.',
     topPick: 'Sinergia alta',
     goodPick: 'Sinergia buona',
@@ -81,11 +78,15 @@ const copy = {
     rosterStarters: 'Titolari',
     rosterFormation: 'Modulo',
     personalFitPreview: 'Fit squadra',
-    replacementLogic: 'confronto con chi gioca nello stesso ruolo',
-    duplicateLogic: 'controllo doppioni in rosa',
-    priorityLogic: 'priorita rispetto ai buchi squadra',
+    replacementLogic: 'ruolo nella rosa',
+    duplicateLogic: 'doppioni tecnici',
+    priorityLogic: 'priorita squadra',
     loadRoster: 'Carica o completa la rosa',
-    closeDetails: 'Chiudi dettagli'
+    closeDetails: 'Chiudi dettagli',
+    mainLever: 'Leva principale',
+    coachLinkup: 'Coach e Link-up',
+    recommendedUse: 'Uso consigliato',
+    noNativeSkills: 'In arrivo con i dati completi della carta',
   },
   en: {
     eyebrow: 'New cards',
@@ -98,17 +99,14 @@ const copy = {
     cardScore: 'Synergy',
     role: 'Role',
     style: 'Style',
-    build: 'Recommended build',
+    build: 'What it adds',
     verdict: 'Read',
-    strengths: 'Strengths',
-    risks: 'Risks',
-    nativeSkills: 'Native skills',
-    teamFit: 'Team fit',
+    strengths: 'Why it matters',
+    risks: 'Technical risk',
+    nativeSkills: 'Technical profile',
+    teamFit: 'Team synergy',
     noRosterTitle: 'Card profile available',
     noRosterText: 'Without a roster we read style, role, and technical profile. With the roster we add duplicates, alternatives, and real priorities.',
-    missingData: 'Evaluation note',
-    sourcePlan: 'How it works',
-    sourcePlanText: 'Choose a card, read the general verdict, and complete your roster for a personalized recommendation.',
     selectedHint: 'Click a card to inspect details.',
     topPick: 'High synergy',
     goodPick: 'Good synergy',
@@ -148,11 +146,15 @@ const copy = {
     rosterStarters: 'Starters',
     rosterFormation: 'Formation',
     personalFitPreview: 'Team fit',
-    replacementLogic: 'comparison with same-role players',
-    duplicateLogic: 'duplicate check in roster',
-    priorityLogic: 'priority against team gaps',
+    replacementLogic: 'roster role',
+    duplicateLogic: 'technical duplicates',
+    priorityLogic: 'team priority',
     loadRoster: 'Load or complete roster',
-    closeDetails: 'Close details'
+    closeDetails: 'Close details',
+    mainLever: 'Main lever',
+    coachLinkup: 'Coach and Link-up',
+    recommendedUse: 'Recommended use',
+    noNativeSkills: 'Coming with complete card data',
   }
 }
 
@@ -200,41 +202,57 @@ function buildAdvice(position) {
   const family = roleFamily(position)
   if (family === 'gk') {
     return {
-      build: ['GK Awareness', 'Reflexes', 'Reach'],
-      skills: ['GK Low Punt', 'GK Long Throw'],
-      strengths: ['Buona base per stabilizzare la porta', 'Utile se subisci molto in area', 'Da valutare con altezza e riflessi'],
-      strengthsEn: ['Good base to stabilize the goal', 'Useful if you concede often in the box', 'Must be checked with height and reflexes'],
-      risks: ['Poco prioritario se hai gia un portiere top', 'Overall non basta: servono stats GK reali'],
-      risksEn: ['Less urgent if you already have a top goalkeeper', 'Overall is not enough: real GK stats matter']
+      build: ['Stabilità porta', 'Reattività', 'Gestione area'],
+      skills: [],
+      strengths: ['Porta sicurezza nelle situazioni dentro l’area', 'Riduce il rischio sulle conclusioni ravvicinate'],
+      strengthsEn: ['Adds security inside the box', 'Reduces risk on close-range shots'],
+      risks: ['Diventa rotazione quando hai già un portiere affidabile e completo'],
+      risksEn: ['Becomes rotation when you already have a reliable complete goalkeeper'],
+      lever: 'Stabilità porta',
+      leverEn: 'Goal stability',
+      use: 'Usalo come portiere titolare quando vuoi ridurre errori e rimbalzi in area.',
+      useEn: 'Use him as starting goalkeeper when you want fewer errors and rebounds in the box.'
     }
   }
   if (family === 'def') {
     return {
-      build: ['Defensive Awareness', 'Tackling', 'Physical Contact'],
-      skills: ['Man Marking', 'Interception', 'Blocker'],
-      strengths: ['Rinforza copertura e duelli', 'Utile contro attacchi diretti', 'Interessante se mancano difensori rapidi o fisici'],
-      strengthsEn: ['Improves coverage and duels', 'Useful against direct attacks', 'Interesting if fast or physical defenders are missing'],
-      risks: ['Controlla se ha abbastanza velocita per la tua linea difensiva', 'Puo essere doppione se hai gia centrali completi'],
-      risksEn: ['Check whether he has enough speed for your defensive line', 'Can be a duplicate if you already have complete defenders']
+      build: ['Copertura', 'Duelli', 'Recupero palla'],
+      skills: [],
+      strengths: ['Rinforza copertura e duelli difensivi', 'Aggiunge presenza nelle chiusure e nei recuperi'],
+      strengthsEn: ['Improves defensive coverage and duels', 'Adds presence in blocks and recoveries'],
+      risks: ['Diventa doppione quando hai già difensori rapidi con Intercettazione e Blocco'],
+      risksEn: ['Becomes a duplicate when you already have fast defenders with Interception and Blocker'],
+      lever: 'Copertura e recupero',
+      leverEn: 'Coverage and recovery',
+      use: 'Usalo per proteggere il lato scoperto e recuperare campo dopo perdita palla.',
+      useEn: 'Use him to protect the exposed side and recover ground after losing possession.'
     }
   }
   if (family === 'mid') {
     return {
-      build: ['Low Pass', 'Stamina', 'Ball Control'],
-      skills: ['One-touch Pass', 'Through Passing', 'Interception'],
-      strengths: ['Aumenta qualita tra costruzione e rifinitura', 'Utile se manca equilibrio a centrocampo', 'Buona carta per collegare reparti'],
-      strengthsEn: ['Improves build-up and chance creation', 'Useful if midfield balance is missing', 'Good card to connect team lines'],
-      risks: ['Non sempre cambia la squadra da sola', 'Va confrontata con stile squadra e modulo'],
-      risksEn: ['Does not always change the team alone', 'Must be compared with team style and formation']
+      build: ['Costruzione', 'Continuità', 'Connessione reparti'],
+      skills: [],
+      strengths: ['Aumenta qualità tra costruzione e rifinitura', 'Dà più continuità al possesso e alle uscite centrali'],
+      strengthsEn: ['Improves build-up and chance creation', 'Adds continuity to possession and central exits'],
+      risks: ['Diventa rotazione quando il centrocampo è già coperto da passaggio e filtro'],
+      risksEn: ['Becomes rotation when midfield already has passing and defensive coverage'],
+      lever: 'Connessione tra reparti',
+      leverEn: 'Team-line connection',
+      use: 'Usalo per collegare difesa e attacco, non come semplice giocatore da inserimento.',
+      useEn: 'Use him to connect defence and attack, not just as a runner.'
     }
   }
   return {
-    build: ['Speed', 'Finishing', 'Dribbling'],
-    skills: ['First-time Shot', 'Double Touch', 'Long Range Shooting'],
-    strengths: ['Porta minaccia offensiva immediata', 'Utile se ti manca profondita o finalizzazione', 'Buona per decidere partite chiuse'],
-    strengthsEn: ['Adds immediate attacking threat', 'Useful if depth or finishing is missing', 'Good for deciding tight matches'],
-    risks: ['Puo essere solo hype se hai gia attaccanti simili', 'Controlla piede debole e fisico prima di spendere'],
-    risksEn: ['Can be pure hype if you already have similar attackers', 'Check weak foot and physical profile before spending']
+    build: ['Profondità', 'Finalizzazione', '1 contro 1'],
+    skills: [],
+    strengths: ['Aggiunge minaccia offensiva immediata', 'Alza profondità, ritmo e presenza negli ultimi metri'],
+    strengthsEn: ['Adds immediate attacking threat', 'Raises depth, tempo and presence in the final third'],
+    risks: ['Diventa doppione quando hai già attaccanti rapidi con finalizzazione e movimento simili'],
+    risksEn: ['Becomes a duplicate when you already have fast forwards with similar finishing and movement'],
+    lever: 'Profondità offensiva',
+    leverEn: 'Attacking depth',
+    use: 'Usalo per attaccare spazio e chiudere azioni, non per abbassarsi a costruire.',
+    useEn: 'Use him to attack space and finish moves, not to drop deep for build-up.'
   }
 }
 
@@ -263,6 +281,10 @@ function enrichCard(card) {
     score: normalized.score ?? score,
     verdict: normalized.verdict || verdictFor(score),
     ...buildAdvice(normalized.position),
+    lever: normalized.lever || buildAdvice(normalized.position).lever,
+    leverEn: normalized.leverEn || buildAdvice(normalized.position).leverEn,
+    use: normalized.use || buildAdvice(normalized.position).use,
+    useEn: normalized.useEn || buildAdvice(normalized.position).useEn,
     missing: normalized.missing || ['Con la rosa completa il verdetto tiene conto di ruolo, doppioni e priorita squadra.'],
     missingEn: normalized.missingEn || ['With a complete roster, the verdict considers role, duplicates, and team priorities.']
   }
@@ -521,7 +543,6 @@ function getFitSummary(card, rosterSummary, labels, lang) {
 }
 
 function ReleaseCard({ card, selected, labels, onSelect }) {
-  const verdict = getVerdictMeta(card.verdict, labels)
   return (
     <button
       type="button"
@@ -538,7 +559,7 @@ function ReleaseCard({ card, selected, labels, onSelect }) {
           <ChevronRight size={18} />
         </div>
         <div className="score-row">
-          <span style={{ background: verdict.bg, color: verdict.color }}>{verdict.label}</span>
+          <span>{card.category}</span>
           <strong>{labels.analyzeSynergy}</strong>
         </div>
       </div>
@@ -607,8 +628,21 @@ function RosterStatusPanel({ labels, rosterSummary, onLoadRoster, onOpenCoach })
 
 function DetailPanel({ card, labels, lang, rosterSummary, onOpenFormation, onOpenCoach, onClose }) {
   const verdict = getVerdictMeta(card.verdict, labels)
-  const hasRoster = rosterSummary?.status === 'ready'
   const fitSummary = getFitSummary(card, rosterSummary, labels, lang)
+  const lever = lang === 'en' ? (card.leverEn || card.lever) : card.lever
+  const recommendedUse = lang === 'en' ? (card.useEn || card.use) : card.use
+  const connectionLabel = getCoachConnectionLabel(rosterSummary?.activeCoach)
+  const coachLinkText = connectionLabel
+    ? (lang === 'en'
+        ? `Link-up ${connectionLabel} is part of this read: the card is evaluated inside your coach setup.`
+        : `Il Link-up ${connectionLabel} entra nella lettura: la carta viene valutata dentro il tuo assetto coach.`)
+    : (rosterSummary?.hasActiveCoach
+        ? (lang === 'en'
+            ? 'Coach and tactics are part of this read.'
+            : 'Coach e tattica entrano nella lettura.')
+        : (lang === 'en'
+            ? 'Add the active coach to include Link-up and style competences.'
+            : 'Aggiungi il coach attivo per includere Link-up e competenze stile.'))
   return (
     <section className="detail-panel">
       {onClose && (
@@ -650,16 +684,18 @@ function DetailPanel({ card, labels, lang, rosterSummary, onOpenFormation, onOpe
 
       <div className="detail-grid">
         <article>
-          <h3><TrendingUp size={18} /> {labels.build}</h3>
+          <h3><TrendingUp size={18} /> {labels.mainLever}</h3>
           <div className="pill-row">
-            {card.build.map(item => <StatPill key={item}>{item}</StatPill>)}
+            <StatPill>{lever}</StatPill>
           </div>
         </article>
 
         <article>
           <h3><Sparkles size={18} /> {labels.nativeSkills}</h3>
           <div className="pill-row">
-            {card.skills.map(item => <StatPill key={item}>{item}</StatPill>)}
+            {card.skills.length > 0
+              ? card.skills.map(item => <StatPill key={item}>{item}</StatPill>)
+              : <StatPill>{labels.noNativeSkills}</StatPill>}
           </div>
         </article>
 
@@ -675,6 +711,18 @@ function DetailPanel({ card, labels, lang, rosterSummary, onOpenFormation, onOpe
           <ul>
             {listFor(card, 'risks', lang).map(item => <li key={item}>{item}</li>)}
           </ul>
+        </article>
+      </div>
+
+      <div className="detail-grid detail-grid-secondary">
+        <article>
+          <h3><Users size={18} /> {labels.coachLinkup}</h3>
+          <p>{coachLinkText}</p>
+        </article>
+
+        <article>
+          <h3><CheckCircle2 size={18} /> {labels.recommendedUse}</h3>
+          <p>{recommendedUse}</p>
         </article>
       </div>
 
@@ -713,13 +761,6 @@ function DetailPanel({ card, labels, lang, rosterSummary, onOpenFormation, onOpe
         )}
       </div>
 
-      <div className="data-warning">
-        <AlertTriangle size={18} />
-        <div>
-          <strong>{labels.missingData}</strong>
-          <p>{listFor(card, 'missing', lang).join(' · ')}</p>
-        </div>
-      </div>
     </section>
   )
 }
@@ -1037,8 +1078,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .hero-copy p,
         .release-header p,
-        .fit-panel p,
-        .data-warning p {
+        .fit-panel p {
           color: rgba(255,255,255,0.72);
           line-height: 1.65;
         }
@@ -1661,9 +1701,12 @@ export default withAuth(function CardAdvisorLabPage() {
           margin-top: 16px;
         }
 
+        .detail-grid-secondary {
+          margin-top: 12px;
+        }
+
         .detail-grid article,
-        .fit-panel,
-        .data-warning {
+        .fit-panel {
           border: 1px solid rgba(255,255,255,0.10);
           border-radius: 18px;
           padding: 14px;
@@ -1678,6 +1721,13 @@ export default withAuth(function CardAdvisorLabPage() {
           gap: 8px;
           font-size: 15px;
           color: #fff;
+        }
+
+        .detail-grid article p {
+          color: rgba(255,255,255,0.72);
+          line-height: 1.6;
+          margin: 0;
+          font-size: 13px;
         }
 
         .pill-row {
@@ -1739,22 +1789,6 @@ export default withAuth(function CardAdvisorLabPage() {
           font-weight: 800;
           cursor: pointer;
           flex-shrink: 0;
-        }
-
-        .data-warning {
-          margin-top: 14px;
-          display: flex;
-          gap: 12px;
-          color: #fbbf24;
-        }
-
-        .data-warning strong {
-          color: #fff;
-        }
-
-        .data-warning p {
-          margin: 4px 0 0;
-          font-size: 13px;
         }
 
         @media (max-width: 1180px) {
