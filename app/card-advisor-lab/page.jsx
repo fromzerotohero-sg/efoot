@@ -407,6 +407,10 @@ function CardImage({ card, labels, large = false }) {
           </div>
         </div>
       )}
+      <div className="card-art-brand-layer" aria-hidden="true">
+        <span className="card-art-brand-logo" />
+        <span className="card-art-brand-stamp">FZH</span>
+      </div>
       <div className="card-art-top">
         <span>{card.overall}</span>
         <small>{card.position}</small>
@@ -1592,6 +1596,40 @@ export default withAuth(function CardAdvisorLabPage() {
           display: block;
         }
 
+        .card-art-brand-layer {
+          position: absolute;
+          inset: 0;
+          z-index: 1;
+          pointer-events: none;
+          background: linear-gradient(180deg, rgba(3,6,16,0.06) 0%, rgba(3,6,16,0.18) 100%);
+        }
+
+        .card-art-brand-logo {
+          position: absolute;
+          inset: 18% 11% 22%;
+          background-image: url('/logo.png');
+          background-size: contain;
+          background-repeat: no-repeat;
+          background-position: center;
+          opacity: 0.18;
+          mix-blend-mode: screen;
+          filter: drop-shadow(0 0 12px rgba(0,212,255,0.35));
+        }
+
+        .card-art-brand-stamp {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          border-radius: 999px;
+          padding: 4px 8px;
+          background: rgba(1, 6, 18, 0.62);
+          border: 1px solid rgba(255,255,255,0.34);
+          color: rgba(255,255,255,0.88);
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: 0.14em;
+        }
+
         .card-art::after {
           content: '';
           position: absolute;
@@ -1677,6 +1715,7 @@ export default withAuth(function CardAdvisorLabPage() {
           position: absolute;
           top: 14px;
           left: 14px;
+          z-index: 3;
           display: flex;
           flex-direction: column;
           line-height: 1;
@@ -1699,6 +1738,7 @@ export default withAuth(function CardAdvisorLabPage() {
           left: 12px;
           right: 12px;
           bottom: 12px;
+          z-index: 3;
           border-radius: 10px;
           padding: 9px 8px;
           background: rgba(2,4,12,0.82);
