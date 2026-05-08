@@ -998,7 +998,7 @@ function PremiumPlayerModal({
         </section>
 
         <section className="nr-premium-sections">
-          <EnterpriseSection title={lang === 'en' ? 'Core identity' : 'Identita'}>
+          <EnterpriseSection title={lang === 'en' ? 'Player setup' : 'Setup giocatore'}>
             <div className="nr-form-grid">
               <EnterpriseInput label={lang === 'en' ? 'Player name' : 'Nome'} value={form.player_name} onChange={(value) => setForm((prev) => ({ ...prev, player_name: value }))} />
               <EnterpriseSelect label={lang === 'en' ? 'Position' : 'Posizione'} value={form.position} onChange={(value) => setForm((prev) => ({ ...prev, position: value }))} options={MANUAL_POSITIONS} />
@@ -1011,122 +1011,132 @@ function PremiumPlayerModal({
             </div>
           </EnterpriseSection>
 
-          <EnterpriseSection
-            title={lang === 'en' ? 'Actions' : 'Azioni'}
-            actions={
-              <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player)}>
-                {lang === 'en' ? 'Replace card' : 'Sostituisci carta'}
+          <div className="nr-premium-toolbar-row">
+            <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player)}>
+              {lang === 'en' ? 'Replace card' : 'Sostituisci carta'}
+            </button>
+            {player.slot_index !== null && player.slot_index !== undefined && (
+              <button type="button" className="nr-secondary-button" onClick={() => onRemoveFromSlot(player.id)}>
+                {lang === 'en' ? 'Move to reserves' : 'Sposta in riserva'}
               </button>
-            }
-          >
-            <div className="nr-quick-actions">
-              {player.slot_index !== null && player.slot_index !== undefined && (
-                <button type="button" className="nr-secondary-button" onClick={() => onRemoveFromSlot(player.id)}>
-                  {lang === 'en' ? 'Move to reserves' : 'Sposta in riserva'}
-                </button>
-              )}
-              <button type="button" className="nr-danger-button" onClick={() => onDeletePlayer(player.id)}>
-                <Trash2 size={14} />
-                {lang === 'en' ? 'Delete player' : 'Elimina giocatore'}
-              </button>
-            </div>
-          </EnterpriseSection>
+            )}
+            <button type="button" className="nr-danger-button" onClick={() => onDeletePlayer(player.id)}>
+              <Trash2 size={14} />
+              {lang === 'en' ? 'Delete player' : 'Elimina giocatore'}
+            </button>
+          </div>
 
-          <div className="nr-premium-stats-grid">
-            <EnterpriseSection title={lang === 'en' ? 'Attacking' : 'Attaccare'}>
-              <div className="nr-form-grid">
-                <EnterpriseInput label={lang === 'en' ? 'Finishing' : 'Finalizzazione'} value={form.finishing} type="number" onChange={(value) => setForm((prev) => ({ ...prev, finishing: value }))} />
-                <EnterpriseInput label={lang === 'en' ? 'Low pass' : 'Passaggio rasoterra'} value={form.low_pass} type="number" onChange={(value) => setForm((prev) => ({ ...prev, low_pass: value }))} />
-                <EnterpriseInput label={lang === 'en' ? 'Lofted pass' : 'Passaggio alto'} value={form.lofted_pass} type="number" onChange={(value) => setForm((prev) => ({ ...prev, lofted_pass: value }))} />
-                <EnterpriseInput label={lang === 'en' ? 'Dribbling' : 'Dribbling'} value={form.dribbling} type="number" onChange={(value) => setForm((prev) => ({ ...prev, dribbling: value }))} />
-                <EnterpriseInput label={lang === 'en' ? 'Ball control' : 'Controllo palla'} value={form.ball_control} type="number" onChange={(value) => setForm((prev) => ({ ...prev, ball_control: value }))} />
-                <EnterpriseInput label={lang === 'en' ? 'Tight possession' : 'Possesso stretto'} value={form.tight_possession} type="number" onChange={(value) => setForm((prev) => ({ ...prev, tight_possession: value }))} />
-              </div>
-            </EnterpriseSection>
+          <div className="nr-reference-main-grid">
+            <section className="nr-reference-left">
+              <EnterpriseSection title={lang === 'en' ? 'Attacking' : 'Attaccare'}>
+                <div className="nr-stat-pairs">
+                  <EnterpriseInput label={lang === 'en' ? 'Finishing' : 'Finalizzazione'} value={form.finishing} type="number" onChange={(value) => setForm((prev) => ({ ...prev, finishing: value }))} />
+                  <EnterpriseInput label={lang === 'en' ? 'Low pass' : 'Passaggio rasoterra'} value={form.low_pass} type="number" onChange={(value) => setForm((prev) => ({ ...prev, low_pass: value }))} />
+                  <EnterpriseInput label={lang === 'en' ? 'Lofted pass' : 'Passaggio alto'} value={form.lofted_pass} type="number" onChange={(value) => setForm((prev) => ({ ...prev, lofted_pass: value }))} />
+                  <EnterpriseInput label={lang === 'en' ? 'Dribbling' : 'Dribbling'} value={form.dribbling} type="number" onChange={(value) => setForm((prev) => ({ ...prev, dribbling: value }))} />
+                  <EnterpriseInput label={lang === 'en' ? 'Ball control' : 'Controllo palla'} value={form.ball_control} type="number" onChange={(value) => setForm((prev) => ({ ...prev, ball_control: value }))} />
+                  <EnterpriseInput label={lang === 'en' ? 'Tight possession' : 'Possesso stretto'} value={form.tight_possession} type="number" onChange={(value) => setForm((prev) => ({ ...prev, tight_possession: value }))} />
+                </div>
+              </EnterpriseSection>
 
-            <EnterpriseSection title={lang === 'en' ? 'Athleticism' : 'Atletismo'}>
-              <div className="nr-form-grid">
-                <EnterpriseInput label={lang === 'en' ? 'Speed' : 'Velocita'} value={form.speed} type="number" onChange={(value) => setForm((prev) => ({ ...prev, speed: value }))} />
-                <EnterpriseInput label={lang === 'en' ? 'Acceleration' : 'Accelerazione'} value={form.acceleration} type="number" onChange={(value) => setForm((prev) => ({ ...prev, acceleration: value }))} />
-                <EnterpriseInput label={lang === 'en' ? 'Kicking power' : 'Potenza di tiro'} value={form.kicking_power} type="number" onChange={(value) => setForm((prev) => ({ ...prev, kicking_power: value }))} />
-                <EnterpriseInput label={lang === 'en' ? 'Physical contact' : 'Contatto fisico'} value={form.physical_contact} type="number" onChange={(value) => setForm((prev) => ({ ...prev, physical_contact: value }))} />
-                <EnterpriseInput label={lang === 'en' ? 'Balance' : 'Equilibrio'} value={form.balance} type="number" onChange={(value) => setForm((prev) => ({ ...prev, balance: value }))} />
-                <EnterpriseInput label={lang === 'en' ? 'Stamina' : 'Resistenza'} value={form.stamina} type="number" onChange={(value) => setForm((prev) => ({ ...prev, stamina: value }))} />
-              </div>
-            </EnterpriseSection>
-
-            <EnterpriseSection title={lang === 'en' ? 'Defending and skills' : 'Difesa e abilita'}>
-              <div className="nr-form-grid">
-                <EnterpriseInput label={lang === 'en' ? 'Defensive awareness' : 'Consapevolezza difensiva'} value={form.defensive_awareness} type="number" onChange={(value) => setForm((prev) => ({ ...prev, defensive_awareness: value }))} />
-                <EnterpriseInput label={lang === 'en' ? 'Tackling' : 'Contrasto'} value={form.tackling} type="number" onChange={(value) => setForm((prev) => ({ ...prev, tackling: value }))} />
-                <EnterpriseInput label={lang === 'en' ? 'Aggression' : 'Aggressivita'} value={form.aggression} type="number" onChange={(value) => setForm((prev) => ({ ...prev, aggression: value }))} />
-                <EnterpriseInput label={lang === 'en' ? 'GK reflexes' : 'Riflessi PT'} value={form.gk_reflexes} type="number" onChange={(value) => setForm((prev) => ({ ...prev, gk_reflexes: value }))} />
-                <EnterpriseInput label={lang === 'en' ? 'GK reach' : 'Copertura PT'} value={form.gk_reach} type="number" onChange={(value) => setForm((prev) => ({ ...prev, gk_reach: value }))} />
-              </div>
-
-              <div className="nr-inline-builder">
-                <EnterpriseInput
-                  label={lang === 'en' ? 'Add skill' : 'Aggiungi abilita'}
-                  value={skillInput}
-                  onChange={setSkillInput}
-                  placeholder={lang === 'en' ? 'Example: One Touch Pass' : 'Esempio: Passaggio di prima'}
-                />
-                <button type="button" className="nr-secondary-button" onClick={addSkill}>
-                  <Plus size={14} />
-                  {lang === 'en' ? 'Add' : 'Aggiungi'}
-                </button>
-              </div>
-
-              <div className="nr-skill-chip-row">
-                {skillsDraft.length > 0 ? skillsDraft.map((skill) => (
-                  <button key={skill} type="button" className="nr-skill-chip" onClick={() => removeSkill(skill)}>
-                    {skill}
-                    <X size={12} />
+              <EnterpriseSection title={lang === 'en' ? 'Skills' : 'Abilita'}>
+                <div className="nr-inline-builder">
+                  <EnterpriseInput
+                    label={lang === 'en' ? 'Add skill' : 'Aggiungi abilita'}
+                    value={skillInput}
+                    onChange={setSkillInput}
+                    placeholder={lang === 'en' ? 'Example: One Touch Pass' : 'Esempio: Passaggio di prima'}
+                  />
+                  <button type="button" className="nr-secondary-button" onClick={addSkill}>
+                    <Plus size={14} />
+                    {lang === 'en' ? 'Add' : 'Aggiungi'}
                   </button>
-                )) : (
-                  <span className="nr-skill-empty">{lang === 'en' ? 'No skills yet.' : 'Nessuna abilita ancora.'}</span>
-                )}
-              </div>
-            </EnterpriseSection>
+                </div>
 
-            <EnterpriseSection
-              title={lang === 'en' ? 'Boosters' : 'Boosters'}
-              actions={
-                <button type="button" className="nr-secondary-button" onClick={addBooster}>
-                  <Plus size={14} />
-                  {lang === 'en' ? 'Add booster' : 'Aggiungi booster'}
-                </button>
-              }
-            >
-              <div className="nr-boosters-list">
-                {boostersDraft.length > 0 ? boostersDraft.map((booster, index) => (
-                  <div key={`${index}-${booster?.name || 'booster'}`} className="nr-booster-row">
-                    <div className="nr-form-grid">
-                      <EnterpriseInput
-                        label={lang === 'en' ? 'Booster name' : 'Nome booster'}
-                        value={String(booster?.name || '')}
-                        onChange={(value) => updateBooster(index, 'name', value)}
-                        placeholder={lang === 'en' ? 'Booster name' : 'Nome booster'}
-                      />
-                      <EnterpriseInput
-                        label={lang === 'en' ? 'Effect' : 'Effetto'}
-                        value={String(booster?.effect || '')}
-                        onChange={(value) => updateBooster(index, 'effect', value)}
-                        placeholder={lang === 'en' ? 'Effect' : 'Effetto'}
-                      />
-                    </div>
-                    <button type="button" className="nr-danger-button" onClick={() => removeBooster(index)}>
-                      <Trash2 size={14} />
-                      {lang === 'en' ? 'Remove' : 'Rimuovi'}
+                <div className="nr-skill-chip-row">
+                  {skillsDraft.length > 0 ? skillsDraft.map((skill) => (
+                    <button key={skill} type="button" className="nr-skill-chip" onClick={() => removeSkill(skill)}>
+                      {skill}
+                      <X size={12} />
                     </button>
-                  </div>
-                )) : (
-                  <div className="nr-empty-state">
-                    <span>{lang === 'en' ? 'No boosters yet.' : 'Nessun booster ancora.'}</span>
-                  </div>
-                )}
-              </div>
-            </EnterpriseSection>
+                  )) : (
+                    <span className="nr-skill-empty">{lang === 'en' ? 'No skills yet.' : 'Nessuna abilita ancora.'}</span>
+                  )}
+                </div>
+              </EnterpriseSection>
+            </section>
+
+            <section className="nr-reference-center">
+              <EnterpriseSection title={lang === 'en' ? 'Defending' : 'Difesa'}>
+                <div className="nr-stat-pairs">
+                  <EnterpriseInput label={lang === 'en' ? 'Defensive awareness' : 'Consapevolezza difensiva'} value={form.defensive_awareness} type="number" onChange={(value) => setForm((prev) => ({ ...prev, defensive_awareness: value }))} />
+                  <EnterpriseInput label={lang === 'en' ? 'Tackling' : 'Contrasto'} value={form.tackling} type="number" onChange={(value) => setForm((prev) => ({ ...prev, tackling: value }))} />
+                  <EnterpriseInput label={lang === 'en' ? 'Aggression' : 'Aggressivita'} value={form.aggression} type="number" onChange={(value) => setForm((prev) => ({ ...prev, aggression: value }))} />
+                  <EnterpriseInput label={lang === 'en' ? 'GK reflexes' : 'Riflessi PT'} value={form.gk_reflexes} type="number" onChange={(value) => setForm((prev) => ({ ...prev, gk_reflexes: value }))} />
+                  <EnterpriseInput label={lang === 'en' ? 'GK reach' : 'Copertura PT'} value={form.gk_reach} type="number" onChange={(value) => setForm((prev) => ({ ...prev, gk_reach: value }))} />
+                </div>
+              </EnterpriseSection>
+
+              <EnterpriseSection title={lang === 'en' ? 'Advanced profile' : 'Profilo avanzato'}>
+                <div className="nr-mini-profile-grid">
+                  <div><span>{lang === 'en' ? 'Role count' : 'Ruoli'}</span><strong>{roleCount}</strong></div>
+                  <div><span>{lang === 'en' ? 'Skills' : 'Abilita'}</span><strong>{skillsDraft.length}</strong></div>
+                  <div><span>{lang === 'en' ? 'Boosters' : 'Boosters'}</span><strong>{boosterCount}</strong></div>
+                </div>
+              </EnterpriseSection>
+            </section>
+
+            <section className="nr-reference-right">
+              <EnterpriseSection title={lang === 'en' ? 'Athleticism' : 'Atletismo'}>
+                <div className="nr-stat-pairs">
+                  <EnterpriseInput label={lang === 'en' ? 'Speed' : 'Velocita'} value={form.speed} type="number" onChange={(value) => setForm((prev) => ({ ...prev, speed: value }))} />
+                  <EnterpriseInput label={lang === 'en' ? 'Acceleration' : 'Accelerazione'} value={form.acceleration} type="number" onChange={(value) => setForm((prev) => ({ ...prev, acceleration: value }))} />
+                  <EnterpriseInput label={lang === 'en' ? 'Kicking power' : 'Potenza di tiro'} value={form.kicking_power} type="number" onChange={(value) => setForm((prev) => ({ ...prev, kicking_power: value }))} />
+                  <EnterpriseInput label={lang === 'en' ? 'Physical contact' : 'Contatto fisico'} value={form.physical_contact} type="number" onChange={(value) => setForm((prev) => ({ ...prev, physical_contact: value }))} />
+                  <EnterpriseInput label={lang === 'en' ? 'Balance' : 'Equilibrio'} value={form.balance} type="number" onChange={(value) => setForm((prev) => ({ ...prev, balance: value }))} />
+                  <EnterpriseInput label={lang === 'en' ? 'Stamina' : 'Resistenza'} value={form.stamina} type="number" onChange={(value) => setForm((prev) => ({ ...prev, stamina: value }))} />
+                </div>
+              </EnterpriseSection>
+
+              <EnterpriseSection
+                title={lang === 'en' ? 'Boosters' : 'Boosters'}
+                actions={
+                  <button type="button" className="nr-secondary-button" onClick={addBooster}>
+                    <Plus size={14} />
+                    {lang === 'en' ? 'Add booster' : 'Aggiungi booster'}
+                  </button>
+                }
+              >
+                <div className="nr-boosters-list">
+                  {boostersDraft.length > 0 ? boostersDraft.map((booster, index) => (
+                    <div key={`${index}-${booster?.name || 'booster'}`} className="nr-booster-row">
+                      <div className="nr-form-grid">
+                        <EnterpriseInput
+                          label={lang === 'en' ? 'Booster name' : 'Nome booster'}
+                          value={String(booster?.name || '')}
+                          onChange={(value) => updateBooster(index, 'name', value)}
+                          placeholder={lang === 'en' ? 'Booster name' : 'Nome booster'}
+                        />
+                        <EnterpriseInput
+                          label={lang === 'en' ? 'Effect' : 'Effetto'}
+                          value={String(booster?.effect || '')}
+                          onChange={(value) => updateBooster(index, 'effect', value)}
+                          placeholder={lang === 'en' ? 'Effect' : 'Effetto'}
+                        />
+                      </div>
+                      <button type="button" className="nr-danger-button" onClick={() => removeBooster(index)}>
+                        <Trash2 size={14} />
+                        {lang === 'en' ? 'Remove' : 'Rimuovi'}
+                      </button>
+                    </div>
+                  )) : (
+                    <div className="nr-empty-state">
+                      <span>{lang === 'en' ? 'No boosters yet.' : 'Nessun booster ancora.'}</span>
+                    </div>
+                  )}
+                </div>
+              </EnterpriseSection>
+            </section>
           </div>
         </section>
       </div>
@@ -2735,6 +2745,58 @@ export default withAuth(function NuovaRosaLabPage() {
           gap: 14px;
         }
 
+        .nr-reference-main-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+          gap: 14px;
+        }
+
+        .nr-reference-left,
+        .nr-reference-center,
+        .nr-reference-right {
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+        }
+
+        .nr-stat-pairs {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .nr-mini-profile-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .nr-mini-profile-grid div {
+          border-radius: 14px;
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          background: rgba(255, 255, 255, 0.04);
+          padding: 10px;
+        }
+
+        .nr-mini-profile-grid span {
+          display: block;
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.62);
+          margin-bottom: 4px;
+        }
+
+        .nr-mini-profile-grid strong {
+          color: #fff;
+          font-size: 16px;
+        }
+
+        .nr-premium-toolbar-row {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+          margin-top: 2px;
+        }
+
         .nr-skill-chip-row {
           display: flex;
           gap: 8px;
@@ -2778,7 +2840,8 @@ export default withAuth(function NuovaRosaLabPage() {
           .nr-hero-card,
           .nr-picker-body,
           .nr-premium-player-layout,
-          .nr-premium-stats-grid {
+          .nr-premium-stats-grid,
+          .nr-reference-main-grid {
             grid-template-columns: 1fr;
           }
 
@@ -2797,7 +2860,9 @@ export default withAuth(function NuovaRosaLabPage() {
           }
 
           .nr-form-grid,
-          .nr-premium-summary-row {
+          .nr-premium-summary-row,
+          .nr-stat-pairs,
+          .nr-mini-profile-grid {
             grid-template-columns: 1fr;
           }
 
