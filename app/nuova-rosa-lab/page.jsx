@@ -205,6 +205,30 @@ function EnterpriseSelect({ label, value, onChange, options }) {
   )
 }
 
+function getStatToneClass(value) {
+  const num = Number(value)
+  if (!Number.isFinite(num)) return 'neutral'
+  if (num >= 85) return 'elite'
+  if (num >= 75) return 'good'
+  if (num >= 65) return 'ok'
+  return 'low'
+}
+
+function CompactStatInput({ label, value, onChange }) {
+  const toneClass = getStatToneClass(value)
+  return (
+    <label className="nr-stat-compact-row">
+      <span>{label}</span>
+      <input
+        type="number"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className={`nr-stat-compact-input tone-${toneClass}`}
+      />
+    </label>
+  )
+}
+
 function SlotPlayerCard({ player, slot, onClick, lang }) {
   const cardImage = getPlayerCardImage(player)
 
@@ -926,6 +950,7 @@ function PremiumPlayerModal({
   const [skillsDraft, setSkillsDraft] = React.useState([])
   const [skillInput, setSkillInput] = React.useState('')
   const [boostersDraft, setBoostersDraft] = React.useState([])
+  const [showAllSkills, setShowAllSkills] = React.useState(false)
 
   React.useEffect(() => {
     if (!show || !player) return
@@ -943,6 +968,7 @@ function PremiumPlayerModal({
     })
     setSkillsDraft(Array.isArray(player.skills) ? player.skills : [])
     setSkillInput('')
+    setShowAllSkills(false)
     setBoostersDraft(
       Array.isArray(player.available_boosters)
         ? player.available_boosters.map((entry) => normalizeBoosterEntry(entry))
@@ -969,7 +995,10 @@ function PremiumPlayerModal({
 
   const addBooster = () => {
     const defaultPreset = BOOSTER_PRESETS[0]?.value || 'custom'
-    setBoostersDraft((prev) => [...prev, normalizeBoosterEntry({ name: defaultPreset, effect: '+1' })])
+    setBoostersDraft((prev) => {
+      if (prev.length >= 2) return prev
+      return [...prev, normalizeBoosterEntry({ name: defaultPreset, effect: '+1' })]
+    })
   }
 
   const updateBooster = (index, key, value) => {
@@ -1007,6 +1036,8 @@ function PremiumPlayerModal({
 
   const boosterCount = boostersDraft.length
   const roleCount = Array.isArray(player.original_positions) ? player.original_positions.length : 0
+  const visibleSkills = showAllSkills ? skillsDraft : skillsDraft.slice(0, 10)
+  const hiddenSkillsCount = Math.max(0, skillsDraft.length - visibleSkills.length)
 
   return (
     <EnterpriseModalFrame
@@ -1109,12 +1140,12 @@ function PremiumPlayerModal({
             <section className="nr-reference-left">
               <EnterpriseSection title={lang === 'en' ? 'Attacking' : 'Attaccare'}>
                 <div className="nr-stat-pairs">
-                  <EnterpriseInput label={lang === 'en' ? 'Finishing' : 'Finalizzazione'} value={form.finishing} type="number" onChange={(value) => setForm((prev) => ({ ...prev, finishing: value }))} />
-                  <EnterpriseInput label={lang === 'en' ? 'Low pass' : 'Passaggio rasoterra'} value={form.low_pass} type="number" onChange={(value) => setForm((prev) => ({ ...prev, low_pass: value }))} />
-                  <EnterpriseInput label={lang === 'en' ? 'Lofted pass' : 'Passaggio alto'} value={form.lofted_pass} type="number" onChange={(value) => setForm((prev) => ({ ...prev, lofted_pass: value }))} />
-                  <EnterpriseInput label={lang === 'en' ? 'Dribbling' : 'Dribbling'} value={form.dribbling} type="number" onChange={(value) => setForm((prev) => ({ ...prev, dribbling: value }))} />
-                  <EnterpriseInput label={lang === 'en' ? 'Ball control' : 'Controllo palla'} value={form.ball_control} type="number" onChange={(value) => setForm((prev) => ({ ...prev, ball_control: value }))} />
-                  <EnterpriseInput label={lang === 'en' ? 'Tight possession' : 'Possesso stretto'} value={form.tight_possession} type="number" onChange={(value) => setForm((prev) => ({ ...prev, tight_possession: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'Finishing' : 'Finalizzazione'} value={form.finishing} onChange={(value) => setForm((prev) => ({ ...prev, finishing: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'Low pass' : 'Passaggio rasoterra'} value={form.low_pass} onChange={(value) => setForm((prev) => ({ ...prev, low_pass: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'Lofted pass' : 'Passaggio alto'} value={form.lofted_pass} onChange={(value) => setForm((prev) => ({ ...prev, lofted_pass: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'Dribbling' : 'Dribbling'} value={form.dribbling} onChange={(value) => setForm((prev) => ({ ...prev, dribbling: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'Ball control' : 'Controllo palla'} value={form.ball_control} onChange={(value) => setForm((prev) => ({ ...prev, ball_control: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'Tight possession' : 'Possesso stretto'} value={form.tight_possession} onChange={(value) => setForm((prev) => ({ ...prev, tight_possession: value }))} />
                 </div>
               </EnterpriseSection>
 
@@ -1133,7 +1164,7 @@ function PremiumPlayerModal({
                 </div>
 
                 <div className="nr-skill-chip-row">
-                  {skillsDraft.length > 0 ? skillsDraft.map((skill) => (
+                  {visibleSkills.length > 0 ? visibleSkills.map((skill) => (
                     <button key={skill} type="button" className="nr-skill-chip" onClick={() => removeSkill(skill)}>
                       {skill}
                       <X size={12} />
@@ -1142,17 +1173,31 @@ function PremiumPlayerModal({
                     <span className="nr-skill-empty">{lang === 'en' ? 'No skills yet.' : 'Nessuna abilita ancora.'}</span>
                   )}
                 </div>
+                {skillsDraft.length > 10 ? (
+                  <button type="button" className="nr-secondary-button nr-skills-toggle" onClick={() => setShowAllSkills((prev) => !prev)}>
+                    {showAllSkills
+                      ? (lang === 'en' ? 'Show less' : 'Mostra meno')
+                      : (lang === 'en' ? `Show all (${skillsDraft.length})` : `Mostra tutte (${skillsDraft.length})`)}
+                  </button>
+                ) : null}
+                {!showAllSkills && hiddenSkillsCount > 0 ? (
+                  <span className="nr-skill-hidden-counter">
+                    {lang === 'en'
+                      ? `${hiddenSkillsCount} hidden skills`
+                      : `${hiddenSkillsCount} abilita nascoste`}
+                  </span>
+                ) : null}
               </EnterpriseSection>
             </section>
 
             <section className="nr-reference-center">
               <EnterpriseSection title={lang === 'en' ? 'Defending' : 'Difesa'}>
                 <div className="nr-stat-pairs">
-                  <EnterpriseInput label={lang === 'en' ? 'Defensive awareness' : 'Consapevolezza difensiva'} value={form.defensive_awareness} type="number" onChange={(value) => setForm((prev) => ({ ...prev, defensive_awareness: value }))} />
-                  <EnterpriseInput label={lang === 'en' ? 'Tackling' : 'Contrasto'} value={form.tackling} type="number" onChange={(value) => setForm((prev) => ({ ...prev, tackling: value }))} />
-                  <EnterpriseInput label={lang === 'en' ? 'Aggression' : 'Aggressivita'} value={form.aggression} type="number" onChange={(value) => setForm((prev) => ({ ...prev, aggression: value }))} />
-                  <EnterpriseInput label={lang === 'en' ? 'GK reflexes' : 'Riflessi PT'} value={form.gk_reflexes} type="number" onChange={(value) => setForm((prev) => ({ ...prev, gk_reflexes: value }))} />
-                  <EnterpriseInput label={lang === 'en' ? 'GK reach' : 'Copertura PT'} value={form.gk_reach} type="number" onChange={(value) => setForm((prev) => ({ ...prev, gk_reach: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'Defensive awareness' : 'Consapevolezza difensiva'} value={form.defensive_awareness} onChange={(value) => setForm((prev) => ({ ...prev, defensive_awareness: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'Tackling' : 'Contrasto'} value={form.tackling} onChange={(value) => setForm((prev) => ({ ...prev, tackling: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'Aggression' : 'Aggressivita'} value={form.aggression} onChange={(value) => setForm((prev) => ({ ...prev, aggression: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'GK reflexes' : 'Riflessi PT'} value={form.gk_reflexes} onChange={(value) => setForm((prev) => ({ ...prev, gk_reflexes: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'GK reach' : 'Copertura PT'} value={form.gk_reach} onChange={(value) => setForm((prev) => ({ ...prev, gk_reach: value }))} />
                 </div>
               </EnterpriseSection>
 
@@ -1168,85 +1213,84 @@ function PremiumPlayerModal({
             <section className="nr-reference-right">
               <EnterpriseSection title={lang === 'en' ? 'Athleticism' : 'Atletismo'}>
                 <div className="nr-stat-pairs">
-                  <EnterpriseInput label={lang === 'en' ? 'Speed' : 'Velocita'} value={form.speed} type="number" onChange={(value) => setForm((prev) => ({ ...prev, speed: value }))} />
-                  <EnterpriseInput label={lang === 'en' ? 'Acceleration' : 'Accelerazione'} value={form.acceleration} type="number" onChange={(value) => setForm((prev) => ({ ...prev, acceleration: value }))} />
-                  <EnterpriseInput label={lang === 'en' ? 'Kicking power' : 'Potenza di tiro'} value={form.kicking_power} type="number" onChange={(value) => setForm((prev) => ({ ...prev, kicking_power: value }))} />
-                  <EnterpriseInput label={lang === 'en' ? 'Physical contact' : 'Contatto fisico'} value={form.physical_contact} type="number" onChange={(value) => setForm((prev) => ({ ...prev, physical_contact: value }))} />
-                  <EnterpriseInput label={lang === 'en' ? 'Balance' : 'Equilibrio'} value={form.balance} type="number" onChange={(value) => setForm((prev) => ({ ...prev, balance: value }))} />
-                  <EnterpriseInput label={lang === 'en' ? 'Stamina' : 'Resistenza'} value={form.stamina} type="number" onChange={(value) => setForm((prev) => ({ ...prev, stamina: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'Speed' : 'Velocita'} value={form.speed} onChange={(value) => setForm((prev) => ({ ...prev, speed: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'Acceleration' : 'Accelerazione'} value={form.acceleration} onChange={(value) => setForm((prev) => ({ ...prev, acceleration: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'Kicking power' : 'Potenza di tiro'} value={form.kicking_power} onChange={(value) => setForm((prev) => ({ ...prev, kicking_power: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'Physical contact' : 'Contatto fisico'} value={form.physical_contact} onChange={(value) => setForm((prev) => ({ ...prev, physical_contact: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'Balance' : 'Equilibrio'} value={form.balance} onChange={(value) => setForm((prev) => ({ ...prev, balance: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'Stamina' : 'Resistenza'} value={form.stamina} onChange={(value) => setForm((prev) => ({ ...prev, stamina: value }))} />
                 </div>
               </EnterpriseSection>
 
               <EnterpriseSection
                 title={lang === 'en' ? 'Boosters' : 'Boosters'}
                 actions={
-                  <button type="button" className="nr-secondary-button" onClick={addBooster}>
+                  <button type="button" className="nr-secondary-button" onClick={addBooster} disabled={boostersDraft.length >= 2}>
                     <Plus size={14} />
-                    {lang === 'en' ? 'Add booster' : 'Aggiungi booster'}
+                    {lang === 'en' ? 'Add booster slot' : 'Aggiungi slot booster'}
                   </button>
                 }
               >
-                <div className="nr-boosters-list">
-                  {boostersDraft.length > 0 ? boostersDraft.map((booster, index) => (
-                    <div key={`${index}-${booster?.name || 'booster'}`} className="nr-booster-row">
-                      <div className="nr-booster-row-head">
-                        <span>{lang === 'en' ? `Booster ${index + 1}` : `Booster ${index + 1}`}</span>
-                        <button type="button" className="nr-danger-button" onClick={() => removeBooster(index)}>
-                          <Trash2 size={14} />
-                          {lang === 'en' ? 'Remove' : 'Rimuovi'}
-                        </button>
-                      </div>
-
-                      <div className="nr-booster-control-grid">
-                        <label className="nr-form-field">
-                          <span>{lang === 'en' ? 'Category' : 'Categoria'}</span>
-                          <select
-                            value={booster?.preset || detectBoosterPreset(booster?.name)}
-                            onChange={(event) => updateBoosterPreset(index, event.target.value)}
-                          >
-                            {BOOSTER_PRESETS.map((preset) => (
-                              <option key={preset.value} value={preset.value}>
-                                {lang === 'en' ? preset.labels.en : preset.labels.it}
-                              </option>
-                            ))}
-                            <option value="custom">{lang === 'en' ? 'Custom' : 'Personalizzato'}</option>
-                          </select>
-                        </label>
-
-                        {(booster?.preset || detectBoosterPreset(booster?.name)) === 'custom' ? (
-                          <EnterpriseInput
-                            label={lang === 'en' ? 'Booster name' : 'Nome booster'}
-                            value={String(booster?.name || '')}
-                            onChange={(value) => updateBooster(index, 'name', value)}
-                            placeholder={lang === 'en' ? 'Custom booster' : 'Booster personalizzato'}
-                          />
-                        ) : (
-                          <div className="nr-booster-level-panel">
-                            <span>{lang === 'en' ? 'Level' : 'Livello'}</span>
+                <div className="nr-booster-slot-grid">
+                  {[0, 1].map((slotIndex) => {
+                    const booster = boostersDraft[slotIndex]
+                    const selectedPreset = booster?.preset || detectBoosterPreset(booster?.name)
+                    const activeLevel = Number(booster?.level || parseBoosterLevel(booster?.effect || '+1'))
+                    return (
+                      <div key={`booster-slot-${slotIndex}`} className="nr-booster-slot-card">
+                        <div className="nr-booster-row-head">
+                          <span>{lang === 'en' ? `Slot ${slotIndex + 1}` : `Slot ${slotIndex + 1}`}</span>
+                          {booster ? (
+                            <button type="button" className="nr-icon-button" onClick={() => removeBooster(slotIndex)}>
+                              <X size={12} />
+                            </button>
+                          ) : null}
+                        </div>
+                        {booster ? (
+                          <>
+                            <label className="nr-form-field">
+                              <span>{lang === 'en' ? 'Booster' : 'Booster'}</span>
+                              <select
+                                value={selectedPreset}
+                                onChange={(event) => updateBoosterPreset(slotIndex, event.target.value)}
+                              >
+                                {BOOSTER_PRESETS.map((preset) => (
+                                  <option key={preset.value} value={preset.value}>
+                                    {lang === 'en' ? preset.labels.en : preset.labels.it}
+                                  </option>
+                                ))}
+                                <option value="custom">{lang === 'en' ? 'Custom' : 'Personalizzato'}</option>
+                              </select>
+                            </label>
+                            {selectedPreset === 'custom' ? (
+                              <EnterpriseInput
+                                label={lang === 'en' ? 'Custom name' : 'Nome personalizzato'}
+                                value={String(booster?.name || '')}
+                                onChange={(value) => updateBooster(slotIndex, 'name', value)}
+                                placeholder={lang === 'en' ? 'Custom booster' : 'Booster personalizzato'}
+                              />
+                            ) : null}
                             <div className="nr-booster-level-buttons">
-                              {[1, 2, 3, 4].map((levelValue) => {
-                                const activeLevel = Number(booster?.level || parseBoosterLevel(booster?.effect || '+1'))
-                                return (
-                                  <button
-                                    key={levelValue}
-                                    type="button"
-                                    className={`nr-booster-level-btn ${activeLevel === levelValue ? 'is-active' : ''}`}
-                                    onClick={() => updateBoosterLevel(index, levelValue)}
-                                  >
-                                    +{levelValue}
-                                  </button>
-                                )
-                              })}
+                              {[1, 2, 3, 4].map((levelValue) => (
+                                <button
+                                  key={`${slotIndex}-${levelValue}`}
+                                  type="button"
+                                  className={`nr-booster-level-btn ${activeLevel === levelValue ? 'is-active' : ''}`}
+                                  onClick={() => updateBoosterLevel(slotIndex, levelValue)}
+                                >
+                                  +{levelValue}
+                                </button>
+                              ))}
                             </div>
+                          </>
+                        ) : (
+                          <div className="nr-empty-state">
+                            <span>{lang === 'en' ? 'No booster in this slot.' : 'Nessun booster in questo slot.'}</span>
                           </div>
                         )}
                       </div>
-                    </div>
-                  )) : (
-                    <div className="nr-empty-state">
-                      <span>{lang === 'en' ? 'No boosters yet.' : 'Nessun booster ancora.'}</span>
-                    </div>
-                  )}
+                    )
+                  })}
                 </div>
               </EnterpriseSection>
             </section>
@@ -2771,6 +2815,22 @@ export default withAuth(function NuovaRosaLabPage() {
           color: #7ceeff;
         }
 
+        .nr-booster-slot-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .nr-booster-slot-card {
+          border-radius: 14px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.02);
+          padding: 10px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
         .nr-inline-builder {
           display: grid;
           grid-template-columns: minmax(0, 1fr) auto;
@@ -2853,8 +2913,8 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-premium-card-frame {
-          width: min(100%, 320px);
-          min-height: 440px;
+          width: min(100%, 250px);
+          min-height: 340px;
           border-radius: 20px;
           overflow: hidden;
           border: 2px solid rgba(255, 177, 66, 0.25);
@@ -2936,8 +2996,64 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-stat-pairs {
           display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 10px;
+          grid-template-columns: 1fr;
+          gap: 8px;
+        }
+
+        .nr-stat-compact-row {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 62px;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .nr-stat-compact-row span {
+          margin: 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.82);
+        }
+
+        .nr-stat-compact-input {
+          height: 34px;
+          padding: 4px 8px;
+          text-align: center;
+          border-radius: 10px;
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          background: rgba(9, 14, 30, 0.95);
+          color: #fff;
+          font-weight: 700;
+        }
+
+        .nr-stat-compact-input.tone-elite {
+          border-color: rgba(64, 222, 122, 0.55);
+          box-shadow: inset 0 0 0 1px rgba(64, 222, 122, 0.22);
+          color: #8affb3;
+        }
+
+        .nr-stat-compact-input.tone-good {
+          border-color: rgba(172, 222, 64, 0.5);
+          box-shadow: inset 0 0 0 1px rgba(172, 222, 64, 0.2);
+          color: #d9ff7e;
+        }
+
+        .nr-stat-compact-input.tone-ok {
+          border-color: rgba(251, 191, 36, 0.52);
+          box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.2);
+          color: #ffd878;
+        }
+
+        .nr-stat-compact-input.tone-low {
+          border-color: rgba(255, 83, 83, 0.52);
+          box-shadow: inset 0 0 0 1px rgba(255, 83, 83, 0.22);
+          color: #ff9a9a;
+        }
+
+        .nr-stat-compact-input.tone-neutral {
+          border-color: rgba(255, 255, 255, 0.14);
+          color: #fff;
         }
 
         .nr-mini-profile-grid {
@@ -2977,6 +3093,20 @@ export default withAuth(function NuovaRosaLabPage() {
           gap: 8px;
           flex-wrap: wrap;
           margin-top: 12px;
+          max-height: 170px;
+          overflow: auto;
+          padding-right: 4px;
+        }
+
+        .nr-skills-toggle {
+          margin-top: 10px;
+        }
+
+        .nr-skill-hidden-counter {
+          display: inline-block;
+          margin-top: 8px;
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.66);
         }
 
         .nr-skill-chip,
@@ -3041,6 +3171,10 @@ export default withAuth(function NuovaRosaLabPage() {
             grid-template-columns: 1fr;
           }
 
+          .nr-booster-slot-grid {
+            grid-template-columns: 1fr;
+          }
+
           .nr-premium-hero-main,
           .nr-premium-hero-top {
             flex-direction: column;
@@ -3051,7 +3185,7 @@ export default withAuth(function NuovaRosaLabPage() {
           }
 
           .nr-premium-card-frame {
-            min-height: 320px;
+            min-height: 280px;
             width: 100%;
           }
 
