@@ -577,6 +577,47 @@ function RosterIntelligencePanel({ starters, reserves, layout, lang }) {
 
 const MANUAL_POSITIONS = ['PT', 'DC', 'TD', 'TS', 'MED', 'CC', 'TRQ', 'CLS', 'CLD', 'ESA', 'EDA', 'SP', 'P']
 const MANUAL_CARD_TYPES = ['Standard', 'Trending', 'Highlight', 'Epic', 'Legendary']
+const BOOSTER_PRESETS = [
+  { value: 'Finishing', labels: { en: 'Finishing', it: 'Finalizzazione' } },
+  { value: 'Low Pass', labels: { en: 'Low pass', it: 'Passaggio rasoterra' } },
+  { value: 'Lofted Pass', labels: { en: 'Lofted pass', it: 'Passaggio alto' } },
+  { value: 'Dribbling', labels: { en: 'Dribbling', it: 'Dribbling' } },
+  { value: 'Ball Control', labels: { en: 'Ball control', it: 'Controllo palla' } },
+  { value: 'Speed', labels: { en: 'Speed', it: 'Velocita' } },
+  { value: 'Acceleration', labels: { en: 'Acceleration', it: 'Accelerazione' } },
+  { value: 'Defensive Awareness', labels: { en: 'Defensive awareness', it: 'Consapevolezza difensiva' } },
+  { value: 'Tackling', labels: { en: 'Tackling', it: 'Contrasto' } },
+  { value: 'Aggression', labels: { en: 'Aggression', it: 'Aggressivita' } },
+  { value: 'Physical Contact', labels: { en: 'Physical contact', it: 'Contatto fisico' } },
+  { value: 'Stamina', labels: { en: 'Stamina', it: 'Resistenza' } }
+]
+
+function parseBoosterLevel(rawEffect) {
+  const match = String(rawEffect || '').match(/([+-]?\d+)/)
+  const parsed = match ? Number(match[1]) : 1
+  if (!Number.isFinite(parsed) || parsed < 1) return 1
+  if (parsed > 4) return 4
+  return parsed
+}
+
+function detectBoosterPreset(name) {
+  const normalizedName = String(name || '').trim().toLowerCase()
+  if (!normalizedName) return 'custom'
+  const preset = BOOSTER_PRESETS.find((entry) => entry.value.toLowerCase() === normalizedName)
+  return preset ? preset.value : 'custom'
+}
+
+function normalizeBoosterEntry(entry) {
+  const baseName = String(entry?.name || '').trim()
+  const level = parseBoosterLevel(entry?.effect)
+  const preset = detectBoosterPreset(baseName)
+  return {
+    name: baseName || (preset !== 'custom' ? preset : ''),
+    effect: `+${level}`,
+    preset,
+    level
+  }
+}
 
 function EnterprisePlayerEditorModal({
   show,
@@ -902,7 +943,11 @@ function PremiumPlayerModal({
     })
     setSkillsDraft(Array.isArray(player.skills) ? player.skills : [])
     setSkillInput('')
-    setBoostersDraft(Array.isArray(player.available_boosters) ? player.available_boosters : [])
+    setBoostersDraft(
+      Array.isArray(player.available_boosters)
+        ? player.available_boosters.map((entry) => normalizeBoosterEntry(entry))
+        : []
+    )
   }, [show, player])
 
   if (!show || !player) return null
@@ -923,11 +968,37 @@ function PremiumPlayerModal({
   }
 
   const addBooster = () => {
-    setBoostersDraft((prev) => [...prev, { name: '', effect: '' }])
+    const defaultPreset = BOOSTER_PRESETS[0]?.value || 'custom'
+    setBoostersDraft((prev) => [...prev, normalizeBoosterEntry({ name: defaultPreset, effect: '+1' })])
   }
 
   const updateBooster = (index, key, value) => {
     setBoostersDraft((prev) => prev.map((entry, idx) => idx === index ? { ...(entry || {}), [key]: value } : entry))
+  }
+
+  const updateBoosterPreset = (index, presetValue) => {
+    setBoostersDraft((prev) => prev.map((entry, idx) => {
+      if (idx !== index) return entry
+      if (presetValue === 'custom') {
+        return { ...(entry || {}), preset: 'custom', name: entry?.name || '' }
+      }
+      return {
+        ...(entry || {}),
+        preset: presetValue,
+        name: presetValue
+      }
+    }))
+  }
+
+  const updateBoosterLevel = (index, level) => {
+    setBoostersDraft((prev) => prev.map((entry, idx) => {
+      if (idx !== index) return entry
+      return {
+        ...(entry || {}),
+        level,
+        effect: `+${level}`
+      }
+    }))
   }
 
   const removeBooster = (index) => {
@@ -987,11 +1058,19 @@ function PremiumPlayerModal({
                 <span>{lang === 'en' ? 'Club' : 'Club'}</span>
                 <strong>{player.club_name || '-'}</strong>
               </div>
+              <div>
+                <span>{lang === 'en' ? 'Nationality' : 'Nazionalita'}</span>
+                <strong>{player.nationality || '-'}</strong>
+              </div>
+              <div>
+                <span>{lang === 'en' ? 'Card type' : 'Tipo carta'}</span>
+                <strong>{player.card_type || '-'}</strong>
+              </div>
             </div>
           </div>
 
           <div className="nr-premium-summary-row">
-            <div><span>{lang === 'en' ? 'Skills' : 'Abilita'}</span><strong>{Array.isArray(player.skills) ? player.skills.length : 0}</strong></div>
+            <div><span>{lang === 'en' ? 'Skills' : 'Abilita'}</span><strong>{skillsDraft.length}</strong></div>
             <div><span>{lang === 'en' ? 'Boosters' : 'Boosters'}</span><strong>{boosterCount}</strong></div>
             <div><span>{lang === 'en' ? 'Roles' : 'Ruoli'}</span><strong>{roleCount}</strong></div>
           </div>
@@ -1110,24 +1189,58 @@ function PremiumPlayerModal({
                 <div className="nr-boosters-list">
                   {boostersDraft.length > 0 ? boostersDraft.map((booster, index) => (
                     <div key={`${index}-${booster?.name || 'booster'}`} className="nr-booster-row">
-                      <div className="nr-form-grid">
-                        <EnterpriseInput
-                          label={lang === 'en' ? 'Booster name' : 'Nome booster'}
-                          value={String(booster?.name || '')}
-                          onChange={(value) => updateBooster(index, 'name', value)}
-                          placeholder={lang === 'en' ? 'Booster name' : 'Nome booster'}
-                        />
-                        <EnterpriseInput
-                          label={lang === 'en' ? 'Effect' : 'Effetto'}
-                          value={String(booster?.effect || '')}
-                          onChange={(value) => updateBooster(index, 'effect', value)}
-                          placeholder={lang === 'en' ? 'Effect' : 'Effetto'}
-                        />
+                      <div className="nr-booster-row-head">
+                        <span>{lang === 'en' ? `Booster ${index + 1}` : `Booster ${index + 1}`}</span>
+                        <button type="button" className="nr-danger-button" onClick={() => removeBooster(index)}>
+                          <Trash2 size={14} />
+                          {lang === 'en' ? 'Remove' : 'Rimuovi'}
+                        </button>
                       </div>
-                      <button type="button" className="nr-danger-button" onClick={() => removeBooster(index)}>
-                        <Trash2 size={14} />
-                        {lang === 'en' ? 'Remove' : 'Rimuovi'}
-                      </button>
+
+                      <div className="nr-booster-control-grid">
+                        <label className="nr-form-field">
+                          <span>{lang === 'en' ? 'Category' : 'Categoria'}</span>
+                          <select
+                            value={booster?.preset || detectBoosterPreset(booster?.name)}
+                            onChange={(event) => updateBoosterPreset(index, event.target.value)}
+                          >
+                            {BOOSTER_PRESETS.map((preset) => (
+                              <option key={preset.value} value={preset.value}>
+                                {lang === 'en' ? preset.labels.en : preset.labels.it}
+                              </option>
+                            ))}
+                            <option value="custom">{lang === 'en' ? 'Custom' : 'Personalizzato'}</option>
+                          </select>
+                        </label>
+
+                        {(booster?.preset || detectBoosterPreset(booster?.name)) === 'custom' ? (
+                          <EnterpriseInput
+                            label={lang === 'en' ? 'Booster name' : 'Nome booster'}
+                            value={String(booster?.name || '')}
+                            onChange={(value) => updateBooster(index, 'name', value)}
+                            placeholder={lang === 'en' ? 'Custom booster' : 'Booster personalizzato'}
+                          />
+                        ) : (
+                          <div className="nr-booster-level-panel">
+                            <span>{lang === 'en' ? 'Level' : 'Livello'}</span>
+                            <div className="nr-booster-level-buttons">
+                              {[1, 2, 3, 4].map((levelValue) => {
+                                const activeLevel = Number(booster?.level || parseBoosterLevel(booster?.effect || '+1'))
+                                return (
+                                  <button
+                                    key={levelValue}
+                                    type="button"
+                                    className={`nr-booster-level-btn ${activeLevel === levelValue ? 'is-active' : ''}`}
+                                    onClick={() => updateBoosterLevel(index, levelValue)}
+                                  >
+                                    +{levelValue}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )) : (
                     <div className="nr-empty-state">
@@ -1159,7 +1272,10 @@ function PremiumPlayerModal({
             nationality: form.nationality,
             club_name: form.club_name,
             skills: skillsDraft,
-            available_boosters: boostersDraft,
+            available_boosters: boostersDraft.map((entry) => ({
+              name: String(entry?.name || '').trim(),
+              effect: String(entry?.effect || '').trim() || '+1'
+            })),
             base_stats: buildBaseStatsPayloadFromEditor(form)
           })}
         >
@@ -2598,6 +2714,63 @@ export default withAuth(function NuovaRosaLabPage() {
           gap: 10px;
         }
 
+        .nr-booster-row-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+        }
+
+        .nr-booster-row-head span {
+          font-size: 13px;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.86);
+        }
+
+        .nr-booster-control-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr);
+          gap: 10px;
+        }
+
+        .nr-booster-level-panel {
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(10, 14, 31, 0.92);
+          padding: 10px;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .nr-booster-level-panel span {
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.66);
+        }
+
+        .nr-booster-level-buttons {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 8px;
+        }
+
+        .nr-booster-level-btn {
+          border-radius: 10px;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          background: rgba(255, 255, 255, 0.03);
+          color: #fff;
+          font-size: 12px;
+          font-weight: 600;
+          padding: 8px 6px;
+          cursor: pointer;
+        }
+
+        .nr-booster-level-btn.is-active {
+          border-color: rgba(0, 212, 255, 0.45);
+          background: rgba(0, 212, 255, 0.16);
+          color: #7ceeff;
+        }
+
         .nr-inline-builder {
           display: grid;
           grid-template-columns: minmax(0, 1fr) auto;
@@ -2622,6 +2795,7 @@ export default withAuth(function NuovaRosaLabPage() {
           display: grid;
           grid-template-columns: minmax(360px, 0.9fr) minmax(0, 1.1fr);
           gap: 18px;
+          align-items: start;
         }
 
         .nr-premium-hero {
@@ -2634,6 +2808,7 @@ export default withAuth(function NuovaRosaLabPage() {
           display: flex;
           flex-direction: column;
           gap: 16px;
+          align-self: start;
         }
 
         .nr-premium-hero-top,
@@ -2697,7 +2872,7 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-premium-side-stats {
           flex: 1;
           display: grid;
-          grid-template-columns: 1fr;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 10px;
           align-self: stretch;
         }
@@ -2871,6 +3046,10 @@ export default withAuth(function NuovaRosaLabPage() {
             flex-direction: column;
           }
 
+          .nr-premium-side-stats {
+            grid-template-columns: 1fr;
+          }
+
           .nr-premium-card-frame {
             min-height: 320px;
             width: 100%;
@@ -2900,6 +3079,10 @@ export default withAuth(function NuovaRosaLabPage() {
 
           .nr-inline-builder {
             grid-template-columns: 1fr;
+          }
+
+          .nr-booster-level-buttons {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
           }
 
           .nr-toast {
