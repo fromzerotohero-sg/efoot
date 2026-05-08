@@ -622,6 +622,50 @@ const BOOSTER_PRESETS = [
   { value: 'Stamina', labels: { en: 'Stamina', it: 'Resistenza' } }
 ]
 
+const PLAYER_SKILL_PRESETS = [
+  'Double Touch',
+  'Sole Control',
+  'Flip Flap',
+  'Marseille Turn',
+  'Sombrero',
+  'Cut Behind & Turn',
+  'Scissors Feint',
+  'Step On Skill Control',
+  'Heading',
+  'Long-Range Curler',
+  'Long-Range Shooting',
+  'Knuckle Shot',
+  'Dipping Shot',
+  'Rising Shot',
+  'Acrobatic Finishing',
+  'Heel Trick',
+  'First-time Shot',
+  'One-touch Pass',
+  'Through Passing',
+  'Weighted Pass',
+  'Pinpoint Crossing',
+  'Outside Curler',
+  'Rabona',
+  'No Look Pass',
+  'Low Lofted Pass',
+  'GK Low Punt',
+  'GK High Punt',
+  'Long Throw',
+  'GK Long Throw',
+  'Penalty Specialist',
+  'Gamesmanship',
+  'Man Marking',
+  'Track Back',
+  'Interception',
+  'Blocker',
+  'Aerial Superiority',
+  'Sliding Tackle',
+  'Acrobatic Clearance',
+  'Captaincy',
+  'Super-sub',
+  'Fighting Spirit'
+]
+
 function parseBoosterLevel(rawEffect) {
   const match = String(rawEffect || '').match(/([+-]?\d+)/)
   const parsed = match ? Number(match[1]) : 1
@@ -955,6 +999,7 @@ function PremiumPlayerModal({
   })
   const [skillsDraft, setSkillsDraft] = React.useState([])
   const [skillInput, setSkillInput] = React.useState('')
+  const [selectedSkillPreset, setSelectedSkillPreset] = React.useState('')
   const [boostersDraft, setBoostersDraft] = React.useState([])
   const [showAllSkills, setShowAllSkills] = React.useState(false)
 
@@ -974,6 +1019,7 @@ function PremiumPlayerModal({
     })
     setSkillsDraft(Array.isArray(player.skills) ? player.skills : [])
     setSkillInput('')
+    setSelectedSkillPreset('')
     setShowAllSkills(false)
     setBoostersDraft(
       Array.isArray(player.available_boosters)
@@ -984,16 +1030,18 @@ function PremiumPlayerModal({
 
   if (!show || !player) return null
 
-  const addSkill = () => {
-    const normalized = String(skillInput || '').trim()
+  const addSkill = (skillValue = skillInput) => {
+    const normalized = String(skillValue || '').trim()
     if (!normalized) return
     if (skillsDraft.includes(normalized)) {
       setSkillInput('')
+      setSelectedSkillPreset('')
       setShowAllSkills(true)
       return
     }
     setSkillsDraft((prev) => [...prev, normalized])
     setSkillInput('')
+    setSelectedSkillPreset('')
     setShowAllSkills(true)
   }
 
@@ -1046,6 +1094,7 @@ function PremiumPlayerModal({
   const roleCount = Array.isArray(player.original_positions) ? player.original_positions.length : 0
   const visibleSkills = showAllSkills ? skillsDraft : skillsDraft.slice(0, 10)
   const hiddenSkillsCount = Math.max(0, skillsDraft.length - visibleSkills.length)
+  const suggestedSkills = PLAYER_SKILL_PRESETS.filter((skill) => !skillsDraft.includes(skill)).slice(0, 12)
 
   return (
     <EnterpriseModalFrame
@@ -1188,9 +1237,39 @@ function PremiumPlayerModal({
           <div className="nr-reference-support-grid">
             <section className="nr-reference-skills">
               <EnterpriseSection title={lang === 'en' ? 'Skills' : 'Abilita'}>
-                <div className="nr-inline-builder">
+                <div className="nr-skill-command-panel">
+                  <label className="nr-form-field">
+                    <span>{lang === 'en' ? 'Select skill' : 'Seleziona abilita'}</span>
+                    <select
+                      value={selectedSkillPreset}
+                      onChange={(event) => {
+                        const value = event.target.value
+                        setSelectedSkillPreset(value)
+                        if (value) addSkill(value)
+                      }}
+                    >
+                      <option value="">{lang === 'en' ? 'Choose from eFootball skills' : 'Scegli dalle abilita eFootball'}</option>
+                      {PLAYER_SKILL_PRESETS.map((skill) => (
+                        <option key={skill} value={skill} disabled={skillsDraft.includes(skill)}>
+                          {skill}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <div className="nr-skill-preset-cloud">
+                    {suggestedSkills.map((skill) => (
+                      <button key={skill} type="button" className="nr-skill-preset-chip" onClick={() => addSkill(skill)}>
+                        <Plus size={12} />
+                        {skill}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="nr-inline-builder nr-skill-custom-builder">
                   <EnterpriseInput
-                    label={lang === 'en' ? 'Add skill' : 'Aggiungi abilita'}
+                    label={lang === 'en' ? 'Custom skill' : 'Abilita personalizzata'}
                     value={skillInput}
                     onChange={setSkillInput}
                     onKeyDown={(event) => {
@@ -1199,11 +1278,11 @@ function PremiumPlayerModal({
                         addSkill()
                       }
                     }}
-                    placeholder={lang === 'en' ? 'Example: One Touch Pass' : 'Esempio: Passaggio di prima'}
+                    placeholder={lang === 'en' ? 'Write only if missing from the list' : 'Scrivi solo se manca nella lista'}
                   />
                   <button type="button" className="nr-secondary-button" onClick={addSkill}>
                     <Plus size={14} />
-                    {lang === 'en' ? 'Add' : 'Aggiungi'}
+                    {lang === 'en' ? 'Add custom' : 'Aggiungi custom'}
                   </button>
                 </div>
 
@@ -2862,6 +2941,58 @@ export default withAuth(function NuovaRosaLabPage() {
           margin-top: 12px;
         }
 
+        .nr-skill-command-panel {
+          border-radius: 16px;
+          border: 1px solid rgba(0, 212, 255, 0.14);
+          background:
+            radial-gradient(circle at top left, rgba(0, 212, 255, 0.12), transparent 36%),
+            rgba(255, 255, 255, 0.025);
+          padding: 12px;
+        }
+
+        .nr-skill-command-panel .nr-form-field select {
+          border-color: rgba(0, 212, 255, 0.26);
+          background: rgba(5, 16, 34, 0.96);
+          box-shadow: inset 0 0 0 1px rgba(0, 212, 255, 0.06);
+        }
+
+        .nr-skill-preset-cloud {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 10px;
+          max-height: 104px;
+          overflow: auto;
+          padding-right: 4px;
+        }
+
+        .nr-skill-preset-chip {
+          border: 1px solid rgba(0, 212, 255, 0.2);
+          background: rgba(0, 212, 255, 0.08);
+          color: #dffbff;
+          border-radius: 999px;
+          padding: 7px 10px;
+          font-size: 12px;
+          font-weight: 650;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          cursor: pointer;
+          transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+        }
+
+        .nr-skill-preset-chip:hover {
+          transform: translateY(-1px);
+          border-color: rgba(0, 212, 255, 0.46);
+          background: rgba(0, 212, 255, 0.15);
+        }
+
+        .nr-skill-custom-builder {
+          margin-top: 10px;
+          padding-top: 10px;
+          border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
         .nr-editor-grid {
           display: flex;
           flex-direction: column;
@@ -3243,25 +3374,69 @@ export default withAuth(function NuovaRosaLabPage() {
 
           .nr-premium-player-shell {
             max-height: calc(100dvh - 72px);
-            padding-bottom: max(92px, calc(env(safe-area-inset-bottom, 0px) + 84px));
+            padding-bottom: max(118px, calc(env(safe-area-inset-bottom, 0px) + 104px));
+          }
+
+          .nr-premium-hero {
+            padding: 10px;
+            border-radius: 14px;
+            gap: 8px;
+          }
+
+          .nr-premium-hero-top {
+            flex-direction: row;
+            align-items: center;
+            width: 100%;
+            text-align: left;
+          }
+
+          .nr-premium-hero-main {
+            gap: 8px;
+          }
+
+          .nr-premium-hero-copy h3 {
+            font-size: 20px;
+            line-height: 1.05;
+            margin-top: 2px;
+          }
+
+          .nr-premium-hero-copy p {
+            font-size: 13px;
+            margin-top: 2px;
+          }
+
+          .nr-premium-overall {
+            min-width: 58px;
+            border-radius: 14px;
+            padding: 8px;
+          }
+
+          .nr-premium-overall span {
+            font-size: 10px;
+          }
+
+          .nr-premium-overall strong {
+            font-size: 24px;
           }
 
           .nr-premium-card-frame {
-            width: min(128px, 42vw);
+            width: min(104px, 34vw);
             min-height: 0;
           }
 
           .nr-modal-footer {
-            position: sticky;
-            bottom: max(74px, env(safe-area-inset-bottom, 0px));
-            z-index: 2;
-            margin: 12px -4px 0;
-            padding: 10px 4px 0;
-            background: linear-gradient(180deg, rgba(6, 10, 22, 0), rgba(6, 10, 22, 0.98) 36%);
+            position: static;
+            margin: 12px 0 0;
+            padding: 10px 0 max(96px, calc(env(safe-area-inset-bottom, 0px) + 84px));
+            background: transparent;
           }
 
           .nr-inline-builder {
             grid-template-columns: 1fr;
+          }
+
+          .nr-skill-preset-cloud {
+            max-height: 126px;
           }
 
           .nr-booster-level-buttons {
