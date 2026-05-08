@@ -182,11 +182,17 @@ function EnterpriseSection({ title, children, actions = null }) {
   )
 }
 
-function EnterpriseInput({ label, value, onChange, placeholder = '', type = 'text' }) {
+function EnterpriseInput({ label, value, onChange, placeholder = '', type = 'text', onKeyDown }) {
   return (
     <label className="nr-form-field">
       <span>{label}</span>
-      <input type={type} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />
+      <input
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        onKeyDown={onKeyDown}
+        placeholder={placeholder}
+      />
     </label>
   )
 }
@@ -983,10 +989,12 @@ function PremiumPlayerModal({
     if (!normalized) return
     if (skillsDraft.includes(normalized)) {
       setSkillInput('')
+      setShowAllSkills(true)
       return
     }
     setSkillsDraft((prev) => [...prev, normalized])
     setSkillInput('')
+    setShowAllSkills(true)
   }
 
   const removeSkill = (skill) => {
@@ -1185,6 +1193,12 @@ function PremiumPlayerModal({
                     label={lang === 'en' ? 'Add skill' : 'Aggiungi abilita'}
                     value={skillInput}
                     onChange={setSkillInput}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault()
+                        addSkill()
+                      }
+                    }}
                     placeholder={lang === 'en' ? 'Example: One Touch Pass' : 'Esempio: Passaggio di prima'}
                   />
                   <button type="button" className="nr-secondary-button" onClick={addSkill}>
@@ -2743,7 +2757,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-modal-footer {
-          margin-top: 16px;
+          margin-top: 12px;
           display: flex;
           justify-content: flex-end;
           gap: 10px;
@@ -2863,20 +2877,20 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-premium-player-layout {
           display: grid;
           grid-template-columns: minmax(280px, 0.62fr) minmax(0, 1.38fr);
-          gap: 18px;
+          gap: 14px;
           align-items: start;
         }
 
         .nr-premium-hero {
-          border-radius: 20px;
-          padding: 18px;
+          border-radius: 18px;
+          padding: 14px;
           background:
             radial-gradient(circle at top, rgba(255, 145, 0, 0.18), transparent 38%),
             linear-gradient(180deg, rgba(24, 16, 10, 0.98), rgba(10, 12, 20, 0.98));
           border: 1px solid rgba(255, 166, 0, 0.18);
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 12px;
           align-self: start;
         }
 
@@ -2884,19 +2898,19 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-premium-hero-main {
           display: flex;
           justify-content: space-between;
-          gap: 16px;
+          gap: 10px;
           flex-direction: column;
           align-items: center;
         }
 
         .nr-premium-hero-copy h3 {
-          margin: 6px 0 0;
-          font-size: 28px;
+          margin: 4px 0 0;
+          font-size: 24px;
           color: #fff;
         }
 
         .nr-premium-hero-copy p {
-          margin: 6px 0 0;
+          margin: 4px 0 0;
           color: rgba(255, 255, 255, 0.8);
         }
 
@@ -2924,10 +2938,10 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-premium-card-frame {
-          width: min(190px, 72%);
+          width: min(160px, 62%);
           aspect-ratio: 0.72;
           min-height: 0;
-          border-radius: 20px;
+          border-radius: 16px;
           overflow: hidden;
           border: 2px solid rgba(255, 177, 66, 0.25);
           background: rgba(255, 255, 255, 0.04);
@@ -2946,16 +2960,16 @@ export default withAuth(function NuovaRosaLabPage() {
           width: 100%;
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 10px;
+          gap: 8px;
           align-self: stretch;
         }
 
         .nr-premium-side-stats div,
         .nr-premium-summary-row div {
-          border-radius: 16px;
+          border-radius: 14px;
           border: 1px solid rgba(255, 255, 255, 0.06);
           background: rgba(255, 255, 255, 0.04);
-          padding: 12px;
+          padding: 9px;
         }
 
         .nr-premium-side-stats span,
@@ -2975,13 +2989,13 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-premium-summary-row {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 10px;
+          gap: 8px;
         }
 
         .nr-premium-sections {
           display: flex;
           flex-direction: column;
-          gap: 14px;
+          gap: 10px;
           min-height: 0;
           overflow: auto;
           padding-right: 4px;
@@ -2996,15 +3010,15 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-reference-main-grid {
           display: grid;
           grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
-          gap: 14px;
+          gap: 10px;
         }
 
         .nr-reference-support-grid {
           display: grid;
           grid-template-columns: minmax(0, 1.15fr) minmax(180px, 0.65fr) minmax(260px, 1.2fr);
-          gap: 14px;
+          gap: 10px;
           align-items: start;
-          margin-top: 14px;
+          margin-top: 10px;
         }
 
         .nr-reference-left,
@@ -3203,12 +3217,11 @@ export default withAuth(function NuovaRosaLabPage() {
           }
 
           .nr-premium-side-stats {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
           }
 
-          .nr-premium-card-frame {
-            width: min(170px, 58vw);
-            min-height: 0;
+          .nr-premium-summary-row {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
           }
 
           .nr-slot-card {
@@ -3222,15 +3235,29 @@ export default withAuth(function NuovaRosaLabPage() {
 
           .nr-modal-shell {
             width: 100%;
-            max-height: 96vh;
+            max-height: calc(100dvh - 72px);
             border-radius: 18px 18px 0 0;
             align-self: flex-end;
             overflow-y: auto;
           }
 
           .nr-premium-player-shell {
-            max-height: 96vh;
-            padding-bottom: max(18px, env(safe-area-inset-bottom, 0px));
+            max-height: calc(100dvh - 72px);
+            padding-bottom: max(92px, calc(env(safe-area-inset-bottom, 0px) + 84px));
+          }
+
+          .nr-premium-card-frame {
+            width: min(128px, 42vw);
+            min-height: 0;
+          }
+
+          .nr-modal-footer {
+            position: sticky;
+            bottom: max(74px, env(safe-area-inset-bottom, 0px));
+            z-index: 2;
+            margin: 12px -4px 0;
+            padding: 10px 4px 0;
+            background: linear-gradient(180deg, rgba(6, 10, 22, 0), rgba(6, 10, 22, 0.98) 36%);
           }
 
           .nr-inline-builder {
