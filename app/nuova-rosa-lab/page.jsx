@@ -113,6 +113,17 @@ function buildPlayerPayloadFromCatalog(card, slotIndex = null) {
   }
 }
 
+function getPlayerCardImage(player) {
+  return (
+    player?.metadata?.catalog_card_front_url ||
+    player?.metadata?.source_card_front_url ||
+    player?.extracted_data?.metadata?.catalog_card_front_url ||
+    player?.extracted_data?.metadata?.source_card_front_url ||
+    player?.extracted_data?.source_card_front_url ||
+    null
+  )
+}
+
 function buildSetupStage({ totalPlayers, starters, hasFormation, hasCoach, hasTactics }) {
   if (totalPlayers === 0) return 'empty'
   if (totalPlayers <= 5) return 'starter_seeded'
@@ -140,7 +151,7 @@ function showConfirmConfig({ title, message, details, confirmLabel, cancelLabel,
 }
 
 function SlotPlayerCard({ player, slot, onClick, lang }) {
-  const cardImage = player?.metadata?.catalog_card_front_url || null
+  const cardImage = getPlayerCardImage(player)
 
   return (
     <button type="button" className="nr-slot-filled" onClick={() => onClick(player, slot)}>
@@ -382,7 +393,7 @@ function CatalogPickerModal({
 
 function QuickPlayerPanel({ player, onClose, onRemoveFromSlot, onDeletePlayer, onOpenBoosters, onOpenReplace, lang }) {
   if (!player) return null
-  const cardImage = player?.metadata?.catalog_card_front_url || null
+  const cardImage = getPlayerCardImage(player)
 
   return (
     <div className="nr-modal-backdrop" onClick={onClose}>

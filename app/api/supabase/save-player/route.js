@@ -188,7 +188,8 @@ export async function POST(req) {
       development_points: {},
       extracted_data: player,
       metadata: {
-        source: 'screenshot_extractor',
+        ...(player.metadata && typeof player.metadata === 'object' ? player.metadata : {}),
+        source: player?.metadata?.catalog_source ? player.metadata.catalog_source : 'screenshot_extractor',
         saved_at: new Date().toISOString(),
         weak_foot_frequency: player.weak_foot_frequency || null,
         weak_foot_accuracy: player.weak_foot_accuracy || null,
