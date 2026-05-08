@@ -850,7 +850,6 @@ function PremiumPlayerModal({
   onSave,
   onRemoveFromSlot,
   onDeletePlayer,
-  onOpenBoosters,
   onOpenReplace,
   saving,
   lang
@@ -865,7 +864,6 @@ function PremiumPlayerModal({
     age: '',
     nationality: '',
     club_name: '',
-    skillsInput: '',
     finishing: '',
     low_pass: '',
     lofted_pass: '',
@@ -884,6 +882,9 @@ function PremiumPlayerModal({
     gk_reflexes: '',
     gk_reach: ''
   })
+  const [skillsDraft, setSkillsDraft] = React.useState([])
+  const [skillInput, setSkillInput] = React.useState('')
+  const [boostersDraft, setBoostersDraft] = React.useState([])
 
   React.useEffect(() => {
     if (!show || !player) return
@@ -897,19 +898,43 @@ function PremiumPlayerModal({
       age: player.age != null ? String(player.age) : '',
       nationality: player.nationality || '',
       club_name: player.club_name || '',
-      skillsInput: Array.isArray(player.skills) ? player.skills.join(', ') : '',
       ...normalizedStats
     })
+    setSkillsDraft(Array.isArray(player.skills) ? player.skills : [])
+    setSkillInput('')
+    setBoostersDraft(Array.isArray(player.available_boosters) ? player.available_boosters : [])
   }, [show, player])
 
   if (!show || !player) return null
 
-  const skillList = form.skillsInput
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean)
+  const addSkill = () => {
+    const normalized = String(skillInput || '').trim()
+    if (!normalized) return
+    if (skillsDraft.includes(normalized)) {
+      setSkillInput('')
+      return
+    }
+    setSkillsDraft((prev) => [...prev, normalized])
+    setSkillInput('')
+  }
 
-  const boosterCount = Array.isArray(player.available_boosters) ? player.available_boosters.length : 0
+  const removeSkill = (skill) => {
+    setSkillsDraft((prev) => prev.filter((entry) => entry !== skill))
+  }
+
+  const addBooster = () => {
+    setBoostersDraft((prev) => [...prev, { name: '', effect: '' }])
+  }
+
+  const updateBooster = (index, key, value) => {
+    setBoostersDraft((prev) => prev.map((entry, idx) => idx === index ? { ...(entry || {}), [key]: value } : entry))
+  }
+
+  const removeBooster = (index) => {
+    setBoostersDraft((prev) => prev.filter((_, idx) => idx !== index))
+  }
+
+  const boosterCount = boostersDraft.length
   const roleCount = Array.isArray(player.original_positions) ? player.original_positions.length : 0
 
   return (
@@ -1000,9 +1025,6 @@ function PremiumPlayerModal({
                   {lang === 'en' ? 'Move to reserves' : 'Sposta in riserva'}
                 </button>
               )}
-              <button type="button" className="nr-secondary-button" onClick={() => onOpenBoosters(player)}>
-                {lang === 'en' ? 'Edit boosters' : 'Modifica boosters'}
-              </button>
               <button type="button" className="nr-danger-button" onClick={() => onDeletePlayer(player.id)}>
                 <Trash2 size={14} />
                 {lang === 'en' ? 'Delete player' : 'Elimina giocatore'}
@@ -1040,13 +1062,68 @@ function PremiumPlayerModal({
                 <EnterpriseInput label={lang === 'en' ? 'Aggression' : 'Aggressivita'} value={form.aggression} type="number" onChange={(value) => setForm((prev) => ({ ...prev, aggression: value }))} />
                 <EnterpriseInput label={lang === 'en' ? 'GK reflexes' : 'Riflessi PT'} value={form.gk_reflexes} type="number" onChange={(value) => setForm((prev) => ({ ...prev, gk_reflexes: value }))} />
                 <EnterpriseInput label={lang === 'en' ? 'GK reach' : 'Copertura PT'} value={form.gk_reach} type="number" onChange={(value) => setForm((prev) => ({ ...prev, gk_reach: value }))} />
-                <EnterpriseInput label={lang === 'en' ? 'Skills (comma separated)' : 'Abilita (separate da virgola)'} value={form.skillsInput} onChange={(value) => setForm((prev) => ({ ...prev, skillsInput: value }))} />
               </div>
+
+              <div className="nr-inline-builder">
+                <EnterpriseInput
+                  label={lang === 'en' ? 'Add skill' : 'Aggiungi abilita'}
+                  value={skillInput}
+                  onChange={setSkillInput}
+                  placeholder={lang === 'en' ? 'Example: One Touch Pass' : 'Esempio: Passaggio di prima'}
+                />
+                <button type="button" className="nr-secondary-button" onClick={addSkill}>
+                  <Plus size={14} />
+                  {lang === 'en' ? 'Add' : 'Aggiungi'}
+                </button>
+              </div>
+
               <div className="nr-skill-chip-row">
-                {skillList.length > 0 ? skillList.map((skill) => (
-                  <span key={skill} className="nr-skill-chip">{skill}</span>
+                {skillsDraft.length > 0 ? skillsDraft.map((skill) => (
+                  <button key={skill} type="button" className="nr-skill-chip" onClick={() => removeSkill(skill)}>
+                    {skill}
+                    <X size={12} />
+                  </button>
                 )) : (
                   <span className="nr-skill-empty">{lang === 'en' ? 'No skills yet.' : 'Nessuna abilita ancora.'}</span>
+                )}
+              </div>
+            </EnterpriseSection>
+
+            <EnterpriseSection
+              title={lang === 'en' ? 'Boosters' : 'Boosters'}
+              actions={
+                <button type="button" className="nr-secondary-button" onClick={addBooster}>
+                  <Plus size={14} />
+                  {lang === 'en' ? 'Add booster' : 'Aggiungi booster'}
+                </button>
+              }
+            >
+              <div className="nr-boosters-list">
+                {boostersDraft.length > 0 ? boostersDraft.map((booster, index) => (
+                  <div key={`${index}-${booster?.name || 'booster'}`} className="nr-booster-row">
+                    <div className="nr-form-grid">
+                      <EnterpriseInput
+                        label={lang === 'en' ? 'Booster name' : 'Nome booster'}
+                        value={String(booster?.name || '')}
+                        onChange={(value) => updateBooster(index, 'name', value)}
+                        placeholder={lang === 'en' ? 'Booster name' : 'Nome booster'}
+                      />
+                      <EnterpriseInput
+                        label={lang === 'en' ? 'Effect' : 'Effetto'}
+                        value={String(booster?.effect || '')}
+                        onChange={(value) => updateBooster(index, 'effect', value)}
+                        placeholder={lang === 'en' ? 'Effect' : 'Effetto'}
+                      />
+                    </div>
+                    <button type="button" className="nr-danger-button" onClick={() => removeBooster(index)}>
+                      <Trash2 size={14} />
+                      {lang === 'en' ? 'Remove' : 'Rimuovi'}
+                    </button>
+                  </div>
+                )) : (
+                  <div className="nr-empty-state">
+                    <span>{lang === 'en' ? 'No boosters yet.' : 'Nessun booster ancora.'}</span>
+                  </div>
                 )}
               </div>
             </EnterpriseSection>
@@ -1071,7 +1148,8 @@ function PremiumPlayerModal({
             age: form.age ? Number(form.age) : null,
             nationality: form.nationality,
             club_name: form.club_name,
-            skills: skillList,
+            skills: skillsDraft,
+            available_boosters: boostersDraft,
             base_stats: buildBaseStatsPayloadFromEditor(form)
           })}
         >
@@ -2338,12 +2416,17 @@ export default withAuth(function NuovaRosaLabPage() {
           align-items: center;
           justify-content: center;
           padding: 14px;
+          overflow-y: auto;
+          overscroll-behavior: contain;
+          -webkit-overflow-scrolling: touch;
         }
 
         .nr-modal-shell {
           width: min(1280px, calc(100vw - 24px));
           max-height: min(92vh, 920px);
-          overflow: hidden;
+          overflow: auto;
+          overscroll-behavior: contain;
+          -webkit-overflow-scrolling: touch;
           padding: 18px;
         }
 
@@ -2505,6 +2588,14 @@ export default withAuth(function NuovaRosaLabPage() {
           gap: 10px;
         }
 
+        .nr-inline-builder {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 10px;
+          align-items: end;
+          margin-top: 12px;
+        }
+
         .nr-editor-grid {
           display: flex;
           flex-direction: column;
@@ -2514,6 +2605,7 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-premium-player-shell {
           width: min(1320px, calc(100vw - 24px));
           max-height: min(94vh, 980px);
+          overflow: auto;
         }
 
         .nr-premium-player-layout {
@@ -2658,6 +2750,9 @@ export default withAuth(function NuovaRosaLabPage() {
           border: 1px solid rgba(0, 212, 255, 0.14);
           color: #fff;
           font-size: 12px;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
         }
 
         .nr-skill-empty {
@@ -2730,6 +2825,16 @@ export default withAuth(function NuovaRosaLabPage() {
             max-height: 96vh;
             border-radius: 18px 18px 0 0;
             align-self: flex-end;
+            overflow-y: auto;
+          }
+
+          .nr-premium-player-shell {
+            max-height: 96vh;
+            padding-bottom: max(18px, env(safe-area-inset-bottom, 0px));
+          }
+
+          .nr-inline-builder {
+            grid-template-columns: 1fr;
           }
 
           .nr-toast {
