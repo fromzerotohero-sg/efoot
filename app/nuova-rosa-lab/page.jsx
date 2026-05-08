@@ -1090,7 +1090,6 @@ function PremiumPlayerModal({
   const roleCount = Array.isArray(player.original_positions) ? player.original_positions.length : 0
   const visibleSkills = showAllSkills ? skillsDraft : skillsDraft.slice(0, 10)
   const hiddenSkillsCount = Math.max(0, skillsDraft.length - visibleSkills.length)
-  const suggestedSkills = PLAYER_SKILL_PRESETS.filter((skill) => !skillsDraft.includes(skill)).slice(0, 12)
 
   return (
     <EnterpriseModalFrame
@@ -1253,14 +1252,6 @@ function PremiumPlayerModal({
                     </select>
                   </label>
 
-                  <div className="nr-skill-preset-cloud">
-                    {suggestedSkills.map((skill) => (
-                      <button key={skill} type="button" className="nr-skill-preset-chip" onClick={() => addSkill(skill)}>
-                        <Plus size={12} />
-                        {skill}
-                      </button>
-                    ))}
-                  </div>
                 </div>
 
                 <div className="nr-skill-chip-row">
@@ -2923,37 +2914,6 @@ export default withAuth(function NuovaRosaLabPage() {
           box-shadow: inset 0 0 0 1px rgba(0, 212, 255, 0.06);
         }
 
-        .nr-skill-preset-cloud {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-          margin-top: 10px;
-          max-height: 104px;
-          overflow: auto;
-          padding-right: 4px;
-        }
-
-        .nr-skill-preset-chip {
-          border: 1px solid rgba(0, 212, 255, 0.2);
-          background: rgba(0, 212, 255, 0.08);
-          color: #dffbff;
-          border-radius: 999px;
-          padding: 7px 10px;
-          font-size: 12px;
-          font-weight: 650;
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          cursor: pointer;
-          transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
-        }
-
-        .nr-skill-preset-chip:hover {
-          transform: translateY(-1px);
-          border-color: rgba(0, 212, 255, 0.46);
-          background: rgba(0, 212, 255, 0.15);
-        }
-
         .nr-editor-grid {
           display: flex;
           flex-direction: column;
@@ -3394,10 +3354,6 @@ export default withAuth(function NuovaRosaLabPage() {
 
           .nr-inline-builder {
             grid-template-columns: 1fr;
-          }
-
-          .nr-skill-preset-cloud {
-            max-height: 126px;
           }
 
           .nr-booster-level-buttons {
