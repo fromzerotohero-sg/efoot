@@ -998,7 +998,6 @@ function PremiumPlayerModal({
     gk_reach: ''
   })
   const [skillsDraft, setSkillsDraft] = React.useState([])
-  const [skillInput, setSkillInput] = React.useState('')
   const [selectedSkillPreset, setSelectedSkillPreset] = React.useState('')
   const [boostersDraft, setBoostersDraft] = React.useState([])
   const [showAllSkills, setShowAllSkills] = React.useState(false)
@@ -1018,7 +1017,6 @@ function PremiumPlayerModal({
       ...normalizedStats
     })
     setSkillsDraft(Array.isArray(player.skills) ? player.skills : [])
-    setSkillInput('')
     setSelectedSkillPreset('')
     setShowAllSkills(false)
     setBoostersDraft(
@@ -1030,17 +1028,15 @@ function PremiumPlayerModal({
 
   if (!show || !player) return null
 
-  const addSkill = (skillValue = skillInput) => {
+  const addSkill = (skillValue) => {
     const normalized = String(skillValue || '').trim()
     if (!normalized) return
     if (skillsDraft.includes(normalized)) {
-      setSkillInput('')
       setSelectedSkillPreset('')
       setShowAllSkills(true)
       return
     }
     setSkillsDraft((prev) => [...prev, normalized])
-    setSkillInput('')
     setSelectedSkillPreset('')
     setShowAllSkills(true)
   }
@@ -1267,25 +1263,6 @@ function PremiumPlayerModal({
                   </div>
                 </div>
 
-                <div className="nr-inline-builder nr-skill-custom-builder">
-                  <EnterpriseInput
-                    label={lang === 'en' ? 'Custom skill' : 'Abilita personalizzata'}
-                    value={skillInput}
-                    onChange={setSkillInput}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
-                        event.preventDefault()
-                        addSkill()
-                      }
-                    }}
-                    placeholder={lang === 'en' ? 'Write only if missing from the list' : 'Scrivi solo se manca nella lista'}
-                  />
-                  <button type="button" className="nr-secondary-button" onClick={addSkill}>
-                    <Plus size={14} />
-                    {lang === 'en' ? 'Add custom' : 'Aggiungi custom'}
-                  </button>
-                </div>
-
                 <div className="nr-skill-chip-row">
                   {visibleSkills.length > 0 ? visibleSkills.map((skill) => (
                     <button key={skill} type="button" className="nr-skill-chip" onClick={() => removeSkill(skill)}>
@@ -1310,16 +1287,6 @@ function PremiumPlayerModal({
                       : `${hiddenSkillsCount} abilita nascoste`}
                   </span>
                 ) : null}
-              </EnterpriseSection>
-            </section>
-
-            <section className="nr-reference-profile">
-              <EnterpriseSection title={lang === 'en' ? 'Advanced profile' : 'Profilo avanzato'}>
-                <div className="nr-mini-profile-grid">
-                  <div><span>{lang === 'en' ? 'Role count' : 'Ruoli'}</span><strong>{roleCount}</strong></div>
-                  <div><span>{lang === 'en' ? 'Skills' : 'Abilita'}</span><strong>{skillsDraft.length}</strong></div>
-                  <div><span>{lang === 'en' ? 'Boosters' : 'Boosters'}</span><strong>{boosterCount}</strong></div>
-                </div>
               </EnterpriseSection>
             </section>
 
@@ -2987,12 +2954,6 @@ export default withAuth(function NuovaRosaLabPage() {
           background: rgba(0, 212, 255, 0.15);
         }
 
-        .nr-skill-custom-builder {
-          margin-top: 10px;
-          padding-top: 10px;
-          border-top: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
         .nr-editor-grid {
           display: flex;
           flex-direction: column;
@@ -3146,7 +3107,7 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-reference-support-grid {
           display: grid;
-          grid-template-columns: minmax(0, 1.15fr) minmax(180px, 0.65fr) minmax(260px, 1.2fr);
+          grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.9fr);
           gap: 10px;
           align-items: start;
           margin-top: 10px;
