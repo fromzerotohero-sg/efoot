@@ -1148,7 +1148,37 @@ function PremiumPlayerModal({
                   <CompactStatInput label={lang === 'en' ? 'Tight possession' : 'Possesso stretto'} value={form.tight_possession} onChange={(value) => setForm((prev) => ({ ...prev, tight_possession: value }))} />
                 </div>
               </EnterpriseSection>
+            </section>
 
+            <section className="nr-reference-center">
+              <EnterpriseSection title={lang === 'en' ? 'Defending' : 'Difesa'}>
+                <div className="nr-stat-pairs">
+                  <CompactStatInput label={lang === 'en' ? 'Defensive awareness' : 'Consapevolezza difensiva'} value={form.defensive_awareness} onChange={(value) => setForm((prev) => ({ ...prev, defensive_awareness: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'Tackling' : 'Contrasto'} value={form.tackling} onChange={(value) => setForm((prev) => ({ ...prev, tackling: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'Aggression' : 'Aggressivita'} value={form.aggression} onChange={(value) => setForm((prev) => ({ ...prev, aggression: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'GK reflexes' : 'Riflessi PT'} value={form.gk_reflexes} onChange={(value) => setForm((prev) => ({ ...prev, gk_reflexes: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'GK reach' : 'Copertura PT'} value={form.gk_reach} onChange={(value) => setForm((prev) => ({ ...prev, gk_reach: value }))} />
+                </div>
+              </EnterpriseSection>
+
+            </section>
+
+            <section className="nr-reference-right">
+              <EnterpriseSection title={lang === 'en' ? 'Athleticism' : 'Atletismo'}>
+                <div className="nr-stat-pairs">
+                  <CompactStatInput label={lang === 'en' ? 'Speed' : 'Velocita'} value={form.speed} onChange={(value) => setForm((prev) => ({ ...prev, speed: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'Acceleration' : 'Accelerazione'} value={form.acceleration} onChange={(value) => setForm((prev) => ({ ...prev, acceleration: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'Kicking power' : 'Potenza di tiro'} value={form.kicking_power} onChange={(value) => setForm((prev) => ({ ...prev, kicking_power: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'Physical contact' : 'Contatto fisico'} value={form.physical_contact} onChange={(value) => setForm((prev) => ({ ...prev, physical_contact: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'Balance' : 'Equilibrio'} value={form.balance} onChange={(value) => setForm((prev) => ({ ...prev, balance: value }))} />
+                  <CompactStatInput label={lang === 'en' ? 'Stamina' : 'Resistenza'} value={form.stamina} onChange={(value) => setForm((prev) => ({ ...prev, stamina: value }))} />
+                </div>
+              </EnterpriseSection>
+            </section>
+          </div>
+
+          <div className="nr-reference-support-grid">
+            <section className="nr-reference-skills">
               <EnterpriseSection title={lang === 'en' ? 'Skills' : 'Abilita'}>
                 <div className="nr-inline-builder">
                   <EnterpriseInput
@@ -1190,17 +1220,7 @@ function PremiumPlayerModal({
               </EnterpriseSection>
             </section>
 
-            <section className="nr-reference-center">
-              <EnterpriseSection title={lang === 'en' ? 'Defending' : 'Difesa'}>
-                <div className="nr-stat-pairs">
-                  <CompactStatInput label={lang === 'en' ? 'Defensive awareness' : 'Consapevolezza difensiva'} value={form.defensive_awareness} onChange={(value) => setForm((prev) => ({ ...prev, defensive_awareness: value }))} />
-                  <CompactStatInput label={lang === 'en' ? 'Tackling' : 'Contrasto'} value={form.tackling} onChange={(value) => setForm((prev) => ({ ...prev, tackling: value }))} />
-                  <CompactStatInput label={lang === 'en' ? 'Aggression' : 'Aggressivita'} value={form.aggression} onChange={(value) => setForm((prev) => ({ ...prev, aggression: value }))} />
-                  <CompactStatInput label={lang === 'en' ? 'GK reflexes' : 'Riflessi PT'} value={form.gk_reflexes} onChange={(value) => setForm((prev) => ({ ...prev, gk_reflexes: value }))} />
-                  <CompactStatInput label={lang === 'en' ? 'GK reach' : 'Copertura PT'} value={form.gk_reach} onChange={(value) => setForm((prev) => ({ ...prev, gk_reach: value }))} />
-                </div>
-              </EnterpriseSection>
-
+            <section className="nr-reference-profile">
               <EnterpriseSection title={lang === 'en' ? 'Advanced profile' : 'Profilo avanzato'}>
                 <div className="nr-mini-profile-grid">
                   <div><span>{lang === 'en' ? 'Role count' : 'Ruoli'}</span><strong>{roleCount}</strong></div>
@@ -1210,18 +1230,7 @@ function PremiumPlayerModal({
               </EnterpriseSection>
             </section>
 
-            <section className="nr-reference-right">
-              <EnterpriseSection title={lang === 'en' ? 'Athleticism' : 'Atletismo'}>
-                <div className="nr-stat-pairs">
-                  <CompactStatInput label={lang === 'en' ? 'Speed' : 'Velocita'} value={form.speed} onChange={(value) => setForm((prev) => ({ ...prev, speed: value }))} />
-                  <CompactStatInput label={lang === 'en' ? 'Acceleration' : 'Accelerazione'} value={form.acceleration} onChange={(value) => setForm((prev) => ({ ...prev, acceleration: value }))} />
-                  <CompactStatInput label={lang === 'en' ? 'Kicking power' : 'Potenza di tiro'} value={form.kicking_power} onChange={(value) => setForm((prev) => ({ ...prev, kicking_power: value }))} />
-                  <CompactStatInput label={lang === 'en' ? 'Physical contact' : 'Contatto fisico'} value={form.physical_contact} onChange={(value) => setForm((prev) => ({ ...prev, physical_contact: value }))} />
-                  <CompactStatInput label={lang === 'en' ? 'Balance' : 'Equilibrio'} value={form.balance} onChange={(value) => setForm((prev) => ({ ...prev, balance: value }))} />
-                  <CompactStatInput label={lang === 'en' ? 'Stamina' : 'Resistenza'} value={form.stamina} onChange={(value) => setForm((prev) => ({ ...prev, stamina: value }))} />
-                </div>
-              </EnterpriseSection>
-
+            <section className="nr-reference-boosters">
               <EnterpriseSection
                 title={lang === 'en' ? 'Boosters' : 'Boosters'}
                 actions={
@@ -2817,7 +2826,7 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-booster-slot-grid {
           display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+          grid-template-columns: 1fr;
           gap: 10px;
         }
 
@@ -2853,7 +2862,7 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-premium-player-layout {
           display: grid;
-          grid-template-columns: minmax(360px, 0.9fr) minmax(0, 1.1fr);
+          grid-template-columns: minmax(280px, 0.62fr) minmax(0, 1.38fr);
           gap: 18px;
           align-items: start;
         }
@@ -2876,6 +2885,8 @@ export default withAuth(function NuovaRosaLabPage() {
           display: flex;
           justify-content: space-between;
           gap: 16px;
+          flex-direction: column;
+          align-items: center;
         }
 
         .nr-premium-hero-copy h3 {
@@ -2913,13 +2924,14 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-premium-card-frame {
-          width: min(100%, 250px);
-          min-height: 340px;
+          width: min(190px, 72%);
+          aspect-ratio: 0.72;
+          min-height: 0;
           border-radius: 20px;
           overflow: hidden;
           border: 2px solid rgba(255, 177, 66, 0.25);
           background: rgba(255, 255, 255, 0.04);
-          align-self: flex-start;
+          align-self: center;
         }
 
         .nr-premium-card-frame img {
@@ -2931,6 +2943,7 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-premium-side-stats {
           flex: 1;
+          width: 100%;
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 10px;
@@ -2984,6 +2997,14 @@ export default withAuth(function NuovaRosaLabPage() {
           display: grid;
           grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
           gap: 14px;
+        }
+
+        .nr-reference-support-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1.15fr) minmax(180px, 0.65fr) minmax(260px, 1.2fr);
+          gap: 14px;
+          align-items: start;
+          margin-top: 14px;
         }
 
         .nr-reference-left,
@@ -3146,7 +3167,8 @@ export default withAuth(function NuovaRosaLabPage() {
           .nr-picker-body,
           .nr-premium-player-layout,
           .nr-premium-stats-grid,
-          .nr-reference-main-grid {
+          .nr-reference-main-grid,
+          .nr-reference-support-grid {
             grid-template-columns: 1fr;
           }
 
@@ -3185,8 +3207,8 @@ export default withAuth(function NuovaRosaLabPage() {
           }
 
           .nr-premium-card-frame {
-            min-height: 280px;
-            width: 100%;
+            width: min(170px, 58vw);
+            min-height: 0;
           }
 
           .nr-slot-card {
