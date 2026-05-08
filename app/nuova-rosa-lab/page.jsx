@@ -967,7 +967,8 @@ function PremiumPlayerModal({
   onDeletePlayer,
   onOpenReplace,
   saving,
-  lang
+  lang,
+  t
 }) {
   const cardImage = getPlayerCardImage(player)
   const [form, setForm] = React.useState({
@@ -1234,7 +1235,7 @@ function PremiumPlayerModal({
               <EnterpriseSection title={lang === 'en' ? 'Skills' : 'Abilita'}>
                 <div className="nr-skill-command-panel">
                   <label className="nr-form-field">
-                    <span>{lang === 'en' ? 'Select skill' : 'Seleziona abilita'}</span>
+                    <span>{t('nuovaRosaSelectOfficialSkill')}</span>
                     <select
                       value={selectedSkillPreset}
                       onChange={(event) => {
@@ -1243,7 +1244,7 @@ function PremiumPlayerModal({
                         if (value) addSkill(value)
                       }}
                     >
-                      <option value="">{lang === 'en' ? 'Choose from eFootball skills' : 'Scegli dalle abilita eFootball'}</option>
+                      <option value="">{t('nuovaRosaChooseOfficialSkill')}</option>
                       {PLAYER_SKILL_PRESETS.map((skill) => (
                         <option key={skill} value={skill} disabled={skillsDraft.includes(skill)}>
                           {skill}
@@ -2091,76 +2092,67 @@ export default withAuth(function NuovaRosaLabPage() {
   const stageCopy = React.useMemo(() => {
     const copy = {
       empty: {
-        title: lang === 'en' ? 'Start your roster with real cards' : 'Inizia la rosa con carte reali',
-        text: lang === 'en'
-          ? 'Click a slot to open the catalog picker. You can still use manual entry or the starter pack.'
-          : 'Clicca uno slot per aprire il picker catalogo. Puoi comunque usare inserimento manuale o starter pack.',
-        cta: totalPlayers <= 5 ? (lang === 'en' ? 'Import starter pack' : 'Importa starter pack') : null
+        title: t('nuovaRosaStageEmptyTitle'),
+        text: t('nuovaRosaStageEmptyText'),
+        cta: totalPlayers <= 5 ? t('nuovaRosaStageEmptyCta') : null
       },
       starter_seeded: {
-        title: lang === 'en' ? 'You already have a base' : 'Hai gia una base',
-        text: lang === 'en'
-          ? 'Complete the missing slots faster with the catalog picker, then keep editing like the current roster page.'
-          : 'Completa gli slot mancanti piu velocemente con il picker catalogo, poi continua a modificare come nella rosa attuale.',
-        cta: totalPlayers <= 5 ? (lang === 'en' ? 'Complete missing players' : 'Completa i mancanti') : null
+        title: t('nuovaRosaStageSeededTitle'),
+        text: t('nuovaRosaStageSeededText'),
+        cta: totalPlayers <= 5 ? t('nuovaRosaStageSeededCta') : null
       },
       partial: {
-        title: lang === 'en' ? 'Your roster is in progress' : 'La tua rosa e in costruzione',
-        text: lang === 'en'
-          ? 'Use the field to add starters, then refine reserves, tactics, and player details.'
-          : 'Usa il campo per aggiungere titolari, poi rifinisci riserve, tattiche e dettagli giocatore.',
+        title: t('nuovaRosaStagePartialTitle'),
+        text: t('nuovaRosaStagePartialText'),
         cta: null
       },
       formation_ready: {
-        title: lang === 'en' ? 'Formation ready' : 'Formazione pronta',
-        text: lang === 'en'
-          ? 'You have the starting eleven. Add coach and tactics for a more complete system read.'
-          : 'Hai gli undici titolari. Aggiungi coach e tattiche per una lettura sistema piu completa.',
+        title: t('nuovaRosaStageFormationReadyTitle'),
+        text: t('nuovaRosaStageFormationReadyText'),
         cta: null
       },
       system_ready: {
-        title: lang === 'en' ? 'System ready' : 'Sistema pronto',
-        text: lang === 'en'
-          ? 'Your roster, formation, and tactical context are aligned.'
-          : 'Rosa, formazione e contesto tattico sono allineati.',
+        title: t('nuovaRosaStageSystemReadyTitle'),
+        text: t('nuovaRosaStageSystemReadyText'),
         cta: null
       }
     }
     return copy[setupStage] || copy.empty
-  }, [lang, setupStage, totalPlayers])
+  }, [setupStage, t, totalPlayers])
 
   return (
     <main className="nr-page">
       <section className="nr-hero-card">
         <div className="nr-hero-copy">
-          <span className="nr-badge"><ShieldCheck size={14} /> {lang === 'en' ? 'Private lab' : 'Lab privato'}</span>
-          <h1>{lang === 'en' ? 'New Roster' : 'Nuova Rosa'}</h1>
+          <span className="nr-badge"><ShieldCheck size={14} /> {t('nuovaRosaPrivateLab')}</span>
+          <h1>{t('nuovaRosaTitle')}</h1>
           <p>{stageCopy.text}</p>
           <div className="nr-hero-actions">
             {stageCopy.cta && (
               <button type="button" className="nr-primary-button" onClick={handleImportStarterPack} disabled={importingStarterPack}>
-                {importingStarterPack ? (lang === 'en' ? 'Importing...' : 'Importazione...') : stageCopy.cta}
+                {importingStarterPack ? t('starterPackImportLoading') : stageCopy.cta}
                 <Gift size={16} />
               </button>
             )}
             <button type="button" className="nr-secondary-button" onClick={() => router.push('/gestione-formazione')}>
-              {lang === 'en' ? 'Open current roster page' : 'Apri la rosa attuale'}
+              {t('nuovaRosaOpenCurrent')}
             </button>
           </div>
         </div>
         <div className="nr-hero-side">
-          <div className="nr-stage-pill"><Zap size={14} /> {stageCopy.title}</div>
+          <div className="nr-stage-pill"><Zap size={14} /> {t('nuovaRosaStatusLabel')}</div>
+          <h2 className="nr-stage-title">{stageCopy.title}</h2>
           <div className="nr-stats-grid">
             <div>
-              <span>{lang === 'en' ? 'Players' : 'Giocatori'}</span>
+              <span>{t('nuovaRosaPlayers')}</span>
               <strong>{totalPlayers}</strong>
             </div>
             <div>
-              <span>{lang === 'en' ? 'Starters' : 'Titolari'}</span>
+              <span>{t('nuovaRosaStarters')}</span>
               <strong>{titolari.length}</strong>
             </div>
             <div>
-              <span>{lang === 'en' ? 'Formation' : 'Modulo'}</span>
+              <span>{t('nuovaRosaFormation')}</span>
               <strong>{layout?.formation || '-'}</strong>
             </div>
           </div>
@@ -2168,7 +2160,7 @@ export default withAuth(function NuovaRosaLabPage() {
       </section>
 
       {loading ? (
-        <section className="nr-card nr-empty-state">{lang === 'en' ? 'Loading roster...' : 'Caricamento rosa...'}</section>
+        <section className="nr-card nr-empty-state">{t('nuovaRosaLoading')}</section>
       ) : error ? (
         <section className="nr-card nr-empty-state">
           <AlertTriangle size={18} />
@@ -2179,7 +2171,7 @@ export default withAuth(function NuovaRosaLabPage() {
           <section className="nr-card">
             <div className="nr-card-head">
               <div>
-                <span className="nr-mini-kicker">{lang === 'en' ? 'Formation workspace' : 'Workspace formazione'}</span>
+                <span className="nr-mini-kicker">{t('nuovaRosaWorkspace')}</span>
                 <h2>{layout?.formation || '4-3-3'}</h2>
               </div>
               <Users size={18} />
@@ -2204,7 +2196,7 @@ export default withAuth(function NuovaRosaLabPage() {
             <section className="nr-card">
               <div className="nr-card-head">
                 <div>
-                  <span className="nr-mini-kicker">{lang === 'en' ? 'Reserves' : 'Riserve'}</span>
+                  <span className="nr-mini-kicker">{t('nuovaRosaReserves')}</span>
                   <h2>{riserve.length}</h2>
                 </div>
                 <button type="button" className="nr-icon-button" onClick={() => { setSelectedSlot(null); setShowManualPlayerModal(true) }}>
@@ -2222,7 +2214,7 @@ export default withAuth(function NuovaRosaLabPage() {
                   </button>
                 )) : (
                   <div className="nr-empty-state">
-                    <span>{lang === 'en' ? 'No reserves yet.' : 'Nessuna riserva ancora.'}</span>
+                    <span>{t('nuovaRosaNoReserves')}</span>
                   </div>
                 )}
               </div>
@@ -2276,6 +2268,7 @@ export default withAuth(function NuovaRosaLabPage() {
           if (slot) openPickerForSlot(slot)
         }}
         lang={lang}
+        t={t}
       />
 
       <EnterprisePlayerEditorModal
@@ -2334,6 +2327,19 @@ export default withAuth(function NuovaRosaLabPage() {
           width: min(1440px, 100%);
           margin: 0 auto;
           padding: clamp(18px, 3vw, 32px);
+          position: relative;
+        }
+
+        .nr-page:before {
+          content: '';
+          position: fixed;
+          inset: 0;
+          pointer-events: none;
+          background:
+            radial-gradient(circle at 12% 8%, rgba(0, 212, 255, 0.18), transparent 30%),
+            radial-gradient(circle at 86% 18%, rgba(168, 85, 247, 0.18), transparent 28%),
+            radial-gradient(circle at 50% 100%, rgba(52, 211, 153, 0.12), transparent 34%);
+          z-index: -1;
         }
 
         .nr-card,
@@ -2350,6 +2356,66 @@ export default withAuth(function NuovaRosaLabPage() {
           grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.8fr);
           gap: 18px;
           margin-bottom: 22px;
+          position: relative;
+          overflow: hidden;
+          border-color: rgba(0, 212, 255, 0.34);
+          background:
+            radial-gradient(circle at 8% 12%, rgba(0, 212, 255, 0.22), transparent 32%),
+            radial-gradient(circle at 82% 22%, rgba(255, 177, 66, 0.16), transparent 30%),
+            linear-gradient(135deg, rgba(10, 19, 43, 0.98), rgba(6, 9, 24, 0.96) 58%, rgba(9, 22, 39, 0.98));
+          box-shadow:
+            0 24px 80px rgba(0, 0, 0, 0.36),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+        }
+
+        .nr-hero-card:after {
+          content: '';
+          position: absolute;
+          inset: auto -10% -55% 35%;
+          height: 220px;
+          background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.22), transparent);
+          transform: rotate(-7deg);
+          pointer-events: none;
+        }
+
+        .nr-hero-copy,
+        .nr-hero-side {
+          position: relative;
+          z-index: 1;
+        }
+
+        .nr-hero-copy h1 {
+          font-size: clamp(32px, 4vw, 56px);
+          line-height: 0.95;
+          letter-spacing: -0.04em;
+          text-shadow: 0 0 32px rgba(0, 212, 255, 0.18);
+        }
+
+        .nr-hero-copy p {
+          max-width: 720px;
+          font-size: 15px;
+          line-height: 1.6;
+        }
+
+        .nr-hero-side {
+          border-radius: 18px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background:
+            radial-gradient(circle at top right, rgba(52, 211, 153, 0.16), transparent 34%),
+            rgba(255, 255, 255, 0.045);
+          padding: 16px;
+          align-self: stretch;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          gap: 12px;
+        }
+
+        .nr-stage-title {
+          margin: 0;
+          color: #fff;
+          font-size: 22px;
+          letter-spacing: -0.02em;
         }
 
         .nr-badge,
@@ -2621,6 +2687,24 @@ export default withAuth(function NuovaRosaLabPage() {
           background: rgba(255, 255, 255, 0.04);
           border: 1px solid rgba(255, 255, 255, 0.06);
           padding: 12px;
+        }
+
+        .nr-hero-side .nr-stats-grid div {
+          border-color: rgba(0, 212, 255, 0.18);
+          background:
+            linear-gradient(180deg, rgba(0, 212, 255, 0.08), rgba(255, 255, 255, 0.035));
+        }
+
+        .nr-hero-side .nr-stats-grid div:nth-child(2) {
+          border-color: rgba(52, 211, 153, 0.22);
+          background:
+            linear-gradient(180deg, rgba(52, 211, 153, 0.1), rgba(255, 255, 255, 0.035));
+        }
+
+        .nr-hero-side .nr-stats-grid div:nth-child(3) {
+          border-color: rgba(255, 177, 66, 0.24);
+          background:
+            linear-gradient(180deg, rgba(255, 177, 66, 0.11), rgba(255, 255, 255, 0.035));
         }
 
         .nr-stats-grid span,
