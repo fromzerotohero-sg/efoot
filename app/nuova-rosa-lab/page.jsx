@@ -6,8 +6,6 @@ import { withAuth } from '@/components/AuthWrapper'
 import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
 import ConfirmModal from '@/components/ConfirmModal'
-import ManualPlayerModal from '@/components/ManualPlayerModal'
-import ManualBoostersModal from '@/components/ManualBoostersModal'
 import TacticalSettingsPanel from '@/components/TacticalSettingsPanel'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
@@ -21,6 +19,7 @@ import {
   Pencil,
   Plus,
   Search,
+  Save,
   ShieldCheck,
   Sparkles,
   Star,
@@ -150,6 +149,62 @@ function showConfirmConfig({ title, message, details, confirmLabel, cancelLabel,
   }
 }
 
+function EnterpriseModalFrame({ show, onClose, title, subtitle, children, className = '' }) {
+  if (!show) return null
+
+  return (
+    <div className="nr-modal-backdrop" onClick={onClose}>
+      <div className={`nr-modal-shell ${className}`.trim()} onClick={(event) => event.stopPropagation()}>
+        <div className="nr-modal-header">
+          <div>
+            {subtitle ? <span className="nr-mini-kicker">{subtitle}</span> : null}
+            <h2>{title}</h2>
+          </div>
+          <button type="button" className="nr-icon-button" onClick={onClose}>
+            <X size={18} />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function EnterpriseSection({ title, children, actions = null }) {
+  return (
+    <section className="nr-section-card">
+      <div className="nr-section-head">
+        <h3>{title}</h3>
+        {actions}
+      </div>
+      {children}
+    </section>
+  )
+}
+
+function EnterpriseInput({ label, value, onChange, placeholder = '', type = 'text' }) {
+  return (
+    <label className="nr-form-field">
+      <span>{label}</span>
+      <input type={type} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />
+    </label>
+  )
+}
+
+function EnterpriseSelect({ label, value, onChange, options }) {
+  return (
+    <label className="nr-form-field">
+      <span>{label}</span>
+      <select value={value} onChange={(event) => onChange(event.target.value)}>
+        <option value="">{label}</option>
+        {options.map((option) => (
+          <option key={option} value={option}>{option}</option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
 function SlotPlayerCard({ player, slot, onClick, lang }) {
   const cardImage = getPlayerCardImage(player)
 
@@ -216,6 +271,28 @@ function CatalogCard({ card, slotPosition, lang, onSelect, selected }) {
   )
 }
 
+function EnterpriseReservePicker({ reserves, lang, onPick }) {
+  return (
+    <EnterpriseSection title={lang === 'en' ? 'Choose from reserves' : 'Scegli dalle riserve'}>
+      <div className="nr-reserve-inline-list">
+        {reserves.length > 0 ? reserves.map((player) => (
+          <button key={player.id} type="button" className="nr-bench-item" onClick={() => onPick(player)}>
+            <div className="nr-bench-item-copy">
+              <strong>{player.player_name}</strong>
+              <span>{player.position || '-'} · OVR {player.overall_rating ?? '-'}</span>
+            </div>
+            <ChevronRight size={16} />
+          </button>
+        )) : (
+          <div className="nr-empty-state">
+            <span>{lang === 'en' ? 'No reserves available yet.' : 'Nessuna riserva disponibile.'}</span>
+          </div>
+        )}
+      </div>
+    </EnterpriseSection>
+  )
+}
+
 function CatalogPickerModal({
   show,
   slot,
@@ -224,10 +301,12 @@ function CatalogPickerModal({
   loading,
   suggested,
   results,
+  reserves,
   selectedCard,
   onSelectCard,
   onClose,
   onConfirm,
+  onSelectReserve,
   onManualFallback,
   onUploadFallback,
   lang
@@ -268,6 +347,8 @@ function CatalogPickerModal({
 
         <div className="nr-picker-body">
           <div className="nr-picker-results">
+            <EnterpriseReservePicker reserves={reserves} lang={lang} onPick={onSelectReserve} />
+
             <section>
               <div className="nr-section-head">
                 <h3>{lang === 'en' ? 'Suggested for this slot' : 'Suggeriti per questo slot'}</h3>
@@ -431,6 +512,10 @@ function QuickPlayerPanel({ player, onClose, onRemoveFromSlot, onDeletePlayer, o
                 {lang === 'en' ? 'Move to reserves' : 'Sposta in riserva'}
               </button>
             )}
+            <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player, true)}>
+              <Pencil size={14} />
+              {lang === 'en' ? 'Edit details' : 'Modifica dati'}
+            </button>
             <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player)}>
               {lang === 'en' ? 'Replace' : 'Sostituisci'}
             </button>
@@ -490,6 +575,200 @@ function RosterIntelligencePanel({ starters, reserves, layout, lang }) {
   )
 }
 
+const MANUAL_POSITIONS = ['PT', 'DC', 'TD', 'TS', 'MED', 'CC', 'TRQ', 'CLS', 'CLD', 'ESA', 'EDA', 'SP', 'P']
+const MANUAL_CARD_TYPES = ['Standard', 'Trending', 'Highlight', 'Epic', 'Legendary']
+
+function EnterprisePlayerEditorModal({
+  show,
+  mode,
+  player,
+  slot,
+  onClose,
+  onSave,
+  saving,
+  lang
+}) {
+  const [form, setForm] = React.useState({
+    player_name: '',
+    position: '',
+    overall_rating: '',
+    card_type: 'Standard',
+    role: '',
+    age: '',
+    nationality: '',
+    club_name: ''
+  })
+
+  React.useEffect(() => {
+    if (!show) return
+    setForm({
+      player_name: player?.player_name || '',
+      position: player?.position || slot?.position || '',
+      overall_rating: player?.overall_rating != null ? String(player.overall_rating) : '',
+      card_type: player?.card_type || 'Standard',
+      role: player?.role || player?.playing_style_name || '',
+      age: player?.age != null ? String(player.age) : '',
+      nationality: player?.nationality || '',
+      club_name: player?.club_name || ''
+    })
+  }, [show, player, slot])
+
+  return (
+    <EnterpriseModalFrame
+      show={show}
+      onClose={onClose}
+      title={mode === 'edit' ? (lang === 'en' ? 'Edit player details' : 'Modifica dati giocatore') : (lang === 'en' ? 'Manual player entry' : 'Inserimento manuale giocatore')}
+      subtitle={slot?.position ? `${lang === 'en' ? 'Slot' : 'Slot'} · ${slot.position}` : (lang === 'en' ? 'Manual entry' : 'Inserimento manuale')}
+      className="nr-editor-shell"
+    >
+      <div className="nr-editor-grid">
+        <EnterpriseSection title={lang === 'en' ? 'Main info' : 'Dati principali'}>
+          <div className="nr-form-grid">
+            <EnterpriseInput
+              label={lang === 'en' ? 'Player name' : 'Nome giocatore'}
+              value={form.player_name}
+              onChange={(value) => setForm((prev) => ({ ...prev, player_name: value }))}
+              placeholder={lang === 'en' ? 'Player name' : 'Nome giocatore'}
+            />
+            <EnterpriseSelect
+              label={lang === 'en' ? 'Position' : 'Posizione'}
+              value={form.position}
+              onChange={(value) => setForm((prev) => ({ ...prev, position: value }))}
+              options={MANUAL_POSITIONS}
+            />
+            <EnterpriseInput
+              label="OVR"
+              value={form.overall_rating}
+              onChange={(value) => setForm((prev) => ({ ...prev, overall_rating: value }))}
+              placeholder="89"
+              type="number"
+            />
+            <EnterpriseSelect
+              label={lang === 'en' ? 'Card type' : 'Tipo carta'}
+              value={form.card_type}
+              onChange={(value) => setForm((prev) => ({ ...prev, card_type: value }))}
+              options={MANUAL_CARD_TYPES}
+            />
+            <EnterpriseInput
+              label={lang === 'en' ? 'Playing style / role' : 'Stile / ruolo'}
+              value={form.role}
+              onChange={(value) => setForm((prev) => ({ ...prev, role: value }))}
+              placeholder={lang === 'en' ? 'Creative Playmaker' : 'Regista creativo'}
+            />
+            <EnterpriseInput
+              label={lang === 'en' ? 'Age' : 'Eta'}
+              value={form.age}
+              onChange={(value) => setForm((prev) => ({ ...prev, age: value }))}
+              placeholder="25"
+              type="number"
+            />
+          </div>
+        </EnterpriseSection>
+
+        <EnterpriseSection title={lang === 'en' ? 'Secondary info' : 'Dati secondari'}>
+          <div className="nr-form-grid">
+            <EnterpriseInput
+              label={lang === 'en' ? 'Nationality' : 'Nazionalita'}
+              value={form.nationality}
+              onChange={(value) => setForm((prev) => ({ ...prev, nationality: value }))}
+              placeholder={lang === 'en' ? 'Argentina' : 'Argentina'}
+            />
+            <EnterpriseInput
+              label={lang === 'en' ? 'Club name' : 'Club'}
+              value={form.club_name}
+              onChange={(value) => setForm((prev) => ({ ...prev, club_name: value }))}
+              placeholder="Barcelona"
+            />
+          </div>
+        </EnterpriseSection>
+      </div>
+
+      <div className="nr-modal-footer">
+        <button type="button" className="nr-secondary-button" onClick={onClose} disabled={saving}>
+          {lang === 'en' ? 'Cancel' : 'Annulla'}
+        </button>
+        <button type="button" className="nr-primary-button" onClick={() => onSave(form)} disabled={saving}>
+          {saving ? (lang === 'en' ? 'Saving...' : 'Salvataggio...') : (mode === 'edit' ? (lang === 'en' ? 'Save changes' : 'Salva modifiche') : (lang === 'en' ? 'Save player' : 'Salva giocatore'))}
+          <Save size={16} />
+        </button>
+      </div>
+    </EnterpriseModalFrame>
+  )
+}
+
+function EnterpriseBoostersModal({ show, boosters, setBoosters, onClose, onSave, saving, lang }) {
+  const list = Array.isArray(boosters) ? boosters : []
+
+  return (
+    <EnterpriseModalFrame
+      show={show}
+      onClose={onClose}
+      title={lang === 'en' ? 'Boosters' : 'Boosters'}
+      subtitle={lang === 'en' ? 'Quick edit' : 'Modifica rapida'}
+      className="nr-editor-shell"
+    >
+      <EnterpriseSection
+        title={lang === 'en' ? 'Booster list' : 'Lista booster'}
+        actions={
+          <button
+            type="button"
+            className="nr-secondary-button"
+            onClick={() => setBoosters([...(list || []), { name: '', effect: '' }])}
+            disabled={saving}
+          >
+            <Plus size={14} />
+            {lang === 'en' ? 'Add booster' : 'Aggiungi booster'}
+          </button>
+        }
+      >
+        <div className="nr-boosters-list">
+          {list.length > 0 ? list.map((booster, index) => (
+            <div key={`${index}-${booster?.name || 'booster'}`} className="nr-booster-row">
+              <div className="nr-form-grid">
+                <EnterpriseInput
+                  label={lang === 'en' ? 'Booster name' : 'Nome booster'}
+                  value={String(booster?.name || '')}
+                  onChange={(value) => setBoosters(list.map((item, idx) => idx === index ? { ...(item || {}), name: value } : item))}
+                  placeholder={lang === 'en' ? 'Booster name' : 'Nome booster'}
+                />
+                <EnterpriseInput
+                  label={lang === 'en' ? 'Effect' : 'Effetto'}
+                  value={String(booster?.effect || '')}
+                  onChange={(value) => setBoosters(list.map((item, idx) => idx === index ? { ...(item || {}), effect: value } : item))}
+                  placeholder={lang === 'en' ? 'Effect' : 'Effetto'}
+                />
+              </div>
+              <button
+                type="button"
+                className="nr-danger-button"
+                onClick={() => setBoosters(list.filter((_, idx) => idx !== index))}
+                disabled={saving}
+              >
+                <Trash2 size={14} />
+                {lang === 'en' ? 'Remove' : 'Rimuovi'}
+              </button>
+            </div>
+          )) : (
+            <div className="nr-empty-state">
+              <span>{lang === 'en' ? 'No boosters added yet.' : 'Nessun booster aggiunto ancora.'}</span>
+            </div>
+          )}
+        </div>
+      </EnterpriseSection>
+
+      <div className="nr-modal-footer">
+        <button type="button" className="nr-secondary-button" onClick={onClose} disabled={saving}>
+          {lang === 'en' ? 'Cancel' : 'Annulla'}
+        </button>
+        <button type="button" className="nr-primary-button" onClick={onSave} disabled={saving}>
+          {saving ? (lang === 'en' ? 'Saving...' : 'Salvataggio...') : (lang === 'en' ? 'Save boosters' : 'Salva boosters')}
+          <Save size={16} />
+        </button>
+      </div>
+    </EnterpriseModalFrame>
+  )
+}
+
 export default withAuth(function NuovaRosaLabPage() {
   const router = useRouter()
   const { t, lang } = useTranslation()
@@ -512,6 +791,9 @@ export default withAuth(function NuovaRosaLabPage() {
   const [selectedCatalogCard, setSelectedCatalogCard] = React.useState(null)
   const [confirmModal, setConfirmModal] = React.useState(null)
   const [showManualPlayerModal, setShowManualPlayerModal] = React.useState(false)
+  const [manualEditorMode, setManualEditorMode] = React.useState('create')
+  const [manualEditorPlayer, setManualEditorPlayer] = React.useState(null)
+  const [savingManualEditor, setSavingManualEditor] = React.useState(false)
   const [showManualBoostersModal, setShowManualBoostersModal] = React.useState(false)
   const [manualBoosters, setManualBoosters] = React.useState([])
   const [manualBoostersPlayerId, setManualBoostersPlayerId] = React.useState(null)
@@ -685,13 +967,32 @@ export default withAuth(function NuovaRosaLabPage() {
 
   const handleOpenManualFallback = React.useCallback(() => {
     setPickerOpen(false)
+    setManualEditorMode('create')
+    setManualEditorPlayer(null)
     setShowManualPlayerModal(true)
   }, [])
 
   const handleUploadFallback = React.useCallback(() => {
     setPickerOpen(false)
-    showToast(lang === 'en' ? 'Photo upload remains available in the legacy page for now.' : 'Il caricamento foto resta disponibile nella pagina legacy per ora.', 'warning')
-  }, [lang, showToast])
+    setConfirmModal({
+      ...showConfirmConfig({
+        title: lang === 'en' ? 'Open legacy photo upload' : 'Apri caricamento foto legacy',
+        message: lang === 'en'
+          ? 'Photo upload is still managed by the current roster page. We can open it now without touching your data.'
+          : 'Il caricamento foto e ancora gestito dalla pagina rosa attuale. Possiamo aprirla ora senza toccare i tuoi dati.',
+        details: lang === 'en'
+          ? 'Use it when the catalog or manual entry is not enough.'
+          : 'Usala quando catalogo o inserimento manuale non bastano.',
+        confirmLabel: lang === 'en' ? 'Open roster page' : 'Apri pagina rosa',
+        cancelLabel: t('cancel')
+      }),
+      onConfirm: () => {
+        setConfirmModal(null)
+        router.push('/gestione-formazione')
+      },
+      onCancel: () => setConfirmModal(null)
+    })
+  }, [lang, router, t])
 
   const handleSaveCatalogCardToSlot = React.useCallback(async () => {
     if (!selectedSlot || !selectedCatalogCard) return
@@ -763,6 +1064,72 @@ export default withAuth(function NuovaRosaLabPage() {
       showToast(message, 'error')
     }
   }, [selectedSlot, selectedCatalogCard, lang, t, fetchRoster, closePicker, refreshDiagnosticAfterSave, showToast])
+
+  const handleSelectReserveForSlot = React.useCallback(async (player) => {
+    if (!selectedSlot || !player?.id) return
+
+    const positions = Array.isArray(player.original_positions) && player.original_positions.length > 0
+      ? player.original_positions
+      : (player.position ? [{ position: player.position, competence: 'Alta' }] : [])
+    const isOriginal = positions.some((entry) => String(entry?.position || '').toUpperCase() === String(selectedSlot.position || '').toUpperCase())
+
+    const continueAssign = async () => {
+      try {
+        let token = getTokenFallback()
+        if (!token && supabase) {
+          const { data: session } = await supabase.auth.getSession()
+          token = session?.session?.access_token
+        }
+        if (!token) throw new Error(t('sessionExpired'))
+
+        const response = await fetch('/api/supabase/assign-player-to-slot', {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            slot_index: selectedSlot.slot_index,
+            player_id: player.id
+          })
+        })
+
+        await safeJsonResponse(response, t('errorAssigningPlayer'))
+        closePicker()
+        await fetchRoster()
+        await refreshDiagnosticAfterSave()
+        showToast(t('playerAssignedSuccessfully'), 'success')
+      } catch (err) {
+        console.error('[NuovaRosaLab] assign reserve error:', err)
+        const { message } = mapErrorToUserMessage(err, t('errorAssigningPlayer'), lang)
+        showToast(message, 'error')
+      }
+    }
+
+    if (!isOriginal && selectedSlot.position) {
+      setConfirmModal({
+        ...showConfirmConfig({
+          title: lang === 'en' ? 'Confirm role change' : 'Conferma cambio ruolo',
+          message: lang === 'en'
+            ? `${player.player_name} is not natural for ${selectedSlot.position}.`
+            : `${player.player_name} non e naturale per ${selectedSlot.position}.`,
+          details: lang === 'en'
+            ? 'You can still continue and edit the role compatibility later.'
+            : 'Puoi comunque continuare e modificare la compatibilita ruolo in seguito.',
+          confirmLabel: t('confirm'),
+          cancelLabel: t('cancel')
+        }),
+        onConfirm: async () => {
+          setConfirmModal(null)
+          await continueAssign()
+        },
+        onCancel: () => setConfirmModal(null)
+      })
+      return
+    }
+
+    await continueAssign()
+  }, [closePicker, fetchRoster, lang, refreshDiagnosticAfterSave, selectedSlot, showToast, t])
 
   const handleRemoveFromSlot = React.useCallback(async (playerId) => {
     try {
@@ -873,6 +1240,80 @@ export default withAuth(function NuovaRosaLabPage() {
     setManualBoostersPlayerId(player.id)
     setShowManualBoostersModal(true)
   }, [])
+
+  const handleManualEditorSave = React.useCallback(async (form) => {
+    setSavingManualEditor(true)
+    try {
+      let token = getTokenFallback()
+      if (!token && supabase) {
+        const { data: session } = await supabase.auth.getSession()
+        token = session?.session?.access_token
+      }
+      if (!token) throw new Error(t('sessionExpired'))
+
+      if (manualEditorMode === 'edit' && manualEditorPlayer?.id) {
+        const response = await fetch(`/api/players/${manualEditorPlayer.id}`, {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            metadata: {
+              manual_override_name: form.player_name.trim(),
+              manual_override_position: form.position || null,
+              manual_override_overall: form.overall_rating ? Number(form.overall_rating) : null,
+              manual_override_card_type: form.card_type || null,
+              manual_override_role: form.role || null,
+              manual_override_nationality: form.nationality || null,
+              manual_override_club_name: form.club_name || null
+            }
+          })
+        })
+        await safeJsonResponse(response, t('errorSavingPlayerGeneric'))
+      } else {
+        const payload = {
+          player_name: form.player_name.trim(),
+          position: form.position || selectedSlot?.position || null,
+          overall_rating: form.overall_rating ? Number(form.overall_rating) : null,
+          card_type: form.card_type || null,
+          role: form.role || null,
+          age: form.age ? Number(form.age) : null,
+          nationality: form.nationality || null,
+          club_name: form.club_name || null,
+          slot_index: selectedSlot?.slot_index ?? null,
+          photo_slots: { manuale: true },
+          metadata: {
+            manual_entry: true,
+            manual_entry_saved_at: new Date().toISOString()
+          },
+          extracted_data: { source: 'manual_input' }
+        }
+
+        const response = await fetch('/api/supabase/save-player', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ player: payload })
+        })
+        await safeJsonResponse(response, t('errorSavingPlayerGeneric'))
+      }
+
+      setShowManualPlayerModal(false)
+      setManualEditorPlayer(null)
+      await fetchRoster()
+      await refreshDiagnosticAfterSave()
+      showToast(lang === 'en' ? 'Player saved successfully.' : 'Giocatore salvato con successo.', 'success')
+    } catch (err) {
+      console.error('[NuovaRosaLab] manual editor error:', err)
+      const { message } = mapErrorToUserMessage(err, t('errorSavingPlayerGeneric'), lang)
+      showToast(message, 'error')
+    } finally {
+      setSavingManualEditor(false)
+    }
+  }, [fetchRoster, lang, manualEditorMode, manualEditorPlayer, refreshDiagnosticAfterSave, selectedSlot, showToast, t])
 
   const saveManualBoostersForPlayer = React.useCallback(async () => {
     if (!manualBoostersPlayerId) return
@@ -1151,10 +1592,12 @@ export default withAuth(function NuovaRosaLabPage() {
         loading={pickerLoading}
         suggested={pickerSuggested}
         results={pickerResults}
+        reserves={riserve}
         selectedCard={selectedCatalogCard}
         onSelectCard={setSelectedCatalogCard}
         onClose={closePicker}
         onConfirm={handleSaveCatalogCardToSlot}
+        onSelectReserve={handleSelectReserveForSlot}
         onManualFallback={handleOpenManualFallback}
         onUploadFallback={handleUploadFallback}
         lang={lang}
@@ -1169,7 +1612,14 @@ export default withAuth(function NuovaRosaLabPage() {
           openManualBoostersForPlayer(player)
           setSelectedPlayer(null)
         }}
-        onOpenReplace={(player) => {
+        onOpenReplace={(player, asEdit = false) => {
+          if (asEdit) {
+            setManualEditorMode('edit')
+            setManualEditorPlayer(player)
+            setShowManualPlayerModal(true)
+            setSelectedPlayer(null)
+            return
+          }
           const slot = player?.slot_index != null ? slots.find((entry) => entry.slot_index === player.slot_index) : null
           setSelectedPlayer(null)
           if (slot) openPickerForSlot(slot)
@@ -1177,31 +1627,33 @@ export default withAuth(function NuovaRosaLabPage() {
         lang={lang}
       />
 
-      <ManualPlayerModal
+      <EnterprisePlayerEditorModal
         show={showManualPlayerModal}
-        onClose={() => setShowManualPlayerModal(false)}
-        onSaved={async () => {
-          await fetchRoster()
-          await refreshDiagnosticAfterSave()
+        mode={manualEditorMode}
+        player={manualEditorPlayer}
+        slot={selectedSlot}
+        onClose={() => {
           setShowManualPlayerModal(false)
-          showToast(lang === 'en' ? 'Player saved successfully.' : 'Giocatore salvato con successo.', 'success')
+          setManualEditorPlayer(null)
         }}
-        slotIndex={selectedSlot?.slot_index ?? null}
+        onSave={handleManualEditorSave}
+        saving={savingManualEditor}
+        lang={lang}
       />
 
-      {showManualBoostersModal && (
-        <ManualBoostersModal
-          boosters={manualBoosters}
-          setBoosters={setManualBoosters}
-          onClose={() => {
-            setShowManualBoostersModal(false)
-            setManualBoosters([])
-            setManualBoostersPlayerId(null)
-          }}
-          onSave={saveManualBoostersForPlayer}
-          saving={savingManualBoosters}
-        />
-      )}
+      <EnterpriseBoostersModal
+        show={showManualBoostersModal}
+        boosters={manualBoosters}
+        setBoosters={setManualBoosters}
+        onClose={() => {
+          setShowManualBoostersModal(false)
+          setManualBoosters([])
+          setManualBoostersPlayerId(null)
+        }}
+        onSave={saveManualBoostersForPlayer}
+        saving={savingManualBoosters}
+        lang={lang}
+      />
 
       {confirmModal?.show && (
         <ConfirmModal
