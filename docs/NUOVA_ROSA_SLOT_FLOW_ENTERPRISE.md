@@ -312,7 +312,7 @@ Dopo il salvataggio:
 Quando il cliente clicca uno slot gia occupato:
 
 - non deve riaprire il picker come prima azione;
-- deve aprirsi un `Quick Player Panel`.
+- deve aprirsi un **player editor premium**.
 
 ## 5.1 Azioni disponibili
 
@@ -322,6 +322,19 @@ Quando il cliente clicca uno slot gia occupato:
 - sposta in riserva
 - sostituisci con altra carta
 - elimina
+
+### Decisione UX aggiornata
+
+Il pannello giocatore non deve essere una lista povera di pulsanti.
+
+Deve essere una superficie forte con:
+
+- card hero;
+- dati identita;
+- statistiche editabili;
+- abilita editabili;
+- accesso booster;
+- azioni rosa.
 
 ## 5.2 Sostituzione
 

@@ -769,6 +769,320 @@ function EnterpriseBoostersModal({ show, boosters, setBoosters, onClose, onSave,
   )
 }
 
+function normalizeBaseStatsForEditor(baseStats = {}) {
+  const attacking = baseStats?.attacking || {}
+  const defending = baseStats?.defending || {}
+  const athleticism = baseStats?.athleticism || {}
+  const goalkeeping = baseStats?.goalkeeping || {}
+
+  return {
+    finishing: attacking.finishing ?? '',
+    low_pass: attacking.low_pass ?? '',
+    lofted_pass: attacking.lofted_pass ?? '',
+    dribbling: attacking.dribbling ?? '',
+    ball_control: attacking.ball_control ?? '',
+    tight_possession: attacking.tight_possession ?? '',
+    defensive_awareness: defending.defensive_awareness ?? '',
+    tackling: defending.tackling ?? '',
+    aggression: defending.aggression ?? '',
+    speed: athleticism.speed ?? '',
+    acceleration: athleticism.acceleration ?? '',
+    kicking_power: athleticism.kicking_power ?? '',
+    physical_contact: athleticism.physical_contact ?? '',
+    balance: athleticism.balance ?? '',
+    stamina: athleticism.stamina ?? '',
+    gk_reflexes: goalkeeping.gk_reflexes ?? '',
+    gk_reach: goalkeeping.gk_reach ?? ''
+  }
+}
+
+function buildBaseStatsPayloadFromEditor(form) {
+  const toNum = (value) => {
+    if (value === '' || value === null || value === undefined) return null
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+
+  const attacking = {}
+  const defending = {}
+  const athleticism = {}
+  const goalkeeping = {}
+
+  const mapValue = (bucket, key, value) => {
+    const parsed = toNum(value)
+    if (parsed === null) return
+    bucket[key] = parsed
+  }
+
+  mapValue(attacking, 'finishing', form.finishing)
+  mapValue(attacking, 'low_pass', form.low_pass)
+  mapValue(attacking, 'lofted_pass', form.lofted_pass)
+  mapValue(attacking, 'dribbling', form.dribbling)
+  mapValue(attacking, 'ball_control', form.ball_control)
+  mapValue(attacking, 'tight_possession', form.tight_possession)
+
+  mapValue(defending, 'defensive_awareness', form.defensive_awareness)
+  mapValue(defending, 'tackling', form.tackling)
+  mapValue(defending, 'aggression', form.aggression)
+
+  mapValue(athleticism, 'speed', form.speed)
+  mapValue(athleticism, 'acceleration', form.acceleration)
+  mapValue(athleticism, 'kicking_power', form.kicking_power)
+  mapValue(athleticism, 'physical_contact', form.physical_contact)
+  mapValue(athleticism, 'balance', form.balance)
+  mapValue(athleticism, 'stamina', form.stamina)
+
+  mapValue(goalkeeping, 'gk_reflexes', form.gk_reflexes)
+  mapValue(goalkeeping, 'gk_reach', form.gk_reach)
+
+  const output = {}
+  if (Object.keys(attacking).length > 0) output.attacking = attacking
+  if (Object.keys(defending).length > 0) output.defending = defending
+  if (Object.keys(athleticism).length > 0) output.athleticism = athleticism
+  if (Object.keys(goalkeeping).length > 0) output.goalkeeping = goalkeeping
+  return output
+}
+
+function PremiumPlayerModal({
+  show,
+  player,
+  onClose,
+  onSave,
+  onRemoveFromSlot,
+  onDeletePlayer,
+  onOpenBoosters,
+  onOpenReplace,
+  saving,
+  lang
+}) {
+  const cardImage = getPlayerCardImage(player)
+  const [form, setForm] = React.useState({
+    player_name: '',
+    position: '',
+    overall_rating: '',
+    card_type: '',
+    role: '',
+    age: '',
+    nationality: '',
+    club_name: '',
+    skillsInput: '',
+    finishing: '',
+    low_pass: '',
+    lofted_pass: '',
+    dribbling: '',
+    ball_control: '',
+    tight_possession: '',
+    defensive_awareness: '',
+    tackling: '',
+    aggression: '',
+    speed: '',
+    acceleration: '',
+    kicking_power: '',
+    physical_contact: '',
+    balance: '',
+    stamina: '',
+    gk_reflexes: '',
+    gk_reach: ''
+  })
+
+  React.useEffect(() => {
+    if (!show || !player) return
+    const normalizedStats = normalizeBaseStatsForEditor(player.base_stats || {})
+    setForm({
+      player_name: player.player_name || '',
+      position: player.position || '',
+      overall_rating: player.overall_rating != null ? String(player.overall_rating) : '',
+      card_type: player.card_type || '',
+      role: player.role || player.playing_style_name || '',
+      age: player.age != null ? String(player.age) : '',
+      nationality: player.nationality || '',
+      club_name: player.club_name || '',
+      skillsInput: Array.isArray(player.skills) ? player.skills.join(', ') : '',
+      ...normalizedStats
+    })
+  }, [show, player])
+
+  if (!show || !player) return null
+
+  const skillList = form.skillsInput
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+
+  const boosterCount = Array.isArray(player.available_boosters) ? player.available_boosters.length : 0
+  const roleCount = Array.isArray(player.original_positions) ? player.original_positions.length : 0
+
+  return (
+    <EnterpriseModalFrame
+      show={show}
+      onClose={onClose}
+      title={player.player_name}
+      subtitle={lang === 'en' ? 'Player editor' : 'Editor giocatore'}
+      className="nr-premium-player-shell"
+    >
+      <div className="nr-premium-player-layout">
+        <section className="nr-premium-hero">
+          <div className="nr-premium-hero-top">
+            <div className="nr-premium-hero-copy">
+              <span className="nr-mini-kicker">
+                {player?.metadata?.catalog_card_type || player.card_type || (lang === 'en' ? 'Roster player' : 'Giocatore rosa')}
+              </span>
+              <h3>{player.player_name}</h3>
+              <p>{player.role || player.playing_style_name || '-'} · {player.position || '-'}</p>
+            </div>
+            <div className="nr-premium-overall">
+              <span>OVR</span>
+              <strong>{player.overall_rating ?? '-'}</strong>
+            </div>
+          </div>
+
+          <div className="nr-premium-hero-main">
+            <div className="nr-premium-card-frame">
+              {cardImage ? (
+                <img src={cardImage} alt={player.player_name} />
+              ) : (
+                <div className="nr-slot-avatar-fallback"><User size={26} /></div>
+              )}
+            </div>
+
+            <div className="nr-premium-side-stats">
+              <div>
+                <span>{lang === 'en' ? 'Height' : 'Altezza'}</span>
+                <strong>{player.height ?? '-'}</strong>
+              </div>
+              <div>
+                <span>{lang === 'en' ? 'Weight' : 'Peso'}</span>
+                <strong>{player.weight ?? '-'}</strong>
+              </div>
+              <div>
+                <span>{lang === 'en' ? 'Age' : 'Eta'}</span>
+                <strong>{player.age ?? '-'}</strong>
+              </div>
+              <div>
+                <span>{lang === 'en' ? 'Club' : 'Club'}</span>
+                <strong>{player.club_name || '-'}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="nr-premium-summary-row">
+            <div><span>{lang === 'en' ? 'Skills' : 'Abilita'}</span><strong>{Array.isArray(player.skills) ? player.skills.length : 0}</strong></div>
+            <div><span>{lang === 'en' ? 'Boosters' : 'Boosters'}</span><strong>{boosterCount}</strong></div>
+            <div><span>{lang === 'en' ? 'Roles' : 'Ruoli'}</span><strong>{roleCount}</strong></div>
+          </div>
+        </section>
+
+        <section className="nr-premium-sections">
+          <EnterpriseSection title={lang === 'en' ? 'Core identity' : 'Identita'}>
+            <div className="nr-form-grid">
+              <EnterpriseInput label={lang === 'en' ? 'Player name' : 'Nome'} value={form.player_name} onChange={(value) => setForm((prev) => ({ ...prev, player_name: value }))} />
+              <EnterpriseSelect label={lang === 'en' ? 'Position' : 'Posizione'} value={form.position} onChange={(value) => setForm((prev) => ({ ...prev, position: value }))} options={MANUAL_POSITIONS} />
+              <EnterpriseInput label="OVR" value={form.overall_rating} type="number" onChange={(value) => setForm((prev) => ({ ...prev, overall_rating: value }))} />
+              <EnterpriseSelect label={lang === 'en' ? 'Card type' : 'Tipo carta'} value={form.card_type} onChange={(value) => setForm((prev) => ({ ...prev, card_type: value }))} options={MANUAL_CARD_TYPES} />
+              <EnterpriseInput label={lang === 'en' ? 'Role / style' : 'Ruolo / stile'} value={form.role} onChange={(value) => setForm((prev) => ({ ...prev, role: value }))} />
+              <EnterpriseInput label={lang === 'en' ? 'Age' : 'Eta'} value={form.age} type="number" onChange={(value) => setForm((prev) => ({ ...prev, age: value }))} />
+              <EnterpriseInput label={lang === 'en' ? 'Nationality' : 'Nazionalita'} value={form.nationality} onChange={(value) => setForm((prev) => ({ ...prev, nationality: value }))} />
+              <EnterpriseInput label={lang === 'en' ? 'Club name' : 'Club'} value={form.club_name} onChange={(value) => setForm((prev) => ({ ...prev, club_name: value }))} />
+            </div>
+          </EnterpriseSection>
+
+          <EnterpriseSection
+            title={lang === 'en' ? 'Actions' : 'Azioni'}
+            actions={
+              <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player)}>
+                {lang === 'en' ? 'Replace card' : 'Sostituisci carta'}
+              </button>
+            }
+          >
+            <div className="nr-quick-actions">
+              {player.slot_index !== null && player.slot_index !== undefined && (
+                <button type="button" className="nr-secondary-button" onClick={() => onRemoveFromSlot(player.id)}>
+                  {lang === 'en' ? 'Move to reserves' : 'Sposta in riserva'}
+                </button>
+              )}
+              <button type="button" className="nr-secondary-button" onClick={() => onOpenBoosters(player)}>
+                {lang === 'en' ? 'Edit boosters' : 'Modifica boosters'}
+              </button>
+              <button type="button" className="nr-danger-button" onClick={() => onDeletePlayer(player.id)}>
+                <Trash2 size={14} />
+                {lang === 'en' ? 'Delete player' : 'Elimina giocatore'}
+              </button>
+            </div>
+          </EnterpriseSection>
+
+          <div className="nr-premium-stats-grid">
+            <EnterpriseSection title={lang === 'en' ? 'Attacking' : 'Attaccare'}>
+              <div className="nr-form-grid">
+                <EnterpriseInput label={lang === 'en' ? 'Finishing' : 'Finalizzazione'} value={form.finishing} type="number" onChange={(value) => setForm((prev) => ({ ...prev, finishing: value }))} />
+                <EnterpriseInput label={lang === 'en' ? 'Low pass' : 'Passaggio rasoterra'} value={form.low_pass} type="number" onChange={(value) => setForm((prev) => ({ ...prev, low_pass: value }))} />
+                <EnterpriseInput label={lang === 'en' ? 'Lofted pass' : 'Passaggio alto'} value={form.lofted_pass} type="number" onChange={(value) => setForm((prev) => ({ ...prev, lofted_pass: value }))} />
+                <EnterpriseInput label={lang === 'en' ? 'Dribbling' : 'Dribbling'} value={form.dribbling} type="number" onChange={(value) => setForm((prev) => ({ ...prev, dribbling: value }))} />
+                <EnterpriseInput label={lang === 'en' ? 'Ball control' : 'Controllo palla'} value={form.ball_control} type="number" onChange={(value) => setForm((prev) => ({ ...prev, ball_control: value }))} />
+                <EnterpriseInput label={lang === 'en' ? 'Tight possession' : 'Possesso stretto'} value={form.tight_possession} type="number" onChange={(value) => setForm((prev) => ({ ...prev, tight_possession: value }))} />
+              </div>
+            </EnterpriseSection>
+
+            <EnterpriseSection title={lang === 'en' ? 'Athleticism' : 'Atletismo'}>
+              <div className="nr-form-grid">
+                <EnterpriseInput label={lang === 'en' ? 'Speed' : 'Velocita'} value={form.speed} type="number" onChange={(value) => setForm((prev) => ({ ...prev, speed: value }))} />
+                <EnterpriseInput label={lang === 'en' ? 'Acceleration' : 'Accelerazione'} value={form.acceleration} type="number" onChange={(value) => setForm((prev) => ({ ...prev, acceleration: value }))} />
+                <EnterpriseInput label={lang === 'en' ? 'Kicking power' : 'Potenza di tiro'} value={form.kicking_power} type="number" onChange={(value) => setForm((prev) => ({ ...prev, kicking_power: value }))} />
+                <EnterpriseInput label={lang === 'en' ? 'Physical contact' : 'Contatto fisico'} value={form.physical_contact} type="number" onChange={(value) => setForm((prev) => ({ ...prev, physical_contact: value }))} />
+                <EnterpriseInput label={lang === 'en' ? 'Balance' : 'Equilibrio'} value={form.balance} type="number" onChange={(value) => setForm((prev) => ({ ...prev, balance: value }))} />
+                <EnterpriseInput label={lang === 'en' ? 'Stamina' : 'Resistenza'} value={form.stamina} type="number" onChange={(value) => setForm((prev) => ({ ...prev, stamina: value }))} />
+              </div>
+            </EnterpriseSection>
+
+            <EnterpriseSection title={lang === 'en' ? 'Defending and skills' : 'Difesa e abilita'}>
+              <div className="nr-form-grid">
+                <EnterpriseInput label={lang === 'en' ? 'Defensive awareness' : 'Consapevolezza difensiva'} value={form.defensive_awareness} type="number" onChange={(value) => setForm((prev) => ({ ...prev, defensive_awareness: value }))} />
+                <EnterpriseInput label={lang === 'en' ? 'Tackling' : 'Contrasto'} value={form.tackling} type="number" onChange={(value) => setForm((prev) => ({ ...prev, tackling: value }))} />
+                <EnterpriseInput label={lang === 'en' ? 'Aggression' : 'Aggressivita'} value={form.aggression} type="number" onChange={(value) => setForm((prev) => ({ ...prev, aggression: value }))} />
+                <EnterpriseInput label={lang === 'en' ? 'GK reflexes' : 'Riflessi PT'} value={form.gk_reflexes} type="number" onChange={(value) => setForm((prev) => ({ ...prev, gk_reflexes: value }))} />
+                <EnterpriseInput label={lang === 'en' ? 'GK reach' : 'Copertura PT'} value={form.gk_reach} type="number" onChange={(value) => setForm((prev) => ({ ...prev, gk_reach: value }))} />
+                <EnterpriseInput label={lang === 'en' ? 'Skills (comma separated)' : 'Abilita (separate da virgola)'} value={form.skillsInput} onChange={(value) => setForm((prev) => ({ ...prev, skillsInput: value }))} />
+              </div>
+              <div className="nr-skill-chip-row">
+                {skillList.length > 0 ? skillList.map((skill) => (
+                  <span key={skill} className="nr-skill-chip">{skill}</span>
+                )) : (
+                  <span className="nr-skill-empty">{lang === 'en' ? 'No skills yet.' : 'Nessuna abilita ancora.'}</span>
+                )}
+              </div>
+            </EnterpriseSection>
+          </div>
+        </section>
+      </div>
+
+      <div className="nr-modal-footer">
+        <button type="button" className="nr-secondary-button" onClick={onClose} disabled={saving}>
+          {lang === 'en' ? 'Cancel' : 'Annulla'}
+        </button>
+        <button
+          type="button"
+          className="nr-primary-button"
+          disabled={saving}
+          onClick={() => onSave({
+            player_name: form.player_name.trim(),
+            position: form.position,
+            overall_rating: form.overall_rating ? Number(form.overall_rating) : null,
+            card_type: form.card_type,
+            role: form.role,
+            age: form.age ? Number(form.age) : null,
+            nationality: form.nationality,
+            club_name: form.club_name,
+            skills: skillList,
+            base_stats: buildBaseStatsPayloadFromEditor(form)
+          })}
+        >
+          {saving ? (lang === 'en' ? 'Saving...' : 'Salvataggio...') : (lang === 'en' ? 'Save player' : 'Salva giocatore')}
+          <Save size={16} />
+        </button>
+      </div>
+    </EnterpriseModalFrame>
+  )
+}
+
 export default withAuth(function NuovaRosaLabPage() {
   const router = useRouter()
   const { t, lang } = useTranslation()
@@ -1369,6 +1683,40 @@ export default withAuth(function NuovaRosaLabPage() {
     }
   }, [manualBoosters, manualBoostersPlayerId, fetchRoster, lang, refreshDiagnosticAfterSave, showToast, t])
 
+  const handlePremiumPlayerSave = React.useCallback(async (payload) => {
+    if (!selectedPlayer?.id) return
+    setSavingManualEditor(true)
+    try {
+      let token = getTokenFallback()
+      if (!token && supabase) {
+        const { data: session } = await supabase.auth.getSession()
+        token = session?.session?.access_token
+      }
+      if (!token) throw new Error(t('sessionExpired'))
+
+      const response = await fetch(`/api/players/${selectedPlayer.id}`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+
+      await safeJsonResponse(response, t('errorSavingPlayerGeneric'))
+      setSelectedPlayer(null)
+      await fetchRoster()
+      await refreshDiagnosticAfterSave()
+      showToast(lang === 'en' ? 'Player updated.' : 'Giocatore aggiornato.', 'success')
+    } catch (err) {
+      console.error('[NuovaRosaLab] premium save error:', err)
+      const { message } = mapErrorToUserMessage(err, t('errorSavingPlayerGeneric'), lang)
+      showToast(message, 'error')
+    } finally {
+      setSavingManualEditor(false)
+    }
+  }, [fetchRoster, lang, refreshDiagnosticAfterSave, selectedPlayer, showToast, t])
+
   const handleSaveTacticalSettings = React.useCallback(async (settings) => {
     setSavingTacticalSettings(true)
     try {
@@ -1603,23 +1951,18 @@ export default withAuth(function NuovaRosaLabPage() {
         lang={lang}
       />
 
-      <QuickPlayerPanel
+      <PremiumPlayerModal
         player={selectedPlayer}
+        show={!!selectedPlayer}
         onClose={() => setSelectedPlayer(null)}
+        onSave={handlePremiumPlayerSave}
+        saving={savingManualEditor}
         onRemoveFromSlot={handleRemoveFromSlot}
         onDeletePlayer={handleDeletePlayer}
         onOpenBoosters={(player) => {
           openManualBoostersForPlayer(player)
-          setSelectedPlayer(null)
         }}
-        onOpenReplace={(player, asEdit = false) => {
-          if (asEdit) {
-            setManualEditorMode('edit')
-            setManualEditorPlayer(player)
-            setShowManualPlayerModal(true)
-            setSelectedPlayer(null)
-            return
-          }
+        onOpenReplace={(player) => {
           const slot = player?.slot_index != null ? slots.find((entry) => entry.slot_index === player.slot_index) : null
           setSelectedPlayer(null)
           if (slot) openPickerForSlot(slot)
@@ -2102,6 +2445,227 @@ export default withAuth(function NuovaRosaLabPage() {
           border-color: rgba(52, 211, 153, 0.35);
         }
 
+        .nr-section-card {
+          border-radius: 18px;
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          background: rgba(255, 255, 255, 0.03);
+          padding: 16px;
+        }
+
+        .nr-form-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
+        }
+
+        .nr-form-field {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .nr-form-field span {
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.65);
+        }
+
+        .nr-form-field input,
+        .nr-form-field select {
+          width: 100%;
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(10, 14, 31, 0.92);
+          color: #fff;
+          padding: 12px;
+          outline: none;
+        }
+
+        .nr-modal-footer {
+          margin-top: 16px;
+          display: flex;
+          justify-content: flex-end;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .nr-reserve-inline-list,
+        .nr-boosters-list {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .nr-booster-row {
+          border-radius: 14px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.02);
+          padding: 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .nr-editor-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+        }
+
+        .nr-premium-player-shell {
+          width: min(1320px, calc(100vw - 24px));
+          max-height: min(94vh, 980px);
+        }
+
+        .nr-premium-player-layout {
+          display: grid;
+          grid-template-columns: minmax(360px, 0.9fr) minmax(0, 1.1fr);
+          gap: 18px;
+        }
+
+        .nr-premium-hero {
+          border-radius: 20px;
+          padding: 18px;
+          background:
+            radial-gradient(circle at top, rgba(255, 145, 0, 0.18), transparent 38%),
+            linear-gradient(180deg, rgba(24, 16, 10, 0.98), rgba(10, 12, 20, 0.98));
+          border: 1px solid rgba(255, 166, 0, 0.18);
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .nr-premium-hero-top,
+        .nr-premium-hero-main {
+          display: flex;
+          justify-content: space-between;
+          gap: 16px;
+        }
+
+        .nr-premium-hero-copy h3 {
+          margin: 6px 0 0;
+          font-size: 28px;
+          color: #fff;
+        }
+
+        .nr-premium-hero-copy p {
+          margin: 6px 0 0;
+          color: rgba(255, 255, 255, 0.8);
+        }
+
+        .nr-premium-overall {
+          min-width: 88px;
+          border-radius: 18px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.05);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 12px;
+        }
+
+        .nr-premium-overall span {
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.62);
+        }
+
+        .nr-premium-overall strong {
+          font-size: 34px;
+          color: #fff;
+          line-height: 1;
+        }
+
+        .nr-premium-card-frame {
+          width: min(100%, 320px);
+          min-height: 440px;
+          border-radius: 20px;
+          overflow: hidden;
+          border: 2px solid rgba(255, 177, 66, 0.25);
+          background: rgba(255, 255, 255, 0.04);
+          align-self: flex-start;
+        }
+
+        .nr-premium-card-frame img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+
+        .nr-premium-side-stats {
+          flex: 1;
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 10px;
+          align-self: stretch;
+        }
+
+        .nr-premium-side-stats div,
+        .nr-premium-summary-row div {
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          background: rgba(255, 255, 255, 0.04);
+          padding: 12px;
+        }
+
+        .nr-premium-side-stats span,
+        .nr-premium-summary-row span {
+          display: block;
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.62);
+          margin-bottom: 4px;
+        }
+
+        .nr-premium-side-stats strong,
+        .nr-premium-summary-row strong {
+          color: #fff;
+          font-size: 16px;
+        }
+
+        .nr-premium-summary-row {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .nr-premium-sections {
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+          min-height: 0;
+          overflow: auto;
+          padding-right: 4px;
+        }
+
+        .nr-premium-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 14px;
+        }
+
+        .nr-skill-chip-row {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+          margin-top: 12px;
+        }
+
+        .nr-skill-chip,
+        .nr-skill-empty {
+          border-radius: 999px;
+          padding: 8px 10px;
+          background: rgba(0, 212, 255, 0.09);
+          border: 1px solid rgba(0, 212, 255, 0.14);
+          color: #fff;
+          font-size: 12px;
+        }
+
+        .nr-skill-empty {
+          background: rgba(255, 255, 255, 0.04);
+          border-color: rgba(255, 255, 255, 0.08);
+          color: rgba(255, 255, 255, 0.7);
+        }
+
         .nr-slot-avatar-fallback {
           width: 100%;
           height: 100%;
@@ -2117,7 +2681,9 @@ export default withAuth(function NuovaRosaLabPage() {
         @media (max-width: 1100px) {
           .nr-main-grid,
           .nr-hero-card,
-          .nr-picker-body {
+          .nr-picker-body,
+          .nr-premium-player-layout,
+          .nr-premium-stats-grid {
             grid-template-columns: 1fr;
           }
 
@@ -2133,6 +2699,21 @@ export default withAuth(function NuovaRosaLabPage() {
 
           .nr-field {
             min-height: 520px;
+          }
+
+          .nr-form-grid,
+          .nr-premium-summary-row {
+            grid-template-columns: 1fr;
+          }
+
+          .nr-premium-hero-main,
+          .nr-premium-hero-top {
+            flex-direction: column;
+          }
+
+          .nr-premium-card-frame {
+            min-height: 320px;
+            width: 100%;
           }
 
           .nr-slot-card {

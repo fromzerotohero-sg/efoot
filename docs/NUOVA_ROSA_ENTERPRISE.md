@@ -339,6 +339,17 @@ Questo edit rapido deve vivere in:
 - side panel su desktop;
 - bottom sheet o full-screen edit panel su mobile.
 
+Per la hidden page lab evoluta, il livello 1 non deve piu essere un pannello povero di azioni.
+
+Deve diventare un **player editor premium** con:
+
+- hero carta;
+- immagine grande;
+- dati principali subito editabili;
+- statistiche a sezioni;
+- abilita editabili;
+- booster e azioni rosa raggiungibili nello stesso spazio.
+
 ### Livello 2 - Edit esteso
 
 Accessibile come azione secondaria:

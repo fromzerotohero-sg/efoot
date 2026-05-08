@@ -149,7 +149,7 @@ export async function PATCH(req, { params }) {
 
     const { data: existingPlayer, error: existingPlayerError } = await supabase
       .from('players')
-      .select('id, base_stats, skills, com_skills, available_boosters, photo_slots, metadata, original_positions')
+      .select('id, player_name, position, card_type, overall_rating, age, nationality, club_name, role, base_stats, skills, com_skills, available_boosters, photo_slots, metadata, original_positions')
       .eq('id', id)
       .eq('user_id', userId)
       .single()
@@ -160,6 +160,7 @@ export async function PATCH(req, { params }) {
     
     // Sanitize body: allow only specific fields for update
     const allowedFields = [
+      'player_name', 'position', 'card_type', 'overall_rating', 'age', 'nationality', 'club_name', 'role',
       'base_stats', 'skills', 'com_skills', 'available_boosters', 
       'photo_slots', 'metadata', 'updated_at', 'slot_index', 'original_positions'
     ]
@@ -176,6 +177,53 @@ export async function PATCH(req, { params }) {
 
     // PATCH is often used for partial updates (boosters only, positions only, slot moves).
     // Never let an empty payload wipe data extracted earlier from screenshots.
+    const sanitizeText = (value) => typeof value === 'string' ? value.trim() : ''
+    const sanitizeNumber = (value) => {
+      if (value === null || value === undefined || value === '') return null
+      const parsed = Number(value)
+      return Number.isFinite(parsed) ? parsed : null
+    }
+
+    if (body.player_name !== undefined) {
+      const nextValue = sanitizeText(body.player_name)
+      updateData.player_name = nextValue || existingPlayer.player_name
+    }
+
+    if (body.position !== undefined) {
+      const nextValue = sanitizeText(body.position)
+      updateData.position = nextValue || existingPlayer.position
+    }
+
+    if (body.card_type !== undefined) {
+      const nextValue = sanitizeText(body.card_type)
+      updateData.card_type = nextValue || existingPlayer.card_type
+    }
+
+    if (body.overall_rating !== undefined) {
+      const nextValue = sanitizeNumber(body.overall_rating)
+      updateData.overall_rating = nextValue ?? existingPlayer.overall_rating
+    }
+
+    if (body.age !== undefined) {
+      const nextValue = sanitizeNumber(body.age)
+      updateData.age = nextValue ?? existingPlayer.age
+    }
+
+    if (body.nationality !== undefined) {
+      const nextValue = sanitizeText(body.nationality)
+      updateData.nationality = nextValue || existingPlayer.nationality
+    }
+
+    if (body.club_name !== undefined) {
+      const nextValue = sanitizeText(body.club_name)
+      updateData.club_name = nextValue || existingPlayer.club_name
+    }
+
+    if (body.role !== undefined) {
+      const nextValue = sanitizeText(body.role)
+      updateData.role = nextValue || existingPlayer.role
+    }
+
     if (body.base_stats !== undefined) {
       updateData.base_stats = hasObjectValue(body.base_stats)
         ? { ...(existingPlayer.base_stats || {}), ...body.base_stats }
