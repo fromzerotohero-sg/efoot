@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Gift,
+  Move,
   Pencil,
   Plus,
   Search,
@@ -338,7 +339,7 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
             onRemove(player.id)
           }}
         >
-          <X size={11} />
+          <X size={14} />
         </span>
       )}
     </div>
@@ -619,6 +620,11 @@ function QuickPlayerPanel({
 }) {
   if (!player) return null
   const cardImage = getPlayerCardImage(player)
+  const [view, setView] = React.useState('actions')
+
+  React.useEffect(() => {
+    setView('actions')
+  }, [player?.id, slot?.slot_index])
 
   return (
     <div className="nr-modal-backdrop" onClick={onClose}>
@@ -650,38 +656,58 @@ function QuickPlayerPanel({
             </div>
           </div>
 
-          <div className="nr-quick-actions">
-            {player.slot_index !== null && player.slot_index !== undefined && (
-              <button type="button" className="nr-secondary-button" onClick={() => onRemoveFromSlot(player.id)}>
-                {lang === 'en' ? 'Move to reserves' : 'Sposta in riserva'}
-              </button>
-            )}
-            <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player, true)}>
-              <Pencil size={14} />
-              {lang === 'en' ? 'Edit details' : 'Modifica dati'}
-            </button>
-            <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player)}>
-              {lang === 'en' ? 'Choose another card' : "Scegli un'altra carta"}
-            </button>
-            <button type="button" className="nr-secondary-button" onClick={() => onOpenBoosters(player)}>
-              {lang === 'en' ? 'Edit boosters' : 'Modifica boosters'}
-            </button>
-            <button type="button" className="nr-danger-button" onClick={() => onDeletePlayer(player.id)}>
-              <Trash2 size={14} />
-              {lang === 'en' ? 'Delete permanently' : 'Elimina definitivamente'}
-            </button>
-          </div>
+          {view === 'actions' ? (
+            <>
+              <div className="nr-quick-actions">
+                {player.slot_index !== null && player.slot_index !== undefined && (
+                  <button
+                    type="button"
+                    className="nr-primary-button"
+                    onClick={() => setView('reserve_swap')}
+                    disabled={assigning}
+                  >
+                    <Move size={14} />
+                    {lang === 'en' ? 'Move / swap with reserves' : 'Sposta / sostituisci con riserve'}
+                  </button>
+                )}
+                <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player, true)}>
+                  <Pencil size={14} />
+                  {lang === 'en' ? 'Edit player' : 'Modifica giocatore'}
+                </button>
+                <button type="button" className="nr-secondary-button" onClick={onUploadPhoto}>
+                  <Upload size={14} />
+                  {lang === 'en' ? 'Upload player photo' : 'Carica foto giocatore'}
+                </button>
+              </div>
 
-          {slot?.slot_index != null && (
+              <div className="nr-secondary-actions">
+                <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player)}>
+                  {lang === 'en' ? 'Choose another card' : "Scegli un'altra carta"}
+                </button>
+                <button type="button" className="nr-secondary-button" onClick={() => onOpenBoosters(player)}>
+                  {lang === 'en' ? 'Edit boosters' : 'Modifica boosters'}
+                </button>
+                <button type="button" className="nr-danger-button" onClick={() => onDeletePlayer(player.id)}>
+                  <Trash2 size={14} />
+                  {lang === 'en' ? 'Delete permanently' : 'Elimina definitivamente'}
+                </button>
+              </div>
+            </>
+          ) : (
             <EnterpriseSection
-              title={lang === 'en' ? 'Choose from reserves' : 'Scegli dalle riserve'}
+              title={lang === 'en' ? 'Reserves list' : 'Elenco riserve'}
               actions={(
                 <div className="nr-secondary-actions">
-                  <button type="button" className="nr-secondary-button" onClick={onOpenManualEntry}>
-                    {lang === 'en' ? 'Manual slot player' : 'Giocatore manuale per slot'}
+                  <button type="button" className="nr-secondary-button" onClick={() => setView('actions')} disabled={assigning}>
+                    {lang === 'en' ? 'Back to actions' : 'Torna alle azioni'}
                   </button>
-                  <button type="button" className="nr-secondary-button" onClick={onUploadPhoto}>
-                    {lang === 'en' ? 'Upload player photo' : 'Carica foto giocatore'}
+                  <button
+                    type="button"
+                    className="nr-primary-button"
+                    onClick={() => onRemoveFromSlot(player.id)}
+                    disabled={assigning}
+                  >
+                    {lang === 'en' ? 'Move to reserves now' : 'Sposta subito in riserva'}
                   </button>
                 </div>
               )}
@@ -2217,6 +2243,7 @@ export default withAuth(function NuovaRosaLabPage() {
   }, [closePicker, fetchRoster, lang, refreshDiagnosticAfterSave, selectedSlot, showToast, t])
 
   const handleRemoveFromSlot = React.useCallback(async (playerId) => {
+    setAssigning(true)
     try {
       let token = getTokenFallback()
       if (!token && supabase) {
@@ -2277,6 +2304,9 @@ export default withAuth(function NuovaRosaLabPage() {
                 })
                 await safeJsonResponse(retryRes, t('errorRemovalAfterDuplicate'))
                 setSelectedPlayer(null)
+                setSelectedReserve(null)
+                setShowAssignModal(false)
+                setSelectedSlot(null)
                 await fetchRoster()
                 await refreshDiagnosticAfterSave()
                 showToast(lang === 'en' ? 'Player moved to reserves.' : 'Giocatore spostato in riserva.', 'success')
@@ -2340,6 +2370,9 @@ export default withAuth(function NuovaRosaLabPage() {
               })
               await safeJsonResponse(response, t('deleteReserveError'))
               setSelectedPlayer(null)
+              setSelectedReserve(null)
+              setShowAssignModal(false)
+              setSelectedSlot(null)
               await fetchRoster()
               await refreshDiagnosticAfterSave()
               showToast(t('playerDeletedSuccessfully'), 'success')
@@ -2355,18 +2388,21 @@ export default withAuth(function NuovaRosaLabPage() {
       }
       const { message } = mapErrorToUserMessage(err, t('errorRemovalAfterDuplicate'), lang)
       showToast(message, 'error')
+    } finally {
+      setAssigning(false)
     }
   }, [fetchRoster, lang, refreshDiagnosticAfterSave, showToast, t])
 
-  const handleDeletePlayer = React.useCallback((playerId) => {
+  const handleDeletePlayer = React.useCallback((playerId, isReserve = false) => {
     setConfirmModal({
       ...showConfirmConfig({
-        title: t('duplicatePlayerTitle'),
-        message: t('confirmDeletePlayer'),
+        title: t('confirm'),
+        message: isReserve ? t('confirmDeleteReserve') : t('confirmDeletePlayer'),
         details: '',
         confirmLabel: t('delete'),
         cancelLabel: t('cancel'),
-        confirmVariant: 'danger'
+        confirmVariant: 'danger',
+        presentation: 'sheet'
       }),
       onConfirm: async () => {
         setConfirmModal(null)
@@ -2388,6 +2424,9 @@ export default withAuth(function NuovaRosaLabPage() {
           })
           await safeJsonResponse(response, t('deleteReserveError'))
           setSelectedPlayer(null)
+          setSelectedReserve(null)
+          setShowAssignModal(false)
+          setSelectedSlot(null)
           await fetchRoster()
           await refreshDiagnosticAfterSave()
           showToast(t('playerDeletedSuccessfully'), 'success')
@@ -2985,17 +3024,32 @@ export default withAuth(function NuovaRosaLabPage() {
             </div>
             <div className="nr-reserve-grid">
               {riserve.length > 0 ? riserve.map((player) => (
-                <button
+                <div
                   key={player.id}
-                  type="button"
                   className="nr-reserve-card"
+                  role="button"
+                  tabIndex={0}
                   onClick={() => {
                     if (selectedSlot && showAssignModal) {
                       handleSelectReserveForSlot(player)
                     } else {
+                      setSelectedSlot(null)
                       setSelectedReserve(player.id)
                       setSelectedPlayer(player)
                       setShowAssignModal(true)
+                    }
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      if (selectedSlot && showAssignModal) {
+                        handleSelectReserveForSlot(player)
+                      } else {
+                        setSelectedSlot(null)
+                        setSelectedReserve(player.id)
+                        setSelectedPlayer(player)
+                        setShowAssignModal(true)
+                      }
                     }
                   }}
                 >
@@ -3015,7 +3069,22 @@ export default withAuth(function NuovaRosaLabPage() {
                     <strong>{player.overall_rating ?? '-'}</strong>
                   </div>
                   <ChevronRight size={14} />
-                </button>
+                  <button
+                    type="button"
+                    className="nr-reserve-remove"
+                    onClick={(event) => {
+                      event.preventDefault()
+                      event.stopPropagation()
+                      handleDeletePlayer(player.id, true)
+                    }}
+                    onMouseDown={(event) => event.stopPropagation()}
+                    onTouchStart={(event) => event.stopPropagation()}
+                    aria-label={lang === 'en' ? 'Delete reserve' : 'Elimina riserva'}
+                    title={lang === 'en' ? 'Delete reserve' : 'Elimina riserva'}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
               )) : (
                 <div className="nr-empty-state">
                   <span>{t('nuovaRosaNoReserves')}</span>
@@ -3047,38 +3116,47 @@ export default withAuth(function NuovaRosaLabPage() {
         lang={lang}
       />
 
-      <PremiumPlayerModal
-        player={selectedPlayer}
+      <QuickPlayerPanel
+        player={showAssignModal ? selectedPlayer : null}
         slot={selectedSlot}
         reserves={riserve}
         assigning={assigning}
         onAssignFromReserve={handleSelectReserveForSlot}
-        show={showAssignModal && !!selectedPlayer}
         onClose={() => {
           setShowAssignModal(false)
           setSelectedSlot(null)
           setSelectedReserve(null)
           setSelectedPlayer(null)
         }}
-        onSave={handlePremiumPlayerSave}
-        saving={savingManualEditor}
         onRemoveFromSlot={handleRemoveFromSlot}
         onDeletePlayer={handleDeletePlayer}
         onOpenManualEntry={() => {
           setShowAssignModal(false)
+          setManualEditorMode('create')
+          setManualEditorPlayer(null)
           setShowManualPlayerModal(true)
         }}
         onUploadPhoto={handleUploadFallback}
         onOpenBoosters={(player) => {
+          setShowAssignModal(false)
           openManualBoostersForPlayer(player)
         }}
-        onOpenReplace={(player) => {
+        onOpenReplace={(player, openEditor = false) => {
+          if (openEditor) {
+            setShowAssignModal(false)
+            setManualEditorMode('edit')
+            setManualEditorPlayer(player)
+            setShowManualPlayerModal(true)
+            return
+          }
           const slot = player?.slot_index != null ? slots.find((entry) => entry.slot_index === player.slot_index) : null
+          setShowAssignModal(false)
           setSelectedPlayer(null)
-          if (slot) openPickerForSlot(slot)
+          if (slot) {
+            openPickerForSlot(slot)
+          }
         }}
         lang={lang}
-        t={t}
       />
 
       <EnterprisePlayerEditorModal
@@ -3619,20 +3697,27 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-slot-remove {
           position: absolute;
-          top: -8px;
-          right: -8px;
-          width: 18px;
-          height: 18px;
-          border-radius: 999px;
-          border: 1px solid rgba(239, 68, 68, 0.65);
-          background: rgba(239, 68, 68, 0.25);
+          top: -10px;
+          right: -10px;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          border: 1px solid rgba(239, 68, 68, 0.6);
+          background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.4) 100%);
           color: #fff;
           display: inline-flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          box-shadow: 0 0 8px rgba(239, 68, 68, 0.35);
+          transition: all 0.3s ease;
+          box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
           z-index: 3;
+        }
+
+        .nr-slot-remove:hover {
+          background: linear-gradient(135deg, rgba(239, 68, 68, 0.5) 0%, rgba(220, 38, 38, 0.6) 100%);
+          transform: scale(1.15) rotate(90deg);
+          box-shadow: 0 4px 12px rgba(239, 68, 68, 0.6);
         }
 
         .nr-bench-item-copy span,
@@ -3657,6 +3742,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-reserve-card {
+          position: relative;
           border-radius: 12px;
           border: 1px solid rgba(0, 212, 255, 0.16);
           background: linear-gradient(180deg, rgba(8, 16, 36, 0.9), rgba(7, 13, 30, 0.92));
@@ -3677,6 +3763,31 @@ export default withAuth(function NuovaRosaLabPage() {
           transform: translateY(-1px) scale(1.01);
           border-color: rgba(0, 212, 255, 0.34);
           background: linear-gradient(180deg, rgba(10, 20, 44, 0.95), rgba(8, 16, 36, 0.96));
+        }
+
+        .nr-reserve-remove {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.4) 100%);
+          border: 1px solid rgba(239, 68, 68, 0.6);
+          color: #ffffff;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.3s ease;
+          box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+          z-index: 2;
+        }
+
+        .nr-reserve-remove:hover {
+          background: linear-gradient(135deg, rgba(239, 68, 68, 0.5) 0%, rgba(220, 38, 38, 0.6) 100%);
+          transform: scale(1.15) rotate(90deg);
+          box-shadow: 0 4px 12px rgba(239, 68, 68, 0.6);
         }
 
         .nr-reserve-card-media {

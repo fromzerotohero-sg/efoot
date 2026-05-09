@@ -110,7 +110,8 @@ export default function ConfirmModal({
         display: 'flex',
         alignItems: isSheet ? 'flex-end' : 'center',
         justifyContent: 'center',
-        zIndex: 100100,
+        // Must stay above page-level modals (e.g. nuova-rosa-lab uses 100200/100300)
+        zIndex: 100500,
         padding: isSheet ? 0 : 'max(8px, env(safe-area-inset-top, 0px)) max(10px, env(safe-area-inset-right, 0px)) max(8px, env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px))',
         paddingBottom: isSheet ? 'env(safe-area-inset-bottom, 0)' : undefined,
         animation: 'fadeIn 0.2s ease-out',
