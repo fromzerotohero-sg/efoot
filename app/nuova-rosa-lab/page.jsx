@@ -903,25 +903,43 @@ function normalizeBaseStatsForEditor(baseStats = {}) {
   const defending = baseStats?.defending || {}
   const athleticism = baseStats?.athleticism || {}
   const goalkeeping = baseStats?.goalkeeping || {}
+  const getStat = (bucket, key, ...aliases) => {
+    if (bucket?.[key] !== undefined) return bucket[key]
+    if (baseStats?.[key] !== undefined) return baseStats[key]
+    for (const alias of aliases) {
+      if (bucket?.[alias] !== undefined) return bucket[alias]
+      if (baseStats?.[alias] !== undefined) return baseStats[alias]
+    }
+    return ''
+  }
 
   return {
-    finishing: attacking.finishing ?? '',
-    low_pass: attacking.low_pass ?? '',
-    lofted_pass: attacking.lofted_pass ?? '',
-    dribbling: attacking.dribbling ?? '',
-    ball_control: attacking.ball_control ?? '',
-    tight_possession: attacking.tight_possession ?? '',
-    defensive_awareness: defending.defensive_awareness ?? '',
-    tackling: defending.tackling ?? '',
-    aggression: defending.aggression ?? '',
-    speed: athleticism.speed ?? '',
-    acceleration: athleticism.acceleration ?? '',
-    kicking_power: athleticism.kicking_power ?? '',
-    physical_contact: athleticism.physical_contact ?? '',
-    balance: athleticism.balance ?? '',
-    stamina: athleticism.stamina ?? '',
-    gk_reflexes: goalkeeping.gk_reflexes ?? '',
-    gk_reach: goalkeeping.gk_reach ?? ''
+    offensive_awareness: getStat(attacking, 'offensive_awareness', 'Offensive Awareness'),
+    finishing: getStat(attacking, 'finishing', 'Finishing'),
+    low_pass: getStat(attacking, 'low_pass', 'Low Pass'),
+    lofted_pass: getStat(attacking, 'lofted_pass', 'Lofted Pass'),
+    dribbling: getStat(attacking, 'dribbling', 'Dribbling'),
+    ball_control: getStat(attacking, 'ball_control', 'Ball Control'),
+    tight_possession: getStat(attacking, 'tight_possession', 'Tight Possession'),
+    heading: getStat(attacking, 'heading', 'Heading'),
+    set_piece_taking: getStat(attacking, 'set_piece_taking', 'Set Piece Taking'),
+    curl: getStat(attacking, 'curl', 'Curl'),
+    defensive_awareness: getStat(defending, 'defensive_awareness', 'Defensive Awareness'),
+    defensive_engagement: getStat(defending, 'defensive_engagement', 'Defensive Engagement'),
+    tackling: getStat(defending, 'tackling', 'Tackling'),
+    aggression: getStat(defending, 'aggression', 'Aggression'),
+    speed: getStat(athleticism, 'speed', 'Speed'),
+    acceleration: getStat(athleticism, 'acceleration', 'Acceleration'),
+    kicking_power: getStat(athleticism, 'kicking_power', 'Kicking Power'),
+    physical_contact: getStat(athleticism, 'physical_contact', 'Physical Contact'),
+    balance: getStat(athleticism, 'balance', 'Balance', 'Body Control'),
+    stamina: getStat(athleticism, 'stamina', 'Stamina'),
+    jump: getStat(athleticism, 'jump', 'Jump', 'Jumping'),
+    gk_awareness: getStat(goalkeeping, 'gk_awareness', 'GK Awareness'),
+    gk_catching: getStat(goalkeeping, 'gk_catching', 'GK Catching'),
+    gk_parrying: getStat(goalkeeping, 'gk_parrying', 'GK Parrying'),
+    gk_reflexes: getStat(goalkeeping, 'gk_reflexes', 'GK Reflexes'),
+    gk_reach: getStat(goalkeeping, 'gk_reach', 'GK Reach')
   }
 }
 
@@ -943,14 +961,19 @@ function buildBaseStatsPayloadFromEditor(form) {
     bucket[key] = parsed
   }
 
+  mapValue(attacking, 'offensive_awareness', form.offensive_awareness)
   mapValue(attacking, 'finishing', form.finishing)
   mapValue(attacking, 'low_pass', form.low_pass)
   mapValue(attacking, 'lofted_pass', form.lofted_pass)
   mapValue(attacking, 'dribbling', form.dribbling)
   mapValue(attacking, 'ball_control', form.ball_control)
   mapValue(attacking, 'tight_possession', form.tight_possession)
+  mapValue(attacking, 'heading', form.heading)
+  mapValue(attacking, 'set_piece_taking', form.set_piece_taking)
+  mapValue(attacking, 'curl', form.curl)
 
   mapValue(defending, 'defensive_awareness', form.defensive_awareness)
+  mapValue(defending, 'defensive_engagement', form.defensive_engagement)
   mapValue(defending, 'tackling', form.tackling)
   mapValue(defending, 'aggression', form.aggression)
 
@@ -960,7 +983,11 @@ function buildBaseStatsPayloadFromEditor(form) {
   mapValue(athleticism, 'physical_contact', form.physical_contact)
   mapValue(athleticism, 'balance', form.balance)
   mapValue(athleticism, 'stamina', form.stamina)
+  mapValue(athleticism, 'jump', form.jump)
 
+  mapValue(goalkeeping, 'gk_awareness', form.gk_awareness)
+  mapValue(goalkeeping, 'gk_catching', form.gk_catching)
+  mapValue(goalkeeping, 'gk_parrying', form.gk_parrying)
   mapValue(goalkeeping, 'gk_reflexes', form.gk_reflexes)
   mapValue(goalkeeping, 'gk_reach', form.gk_reach)
 
@@ -994,13 +1021,18 @@ function PremiumPlayerModal({
     age: '',
     nationality: '',
     club_name: '',
+    offensive_awareness: '',
     finishing: '',
     low_pass: '',
     lofted_pass: '',
     dribbling: '',
     ball_control: '',
     tight_possession: '',
+    heading: '',
+    set_piece_taking: '',
+    curl: '',
     defensive_awareness: '',
+    defensive_engagement: '',
     tackling: '',
     aggression: '',
     speed: '',
@@ -1009,6 +1041,10 @@ function PremiumPlayerModal({
     physical_contact: '',
     balance: '',
     stamina: '',
+    jump: '',
+    gk_awareness: '',
+    gk_catching: '',
+    gk_parrying: '',
     gk_reflexes: '',
     gk_reach: ''
   })
@@ -1205,40 +1241,56 @@ function PremiumPlayerModal({
 
           <div className="nr-reference-main-grid">
             <section className="nr-reference-left">
-              <EnterpriseSection title={lang === 'en' ? 'Attacking' : 'Attaccare'}>
+              <EnterpriseSection title={t('attacking')}>
                 <div className="nr-stat-pairs">
-                  <CompactStatInput label={lang === 'en' ? 'Finishing' : 'Finalizzazione'} value={form.finishing} onChange={(value) => setForm((prev) => ({ ...prev, finishing: value }))} />
-                  <CompactStatInput label={lang === 'en' ? 'Low pass' : 'Passaggio rasoterra'} value={form.low_pass} onChange={(value) => setForm((prev) => ({ ...prev, low_pass: value }))} />
-                  <CompactStatInput label={lang === 'en' ? 'Lofted pass' : 'Passaggio alto'} value={form.lofted_pass} onChange={(value) => setForm((prev) => ({ ...prev, lofted_pass: value }))} />
-                  <CompactStatInput label={lang === 'en' ? 'Dribbling' : 'Dribbling'} value={form.dribbling} onChange={(value) => setForm((prev) => ({ ...prev, dribbling: value }))} />
-                  <CompactStatInput label={lang === 'en' ? 'Ball control' : 'Controllo palla'} value={form.ball_control} onChange={(value) => setForm((prev) => ({ ...prev, ball_control: value }))} />
-                  <CompactStatInput label={lang === 'en' ? 'Tight possession' : 'Possesso stretto'} value={form.tight_possession} onChange={(value) => setForm((prev) => ({ ...prev, tight_possession: value }))} />
+                  <CompactStatInput label={t('offensive_awareness')} value={form.offensive_awareness} onChange={(value) => setForm((prev) => ({ ...prev, offensive_awareness: value }))} />
+                  <CompactStatInput label={t('finishing')} value={form.finishing} onChange={(value) => setForm((prev) => ({ ...prev, finishing: value }))} />
+                  <CompactStatInput label={t('low_pass')} value={form.low_pass} onChange={(value) => setForm((prev) => ({ ...prev, low_pass: value }))} />
+                  <CompactStatInput label={t('lofted_pass')} value={form.lofted_pass} onChange={(value) => setForm((prev) => ({ ...prev, lofted_pass: value }))} />
+                  <CompactStatInput label={t('dribbling')} value={form.dribbling} onChange={(value) => setForm((prev) => ({ ...prev, dribbling: value }))} />
+                  <CompactStatInput label={t('ball_control')} value={form.ball_control} onChange={(value) => setForm((prev) => ({ ...prev, ball_control: value }))} />
+                  <CompactStatInput label={t('tight_possession')} value={form.tight_possession} onChange={(value) => setForm((prev) => ({ ...prev, tight_possession: value }))} />
+                  <CompactStatInput label={t('heading')} value={form.heading} onChange={(value) => setForm((prev) => ({ ...prev, heading: value }))} />
+                  <CompactStatInput label={t('place_kicking')} value={form.set_piece_taking} onChange={(value) => setForm((prev) => ({ ...prev, set_piece_taking: value }))} />
+                  <CompactStatInput label={t('curl')} value={form.curl} onChange={(value) => setForm((prev) => ({ ...prev, curl: value }))} />
                 </div>
               </EnterpriseSection>
             </section>
 
             <section className="nr-reference-center">
-              <EnterpriseSection title={lang === 'en' ? 'Defending' : 'Difesa'}>
+              <EnterpriseSection title={t('defending')}>
                 <div className="nr-stat-pairs">
-                  <CompactStatInput label={lang === 'en' ? 'Defensive awareness' : 'Consapevolezza difensiva'} value={form.defensive_awareness} onChange={(value) => setForm((prev) => ({ ...prev, defensive_awareness: value }))} />
-                  <CompactStatInput label={lang === 'en' ? 'Tackling' : 'Contrasto'} value={form.tackling} onChange={(value) => setForm((prev) => ({ ...prev, tackling: value }))} />
-                  <CompactStatInput label={lang === 'en' ? 'Aggression' : 'Aggressivita'} value={form.aggression} onChange={(value) => setForm((prev) => ({ ...prev, aggression: value }))} />
-                  <CompactStatInput label={lang === 'en' ? 'GK reflexes' : 'Riflessi PT'} value={form.gk_reflexes} onChange={(value) => setForm((prev) => ({ ...prev, gk_reflexes: value }))} />
-                  <CompactStatInput label={lang === 'en' ? 'GK reach' : 'Copertura PT'} value={form.gk_reach} onChange={(value) => setForm((prev) => ({ ...prev, gk_reach: value }))} />
+                  <CompactStatInput label={t('defensive_awareness')} value={form.defensive_awareness} onChange={(value) => setForm((prev) => ({ ...prev, defensive_awareness: value }))} />
+                  <CompactStatInput label={t('defensive_engagement')} value={form.defensive_engagement} onChange={(value) => setForm((prev) => ({ ...prev, defensive_engagement: value }))} />
+                  <CompactStatInput label={t('tackling')} value={form.tackling} onChange={(value) => setForm((prev) => ({ ...prev, tackling: value }))} />
+                  <CompactStatInput label={t('aggression')} value={form.aggression} onChange={(value) => setForm((prev) => ({ ...prev, aggression: value }))} />
                 </div>
               </EnterpriseSection>
 
             </section>
 
             <section className="nr-reference-right">
-              <EnterpriseSection title={lang === 'en' ? 'Athleticism' : 'Atletismo'}>
+              <EnterpriseSection title={t('athleticism')}>
                 <div className="nr-stat-pairs">
-                  <CompactStatInput label={lang === 'en' ? 'Speed' : 'Velocita'} value={form.speed} onChange={(value) => setForm((prev) => ({ ...prev, speed: value }))} />
-                  <CompactStatInput label={lang === 'en' ? 'Acceleration' : 'Accelerazione'} value={form.acceleration} onChange={(value) => setForm((prev) => ({ ...prev, acceleration: value }))} />
-                  <CompactStatInput label={lang === 'en' ? 'Kicking power' : 'Potenza di tiro'} value={form.kicking_power} onChange={(value) => setForm((prev) => ({ ...prev, kicking_power: value }))} />
-                  <CompactStatInput label={lang === 'en' ? 'Physical contact' : 'Contatto fisico'} value={form.physical_contact} onChange={(value) => setForm((prev) => ({ ...prev, physical_contact: value }))} />
-                  <CompactStatInput label={lang === 'en' ? 'Balance' : 'Equilibrio'} value={form.balance} onChange={(value) => setForm((prev) => ({ ...prev, balance: value }))} />
-                  <CompactStatInput label={lang === 'en' ? 'Stamina' : 'Resistenza'} value={form.stamina} onChange={(value) => setForm((prev) => ({ ...prev, stamina: value }))} />
+                  <CompactStatInput label={t('speed')} value={form.speed} onChange={(value) => setForm((prev) => ({ ...prev, speed: value }))} />
+                  <CompactStatInput label={t('acceleration')} value={form.acceleration} onChange={(value) => setForm((prev) => ({ ...prev, acceleration: value }))} />
+                  <CompactStatInput label={t('kicking_power')} value={form.kicking_power} onChange={(value) => setForm((prev) => ({ ...prev, kicking_power: value }))} />
+                  <CompactStatInput label={t('physical_contact')} value={form.physical_contact} onChange={(value) => setForm((prev) => ({ ...prev, physical_contact: value }))} />
+                  <CompactStatInput label={t('balance')} value={form.balance} onChange={(value) => setForm((prev) => ({ ...prev, balance: value }))} />
+                  <CompactStatInput label={t('stamina')} value={form.stamina} onChange={(value) => setForm((prev) => ({ ...prev, stamina: value }))} />
+                  <CompactStatInput label={t('jump')} value={form.jump} onChange={(value) => setForm((prev) => ({ ...prev, jump: value }))} />
+                </div>
+              </EnterpriseSection>
+            </section>
+
+            <section className="nr-reference-goalkeeping">
+              <EnterpriseSection title={t('goalkeeping')}>
+                <div className="nr-stat-pairs">
+                  <CompactStatInput label={t('goalkeeping')} value={form.gk_awareness} onChange={(value) => setForm((prev) => ({ ...prev, gk_awareness: value }))} />
+                  <CompactStatInput label={t('gk_catching')} value={form.gk_catching} onChange={(value) => setForm((prev) => ({ ...prev, gk_catching: value }))} />
+                  <CompactStatInput label={t('gk_parrying')} value={form.gk_parrying} onChange={(value) => setForm((prev) => ({ ...prev, gk_parrying: value }))} />
+                  <CompactStatInput label={t('gk_reflexes')} value={form.gk_reflexes} onChange={(value) => setForm((prev) => ({ ...prev, gk_reflexes: value }))} />
+                  <CompactStatInput label={t('gk_reach')} value={form.gk_reach} onChange={(value) => setForm((prev) => ({ ...prev, gk_reach: value }))} />
                 </div>
               </EnterpriseSection>
             </section>
@@ -3230,7 +3282,7 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-reference-main-grid {
           display: grid;
-          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+          grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 10px;
         }
 
