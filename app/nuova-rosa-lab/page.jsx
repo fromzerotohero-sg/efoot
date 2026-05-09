@@ -12,7 +12,6 @@ import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import {
   AlertTriangle,
   ArrowRight,
-  Brain,
   CheckCircle2,
   ChevronRight,
   Gift,
@@ -26,7 +25,6 @@ import {
   Trash2,
   Upload,
   User,
-  Users,
   X,
   Zap
 } from 'lucide-react'
@@ -235,7 +233,7 @@ function CompactStatInput({ label, value, onChange }) {
   )
 }
 
-function SlotPlayerCard({ player, slot, onClick, lang, isEditMode = false, onPositionChange }) {
+function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = false, onPositionChange }) {
   const [dragging, setDragging] = React.useState(false)
   const [dragOffset, setDragOffset] = React.useState({ x: 0, y: 0 })
   const displayName = React.useMemo(() => {
@@ -248,6 +246,7 @@ function SlotPlayerCard({ player, slot, onClick, lang, isEditMode = false, onPos
 
   const handlePointerStart = (event) => {
     if (!isEditMode || !player) return
+    if (event.target instanceof HTMLElement && event.target.closest('.nr-slot-remove')) return
     event.stopPropagation()
     const isTouch = event.type.startsWith('touch')
     const container = event.currentTarget.closest('[data-field-container]')
@@ -323,15 +322,32 @@ function SlotPlayerCard({ player, slot, onClick, lang, isEditMode = false, onPos
         <div className="nr-slot-status-dot" />
         <div className="nr-slot-status-dot is-warn" />
       </div>
+      {typeof onRemove === 'function' && (
+        <span
+          role="button"
+          aria-label={lang === 'en' ? 'Remove from slot' : 'Rimuovi dallo slot'}
+          title={lang === 'en' ? 'Remove from slot' : 'Rimuovi dallo slot'}
+          className="nr-slot-remove"
+          onMouseDown={(event) => event.stopPropagation()}
+          onTouchStart={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            onRemove(player.id)
+          }}
+        >
+          <X size={11} />
+        </span>
+      )}
     </button>
   )
 }
 
-function SlotCard({ slot, player, onEmptyClick, onPlayerClick, lang, isEditMode = false, onPositionChange }) {
+function SlotCard({ slot, player, onEmptyClick, onPlayerClick, onRemove, lang, isEditMode = false, onPositionChange }) {
   return (
     <div className="nr-slot-card" style={{ left: `${slot.x}%`, top: `${slot.y}%` }}>
       {player ? (
-        <SlotPlayerCard player={player} slot={slot} onClick={onPlayerClick} lang={lang} isEditMode={isEditMode} onPositionChange={onPositionChange} />
+        <SlotPlayerCard player={player} slot={slot} onClick={onPlayerClick} onRemove={onRemove} lang={lang} isEditMode={isEditMode} onPositionChange={onPositionChange} />
       ) : (
         <button type="button" className="nr-slot-empty" onClick={() => onEmptyClick(slot)}>
           <Plus size={18} />
@@ -411,15 +427,31 @@ function CatalogPickerModal({
   onUploadFallback,
   lang
 }) {
+  const [slotSource, setSlotSource] = React.useState('catalog')
+
+  React.useEffect(() => {
+    if (!show) return
+    if (mode === 'reserve') {
+      setSlotSource('catalog')
+      return
+    }
+    setSlotSource('catalog')
+  }, [show, mode, slot?.slot_index])
+
+  React.useEffect(() => {
+    if (slotSource === 'reserves') onSelectCard?.(null)
+  }, [slotSource, onSelectCard])
+
   if (!show) return null
 
   const isReserveMode = mode === 'reserve'
+  const isReservesSource = !isReserveMode && slotSource === 'reserves'
   const slotPosition = isReserveMode ? '' : slot?.position
   const compatibility = selectedCard && !isReserveMode ? getSlotCompatibility(slotPosition, selectedCard.position) : 'unknown'
 
   return (
     <div className="nr-modal-backdrop" onClick={onClose}>
-      <div className={`nr-modal-shell nr-picker-shell ${isReserveMode ? 'reserve-mode' : 'slot-mode'}`} onClick={(event) => event.stopPropagation()}>
+      <div className={`nr-modal-shell nr-picker-shell ${isReserveMode ? 'reserve-mode' : 'slot-mode'} ${isReservesSource ? 'reserves-source' : ''}`} onClick={(event) => event.stopPropagation()}>
         <div className="nr-modal-header">
           <div>
             <span className="nr-mini-kicker">
@@ -445,23 +477,46 @@ function CatalogPickerModal({
           </button>
         </div>
 
-        <div className="nr-picker-toolbar">
-          <label className="nr-search-input">
-            <Search size={16} />
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(event) => onSearchChange(event.target.value)}
-              placeholder={lang === 'en' ? 'Search player, role, or card type' : 'Cerca giocatore, ruolo o tipo carta'}
-            />
-          </label>
-        </div>
+        {!isReserveMode && (
+          <div className="nr-picker-source-switch">
+            <button
+              type="button"
+              className={`nr-source-chip ${slotSource === 'catalog' ? 'is-active' : ''}`}
+              onClick={() => setSlotSource('catalog')}
+            >
+              {lang === 'en' ? 'Choose from catalog' : 'Scegli dal catalogo'}
+            </button>
+            <button
+              type="button"
+              className={`nr-source-chip ${slotSource === 'reserves' ? 'is-active' : ''}`}
+              onClick={() => setSlotSource('reserves')}
+            >
+              {lang === 'en' ? 'Load from reserves' : 'Carica da riserve'}
+            </button>
+          </div>
+        )}
+
+        {(isReserveMode || !isReservesSource) && (
+          <div className="nr-picker-toolbar">
+            <label className="nr-search-input">
+              <Search size={16} />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => onSearchChange(event.target.value)}
+                placeholder={lang === 'en' ? 'Search player, role, or card type' : 'Cerca giocatore, ruolo o tipo carta'}
+              />
+            </label>
+          </div>
+        )}
 
         <div className="nr-picker-body">
           <div className="nr-picker-results">
-            {!isReserveMode && <EnterpriseReservePicker reserves={reserves} lang={lang} onPick={onSelectReserve} />}
+            {isReservesSource ? (
+              <EnterpriseReservePicker reserves={reserves} lang={lang} onPick={onSelectReserve} />
+            ) : null}
 
-            {!isReserveMode && <section>
+            {!isReserveMode && !isReservesSource && <section>
               <div className="nr-section-head">
                 <h3>{lang === 'en' ? 'Suggested for this slot' : 'Suggeriti per questo slot'}</h3>
               </div>
@@ -487,7 +542,7 @@ function CatalogPickerModal({
               </div>
             </section>}
 
-            <section>
+            {!isReservesSource && <section>
               <div className="nr-section-head">
                 <h3>{isReserveMode ? (lang === 'en' ? 'Catalog cards' : 'Carte catalogo') : (lang === 'en' ? 'All results' : 'Tutti i risultati')}</h3>
               </div>
@@ -511,10 +566,10 @@ function CatalogPickerModal({
                   </div>
                 )}
               </div>
-            </section>
+            </section>}
           </div>
 
-          <aside className="nr-picker-detail">
+          {!isReservesSource && <aside className="nr-picker-detail">
             {selectedCard ? (
               <>
                 <div className="nr-picker-detail-hero">
@@ -563,7 +618,7 @@ function CatalogPickerModal({
                   </button>
                   <div className="nr-secondary-actions">
                     <button type="button" className="nr-secondary-button" onClick={onManualFallback}>
-                      {isReserveMode ? (lang === 'en' ? 'Manual reserve' : 'Riserva manuale') : (lang === 'en' ? 'Manual entry' : 'Inserimento manuale')}
+                      {isReserveMode ? (lang === 'en' ? 'Manual reserve' : 'Riserva manuale') : (lang === 'en' ? 'Manual player' : 'Giocatore manuale')}
                     </button>
                     <button type="button" className="nr-secondary-button" onClick={onUploadFallback}>
                       {lang === 'en' ? 'Upload from photos' : 'Carica da foto'}
@@ -577,7 +632,7 @@ function CatalogPickerModal({
                 <span>{lang === 'en' ? 'Select a card to preview it before saving.' : 'Seleziona una carta per vederla prima del salvataggio.'}</span>
               </div>
             )}
-          </aside>
+          </aside>}
         </div>
       </div>
     </div>
@@ -642,48 +697,6 @@ function QuickPlayerPanel({ player, onClose, onRemoveFromSlot, onDeletePlayer, o
         </div>
       </div>
     </div>
-  )
-}
-
-function RosterIntelligencePanel({ starters, reserves, layout, lang }) {
-  const totalPlayers = starters.length + reserves.length
-  const missingStarters = Math.max(0, 11 - starters.length)
-  const offRolePlayers = starters.filter((player) => {
-    const slotPosition = layout?.slot_positions?.[player.slot_index]?.position
-    if (!slotPosition) return false
-    const positions = Array.isArray(player.original_positions) ? player.original_positions : []
-    if (positions.length === 0) return false
-    return !positions.some((entry) => String(entry?.position || '').toUpperCase() === String(slotPosition).toUpperCase())
-  })
-
-  return (
-    <section className="nr-card">
-      <div className="nr-card-head">
-        <div>
-          <span className="nr-mini-kicker">{lang === 'en' ? 'Roster intelligence' : 'Rosa intelligence'}</span>
-          <h2>{lang === 'en' ? 'Quick read' : 'Lettura rapida'}</h2>
-        </div>
-        <Brain size={18} />
-      </div>
-      <div className="nr-stats-grid">
-        <div>
-          <span>{lang === 'en' ? 'Players' : 'Giocatori'}</span>
-          <strong>{totalPlayers}</strong>
-        </div>
-        <div>
-          <span>{lang === 'en' ? 'Starters missing' : 'Titolari mancanti'}</span>
-          <strong>{missingStarters}</strong>
-        </div>
-        <div>
-          <span>{lang === 'en' ? 'Reserves' : 'Riserve'}</span>
-          <strong>{reserves.length}</strong>
-        </div>
-        <div>
-          <span>{lang === 'en' ? 'Out of role' : 'Fuori ruolo'}</span>
-          <strong>{offRolePlayers.length}</strong>
-        </div>
-      </div>
-    </section>
   )
 }
 
@@ -1741,6 +1754,7 @@ export default withAuth(function NuovaRosaLabPage() {
   const [savingTacticalSettings, setSavingTacticalSettings] = React.useState(false)
   const [fieldEditMode, setFieldEditMode] = React.useState(false)
   const [customPositions, setCustomPositions] = React.useState({})
+  const hasPendingFieldChanges = Object.keys(customPositions || {}).length > 0
   const [savingFieldLayout, setSavingFieldLayout] = React.useState(false)
 
   const totalPlayers = titolari.length + riserve.length
@@ -2718,7 +2732,7 @@ export default withAuth(function NuovaRosaLabPage() {
                     <button type="button" className="nr-secondary-button" onClick={() => { setFieldEditMode(false); setCustomPositions({}) }} disabled={savingFieldLayout}>
                       {t('cancel')}
                     </button>
-                    <button type="button" className="nr-primary-button" onClick={() => saveFieldLayout()} disabled={savingFieldLayout}>
+                    <button type="button" className="nr-primary-button" onClick={() => saveFieldLayout()} disabled={savingFieldLayout || !hasPendingFieldChanges}>
                       {savingFieldLayout ? (lang === 'en' ? 'Saving...' : 'Salvataggio...') : (lang === 'en' ? 'Save positions' : 'Salva posizioni')}
                     </button>
                   </>
@@ -2751,6 +2765,7 @@ export default withAuth(function NuovaRosaLabPage() {
                     player={startersBySlot.get(slot.slot_index)}
                     onEmptyClick={openPickerForSlot}
                     onPlayerClick={(player) => setSelectedPlayer(player)}
+                    onRemove={handleRemoveFromSlot}
                     lang={lang}
                     isEditMode={fieldEditMode}
                     onPositionChange={handleFieldPositionChange}
@@ -2805,7 +2820,6 @@ export default withAuth(function NuovaRosaLabPage() {
             </div>
           </section>
 
-          <RosterIntelligencePanel starters={titolari} reserves={riserve} layout={layout} lang={lang} />
         </div>
       )}
 
@@ -3401,6 +3415,24 @@ export default withAuth(function NuovaRosaLabPage() {
           box-shadow: 0 0 6px rgba(239, 68, 68, 0.28);
         }
 
+        .nr-slot-remove {
+          position: absolute;
+          top: -8px;
+          right: -8px;
+          width: 18px;
+          height: 18px;
+          border-radius: 999px;
+          border: 1px solid rgba(239, 68, 68, 0.65);
+          background: rgba(239, 68, 68, 0.25);
+          color: #fff;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          box-shadow: 0 0 8px rgba(239, 68, 68, 0.35);
+          z-index: 3;
+        }
+
         .nr-bench-item-copy span,
         .nr-catalog-card-copy p,
         .nr-catalog-card-meta {
@@ -3625,12 +3657,63 @@ export default withAuth(function NuovaRosaLabPage() {
           gap: 18px;
         }
 
+        .nr-picker-source-switch {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 8px;
+          margin: 0 0 10px;
+        }
+
+        .nr-source-chip {
+          border-radius: 12px;
+          border: 1px solid rgba(0, 212, 255, 0.2);
+          background: rgba(255, 255, 255, 0.03);
+          color: rgba(255, 255, 255, 0.9);
+          padding: 10px 12px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+
+        .nr-source-chip.is-active {
+          border-color: rgba(0, 212, 255, 0.55);
+          background: rgba(0, 212, 255, 0.14);
+          color: #7ceeff;
+          box-shadow: inset 0 0 0 1px rgba(0, 212, 255, 0.2);
+        }
+
+        .nr-picker-toolbar {
+          position: sticky;
+          top: 0;
+          z-index: 3;
+          padding: 6px 0 10px;
+          margin-bottom: 2px;
+          background: linear-gradient(180deg, rgba(8, 12, 28, 0.97), rgba(8, 12, 28, 0.86));
+        }
+
         .nr-picker-shell.reserve-mode .nr-picker-body {
           grid-template-columns: minmax(0, 1fr) minmax(320px, 0.72fr);
         }
 
+        .nr-picker-shell.reserves-source .nr-picker-body {
+          grid-template-columns: 1fr;
+        }
+
         .nr-picker-shell.reserve-mode .nr-picker-results {
           gap: 14px;
+        }
+
+        .nr-picker-shell.reserves-source .nr-picker-results {
+          gap: 12px;
+          padding-right: 0;
+        }
+
+        .nr-picker-actions {
+          position: sticky;
+          bottom: 0;
+          z-index: 2;
+          padding: 10px 0 6px;
+          background: linear-gradient(180deg, rgba(8, 12, 28, 0), rgba(8, 12, 28, 0.94) 40%);
         }
 
         .nr-picker-shell.reserve-mode .nr-modal-header {
@@ -4281,8 +4364,33 @@ export default withAuth(function NuovaRosaLabPage() {
             overflow-y: auto;
           }
 
+          .nr-picker-shell .nr-modal-header {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            background: linear-gradient(180deg, rgba(8, 12, 28, 0.99), rgba(8, 12, 28, 0.9));
+            backdrop-filter: blur(4px);
+          }
+
+          .nr-picker-shell .nr-picker-toolbar {
+            top: 76px;
+            z-index: 4;
+            padding: 6px 0 10px;
+          }
+
+          .nr-picker-shell .nr-picker-actions {
+            padding-bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 8px));
+          }
+
           .nr-picker-shell.reserve-mode .nr-picker-body {
             grid-template-columns: 1fr;
+          }
+
+          .nr-picker-source-switch {
+            grid-template-columns: 1fr;
+            gap: 6px;
           }
 
           .nr-premium-player-shell {
