@@ -2706,8 +2706,8 @@ export default withAuth(function NuovaRosaLabPage() {
         </section>
       ) : (
         <div className="nr-main-stack">
-          <section className="nr-card">
-            <div className="nr-card-head">
+          <section className="nr-workspace-block">
+            <div className="nr-workspace-head nr-card-head">
               <div>
                 <span className="nr-mini-kicker">{t('nuovaRosaWorkspace')}</span>
                 <h2>{layout?.formation || '4-3-3'}</h2>
@@ -2767,7 +2767,7 @@ export default withAuth(function NuovaRosaLabPage() {
             saving={savingTacticalSettings}
           />
 
-          <section className="nr-card">
+          <section className="nr-reserve-section">
             <div className="nr-card-head">
               <div>
                 <span className="nr-mini-kicker">{t('nuovaRosaReserves')}</span>
@@ -3071,11 +3071,26 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-main-stack {
           display: flex;
           flex-direction: column;
-          gap: 20px;
+          gap: 14px;
         }
 
         .nr-card {
           padding: 18px;
+        }
+
+        .nr-workspace-block {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .nr-workspace-head {
+          padding: 0 2px;
+          margin-bottom: 6px;
+        }
+
+        .nr-reserve-section {
+          padding-top: 6px;
         }
 
         .nr-card-head,
@@ -3088,9 +3103,9 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-field-shell {
-          border-radius: 16px;
+          border-radius: 14px;
           overflow: hidden;
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(0, 212, 255, 0.14);
           background:
             linear-gradient(180deg, rgba(5, 8, 21, 0.4) 0%, rgba(10, 14, 39, 0.3) 50%, rgba(5, 8, 21, 0.4) 100%),
             linear-gradient(90deg, rgba(22, 163, 74, 0.08) 0%, rgba(34, 197, 94, 0.12) 50%, rgba(22, 163, 74, 0.08) 100%),
@@ -3102,10 +3117,12 @@ export default withAuth(function NuovaRosaLabPage() {
               rgba(34, 197, 94, 0.05) 4px
             ),
             linear-gradient(180deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.15) 50%, rgba(16, 185, 129, 0.12) 100%);
-          width: min(100%, 720px);
+          width: 100%;
+          max-width: clamp(540px, 94vw, 720px);
           min-height: clamp(292px, 39vh, 422px);
           aspect-ratio: 2 / 3;
           margin: 0 auto 18px;
+          box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
         }
 
         .nr-field {
@@ -3401,35 +3418,36 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-reserve-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(clamp(150px, 18vw, 200px), 1fr));
-          gap: clamp(12px, 1.5vw, 16px);
+          grid-template-columns: repeat(auto-fill, minmax(clamp(150px, 18vw, 190px), 1fr));
+          gap: 10px;
         }
 
         .nr-reserve-card {
-          border-radius: 14px;
-          border: 1px solid rgba(0, 212, 255, 0.2);
-          background: rgba(9, 14, 31, 0.92);
+          border-radius: 12px;
+          border: 1px solid rgba(0, 212, 255, 0.16);
+          background: linear-gradient(180deg, rgba(8, 16, 36, 0.9), rgba(7, 13, 30, 0.92));
           color: #fff;
           display: grid;
-          grid-template-columns: 40px minmax(0, 1fr) auto auto;
-          gap: 8px;
+          grid-template-columns: 32px minmax(0, 1fr) auto auto;
+          gap: 7px;
           align-items: center;
           text-align: left;
           width: 100%;
-          padding: 8px;
+          min-height: 58px;
+          padding: 6px;
           cursor: pointer;
           transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
         }
 
         .nr-reserve-card:hover {
-          transform: translateY(-1px);
-          border-color: rgba(0, 212, 255, 0.45);
-          background: rgba(10, 20, 42, 0.95);
+          transform: translateY(-1px) scale(1.01);
+          border-color: rgba(0, 212, 255, 0.34);
+          background: linear-gradient(180deg, rgba(10, 20, 44, 0.95), rgba(8, 16, 36, 0.96));
         }
 
         .nr-reserve-card-media {
-          width: 40px;
-          height: 54px;
+          width: 32px;
+          height: 42px;
         }
 
         .nr-reserve-card-media img {
@@ -3447,7 +3465,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-reserve-card-copy strong {
-          font-size: 11px;
+          font-size: 10px;
           line-height: 1.2;
           white-space: nowrap;
           overflow: hidden;
@@ -3455,7 +3473,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-reserve-card-copy span {
-          font-size: 10px;
+          font-size: 9px;
           color: rgba(255, 255, 255, 0.75);
         }
 
@@ -3473,7 +3491,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-reserve-card-ovr strong {
-          font-size: 13px;
+          font-size: 12px;
           color: #fcd34d;
           text-shadow: 0 0 8px rgba(252, 211, 77, 0.25);
         }
@@ -4199,11 +4217,27 @@ export default withAuth(function NuovaRosaLabPage() {
 
         @media (max-width: 768px) {
           .nr-page {
-            padding: 14px;
+            padding: 10px;
+          }
+
+          .nr-card {
+            padding: 12px;
+          }
+
+          .nr-workspace-head {
+            margin-bottom: 4px;
           }
 
           .nr-field {
             min-height: 520px;
+          }
+
+          .nr-field-shell {
+            width: 100%;
+            max-width: none;
+            min-height: clamp(460px, 68vh, 820px);
+            margin-bottom: 8px;
+            border-radius: 12px;
           }
 
           .nr-form-grid,
@@ -4231,7 +4265,7 @@ export default withAuth(function NuovaRosaLabPage() {
           }
 
           .nr-slot-card {
-            width: min(98px, 25vw);
+            width: min(104px, 27vw);
           }
 
           .nr-stats-grid,
@@ -4319,7 +4353,37 @@ export default withAuth(function NuovaRosaLabPage() {
           }
 
           .nr-reserve-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+          }
+
+          .nr-reserve-card {
+            grid-template-columns: 28px minmax(0, 1fr) auto;
+            gap: 6px;
+            padding: 6px;
+            min-height: 54px;
+            border-radius: 10px;
+          }
+
+          .nr-reserve-card-media {
+            width: 28px;
+            height: 38px;
+          }
+
+          .nr-reserve-card-copy strong {
+            font-size: 10px;
+          }
+
+          .nr-reserve-card-copy span {
+            font-size: 9px;
+          }
+
+          .nr-reserve-card-ovr small {
+            font-size: 7px;
+          }
+
+          .nr-reserve-card-ovr strong {
+            font-size: 11px;
           }
 
           .nr-toast {
