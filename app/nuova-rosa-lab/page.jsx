@@ -300,27 +300,29 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
   }
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       className={`nr-slot-filled ${isEditMode ? 'is-draggable' : ''} ${dragging ? 'is-dragging' : ''}`}
       style={dragging ? { transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)` } : undefined}
       onClick={() => {
         if (!isEditMode) onClick(player, slot)
+      }}
+      onKeyDown={(event) => {
+        if (!isEditMode && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault()
+          onClick(player, slot)
+        }
       }}
       onMouseDown={handlePointerStart}
       onTouchStart={handlePointerStart}
     >
       <div className="nr-slot-filled-head">
         <span>{isEditMode ? (slot.position || player.position || '-') : (player.position || slot.position || '-')}</span>
-        <small>3/3</small>
+        <small>OVR {player.overall_rating ?? '-'}</small>
       </div>
       <div className="nr-slot-filled-copy">
         <strong>{displayName}</strong>
-      </div>
-      <div className="nr-slot-filled-foot">
-        <div className="nr-slot-status-dot" />
-        <div className="nr-slot-status-dot" />
-        <div className="nr-slot-status-dot is-warn" />
       </div>
       {typeof onRemove === 'function' && (
         <span
@@ -339,7 +341,7 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
           <X size={11} />
         </span>
       )}
-    </button>
+    </div>
   )
 }
 
@@ -427,31 +429,15 @@ function CatalogPickerModal({
   onUploadFallback,
   lang
 }) {
-  const [slotSource, setSlotSource] = React.useState('catalog')
-
-  React.useEffect(() => {
-    if (!show) return
-    if (mode === 'reserve') {
-      setSlotSource('catalog')
-      return
-    }
-    setSlotSource('catalog')
-  }, [show, mode, slot?.slot_index])
-
-  React.useEffect(() => {
-    if (slotSource === 'reserves') onSelectCard?.(null)
-  }, [slotSource, onSelectCard])
-
   if (!show) return null
 
   const isReserveMode = mode === 'reserve'
-  const isReservesSource = !isReserveMode && slotSource === 'reserves'
   const slotPosition = isReserveMode ? '' : slot?.position
   const compatibility = selectedCard && !isReserveMode ? getSlotCompatibility(slotPosition, selectedCard.position) : 'unknown'
 
   return (
     <div className="nr-modal-backdrop" onClick={onClose}>
-      <div className={`nr-modal-shell nr-picker-shell ${isReserveMode ? 'reserve-mode' : 'slot-mode'} ${isReservesSource ? 'reserves-source' : ''}`} onClick={(event) => event.stopPropagation()}>
+      <div className={`nr-modal-shell nr-picker-shell ${isReserveMode ? 'reserve-mode' : 'slot-mode'}`} onClick={(event) => event.stopPropagation()}>
         <div className="nr-modal-header">
           <div>
             <span className="nr-mini-kicker">
@@ -477,46 +463,23 @@ function CatalogPickerModal({
           </button>
         </div>
 
-        {!isReserveMode && (
-          <div className="nr-picker-source-switch">
-            <button
-              type="button"
-              className={`nr-source-chip ${slotSource === 'catalog' ? 'is-active' : ''}`}
-              onClick={() => setSlotSource('catalog')}
-            >
-              {lang === 'en' ? 'Choose from catalog' : 'Scegli dal catalogo'}
-            </button>
-            <button
-              type="button"
-              className={`nr-source-chip ${slotSource === 'reserves' ? 'is-active' : ''}`}
-              onClick={() => setSlotSource('reserves')}
-            >
-              {lang === 'en' ? 'Load from reserves' : 'Carica da riserve'}
-            </button>
-          </div>
-        )}
-
-        {(isReserveMode || !isReservesSource) && (
-          <div className="nr-picker-toolbar">
-            <label className="nr-search-input">
-              <Search size={16} />
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={(event) => onSearchChange(event.target.value)}
-                placeholder={lang === 'en' ? 'Search player, role, or card type' : 'Cerca giocatore, ruolo o tipo carta'}
-              />
-            </label>
-          </div>
-        )}
+        <div className="nr-picker-toolbar">
+          <label className="nr-search-input">
+            <Search size={16} />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(event) => onSearchChange(event.target.value)}
+              placeholder={lang === 'en' ? 'Search player, role, or card type' : 'Cerca giocatore, ruolo o tipo carta'}
+            />
+          </label>
+        </div>
 
         <div className="nr-picker-body">
           <div className="nr-picker-results">
-            {isReservesSource ? (
-              <EnterpriseReservePicker reserves={reserves} lang={lang} onPick={onSelectReserve} />
-            ) : null}
+            {!isReserveMode && <EnterpriseReservePicker reserves={reserves} lang={lang} onPick={onSelectReserve} />}
 
-            {!isReserveMode && !isReservesSource && <section>
+            {!isReserveMode && <section>
               <div className="nr-section-head">
                 <h3>{lang === 'en' ? 'Suggested for this slot' : 'Suggeriti per questo slot'}</h3>
               </div>
@@ -542,7 +505,7 @@ function CatalogPickerModal({
               </div>
             </section>}
 
-            {!isReservesSource && <section>
+            <section>
               <div className="nr-section-head">
                 <h3>{isReserveMode ? (lang === 'en' ? 'Catalog cards' : 'Carte catalogo') : (lang === 'en' ? 'All results' : 'Tutti i risultati')}</h3>
               </div>
@@ -566,10 +529,10 @@ function CatalogPickerModal({
                   </div>
                 )}
               </div>
-            </section>}
+            </section>
           </div>
 
-          {!isReservesSource && <aside className="nr-picker-detail">
+          <aside className="nr-picker-detail">
             {selectedCard ? (
               <>
                 <div className="nr-picker-detail-hero">
@@ -613,15 +576,15 @@ function CatalogPickerModal({
 
                 <div className="nr-picker-actions">
                   <button type="button" className="nr-primary-button" onClick={onConfirm}>
-                    {isReserveMode ? (lang === 'en' ? 'Add reserve' : 'Aggiungi riserva') : (lang === 'en' ? 'Add to slot' : 'Aggiungi allo slot')}
+                    {isReserveMode ? (lang === 'en' ? 'Add to reserves' : 'Aggiungi in riserva') : (lang === 'en' ? 'Assign to slot' : 'Assegna allo slot')}
                     <ArrowRight size={16} />
                   </button>
                   <div className="nr-secondary-actions">
                     <button type="button" className="nr-secondary-button" onClick={onManualFallback}>
-                      {isReserveMode ? (lang === 'en' ? 'Manual reserve' : 'Riserva manuale') : (lang === 'en' ? 'Manual player' : 'Giocatore manuale')}
+                      {isReserveMode ? (lang === 'en' ? 'Manual reserve' : 'Riserva manuale') : (lang === 'en' ? 'Manual slot player' : 'Giocatore manuale per slot')}
                     </button>
                     <button type="button" className="nr-secondary-button" onClick={onUploadFallback}>
-                      {lang === 'en' ? 'Upload from photos' : 'Carica da foto'}
+                      {lang === 'en' ? 'Upload player photo' : 'Carica foto giocatore'}
                     </button>
                   </div>
                 </div>
@@ -632,14 +595,28 @@ function CatalogPickerModal({
                 <span>{lang === 'en' ? 'Select a card to preview it before saving.' : 'Seleziona una carta per vederla prima del salvataggio.'}</span>
               </div>
             )}
-          </aside>}
+          </aside>
         </div>
       </div>
     </div>
   )
 }
 
-function QuickPlayerPanel({ player, onClose, onRemoveFromSlot, onDeletePlayer, onOpenBoosters, onOpenReplace, lang }) {
+function QuickPlayerPanel({
+  player,
+  slot,
+  reserves = [],
+  assigning = false,
+  onAssignFromReserve,
+  onClose,
+  onRemoveFromSlot,
+  onDeletePlayer,
+  onOpenBoosters,
+  onOpenReplace,
+  onOpenManualEntry,
+  onUploadPhoto,
+  lang
+}) {
   if (!player) return null
   const cardImage = getPlayerCardImage(player)
 
@@ -684,16 +661,54 @@ function QuickPlayerPanel({ player, onClose, onRemoveFromSlot, onDeletePlayer, o
               {lang === 'en' ? 'Edit details' : 'Modifica dati'}
             </button>
             <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player)}>
-              {lang === 'en' ? 'Replace' : 'Sostituisci'}
+              {lang === 'en' ? 'Choose another card' : "Scegli un'altra carta"}
             </button>
             <button type="button" className="nr-secondary-button" onClick={() => onOpenBoosters(player)}>
               {lang === 'en' ? 'Edit boosters' : 'Modifica boosters'}
             </button>
             <button type="button" className="nr-danger-button" onClick={() => onDeletePlayer(player.id)}>
               <Trash2 size={14} />
-              {lang === 'en' ? 'Delete player' : 'Elimina giocatore'}
+              {lang === 'en' ? 'Delete permanently' : 'Elimina definitivamente'}
             </button>
           </div>
+
+          {slot?.slot_index != null && (
+            <EnterpriseSection
+              title={lang === 'en' ? 'Choose from reserves' : 'Scegli dalle riserve'}
+              actions={(
+                <div className="nr-secondary-actions">
+                  <button type="button" className="nr-secondary-button" onClick={onOpenManualEntry}>
+                    {lang === 'en' ? 'Manual slot player' : 'Giocatore manuale per slot'}
+                  </button>
+                  <button type="button" className="nr-secondary-button" onClick={onUploadPhoto}>
+                    {lang === 'en' ? 'Upload player photo' : 'Carica foto giocatore'}
+                  </button>
+                </div>
+              )}
+            >
+              <div className="nr-reserve-inline-list">
+                {reserves.length > 0 ? reserves.map((entry) => (
+                  <button
+                    key={entry.id}
+                    type="button"
+                    className="nr-bench-item"
+                    onClick={() => onAssignFromReserve?.(entry)}
+                    disabled={assigning}
+                  >
+                    <div className="nr-bench-item-copy">
+                      <strong>{entry.player_name}</strong>
+                      <span>{entry.position || '-'} · OVR {entry.overall_rating ?? '-'}</span>
+                    </div>
+                    <ChevronRight size={16} />
+                  </button>
+                )) : (
+                  <div className="nr-empty-state">
+                    <span>{lang === 'en' ? 'No reserves available yet.' : 'Nessuna riserva disponibile.'}</span>
+                  </div>
+                )}
+              </div>
+            </EnterpriseSection>
+          )}
         </div>
       </div>
     </div>
@@ -1264,11 +1279,17 @@ function buildBaseStatsPayloadFromEditor(form) {
 function PremiumPlayerModal({
   show,
   player,
+  slot,
+  reserves = [],
+  assigning = false,
+  onAssignFromReserve,
   onClose,
   onSave,
   onRemoveFromSlot,
   onDeletePlayer,
   onOpenReplace,
+  onOpenManualEntry,
+  onUploadPhoto,
   saving,
   lang,
   t
@@ -1488,7 +1509,7 @@ function PremiumPlayerModal({
 
           <div className="nr-premium-toolbar-row">
             <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player)}>
-              {lang === 'en' ? 'Replace card' : 'Sostituisci carta'}
+              {lang === 'en' ? 'Choose another card' : "Scegli un'altra carta"}
             </button>
             {player.slot_index !== null && player.slot_index !== undefined && (
               <button type="button" className="nr-secondary-button" onClick={() => onRemoveFromSlot(player.id)}>
@@ -1497,9 +1518,47 @@ function PremiumPlayerModal({
             )}
             <button type="button" className="nr-danger-button" onClick={() => onDeletePlayer(player.id)}>
               <Trash2 size={14} />
-              {lang === 'en' ? 'Delete player' : 'Elimina giocatore'}
+              {lang === 'en' ? 'Delete permanently' : 'Elimina definitivamente'}
             </button>
           </div>
+
+          {slot?.slot_index != null && (
+            <EnterpriseSection
+              title={lang === 'en' ? 'Choose from reserves' : 'Scegli dalle riserve'}
+              actions={(
+                <div className="nr-secondary-actions">
+                  <button type="button" className="nr-secondary-button" onClick={onOpenManualEntry}>
+                    {lang === 'en' ? 'Manual slot player' : 'Giocatore manuale per slot'}
+                  </button>
+                  <button type="button" className="nr-secondary-button" onClick={onUploadPhoto}>
+                    {lang === 'en' ? 'Upload player photo' : 'Carica foto giocatore'}
+                  </button>
+                </div>
+              )}
+            >
+              <div className="nr-reserve-inline-list">
+                {reserves.length > 0 ? reserves.map((entry) => (
+                  <button
+                    key={entry.id}
+                    type="button"
+                    className="nr-bench-item"
+                    onClick={() => onAssignFromReserve?.(entry)}
+                    disabled={assigning}
+                  >
+                    <div className="nr-bench-item-copy">
+                      <strong>{entry.player_name}</strong>
+                      <span>{entry.position || '-'} · OVR {entry.overall_rating ?? '-'}</span>
+                    </div>
+                    <ChevronRight size={16} />
+                  </button>
+                )) : (
+                  <div className="nr-empty-state">
+                    <span>{lang === 'en' ? 'No reserves available yet.' : 'Nessuna riserva disponibile.'}</span>
+                  </div>
+                )}
+              </div>
+            </EnterpriseSection>
+          )}
 
           <div className="nr-reference-main-grid">
             <section className="nr-reference-left">
@@ -1733,7 +1792,10 @@ export default withAuth(function NuovaRosaLabPage() {
   const [error, setError] = React.useState(null)
   const [toast, setToast] = React.useState(null)
   const [selectedSlot, setSelectedSlot] = React.useState(null)
+  const [selectedReserve, setSelectedReserve] = React.useState(null)
   const [selectedPlayer, setSelectedPlayer] = React.useState(null)
+  const [showAssignModal, setShowAssignModal] = React.useState(false)
+  const [assigning, setAssigning] = React.useState(false)
   const [pickerOpen, setPickerOpen] = React.useState(false)
   const [pickerMode, setPickerMode] = React.useState('slot')
   const [pickerLoading, setPickerLoading] = React.useState(false)
@@ -1754,7 +1816,6 @@ export default withAuth(function NuovaRosaLabPage() {
   const [savingTacticalSettings, setSavingTacticalSettings] = React.useState(false)
   const [fieldEditMode, setFieldEditMode] = React.useState(false)
   const [customPositions, setCustomPositions] = React.useState({})
-  const hasPendingFieldChanges = Object.keys(customPositions || {}).length > 0
   const [savingFieldLayout, setSavingFieldLayout] = React.useState(false)
 
   const totalPlayers = titolari.length + riserve.length
@@ -1912,6 +1973,9 @@ export default withAuth(function NuovaRosaLabPage() {
   }, [pickerOpen, selectedSlot, pickerQuery, pickerMode, loadCatalog])
 
   const openPickerForSlot = React.useCallback((slot) => {
+    setShowAssignModal(false)
+    setSelectedPlayer(null)
+    setSelectedReserve(null)
     setSelectedSlot(slot)
     setPickerMode('slot')
     setSelectedCatalogCard(null)
@@ -1925,6 +1989,9 @@ export default withAuth(function NuovaRosaLabPage() {
       return
     }
     setSelectedSlot(null)
+    setShowAssignModal(false)
+    setSelectedPlayer(null)
+    setSelectedReserve(null)
     setPickerMode('reserve')
     setSelectedCatalogCard(null)
     setPickerQuery('')
@@ -2086,6 +2153,7 @@ export default withAuth(function NuovaRosaLabPage() {
     const isOriginal = positions.some((entry) => String(entry?.position || '').toUpperCase() === String(selectedSlot.position || '').toUpperCase())
 
     const continueAssign = async () => {
+      setAssigning(true)
       try {
         let token = getTokenFallback()
         if (!token && supabase) {
@@ -2107,6 +2175,9 @@ export default withAuth(function NuovaRosaLabPage() {
         })
 
         await safeJsonResponse(response, t('errorAssigningPlayer'))
+        setShowAssignModal(false)
+        setSelectedReserve(null)
+        setSelectedPlayer(null)
         closePicker()
         await fetchRoster()
         await refreshDiagnosticAfterSave()
@@ -2115,6 +2186,8 @@ export default withAuth(function NuovaRosaLabPage() {
         console.error('[NuovaRosaLab] assign reserve error:', err)
         const { message } = mapErrorToUserMessage(err, t('errorAssigningPlayer'), lang)
         showToast(message, 'error')
+      } finally {
+        setAssigning(false)
       }
     }
 
@@ -2160,13 +2233,126 @@ export default withAuth(function NuovaRosaLabPage() {
         },
         body: JSON.stringify({ player_id: playerId })
       })
-      await safeJsonResponse(response, t('errorRemovalAfterDuplicate'))
+      let data = null
+      try {
+        data = await response.json()
+      } catch (_) {
+        data = null
+      }
+
+      if (!response.ok) {
+        if (data?.duplicate_reserve_id) {
+          setConfirmModal({
+            ...showConfirmConfig({
+              title: t('duplicatePlayerTitle'),
+              message: lang === 'en'
+                ? 'A duplicate reserve already exists for this player. Replace it to continue?'
+                : 'Esiste gia una riserva duplicata per questo giocatore. Vuoi sostituirla per continuare?',
+              details: lang === 'en'
+                ? 'The old reserve copy will be deleted and the player will be moved from the slot.'
+                : 'La copia riserva precedente verra eliminata e il giocatore verra spostato dallo slot.',
+              confirmLabel: lang === 'en' ? 'Replace' : t('replace'),
+              cancelLabel: t('cancel')
+            }),
+            onConfirm: async () => {
+              setConfirmModal(null)
+              try {
+                const deleteRes = await fetch('/api/supabase/delete-player', {
+                  method: 'DELETE',
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({ player_id: data.duplicate_reserve_id })
+                })
+                await safeJsonResponse(deleteRes, t('errorDeletingDuplicateReserve'))
+
+                const retryRes = await fetch('/api/supabase/remove-player-from-slot', {
+                  method: 'PATCH',
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({ player_id: playerId })
+                })
+                await safeJsonResponse(retryRes, t('errorRemovalAfterDuplicate'))
+                setSelectedPlayer(null)
+                await fetchRoster()
+                await refreshDiagnosticAfterSave()
+                showToast(lang === 'en' ? 'Player moved to reserves.' : 'Giocatore spostato in riserva.', 'success')
+              } catch (retryErr) {
+                console.error('[NuovaRosaLab] remove retry error:', retryErr)
+                const { message } = mapErrorToUserMessage(retryErr, t('errorRemovalAfterDuplicate'), lang)
+                showToast(message, 'error')
+              }
+            },
+            onCancel: () => setConfirmModal(null)
+          })
+          return
+        }
+
+        if ((data?.error || '').toLowerCase().includes('massimo 12 riserve') || (data?.error || '').toLowerCase().includes('max 12 reserves')) {
+          throw new Error(data.error)
+        }
+
+        throw new Error(data?.error || t('errorRemovalAfterDuplicate'))
+      }
       setSelectedPlayer(null)
+      setShowAssignModal(false)
+      setSelectedReserve(null)
+      setSelectedSlot(null)
       await fetchRoster()
       await refreshDiagnosticAfterSave()
       showToast(lang === 'en' ? 'Player moved to reserves.' : 'Giocatore spostato in riserva.', 'success')
     } catch (err) {
       console.error('[NuovaRosaLab] remove error:', err)
+      const rawMessage = String(err?.message || '')
+      if (rawMessage.toLowerCase().includes('massimo 12 riserve') || rawMessage.toLowerCase().includes('max 12 reserves')) {
+        setConfirmModal({
+          ...showConfirmConfig({
+            title: lang === 'en' ? 'Reserves are full' : 'Riserve al completo',
+            message: lang === 'en'
+              ? 'You already have 12 reserves. To free this slot now, you can delete this player.'
+              : 'Hai gia 12 riserve. Per liberare subito questo slot, puoi eliminare questo giocatore.',
+            details: lang === 'en'
+              ? 'This action removes the player from your roster.'
+              : 'Questa azione rimuove il giocatore dalla tua rosa.',
+            confirmLabel: lang === 'en' ? 'Delete permanently' : 'Elimina definitivamente',
+            cancelLabel: t('cancel'),
+            confirmVariant: 'danger'
+          }),
+          onConfirm: async () => {
+            setConfirmModal(null)
+            try {
+              let token = getTokenFallback()
+              if (!token && supabase) {
+                const { data: session } = await supabase.auth.getSession()
+                token = session?.session?.access_token
+              }
+              if (!token) throw new Error(t('sessionExpired'))
+              const response = await fetch('/api/supabase/delete-player', {
+                method: 'DELETE',
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ player_id: playerId })
+              })
+              await safeJsonResponse(response, t('deleteReserveError'))
+              setSelectedPlayer(null)
+              await fetchRoster()
+              await refreshDiagnosticAfterSave()
+              showToast(t('playerDeletedSuccessfully'), 'success')
+            } catch (deleteErr) {
+              console.error('[NuovaRosaLab] delete after reserve full error:', deleteErr)
+              const { message } = mapErrorToUserMessage(deleteErr, t('deleteReserveError'), lang)
+              showToast(message, 'error')
+            }
+          },
+          onCancel: () => setConfirmModal(null)
+        })
+        return
+      }
       const { message } = mapErrorToUserMessage(err, t('errorRemovalAfterDuplicate'), lang)
       showToast(message, 'error')
     }
@@ -2732,7 +2918,7 @@ export default withAuth(function NuovaRosaLabPage() {
                     <button type="button" className="nr-secondary-button" onClick={() => { setFieldEditMode(false); setCustomPositions({}) }} disabled={savingFieldLayout}>
                       {t('cancel')}
                     </button>
-                    <button type="button" className="nr-primary-button" onClick={() => saveFieldLayout()} disabled={savingFieldLayout || !hasPendingFieldChanges}>
+                    <button type="button" className="nr-primary-button" onClick={() => saveFieldLayout()} disabled={savingFieldLayout}>
                       {savingFieldLayout ? (lang === 'en' ? 'Saving...' : 'Salvataggio...') : (lang === 'en' ? 'Save positions' : 'Salva posizioni')}
                     </button>
                   </>
@@ -2764,7 +2950,12 @@ export default withAuth(function NuovaRosaLabPage() {
                     slot={slot}
                     player={startersBySlot.get(slot.slot_index)}
                     onEmptyClick={openPickerForSlot}
-                    onPlayerClick={(player) => setSelectedPlayer(player)}
+                    onPlayerClick={(player, slotData) => {
+                      setSelectedSlot(slotData)
+                      setSelectedReserve(null)
+                      setSelectedPlayer(player)
+                      setShowAssignModal(true)
+                    }}
                     onRemove={handleRemoveFromSlot}
                     lang={lang}
                     isEditMode={fieldEditMode}
@@ -2794,7 +2985,20 @@ export default withAuth(function NuovaRosaLabPage() {
             </div>
             <div className="nr-reserve-grid">
               {riserve.length > 0 ? riserve.map((player) => (
-                <button key={player.id} type="button" className="nr-reserve-card" onClick={() => setSelectedPlayer(player)}>
+                <button
+                  key={player.id}
+                  type="button"
+                  className="nr-reserve-card"
+                  onClick={() => {
+                    if (selectedSlot && showAssignModal) {
+                      handleSelectReserveForSlot(player)
+                    } else {
+                      setSelectedReserve(player.id)
+                      setSelectedPlayer(player)
+                      setShowAssignModal(true)
+                    }
+                  }}
+                >
                   <div className="nr-reserve-card-media">
                     {player.photo_url ? (
                       <img src={player.photo_url} alt={player.player_name} loading="lazy" />
@@ -2845,12 +3049,26 @@ export default withAuth(function NuovaRosaLabPage() {
 
       <PremiumPlayerModal
         player={selectedPlayer}
-        show={!!selectedPlayer}
-        onClose={() => setSelectedPlayer(null)}
+        slot={selectedSlot}
+        reserves={riserve}
+        assigning={assigning}
+        onAssignFromReserve={handleSelectReserveForSlot}
+        show={showAssignModal && !!selectedPlayer}
+        onClose={() => {
+          setShowAssignModal(false)
+          setSelectedSlot(null)
+          setSelectedReserve(null)
+          setSelectedPlayer(null)
+        }}
         onSave={handlePremiumPlayerSave}
         saving={savingManualEditor}
         onRemoveFromSlot={handleRemoveFromSlot}
         onDeletePlayer={handleDeletePlayer}
+        onOpenManualEntry={() => {
+          setShowAssignModal(false)
+          setShowManualPlayerModal(true)
+        }}
+        onUploadPhoto={handleUploadFallback}
         onOpenBoosters={(player) => {
           openManualBoostersForPlayer(player)
         }}
@@ -3361,8 +3579,7 @@ export default withAuth(function NuovaRosaLabPage() {
           border-radius: 10px;
         }
 
-        .nr-slot-filled-head,
-        .nr-slot-filled-foot {
+        .nr-slot-filled-head {
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -3380,8 +3597,8 @@ export default withAuth(function NuovaRosaLabPage() {
           font-weight: 700;
           color: #ffffff;
           border-radius: 999px;
-          border: 1px solid rgba(34, 197, 94, 0.6);
-          background: rgba(34, 197, 94, 0.2);
+          border: 1px solid rgba(255, 255, 255, 0.24);
+          background: rgba(255, 255, 255, 0.1);
           padding: 0 4px;
           line-height: 1.4;
         }
@@ -3398,21 +3615,6 @@ export default withAuth(function NuovaRosaLabPage() {
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-        }
-
-        .nr-slot-status-dot {
-          width: 7px;
-          height: 7px;
-          border-radius: 50%;
-          border: 1px solid rgba(34, 197, 94, 0.6);
-          background: rgba(34, 197, 94, 0.2);
-          box-shadow: 0 0 6px rgba(34, 197, 94, 0.3);
-        }
-
-        .nr-slot-status-dot.is-warn {
-          border-color: rgba(239, 68, 68, 0.6);
-          background: rgba(239, 68, 68, 0.22);
-          box-shadow: 0 0 6px rgba(239, 68, 68, 0.28);
         }
 
         .nr-slot-remove {
@@ -3657,64 +3859,14 @@ export default withAuth(function NuovaRosaLabPage() {
           gap: 18px;
         }
 
-        .nr-picker-source-switch {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 8px;
-          margin: 0 0 10px;
-        }
-
-        .nr-source-chip {
-          border-radius: 12px;
-          border: 1px solid rgba(0, 212, 255, 0.2);
-          background: rgba(255, 255, 255, 0.03);
-          color: rgba(255, 255, 255, 0.9);
-          padding: 10px 12px;
-          font-size: 13px;
-          font-weight: 600;
-          cursor: pointer;
-        }
-
-        .nr-source-chip.is-active {
-          border-color: rgba(0, 212, 255, 0.55);
-          background: rgba(0, 212, 255, 0.14);
-          color: #7ceeff;
-          box-shadow: inset 0 0 0 1px rgba(0, 212, 255, 0.2);
-        }
-
-        .nr-picker-toolbar {
-          position: sticky;
-          top: 0;
-          z-index: 3;
-          padding: 6px 0 10px;
-          margin-bottom: 2px;
-          background: linear-gradient(180deg, rgba(8, 12, 28, 0.97), rgba(8, 12, 28, 0.86));
-        }
-
         .nr-picker-shell.reserve-mode .nr-picker-body {
           grid-template-columns: minmax(0, 1fr) minmax(320px, 0.72fr);
-        }
-
-        .nr-picker-shell.reserves-source .nr-picker-body {
-          grid-template-columns: 1fr;
         }
 
         .nr-picker-shell.reserve-mode .nr-picker-results {
           gap: 14px;
         }
 
-        .nr-picker-shell.reserves-source .nr-picker-results {
-          gap: 12px;
-          padding-right: 0;
-        }
-
-        .nr-picker-actions {
-          position: sticky;
-          bottom: 0;
-          z-index: 2;
-          padding: 10px 0 6px;
-          background: linear-gradient(180deg, rgba(8, 12, 28, 0), rgba(8, 12, 28, 0.94) 40%);
-        }
 
         .nr-picker-shell.reserve-mode .nr-modal-header {
           border-bottom: 1px solid rgba(0, 212, 255, 0.1);
@@ -4364,33 +4516,8 @@ export default withAuth(function NuovaRosaLabPage() {
             overflow-y: auto;
           }
 
-          .nr-picker-shell .nr-modal-header {
-            position: sticky;
-            top: 0;
-            z-index: 5;
-            padding-bottom: 10px;
-            margin-bottom: 10px;
-            background: linear-gradient(180deg, rgba(8, 12, 28, 0.99), rgba(8, 12, 28, 0.9));
-            backdrop-filter: blur(4px);
-          }
-
-          .nr-picker-shell .nr-picker-toolbar {
-            top: 76px;
-            z-index: 4;
-            padding: 6px 0 10px;
-          }
-
-          .nr-picker-shell .nr-picker-actions {
-            padding-bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 8px));
-          }
-
           .nr-picker-shell.reserve-mode .nr-picker-body {
             grid-template-columns: 1fr;
-          }
-
-          .nr-picker-source-switch {
-            grid-template-columns: 1fr;
-            gap: 6px;
           }
 
           .nr-premium-player-shell {
