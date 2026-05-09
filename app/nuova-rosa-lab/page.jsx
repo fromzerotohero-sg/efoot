@@ -235,11 +235,76 @@ function CompactStatInput({ label, value, onChange }) {
   )
 }
 
-function SlotPlayerCard({ player, slot, onClick, lang }) {
+function SlotPlayerCard({ player, slot, onClick, lang, isEditMode = false, onPositionChange }) {
   const cardImage = getPlayerCardImage(player)
+  const [dragging, setDragging] = React.useState(false)
+  const [dragOffset, setDragOffset] = React.useState({ x: 0, y: 0 })
+
+  const handlePointerStart = (event) => {
+    if (!isEditMode || !player) return
+    event.stopPropagation()
+    const isTouch = event.type.startsWith('touch')
+    const container = event.currentTarget.closest('[data-field-container]')
+    if (!container) return
+    const rect = container.getBoundingClientRect()
+    const startX = isTouch ? event.touches[0].clientX : event.clientX
+    const startY = isTouch ? event.touches[0].clientY : event.clientY
+    const startSlotX = Number(slot.x)
+    const startSlotY = Number(slot.y)
+    let lastPosition = { x: startSlotX, y: startSlotY }
+    setDragging(true)
+
+    const onMove = (moveEvent) => {
+      const moveIsTouch = moveEvent.type.startsWith('touch')
+      const currentX = moveIsTouch ? moveEvent.touches[0].clientX : moveEvent.clientX
+      const currentY = moveIsTouch ? moveEvent.touches[0].clientY : moveEvent.clientY
+      const deltaX = currentX - startX
+      const deltaY = currentY - startY
+      let nextX = clampPercent(startSlotX + ((currentX - startX) / rect.width) * 100)
+      let nextY = clampPercent(startSlotY + ((currentY - startY) / rect.height) * 100)
+      if (slot.slot_index === 0) {
+        const clamped = clampPointerForGkSlot(nextX, nextY)
+        nextX = clamped.x
+        nextY = clamped.y
+      }
+      lastPosition = { x: nextX, y: nextY }
+      setDragOffset({ x: deltaX, y: deltaY })
+      if (moveIsTouch) moveEvent.preventDefault()
+    }
+
+    const onEnd = () => {
+      setDragging(false)
+      setDragOffset({ x: 0, y: 0 })
+      onPositionChange?.(slot.slot_index, lastPosition)
+      if (isTouch) {
+        document.removeEventListener('touchmove', onMove)
+        document.removeEventListener('touchend', onEnd)
+      } else {
+        document.removeEventListener('mousemove', onMove)
+        document.removeEventListener('mouseup', onEnd)
+      }
+    }
+
+    if (isTouch) {
+      document.addEventListener('touchmove', onMove, { passive: false })
+      document.addEventListener('touchend', onEnd)
+    } else {
+      document.addEventListener('mousemove', onMove)
+      document.addEventListener('mouseup', onEnd)
+    }
+  }
 
   return (
-    <button type="button" className="nr-slot-filled" onClick={() => onClick(player, slot)}>
+    <button
+      type="button"
+      className={`nr-slot-filled ${isEditMode ? 'is-draggable' : ''} ${dragging ? 'is-dragging' : ''}`}
+      style={dragging ? { transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)` } : undefined}
+      onClick={() => {
+        if (!isEditMode) onClick(player, slot)
+      }}
+      onMouseDown={handlePointerStart}
+      onTouchStart={handlePointerStart}
+    >
       <div className="nr-slot-filled-media">
         {cardImage ? (
           <img src={cardImage} alt={player.player_name} />
@@ -251,18 +316,18 @@ function SlotPlayerCard({ player, slot, onClick, lang }) {
       </div>
       <div className="nr-slot-filled-copy">
         <strong>{player.player_name}</strong>
-        <span>{player.position || slot.position || '-'}</span>
+        <span>{isEditMode ? (slot.position || player.position || '-') : (player.position || slot.position || '-')}</span>
         <em>{player.overall_rating ?? '-'}</em>
       </div>
     </button>
   )
 }
 
-function SlotCard({ slot, player, onEmptyClick, onPlayerClick, lang }) {
+function SlotCard({ slot, player, onEmptyClick, onPlayerClick, lang, isEditMode = false, onPositionChange }) {
   return (
     <div className="nr-slot-card" style={{ left: `${slot.x}%`, top: `${slot.y}%` }}>
       {player ? (
-        <SlotPlayerCard player={player} slot={slot} onClick={onPlayerClick} lang={lang} />
+        <SlotPlayerCard player={player} slot={slot} onClick={onPlayerClick} lang={lang} isEditMode={isEditMode} onPositionChange={onPositionChange} />
       ) : (
         <button type="button" className="nr-slot-empty" onClick={() => onEmptyClick(slot)}>
           <Plus size={18} />
@@ -621,6 +686,20 @@ function RosterIntelligencePanel({ starters, reserves, layout, lang }) {
 const MANUAL_POSITIONS = ['PT', 'DC', 'TD', 'TS', 'MED', 'CC', 'TRQ', 'CLS', 'CLD', 'ESA', 'EDA', 'SP', 'P']
 const MANUAL_CARD_TYPES = ['Standard', 'Trending', 'Highlight', 'Epic', 'Legendary']
 const MAX_RESERVES = 12
+const GK_GOAL_AREA = { xMin: 36, xMax: 64, yMin: 83, yMax: 96 }
+const DEFAULT_SLOT_POSITIONS = {
+  0: { x: 50, y: 90, position: 'PT' },
+  1: { x: 20, y: 65, position: 'DC' },
+  2: { x: 40, y: 65, position: 'DC' },
+  3: { x: 60, y: 65, position: 'DC' },
+  4: { x: 80, y: 65, position: 'DC' },
+  5: { x: 30, y: 52, position: 'CC' },
+  6: { x: 50, y: 58, position: 'MED' },
+  7: { x: 70, y: 52, position: 'CC' },
+  8: { x: 25, y: 34, position: 'SP' },
+  9: { x: 50, y: 28, position: 'P' },
+  10: { x: 75, y: 34, position: 'SP' }
+}
 const BOOSTER_PRESETS = [
   { value: 'Finishing', labels: { en: 'Finishing', it: 'Finalizzazione' } },
   { value: 'Low Pass', labels: { en: 'Low pass', it: 'Passaggio rasoterra' } },
@@ -635,6 +714,109 @@ const BOOSTER_PRESETS = [
   { value: 'Physical Contact', labels: { en: 'Physical contact', it: 'Contatto fisico' } },
   { value: 'Stamina', labels: { en: 'Stamina', it: 'Resistenza' } }
 ]
+
+function clampPercent(value, min = 5, max = 95) {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed)) return min
+  return Math.max(min, Math.min(max, parsed))
+}
+
+function clampGkInGoalMouth(x, y) {
+  const nx = Number(x)
+  const ny = Number(y)
+  if (!Number.isFinite(nx) || !Number.isFinite(ny)) return { x: 50, y: 90 }
+  return {
+    x: Math.max(GK_GOAL_AREA.xMin, Math.min(GK_GOAL_AREA.xMax, nx)),
+    y: Math.max(GK_GOAL_AREA.yMin, Math.min(GK_GOAL_AREA.yMax, ny))
+  }
+}
+
+function clampPointerForGkSlot(x, y) {
+  const xx = clampPercent(x)
+  const yy = clampPercent(y)
+  if (yy > 80) return clampGkInGoalMouth(xx, yy)
+  return { x: xx, y: yy }
+}
+
+function normalizeSlotPositionsDxSx(slotPositions) {
+  const output = { ...(slotPositions || {}) }
+  Object.entries(output).forEach(([key, value]) => {
+    if (!value) return
+    const x = value.x != null ? Number(value.x) : null
+    const position = String(value.position || '').trim().toUpperCase()
+    if (x == null || !Number.isFinite(x)) return
+    if (position === 'TD' && x < 50) output[key] = { ...value, position: 'TS' }
+    if (position === 'TS' && x > 50) output[key] = { ...value, position: 'TD' }
+  })
+  return output
+}
+
+function completeSlotPositions(slotPositions) {
+  const complete = { ...(slotPositions || {}) }
+  for (let index = 0; index <= 10; index += 1) {
+    if (!complete[index]) complete[index] = DEFAULT_SLOT_POSITIONS[index]
+  }
+  return normalizeSlotPositionsDxSx(complete)
+}
+
+function calculatePositionFromCoordinates(slotIndex, x, y, attackSlots = null) {
+  const xx = clampPercent(x)
+  const yy = clampPercent(y)
+  const centerLow = 26
+  const centerHigh = 74
+  const wingLow = 28
+  const wingHigh = 72
+
+  if (yy > 80) return 'PT'
+  if (yy >= 63 && yy <= 80) {
+    if (xx < 24) return 'TS'
+    if (xx > 76) return 'TD'
+    return 'DC'
+  }
+  if (yy >= 40 && yy <= 62) {
+    if (xx < wingLow) return 'CLS'
+    if (xx > wingHigh) return 'CLD'
+    if (yy >= 40 && yy <= 44 && xx >= centerLow && xx <= centerHigh) return 'TRQ'
+    if (xx >= centerLow && xx <= centerHigh && yy >= 45 && yy <= 52) return 'CC'
+    if (xx >= centerLow && xx <= centerHigh && yy >= 50 && yy <= 62) return 'MED'
+    return 'MED'
+  }
+  if (yy < 40) {
+    if (xx < 30) return 'ESA'
+    if (xx > 70) return 'EDA'
+    if (yy >= 36 && yy <= 40 && xx >= 30 && xx <= 70) return 'TRQ'
+    if (attackSlots && attackSlots.length > 1) {
+      const sorted = [...attackSlots].sort((a, b) => {
+        if (a.y !== b.y) return a.y - b.y
+        return (a.x ?? 50) - (b.x ?? 50)
+      })
+      const currentIndex = sorted.findIndex((slot) => Number(slot.slotIndex) === Number(slotIndex))
+      if (currentIndex === 0) return 'P'
+      return 'SP'
+    }
+    if (yy < 25) return 'P'
+    if (yy < 35) return 'P'
+    return 'SP'
+  }
+  return 'MED'
+}
+
+function applyMedCcHysteresis(previousRole, computedRole, x, y) {
+  const previous = String(previousRole || '').trim().toUpperCase()
+  const computed = String(computedRole || '').trim().toUpperCase()
+  if (!(previous === 'MED' || previous === 'CC')) return computedRole
+  if (!(computed === 'MED' || computed === 'CC')) return computedRole
+  if (previous === computed) return computedRole
+
+  const xx = clampPercent(x)
+  const yy = clampPercent(y)
+  const ccCore = xx >= 30 && xx <= 70 && yy >= 45 && yy <= 52
+  const outsideCcHold = xx < 27 || xx > 73 || yy < 42 || yy > 60
+
+  if (computed === 'CC') return ccCore ? 'CC' : previous
+  if (computed === 'MED') return outsideCcHold ? 'MED' : previous
+  return computedRole
+}
 
 const PLAYER_SKILL_PRESETS = [
   'Double Touch',
@@ -679,6 +861,69 @@ const PLAYER_SKILL_PRESETS = [
   'Super-sub',
   'Fighting Spirit'
 ]
+
+const PLAYER_SKILL_LABELS = {
+  'Double Touch': { en: 'Double Touch', it: 'Doppio tocco' },
+  'Sole Control': { en: 'Sole Control', it: 'Controllo di suola' },
+  'Flip Flap': { en: 'Flip Flap', it: 'Elastico' },
+  'Marseille Turn': { en: 'Marseille Turn', it: 'Veronica' },
+  Sombrero: { en: 'Sombrero', it: 'Sombrero' },
+  'Cut Behind & Turn': { en: 'Cut Behind & Turn', it: 'Taglio dietro e cambio direzione' },
+  'Scissors Feint': { en: 'Scissors Feint', it: 'Doppio passo' },
+  'Step On Skill Control': { en: 'Step On Skill Control', it: 'Controllo abilita con suola' },
+  Heading: { en: 'Heading', it: 'Colpo di testa' },
+  'Long-Range Curler': { en: 'Long-Range Curler', it: 'Tiro a giro da lontano' },
+  'Long-Range Shooting': { en: 'Long-Range Shooting', it: 'Tiro dalla distanza' },
+  'Knuckle Shot': { en: 'Knuckle Shot', it: 'Tiro a effetto imprevedibile' },
+  'Dipping Shot': { en: 'Dipping Shot', it: 'Tiro a scendere' },
+  'Rising Shot': { en: 'Rising Shot', it: 'Tiro a salire' },
+  'Acrobatic Finishing': { en: 'Acrobatic Finishing', it: 'Finalizzazione acrobatica' },
+  'Heel Trick': { en: 'Heel Trick', it: 'Colpo di tacco' },
+  'First-time Shot': { en: 'First-time Shot', it: 'Tiro di prima' },
+  'One-touch Pass': { en: 'One-touch Pass', it: 'Passaggio di prima' },
+  'Through Passing': { en: 'Through Passing', it: 'Passaggio filtrante' },
+  'Weighted Pass': { en: 'Weighted Pass', it: 'Passaggio calibrato' },
+  'Pinpoint Crossing': { en: 'Pinpoint Crossing', it: 'Cross preciso' },
+  'Outside Curler': { en: 'Outside Curler', it: 'Esterno a giro' },
+  Rabona: { en: 'Rabona', it: 'Rabona' },
+  'No Look Pass': { en: 'No Look Pass', it: 'Passaggio no look' },
+  'Low Lofted Pass': { en: 'Low Lofted Pass', it: 'Passaggio alto teso' },
+  'GK Low Punt': { en: 'GK Low Punt', it: 'Rinvio basso PT' },
+  'GK High Punt': { en: 'GK High Punt', it: 'Rinvio alto PT' },
+  'Long Throw': { en: 'Long Throw', it: 'Rimessa lunga' },
+  'GK Long Throw': { en: 'GK Long Throw', it: 'Rimessa lunga PT' },
+  'Penalty Specialist': { en: 'Penalty Specialist', it: 'Specialista rigori' },
+  Gamesmanship: { en: 'Gamesmanship', it: 'Malizia' },
+  'Man Marking': { en: 'Man Marking', it: 'Marcatura a uomo' },
+  'Track Back': { en: 'Track Back', it: 'Ripiegamento' },
+  Interception: { en: 'Interception', it: 'Intercettazione' },
+  Blocker: { en: 'Blocker', it: 'Blocco' },
+  'Aerial Superiority': { en: 'Aerial Superiority', it: 'Superiorita aerea' },
+  'Sliding Tackle': { en: 'Sliding Tackle', it: 'Scivolata' },
+  'Acrobatic Clearance': { en: 'Acrobatic Clearance', it: 'Rinvio acrobatico' },
+  Captaincy: { en: 'Captaincy', it: 'Leadership' },
+  'Super-sub': { en: 'Super-sub', it: 'Super riserva' },
+  'Fighting Spirit': { en: 'Fighting Spirit', it: 'Spirito combattivo' }
+}
+
+function normalizePlayerSkillKey(skill) {
+  return String(skill || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+}
+
+function getPlayerSkillLabel(skill, lang) {
+  const raw = String(skill || '').trim()
+  const labels = PLAYER_SKILL_LABELS[raw]
+    || PLAYER_SKILL_LABELS[
+      Object.keys(PLAYER_SKILL_LABELS).find((key) => normalizePlayerSkillKey(key) === normalizePlayerSkillKey(raw))
+    ]
+  if (!labels) return String(skill || '')
+  return lang === 'en' ? labels.en : labels.it
+}
+
+function hasPlayerSkill(skills, skill) {
+  const normalized = normalizePlayerSkillKey(skill)
+  return (Array.isArray(skills) ? skills : []).some((entry) => normalizePlayerSkillKey(entry) === normalized)
+}
 
 function parseBoosterLevel(rawEffect) {
   const match = String(rawEffect || '').match(/([+-]?\d+)/)
@@ -1082,7 +1327,7 @@ function PremiumPlayerModal({
   const addSkill = (skillValue) => {
     const normalized = String(skillValue || '').trim()
     if (!normalized) return
-    if (skillsDraft.includes(normalized)) {
+    if (hasPlayerSkill(skillsDraft, normalized)) {
       setSelectedSkillPreset('')
       setShowAllSkills(true)
       return
@@ -1312,8 +1557,8 @@ function PremiumPlayerModal({
                     >
                       <option value="">{t('nuovaRosaChooseOfficialSkill')}</option>
                       {PLAYER_SKILL_PRESETS.map((skill) => (
-                        <option key={skill} value={skill} disabled={skillsDraft.includes(skill)}>
-                          {skill}
+                        <option key={skill} value={skill} disabled={hasPlayerSkill(skillsDraft, skill)}>
+                          {getPlayerSkillLabel(skill, lang)}
                         </option>
                       ))}
                     </select>
@@ -1324,7 +1569,7 @@ function PremiumPlayerModal({
                 <div className="nr-skill-chip-row">
                   {visibleSkills.length > 0 ? visibleSkills.map((skill) => (
                     <button key={skill} type="button" className="nr-skill-chip" onClick={() => removeSkill(skill)}>
-                      {skill}
+                      {getPlayerSkillLabel(skill, lang)}
                       <X size={12} />
                     </button>
                   )) : (
@@ -1490,6 +1735,9 @@ export default withAuth(function NuovaRosaLabPage() {
   const [savingManualBoosters, setSavingManualBoosters] = React.useState(false)
   const [importingStarterPack, setImportingStarterPack] = React.useState(false)
   const [savingTacticalSettings, setSavingTacticalSettings] = React.useState(false)
+  const [fieldEditMode, setFieldEditMode] = React.useState(false)
+  const [customPositions, setCustomPositions] = React.useState({})
+  const [savingFieldLayout, setSavingFieldLayout] = React.useState(false)
 
   const totalPlayers = titolari.length + riserve.length
   const setupStage = buildSetupStage({
@@ -2182,35 +2430,198 @@ export default withAuth(function NuovaRosaLabPage() {
   }, [fetchRoster, lang, refreshDiagnosticAfterSave, showToast, t])
 
   const slots = React.useMemo(() => {
-    const base = layout?.slot_positions && typeof layout.slot_positions === 'object'
-      ? layout.slot_positions
-      : {
-          0: { x: 50, y: 90, position: 'PT' },
-          1: { x: 20, y: 65, position: 'DC' },
-          2: { x: 40, y: 65, position: 'DC' },
-          3: { x: 60, y: 65, position: 'DC' },
-          4: { x: 80, y: 65, position: 'DC' },
-          5: { x: 30, y: 52, position: 'CC' },
-          6: { x: 50, y: 58, position: 'MED' },
-          7: { x: 70, y: 52, position: 'CC' },
-          8: { x: 25, y: 34, position: 'SP' },
-          9: { x: 50, y: 28, position: 'P' },
-          10: { x: 75, y: 34, position: 'SP' }
-        }
+    const base = completeSlotPositions(
+      layout?.slot_positions && typeof layout.slot_positions === 'object'
+        ? layout.slot_positions
+        : DEFAULT_SLOT_POSITIONS
+    )
 
     return Array.from({ length: 11 }, (_, index) => ({
       slot_index: index,
-      x: Number(base?.[index]?.x ?? 50),
-      y: Number(base?.[index]?.y ?? 50),
-      position: base?.[index]?.position || '?'
+      x: Number(customPositions?.[index]?.x ?? base?.[index]?.x ?? 50),
+      y: Number(customPositions?.[index]?.y ?? base?.[index]?.y ?? 50),
+      position: customPositions?.[index]?.position || base?.[index]?.position || '?'
     }))
-  }, [layout])
+  }, [customPositions, layout])
 
   const startersBySlot = React.useMemo(() => {
     const map = new Map()
     titolari.forEach((player) => map.set(player.slot_index, player))
     return map
   }, [titolari])
+
+  const handleFieldPositionChange = React.useCallback((slotIndex, position) => {
+    const allAttackSlots = []
+    Object.entries(customPositions || {}).forEach(([idx, pos]) => {
+      if (pos?.y < 40) allAttackSlots.push({ slotIndex: Number(idx), x: pos.x, y: pos.y })
+    })
+    if (position?.y < 40) {
+      allAttackSlots.push({ slotIndex: Number(slotIndex), x: position.x, y: position.y })
+    }
+    Object.entries(layout?.slot_positions || {}).forEach(([idx, pos]) => {
+      if (pos?.y < 40 && !customPositions?.[idx]) {
+        allAttackSlots.push({ slotIndex: Number(idx), x: pos.x, y: pos.y })
+      }
+    })
+
+    const computedRole = calculatePositionFromCoordinates(
+      slotIndex,
+      position.x,
+      position.y,
+      allAttackSlots.length > 1 ? allAttackSlots : null
+    )
+    const previousRole =
+      customPositions?.[slotIndex]?.position ||
+      customPositions?.[String(slotIndex)]?.position ||
+      layout?.slot_positions?.[slotIndex]?.position ||
+      layout?.slot_positions?.[String(slotIndex)]?.position ||
+      null
+    const nextRole = applyMedCcHysteresis(previousRole, computedRole, position.x, position.y)
+    let nextX = clampPercent(position.x)
+    let nextY = clampPercent(position.y)
+    if (String(nextRole).toUpperCase() === 'PT') {
+      const clamped = clampGkInGoalMouth(nextX, nextY)
+      nextX = clamped.x
+      nextY = clamped.y
+    }
+
+    setCustomPositions((prev) => ({
+      ...prev,
+      [slotIndex]: {
+        x: nextX,
+        y: nextY,
+        position: nextRole
+      }
+    }))
+  }, [customPositions, layout])
+
+  const saveFieldLayout = React.useCallback(async (skipOutOfRoleWarning = false) => {
+    if (!layout || Object.keys(customPositions).length === 0) {
+      setFieldEditMode(false)
+      setCustomPositions({})
+      return
+    }
+    setSavingFieldLayout(true)
+    try {
+      let token = getTokenFallback()
+      if (!token && supabase) {
+        const { data: session } = await supabase.auth.getSession()
+        token = session?.session?.access_token
+      }
+      if (!token) throw new Error(t('sessionExpired'))
+
+      const updatedSlotPositions = completeSlotPositions(layout.slot_positions)
+      Object.entries(customPositions).forEach(([slotIndex, pos]) => {
+        let x = clampPercent(pos.x)
+        let y = clampPercent(pos.y)
+        let position = pos.position || updatedSlotPositions[slotIndex]?.position || '?'
+        if (String(position).toUpperCase() === 'PT') {
+          const clamped = clampGkInGoalMouth(x, y)
+          x = clamped.x
+          y = clamped.y
+        }
+        updatedSlotPositions[slotIndex] = {
+          ...(updatedSlotPositions[slotIndex] || {}),
+          x,
+          y,
+          position
+        }
+      })
+
+      const playersOutOfRole = Object.entries(customPositions)
+        .map(([slotIndex, pos]) => {
+          const player = titolari.find((entry) => Number(entry.slot_index) === Number(slotIndex))
+          if (!player || !pos?.position) return null
+          const originalPositions = Array.isArray(player.original_positions) && player.original_positions.length > 0
+            ? player.original_positions
+            : (player.position ? [{ position: player.position, competence: 'Alta' }] : [])
+          const isOriginal = originalPositions.some((entry) => String(entry?.position || '').toUpperCase() === String(pos.position).toUpperCase())
+          if (isOriginal || originalPositions.length === 0) return null
+          return {
+            player,
+            newRole: pos.position,
+            originalPositions,
+            originalPositionsLabel: originalPositions.map((entry) => entry.position).filter(Boolean).join(', ')
+          }
+        })
+        .filter(Boolean)
+
+      if (!skipOutOfRoleWarning) {
+        if (playersOutOfRole.length > 0) {
+          setSavingFieldLayout(false)
+          const details = playersOutOfRole
+            .map(({ player, newRole, originalPositionsLabel }) => `${player.player_name}: ${originalPositionsLabel} -> ${newRole}`)
+            .join('\n')
+          setConfirmModal({
+            ...showConfirmConfig({
+              title: lang === 'en' ? 'Players out of role' : 'Giocatori fuori ruolo',
+              message: lang === 'en'
+                ? 'Some moved players are no longer in one of their original roles.'
+                : 'Alcuni giocatori spostati non sono piu in uno dei loro ruoli originali.',
+              details,
+              confirmLabel: lang === 'en' ? 'Save anyway' : 'Salva comunque',
+              cancelLabel: t('cancel')
+            }),
+            onConfirm: async () => {
+              setConfirmModal(null)
+              await saveFieldLayout(true)
+            },
+            onCancel: () => setConfirmModal(null)
+          })
+          return
+        }
+      }
+
+      if (skipOutOfRoleWarning && playersOutOfRole.length > 0) {
+        await Promise.all(playersOutOfRole.map(async ({ player, newRole, originalPositions }) => {
+          const roleExists = originalPositions.some((entry) => String(entry?.position || '').toUpperCase() === String(newRole).toUpperCase())
+          if (roleExists) return
+          const updatedOriginalPositions = [
+            ...originalPositions,
+            { position: newRole, competence: 'Intermedia' }
+          ]
+          await fetch(`/api/players/${player.id}`, {
+            method: 'PATCH',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ original_positions: updatedOriginalPositions })
+          })
+        }))
+      }
+
+      let effectiveFormation = layout.formation || 'Custom'
+      try {
+        const { getFormationNameFromSlotPositions } = await import('../../lib/validateFormationLimits')
+        effectiveFormation = getFormationNameFromSlotPositions(updatedSlotPositions) || effectiveFormation
+      } catch (_) {}
+
+      const response = await fetch('/api/supabase/save-formation-layout', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          formation: effectiveFormation,
+          slot_positions: updatedSlotPositions,
+          preserve_slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        })
+      })
+      await safeJsonResponse(response, t('errorSavingFormation'))
+      setFieldEditMode(false)
+      setCustomPositions({})
+      await fetchRoster()
+      await refreshDiagnosticAfterSave()
+      showToast(t('positionsSavedSuccessfully'), 'success')
+    } catch (err) {
+      const { message } = mapErrorToUserMessage(err, t('errorSavingFormation'), lang)
+      showToast(message, 'error')
+    } finally {
+      setSavingFieldLayout(false)
+    }
+  }, [customPositions, fetchRoster, lang, layout, refreshDiagnosticAfterSave, showToast, t, titolari])
 
   const stageCopy = React.useMemo(() => {
     const copy = {
@@ -2297,10 +2708,25 @@ export default withAuth(function NuovaRosaLabPage() {
                 <span className="nr-mini-kicker">{t('nuovaRosaWorkspace')}</span>
                 <h2>{layout?.formation || '4-3-3'}</h2>
               </div>
-              <Users size={18} />
+              <div className="nr-field-actions">
+                {fieldEditMode ? (
+                  <>
+                    <button type="button" className="nr-secondary-button" onClick={() => { setFieldEditMode(false); setCustomPositions({}) }} disabled={savingFieldLayout}>
+                      {t('cancel')}
+                    </button>
+                    <button type="button" className="nr-primary-button" onClick={() => saveFieldLayout()} disabled={savingFieldLayout}>
+                      {savingFieldLayout ? (lang === 'en' ? 'Saving...' : 'Salvataggio...') : (lang === 'en' ? 'Save positions' : 'Salva posizioni')}
+                    </button>
+                  </>
+                ) : (
+                  <button type="button" className="nr-secondary-button" onClick={() => setFieldEditMode(true)}>
+                    {lang === 'en' ? 'Move players' : 'Sposta giocatori'}
+                  </button>
+                )}
+              </div>
             </div>
             <div className="nr-field-shell">
-              <div className="nr-field">
+              <div className={`nr-field ${fieldEditMode ? 'is-editing' : ''}`} data-field-container>
                 {slots.map((slot) => (
                   <SlotCard
                     key={slot.slot_index}
@@ -2309,13 +2735,12 @@ export default withAuth(function NuovaRosaLabPage() {
                     onEmptyClick={openPickerForSlot}
                     onPlayerClick={(player) => setSelectedPlayer(player)}
                     lang={lang}
+                    isEditMode={fieldEditMode}
+                    onPositionChange={handleFieldPositionChange}
                   />
                 ))}
               </div>
             </div>
-          </section>
-
-          <section className="nr-side-column">
             <section className="nr-card">
               <div className="nr-card-head">
                 <div>
@@ -2342,7 +2767,9 @@ export default withAuth(function NuovaRosaLabPage() {
                 )}
               </div>
             </section>
+          </section>
 
+          <section className="nr-side-column">
             <RosterIntelligencePanel starters={titolari} reserves={riserve} layout={layout} lang={lang} />
 
             <TacticalSettingsPanel
@@ -2616,8 +3043,9 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-main-grid {
           display: grid;
-          grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.85fr);
+          grid-template-columns: minmax(0, 1fr) minmax(320px, 0.74fr);
           gap: 20px;
+          align-items: start;
         }
 
         .nr-card {
@@ -2638,14 +3066,25 @@ export default withAuth(function NuovaRosaLabPage() {
           overflow: hidden;
           border: 1px solid rgba(255, 255, 255, 0.08);
           background: rgba(6, 10, 24, 0.78);
+          width: min(100%, 720px);
+          min-height: clamp(292px, 39vh, 422px);
+          aspect-ratio: 2 / 3;
+          margin: 0 auto 18px;
         }
 
         .nr-field {
           position: relative;
-          min-height: 620px;
+          width: 100%;
+          height: 100%;
+          min-height: inherit;
           background:
             radial-gradient(circle at center, rgba(30, 160, 90, 0.14), transparent 55%),
             linear-gradient(180deg, rgba(22, 106, 56, 0.35), rgba(10, 55, 28, 0.28));
+        }
+
+        .nr-field.is-editing {
+          outline: 2px solid rgba(251, 191, 36, 0.42);
+          outline-offset: -4px;
         }
 
         .nr-field:before,
@@ -2667,8 +3106,8 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-slot-card {
           position: absolute;
           transform: translate(-50%, -50%);
-          width: min(124px, 22vw);
-          max-width: 124px;
+          width: clamp(78px, 9.2vw, 116px);
+          max-width: 116px;
         }
 
         .nr-slot-empty,
@@ -2684,7 +3123,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-slot-empty {
-          min-height: 92px;
+          min-height: 46px;
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -2695,10 +3134,21 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-slot-filled {
           display: grid;
-          grid-template-columns: 42px minmax(0, 1fr);
-          gap: 10px;
-          padding: 8px;
+          grid-template-columns: 34px minmax(0, 1fr);
+          gap: 8px;
+          padding: 6px;
           text-align: left;
+          touch-action: manipulation;
+        }
+
+        .nr-slot-filled.is-draggable {
+          cursor: move;
+          touch-action: none;
+        }
+
+        .nr-slot-filled.is-dragging {
+          opacity: 0.75;
+          z-index: 10;
         }
 
         .nr-slot-filled-media img,
@@ -2711,8 +3161,8 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-slot-filled-media {
-          width: 42px;
-          height: 56px;
+          width: 34px;
+          height: 46px;
         }
 
         .nr-slot-filled-copy {
@@ -2725,7 +3175,7 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-slot-filled-copy strong,
         .nr-bench-item-copy strong,
         .nr-catalog-card-copy strong {
-          font-size: 12px;
+          font-size: 11px;
           line-height: 1.2;
         }
 
@@ -2734,7 +3184,7 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-bench-item-copy span,
         .nr-catalog-card-copy p,
         .nr-catalog-card-meta {
-          font-size: 11px;
+          font-size: 10px;
           color: rgba(255, 255, 255, 0.75);
           font-style: normal;
         }
@@ -2743,6 +3193,13 @@ export default withAuth(function NuovaRosaLabPage() {
           display: flex;
           flex-direction: column;
           gap: 20px;
+        }
+
+        .nr-field-actions {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+          justify-content: flex-end;
         }
 
         .nr-bench-list,
