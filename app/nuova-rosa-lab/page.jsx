@@ -326,6 +326,7 @@ function EnterpriseReservePicker({ reserves, lang, onPick }) {
 function CatalogPickerModal({
   show,
   slot,
+  mode = 'slot',
   searchQuery,
   onSearchChange,
   loading,
@@ -341,21 +342,33 @@ function CatalogPickerModal({
   onUploadFallback,
   lang
 }) {
-  if (!show || !slot) return null
+  if (!show) return null
 
-  const compatibility = selectedCard ? getSlotCompatibility(slot.position, selectedCard.position) : 'unknown'
+  const isReserveMode = mode === 'reserve'
+  const slotPosition = isReserveMode ? '' : slot?.position
+  const compatibility = selectedCard && !isReserveMode ? getSlotCompatibility(slotPosition, selectedCard.position) : 'unknown'
 
   return (
     <div className="nr-modal-backdrop" onClick={onClose}>
-      <div className="nr-modal-shell nr-picker-shell" onClick={(event) => event.stopPropagation()}>
+      <div className={`nr-modal-shell nr-picker-shell ${isReserveMode ? 'reserve-mode' : 'slot-mode'}`} onClick={(event) => event.stopPropagation()}>
         <div className="nr-modal-header">
           <div>
-            <span className="nr-mini-kicker">{lang === 'en' ? 'Slot target' : 'Slot target'}</span>
-            <h2>{lang === 'en' ? 'Choose a player' : 'Scegli un giocatore'} · {slot.position}</h2>
+            <span className="nr-mini-kicker">
+              {isReserveMode ? (lang === 'en' ? 'Reserve target' : 'Target riserva') : (lang === 'en' ? 'Slot target' : 'Slot target')}
+            </span>
+            <h2>
+              {isReserveMode
+                ? (lang === 'en' ? 'Add reserve from catalog' : 'Aggiungi riserva da catalogo')
+                : `${lang === 'en' ? 'Choose a player' : 'Scegli un giocatore'} · ${slotPosition}`}
+            </h2>
             <p>
-              {lang === 'en'
-                ? 'We suggest cards that fit this slot, but you can choose any player.'
-                : 'Ti suggeriamo carte adatte a questo slot, ma puoi scegliere qualsiasi giocatore.'}
+              {isReserveMode
+                ? (lang === 'en'
+                    ? 'Search the official card catalog and save the selected player directly as a reserve.'
+                    : 'Cerca nel catalogo ufficiale e salva il giocatore selezionato direttamente tra le riserve.')
+                : (lang === 'en'
+                    ? 'We suggest cards that fit this slot, but you can choose any player.'
+                    : 'Ti suggeriamo carte adatte a questo slot, ma puoi scegliere qualsiasi giocatore.')}
             </p>
           </div>
           <button type="button" className="nr-icon-button" onClick={onClose}>
@@ -377,9 +390,9 @@ function CatalogPickerModal({
 
         <div className="nr-picker-body">
           <div className="nr-picker-results">
-            <EnterpriseReservePicker reserves={reserves} lang={lang} onPick={onSelectReserve} />
+            {!isReserveMode && <EnterpriseReservePicker reserves={reserves} lang={lang} onPick={onSelectReserve} />}
 
-            <section>
+            {!isReserveMode && <section>
               <div className="nr-section-head">
                 <h3>{lang === 'en' ? 'Suggested for this slot' : 'Suggeriti per questo slot'}</h3>
               </div>
@@ -391,7 +404,7 @@ function CatalogPickerModal({
                     <CatalogCard
                       key={card.id}
                       card={card}
-                      slotPosition={slot.position}
+                      slotPosition={slotPosition}
                       lang={lang}
                       onSelect={onSelectCard}
                       selected={selectedCard?.id === card.id}
@@ -403,11 +416,11 @@ function CatalogPickerModal({
                   </div>
                 )}
               </div>
-            </section>
+            </section>}
 
             <section>
               <div className="nr-section-head">
-                <h3>{lang === 'en' ? 'All results' : 'Tutti i risultati'}</h3>
+                <h3>{isReserveMode ? (lang === 'en' ? 'Catalog cards' : 'Carte catalogo') : (lang === 'en' ? 'All results' : 'Tutti i risultati')}</h3>
               </div>
               <div className="nr-catalog-list">
                 {loading ? (
@@ -417,7 +430,7 @@ function CatalogPickerModal({
                     <CatalogCard
                       key={card.id}
                       card={card}
-                      slotPosition={slot.position}
+                      slotPosition={slotPosition}
                       lang={lang}
                       onSelect={onSelectCard}
                       selected={selectedCard?.id === card.id}
@@ -458,12 +471,12 @@ function CatalogPickerModal({
                     <strong>{selectedCard.position || '-'}</strong>
                   </div>
                   <div>
-                    <span>{lang === 'en' ? 'Fit' : 'Fit'}</span>
-                    <strong>{compatibilityLabel(compatibility, lang)}</strong>
+                    <span>{isReserveMode ? (lang === 'en' ? 'Destination' : 'Destinazione') : (lang === 'en' ? 'Fit' : 'Fit')}</span>
+                    <strong>{isReserveMode ? (lang === 'en' ? 'Reserve' : 'Riserva') : compatibilityLabel(compatibility, lang)}</strong>
                   </div>
                 </div>
 
-                {compatibility === 'out_of_role' && (
+                {!isReserveMode && compatibility === 'out_of_role' && (
                   <div className="nr-warning-box">
                     <AlertTriangle size={16} />
                     <span>
@@ -476,12 +489,12 @@ function CatalogPickerModal({
 
                 <div className="nr-picker-actions">
                   <button type="button" className="nr-primary-button" onClick={onConfirm}>
-                    {lang === 'en' ? 'Add to slot' : 'Aggiungi allo slot'}
+                    {isReserveMode ? (lang === 'en' ? 'Add reserve' : 'Aggiungi riserva') : (lang === 'en' ? 'Add to slot' : 'Aggiungi allo slot')}
                     <ArrowRight size={16} />
                   </button>
                   <div className="nr-secondary-actions">
                     <button type="button" className="nr-secondary-button" onClick={onManualFallback}>
-                      {lang === 'en' ? 'Manual entry' : 'Inserimento manuale'}
+                      {isReserveMode ? (lang === 'en' ? 'Manual reserve' : 'Riserva manuale') : (lang === 'en' ? 'Manual entry' : 'Inserimento manuale')}
                     </button>
                     <button type="button" className="nr-secondary-button" onClick={onUploadFallback}>
                       {lang === 'en' ? 'Upload from photos' : 'Carica da foto'}
@@ -607,6 +620,7 @@ function RosterIntelligencePanel({ starters, reserves, layout, lang }) {
 
 const MANUAL_POSITIONS = ['PT', 'DC', 'TD', 'TS', 'MED', 'CC', 'TRQ', 'CLS', 'CLD', 'ESA', 'EDA', 'SP', 'P']
 const MANUAL_CARD_TYPES = ['Standard', 'Trending', 'Highlight', 'Epic', 'Legendary']
+const MAX_RESERVES = 12
 const BOOSTER_PRESETS = [
   { value: 'Finishing', labels: { en: 'Finishing', it: 'Finalizzazione' } },
   { value: 'Low Pass', labels: { en: 'Low pass', it: 'Passaggio rasoterra' } },
@@ -1407,6 +1421,7 @@ export default withAuth(function NuovaRosaLabPage() {
   const [selectedSlot, setSelectedSlot] = React.useState(null)
   const [selectedPlayer, setSelectedPlayer] = React.useState(null)
   const [pickerOpen, setPickerOpen] = React.useState(false)
+  const [pickerMode, setPickerMode] = React.useState('slot')
   const [pickerLoading, setPickerLoading] = React.useState(false)
   const [pickerQuery, setPickerQuery] = React.useState('')
   const [pickerResults, setPickerResults] = React.useState([])
@@ -1532,8 +1547,8 @@ export default withAuth(function NuovaRosaLabPage() {
     } catch (_) {}
   }, [])
 
-  const loadCatalog = React.useCallback(async (slot, query = '') => {
-    if (!slot) return
+  const loadCatalog = React.useCallback(async (slot, query = '', mode = 'slot') => {
+    if (mode !== 'reserve' && !slot) return
     setPickerLoading(true)
     try {
       let token = getTokenFallback()
@@ -1544,10 +1559,12 @@ export default withAuth(function NuovaRosaLabPage() {
       if (!token) throw new Error(t('sessionExpired'))
 
       const params = new URLSearchParams({
-        slot_position: String(slot.position || ''),
         q: query,
         limit: '24'
       })
+      if (mode !== 'reserve') {
+        params.set('slot_position', String(slot?.position || ''))
+      }
       const response = await fetch(`/api/player-catalog/search?${params.toString()}`, {
         headers: {
           Authorization: `Bearer ${token}`
@@ -1568,22 +1585,37 @@ export default withAuth(function NuovaRosaLabPage() {
   }, [lang, showToast, t])
 
   React.useEffect(() => {
-    if (!pickerOpen || !selectedSlot) return
+    if (!pickerOpen) return
+    if (pickerMode !== 'reserve' && !selectedSlot) return
     const timer = window.setTimeout(() => {
-      loadCatalog(selectedSlot, pickerQuery)
+      loadCatalog(selectedSlot, pickerQuery, pickerMode)
     }, 180)
     return () => window.clearTimeout(timer)
-  }, [pickerOpen, selectedSlot, pickerQuery, loadCatalog])
+  }, [pickerOpen, selectedSlot, pickerQuery, pickerMode, loadCatalog])
 
   const openPickerForSlot = React.useCallback((slot) => {
     setSelectedSlot(slot)
+    setPickerMode('slot')
     setSelectedCatalogCard(null)
     setPickerQuery('')
     setPickerOpen(true)
   }, [])
 
+  const openPickerForReserve = React.useCallback(() => {
+    if (riserve.length >= MAX_RESERVES) {
+      showToast(t('maxReservesReached'), 'error')
+      return
+    }
+    setSelectedSlot(null)
+    setPickerMode('reserve')
+    setSelectedCatalogCard(null)
+    setPickerQuery('')
+    setPickerOpen(true)
+  }, [riserve.length, showToast, t])
+
   const closePicker = React.useCallback(() => {
     setPickerOpen(false)
+    setPickerMode('slot')
     setSelectedCatalogCard(null)
     setPickerQuery('')
   }, [])
@@ -1645,6 +1677,45 @@ export default withAuth(function NuovaRosaLabPage() {
 
     await createPlayerFromCatalog(false)
   }, [selectedSlot, selectedCatalogCard, lang, t])
+
+  const handleSaveCatalogCardAsReserve = React.useCallback(async () => {
+    if (!selectedCatalogCard) return
+    if (riserve.length >= MAX_RESERVES) {
+      showToast(t('maxReservesReached'), 'error')
+      return
+    }
+
+    try {
+      let token = getTokenFallback()
+      if (!token && supabase) {
+        const { data: session } = await supabase.auth.getSession()
+        token = session?.session?.access_token
+      }
+      if (!token) throw new Error(t('sessionExpired'))
+
+      const playerPayload = buildPlayerPayloadFromCatalog(selectedCatalogCard, null)
+      playerPayload.slot_index = null
+
+      const response = await fetch('/api/supabase/save-player', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ player: playerPayload })
+      })
+
+      await safeJsonResponse(response, t('errorSavingPlayerGeneric'))
+      await fetchRoster()
+      closePicker()
+      await refreshDiagnosticAfterSave()
+      showToast(lang === 'en' ? 'Reserve added successfully.' : 'Riserva aggiunta con successo.', 'success')
+    } catch (err) {
+      console.error('[NuovaRosaLab] save reserve catalog player error:', err)
+      const { message } = mapErrorToUserMessage(err, t('errorSavingPlayerGeneric'), lang)
+      showToast(message, 'error')
+    }
+  }, [closePicker, fetchRoster, lang, refreshDiagnosticAfterSave, riserve.length, selectedCatalogCard, showToast, t])
 
   const createPlayerFromCatalog = React.useCallback(async (forcedOutOfRole) => {
     if (!selectedSlot || !selectedCatalogCard) return
@@ -2199,7 +2270,7 @@ export default withAuth(function NuovaRosaLabPage() {
                   <span className="nr-mini-kicker">{t('nuovaRosaReserves')}</span>
                   <h2>{riserve.length}</h2>
                 </div>
-                <button type="button" className="nr-icon-button" onClick={() => { setSelectedSlot(null); setShowManualPlayerModal(true) }}>
+                <button type="button" className="nr-icon-button" onClick={openPickerForReserve}>
                   <Plus size={16} />
                 </button>
               </div>
@@ -2235,6 +2306,7 @@ export default withAuth(function NuovaRosaLabPage() {
       <CatalogPickerModal
         show={pickerOpen}
         slot={selectedSlot}
+        mode={pickerMode}
         searchQuery={pickerQuery}
         onSearchChange={setPickerQuery}
         loading={pickerLoading}
@@ -2244,7 +2316,7 @@ export default withAuth(function NuovaRosaLabPage() {
         selectedCard={selectedCatalogCard}
         onSelectCard={setSelectedCatalogCard}
         onClose={closePicker}
-        onConfirm={handleSaveCatalogCardToSlot}
+        onConfirm={pickerMode === 'reserve' ? handleSaveCatalogCardAsReserve : handleSaveCatalogCardToSlot}
         onSelectReserve={handleSelectReserveForSlot}
         onManualFallback={handleOpenManualFallback}
         onUploadFallback={handleUploadFallback}
@@ -2748,6 +2820,19 @@ export default withAuth(function NuovaRosaLabPage() {
           display: grid;
           grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
           gap: 18px;
+        }
+
+        .nr-picker-shell.reserve-mode .nr-picker-body {
+          grid-template-columns: minmax(0, 1fr) minmax(320px, 0.72fr);
+        }
+
+        .nr-picker-shell.reserve-mode .nr-picker-results {
+          gap: 14px;
+        }
+
+        .nr-picker-shell.reserve-mode .nr-modal-header {
+          border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+          padding-bottom: 14px;
         }
 
         .nr-picker-results {
@@ -3375,6 +3460,10 @@ export default withAuth(function NuovaRosaLabPage() {
             border-radius: 18px 18px 0 0;
             align-self: flex-end;
             overflow-y: auto;
+          }
+
+          .nr-picker-shell.reserve-mode .nr-picker-body {
+            grid-template-columns: 1fr;
           }
 
           .nr-premium-player-shell {
