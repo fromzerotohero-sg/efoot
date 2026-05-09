@@ -15,7 +15,6 @@ import {
   CheckCircle2,
   ChevronRight,
   Gift,
-  Move,
   Pencil,
   Plus,
   Search,
@@ -237,13 +236,7 @@ function CompactStatInput({ label, value, onChange }) {
 function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = false, onPositionChange }) {
   const [dragging, setDragging] = React.useState(false)
   const [dragOffset, setDragOffset] = React.useState({ x: 0, y: 0 })
-  const displayName = React.useMemo(() => {
-    const raw = player?.player_name || ''
-    if (raw.length <= 12) return raw
-    const parts = raw.split(' ').filter(Boolean)
-    if (parts.length > 1) return `${parts[0]} ${parts[parts.length - 1].charAt(0)}.`
-    return `${raw.slice(0, 10)}...`
-  }, [player?.player_name])
+  const slotThumb = React.useMemo(() => player?.photo_url || getPlayerCardImage(player), [player])
 
   const handlePointerStart = (event) => {
     if (!isEditMode || !player) return
@@ -318,12 +311,15 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
       onMouseDown={handlePointerStart}
       onTouchStart={handlePointerStart}
     >
-      <div className="nr-slot-filled-head">
-        <span>{isEditMode ? (slot.position || player.position || '-') : (player.position || slot.position || '-')}</span>
-        <small>OVR {player.overall_rating ?? '-'}</small>
-      </div>
-      <div className="nr-slot-filled-copy">
-        <strong>{displayName}</strong>
+      <div className="nr-slot-filled-main">
+        <div className="nr-slot-avatar-mini">
+          {slotThumb ? (
+            <img src={slotThumb} alt={player.player_name || 'player'} loading="lazy" />
+          ) : (
+            <User size={14} />
+          )}
+        </div>
+        <span className="nr-slot-role-chip">{isEditMode ? (slot.position || player.position || '-') : (player.position || slot.position || '-')}</span>
       </div>
       {typeof onRemove === 'function' && (
         <span
@@ -606,25 +602,16 @@ function CatalogPickerModal({
 function QuickPlayerPanel({
   player,
   slot,
-  reserves = [],
-  assigning = false,
-  onAssignFromReserve,
   onClose,
   onRemoveFromSlot,
   onDeletePlayer,
   onOpenBoosters,
   onOpenReplace,
-  onOpenManualEntry,
   onUploadPhoto,
   lang
 }) {
   if (!player) return null
   const cardImage = getPlayerCardImage(player)
-  const [view, setView] = React.useState('actions')
-
-  React.useEffect(() => {
-    setView('actions')
-  }, [player?.id, slot?.slot_index])
 
   return (
     <div className="nr-modal-backdrop" onClick={onClose}>
@@ -656,85 +643,34 @@ function QuickPlayerPanel({
             </div>
           </div>
 
-          {view === 'actions' ? (
-            <>
-              <div className="nr-quick-actions">
-                {player.slot_index !== null && player.slot_index !== undefined && (
-                  <button
-                    type="button"
-                    className="nr-primary-button"
-                    onClick={() => setView('reserve_swap')}
-                    disabled={assigning}
-                  >
-                    <Move size={14} />
-                    {lang === 'en' ? 'Move / swap with reserves' : 'Sposta / sostituisci con riserve'}
-                  </button>
-                )}
-                <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player, true)}>
-                  <Pencil size={14} />
-                  {lang === 'en' ? 'Edit player' : 'Modifica giocatore'}
-                </button>
-                <button type="button" className="nr-secondary-button" onClick={onUploadPhoto}>
-                  <Upload size={14} />
-                  {lang === 'en' ? 'Upload player photo' : 'Carica foto giocatore'}
-                </button>
-              </div>
+          <div className="nr-quick-actions">
+            {slot?.slot_index != null && (
+              <button type="button" className="nr-primary-button" onClick={() => onRemoveFromSlot(player.id)}>
+                {lang === 'en' ? 'Move to reserves' : 'Sposta in riserva'}
+              </button>
+            )}
+            <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player, true)}>
+              <Pencil size={14} />
+              {lang === 'en' ? 'Edit player' : 'Modifica giocatore'}
+            </button>
+            <button type="button" className="nr-secondary-button" onClick={onUploadPhoto}>
+              <Upload size={14} />
+              {lang === 'en' ? 'Upload player photo' : 'Carica foto giocatore'}
+            </button>
+          </div>
 
-              <div className="nr-secondary-actions">
-                <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player)}>
-                  {lang === 'en' ? 'Choose another card' : "Scegli un'altra carta"}
-                </button>
-                <button type="button" className="nr-secondary-button" onClick={() => onOpenBoosters(player)}>
-                  {lang === 'en' ? 'Edit boosters' : 'Modifica boosters'}
-                </button>
-                <button type="button" className="nr-danger-button" onClick={() => onDeletePlayer(player.id)}>
-                  <Trash2 size={14} />
-                  {lang === 'en' ? 'Delete permanently' : 'Elimina definitivamente'}
-                </button>
-              </div>
-            </>
-          ) : (
-            <EnterpriseSection
-              title={lang === 'en' ? 'Reserves list' : 'Elenco riserve'}
-              actions={(
-                <div className="nr-secondary-actions">
-                  <button type="button" className="nr-secondary-button" onClick={() => setView('actions')} disabled={assigning}>
-                    {lang === 'en' ? 'Back to actions' : 'Torna alle azioni'}
-                  </button>
-                  <button
-                    type="button"
-                    className="nr-primary-button"
-                    onClick={() => onRemoveFromSlot(player.id)}
-                    disabled={assigning}
-                  >
-                    {lang === 'en' ? 'Move to reserves now' : 'Sposta subito in riserva'}
-                  </button>
-                </div>
-              )}
-            >
-              <div className="nr-reserve-inline-list">
-                {reserves.length > 0 ? reserves.map((entry) => (
-                  <button
-                    key={entry.id}
-                    type="button"
-                    className="nr-bench-item"
-                    onClick={() => onAssignFromReserve?.(entry)}
-                    disabled={assigning}
-                  >
-                    <div className="nr-bench-item-copy">
-                      <strong>{entry.player_name}</strong>
-                      <span>{entry.position || '-'} · OVR {entry.overall_rating ?? '-'}</span>
-                    </div>
-                    <ChevronRight size={16} />
-                  </button>
-                )) : (
-                  <div className="nr-empty-state">
-                    <span>{lang === 'en' ? 'No reserves available yet.' : 'Nessuna riserva disponibile.'}</span>
-                  </div>
-                )}
-              </div>
-            </EnterpriseSection>
-          )}
+          <div className="nr-secondary-actions">
+            <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player)}>
+              {lang === 'en' ? 'Choose another card' : "Scegli un'altra carta"}
+            </button>
+            <button type="button" className="nr-secondary-button" onClick={() => onOpenBoosters(player)}>
+              {lang === 'en' ? 'Edit boosters' : 'Modifica boosters'}
+            </button>
+            <button type="button" className="nr-danger-button" onClick={() => onDeletePlayer(player.id)}>
+              <Trash2 size={14} />
+              {lang === 'en' ? 'Delete permanently' : 'Elimina definitivamente'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -757,6 +693,34 @@ const DEFAULT_SLOT_POSITIONS = {
   8: { x: 25, y: 34, position: 'SP' },
   9: { x: 50, y: 28, position: 'P' },
   10: { x: 75, y: 34, position: 'SP' }
+}
+
+function normalizeLayoutPayload(layoutPayload, previousLayout = null) {
+  const raw = layoutPayload && typeof layoutPayload === 'object' ? layoutPayload : {}
+  const rawSlots = raw.slot_positions
+  let parsedSlots = {}
+
+  if (rawSlots && typeof rawSlots === 'object') {
+    parsedSlots = rawSlots
+  } else if (typeof rawSlots === 'string') {
+    try {
+      const maybeObject = JSON.parse(rawSlots)
+      if (maybeObject && typeof maybeObject === 'object') {
+        parsedSlots = maybeObject
+      }
+    } catch (_) {
+      parsedSlots = {}
+    }
+  }
+
+  const baseSlots = Object.keys(parsedSlots).length > 0
+    ? parsedSlots
+    : (previousLayout?.slot_positions || DEFAULT_SLOT_POSITIONS)
+
+  return {
+    formation: raw.formation || previousLayout?.formation || '4-3-3',
+    slot_positions: completeSlotPositions(baseSlots)
+  }
 }
 const BOOSTER_PRESETS = [
   { value: 'Finishing', labels: { en: 'Finishing', it: 'Finalizzazione' } },
@@ -1522,15 +1486,13 @@ function PremiumPlayerModal({
         <section className="nr-premium-sections">
           <EnterpriseSection title={lang === 'en' ? 'Player setup' : 'Setup giocatore'}>
             <div className="nr-form-grid">
-              <EnterpriseInput label={lang === 'en' ? 'Player name' : 'Nome'} value={form.player_name} onChange={(value) => setForm((prev) => ({ ...prev, player_name: value }))} />
-              <EnterpriseSelect label={lang === 'en' ? 'Position' : 'Posizione'} value={form.position} onChange={(value) => setForm((prev) => ({ ...prev, position: value }))} options={MANUAL_POSITIONS} />
               <EnterpriseInput label="OVR" value={form.overall_rating} type="number" onChange={(value) => setForm((prev) => ({ ...prev, overall_rating: value }))} />
-              <EnterpriseSelect label={lang === 'en' ? 'Card type' : 'Tipo carta'} value={form.card_type} onChange={(value) => setForm((prev) => ({ ...prev, card_type: value }))} options={MANUAL_CARD_TYPES} />
-              <EnterpriseInput label={lang === 'en' ? 'Role / style' : 'Ruolo / stile'} value={form.role} onChange={(value) => setForm((prev) => ({ ...prev, role: value }))} />
-              <EnterpriseInput label={lang === 'en' ? 'Age' : 'Eta'} value={form.age} type="number" onChange={(value) => setForm((prev) => ({ ...prev, age: value }))} />
-              <EnterpriseInput label={lang === 'en' ? 'Nationality' : 'Nazionalita'} value={form.nationality} onChange={(value) => setForm((prev) => ({ ...prev, nationality: value }))} />
-              <EnterpriseInput label={lang === 'en' ? 'Club name' : 'Club'} value={form.club_name} onChange={(value) => setForm((prev) => ({ ...prev, club_name: value }))} />
             </div>
+            <p className="nr-setup-readonly-note">
+              {lang === 'en'
+                ? 'Base data (name, role, age, club, nationality) is fixed and syncs from catalog/manual source. You can edit only OVR here.'
+                : 'I dati base (nome, ruolo, eta, club, nazionalita) sono fissi e seguono la sorgente catalogo/manuale. Qui puoi modificare solo OVR.'}
+            </p>
           </EnterpriseSection>
 
           <div className="nr-premium-toolbar-row">
@@ -1818,7 +1780,6 @@ export default withAuth(function NuovaRosaLabPage() {
   const [error, setError] = React.useState(null)
   const [toast, setToast] = React.useState(null)
   const [selectedSlot, setSelectedSlot] = React.useState(null)
-  const [selectedReserve, setSelectedReserve] = React.useState(null)
   const [selectedPlayer, setSelectedPlayer] = React.useState(null)
   const [showAssignModal, setShowAssignModal] = React.useState(false)
   const [assigning, setAssigning] = React.useState(false)
@@ -1833,6 +1794,7 @@ export default withAuth(function NuovaRosaLabPage() {
   const [showManualPlayerModal, setShowManualPlayerModal] = React.useState(false)
   const [manualEditorMode, setManualEditorMode] = React.useState('create')
   const [manualEditorPlayer, setManualEditorPlayer] = React.useState(null)
+  const [showPremiumEditorModal, setShowPremiumEditorModal] = React.useState(false)
   const [savingManualEditor, setSavingManualEditor] = React.useState(false)
   const [showManualBoostersModal, setShowManualBoostersModal] = React.useState(false)
   const [manualBoosters, setManualBoosters] = React.useState([])
@@ -1906,7 +1868,7 @@ export default withAuth(function NuovaRosaLabPage() {
           playing_style_name: player.playing_style_id ? stylesLookup[player.playing_style_id] || null : null
         }))
 
-      setLayout(data.layout || null)
+      setLayout((prev) => normalizeLayoutPayload(data?.layout, prev))
       setActiveCoach(data.activeCoach || null)
       setTacticalSettings(data.tacticalSettings || null)
       setTitolari(
@@ -2001,7 +1963,6 @@ export default withAuth(function NuovaRosaLabPage() {
   const openPickerForSlot = React.useCallback((slot) => {
     setShowAssignModal(false)
     setSelectedPlayer(null)
-    setSelectedReserve(null)
     setSelectedSlot(slot)
     setPickerMode('slot')
     setSelectedCatalogCard(null)
@@ -2017,7 +1978,6 @@ export default withAuth(function NuovaRosaLabPage() {
     setSelectedSlot(null)
     setShowAssignModal(false)
     setSelectedPlayer(null)
-    setSelectedReserve(null)
     setPickerMode('reserve')
     setSelectedCatalogCard(null)
     setPickerQuery('')
@@ -2202,7 +2162,6 @@ export default withAuth(function NuovaRosaLabPage() {
 
         await safeJsonResponse(response, t('errorAssigningPlayer'))
         setShowAssignModal(false)
-        setSelectedReserve(null)
         setSelectedPlayer(null)
         closePicker()
         await fetchRoster()
@@ -2304,7 +2263,6 @@ export default withAuth(function NuovaRosaLabPage() {
                 })
                 await safeJsonResponse(retryRes, t('errorRemovalAfterDuplicate'))
                 setSelectedPlayer(null)
-                setSelectedReserve(null)
                 setShowAssignModal(false)
                 setSelectedSlot(null)
                 await fetchRoster()
@@ -2329,7 +2287,6 @@ export default withAuth(function NuovaRosaLabPage() {
       }
       setSelectedPlayer(null)
       setShowAssignModal(false)
-      setSelectedReserve(null)
       setSelectedSlot(null)
       await fetchRoster()
       await refreshDiagnosticAfterSave()
@@ -2370,7 +2327,6 @@ export default withAuth(function NuovaRosaLabPage() {
               })
               await safeJsonResponse(response, t('deleteReserveError'))
               setSelectedPlayer(null)
-              setSelectedReserve(null)
               setShowAssignModal(false)
               setSelectedSlot(null)
               await fetchRoster()
@@ -2424,7 +2380,6 @@ export default withAuth(function NuovaRosaLabPage() {
           })
           await safeJsonResponse(response, t('deleteReserveError'))
           setSelectedPlayer(null)
-          setSelectedReserve(null)
           setShowAssignModal(false)
           setSelectedSlot(null)
           await fetchRoster()
@@ -3034,7 +2989,6 @@ export default withAuth(function NuovaRosaLabPage() {
                       handleSelectReserveForSlot(player)
                     } else {
                       setSelectedSlot(null)
-                      setSelectedReserve(player.id)
                       setSelectedPlayer(player)
                       setShowAssignModal(true)
                     }
@@ -3046,7 +3000,6 @@ export default withAuth(function NuovaRosaLabPage() {
                         handleSelectReserveForSlot(player)
                       } else {
                         setSelectedSlot(null)
-                        setSelectedReserve(player.id)
                         setSelectedPlayer(player)
                         setShowAssignModal(true)
                       }
@@ -3119,23 +3072,13 @@ export default withAuth(function NuovaRosaLabPage() {
       <QuickPlayerPanel
         player={showAssignModal ? selectedPlayer : null}
         slot={selectedSlot}
-        reserves={riserve}
-        assigning={assigning}
-        onAssignFromReserve={handleSelectReserveForSlot}
         onClose={() => {
           setShowAssignModal(false)
           setSelectedSlot(null)
-          setSelectedReserve(null)
           setSelectedPlayer(null)
         }}
         onRemoveFromSlot={handleRemoveFromSlot}
         onDeletePlayer={handleDeletePlayer}
-        onOpenManualEntry={() => {
-          setShowAssignModal(false)
-          setManualEditorMode('create')
-          setManualEditorPlayer(null)
-          setShowManualPlayerModal(true)
-        }}
         onUploadPhoto={handleUploadFallback}
         onOpenBoosters={(player) => {
           setShowAssignModal(false)
@@ -3144,9 +3087,8 @@ export default withAuth(function NuovaRosaLabPage() {
         onOpenReplace={(player, openEditor = false) => {
           if (openEditor) {
             setShowAssignModal(false)
-            setManualEditorMode('edit')
-            setManualEditorPlayer(player)
-            setShowManualPlayerModal(true)
+            setSelectedPlayer(player)
+            setShowPremiumEditorModal(true)
             return
           }
           const slot = player?.slot_index != null ? slots.find((entry) => entry.slot_index === player.slot_index) : null
@@ -3157,6 +3099,44 @@ export default withAuth(function NuovaRosaLabPage() {
           }
         }}
         lang={lang}
+      />
+
+      <PremiumPlayerModal
+        player={showPremiumEditorModal ? selectedPlayer : null}
+        slot={selectedSlot}
+        reserves={riserve}
+        assigning={assigning}
+        onAssignFromReserve={handleSelectReserveForSlot}
+        show={showPremiumEditorModal && !!selectedPlayer}
+        onClose={() => {
+          setShowPremiumEditorModal(false)
+          setSelectedPlayer(null)
+        }}
+        onSave={handlePremiumPlayerSave}
+        saving={savingManualEditor}
+        onRemoveFromSlot={handleRemoveFromSlot}
+        onDeletePlayer={handleDeletePlayer}
+        onOpenManualEntry={() => {
+          setShowPremiumEditorModal(false)
+          setManualEditorMode('create')
+          setManualEditorPlayer(null)
+          setShowManualPlayerModal(true)
+        }}
+        onUploadPhoto={handleUploadFallback}
+        onOpenBoosters={(player) => {
+          setShowPremiumEditorModal(false)
+          openManualBoostersForPlayer(player)
+        }}
+        onOpenReplace={(player) => {
+          const slot = player?.slot_index != null ? slots.find((entry) => entry.slot_index === player.slot_index) : null
+          setShowPremiumEditorModal(false)
+          setSelectedPlayer(null)
+          if (slot) {
+            openPickerForSlot(slot)
+          }
+        }}
+        lang={lang}
+        t={t}
       />
 
       <EnterprisePlayerEditorModal
@@ -3628,12 +3608,12 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-slot-filled {
           display: flex;
-          flex-direction: column;
-          gap: 4px;
-          padding: 5px 6px;
+          align-items: center;
+          justify-content: center;
+          padding: 5px;
           text-align: left;
           touch-action: manipulation;
-          min-height: 58px;
+          min-height: 54px;
           border-radius: 12px;
           background: linear-gradient(180deg, rgba(11, 41, 94, 0.93) 0%, rgba(8, 25, 66, 0.95) 100%);
           box-shadow: 0 6px 18px rgba(0, 212, 255, 0.22), 0 0 14px rgba(8, 145, 178, 0.2);
@@ -3657,35 +3637,45 @@ export default withAuth(function NuovaRosaLabPage() {
           border-radius: 10px;
         }
 
-        .nr-slot-filled-head {
+        .nr-slot-filled-main {
           display: flex;
           align-items: center;
-          justify-content: space-between;
+          justify-content: center;
+          gap: 6px;
         }
 
-        .nr-slot-filled-head span {
-          font-size: 8px;
-          font-weight: 700;
-          color: rgba(255, 255, 255, 0.86);
-          letter-spacing: 0.05em;
+        .nr-slot-avatar-mini {
+          width: 24px;
+          height: 24px;
+          border-radius: 999px;
+          border: 1px solid rgba(255, 255, 255, 0.18);
+          background: rgba(255, 255, 255, 0.08);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          color: rgba(255, 255, 255, 0.85);
+          flex-shrink: 0;
         }
 
-        .nr-slot-filled-head small {
-          font-size: 8px;
+        .nr-slot-avatar-mini img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .nr-slot-role-chip {
+          font-size: 9px;
           font-weight: 700;
           color: #ffffff;
+          letter-spacing: 0.05em;
           border-radius: 999px;
-          border: 1px solid rgba(255, 255, 255, 0.24);
-          background: rgba(255, 255, 255, 0.1);
-          padding: 0 4px;
-          line-height: 1.4;
+          border: 1px solid rgba(255, 255, 255, 0.28);
+          background: rgba(255, 255, 255, 0.12);
+          padding: 1px 7px;
+          line-height: 1.3;
         }
 
-        .nr-slot-filled-copy {
-          min-width: 0;
-        }
-
-        .nr-slot-filled-copy strong,
         .nr-bench-item-copy strong,
         .nr-catalog-card-copy strong {
           font-size: 10px;
@@ -4493,6 +4483,13 @@ export default withAuth(function NuovaRosaLabPage() {
           margin-top: 2px;
         }
 
+        .nr-setup-readonly-note {
+          margin: 10px 0 0;
+          font-size: 12px;
+          line-height: 1.45;
+          color: rgba(255, 255, 255, 0.68);
+        }
+
         .nr-skill-chip-row {
           display: flex;
           gap: 8px;
@@ -4562,6 +4559,12 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         @media (max-width: 768px) {
+          .nr-modal-backdrop {
+            align-items: flex-end;
+            justify-content: stretch;
+            padding: 0;
+          }
+
           .nr-page {
             padding: 10px;
           }
@@ -4621,10 +4624,24 @@ export default withAuth(function NuovaRosaLabPage() {
 
           .nr-modal-shell {
             width: 100%;
-            max-height: calc(100dvh - 72px);
+            max-height: 100dvh;
             border-radius: 18px 18px 0 0;
             align-self: flex-end;
             overflow-y: auto;
+            padding: 12px;
+            padding-bottom: max(132px, calc(env(safe-area-inset-bottom, 0px) + 116px));
+          }
+
+          .nr-quick-shell,
+          .nr-picker-shell,
+          .nr-premium-player-shell {
+            padding-bottom: max(132px, calc(env(safe-area-inset-bottom, 0px) + 116px));
+          }
+
+          .nr-quick-body,
+          .nr-picker-results,
+          .nr-premium-sections {
+            padding-bottom: 8px;
           }
 
           .nr-picker-shell.reserve-mode .nr-picker-body {
@@ -4632,7 +4649,7 @@ export default withAuth(function NuovaRosaLabPage() {
           }
 
           .nr-premium-player-shell {
-            max-height: calc(100dvh - 72px);
+            max-height: 100dvh;
             padding-bottom: max(118px, calc(env(safe-area-inset-bottom, 0px) + 104px));
           }
 
