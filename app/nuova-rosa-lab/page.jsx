@@ -239,6 +239,8 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
   const [dragging, setDragging] = React.useState(false)
   const [dragOffset, setDragOffset] = React.useState({ x: 0, y: 0 })
   const suppressClickForFieldDragRef = React.useRef(false)
+  /** After opening from pointer release (edit mode), skip one synthetic click to avoid double-open on desktop */
+  const skipNextSyntheticCardClickRef = React.useRef(false)
   const slotThumb = React.useMemo(() => player?.photo_url || getPlayerCardImage(player), [player])
 
   React.useEffect(() => {
@@ -283,10 +285,18 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
     }
 
     const onEnd = () => {
+      const hadRealDrag = suppressClickForFieldDragRef.current
       setDragging(false)
       setDragOffset({ x: 0, y: 0 })
-      if (suppressClickForFieldDragRef.current) {
+      if (hadRealDrag) {
         onPositionChange?.(slot.slot_index, lastPosition)
+      } else if (isEditMode) {
+        /*
+         * With `.is-draggable` we use touch-action:none for dragging. Mobile browsers often omit the
+         * synthetic click, so rely on gesture end — and skip one duplicate click on desktop (same tap).
+         */
+        skipNextSyntheticCardClickRef.current = true
+        onClick(player, slot)
       }
       if (isTouch) {
         document.removeEventListener('touchmove', onMove)
@@ -313,6 +323,10 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
       className={`nr-slot-filled ${isEditMode ? 'is-draggable' : ''} ${dragging ? 'is-dragging' : ''}`}
       style={dragging ? { transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)` } : undefined}
       onClick={() => {
+        if (skipNextSyntheticCardClickRef.current) {
+          skipNextSyntheticCardClickRef.current = false
+          return
+        }
         if (suppressClickForFieldDragRef.current) {
           suppressClickForFieldDragRef.current = false
           return
@@ -326,16 +340,25 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
             suppressClickForFieldDragRef.current = false
             return
           }
+          if (skipNextSyntheticCardClickRef.current) {
+            skipNextSyntheticCardClickRef.current = false
+            return
+          }
           onClick(player, slot)
         }
       }}
-      onMouseDown={handlePointerStart}
-      onTouchStart={handlePointerStart}
+      onMouseDown={isEditMode ? handlePointerStart : undefined}
+      onTouchStart={isEditMode ? handlePointerStart : undefined}
     >
       <div className="nr-slot-filled-main">
         <div className="nr-slot-avatar-mini">
           {slotThumb ? (
-            <img src={slotThumb} alt={player.player_name || 'player'} loading="lazy" />
+            <img
+              src={slotThumb}
+              alt={player.player_name || 'player'}
+              loading="lazy"
+              draggable={false}
+            />
           ) : (
             <User size={20} />
           )}
@@ -2967,7 +2990,6 @@ export default withAuth(function NuovaRosaLabPage() {
                     onEmptyClick={openPickerForSlot}
                     onPlayerClick={(player, slotData) => {
                       setSelectedSlot(slotData)
-                      setSelectedReserve(null)
                       setSelectedPlayer(player)
                       setShowAssignModal(true)
                     }}
@@ -3029,7 +3051,7 @@ export default withAuth(function NuovaRosaLabPage() {
                 >
                   <div className="nr-reserve-card-media">
                     {player.photo_url ? (
-                      <img src={player.photo_url} alt={player.player_name} loading="lazy" />
+                      <img src={player.photo_url} alt={player.player_name} loading="lazy" draggable={false} />
                     ) : (
                       <div className="nr-slot-avatar-fallback"><User size={16} /></div>
                     )}
@@ -3688,6 +3710,9 @@ export default withAuth(function NuovaRosaLabPage() {
           object-position: center top;
           transform: scale(1.06);
           transform-origin: center top;
+          -webkit-user-drag: none;
+          user-drag: none;
+          pointer-events: none;
         }
 
         .nr-slot-role-chip {
