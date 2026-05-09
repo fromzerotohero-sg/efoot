@@ -236,9 +236,15 @@ function CompactStatInput({ label, value, onChange }) {
 }
 
 function SlotPlayerCard({ player, slot, onClick, lang, isEditMode = false, onPositionChange }) {
-  const cardImage = getPlayerCardImage(player)
   const [dragging, setDragging] = React.useState(false)
   const [dragOffset, setDragOffset] = React.useState({ x: 0, y: 0 })
+  const displayName = React.useMemo(() => {
+    const raw = player?.player_name || ''
+    if (raw.length <= 12) return raw
+    const parts = raw.split(' ').filter(Boolean)
+    if (parts.length > 1) return `${parts[0]} ${parts[parts.length - 1].charAt(0)}.`
+    return `${raw.slice(0, 10)}...`
+  }, [player?.player_name])
 
   const handlePointerStart = (event) => {
     if (!isEditMode || !player) return
@@ -305,19 +311,17 @@ function SlotPlayerCard({ player, slot, onClick, lang, isEditMode = false, onPos
       onMouseDown={handlePointerStart}
       onTouchStart={handlePointerStart}
     >
-      <div className="nr-slot-filled-media">
-        {cardImage ? (
-          <img src={cardImage} alt={player.player_name} />
-        ) : (
-          <div className="nr-slot-avatar-fallback">
-            <User size={18} />
-          </div>
-        )}
+      <div className="nr-slot-filled-head">
+        <span>{isEditMode ? (slot.position || player.position || '-') : (player.position || slot.position || '-')}</span>
+        <small>3/3</small>
       </div>
       <div className="nr-slot-filled-copy">
-        <strong>{player.player_name}</strong>
-        <span>{isEditMode ? (slot.position || player.position || '-') : (player.position || slot.position || '-')}</span>
-        <em>{player.overall_rating ?? '-'}</em>
+        <strong>{displayName}</strong>
+      </div>
+      <div className="nr-slot-filled-foot">
+        <div className="nr-slot-status-dot" />
+        <div className="nr-slot-status-dot" />
+        <div className="nr-slot-status-dot is-warn" />
       </div>
     </button>
   )
@@ -2701,7 +2705,7 @@ export default withAuth(function NuovaRosaLabPage() {
           <span>{error}</span>
         </section>
       ) : (
-        <div className="nr-main-grid">
+        <div className="nr-main-stack">
           <section className="nr-card">
             <div className="nr-card-head">
               <div>
@@ -2727,6 +2731,19 @@ export default withAuth(function NuovaRosaLabPage() {
             </div>
             <div className="nr-field-shell">
               <div className={`nr-field ${fieldEditMode ? 'is-editing' : ''}`} data-field-container>
+                <div className="nr-field-texture" />
+                <div className="nr-field-dark-vignette" />
+                <div className="nr-field-mid-line" />
+                <div className="nr-field-center-circle" />
+                <div className="nr-field-center-dot" />
+                <div className="nr-field-penalty-top-outer" />
+                <div className="nr-field-penalty-top-inner" />
+                <div className="nr-field-penalty-bottom-outer" />
+                <div className="nr-field-penalty-bottom-inner" />
+                <div className="nr-field-side-left" />
+                <div className="nr-field-side-right" />
+                <div className="nr-field-zone-top" />
+                <div className="nr-field-zone-bottom" />
                 {slots.map((slot) => (
                   <SlotCard
                     key={slot.slot_index}
@@ -2741,44 +2758,54 @@ export default withAuth(function NuovaRosaLabPage() {
                 ))}
               </div>
             </div>
-            <section className="nr-card">
-              <div className="nr-card-head">
-                <div>
-                  <span className="nr-mini-kicker">{t('nuovaRosaReserves')}</span>
-                  <h2>{riserve.length}</h2>
-                </div>
-                <button type="button" className="nr-icon-button" onClick={openPickerForReserve}>
-                  <Plus size={16} />
-                </button>
+          </section>
+
+          <TacticalSettingsPanel
+            titolari={titolari}
+            tacticalSettings={tacticalSettings}
+            onSave={handleSaveTacticalSettings}
+            saving={savingTacticalSettings}
+          />
+
+          <section className="nr-card">
+            <div className="nr-card-head">
+              <div>
+                <span className="nr-mini-kicker">{t('nuovaRosaReserves')}</span>
+                <h2>{riserve.length}</h2>
               </div>
-              <div className="nr-bench-list">
-                {riserve.length > 0 ? riserve.map((player) => (
-                  <button key={player.id} type="button" className="nr-bench-item" onClick={() => setSelectedPlayer(player)}>
-                    <div className="nr-bench-item-copy">
-                      <strong>{player.player_name}</strong>
-                      <span>{player.position || '-'} · OVR {player.overall_rating ?? '-'}</span>
-                    </div>
-                    <ChevronRight size={16} />
-                  </button>
-                )) : (
-                  <div className="nr-empty-state">
-                    <span>{t('nuovaRosaNoReserves')}</span>
+              <button type="button" className="nr-icon-button" onClick={openPickerForReserve}>
+                <Plus size={16} />
+              </button>
+            </div>
+            <div className="nr-reserve-grid">
+              {riserve.length > 0 ? riserve.map((player) => (
+                <button key={player.id} type="button" className="nr-reserve-card" onClick={() => setSelectedPlayer(player)}>
+                  <div className="nr-reserve-card-media">
+                    {player.photo_url ? (
+                      <img src={player.photo_url} alt={player.player_name} loading="lazy" />
+                    ) : (
+                      <div className="nr-slot-avatar-fallback"><User size={16} /></div>
+                    )}
                   </div>
-                )}
-              </div>
-            </section>
+                  <div className="nr-reserve-card-copy">
+                    <strong>{player.player_name}</strong>
+                    <span>{player.position || '-'}</span>
+                  </div>
+                  <div className="nr-reserve-card-ovr">
+                    <small>OVR</small>
+                    <strong>{player.overall_rating ?? '-'}</strong>
+                  </div>
+                  <ChevronRight size={14} />
+                </button>
+              )) : (
+                <div className="nr-empty-state">
+                  <span>{t('nuovaRosaNoReserves')}</span>
+                </div>
+              )}
+            </div>
           </section>
 
-          <section className="nr-side-column">
-            <RosterIntelligencePanel starters={titolari} reserves={riserve} layout={layout} lang={lang} />
-
-            <TacticalSettingsPanel
-              titolari={titolari}
-              tacticalSettings={tacticalSettings}
-              onSave={handleSaveTacticalSettings}
-              saving={savingTacticalSettings}
-            />
-          </section>
+          <RosterIntelligencePanel starters={titolari} reserves={riserve} layout={layout} lang={lang} />
         </div>
       )}
 
@@ -2902,7 +2929,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-hero-card {
-          padding: clamp(20px, 4vw, 30px);
+          padding: clamp(14px, 2.8vw, 22px);
           display: grid;
           grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.8fr);
           gap: 18px;
@@ -2936,7 +2963,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-hero-copy h1 {
-          font-size: clamp(32px, 4vw, 56px);
+          font-size: clamp(24px, 3.2vw, 42px);
           line-height: 0.95;
           letter-spacing: -0.04em;
           text-shadow: 0 0 32px rgba(0, 212, 255, 0.18);
@@ -3041,11 +3068,10 @@ export default withAuth(function NuovaRosaLabPage() {
           padding: 0;
         }
 
-        .nr-main-grid {
-          display: grid;
-          grid-template-columns: minmax(0, 1fr) minmax(320px, 0.74fr);
+        .nr-main-stack {
+          display: flex;
+          flex-direction: column;
           gap: 20px;
-          align-items: start;
         }
 
         .nr-card {
@@ -3065,7 +3091,17 @@ export default withAuth(function NuovaRosaLabPage() {
           border-radius: 16px;
           overflow: hidden;
           border: 1px solid rgba(255, 255, 255, 0.08);
-          background: rgba(6, 10, 24, 0.78);
+          background:
+            linear-gradient(180deg, rgba(5, 8, 21, 0.4) 0%, rgba(10, 14, 39, 0.3) 50%, rgba(5, 8, 21, 0.4) 100%),
+            linear-gradient(90deg, rgba(22, 163, 74, 0.08) 0%, rgba(34, 197, 94, 0.12) 50%, rgba(22, 163, 74, 0.08) 100%),
+            repeating-linear-gradient(
+              0deg,
+              transparent,
+              transparent 2px,
+              rgba(34, 197, 94, 0.05) 2px,
+              rgba(34, 197, 94, 0.05) 4px
+            ),
+            linear-gradient(180deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.15) 50%, rgba(16, 185, 129, 0.12) 100%);
           width: min(100%, 720px);
           min-height: clamp(292px, 39vh, 422px);
           aspect-ratio: 2 / 3;
@@ -3077,9 +3113,7 @@ export default withAuth(function NuovaRosaLabPage() {
           width: 100%;
           height: 100%;
           min-height: inherit;
-          background:
-            radial-gradient(circle at center, rgba(30, 160, 90, 0.14), transparent 55%),
-            linear-gradient(180deg, rgba(22, 106, 56, 0.35), rgba(10, 55, 28, 0.28));
+          background: transparent;
         }
 
         .nr-field.is-editing {
@@ -3087,27 +3121,160 @@ export default withAuth(function NuovaRosaLabPage() {
           outline-offset: -4px;
         }
 
-        .nr-field:before,
-        .nr-field:after {
-          content: '';
+        .nr-field-texture,
+        .nr-field-dark-vignette,
+        .nr-field-mid-line,
+        .nr-field-center-circle,
+        .nr-field-center-dot,
+        .nr-field-penalty-top-outer,
+        .nr-field-penalty-top-inner,
+        .nr-field-penalty-bottom-outer,
+        .nr-field-penalty-bottom-inner,
+        .nr-field-side-left,
+        .nr-field-side-right,
+        .nr-field-zone-top,
+        .nr-field-zone-bottom {
           position: absolute;
-          inset: 24px;
-          border: 1px solid rgba(255, 255, 255, 0.14);
-          border-radius: 18px;
           pointer-events: none;
         }
 
-        .nr-field:after {
-          inset: 50% 24px auto 24px;
-          height: 0;
-          border-radius: 0;
+        .nr-field-texture {
+          inset: 0;
+          background:
+            repeating-linear-gradient(
+              45deg,
+              transparent,
+              transparent 10px,
+              rgba(34, 197, 94, 0.015) 10px,
+              rgba(34, 197, 94, 0.015) 20px
+            );
+          opacity: 0.6;
+        }
+
+        .nr-field-dark-vignette {
+          inset: 0;
+          background:
+            radial-gradient(ellipse at center, transparent 0%, rgba(5, 8, 21, 0.3) 100%),
+            linear-gradient(180deg, rgba(5, 8, 21, 0.2) 0%, transparent 20%, transparent 80%, rgba(5, 8, 21, 0.2) 100%);
+        }
+
+        .nr-field-mid-line {
+          top: 50%;
+          left: 0;
+          right: 0;
+          height: 3px;
+          background: rgba(255, 255, 255, 0.5);
+          transform: translateY(-50%);
+          box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+        }
+
+        .nr-field-center-circle {
+          top: 50%;
+          left: 50%;
+          width: 120px;
+          height: 120px;
+          border: 3px solid rgba(255, 255, 255, 0.4);
+          border-radius: 50%;
+          transform: translate(-50%, -50%);
+          box-shadow: 0 0 16px rgba(255, 255, 255, 0.3);
+        }
+
+        .nr-field-center-dot {
+          top: 50%;
+          left: 50%;
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          transform: translate(-50%, -50%);
+          background: rgba(255, 255, 255, 0.5);
+          box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+        }
+
+        .nr-field-penalty-top-outer {
+          top: 8%;
+          left: 10%;
+          right: 10%;
+          height: 18%;
+          border: 3px solid rgba(255, 255, 255, 0.35);
+          border-bottom: none;
+          border-radius: 12px 12px 0 0;
+          box-shadow: 0 -2px 10px rgba(255, 255, 255, 0.2);
+        }
+
+        .nr-field-penalty-top-inner {
+          top: 8%;
+          left: 20%;
+          right: 20%;
+          height: 8%;
+          border: 3px solid rgba(255, 255, 255, 0.35);
+          border-bottom: none;
+          border-radius: 8px 8px 0 0;
+          box-shadow: 0 -2px 8px rgba(255, 255, 255, 0.2);
+        }
+
+        .nr-field-penalty-bottom-outer {
+          bottom: 8%;
+          left: 10%;
+          right: 10%;
+          height: 18%;
+          border: 3px solid rgba(255, 255, 255, 0.35);
+          border-top: none;
+          border-radius: 0 0 12px 12px;
+          box-shadow: 0 2px 10px rgba(255, 255, 255, 0.2);
+        }
+
+        .nr-field-penalty-bottom-inner {
+          bottom: 8%;
+          left: 20%;
+          right: 20%;
+          height: 8%;
+          border: 3px solid rgba(255, 255, 255, 0.35);
+          border-top: none;
+          border-radius: 0 0 8px 8px;
+          box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2);
+        }
+
+        .nr-field-side-left {
+          top: 0;
+          bottom: 0;
+          left: 5%;
+          width: 2px;
+          background: rgba(255, 255, 255, 0.4);
+          box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+        }
+
+        .nr-field-side-right {
+          top: 0;
+          bottom: 0;
+          right: 5%;
+          width: 2px;
+          background: rgba(255, 255, 255, 0.4);
+          box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+        }
+
+        .nr-field-zone-top {
+          top: 25%;
+          left: 5%;
+          right: 5%;
+          height: 1px;
+          background: rgba(255, 255, 255, 0.25);
+          box-shadow: 0 0 6px rgba(255, 255, 255, 0.15);
+        }
+
+        .nr-field-zone-bottom {
+          top: 75%;
+          left: 5%;
+          right: 5%;
+          height: 1px;
+          background: rgba(255, 255, 255, 0.25);
+          box-shadow: 0 0 6px rgba(255, 255, 255, 0.15);
         }
 
         .nr-slot-card {
           position: absolute;
           transform: translate(-50%, -50%);
-          width: clamp(78px, 9.2vw, 116px);
-          max-width: 116px;
+          width: clamp(76px, 8.6vw, 108px);
+          max-width: 108px;
         }
 
         .nr-slot-empty,
@@ -3133,12 +3300,16 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-slot-filled {
-          display: grid;
-          grid-template-columns: 34px minmax(0, 1fr);
-          gap: 8px;
-          padding: 6px;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          padding: 5px 6px;
           text-align: left;
           touch-action: manipulation;
+          min-height: 58px;
+          border-radius: 12px;
+          background: linear-gradient(180deg, rgba(11, 41, 94, 0.93) 0%, rgba(8, 25, 66, 0.95) 100%);
+          box-shadow: 0 6px 18px rgba(0, 212, 255, 0.22), 0 0 14px rgba(8, 145, 178, 0.2);
         }
 
         .nr-slot-filled.is-draggable {
@@ -3151,7 +3322,6 @@ export default withAuth(function NuovaRosaLabPage() {
           z-index: 10;
         }
 
-        .nr-slot-filled-media img,
         .nr-picker-detail-hero img,
         .nr-catalog-card-media img {
           width: 100%;
@@ -3160,27 +3330,60 @@ export default withAuth(function NuovaRosaLabPage() {
           border-radius: 10px;
         }
 
-        .nr-slot-filled-media {
-          width: 34px;
-          height: 46px;
+        .nr-slot-filled-head,
+        .nr-slot-filled-foot {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .nr-slot-filled-head span {
+          font-size: 8px;
+          font-weight: 700;
+          color: rgba(255, 255, 255, 0.86);
+          letter-spacing: 0.05em;
+        }
+
+        .nr-slot-filled-head small {
+          font-size: 8px;
+          font-weight: 700;
+          color: #ffffff;
+          border-radius: 999px;
+          border: 1px solid rgba(34, 197, 94, 0.6);
+          background: rgba(34, 197, 94, 0.2);
+          padding: 0 4px;
+          line-height: 1.4;
         }
 
         .nr-slot-filled-copy {
-          display: flex;
-          flex-direction: column;
-          gap: 3px;
           min-width: 0;
         }
 
         .nr-slot-filled-copy strong,
         .nr-bench-item-copy strong,
         .nr-catalog-card-copy strong {
-          font-size: 11px;
-          line-height: 1.2;
+          font-size: 10px;
+          line-height: 1.1;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
-        .nr-slot-filled-copy span,
-        .nr-slot-filled-copy em,
+        .nr-slot-status-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          border: 1px solid rgba(34, 197, 94, 0.6);
+          background: rgba(34, 197, 94, 0.2);
+          box-shadow: 0 0 6px rgba(34, 197, 94, 0.3);
+        }
+
+        .nr-slot-status-dot.is-warn {
+          border-color: rgba(239, 68, 68, 0.6);
+          background: rgba(239, 68, 68, 0.22);
+          box-shadow: 0 0 6px rgba(239, 68, 68, 0.28);
+        }
+
         .nr-bench-item-copy span,
         .nr-catalog-card-copy p,
         .nr-catalog-card-meta {
@@ -3189,17 +3392,90 @@ export default withAuth(function NuovaRosaLabPage() {
           font-style: normal;
         }
 
-        .nr-side-column {
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-        }
-
         .nr-field-actions {
           display: flex;
           gap: 8px;
           flex-wrap: wrap;
           justify-content: flex-end;
+        }
+
+        .nr-reserve-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(clamp(150px, 18vw, 200px), 1fr));
+          gap: clamp(12px, 1.5vw, 16px);
+        }
+
+        .nr-reserve-card {
+          border-radius: 14px;
+          border: 1px solid rgba(0, 212, 255, 0.2);
+          background: rgba(9, 14, 31, 0.92);
+          color: #fff;
+          display: grid;
+          grid-template-columns: 40px minmax(0, 1fr) auto auto;
+          gap: 8px;
+          align-items: center;
+          text-align: left;
+          width: 100%;
+          padding: 8px;
+          cursor: pointer;
+          transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
+        }
+
+        .nr-reserve-card:hover {
+          transform: translateY(-1px);
+          border-color: rgba(0, 212, 255, 0.45);
+          background: rgba(10, 20, 42, 0.95);
+        }
+
+        .nr-reserve-card-media {
+          width: 40px;
+          height: 54px;
+        }
+
+        .nr-reserve-card-media img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 9px;
+        }
+
+        .nr-reserve-card-copy {
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .nr-reserve-card-copy strong {
+          font-size: 11px;
+          line-height: 1.2;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .nr-reserve-card-copy span {
+          font-size: 10px;
+          color: rgba(255, 255, 255, 0.75);
+        }
+
+        .nr-reserve-card-ovr {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          line-height: 1;
+        }
+
+        .nr-reserve-card-ovr small {
+          font-size: 8px;
+          color: rgba(255, 255, 255, 0.6);
+          letter-spacing: 0.06em;
+        }
+
+        .nr-reserve-card-ovr strong {
+          font-size: 13px;
+          color: #fcd34d;
+          text-shadow: 0 0 8px rgba(252, 211, 77, 0.25);
         }
 
         .nr-bench-list,
@@ -3906,7 +4182,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         @media (max-width: 1100px) {
-          .nr-main-grid,
+          .nr-main-stack,
           .nr-hero-card,
           .nr-picker-body,
           .nr-premium-player-layout,
@@ -3955,7 +4231,7 @@ export default withAuth(function NuovaRosaLabPage() {
           }
 
           .nr-slot-card {
-            width: min(106px, 27vw);
+            width: min(98px, 25vw);
           }
 
           .nr-stats-grid,
@@ -4040,6 +4316,10 @@ export default withAuth(function NuovaRosaLabPage() {
 
           .nr-booster-level-buttons {
             grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .nr-reserve-grid {
+            grid-template-columns: 1fr;
           }
 
           .nr-toast {
