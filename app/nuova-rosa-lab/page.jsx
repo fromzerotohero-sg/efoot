@@ -233,15 +233,23 @@ function CompactStatInput({ label, value, onChange }) {
   )
 }
 
+const FIELD_SLOT_DRAG_THRESHOLD_PX = 10
+
 function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = false, onPositionChange }) {
   const [dragging, setDragging] = React.useState(false)
   const [dragOffset, setDragOffset] = React.useState({ x: 0, y: 0 })
+  const suppressClickForFieldDragRef = React.useRef(false)
   const slotThumb = React.useMemo(() => player?.photo_url || getPlayerCardImage(player), [player])
+
+  React.useEffect(() => {
+    if (!isEditMode) suppressClickForFieldDragRef.current = false
+  }, [isEditMode])
 
   const handlePointerStart = (event) => {
     if (!isEditMode || !player) return
     if (event.target instanceof HTMLElement && event.target.closest('.nr-slot-remove')) return
     event.stopPropagation()
+    suppressClickForFieldDragRef.current = false
     const isTouch = event.type.startsWith('touch')
     const container = event.currentTarget.closest('[data-field-container]')
     if (!container) return
@@ -259,6 +267,9 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
       const currentY = moveIsTouch ? moveEvent.touches[0].clientY : moveEvent.clientY
       const deltaX = currentX - startX
       const deltaY = currentY - startY
+      if (deltaX * deltaX + deltaY * deltaY > FIELD_SLOT_DRAG_THRESHOLD_PX * FIELD_SLOT_DRAG_THRESHOLD_PX) {
+        suppressClickForFieldDragRef.current = true
+      }
       let nextX = clampPercent(startSlotX + ((currentX - startX) / rect.width) * 100)
       let nextY = clampPercent(startSlotY + ((currentY - startY) / rect.height) * 100)
       if (slot.slot_index === 0) {
@@ -274,7 +285,9 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
     const onEnd = () => {
       setDragging(false)
       setDragOffset({ x: 0, y: 0 })
-      onPositionChange?.(slot.slot_index, lastPosition)
+      if (suppressClickForFieldDragRef.current) {
+        onPositionChange?.(slot.slot_index, lastPosition)
+      }
       if (isTouch) {
         document.removeEventListener('touchmove', onMove)
         document.removeEventListener('touchend', onEnd)
@@ -300,11 +313,19 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
       className={`nr-slot-filled ${isEditMode ? 'is-draggable' : ''} ${dragging ? 'is-dragging' : ''}`}
       style={dragging ? { transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)` } : undefined}
       onClick={() => {
-        if (!isEditMode) onClick(player, slot)
+        if (suppressClickForFieldDragRef.current) {
+          suppressClickForFieldDragRef.current = false
+          return
+        }
+        onClick(player, slot)
       }}
       onKeyDown={(event) => {
-        if (!isEditMode && (event.key === 'Enter' || event.key === ' ')) {
+        if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault()
+          if (suppressClickForFieldDragRef.current) {
+            suppressClickForFieldDragRef.current = false
+            return
+          }
           onClick(player, slot)
         }
       }}
@@ -316,7 +337,7 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
           {slotThumb ? (
             <img src={slotThumb} alt={player.player_name || 'player'} loading="lazy" />
           ) : (
-            <User size={14} />
+            <User size={20} />
           )}
         </div>
         <span className="nr-slot-role-chip">{isEditMode ? (slot.position || player.position || '-') : (player.position || slot.position || '-')}</span>
@@ -3610,10 +3631,10 @@ export default withAuth(function NuovaRosaLabPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 5px;
+          padding: 4px 5px;
           text-align: left;
           touch-action: manipulation;
-          min-height: 54px;
+          min-height: 58px;
           border-radius: 12px;
           background: linear-gradient(180deg, rgba(11, 41, 94, 0.93) 0%, rgba(8, 25, 66, 0.95) 100%);
           box-shadow: 0 6px 18px rgba(0, 212, 255, 0.22), 0 0 14px rgba(8, 145, 178, 0.2);
@@ -3641,15 +3662,17 @@ export default withAuth(function NuovaRosaLabPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 6px;
+          gap: 4px;
+          min-width: 0;
+          flex: 1;
         }
 
         .nr-slot-avatar-mini {
-          width: 24px;
-          height: 24px;
+          width: clamp(36px, 4.6vw, 46px);
+          height: clamp(36px, 4.6vw, 46px);
           border-radius: 999px;
-          border: 1px solid rgba(255, 255, 255, 0.18);
-          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.22);
+          background: rgba(255, 255, 255, 0.1);
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -3662,6 +3685,9 @@ export default withAuth(function NuovaRosaLabPage() {
           width: 100%;
           height: 100%;
           object-fit: cover;
+          object-position: center top;
+          transform: scale(1.06);
+          transform-origin: center top;
         }
 
         .nr-slot-role-chip {
