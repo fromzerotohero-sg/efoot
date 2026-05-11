@@ -38,19 +38,13 @@ function slotCompatibility(slotPosition = '', cardPosition = '') {
   return compatible.includes(card) ? 'adaptable' : 'out_of_role'
 }
 
-function buildOrderScore(slotPosition, card) {
-  const compatibility = slotCompatibility(slotPosition, card?.position)
+function buildOrderScore(card) {
   const overall =
     Number(card?.overall_level_1) ||
     Number(card?.overall_max_level) ||
     0
 
-  const compatibilityScore =
-    compatibility === 'perfect' ? 3000 :
-    compatibility === 'adaptable' ? 2000 :
-    compatibility === 'out_of_role' ? 1000 : 0
-
-  return compatibilityScore + overall
+  return overall
 }
 
 function normalizeResult(row, slotPosition) {
@@ -113,7 +107,7 @@ export async function GET(req) {
     const slotPosition = toText(searchParams.get('slot_position')).toUpperCase()
     const cardType = toText(searchParams.get('card_type'))
     const limitRaw = Number(searchParams.get('limit') || 24)
-    const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(limitRaw, 60)) : 24
+    const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(limitRaw, 100)) : 24
 
     let query = supabase
       .from('player_catalog')
@@ -144,7 +138,7 @@ export async function GET(req) {
       .eq('catalog_ready', true)
       .eq('needs_review', false)
       .order('overall_level_1', { ascending: false, nullsFirst: false })
-      .limit(Math.max(limit * 3, 30))
+      .limit(Math.max(limit * 4, 60))
 
     if (cardType) {
       query = query.eq('card_type', cardType)
@@ -158,9 +152,6 @@ export async function GET(req) {
         `playing_style.ilike.%${q}%`,
         `pack_name.ilike.%${q}%`
       ].join(','))
-    } else if (slotPosition) {
-      const candidates = SLOT_COMPATIBILITY[slotPosition] || [slotPosition]
-      query = query.in('position', candidates)
     }
 
     const { data, error } = await query
@@ -172,14 +163,15 @@ export async function GET(req) {
 
     const normalized = (data || []).map((row) => normalizeResult(row, slotPosition))
     const sorted = normalized
-      .sort((a, b) => buildOrderScore(slotPosition, b) - buildOrderScore(slotPosition, a))
+      .sort((a, b) => {
+        const scoreDiff = buildOrderScore(b) - buildOrderScore(a)
+        if (scoreDiff !== 0) return scoreDiff
+        return String(a.player_name || '').localeCompare(String(b.player_name || ''))
+      })
       .slice(0, limit)
-
-    const suggested = sorted.filter((row) => row.compatibility !== 'out_of_role').slice(0, Math.min(8, limit))
 
     return NextResponse.json({
       results: sorted,
-      suggested,
       total: sorted.length
     })
   } catch (error) {

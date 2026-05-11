@@ -512,7 +512,6 @@ function CatalogPickerModal({
   searchQuery,
   onSearchChange,
   loading,
-  suggested,
   results,
   reserves,
   selectedCard,
@@ -526,10 +525,12 @@ function CatalogPickerModal({
   const isReserveMode = mode === 'reserve'
   const slotPosition = isReserveMode ? '' : slot?.position
   const [slotFlow, setSlotFlow] = React.useState(isReserveMode ? 'catalog' : 'choice')
+  const [catalogFilter, setCatalogFilter] = React.useState('all')
 
   React.useEffect(() => {
     if (!show) return
     setSlotFlow(isReserveMode ? 'catalog' : 'choice')
+    setCatalogFilter('all')
   }, [show, isReserveMode, slot?.slot_index])
 
   if (!show) return null
@@ -538,8 +539,17 @@ function CatalogPickerModal({
   const showChoice = !isReserveMode && slotFlow === 'choice'
   const showReserves = !isReserveMode && slotFlow === 'reserves'
   const showCatalog = isReserveMode || slotFlow === 'catalog'
+  const catalogFilters = [
+    { id: 'all', label: lang === 'en' ? 'All' : 'Tutti' },
+    { id: 'perfect', label: lang === 'en' ? 'Exact role' : 'Ruolo esatto' },
+    { id: 'adaptable', label: lang === 'en' ? 'Compatible' : 'Compatibili' },
+    { id: 'out_of_role', label: lang === 'en' ? 'Out of role' : 'Fuori ruolo' }
+  ]
+  const visibleResults = !isReserveMode && catalogFilter !== 'all'
+    ? results.filter((card) => getSlotCompatibility(slotPosition, card.position) === catalogFilter)
+    : results
   const title = isReserveMode
-    ? (lang === 'en' ? 'Add reserve from catalog' : 'Aggiungi riserva da catalogo')
+    ? (lang === 'en' ? 'Add reserve' : 'Aggiungi riserva')
     : showChoice
       ? `${lang === 'en' ? 'Add player in' : 'Aggiungi giocatore in'} ${slotPosition}`
       : showReserves
@@ -547,8 +557,8 @@ function CatalogPickerModal({
         : `${lang === 'en' ? 'Choose from catalog for' : 'Scegli dal catalogo per'} ${slotPosition}`
   const description = isReserveMode
     ? (lang === 'en'
-        ? 'Search the official card catalog and save the selected player directly as a reserve.'
-        : 'Cerca nel catalogo ufficiale e salva il giocatore selezionato direttamente tra le riserve.')
+        ? 'Search the official catalog or upload photos if the player is not available.'
+        : 'Cerca nel catalogo ufficiale oppure carica foto se il giocatore non e disponibile.')
     : showChoice
       ? (lang === 'en'
           ? 'First choose the source. Existing reserves and new players are separate flows.'
@@ -558,8 +568,8 @@ function CatalogPickerModal({
             ? 'Pick one player already in your reserves. The slot will be filled immediately.'
             : 'Scegli un giocatore gia presente tra le riserve. Lo slot verra riempito subito.')
         : (lang === 'en'
-            ? 'Search the official catalog. If the player is not available, use photo upload.'
-            : 'Cerca nel catalogo ufficiale. Se il giocatore non c e, usa il caricamento foto.')
+            ? 'Search freely in the official catalog. The role badge is only informational.'
+            : 'Cerca liberamente nel catalogo ufficiale. Il badge ruolo e solo informativo.')
 
   const goBackToChoice = () => {
     onSelectCard(null)
@@ -584,16 +594,23 @@ function CatalogPickerModal({
 
         {showChoice && (
           <div className="nr-picker-choice-panel">
-            <button type="button" className="nr-picker-choice-card primary" onClick={() => setSlotFlow('reserves')}>
+            <button
+              type="button"
+              className={`nr-picker-choice-card ${reserves.length > 0 ? 'primary' : ''}`}
+              onClick={() => setSlotFlow('reserves')}
+              disabled={reserves.length === 0}
+            >
               <span className="nr-choice-icon"><User size={18} /></span>
               <div>
-                <strong>{lang === 'en' ? 'Use a reserve' : 'Usa una riserva'}</strong>
-                <p>{lang === 'en' ? `${reserves.length} players already in your bench.` : `${reserves.length} giocatori gia in panchina.`}</p>
+                <strong>{reserves.length > 0 ? (lang === 'en' ? 'Use a reserve' : 'Usa una riserva') : (lang === 'en' ? 'No reserves available' : 'Nessuna riserva disponibile')}</strong>
+                <p>{reserves.length > 0
+                  ? (lang === 'en' ? `${reserves.length} players already in your bench.` : `${reserves.length} giocatori gia in panchina.`)
+                  : (lang === 'en' ? 'Add a new player from catalog or photo instead.' : 'Aggiungi un nuovo giocatore da catalogo o foto.')}</p>
               </div>
               <ChevronRight size={18} />
             </button>
 
-            <button type="button" className="nr-picker-choice-card" onClick={() => setSlotFlow('catalog')}>
+            <button type="button" className={`nr-picker-choice-card ${reserves.length === 0 ? 'primary' : ''}`} onClick={() => setSlotFlow('catalog')}>
               <span className="nr-choice-icon"><Search size={18} /></span>
               <div>
                 <strong>{lang === 'en' ? 'Add new player' : 'Aggiungi nuovo'}</strong>
@@ -636,6 +653,20 @@ function CatalogPickerModal({
                   placeholder={lang === 'en' ? 'Search player, role, or card type' : 'Cerca giocatore, ruolo o tipo carta'}
                 />
               </label>
+              {!isReserveMode && (
+                <div className="nr-filter-pills" aria-label={lang === 'en' ? 'Catalog filters' : 'Filtri catalogo'}>
+                  {catalogFilters.map((filter) => (
+                    <button
+                      key={filter.id}
+                      type="button"
+                      className={catalogFilter === filter.id ? 'active' : ''}
+                      onClick={() => setCatalogFilter(filter.id)}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </>
         )}
@@ -657,41 +688,15 @@ function CatalogPickerModal({
         {showCatalog && (
           <div className="nr-picker-body">
             <div className="nr-picker-results">
-              {!isReserveMode && <section>
-              <div className="nr-section-head">
-                <h3>{lang === 'en' ? 'Suggested for this slot' : 'Suggeriti per questo slot'}</h3>
-              </div>
-              <div className="nr-catalog-list">
-                {loading ? (
-                  <div className="nr-empty-state">{lang === 'en' ? 'Loading...' : 'Caricamento...'}</div>
-                ) : suggested.length > 0 ? (
-                  suggested.map((card) => (
-                    <CatalogCard
-                      key={card.id}
-                      card={card}
-                      slotPosition={slotPosition}
-                      lang={lang}
-                      onSelect={onSelectCard}
-                      selected={selectedCard?.id === card.id}
-                    />
-                  ))
-                ) : (
-                  <div className="nr-empty-state">
-                    {lang === 'en' ? 'No suggested cards found for this slot.' : 'Nessuna carta suggerita trovata per questo slot.'}
-                  </div>
-                )}
-              </div>
-            </section>}
-
               <section>
               <div className="nr-section-head">
-                <h3>{isReserveMode ? (lang === 'en' ? 'Catalog cards' : 'Carte catalogo') : (lang === 'en' ? 'All results' : 'Tutti i risultati')}</h3>
+                <h3>{isReserveMode ? (lang === 'en' ? 'Catalog cards' : 'Carte catalogo') : (lang === 'en' ? 'Catalog results' : 'Risultati catalogo')}</h3>
               </div>
               <div className="nr-catalog-list">
                 {loading ? (
                   <div className="nr-empty-state">{lang === 'en' ? 'Loading...' : 'Caricamento...'}</div>
-                ) : results.length > 0 ? (
-                  results.map((card) => (
+                ) : visibleResults.length > 0 ? (
+                  visibleResults.map((card) => (
                     <CatalogCard
                       key={card.id}
                       card={card}
@@ -703,7 +708,7 @@ function CatalogPickerModal({
                   ))
                 ) : (
                   <div className="nr-empty-state">
-                    {lang === 'en' ? 'No cards found with these filters.' : 'Nessuna carta trovata con questi filtri.'}
+                    {lang === 'en' ? 'No cards found with this search or filter.' : 'Nessuna carta trovata con questa ricerca o filtro.'}
                   </div>
                 )}
               </div>
@@ -842,9 +847,9 @@ function PhotoUploadModal({
     skills: lang === 'en' ? 'Boosters photo' : 'Foto booster'
   }
   const descByKey = {
-    card: lang === 'en' ? 'Main player card and visible stats.' : 'Carta principale e statistiche visibili.',
-    stats: lang === 'en' ? 'Use it to complete player skills.' : 'Usala per completare le abilita.',
-    skills: lang === 'en' ? 'Use it only if the card has boosters.' : 'Usala solo se la carta ha booster.'
+    card: lang === 'en' ? 'Needed to create the player and read visible stats.' : 'Necessaria per creare il giocatore e leggere le statistiche visibili.',
+    stats: lang === 'en' ? 'Recommended to complete player skills.' : 'Consigliata per completare le abilita.',
+    skills: lang === 'en' ? 'Only upload it if this player has boosters.' : 'Caricala solo se questo giocatore ha booster.'
   }
   const imageTypes = PHOTO_TYPE_KEYS.map((key) => ({
     ...getPhotoTypeConfig(key),
@@ -951,7 +956,7 @@ function PhotoUploadModal({
         <PhotoUploadExamples lang={lang} />
 
         <div className="nr-photo-upload-grid">
-          {imageTypes.map(({ key, label, description, color, bgColor, borderColor, required }) => {
+          {imageTypes.map(({ key, label, description, color, bgColor, borderColor }) => {
             const image = getImageForType(key)
             return (
               <section
@@ -970,7 +975,11 @@ function PhotoUploadModal({
                   </div>
                   <span>{image
                     ? (lang === 'en' ? 'Ready to extract' : 'Da estrarre')
-                    : required ? (lang === 'en' ? 'Recommended' : 'Consigliata') : (lang === 'en' ? 'Optional' : 'Opzionale')}</span>
+                    : key === 'card'
+                      ? (lang === 'en' ? 'Needed' : 'Necessaria')
+                      : key === 'stats'
+                        ? (lang === 'en' ? 'Recommended' : 'Consigliata')
+                        : (lang === 'en' ? 'Only if present' : 'Solo se presente')}</span>
                 </div>
 
                 {image ? (
@@ -1176,6 +1185,7 @@ function QuickPlayerPanel({
   const cardImage = getPlayerCardImage(player)
   const profileCompletion = getPhotoProfileCompletion(player, lang)
   const missingLabels = profileCompletion.missing.map((section) => section.label).join(', ')
+  const onlyBoosterMissing = profileCompletion.missing.length === 1 && profileCompletion.missing[0]?.key === 'boosters'
 
   return (
     <div className="nr-modal-backdrop" onClick={onClose}>
@@ -1211,16 +1221,24 @@ function QuickPlayerPanel({
             <div className="nr-complete-photo-callout">
               <AlertTriangle size={16} />
               <div>
-                <strong>{lang === 'en' ? 'Profile not complete' : 'Profilo non completo'}</strong>
+                <strong>{onlyBoosterMissing
+                  ? (lang === 'en' ? 'Booster photo not added' : 'Foto booster non aggiunta')
+                  : (lang === 'en' ? 'Profile to complete' : 'Profilo da completare')}</strong>
                 <p>
-                  {lang === 'en'
-                    ? `Missing ${missingLabels}. Add only the missing screenshots without replacing this player.`
-                    : `Mancano ${missingLabels}. Aggiungi solo le schermate mancanti senza sostituire questo giocatore.`}
+                  {onlyBoosterMissing
+                    ? (lang === 'en'
+                      ? 'Add it only if this player really has boosters. Otherwise you can ignore this.'
+                      : 'Aggiungila solo se questo giocatore ha davvero booster. Altrimenti puoi ignorarlo.')
+                    : (lang === 'en'
+                      ? `Missing ${missingLabels}. Add only the missing screenshots without replacing this player.`
+                      : `Mancano ${missingLabels}. Aggiungi solo le schermate mancanti senza sostituire questo giocatore.`)}
                 </p>
               </div>
               <button type="button" className="nr-primary-button" onClick={() => onCompletePhotoProfile(player, slot)}>
                 <Upload size={14} />
-                {lang === 'en' ? 'Complete with photos' : 'Completa con foto'}
+                {onlyBoosterMissing
+                  ? (lang === 'en' ? 'Add booster photo' : 'Aggiungi foto booster')
+                  : (lang === 'en' ? 'Complete with photos' : 'Completa con foto')}
               </button>
             </div>
           )}
@@ -1230,9 +1248,11 @@ function QuickPlayerPanel({
               <Pencil size={14} />
               {lang === 'en' ? 'Edit player' : 'Modifica giocatore'}
             </button>
-            <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player)}>
-              {lang === 'en' ? 'Replace player' : 'Sostituisci giocatore'}
-            </button>
+            {slot?.slot_index != null && (
+              <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player)}>
+                {lang === 'en' ? 'Replace from catalog' : 'Sostituisci da catalogo'}
+              </button>
+            )}
             {slot?.slot_index != null && (
               <button type="button" className="nr-secondary-button" onClick={() => onRemoveFromSlot(player.id)}>
                 {lang === 'en' ? 'Move to reserves' : 'Sposta in riserva'}
@@ -1881,13 +1901,15 @@ function PremiumPlayerModal({
 
           <div className="nr-premium-toolbar-row">
             <div className="nr-secondary-actions">
-              <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player)}>
-                {lang === 'en' ? 'Replace player' : 'Sostituisci giocatore'}
-              </button>
               {player.slot_index !== null && player.slot_index !== undefined && (
-                <button type="button" className="nr-secondary-button" onClick={() => onRemoveFromSlot(player.id)}>
-                  {lang === 'en' ? 'Move to reserves' : 'Sposta in riserva'}
-                </button>
+                <>
+                  <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player)}>
+                    {lang === 'en' ? 'Replace from catalog' : 'Sostituisci da catalogo'}
+                  </button>
+                  <button type="button" className="nr-secondary-button" onClick={() => onRemoveFromSlot(player.id)}>
+                    {lang === 'en' ? 'Move to reserves' : 'Sposta in riserva'}
+                  </button>
+                </>
               )}
             </div>
             <div className="nr-danger-zone">
@@ -2139,7 +2161,6 @@ export default withAuth(function NuovaRosaLabPage() {
   const [pickerLoading, setPickerLoading] = React.useState(false)
   const [pickerQuery, setPickerQuery] = React.useState('')
   const [pickerResults, setPickerResults] = React.useState([])
-  const [pickerSuggested, setPickerSuggested] = React.useState([])
   const [selectedCatalogCard, setSelectedCatalogCard] = React.useState(null)
   const [confirmModal, setConfirmModal] = React.useState(null)
   const [showPremiumEditorModal, setShowPremiumEditorModal] = React.useState(false)
@@ -2281,7 +2302,7 @@ export default withAuth(function NuovaRosaLabPage() {
 
       const params = new URLSearchParams({
         q: query,
-        limit: '24'
+        limit: '60'
       })
       if (mode !== 'reserve') {
         params.set('slot_position', String(slot?.position || ''))
@@ -2294,12 +2315,10 @@ export default withAuth(function NuovaRosaLabPage() {
       })
       const data = await safeJsonResponse(response, 'Catalog load failed')
       setPickerResults(Array.isArray(data.results) ? data.results : [])
-      setPickerSuggested(Array.isArray(data.suggested) ? data.suggested : [])
     } catch (err) {
       console.error('[NuovaRosaLab] catalog error:', err)
       showToast(lang === 'en' ? 'Unable to load the catalog.' : 'Impossibile caricare il catalogo.', 'error')
       setPickerResults([])
-      setPickerSuggested([])
     } finally {
       setPickerLoading(false)
     }
@@ -3710,7 +3729,6 @@ export default withAuth(function NuovaRosaLabPage() {
         searchQuery={pickerQuery}
         onSearchChange={setPickerQuery}
         loading={pickerLoading}
-        suggested={pickerSuggested}
         results={pickerResults}
         reserves={riserve}
         selectedCard={selectedCatalogCard}
@@ -4729,6 +4747,20 @@ export default withAuth(function NuovaRosaLabPage() {
           background: rgba(0, 212, 255, 0.08);
         }
 
+        .nr-picker-choice-card:disabled {
+          opacity: 0.55;
+          cursor: not-allowed;
+          transform: none;
+          border-color: rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.025);
+        }
+
+        .nr-picker-choice-card:disabled:hover {
+          transform: none;
+          border-color: rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.025);
+        }
+
         .nr-picker-choice-card strong {
           display: block;
           margin-bottom: 6px;
@@ -5155,6 +5187,13 @@ export default withAuth(function NuovaRosaLabPage() {
           align-items: flex-start;
         }
 
+        .nr-picker-toolbar {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          margin-bottom: 14px;
+        }
+
         .nr-search-input {
           width: 100%;
           display: flex;
@@ -5173,6 +5212,31 @@ export default withAuth(function NuovaRosaLabPage() {
           background: transparent;
           color: #fff;
           font-size: 14px;
+        }
+
+        .nr-filter-pills {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        .nr-filter-pills button {
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.04);
+          color: rgba(255, 255, 255, 0.72);
+          padding: 7px 10px;
+          font-size: 12px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+        }
+
+        .nr-filter-pills button.active,
+        .nr-filter-pills button:hover {
+          border-color: rgba(0, 212, 255, 0.42);
+          background: rgba(0, 212, 255, 0.1);
+          color: #fff;
         }
 
         .nr-section-head h3 {
