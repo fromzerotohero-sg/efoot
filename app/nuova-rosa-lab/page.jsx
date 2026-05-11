@@ -688,15 +688,15 @@ function QuickPlayerPanel({
           </div>
 
           <div className="nr-quick-actions">
-            <button type="button" className="nr-primary-button" onClick={() => onOpenReplace(player, true)}>
-              <Pencil size={14} />
-              {lang === 'en' ? 'Edit player' : 'Modifica giocatore'}
-            </button>
             {slot?.slot_index != null && (
-              <button type="button" className="nr-secondary-button" onClick={() => onRemoveFromSlot(player.id)}>
+              <button type="button" className="nr-primary-button" onClick={() => onRemoveFromSlot(player.id)}>
                 {lang === 'en' ? 'Move to reserves' : 'Sposta in riserva'}
               </button>
             )}
+            <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player, true)}>
+              <Pencil size={14} />
+              {lang === 'en' ? 'Edit player' : 'Modifica giocatore'}
+            </button>
             <button type="button" className="nr-secondary-button" onClick={onUploadPhoto}>
               <Upload size={14} />
               {lang === 'en' ? 'Upload player photo' : 'Carica foto giocatore'}
@@ -1330,35 +1330,134 @@ function PremiumPlayerModal({
 }) {
   const cardImage = getPlayerCardImage(player)
   const [form, setForm] = React.useState({
-    overall_rating: ''
+    player_name: '',
+    position: '',
+    overall_rating: '',
+    card_type: '',
+    role: '',
+    age: '',
+    nationality: '',
+    club_name: '',
+    offensive_awareness: '',
+    finishing: '',
+    low_pass: '',
+    lofted_pass: '',
+    dribbling: '',
+    ball_control: '',
+    tight_possession: '',
+    heading: '',
+    set_piece_taking: '',
+    curl: '',
+    defensive_awareness: '',
+    defensive_engagement: '',
+    tackling: '',
+    aggression: '',
+    speed: '',
+    acceleration: '',
+    kicking_power: '',
+    physical_contact: '',
+    balance: '',
+    stamina: '',
+    jump: '',
+    gk_awareness: '',
+    gk_catching: '',
+    gk_parrying: '',
+    gk_reflexes: '',
+    gk_reach: ''
   })
+  const [skillsDraft, setSkillsDraft] = React.useState([])
+  const [selectedSkillPreset, setSelectedSkillPreset] = React.useState('')
+  const [boostersDraft, setBoostersDraft] = React.useState([])
+  const [showAllSkills, setShowAllSkills] = React.useState(false)
 
   React.useEffect(() => {
     if (!show || !player) return
+    const normalizedStats = normalizeBaseStatsForEditor(player.base_stats || {})
     setForm({
-      overall_rating: player.overall_rating != null ? String(player.overall_rating) : ''
+      player_name: player.player_name || '',
+      position: player.position || '',
+      overall_rating: player.overall_rating != null ? String(player.overall_rating) : '',
+      card_type: player.card_type || '',
+      role: player.role || player.playing_style_name || '',
+      age: player.age != null ? String(player.age) : '',
+      nationality: player.nationality || '',
+      club_name: player.club_name || '',
+      ...normalizedStats
     })
+    setSkillsDraft(Array.isArray(player.skills) ? player.skills : [])
+    setSelectedSkillPreset('')
+    setShowAllSkills(false)
+    setBoostersDraft(
+      Array.isArray(player.available_boosters)
+        ? player.available_boosters.map((entry) => normalizeBoosterEntry(entry))
+        : []
+    )
   }, [show, player])
 
   if (!show || !player) return null
-  const roleCount = Array.isArray(player.original_positions) ? player.original_positions.length : 0
-  const showAdvancedPlayerEditor = false
-  const skillsDraft = Array.isArray(player.skills) ? player.skills : []
-  const boostersDraft = Array.isArray(player.available_boosters) ? player.available_boosters : []
+
+  const addSkill = (skillValue) => {
+    const normalized = String(skillValue || '').trim()
+    if (!normalized) return
+    if (hasPlayerSkill(skillsDraft, normalized)) {
+      setSelectedSkillPreset('')
+      setShowAllSkills(true)
+      return
+    }
+    setSkillsDraft((prev) => [...prev, normalized])
+    setSelectedSkillPreset('')
+    setShowAllSkills(true)
+  }
+
+  const removeSkill = (skill) => {
+    setSkillsDraft((prev) => prev.filter((entry) => entry !== skill))
+  }
+
+  const addBooster = () => {
+    const defaultPreset = BOOSTER_PRESETS[0]?.value || 'custom'
+    setBoostersDraft((prev) => {
+      if (prev.length >= 2) return prev
+      return [...prev, normalizeBoosterEntry({ name: defaultPreset, effect: '+1' })]
+    })
+  }
+
+  const updateBooster = (index, key, value) => {
+    setBoostersDraft((prev) => prev.map((entry, idx) => idx === index ? { ...(entry || {}), [key]: value } : entry))
+  }
+
+  const updateBoosterPreset = (index, presetValue) => {
+    setBoostersDraft((prev) => prev.map((entry, idx) => {
+      if (idx !== index) return entry
+      if (presetValue === 'custom') {
+        return { ...(entry || {}), preset: 'custom', name: entry?.name || '' }
+      }
+      return {
+        ...(entry || {}),
+        preset: presetValue,
+        name: presetValue
+      }
+    }))
+  }
+
+  const updateBoosterLevel = (index, level) => {
+    setBoostersDraft((prev) => prev.map((entry, idx) => {
+      if (idx !== index) return entry
+      return {
+        ...(entry || {}),
+        level,
+        effect: `+${level}`
+      }
+    }))
+  }
+
+  const removeBooster = (index) => {
+    setBoostersDraft((prev) => prev.filter((_, idx) => idx !== index))
+  }
+
   const boosterCount = boostersDraft.length
-  const selectedSkillPreset = ''
-  const showAllSkills = false
-  const visibleSkills = skillsDraft.slice(0, 10)
+  const roleCount = Array.isArray(player.original_positions) ? player.original_positions.length : 0
+  const visibleSkills = showAllSkills ? skillsDraft : skillsDraft.slice(0, 10)
   const hiddenSkillsCount = Math.max(0, skillsDraft.length - visibleSkills.length)
-  const setSelectedSkillPreset = () => {}
-  const setShowAllSkills = () => {}
-  const addSkill = () => {}
-  const removeSkill = () => {}
-  const addBooster = () => {}
-  const updateBooster = () => {}
-  const updateBoosterPreset = () => {}
-  const updateBoosterLevel = () => {}
-  const removeBooster = () => {}
 
   return (
     <EnterpriseModalFrame
@@ -1422,9 +1521,9 @@ function PremiumPlayerModal({
           </div>
 
           <div className="nr-premium-summary-row">
-            <div><span>{lang === 'en' ? 'Editable here' : 'Modificabile qui'}</span><strong>OVR</strong></div>
-            <div><span>{lang === 'en' ? 'Base data' : 'Dati base'}</span><strong>{lang === 'en' ? 'Fixed' : 'Fissi'}</strong></div>
-            <div><span>{lang === 'en' ? 'Advanced' : 'Avanzato'}</span><strong>{lang === 'en' ? 'Separate' : 'Separato'}</strong></div>
+            <div><span>{lang === 'en' ? 'Skills' : 'Abilita'}</span><strong>{skillsDraft.length}</strong></div>
+            <div><span>{lang === 'en' ? 'Boosters' : 'Boosters'}</span><strong>{boosterCount}</strong></div>
+            <div><span>{lang === 'en' ? 'Roles' : 'Ruoli'}</span><strong>{roleCount}</strong></div>
           </div>
         </section>
 
@@ -1435,8 +1534,8 @@ function PremiumPlayerModal({
             </div>
             <p className="nr-setup-readonly-note">
               {lang === 'en'
-                ? 'Base data (name, role, age, club, nationality) is fixed and syncs from catalog/manual source. You can edit only OVR here.'
-                : 'I dati base (nome, ruolo, eta, club, nazionalita) sono fissi e seguono la sorgente catalogo/manuale. Qui puoi modificare solo OVR.'}
+                ? 'Base data (name, role, age, club, nationality) is fixed and syncs from catalog/manual source. You can edit OVR and performance stats here.'
+                : 'I dati base (nome, ruolo, eta, club, nazionalita) sono fissi e seguono la sorgente catalogo/manuale. Qui puoi modificare OVR e statistiche.'}
             </p>
           </EnterpriseSection>
 
@@ -1455,7 +1554,7 @@ function PremiumPlayerModal({
             </button>
           </div>
 
-          {showAdvancedPlayerEditor && slot?.slot_index != null && (
+          {slot?.slot_index != null && (
             <EnterpriseSection
               title={lang === 'en' ? 'Choose from reserves' : 'Scegli dalle riserve'}
               actions={(
@@ -1493,7 +1592,6 @@ function PremiumPlayerModal({
             </EnterpriseSection>
           )}
 
-          {showAdvancedPlayerEditor && (
           <div className="nr-reference-main-grid">
             <section className="nr-reference-left">
               <EnterpriseSection title={t('attacking')}>
@@ -1550,9 +1648,7 @@ function PremiumPlayerModal({
               </EnterpriseSection>
             </section>
           </div>
-          )}
 
-          {showAdvancedPlayerEditor && (
           <div className="nr-reference-support-grid">
             <section className="nr-reference-skills">
               <EnterpriseSection title={lang === 'en' ? 'Skills' : 'Abilita'}>
@@ -1679,7 +1775,6 @@ function PremiumPlayerModal({
               </EnterpriseSection>
             </section>
           </div>
-          )}
         </section>
       </div>
 
@@ -1692,7 +1787,20 @@ function PremiumPlayerModal({
           className="nr-primary-button"
           disabled={saving}
           onClick={() => onSave({
-            overall_rating: form.overall_rating ? Number(form.overall_rating) : null
+            player_name: form.player_name.trim(),
+            position: form.position,
+            overall_rating: form.overall_rating ? Number(form.overall_rating) : null,
+            card_type: form.card_type,
+            role: form.role,
+            age: form.age ? Number(form.age) : null,
+            nationality: form.nationality,
+            club_name: form.club_name,
+            skills: skillsDraft,
+            available_boosters: boostersDraft.map((entry) => ({
+              name: String(entry?.name || '').trim(),
+              effect: String(entry?.effect || '').trim() || '+1'
+            })),
+            base_stats: buildBaseStatsPayloadFromEditor(form)
           })}
         >
           {saving ? (lang === 'en' ? 'Saving...' : 'Salvataggio...') : (lang === 'en' ? 'Save player' : 'Salva giocatore')}
@@ -3058,6 +3166,10 @@ export default withAuth(function NuovaRosaLabPage() {
           setShowManualPlayerModal(true)
         }}
         onUploadPhoto={handleUploadFallback}
+        onOpenBoosters={(player) => {
+          setShowPremiumEditorModal(false)
+          openManualBoostersForPlayer(player)
+        }}
         onOpenReplace={(player) => {
           const slot = player?.slot_index != null ? slots.find((entry) => entry.slot_index === player.slot_index) : null
           setShowPremiumEditorModal(false)
