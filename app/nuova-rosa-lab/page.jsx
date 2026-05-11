@@ -4374,6 +4374,7 @@ export default withAuth(function NuovaRosaLabPage() {
           transform: translate(-50%, -50%);
           width: clamp(76px, 8.6vw, 108px);
           max-width: 108px;
+          overflow: visible;
         }
 
         .nr-slot-empty,
@@ -4403,16 +4404,26 @@ export default withAuth(function NuovaRosaLabPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 4px;
+          padding: 5px;
           text-align: left;
           touch-action: manipulation;
-          min-height: 74px;
-          border-radius: 12px;
-          overflow: hidden;
+          min-height: 78px;
+          border-radius: 14px;
+          overflow: visible;
           background:
             radial-gradient(circle at 20% 0%, rgba(0, 212, 255, 0.22), transparent 42%),
             linear-gradient(180deg, rgba(11, 41, 94, 0.93) 0%, rgba(8, 25, 66, 0.95) 100%);
           box-shadow: 0 6px 18px rgba(0, 212, 255, 0.22), 0 0 14px rgba(8, 145, 178, 0.2);
+        }
+
+        .nr-slot-filled::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          background: inherit;
+          pointer-events: none;
+          z-index: 0;
         }
 
         .nr-slot-filled.is-draggable {
@@ -4434,11 +4445,13 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-slot-filled-main {
+          position: relative;
+          z-index: 1;
           display: flex;
           align-items: center;
           justify-content: center;
           flex-direction: column;
-          gap: 3px;
+          gap: 4px;
           min-width: 0;
           flex: 1;
         }
@@ -4446,8 +4459,8 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-slot-avatar-mini {
           position: relative;
           width: 100%;
-          height: clamp(48px, 6vw, 62px);
-          border-radius: 11px;
+          height: clamp(50px, 6vw, 64px);
+          border-radius: 12px;
           border: 1px solid rgba(255, 255, 255, 0.18);
           background:
             radial-gradient(circle at 30% 20%, rgba(0, 212, 255, 0.34), transparent 38%),
@@ -4492,8 +4505,8 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-slot-role-chip {
           position: absolute;
-          left: 5px;
-          bottom: 5px;
+          left: 6px;
+          bottom: 6px;
           z-index: 1;
           font-size: 9px;
           font-weight: 700;
@@ -4502,7 +4515,7 @@ export default withAuth(function NuovaRosaLabPage() {
           border-radius: 999px;
           border: 1px solid rgba(255, 255, 255, 0.28);
           background: rgba(255, 255, 255, 0.12);
-          padding: 1px 7px;
+          padding: 2px 7px;
           line-height: 1.3;
         }
 
@@ -4529,10 +4542,10 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-slot-remove {
           position: absolute;
-          top: -10px;
-          right: -10px;
-          width: 24px;
-          height: 24px;
+          top: -8px;
+          right: -8px;
+          width: 22px;
+          height: 22px;
           border-radius: 50%;
           border: 1px solid rgba(239, 68, 68, 0.6);
           background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.4) 100%);
@@ -4543,7 +4556,14 @@ export default withAuth(function NuovaRosaLabPage() {
           cursor: pointer;
           transition: all 0.3s ease;
           box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
-          z-index: 3;
+          z-index: 4;
+        }
+
+        .nr-slot-remove svg {
+          width: 13px;
+          height: 13px;
+          display: block;
+          stroke-width: 2.6;
         }
 
         .nr-slot-remove:hover {
@@ -5970,6 +5990,29 @@ export default withAuth(function NuovaRosaLabPage() {
 
           .nr-slot-card {
             width: min(104px, 27vw);
+          }
+
+          .nr-slot-filled {
+            min-height: 72px;
+            border-radius: 12px;
+            padding: 4px;
+          }
+
+          .nr-slot-avatar-mini {
+            height: 48px;
+            border-radius: 10px;
+          }
+
+          .nr-slot-remove {
+            top: -7px;
+            right: -7px;
+            width: 20px;
+            height: 20px;
+          }
+
+          .nr-slot-remove svg {
+            width: 12px;
+            height: 12px;
           }
 
           .nr-stats-grid,
