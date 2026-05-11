@@ -116,6 +116,31 @@ function buildPlayerPayloadFromCatalog(card, slotIndex = null) {
   }
 }
 
+function buildInitialPositionsFromCatalogCard(card) {
+  const payload = card?.players_payload && typeof card.players_payload === 'object'
+    ? card.players_payload
+    : {}
+  const sourcePositions = Array.isArray(payload.original_positions) && payload.original_positions.length > 0
+    ? payload.original_positions
+    : Array.isArray(card?.original_positions) && card.original_positions.length > 0
+      ? card.original_positions
+      : []
+  const normalized = sourcePositions
+    .map((entry) => {
+      const position = typeof entry === 'string' ? entry : entry?.position
+      if (!position) return null
+      return {
+        position,
+        competence: typeof entry === 'object' && entry?.competence ? entry.competence : 'Alta'
+      }
+    })
+    .filter(Boolean)
+
+  if (normalized.length > 0) return normalized
+  const mainPosition = payload.position || card?.position
+  return mainPosition ? [{ position: mainPosition, competence: 'Alta' }] : []
+}
+
 function getPlayerCardImage(player) {
   return (
     player?.metadata?.catalog_card_front_url ||
@@ -454,7 +479,7 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
           onClick={(event) => {
             event.preventDefault()
             event.stopPropagation()
-            onRemove(player.id)
+            onRemove(player.id, player)
           }}
         >
           <X size={14} />
@@ -2152,6 +2177,7 @@ export default withAuth(function NuovaRosaLabPage() {
   const [extractedPlayerData, setExtractedPlayerData] = React.useState(null)
   const [selectedOriginalPositions, setSelectedOriginalPositions] = React.useState([])
   const [positionModalCtx, setPositionModalCtx] = React.useState(null)
+  const [catalogPositionCtx, setCatalogPositionCtx] = React.useState(null)
   const [showPhotoReviewModal, setShowPhotoReviewModal] = React.useState(false)
   const [photoCompletionTarget, setPhotoCompletionTarget] = React.useState(null)
 
@@ -2350,6 +2376,7 @@ export default withAuth(function NuovaRosaLabPage() {
     setPickerResults([])
     setPickerTotal(0)
     setPickerHasMore(false)
+    setCatalogPositionCtx(null)
     setPickerOpen(true)
   }, [])
 
@@ -2367,6 +2394,7 @@ export default withAuth(function NuovaRosaLabPage() {
     setPickerResults([])
     setPickerTotal(0)
     setPickerHasMore(false)
+    setCatalogPositionCtx(null)
     setPickerOpen(true)
   }, [riserve.length, showToast, t])
 
@@ -2378,6 +2406,7 @@ export default withAuth(function NuovaRosaLabPage() {
     setPickerResults([])
     setPickerTotal(0)
     setPickerHasMore(false)
+    setCatalogPositionCtx(null)
   }, [])
 
   const openPhotoUploadFlow = React.useCallback((mode = null, slot = null) => {
@@ -2400,6 +2429,7 @@ export default withAuth(function NuovaRosaLabPage() {
     setExtractedPlayerData(null)
     setSelectedOriginalPositions([])
     setPositionModalCtx(null)
+    setCatalogPositionCtx(null)
     setShowPhotoReviewModal(false)
     setPhotoCompletionTarget(null)
     setPhotoUploadMode(nextMode)
@@ -2419,6 +2449,7 @@ export default withAuth(function NuovaRosaLabPage() {
     setExtractedPlayerData(null)
     setSelectedOriginalPositions([])
     setPositionModalCtx(null)
+    setCatalogPositionCtx(null)
     setShowPhotoReviewModal(false)
     setPhotoCompletionTarget(player)
     setPhotoUploadMode('complete')
@@ -2889,7 +2920,14 @@ export default withAuth(function NuovaRosaLabPage() {
       }),
       onConfirm: async () => {
         setConfirmModal(null)
-        await createPlayerFromCatalog(card, isOutOfRole)
+        setPickerOpen(false)
+        setSelectedOriginalPositions(buildInitialPositionsFromCatalogCard(card))
+        setCatalogPositionCtx({
+          card,
+          mode: 'slot',
+          slotIndex: selectedSlot.slot_index,
+          forcedOutOfRole: isOutOfRole
+        })
       },
       onCancel: () => setConfirmModal(null)
     })
@@ -2900,39 +2938,6 @@ export default withAuth(function NuovaRosaLabPage() {
     if (riserve.length >= MAX_RESERVES) {
       showToast(t('maxReservesReached'), 'error')
       return
-    }
-
-    const continueAddReserve = async () => {
-      try {
-        let token = getTokenFallback()
-        if (!token && supabase) {
-          const { data: session } = await supabase.auth.getSession()
-          token = session?.session?.access_token
-        }
-        if (!token) throw new Error(t('sessionExpired'))
-
-        const playerPayload = buildPlayerPayloadFromCatalog(card, null)
-        playerPayload.slot_index = null
-
-        const response = await fetch('/api/supabase/save-player', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ player: playerPayload })
-        })
-
-        await safeJsonResponse(response, t('errorSavingPlayerGeneric'))
-        await fetchRoster()
-        closePicker()
-        await refreshDiagnosticAfterSave()
-        showToast(lang === 'en' ? 'Reserve added successfully.' : 'Riserva aggiunta con successo.', 'success')
-      } catch (err) {
-        console.error('[NuovaRosaLab] save reserve catalog player error:', err)
-        const { message } = mapErrorToUserMessage(err, t('errorSavingPlayerGeneric'), lang)
-        showToast(message, 'error')
-      }
     }
 
     const cardSummary = `${card.player_name} · ${card.position || '-'} · OVR ${card.overall_level_1 ?? card.overall_max_level ?? '-'}`
@@ -2948,14 +2953,22 @@ export default withAuth(function NuovaRosaLabPage() {
       }),
       onConfirm: async () => {
         setConfirmModal(null)
-        await continueAddReserve()
+        setPickerOpen(false)
+        setSelectedOriginalPositions(buildInitialPositionsFromCatalogCard(card))
+        setCatalogPositionCtx({
+          card,
+          mode: 'reserve',
+          slotIndex: null,
+          forcedOutOfRole: false
+        })
       },
       onCancel: () => setConfirmModal(null)
     })
-  }, [closePicker, fetchRoster, lang, refreshDiagnosticAfterSave, riserve.length, showToast, t])
+  }, [lang, riserve.length, showToast, t])
 
-  const createPlayerFromCatalog = React.useCallback(async (card, forcedOutOfRole) => {
-    if (!selectedSlot || !card) return
+  const createPlayerFromCatalog = React.useCallback(async (card, { slotIndex = null, forcedOutOfRole = false, originalPositions = [] } = {}) => {
+    if (!card) return
+    if (slotIndex !== null && !selectedSlot) return
 
     try {
       let token = getTokenFallback()
@@ -2965,12 +2978,16 @@ export default withAuth(function NuovaRosaLabPage() {
       }
       if (!token) throw new Error(t('sessionExpired'))
 
-      const playerPayload = buildPlayerPayloadFromCatalog(card, selectedSlot.slot_index)
+      const playerPayload = buildPlayerPayloadFromCatalog(card, slotIndex)
+      if (originalPositions.length > 0) {
+        playerPayload.original_positions = originalPositions
+        playerPayload.position = originalPositions[0]?.position || playerPayload.position
+      }
       if (forcedOutOfRole) {
         playerPayload.metadata = {
           ...(playerPayload.metadata || {}),
           forced_out_of_role: true,
-          forced_slot_position: selectedSlot.position || null
+          forced_slot_position: selectedSlot?.position || null
         }
       }
 
@@ -2987,7 +3004,12 @@ export default withAuth(function NuovaRosaLabPage() {
       await fetchRoster()
       closePicker()
       await refreshDiagnosticAfterSave()
-      showToast(lang === 'en' ? 'Player added successfully.' : 'Giocatore aggiunto con successo.', 'success')
+      showToast(
+        slotIndex === null
+          ? (lang === 'en' ? 'Reserve added successfully.' : 'Riserva aggiunta con successo.')
+          : (lang === 'en' ? 'Player added successfully.' : 'Giocatore aggiunto con successo.'),
+        'success'
+      )
       return data
     } catch (err) {
       console.error('[NuovaRosaLab] save catalog player error:', err)
@@ -2995,6 +3017,29 @@ export default withAuth(function NuovaRosaLabPage() {
       showToast(message, 'error')
     }
   }, [selectedSlot, lang, t, fetchRoster, closePicker, refreshDiagnosticAfterSave, showToast])
+
+  const handleSaveCatalogPlayerWithPositions = React.useCallback(async () => {
+    if (!catalogPositionCtx?.card || selectedOriginalPositions.length === 0) return
+    if (catalogPositionCtx.mode === 'reserve' && riserve.length >= MAX_RESERVES) {
+      showToast(t('maxReservesReached'), 'error')
+      return
+    }
+
+    setAssigning(true)
+    try {
+      const savedPlayer = await createPlayerFromCatalog(catalogPositionCtx.card, {
+        slotIndex: catalogPositionCtx.slotIndex,
+        forcedOutOfRole: catalogPositionCtx.forcedOutOfRole,
+        originalPositions: selectedOriginalPositions
+      })
+      if (savedPlayer) {
+        setCatalogPositionCtx(null)
+        setSelectedOriginalPositions([])
+      }
+    } finally {
+      setAssigning(false)
+    }
+  }, [catalogPositionCtx, createPlayerFromCatalog, riserve.length, selectedOriginalPositions, showToast, t])
 
   const handleSelectReserveForSlot = React.useCallback(async (player) => {
     if (!selectedSlot || !player?.id) return
@@ -3642,7 +3687,7 @@ export default withAuth(function NuovaRosaLabPage() {
                       setSelectedPlayer(player)
                       setShowAssignModal(true)
                     }}
-                    onRemove={handleRemoveFromSlot}
+                    onRemove={(playerId) => handleDeletePlayer(playerId, false)}
                     lang={lang}
                     isEditMode={fieldEditMode}
                     onPositionChange={handleFieldPositionChange}
@@ -3817,6 +3862,22 @@ export default withAuth(function NuovaRosaLabPage() {
           onConfirm={handleSavePhotoPlayerWithPositions}
           uploading={uploadingPhoto}
           onCancel={resetPhotoPositionFlow}
+        />
+      )}
+
+      {catalogPositionCtx?.card && (
+        <PositionSelectionModal
+          playerName={catalogPositionCtx.card.player_name}
+          overallRating={catalogPositionCtx.card.overall_level_1 ?? catalogPositionCtx.card.overall_max_level}
+          mainPosition={catalogPositionCtx.card?.players_payload?.position || catalogPositionCtx.card.position}
+          selectedPositions={selectedOriginalPositions}
+          onPositionsChange={setSelectedOriginalPositions}
+          onConfirm={handleSaveCatalogPlayerWithPositions}
+          uploading={assigning}
+          onCancel={() => {
+            setCatalogPositionCtx(null)
+            setSelectedOriginalPositions([])
+          }}
         />
       )}
 
