@@ -439,12 +439,6 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
           ) : (
             <span className="nr-player-initials">{getPlayerInitials(player.player_name)}</span>
           )}
-          {slotThumb && (
-            <>
-              <span className="nr-slot-card-corner-mask" />
-              <span className="nr-slot-card-rating-mask" />
-            </>
-          )}
           <span className="nr-slot-role-chip">{roleLabel}</span>
         </div>
         <span className="nr-slot-name-chip">{getShortPlayerName(player.player_name)}</span>
@@ -4390,11 +4384,11 @@ export default withAuth(function NuovaRosaLabPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 5px;
+          padding: 6px;
           text-align: left;
           touch-action: manipulation;
-          min-height: 78px;
-          border-radius: 14px;
+          min-height: 84px;
+          border-radius: 16px;
           overflow: visible;
           background:
             radial-gradient(circle at 20% 0%, rgba(0, 212, 255, 0.22), transparent 42%),
@@ -4437,16 +4431,16 @@ export default withAuth(function NuovaRosaLabPage() {
           align-items: center;
           justify-content: center;
           flex-direction: column;
-          gap: 4px;
+          gap: 3px;
           min-width: 0;
           flex: 1;
         }
 
         .nr-slot-avatar-mini {
           position: relative;
-          width: 100%;
-          height: clamp(50px, 6vw, 64px);
-          border-radius: 12px;
+          width: clamp(48px, 5.4vw, 60px);
+          height: clamp(48px, 5.4vw, 60px);
+          border-radius: 16px;
           border: 1px solid rgba(255, 255, 255, 0.18);
           background:
             radial-gradient(circle at 30% 20%, rgba(0, 212, 255, 0.34), transparent 38%),
@@ -4465,9 +4459,9 @@ export default withAuth(function NuovaRosaLabPage() {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          object-position: center top;
-          transform: scale(1.06);
-          transform-origin: center top;
+          object-position: 60% 32%;
+          transform: scale(1.46);
+          transform-origin: 60% 32%;
           -webkit-user-drag: none;
           user-drag: none;
           pointer-events: none;
@@ -4478,8 +4472,8 @@ export default withAuth(function NuovaRosaLabPage() {
           position: absolute;
           inset: 0;
           background:
-            linear-gradient(135deg, rgba(3, 7, 18, 0.86) 0%, rgba(3, 7, 18, 0.68) 24%, transparent 52%),
-            radial-gradient(ellipse 34px 28px at calc(100% - 12px) 12px, rgba(3, 7, 18, 0.7) 0%, rgba(3, 7, 18, 0.44) 52%, transparent 76%);
+            radial-gradient(circle at 52% 24%, rgba(255, 255, 255, 0.1), transparent 28%),
+            linear-gradient(180deg, rgba(3, 7, 18, 0.1) 0%, transparent 35%, rgba(3, 7, 18, 0.52) 100%);
           pointer-events: none;
           z-index: 1;
         }
@@ -4487,54 +4481,12 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-slot-filled-main.has-photo .nr-slot-avatar-mini::after {
           content: "";
           position: absolute;
-          inset: 0;
-          background: linear-gradient(180deg, transparent 44%, rgba(3, 7, 18, 0.54) 100%);
+          inset: 1px;
+          border-radius: 15px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: inset 0 -14px 18px rgba(3, 7, 18, 0.32);
           pointer-events: none;
           z-index: 1;
-        }
-
-        .nr-slot-card-corner-mask {
-          position: absolute;
-          top: 0;
-          left: 0;
-          z-index: 2;
-          width: 43px;
-          height: 36px;
-          border-radius: 12px 0 20px 0;
-          background:
-            radial-gradient(circle at 24% 26%, rgba(34, 211, 238, 0.2), transparent 36%),
-            linear-gradient(135deg, rgba(3, 7, 18, 0.94), rgba(15, 23, 42, 0.72) 58%, transparent 100%);
-          box-shadow:
-            12px 8px 18px rgba(3, 7, 18, 0.26),
-            inset 0 0 0 1px rgba(255, 255, 255, 0.05);
-          backdrop-filter: blur(2.5px);
-          pointer-events: none;
-        }
-
-        .nr-slot-card-corner-mask::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          border-radius: inherit;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 44%);
-        }
-
-        .nr-slot-card-rating-mask {
-          position: absolute;
-          top: 0;
-          right: 0;
-          z-index: 2;
-          width: 30px;
-          height: 25px;
-          border-radius: 0 12px 0 18px;
-          background:
-            radial-gradient(circle at 72% 26%, rgba(34, 211, 238, 0.16), transparent 42%),
-            linear-gradient(225deg, rgba(3, 7, 18, 0.82), rgba(15, 23, 42, 0.48) 58%, transparent 100%);
-          box-shadow:
-            -8px 8px 16px rgba(3, 7, 18, 0.2),
-            inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-          backdrop-filter: blur(2px);
-          pointer-events: none;
         }
 
         .nr-reserve-card-media::after {
@@ -4560,8 +4512,9 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-slot-role-chip {
           position: absolute;
-          left: 6px;
-          bottom: 6px;
+          left: 50%;
+          bottom: -5px;
+          transform: translateX(-50%);
           z-index: 2;
           font-size: 9px;
           font-weight: 700;
@@ -4569,14 +4522,15 @@ export default withAuth(function NuovaRosaLabPage() {
           letter-spacing: 0.05em;
           border-radius: 999px;
           border: 1px solid rgba(255, 255, 255, 0.28);
-          background: rgba(3, 7, 18, 0.58);
-          padding: 2px 7px;
+          background: rgba(3, 7, 18, 0.74);
+          padding: 2px 8px;
           line-height: 1.3;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.24);
         }
 
         .nr-slot-name-chip {
           min-width: 0;
+          max-width: 100%;
           font-size: 8px;
           font-weight: 800;
           color: rgba(255, 255, 255, 0.86);
@@ -6102,19 +6056,19 @@ export default withAuth(function NuovaRosaLabPage() {
           }
 
           .nr-slot-filled {
-            min-height: 72px;
+            min-height: 78px;
             border-radius: 12px;
             padding: 4px;
           }
 
           .nr-slot-avatar-mini {
-            height: 48px;
+            width: 50px;
+            height: 50px;
             border-radius: 10px;
           }
 
           .nr-slot-role-chip {
-            left: 5px;
-            bottom: 5px;
+            bottom: -5px;
             font-size: 8px;
             padding: 1px 6px;
           }
