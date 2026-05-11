@@ -12,6 +12,7 @@ import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import { PHOTO_TYPE_KEYS, getPhotoTypeConfig } from '@/lib/playerPhotoTypes'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
+import { getFormationNameFromSlotPositions } from '@/lib/validateFormationLimits'
 import {
   AlertTriangle,
   ArrowRight,
@@ -4128,11 +4129,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }))
       }
 
-      let effectiveFormation = layout.formation || 'Custom'
-      try {
-        const { getFormationNameFromSlotPositions } = await import('../../lib/validateFormationLimits')
-        effectiveFormation = getFormationNameFromSlotPositions(updatedSlotPositions) || effectiveFormation
-      } catch (_) {}
+      const effectiveFormation = getFormationNameFromSlotPositions(updatedSlotPositions) || layout.formation || 'Custom'
 
       const response = await fetch('/api/supabase/save-formation-layout', {
         method: 'POST',
