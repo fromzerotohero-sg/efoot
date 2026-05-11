@@ -159,6 +159,41 @@ function getBestCoachPlaystyle(coach) {
   return entries[0] || null
 }
 
+function mergeCoachPhotoData(currentCoach, nextCoach) {
+  if (!currentCoach) return nextCoach
+  if (!nextCoach) return currentCoach
+
+  const merged = { ...currentCoach }
+  Object.entries(nextCoach).forEach(([key, value]) => {
+    if (value === null || value === undefined || value === '') return
+    merged[key] = value
+  })
+
+  return {
+    ...merged,
+    coach_name: nextCoach.coach_name || currentCoach.coach_name,
+    age: nextCoach.age ?? currentCoach.age,
+    nationality: nextCoach.nationality || currentCoach.nationality,
+    team: nextCoach.team || currentCoach.team,
+    category: nextCoach.category || currentCoach.category,
+    pack_type: nextCoach.pack_type || currentCoach.pack_type,
+    training_affinity_description: nextCoach.training_affinity_description || currentCoach.training_affinity_description,
+    connection: nextCoach.connection || currentCoach.connection,
+    playing_style_competence: {
+      ...(currentCoach.playing_style_competence || {}),
+      ...(nextCoach.playing_style_competence || {})
+    },
+    stat_boosters: [
+      ...(currentCoach.stat_boosters || []),
+      ...(nextCoach.stat_boosters || [])
+    ]
+  }
+}
+
+function formatCoachLabel(key, t) {
+  return t(key) || String(key || '').replace(/_/g, ' ')
+}
+
 function buildInitialPositionsFromCatalogCard(card) {
   const payload = card?.players_payload && typeof card.players_payload === 'object'
     ? card.players_payload
@@ -875,6 +910,134 @@ function CoachPhotoUploadModal({
             {uploading
               ? (lang === 'en' ? 'Extracting coach...' : 'Estrazione coach...')
               : (lang === 'en' ? 'Save coach from photos' : 'Salva coach da foto')}
+          </button>
+        </div>
+      </div>
+    </EnterpriseModalFrame>
+  )
+}
+
+function CoachDetailsModal({ show, coach, onClose, onReplaceFromCatalog, onReplaceFromPhoto, saving, lang, t }) {
+  if (!show || !coach) return null
+
+  const image = getCoachCardImage(coach)
+  const bestPlaystyle = getBestCoachPlaystyle(coach)
+  const infoRows = [
+    [lang === 'en' ? 'Age' : 'Eta', coach.age],
+    [lang === 'en' ? 'Nationality' : 'Nazionalita', coach.nationality],
+    [lang === 'en' ? 'Team' : 'Squadra', coach.team],
+    [lang === 'en' ? 'Category' : 'Categoria', coach.category],
+    [lang === 'en' ? 'Type' : 'Tipo', coach.pack_type]
+  ].filter(([, value]) => value !== null && value !== undefined && value !== '')
+  const playstyles = Object.entries(coach.playing_style_competence || {})
+    .filter(([, value]) => value !== null && value !== undefined && value !== '')
+    .sort((left, right) => Number(right[1]) - Number(left[1]))
+  const boosters = Array.isArray(coach.stat_boosters) ? coach.stat_boosters : []
+  const connection = coach.connection && typeof coach.connection === 'object' ? coach.connection : null
+  const hasDetails = infoRows.length > 0 || playstyles.length > 0 || coach.training_affinity_description || boosters.length > 0 || connection
+
+  return (
+    <EnterpriseModalFrame
+      show={show}
+      onClose={onClose}
+      title={coach.coach_name || (lang === 'en' ? 'Coach details' : 'Dettaglio allenatore')}
+      subtitle={lang === 'en' ? 'Coach details' : 'Dettaglio allenatore'}
+      className="nr-coach-details-shell"
+    >
+      <div className="nr-coach-details-body">
+        <div className="nr-coach-details-hero">
+          <div className="nr-coach-details-image">
+            {image ? <img src={image} alt={coach.coach_name || 'coach'} /> : <Star size={22} />}
+          </div>
+          <div>
+            <span className="nr-mini-kicker">{coach.is_active ? (lang === 'en' ? 'Active coach' : 'Coach attivo') : (lang === 'en' ? 'Saved coach' : 'Coach salvato')}</span>
+            <h3>{coach.coach_name || '-'}</h3>
+            <p>
+              {bestPlaystyle
+                ? `${formatCoachLabel(bestPlaystyle[0], t)} ${bestPlaystyle[1]}`
+                : (coach.category || coach.team || (lang === 'en' ? 'Personal coach' : 'Allenatore personale'))}
+            </p>
+          </div>
+        </div>
+
+        {!hasDetails && (
+          <div className="nr-empty-state">
+            <span>{lang === 'en' ? 'No extra coach details available yet.' : 'Nessun dettaglio allenatore aggiuntivo disponibile.'}</span>
+          </div>
+        )}
+
+        {infoRows.length > 0 && (
+          <EnterpriseSection title={lang === 'en' ? 'Information' : 'Informazioni'}>
+            <div className="nr-coach-info-grid">
+              {infoRows.map(([label, value]) => (
+                <div key={label} className="nr-coach-info-row">
+                  <span>{label}</span>
+                  <strong>{value}</strong>
+                </div>
+              ))}
+            </div>
+          </EnterpriseSection>
+        )}
+
+        {playstyles.length > 0 && (
+          <EnterpriseSection title={lang === 'en' ? 'Playing style competence' : 'Competenza stili di gioco'}>
+            <div className="nr-coach-style-list">
+              {playstyles.map(([style, value]) => (
+                <div key={style} className="nr-coach-style-row">
+                  <span>{formatCoachLabel(style, t)}</span>
+                  <strong>{typeof value === 'object' ? '-' : value}</strong>
+                </div>
+              ))}
+            </div>
+          </EnterpriseSection>
+        )}
+
+        {coach.training_affinity_description && (
+          <EnterpriseSection title={lang === 'en' ? 'Training affinity' : 'Affinita di allenamento'}>
+            <p className="nr-coach-description">{coach.training_affinity_description}</p>
+          </EnterpriseSection>
+        )}
+
+        {boosters.length > 0 && (
+          <EnterpriseSection title={lang === 'en' ? 'Stat boosters' : 'Stat boosters'}>
+            <div className="nr-coach-style-list">
+              {boosters.map((booster, index) => (
+                <div key={`${booster.stat_name || booster.name || 'booster'}-${index}`} className="nr-coach-style-row">
+                  <span>{formatCoachLabel(booster.stat_name || booster.name || booster.booster_name || 'Booster', t)}</span>
+                  <strong>{booster.bonus !== null && booster.bonus !== undefined ? `+${booster.bonus}` : ''}</strong>
+                </div>
+              ))}
+            </div>
+          </EnterpriseSection>
+        )}
+
+        {connection && (
+          <EnterpriseSection title={lang === 'en' ? 'Connection' : 'Collegamento'}>
+            <div className="nr-coach-connection">
+              {connection.name && <strong>{connection.name}</strong>}
+              {connection.description && <p>{connection.description}</p>}
+              {connection.focal_point && (
+                <span>
+                  <b>{lang === 'en' ? 'Focal point' : 'Punto focale'}:</b> {connection.focal_point.playing_style || '-'} ({connection.focal_point.position || '-'})
+                </span>
+              )}
+              {connection.key_man && (
+                <span>
+                  <b>{lang === 'en' ? 'Key man' : 'Uomo chiave'}:</b> {connection.key_man.playing_style || '-'} ({connection.key_man.position || '-'})
+                </span>
+              )}
+            </div>
+          </EnterpriseSection>
+        )}
+
+        <div className="nr-modal-footer">
+          <button type="button" className="nr-secondary-button" onClick={onReplaceFromPhoto} disabled={saving}>
+            <Upload size={14} />
+            {lang === 'en' ? 'Replace from photo' : 'Sostituisci da foto'}
+          </button>
+          <button type="button" className="nr-primary-button" onClick={onReplaceFromCatalog} disabled={saving}>
+            <Search size={14} />
+            {lang === 'en' ? 'Change from catalog' : 'Cambia da catalogo'}
           </button>
         </div>
       </div>
@@ -2645,6 +2808,7 @@ export default withAuth(function NuovaRosaLabPage() {
   const [savingCoach, setSavingCoach] = React.useState(false)
   const [showCoachPhotoUploadModal, setShowCoachPhotoUploadModal] = React.useState(false)
   const [coachPhotoImages, setCoachPhotoImages] = React.useState([])
+  const [showCoachDetailsModal, setShowCoachDetailsModal] = React.useState(false)
   const [reserveSlotPickerPlayer, setReserveSlotPickerPlayer] = React.useState(null)
 
   const activeTeamPlaystyle = tacticalSettings?.team_playing_style || null
@@ -2941,6 +3105,7 @@ export default withAuth(function NuovaRosaLabPage() {
     setShowAssignModal(false)
     setShowPremiumEditorModal(false)
     setShowCoachPhotoUploadModal(false)
+    setShowCoachDetailsModal(false)
     setCoachPhotoImages([])
     setCoachCatalogQuery('')
     setCoachCatalogSort(activeTeamPlaystyle ? 'best_playstyle' : 'name_asc')
@@ -2963,8 +3128,23 @@ export default withAuth(function NuovaRosaLabPage() {
     setShowAssignModal(false)
     setShowPremiumEditorModal(false)
     setCoachCatalogOpen(false)
+    setShowCoachDetailsModal(false)
     setCoachPhotoImages([])
     setShowCoachPhotoUploadModal(true)
+  }, [])
+
+  const openCoachDetails = React.useCallback(() => {
+    if (!activeCoach?.coach_name) return
+    setPickerOpen(false)
+    setShowAssignModal(false)
+    setShowPremiumEditorModal(false)
+    setCoachCatalogOpen(false)
+    setShowCoachPhotoUploadModal(false)
+    setShowCoachDetailsModal(true)
+  }, [activeCoach])
+
+  const closeCoachDetails = React.useCallback(() => {
+    setShowCoachDetailsModal(false)
   }, [])
 
   const closeCoachPhotoUpload = React.useCallback(() => {
@@ -3133,19 +3313,7 @@ export default withAuth(function NuovaRosaLabPage() {
       if (!coachData) {
         coachData = data.coach
       } else {
-        coachData = {
-          ...coachData,
-          ...data.coach,
-          connection: data.coach.connection || coachData.connection,
-          playing_style_competence: {
-            ...(coachData.playing_style_competence || {}),
-            ...(data.coach.playing_style_competence || {})
-          },
-          stat_boosters: [
-            ...(coachData.stat_boosters || []),
-            ...(data.coach.stat_boosters || [])
-          ]
-        }
+        coachData = mergeCoachPhotoData(coachData, data.coach)
       }
 
       allExtractedData[slotType] = data.coach
@@ -4270,7 +4438,13 @@ export default withAuth(function NuovaRosaLabPage() {
         </div>
         <div className="nr-hero-side">
           <div className="nr-coach-header-panel">
-            <div className="nr-coach-header-main">
+            <button
+              type="button"
+              className={`nr-coach-header-main ${activeCoach?.coach_name ? 'is-clickable' : ''}`}
+              onClick={openCoachDetails}
+              disabled={!activeCoach?.coach_name}
+              title={activeCoach?.coach_name ? (lang === 'en' ? 'Open coach details' : 'Apri dettagli allenatore') : undefined}
+            >
               <div className="nr-coach-avatar">
                 {getCoachCardImage(activeCoach) ? (
                   <img src={getCoachCardImage(activeCoach)} alt={activeCoach?.coach_name || 'coach'} />
@@ -4290,8 +4464,11 @@ export default withAuth(function NuovaRosaLabPage() {
                       ? 'Choose from catalog or upload screenshots.'
                       : 'Scegli da catalogo o carica screenshot.')}
                 </p>
+                {activeCoach?.coach_name && (
+                  <small>{lang === 'en' ? 'Click to view details' : 'Clicca per vedere i dettagli'}</small>
+                )}
               </div>
-            </div>
+            </button>
             <div className="nr-coach-header-actions">
               <button type="button" className="nr-primary-button" onClick={openCoachCatalog} disabled={savingCoach}>
                 <Search size={14} />
@@ -4503,6 +4680,17 @@ export default withAuth(function NuovaRosaLabPage() {
         onLoadMore={loadMoreCatalog}
         onUploadFallback={() => openPhotoUploadFlow(pickerMode, selectedSlot)}
         lang={lang}
+      />
+
+      <CoachDetailsModal
+        show={showCoachDetailsModal}
+        coach={activeCoach}
+        onClose={closeCoachDetails}
+        onReplaceFromCatalog={openCoachCatalog}
+        onReplaceFromPhoto={openCoachPhotoUpload}
+        saving={savingCoach}
+        lang={lang}
+        t={t}
       />
 
       <CoachCatalogModal
@@ -5595,6 +5783,27 @@ export default withAuth(function NuovaRosaLabPage() {
           grid-template-columns: auto minmax(0, 1fr);
           gap: 12px;
           align-items: center;
+          width: 100%;
+          border: 0;
+          background: transparent;
+          color: inherit;
+          padding: 0;
+          text-align: left;
+        }
+
+        .nr-coach-header-main.is-clickable {
+          cursor: pointer;
+          border-radius: 14px;
+          transition: background 0.18s ease, transform 0.18s ease;
+        }
+
+        .nr-coach-header-main.is-clickable:hover {
+          background: rgba(255, 255, 255, 0.035);
+          transform: translateY(-1px);
+        }
+
+        .nr-coach-header-main:disabled {
+          cursor: default;
         }
 
         .nr-coach-avatar {
@@ -5641,6 +5850,13 @@ export default withAuth(function NuovaRosaLabPage() {
           line-height: 1.35;
         }
 
+        .nr-coach-header-main small {
+          display: block;
+          margin-top: 5px;
+          color: rgba(0, 212, 255, 0.7);
+          font-size: 11px;
+        }
+
         .nr-coach-header-actions {
           display: flex;
           gap: 8px;
@@ -5653,6 +5869,96 @@ export default withAuth(function NuovaRosaLabPage() {
           min-width: 140px;
           justify-content: center;
           padding: 9px 10px;
+        }
+
+        .nr-coach-details-shell {
+          width: min(760px, calc(100vw - 24px));
+        }
+
+        .nr-coach-details-body {
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+        }
+
+        .nr-coach-details-hero {
+          border-radius: 18px;
+          border: 1px solid rgba(0, 212, 255, 0.18);
+          background:
+            radial-gradient(circle at top left, rgba(0, 212, 255, 0.12), transparent 34%),
+            rgba(255, 255, 255, 0.035);
+          padding: 14px;
+          display: grid;
+          grid-template-columns: auto minmax(0, 1fr);
+          gap: 14px;
+          align-items: center;
+        }
+
+        .nr-coach-details-image {
+          width: 76px;
+          height: 98px;
+          border-radius: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          background: linear-gradient(180deg, rgba(0, 212, 255, 0.16), rgba(255, 255, 255, 0.05));
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: rgba(0, 212, 255, 0.9);
+          overflow: hidden;
+        }
+
+        .nr-coach-details-image img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .nr-coach-details-hero h3 {
+          margin: 4px 0;
+          color: #fff;
+          font-size: 22px;
+        }
+
+        .nr-coach-details-hero p,
+        .nr-coach-description,
+        .nr-coach-connection p {
+          margin: 0;
+          color: rgba(255, 255, 255, 0.72);
+          font-size: 13px;
+          line-height: 1.45;
+        }
+
+        .nr-coach-info-grid,
+        .nr-coach-style-list,
+        .nr-coach-connection {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .nr-coach-info-row,
+        .nr-coach-style-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.035);
+          padding: 10px 12px;
+          color: rgba(255, 255, 255, 0.7);
+          font-size: 13px;
+        }
+
+        .nr-coach-info-row strong,
+        .nr-coach-style-row strong,
+        .nr-coach-connection strong {
+          color: #fff;
+        }
+
+        .nr-coach-connection span {
+          color: rgba(255, 255, 255, 0.74);
+          font-size: 13px;
         }
 
         .nr-modal-backdrop {
