@@ -39,6 +39,17 @@ const copy = {
     teamFit: 'Sinergia con la tua squadra',
     teamSynergyScore: 'Sinergia squadra',
     coachAdvice: 'Consiglio',
+    deepAnalysisCta: 'Analisi dettagliata IA',
+    deepAnalysisCost: '2 HP',
+    deepAnalysisLoading: 'Sto preparando l’analisi dettagliata...',
+    deepAnalysisError: 'Analisi dettagliata non disponibile. Riprova tra poco.',
+    deepAnalysisTitle: 'Analisi dettagliata IA',
+    deepPros: 'Pro',
+    deepCons: 'Contro',
+    deepSynergies: 'Sinergie',
+    deepHowToUse: 'Come usarla',
+    deepWhenAvoid: 'Quando evitarla',
+    deepFinalDecision: 'Decisione finale',
     howToUse: 'Lettura sinergie',
     viewDetails: 'Vedi dettagli',
     hideDetails: 'Nascondi dettagli',
@@ -118,6 +129,17 @@ const copy = {
     teamFit: 'Team synergy',
     teamSynergyScore: 'Team synergy',
     coachAdvice: 'Advice',
+    deepAnalysisCta: 'Detailed AI analysis',
+    deepAnalysisCost: '2 HP',
+    deepAnalysisLoading: 'Preparing detailed analysis...',
+    deepAnalysisError: 'Detailed analysis unavailable. Please try again shortly.',
+    deepAnalysisTitle: 'Detailed AI analysis',
+    deepPros: 'Pros',
+    deepCons: 'Cons',
+    deepSynergies: 'Synergies',
+    deepHowToUse: 'How to use it',
+    deepWhenAvoid: 'When to avoid it',
+    deepFinalDecision: 'Final decision',
     howToUse: 'Synergy read',
     viewDetails: 'See details',
     hideDetails: 'Hide details',
@@ -658,7 +680,21 @@ function RosterStatusPanel({ labels, rosterSummary, onLoadRoster, onOpenCoach })
   )
 }
 
-function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating, onOpenFormation, onOpenCoach, onClose }) {
+function DetailPanel({
+  card,
+  labels,
+  lang,
+  rosterSummary,
+  evaluation,
+  evaluating,
+  deepAnalysis,
+  deepAnalysisLoading,
+  deepAnalysisError,
+  onRequestDeepAnalysis,
+  onOpenFormation,
+  onOpenCoach,
+  onClose
+}) {
   const [showSynergyDetails, setShowSynergyDetails] = React.useState(false)
   const verdict = getVerdictMeta(card.verdict, labels)
   const fitSummary = getFitSummary(card, rosterSummary, labels, lang)
@@ -781,6 +817,62 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
         </div>
       )}
 
+      <div className="deep-analysis-entry">
+        <div>
+          <span>{labels.deepAnalysisTitle}</span>
+          <p>{deepAnalysis ? deepAnalysis.headline : `${labels.deepAnalysisCta} · ${labels.deepAnalysisCost}`}</p>
+        </div>
+        {!deepAnalysis && (
+          <button type="button" onClick={onRequestDeepAnalysis} disabled={deepAnalysisLoading}>
+            {deepAnalysisLoading ? labels.deepAnalysisLoading : `${labels.deepAnalysisCta} · ${labels.deepAnalysisCost}`}
+          </button>
+        )}
+      </div>
+      {deepAnalysisError && <p className="deep-analysis-error">{deepAnalysisError}</p>}
+      {deepAnalysis && (
+        <div className="deep-analysis-report">
+          <div className="deep-analysis-summary">
+            <span>{labels.deepAnalysisTitle}</span>
+            <h3>{deepAnalysis.headline}</h3>
+            <p>{deepAnalysis.summary}</p>
+          </div>
+          <div className="deep-analysis-grid">
+            <article>
+              <h4>{labels.deepPros}</h4>
+              <ul>{(deepAnalysis.pros || []).map(item => <li key={item}>{item}</li>)}</ul>
+            </article>
+            <article>
+              <h4>{labels.deepCons}</h4>
+              <ul>{(deepAnalysis.cons || []).map(item => <li key={item}>{item}</li>)}</ul>
+            </article>
+            <article>
+              <h4>{labels.deepSynergies}</h4>
+              <ul>{(deepAnalysis.synergies || []).map(item => <li key={item}>{item}</li>)}</ul>
+            </article>
+            <article>
+              <h4>{labels.deepHowToUse}</h4>
+              <ul>{(deepAnalysis.how_to_use || []).map(item => <li key={item}>{item}</li>)}</ul>
+            </article>
+          </div>
+          {(deepAnalysis.when_to_avoid?.length > 0 || deepAnalysis.final_decision) && (
+            <div className="deep-analysis-final">
+              {deepAnalysis.when_to_avoid?.length > 0 && (
+                <div>
+                  <h4>{labels.deepWhenAvoid}</h4>
+                  <ul>{deepAnalysis.when_to_avoid.map(item => <li key={item}>{item}</li>)}</ul>
+                </div>
+              )}
+              {deepAnalysis.final_decision && (
+                <div>
+                  <h4>{labels.deepFinalDecision}</h4>
+                  <p>{deepAnalysis.final_decision}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="detail-grid">
         <article>
           <h3><TrendingUp size={18} /> {labels.mainLever}</h3>
@@ -831,7 +923,21 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
   )
 }
 
-function CardDetailsModal({ card, labels, lang, rosterSummary, evaluation, evaluating, onOpenFormation, onOpenCoach, onClose }) {
+function CardDetailsModal({
+  card,
+  labels,
+  lang,
+  rosterSummary,
+  evaluation,
+  evaluating,
+  deepAnalysis,
+  deepAnalysisLoading,
+  deepAnalysisError,
+  onRequestDeepAnalysis,
+  onOpenFormation,
+  onOpenCoach,
+  onClose
+}) {
   React.useEffect(() => {
     if (!card) return
     const previousOverflow = document.body.style.overflow
@@ -866,6 +972,10 @@ function CardDetailsModal({ card, labels, lang, rosterSummary, evaluation, evalu
           rosterSummary={rosterSummary}
           evaluation={evaluation}
           evaluating={evaluating}
+          deepAnalysis={deepAnalysis}
+          deepAnalysisLoading={deepAnalysisLoading}
+          deepAnalysisError={deepAnalysisError}
+          onRequestDeepAnalysis={onRequestDeepAnalysis}
           onOpenFormation={onOpenFormation}
           onOpenCoach={onOpenCoach}
           onClose={onClose}
@@ -888,6 +998,9 @@ export default withAuth(function CardAdvisorLabPage() {
   const [searchQuery, setSearchQuery] = React.useState('')
   const [evaluationsByCard, setEvaluationsByCard] = React.useState({})
   const [evaluatingCardId, setEvaluatingCardId] = React.useState(null)
+  const [deepAnalysesByCard, setDeepAnalysesByCard] = React.useState({})
+  const [deepAnalysisLoadingId, setDeepAnalysisLoadingId] = React.useState(null)
+  const [deepAnalysisErrors, setDeepAnalysisErrors] = React.useState({})
   const cards = React.useMemo(() => {
     const baseCards = releaseId === 'all'
       ? activeReleases.flatMap(release => release.cards.map(card => ({ ...card, releaseName: release.name, releaseStatus: release.status })))
@@ -943,6 +1056,39 @@ export default withAuth(function CardAdvisorLabPage() {
   const selectedCard = cards.find(card => card.id === selectedId) || cards[0]
   const detailsCard = cards.find(card => card.id === detailsCardId) || null
   const detailsEvaluation = detailsCard ? evaluationsByCard[detailsCard.id] : null
+  const detailsDeepAnalysis = detailsCard ? deepAnalysesByCard[detailsCard.id] : null
+  const detailsDeepAnalysisError = detailsCard ? deepAnalysisErrors[detailsCard.id] : ''
+
+  const requestDeepAnalysis = React.useCallback(async () => {
+    if (!detailsCard?.id || deepAnalysesByCard[detailsCard.id] || deepAnalysisLoadingId) return
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+    if (!token) return
+
+    setDeepAnalysisLoadingId(detailsCard.id)
+    setDeepAnalysisErrors(prev => ({ ...prev, [detailsCard.id]: '' }))
+    try {
+      const response = await fetch('/api/card-advisor-lab/deep-analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ card: detailsCard, lang: lang === 'en' ? 'en' : 'it' })
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || !data?.analysis) {
+        throw new Error(data?.error || labels.deepAnalysisError)
+      }
+      setDeepAnalysesByCard(prev => ({ ...prev, [detailsCard.id]: data.analysis }))
+    } catch (error) {
+      setDeepAnalysisErrors(prev => ({
+        ...prev,
+        [detailsCard.id]: error?.message || labels.deepAnalysisError
+      }))
+    } finally {
+      setDeepAnalysisLoadingId(null)
+    }
+  }, [deepAnalysesByCard, deepAnalysisLoadingId, detailsCard, labels.deepAnalysisError, lang])
 
   React.useEffect(() => {
     let active = true
@@ -1136,6 +1282,10 @@ export default withAuth(function CardAdvisorLabPage() {
         rosterSummary={rosterSummary}
         evaluation={detailsEvaluation}
         evaluating={detailsCard?.id === evaluatingCardId}
+        deepAnalysis={detailsDeepAnalysis}
+        deepAnalysisLoading={detailsCard?.id === deepAnalysisLoadingId}
+        deepAnalysisError={detailsDeepAnalysisError}
+        onRequestDeepAnalysis={requestDeepAnalysis}
         onOpenFormation={() => router.push('/gestione-formazione')}
         onOpenCoach={() => router.push('/allenatori')}
         onClose={() => setDetailsCardId(null)}
@@ -1962,6 +2112,109 @@ export default withAuth(function CardAdvisorLabPage() {
           line-height: 1.5;
         }
 
+        .deep-analysis-entry {
+          margin-top: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 14px;
+          border: 1px solid rgba(251,191,36,0.22);
+          border-radius: 18px;
+          padding: 14px;
+          background:
+            radial-gradient(circle at 0% 0%, rgba(251,191,36,0.12), transparent 36%),
+            rgba(255,255,255,0.04);
+        }
+
+        .deep-analysis-entry span,
+        .deep-analysis-summary span {
+          display: block;
+          color: #facc15;
+          font-size: 11px;
+          font-weight: 950;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          margin-bottom: 5px;
+        }
+
+        .deep-analysis-entry p {
+          margin: 0;
+          color: rgba(255,255,255,0.78);
+          font-size: 13px;
+          line-height: 1.45;
+        }
+
+        .deep-analysis-entry button {
+          border: none;
+          border-radius: 999px;
+          background: linear-gradient(135deg, #facc15, #f97316);
+          color: #050814;
+          min-height: 40px;
+          padding: 9px 14px;
+          font-weight: 950;
+          cursor: pointer;
+          white-space: nowrap;
+        }
+
+        .deep-analysis-entry button:disabled {
+          opacity: 0.65;
+          cursor: wait;
+        }
+
+        .deep-analysis-error {
+          margin: 10px 0 0;
+          color: #ff9d9d;
+          font-size: 13px;
+        }
+
+        .deep-analysis-report {
+          margin-top: 14px;
+          border: 1px solid rgba(251,191,36,0.18);
+          border-radius: 20px;
+          padding: 16px;
+          background:
+            radial-gradient(circle at 90% 0%, rgba(251,191,36,0.10), transparent 34%),
+            rgba(5,8,20,0.72);
+        }
+
+        .deep-analysis-summary h3 {
+          margin: 0 0 8px;
+          color: #fff;
+          font-size: clamp(20px, 3vw, 28px);
+          letter-spacing: -0.03em;
+        }
+
+        .deep-analysis-summary p,
+        .deep-analysis-final p {
+          margin: 0;
+          color: rgba(255,255,255,0.80);
+          line-height: 1.65;
+          font-size: 14px;
+        }
+
+        .deep-analysis-grid,
+        .deep-analysis-final {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
+          margin-top: 14px;
+        }
+
+        .deep-analysis-grid article,
+        .deep-analysis-final > div {
+          border: 1px solid rgba(255,255,255,0.10);
+          border-radius: 16px;
+          padding: 13px;
+          background: rgba(255,255,255,0.045);
+        }
+
+        .deep-analysis-grid h4,
+        .deep-analysis-final h4 {
+          margin: 0 0 9px;
+          color: #fff;
+          font-size: 14px;
+        }
+
         .team-synergy-details-toggle {
           margin-top: 12px;
           border: 1px solid rgba(0,212,255,0.34);
@@ -2261,6 +2514,17 @@ export default withAuth(function CardAdvisorLabPage() {
 
           .fit-panel button {
             width: 100%;
+          }
+
+          .deep-analysis-entry,
+          .deep-analysis-grid,
+          .deep-analysis-final {
+            grid-template-columns: 1fr;
+          }
+
+          .deep-analysis-entry {
+            flex-direction: column;
+            align-items: stretch;
           }
 
           .fit-summary-grid {
