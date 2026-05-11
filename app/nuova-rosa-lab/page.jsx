@@ -278,16 +278,34 @@ function getStatToneClass(value) {
 
 function CompactStatInput({ label, value, onChange }) {
   const toneClass = getStatToneClass(value)
+  const numericValue = Number(value)
+  const safeValue = Number.isFinite(numericValue) ? numericValue : 0
+  const adjustValue = (delta) => {
+    const nextValue = Math.max(0, Math.min(99, safeValue + delta))
+    onChange(String(nextValue))
+  }
+
   return (
-    <label className="nr-stat-compact-row">
-      <span>{label}</span>
-      <input
-        type="number"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className={`nr-stat-compact-input tone-${toneClass}`}
-      />
-    </label>
+    <div className="nr-stat-compact-row">
+      <span className="nr-stat-compact-label">{label}</span>
+      <div className={`nr-stat-stepper tone-${toneClass}`}>
+        <button type="button" onClick={() => adjustValue(-1)} aria-label={`Decrease ${label}`}>
+          -
+        </button>
+        <input
+          type="number"
+          min="0"
+          max="99"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          aria-label={label}
+          className="nr-stat-compact-input"
+        />
+        <button type="button" onClick={() => adjustValue(1)} aria-label={`Increase ${label}`}>
+          +
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -4477,15 +4495,24 @@ export default withAuth(function NuovaRosaLabPage() {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          object-position: center top;
-          transform: scale(1.08);
-          transform-origin: center top;
+          object-position: 58% 42%;
+          transform: scale(1.82);
+          transform-origin: 58% 42%;
           -webkit-user-drag: none;
           user-drag: none;
           pointer-events: none;
         }
 
-        .nr-slot-avatar-mini::after,
+        .nr-slot-avatar-mini::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background:
+            radial-gradient(circle at 56% 34%, transparent 0%, transparent 34%, rgba(3, 7, 18, 0.18) 58%, rgba(3, 7, 18, 0.52) 100%),
+            linear-gradient(180deg, rgba(3, 7, 18, 0.22) 0%, transparent 32%, rgba(3, 7, 18, 0.58) 100%);
+          pointer-events: none;
+        }
+
         .nr-reserve-card-media::after {
           content: "";
           position: absolute;
@@ -4503,6 +4530,10 @@ export default withAuth(function NuovaRosaLabPage() {
           text-shadow: 0 2px 10px rgba(0, 0, 0, 0.42);
         }
 
+        .nr-slot-caption-row {
+          display: none;
+        }
+
         .nr-slot-role-chip {
           position: absolute;
           left: 6px;
@@ -4514,13 +4545,14 @@ export default withAuth(function NuovaRosaLabPage() {
           letter-spacing: 0.05em;
           border-radius: 999px;
           border: 1px solid rgba(255, 255, 255, 0.28);
-          background: rgba(255, 255, 255, 0.12);
+          background: rgba(3, 7, 18, 0.58);
           padding: 2px 7px;
           line-height: 1.3;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.24);
         }
 
         .nr-slot-name-chip {
-          max-width: 100%;
+          min-width: 0;
           font-size: 8px;
           font-weight: 800;
           color: rgba(255, 255, 255, 0.86);
@@ -5771,12 +5803,12 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-stat-compact-row {
           display: grid;
-          grid-template-columns: minmax(0, 1fr) 62px;
+          grid-template-columns: minmax(0, 1fr) auto;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
         }
 
-        .nr-stat-compact-row span {
+        .nr-stat-compact-label {
           margin: 0;
           white-space: nowrap;
           overflow: hidden;
@@ -5785,43 +5817,101 @@ export default withAuth(function NuovaRosaLabPage() {
           color: rgba(255, 255, 255, 0.82);
         }
 
-        .nr-stat-compact-input {
-          height: 34px;
-          padding: 4px 8px;
-          text-align: center;
-          border-radius: 10px;
+        .nr-stat-stepper {
+          display: grid;
+          grid-template-columns: 28px 46px 28px;
+          align-items: center;
+          gap: 4px;
+          padding: 3px;
+          border-radius: 999px;
           border: 1px solid rgba(255, 255, 255, 0.14);
           background: rgba(9, 14, 30, 0.95);
-          color: #fff;
-          font-weight: 700;
         }
 
-        .nr-stat-compact-input.tone-elite {
+        .nr-stat-stepper button {
+          width: 28px;
+          height: 28px;
+          border: 0;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.06);
+          color: rgba(255, 255, 255, 0.84);
+          font-size: 15px;
+          font-weight: 900;
+          line-height: 1;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .nr-stat-stepper button:hover {
+          background: rgba(0, 212, 255, 0.13);
+          color: #fff;
+        }
+
+        .nr-stat-compact-input {
+          width: 46px;
+          height: 28px;
+          padding: 0 2px;
+          text-align: center;
+          border: 0;
+          outline: 0;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.045);
+          color: #fff;
+          font-size: 12px;
+          font-weight: 900;
+          appearance: textfield;
+          -moz-appearance: textfield;
+        }
+
+        .nr-stat-compact-input::-webkit-outer-spin-button,
+        .nr-stat-compact-input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+
+        .nr-stat-stepper.tone-elite {
           border-color: rgba(64, 222, 122, 0.55);
           box-shadow: inset 0 0 0 1px rgba(64, 222, 122, 0.22);
+        }
+
+        .nr-stat-stepper.tone-elite .nr-stat-compact-input {
           color: #8affb3;
         }
 
-        .nr-stat-compact-input.tone-good {
+        .nr-stat-stepper.tone-good {
           border-color: rgba(172, 222, 64, 0.5);
           box-shadow: inset 0 0 0 1px rgba(172, 222, 64, 0.2);
+        }
+
+        .nr-stat-stepper.tone-good .nr-stat-compact-input {
           color: #d9ff7e;
         }
 
-        .nr-stat-compact-input.tone-ok {
+        .nr-stat-stepper.tone-ok {
           border-color: rgba(251, 191, 36, 0.52);
           box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.2);
+        }
+
+        .nr-stat-stepper.tone-ok .nr-stat-compact-input {
           color: #ffd878;
         }
 
-        .nr-stat-compact-input.tone-low {
+        .nr-stat-stepper.tone-low {
           border-color: rgba(255, 83, 83, 0.52);
           box-shadow: inset 0 0 0 1px rgba(255, 83, 83, 0.22);
+        }
+
+        .nr-stat-stepper.tone-low .nr-stat-compact-input {
           color: #ff9a9a;
         }
 
-        .nr-stat-compact-input.tone-neutral {
+        .nr-stat-stepper.tone-neutral {
           border-color: rgba(255, 255, 255, 0.14);
+        }
+
+        .nr-stat-stepper.tone-neutral .nr-stat-compact-input {
           color: #fff;
         }
 
@@ -6001,6 +6091,13 @@ export default withAuth(function NuovaRosaLabPage() {
           .nr-slot-avatar-mini {
             height: 48px;
             border-radius: 10px;
+          }
+
+          .nr-slot-role-chip {
+            left: 5px;
+            bottom: 5px;
+            font-size: 8px;
+            padding: 1px 6px;
           }
 
           .nr-slot-remove {
