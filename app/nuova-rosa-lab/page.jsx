@@ -4,7 +4,7 @@ import React from 'react'
 import { useRouter } from 'next/navigation'
 import { withAuth } from '@/components/AuthWrapper'
 import { supabase } from '@/lib/supabaseClient'
-import { useTranslation } from '@/lib/i18n'
+import { getPositionRoleTranslationKey, useTranslation } from '@/lib/i18n'
 import ConfirmModal from '@/components/ConfirmModal'
 import TacticalSettingsPanel from '@/components/TacticalSettingsPanel'
 import PositionSelectionModal from '@/components/PositionSelectionModal'
@@ -139,6 +139,22 @@ function buildInitialPositionsFromCatalogCard(card) {
   if (normalized.length > 0) return normalized
   const mainPosition = payload.position || card?.position
   return mainPosition ? [{ position: mainPosition, competence: 'Alta' }] : []
+}
+
+function buildInitialPositionsFromPlayer(player) {
+  if (Array.isArray(player?.original_positions) && player.original_positions.length > 0) {
+    return player.original_positions
+      .map((entry) => {
+        const position = typeof entry === 'string' ? entry : entry?.position
+        if (!position) return null
+        return {
+          position,
+          competence: typeof entry === 'object' && entry?.competence ? entry.competence : 'Alta'
+        }
+      })
+      .filter(Boolean)
+  }
+  return player?.position ? [{ position: player.position, competence: 'Alta' }] : []
 }
 
 function getPlayerCardImage(player) {
@@ -1725,6 +1741,8 @@ function PremiumPlayerModal({
   const [selectedSkillPreset, setSelectedSkillPreset] = React.useState('')
   const [boostersDraft, setBoostersDraft] = React.useState([])
   const [showAllSkills, setShowAllSkills] = React.useState(false)
+  const [originalPositionsDraft, setOriginalPositionsDraft] = React.useState([])
+  const [showPositionEditor, setShowPositionEditor] = React.useState(false)
 
   React.useEffect(() => {
     if (!show || !player) return
@@ -1743,6 +1761,8 @@ function PremiumPlayerModal({
     setSkillsDraft(Array.isArray(player.skills) ? player.skills : [])
     setSelectedSkillPreset('')
     setShowAllSkills(false)
+    setOriginalPositionsDraft(buildInitialPositionsFromPlayer(player))
+    setShowPositionEditor(false)
     setBoostersDraft(
       Array.isArray(player.available_boosters)
         ? player.available_boosters.map((entry) => normalizeBoosterEntry(entry))
@@ -1811,7 +1831,7 @@ function PremiumPlayerModal({
   }
 
   const boosterCount = boostersDraft.length
-  const roleCount = Array.isArray(player.original_positions) ? player.original_positions.length : 0
+  const roleCount = originalPositionsDraft.length
   const visibleSkills = showAllSkills ? skillsDraft : skillsDraft.slice(0, 10)
   const hiddenSkillsCount = Math.max(0, skillsDraft.length - visibleSkills.length)
 
@@ -1888,10 +1908,34 @@ function PremiumPlayerModal({
             <div className="nr-form-grid">
               <EnterpriseInput label="OVR" value={form.overall_rating} type="number" onChange={(value) => setForm((prev) => ({ ...prev, overall_rating: value }))} />
             </div>
+            <div className="nr-role-editor-card">
+              <div className="nr-role-editor-head">
+                <div>
+                  <strong>{lang === 'en' ? 'Playable roles' : 'Ruoli giocabili'}</strong>
+                  <p>{lang === 'en' ? 'Main role is the first selected role.' : 'Il ruolo principale e il primo ruolo selezionato.'}</p>
+                </div>
+                <button type="button" className="nr-secondary-button" onClick={() => setShowPositionEditor(true)}>
+                  {lang === 'en' ? 'Edit roles' : 'Modifica ruoli'}
+                </button>
+              </div>
+              <div className="nr-role-chip-row">
+                {originalPositionsDraft.length > 0 ? originalPositionsDraft.map((entry) => (
+                  <span
+                    key={`${entry.position}-${entry.competence}`}
+                    className="nr-role-chip"
+                    title={t(getPositionRoleTranslationKey(entry.position))}
+                  >
+                    {entry.position} · {entry.competence || 'Alta'}
+                  </span>
+                )) : (
+                  <span className="nr-skill-empty">{lang === 'en' ? 'No playable roles set.' : 'Nessun ruolo giocabile impostato.'}</span>
+                )}
+              </div>
+            </div>
             <p className="nr-setup-readonly-note">
               {lang === 'en'
-                ? 'Base data (name, role, age, club, nationality) is fixed and syncs from catalog/photo source. You can edit OVR and performance stats here.'
-                : 'I dati base (nome, ruolo, eta, club, nazionalita) sono fissi e seguono la sorgente catalogo/foto. Qui puoi modificare OVR e statistiche.'}
+                ? 'Base data (name, age, club, nationality) syncs from catalog/photo source. You can edit OVR, playable roles and performance stats here.'
+                : 'I dati base (nome, eta, club, nazionalita) seguono la sorgente catalogo/foto. Qui puoi modificare OVR, ruoli giocabili e statistiche.'}
             </p>
           </EnterpriseSection>
 
@@ -2113,7 +2157,7 @@ function PremiumPlayerModal({
           disabled={saving}
           onClick={() => onSave({
             player_name: form.player_name.trim(),
-            position: form.position,
+            position: originalPositionsDraft[0]?.position || form.position,
             overall_rating: form.overall_rating ? Number(form.overall_rating) : null,
             card_type: form.card_type,
             role: form.role,
@@ -2125,6 +2169,7 @@ function PremiumPlayerModal({
               name: String(entry?.name || '').trim(),
               effect: String(entry?.effect || '').trim() || '+1'
             })),
+            original_positions: originalPositionsDraft,
             base_stats: buildBaseStatsPayloadFromEditor(form)
           })}
         >
@@ -2132,6 +2177,18 @@ function PremiumPlayerModal({
           <Save size={16} />
         </button>
       </div>
+      {showPositionEditor && (
+        <PositionSelectionModal
+          playerName={player.player_name}
+          overallRating={form.overall_rating || player.overall_rating}
+          mainPosition={originalPositionsDraft[0]?.position || form.position || player.position}
+          selectedPositions={originalPositionsDraft}
+          onPositionsChange={setOriginalPositionsDraft}
+          onConfirm={() => setShowPositionEditor(false)}
+          uploading={false}
+          onCancel={() => setShowPositionEditor(false)}
+        />
+      )}
     </EnterpriseModalFrame>
   )
 }
@@ -5974,6 +6031,54 @@ export default withAuth(function NuovaRosaLabPage() {
           color: rgba(255, 255, 255, 0.68);
         }
 
+        .nr-role-editor-card {
+          margin-top: 12px;
+          border-radius: 14px;
+          border: 1px solid rgba(0, 212, 255, 0.16);
+          background:
+            radial-gradient(circle at top left, rgba(0, 212, 255, 0.1), transparent 38%),
+            rgba(255, 255, 255, 0.035);
+          padding: 12px;
+        }
+
+        .nr-role-editor-head {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 12px;
+          margin-bottom: 10px;
+        }
+
+        .nr-role-editor-head strong {
+          display: block;
+          color: #fff;
+          font-size: 13px;
+        }
+
+        .nr-role-editor-head p {
+          margin: 4px 0 0;
+          color: rgba(255, 255, 255, 0.64);
+          font-size: 12px;
+          line-height: 1.35;
+        }
+
+        .nr-role-chip-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        .nr-role-chip {
+          border-radius: 999px;
+          border: 1px solid rgba(0, 212, 255, 0.22);
+          background: rgba(0, 212, 255, 0.08);
+          color: #eafcff;
+          padding: 7px 10px;
+          font-size: 12px;
+          font-weight: 800;
+          line-height: 1;
+        }
+
         .nr-skill-chip-row {
           display: flex;
           gap: 8px;
@@ -6096,6 +6201,11 @@ export default withAuth(function NuovaRosaLabPage() {
 
           .nr-premium-summary-row {
             grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+
+          .nr-role-editor-head {
+            flex-direction: column;
+            align-items: stretch;
           }
 
           .nr-slot-card {
