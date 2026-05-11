@@ -1138,7 +1138,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
 
   const technicalRisk = lang === 'en'
     ? !technical.hasCompleteCardData
-      ? 'Do not make a coins decision until the full EFHub card detail is available.'
+      ? 'Do not make a coins decision until the full card detail is available.'
       : !hasRoster
         ? 'Without your roster, this is a card read only: the real risk is buying a duplicate.'
         : duplicate
@@ -1147,7 +1147,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
             ? `Coin risk: ${bestAlternative?.name || 'the starter'} already occupies this lane at a similar or higher level.`
             : 'Coin risk is controlled if this role is one of your current priorities.'
     : !technical.hasCompleteCardData
-      ? 'Non prendere decisioni coins finché non è disponibile il dettaglio completo EFHub della carta.'
+      ? 'Non prendere decisioni coins finché non è disponibile il dettaglio completo della carta.'
       : !hasRoster
         ? 'Senza rosa questa è solo lettura carta: il rischio reale è comprare un doppione.'
         : duplicate

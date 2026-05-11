@@ -118,10 +118,12 @@ function buildCoachPayloadFromCatalog(coach) {
     ? coach.coach_payload
     : {}
 
+  const category = getCoachDisplayCategory(payload.category || coach?.category) || 'Allenatore catalogo'
+
   return {
     ...payload,
     coach_name: payload.coach_name || coach?.coach_name,
-    category: payload.category || coach?.category || 'EFHub Manager',
+    category,
     pack_type: payload.pack_type || coach?.pack_type || 'Special',
     playing_style_competence: payload.playing_style_competence || coach?.playing_style_competence || {},
     stat_boosters: Array.isArray(payload.stat_boosters)
@@ -141,6 +143,12 @@ function buildCoachPayloadFromCatalog(coach) {
       source_card_image_url: coach?.source_card_image_url || null
     }
   }
+}
+
+function getCoachDisplayCategory(category) {
+  const value = String(category || '').trim()
+  if (!value) return null
+  return /efhub/i.test(value) ? 'Allenatore catalogo' : value
 }
 
 function getCoachCardImage(coach) {
@@ -621,6 +629,7 @@ function CoachCatalogCard({ coach, lang, t, onSelect, disabled }) {
   const image = getCoachCardImage(coach)
   const bestPlaystyle = getBestCoachPlaystyle(coach)
   const boosterCount = Array.isArray(coach.stat_boosters) ? coach.stat_boosters.length : 0
+  const category = getCoachDisplayCategory(coach.category)
 
   return (
     <button
@@ -638,7 +647,7 @@ function CoachCatalogCard({ coach, lang, t, onSelect, disabled }) {
       </div>
       <div className="nr-catalog-card-copy">
         <strong>{coach.coach_name}</strong>
-        <p>{coach.category || 'EFHub'} · {coach.pack_type || 'Special'}</p>
+        <p>{category || (lang === 'en' ? 'Coach catalog' : 'Catalogo allenatori')} · {coach.pack_type || 'Special'}</p>
         <div className="nr-catalog-card-meta">
           <span>
             {bestPlaystyle
@@ -679,7 +688,7 @@ function CoachCatalogModal({
         if (!saving) onClose()
       }}
       title={lang === 'en' ? 'Choose coach from catalog' : 'Scegli allenatore da catalogo'}
-      subtitle={lang === 'en' ? 'EFHub coach catalog' : 'Catalogo coach EFHub'}
+      subtitle={lang === 'en' ? 'Coach catalog' : 'Catalogo allenatori'}
       className="nr-picker-shell nr-coach-picker-shell"
     >
       <div className="nr-picker-subnav">
@@ -926,7 +935,7 @@ function CoachDetailsModal({ show, coach, onClose, onReplaceFromCatalog, onRepla
     [lang === 'en' ? 'Age' : 'Eta', coach.age],
     [lang === 'en' ? 'Nationality' : 'Nazionalita', coach.nationality],
     [lang === 'en' ? 'Team' : 'Squadra', coach.team],
-    [lang === 'en' ? 'Category' : 'Categoria', coach.category],
+    [lang === 'en' ? 'Category' : 'Categoria', getCoachDisplayCategory(coach.category)],
     [lang === 'en' ? 'Type' : 'Tipo', coach.pack_type]
   ].filter(([, value]) => value !== null && value !== undefined && value !== '')
   const playstyles = Object.entries(coach.playing_style_competence || {})
@@ -5426,9 +5435,9 @@ export default withAuth(function NuovaRosaLabPage() {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          object-position: center top;
-          transform: scale(1.06);
-          transform-origin: center top;
+          object-position: center 24%;
+          transform: scale(1.75);
+          transform-origin: center 24%;
           -webkit-user-drag: none;
           user-drag: none;
           pointer-events: none;
