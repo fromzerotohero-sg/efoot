@@ -516,7 +516,7 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
     <div
       role="button"
       tabIndex={0}
-      className={`nr-slot-filled ${isEditMode ? 'is-draggable' : ''} ${dragging ? 'is-dragging' : ''}`}
+      className={`nr-slot-filled ${slotThumb ? 'has-photo-card' : ''} ${isEditMode ? 'is-draggable' : ''} ${dragging ? 'is-dragging' : ''}`}
       style={dragging ? { transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)` } : undefined}
       onClick={() => {
         if (skipNextSyntheticCardClickRef.current) {
@@ -5392,6 +5392,13 @@ export default withAuth(function NuovaRosaLabPage() {
           z-index: 10;
         }
 
+        .nr-slot-filled.has-photo-card {
+          width: clamp(70px, 6.6vw, 84px);
+          min-height: clamp(84px, 7.2vw, 94px);
+          margin: 0 auto;
+          padding: 5px 4px;
+        }
+
         .nr-picker-detail-hero img,
         .nr-catalog-card-media img {
           width: 100%;
@@ -5429,6 +5436,12 @@ export default withAuth(function NuovaRosaLabPage() {
           flex-shrink: 0;
         }
 
+        .nr-slot-filled-main.has-photo .nr-slot-avatar-mini {
+          width: clamp(56px, 5.4vw, 68px);
+          height: clamp(64px, 6.4vw, 78px);
+          border-radius: 10px;
+        }
+
         .nr-slot-avatar-mini img {
           position: relative;
           z-index: 0;
@@ -5436,7 +5449,7 @@ export default withAuth(function NuovaRosaLabPage() {
           height: 100%;
           object-fit: contain;
           object-position: center center;
-          transform: scale(1.24);
+          transform: scale(1.08);
           transform-origin: center center;
           -webkit-user-drag: none;
           user-drag: none;
@@ -7267,9 +7280,20 @@ export default withAuth(function NuovaRosaLabPage() {
             padding: 4px;
           }
 
+          .nr-slot-filled.has-photo-card {
+            width: min(76px, 78%);
+            min-height: 84px;
+            padding: 4px;
+          }
+
           .nr-slot-avatar-mini {
             height: 50px;
             border-radius: 10px;
+          }
+
+          .nr-slot-filled-main.has-photo .nr-slot-avatar-mini {
+            width: 58px;
+            height: 66px;
           }
 
           .nr-slot-role-chip {
