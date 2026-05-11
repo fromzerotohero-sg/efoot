@@ -165,6 +165,51 @@ function getPhotoProfileCompletion(player, lang = 'it') {
   }
 }
 
+function getProfileCompletionUi(player, lang = 'it') {
+  const completion = getPhotoProfileCompletion(player, lang)
+  const missingLabels = completion.missing.map((section) => section.label).join(', ')
+  const onlyBoosterMissing = completion.missing.length === 1 && completion.missing[0]?.key === 'boosters'
+  if (completion.isComplete) {
+    return {
+      completion,
+      tone: 'complete',
+      shortLabel: lang === 'en' ? 'OK' : 'OK',
+      label: lang === 'en' ? 'Complete' : 'Completo',
+      detail: lang === 'en' ? 'Stats, skills and boosters present' : 'Statistiche, abilita e booster presenti'
+    }
+  }
+  if (onlyBoosterMissing) {
+    return {
+      completion,
+      tone: 'optional',
+      shortLabel: 'B',
+      label: lang === 'en' ? 'Booster missing' : 'Booster mancante',
+      detail: lang === 'en' ? 'Only booster photo is missing' : 'Manca solo la foto booster'
+    }
+  }
+  return {
+    completion,
+    tone: 'missing',
+    shortLabel: String(completion.missing.length),
+    label: lang === 'en' ? 'To complete' : 'Da completare',
+    detail: lang === 'en' ? `Missing ${missingLabels}` : `Mancano ${missingLabels}`
+  }
+}
+
+function ProfileCompletenessBadge({ player, lang, compact = false }) {
+  const status = getProfileCompletionUi(player, lang)
+  return (
+    <span
+      className={`nr-profile-status tone-${status.tone} ${compact ? 'compact' : ''}`}
+      title={status.detail}
+      aria-label={status.detail}
+    >
+      <span className="nr-profile-status-dot">{status.shortLabel}</span>
+      {!compact && <span>{status.label}</span>}
+    </span>
+  )
+}
+
 function isSameExtractedPlayer(existingPlayer, extractedPlayer) {
   const existingName = String(existingPlayer?.player_name || '').trim().toLowerCase()
   const extractedName = String(extractedPlayer?.player_name || '').trim().toLowerCase()
@@ -283,6 +328,7 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
   /** After opening from pointer release (edit mode), skip one synthetic click to avoid double-open on desktop */
   const skipNextSyntheticCardClickRef = React.useRef(false)
   const slotThumb = React.useMemo(() => player?.photo_url || getPlayerCardImage(player), [player])
+  const profileStatus = getProfileCompletionUi(player, lang)
 
   React.useEffect(() => {
     if (!isEditMode) suppressClickForFieldDragRef.current = false
@@ -406,6 +452,13 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
         </div>
         <span className="nr-slot-role-chip">{isEditMode ? (slot.position || player.position || '-') : (player.position || slot.position || '-')}</span>
       </div>
+      <span
+        className={`nr-slot-profile-dot tone-${profileStatus.tone}`}
+        title={profileStatus.detail}
+        aria-label={profileStatus.detail}
+      >
+        {profileStatus.shortLabel}
+      </span>
       {typeof onRemove === 'function' && (
         <span
           role="button"
@@ -481,12 +534,14 @@ function EnterpriseReservePicker({ reserves, lang, onPick, slotPosition, onAddNe
       <div className="nr-reserve-inline-list">
         {orderedReserves.length > 0 ? orderedReserves.map((player) => {
           const compatibility = getSlotCompatibility(slotPosition, player.position)
+          const profileStatus = getProfileCompletionUi(player, lang)
           return (
           <button key={player.id} type="button" className="nr-bench-item" onClick={() => onPick(player)}>
             <div className="nr-bench-item-copy">
               <strong>{player.player_name}</strong>
-              <span>{player.position || '-'} · OVR {player.overall_rating ?? '-'} · {compatibilityLabel(compatibility, lang)}</span>
+              <span>{player.position || '-'} · {profileStatus.label} · {compatibilityLabel(compatibility, lang)}</span>
             </div>
+            <ProfileCompletenessBadge player={player} lang={lang} compact />
             <span className={`nr-fit-pill compat-${compatibility}`}>{compatibilityLabel(compatibility, lang)}</span>
             <ChevronRight size={16} />
           </button>
@@ -1187,7 +1242,7 @@ function QuickPlayerPanel({
           <div>
             <span className="nr-mini-kicker">{lang === 'en' ? 'Player details' : 'Dettaglio giocatore'}</span>
             <h2>{player.player_name}</h2>
-            <p>{player.position || '-'} · OVR {player.overall_rating ?? '-'}</p>
+              <p>{player.position || '-'} · {getProfileCompletionUi(player, lang).label}</p>
           </div>
           <button type="button" className="nr-icon-button" onClick={onClose}>
             <X size={18} />
@@ -3693,24 +3748,15 @@ export default withAuth(function NuovaRosaLabPage() {
               </div>
             )}
             <div className="nr-reserve-grid">
-              {riserve.length > 0 ? riserve.map((player) => (
-                <div
-                  key={player.id}
-                  className="nr-reserve-card"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => {
-                    if (selectedSlot && showAssignModal) {
-                      handleSelectReserveForSlot(player)
-                    } else {
-                      setSelectedSlot(null)
-                      setSelectedPlayer(player)
-                      setShowAssignModal(true)
-                    }
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
+              {riserve.length > 0 ? riserve.map((player) => {
+                const profileStatus = getProfileCompletionUi(player, lang)
+                return (
+                  <div
+                    key={player.id}
+                    className={`nr-reserve-card tone-${profileStatus.tone}`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
                       if (selectedSlot && showAssignModal) {
                         handleSelectReserveForSlot(player)
                       } else {
@@ -3718,42 +3764,51 @@ export default withAuth(function NuovaRosaLabPage() {
                         setSelectedPlayer(player)
                         setShowAssignModal(true)
                       }
-                    }
-                  }}
-                >
-                  <div className="nr-reserve-card-media">
-                    {player.photo_url ? (
-                      <img src={player.photo_url} alt={player.player_name} loading="lazy" draggable={false} />
-                    ) : (
-                      <div className="nr-slot-avatar-fallback"><User size={16} /></div>
-                    )}
-                  </div>
-                  <div className="nr-reserve-card-copy">
-                    <strong>{player.player_name}</strong>
-                    <span>{player.position || '-'}</span>
-                  </div>
-                  <div className="nr-reserve-card-ovr">
-                    <small>OVR</small>
-                    <strong>{player.overall_rating ?? '-'}</strong>
-                  </div>
-                  <ChevronRight size={14} />
-                  <button
-                    type="button"
-                    className="nr-reserve-remove"
-                    onClick={(event) => {
-                      event.preventDefault()
-                      event.stopPropagation()
-                      handleDeletePlayer(player.id, true)
                     }}
-                    onMouseDown={(event) => event.stopPropagation()}
-                    onTouchStart={(event) => event.stopPropagation()}
-                    aria-label={lang === 'en' ? 'Delete reserve' : 'Elimina riserva'}
-                    title={lang === 'en' ? 'Delete reserve' : 'Elimina riserva'}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        if (selectedSlot && showAssignModal) {
+                          handleSelectReserveForSlot(player)
+                        } else {
+                          setSelectedSlot(null)
+                          setSelectedPlayer(player)
+                          setShowAssignModal(true)
+                        }
+                      }
+                    }}
                   >
-                    <X size={16} />
-                  </button>
-                </div>
-              )) : (
+                    <div className="nr-reserve-card-media">
+                      {player.photo_url ? (
+                        <img src={player.photo_url} alt={player.player_name} loading="lazy" draggable={false} />
+                      ) : (
+                        <div className="nr-slot-avatar-fallback"><User size={16} /></div>
+                      )}
+                    </div>
+                    <div className="nr-reserve-card-copy">
+                      <strong>{player.player_name}</strong>
+                      <span>{player.position || '-'}</span>
+                    </div>
+                    <ProfileCompletenessBadge player={player} lang={lang} />
+                    <ChevronRight size={14} />
+                    <button
+                      type="button"
+                      className="nr-reserve-remove"
+                      onClick={(event) => {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        handleDeletePlayer(player.id, true)
+                      }}
+                      onMouseDown={(event) => event.stopPropagation()}
+                      onTouchStart={(event) => event.stopPropagation()}
+                      aria-label={lang === 'en' ? 'Delete reserve' : 'Elimina riserva'}
+                      title={lang === 'en' ? 'Delete reserve' : 'Elimina riserva'}
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                )
+              }) : (
                 <div className="nr-empty-state">
                   <span>{t('nuovaRosaNoReserves')}</span>
                 </div>
@@ -4388,6 +4443,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-slot-filled {
+          position: relative;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -4465,6 +4521,38 @@ export default withAuth(function NuovaRosaLabPage() {
           line-height: 1.3;
         }
 
+        .nr-slot-profile-dot {
+          position: absolute;
+          right: -5px;
+          bottom: -5px;
+          width: 20px;
+          height: 20px;
+          border-radius: 999px;
+          border: 2px solid rgba(8, 16, 36, 0.96);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 8px;
+          font-weight: 900;
+          letter-spacing: -0.02em;
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.24);
+        }
+
+        .nr-slot-profile-dot.tone-complete {
+          background: #10b981;
+          color: #052e1b;
+        }
+
+        .nr-slot-profile-dot.tone-optional {
+          background: #facc15;
+          color: #422006;
+        }
+
+        .nr-slot-profile-dot.tone-missing {
+          background: #fb923c;
+          color: #431407;
+        }
+
         .nr-bench-item-copy strong,
         .nr-catalog-card-copy strong {
           font-size: 10px;
@@ -4538,6 +4626,18 @@ export default withAuth(function NuovaRosaLabPage() {
           transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
         }
 
+        .nr-reserve-card.tone-complete {
+          border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .nr-reserve-card.tone-optional {
+          border-color: rgba(250, 204, 21, 0.24);
+        }
+
+        .nr-reserve-card.tone-missing {
+          border-color: rgba(251, 146, 60, 0.28);
+        }
+
         .nr-reserve-card:hover {
           transform: translateY(-1px) scale(1.01);
           border-color: rgba(0, 212, 255, 0.34);
@@ -4601,23 +4701,72 @@ export default withAuth(function NuovaRosaLabPage() {
           color: rgba(255, 255, 255, 0.75);
         }
 
-        .nr-reserve-card-ovr {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-end;
-          line-height: 1;
+        .nr-profile-status {
+          display: inline-flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 5px;
+          min-width: 0;
+          border-radius: 999px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.05);
+          color: rgba(255, 255, 255, 0.82);
+          padding: 4px 7px 4px 5px;
+          font-size: 9px;
+          font-weight: 800;
+          white-space: nowrap;
         }
 
-        .nr-reserve-card-ovr small {
+        .nr-profile-status.compact {
+          width: 26px;
+          min-width: 26px;
+          height: 26px;
+          padding: 0;
+          justify-content: center;
+        }
+
+        .nr-profile-status-dot {
+          width: 16px;
+          height: 16px;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
           font-size: 8px;
-          color: rgba(255, 255, 255, 0.6);
-          letter-spacing: 0.06em;
+          font-weight: 900;
         }
 
-        .nr-reserve-card-ovr strong {
-          font-size: 12px;
-          color: #fcd34d;
-          text-shadow: 0 0 8px rgba(252, 211, 77, 0.25);
+        .nr-profile-status.tone-complete {
+          border-color: rgba(16, 185, 129, 0.32);
+          background: rgba(16, 185, 129, 0.1);
+          color: #bbf7d0;
+        }
+
+        .nr-profile-status.tone-complete .nr-profile-status-dot {
+          background: #10b981;
+          color: #052e1b;
+        }
+
+        .nr-profile-status.tone-optional {
+          border-color: rgba(250, 204, 21, 0.34);
+          background: rgba(250, 204, 21, 0.1);
+          color: #fef08a;
+        }
+
+        .nr-profile-status.tone-optional .nr-profile-status-dot {
+          background: #facc15;
+          color: #422006;
+        }
+
+        .nr-profile-status.tone-missing {
+          border-color: rgba(251, 146, 60, 0.38);
+          background: rgba(251, 146, 60, 0.12);
+          color: #fed7aa;
+        }
+
+        .nr-profile-status.tone-missing .nr-profile-status-dot {
+          background: #fb923c;
+          color: #431407;
         }
 
         .nr-bench-list,
@@ -6023,7 +6172,7 @@ export default withAuth(function NuovaRosaLabPage() {
           }
 
           .nr-reserve-card {
-            grid-template-columns: 28px minmax(0, 1fr) auto;
+            grid-template-columns: 28px minmax(0, 1fr) auto auto;
             gap: 6px;
             padding: 6px;
             min-height: 54px;
@@ -6043,12 +6192,15 @@ export default withAuth(function NuovaRosaLabPage() {
             font-size: 9px;
           }
 
-          .nr-reserve-card-ovr small {
-            font-size: 7px;
+          .nr-profile-status:not(.compact) {
+            width: 24px;
+            min-width: 24px;
+            height: 24px;
+            padding: 0;
           }
 
-          .nr-reserve-card-ovr strong {
-            font-size: 11px;
+          .nr-profile-status:not(.compact) > span:last-child {
+            display: none;
           }
 
           .nr-toast {
