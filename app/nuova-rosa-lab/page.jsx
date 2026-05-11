@@ -5448,7 +5448,7 @@ export default withAuth(function NuovaRosaLabPage() {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          object-position: center 42%;
+          object-position: center 44%;
           transform: scale(1.04);
           transform-origin: center center;
           -webkit-user-drag: none;
