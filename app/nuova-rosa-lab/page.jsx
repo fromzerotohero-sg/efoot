@@ -5393,8 +5393,8 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-slot-filled.has-photo-card {
-          width: clamp(82px, 7.4vw, 96px);
-          min-height: clamp(76px, 6.6vw, 86px);
+          width: clamp(78px, 7vw, 92px);
+          min-height: clamp(84px, 7.1vw, 96px);
           margin: 0 auto;
           padding: 5px 4px;
         }
@@ -5437,8 +5437,8 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-slot-filled-main.has-photo .nr-slot-avatar-mini {
-          width: clamp(68px, 6.5vw, 82px);
-          height: clamp(58px, 5.5vw, 68px);
+          width: clamp(64px, 6vw, 76px);
+          height: clamp(70px, 6.8vw, 82px);
           border-radius: 10px;
         }
 
@@ -5448,8 +5448,8 @@ export default withAuth(function NuovaRosaLabPage() {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          object-position: center 46%;
-          transform: scale(1.04);
+          object-position: center 42%;
+          transform: scale(1.02);
           transform-origin: center center;
           -webkit-user-drag: none;
           user-drag: none;
@@ -7281,8 +7281,8 @@ export default withAuth(function NuovaRosaLabPage() {
           }
 
           .nr-slot-filled.has-photo-card {
-            width: min(88px, 86%);
-            min-height: 78px;
+            width: min(82px, 82%);
+            min-height: 88px;
             padding: 4px;
           }
 
@@ -7292,8 +7292,8 @@ export default withAuth(function NuovaRosaLabPage() {
           }
 
           .nr-slot-filled-main.has-photo .nr-slot-avatar-mini {
-            width: 74px;
-            height: 60px;
+            width: 66px;
+            height: 74px;
           }
 
           .nr-slot-role-chip {
