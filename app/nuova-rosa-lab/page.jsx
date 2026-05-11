@@ -567,7 +567,7 @@ function CatalogPickerModal({
               )}
               <button type="button" className="nr-secondary-button" onClick={onUploadFallback}>
                 <Upload size={14} />
-                {lang === 'en' ? 'Upload photo instead' : 'Carica foto invece'}
+                {lang === 'en' ? 'Open photo upload page' : 'Apri caricamento foto'}
               </button>
             </div>
 
@@ -762,25 +762,26 @@ function QuickPlayerPanel({
           </div>
 
           <div className="nr-quick-actions">
-            {slot?.slot_index != null && (
-              <button type="button" className="nr-primary-button" onClick={() => onRemoveFromSlot(player.id)}>
-                {lang === 'en' ? 'Move to reserves' : 'Sposta in riserva'}
-              </button>
-            )}
-            <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player, true)}>
+            <button type="button" className="nr-primary-button" onClick={() => onOpenReplace(player, true)}>
               <Pencil size={14} />
               {lang === 'en' ? 'Edit player' : 'Modifica giocatore'}
             </button>
+            <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player)}>
+              {lang === 'en' ? 'Replace player' : 'Sostituisci giocatore'}
+            </button>
+            {slot?.slot_index != null && (
+              <button type="button" className="nr-secondary-button" onClick={() => onRemoveFromSlot(player.id)}>
+                {lang === 'en' ? 'Move to reserves' : 'Sposta in riserva'}
+              </button>
+            )}
             <button type="button" className="nr-secondary-button" onClick={onUploadPhoto}>
               <Upload size={14} />
-              {lang === 'en' ? 'Upload player photo' : 'Carica foto giocatore'}
+              {lang === 'en' ? 'Open photo upload page' : 'Apri caricamento foto'}
             </button>
           </div>
 
-          <div className="nr-secondary-actions">
-            <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player)}>
-              {lang === 'en' ? 'Choose another card' : "Scegli un'altra carta"}
-            </button>
+          <div className="nr-danger-zone">
+            <span>{lang === 'en' ? 'Danger area' : 'Area pericolosa'}</span>
             <button type="button" className="nr-danger-button" onClick={() => onDeletePlayer(player.id)}>
               <Trash2 size={14} />
               {lang === 'en' ? 'Delete permanently' : 'Elimina definitivamente'}
@@ -1413,18 +1414,23 @@ function PremiumPlayerModal({
           </EnterpriseSection>
 
           <div className="nr-premium-toolbar-row">
-            <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player)}>
-              {lang === 'en' ? 'Choose another card' : "Scegli un'altra carta"}
-            </button>
-            {player.slot_index !== null && player.slot_index !== undefined && (
-              <button type="button" className="nr-secondary-button" onClick={() => onRemoveFromSlot(player.id)}>
-                {lang === 'en' ? 'Move to reserves' : 'Sposta in riserva'}
+            <div className="nr-secondary-actions">
+              <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player)}>
+                {lang === 'en' ? 'Replace player' : 'Sostituisci giocatore'}
               </button>
-            )}
-            <button type="button" className="nr-danger-button" onClick={() => onDeletePlayer(player.id)}>
-              <Trash2 size={14} />
-              {lang === 'en' ? 'Delete permanently' : 'Elimina definitivamente'}
-            </button>
+              {player.slot_index !== null && player.slot_index !== undefined && (
+                <button type="button" className="nr-secondary-button" onClick={() => onRemoveFromSlot(player.id)}>
+                  {lang === 'en' ? 'Move to reserves' : 'Sposta in riserva'}
+                </button>
+              )}
+            </div>
+            <div className="nr-danger-zone">
+              <span>{lang === 'en' ? 'Danger area' : 'Area pericolosa'}</span>
+              <button type="button" className="nr-danger-button" onClick={() => onDeletePlayer(player.id)}>
+                <Trash2 size={14} />
+                {lang === 'en' ? 'Delete permanently' : 'Elimina definitivamente'}
+              </button>
+            </div>
           </div>
 
           <div className="nr-reference-main-grid">
@@ -1867,14 +1873,14 @@ export default withAuth(function NuovaRosaLabPage() {
     setPickerOpen(false)
     setConfirmModal({
       ...showConfirmConfig({
-        title: lang === 'en' ? 'Open legacy photo upload' : 'Apri caricamento foto legacy',
+        title: lang === 'en' ? 'Open photo upload page' : 'Apri caricamento foto',
         message: lang === 'en'
-          ? 'Photo upload is still managed by the current roster page. We can open it now without touching your data.'
-          : 'Il caricamento foto e ancora gestito dalla pagina rosa attuale. Possiamo aprirla ora senza toccare i tuoi dati.',
+          ? 'Photo upload is still managed in the current roster page. We will open that page now without changing this roster.'
+          : 'Il caricamento foto e ancora gestito nella pagina rosa attuale. Apriremo quella pagina senza modificare questa rosa.',
         details: lang === 'en'
-          ? 'Use it when you cannot find the player in the catalog.'
-          : 'Usala quando non trovi il giocatore nel catalogo.',
-        confirmLabel: lang === 'en' ? 'Open roster page' : 'Apri pagina rosa',
+          ? 'Use it only when the player is not available in the catalog.'
+          : 'Usalo solo quando il giocatore non e disponibile nel catalogo.',
+        confirmLabel: lang === 'en' ? 'Open current roster page' : 'Apri rosa attuale',
         cancelLabel: t('cancel')
       }),
       onConfirm: () => {
@@ -2041,29 +2047,35 @@ export default withAuth(function NuovaRosaLabPage() {
       }
     }
 
-    if (!isOriginal && selectedSlot.position) {
-      setConfirmModal({
-        ...showConfirmConfig({
-          title: lang === 'en' ? 'Confirm role change' : 'Conferma cambio ruolo',
-          message: lang === 'en'
-            ? `${player.player_name} is not natural for ${selectedSlot.position}.`
-            : `${player.player_name} non e naturale per ${selectedSlot.position}.`,
-          details: lang === 'en'
-            ? 'You can still continue and edit the role compatibility later.'
-            : 'Puoi comunque continuare e modificare la compatibilita ruolo in seguito.',
-          confirmLabel: t('confirm'),
-          cancelLabel: t('cancel')
-        }),
-        onConfirm: async () => {
-          setConfirmModal(null)
-          await continueAssign()
-        },
-        onCancel: () => setConfirmModal(null)
-      })
-      return
-    }
-
-    await continueAssign()
+    const playerSummary = `${player.player_name} · ${player.position || '-'} · OVR ${player.overall_rating ?? '-'}`
+    const targetSummary = selectedSlot.position ? `${selectedSlot.position}` : (lang === 'en' ? 'selected slot' : 'slot selezionato')
+    const isOutOfRole = !isOriginal && selectedSlot.position
+    setConfirmModal({
+      ...showConfirmConfig({
+        title: isOutOfRole
+          ? (lang === 'en' ? 'Confirm role change' : 'Conferma cambio ruolo')
+          : (lang === 'en' ? 'Assign reserve to slot' : 'Assegna riserva allo slot'),
+        message: isOutOfRole
+          ? (lang === 'en'
+              ? `${player.player_name} is not natural for ${targetSummary}. Assign anyway?`
+              : `${player.player_name} non e naturale per ${targetSummary}. Vuoi assegnarlo comunque?`)
+          : (lang === 'en'
+              ? `Assign ${player.player_name} to ${targetSummary}?`
+              : `Assegnare ${player.player_name} a ${targetSummary}?`),
+        details: isOutOfRole
+          ? (lang === 'en'
+              ? `${playerSummary}\nYou can still edit role compatibility later.`
+              : `${playerSummary}\nPuoi comunque modificare la compatibilita ruolo in seguito.`)
+          : playerSummary,
+        confirmLabel: lang === 'en' ? 'Assign player' : 'Assegna giocatore',
+        cancelLabel: t('cancel')
+      }),
+      onConfirm: async () => {
+        setConfirmModal(null)
+        await continueAssign()
+      },
+      onCancel: () => setConfirmModal(null)
+    })
   }, [closePicker, fetchRoster, lang, refreshDiagnosticAfterSave, selectedSlot, showToast, t])
 
   const handleRemoveFromSlot = React.useCallback(async (playerId) => {
@@ -2656,12 +2668,28 @@ export default withAuth(function NuovaRosaLabPage() {
             <div className="nr-card-head">
               <div>
                 <span className="nr-mini-kicker">{t('nuovaRosaReserves')}</span>
-                <h2>{riserve.length}</h2>
+                <h2>{riserve.length}/{MAX_RESERVES}</h2>
               </div>
-              <button type="button" className="nr-icon-button" onClick={openPickerForReserve}>
+              <button
+                type="button"
+                className="nr-icon-button"
+                onClick={openPickerForReserve}
+                disabled={riserve.length >= MAX_RESERVES}
+                aria-label={riserve.length >= MAX_RESERVES
+                  ? (lang === 'en' ? 'Reserves are full' : 'Riserve al completo')
+                  : (lang === 'en' ? 'Add reserve' : 'Aggiungi riserva')}
+                title={riserve.length >= MAX_RESERVES
+                  ? (lang === 'en' ? 'Reserves are full' : 'Riserve al completo')
+                  : (lang === 'en' ? 'Add reserve' : 'Aggiungi riserva')}
+              >
                 <Plus size={16} />
               </button>
             </div>
+            {riserve.length >= MAX_RESERVES && (
+              <div className="nr-limit-note">
+                {lang === 'en' ? 'Reserve bench full. Delete a reserve before adding another one.' : 'Panchina riserve piena. Elimina una riserva prima di aggiungerne un altra.'}
+              </div>
+            )}
             <div className="nr-reserve-grid">
               {riserve.length > 0 ? riserve.map((player) => (
                 <div
@@ -2984,9 +3012,44 @@ export default withAuth(function NuovaRosaLabPage() {
           border-color: rgba(0, 212, 255, 0.55);
         }
 
+        .nr-primary-button:disabled,
+        .nr-secondary-button:disabled,
+        .nr-danger-button:disabled,
+        .nr-icon-button:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+          transform: none;
+        }
+
         .nr-danger-button {
           border-color: rgba(255, 59, 48, 0.35);
           background: rgba(255, 59, 48, 0.12);
+        }
+
+        .nr-danger-zone {
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
+          margin-top: 4px;
+          padding-top: 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          align-items: flex-start;
+        }
+
+        .nr-danger-zone > span,
+        .nr-limit-note {
+          color: rgba(255, 255, 255, 0.62);
+          font-size: 12px;
+          line-height: 1.35;
+        }
+
+        .nr-premium-toolbar-row .nr-danger-zone {
+          width: 100%;
+        }
+
+        .nr-limit-note {
+          margin: -2px 0 12px;
+          color: rgba(255, 177, 66, 0.86);
         }
 
         .nr-icon-button {
