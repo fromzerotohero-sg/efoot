@@ -5435,10 +5435,7 @@ export default withAuth(function NuovaRosaLabPage() {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          object-position: center 20%;
-          transform: scale(2.18);
-          transform-origin: center 20%;
-          filter: saturate(1.04) contrast(1.06) brightness(0.92);
+          object-position: center center;
           -webkit-user-drag: none;
           user-drag: none;
           pointer-events: none;
@@ -5447,10 +5444,35 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-slot-filled-main.has-photo .nr-slot-avatar-mini::before {
           content: "";
           position: absolute;
-          inset: 0;
+          top: -1px;
+          left: -1px;
+          width: 30px;
+          height: 27px;
           background:
-            radial-gradient(circle at center 28%, transparent 0%, transparent 36%, rgba(3, 7, 18, 0.2) 68%),
-            linear-gradient(180deg, rgba(3, 7, 18, 0.18) 0%, transparent 34%, rgba(3, 7, 18, 0.72) 100%);
+            linear-gradient(135deg, rgba(8, 47, 73, 0.98), rgba(14, 116, 144, 0.94)),
+            radial-gradient(circle at 18% 18%, rgba(34, 211, 238, 0.36), transparent 54%);
+          border-right: 1px solid rgba(125, 211, 252, 0.28);
+          border-bottom: 1px solid rgba(125, 211, 252, 0.22);
+          border-bottom-right-radius: 12px;
+          box-shadow: 4px 4px 12px rgba(2, 6, 23, 0.28);
+          pointer-events: none;
+          z-index: 1;
+        }
+
+        .nr-slot-filled-main.has-photo .nr-slot-avatar-mini::after {
+          content: "";
+          position: absolute;
+          top: -1px;
+          right: -1px;
+          width: 30px;
+          height: 27px;
+          background:
+            linear-gradient(225deg, rgba(8, 47, 73, 0.98), rgba(14, 116, 144, 0.94)),
+            radial-gradient(circle at 82% 18%, rgba(34, 211, 238, 0.36), transparent 54%);
+          border-left: 1px solid rgba(125, 211, 252, 0.28);
+          border-bottom: 1px solid rgba(125, 211, 252, 0.22);
+          border-bottom-left-radius: 12px;
+          box-shadow: -4px 4px 12px rgba(2, 6, 23, 0.28);
           pointer-events: none;
           z-index: 1;
         }
