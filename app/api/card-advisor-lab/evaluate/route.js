@@ -1321,6 +1321,120 @@ function synergyUseLine({ card, sameRole, bestAlternative, duplicate, starterBlo
     : `${card.name} può diventare utile perché aggiunge ${trait || movement} in una zona dove la tua rosa ha meno copertura diretta.`
 }
 
+function coachAdvice({ card, hasRoster, technical, combo, duplicate, starterBlocked, roleGap, evidence, tacticalStyle, profile, lang }) {
+  const name = userDisplayName(profile)
+  const intro = name && lang !== 'en' ? `${name}, ` : ''
+  const movement = movementProfile(technical, card.position, lang)
+  const trait = strongestTrait(technical, card.position, lang)
+  const style = teamStyleLabel(tacticalStyle, lang)
+
+  if (!hasRoster) {
+    return {
+      title: lang === 'en' ? 'Card read' : 'Lettura carta',
+      text: lang === 'en'
+        ? `${card.name} is best read from style and native skills for now. The profile points to ${movement}; load your roster to know if that movement creates a real combo for your players.`
+        : `${card.name} va letto prima da stile e abilità native. Il profilo porta ${movement}; con la rosa caricata possiamo dirti se quel movimento crea una combo reale con i tuoi giocatori.`,
+      action: lang === 'en'
+        ? 'Use this as a card review, not a personal roster verdict yet.'
+        : 'Usala come review della carta, non ancora come verdetto personale sulla tua rosa.'
+    }
+  }
+
+  if (combo?.key === 'cross-aerial') {
+    return {
+      title: lang === 'en' ? 'Real wide combo' : 'Combo reale sulla fascia',
+      text: lang === 'en'
+        ? `${card.name} is useful because the crossing skill has a target in your roster. This is the kind of card I would use to turn the wide lane into chances, not just to add another full-back.`
+        : `${intro}${card.name} è utile perché la skill da cross trova un riferimento nella tua rosa. È una carta da usare per trasformare la fascia in occasioni, non solo per aggiungere un altro esterno.`,
+      action: lang === 'en'
+        ? 'Use him when you want width, early balls and pressure into the box.'
+        : 'Usalo quando vuoi ampiezza, palloni messi presto e più presenza in area.'
+    }
+  }
+
+  if (combo?.key === 'cross-no-target') {
+    return {
+      title: lang === 'en' ? 'Good skill, incomplete combo' : 'Skill forte, combo incompleta',
+      text: lang === 'en'
+        ? `${card.name} brings width and crossing, but your roster does not give that skill a strong box target yet. I would not make him a priority unless you want to change how you attack from wide areas.`
+        : `${intro}${card.name} porta ampiezza e cross, ma nella tua rosa quella skill non ha ancora un riferimento forte in area. Non la metterei tra le priorità, a meno che tu voglia cambiare il modo in cui attacchi dalle fasce.`,
+      action: lang === 'en'
+        ? 'Useful for width; less useful if your attack stays mostly on the ground.'
+        : 'Utile per dare ampiezza; meno utile se il tuo attacco resta soprattutto palla a terra.'
+    }
+  }
+
+  if (combo?.key === 'through-depth') {
+    return {
+      title: lang === 'en' ? 'Vertical combo' : 'Combo verticale',
+      text: lang === 'en'
+        ? `${card.name} has a clear use: serve players who attack space. In your roster the pass has a runner, so this card can speed up your attacks instead of slowing the play down.`
+        : `${intro}${card.name} ha un uso chiaro: servire chi attacca lo spazio. Nella tua rosa il passaggio trova un corridore, quindi questa carta può velocizzare l’attacco invece di rallentare il gioco.`,
+      action: lang === 'en'
+        ? 'Use him when you want earlier vertical passes and runs behind the line.'
+        : 'Usalo quando vuoi verticalizzare prima e attaccare alle spalle della linea.'
+    }
+  }
+
+  if (combo?.key === 'creator-finisher') {
+    return {
+      title: lang === 'en' ? 'Finishing combo' : 'Combo finalizzazione',
+      text: lang === 'en'
+        ? `${card.name} becomes more interesting because your roster already has a creator. The value is not generic: it is the link between service and first-time finishing.`
+        : `${intro}${card.name} diventa più interessante perché nella tua rosa c’è già chi può creare. Il valore non è generico: è il collegamento tra servizio e chiusura di prima.`,
+      action: lang === 'en'
+        ? 'Use him near the box, where clean service turns into quick shots.'
+        : 'Usalo vicino all’area, dove un servizio pulito può diventare tiro rapido.'
+    }
+  }
+
+  if (combo?.key === 'defensive-need') {
+    return {
+      title: lang === 'en' ? 'Defensive answer' : 'Risposta difensiva',
+      text: lang === 'en'
+        ? `${card.name} is not just another defensive card: the native skills connect with a need already visible in your data. I would value him when you want more coverage, duels and interceptions.`
+        : `${intro}${card.name} non è solo un’altra carta difensiva: le skill native si collegano a un bisogno già visibile nei tuoi dati. La valuterei quando vuoi più copertura, duelli e intercetti.`,
+      action: lang === 'en'
+        ? 'Use him to stabilize the zone before looking for a more attacking option.'
+        : 'Usalo per stabilizzare la zona prima di cercare una soluzione più offensiva.'
+    }
+  }
+
+  if (duplicate || starterBlocked) {
+    return {
+      title: lang === 'en' ? 'Not a priority' : 'Non è una priorità',
+      text: lang === 'en'
+        ? `${card.name} does not change the balance of your current players enough. I would keep him as a situational option, useful when you specifically want ${trait || movement}.`
+        : `${intro}${card.name} non cambia abbastanza l’equilibrio dei tuoi giocatori attuali. Lo terrei come opzione situazionale, utile quando vuoi proprio ${trait || movement}.`,
+      action: lang === 'en'
+        ? 'Do not force him as a starter; use him for that specific match need.'
+        : 'Non forzarlo come titolare: usalo per quel bisogno specifico di partita.'
+    }
+  }
+
+  if (roleGap || evidence.profileNeedFit || evidence.teamStyleFit) {
+    return {
+      title: lang === 'en' ? 'Useful fit' : 'Fit utile',
+      text: lang === 'en'
+        ? `${card.name} gives your roster something recognizable: ${trait || movement}. With ${style || 'your current setup'}, I would test him where that quality is missing most.`
+        : `${intro}${card.name} dà alla tua rosa qualcosa di riconoscibile: ${trait || movement}. Con ${style || 'il tuo assetto attuale'}, lo proverei dove questa qualità ti manca di più.`,
+      action: lang === 'en'
+        ? 'Use him to change the lane behaviour, not just to fill a position.'
+        : 'Usalo per cambiare il comportamento della zona, non solo per riempire un ruolo.'
+    }
+  }
+
+  return {
+    title: lang === 'en' ? 'Situational card' : 'Carta situazionale',
+    text: lang === 'en'
+      ? `${card.name} has a readable profile, but I do not see a strong roster trigger yet. He is useful if you want ${trait || movement}; otherwise he stays behind clearer needs.`
+      : `${intro}${card.name} ha un profilo leggibile, ma non vedo ancora un trigger forte nella tua rosa. È utile se vuoi ${trait || movement}; altrimenti resta dietro bisogni più chiari.`,
+    action: lang === 'en'
+      ? 'Keep him for a specific use case, not as an automatic priority.'
+      : 'Tienilo per un uso specifico, non come priorità automatica.'
+  }
+}
+
 function teamSynergyDetails({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, technical, tacticalStyle, profileRead, issues, gameRead, evidence, combo, lang }) {
   const details = []
   const family = roleFamily(card.position)
@@ -1566,6 +1680,19 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   const teamSynergy = {
     score,
     label: teamSynergyLabel(score, lang),
+    coachAdvice: coachAdvice({
+      card,
+      hasRoster,
+      technical,
+      combo,
+      duplicate,
+      starterBlocked,
+      roleGap,
+      evidence,
+      tacticalStyle,
+      profile,
+      lang
+    }),
     summary: teamSynergySummary({
       card,
       score,

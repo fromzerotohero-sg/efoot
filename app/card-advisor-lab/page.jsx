@@ -13,7 +13,6 @@ import {
   X,
   ShieldCheck,
   Sparkles,
-  Star,
   TrendingUp,
   Users,
   Zap
@@ -39,7 +38,7 @@ const copy = {
     nativeSkills: 'Profilo tecnico',
     teamFit: 'Sinergia con la tua squadra',
     teamSynergyScore: 'Sinergia squadra',
-    whyItWorks: 'Perché funziona',
+    coachAdvice: 'Consiglio',
     howToUse: 'Lettura sinergie',
     viewDetails: 'Vedi dettagli',
     hideDetails: 'Nascondi dettagli',
@@ -118,7 +117,7 @@ const copy = {
     nativeSkills: 'Technical profile',
     teamFit: 'Team synergy',
     teamSynergyScore: 'Team synergy',
-    whyItWorks: 'Why it works',
+    coachAdvice: 'Advice',
     howToUse: 'Synergy read',
     viewDetails: 'See details',
     hideDetails: 'Hide details',
@@ -673,7 +672,6 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
         ? `Coach active: ${serverEval.context.activeCoachName}. The verdict uses team style and coach competences.`
         : `Coach attivo: ${serverEval.context.activeCoachName}. Il verdetto usa stile squadra e competenze coach.`)
     : ''
-  const strengthItems = serverEval?.strengths?.length ? serverEval.strengths : listFor(card, 'strengths', lang)
   const fitReadLines = serverEval?.rosterRead?.length
     ? serverEval.rosterRead
     : effectiveFitText
@@ -688,10 +686,8 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
   const teamSynergySummary = evaluating
     ? (lang === 'en' ? 'Reading your team context...' : 'Sto leggendo il contesto della tua squadra...')
     : (teamSynergy?.summary || fitReadLines[0] || effectiveFitText)
-  const teamSynergyReasons = teamSynergy?.reasons?.length
-    ? teamSynergy.reasons
-    : strengthItems.slice(0, 3)
   const teamSynergyDetails = Array.isArray(teamSynergy?.details) ? teamSynergy.details : []
+  const coachAdvice = teamSynergy?.coachAdvice || null
   const recommendedUseLine = teamSynergy?.useLine || serverEval?.recommendedUse || fitReadLines[1] || effectiveFitText
   const heroProfile = serverEval?.technicalProfile?.find(item => item.toLowerCase().startsWith(lang === 'en' ? 'style:' : 'stile:'))
   const readableStyle = heroProfile
@@ -776,6 +772,15 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
         </div>
       </div>
 
+      {coachAdvice && (
+        <div className="coach-advice-card">
+          <span>{labels.coachAdvice}</span>
+          <h3>{coachAdvice.title}</h3>
+          <p>{coachAdvice.text}</p>
+          {coachAdvice.action && <strong>{coachAdvice.action}</strong>}
+        </div>
+      )}
+
       <div className="detail-grid">
         <article>
           <h3><TrendingUp size={18} /> {labels.mainLever}</h3>
@@ -791,13 +796,6 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
               ? (serverEval?.technicalProfile || card.skills).map(item => <StatPill key={item}>{item}</StatPill>)
               : <StatPill>{labels.noNativeSkills}</StatPill>}
           </div>
-        </article>
-
-        <article>
-          <h3><Star size={18} /> {labels.whyItWorks}</h3>
-          <ul>
-            {teamSynergyReasons.map(item => <li key={item}>{item}</li>)}
-          </ul>
         </article>
 
       </div>
@@ -1920,6 +1918,48 @@ export default withAuth(function CardAdvisorLabPage() {
           color: rgba(255,255,255,0.76);
           font-size: 13px;
           line-height: 1.55;
+        }
+
+        .coach-advice-card {
+          margin-top: 16px;
+          border: 1px solid rgba(0,212,255,0.18);
+          border-radius: 18px;
+          padding: 16px;
+          background:
+            radial-gradient(circle at 8% 0%, rgba(0,212,255,0.12), transparent 32%),
+            rgba(255,255,255,0.045);
+        }
+
+        .coach-advice-card span {
+          display: inline-flex;
+          color: var(--primary-cyan);
+          font-size: 11px;
+          font-weight: 950;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          margin-bottom: 8px;
+        }
+
+        .coach-advice-card h3 {
+          margin: 0 0 8px;
+          color: #fff;
+          font-size: clamp(18px, 3vw, 24px);
+          letter-spacing: -0.02em;
+        }
+
+        .coach-advice-card p {
+          margin: 0;
+          color: rgba(255,255,255,0.80);
+          line-height: 1.62;
+          font-size: 14px;
+        }
+
+        .coach-advice-card strong {
+          display: block;
+          margin-top: 10px;
+          color: #facc15;
+          font-size: 13px;
+          line-height: 1.5;
         }
 
         .team-synergy-details-toggle {
