@@ -755,21 +755,29 @@ function CoachPhotoUploadModal({
   const getImageForType = (type) => images.find((img) => img.type === type)
   const removeImage = (type) => onImagesChange(images.filter((img) => img.type !== type))
 
-  const handleFileSelect = async (event, type) => {
-    const file = event.target.files?.[0]
-    if (!file || !file.type?.startsWith('image/')) return
+  const handleFileSelect = async (event, preferredType = null) => {
+    const files = Array.from(event.target.files || []).filter((file) => file.type?.startsWith('image/'))
+    if (files.length === 0) return
 
     try {
-      const optimized = await optimizeImageFile(file)
-      const nextImage = { file, dataUrl: optimized.dataUrl, type, name: file.name }
-      const existingIndex = images.findIndex((img) => img.type === type)
-      if (existingIndex >= 0) {
-        const next = [...images]
-        next[existingIndex] = nextImage
-        onImagesChange(next)
-      } else {
-        onImagesChange([...images, nextImage])
+      let nextImages = [...images]
+      for (const file of files) {
+        if (nextImages.length >= 2) break
+        const optimized = await optimizeImageFile(file)
+        const type = preferredType && !nextImages.some((img) => img.type === preferredType)
+          ? preferredType
+          : nextImages.some((img) => img.type === 'main')
+            ? 'connection'
+            : 'main'
+        const nextImage = { file, dataUrl: optimized.dataUrl, type, name: file.name, id: Date.now() + nextImages.length }
+        const existingIndex = nextImages.findIndex((img) => img.type === type)
+        if (existingIndex >= 0) {
+          nextImages[existingIndex] = nextImage
+        } else {
+          nextImages = [...nextImages, nextImage]
+        }
       }
+      onImagesChange(nextImages.slice(0, 2))
     } catch (err) {
       const message = getImageOptimizeUserMessage(err, t)
       if (onOptimizeError) onOptimizeError(message)
@@ -842,7 +850,7 @@ function CoachPhotoUploadModal({
                 ) : (
                   <div className="nr-photo-pick-row">
                     <label className="nr-secondary-button">
-                      <input type="file" accept="image/*" onChange={(event) => handleFileSelect(event, key)} disabled={uploading} />
+                      <input type="file" accept="image/*" multiple onChange={(event) => handleFileSelect(event, key)} disabled={uploading} />
                       <Upload size={14} />
                       {lang === 'en' ? 'Upload' : 'Carica'}
                     </label>
@@ -3082,8 +3090,14 @@ export default withAuth(function NuovaRosaLabPage() {
     const allExtractedData = {}
     const photoSlots = {}
     const errors = []
+    let extractedCoachCount = 0
 
-    for (const image of images) {
+    const orderedImages = [...images].sort((first, second) => {
+      const order = { main: 0, connection: 1 }
+      return (order[first.type] ?? 99) - (order[second.type] ?? 99)
+    })
+
+    for (const image of orderedImages) {
       const response = await fetch('/api/extract-coach', {
         method: 'POST',
         headers: {
@@ -3114,6 +3128,8 @@ export default withAuth(function NuovaRosaLabPage() {
 
       if (!data?.coach) continue
 
+      const slotType = extractedCoachCount === 0 ? 'main' : 'connection'
+
       if (!coachData) {
         coachData = data.coach
       } else {
@@ -3132,8 +3148,9 @@ export default withAuth(function NuovaRosaLabPage() {
         }
       }
 
-      allExtractedData[image.type] = data.coach
-      photoSlots[image.type] = true
+      allExtractedData[slotType] = data.coach
+      photoSlots[slotType] = true
+      extractedCoachCount += 1
     }
 
     if (!coachData || !coachData.coach_name) {
