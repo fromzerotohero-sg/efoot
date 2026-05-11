@@ -127,6 +127,55 @@ function getPlayerCardImage(player) {
   )
 }
 
+function hasPlayerStats(player) {
+  return Boolean(player?.base_stats && Object.keys(player.base_stats || {}).length > 0)
+}
+
+function hasPlayerSkills(player) {
+  return Boolean(
+    (Array.isArray(player?.skills) && player.skills.length > 0) ||
+    (Array.isArray(player?.com_skills) && player.com_skills.length > 0)
+  )
+}
+
+function hasPlayerBoosters(player) {
+  return Boolean(
+    (Array.isArray(player?.available_boosters) && player.available_boosters.length > 0) ||
+    (Array.isArray(player?.boosters) && player.boosters.length > 0)
+  )
+}
+
+function getPhotoProfileCompletion(player, lang = 'it') {
+  const statsReady = hasPlayerStats(player)
+  const skillsReady = hasPlayerSkills(player)
+  const boostersReady = hasPlayerBoosters(player)
+  const sections = [
+    { key: 'stats', ready: statsReady, label: lang === 'en' ? 'stats' : 'statistiche' },
+    { key: 'skills', ready: skillsReady, label: lang === 'en' ? 'skills' : 'abilita' },
+    { key: 'boosters', ready: boostersReady, label: 'booster' }
+  ]
+  const missing = sections.filter((section) => !section.ready)
+  return {
+    statsReady,
+    skillsReady,
+    boostersReady,
+    completedCount: sections.length - missing.length,
+    missing,
+    isComplete: missing.length === 0
+  }
+}
+
+function isSameExtractedPlayer(existingPlayer, extractedPlayer) {
+  const existingName = String(existingPlayer?.player_name || '').trim().toLowerCase()
+  const extractedName = String(extractedPlayer?.player_name || '').trim().toLowerCase()
+  const existingAge = existingPlayer?.age != null ? Number(existingPlayer.age) : null
+  const extractedAge = extractedPlayer?.age != null ? Number(extractedPlayer.age) : null
+  if (existingName && extractedName && existingAge && extractedAge) {
+    return existingName === extractedName && existingAge === extractedAge
+  }
+  return Boolean(existingName && extractedName && existingName === extractedName)
+}
+
 function buildSetupStage({ totalPlayers, starters, hasFormation, hasCoach, hasTactics }) {
   if (totalPlayers === 0) return 'empty'
   if (totalPlayers <= 5) return 'starter_seeded'
@@ -781,6 +830,7 @@ function PhotoUploadModal({
   onClose,
   uploading,
   onOptimizeError,
+  completionTarget,
   lang,
   t
 }) {
@@ -803,7 +853,11 @@ function PhotoUploadModal({
   }))
   const destination = mode === 'reserve'
     ? (lang === 'en' ? 'Reserve bench' : 'Riserve')
+    : mode === 'complete'
+      ? (completionTarget?.player_name || (lang === 'en' ? 'existing player' : 'giocatore esistente'))
     : (slot?.position || (lang === 'en' ? 'selected slot' : 'slot selezionato'))
+  const completionStatus = completionTarget ? getPhotoProfileCompletion(completionTarget, lang) : null
+  const missingText = completionStatus?.missing?.map((section) => section.label).join(', ')
 
   const getImageForType = (type) => images.find((img) => img.type === type)
   const removeImage = (type) => onImagesChange(images.filter((img) => img.type !== type))
@@ -839,6 +893,8 @@ function PhotoUploadModal({
       }}
       title={mode === 'reserve'
         ? (lang === 'en' ? 'Add reserve from photo' : 'Aggiungi riserva da foto')
+        : mode === 'complete'
+          ? (lang === 'en' ? 'Complete player with photos' : 'Completa giocatore con foto')
         : `${lang === 'en' ? 'Add player from photo' : 'Aggiungi giocatore da foto'} · ${destination}`}
       subtitle={lang === 'en' ? 'Photo extraction' : 'Estrazione foto'}
       className="nr-photo-upload-shell"
@@ -848,10 +904,29 @@ function PhotoUploadModal({
           <Sparkles size={18} />
           <span>
             {lang === 'en'
-              ? 'Upload one or more screenshots. We will extract the player, then you will confirm roles before saving.'
-              : 'Carica una o piu schermate. Estraiamo il giocatore, poi confermi i ruoli prima del salvataggio.'}
+              ? mode === 'complete'
+                ? 'Upload the missing screenshots. We will add only new data to this player without replacing him.'
+                : 'Upload one or more screenshots. We will extract the player, then you will confirm roles before saving.'
+              : mode === 'complete'
+                ? 'Carica le schermate mancanti. Aggiungiamo solo i nuovi dati a questo giocatore senza sostituirlo.'
+                : 'Carica una o piu schermate. Estraiamo il giocatore, poi confermi i ruoli prima del salvataggio.'}
           </span>
         </div>
+
+        {mode === 'complete' && completionStatus && (
+          <div className="nr-warning-box">
+            <AlertTriangle size={16} />
+            <span>
+              {completionStatus.isComplete
+                ? (lang === 'en'
+                  ? 'This profile already looks complete. Use this only if you want to add corrected photos.'
+                  : 'Questo profilo sembra gia completo. Usa questa funzione solo se vuoi aggiungere foto corrette.')
+                : (lang === 'en'
+                  ? `Missing sections: ${missingText}. If the photo belongs to another player, use Replace from photo instead.`
+                  : `Sezioni mancanti: ${missingText}. Se la foto e di un altro giocatore, usa Sostituisci da foto.`)}
+            </span>
+          </div>
+        )}
 
         <div className="nr-photo-step-row">
           {imageTypes.map((type, index) => {
@@ -949,9 +1024,9 @@ function PhotoUploadModal({
 function PhotoExtractionReviewModal({
   show,
   playerData,
-  photoSlots,
   mode,
   slot,
+  completionTarget,
   lang,
   onContinue,
   onCancel
@@ -959,11 +1034,17 @@ function PhotoExtractionReviewModal({
   if (!show || !playerData) return null
 
   const baseReady = Boolean(playerData.player_name && playerData.overall_rating && (playerData.position || playerData.original_positions?.length))
-  const statsReady = Boolean(playerData.base_stats && Object.keys(playerData.base_stats || {}).length > 0)
-  const skillsReady = Boolean((Array.isArray(playerData.skills) && playerData.skills.length > 0) || (Array.isArray(playerData.com_skills) && playerData.com_skills.length > 0))
-  const boostersReady = Boolean((Array.isArray(playerData.available_boosters) && playerData.available_boosters.length > 0) || (Array.isArray(playerData.boosters) && playerData.boosters.length > 0))
+  const isCompletion = mode === 'complete' && completionTarget
+  const extractedStatsReady = hasPlayerStats(playerData)
+  const extractedSkillsReady = hasPlayerSkills(playerData)
+  const extractedBoostersReady = hasPlayerBoosters(playerData)
+  const statsReady = isCompletion ? hasPlayerStats(completionTarget) || extractedStatsReady : extractedStatsReady
+  const skillsReady = isCompletion ? hasPlayerSkills(completionTarget) || extractedSkillsReady : extractedSkillsReady
+  const boostersReady = isCompletion ? hasPlayerBoosters(completionTarget) || extractedBoostersReady : extractedBoostersReady
   const destination = mode === 'reserve'
     ? (lang === 'en' ? 'Reserve bench' : 'Riserve')
+    : mode === 'complete'
+      ? (completionTarget?.player_name || (lang === 'en' ? 'existing player' : 'giocatore esistente'))
     : (slot?.position || (lang === 'en' ? 'selected slot' : 'slot selezionato'))
   const rows = [
     {
@@ -976,27 +1057,45 @@ function PhotoExtractionReviewModal({
       key: 'stats',
       label: lang === 'en' ? 'Performance stats' : 'Statistiche',
       ready: statsReady,
-      detail: photoSlots?.statistiche ? (lang === 'en' ? 'Extracted from stats/card photo' : 'Estratte da foto statistiche/carta') : (lang === 'en' ? 'Not detected yet' : 'Non rilevate')
+      newData: extractedStatsReady,
+      detail: extractedStatsReady
+        ? (lang === 'en' ? 'New stats detected from this upload' : 'Nuove statistiche rilevate da questo upload')
+        : statsReady
+          ? (lang === 'en' ? 'Already present on this player' : 'Gia presenti su questo giocatore')
+          : (lang === 'en' ? 'Not detected yet' : 'Non rilevate')
     },
     {
       key: 'skills',
       label: lang === 'en' ? 'Skills' : 'Abilita',
       ready: skillsReady,
-      detail: photoSlots?.abilita ? (lang === 'en' ? 'Extracted from skills photo' : 'Estratte da foto abilita') : (lang === 'en' ? 'Can be completed later' : 'Completabile dopo')
+      newData: extractedSkillsReady,
+      detail: extractedSkillsReady
+        ? (lang === 'en' ? 'New skills detected from this upload' : 'Nuove abilita rilevate da questo upload')
+        : skillsReady
+          ? (lang === 'en' ? 'Already present on this player' : 'Gia presenti su questo giocatore')
+          : (lang === 'en' ? 'Can be completed later' : 'Completabile dopo')
     },
     {
       key: 'boosters',
       label: 'Boosters',
       ready: boostersReady,
-      detail: photoSlots?.booster ? (lang === 'en' ? 'Extracted from boosters photo' : 'Estratti da foto booster') : (lang === 'en' ? 'Optional, can be completed later' : 'Opzionali, completabili dopo')
+      newData: extractedBoostersReady,
+      detail: extractedBoostersReady
+        ? (lang === 'en' ? 'New boosters detected from this upload' : 'Nuovi booster rilevati da questo upload')
+        : boostersReady
+          ? (lang === 'en' ? 'Already present on this player' : 'Gia presenti su questo giocatore')
+          : (lang === 'en' ? 'Optional, can be completed later' : 'Opzionali, completabili dopo')
     }
   ]
+  const hasNewCompletionData = rows.some((row) => row.key !== 'base' && row.newData)
 
   return (
     <EnterpriseModalFrame
       show={show}
       onClose={onCancel}
-      title={lang === 'en' ? 'Extraction complete' : 'Estrazione completata'}
+      title={isCompletion
+        ? (lang === 'en' ? 'Review added data' : 'Controlla dati aggiunti')
+        : (lang === 'en' ? 'Extraction complete' : 'Estrazione completata')}
       subtitle={lang === 'en' ? `Review before saving to ${destination}` : `Controlla prima di salvare in ${destination}`}
       className="nr-photo-review-shell"
     >
@@ -1018,7 +1117,13 @@ function PhotoExtractionReviewModal({
                 <strong>{row.label}</strong>
                 <p>{row.detail}</p>
               </div>
-              <em>{row.ready ? (lang === 'en' ? 'Extracted' : 'Estratto') : (lang === 'en' ? 'To complete' : 'Da completare')}</em>
+              <em>{isCompletion
+                ? row.newData
+                  ? (lang === 'en' ? 'New' : 'Nuovo')
+                  : row.ready
+                    ? (lang === 'en' ? 'Present' : 'Presente')
+                    : (lang === 'en' ? 'To complete' : 'Da completare')
+                : row.ready ? (lang === 'en' ? 'Extracted' : 'Estratto') : (lang === 'en' ? 'To complete' : 'Da completare')}</em>
             </div>
           ))}
         </div>
@@ -1026,9 +1131,17 @@ function PhotoExtractionReviewModal({
         <div className="nr-warning-box">
           <AlertTriangle size={16} />
           <span>
-            {lang === 'en'
-              ? 'Only required data blocks saving. Optional missing sections can be completed later from the player editor.'
-              : "Solo i dati obbligatori bloccano il salvataggio. Le sezioni opzionali mancanti si possono completare dopo dall'editor."}
+            {isCompletion
+              ? hasNewCompletionData
+                ? (lang === 'en'
+                  ? 'This will update the same player and keep existing data. It will not replace the player or move him.'
+                  : 'Questo aggiorna lo stesso giocatore e mantiene i dati esistenti. Non sostituisce e non sposta il giocatore.')
+                : (lang === 'en'
+                  ? 'No new useful section was detected. You can cancel and upload clearer missing screenshots.'
+                  : 'Non e stata rilevata nessuna nuova sezione utile. Puoi annullare e caricare schermate mancanti piu chiare.')
+              : (lang === 'en'
+                ? 'Only required data blocks saving. Optional missing sections can be completed later from the player editor.'
+                : "Solo i dati obbligatori bloccano il salvataggio. Le sezioni opzionali mancanti si possono completare dopo dall'editor.")}
           </span>
         </div>
 
@@ -1037,7 +1150,9 @@ function PhotoExtractionReviewModal({
             {lang === 'en' ? 'Cancel' : 'Annulla'}
           </button>
           <button type="button" className="nr-primary-button" onClick={onContinue}>
-            {lang === 'en' ? 'Confirm roles' : 'Conferma ruoli'}
+            {isCompletion
+              ? (lang === 'en' ? 'Save added data' : 'Salva dati aggiunti')
+              : (lang === 'en' ? 'Confirm roles' : 'Conferma ruoli')}
             <ArrowRight size={14} />
           </button>
         </div>
@@ -1054,10 +1169,13 @@ function QuickPlayerPanel({
   onDeletePlayer,
   onOpenReplace,
   onUploadPhoto,
+  onCompletePhotoProfile,
   lang
 }) {
   if (!player) return null
   const cardImage = getPlayerCardImage(player)
+  const profileCompletion = getPhotoProfileCompletion(player, lang)
+  const missingLabels = profileCompletion.missing.map((section) => section.label).join(', ')
 
   return (
     <div className="nr-modal-backdrop" onClick={onClose}>
@@ -1089,6 +1207,24 @@ function QuickPlayerPanel({
             </div>
           </div>
 
+          {!profileCompletion.isComplete && (
+            <div className="nr-complete-photo-callout">
+              <AlertTriangle size={16} />
+              <div>
+                <strong>{lang === 'en' ? 'Profile not complete' : 'Profilo non completo'}</strong>
+                <p>
+                  {lang === 'en'
+                    ? `Missing ${missingLabels}. Add only the missing screenshots without replacing this player.`
+                    : `Mancano ${missingLabels}. Aggiungi solo le schermate mancanti senza sostituire questo giocatore.`}
+                </p>
+              </div>
+              <button type="button" className="nr-primary-button" onClick={() => onCompletePhotoProfile(player, slot)}>
+                <Upload size={14} />
+                {lang === 'en' ? 'Complete with photos' : 'Completa con foto'}
+              </button>
+            </div>
+          )}
+
           <div className="nr-quick-actions">
             <button type="button" className="nr-primary-button" onClick={() => onOpenReplace(player, true)}>
               <Pencil size={14} />
@@ -1102,10 +1238,12 @@ function QuickPlayerPanel({
                 {lang === 'en' ? 'Move to reserves' : 'Sposta in riserva'}
               </button>
             )}
-            <button type="button" className="nr-secondary-button" onClick={onUploadPhoto}>
-              <Upload size={14} />
-              {lang === 'en' ? 'Replace from photo' : 'Sostituisci da foto'}
-            </button>
+            {slot?.slot_index != null && (
+              <button type="button" className="nr-secondary-button" onClick={onUploadPhoto}>
+                <Upload size={14} />
+                {lang === 'en' ? 'Replace from photo' : 'Sostituisci da foto'}
+              </button>
+            )}
           </div>
 
           <div className="nr-danger-zone">
@@ -2020,6 +2158,7 @@ export default withAuth(function NuovaRosaLabPage() {
   const [selectedOriginalPositions, setSelectedOriginalPositions] = React.useState([])
   const [positionModalCtx, setPositionModalCtx] = React.useState(null)
   const [showPhotoReviewModal, setShowPhotoReviewModal] = React.useState(false)
+  const [photoCompletionTarget, setPhotoCompletionTarget] = React.useState(null)
 
   const totalPlayers = titolari.length + riserve.length
   const setupStage = buildSetupStage({
@@ -2228,12 +2367,41 @@ export default withAuth(function NuovaRosaLabPage() {
     setSelectedOriginalPositions([])
     setPositionModalCtx(null)
     setShowPhotoReviewModal(false)
+    setPhotoCompletionTarget(null)
     setPhotoUploadMode(nextMode)
     setPhotoUploadSlot(nextMode === 'slot' ? nextSlot : null)
     setSelectedSlot(nextMode === 'slot' ? nextSlot : null)
     setPhotoUploadImages([])
     setShowPhotoUploadModal(true)
   }, [lang, pickerMode, riserve.length, selectedSlot, showToast, t])
+
+  const openPhotoCompletionFlow = React.useCallback((player, slot = null) => {
+    if (!player?.id) return
+    const completion = getPhotoProfileCompletion(player, lang)
+    setPickerOpen(false)
+    setShowAssignModal(false)
+    setShowPremiumEditorModal(false)
+    setSelectedCatalogCard(null)
+    setSelectedPlayer(null)
+    setExtractedPlayerData(null)
+    setSelectedOriginalPositions([])
+    setPositionModalCtx(null)
+    setShowPhotoReviewModal(false)
+    setPhotoCompletionTarget(player)
+    setPhotoUploadMode('complete')
+    setPhotoUploadSlot(slot || null)
+    setSelectedSlot(slot || null)
+    setPhotoUploadImages([])
+    setShowPhotoUploadModal(true)
+    if (completion.isComplete) {
+      showToast(
+        lang === 'en'
+          ? 'This profile already looks complete. Upload only if you need to correct or add data.'
+          : 'Questo profilo sembra gia completo. Carica foto solo se devi correggere o aggiungere dati.',
+        'warning'
+      )
+    }
+  }, [lang, showToast])
 
   const closePhotoUpload = React.useCallback(() => {
     if (uploadingPhoto) return
@@ -2242,6 +2410,7 @@ export default withAuth(function NuovaRosaLabPage() {
     setPhotoUploadSlot(null)
     setPhotoUploadMode('slot')
     setShowPhotoReviewModal(false)
+    setPhotoCompletionTarget(null)
   }, [uploadingPhoto])
 
   const checkPhotoMissingData = React.useCallback((playerData) => {
@@ -2380,12 +2549,16 @@ export default withAuth(function NuovaRosaLabPage() {
       showToast(lang === 'en' ? 'Select a slot before uploading a photo.' : 'Seleziona uno slot prima di caricare una foto.', 'error')
       return
     }
+    if (photoUploadMode === 'complete' && !photoCompletionTarget?.id) {
+      showToast(lang === 'en' ? 'Select the player to complete first.' : 'Seleziona prima il giocatore da completare.', 'error')
+      return
+    }
 
     setUploadingPhoto(true)
     try {
       const { playerData, photoSlots } = await extractPlayerFromPhotos(photoUploadImages)
       const missing = checkPhotoMissingData(playerData)
-      if (missing.required.length > 0) {
+      if (photoUploadMode !== 'complete' && missing.required.length > 0) {
         showToast(
           lang === 'en'
             ? `Missing required data: ${missing.required.map((entry) => entry.label).join(', ')}. Upload a clearer photo or use the catalog.`
@@ -2394,11 +2567,20 @@ export default withAuth(function NuovaRosaLabPage() {
         )
         return
       }
+      if (photoUploadMode === 'complete' && !isSameExtractedPlayer(photoCompletionTarget, playerData)) {
+        throw new Error(lang === 'en'
+          ? `These photos seem to belong to another player. Use Replace from photo if you want to change ${photoCompletionTarget.player_name}.`
+          : `Queste foto sembrano di un altro giocatore. Usa Sostituisci da foto se vuoi cambiare ${photoCompletionTarget.player_name}.`)
+      }
       const mainPosition = playerData.position || 'AMF'
       const initialPositions = Array.isArray(playerData.original_positions) && playerData.original_positions.length > 0
         ? playerData.original_positions
         : [{ position: mainPosition, competence: 'Alta' }]
-      const slotIndex = photoUploadMode === 'slot' ? photoUploadSlot.slot_index : null
+      const slotIndex = photoUploadMode === 'slot'
+        ? photoUploadSlot.slot_index
+        : photoUploadMode === 'complete'
+          ? photoCompletionTarget.slot_index ?? null
+          : null
 
       setSelectedOriginalPositions(initialPositions)
       setExtractedPlayerData({
@@ -2407,7 +2589,7 @@ export default withAuth(function NuovaRosaLabPage() {
         slot_index: slotIndex
       })
       setPositionModalCtx({
-        mode: 'photo',
+        mode: photoUploadMode === 'complete' ? 'complete' : 'photo',
         slotIndex,
         uploadMode: photoUploadMode,
         photoSlots
@@ -2421,7 +2603,7 @@ export default withAuth(function NuovaRosaLabPage() {
     } finally {
       setUploadingPhoto(false)
     }
-  }, [checkPhotoMissingData, extractPlayerFromPhotos, lang, photoUploadImages, photoUploadMode, photoUploadSlot, riserve.length, showToast, t])
+  }, [checkPhotoMissingData, extractPlayerFromPhotos, lang, photoCompletionTarget, photoUploadImages, photoUploadMode, photoUploadSlot, riserve.length, showToast, t])
 
   const resetPhotoPositionFlow = React.useCallback(() => {
     setPositionModalCtx(null)
@@ -2431,8 +2613,65 @@ export default withAuth(function NuovaRosaLabPage() {
     setPhotoUploadSlot(null)
     setPhotoUploadMode('slot')
     setShowPhotoReviewModal(false)
+    setPhotoCompletionTarget(null)
     setSelectedSlot(null)
   }, [])
+
+  const handleSavePhotoCompletion = React.useCallback(async () => {
+    if (!photoCompletionTarget?.id || !extractedPlayerData || !positionModalCtx) return
+
+    const hasUsefulExtractedData = hasPlayerStats(extractedPlayerData) || hasPlayerSkills(extractedPlayerData) || hasPlayerBoosters(extractedPlayerData)
+    if (!hasUsefulExtractedData) {
+      showToast(
+        lang === 'en'
+          ? 'No new useful data was detected. Upload clearer missing screenshots before saving.'
+          : 'Non sono stati rilevati nuovi dati utili. Carica schermate mancanti piu chiare prima di salvare.',
+        'warning'
+      )
+      return
+    }
+
+    setUploadingPhoto(true)
+    try {
+      let token = getTokenFallback()
+      if (!token && supabase) {
+        const { data: session } = await supabase.auth.getSession()
+        token = session?.session?.access_token
+      }
+      if (!token) throw new Error(t('sessionExpired'))
+
+      const payload = {
+        ...(hasPlayerStats(extractedPlayerData) ? { base_stats: extractedPlayerData.base_stats } : {}),
+        ...(Array.isArray(extractedPlayerData.skills) && extractedPlayerData.skills.length > 0 ? { skills: extractedPlayerData.skills } : {}),
+        ...(Array.isArray(extractedPlayerData.com_skills) && extractedPlayerData.com_skills.length > 0 ? { com_skills: extractedPlayerData.com_skills } : {}),
+        ...(hasPlayerBoosters(extractedPlayerData)
+          ? { available_boosters: extractedPlayerData.available_boosters || extractedPlayerData.boosters }
+          : {}),
+        ...(positionModalCtx.photoSlots ? { photo_slots: positionModalCtx.photoSlots } : {})
+      }
+
+      const response = await fetch(`/api/players/${photoCompletionTarget.id}`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+      await safeJsonResponse(response, t('errorUpdatingPlayer'))
+
+      await fetchRoster()
+      await refreshDiagnosticAfterSave()
+      resetPhotoPositionFlow()
+      showToast(lang === 'en' ? 'Player completed with photos.' : 'Giocatore completato con foto.', 'success')
+    } catch (err) {
+      console.error('[NuovaRosaLab] photo completion error:', err)
+      const { message } = mapErrorToUserMessage(err, t('errorUpdatingPlayer'), lang)
+      showToast(message, 'error')
+    } finally {
+      setUploadingPhoto(false)
+    }
+  }, [extractedPlayerData, fetchRoster, lang, photoCompletionTarget, positionModalCtx, refreshDiagnosticAfterSave, resetPhotoPositionFlow, showToast, t])
 
   const handleSavePhotoPlayerWithPositions = React.useCallback(async () => {
     if (!extractedPlayerData || selectedOriginalPositions.length === 0 || !positionModalCtx) return
@@ -3493,6 +3732,7 @@ export default withAuth(function NuovaRosaLabPage() {
         onClose={closePhotoUpload}
         uploading={uploadingPhoto}
         onOptimizeError={(message) => showToast(message, 'error')}
+        completionTarget={photoCompletionTarget}
         lang={lang}
         t={t}
       />
@@ -3500,15 +3740,17 @@ export default withAuth(function NuovaRosaLabPage() {
       <PhotoExtractionReviewModal
         show={showPhotoReviewModal}
         playerData={extractedPlayerData}
-        photoSlots={positionModalCtx?.photoSlots}
         mode={positionModalCtx?.uploadMode}
         slot={photoUploadSlot}
+        completionTarget={photoCompletionTarget}
         lang={lang}
-        onContinue={() => setShowPhotoReviewModal(false)}
+        onContinue={positionModalCtx?.uploadMode === 'complete'
+          ? handleSavePhotoCompletion
+          : () => setShowPhotoReviewModal(false)}
         onCancel={resetPhotoPositionFlow}
       />
 
-      {positionModalCtx && extractedPlayerData && !showPhotoReviewModal && (
+      {positionModalCtx && extractedPlayerData && positionModalCtx.uploadMode !== 'complete' && !showPhotoReviewModal && (
         <PositionSelectionModal
           playerName={extractedPlayerData.player_name}
           overallRating={extractedPlayerData.overall_rating}
@@ -3532,6 +3774,7 @@ export default withAuth(function NuovaRosaLabPage() {
         onRemoveFromSlot={handleRemoveFromSlot}
         onDeletePlayer={handleDeletePlayer}
         onUploadPhoto={() => openPhotoUploadFlow('slot', selectedSlot)}
+        onCompletePhotoProfile={openPhotoCompletionFlow}
         onOpenReplace={(player, openEditor = false) => {
           if (openEditor) {
             setShowAssignModal(false)
@@ -3726,6 +3969,37 @@ export default withAuth(function NuovaRosaLabPage() {
           display: flex;
           gap: 10px;
           flex-wrap: wrap;
+        }
+
+        .nr-complete-photo-callout {
+          border-radius: 16px;
+          border: 1px solid rgba(245, 158, 11, 0.3);
+          background:
+            radial-gradient(circle at top right, rgba(245, 158, 11, 0.12), transparent 34%),
+            rgba(245, 158, 11, 0.07);
+          padding: 14px;
+          display: grid;
+          grid-template-columns: auto minmax(0, 1fr) auto;
+          gap: 12px;
+          align-items: center;
+        }
+
+        .nr-complete-photo-callout > svg {
+          color: #fbbf24;
+        }
+
+        .nr-complete-photo-callout strong {
+          display: block;
+          color: #fff;
+          font-size: 13px;
+          margin-bottom: 3px;
+        }
+
+        .nr-complete-photo-callout p {
+          margin: 0;
+          color: rgba(255, 255, 255, 0.68);
+          font-size: 12px;
+          line-height: 1.4;
         }
 
         .nr-primary-button,
@@ -5589,6 +5863,16 @@ export default withAuth(function NuovaRosaLabPage() {
             margin: 12px 0 0;
             padding: 10px 0 max(96px, calc(env(safe-area-inset-bottom, 0px) + 84px));
             background: transparent;
+          }
+
+          .nr-complete-photo-callout {
+            grid-template-columns: auto minmax(0, 1fr);
+          }
+
+          .nr-complete-photo-callout .nr-primary-button {
+            grid-column: 1 / -1;
+            width: 100%;
+            justify-content: center;
           }
 
           .nr-inline-builder {
