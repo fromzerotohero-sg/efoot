@@ -7,16 +7,22 @@ import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
 import ConfirmModal from '@/components/ConfirmModal'
 import TacticalSettingsPanel from '@/components/TacticalSettingsPanel'
+import PositionSelectionModal from '@/components/PositionSelectionModal'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
+import { PHOTO_TYPE_KEYS, getPhotoTypeConfig } from '@/lib/playerPhotoTypes'
+import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
+import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 import {
   AlertTriangle,
   ArrowRight,
+  Camera,
   CheckCircle2,
   ChevronRight,
   Gift,
   Pencil,
   Plus,
+  RefreshCw,
   Search,
   Save,
   ShieldCheck,
@@ -567,7 +573,7 @@ function CatalogPickerModal({
               )}
               <button type="button" className="nr-secondary-button" onClick={onUploadFallback}>
                 <Upload size={14} />
-                {lang === 'en' ? 'Open photo upload page' : 'Apri caricamento foto'}
+                {lang === 'en' ? 'Upload from photo' : 'Carica da foto'}
               </button>
             </div>
 
@@ -718,6 +724,215 @@ function CatalogPickerModal({
   )
 }
 
+const PLAYER_UPLOAD_EXAMPLES = [
+  {
+    key: 'stats',
+    src: '/examples/player-upload/thuram-statistiche.png',
+    labels: { it: 'Statistiche', en: 'Stats' }
+  },
+  {
+    key: 'skills',
+    src: '/examples/player-upload/thuram-abilita.png',
+    labels: { it: 'Abilita', en: 'Skills' }
+  },
+  {
+    key: 'booster',
+    src: '/examples/player-upload/thuram-booster.png',
+    labels: { it: 'Booster', en: 'Booster' }
+  }
+]
+
+function PhotoUploadExamples({ lang }) {
+  return (
+    <section className="nr-photo-example-panel">
+      <div className="nr-photo-example-copy">
+        <strong>{lang === 'en' ? 'Example screenshots' : 'Esempi di screenshot'}</strong>
+        <p>
+          {lang === 'en'
+            ? 'Use these screens as a guide: stats, skills and boosters must be readable before extraction.'
+            : 'Usa queste schermate come guida: statistiche, abilita e booster devono essere leggibili prima dell estrazione.'}
+        </p>
+      </div>
+      <div className="nr-photo-example-grid">
+        {PLAYER_UPLOAD_EXAMPLES.map((example) => (
+          <a
+            key={example.key}
+            href={example.src}
+            target="_blank"
+            rel="noreferrer"
+            className="nr-photo-example-card"
+          >
+            <img src={example.src} alt={example.labels[lang === 'en' ? 'en' : 'it']} />
+            <span>{example.labels[lang === 'en' ? 'en' : 'it']}</span>
+          </a>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function PhotoUploadModal({
+  show,
+  mode,
+  slot,
+  images,
+  onImagesChange,
+  onUpload,
+  onClose,
+  uploading,
+  onOptimizeError,
+  lang,
+  t
+}) {
+  if (!show) return null
+
+  const labelByKey = {
+    card: lang === 'en' ? 'Card / stats' : 'Carta / statistiche',
+    stats: lang === 'en' ? 'Skills photo' : 'Foto abilita',
+    skills: lang === 'en' ? 'Boosters photo' : 'Foto booster'
+  }
+  const descByKey = {
+    card: lang === 'en' ? 'Main player card and visible stats.' : 'Carta principale e statistiche visibili.',
+    stats: lang === 'en' ? 'Use it to complete player skills.' : 'Usala per completare le abilita.',
+    skills: lang === 'en' ? 'Use it only if the card has boosters.' : 'Usala solo se la carta ha booster.'
+  }
+  const imageTypes = PHOTO_TYPE_KEYS.map((key) => ({
+    ...getPhotoTypeConfig(key),
+    label: labelByKey[key],
+    description: descByKey[key]
+  }))
+  const destination = mode === 'reserve'
+    ? (lang === 'en' ? 'Reserve bench' : 'Riserve')
+    : (slot?.position || (lang === 'en' ? 'selected slot' : 'slot selezionato'))
+
+  const getImageForType = (type) => images.find((img) => img.type === type)
+  const removeImage = (type) => onImagesChange(images.filter((img) => img.type !== type))
+
+  const handleFileSelect = async (event, type) => {
+    const file = event.target.files?.[0]
+    if (!file || !file.type?.startsWith('image/')) return
+
+    try {
+      const optimized = await optimizeImageFile(file)
+      const nextImage = { file, dataUrl: optimized.dataUrl, type, name: file.name }
+      const existingIndex = images.findIndex((img) => img.type === type)
+      if (existingIndex >= 0) {
+        const next = [...images]
+        next[existingIndex] = nextImage
+        onImagesChange(next)
+      } else {
+        onImagesChange([...images, nextImage])
+      }
+    } catch (err) {
+      const message = getImageOptimizeUserMessage(err, t)
+      if (onOptimizeError) onOptimizeError(message)
+    } finally {
+      event.target.value = ''
+    }
+  }
+
+  return (
+    <EnterpriseModalFrame
+      show={show}
+      onClose={() => {
+        if (!uploading) onClose()
+      }}
+      title={mode === 'reserve'
+        ? (lang === 'en' ? 'Add reserve from photo' : 'Aggiungi riserva da foto')
+        : `${lang === 'en' ? 'Add player from photo' : 'Aggiungi giocatore da foto'} · ${destination}`}
+      subtitle={lang === 'en' ? 'Photo extraction' : 'Estrazione foto'}
+      className="nr-photo-upload-shell"
+    >
+      <div className="nr-photo-upload-body">
+        <div className="nr-photo-upload-intro">
+          <Sparkles size={18} />
+          <span>
+            {lang === 'en'
+              ? 'Upload one or more screenshots. We will extract the player, then you will confirm roles before saving.'
+              : 'Carica una o piu schermate. Estraiamo il giocatore, poi confermi i ruoli prima del salvataggio.'}
+          </span>
+        </div>
+
+        <div className="nr-photo-step-row">
+          {imageTypes.map((type, index) => {
+            const image = getImageForType(type.key)
+            return (
+              <div key={type.key} className={`nr-photo-step ${image ? 'complete' : ''}`}>
+                <span>{image ? <CheckCircle2 size={14} /> : index + 1}</span>
+                <small>{type.label}</small>
+              </div>
+            )
+          })}
+        </div>
+
+        <PhotoUploadExamples lang={lang} />
+
+        <div className="nr-photo-upload-grid">
+          {imageTypes.map(({ key, label, description, color, bgColor, borderColor, required }) => {
+            const image = getImageForType(key)
+            return (
+              <section
+                key={key}
+                className="nr-photo-upload-card"
+                style={{
+                  '--photo-color': color,
+                  '--photo-bg': bgColor,
+                  '--photo-border': borderColor
+                }}
+              >
+                <div className="nr-photo-card-head">
+                  <div>
+                    <strong>{label}</strong>
+                    <p>{description}</p>
+                  </div>
+                  <span>{required ? (lang === 'en' ? 'Recommended' : 'Consigliata') : (lang === 'en' ? 'Optional' : 'Opzionale')}</span>
+                </div>
+
+                {image ? (
+                  <div className="nr-photo-preview">
+                    <img src={image.dataUrl} alt={label} />
+                    <div>
+                      <span>{image.name || (lang === 'en' ? 'Selected photo' : 'Foto selezionata')}</span>
+                      <button type="button" className="nr-secondary-button" onClick={() => removeImage(key)} disabled={uploading}>
+                        {lang === 'en' ? 'Remove' : 'Rimuovi'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="nr-photo-pick-row">
+                    <label className="nr-secondary-button">
+                      <input type="file" accept="image/*" onChange={(event) => handleFileSelect(event, key)} disabled={uploading} />
+                      <Upload size={14} />
+                      {lang === 'en' ? 'Upload' : 'Carica'}
+                    </label>
+                    <label className="nr-secondary-button">
+                      <input type="file" accept="image/*" capture="environment" onChange={(event) => handleFileSelect(event, key)} disabled={uploading} />
+                      <Camera size={14} />
+                      {lang === 'en' ? 'Camera' : 'Fotocamera'}
+                    </label>
+                  </div>
+                )}
+              </section>
+            )
+          })}
+        </div>
+
+        <div className="nr-modal-footer">
+          <button type="button" className="nr-secondary-button" onClick={onClose} disabled={uploading}>
+            {t('cancel')}
+          </button>
+          <button type="button" className="nr-primary-button" onClick={onUpload} disabled={uploading || images.length === 0}>
+            {uploading ? <RefreshCw size={14} className="nr-spin" /> : <CheckCircle2 size={14} />}
+            {uploading
+              ? (lang === 'en' ? 'Extracting...' : 'Estrazione...')
+              : (lang === 'en' ? 'Extract player' : 'Estrai giocatore')}
+          </button>
+        </div>
+      </div>
+    </EnterpriseModalFrame>
+  )
+}
+
 function QuickPlayerPanel({
   player,
   slot,
@@ -776,7 +991,7 @@ function QuickPlayerPanel({
             )}
             <button type="button" className="nr-secondary-button" onClick={onUploadPhoto}>
               <Upload size={14} />
-              {lang === 'en' ? 'Open photo upload page' : 'Apri caricamento foto'}
+              {lang === 'en' ? 'Replace from photo' : 'Sostituisci da foto'}
             </button>
           </div>
 
@@ -1683,6 +1898,14 @@ export default withAuth(function NuovaRosaLabPage() {
   const [fieldEditMode, setFieldEditMode] = React.useState(false)
   const [customPositions, setCustomPositions] = React.useState({})
   const [savingFieldLayout, setSavingFieldLayout] = React.useState(false)
+  const [showPhotoUploadModal, setShowPhotoUploadModal] = React.useState(false)
+  const [photoUploadMode, setPhotoUploadMode] = React.useState('slot')
+  const [photoUploadSlot, setPhotoUploadSlot] = React.useState(null)
+  const [photoUploadImages, setPhotoUploadImages] = React.useState([])
+  const [uploadingPhoto, setUploadingPhoto] = React.useState(false)
+  const [extractedPlayerData, setExtractedPlayerData] = React.useState(null)
+  const [selectedOriginalPositions, setSelectedOriginalPositions] = React.useState([])
+  const [positionModalCtx, setPositionModalCtx] = React.useState(null)
 
   const totalPlayers = titolari.length + riserve.length
   const setupStage = buildSetupStage({
@@ -1869,27 +2092,394 @@ export default withAuth(function NuovaRosaLabPage() {
     setPickerQuery('')
   }, [])
 
-  const handleUploadFallback = React.useCallback(() => {
+  const openPhotoUploadFlow = React.useCallback((mode = null, slot = null) => {
+    const nextMode = mode || (pickerMode === 'reserve' ? 'reserve' : 'slot')
+    const nextSlot = slot || selectedSlot
+
+    if (nextMode === 'reserve' && riserve.length >= MAX_RESERVES) {
+      showToast(t('maxReservesReached'), 'error')
+      return
+    }
+    if (nextMode === 'slot' && !nextSlot) {
+      showToast(lang === 'en' ? 'Select a slot before uploading a photo.' : 'Seleziona uno slot prima di caricare una foto.', 'error')
+      return
+    }
+
     setPickerOpen(false)
-    setConfirmModal({
-      ...showConfirmConfig({
-        title: lang === 'en' ? 'Open photo upload page' : 'Apri caricamento foto',
-        message: lang === 'en'
-          ? 'Photo upload is still managed in the current roster page. We will open that page now without changing this roster.'
-          : 'Il caricamento foto e ancora gestito nella pagina rosa attuale. Apriremo quella pagina senza modificare questa rosa.',
-        details: lang === 'en'
-          ? 'Use it only when the player is not available in the catalog.'
-          : 'Usalo solo quando il giocatore non e disponibile nel catalogo.',
-        confirmLabel: lang === 'en' ? 'Open current roster page' : 'Apri rosa attuale',
-        cancelLabel: t('cancel')
-      }),
-      onConfirm: () => {
-        setConfirmModal(null)
-        router.push('/gestione-formazione')
-      },
-      onCancel: () => setConfirmModal(null)
-    })
-  }, [lang, router, t])
+    setShowAssignModal(false)
+    setShowPremiumEditorModal(false)
+    setSelectedCatalogCard(null)
+    setSelectedPlayer(null)
+    setPhotoUploadMode(nextMode)
+    setPhotoUploadSlot(nextMode === 'slot' ? nextSlot : null)
+    setSelectedSlot(nextMode === 'slot' ? nextSlot : null)
+    setPhotoUploadImages([])
+    setShowPhotoUploadModal(true)
+  }, [lang, pickerMode, riserve.length, selectedSlot, showToast, t])
+
+  const closePhotoUpload = React.useCallback(() => {
+    if (uploadingPhoto) return
+    setShowPhotoUploadModal(false)
+    setPhotoUploadImages([])
+    setPhotoUploadSlot(null)
+    setPhotoUploadMode('slot')
+  }, [uploadingPhoto])
+
+  const checkPhotoMissingData = React.useCallback((playerData) => {
+    const missing = { required: [], optional: [] }
+    if (!playerData.player_name || String(playerData.player_name).trim().length === 0) {
+      missing.required.push({ field: 'player_name', label: lang === 'en' ? 'Player name' : 'Nome giocatore' })
+    }
+    if (playerData.overall_rating == null || Number(playerData.overall_rating) === 0) {
+      missing.required.push({ field: 'overall_rating', label: 'OVR' })
+    }
+    if (!playerData.position && (!Array.isArray(playerData.original_positions) || playerData.original_positions.length === 0)) {
+      missing.required.push({ field: 'position', label: lang === 'en' ? 'Position' : 'Ruolo' })
+    }
+    if (!playerData.base_stats || Object.keys(playerData.base_stats || {}).length === 0) {
+      missing.optional.push({ field: 'base_stats', label: lang === 'en' ? 'Stats' : 'Statistiche' })
+    }
+    if (!Array.isArray(playerData.skills) || playerData.skills.length === 0) {
+      missing.optional.push({ field: 'skills', label: lang === 'en' ? 'Skills' : 'Abilita' })
+    }
+    if (!Array.isArray(playerData.available_boosters) && !Array.isArray(playerData.boosters)) {
+      missing.optional.push({ field: 'boosters', label: 'Boosters' })
+    }
+    return missing
+  }, [lang])
+
+  const extractPlayerFromPhotos = React.useCallback(async (images) => {
+    let token = getTokenFallback()
+    if (!token && supabase) {
+      const { data: session } = await supabase.auth.getSession()
+      token = session?.session?.access_token
+    }
+    if (!token) throw new Error(t('sessionExpired'))
+
+    let playerData = null
+    const allExtractedData = {}
+    const photoSlots = {}
+    const errors = []
+
+    for (const image of images) {
+      const response = await fetch('/api/extract-player', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept-Language': lang === 'en' ? 'en' : 'it'
+        },
+        body: JSON.stringify({ imageDataUrl: image.dataUrl })
+      })
+
+      let data = null
+      try {
+        data = await response.json()
+      } catch (_) {
+        errors.push(`${lang === 'en' ? 'Server error' : 'Errore server'}: ${response.status} ${response.statusText}`)
+        continue
+      }
+
+      if (!response.ok) {
+        const { message } = mapErrorToUserMessage(data?.error || '', lang === 'en' ? 'Unknown error' : 'Errore sconosciuto', lang)
+        errors.push(message)
+        continue
+      }
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('credits-consumed'))
+      }
+
+      if (!data?.player) continue
+
+      if (!playerData) {
+        playerData = data.player
+      } else {
+        const currentName = String(data.player.player_name || '').trim().toLowerCase()
+        const existingName = String(playerData.player_name || '').trim().toLowerCase()
+        const currentAge = data.player.age != null ? Number(data.player.age) : null
+        const existingAge = playerData.age != null ? Number(playerData.age) : null
+        if (currentName && existingName && currentAge && existingAge && (currentName !== existingName || currentAge !== existingAge)) {
+          throw new Error(lang === 'en'
+            ? `The uploaded photos seem to describe different players: ${playerData.player_name} vs ${data.player.player_name}.`
+            : `Le foto caricate sembrano riferirsi a giocatori diversi: ${playerData.player_name} vs ${data.player.player_name}.`)
+        }
+        const { overall_rating, ...extractedWithoutRating } = data.player
+        playerData = {
+          ...playerData,
+          ...extractedWithoutRating,
+          base_stats: data.player.base_stats || playerData.base_stats,
+          skills: data.player.skills || playerData.skills,
+          com_skills: data.player.com_skills || playerData.com_skills,
+          available_boosters: data.player.available_boosters || data.player.boosters || playerData.available_boosters,
+          boosters: data.player.boosters || playerData.boosters
+        }
+      }
+
+      allExtractedData[image.type] = data.player
+      if (image.type === 'card') {
+        photoSlots.card = true
+        if (data.player?.base_stats && Object.keys(data.player.base_stats || {}).length > 0) {
+          photoSlots.statistiche = true
+        }
+      } else if (image.type === 'stats') {
+        photoSlots.abilita = true
+      } else if (image.type === 'skills') {
+        photoSlots.booster = true
+        if (data.player?.skills?.length || data.player?.com_skills?.length) {
+          photoSlots.abilita = true
+        }
+      }
+    }
+
+    if (!playerData || !playerData.player_name) {
+      const quotaError = errors.find((error) => String(error).toLowerCase().includes('quota') || String(error).toLowerCase().includes('billing'))
+      if (quotaError) throw new Error(t('openAQuotaError'))
+      if (errors.length > 0) {
+        throw new Error(`${lang === 'en' ? 'Unable to extract player data' : 'Impossibile estrarre i dati giocatore'}: ${errors[0]}`)
+      }
+      throw new Error(lang === 'en' ? 'No player data extracted from the uploaded photos.' : 'Nessun dato giocatore estratto dalle foto caricate.')
+    }
+
+    const ratings = Object.values(allExtractedData)
+      .map((entry) => entry?.overall_rating)
+      .filter((rating) => rating != null && Number(rating) > 0)
+    if (ratings.length > 0) {
+      playerData.overall_rating = Math.max(...ratings.map(Number))
+    }
+
+    return { playerData, photoSlots }
+  }, [lang, t])
+
+  const handlePhotoUploadExtract = React.useCallback(async () => {
+    if (photoUploadImages.length === 0) return
+    if (photoUploadMode === 'reserve' && riserve.length >= MAX_RESERVES) {
+      showToast(t('maxReservesReached'), 'error')
+      return
+    }
+    if (photoUploadMode === 'slot' && !photoUploadSlot) {
+      showToast(lang === 'en' ? 'Select a slot before uploading a photo.' : 'Seleziona uno slot prima di caricare una foto.', 'error')
+      return
+    }
+
+    setUploadingPhoto(true)
+    try {
+      const { playerData, photoSlots } = await extractPlayerFromPhotos(photoUploadImages)
+      const missing = checkPhotoMissingData(playerData)
+      if (missing.required.length > 0) {
+        showToast(
+          lang === 'en'
+            ? `Missing required data: ${missing.required.map((entry) => entry.label).join(', ')}. Upload a clearer photo or use the catalog.`
+            : `Dati obbligatori mancanti: ${missing.required.map((entry) => entry.label).join(', ')}. Carica una foto piu chiara o usa il catalogo.`,
+          'error'
+        )
+        return
+      }
+      if (missing.optional.length > 0) {
+        showToast(
+          lang === 'en'
+            ? `Some optional data is missing: ${missing.optional.map((entry) => entry.label).join(', ')}. You can complete it later in the editor.`
+            : `Mancano alcuni dati opzionali: ${missing.optional.map((entry) => entry.label).join(', ')}. Puoi completarli dopo nell'editor.`,
+          'warning'
+        )
+      }
+
+      const mainPosition = playerData.position || 'AMF'
+      const initialPositions = Array.isArray(playerData.original_positions) && playerData.original_positions.length > 0
+        ? playerData.original_positions
+        : [{ position: mainPosition, competence: 'Alta' }]
+      const slotIndex = photoUploadMode === 'slot' ? photoUploadSlot.slot_index : null
+
+      setSelectedOriginalPositions(initialPositions)
+      setExtractedPlayerData({
+        ...playerData,
+        photo_slots: photoSlots,
+        slot_index: slotIndex
+      })
+      setPositionModalCtx({
+        mode: 'photo',
+        slotIndex,
+        uploadMode: photoUploadMode,
+        photoSlots
+      })
+      setShowPhotoUploadModal(false)
+    } catch (err) {
+      console.error('[NuovaRosaLab] photo extraction error:', err)
+      const { message } = mapErrorToUserMessage(err, lang === 'en' ? 'Unable to upload photo.' : 'Impossibile caricare la foto.', lang)
+      showToast(message, 'error')
+    } finally {
+      setUploadingPhoto(false)
+    }
+  }, [checkPhotoMissingData, extractPlayerFromPhotos, lang, photoUploadImages, photoUploadMode, photoUploadSlot, riserve.length, showToast, t])
+
+  const resetPhotoPositionFlow = React.useCallback(() => {
+    setPositionModalCtx(null)
+    setExtractedPlayerData(null)
+    setSelectedOriginalPositions([])
+    setPhotoUploadImages([])
+    setPhotoUploadSlot(null)
+    setPhotoUploadMode('slot')
+    setSelectedSlot(null)
+  }, [])
+
+  const handleSavePhotoPlayerWithPositions = React.useCallback(async () => {
+    if (!extractedPlayerData || selectedOriginalPositions.length === 0 || !positionModalCtx) return
+
+    const slotIndexToSave = positionModalCtx.slotIndex ?? null
+    if (slotIndexToSave === null && riserve.length >= MAX_RESERVES) {
+      showToast(t('maxReservesReached'), 'error')
+      return
+    }
+
+    const savePlayer = async ({ allowDuplicateStarterReplace = false } = {}) => {
+      setUploadingPhoto(true)
+      try {
+        let token = getTokenFallback()
+        if (!token && supabase) {
+          const { data: session } = await supabase.auth.getSession()
+          token = session?.session?.access_token
+        }
+        if (!token) throw new Error(t('sessionExpired'))
+
+        const playerName = String(extractedPlayerData.player_name || '').trim().toLowerCase()
+        const playerAge = extractedPlayerData.age != null ? Number(extractedPlayerData.age) : null
+        const isSamePlayer = (player) => {
+          const currentName = String(player?.player_name || '').trim().toLowerCase()
+          const currentAge = player?.age != null ? Number(player.age) : null
+          if (playerName && currentName && playerAge && currentAge) return playerName === currentName && playerAge === currentAge
+          return Boolean(playerName && currentName && playerName === currentName)
+        }
+
+        const duplicateReserve = riserve.find((player) => isSamePlayer(player))
+        const duplicateStarter = slotIndexToSave !== null
+          ? titolari.find((player) => isSamePlayer(player) && player.slot_index !== slotIndexToSave)
+          : null
+        const duplicateStarterWhileSavingReserve = slotIndexToSave === null
+          ? titolari.find((player) => isSamePlayer(player))
+          : null
+
+        if (duplicateStarterWhileSavingReserve) {
+          throw new Error(lang === 'en'
+            ? `${extractedPlayerData.player_name} is already in your starting eleven. Move or replace that player before saving a reserve copy.`
+            : `${extractedPlayerData.player_name} e gia tra i titolari. Sposta o sostituisci quel giocatore prima di salvarlo come riserva.`)
+        }
+
+        if (duplicateStarter && !allowDuplicateStarterReplace) {
+          setUploadingPhoto(false)
+          setConfirmModal({
+            ...showConfirmConfig({
+              title: lang === 'en' ? 'Player already in lineup' : 'Giocatore gia titolare',
+              message: lang === 'en'
+                ? `${extractedPlayerData.player_name} is already assigned to another slot. Replace that starter?`
+                : `${extractedPlayerData.player_name} e gia assegnato a un altro slot. Vuoi sostituire quel titolare?`,
+              details: lang === 'en'
+                ? 'The existing starter will move to reserves if there is room.'
+                : 'Il titolare esistente verra spostato in riserva se c e spazio.',
+              confirmLabel: lang === 'en' ? 'Replace starter' : 'Sostituisci titolare',
+              cancelLabel: t('cancel')
+            }),
+            onConfirm: async () => {
+              setConfirmModal(null)
+              await savePlayer({ allowDuplicateStarterReplace: true })
+            },
+            onCancel: () => setConfirmModal(null)
+          })
+          return
+        }
+
+        if (duplicateStarter && allowDuplicateStarterReplace) {
+          if (!duplicateReserve && riserve.length >= MAX_RESERVES) {
+            throw new Error(t('maxReservesReached'))
+          }
+          if (duplicateReserve) {
+            const deleteResponse = await fetch('/api/supabase/delete-player', {
+              method: 'DELETE',
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ player_id: duplicateReserve.id })
+            })
+            await safeJsonResponse(deleteResponse, t('errorDeletingDuplicateReserve'))
+          }
+          const moveResponse = await fetch(`/api/players/${duplicateStarter.id}`, {
+            method: 'PATCH',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ slot_index: null })
+          })
+          await safeJsonResponse(moveResponse, t('errorUpdatingPlayer'))
+        }
+
+        if (slotIndexToSave === null && duplicateReserve) {
+          const confirmed = await new Promise((resolve) => {
+            setUploadingPhoto(false)
+            setConfirmModal({
+              ...showConfirmConfig({
+                title: lang === 'en' ? 'Reserve already exists' : 'Riserva gia presente',
+                message: lang === 'en'
+                  ? `${extractedPlayerData.player_name} is already in reserves. Replace the old reserve?`
+                  : `${extractedPlayerData.player_name} e gia nelle riserve. Vuoi sostituire la vecchia riserva?`,
+                confirmLabel: t('replace'),
+                cancelLabel: t('cancel')
+              }),
+              onConfirm: () => {
+                setConfirmModal(null)
+                resolve(true)
+              },
+              onCancel: () => {
+                setConfirmModal(null)
+                resolve(false)
+              }
+            })
+          })
+          if (!confirmed) return
+          setUploadingPhoto(true)
+          const deleteResponse = await fetch('/api/supabase/delete-player', {
+            method: 'DELETE',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ player_id: duplicateReserve.id })
+          })
+          await safeJsonResponse(deleteResponse, t('errorDeletingDuplicateReserve'))
+        }
+
+        const response = await fetch('/api/supabase/save-player', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            player: {
+              ...extractedPlayerData,
+              original_positions: selectedOriginalPositions,
+              slot_index: slotIndexToSave,
+              photo_slots: positionModalCtx.photoSlots || extractedPlayerData.photo_slots
+            }
+          })
+        })
+        await safeJsonResponse(response, t('errorSavingPlayerGeneric'))
+
+        await fetchRoster()
+        await refreshDiagnosticAfterSave()
+        resetPhotoPositionFlow()
+        showToast(lang === 'en' ? 'Player saved from photo.' : 'Giocatore salvato da foto.', 'success')
+      } catch (err) {
+        console.error('[NuovaRosaLab] photo save error:', err)
+        const { message } = mapErrorToUserMessage(err, t('errorSavingPlayerGeneric'), lang)
+        showToast(message, 'error')
+      } finally {
+        setUploadingPhoto(false)
+      }
+    }
+
+    await savePlayer()
+  }, [extractedPlayerData, fetchRoster, lang, positionModalCtx, refreshDiagnosticAfterSave, resetPhotoPositionFlow, riserve, selectedOriginalPositions, showToast, t, titolari])
 
   const handleSaveCatalogCardToSlot = React.useCallback(async () => {
     if (!selectedSlot || !selectedCatalogCard) return
@@ -2777,9 +3367,36 @@ export default withAuth(function NuovaRosaLabPage() {
         onClose={closePicker}
         onConfirm={pickerMode === 'reserve' ? handleSaveCatalogCardAsReserve : handleSaveCatalogCardToSlot}
         onSelectReserve={handleSelectReserveForSlot}
-        onUploadFallback={handleUploadFallback}
+        onUploadFallback={() => openPhotoUploadFlow(pickerMode, selectedSlot)}
         lang={lang}
       />
+
+      <PhotoUploadModal
+        show={showPhotoUploadModal}
+        mode={photoUploadMode}
+        slot={photoUploadSlot}
+        images={photoUploadImages}
+        onImagesChange={setPhotoUploadImages}
+        onUpload={handlePhotoUploadExtract}
+        onClose={closePhotoUpload}
+        uploading={uploadingPhoto}
+        onOptimizeError={(message) => showToast(message, 'error')}
+        lang={lang}
+        t={t}
+      />
+
+      {positionModalCtx && extractedPlayerData && (
+        <PositionSelectionModal
+          playerName={extractedPlayerData.player_name}
+          overallRating={extractedPlayerData.overall_rating}
+          mainPosition={extractedPlayerData.position}
+          selectedPositions={selectedOriginalPositions}
+          onPositionsChange={setSelectedOriginalPositions}
+          onConfirm={handleSavePhotoPlayerWithPositions}
+          uploading={uploadingPhoto}
+          onCancel={resetPhotoPositionFlow}
+        />
+      )}
 
       <QuickPlayerPanel
         player={showAssignModal ? selectedPlayer : null}
@@ -2791,7 +3408,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }}
         onRemoveFromSlot={handleRemoveFromSlot}
         onDeletePlayer={handleDeletePlayer}
-        onUploadPhoto={handleUploadFallback}
+        onUploadPhoto={() => openPhotoUploadFlow('slot', selectedSlot)}
         onOpenReplace={(player, openEditor = false) => {
           if (openEditor) {
             setShowAssignModal(false)
@@ -3747,6 +4364,222 @@ export default withAuth(function NuovaRosaLabPage() {
           align-items: center;
           justify-content: space-between;
           margin: 16px 0 12px;
+        }
+
+        .nr-photo-upload-shell {
+          width: min(760px, calc(100vw - 24px));
+        }
+
+        .nr-photo-upload-body {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .nr-photo-upload-intro {
+          border-radius: 16px;
+          border: 1px solid rgba(0, 212, 255, 0.14);
+          background: rgba(0, 212, 255, 0.06);
+          padding: 14px;
+          display: flex;
+          gap: 10px;
+          align-items: flex-start;
+          color: rgba(255, 255, 255, 0.78);
+          font-size: 13px;
+          line-height: 1.45;
+        }
+
+        .nr-photo-step-row {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .nr-photo-step {
+          border-radius: 14px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.035);
+          padding: 10px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: rgba(255, 255, 255, 0.7);
+        }
+
+        .nr-photo-step span {
+          width: 24px;
+          height: 24px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.08);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+          font-weight: 800;
+          flex-shrink: 0;
+        }
+
+        .nr-photo-step.complete {
+          color: #d1fae5;
+          border-color: rgba(52, 211, 153, 0.28);
+          background: rgba(52, 211, 153, 0.08);
+        }
+
+        .nr-photo-example-panel {
+          border-radius: 16px;
+          border: 1px solid rgba(0, 212, 255, 0.18);
+          background:
+            radial-gradient(circle at top left, rgba(0, 212, 255, 0.1), transparent 34%),
+            rgba(255, 255, 255, 0.025);
+          padding: 14px;
+        }
+
+        .nr-photo-example-copy strong {
+          display: block;
+          color: #fff;
+          font-size: 14px;
+          margin-bottom: 4px;
+        }
+
+        .nr-photo-example-copy p {
+          margin: 0 0 12px;
+          color: rgba(255, 255, 255, 0.7);
+          font-size: 12px;
+          line-height: 1.45;
+        }
+
+        .nr-photo-example-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .nr-photo-example-card {
+          display: block;
+          overflow: hidden;
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(0, 0, 0, 0.18);
+          color: #fff;
+          text-decoration: none;
+          transition: transform 0.18s ease, border-color 0.18s ease;
+        }
+
+        .nr-photo-example-card:hover {
+          transform: translateY(-1px);
+          border-color: rgba(0, 212, 255, 0.36);
+        }
+
+        .nr-photo-example-card img {
+          width: 100%;
+          height: clamp(76px, 15vw, 108px);
+          object-fit: cover;
+          display: block;
+        }
+
+        .nr-photo-example-card span {
+          display: block;
+          padding: 7px 6px;
+          text-align: center;
+          color: rgba(255, 255, 255, 0.88);
+          font-size: 11px;
+          font-weight: 700;
+        }
+
+        .nr-photo-upload-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .nr-photo-upload-card {
+          border-radius: 16px;
+          border: 1px solid var(--photo-border);
+          background: var(--photo-bg);
+          padding: 14px;
+        }
+
+        .nr-photo-card-head {
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+          margin-bottom: 12px;
+        }
+
+        .nr-photo-card-head strong {
+          display: block;
+          color: var(--photo-color);
+          font-size: 15px;
+          margin-bottom: 4px;
+        }
+
+        .nr-photo-card-head p {
+          margin: 0;
+          color: rgba(255, 255, 255, 0.68);
+          font-size: 12px;
+          line-height: 1.4;
+        }
+
+        .nr-photo-card-head > span {
+          align-self: flex-start;
+          border-radius: 999px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.05);
+          padding: 4px 8px;
+          color: rgba(255, 255, 255, 0.62);
+          font-size: 10px;
+          white-space: nowrap;
+        }
+
+        .nr-photo-pick-row {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .nr-photo-pick-row input,
+        .nr-photo-upload-card input[type="file"] {
+          display: none;
+        }
+
+        .nr-photo-preview {
+          display: grid;
+          grid-template-columns: 120px minmax(0, 1fr);
+          gap: 12px;
+          align-items: center;
+        }
+
+        .nr-photo-preview img {
+          width: 120px;
+          height: 82px;
+          border-radius: 12px;
+          object-fit: cover;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .nr-photo-preview div {
+          display: flex;
+          gap: 10px;
+          justify-content: space-between;
+          align-items: center;
+          min-width: 0;
+        }
+
+        .nr-photo-preview span {
+          color: rgba(255, 255, 255, 0.75);
+          font-size: 13px;
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .nr-spin {
+          animation: nr-spin 1s linear infinite;
+        }
+
+        @keyframes nr-spin {
+          to { transform: rotate(360deg); }
         }
 
         .nr-picker-shell.reserve-mode .nr-picker-results {
