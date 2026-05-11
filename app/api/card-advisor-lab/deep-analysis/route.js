@@ -11,7 +11,7 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const DEEP_ANALYSIS_COST = 2
-const MODEL = process.env.CARD_ADVISOR_DEEP_MODEL || process.env.OPENAI_MODEL || 'gpt-4o'
+const MODEL = process.env.CARD_ADVISOR_DEEP_MODEL || 'gpt-5.2'
 
 const CATALOG_SELECT = [
   'source',
@@ -308,6 +308,16 @@ function normalizeDeepAnalysis(payload, lang) {
   }
 }
 
+function buildOpenAIRequestBody(model, prompt) {
+  return {
+    model,
+    messages: [{ role: 'user', content: prompt }],
+    response_format: { type: 'json_object' },
+    temperature: 0.45,
+    max_completion_tokens: 1600
+  }
+}
+
 export async function POST(req) {
   let charged = false
   let admin = null
@@ -403,20 +413,14 @@ export async function POST(req) {
       ragKnowledge
     })
 
-    const requestBody = {
-      model: MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' },
-      temperature: 0.45,
-      max_tokens: 1600
-    }
+    const requestBody = buildOpenAIRequestBody(MODEL, prompt)
 
     let response
     try {
       response = await callOpenAIWithRetry(apiKey, requestBody, 'card-advisor-deep-analysis')
     } catch (error) {
       if (error?.type !== 'model_not_found' || MODEL === 'gpt-4o') throw error
-      response = await callOpenAIWithRetry(apiKey, { ...requestBody, model: 'gpt-4o' }, 'card-advisor-deep-analysis')
+      response = await callOpenAIWithRetry(apiKey, buildOpenAIRequestBody('gpt-4o', prompt), 'card-advisor-deep-analysis')
     }
     const payload = await parseOpenAIResponse(response, 'card-advisor-deep-analysis')
     const analysis = normalizeDeepAnalysis(payload, lang)
