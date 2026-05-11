@@ -28,8 +28,7 @@ import {
   Trash2,
   Upload,
   User,
-  X,
-  Zap
+  X
 } from 'lucide-react'
 
 function toKey(value) {
@@ -275,14 +274,6 @@ function getShortPlayerName(name = '') {
   if (parts.length === 0) return '-'
   const lastName = parts[parts.length - 1]
   return lastName.length > 10 ? `${lastName.slice(0, 9)}.` : lastName
-}
-
-function buildSetupStage({ totalPlayers, starters, hasFormation, hasCoach, hasTactics }) {
-  if (totalPlayers === 0) return 'empty'
-  if (totalPlayers <= 5) return 'starter_seeded'
-  if (!hasFormation || starters < 11) return 'partial'
-  if (hasFormation && starters >= 11 && (!hasCoach || !hasTactics)) return 'formation_ready'
-  return 'system_ready'
 }
 
 function getTokenFallback() {
@@ -2580,14 +2571,6 @@ export default withAuth(function NuovaRosaLabPage() {
   const [showCoachPhotoUploadModal, setShowCoachPhotoUploadModal] = React.useState(false)
   const [coachPhotoImages, setCoachPhotoImages] = React.useState([])
 
-  const totalPlayers = titolari.length + riserve.length
-  const setupStage = buildSetupStage({
-    totalPlayers,
-    starters: titolari.length,
-    hasFormation: Boolean(layout?.formation),
-    hasCoach: Boolean(activeCoach?.coach_name),
-    hasTactics: Boolean(tacticalSettings?.team_playing_style)
-  })
   const activeTeamPlaystyle = tacticalSettings?.team_playing_style || null
 
   const showToast = React.useCallback((message, type = 'success') => {
@@ -4177,37 +4160,6 @@ export default withAuth(function NuovaRosaLabPage() {
     }
   }, [customPositions, fetchRoster, lang, layout, refreshDiagnosticAfterSave, showToast, t, titolari])
 
-  const stageCopy = React.useMemo(() => {
-    const copy = {
-      empty: {
-        title: t('nuovaRosaStageEmptyTitle'),
-        text: t('nuovaRosaStageEmptyText'),
-        cta: totalPlayers <= 5 ? t('nuovaRosaStageEmptyCta') : null
-      },
-      starter_seeded: {
-        title: t('nuovaRosaStageSeededTitle'),
-        text: t('nuovaRosaStageSeededText'),
-        cta: totalPlayers <= 5 ? t('nuovaRosaStageSeededCta') : null
-      },
-      partial: {
-        title: t('nuovaRosaStagePartialTitle'),
-        text: t('nuovaRosaStagePartialText'),
-        cta: null
-      },
-      formation_ready: {
-        title: t('nuovaRosaStageFormationReadyTitle'),
-        text: t('nuovaRosaStageFormationReadyText'),
-        cta: null
-      },
-      system_ready: {
-        title: t('nuovaRosaStageSystemReadyTitle'),
-        text: t('nuovaRosaStageSystemReadyText'),
-        cta: null
-      }
-    }
-    return copy[setupStage] || copy.empty
-  }, [setupStage, t, totalPlayers])
-
   return (
     <main className="nr-page">
       <section className="nr-hero-card">
@@ -4215,22 +4167,6 @@ export default withAuth(function NuovaRosaLabPage() {
           <h1>{lang === 'en' ? 'My squad' : 'La mia rosa'}</h1>
         </div>
         <div className="nr-hero-side">
-          <div className="nr-stage-pill"><Zap size={14} /> {t('nuovaRosaStatusLabel')}</div>
-          <h2 className="nr-stage-title">{stageCopy.title}</h2>
-          <div className="nr-stats-grid">
-            <div>
-              <span>{t('nuovaRosaPlayers')}</span>
-              <strong>{totalPlayers}</strong>
-            </div>
-            <div>
-              <span>{t('nuovaRosaStarters')}</span>
-              <strong>{titolari.length}</strong>
-            </div>
-            <div>
-              <span>{t('nuovaRosaFormation')}</span>
-              <strong>{layout?.formation || '-'}</strong>
-            </div>
-          </div>
           <div className="nr-coach-header-panel">
             <div className="nr-coach-header-main">
               <div className="nr-coach-avatar">
@@ -4724,15 +4660,6 @@ export default withAuth(function NuovaRosaLabPage() {
           gap: 12px;
         }
 
-        .nr-stage-title {
-          margin: 0;
-          color: #fff;
-          font-size: 22px;
-          letter-spacing: -0.02em;
-        }
-
-        .nr-badge,
-        .nr-stage-pill,
         .nr-mini-kicker {
           display: inline-flex;
           align-items: center;
