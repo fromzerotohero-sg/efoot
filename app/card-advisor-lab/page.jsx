@@ -37,6 +37,12 @@ const copy = {
     risks: 'Rischio tecnico',
     nativeSkills: 'Profilo tecnico',
     teamFit: 'Sinergia con la tua squadra',
+    teamSynergyScore: 'Sinergia squadra',
+    whyItWorks: 'Perché funziona',
+    howToUse: 'Come usarlo',
+    viewDetails: 'Vedi dettagli',
+    hideDetails: 'Nascondi dettagli',
+    synergyDetails: 'Dettaglio sinergia',
     noRosterTitle: 'Analisi carta disponibile',
     noRosterText: 'Senza rosa leggiamo stile, ruolo e profilo tecnico. Con la rosa aggiungiamo doppioni, alternative e priorita reali.',
     selectedHint: 'Clicca una carta per vedere il dettaglio.',
@@ -109,6 +115,12 @@ const copy = {
     risks: 'Technical risk',
     nativeSkills: 'Technical profile',
     teamFit: 'Team synergy',
+    teamSynergyScore: 'Team synergy',
+    whyItWorks: 'Why it works',
+    howToUse: 'How to use it',
+    viewDetails: 'See details',
+    hideDetails: 'Hide details',
+    synergyDetails: 'Synergy details',
     noRosterTitle: 'Card profile available',
     noRosterText: 'Without a roster we read style, role, and technical profile. With the roster we add duplicates, alternatives, and real priorities.',
     selectedHint: 'Click a card to inspect details.',
@@ -646,6 +658,7 @@ function RosterStatusPanel({ labels, rosterSummary, onLoadRoster, onOpenCoach })
 }
 
 function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating, onOpenFormation, onOpenCoach, onClose }) {
+  const [showSynergyDetails, setShowSynergyDetails] = React.useState(false)
   const verdict = getVerdictMeta(card.verdict, labels)
   const fitSummary = getFitSummary(card, rosterSummary, labels, lang)
   const serverEval = evaluation || null
@@ -659,9 +672,6 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
         ? `Coach active: ${serverEval.context.activeCoachName}. The verdict uses team style and coach competences.`
         : `Coach attivo: ${serverEval.context.activeCoachName}. Il verdetto usa stile squadra e competenze coach.`)
     : ''
-  const effectiveRisk = serverEval?.coinsRisk || serverEval?.technicalRisk
-    ? [serverEval.coinsRisk || serverEval.technicalRisk]
-    : listFor(card, 'risks', lang)
   const strengthItems = serverEval?.strengths?.length ? serverEval.strengths : listFor(card, 'strengths', lang)
   const fitReadLines = serverEval?.rosterRead?.length
     ? serverEval.rosterRead
@@ -669,11 +679,19 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
       ? [effectiveFitText]
       : []
   const effectiveCta = serverEval?.nextCta || (fitSummary.cta ? { label: fitSummary.cta, target: fitSummary.ctaTarget } : null)
-  const purchaseAdvice = serverEval?.purchaseAdvice || serverEval?.recommendedUse || (effectiveCta
-    ? (lang === 'en'
-        ? 'Complete your team data to turn this into a personal buy/skip verdict.'
-        : 'Completa i dati squadra per trasformarlo in un verdetto personale compra/evita.')
-    : effectiveFitText)
+  const teamSynergy = serverEval?.teamSynergy || null
+  const teamSynergyScore = evaluating
+    ? 0
+    : Math.max(0, Math.min(100, Number(teamSynergy?.score || serverEval?.score || card.score || 0)))
+  const teamSynergyLabel = evaluating ? '...' : (teamSynergy?.label || effectivePriority)
+  const teamSynergySummary = evaluating
+    ? (lang === 'en' ? 'Reading your team context...' : 'Sto leggendo il contesto della tua squadra...')
+    : (teamSynergy?.summary || fitReadLines[0] || effectiveFitText)
+  const teamSynergyReasons = teamSynergy?.reasons?.length
+    ? teamSynergy.reasons
+    : strengthItems.slice(0, 3)
+  const teamSynergyDetails = Array.isArray(teamSynergy?.details) ? teamSynergy.details : []
+  const recommendedUseLine = teamSynergy?.useLine || serverEval?.recommendedUse || fitReadLines[1] || effectiveFitText
   const heroProfile = serverEval?.technicalProfile?.find(item => item.toLowerCase().startsWith(lang === 'en' ? 'style:' : 'stile:'))
   const readableStyle = heroProfile
     ? heroProfile.replace(/^Style:\s*/i, '').replace(/^Stile:\s*/i, '')
@@ -716,6 +734,45 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
             <CheckCircle2 size={18} style={{ color: verdict.color }} />
             <span>{labels.verdict}: <strong style={{ color: verdict.color }}>{effectiveTitle}</strong></span>
           </div>
+          <div className="team-synergy-card">
+            <div className="team-synergy-head">
+              <span>{labels.teamSynergyScore}</span>
+              <strong>{teamSynergyScore}%</strong>
+            </div>
+            <div className="team-synergy-bar" aria-label={`${labels.teamSynergyScore}: ${teamSynergyScore}%`}>
+              <span style={{ width: `${teamSynergyScore}%` }} />
+            </div>
+            <div className="team-synergy-caption">
+              <strong>{teamSynergyLabel}</strong>
+              <p>{teamSynergySummary}</p>
+            </div>
+            {teamSynergyDetails.length > 0 && (
+              <>
+                <button
+                  type="button"
+                  className="team-synergy-details-toggle"
+                  onClick={() => setShowSynergyDetails(value => !value)}
+                  aria-expanded={showSynergyDetails}
+                >
+                  {showSynergyDetails ? labels.hideDetails : labels.viewDetails}
+                  <ChevronRight size={15} />
+                </button>
+                {showSynergyDetails && (
+                  <div className="team-synergy-details" aria-label={labels.synergyDetails}>
+                    {teamSynergyDetails.map(detail => (
+                      <div key={detail.key} className="team-synergy-detail-item">
+                        <div>
+                          <span>{detail.label}</span>
+                          <strong>{detail.score}%</strong>
+                        </div>
+                        <p>{detail.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -737,35 +794,18 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
         </article>
 
         <article>
-          <h3><Star size={18} /> {labels.cardValue}</h3>
+          <h3><Star size={18} /> {labels.whyItWorks}</h3>
           <ul>
-            {strengthItems.map(item => <li key={item}>{item}</li>)}
+            {teamSynergyReasons.map(item => <li key={item}>{item}</li>)}
           </ul>
         </article>
 
       </div>
 
-      <div className="detail-grid detail-grid-secondary">
-        <article>
-          <h3><AlertTriangle size={18} /> {labels.coinRisk}</h3>
-          <p>{effectiveRisk[0]}</p>
-        </article>
-
-        <article>
-          <h3><CheckCircle2 size={18} /> {labels.purchaseAdvice}</h3>
-          <p>{purchaseAdvice}</p>
-        </article>
-      </div>
-
       <div className="fit-panel">
         <div>
-          <h3><Users size={18} /> {labels.teamFit}</h3>
-          <p>{fitReadLines[0] || effectiveFitText}</p>
-          {fitReadLines.length > 1 && (
-            <ul>
-              {fitReadLines.slice(1).map(item => <li key={item}>{item}</li>)}
-            </ul>
-          )}
+          <h3><Users size={18} /> {labels.howToUse}</h3>
+          <p>{recommendedUseLine}</p>
           <div className="fit-summary-grid">
             <div>
               <span>{labels.priorityVerdict}</span>
@@ -1818,6 +1858,147 @@ export default withAuth(function CardAdvisorLabPage() {
           background: rgba(255,255,255,0.05);
         }
 
+        .team-synergy-card {
+          margin-top: 12px;
+          border: 1px solid rgba(255,255,255,0.12);
+          border-radius: 18px;
+          padding: 14px;
+          background:
+            radial-gradient(circle at 85% 10%, rgba(34,197,94,0.14), transparent 34%),
+            linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.035));
+          box-shadow: 0 16px 34px rgba(0,0,0,0.18);
+        }
+
+        .team-synergy-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 14px;
+          margin-bottom: 10px;
+        }
+
+        .team-synergy-head span {
+          color: rgba(255,255,255,0.62);
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.10em;
+          font-weight: 900;
+        }
+
+        .team-synergy-head strong {
+          color: #fff;
+          font-size: clamp(24px, 4vw, 38px);
+          line-height: 1;
+          letter-spacing: -0.04em;
+        }
+
+        .team-synergy-bar {
+          position: relative;
+          height: 14px;
+          overflow: hidden;
+          border-radius: 999px;
+          background: linear-gradient(90deg, #ef4444 0%, #f97316 32%, #facc15 58%, #22c55e 100%);
+          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18), 0 0 22px rgba(34,197,94,0.18);
+        }
+
+        .team-synergy-bar::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, rgba(255,255,255,0.36), transparent 56%);
+          pointer-events: none;
+        }
+
+        .team-synergy-bar span {
+          position: absolute;
+          inset: 0 auto 0 0;
+          min-width: 8px;
+          border-radius: inherit;
+          background: rgba(255,255,255,0.18);
+          border-right: 2px solid rgba(255,255,255,0.88);
+          box-shadow: 0 0 22px rgba(255,255,255,0.28);
+        }
+
+        .team-synergy-caption {
+          margin-top: 12px;
+        }
+
+        .team-synergy-caption strong {
+          display: block;
+          color: #fff;
+          font-size: 15px;
+          margin-bottom: 5px;
+        }
+
+        .team-synergy-caption p {
+          margin: 0;
+          color: rgba(255,255,255,0.76);
+          font-size: 13px;
+          line-height: 1.55;
+        }
+
+        .team-synergy-details-toggle {
+          margin-top: 12px;
+          border: 1px solid rgba(0,212,255,0.34);
+          border-radius: 999px;
+          background: rgba(0,212,255,0.09);
+          color: #fff;
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          min-height: 34px;
+          padding: 7px 12px;
+          font-size: 12px;
+          font-weight: 900;
+          cursor: pointer;
+        }
+
+        .team-synergy-details-toggle[aria-expanded="true"] svg {
+          transform: rotate(90deg);
+        }
+
+        .team-synergy-details {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+          margin-top: 12px;
+        }
+
+        .team-synergy-detail-item {
+          border: 1px solid rgba(255,255,255,0.10);
+          border-radius: 14px;
+          padding: 10px;
+          background: rgba(3,6,16,0.34);
+        }
+
+        .team-synergy-detail-item div {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          margin-bottom: 6px;
+        }
+
+        .team-synergy-detail-item span {
+          color: rgba(255,255,255,0.62);
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          font-weight: 900;
+        }
+
+        .team-synergy-detail-item strong {
+          color: #facc15;
+          font-size: 13px;
+        }
+
+        .team-synergy-detail-item p {
+          margin: 0;
+          color: rgba(255,255,255,0.72);
+          font-size: 12px;
+          line-height: 1.45;
+        }
+
         .detail-grid {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1985,6 +2166,10 @@ export default withAuth(function CardAdvisorLabPage() {
           .cards-grid,
           .detail-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .team-synergy-details {
+            grid-template-columns: 1fr;
           }
 
           .card-details-modal {

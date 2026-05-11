@@ -818,34 +818,34 @@ function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, dupl
     return {
       level: 'needs-roster',
       label: lang === 'en' ? 'Card value only' : 'Valore carta',
-      title: lang === 'en' ? 'Good card read, not your purchase verdict yet' : 'Buona lettura carta, non ancora verdetto per te'
+      title: lang === 'en' ? 'Good card read, team fit needs your roster' : 'Buona carta, fit squadra da completare'
     }
   }
   if (duplicate || starterBlocked) {
     return {
       level: 'avoid',
-      label: lang === 'en' ? 'Duplicate risk' : 'Rischio doppione',
-      title: lang === 'en' ? 'Not a priority: role already covered' : 'Non prioritario: ruolo già coperto'
+      label: lang === 'en' ? 'Low team fit' : 'Fit squadra basso',
+      title: lang === 'en' ? 'Strong card, not central for your XI now' : 'Carta forte, ma non centrale nel tuo XI'
     }
   }
   if (roleGap || score >= 74) {
     return {
       level: 'buy',
-      label: lang === 'en' ? 'Strong target' : 'Target forte',
-      title: lang === 'en' ? 'Worth serious consideration for your team' : 'Da valutare seriamente per la tua squadra'
+      label: lang === 'en' ? 'High team synergy' : 'Sinergia alta',
+      title: lang === 'en' ? 'Excellent fit for your team' : 'Ottimo fit per la tua squadra'
     }
   }
   if (score >= 58) {
     return {
       level: 'watch',
-      label: lang === 'en' ? 'Evaluate' : 'Da valutare',
-      title: lang === 'en' ? 'Useful only if the role is a priority' : 'Utile solo se quel ruolo è prioritario'
+      label: lang === 'en' ? 'Situational synergy' : 'Sinergia situazionale',
+      title: lang === 'en' ? 'Useful in the right match plan' : 'Utile nel piano partita giusto'
     }
   }
   return {
     level: 'skip',
     label: lang === 'en' ? 'Low priority' : 'Bassa priorità',
-    title: lang === 'en' ? 'Save coins for a clearer upgrade' : 'Risparmia coins per un upgrade più chiaro'
+    title: lang === 'en' ? 'Not the upgrade your team needs now' : 'Non è l’upgrade che ti serve ora'
   }
 }
 
@@ -1048,6 +1048,195 @@ function buildRosterRead({ card, sameRole, bestAlternative, roleGap, duplicate, 
   ]
 }
 
+function teamSynergyLabel(score, lang) {
+  if (score >= 78) return lang === 'en' ? 'Wow fit' : 'Fit wow'
+  if (score >= 68) return lang === 'en' ? 'Strong synergy' : 'Sinergia forte'
+  if (score >= 55) return lang === 'en' ? 'Situational synergy' : 'Sinergia situazionale'
+  return lang === 'en' ? 'Low fit' : 'Fit basso'
+}
+
+function addUniqueLine(lines, line) {
+  const clean = String(line || '').trim()
+  if (!clean || lines.includes(clean)) return
+  lines.push(clean)
+}
+
+function strongestTrait(technical, position, lang) {
+  const family = roleFamily(position)
+  if (family === 'gk') return technical.gk >= 78 ? (lang === 'en' ? 'goal reliability' : 'affidabilità in porta') : ''
+  if (family === 'def') {
+    if (technical.defend >= 78) return lang === 'en' ? 'defensive timing' : 'tempo difensivo'
+    if (technical.pace >= 76) return lang === 'en' ? 'recovery speed' : 'velocità di recupero'
+  }
+  if (family === 'mid') {
+    if (technical.pass >= 78) return lang === 'en' ? 'cleaner build-up' : 'costruzione più pulita'
+    if (technical.defend >= 74) return lang === 'en' ? 'balance after ball loss' : 'equilibrio dopo perdita palla'
+  }
+  if (technical.pace >= 78) return lang === 'en' ? 'depth and separation' : 'profondità e strappo'
+  if (technical.finish >= 78) return lang === 'en' ? 'finishing threat' : 'minaccia in finalizzazione'
+  if (technical.pass >= 76) return lang === 'en' ? 'last-pass quality' : 'qualità nell’ultimo passaggio'
+  return ''
+}
+
+function teamSynergySummary({ card, score, hasRoster, technical, roleGap, duplicate, starterBlocked, evidence, tacticalStyle, lang }) {
+  const trait = strongestTrait(technical, card.position, lang)
+  const style = teamStyleLabel(tacticalStyle, lang)
+  if (!technical.hasCompleteCardData) {
+    return lang === 'en'
+      ? 'We can show the card profile, but the full technical detail is still needed for a confident team fit.'
+      : 'Possiamo leggere il profilo carta, ma serve il dettaglio tecnico completo per un fit squadra davvero affidabile.'
+  }
+  if (!hasRoster) {
+    return lang === 'en'
+      ? `${card.name} looks interesting as a card; load your roster to understand if it improves your actual XI.`
+      : `${card.name} è interessante come carta; carica la rosa per capire se migliora davvero il tuo XI.`
+  }
+  if (score >= 78 && roleGap) {
+    return lang === 'en'
+      ? `${card.name} fills a real squad gap and adds ${trait || 'a different profile'} where your team currently has little direct coverage.`
+      : `${card.name} copre un buco reale della rosa e aggiunge ${trait || 'un profilo diverso'} dove oggi hai poca copertura diretta.`
+  }
+  if (score >= 68 && evidence.teamStyleFit) {
+    return lang === 'en'
+      ? `${card.name} fits your ${style || 'current system'} because it adds ${trait || 'a useful technical trait'} to the way you already play.`
+      : `${card.name} si lega al tuo ${style || 'sistema attuale'} perché aggiunge ${trait || 'una qualità tecnica utile'} al modo in cui giochi già.`
+  }
+  if (duplicate || starterBlocked) {
+    return lang === 'en'
+      ? `${card.name} is not weak, but today the team fit is limited: your XI already has a similar answer in that lane.`
+      : `${card.name} non è scarso, ma oggi il fit squadra è limitato: nel tuo XI hai già una risposta simile in quella zona.`
+  }
+  if (evidence.profileNeedFit) {
+    return lang === 'en'
+      ? `${card.name} is interesting because it connects with one of your current improvement areas, not just because of the rating.`
+      : `${card.name} è interessante perché si collega a una tua area di miglioramento, non solo per l’overall.`
+  }
+  return lang === 'en'
+    ? `${card.name} can help your team in specific scenarios, especially when you need ${trait || 'a different technical solution'}.`
+    : `${card.name} può aiutarti in scenari specifici, soprattutto quando ti serve ${trait || 'una soluzione tecnica diversa'}.`
+}
+
+function teamSynergyReasons({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, technical, tacticalStyle, patterns, profileRead, evidence, lang }) {
+  const lines = []
+  const trait = strongestTrait(technical, card.position, lang)
+  const fitLine = tacticalStyleFit(technical, card.position, tacticalStyle, profileRead, lang)
+  const edgeLine = statEdgeLine(card.position, technical, bestAlternative, lang)
+  const mapLine = tacticalMapLine(patterns, card.position, lang)
+  if (roleGap) {
+    addUniqueLine(lines, lang === 'en'
+      ? `Covers a role where your roster has no direct high-confidence option.`
+      : `Copre un ruolo dove oggi non hai una vera alternativa diretta.`)
+  }
+  if (duplicate || starterBlocked) {
+    addUniqueLine(lines, lang === 'en'
+      ? `${joinedAlternatives(sameRole) || 'Your current starters'} already cover the lane, so it must add something different to matter.`
+      : `${joinedAlternatives(sameRole) || 'I tuoi titolari attuali'} coprono già la zona: deve aggiungere qualcosa di diverso per contare.`)
+  }
+  if (trait) {
+    addUniqueLine(lines, lang === 'en'
+      ? `Adds ${trait}, a trait that changes how the role can be used.`
+      : `Aggiunge ${trait}, una caratteristica che cambia come puoi usare quel ruolo.`)
+  }
+  if (fitLine) addUniqueLine(lines, fitLine)
+  if (edgeLine) addUniqueLine(lines, edgeLine)
+  if (evidence.profileNeedFit) {
+    addUniqueLine(lines, lang === 'en'
+      ? `Matches one of your current improvement priorities from profile or match reads.`
+      : `Risponde a una priorità emersa dal profilo o dalle letture partita.`)
+  }
+  if (mapLine) addUniqueLine(lines, mapLine)
+  return lines.slice(0, 3)
+}
+
+function teamSynergyDetails({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, technical, tacticalStyle, profileRead, issues, gameRead, evidence, lang }) {
+  const details = []
+  const family = roleFamily(card.position)
+  const teamStyle = teamStyleLabel(tacticalStyle, lang)
+  const movement = movementProfile(technical, card.position, lang)
+  const physicalBase = Math.max(technical.physical || 0, technical.aerial || 0, family === 'def' ? technical.pace || 0 : 0)
+  const physicalEdge = bestAlternative?.signals
+    ? Math.max(
+        (technical.physical || 0) - (bestAlternative.signals.physical || 0),
+        (technical.aerial || 0) - (bestAlternative.signals.aerial || 0),
+        (technical.pace || 0) - (bestAlternative.signals.pace || 0)
+      )
+    : 0
+
+  details.push({
+    key: 'style',
+    label: lang === 'en' ? 'Style fit' : 'Fit stile',
+    score: evidence.teamStyleFit ? 78 : tacticalStyle ? 56 : 50,
+    text: evidence.teamStyleFit
+      ? (lang === 'en'
+          ? `Works with ${teamStyle}: the card profile supports the way your team already attacks or defends.`
+          : `Funziona con ${teamStyle}: il profilo carta supporta il modo in cui la tua squadra attacca o difende già.`)
+      : tacticalStyle
+        ? (lang === 'en'
+            ? `Not a perfect style lock for ${teamStyle}; the value depends more on role usage than system bonus.`
+            : `Non è un incastro perfetto con ${teamStyle}; il valore dipende più dall’uso nel ruolo che dal bonus sistema.`)
+        : (lang === 'en'
+            ? 'Team style is missing, so this part stays neutral until the coach/tactics are configured.'
+            : 'Manca lo stile squadra, quindi questa parte resta neutra finché coach/tattica non sono configurati.')
+  })
+
+  details.push({
+    key: 'physicality',
+    label: lang === 'en' ? 'Physical profile' : 'Fisicità',
+    score: clamp(physicalBase + Math.max(0, physicalEdge), 35, 88),
+    text: physicalEdge >= 5
+      ? (lang === 'en'
+          ? `Compared with ${bestAlternative?.name || 'your current option'}, the physical edge can change duels, aerial balls or recovery runs.`
+          : `Rispetto a ${bestAlternative?.name || 'l’opzione attuale'}, il vantaggio fisico può cambiare duelli, palle alte o recuperi.`)
+      : physicalBase >= 76
+        ? (lang === 'en'
+            ? 'The physical base is useful, but it is not automatically a bigger upgrade than your current options.'
+            : 'La base fisica è utile, ma non è automaticamente un upgrade netto rispetto alle opzioni attuali.')
+        : (lang === 'en'
+            ? 'Physical impact is not the main reason to choose this card.'
+            : 'L’impatto fisico non è il motivo principale per scegliere questa carta.')
+  })
+
+  details.push({
+    key: 'squad',
+    label: lang === 'en' ? 'Squad comparison' : 'Confronto rosa',
+    score: roleGap ? 84 : duplicate || starterBlocked ? 46 : bestAlternative ? 62 : 58,
+    text: roleGap
+      ? (lang === 'en'
+          ? `Clear squad value: you do not have a direct ${card.position} alternative with the same role coverage.`
+          : `Valore rosa chiaro: non hai una vera alternativa diretta da ${card.position} con la stessa copertura.`)
+      : duplicate || starterBlocked
+        ? (lang === 'en'
+            ? `${joinedAlternatives(sameRole) || 'Your current options'} already cover this lane; the card must offer a different match plan.`
+            : `${joinedAlternatives(sameRole) || 'Le opzioni attuali'} coprono già questa zona; la carta deve offrirti un piano partita diverso.`)
+        : (lang === 'en'
+            ? `The role is covered, so the question is whether ${movement} gives you a better use case than ${bestAlternative?.name || 'your current option'}.`
+            : `Il ruolo è coperto, quindi la domanda è se il ${movement} ti dà un caso d’uso migliore di ${bestAlternative?.name || 'l’opzione attuale'}.`)
+  })
+
+  const difficultyMatch = (
+    evidence.profileNeedFit ||
+    (issues.needDefence && (family === 'def' || family === 'gk')) ||
+    (issues.needBuild && family === 'mid') ||
+    (issues.needDepth && family === 'att') ||
+    (gameRead.passAccuracy != null && gameRead.passAccuracy < 78 && family === 'mid') ||
+    (gameRead.shotsConceded != null && gameRead.shotsConceded >= 7 && family === 'def')
+  )
+  details.push({
+    key: 'difficulty',
+    label: lang === 'en' ? 'Your difficulties' : 'Tue difficoltà',
+    score: difficultyMatch ? 76 : 52,
+    text: difficultyMatch
+      ? (lang === 'en'
+          ? 'This card connects with one of your current weak points, so the recommendation is based on need, not only rating.'
+          : 'Questa carta si collega a una tua difficoltà attuale, quindi il consiglio nasce dal bisogno reale, non solo dall’overall.')
+      : (lang === 'en'
+          ? 'No strong link with your current weak points emerged; treat it as a tactical option, not a problem-solver.'
+          : 'Non emerge un legame forte con le tue difficoltà attuali: considerala un’opzione tattica, non una soluzione diretta.')
+  })
+
+  return details
+}
+
 function evaluate({ card, catalogCard, players, formation, coach, tacticalSettings, profile, patterns, gameAnalysis, stylesLookup, lang }) {
   const sameRole = sameRolePlayers(card, players, stylesLookup)
   const hasRoster = players.length > 0
@@ -1191,10 +1380,59 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
       : !hasCoach
         ? { label: lang === 'en' ? 'Add coach for team-style fit' : 'Aggiungi coach per il fit stile squadra', target: 'coach' }
         : null
+  const teamSynergy = {
+    score,
+    label: teamSynergyLabel(score, lang),
+    summary: teamSynergySummary({
+      card,
+      score,
+      hasRoster,
+      technical,
+      roleGap,
+      duplicate,
+      starterBlocked,
+      evidence,
+      tacticalStyle,
+      lang
+    }),
+    reasons: teamSynergyReasons({
+      card,
+      sameRole,
+      bestAlternative,
+      roleGap,
+      duplicate,
+      starterBlocked,
+      technical,
+      tacticalStyle,
+      patterns,
+      profileRead,
+      evidence,
+      lang
+    }),
+    useLine: hasRoster && technical.hasCompleteCardData
+      ? tacticalUseLine(card, technical, tacticalStyle, lang)
+      : '',
+    details: teamSynergyDetails({
+      card,
+      sameRole,
+      bestAlternative,
+      roleGap,
+      duplicate,
+      starterBlocked,
+      technical,
+      tacticalStyle,
+      profileRead,
+      issues,
+      gameRead,
+      evidence,
+      lang
+    })
+  }
   return {
     title,
     synergyLevel,
     score,
+    teamSynergy,
     mainLever: lever,
     technicalProfile: technicalProfile(card, technical, lang),
     strengths,
