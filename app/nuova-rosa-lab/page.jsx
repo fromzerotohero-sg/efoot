@@ -631,7 +631,6 @@ function QuickPlayerPanel({
   onClose,
   onRemoveFromSlot,
   onDeletePlayer,
-  onOpenBoosters,
   onOpenReplace,
   onUploadPhoto,
   lang
@@ -688,9 +687,6 @@ function QuickPlayerPanel({
           <div className="nr-secondary-actions">
             <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player)}>
               {lang === 'en' ? 'Choose another card' : "Scegli un'altra carta"}
-            </button>
-            <button type="button" className="nr-secondary-button" onClick={() => onOpenBoosters(player)}>
-              {lang === 'en' ? 'Edit boosters' : 'Modifica boosters'}
             </button>
             <button type="button" className="nr-danger-button" onClick={() => onDeletePlayer(player.id)}>
               <Trash2 size={14} />
@@ -996,79 +992,6 @@ function normalizeBoosterEntry(entry) {
     preset,
     level
   }
-}
-
-function EnterpriseBoostersModal({ show, boosters, setBoosters, onClose, onSave, saving, lang }) {
-  const list = Array.isArray(boosters) ? boosters : []
-
-  return (
-    <EnterpriseModalFrame
-      show={show}
-      onClose={onClose}
-      title={lang === 'en' ? 'Boosters' : 'Boosters'}
-      subtitle={lang === 'en' ? 'Quick edit' : 'Modifica rapida'}
-      className="nr-editor-shell"
-    >
-      <EnterpriseSection
-        title={lang === 'en' ? 'Booster list' : 'Lista booster'}
-        actions={
-          <button
-            type="button"
-            className="nr-secondary-button"
-            onClick={() => setBoosters([...(list || []), { name: '', effect: '' }])}
-            disabled={saving}
-          >
-            <Plus size={14} />
-            {lang === 'en' ? 'Add booster' : 'Aggiungi booster'}
-          </button>
-        }
-      >
-        <div className="nr-boosters-list">
-          {list.length > 0 ? list.map((booster, index) => (
-            <div key={`${index}-${booster?.name || 'booster'}`} className="nr-booster-row">
-              <div className="nr-form-grid">
-                <EnterpriseInput
-                  label={lang === 'en' ? 'Booster name' : 'Nome booster'}
-                  value={String(booster?.name || '')}
-                  onChange={(value) => setBoosters(list.map((item, idx) => idx === index ? { ...(item || {}), name: value } : item))}
-                  placeholder={lang === 'en' ? 'Booster name' : 'Nome booster'}
-                />
-                <EnterpriseInput
-                  label={lang === 'en' ? 'Effect' : 'Effetto'}
-                  value={String(booster?.effect || '')}
-                  onChange={(value) => setBoosters(list.map((item, idx) => idx === index ? { ...(item || {}), effect: value } : item))}
-                  placeholder={lang === 'en' ? 'Effect' : 'Effetto'}
-                />
-              </div>
-              <button
-                type="button"
-                className="nr-danger-button"
-                onClick={() => setBoosters(list.filter((_, idx) => idx !== index))}
-                disabled={saving}
-              >
-                <Trash2 size={14} />
-                {lang === 'en' ? 'Remove' : 'Rimuovi'}
-              </button>
-            </div>
-          )) : (
-            <div className="nr-empty-state">
-              <span>{lang === 'en' ? 'No boosters added yet.' : 'Nessun booster aggiunto ancora.'}</span>
-            </div>
-          )}
-        </div>
-      </EnterpriseSection>
-
-      <div className="nr-modal-footer">
-        <button type="button" className="nr-secondary-button" onClick={onClose} disabled={saving}>
-          {lang === 'en' ? 'Cancel' : 'Annulla'}
-        </button>
-        <button type="button" className="nr-primary-button" onClick={onSave} disabled={saving}>
-          {saving ? (lang === 'en' ? 'Saving...' : 'Salvataggio...') : (lang === 'en' ? 'Save boosters' : 'Salva boosters')}
-          <Save size={16} />
-        </button>
-      </div>
-    </EnterpriseModalFrame>
-  )
 }
 
 function normalizeBaseStatsForEditor(baseStats = {}) {
@@ -1656,10 +1579,6 @@ export default withAuth(function NuovaRosaLabPage() {
   const [confirmModal, setConfirmModal] = React.useState(null)
   const [showPremiumEditorModal, setShowPremiumEditorModal] = React.useState(false)
   const [savingPlayerEditor, setSavingPlayerEditor] = React.useState(false)
-  const [showBoostersModal, setShowBoostersModal] = React.useState(false)
-  const [boostersEditorDraft, setBoostersEditorDraft] = React.useState([])
-  const [boostersPlayerId, setBoostersPlayerId] = React.useState(null)
-  const [savingBoosters, setSavingBoosters] = React.useState(false)
   const [importingStarterPack, setImportingStarterPack] = React.useState(false)
   const [savingTacticalSettings, setSavingTacticalSettings] = React.useState(false)
   const [fieldEditMode, setFieldEditMode] = React.useState(false)
@@ -2278,68 +2197,6 @@ export default withAuth(function NuovaRosaLabPage() {
     }
   }, [fetchRoster, lang, refreshDiagnosticAfterSave, showToast, t])
 
-  const openBoostersForPlayer = React.useCallback((player) => {
-    if (!player?.id) return
-    const existing = Array.isArray(player.available_boosters) ? player.available_boosters : []
-    setBoostersEditorDraft(existing.length > 0 ? existing : [{ name: '', effect: '' }])
-    setBoostersPlayerId(player.id)
-    setShowBoostersModal(true)
-  }, [])
-
-  const saveBoostersForPlayer = React.useCallback(async () => {
-    if (!boostersPlayerId) return
-    setSavingBoosters(true)
-    try {
-      let token = getTokenFallback()
-      if (!token && supabase) {
-        const { data: session } = await supabase.auth.getSession()
-        token = session?.session?.access_token
-      }
-      if (!token) throw new Error(t('sessionExpired'))
-
-      const cleaned = (Array.isArray(boostersEditorDraft) ? boostersEditorDraft : [])
-        .map((booster) => ({
-          name: typeof booster?.name === 'string' ? booster.name.trim() : '',
-          effect: typeof booster?.effect === 'string' ? booster.effect.trim() : ''
-        }))
-        .filter((booster) => booster.name || booster.effect)
-
-      const playerRes = await fetch(`/api/players/${boostersPlayerId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const current = await playerRes.json().catch(() => ({}))
-      const existingPhotoSlots = current?.player?.photo_slots && typeof current.player.photo_slots === 'object'
-        ? current.player.photo_slots
-        : {}
-
-      const patchRes = await fetch(`/api/players/${boostersPlayerId}`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          available_boosters: cleaned,
-          photo_slots: { ...existingPhotoSlots, booster: true }
-        })
-      })
-      await safeJsonResponse(patchRes, t('errorSavingPlayerGeneric'))
-      setShowBoostersModal(false)
-      setBoostersEditorDraft([])
-      setBoostersPlayerId(null)
-      setSelectedPlayer(null)
-      await fetchRoster()
-      await refreshDiagnosticAfterSave()
-      showToast(lang === 'en' ? 'Boosters updated.' : 'Boosters aggiornati.', 'success')
-    } catch (err) {
-      console.error('[NuovaRosaLab] boosters error:', err)
-      const { message } = mapErrorToUserMessage(err, t('errorSavingPlayerGeneric'), lang)
-      showToast(message, 'error')
-    } finally {
-      setSavingBoosters(false)
-    }
-  }, [boostersEditorDraft, boostersPlayerId, fetchRoster, lang, refreshDiagnosticAfterSave, showToast, t])
-
   const handlePremiumPlayerSave = React.useCallback(async (payload) => {
     if (!selectedPlayer?.id) return
     setSavingPlayerEditor(true)
@@ -2857,10 +2714,6 @@ export default withAuth(function NuovaRosaLabPage() {
         onRemoveFromSlot={handleRemoveFromSlot}
         onDeletePlayer={handleDeletePlayer}
         onUploadPhoto={handleUploadFallback}
-        onOpenBoosters={(player) => {
-          setShowAssignModal(false)
-          openBoostersForPlayer(player)
-        }}
         onOpenReplace={(player, openEditor = false) => {
           if (openEditor) {
             setShowAssignModal(false)
@@ -2890,10 +2743,6 @@ export default withAuth(function NuovaRosaLabPage() {
         saving={savingPlayerEditor}
         onRemoveFromSlot={handleRemoveFromSlot}
         onDeletePlayer={handleDeletePlayer}
-        onOpenBoosters={(player) => {
-          setShowPremiumEditorModal(false)
-          openBoostersForPlayer(player)
-        }}
         onOpenReplace={(player) => {
           const slot = player?.slot_index != null ? slots.find((entry) => entry.slot_index === player.slot_index) : null
           setShowPremiumEditorModal(false)
@@ -2904,20 +2753,6 @@ export default withAuth(function NuovaRosaLabPage() {
         }}
         lang={lang}
         t={t}
-      />
-
-      <EnterpriseBoostersModal
-        show={showBoostersModal}
-        boosters={boostersEditorDraft}
-        setBoosters={setBoostersEditorDraft}
-        onClose={() => {
-          setShowBoostersModal(false)
-          setBoostersEditorDraft([])
-          setBoostersPlayerId(null)
-        }}
-        onSave={saveBoostersForPlayer}
-        saving={savingBoosters}
-        lang={lang}
       />
 
       {confirmModal?.show && (
@@ -3870,18 +3705,7 @@ export default withAuth(function NuovaRosaLabPage() {
           flex-wrap: wrap;
         }
 
-        .nr-reserve-inline-list,
-        .nr-boosters-list {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-
-        .nr-booster-row {
-          border-radius: 14px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          background: rgba(255, 255, 255, 0.02);
-          padding: 12px;
+        .nr-reserve-inline-list {
           display: flex;
           flex-direction: column;
           gap: 10px;
