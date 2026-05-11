@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import { useRouter } from 'next/navigation'
 import { withAuth } from '@/components/AuthWrapper'
 import { supabase } from '@/lib/supabaseClient'
 import { getPositionRoleTranslationKey, useTranslation } from '@/lib/i18n'
@@ -19,13 +18,11 @@ import {
   Camera,
   CheckCircle2,
   ChevronRight,
-  Gift,
   Pencil,
   Plus,
   RefreshCw,
   Search,
   Save,
-  ShieldCheck,
   Sparkles,
   Star,
   Trash2,
@@ -2532,7 +2529,6 @@ function PremiumPlayerModal({
 }
 
 export default withAuth(function NuovaRosaLabPage() {
-  const router = useRouter()
   const { t, lang } = useTranslation()
 
   const [layout, setLayout] = React.useState(null)
@@ -2559,7 +2555,6 @@ export default withAuth(function NuovaRosaLabPage() {
   const [confirmModal, setConfirmModal] = React.useState(null)
   const [showPremiumEditorModal, setShowPremiumEditorModal] = React.useState(false)
   const [savingPlayerEditor, setSavingPlayerEditor] = React.useState(false)
-  const [importingStarterPack, setImportingStarterPack] = React.useState(false)
   const [savingTacticalSettings, setSavingTacticalSettings] = React.useState(false)
   const [fieldEditMode, setFieldEditMode] = React.useState(false)
   const [customPositions, setCustomPositions] = React.useState({})
@@ -3922,36 +3917,6 @@ export default withAuth(function NuovaRosaLabPage() {
     })
   }, [fetchRoster, lang, refreshDiagnosticAfterSave, showToast, t])
 
-  const handleImportStarterPack = React.useCallback(async () => {
-    try {
-      setImportingStarterPack(true)
-      let token = getTokenFallback()
-      if (!token && supabase) {
-        const { data: session } = await supabase.auth.getSession()
-        token = session?.session?.access_token
-      }
-      if (!token) throw new Error(t('sessionExpired'))
-
-      const response = await fetch('/api/starter-pack/import', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Accept-Language': lang === 'en' ? 'en' : 'it'
-        }
-      })
-      await safeJsonResponse(response, t('starterPackImportError'))
-      await fetchRoster()
-      await refreshDiagnosticAfterSave()
-      showToast(t('starterPackImportSuccess'), 'success')
-    } catch (err) {
-      console.error('[NuovaRosaLab] starter pack error:', err)
-      const { message } = mapErrorToUserMessage(err, t('starterPackImportError'), lang)
-      showToast(message, 'error')
-    } finally {
-      setImportingStarterPack(false)
-    }
-  }, [fetchRoster, lang, refreshDiagnosticAfterSave, showToast, t])
-
   const handlePremiumPlayerSave = React.useCallback(async (payload) => {
     if (!selectedPlayer?.id) return
     setSavingPlayerEditor(true)
@@ -4247,20 +4212,7 @@ export default withAuth(function NuovaRosaLabPage() {
     <main className="nr-page">
       <section className="nr-hero-card">
         <div className="nr-hero-copy">
-          <span className="nr-badge"><ShieldCheck size={14} /> {t('nuovaRosaPrivateLab')}</span>
-          <h1>{t('nuovaRosaTitle')}</h1>
-          <p>{stageCopy.text}</p>
-          <div className="nr-hero-actions">
-            {stageCopy.cta && (
-              <button type="button" className="nr-primary-button" onClick={handleImportStarterPack} disabled={importingStarterPack}>
-                {importingStarterPack ? t('starterPackImportLoading') : stageCopy.cta}
-                <Gift size={16} />
-              </button>
-            )}
-            <button type="button" className="nr-secondary-button" onClick={() => router.push('/gestione-formazione')}>
-              {t('nuovaRosaOpenCurrent')}
-            </button>
-          </div>
+          <h1>{lang === 'en' ? 'My squad' : 'La mia rosa'}</h1>
         </div>
         <div className="nr-hero-side">
           <div className="nr-stage-pill"><Zap size={14} /> {t('nuovaRosaStatusLabel')}</div>
@@ -4707,11 +4659,11 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-hero-card {
-          padding: clamp(14px, 2.8vw, 22px);
+          padding: clamp(10px, 2vw, 16px);
           display: grid;
-          grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.8fr);
-          gap: 18px;
-          margin-bottom: 22px;
+          grid-template-columns: minmax(150px, 0.42fr) minmax(280px, 1fr);
+          gap: 14px;
+          margin-bottom: 16px;
           position: relative;
           overflow: hidden;
           border-color: rgba(0, 212, 255, 0.34);
@@ -4740,10 +4692,15 @@ export default withAuth(function NuovaRosaLabPage() {
           z-index: 1;
         }
 
+        .nr-hero-copy {
+          display: flex;
+          align-items: center;
+        }
+
         .nr-hero-copy h1 {
-          font-size: clamp(24px, 3.2vw, 42px);
-          line-height: 0.95;
-          letter-spacing: -0.04em;
+          font-size: clamp(20px, 2.2vw, 28px);
+          line-height: 1.05;
+          letter-spacing: -0.03em;
           text-shadow: 0 0 32px rgba(0, 212, 255, 0.18);
         }
 
