@@ -441,7 +441,7 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
           )}
           {slotThumb && (
             <>
-              <span className="nr-slot-card-brand">AI</span>
+              <span className="nr-slot-card-corner-mask" />
               <span className="nr-slot-card-rating-mask" />
             </>
           )}
@@ -485,11 +485,11 @@ function SlotCard({ slot, player, onEmptyClick, onPlayerClick, onRemove, lang, i
   )
 }
 
-function CatalogCard({ card, lang, onSelect, selected }) {
+function CatalogCard({ card, lang, onSelect }) {
   return (
     <button
       type="button"
-      className={`nr-catalog-card ${selected ? 'selected' : ''}`}
+      className="nr-catalog-card"
       onClick={() => onSelect(card)}
     >
       <div className="nr-catalog-card-media">
@@ -561,10 +561,8 @@ function CatalogPickerModal({
   total,
   hasMore,
   reserves,
-  selectedCard,
-  onSelectCard,
   onClose,
-  onConfirm,
+  onSelectCatalogCard,
   onSelectReserve,
   onLoadMore,
   onUploadFallback,
@@ -612,13 +610,10 @@ function CatalogPickerModal({
             ? 'Pick one player already in your reserves. The slot will be filled immediately.'
             : 'Scegli un giocatore gia presente tra le riserve. Lo slot verra riempito subito.')
         : (lang === 'en'
-            ? 'Search the catalog freely. No role suggestions are applied here.'
-            : 'Cerca liberamente nel catalogo. Qui non vengono applicati suggerimenti per ruolo.')
+            ? 'Search freely, then tap a card to confirm the selection.'
+            : 'Cerca liberamente, poi tocca una carta per confermare la selezione.')
 
-  const goBackToChoice = () => {
-    onSelectCard(null)
-    setSlotFlow('choice')
-  }
+  const goBackToChoice = () => setSlotFlow('choice')
 
   return (
     <div className="nr-modal-backdrop" onClick={onClose}>
@@ -727,7 +722,7 @@ function CatalogPickerModal({
         )}
 
         {showCatalog && (
-          <div className="nr-picker-body">
+          <div className="nr-picker-body single">
             <div className="nr-picker-results">
               <section>
               <div className="nr-section-head">
@@ -743,8 +738,7 @@ function CatalogPickerModal({
                         key={card.id}
                         card={card}
                         lang={lang}
-                        onSelect={onSelectCard}
-                        selected={selectedCard?.id === card.id}
+                        onSelect={onSelectCatalogCard}
                       />
                     ))}
                     {hasMore && (
@@ -762,51 +756,6 @@ function CatalogPickerModal({
             </section>
             </div>
 
-            <aside className="nr-picker-detail">
-              {selectedCard ? (
-              <>
-                <div className="nr-picker-detail-hero">
-                  {selectedCard.source_card_front_url ? (
-                    <img src={selectedCard.source_card_front_url} alt={selectedCard.player_name} />
-                  ) : (
-                    <div className="nr-slot-avatar-fallback"><User size={18} /></div>
-                  )}
-                  <div>
-                    <span className="nr-mini-kicker">{selectedCard.pack_name || selectedCard.card_type}</span>
-                    <h3>{selectedCard.player_name}</h3>
-                    <p>{selectedCard.card_type} · {selectedCard.position} · {selectedCard.playing_style || '-'}</p>
-                  </div>
-                </div>
-
-                <div className="nr-picker-stats">
-                  <div>
-                    <span>OVR</span>
-                    <strong>{selectedCard.overall_level_1 ?? selectedCard.overall_max_level ?? '-'}</strong>
-                  </div>
-                  <div>
-                    <span>{lang === 'en' ? 'Role' : 'Ruolo'}</span>
-                    <strong>{selectedCard.position || '-'}</strong>
-                  </div>
-                  <div>
-                    <span>{isReserveMode ? (lang === 'en' ? 'Destination' : 'Destinazione') : (lang === 'en' ? 'Card type' : 'Tipo carta')}</span>
-                    <strong>{isReserveMode ? (lang === 'en' ? 'Reserve' : 'Riserva') : (selectedCard.card_type || '-')}</strong>
-                  </div>
-                </div>
-
-                <div className="nr-picker-actions">
-                  <button type="button" className="nr-primary-button" onClick={onConfirm}>
-                    {isReserveMode ? (lang === 'en' ? 'Add to reserves' : 'Aggiungi in riserva') : (lang === 'en' ? 'Assign to slot' : 'Assegna allo slot')}
-                    <ArrowRight size={16} />
-                  </button>
-                </div>
-              </>
-              ) : (
-              <div className="nr-empty-state nr-empty-state-detail">
-                <Sparkles size={18} />
-                <span>{lang === 'en' ? 'Select a catalog card to preview and confirm it.' : 'Seleziona una carta catalogo per vedere anteprima e conferma.'}</span>
-              </div>
-              )}
-            </aside>
           </div>
         )}
       </div>
@@ -2193,7 +2142,6 @@ export default withAuth(function NuovaRosaLabPage() {
   const [pickerResults, setPickerResults] = React.useState([])
   const [pickerTotal, setPickerTotal] = React.useState(0)
   const [pickerHasMore, setPickerHasMore] = React.useState(false)
-  const [selectedCatalogCard, setSelectedCatalogCard] = React.useState(null)
   const [confirmModal, setConfirmModal] = React.useState(null)
   const [showPremiumEditorModal, setShowPremiumEditorModal] = React.useState(false)
   const [savingPlayerEditor, setSavingPlayerEditor] = React.useState(false)
@@ -2403,7 +2351,6 @@ export default withAuth(function NuovaRosaLabPage() {
     setSelectedPlayer(null)
     setSelectedSlot(slot)
     setPickerMode('slot')
-    setSelectedCatalogCard(null)
     setPickerQuery('')
     setPickerSort('name_asc')
     setPickerResults([])
@@ -2421,7 +2368,6 @@ export default withAuth(function NuovaRosaLabPage() {
     setShowAssignModal(false)
     setSelectedPlayer(null)
     setPickerMode('reserve')
-    setSelectedCatalogCard(null)
     setPickerQuery('')
     setPickerSort('name_asc')
     setPickerResults([])
@@ -2433,7 +2379,6 @@ export default withAuth(function NuovaRosaLabPage() {
   const closePicker = React.useCallback(() => {
     setPickerOpen(false)
     setPickerMode('slot')
-    setSelectedCatalogCard(null)
     setPickerQuery('')
     setPickerSort('name_asc')
     setPickerResults([])
@@ -2457,7 +2402,6 @@ export default withAuth(function NuovaRosaLabPage() {
     setPickerOpen(false)
     setShowAssignModal(false)
     setShowPremiumEditorModal(false)
-    setSelectedCatalogCard(null)
     setSelectedPlayer(null)
     setExtractedPlayerData(null)
     setSelectedOriginalPositions([])
@@ -2477,7 +2421,6 @@ export default withAuth(function NuovaRosaLabPage() {
     setPickerOpen(false)
     setShowAssignModal(false)
     setShowPremiumEditorModal(false)
-    setSelectedCatalogCard(null)
     setSelectedPlayer(null)
     setExtractedPlayerData(null)
     setSelectedOriginalPositions([])
@@ -2928,76 +2871,97 @@ export default withAuth(function NuovaRosaLabPage() {
     await savePlayer()
   }, [extractedPlayerData, fetchRoster, lang, positionModalCtx, refreshDiagnosticAfterSave, resetPhotoPositionFlow, riserve, selectedOriginalPositions, showToast, t, titolari])
 
-  const handleSaveCatalogCardToSlot = React.useCallback(async () => {
-    if (!selectedSlot || !selectedCatalogCard) return
+  const handleSaveCatalogCardToSlot = React.useCallback((card) => {
+    if (!selectedSlot || !card) return
 
-    const compatibility = getSlotCompatibility(selectedSlot.position, selectedCatalogCard.position)
-    if (compatibility === 'out_of_role') {
-      setConfirmModal({
-        ...showConfirmConfig({
-          title: lang === 'en' ? 'Confirm assignment' : 'Conferma assegnazione',
-          message: lang === 'en'
-            ? `${selectedCatalogCard.player_name} has role ${selectedCatalogCard.position || '-'} and will be placed in ${selectedSlot.position}.`
-            : `${selectedCatalogCard.player_name} ha ruolo ${selectedCatalogCard.position || '-'} e verra inserito in ${selectedSlot.position}.`,
-          details: lang === 'en'
-            ? 'The catalog is free: confirm only if this is the player you want in this slot.'
-            : 'Il catalogo e libero: conferma solo se e il giocatore che vuoi in questo slot.',
-          confirmLabel: lang === 'en' ? 'Confirm' : t('confirm'),
-          cancelLabel: lang === 'en' ? 'Cancel' : t('cancel')
-        }),
-        onConfirm: async () => {
-          setConfirmModal(null)
-          await createPlayerFromCatalog(true)
-        },
-        onCancel: () => setConfirmModal(null)
-      })
-      return
-    }
+    const compatibility = getSlotCompatibility(selectedSlot.position, card.position)
+    const isOutOfRole = compatibility === 'out_of_role'
+    const cardSummary = `${card.player_name} · ${card.position || '-'} · OVR ${card.overall_level_1 ?? card.overall_max_level ?? '-'}`
+    const targetSummary = selectedSlot.position || (lang === 'en' ? 'selected slot' : 'slot selezionato')
 
-    await createPlayerFromCatalog(false)
-  }, [selectedSlot, selectedCatalogCard, lang, t])
+    setConfirmModal({
+      ...showConfirmConfig({
+        title: lang === 'en' ? 'Confirm catalog player' : 'Conferma giocatore catalogo',
+        message: lang === 'en'
+          ? `Assign ${card.player_name} to ${targetSummary}?`
+          : `Assegnare ${card.player_name} a ${targetSummary}?`,
+        details: isOutOfRole
+          ? (lang === 'en'
+              ? `${cardSummary}\nCard role differs from the slot, but the catalog remains free.`
+              : `${cardSummary}\nIl ruolo carta e diverso dallo slot, ma il catalogo resta libero.`)
+          : cardSummary,
+        confirmLabel: lang === 'en' ? 'Assign player' : 'Assegna giocatore',
+        cancelLabel: lang === 'en' ? 'Cancel' : t('cancel')
+      }),
+      onConfirm: async () => {
+        setConfirmModal(null)
+        await createPlayerFromCatalog(card, isOutOfRole)
+      },
+      onCancel: () => setConfirmModal(null)
+    })
+  }, [selectedSlot, lang, t])
 
-  const handleSaveCatalogCardAsReserve = React.useCallback(async () => {
-    if (!selectedCatalogCard) return
+  const handleSaveCatalogCardAsReserve = React.useCallback((card) => {
+    if (!card) return
     if (riserve.length >= MAX_RESERVES) {
       showToast(t('maxReservesReached'), 'error')
       return
     }
 
-    try {
-      let token = getTokenFallback()
-      if (!token && supabase) {
-        const { data: session } = await supabase.auth.getSession()
-        token = session?.session?.access_token
+    const continueAddReserve = async () => {
+      try {
+        let token = getTokenFallback()
+        if (!token && supabase) {
+          const { data: session } = await supabase.auth.getSession()
+          token = session?.session?.access_token
+        }
+        if (!token) throw new Error(t('sessionExpired'))
+
+        const playerPayload = buildPlayerPayloadFromCatalog(card, null)
+        playerPayload.slot_index = null
+
+        const response = await fetch('/api/supabase/save-player', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ player: playerPayload })
+        })
+
+        await safeJsonResponse(response, t('errorSavingPlayerGeneric'))
+        await fetchRoster()
+        closePicker()
+        await refreshDiagnosticAfterSave()
+        showToast(lang === 'en' ? 'Reserve added successfully.' : 'Riserva aggiunta con successo.', 'success')
+      } catch (err) {
+        console.error('[NuovaRosaLab] save reserve catalog player error:', err)
+        const { message } = mapErrorToUserMessage(err, t('errorSavingPlayerGeneric'), lang)
+        showToast(message, 'error')
       }
-      if (!token) throw new Error(t('sessionExpired'))
-
-      const playerPayload = buildPlayerPayloadFromCatalog(selectedCatalogCard, null)
-      playerPayload.slot_index = null
-
-      const response = await fetch('/api/supabase/save-player', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ player: playerPayload })
-      })
-
-      await safeJsonResponse(response, t('errorSavingPlayerGeneric'))
-      await fetchRoster()
-      closePicker()
-      await refreshDiagnosticAfterSave()
-      showToast(lang === 'en' ? 'Reserve added successfully.' : 'Riserva aggiunta con successo.', 'success')
-    } catch (err) {
-      console.error('[NuovaRosaLab] save reserve catalog player error:', err)
-      const { message } = mapErrorToUserMessage(err, t('errorSavingPlayerGeneric'), lang)
-      showToast(message, 'error')
     }
-  }, [closePicker, fetchRoster, lang, refreshDiagnosticAfterSave, riserve.length, selectedCatalogCard, showToast, t])
 
-  const createPlayerFromCatalog = React.useCallback(async (forcedOutOfRole) => {
-    if (!selectedSlot || !selectedCatalogCard) return
+    const cardSummary = `${card.player_name} · ${card.position || '-'} · OVR ${card.overall_level_1 ?? card.overall_max_level ?? '-'}`
+    setConfirmModal({
+      ...showConfirmConfig({
+        title: lang === 'en' ? 'Confirm reserve' : 'Conferma riserva',
+        message: lang === 'en'
+          ? `Add ${card.player_name} to reserves?`
+          : `Aggiungere ${card.player_name} in riserva?`,
+        details: cardSummary,
+        confirmLabel: lang === 'en' ? 'Add reserve' : 'Aggiungi riserva',
+        cancelLabel: lang === 'en' ? 'Cancel' : t('cancel')
+      }),
+      onConfirm: async () => {
+        setConfirmModal(null)
+        await continueAddReserve()
+      },
+      onCancel: () => setConfirmModal(null)
+    })
+  }, [closePicker, fetchRoster, lang, refreshDiagnosticAfterSave, riserve.length, showToast, t])
+
+  const createPlayerFromCatalog = React.useCallback(async (card, forcedOutOfRole) => {
+    if (!selectedSlot || !card) return
 
     try {
       let token = getTokenFallback()
@@ -3007,7 +2971,7 @@ export default withAuth(function NuovaRosaLabPage() {
       }
       if (!token) throw new Error(t('sessionExpired'))
 
-      const playerPayload = buildPlayerPayloadFromCatalog(selectedCatalogCard, selectedSlot.slot_index)
+      const playerPayload = buildPlayerPayloadFromCatalog(card, selectedSlot.slot_index)
       if (forcedOutOfRole) {
         playerPayload.metadata = {
           ...(playerPayload.metadata || {}),
@@ -3036,7 +3000,7 @@ export default withAuth(function NuovaRosaLabPage() {
       const { message } = mapErrorToUserMessage(err, t('errorSavingPlayerGeneric'), lang)
       showToast(message, 'error')
     }
-  }, [selectedSlot, selectedCatalogCard, lang, t, fetchRoster, closePicker, refreshDiagnosticAfterSave, showToast])
+  }, [selectedSlot, lang, t, fetchRoster, closePicker, refreshDiagnosticAfterSave, showToast])
 
   const handleSelectReserveForSlot = React.useCallback(async (player) => {
     if (!selectedSlot || !player?.id) return
@@ -3813,10 +3777,8 @@ export default withAuth(function NuovaRosaLabPage() {
         total={pickerTotal}
         hasMore={pickerHasMore}
         reserves={riserve}
-        selectedCard={selectedCatalogCard}
-        onSelectCard={setSelectedCatalogCard}
         onClose={closePicker}
-        onConfirm={pickerMode === 'reserve' ? handleSaveCatalogCardAsReserve : handleSaveCatalogCardToSlot}
+        onSelectCatalogCard={pickerMode === 'reserve' ? handleSaveCatalogCardAsReserve : handleSaveCatalogCardToSlot}
         onSelectReserve={handleSelectReserveForSlot}
         onLoadMore={loadMoreCatalog}
         onUploadFallback={() => openPhotoUploadFlow(pickerMode, selectedSlot)}
@@ -4516,8 +4478,8 @@ export default withAuth(function NuovaRosaLabPage() {
           position: absolute;
           inset: 0;
           background:
-            linear-gradient(135deg, rgba(3, 7, 18, 0.92) 0%, rgba(3, 7, 18, 0.8) 18%, transparent 42%),
-            radial-gradient(ellipse 34px 30px at calc(100% - 12px) 13px, rgba(3, 7, 18, 0.88) 0%, rgba(3, 7, 18, 0.68) 50%, transparent 76%);
+            linear-gradient(135deg, rgba(3, 7, 18, 0.86) 0%, rgba(3, 7, 18, 0.68) 24%, transparent 52%),
+            radial-gradient(ellipse 34px 28px at calc(100% - 12px) 12px, rgba(3, 7, 18, 0.7) 0%, rgba(3, 7, 18, 0.44) 52%, transparent 76%);
           pointer-events: none;
           z-index: 1;
         }
@@ -4531,56 +4493,47 @@ export default withAuth(function NuovaRosaLabPage() {
           z-index: 1;
         }
 
-        .nr-slot-card-brand {
+        .nr-slot-card-corner-mask {
           position: absolute;
-          top: 5px;
-          left: 5px;
+          top: 0;
+          left: 0;
           z-index: 2;
-          width: 26px;
-          height: 21px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 7px 12px 12px 7px;
-          border: 1px solid rgba(94, 234, 212, 0.35);
+          width: 43px;
+          height: 36px;
+          border-radius: 12px 0 20px 0;
           background:
-            radial-gradient(circle at 24% 28%, rgba(34, 211, 238, 0.34), transparent 42%),
-            linear-gradient(135deg, rgba(8, 13, 30, 0.96), rgba(15, 23, 42, 0.78));
-          color: rgba(224, 242, 254, 0.72);
-          font-size: 8px;
-          font-weight: 900;
-          letter-spacing: 0.08em;
+            radial-gradient(circle at 24% 26%, rgba(34, 211, 238, 0.2), transparent 36%),
+            linear-gradient(135deg, rgba(3, 7, 18, 0.94), rgba(15, 23, 42, 0.72) 58%, transparent 100%);
           box-shadow:
-            0 5px 16px rgba(3, 7, 18, 0.4),
-            0 0 18px rgba(34, 211, 238, 0.16);
-          text-shadow: 0 1px 8px rgba(103, 232, 249, 0.34);
+            12px 8px 18px rgba(3, 7, 18, 0.26),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(2.5px);
           pointer-events: none;
         }
 
-        .nr-slot-card-brand::after {
+        .nr-slot-card-corner-mask::after {
           content: "";
           position: absolute;
-          inset: -6px -9px -5px -4px;
-          z-index: -1;
-          border-radius: 12px;
-          background: linear-gradient(90deg, rgba(3, 7, 18, 0.72), rgba(3, 7, 18, 0.3), transparent);
-          filter: blur(3px);
+          inset: 0;
+          border-radius: inherit;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 44%);
         }
 
         .nr-slot-card-rating-mask {
           position: absolute;
-          top: 4px;
-          right: 4px;
+          top: 0;
+          right: 0;
           z-index: 2;
-          width: 23px;
-          height: 21px;
-          border-radius: 11px 7px 7px 11px;
+          width: 30px;
+          height: 25px;
+          border-radius: 0 12px 0 18px;
           background:
-            radial-gradient(circle at 70% 30%, rgba(34, 211, 238, 0.22), transparent 45%),
-            linear-gradient(135deg, rgba(3, 7, 18, 0.82), rgba(15, 23, 42, 0.56));
+            radial-gradient(circle at 72% 26%, rgba(34, 211, 238, 0.16), transparent 42%),
+            linear-gradient(225deg, rgba(3, 7, 18, 0.82), rgba(15, 23, 42, 0.48) 58%, transparent 100%);
           box-shadow:
-            0 0 16px rgba(3, 7, 18, 0.4),
+            -8px 8px 16px rgba(3, 7, 18, 0.2),
             inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+          backdrop-filter: blur(2px);
           pointer-events: none;
         }
 
@@ -4834,11 +4787,6 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-catalog-card {
           padding: 10px;
-        }
-
-        .nr-catalog-card.selected {
-          border-color: rgba(0, 212, 255, 0.75);
-          background: rgba(0, 212, 255, 0.12);
         }
 
         .nr-catalog-card-media,
