@@ -5435,9 +5435,10 @@ export default withAuth(function NuovaRosaLabPage() {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          object-position: center 24%;
-          transform: scale(1.75);
-          transform-origin: center 24%;
+          object-position: center 20%;
+          transform: scale(2.18);
+          transform-origin: center 20%;
+          filter: saturate(1.04) contrast(1.06) brightness(0.92);
           -webkit-user-drag: none;
           user-drag: none;
           pointer-events: none;
@@ -5447,7 +5448,9 @@ export default withAuth(function NuovaRosaLabPage() {
           content: "";
           position: absolute;
           inset: 0;
-          background: linear-gradient(180deg, transparent 44%, rgba(3, 7, 18, 0.54) 100%);
+          background:
+            radial-gradient(circle at center 28%, transparent 0%, transparent 36%, rgba(3, 7, 18, 0.2) 68%),
+            linear-gradient(180deg, rgba(3, 7, 18, 0.18) 0%, transparent 34%, rgba(3, 7, 18, 0.72) 100%);
           pointer-events: none;
           z-index: 1;
         }
