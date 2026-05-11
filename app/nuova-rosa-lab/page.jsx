@@ -5425,7 +5425,6 @@ export default withAuth(function NuovaRosaLabPage() {
           align-items: center;
           justify-content: center;
           overflow: hidden;
-          clip-path: polygon(34px 0, calc(100% - 34px) 0, 100% 24px, 100% 100%, 0 100%, 0 24px);
           color: rgba(255, 255, 255, 0.85);
           flex-shrink: 0;
         }
@@ -5435,7 +5434,7 @@ export default withAuth(function NuovaRosaLabPage() {
           z-index: 0;
           width: 100%;
           height: 100%;
-          object-fit: cover;
+          object-fit: contain;
           object-position: center center;
           -webkit-user-drag: none;
           user-drag: none;
