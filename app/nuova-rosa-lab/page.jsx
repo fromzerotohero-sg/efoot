@@ -4492,25 +4492,37 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-slot-avatar-mini img {
+          position: relative;
+          z-index: 0;
           width: 100%;
           height: 100%;
           object-fit: cover;
-          object-position: 58% 42%;
-          transform: scale(1.82);
-          transform-origin: 58% 42%;
+          object-position: center top;
+          transform: scale(1.06);
+          transform-origin: center top;
           -webkit-user-drag: none;
           user-drag: none;
           pointer-events: none;
         }
 
-        .nr-slot-avatar-mini::after {
+        .nr-slot-filled-main.has-photo .nr-slot-avatar-mini::before {
           content: "";
           position: absolute;
           inset: 0;
           background:
-            radial-gradient(circle at 56% 34%, transparent 0%, transparent 34%, rgba(3, 7, 18, 0.18) 58%, rgba(3, 7, 18, 0.52) 100%),
-            linear-gradient(180deg, rgba(3, 7, 18, 0.22) 0%, transparent 32%, rgba(3, 7, 18, 0.58) 100%);
+            radial-gradient(ellipse 30px 30px at 18px 18px, rgba(3, 7, 18, 0.9) 0%, rgba(3, 7, 18, 0.74) 52%, transparent 72%),
+            radial-gradient(ellipse 24px 22px at calc(100% - 14px) 14px, rgba(3, 7, 18, 0.72) 0%, rgba(3, 7, 18, 0.52) 50%, transparent 74%);
           pointer-events: none;
+          z-index: 1;
+        }
+
+        .nr-slot-filled-main.has-photo .nr-slot-avatar-mini::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, transparent 44%, rgba(3, 7, 18, 0.54) 100%);
+          pointer-events: none;
+          z-index: 1;
         }
 
         .nr-reserve-card-media::after {
@@ -4538,7 +4550,7 @@ export default withAuth(function NuovaRosaLabPage() {
           position: absolute;
           left: 6px;
           bottom: 6px;
-          z-index: 1;
+          z-index: 2;
           font-size: 9px;
           font-weight: 700;
           color: #ffffff;
