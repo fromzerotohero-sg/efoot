@@ -4384,11 +4384,11 @@ export default withAuth(function NuovaRosaLabPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 6px;
+          padding: 5px;
           text-align: left;
           touch-action: manipulation;
-          min-height: 84px;
-          border-radius: 16px;
+          min-height: 78px;
+          border-radius: 14px;
           overflow: visible;
           background:
             radial-gradient(circle at 20% 0%, rgba(0, 212, 255, 0.22), transparent 42%),
@@ -4431,16 +4431,16 @@ export default withAuth(function NuovaRosaLabPage() {
           align-items: center;
           justify-content: center;
           flex-direction: column;
-          gap: 3px;
+          gap: 4px;
           min-width: 0;
           flex: 1;
         }
 
         .nr-slot-avatar-mini {
           position: relative;
-          width: clamp(48px, 5.4vw, 60px);
-          height: clamp(48px, 5.4vw, 60px);
-          border-radius: 16px;
+          width: 100%;
+          height: clamp(50px, 6vw, 64px);
+          border-radius: 12px;
           border: 1px solid rgba(255, 255, 255, 0.18);
           background:
             radial-gradient(circle at 30% 20%, rgba(0, 212, 255, 0.34), transparent 38%),
@@ -4459,9 +4459,9 @@ export default withAuth(function NuovaRosaLabPage() {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          object-position: 60% 32%;
-          transform: scale(1.46);
-          transform-origin: 60% 32%;
+          object-position: center top;
+          transform: scale(1.06);
+          transform-origin: center top;
           -webkit-user-drag: none;
           user-drag: none;
           pointer-events: none;
@@ -4471,20 +4471,7 @@ export default withAuth(function NuovaRosaLabPage() {
           content: "";
           position: absolute;
           inset: 0;
-          background:
-            radial-gradient(circle at 52% 24%, rgba(255, 255, 255, 0.1), transparent 28%),
-            linear-gradient(180deg, rgba(3, 7, 18, 0.1) 0%, transparent 35%, rgba(3, 7, 18, 0.52) 100%);
-          pointer-events: none;
-          z-index: 1;
-        }
-
-        .nr-slot-filled-main.has-photo .nr-slot-avatar-mini::after {
-          content: "";
-          position: absolute;
-          inset: 1px;
-          border-radius: 15px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          box-shadow: inset 0 -14px 18px rgba(3, 7, 18, 0.32);
+          background: linear-gradient(180deg, transparent 44%, rgba(3, 7, 18, 0.54) 100%);
           pointer-events: none;
           z-index: 1;
         }
@@ -4512,9 +4499,8 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-slot-role-chip {
           position: absolute;
-          left: 50%;
-          bottom: -5px;
-          transform: translateX(-50%);
+          left: 6px;
+          bottom: 6px;
           z-index: 2;
           font-size: 9px;
           font-weight: 700;
@@ -4522,8 +4508,8 @@ export default withAuth(function NuovaRosaLabPage() {
           letter-spacing: 0.05em;
           border-radius: 999px;
           border: 1px solid rgba(255, 255, 255, 0.28);
-          background: rgba(3, 7, 18, 0.74);
-          padding: 2px 8px;
+          background: rgba(3, 7, 18, 0.58);
+          padding: 2px 7px;
           line-height: 1.3;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.24);
         }
@@ -6056,19 +6042,19 @@ export default withAuth(function NuovaRosaLabPage() {
           }
 
           .nr-slot-filled {
-            min-height: 78px;
+            min-height: 72px;
             border-radius: 12px;
             padding: 4px;
           }
 
           .nr-slot-avatar-mini {
-            width: 50px;
             height: 50px;
             border-radius: 10px;
           }
 
           .nr-slot-role-chip {
-            bottom: -5px;
+            left: 5px;
+            bottom: 5px;
             font-size: 8px;
             padding: 1px 6px;
           }
