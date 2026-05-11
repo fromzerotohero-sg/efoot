@@ -39,7 +39,7 @@ const copy = {
     teamFit: 'Sinergia con la tua squadra',
     teamSynergyScore: 'Sinergia squadra',
     whyItWorks: 'Perché funziona',
-    howToUse: 'Come usarlo',
+    howToUse: 'Lettura sinergie',
     viewDetails: 'Vedi dettagli',
     hideDetails: 'Nascondi dettagli',
     synergyDetails: 'Dettaglio sinergia',
@@ -58,7 +58,7 @@ const copy = {
     cardsAvailable: 'carte disponibili',
     noCardsFound: 'Nessuna carta trovata con questi filtri.',
     needsSourceReview: 'In aggiornamento',
-    similarPlayers: 'Alternative in rosa',
+    similarPlayers: 'Profili considerati',
     priorityVerdict: 'Lettura per te',
     synergyHigh: 'Sinergia alta',
     synergyMedium: 'Sinergia media',
@@ -66,7 +66,7 @@ const copy = {
     cardProfileOnly: 'Profilo carta',
     rosterSynergy: 'Sinergia rosa',
     moduleFit: 'Fit modulo',
-    systemSynergy: 'Sinergia sistema',
+    systemSynergy: 'Lettura sinergie',
     noFormationTitle: 'Formazione non salvata',
     noFormationText: 'Hai giocatori in rosa: posso valutare ruolo, doppioni e alternative, ma per sapere se entra nei titolari serve una formazione salvata.',
     noCoachText: 'Aggiungi il coach attivo per leggere stile squadra e competenze.',
@@ -84,9 +84,9 @@ const copy = {
     rosterStarters: 'Titolari',
     rosterFormation: 'Modulo',
     personalFitPreview: 'Fit squadra',
-    replacementLogic: 'ruolo nella rosa',
-    duplicateLogic: 'doppioni tecnici',
-    priorityLogic: 'priorita squadra',
+    replacementLogic: 'catena di gioco',
+    duplicateLogic: 'movimenti compatibili',
+    priorityLogic: 'scenario utile',
     loadRoster: 'Carica o completa la rosa',
     closeDetails: 'Chiudi dettagli',
     mainLever: 'Leva principale',
@@ -117,7 +117,7 @@ const copy = {
     teamFit: 'Team synergy',
     teamSynergyScore: 'Team synergy',
     whyItWorks: 'Why it works',
-    howToUse: 'How to use it',
+    howToUse: 'Synergy read',
     viewDetails: 'See details',
     hideDetails: 'Hide details',
     synergyDetails: 'Synergy details',
@@ -136,7 +136,7 @@ const copy = {
     cardsAvailable: 'cards available',
     noCardsFound: 'No cards found with these filters.',
     needsSourceReview: 'Updating',
-    similarPlayers: 'Roster alternatives',
+    similarPlayers: 'Profiles considered',
     priorityVerdict: 'Read for you',
     synergyHigh: 'High synergy',
     synergyMedium: 'Medium synergy',
@@ -144,7 +144,7 @@ const copy = {
     cardProfileOnly: 'Card profile',
     rosterSynergy: 'Roster synergy',
     moduleFit: 'Module fit',
-    systemSynergy: 'System synergy',
+    systemSynergy: 'Synergy read',
     noFormationTitle: 'Formation not saved',
     noFormationText: 'You have players in the roster: I can read role, duplicates, and alternatives, but a saved formation is needed to know if the card enters the starters.',
     noCoachText: 'Add the active coach to read team style and competences.',
@@ -162,9 +162,9 @@ const copy = {
     rosterStarters: 'Starters',
     rosterFormation: 'Formation',
     personalFitPreview: 'Team fit',
-    replacementLogic: 'roster role',
-    duplicateLogic: 'technical duplicates',
-    priorityLogic: 'team priority',
+    replacementLogic: 'movement chain',
+    duplicateLogic: 'compatible movements',
+    priorityLogic: 'useful scenario',
     loadRoster: 'Load or complete roster',
     closeDetails: 'Close details',
     mainLever: 'Main lever',
@@ -305,8 +305,8 @@ function enrichCard(card) {
     leverEn: normalized.leverEn || buildAdvice(normalized.position).leverEn,
     use: normalized.use || buildAdvice(normalized.position).use,
     useEn: normalized.useEn || buildAdvice(normalized.position).useEn,
-    missing: normalized.missing || ['Con la rosa completa il verdetto tiene conto di ruolo, doppioni e priorita squadra.'],
-    missingEn: normalized.missingEn || ['With a complete roster, the verdict considers role, duplicates, and team priorities.']
+    missing: normalized.missing || ['Con la rosa completa il verdetto legge movimenti, stile e incastri con i giocatori già in campo.'],
+    missingEn: normalized.missingEn || ['With a complete roster, the verdict reads movements, style, and links with the players already on the pitch.']
   }
 }
 
@@ -523,11 +523,11 @@ function getFitSummary(card, rosterSummary, labels, lang) {
   if (depth === 'roster_only') {
     const text = lang === 'en'
       ? best
-        ? `${card.name} is compared with ${best.player_name} in ${card.position}. This is still roster synergy: save a formation to know if the card enters your starters.`
-        : `${card.name} covers ${card.position}, a role where your roster has no direct alternative yet. Save a formation to read the starter fit.`
+        ? `${card.name} adds a different profile in the ${card.position} zone, but a saved formation is needed to read movements around your starters.`
+        : `${card.name} covers a zone where your roster has less direct coverage. Save a formation to read the real movement fit.`
       : best
-        ? `${card.name} viene confrontato con ${best.player_name} nel ruolo ${card.position}. Questa e ancora sinergia rosa: salva una formazione per sapere se entra nei titolari.`
-        : `${card.name} copre ${card.position}, un ruolo dove la tua rosa non ha alternative dirette. Salva una formazione per leggere il fit titolari.`
+        ? `${card.name} aggiunge un profilo diverso nella zona ${card.position}, ma serve una formazione salvata per leggere i movimenti attorno ai titolari.`
+        : `${card.name} copre una zona dove la tua rosa ha meno copertura diretta. Salva una formazione per leggere il vero fit di movimento.`
 
     return {
       title: labels.noFormationTitle,
@@ -541,11 +541,11 @@ function getFitSummary(card, rosterSummary, labels, lang) {
 
   const baseText = lang === 'en'
     ? best
-      ? `${card.name} is compared first with ${best.player_name} in ${card.position}. Formation data lets us read if this is a starter fit, rotation, or duplicate.`
-      : `${card.name} covers ${card.position}, a role not directly covered in your saved formation.`
+      ? `${card.name} is read against the movements already present in your XI, especially the spaces occupied around ${card.position}.`
+      : `${card.name} covers a lane that is not clearly occupied in your saved formation.`
     : best
-      ? `${card.name} viene confrontato prima con ${best.player_name} nel ruolo ${card.position}. La formazione permette di capire se e fit titolare, rotazione o doppione.`
-      : `${card.name} copre ${card.position}, un ruolo non coperto direttamente nella formazione salvata.`
+      ? `${card.name} viene letto sui movimenti già presenti nel tuo XI, soprattutto gli spazi occupati attorno a ${card.position}.`
+      : `${card.name} copre una corsia non occupata in modo chiaro nella formazione salvata.`
 
   if (depth === 'formation') {
     return {
@@ -559,10 +559,10 @@ function getFitSummary(card, rosterSummary, labels, lang) {
   }
 
   return {
-    title: labels.systemSynergy,
+    title: labels.howToUse,
     text: lang === 'en'
-      ? `${baseText} Coach and tactics are available, so the read includes team style and coach competences.`
-      : `${baseText} Coach e tattica sono presenti: la lettura include stile squadra e competenze coach.`,
+      ? `${baseText} The read includes style, movement chains and how the card changes your current spacing.`
+      : `${baseText} La lettura include stile, catene di movimento e come la carta cambia gli spazi attuali.`,
     priority,
     alternatives: sameRole,
     cta: null,
@@ -664,9 +664,8 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
   const serverEval = evaluation || null
   const lever = serverEval?.mainLever || (lang === 'en' ? (card.leverEn || card.lever) : card.lever)
   const effectiveTitle = evaluating ? labels.loadingDecision : (serverEval?.title || fitSummary.title)
-  const effectivePriority = evaluating ? '...' : (serverEval?.decision?.label || serverEval?.synergyLevel || fitSummary.priority)
+  const effectivePriority = evaluating ? '...' : (serverEval?.teamSynergy?.label || serverEval?.decision?.label || serverEval?.synergyLevel || fitSummary.priority)
   const effectiveFitText = serverEval?.whyItMatters?.length ? serverEval.whyItMatters.join(' ') : fitSummary.text
-  const effectiveAlternatives = serverEval?.alternatives || fitSummary.alternatives
   const effectiveCoachText = serverEval?.context?.activeCoachName
     ? (lang === 'en'
         ? `Coach active: ${serverEval.context.activeCoachName}. The verdict uses team style and coach competences.`
@@ -719,7 +718,7 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
           <div className="detail-metrics">
             <div>
               <span>{labels.cardScore}</span>
-              <strong>{effectivePriority}</strong>
+              <strong>{teamSynergyLabel}</strong>
             </div>
             <div>
               <span>OVR base</span>
@@ -809,24 +808,9 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
           <div className="fit-summary-grid">
             <div>
               <span>{labels.priorityVerdict}</span>
-              <strong>{effectivePriority}</strong>
-            </div>
-            <div>
-              <span>{labels.similarPlayers}</span>
-              <strong>
-                {effectiveAlternatives.length > 0
-                  ? effectiveAlternatives.map(player => `${player.player_name || player.name}`).join(', ')
-                  : '-'}
-              </strong>
+              <strong>{teamSynergyLabel}</strong>
             </div>
           </div>
-          {!serverEval && (
-            <div className="fit-logic-list">
-              <span>{labels.replacementLogic}</span>
-              <span>{labels.duplicateLogic}</span>
-              <span>{labels.priorityLogic}</span>
-            </div>
-          )}
           {serverEval?.context?.hasCoach && effectiveCoachText && (
             <div className="fit-logic-list">
               <span>{labels.coachContext}: {effectiveCoachText}</span>

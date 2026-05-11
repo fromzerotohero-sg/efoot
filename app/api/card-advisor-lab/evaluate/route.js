@@ -1049,10 +1049,11 @@ function buildRosterRead({ card, sameRole, bestAlternative, roleGap, duplicate, 
 }
 
 function teamSynergyLabel(score, lang) {
-  if (score >= 78) return lang === 'en' ? 'Wow fit' : 'Fit wow'
-  if (score >= 68) return lang === 'en' ? 'Strong synergy' : 'Sinergia forte'
-  if (score >= 55) return lang === 'en' ? 'Situational synergy' : 'Sinergia situazionale'
-  return lang === 'en' ? 'Low fit' : 'Fit basso'
+  if (score >= 88) return lang === 'en' ? 'Wow synergy' : 'Sinergia wow'
+  if (score >= 76) return lang === 'en' ? 'High synergy' : 'Sinergia alta'
+  if (score >= 62) return lang === 'en' ? 'Good synergy' : 'Sinergia buona'
+  if (score >= 48) return lang === 'en' ? 'Medium synergy' : 'Sinergia media'
+  return lang === 'en' ? 'Low synergy' : 'Sinergia bassa'
 }
 
 function addUniqueLine(lines, line) {
@@ -1103,8 +1104,8 @@ function teamSynergySummary({ card, score, hasRoster, technical, roleGap, duplic
   }
   if (duplicate || starterBlocked) {
     return lang === 'en'
-      ? `${card.name} is not weak, but today the team fit is limited: your XI already has a similar answer in that lane.`
-      : `${card.name} non è scarso, ma oggi il fit squadra è limitato: nel tuo XI hai già una risposta simile in quella zona.`
+      ? `${card.name} does not create a new main synergy in your XI: the value is mostly a different match scenario, not replacing your best movements.`
+      : `${card.name} non crea una nuova sinergia principale nel tuo XI: il valore è soprattutto uno scenario diverso, non sostituire i movimenti migliori.`
   }
   if (evidence.profileNeedFit) {
     return lang === 'en'
@@ -1129,8 +1130,8 @@ function teamSynergyReasons({ card, sameRole, bestAlternative, roleGap, duplicat
   }
   if (duplicate || starterBlocked) {
     addUniqueLine(lines, lang === 'en'
-      ? `${joinedAlternatives(sameRole) || 'Your current starters'} already cover the lane, so it must add something different to matter.`
-      : `${joinedAlternatives(sameRole) || 'I tuoi titolari attuali'} coprono già la zona: deve aggiungere qualcosa di diverso per contare.`)
+      ? `Your current XI already owns similar spaces, so this card matters only if it changes the movement pattern.`
+      : `Il tuo XI occupa già spazi simili, quindi questa carta conta solo se cambia il tipo di movimento.`)
   }
   if (trait) {
     addUniqueLine(lines, lang === 'en'
@@ -1146,6 +1147,26 @@ function teamSynergyReasons({ card, sameRole, bestAlternative, roleGap, duplicat
   }
   if (mapLine) addUniqueLine(lines, mapLine)
   return lines.slice(0, 3)
+}
+
+function synergyUseLine({ card, sameRole, bestAlternative, duplicate, starterBlocked, technical, tacticalStyle, profileRead, lang }) {
+  const movement = movementProfile(technical, card.position, lang)
+  const trait = strongestTrait(technical, card.position, lang)
+  const fitLine = tacticalStyleFit(technical, card.position, tacticalStyle, profileRead, lang)
+  const currentReference = bestAlternative?.name
+  if (duplicate || starterBlocked) {
+    return lang === 'en'
+      ? `${card.name} is not a natural starter in this XI. Use him as a situational profile when you want ${trait || movement}, without forcing him into the same spaces already owned by your key players.`
+      : `${card.name} non è un titolare naturale in questo XI. Usalo come profilo situazionale quando vuoi ${trait || movement}, senza forzarlo negli stessi spazi già occupati dai tuoi giocatori chiave.`
+  }
+  if (currentReference) {
+    return lang === 'en'
+      ? `${card.name} makes sense if you want a different movement from ${currentReference}: ${movement}. ${fitLine || 'Use him when that lane needs a new tempo or a different final-third connection.'}`
+      : `${card.name} ha senso se vuoi un movimento diverso da ${currentReference}: ${movement}. ${fitLine || 'Usalo quando quella zona ha bisogno di un ritmo nuovo o di una connessione diversa negli ultimi metri.'}`
+  }
+  return lang === 'en'
+    ? `${card.name} can become useful because he adds ${trait || movement} to a zone where your squad has less direct coverage.`
+    : `${card.name} può diventare utile perché aggiunge ${trait || movement} in una zona dove la tua rosa ha meno copertura diretta.`
 }
 
 function teamSynergyDetails({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, technical, tacticalStyle, profileRead, issues, gameRead, evidence, lang }) {
@@ -1410,7 +1431,17 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
       lang
     }),
     useLine: hasRoster && technical.hasCompleteCardData
-      ? tacticalUseLine(card, technical, tacticalStyle, lang)
+      ? synergyUseLine({
+          card,
+          sameRole,
+          bestAlternative,
+          duplicate,
+          starterBlocked,
+          technical,
+          tacticalStyle,
+          profileRead,
+          lang
+        })
       : '',
     details: teamSynergyDetails({
       card,
