@@ -632,6 +632,152 @@ function profileSignals(profile = {}, lang = 'it') {
   }
 }
 
+function userDisplayName(profile = {}) {
+  return String(profile?.nickname || profile?.first_name || profile?.team_name || '').trim()
+}
+
+function skillText(skills = []) {
+  return toAscii((Array.isArray(skills) ? skills : []).join(' '))
+}
+
+function bestAerialTarget(players = []) {
+  return (players || [])
+    .map(player => {
+      const signals = signalsFromStats(player?.base_stats || {})
+      const skills = skillText([...(Array.isArray(player?.skills) ? player.skills : []), ...(Array.isArray(player?.com_skills) ? player.com_skills : [])])
+      const hasAerialSkill = /(heading|colpo di testa|aerial|dominio|svettante)/.test(skills)
+      return {
+        name: player?.player_name,
+        position: player?.position,
+        signals,
+        score: Math.max(signals.aerial || 0, signals.physical || 0) + (hasAerialSkill ? 8 : 0)
+      }
+    })
+    .filter(player => player.name && player.score >= 74)
+    .sort((a, b) => b.score - a.score)
+    [0] || null
+}
+
+function bestDepthRunner(players = []) {
+  return (players || [])
+    .map(player => {
+      const signals = signalsFromStats(player?.base_stats || {})
+      const skills = skillText([...(Array.isArray(player?.skills) ? player.skills : []), ...(Array.isArray(player?.com_skills) ? player.com_skills : [])])
+      const position = String(player?.position || '')
+      const attackingRole = ['P', 'SP', 'ESA', 'EDA'].includes(position)
+      const hasFinishSkill = /(first time|tiro di prima|finishing|finalizzazione|goal|gol|long range|tiro)/.test(skills)
+      return {
+        name: player?.player_name,
+        position,
+        signals,
+        score: Math.max(signals.pace || 0, signals.finish || 0) + (attackingRole ? 6 : 0) + (hasFinishSkill ? 5 : 0)
+      }
+    })
+    .filter(player => player.name && player.score >= 76)
+    .sort((a, b) => b.score - a.score)
+    [0] || null
+}
+
+function bestCreator(players = []) {
+  return (players || [])
+    .map(player => {
+      const signals = signalsFromStats(player?.base_stats || {})
+      const skills = skillText([...(Array.isArray(player?.skills) ? player.skills : []), ...(Array.isArray(player?.com_skills) ? player.com_skills : [])])
+      const hasCreatorSkill = /(through|filtrante|one touch|prima|weighted|calibrato|passaggio)/.test(skills)
+      return {
+        name: player?.player_name,
+        position: player?.position,
+        signals,
+        score: (signals.pass || 0) + (hasCreatorSkill ? 8 : 0)
+      }
+    })
+    .filter(player => player.name && player.score >= 76)
+    .sort((a, b) => b.score - a.score)
+    [0] || null
+}
+
+function comboRead({ card, technical, players, issues, profileRead, gameRead, lang }) {
+  const groups = skillGroups(technical)
+  const family = roleFamily(card.position)
+  const skills = skillText(technical.mergedSkills)
+  const aerialTarget = bestAerialTarget(players)
+  const depthRunner = bestDepthRunner(players)
+  const creator = bestCreator(players)
+  if (groups.crossing && ['def', 'mid', 'att'].includes(family) && ['TD', 'TS', 'CLD', 'CLS', 'EDA', 'ESA'].includes(card.position)) {
+    return aerialTarget
+      ? {
+          key: 'cross-aerial',
+          label: lang === 'en' ? 'Wide-to-box combo' : 'Combo fascia-area',
+          text: lang === 'en'
+            ? `${card.name} has value on crosses because ${aerialTarget.name} gives your roster a real target in the box.`
+            : `${card.name} dà valore sui cross perché ${aerialTarget.name} ti offre un riferimento reale in area.`,
+          detail: lang === 'en'
+            ? `Native crossing skill plus an aerial target turns the wide lane into a concrete chance source.`
+            : `Skill da cross più un riferimento aereo trasformano la fascia in una fonte concreta di occasioni.`
+        }
+      : {
+          key: 'cross-no-target',
+          label: lang === 'en' ? 'Cross value limited' : 'Cross da sfruttare meglio',
+          text: lang === 'en'
+            ? `${card.name} has crossing value, but your roster does not show a strong aerial target yet.`
+            : `${card.name} ha valore nel cross, ma nella tua rosa non emerge ancora un riferimento forte nel gioco aereo.`,
+          detail: lang === 'en'
+            ? `The skill is real, but it becomes more valuable when a striker or midfielder can attack those balls.`
+            : `La skill è reale, ma diventa più preziosa quando una punta o un centrocampista può attaccare quei palloni.`
+        }
+  }
+  if (/(through|filtrante)/.test(skills) || (groups.passing && technical.pass >= 80)) {
+    return depthRunner
+      ? {
+          key: 'through-depth',
+          label: lang === 'en' ? 'Pass-to-depth combo' : 'Combo filtrante-profondità',
+          text: lang === 'en'
+            ? `${card.name} can feed depth because ${depthRunner.name} gives your roster a player who can attack that space.`
+            : `${card.name} può servire la profondità perché ${depthRunner.name} ti dà un giocatore capace di attaccare quello spazio.`,
+          detail: lang === 'en'
+            ? `Passing skill plus a runner makes the card useful when you want faster vertical attacks.`
+            : `Skill di passaggio più un giocatore che attacca spazio rendono la carta utile quando vuoi verticalizzare più rapidamente.`
+        }
+      : {
+          key: 'through-no-runner',
+          label: lang === 'en' ? 'Creative value limited' : 'Creatività da completare',
+          text: lang === 'en'
+            ? `${card.name} has passing value, but your roster does not show a clear depth runner to maximize it.`
+            : `${card.name} ha valore nel passaggio, ma nella tua rosa non emerge un attaccante della profondità per massimizzarlo.`,
+          detail: lang === 'en'
+            ? `The skill remains useful, but it needs movement ahead of the ball to become decisive.`
+            : `La skill resta utile, ma ha bisogno di movimento davanti al pallone per diventare decisiva.`
+        }
+  }
+  if (/(first time|tiro di prima)/.test(skills) || (groups.finishing && family === 'att')) {
+    return creator
+      ? {
+          key: 'creator-finisher',
+          label: lang === 'en' ? 'Creator-to-finish combo' : 'Combo creator-finalizzatore',
+          text: lang === 'en'
+            ? `${card.name} gains value because ${creator.name} can already create the kind of balls a first-time finisher needs.`
+            : `${card.name} guadagna valore perché ${creator.name} può già creare palloni adatti a chi chiude di prima.`,
+          detail: lang === 'en'
+            ? `Finishing skill becomes more concrete when the roster has a passer who can serve clean chances.`
+            : `La skill di finalizzazione diventa più concreta quando la rosa ha un passatore capace di creare occasioni pulite.`
+        }
+      : null
+  }
+  if (groups.defensive && (issues?.needDefence || profileRead?.needDef || (gameRead?.shotsConceded != null && gameRead.shotsConceded >= 7))) {
+    return {
+      key: 'defensive-need',
+      label: lang === 'en' ? 'Defensive need match' : 'Risposta difensiva',
+      text: lang === 'en'
+        ? `${card.name} matches a defensive need in your data: the native defensive skills support coverage, duels and interceptions.`
+        : `${card.name} risponde a un bisogno difensivo nei tuoi dati: le skill native aiutano copertura, duelli e intercetti.`,
+      detail: lang === 'en'
+        ? `This is a real fit because the card skill set connects with an area your profile or match reads already highlight.`
+        : `È un fit reale perché il set di skill della carta si collega a un’area già emersa dal profilo o dalle letture partita.`
+    }
+  }
+  return null
+}
+
 function gameSignals(gameAnalysis = {}) {
   const stats = gameAnalysis?.stats || {}
   const numeric = collectNumbers(stats)
@@ -825,7 +971,7 @@ function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, dupl
     return {
       level: 'avoid',
       label: lang === 'en' ? 'Low team fit' : 'Fit squadra basso',
-      title: lang === 'en' ? 'Strong card, not central for your XI now' : 'Carta forte, ma non centrale nel tuo XI'
+      title: lang === 'en' ? 'Strong card, not central for your roster now' : 'Carta forte, ma non centrale nella tua rosa'
     }
   }
   if (roleGap || score >= 74) {
@@ -1040,8 +1186,8 @@ function buildRosterRead({ card, sameRole, bestAlternative, roleGap, duplicate, 
 
   return [
     lang === 'en'
-      ? `${card.name} can help the ${card.position} lane compared with ${bestName || 'your current option'}, but the decision depends on profile fit, not rating.`
-      : `${card.name} può aiutare la corsia ${card.position} rispetto a ${bestName || 'l’opzione attuale'}, ma la decisione dipende dal fit del profilo, non dal rating.`,
+      ? `${card.name} can help the ${card.position} lane compared with ${bestName || 'your current option'}, but the decision depends on movement, skill fit and roster use.`
+      : `${card.name} può aiutare la corsia ${card.position} rispetto a ${bestName || 'l’opzione attuale'}, ma la decisione dipende da movimento, skill e uso nella rosa.`,
     lang === 'en'
       ? `${secondLine} Put him on the shortlist only if that role is where you want to spend coins now.`
       : `${secondLine} Tienilo in lista solo se quel ruolo è dove vuoi spendere coins adesso.`
@@ -1079,9 +1225,11 @@ function strongestTrait(technical, position, lang) {
   return ''
 }
 
-function teamSynergySummary({ card, score, hasRoster, technical, roleGap, duplicate, starterBlocked, evidence, tacticalStyle, lang }) {
+function teamSynergySummary({ card, score, hasRoster, technical, roleGap, duplicate, starterBlocked, evidence, tacticalStyle, profile, combo, lang }) {
   const trait = strongestTrait(technical, card.position, lang)
   const style = teamStyleLabel(tacticalStyle, lang)
+  const name = userDisplayName(profile)
+  const intro = name && lang !== 'en' ? `${name}, ` : ''
   if (!technical.hasCompleteCardData) {
     return lang === 'en'
       ? 'We can show the card profile, but the full technical detail is still needed for a confident team fit.'
@@ -1089,40 +1237,44 @@ function teamSynergySummary({ card, score, hasRoster, technical, roleGap, duplic
   }
   if (!hasRoster) {
     return lang === 'en'
-      ? `${card.name} looks interesting as a card; load your roster to understand if it improves your actual XI.`
-      : `${card.name} è interessante come carta; carica la rosa per capire se migliora davvero il tuo XI.`
+      ? `${card.name} is a card profile read for now: style, native skills and available stats show what it can bring.`
+      : `${card.name} per ora è una lettura carta: stile, abilità native e statistiche disponibili ci dicono cosa può portare.`
+  }
+  if (combo?.text) {
+    return `${intro}${combo.text}`
   }
   if (score >= 78 && roleGap) {
     return lang === 'en'
       ? `${card.name} fills a real squad gap and adds ${trait || 'a different profile'} where your team currently has little direct coverage.`
-      : `${card.name} copre un buco reale della rosa e aggiunge ${trait || 'un profilo diverso'} dove oggi hai poca copertura diretta.`
+      : `${intro}${card.name} copre un buco reale della rosa e aggiunge ${trait || 'un profilo diverso'} dove oggi hai poca copertura diretta.`
   }
   if (score >= 68 && evidence.teamStyleFit) {
     return lang === 'en'
       ? `${card.name} fits your ${style || 'current system'} because it adds ${trait || 'a useful technical trait'} to the way you already play.`
-      : `${card.name} si lega al tuo ${style || 'sistema attuale'} perché aggiunge ${trait || 'una qualità tecnica utile'} al modo in cui giochi già.`
+      : `${intro}${card.name} si lega al tuo ${style || 'sistema attuale'} perché aggiunge ${trait || 'una qualità tecnica utile'} al modo in cui giochi già.`
   }
   if (duplicate || starterBlocked) {
     return lang === 'en'
-      ? `${card.name} does not create a new main synergy in your XI: the value is mostly a different match scenario, not replacing your best movements.`
-      : `${card.name} non crea una nuova sinergia principale nel tuo XI: il valore è soprattutto uno scenario diverso, non sostituire i movimenti migliori.`
+      ? `${card.name} is useful as a different option in your roster, but it does not clearly change the main balance of your current players.`
+      : `${intro}${card.name} è utile come opzione diversa nella tua rosa, ma non cambia in modo chiaro l’equilibrio principale dei tuoi giocatori attuali.`
   }
   if (evidence.profileNeedFit) {
     return lang === 'en'
-      ? `${card.name} is interesting because it connects with one of your current improvement areas, not just because of the rating.`
-      : `${card.name} è interessante perché si collega a una tua area di miglioramento, non solo per l’overall.`
+      ? `${card.name} is interesting because it connects with one of your current improvement areas through its style and native skills.`
+      : `${intro}${card.name} è interessante perché si collega a una tua area di miglioramento, non solo ai dati generali della carta.`
   }
   return lang === 'en'
     ? `${card.name} can help your team in specific scenarios, especially when you need ${trait || 'a different technical solution'}.`
-    : `${card.name} può aiutarti in scenari specifici, soprattutto quando ti serve ${trait || 'una soluzione tecnica diversa'}.`
+    : `${intro}${card.name} può aiutarti in scenari specifici, soprattutto quando ti serve ${trait || 'una soluzione tecnica diversa'}.`
 }
 
-function teamSynergyReasons({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, technical, tacticalStyle, patterns, profileRead, evidence, lang }) {
+function teamSynergyReasons({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, technical, tacticalStyle, patterns, profileRead, evidence, combo, lang }) {
   const lines = []
   const trait = strongestTrait(technical, card.position, lang)
   const fitLine = tacticalStyleFit(technical, card.position, tacticalStyle, profileRead, lang)
   const edgeLine = statEdgeLine(card.position, technical, bestAlternative, lang)
   const mapLine = tacticalMapLine(patterns, card.position, lang)
+  if (combo?.detail) addUniqueLine(lines, combo.detail)
   if (roleGap) {
     addUniqueLine(lines, lang === 'en'
       ? `Covers a role where your roster has no direct high-confidence option.`
@@ -1130,8 +1282,8 @@ function teamSynergyReasons({ card, sameRole, bestAlternative, roleGap, duplicat
   }
   if (duplicate || starterBlocked) {
     addUniqueLine(lines, lang === 'en'
-      ? `Your current XI already owns similar spaces, so this card matters only if it changes the movement pattern.`
-      : `Il tuo XI occupa già spazi simili, quindi questa carta conta solo se cambia il tipo di movimento.`)
+      ? `Your current players already cover similar spaces, so this card matters when it gives you a different use.`
+      : `I tuoi giocatori coprono già spazi simili, quindi questa carta conta quando ti dà un uso diverso.`)
   }
   if (trait) {
     addUniqueLine(lines, lang === 'en'
@@ -1156,8 +1308,8 @@ function synergyUseLine({ card, sameRole, bestAlternative, duplicate, starterBlo
   const currentReference = bestAlternative?.name
   if (duplicate || starterBlocked) {
     return lang === 'en'
-      ? `${card.name} is not a natural starter in this XI. Use him as a situational profile when you want ${trait || movement}, without forcing him into the same spaces already owned by your key players.`
-      : `${card.name} non è un titolare naturale in questo XI. Usalo come profilo situazionale quando vuoi ${trait || movement}, senza forzarlo negli stessi spazi già occupati dai tuoi giocatori chiave.`
+      ? `${card.name} is not the natural first choice for your current players. Use him when you want ${trait || movement}, without forcing him into the same spaces already owned by your key players.`
+      : `${card.name} non è la prima scelta naturale per i tuoi giocatori attuali. Usalo quando vuoi ${trait || movement}, senza forzarlo negli stessi spazi già occupati dai tuoi giocatori chiave.`
   }
   if (currentReference) {
     return lang === 'en'
@@ -1169,7 +1321,7 @@ function synergyUseLine({ card, sameRole, bestAlternative, duplicate, starterBlo
     : `${card.name} può diventare utile perché aggiunge ${trait || movement} in una zona dove la tua rosa ha meno copertura diretta.`
 }
 
-function teamSynergyDetails({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, technical, tacticalStyle, profileRead, issues, gameRead, evidence, lang }) {
+function teamSynergyDetails({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, technical, tacticalStyle, profileRead, issues, gameRead, evidence, combo, lang }) {
   const details = []
   const family = roleFamily(card.position)
   const teamStyle = teamStyleLabel(tacticalStyle, lang)
@@ -1183,21 +1335,30 @@ function teamSynergyDetails({ card, sameRole, bestAlternative, roleGap, duplicat
       )
     : 0
 
+  if (combo) {
+    details.push({
+      key: 'combo',
+      label: combo.label,
+      score: null,
+      text: combo.detail || combo.text
+    })
+  }
+
   details.push({
     key: 'style',
-    label: lang === 'en' ? 'Style fit' : 'Fit stile',
+    label: lang === 'en' ? 'Movement' : 'Movimento',
     score: evidence.teamStyleFit ? 78 : tacticalStyle ? 56 : 50,
     text: evidence.teamStyleFit
       ? (lang === 'en'
-          ? `Works with ${teamStyle}: the card profile supports the way your team already attacks or defends.`
-          : `Funziona con ${teamStyle}: il profilo carta supporta il modo in cui la tua squadra attacca o difende già.`)
+          ? `With ${teamStyle}, this movement has a clear use in how your players already attack or defend.`
+          : `Con ${teamStyle}, questo movimento ha un uso chiaro nel modo in cui i tuoi giocatori attaccano o difendono.`)
       : tacticalStyle
         ? (lang === 'en'
-            ? `Not a perfect style lock for ${teamStyle}; the value depends more on role usage than system bonus.`
-            : `Non è un incastro perfetto con ${teamStyle}; il valore dipende più dall’uso nel ruolo che dal bonus sistema.`)
+            ? `With ${teamStyle}, the value depends on using the card in the right lane and not forcing the movement.`
+            : `Con ${teamStyle}, il valore dipende dall’usare la carta nella corsia giusta senza forzare il movimento.`)
         : (lang === 'en'
-            ? 'Team style is missing, so this part stays neutral until the coach/tactics are configured.'
-            : 'Manca lo stile squadra, quindi questa parte resta neutra finché coach/tattica non sono configurati.')
+            ? `The card movement is readable, but team style would make this part sharper.`
+            : `Il movimento della carta è leggibile, ma lo stile squadra renderebbe questa parte più precisa.`)
   })
 
   details.push({
@@ -1219,7 +1380,7 @@ function teamSynergyDetails({ card, sameRole, bestAlternative, roleGap, duplicat
 
   details.push({
     key: 'squad',
-    label: lang === 'en' ? 'Squad comparison' : 'Confronto rosa',
+    label: lang === 'en' ? 'Roster impact' : 'Impatto rosa',
     score: roleGap ? 84 : duplicate || starterBlocked ? 46 : bestAlternative ? 62 : 58,
     text: roleGap
       ? (lang === 'en'
@@ -1248,8 +1409,8 @@ function teamSynergyDetails({ card, sameRole, bestAlternative, roleGap, duplicat
     score: difficultyMatch ? 76 : 52,
     text: difficultyMatch
       ? (lang === 'en'
-          ? 'This card connects with one of your current weak points, so the recommendation is based on need, not only rating.'
-          : 'Questa carta si collega a una tua difficoltà attuale, quindi il consiglio nasce dal bisogno reale, non solo dall’overall.')
+          ? 'This card connects with one of your current weak points, so the recommendation is based on a real need from your data.'
+          : 'Questa carta si collega a una tua difficoltà attuale, quindi il consiglio nasce da un bisogno reale emerso dai tuoi dati.')
       : (lang === 'en'
           ? 'No strong link with your current weak points emerged; treat it as a tactical option, not a problem-solver.'
           : 'Non emerge un legame forte con le tue difficoltà attuali: considerala un’opzione tattica, non una soluzione diretta.')
@@ -1273,6 +1434,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   const hasCoveredRole = hasRoster && sameRole.length > 0
   const duplicate = hasCoveredRole && sameRole.length >= 2
   const starterBlocked = hasFormation && sameRole.some(player => Number(player.slotIndex) >= 0 && Number(player.slotIndex) <= 10)
+  const combo = hasRoster ? comboRead({ card, technical, players, issues, profileRead, gameRead, lang }) : null
   const evidence = decisionEvidence({
     technical,
     sameRole,
@@ -1414,6 +1576,8 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
       starterBlocked,
       evidence,
       tacticalStyle,
+      profile,
+      combo,
       lang
     }),
     reasons: teamSynergyReasons({
@@ -1428,6 +1592,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
       patterns,
       profileRead,
       evidence,
+      combo,
       lang
     }),
     useLine: hasRoster && technical.hasCompleteCardData
@@ -1456,6 +1621,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
       issues,
       gameRead,
       evidence,
+      combo,
       lang
     })
   }
@@ -1529,7 +1695,7 @@ export async function POST(req) {
       patternsRes,
       gameAnalysisRes
     ] = await Promise.all([
-      admin.from('user_profiles').select('ai_weak_point, ai_learn_goals, ai_notes, input_delay, connection_quality, pass_level').eq('user_id', userId).maybeSingle(),
+      admin.from('user_profiles').select('first_name, nickname, team_name, ai_weak_point, ai_learn_goals, ai_notes, input_delay, connection_quality, pass_level').eq('user_id', userId).maybeSingle(),
       admin.from('formation_layout').select('formation, slot_positions').eq('user_id', userId).maybeSingle(),
       admin.from('players').select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, skills, com_skills, form, base_stats, original_positions, height, weight').eq('user_id', userId).limit(60),
       admin.from('playing_styles').select('id, name'),

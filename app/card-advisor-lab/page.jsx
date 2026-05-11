@@ -29,6 +29,7 @@ const copy = {
     releaseTitle: 'Uscite recenti',
     sourceNote: 'Seleziona un pack: mostriamo solo le carte di quella uscita, con ricerca e filtri per evitare una pagina infinita.',
     cardScore: 'Sinergia',
+    cardIdentity: 'Identità',
     role: 'Ruolo',
     style: 'Stile',
     build: 'Cosa aggiunge',
@@ -107,6 +108,7 @@ const copy = {
     releaseTitle: 'Recent releases',
     sourceNote: 'Select one pack: only that release is shown, with search and filters to avoid an endless page.',
     cardScore: 'Synergy',
+    cardIdentity: 'Identity',
     role: 'Role',
     style: 'Style',
     build: 'What it adds',
@@ -541,10 +543,10 @@ function getFitSummary(card, rosterSummary, labels, lang) {
 
   const baseText = lang === 'en'
     ? best
-      ? `${card.name} is read against the movements already present in your XI, especially the spaces occupied around ${card.position}.`
+      ? `${card.name} is read against the movements already present in your players, especially the spaces occupied around ${card.position}.`
       : `${card.name} covers a lane that is not clearly occupied in your saved formation.`
     : best
-      ? `${card.name} viene letto sui movimenti già presenti nel tuo XI, soprattutto gli spazi occupati attorno a ${card.position}.`
+      ? `${card.name} viene letto sui movimenti già presenti nei tuoi giocatori, soprattutto gli spazi occupati attorno a ${card.position}.`
       : `${card.name} copre una corsia non occupata in modo chiaro nella formazione salvata.`
 
   if (depth === 'formation') {
@@ -721,8 +723,8 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
               <strong>{teamSynergyLabel}</strong>
             </div>
             <div>
-              <span>OVR base</span>
-              <strong>{card.overall}</strong>
+              <span>{labels.cardIdentity}</span>
+              <strong>{readableStyle}</strong>
             </div>
             <div>
               <span>{labels.role}</span>
@@ -762,7 +764,6 @@ function DetailPanel({ card, labels, lang, rosterSummary, evaluation, evaluating
                       <div key={detail.key} className="team-synergy-detail-item">
                         <div>
                           <span>{detail.label}</span>
-                          <strong>{detail.score}%</strong>
                         </div>
                         <p>{detail.text}</p>
                       </div>
@@ -1969,11 +1970,6 @@ export default withAuth(function CardAdvisorLabPage() {
           text-transform: uppercase;
           letter-spacing: 0.08em;
           font-weight: 900;
-        }
-
-        .team-synergy-detail-item strong {
-          color: #facc15;
-          font-size: 13px;
         }
 
         .team-synergy-detail-item p {
