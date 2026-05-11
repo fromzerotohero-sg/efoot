@@ -439,6 +439,12 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
           ) : (
             <span className="nr-player-initials">{getPlayerInitials(player.player_name)}</span>
           )}
+          {slotThumb && (
+            <>
+              <span className="nr-slot-card-brand">AI</span>
+              <span className="nr-slot-card-rating-mask" />
+            </>
+          )}
           <span className="nr-slot-role-chip">{roleLabel}</span>
         </div>
         <span className="nr-slot-name-chip">{getShortPlayerName(player.player_name)}</span>
@@ -4510,8 +4516,8 @@ export default withAuth(function NuovaRosaLabPage() {
           position: absolute;
           inset: 0;
           background:
-            radial-gradient(ellipse 30px 30px at 18px 18px, rgba(3, 7, 18, 0.9) 0%, rgba(3, 7, 18, 0.74) 52%, transparent 72%),
-            radial-gradient(ellipse 24px 22px at calc(100% - 14px) 14px, rgba(3, 7, 18, 0.72) 0%, rgba(3, 7, 18, 0.52) 50%, transparent 74%);
+            linear-gradient(135deg, rgba(3, 7, 18, 0.92) 0%, rgba(3, 7, 18, 0.8) 18%, transparent 42%),
+            radial-gradient(ellipse 34px 30px at calc(100% - 12px) 13px, rgba(3, 7, 18, 0.88) 0%, rgba(3, 7, 18, 0.68) 50%, transparent 76%);
           pointer-events: none;
           z-index: 1;
         }
@@ -4523,6 +4529,59 @@ export default withAuth(function NuovaRosaLabPage() {
           background: linear-gradient(180deg, transparent 44%, rgba(3, 7, 18, 0.54) 100%);
           pointer-events: none;
           z-index: 1;
+        }
+
+        .nr-slot-card-brand {
+          position: absolute;
+          top: 5px;
+          left: 5px;
+          z-index: 2;
+          width: 26px;
+          height: 21px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 7px 12px 12px 7px;
+          border: 1px solid rgba(94, 234, 212, 0.35);
+          background:
+            radial-gradient(circle at 24% 28%, rgba(34, 211, 238, 0.34), transparent 42%),
+            linear-gradient(135deg, rgba(8, 13, 30, 0.96), rgba(15, 23, 42, 0.78));
+          color: rgba(224, 242, 254, 0.72);
+          font-size: 8px;
+          font-weight: 900;
+          letter-spacing: 0.08em;
+          box-shadow:
+            0 5px 16px rgba(3, 7, 18, 0.4),
+            0 0 18px rgba(34, 211, 238, 0.16);
+          text-shadow: 0 1px 8px rgba(103, 232, 249, 0.34);
+          pointer-events: none;
+        }
+
+        .nr-slot-card-brand::after {
+          content: "";
+          position: absolute;
+          inset: -6px -9px -5px -4px;
+          z-index: -1;
+          border-radius: 12px;
+          background: linear-gradient(90deg, rgba(3, 7, 18, 0.72), rgba(3, 7, 18, 0.3), transparent);
+          filter: blur(3px);
+        }
+
+        .nr-slot-card-rating-mask {
+          position: absolute;
+          top: 4px;
+          right: 4px;
+          z-index: 2;
+          width: 23px;
+          height: 21px;
+          border-radius: 11px 7px 7px 11px;
+          background:
+            radial-gradient(circle at 70% 30%, rgba(34, 211, 238, 0.22), transparent 45%),
+            linear-gradient(135deg, rgba(3, 7, 18, 0.82), rgba(15, 23, 42, 0.56));
+          box-shadow:
+            0 0 16px rgba(3, 7, 18, 0.4),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+          pointer-events: none;
         }
 
         .nr-reserve-card-media::after {
