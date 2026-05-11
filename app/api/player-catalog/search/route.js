@@ -38,15 +38,6 @@ function slotCompatibility(slotPosition = '', cardPosition = '') {
   return compatible.includes(card) ? 'adaptable' : 'out_of_role'
 }
 
-function buildOrderScore(card) {
-  const overall =
-    Number(card?.overall_level_1) ||
-    Number(card?.overall_max_level) ||
-    0
-
-  return overall
-}
-
 function normalizeResult(row, slotPosition) {
   const payload = row?.players_payload && typeof row.players_payload === 'object'
     ? row.players_payload
@@ -108,6 +99,9 @@ export async function GET(req) {
     const cardType = toText(searchParams.get('card_type'))
     const limitRaw = Number(searchParams.get('limit') || 24)
     const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(limitRaw, 100)) : 24
+    const offsetRaw = Number(searchParams.get('offset') || 0)
+    const offset = Number.isFinite(offsetRaw) ? Math.max(0, offsetRaw) : 0
+    const sort = toText(searchParams.get('sort')) || 'name_asc'
 
     let query = supabase
       .from('player_catalog')
@@ -133,12 +127,10 @@ export async function GET(req) {
         player_identity_id,
         player_identity_key,
         card_instance_key
-      `)
+      `, { count: 'exact' })
       .eq('source', 'pesdb')
       .eq('catalog_ready', true)
       .eq('needs_review', false)
-      .order('overall_level_1', { ascending: false, nullsFirst: false })
-      .limit(Math.max(limit * 4, 60))
 
     if (cardType) {
       query = query.eq('card_type', cardType)
@@ -154,25 +146,36 @@ export async function GET(req) {
       ].join(','))
     }
 
-    const { data, error } = await query
+    if (sort === 'ovr_desc') {
+      query = query
+        .order('overall_level_1', { ascending: false, nullsFirst: false })
+        .order('player_name', { ascending: true, nullsFirst: false })
+    } else if (sort === 'role_asc') {
+      query = query
+        .order('position', { ascending: true, nullsFirst: false })
+        .order('player_name', { ascending: true, nullsFirst: false })
+    } else {
+      query = query.order('player_name', { ascending: true, nullsFirst: false })
+    }
+
+    query = query.range(offset, offset + limit - 1)
+
+    const { data, error, count } = await query
 
     if (error) {
       console.error('[player-catalog/search] Query error:', error)
       return NextResponse.json({ error: 'Failed to load catalog' }, { status: 500 })
     }
 
-    const normalized = (data || []).map((row) => normalizeResult(row, slotPosition))
-    const sorted = normalized
-      .sort((a, b) => {
-        const scoreDiff = buildOrderScore(b) - buildOrderScore(a)
-        if (scoreDiff !== 0) return scoreDiff
-        return String(a.player_name || '').localeCompare(String(b.player_name || ''))
-      })
-      .slice(0, limit)
+    const results = (data || []).map((row) => normalizeResult(row, slotPosition))
+    const total = typeof count === 'number' ? count : results.length
 
     return NextResponse.json({
-      results: sorted,
-      total: sorted.length
+      results,
+      total,
+      offset,
+      limit,
+      hasMore: offset + results.length < total
     })
   } catch (error) {
     console.error('[player-catalog/search] Error:', error)

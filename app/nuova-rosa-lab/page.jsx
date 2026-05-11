@@ -442,8 +442,7 @@ function SlotCard({ slot, player, onEmptyClick, onPlayerClick, onRemove, lang, i
   )
 }
 
-function CatalogCard({ card, slotPosition, lang, onSelect, selected }) {
-  const compatibility = getSlotCompatibility(slotPosition, card.position)
+function CatalogCard({ card, lang, onSelect, selected }) {
   return (
     <button
       type="button"
@@ -461,8 +460,8 @@ function CatalogCard({ card, slotPosition, lang, onSelect, selected }) {
         <strong>{card.player_name}</strong>
         <p>{card.card_type} · {card.position} · {card.playing_style || '-'}</p>
         <div className="nr-catalog-card-meta">
-          <span>{card.overall_level_1 ?? card.overall_max_level ?? '-'}</span>
-          <em className={`compat-${compatibility}`}>{compatibilityLabel(compatibility, lang)}</em>
+          <span>OVR {card.overall_level_1 ?? card.overall_max_level ?? '-'}</span>
+          <em>{lang === 'en' ? 'Free catalog' : 'Catalogo libero'}</em>
         </div>
       </div>
       <ChevronRight size={16} />
@@ -511,43 +510,45 @@ function CatalogPickerModal({
   mode = 'slot',
   searchQuery,
   onSearchChange,
+  sort,
+  onSortChange,
   loading,
+  loadingMore,
   results,
+  total,
+  hasMore,
   reserves,
   selectedCard,
   onSelectCard,
   onClose,
   onConfirm,
   onSelectReserve,
+  onLoadMore,
   onUploadFallback,
   lang
 }) {
   const isReserveMode = mode === 'reserve'
   const slotPosition = isReserveMode ? '' : slot?.position
   const [slotFlow, setSlotFlow] = React.useState(isReserveMode ? 'catalog' : 'choice')
-  const [catalogFilter, setCatalogFilter] = React.useState('all')
 
   React.useEffect(() => {
     if (!show) return
     setSlotFlow(isReserveMode ? 'catalog' : 'choice')
-    setCatalogFilter('all')
   }, [show, isReserveMode, slot?.slot_index])
 
   if (!show) return null
 
-  const compatibility = selectedCard && !isReserveMode ? getSlotCompatibility(slotPosition, selectedCard.position) : 'unknown'
   const showChoice = !isReserveMode && slotFlow === 'choice'
   const showReserves = !isReserveMode && slotFlow === 'reserves'
   const showCatalog = isReserveMode || slotFlow === 'catalog'
-  const catalogFilters = [
-    { id: 'all', label: lang === 'en' ? 'All' : 'Tutti' },
-    { id: 'perfect', label: lang === 'en' ? 'Exact role' : 'Ruolo esatto' },
-    { id: 'adaptable', label: lang === 'en' ? 'Compatible' : 'Compatibili' },
-    { id: 'out_of_role', label: lang === 'en' ? 'Out of role' : 'Fuori ruolo' }
+  const sortOptions = [
+    { id: 'name_asc', label: lang === 'en' ? 'Name A-Z' : 'Nome A-Z' },
+    { id: 'ovr_desc', label: lang === 'en' ? 'OVR high first' : 'OVR piu alto' },
+    { id: 'role_asc', label: lang === 'en' ? 'Role A-Z' : 'Ruolo A-Z' }
   ]
-  const visibleResults = !isReserveMode && catalogFilter !== 'all'
-    ? results.filter((card) => getSlotCompatibility(slotPosition, card.position) === catalogFilter)
-    : results
+  const resultCountLabel = total > 0
+    ? (lang === 'en' ? `${results.length} of ${total} cards` : `${results.length} di ${total} carte`)
+    : (lang === 'en' ? 'No cards loaded yet' : 'Nessuna carta caricata')
   const title = isReserveMode
     ? (lang === 'en' ? 'Add reserve' : 'Aggiungi riserva')
     : showChoice
@@ -568,8 +569,8 @@ function CatalogPickerModal({
             ? 'Pick one player already in your reserves. The slot will be filled immediately.'
             : 'Scegli un giocatore gia presente tra le riserve. Lo slot verra riempito subito.')
         : (lang === 'en'
-            ? 'Search freely in the official catalog. The role badge is only informational.'
-            : 'Cerca liberamente nel catalogo ufficiale. Il badge ruolo e solo informativo.')
+            ? 'Search the catalog freely. No role suggestions are applied here.'
+            : 'Cerca liberamente nel catalogo. Qui non vengono applicati suggerimenti per ruolo.')
 
   const goBackToChoice = () => {
     onSelectCard(null)
@@ -653,20 +654,17 @@ function CatalogPickerModal({
                   placeholder={lang === 'en' ? 'Search player, role, or card type' : 'Cerca giocatore, ruolo o tipo carta'}
                 />
               </label>
-              {!isReserveMode && (
-                <div className="nr-filter-pills" aria-label={lang === 'en' ? 'Catalog filters' : 'Filtri catalogo'}>
-                  {catalogFilters.map((filter) => (
-                    <button
-                      key={filter.id}
-                      type="button"
-                      className={catalogFilter === filter.id ? 'active' : ''}
-                      onClick={() => setCatalogFilter(filter.id)}
-                    >
-                      {filter.label}
-                    </button>
-                  ))}
-                </div>
-              )}
+              <div className="nr-catalog-meta">
+                <span>{resultCountLabel}</span>
+                <label>
+                  {lang === 'en' ? 'Sort' : 'Ordina'}
+                  <select value={sort} onChange={(event) => onSortChange(event.target.value)}>
+                    {sortOptions.map((option) => (
+                      <option key={option.id} value={option.id}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
             </div>
           </>
         )}
@@ -695,20 +693,26 @@ function CatalogPickerModal({
               <div className="nr-catalog-list">
                 {loading ? (
                   <div className="nr-empty-state">{lang === 'en' ? 'Loading...' : 'Caricamento...'}</div>
-                ) : visibleResults.length > 0 ? (
-                  visibleResults.map((card) => (
-                    <CatalogCard
-                      key={card.id}
-                      card={card}
-                      slotPosition={slotPosition}
-                      lang={lang}
-                      onSelect={onSelectCard}
-                      selected={selectedCard?.id === card.id}
-                    />
-                  ))
+                ) : results.length > 0 ? (
+                  <>
+                    {results.map((card) => (
+                      <CatalogCard
+                        key={card.id}
+                        card={card}
+                        lang={lang}
+                        onSelect={onSelectCard}
+                        selected={selectedCard?.id === card.id}
+                      />
+                    ))}
+                    {hasMore && (
+                      <button type="button" className="nr-load-more-button" onClick={onLoadMore} disabled={loadingMore}>
+                        {loadingMore ? (lang === 'en' ? 'Loading more...' : 'Caricamento...') : (lang === 'en' ? 'Show more cards' : 'Mostra altri giocatori')}
+                      </button>
+                    )}
+                  </>
                 ) : (
                   <div className="nr-empty-state">
-                    {lang === 'en' ? 'No cards found with this search or filter.' : 'Nessuna carta trovata con questa ricerca o filtro.'}
+                    {lang === 'en' ? 'No cards found with this search.' : 'Nessuna carta trovata con questa ricerca.'}
                   </div>
                 )}
               </div>
@@ -741,21 +745,10 @@ function CatalogPickerModal({
                     <strong>{selectedCard.position || '-'}</strong>
                   </div>
                   <div>
-                    <span>{isReserveMode ? (lang === 'en' ? 'Destination' : 'Destinazione') : (lang === 'en' ? 'Fit' : 'Fit')}</span>
-                    <strong>{isReserveMode ? (lang === 'en' ? 'Reserve' : 'Riserva') : compatibilityLabel(compatibility, lang)}</strong>
+                    <span>{isReserveMode ? (lang === 'en' ? 'Destination' : 'Destinazione') : (lang === 'en' ? 'Card type' : 'Tipo carta')}</span>
+                    <strong>{isReserveMode ? (lang === 'en' ? 'Reserve' : 'Riserva') : (selectedCard.card_type || '-')}</strong>
                   </div>
                 </div>
-
-                {!isReserveMode && compatibility === 'out_of_role' && (
-                  <div className="nr-warning-box">
-                    <AlertTriangle size={16} />
-                    <span>
-                      {lang === 'en'
-                        ? 'This card is not natural for the selected slot. You can still continue.'
-                        : 'Questa carta non e naturale per lo slot selezionato. Puoi comunque continuare.'}
-                    </span>
-                  </div>
-                )}
 
                 <div className="nr-picker-actions">
                   <button type="button" className="nr-primary-button" onClick={onConfirm}>
@@ -2159,8 +2152,12 @@ export default withAuth(function NuovaRosaLabPage() {
   const [pickerOpen, setPickerOpen] = React.useState(false)
   const [pickerMode, setPickerMode] = React.useState('slot')
   const [pickerLoading, setPickerLoading] = React.useState(false)
+  const [pickerLoadingMore, setPickerLoadingMore] = React.useState(false)
   const [pickerQuery, setPickerQuery] = React.useState('')
+  const [pickerSort, setPickerSort] = React.useState('name_asc')
   const [pickerResults, setPickerResults] = React.useState([])
+  const [pickerTotal, setPickerTotal] = React.useState(0)
+  const [pickerHasMore, setPickerHasMore] = React.useState(false)
   const [selectedCatalogCard, setSelectedCatalogCard] = React.useState(null)
   const [confirmModal, setConfirmModal] = React.useState(null)
   const [showPremiumEditorModal, setShowPremiumEditorModal] = React.useState(false)
@@ -2289,9 +2286,16 @@ export default withAuth(function NuovaRosaLabPage() {
     } catch (_) {}
   }, [])
 
-  const loadCatalog = React.useCallback(async (slot, query = '', mode = 'slot') => {
+  const loadCatalog = React.useCallback(async (slot, query = '', mode = 'slot', options = {}) => {
     if (mode !== 'reserve' && !slot) return
-    setPickerLoading(true)
+    const offset = Number(options.offset || 0)
+    const append = !!options.append
+    const sort = options.sort || 'name_asc'
+    if (append) {
+      setPickerLoadingMore(true)
+    } else {
+      setPickerLoading(true)
+    }
     try {
       let token = getTokenFallback()
       if (!token && supabase) {
@@ -2302,7 +2306,9 @@ export default withAuth(function NuovaRosaLabPage() {
 
       const params = new URLSearchParams({
         q: query,
-        limit: '60'
+        limit: '80',
+        offset: String(offset),
+        sort
       })
       if (mode !== 'reserve') {
         params.set('slot_position', String(slot?.position || ''))
@@ -2314,13 +2320,28 @@ export default withAuth(function NuovaRosaLabPage() {
         cache: 'no-store'
       })
       const data = await safeJsonResponse(response, 'Catalog load failed')
-      setPickerResults(Array.isArray(data.results) ? data.results : [])
+      const nextResults = Array.isArray(data.results) ? data.results : []
+      setPickerResults((prev) => {
+        if (!append) return nextResults
+        const seen = new Set(prev.map((card) => card.id))
+        return [...prev, ...nextResults.filter((card) => !seen.has(card.id))]
+      })
+      setPickerTotal(Number(data.total || 0))
+      setPickerHasMore(!!data.hasMore)
     } catch (err) {
       console.error('[NuovaRosaLab] catalog error:', err)
       showToast(lang === 'en' ? 'Unable to load the catalog.' : 'Impossibile caricare il catalogo.', 'error')
-      setPickerResults([])
+      if (!append) {
+        setPickerResults([])
+        setPickerTotal(0)
+        setPickerHasMore(false)
+      }
     } finally {
-      setPickerLoading(false)
+      if (append) {
+        setPickerLoadingMore(false)
+      } else {
+        setPickerLoading(false)
+      }
     }
   }, [lang, showToast, t])
 
@@ -2328,10 +2349,19 @@ export default withAuth(function NuovaRosaLabPage() {
     if (!pickerOpen) return
     if (pickerMode !== 'reserve' && !selectedSlot) return
     const timer = window.setTimeout(() => {
-      loadCatalog(selectedSlot, pickerQuery, pickerMode)
+      loadCatalog(selectedSlot, pickerQuery, pickerMode, { sort: pickerSort })
     }, 180)
     return () => window.clearTimeout(timer)
-  }, [pickerOpen, selectedSlot, pickerQuery, pickerMode, loadCatalog])
+  }, [pickerOpen, selectedSlot, pickerQuery, pickerMode, pickerSort, loadCatalog])
+
+  const loadMoreCatalog = React.useCallback(() => {
+    if (pickerLoading || pickerLoadingMore || !pickerHasMore) return
+    loadCatalog(selectedSlot, pickerQuery, pickerMode, {
+      offset: pickerResults.length,
+      append: true,
+      sort: pickerSort
+    })
+  }, [loadCatalog, pickerHasMore, pickerLoading, pickerLoadingMore, pickerMode, pickerQuery, pickerResults.length, pickerSort, selectedSlot])
 
   const openPickerForSlot = React.useCallback((slot) => {
     setShowAssignModal(false)
@@ -2340,6 +2370,10 @@ export default withAuth(function NuovaRosaLabPage() {
     setPickerMode('slot')
     setSelectedCatalogCard(null)
     setPickerQuery('')
+    setPickerSort('name_asc')
+    setPickerResults([])
+    setPickerTotal(0)
+    setPickerHasMore(false)
     setPickerOpen(true)
   }, [])
 
@@ -2354,6 +2388,10 @@ export default withAuth(function NuovaRosaLabPage() {
     setPickerMode('reserve')
     setSelectedCatalogCard(null)
     setPickerQuery('')
+    setPickerSort('name_asc')
+    setPickerResults([])
+    setPickerTotal(0)
+    setPickerHasMore(false)
     setPickerOpen(true)
   }, [riserve.length, showToast, t])
 
@@ -2362,6 +2400,10 @@ export default withAuth(function NuovaRosaLabPage() {
     setPickerMode('slot')
     setSelectedCatalogCard(null)
     setPickerQuery('')
+    setPickerSort('name_asc')
+    setPickerResults([])
+    setPickerTotal(0)
+    setPickerHasMore(false)
   }, [])
 
   const openPhotoUploadFlow = React.useCallback((mode = null, slot = null) => {
@@ -2858,13 +2900,13 @@ export default withAuth(function NuovaRosaLabPage() {
     if (compatibility === 'out_of_role') {
       setConfirmModal({
         ...showConfirmConfig({
-          title: lang === 'en' ? 'Confirm role change' : 'Conferma cambio ruolo',
+          title: lang === 'en' ? 'Confirm assignment' : 'Conferma assegnazione',
           message: lang === 'en'
-            ? `${selectedCatalogCard.player_name} is not natural for ${selectedSlot.position}.`
-            : `${selectedCatalogCard.player_name} non e naturale per ${selectedSlot.position}.`,
+            ? `${selectedCatalogCard.player_name} has role ${selectedCatalogCard.position || '-'} and will be placed in ${selectedSlot.position}.`
+            : `${selectedCatalogCard.player_name} ha ruolo ${selectedCatalogCard.position || '-'} e verra inserito in ${selectedSlot.position}.`,
           details: lang === 'en'
-            ? 'You can still continue and correct the player later if needed.'
-            : 'Puoi comunque continuare e correggere il giocatore dopo, se serve.',
+            ? 'The catalog is free: confirm only if this is the player you want in this slot.'
+            : 'Il catalogo e libero: conferma solo se e il giocatore che vuoi in questo slot.',
           confirmLabel: lang === 'en' ? 'Confirm' : t('confirm'),
           cancelLabel: lang === 'en' ? 'Cancel' : t('cancel')
         }),
@@ -3728,14 +3770,20 @@ export default withAuth(function NuovaRosaLabPage() {
         mode={pickerMode}
         searchQuery={pickerQuery}
         onSearchChange={setPickerQuery}
+        sort={pickerSort}
+        onSortChange={setPickerSort}
         loading={pickerLoading}
+        loadingMore={pickerLoadingMore}
         results={pickerResults}
+        total={pickerTotal}
+        hasMore={pickerHasMore}
         reserves={riserve}
         selectedCard={selectedCatalogCard}
         onSelectCard={setSelectedCatalogCard}
         onClose={closePicker}
         onConfirm={pickerMode === 'reserve' ? handleSaveCatalogCardAsReserve : handleSaveCatalogCardToSlot}
         onSelectReserve={handleSelectReserveForSlot}
+        onLoadMore={loadMoreCatalog}
         onUploadFallback={() => openPhotoUploadFlow(pickerMode, selectedSlot)}
         lang={lang}
       />
@@ -5214,29 +5262,51 @@ export default withAuth(function NuovaRosaLabPage() {
           font-size: 14px;
         }
 
-        .nr-filter-pills {
+        .nr-catalog-meta {
           display: flex;
-          flex-wrap: wrap;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          color: rgba(255, 255, 255, 0.68);
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .nr-catalog-meta label {
+          display: flex;
+          align-items: center;
           gap: 8px;
         }
 
-        .nr-filter-pills button {
+        .nr-catalog-meta select {
           border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 999px;
+          border-radius: 10px;
           background: rgba(255, 255, 255, 0.04);
-          color: rgba(255, 255, 255, 0.72);
-          padding: 7px 10px;
+          color: #fff;
+          padding: 8px 10px;
           font-size: 12px;
           font-weight: 700;
-          cursor: pointer;
-          transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
         }
 
-        .nr-filter-pills button.active,
-        .nr-filter-pills button:hover {
-          border-color: rgba(0, 212, 255, 0.42);
-          background: rgba(0, 212, 255, 0.1);
-          color: #fff;
+        .nr-catalog-meta option {
+          color: #111827;
+        }
+
+        .nr-load-more-button {
+          width: 100%;
+          border: 1px solid rgba(0, 212, 255, 0.28);
+          border-radius: 14px;
+          background: rgba(0, 212, 255, 0.08);
+          color: #eafcff;
+          padding: 12px 14px;
+          font-size: 13px;
+          font-weight: 800;
+          cursor: pointer;
+        }
+
+        .nr-load-more-button:disabled {
+          opacity: 0.62;
+          cursor: wait;
         }
 
         .nr-section-head h3 {
