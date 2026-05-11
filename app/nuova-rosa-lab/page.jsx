@@ -195,20 +195,6 @@ function EnterpriseInput({ label, value, onChange, placeholder = '', type = 'tex
   )
 }
 
-function EnterpriseSelect({ label, value, onChange, options }) {
-  return (
-    <label className="nr-form-field">
-      <span>{label}</span>
-      <select value={value} onChange={(event) => onChange(event.target.value)}>
-        <option value="">{label}</option>
-        {options.map((option) => (
-          <option key={option} value={option}>{option}</option>
-        ))}
-      </select>
-    </label>
-  )
-}
-
 function getStatToneClass(value) {
   const num = Number(value)
   if (!Number.isFinite(num)) return 'neutral'
@@ -466,7 +452,6 @@ function CatalogPickerModal({
   onClose,
   onConfirm,
   onSelectReserve,
-  onManualFallback,
   onUploadFallback,
   lang
 }) {
@@ -621,9 +606,6 @@ function CatalogPickerModal({
                     <ArrowRight size={16} />
                   </button>
                   <div className="nr-secondary-actions">
-                    <button type="button" className="nr-secondary-button" onClick={onManualFallback}>
-                      {isReserveMode ? (lang === 'en' ? 'Manual reserve' : 'Riserva manuale') : (lang === 'en' ? 'Manual slot player' : 'Giocatore manuale per slot')}
-                    </button>
                     <button type="button" className="nr-secondary-button" onClick={onUploadFallback}>
                       {lang === 'en' ? 'Upload player photo' : 'Carica foto giocatore'}
                     </button>
@@ -721,8 +703,6 @@ function QuickPlayerPanel({
   )
 }
 
-const MANUAL_POSITIONS = ['PT', 'DC', 'TD', 'TS', 'MED', 'CC', 'TRQ', 'CLS', 'CLD', 'ESA', 'EDA', 'SP', 'P']
-const MANUAL_CARD_TYPES = ['Standard', 'Trending', 'Highlight', 'Epic', 'Legendary']
 const MAX_RESERVES = 12
 const GK_GOAL_AREA = { xMin: 36, xMax: 64, yMin: 83, yMax: 96 }
 const DEFAULT_SLOT_POSITIONS = {
@@ -1018,124 +998,6 @@ function normalizeBoosterEntry(entry) {
   }
 }
 
-function EnterprisePlayerEditorModal({
-  show,
-  mode,
-  player,
-  slot,
-  onClose,
-  onSave,
-  saving,
-  lang
-}) {
-  const [form, setForm] = React.useState({
-    player_name: '',
-    position: '',
-    overall_rating: '',
-    card_type: 'Standard',
-    role: '',
-    age: '',
-    nationality: '',
-    club_name: ''
-  })
-
-  React.useEffect(() => {
-    if (!show) return
-    setForm({
-      player_name: player?.player_name || '',
-      position: player?.position || slot?.position || '',
-      overall_rating: player?.overall_rating != null ? String(player.overall_rating) : '',
-      card_type: player?.card_type || 'Standard',
-      role: player?.role || player?.playing_style_name || '',
-      age: player?.age != null ? String(player.age) : '',
-      nationality: player?.nationality || '',
-      club_name: player?.club_name || ''
-    })
-  }, [show, player, slot])
-
-  return (
-    <EnterpriseModalFrame
-      show={show}
-      onClose={onClose}
-      title={mode === 'edit' ? (lang === 'en' ? 'Edit player details' : 'Modifica dati giocatore') : (lang === 'en' ? 'Manual player entry' : 'Inserimento manuale giocatore')}
-      subtitle={slot?.position ? `${lang === 'en' ? 'Slot' : 'Slot'} · ${slot.position}` : (lang === 'en' ? 'Manual entry' : 'Inserimento manuale')}
-      className="nr-editor-shell"
-    >
-      <div className="nr-editor-grid">
-        <EnterpriseSection title={lang === 'en' ? 'Main info' : 'Dati principali'}>
-          <div className="nr-form-grid">
-            <EnterpriseInput
-              label={lang === 'en' ? 'Player name' : 'Nome giocatore'}
-              value={form.player_name}
-              onChange={(value) => setForm((prev) => ({ ...prev, player_name: value }))}
-              placeholder={lang === 'en' ? 'Player name' : 'Nome giocatore'}
-            />
-            <EnterpriseSelect
-              label={lang === 'en' ? 'Position' : 'Posizione'}
-              value={form.position}
-              onChange={(value) => setForm((prev) => ({ ...prev, position: value }))}
-              options={MANUAL_POSITIONS}
-            />
-            <EnterpriseInput
-              label="OVR"
-              value={form.overall_rating}
-              onChange={(value) => setForm((prev) => ({ ...prev, overall_rating: value }))}
-              placeholder="89"
-              type="number"
-            />
-            <EnterpriseSelect
-              label={lang === 'en' ? 'Card type' : 'Tipo carta'}
-              value={form.card_type}
-              onChange={(value) => setForm((prev) => ({ ...prev, card_type: value }))}
-              options={MANUAL_CARD_TYPES}
-            />
-            <EnterpriseInput
-              label={lang === 'en' ? 'Playing style / role' : 'Stile / ruolo'}
-              value={form.role}
-              onChange={(value) => setForm((prev) => ({ ...prev, role: value }))}
-              placeholder={lang === 'en' ? 'Creative Playmaker' : 'Regista creativo'}
-            />
-            <EnterpriseInput
-              label={lang === 'en' ? 'Age' : 'Eta'}
-              value={form.age}
-              onChange={(value) => setForm((prev) => ({ ...prev, age: value }))}
-              placeholder="25"
-              type="number"
-            />
-          </div>
-        </EnterpriseSection>
-
-        <EnterpriseSection title={lang === 'en' ? 'Secondary info' : 'Dati secondari'}>
-          <div className="nr-form-grid">
-            <EnterpriseInput
-              label={lang === 'en' ? 'Nationality' : 'Nazionalita'}
-              value={form.nationality}
-              onChange={(value) => setForm((prev) => ({ ...prev, nationality: value }))}
-              placeholder={lang === 'en' ? 'Argentina' : 'Argentina'}
-            />
-            <EnterpriseInput
-              label={lang === 'en' ? 'Club name' : 'Club'}
-              value={form.club_name}
-              onChange={(value) => setForm((prev) => ({ ...prev, club_name: value }))}
-              placeholder="Barcelona"
-            />
-          </div>
-        </EnterpriseSection>
-      </div>
-
-      <div className="nr-modal-footer">
-        <button type="button" className="nr-secondary-button" onClick={onClose} disabled={saving}>
-          {lang === 'en' ? 'Cancel' : 'Annulla'}
-        </button>
-        <button type="button" className="nr-primary-button" onClick={() => onSave(form)} disabled={saving}>
-          {saving ? (lang === 'en' ? 'Saving...' : 'Salvataggio...') : (mode === 'edit' ? (lang === 'en' ? 'Save changes' : 'Salva modifiche') : (lang === 'en' ? 'Save player' : 'Salva giocatore'))}
-          <Save size={16} />
-        </button>
-      </div>
-    </EnterpriseModalFrame>
-  )
-}
-
 function EnterpriseBoostersModal({ show, boosters, setBoosters, onClose, onSave, saving, lang }) {
   const list = Array.isArray(boosters) ? boosters : []
 
@@ -1314,16 +1176,11 @@ function PremiumPlayerModal({
   show,
   player,
   slot,
-  reserves = [],
-  assigning = false,
-  onAssignFromReserve,
   onClose,
   onSave,
   onRemoveFromSlot,
   onDeletePlayer,
   onOpenReplace,
-  onOpenManualEntry,
-  onUploadPhoto,
   saving,
   lang,
   t
@@ -1534,8 +1391,8 @@ function PremiumPlayerModal({
             </div>
             <p className="nr-setup-readonly-note">
               {lang === 'en'
-                ? 'Base data (name, role, age, club, nationality) is fixed and syncs from catalog/manual source. You can edit OVR and performance stats here.'
-                : 'I dati base (nome, ruolo, eta, club, nazionalita) sono fissi e seguono la sorgente catalogo/manuale. Qui puoi modificare OVR e statistiche.'}
+                ? 'Base data (name, role, age, club, nationality) is fixed and syncs from catalog/photo source. You can edit OVR and performance stats here.'
+                : 'I dati base (nome, ruolo, eta, club, nazionalita) sono fissi e seguono la sorgente catalogo/foto. Qui puoi modificare OVR e statistiche.'}
             </p>
           </EnterpriseSection>
 
@@ -1553,44 +1410,6 @@ function PremiumPlayerModal({
               {lang === 'en' ? 'Delete permanently' : 'Elimina definitivamente'}
             </button>
           </div>
-
-          {slot?.slot_index != null && (
-            <EnterpriseSection
-              title={lang === 'en' ? 'Choose from reserves' : 'Scegli dalle riserve'}
-              actions={(
-                <div className="nr-secondary-actions">
-                  <button type="button" className="nr-secondary-button" onClick={onOpenManualEntry}>
-                    {lang === 'en' ? 'Manual slot player' : 'Giocatore manuale per slot'}
-                  </button>
-                  <button type="button" className="nr-secondary-button" onClick={onUploadPhoto}>
-                    {lang === 'en' ? 'Upload player photo' : 'Carica foto giocatore'}
-                  </button>
-                </div>
-              )}
-            >
-              <div className="nr-reserve-inline-list">
-                {reserves.length > 0 ? reserves.map((entry) => (
-                  <button
-                    key={entry.id}
-                    type="button"
-                    className="nr-bench-item"
-                    onClick={() => onAssignFromReserve?.(entry)}
-                    disabled={assigning}
-                  >
-                    <div className="nr-bench-item-copy">
-                      <strong>{entry.player_name}</strong>
-                      <span>{entry.position || '-'} · OVR {entry.overall_rating ?? '-'}</span>
-                    </div>
-                    <ChevronRight size={16} />
-                  </button>
-                )) : (
-                  <div className="nr-empty-state">
-                    <span>{lang === 'en' ? 'No reserves available yet.' : 'Nessuna riserva disponibile.'}</span>
-                  </div>
-                )}
-              </div>
-            </EnterpriseSection>
-          )}
 
           <div className="nr-reference-main-grid">
             <section className="nr-reference-left">
@@ -1835,15 +1654,12 @@ export default withAuth(function NuovaRosaLabPage() {
   const [pickerSuggested, setPickerSuggested] = React.useState([])
   const [selectedCatalogCard, setSelectedCatalogCard] = React.useState(null)
   const [confirmModal, setConfirmModal] = React.useState(null)
-  const [showManualPlayerModal, setShowManualPlayerModal] = React.useState(false)
-  const [manualEditorMode, setManualEditorMode] = React.useState('create')
-  const [manualEditorPlayer, setManualEditorPlayer] = React.useState(null)
   const [showPremiumEditorModal, setShowPremiumEditorModal] = React.useState(false)
-  const [savingManualEditor, setSavingManualEditor] = React.useState(false)
-  const [showManualBoostersModal, setShowManualBoostersModal] = React.useState(false)
-  const [manualBoosters, setManualBoosters] = React.useState([])
-  const [manualBoostersPlayerId, setManualBoostersPlayerId] = React.useState(null)
-  const [savingManualBoosters, setSavingManualBoosters] = React.useState(false)
+  const [savingPlayerEditor, setSavingPlayerEditor] = React.useState(false)
+  const [showBoostersModal, setShowBoostersModal] = React.useState(false)
+  const [boostersEditorDraft, setBoostersEditorDraft] = React.useState([])
+  const [boostersPlayerId, setBoostersPlayerId] = React.useState(null)
+  const [savingBoosters, setSavingBoosters] = React.useState(false)
   const [importingStarterPack, setImportingStarterPack] = React.useState(false)
   const [savingTacticalSettings, setSavingTacticalSettings] = React.useState(false)
   const [fieldEditMode, setFieldEditMode] = React.useState(false)
@@ -2035,13 +1851,6 @@ export default withAuth(function NuovaRosaLabPage() {
     setPickerQuery('')
   }, [])
 
-  const handleOpenManualFallback = React.useCallback(() => {
-    setPickerOpen(false)
-    setManualEditorMode('create')
-    setManualEditorPlayer(null)
-    setShowManualPlayerModal(true)
-  }, [])
-
   const handleUploadFallback = React.useCallback(() => {
     setPickerOpen(false)
     setConfirmModal({
@@ -2051,8 +1860,8 @@ export default withAuth(function NuovaRosaLabPage() {
           ? 'Photo upload is still managed by the current roster page. We can open it now without touching your data.'
           : 'Il caricamento foto e ancora gestito dalla pagina rosa attuale. Possiamo aprirla ora senza toccare i tuoi dati.',
         details: lang === 'en'
-          ? 'Use it when the catalog or manual entry is not enough.'
-          : 'Usala quando catalogo o inserimento manuale non bastano.',
+          ? 'Use it when you cannot find the player in the catalog.'
+          : 'Usala quando non trovi il giocatore nel catalogo.',
         confirmLabel: lang === 'en' ? 'Open roster page' : 'Apri pagina rosa',
         cancelLabel: t('cancel')
       }),
@@ -2469,16 +2278,17 @@ export default withAuth(function NuovaRosaLabPage() {
     }
   }, [fetchRoster, lang, refreshDiagnosticAfterSave, showToast, t])
 
-  const openManualBoostersForPlayer = React.useCallback((player) => {
+  const openBoostersForPlayer = React.useCallback((player) => {
     if (!player?.id) return
     const existing = Array.isArray(player.available_boosters) ? player.available_boosters : []
-    setManualBoosters(existing.length > 0 ? existing : [{ name: '', effect: '' }])
-    setManualBoostersPlayerId(player.id)
-    setShowManualBoostersModal(true)
+    setBoostersEditorDraft(existing.length > 0 ? existing : [{ name: '', effect: '' }])
+    setBoostersPlayerId(player.id)
+    setShowBoostersModal(true)
   }, [])
 
-  const handleManualEditorSave = React.useCallback(async (form) => {
-    setSavingManualEditor(true)
+  const saveBoostersForPlayer = React.useCallback(async () => {
+    if (!boostersPlayerId) return
+    setSavingBoosters(true)
     try {
       let token = getTokenFallback()
       if (!token && supabase) {
@@ -2487,89 +2297,14 @@ export default withAuth(function NuovaRosaLabPage() {
       }
       if (!token) throw new Error(t('sessionExpired'))
 
-      if (manualEditorMode === 'edit' && manualEditorPlayer?.id) {
-        const response = await fetch(`/api/players/${manualEditorPlayer.id}`, {
-          method: 'PATCH',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            metadata: {
-              manual_override_name: form.player_name.trim(),
-              manual_override_position: form.position || null,
-              manual_override_overall: form.overall_rating ? Number(form.overall_rating) : null,
-              manual_override_card_type: form.card_type || null,
-              manual_override_role: form.role || null,
-              manual_override_nationality: form.nationality || null,
-              manual_override_club_name: form.club_name || null
-            }
-          })
-        })
-        await safeJsonResponse(response, t('errorSavingPlayerGeneric'))
-      } else {
-        const payload = {
-          player_name: form.player_name.trim(),
-          position: form.position || selectedSlot?.position || null,
-          overall_rating: form.overall_rating ? Number(form.overall_rating) : null,
-          card_type: form.card_type || null,
-          role: form.role || null,
-          age: form.age ? Number(form.age) : null,
-          nationality: form.nationality || null,
-          club_name: form.club_name || null,
-          slot_index: selectedSlot?.slot_index ?? null,
-          photo_slots: { manuale: true },
-          metadata: {
-            manual_entry: true,
-            manual_entry_saved_at: new Date().toISOString()
-          },
-          extracted_data: { source: 'manual_input' }
-        }
-
-        const response = await fetch('/api/supabase/save-player', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ player: payload })
-        })
-        await safeJsonResponse(response, t('errorSavingPlayerGeneric'))
-      }
-
-      setShowManualPlayerModal(false)
-      setManualEditorPlayer(null)
-      await fetchRoster()
-      await refreshDiagnosticAfterSave()
-      showToast(lang === 'en' ? 'Player saved successfully.' : 'Giocatore salvato con successo.', 'success')
-    } catch (err) {
-      console.error('[NuovaRosaLab] manual editor error:', err)
-      const { message } = mapErrorToUserMessage(err, t('errorSavingPlayerGeneric'), lang)
-      showToast(message, 'error')
-    } finally {
-      setSavingManualEditor(false)
-    }
-  }, [fetchRoster, lang, manualEditorMode, manualEditorPlayer, refreshDiagnosticAfterSave, selectedSlot, showToast, t])
-
-  const saveManualBoostersForPlayer = React.useCallback(async () => {
-    if (!manualBoostersPlayerId) return
-    setSavingManualBoosters(true)
-    try {
-      let token = getTokenFallback()
-      if (!token && supabase) {
-        const { data: session } = await supabase.auth.getSession()
-        token = session?.session?.access_token
-      }
-      if (!token) throw new Error(t('sessionExpired'))
-
-      const cleaned = (Array.isArray(manualBoosters) ? manualBoosters : [])
+      const cleaned = (Array.isArray(boostersEditorDraft) ? boostersEditorDraft : [])
         .map((booster) => ({
           name: typeof booster?.name === 'string' ? booster.name.trim() : '',
           effect: typeof booster?.effect === 'string' ? booster.effect.trim() : ''
         }))
         .filter((booster) => booster.name || booster.effect)
 
-      const playerRes = await fetch(`/api/players/${manualBoostersPlayerId}`, {
+      const playerRes = await fetch(`/api/players/${boostersPlayerId}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       const current = await playerRes.json().catch(() => ({}))
@@ -2577,7 +2312,7 @@ export default withAuth(function NuovaRosaLabPage() {
         ? current.player.photo_slots
         : {}
 
-      const patchRes = await fetch(`/api/players/${manualBoostersPlayerId}`, {
+      const patchRes = await fetch(`/api/players/${boostersPlayerId}`, {
         method: 'PATCH',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -2589,9 +2324,9 @@ export default withAuth(function NuovaRosaLabPage() {
         })
       })
       await safeJsonResponse(patchRes, t('errorSavingPlayerGeneric'))
-      setShowManualBoostersModal(false)
-      setManualBoosters([])
-      setManualBoostersPlayerId(null)
+      setShowBoostersModal(false)
+      setBoostersEditorDraft([])
+      setBoostersPlayerId(null)
       setSelectedPlayer(null)
       await fetchRoster()
       await refreshDiagnosticAfterSave()
@@ -2601,13 +2336,13 @@ export default withAuth(function NuovaRosaLabPage() {
       const { message } = mapErrorToUserMessage(err, t('errorSavingPlayerGeneric'), lang)
       showToast(message, 'error')
     } finally {
-      setSavingManualBoosters(false)
+      setSavingBoosters(false)
     }
-  }, [manualBoosters, manualBoostersPlayerId, fetchRoster, lang, refreshDiagnosticAfterSave, showToast, t])
+  }, [boostersEditorDraft, boostersPlayerId, fetchRoster, lang, refreshDiagnosticAfterSave, showToast, t])
 
   const handlePremiumPlayerSave = React.useCallback(async (payload) => {
     if (!selectedPlayer?.id) return
-    setSavingManualEditor(true)
+    setSavingPlayerEditor(true)
     try {
       let token = getTokenFallback()
       if (!token && supabase) {
@@ -2635,7 +2370,7 @@ export default withAuth(function NuovaRosaLabPage() {
       const { message } = mapErrorToUserMessage(err, t('errorSavingPlayerGeneric'), lang)
       showToast(message, 'error')
     } finally {
-      setSavingManualEditor(false)
+      setSavingPlayerEditor(false)
     }
   }, [fetchRoster, lang, refreshDiagnosticAfterSave, selectedPlayer, showToast, t])
 
@@ -3107,7 +2842,6 @@ export default withAuth(function NuovaRosaLabPage() {
         onClose={closePicker}
         onConfirm={pickerMode === 'reserve' ? handleSaveCatalogCardAsReserve : handleSaveCatalogCardToSlot}
         onSelectReserve={handleSelectReserveForSlot}
-        onManualFallback={handleOpenManualFallback}
         onUploadFallback={handleUploadFallback}
         lang={lang}
       />
@@ -3125,7 +2859,7 @@ export default withAuth(function NuovaRosaLabPage() {
         onUploadPhoto={handleUploadFallback}
         onOpenBoosters={(player) => {
           setShowAssignModal(false)
-          openManualBoostersForPlayer(player)
+          openBoostersForPlayer(player)
         }}
         onOpenReplace={(player, openEditor = false) => {
           if (openEditor) {
@@ -3147,28 +2881,18 @@ export default withAuth(function NuovaRosaLabPage() {
       <PremiumPlayerModal
         player={showPremiumEditorModal ? selectedPlayer : null}
         slot={selectedSlot}
-        reserves={riserve}
-        assigning={assigning}
-        onAssignFromReserve={handleSelectReserveForSlot}
         show={showPremiumEditorModal && !!selectedPlayer}
         onClose={() => {
           setShowPremiumEditorModal(false)
           setSelectedPlayer(null)
         }}
         onSave={handlePremiumPlayerSave}
-        saving={savingManualEditor}
+        saving={savingPlayerEditor}
         onRemoveFromSlot={handleRemoveFromSlot}
         onDeletePlayer={handleDeletePlayer}
-        onOpenManualEntry={() => {
-          setShowPremiumEditorModal(false)
-          setManualEditorMode('create')
-          setManualEditorPlayer(null)
-          setShowManualPlayerModal(true)
-        }}
-        onUploadPhoto={handleUploadFallback}
         onOpenBoosters={(player) => {
           setShowPremiumEditorModal(false)
-          openManualBoostersForPlayer(player)
+          openBoostersForPlayer(player)
         }}
         onOpenReplace={(player) => {
           const slot = player?.slot_index != null ? slots.find((entry) => entry.slot_index === player.slot_index) : null
@@ -3182,31 +2906,17 @@ export default withAuth(function NuovaRosaLabPage() {
         t={t}
       />
 
-      <EnterprisePlayerEditorModal
-        show={showManualPlayerModal}
-        mode={manualEditorMode}
-        player={manualEditorPlayer}
-        slot={selectedSlot}
-        onClose={() => {
-          setShowManualPlayerModal(false)
-          setManualEditorPlayer(null)
-        }}
-        onSave={handleManualEditorSave}
-        saving={savingManualEditor}
-        lang={lang}
-      />
-
       <EnterpriseBoostersModal
-        show={showManualBoostersModal}
-        boosters={manualBoosters}
-        setBoosters={setManualBoosters}
+        show={showBoostersModal}
+        boosters={boostersEditorDraft}
+        setBoosters={setBoostersEditorDraft}
         onClose={() => {
-          setShowManualBoostersModal(false)
-          setManualBoosters([])
-          setManualBoostersPlayerId(null)
+          setShowBoostersModal(false)
+          setBoostersEditorDraft([])
+          setBoostersPlayerId(null)
         }}
-        onSave={saveManualBoostersForPlayer}
-        saving={savingManualBoosters}
+        onSave={saveBoostersForPlayer}
+        saving={savingBoosters}
         lang={lang}
       />
 
