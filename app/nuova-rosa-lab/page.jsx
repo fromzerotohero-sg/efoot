@@ -856,10 +856,18 @@ function PhotoUploadModal({
         <div className="nr-photo-step-row">
           {imageTypes.map((type, index) => {
             const image = getImageForType(type.key)
+            const statusLabel = uploading && image
+              ? (lang === 'en' ? 'Extracting' : 'Estrazione')
+              : image
+                ? (lang === 'en' ? 'Selected, not extracted yet' : 'Selezionata, non ancora estratta')
+                : (lang === 'en' ? 'Not selected' : 'Non selezionata')
             return (
-              <div key={type.key} className={`nr-photo-step ${image ? 'complete' : ''}`}>
-                <span>{image ? <CheckCircle2 size={14} /> : index + 1}</span>
-                <small>{type.label}</small>
+              <div key={type.key} className={`nr-photo-step ${uploading && image ? 'extracting' : image ? 'selected' : ''}`}>
+                <span>{uploading && image ? <RefreshCw size={14} className="nr-spin" /> : image ? <Upload size={13} /> : index + 1}</span>
+                <small>
+                  <strong>{type.label}</strong>
+                  <em>{statusLabel}</em>
+                </small>
               </div>
             )
           })}
@@ -885,14 +893,19 @@ function PhotoUploadModal({
                     <strong>{label}</strong>
                     <p>{description}</p>
                   </div>
-                  <span>{required ? (lang === 'en' ? 'Recommended' : 'Consigliata') : (lang === 'en' ? 'Optional' : 'Opzionale')}</span>
+                  <span>{image
+                    ? (lang === 'en' ? 'Ready to extract' : 'Da estrarre')
+                    : required ? (lang === 'en' ? 'Recommended' : 'Consigliata') : (lang === 'en' ? 'Optional' : 'Opzionale')}</span>
                 </div>
 
                 {image ? (
                   <div className="nr-photo-preview">
                     <img src={image.dataUrl} alt={label} />
                     <div>
-                      <span>{image.name || (lang === 'en' ? 'Selected photo' : 'Foto selezionata')}</span>
+                      <span>
+                        {image.name || (lang === 'en' ? 'Selected photo' : 'Foto selezionata')}
+                        <small>{lang === 'en' ? 'Will be extracted when you press Extract data from photos.' : 'Sara estratta quando premi Estrai dati dalle foto.'}</small>
+                      </span>
                       <button type="button" className="nr-secondary-button" onClick={() => removeImage(key)} disabled={uploading}>
                         {lang === 'en' ? 'Remove' : 'Rimuovi'}
                       </button>
@@ -924,8 +937,108 @@ function PhotoUploadModal({
           <button type="button" className="nr-primary-button" onClick={onUpload} disabled={uploading || images.length === 0}>
             {uploading ? <RefreshCw size={14} className="nr-spin" /> : <CheckCircle2 size={14} />}
             {uploading
-              ? (lang === 'en' ? 'Extracting...' : 'Estrazione...')
-              : (lang === 'en' ? 'Extract player' : 'Estrai giocatore')}
+              ? (lang === 'en' ? 'Extracting data...' : 'Estrazione dati...')
+              : (lang === 'en' ? 'Extract data from photos' : 'Estrai dati dalle foto')}
+          </button>
+        </div>
+      </div>
+    </EnterpriseModalFrame>
+  )
+}
+
+function PhotoExtractionReviewModal({
+  show,
+  playerData,
+  photoSlots,
+  mode,
+  slot,
+  lang,
+  onContinue,
+  onCancel
+}) {
+  if (!show || !playerData) return null
+
+  const baseReady = Boolean(playerData.player_name && playerData.overall_rating && (playerData.position || playerData.original_positions?.length))
+  const statsReady = Boolean(playerData.base_stats && Object.keys(playerData.base_stats || {}).length > 0)
+  const skillsReady = Boolean((Array.isArray(playerData.skills) && playerData.skills.length > 0) || (Array.isArray(playerData.com_skills) && playerData.com_skills.length > 0))
+  const boostersReady = Boolean((Array.isArray(playerData.available_boosters) && playerData.available_boosters.length > 0) || (Array.isArray(playerData.boosters) && playerData.boosters.length > 0))
+  const destination = mode === 'reserve'
+    ? (lang === 'en' ? 'Reserve bench' : 'Riserve')
+    : (slot?.position || (lang === 'en' ? 'selected slot' : 'slot selezionato'))
+  const rows = [
+    {
+      key: 'base',
+      label: lang === 'en' ? 'Base player data' : 'Dati base giocatore',
+      ready: baseReady,
+      detail: `${playerData.player_name || '-'} · ${playerData.position || '-'} · OVR ${playerData.overall_rating ?? '-'}`
+    },
+    {
+      key: 'stats',
+      label: lang === 'en' ? 'Performance stats' : 'Statistiche',
+      ready: statsReady,
+      detail: photoSlots?.statistiche ? (lang === 'en' ? 'Extracted from stats/card photo' : 'Estratte da foto statistiche/carta') : (lang === 'en' ? 'Not detected yet' : 'Non rilevate')
+    },
+    {
+      key: 'skills',
+      label: lang === 'en' ? 'Skills' : 'Abilita',
+      ready: skillsReady,
+      detail: photoSlots?.abilita ? (lang === 'en' ? 'Extracted from skills photo' : 'Estratte da foto abilita') : (lang === 'en' ? 'Can be completed later' : 'Completabile dopo')
+    },
+    {
+      key: 'boosters',
+      label: 'Boosters',
+      ready: boostersReady,
+      detail: photoSlots?.booster ? (lang === 'en' ? 'Extracted from boosters photo' : 'Estratti da foto booster') : (lang === 'en' ? 'Optional, can be completed later' : 'Opzionali, completabili dopo')
+    }
+  ]
+
+  return (
+    <EnterpriseModalFrame
+      show={show}
+      onClose={onCancel}
+      title={lang === 'en' ? 'Extraction complete' : 'Estrazione completata'}
+      subtitle={lang === 'en' ? `Review before saving to ${destination}` : `Controlla prima di salvare in ${destination}`}
+      className="nr-photo-review-shell"
+    >
+      <div className="nr-photo-review-body">
+        <div className="nr-photo-review-hero">
+          <div>
+            <span className="nr-mini-kicker">{lang === 'en' ? 'Extracted player' : 'Giocatore estratto'}</span>
+            <h3>{playerData.player_name || '-'}</h3>
+            <p>{playerData.position || '-'} · OVR {playerData.overall_rating ?? '-'}</p>
+          </div>
+          <CheckCircle2 size={28} />
+        </div>
+
+        <div className="nr-photo-review-list">
+          {rows.map((row) => (
+            <div key={row.key} className={`nr-photo-review-row ${row.ready ? 'ready' : 'missing'}`}>
+              <span>{row.ready ? <CheckCircle2 size={15} /> : <AlertTriangle size={15} />}</span>
+              <div>
+                <strong>{row.label}</strong>
+                <p>{row.detail}</p>
+              </div>
+              <em>{row.ready ? (lang === 'en' ? 'Extracted' : 'Estratto') : (lang === 'en' ? 'To complete' : 'Da completare')}</em>
+            </div>
+          ))}
+        </div>
+
+        <div className="nr-warning-box">
+          <AlertTriangle size={16} />
+          <span>
+            {lang === 'en'
+              ? 'Only required data blocks saving. Optional missing sections can be completed later from the player editor.'
+              : "Solo i dati obbligatori bloccano il salvataggio. Le sezioni opzionali mancanti si possono completare dopo dall'editor."}
+          </span>
+        </div>
+
+        <div className="nr-modal-footer">
+          <button type="button" className="nr-secondary-button" onClick={onCancel}>
+            {lang === 'en' ? 'Cancel' : 'Annulla'}
+          </button>
+          <button type="button" className="nr-primary-button" onClick={onContinue}>
+            {lang === 'en' ? 'Confirm roles' : 'Conferma ruoli'}
+            <ArrowRight size={14} />
           </button>
         </div>
       </div>
@@ -1906,6 +2019,7 @@ export default withAuth(function NuovaRosaLabPage() {
   const [extractedPlayerData, setExtractedPlayerData] = React.useState(null)
   const [selectedOriginalPositions, setSelectedOriginalPositions] = React.useState([])
   const [positionModalCtx, setPositionModalCtx] = React.useState(null)
+  const [showPhotoReviewModal, setShowPhotoReviewModal] = React.useState(false)
 
   const totalPlayers = titolari.length + riserve.length
   const setupStage = buildSetupStage({
@@ -2110,6 +2224,10 @@ export default withAuth(function NuovaRosaLabPage() {
     setShowPremiumEditorModal(false)
     setSelectedCatalogCard(null)
     setSelectedPlayer(null)
+    setExtractedPlayerData(null)
+    setSelectedOriginalPositions([])
+    setPositionModalCtx(null)
+    setShowPhotoReviewModal(false)
     setPhotoUploadMode(nextMode)
     setPhotoUploadSlot(nextMode === 'slot' ? nextSlot : null)
     setSelectedSlot(nextMode === 'slot' ? nextSlot : null)
@@ -2123,6 +2241,7 @@ export default withAuth(function NuovaRosaLabPage() {
     setPhotoUploadImages([])
     setPhotoUploadSlot(null)
     setPhotoUploadMode('slot')
+    setShowPhotoReviewModal(false)
   }, [uploadingPhoto])
 
   const checkPhotoMissingData = React.useCallback((playerData) => {
@@ -2275,15 +2394,6 @@ export default withAuth(function NuovaRosaLabPage() {
         )
         return
       }
-      if (missing.optional.length > 0) {
-        showToast(
-          lang === 'en'
-            ? `Some optional data is missing: ${missing.optional.map((entry) => entry.label).join(', ')}. You can complete it later in the editor.`
-            : `Mancano alcuni dati opzionali: ${missing.optional.map((entry) => entry.label).join(', ')}. Puoi completarli dopo nell'editor.`,
-          'warning'
-        )
-      }
-
       const mainPosition = playerData.position || 'AMF'
       const initialPositions = Array.isArray(playerData.original_positions) && playerData.original_positions.length > 0
         ? playerData.original_positions
@@ -2303,6 +2413,7 @@ export default withAuth(function NuovaRosaLabPage() {
         photoSlots
       })
       setShowPhotoUploadModal(false)
+      setShowPhotoReviewModal(true)
     } catch (err) {
       console.error('[NuovaRosaLab] photo extraction error:', err)
       const { message } = mapErrorToUserMessage(err, lang === 'en' ? 'Unable to upload photo.' : 'Impossibile caricare la foto.', lang)
@@ -2319,6 +2430,7 @@ export default withAuth(function NuovaRosaLabPage() {
     setPhotoUploadImages([])
     setPhotoUploadSlot(null)
     setPhotoUploadMode('slot')
+    setShowPhotoReviewModal(false)
     setSelectedSlot(null)
   }, [])
 
@@ -3385,7 +3497,18 @@ export default withAuth(function NuovaRosaLabPage() {
         t={t}
       />
 
-      {positionModalCtx && extractedPlayerData && (
+      <PhotoExtractionReviewModal
+        show={showPhotoReviewModal}
+        playerData={extractedPlayerData}
+        photoSlots={positionModalCtx?.photoSlots}
+        mode={positionModalCtx?.uploadMode}
+        slot={photoUploadSlot}
+        lang={lang}
+        onContinue={() => setShowPhotoReviewModal(false)}
+        onCancel={resetPhotoPositionFlow}
+      />
+
+      {positionModalCtx && extractedPlayerData && !showPhotoReviewModal && (
         <PositionSelectionModal
           playerName={extractedPlayerData.player_name}
           overallRating={extractedPlayerData.overall_rating}
@@ -4419,10 +4542,36 @@ export default withAuth(function NuovaRosaLabPage() {
           flex-shrink: 0;
         }
 
-        .nr-photo-step.complete {
+        .nr-photo-step.selected {
           color: #d1fae5;
           border-color: rgba(52, 211, 153, 0.28);
           background: rgba(52, 211, 153, 0.08);
+        }
+
+        .nr-photo-step.extracting {
+          color: #bae6fd;
+          border-color: rgba(56, 189, 248, 0.32);
+          background: rgba(56, 189, 248, 0.09);
+        }
+
+        .nr-photo-step small {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          min-width: 0;
+        }
+
+        .nr-photo-step small strong {
+          color: inherit;
+          font-size: 12px;
+          line-height: 1.15;
+        }
+
+        .nr-photo-step small em {
+          color: rgba(255, 255, 255, 0.56);
+          font-size: 10px;
+          font-style: normal;
+          line-height: 1.2;
         }
 
         .nr-photo-example-panel {
@@ -4571,6 +4720,123 @@ export default withAuth(function NuovaRosaLabPage() {
           min-width: 0;
           overflow: hidden;
           text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .nr-photo-preview span small {
+          display: block;
+          margin-top: 3px;
+          color: rgba(255, 255, 255, 0.52);
+          font-size: 11px;
+          line-height: 1.25;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .nr-photo-review-shell {
+          width: min(640px, calc(100vw - 24px));
+        }
+
+        .nr-photo-review-body {
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+        }
+
+        .nr-photo-review-hero {
+          border-radius: 18px;
+          border: 1px solid rgba(52, 211, 153, 0.24);
+          background:
+            radial-gradient(circle at top right, rgba(52, 211, 153, 0.14), transparent 34%),
+            rgba(52, 211, 153, 0.06);
+          padding: 16px;
+          display: flex;
+          justify-content: space-between;
+          gap: 14px;
+          align-items: center;
+          color: #d1fae5;
+        }
+
+        .nr-photo-review-hero h3 {
+          margin: 4px 0;
+          color: #fff;
+          font-size: 22px;
+        }
+
+        .nr-photo-review-hero p {
+          margin: 0;
+          color: rgba(255, 255, 255, 0.74);
+          font-size: 13px;
+        }
+
+        .nr-photo-review-list {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .nr-photo-review-row {
+          border-radius: 14px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.035);
+          padding: 12px;
+          display: grid;
+          grid-template-columns: auto minmax(0, 1fr) auto;
+          gap: 10px;
+          align-items: center;
+        }
+
+        .nr-photo-review-row.ready {
+          border-color: rgba(52, 211, 153, 0.22);
+          background: rgba(52, 211, 153, 0.06);
+        }
+
+        .nr-photo-review-row.missing {
+          border-color: rgba(245, 158, 11, 0.24);
+          background: rgba(245, 158, 11, 0.06);
+        }
+
+        .nr-photo-review-row > span {
+          width: 28px;
+          height: 28px;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(255, 255, 255, 0.08);
+          color: currentColor;
+        }
+
+        .nr-photo-review-row.ready > span {
+          color: #34d399;
+        }
+
+        .nr-photo-review-row.missing > span {
+          color: #fbbf24;
+        }
+
+        .nr-photo-review-row strong {
+          display: block;
+          color: #fff;
+          font-size: 13px;
+          margin-bottom: 2px;
+        }
+
+        .nr-photo-review-row p {
+          margin: 0;
+          color: rgba(255, 255, 255, 0.62);
+          font-size: 12px;
+          line-height: 1.35;
+        }
+
+        .nr-photo-review-row em {
+          color: rgba(255, 255, 255, 0.58);
+          font-size: 11px;
+          font-style: normal;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
           white-space: nowrap;
         }
 
