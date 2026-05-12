@@ -13,22 +13,31 @@ export const dynamic = 'force-dynamic'
 const DEEP_ANALYSIS_COST = 2
 const MODEL = process.env.CARD_ADVISOR_DEEP_MODEL || 'gpt-5.2'
 
-const CATALOG_SELECT = [
+const CARD_ADVISOR_SELECT = [
   'source',
   'source_player_id',
+  'source_url',
   'player_name',
   'position',
+  'category',
   'card_type',
-  'rating',
-  'overall_level_1',
-  'overall_max_level',
+  'overall_display',
+  'image_url',
   'playing_style',
   'player_skills',
+  'ai_playstyles',
   'base_stats',
   'max_stats',
-  'catalog_ready',
-  'needs_review',
-  'position_compatibility'
+  'position_compatibility',
+  'height',
+  'weight',
+  'age',
+  'foot',
+  'data_quality',
+  'completeness_score',
+  'enrichment_status',
+  'error_message',
+  'source_payload'
 ].join(',')
 
 function sanitize(value, maxLen = 500) {
@@ -135,16 +144,15 @@ async function resolveUserId(userData, admin) {
   return userId
 }
 
-async function fetchCatalogCard(admin, card) {
+async function fetchCardAdvisorCard(admin, card) {
   const safeName = String(card.name || '').replace(/[%_]/g, '').trim()
-  let query = admin.from('player_catalog')
-    .select(CATALOG_SELECT)
-    .eq('catalog_ready', true)
-    .eq('needs_review', false)
+  let query = admin.from('card_advisor_cards')
+    .select(CARD_ADVISOR_SELECT)
+    .eq('is_active', true)
     .limit(8)
 
-  if (card.sourcePlayerId && card.source === 'pesdb') {
-    query = query.eq('source', 'pesdb').eq('source_player_id', card.sourcePlayerId)
+  if (card.sourcePlayerId) {
+    query = query.eq('source', card.source || 'efhub').eq('source_player_id', card.sourcePlayerId)
   } else {
     if (!safeName) return null
     query = query.ilike('player_name', `%${safeName}%`).eq('position', card.position)
@@ -158,7 +166,9 @@ async function fetchCatalogCard(admin, card) {
       const nameB = toAscii(b.player_name) === toAscii(card.name) ? 8 : 0
       const posA = a.position === card.position ? 4 : 0
       const posB = b.position === card.position ? 4 : 0
-      return (nameB + posB) - (nameA + posA)
+      const qualityA = a.enrichment_status === 'complete' ? 4 : a.enrichment_status === 'partial' ? 1 : 0
+      const qualityB = b.enrichment_status === 'complete' ? 4 : b.enrichment_status === 'partial' ? 1 : 0
+      return (nameB + posB + qualityB) - (nameA + posA + qualityA)
     })[0]
 }
 
@@ -228,6 +238,7 @@ FOCUS:
 - Stili e abilità sono diversi: lo stile spiega il movimento; le abilità spiegano cosa sa fare.
 - Se trovi una combo reale, mettila al centro. Se manca metà combo, dillo.
 - Usa il RAG per interpretare movimenti da stile, meccaniche eFootball, movimenti collettivi, abilità e situazioni di gioco. Non copiarlo: applicalo ai dati del cliente.
+- Scrivi corto e denso. Niente tema. Ogni campo deve essere leggibile in pochi secondi.
 
 SEMANTICA:
 - Usa termini da coach/community: movimento, skill nativa, combo, catena, rotazione, non prioritaria, luxury pick, riferimento in area, attacca spazio, dà ampiezza, tiene posizione, non cambia gerarchie.
@@ -247,23 +258,23 @@ ${ragKnowledge || 'Nessun RAG disponibile.'}
 OUTPUT:
 Restituisci SOLO JSON valido con questa struttura:
 {
-  "headline": "titolo breve e deciso",
+  "headline": "titolo breve e deciso, massimo 55 caratteri",
   "verdict": "take|premium_rotation|situational|luxury_pick|not_priority|skip",
-  "summary": "analisi principale in 3-5 frasi, tono coach sicuro",
+  "summary": "massimo 2 frasi brevi, verdetto + motivo principale",
   "card_identity": {
-    "movement": "movimento automatico da stile",
+    "movement": "movimento automatico da stile, massimo 100 caratteri",
     "key_skills": ["skill rilevanti"],
-    "best_use": "uso ideale"
+    "best_use": "uso ideale, massimo 120 caratteri"
   },
   "key_reasoning": [
-    { "label": "Catena / movimento / dato incrociato", "text": "micro-ragionamento personalizzato e assertivo" }
+    { "label": "massimo 35 caratteri", "text": "micro-ragionamento assertivo, massimo 180 caratteri" }
   ],
-  "pros": ["3-5 pro concreti"],
-  "cons": ["2-4 contro concreti"],
-  "synergies": ["3-5 sinergie o combo, incluse combo assenti se importanti"],
-  "how_to_use": ["2-4 indicazioni pratiche"],
-  "when_to_avoid": ["1-3 casi in cui perde valore"],
-  "final_decision": "decisione finale netta e utile"
+  "pros": ["max 3 pro concreti, max 120 caratteri ciascuno"],
+  "cons": ["max 3 contro concreti, max 120 caratteri ciascuno"],
+  "synergies": ["max 3 sinergie/combo, max 140 caratteri ciascuna"],
+  "how_to_use": ["max 3 indicazioni pratiche, max 120 caratteri ciascuna"],
+  "when_to_avoid": ["max 2 casi, max 120 caratteri ciascuno"],
+  "final_decision": "decisione finale netta, massimo 180 caratteri"
 }
 `.trim()
 }
@@ -298,32 +309,32 @@ function normalizeDeepAnalysis(payload, lang) {
       }
 
   if (!payload || typeof payload !== 'object') return fallback
-  const arr = (value) => Array.isArray(value) ? value.map(item => sanitize(item, 260)).filter(Boolean).slice(0, 5) : []
+  const arr = (value, maxItems = 3, maxLen = 150) => Array.isArray(value) ? value.map(item => sanitize(item, maxLen)).filter(Boolean).slice(0, maxItems) : []
   const reasoning = (value) => Array.isArray(value)
     ? value
         .map(item => ({
-          label: sanitize(item?.label || '', 70),
-          text: sanitize(item?.text || item, 360)
+          label: sanitize(item?.label || '', 45),
+          text: sanitize(item?.text || item, 220)
         }))
         .filter(item => item.text)
-        .slice(0, 6)
+        .slice(0, 4)
     : []
   return {
     headline: sanitize(payload.headline, 120) || fallback.headline,
     verdict: ['take', 'premium_rotation', 'situational', 'luxury_pick', 'not_priority', 'skip'].includes(payload.verdict) ? payload.verdict : 'situational',
-    summary: sanitize(payload.summary, 900) || fallback.summary,
+    summary: sanitize(payload.summary, 420) || fallback.summary,
     card_identity: {
-      movement: sanitize(payload.card_identity?.movement, 260),
-      key_skills: arr(payload.card_identity?.key_skills),
-      best_use: sanitize(payload.card_identity?.best_use, 260)
+      movement: sanitize(payload.card_identity?.movement, 130),
+      key_skills: arr(payload.card_identity?.key_skills, 5, 60),
+      best_use: sanitize(payload.card_identity?.best_use, 160)
     },
     key_reasoning: reasoning(payload.key_reasoning),
-    pros: arr(payload.pros),
-    cons: arr(payload.cons),
-    synergies: arr(payload.synergies),
-    how_to_use: arr(payload.how_to_use),
-    when_to_avoid: arr(payload.when_to_avoid),
-    final_decision: sanitize(payload.final_decision, 500) || fallback.final_decision
+    pros: arr(payload.pros, 3, 140),
+    cons: arr(payload.cons, 3, 140),
+    synergies: arr(payload.synergies, 3, 160),
+    how_to_use: arr(payload.how_to_use, 3, 140),
+    when_to_avoid: arr(payload.when_to_avoid, 2, 140),
+    final_decision: sanitize(payload.final_decision, 220) || fallback.final_decision
   }
 }
 
@@ -369,6 +380,20 @@ export async function POST(req) {
     const lang = body.lang === 'en' ? 'en' : 'it'
     if (!card.name || !card.position) return NextResponse.json({ error: 'Invalid card' }, { status: 400 })
 
+    const catalogCard = await fetchCardAdvisorCard(admin, card).catch(() => null)
+    const hasUsableCardData = catalogCard?.enrichment_status === 'complete' && catalogCard?.base_stats && Object.keys(catalogCard.base_stats).length > 0
+    if (!hasUsableCardData) {
+      return NextResponse.json(
+        {
+          error: lang === 'en'
+            ? 'Detailed analysis is not ready for this card yet.'
+            : 'Analisi dettagliata non ancora pronta per questa carta.',
+          code: 'card_data_not_ready'
+        },
+        { status: 409 }
+      )
+    }
+
     const deduction = await deductCredits(admin, userId, token, DEEP_ANALYSIS_COST, 'card-advisor-deep-analysis')
     if (!deduction.success) {
       return NextResponse.json(
@@ -378,7 +403,6 @@ export async function POST(req) {
     }
     charged = true
 
-    const catalogCard = await fetchCatalogCard(admin, card).catch(() => null)
     const [
       profileRes,
       playersRes,

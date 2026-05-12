@@ -51,6 +51,8 @@ const copy = {
     deepHowToUse: 'Come usarla',
     deepWhenAvoid: 'Quando evitarla',
     deepFinalDecision: 'Decisione finale',
+    deepShowFull: 'Vedi report completo',
+    deepHideFull: 'Nascondi report',
     howToUse: 'Lettura sinergie',
     viewDetails: 'Vedi dettagli',
     hideDetails: 'Nascondi dettagli',
@@ -142,6 +144,8 @@ const copy = {
     deepHowToUse: 'How to use it',
     deepWhenAvoid: 'When to avoid it',
     deepFinalDecision: 'Final decision',
+    deepShowFull: 'Show full report',
+    deepHideFull: 'Hide report',
     howToUse: 'Synergy read',
     viewDetails: 'See details',
     hideDetails: 'Hide details',
@@ -698,6 +702,7 @@ function DetailPanel({
   onClose
 }) {
   const [showSynergyDetails, setShowSynergyDetails] = React.useState(false)
+  const [showDeepFullReport, setShowDeepFullReport] = React.useState(false)
   const verdict = getVerdictMeta(card.verdict, labels)
   const fitSummary = getFitSummary(card, rosterSummary, labels, lang)
   const serverEval = evaluation || null
@@ -849,39 +854,52 @@ function DetailPanel({
               ))}
             </div>
           )}
-          <div className="deep-analysis-grid">
-            <article>
-              <h4>{labels.deepPros}</h4>
-              <ul>{(deepAnalysis.pros || []).map(item => <li key={item}>{item}</li>)}</ul>
-            </article>
-            <article>
-              <h4>{labels.deepCons}</h4>
-              <ul>{(deepAnalysis.cons || []).map(item => <li key={item}>{item}</li>)}</ul>
-            </article>
-            <article>
-              <h4>{labels.deepSynergies}</h4>
-              <ul>{(deepAnalysis.synergies || []).map(item => <li key={item}>{item}</li>)}</ul>
-            </article>
-            <article>
-              <h4>{labels.deepHowToUse}</h4>
-              <ul>{(deepAnalysis.how_to_use || []).map(item => <li key={item}>{item}</li>)}</ul>
-            </article>
-          </div>
-          {(deepAnalysis.when_to_avoid?.length > 0 || deepAnalysis.final_decision) && (
-            <div className="deep-analysis-final">
-              {deepAnalysis.when_to_avoid?.length > 0 && (
-                <div>
-                  <h4>{labels.deepWhenAvoid}</h4>
-                  <ul>{deepAnalysis.when_to_avoid.map(item => <li key={item}>{item}</li>)}</ul>
+          <button
+            type="button"
+            className="deep-report-toggle"
+            onClick={() => setShowDeepFullReport(value => !value)}
+            aria-expanded={showDeepFullReport}
+          >
+            {showDeepFullReport ? labels.deepHideFull : labels.deepShowFull}
+            <ChevronRight size={15} />
+          </button>
+          {showDeepFullReport && (
+            <>
+              <div className="deep-analysis-grid">
+                <article>
+                  <h4>{labels.deepPros}</h4>
+                  <ul>{(deepAnalysis.pros || []).map(item => <li key={item}>{item}</li>)}</ul>
+                </article>
+                <article>
+                  <h4>{labels.deepCons}</h4>
+                  <ul>{(deepAnalysis.cons || []).map(item => <li key={item}>{item}</li>)}</ul>
+                </article>
+                <article>
+                  <h4>{labels.deepSynergies}</h4>
+                  <ul>{(deepAnalysis.synergies || []).map(item => <li key={item}>{item}</li>)}</ul>
+                </article>
+                <article>
+                  <h4>{labels.deepHowToUse}</h4>
+                  <ul>{(deepAnalysis.how_to_use || []).map(item => <li key={item}>{item}</li>)}</ul>
+                </article>
+              </div>
+              {(deepAnalysis.when_to_avoid?.length > 0 || deepAnalysis.final_decision) && (
+                <div className="deep-analysis-final">
+                  {deepAnalysis.when_to_avoid?.length > 0 && (
+                    <div>
+                      <h4>{labels.deepWhenAvoid}</h4>
+                      <ul>{deepAnalysis.when_to_avoid.map(item => <li key={item}>{item}</li>)}</ul>
+                    </div>
+                  )}
+                  {deepAnalysis.final_decision && (
+                    <div>
+                      <h4>{labels.deepFinalDecision}</h4>
+                      <p>{deepAnalysis.final_decision}</p>
+                    </div>
+                  )}
                 </div>
               )}
-              {deepAnalysis.final_decision && (
-                <div>
-                  <h4>{labels.deepFinalDecision}</h4>
-                  <p>{deepAnalysis.final_decision}</p>
-                </div>
-              )}
-            </div>
+            </>
           )}
         </div>
       )}
@@ -2239,6 +2257,26 @@ export default withAuth(function CardAdvisorLabPage() {
           color: rgba(255,255,255,0.80);
           line-height: 1.58;
           font-size: 13px;
+        }
+
+        .deep-report-toggle {
+          margin-top: 14px;
+          border: 1px solid rgba(251,191,36,0.32);
+          border-radius: 999px;
+          background: rgba(251,191,36,0.08);
+          color: #fff;
+          min-height: 36px;
+          padding: 8px 12px;
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          font-size: 12px;
+          font-weight: 900;
+          cursor: pointer;
+        }
+
+        .deep-report-toggle[aria-expanded="true"] svg {
+          transform: rotate(90deg);
         }
 
         .deep-analysis-grid,
