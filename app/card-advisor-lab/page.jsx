@@ -1690,9 +1690,10 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .card-details-modal-inner {
-          width: min(1040px, 100%);
+          width: min(1040px, calc(100vw - clamp(24px, 6vw, 56px)));
           max-height: min(880px, calc(100vh - 32px));
           overflow-y: auto;
+          overflow-x: hidden;
           border-radius: 24px;
           box-shadow: 0 0 50px rgba(0, 212, 255, 0.22);
         }
@@ -1700,6 +1701,8 @@ export default withAuth(function CardAdvisorLabPage() {
         .card-details-modal .detail-panel {
           position: relative;
           top: auto;
+          box-sizing: border-box;
+          width: 100%;
         }
 
         .detail-close-button {
@@ -1792,7 +1795,10 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .card-art-large {
-          width: min(235px, 34vw);
+          --card-image-scale: 1;
+          --card-image-x: 0%;
+          --card-image-y: 0%;
+          width: min(215px, 28vw);
           flex: 0 0 auto;
         }
 
@@ -1985,6 +1991,8 @@ export default withAuth(function CardAdvisorLabPage() {
           display: flex;
           gap: 20px;
           align-items: stretch;
+          min-width: 0;
+          width: 100%;
         }
 
         .detail-copy {
@@ -2484,6 +2492,21 @@ export default withAuth(function CardAdvisorLabPage() {
 
           .cards-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+        }
+
+        @media (max-width: 1040px) {
+          .card-details-modal {
+            align-items: flex-start;
+          }
+
+          .detail-hero {
+            flex-direction: column;
+          }
+
+          .card-art-large {
+            width: min(230px, 70vw);
+            align-self: center;
           }
         }
 
