@@ -438,6 +438,8 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
   const skipNextSyntheticCardClickRef = React.useRef(false)
   const slotThumb = React.useMemo(() => player?.photo_url || getPlayerCardImage(player), [player])
   const roleLabel = isEditMode ? (slot.position || player.position || '-') : (player.position || slot.position || '-')
+  const overallLabel = player?.overall_rating ?? player?.position_ratings?.[roleLabel] ?? '-'
+  const initialsLabel = getPlayerInitials(player.player_name)
 
   React.useEffect(() => {
     if (!isEditMode) suppressClickForFieldDragRef.current = false
@@ -546,6 +548,10 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
       onMouseDown={isEditMode ? handlePointerStart : undefined}
       onTouchStart={isEditMode ? handlePointerStart : undefined}
     >
+      <div className="nr-slot-top-badge">
+        <strong>{overallLabel}</strong>
+        <span>{roleLabel}</span>
+      </div>
       <div className={`nr-slot-filled-main ${slotThumb ? 'has-photo' : 'has-initials'}`}>
         <div className="nr-slot-avatar-mini">
           {slotThumb ? (
@@ -558,9 +564,11 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
           ) : (
             <span className="nr-player-initials">{getPlayerInitials(player.player_name)}</span>
           )}
-          <span className="nr-slot-role-chip">{roleLabel}</span>
         </div>
-        <span className="nr-slot-name-chip">{getShortPlayerName(player.player_name)}</span>
+        <span className="nr-slot-name-chip">
+          <span className="nr-slot-name-initials">{initialsLabel}</span>
+          <span>{getShortPlayerName(player.player_name)}</span>
+        </span>
       </div>
       {typeof onRemove === 'function' && (
         <span
@@ -5592,7 +5600,42 @@ export default withAuth(function NuovaRosaLabPage() {
           width: clamp(78px, 7vw, 92px);
           min-height: clamp(84px, 7.1vw, 96px);
           margin: 0 auto;
-          padding: 5px 4px;
+          padding: 12px 4px 5px;
+        }
+
+        .nr-slot-top-badge {
+          position: absolute;
+          top: -11px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 3;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 3px 7px;
+          border-radius: 999px;
+          border: 1px solid rgba(255, 255, 255, 0.34);
+          background: linear-gradient(135deg, rgba(3, 7, 18, 0.94), rgba(12, 74, 110, 0.92));
+          color: #fff;
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.38), 0 0 12px rgba(0, 212, 255, 0.22);
+          white-space: nowrap;
+          pointer-events: none;
+        }
+
+        .nr-slot-top-badge strong {
+          font-size: 11px;
+          line-height: 1;
+          font-weight: 950;
+          color: #d9f99d;
+          font-variant-numeric: tabular-nums;
+        }
+
+        .nr-slot-top-badge span {
+          font-size: 9px;
+          line-height: 1;
+          font-weight: 900;
+          letter-spacing: 0.04em;
+          color: #e0f2fe;
         }
 
         .nr-picker-detail-hero img,
@@ -5673,34 +5716,40 @@ export default withAuth(function NuovaRosaLabPage() {
           display: none;
         }
 
-        .nr-slot-role-chip {
-          position: absolute;
-          left: 6px;
-          bottom: 6px;
-          z-index: 2;
-          font-size: 9px;
-          font-weight: 700;
-          color: #ffffff;
-          letter-spacing: 0.05em;
-          border-radius: 999px;
-          border: 1px solid rgba(255, 255, 255, 0.28);
-          background: rgba(3, 7, 18, 0.58);
-          padding: 2px 7px;
-          line-height: 1.3;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.24);
-        }
-
         .nr-slot-name-chip {
           min-width: 0;
           max-width: 100%;
-          font-size: 8px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 3px;
+          padding: 2px 5px;
+          border-radius: 999px;
+          background: rgba(3, 7, 18, 0.62);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          font-size: 8.5px;
           font-weight: 800;
-          color: rgba(255, 255, 255, 0.86);
+          color: rgba(255, 255, 255, 0.92);
           line-height: 1;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
           text-align: center;
+        }
+
+        .nr-slot-name-initials {
+          flex: 0 0 auto;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 15px;
+          height: 15px;
+          border-radius: 999px;
+          background: rgba(0, 212, 255, 0.16);
+          color: #bae6fd;
+          font-size: 7px;
+          font-weight: 950;
+          letter-spacing: -0.02em;
         }
 
         .nr-bench-item-copy strong,
