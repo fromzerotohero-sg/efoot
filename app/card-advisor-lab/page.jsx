@@ -1826,18 +1826,23 @@ export default withAuth(function CardAdvisorLabPage() {
           right: 8px;
           z-index: 2;
           display: block;
-          width: 22%;
-          min-width: 36px;
-          max-width: 58px;
-          aspect-ratio: 1.9;
+          width: 25%;
+          min-width: 42px;
+          max-width: 70px;
+          aspect-ratio: 1.85;
           border-radius: 999px;
-          background:
-            url('/logo.png') center / 78% auto no-repeat,
-            linear-gradient(135deg, rgba(1,6,18,0.98), rgba(18,26,52,0.94));
+          background: linear-gradient(135deg, rgba(1,6,18,0.99), rgba(18,26,52,0.97));
           border: 1px solid rgba(255,255,255,0.38);
           box-shadow:
             0 2px 8px rgba(0,0,0,0.45),
             inset 0 0 0 1px rgba(0,212,255,0.18);
+        }
+
+        .card-art-brand-stamp::after {
+          content: '';
+          position: absolute;
+          inset: 3px 5px;
+          background: url('/logo.png') center / contain no-repeat;
         }
 
         .card-art::after {
