@@ -13,6 +13,66 @@ export const dynamic = 'force-dynamic'
 const DEEP_ANALYSIS_COST = 2
 const MODEL = process.env.CARD_ADVISOR_DEEP_MODEL || 'gpt-5.2'
 
+const IT_TERM_GLOSSARY = [
+  ['Acceleration Burst', 'Scatto esplosivo'],
+  ['Aerial Superiority', 'Dominio aereo'],
+  ['Acrobatic Clearance', 'Rinvio acrobatico'],
+  ['Acrobatic Finishing', 'Finalizzazione acrobatica'],
+  ['Anchor Man', 'Collante'],
+  ['Blocker', 'Blocco'],
+  ['Box To Box', 'Box-to-box'],
+  ['Build Up', 'Sviluppo'],
+  ['Captaincy', 'Leadership'],
+  ['Classic No. 10', 'Classico numero 10'],
+  ['Creative Playmaker', 'Regista creativo'],
+  ['Cross Specialist', 'Specialista cross'],
+  ['Cut Behind Turn', 'Taglio alle spalle e giro'],
+  ['Deep-Lying Forward', 'Fulcro di gioco'],
+  ['Defensive Full-back', 'Terzino difensivo'],
+  ['Destroyer', 'Distruttore'],
+  ['Double Touch', 'Doppio tocco'],
+  ['Dummy Runner', 'Finto nove'],
+  ['Edged Crossing', 'Cross tagliente'],
+  ['Extra Frontman', 'Difensore offensivo'],
+  ['First-time Shot', 'Tiro di prima'],
+  ['Fighting Spirit', 'Spirito combattivo'],
+  ['Fox In The Box', 'Rapace d’area'],
+  ['Full-back Finisher', 'Terzino finalizzatore'],
+  ['Goal Poacher', 'Opportunista'],
+  ['Heading', 'Colpo di testa'],
+  ['Hole Player', 'Giocatore chiave'],
+  ['Incisive Run', 'Inserimento incisivo'],
+  ['Interception', 'Intercettazione'],
+  ['Long Ball Expert', 'Specialista lancio lungo'],
+  ['Long Range Shooting', 'Tiro dalla distanza'],
+  ['Long-Range Curler', 'Tiro a giro dalla distanza'],
+  ['Low Lofted Pass', 'Pallonetto basso'],
+  ['Low Screamer', 'Rasoterra potente'],
+  ['Magnetic Feet', 'Piedi magnetici'],
+  ['Man Marking', 'Marcatura a uomo'],
+  ['Mazing Run', 'Corsa ubriacante'],
+  ['Momentum Dribbling', 'Dribbling in slancio'],
+  ['Offensive Goalkeeper', 'Portiere offensivo'],
+  ['Offensive Wingback', 'Terzino offensivo'],
+  ['One-touch Pass', 'Passaggio di prima'],
+  ['Orchestrator', 'Regista'],
+  ['Outside Curler', 'Esterno a giro'],
+  ['Phenomenal Finishing', 'Finalizzazione fenomenale'],
+  ['Phenomenal Passing', 'Passaggio fenomenale'],
+  ['Pinpoint Crossing', 'Cross calibrato'],
+  ['Prolific Winger', 'Ala prolifica'],
+  ['Rising Shots', 'Tiro ascendente'],
+  ['Roaming Flank', 'Taglio al centro'],
+  ['Sliding Tackle', 'Scivolata'],
+  ['Speeding Bullet', 'Proiettile veloce'],
+  ['Super Sub', 'Super riserva'],
+  ['Through Passing', 'Passaggio filtrante'],
+  ['Track Back', 'Rientro difensivo'],
+  ['Visionary Pass', 'Passaggio visionario'],
+  ['Weighted Pass', 'Passaggio calibrato'],
+  ['Tackle', 'Contrasto']
+]
+
 const CARD_ADVISOR_SELECT = [
   'source',
   'source_player_id',
@@ -43,6 +103,21 @@ const CARD_ADVISOR_SELECT = [
 function sanitize(value, maxLen = 500) {
   const text = String(value ?? '').replace(/\r\n|\r|\n/g, ' ').trim()
   return text.length > maxLen ? `${text.slice(0, maxLen)}...` : text
+}
+
+function escapeRegExp(value = '') {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function localizeItalianTerms(value = '') {
+  let text = String(value || '')
+  IT_TERM_GLOSSARY
+    .slice()
+    .sort((a, b) => b[0].length - a[0].length)
+    .forEach(([en, it]) => {
+      text = text.replace(new RegExp(`\\b${escapeRegExp(en)}\\b`, 'gi'), it)
+    })
+  return text
 }
 
 function toAscii(value = '') {
@@ -243,6 +318,7 @@ FOCUS:
 SEMANTICA:
 - Usa termini da coach/community: movimento, skill nativa, combo, catena, rotazione, non prioritaria, luxury pick, riferimento in area, attacca spazio, dà ampiezza, tiene posizione, non cambia gerarchie.
 - Evita: "fit stile 56%", "bonus sistema", "sinergia principale", "stat edge", "overall", "rating", "buildalo", "potenzialo", "allenalo".
+- Se rispondi in italiano, traduci in italiano anche stili, skill e tag tecnici quando possibile: non lasciare frasi con "Pinpoint Crossing", "Edged Crossing", "Acceleration Burst", "Hole Player", "Blocker", "Interception" se puoi dire "Cross calibrato", "Cross tagliente", "Scatto esplosivo", "Giocatore chiave", "Blocco", "Intercettazione".
 - La sezione "key_reasoning" è la parte più importante: ogni punto deve incrociare almeno due fonti tra carta, stile, skill, stats, rosa, formazione, tattica, coach, diagnosi, game analysis e RAG meccaniche.
 - Ogni ragionamento deve chiudere con una conseguenza pratica: cosa cambia, cosa sfruttare, cosa evitare o perché non è priorità.
 
@@ -309,24 +385,28 @@ function normalizeDeepAnalysis(payload, lang) {
       }
 
   if (!payload || typeof payload !== 'object') return fallback
-  const arr = (value, maxItems = 3, maxLen = 150) => Array.isArray(value) ? value.map(item => sanitize(item, maxLen)).filter(Boolean).slice(0, maxItems) : []
+  const clean = (value, maxLen = 500) => {
+    const text = sanitize(value, maxLen)
+    return lang === 'en' ? text : localizeItalianTerms(text)
+  }
+  const arr = (value, maxItems = 3, maxLen = 150) => Array.isArray(value) ? value.map(item => clean(item, maxLen)).filter(Boolean).slice(0, maxItems) : []
   const reasoning = (value) => Array.isArray(value)
     ? value
         .map(item => ({
-          label: sanitize(item?.label || '', 45),
-          text: sanitize(item?.text || item, 220)
+          label: clean(item?.label || '', 45),
+          text: clean(item?.text || item, 220)
         }))
         .filter(item => item.text)
         .slice(0, 4)
     : []
   return {
-    headline: sanitize(payload.headline, 120) || fallback.headline,
+    headline: clean(payload.headline, 120) || fallback.headline,
     verdict: ['take', 'premium_rotation', 'situational', 'luxury_pick', 'not_priority', 'skip'].includes(payload.verdict) ? payload.verdict : 'situational',
-    summary: sanitize(payload.summary, 420) || fallback.summary,
+    summary: clean(payload.summary, 420) || fallback.summary,
     card_identity: {
-      movement: sanitize(payload.card_identity?.movement, 130),
+      movement: clean(payload.card_identity?.movement, 130),
       key_skills: arr(payload.card_identity?.key_skills, 5, 60),
-      best_use: sanitize(payload.card_identity?.best_use, 160)
+      best_use: clean(payload.card_identity?.best_use, 160)
     },
     key_reasoning: reasoning(payload.key_reasoning),
     pros: arr(payload.pros, 3, 140),
@@ -334,7 +414,7 @@ function normalizeDeepAnalysis(payload, lang) {
     synergies: arr(payload.synergies, 3, 160),
     how_to_use: arr(payload.how_to_use, 3, 140),
     when_to_avoid: arr(payload.when_to_avoid, 2, 140),
-    final_decision: sanitize(payload.final_decision, 220) || fallback.final_decision
+    final_decision: clean(payload.final_decision, 220) || fallback.final_decision
   }
 }
 
@@ -397,7 +477,13 @@ export async function POST(req) {
     const deduction = await deductCredits(admin, userId, token, DEEP_ANALYSIS_COST, 'card-advisor-deep-analysis')
     if (!deduction.success) {
       return NextResponse.json(
-        { error: lang === 'en' ? 'Insufficient credits' : 'Crediti insufficienti' },
+        {
+          error: lang === 'en'
+            ? `You need ${DEEP_ANALYSIS_COST} HP to unlock the Pro verdict.`
+            : `Ti servono ${DEEP_ANALYSIS_COST} HP per sbloccare il verdetto Pro.`,
+          code: 'insufficient_credits',
+          requiredCredits: DEEP_ANALYSIS_COST
+        },
         { status: 402 }
       )
     }

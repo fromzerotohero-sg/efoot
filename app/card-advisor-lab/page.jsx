@@ -46,6 +46,9 @@ const copy = {
     proUnlockBullets: ['Decisione netta: prendere, evitare o solo rotazione', 'Combo reali con titolari, riserve, stile e coach', 'Uso pratico: dove rende e quando lasciarla stare'],
     proUnlockButton: 'Sblocca verdetto Pro',
     proUnlockedBadge: 'Sbloccato',
+    insufficientHpTitle: 'HP insufficienti',
+    insufficientHpText: 'Per sbloccare il Verdetto Pro servono 2 HP. Ricarica e riprova quando vuoi.',
+    rechargeHpCta: 'Ricarica HP',
     baseDetailsShow: 'Vedi dettagli base',
     baseDetailsHide: 'Nascondi dettagli base',
     deepAnalysisCta: 'Sblocca analisi premium',
@@ -148,6 +151,9 @@ const copy = {
     proUnlockBullets: ['Clear decision: take, skip, or rotation only', 'Real combos with starters, bench, style, and coach', 'Practical use: where it works and when to avoid it'],
     proUnlockButton: 'Unlock Pro verdict',
     proUnlockedBadge: 'Unlocked',
+    insufficientHpTitle: 'Not enough HP',
+    insufficientHpText: 'The Pro verdict costs 2 HP. Recharge and try again whenever you want.',
+    rechargeHpCta: 'Recharge HP',
     baseDetailsShow: 'Show base details',
     baseDetailsHide: 'Hide base details',
     deepAnalysisCta: 'Unlock premium analysis',
@@ -496,6 +502,28 @@ function DeepAnalysisSection({ tone, icon: Icon, title, items }) {
       <ul>{cleanItems.map(item => <li key={item}>{item}</li>)}</ul>
     </article>
   )
+}
+
+function DeepAnalysisError({ error, labels }) {
+  if (!error) return null
+  const isStructured = typeof error === 'object'
+  const type = isStructured ? error.type : ''
+  const message = isStructured ? error.message : error
+
+  if (type === 'credits') {
+    return (
+      <div className="deep-analysis-error deep-analysis-error-credits">
+        <div>
+          <AlertTriangle size={17} />
+          <strong>{labels.insufficientHpTitle}</strong>
+        </div>
+        <p>{message || labels.insufficientHpText}</p>
+        <a href="/gestione-profilo">{labels.rechargeHpCta}</a>
+      </div>
+    )
+  }
+
+  return <p className="deep-analysis-error">{message || labels.deepAnalysisError}</p>
 }
 
 function listFor(card, key, lang) {
@@ -883,7 +911,7 @@ function DetailPanel({
           </button>
         )}
       </div>
-      {deepAnalysisError && <p className="deep-analysis-error">{deepAnalysisError}</p>}
+      <DeepAnalysisError error={deepAnalysisError} labels={labels} />
       {deepAnalysis && (
         <div className="deep-analysis-report">
           <div className="deep-analysis-summary">
@@ -1158,6 +1186,17 @@ export default withAuth(function CardAdvisorLabPage() {
       })
       const data = await response.json().catch(() => ({}))
       if (!response.ok || !data?.analysis) {
+        if (response.status === 402 || data?.code === 'insufficient_credits') {
+          setDeepAnalysisErrors(prev => ({
+            ...prev,
+            [detailsCard.id]: {
+              type: 'credits',
+              message: data?.error || labels.insufficientHpText,
+              requiredCredits: data?.requiredCredits || 2
+            }
+          }))
+          return
+        }
         throw new Error(data?.error || labels.deepAnalysisError)
       }
       setDeepAnalysesByCard(prev => ({ ...prev, [detailsCard.id]: data.analysis }))
@@ -1169,7 +1208,7 @@ export default withAuth(function CardAdvisorLabPage() {
     } finally {
       setDeepAnalysisLoadingId(null)
     }
-  }, [deepAnalysesByCard, deepAnalysisLoadingId, detailsCard, labels.deepAnalysisError, lang])
+  }, [deepAnalysesByCard, deepAnalysisLoadingId, detailsCard, labels.deepAnalysisError, labels.insufficientHpText, lang])
 
   React.useEffect(() => {
     let active = true
@@ -2335,6 +2374,48 @@ export default withAuth(function CardAdvisorLabPage() {
           margin: 10px 0 0;
           color: #ff9d9d;
           font-size: 13px;
+        }
+
+        .deep-analysis-error-credits {
+          border: 1px solid rgba(251,191,36,0.28);
+          border-radius: 16px;
+          padding: 12px;
+          background:
+            radial-gradient(circle at 0% 0%, rgba(251,191,36,0.12), transparent 36%),
+            rgba(251,191,36,0.055);
+          color: rgba(255,255,255,0.80);
+        }
+
+        .deep-analysis-error-credits div {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: #facc15;
+          font-size: 13px;
+          font-weight: 950;
+          margin-bottom: 6px;
+        }
+
+        .deep-analysis-error-credits p {
+          margin: 0;
+          color: rgba(255,255,255,0.76);
+          font-size: 13px;
+          line-height: 1.5;
+        }
+
+        .deep-analysis-error-credits a {
+          margin-top: 10px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 999px;
+          background: linear-gradient(135deg, #facc15, #f97316);
+          color: #050814;
+          min-height: 34px;
+          padding: 7px 12px;
+          font-size: 12px;
+          font-weight: 950;
+          text-decoration: none;
         }
 
         .deep-analysis-report {
