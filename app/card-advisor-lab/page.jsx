@@ -838,6 +838,25 @@ function DetailPanel({
             <CheckCircle2 size={18} style={{ color: verdict.color }} />
             <span>{labels.verdict}: <strong style={{ color: verdict.color }}>{effectiveTitle}</strong></span>
           </div>
+          <div className={`deep-analysis-entry deep-analysis-entry-featured ${deepAnalysis ? 'deep-analysis-entry-unlocked' : ''}`}>
+            <div className="deep-analysis-entry-copy">
+              <div className="deep-analysis-entry-title">
+                <span>{deepAnalysis ? labels.proUnlockedBadge : labels.deepAnalysisCost}</span>
+                <h3>{deepAnalysis ? labels.deepAnalysisTitle : labels.proUnlockTitle}</h3>
+              </div>
+              <p>{deepAnalysis ? deepAnalysis.headline : labels.proUnlockText}</p>
+              {!deepAnalysis && (
+                <ul>
+                  {labels.proUnlockBullets.map(item => <li key={item}>{item}</li>)}
+                </ul>
+              )}
+            </div>
+            {!deepAnalysis && (
+              <button type="button" onClick={onRequestDeepAnalysis} disabled={deepAnalysisLoading}>
+                {deepAnalysisLoading ? labels.deepAnalysisLoading : labels.proUnlockButton}
+              </button>
+            )}
+          </div>
           <div className="quick-read-card">
             <div className="quick-read-top">
               <span>{labels.quickReadTitle}</span>
@@ -892,25 +911,6 @@ function DetailPanel({
         </div>
       )}
 
-      <div className={`deep-analysis-entry ${deepAnalysis ? 'deep-analysis-entry-unlocked' : ''}`}>
-        <div className="deep-analysis-entry-copy">
-          <div className="deep-analysis-entry-title">
-            <span>{deepAnalysis ? labels.proUnlockedBadge : labels.deepAnalysisCost}</span>
-            <h3>{deepAnalysis ? labels.deepAnalysisTitle : labels.proUnlockTitle}</h3>
-          </div>
-          <p>{deepAnalysis ? deepAnalysis.headline : labels.proUnlockText}</p>
-          {!deepAnalysis && (
-            <ul>
-              {labels.proUnlockBullets.map(item => <li key={item}>{item}</li>)}
-            </ul>
-          )}
-        </div>
-        {!deepAnalysis && (
-          <button type="button" onClick={onRequestDeepAnalysis} disabled={deepAnalysisLoading}>
-            {deepAnalysisLoading ? labels.deepAnalysisLoading : labels.proUnlockButton}
-          </button>
-        )}
-      </div>
       <DeepAnalysisError error={deepAnalysisError} labels={labels} />
       {deepAnalysis && (
         <div className="deep-analysis-report">
@@ -1074,6 +1074,12 @@ function CardDetailsModal({
       onClick={onClose}
     >
       <div className="card-details-modal-inner" onClick={(event) => event.stopPropagation()}>
+        <BrandAnalysisOverlay
+          show={evaluating || deepAnalysisLoading}
+          labels={labels}
+          lang={lang}
+          mode={deepAnalysisLoading ? 'deep' : 'evaluation'}
+        />
         <DetailPanel
           card={card}
           labels={labels}
@@ -1089,6 +1095,32 @@ function CardDetailsModal({
           onOpenCoach={onOpenCoach}
           onClose={onClose}
         />
+      </div>
+    </div>
+  )
+}
+
+function BrandAnalysisOverlay({ show, labels, lang, mode = 'evaluation' }) {
+  if (!show) return null
+  const isDeep = mode === 'deep'
+  const title = isDeep
+    ? (lang === 'en' ? 'Preparing Pro AI verdict' : 'Preparo il verdetto IA Pro')
+    : (lang === 'en' ? 'Reading the card' : 'Sto leggendo la carta')
+  const text = isDeep ? labels.deepAnalysisLoading : labels.loadingDecision
+
+  return (
+    <div className="brand-analysis-overlay" role="status" aria-live="polite">
+      <div className="brand-analysis-core">
+        <div className="brand-analysis-logo-wrap" aria-hidden="true">
+          <span className="brand-analysis-scanline" />
+          <span className="brand-analysis-orbit" />
+          <img src="/logo.png" alt="" className="brand-analysis-logo" />
+        </div>
+        <div className="brand-analysis-copy">
+          <span>AI COACH</span>
+          <strong>{title}</strong>
+          <p>{text}</p>
+        </div>
       </div>
     </div>
   )
@@ -1779,12 +1811,197 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .card-details-modal-inner {
+          position: relative;
           width: min(1040px, calc(100vw - clamp(24px, 6vw, 56px)));
           max-height: min(880px, calc(100vh - 32px));
           overflow-y: auto;
           overflow-x: hidden;
           border-radius: 24px;
           box-shadow: 0 0 50px rgba(0, 212, 255, 0.22);
+        }
+
+        .brand-analysis-overlay {
+          position: absolute;
+          inset: 0;
+          z-index: 12;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 18px;
+          background:
+            radial-gradient(circle at 50% 38%, rgba(0, 212, 255, 0.20), transparent 28%),
+            radial-gradient(circle at 48% 42%, rgba(138, 43, 226, 0.18), transparent 35%),
+            rgba(2, 4, 12, 0.78);
+          backdrop-filter: blur(10px);
+        }
+
+        .brand-analysis-core {
+          position: relative;
+          width: min(430px, calc(100vw - 42px));
+          display: grid;
+          justify-items: center;
+          gap: 18px;
+          padding: 24px 20px 22px;
+          border-radius: 26px;
+          border: 1px solid rgba(0, 212, 255, 0.32);
+          background:
+            linear-gradient(180deg, rgba(6, 11, 30, 0.94), rgba(3, 6, 18, 0.96)),
+            radial-gradient(circle at top, rgba(0, 212, 255, 0.18), transparent 38%);
+          box-shadow:
+            0 24px 80px rgba(0, 0, 0, 0.48),
+            inset 0 1px 0 rgba(255, 255, 255, 0.06);
+          overflow: hidden;
+        }
+
+        .brand-analysis-core::before,
+        .brand-analysis-core::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+        }
+
+        .brand-analysis-core::before {
+          background: repeating-linear-gradient(
+            0deg,
+            rgba(255, 255, 255, 0.04) 0,
+            rgba(255, 255, 255, 0.04) 1px,
+            transparent 1px,
+            transparent 5px
+          );
+          opacity: 0.32;
+          animation: brandScan 1.9s linear infinite;
+        }
+
+        .brand-analysis-core::after {
+          background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.22), transparent);
+          transform: translateX(-120%);
+          animation: brandSweep 2.4s ease-in-out infinite;
+        }
+
+        .brand-analysis-logo-wrap {
+          position: relative;
+          width: 132px;
+          height: 132px;
+          display: grid;
+          place-items: center;
+          border-radius: 32px;
+          background: radial-gradient(circle, rgba(0, 212, 255, 0.13), rgba(138, 43, 226, 0.08) 50%, transparent 72%);
+          isolation: isolate;
+        }
+
+        .brand-analysis-logo-wrap::before,
+        .brand-analysis-logo-wrap::after {
+          content: '';
+          position: absolute;
+          inset: 14px;
+          border-radius: 26px;
+          border: 1px solid rgba(0, 212, 255, 0.28);
+          box-shadow: 0 0 24px rgba(0, 212, 255, 0.16);
+        }
+
+        .brand-analysis-logo-wrap::after {
+          inset: 4px;
+          border-color: rgba(250, 204, 21, 0.16);
+          animation: brandPulse 1.8s ease-in-out infinite;
+        }
+
+        .brand-analysis-logo {
+          position: relative;
+          z-index: 2;
+          width: 104px;
+          max-height: 104px;
+          object-fit: contain;
+          filter:
+            drop-shadow(0 0 12px rgba(0, 212, 255, 0.44))
+            drop-shadow(0 0 22px rgba(138, 43, 226, 0.22));
+          animation: brandInterference 1.15s steps(2, end) infinite;
+        }
+
+        .brand-analysis-orbit {
+          position: absolute;
+          inset: 7px;
+          border-radius: 30px;
+          border: 1px dashed rgba(255, 255, 255, 0.2);
+          animation: brandOrbit 3.8s linear infinite;
+        }
+
+        .brand-analysis-scanline {
+          position: absolute;
+          z-index: 3;
+          left: 10px;
+          right: 10px;
+          height: 2px;
+          border-radius: 999px;
+          background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.95), transparent);
+          box-shadow: 0 0 16px rgba(0, 212, 255, 0.72);
+          animation: brandLogoScan 1.45s ease-in-out infinite;
+        }
+
+        .brand-analysis-copy {
+          position: relative;
+          z-index: 2;
+          text-align: center;
+        }
+
+        .brand-analysis-copy span {
+          display: inline-flex;
+          margin-bottom: 8px;
+          color: #67e8f9;
+          font-size: 11px;
+          font-weight: 950;
+          letter-spacing: 0.16em;
+        }
+
+        .brand-analysis-copy strong {
+          display: block;
+          color: #fff;
+          font-size: clamp(18px, 5vw, 24px);
+          letter-spacing: -0.03em;
+        }
+
+        .brand-analysis-copy p {
+          margin: 8px auto 0;
+          max-width: 30ch;
+          color: rgba(255, 255, 255, 0.72);
+          line-height: 1.5;
+          font-size: 13px;
+        }
+
+        @keyframes brandInterference {
+          0%, 100% { transform: translate(0, 0) skewX(0deg); opacity: 1; }
+          10% { transform: translate(-1px, 1px) skewX(-1deg); }
+          18% { transform: translate(1px, -1px) skewX(1deg); filter: drop-shadow(2px 0 rgba(255, 0, 102, 0.36)) drop-shadow(-2px 0 rgba(0, 212, 255, 0.44)); }
+          38% { transform: translate(0, 0); }
+          52% { transform: translate(1px, 0) skewX(-0.6deg); }
+          64% { transform: translate(-1px, 0) skewX(0.6deg); }
+        }
+
+        @keyframes brandLogoScan {
+          0% { top: 20px; opacity: 0; }
+          18% { opacity: 1; }
+          78% { opacity: 1; }
+          100% { top: calc(100% - 22px); opacity: 0; }
+        }
+
+        @keyframes brandSweep {
+          0%, 42% { transform: translateX(-130%); opacity: 0; }
+          55% { opacity: 1; }
+          100% { transform: translateX(130%); opacity: 0; }
+        }
+
+        @keyframes brandScan {
+          from { transform: translateY(0); }
+          to { transform: translateY(12px); }
+        }
+
+        @keyframes brandPulse {
+          0%, 100% { opacity: 0.44; transform: scale(0.98); }
+          50% { opacity: 1; transform: scale(1.03); }
+        }
+
+        @keyframes brandOrbit {
+          to { transform: rotate(360deg); }
         }
 
         .card-details-modal .detail-panel {
@@ -3069,6 +3286,21 @@ export default withAuth(function CardAdvisorLabPage() {
             padding: 14px;
           }
 
+          .brand-analysis-core {
+            padding: 22px 16px 20px;
+            border-radius: 22px;
+          }
+
+          .brand-analysis-logo-wrap {
+            width: 112px;
+            height: 112px;
+          }
+
+          .brand-analysis-logo {
+            width: 88px;
+            max-height: 88px;
+          }
+
           .release-card {
             display: flex;
             flex-direction: column;
@@ -3158,6 +3390,17 @@ export default withAuth(function CardAdvisorLabPage() {
 
           .release-card {
             display: flex;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .brand-analysis-logo,
+          .brand-analysis-orbit,
+          .brand-analysis-scanline,
+          .brand-analysis-core::before,
+          .brand-analysis-core::after,
+          .brand-analysis-logo-wrap::after {
+            animation: none !important;
           }
         }
       `}</style>
