@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
+import { computeOverallRating, normalizeEfhubPosition, normalizeStatsToEfhub } from '@/lib/efootballBuildRules'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -292,6 +293,26 @@ export async function PATCH(req, { params }) {
     }
     
     // Always update updated_at
+    if (updateData.base_stats && body.base_stats !== undefined) {
+      const targetPosition = normalizeEfhubPosition(updateData.position || existingPlayer.position)
+      const height = body.height ?? body.height_cm ?? existingPlayer.height
+      const weakFootAccuracy = updateData.metadata?.weak_foot_accuracy || existingPlayer.metadata?.weak_foot_accuracy || 2
+      const recalculatedOverall = computeOverallRating({
+        position: targetPosition,
+        height,
+        weakFootAccuracy,
+        stats: normalizeStatsToEfhub(updateData.base_stats)
+      })
+      if (Number.isFinite(recalculatedOverall)) {
+        updateData.overall_rating = recalculatedOverall
+        updateData.position_ratings = {
+          ...(existingPlayer.position_ratings || {}),
+          ...(updateData.position_ratings || {}),
+          [targetPosition]: recalculatedOverall
+        }
+      }
+    }
+
     updateData.updated_at = new Date().toISOString()
 
     const { data: updatedPlayer, error: updateError } = await supabase
