@@ -56,6 +56,10 @@ const copy = {
     deepAnalysisLoading: 'Sto preparando l’analisi dettagliata...',
     deepAnalysisError: 'Analisi dettagliata non disponibile. Riprova tra poco.',
     deepAnalysisTitle: 'Analisi premium IA',
+    premiumSectionLabel: 'Premium IA',
+    premiumSectionHint: 'Verdetto completo',
+    freeSectionLabel: 'Lettura gratuita',
+    freeSectionHint: 'Sintesi rapida',
     deepKeyReasoning: 'Ragionamenti chiave',
     deepPros: 'Pro',
     deepCons: 'Contro',
@@ -161,6 +165,10 @@ const copy = {
     deepAnalysisLoading: 'Preparing detailed analysis...',
     deepAnalysisError: 'Detailed analysis unavailable. Please try again shortly.',
     deepAnalysisTitle: 'Premium AI analysis',
+    premiumSectionLabel: 'Premium AI',
+    premiumSectionHint: 'Full verdict',
+    freeSectionLabel: 'Free read',
+    freeSectionHint: 'Quick summary',
     deepKeyReasoning: 'Key reasoning',
     deepPros: 'Pros',
     deepCons: 'Cons',
@@ -838,6 +846,10 @@ function DetailPanel({
             <CheckCircle2 size={18} style={{ color: verdict.color }} />
             <span>{labels.verdict}: <strong style={{ color: verdict.color }}>{effectiveTitle}</strong></span>
           </div>
+          <div className="advisor-section-marker advisor-section-marker-premium">
+            <span>{labels.premiumSectionLabel}</span>
+            <small>{labels.premiumSectionHint}</small>
+          </div>
           <div className={`deep-analysis-entry deep-analysis-entry-featured ${deepAnalysis ? 'deep-analysis-entry-unlocked' : ''}`}>
             <div className="deep-analysis-entry-copy">
               <div className="deep-analysis-entry-title">
@@ -856,6 +868,10 @@ function DetailPanel({
                 {deepAnalysisLoading ? labels.deepAnalysisLoading : labels.proUnlockButton}
               </button>
             )}
+          </div>
+          <div className="advisor-section-marker advisor-section-marker-free">
+            <span>{labels.freeSectionLabel}</span>
+            <small>{labels.freeSectionHint}</small>
           </div>
           <div className="quick-read-card">
             <div className="quick-read-top">
@@ -1821,9 +1837,11 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .brand-analysis-overlay {
-          position: absolute;
+          position: sticky;
+          top: 0;
           inset: 0;
           z-index: 12;
+          min-height: min(520px, calc(100vh - 48px));
           display: flex;
           align-items: center;
           justify-content: center;
@@ -1833,6 +1851,7 @@ export default withAuth(function CardAdvisorLabPage() {
             radial-gradient(circle at 48% 42%, rgba(138, 43, 226, 0.18), transparent 35%),
             rgba(2, 4, 12, 0.78);
           backdrop-filter: blur(10px);
+          overscroll-behavior: contain;
         }
 
         .brand-analysis-core {
@@ -2490,6 +2509,77 @@ export default withAuth(function CardAdvisorLabPage() {
             radial-gradient(circle at 100% 0%, rgba(249,115,22,0.14), transparent 40%),
             rgba(255,255,255,0.055);
           box-shadow: 0 18px 45px rgba(0,0,0,0.18);
+        }
+
+        .advisor-section-marker {
+          margin-top: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          border-radius: 999px;
+          padding: 7px 10px;
+          border: 1px solid rgba(255,255,255,0.10);
+          background: rgba(2,4,12,0.46);
+        }
+
+        .advisor-section-marker span {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          font-size: 11px;
+          font-weight: 950;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+
+        .advisor-section-marker span::before {
+          content: '';
+          width: 7px;
+          height: 7px;
+          border-radius: 999px;
+          background: currentColor;
+          box-shadow: 0 0 10px currentColor;
+        }
+
+        .advisor-section-marker small {
+          color: rgba(255,255,255,0.58);
+          font-size: 11px;
+          font-weight: 800;
+          white-space: nowrap;
+        }
+
+        .advisor-section-marker-premium {
+          border-color: rgba(251,191,36,0.36);
+          background:
+            linear-gradient(90deg, rgba(251,191,36,0.13), rgba(249,115,22,0.06)),
+            rgba(2,4,12,0.62);
+        }
+
+        .advisor-section-marker-premium span {
+          color: #facc15;
+        }
+
+        .advisor-section-marker-free {
+          border-color: rgba(0,212,255,0.22);
+          background:
+            linear-gradient(90deg, rgba(0,212,255,0.09), rgba(34,197,94,0.045)),
+            rgba(2,4,12,0.46);
+        }
+
+        .advisor-section-marker-free span {
+          color: #67e8f9;
+        }
+
+        .deep-analysis-entry-featured {
+          margin-top: 8px;
+          border-width: 1.5px;
+          border-color: rgba(251,191,36,0.56);
+          background:
+            radial-gradient(circle at 0% 0%, rgba(251,191,36,0.22), transparent 42%),
+            radial-gradient(circle at 100% 0%, rgba(249,115,22,0.20), transparent 42%),
+            linear-gradient(180deg, rgba(22,16,5,0.34), rgba(255,255,255,0.052));
+          box-shadow: 0 18px 50px rgba(251,191,36,0.12), 0 0 0 1px rgba(251,191,36,0.08) inset;
         }
 
         .deep-analysis-entry-unlocked {
