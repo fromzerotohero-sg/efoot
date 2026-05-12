@@ -179,6 +179,10 @@ function summarizeStats(stats = {}) {
   }
 }
 
+function hasStats(stats) {
+  return Boolean(stats && typeof stats === 'object' && Object.keys(stats).length > 0)
+}
+
 function sanitizeList(items = [], maxItems = 8, maxLen = 60) {
   return (Array.isArray(items) ? items : [])
     .map(item => sanitize(item, maxLen))
@@ -197,7 +201,14 @@ function compactPlayer(player, stylesLookup = {}) {
     starter: Number(player?.slot_index) >= 0 && Number(player?.slot_index) <= 10,
     style: (player?.playing_style_id && stylesLookup[player.playing_style_id]) || player?.role || null,
     skills: sanitizeList(skills, 8),
-    stats: summarizeStats(player?.base_stats || {}),
+    saved_stats: summarizeStats(player?.base_stats || {}),
+    stats_basis: {
+      source: 'saved_roster_stats',
+      note: 'Stats salvate nel profilo rosa; possono rappresentare una build/edit del cliente se importate cosi.',
+      current_level: player?.current_level || null,
+      level_cap: player?.level_cap || null,
+      active_booster_name: player?.active_booster_name || null
+    },
     original_positions: Array.isArray(player?.original_positions) ? player.original_positions.slice(0, 6) : [],
     height: player?.height || null,
     weight: player?.weight || null,
@@ -249,7 +260,8 @@ async function fetchCardAdvisorCard(admin, card) {
 
 function buildPrompt({ lang, card, catalogCard, profile, players, formation, coach, tacticalSettings, patterns, gameAnalysis, diagnostic, feedback, performance, ragKnowledge }) {
   const isEn = lang === 'en'
-  const cardStats = summarizeStats({ ...(catalogCard?.base_stats || {}), ...(catalogCard?.max_stats || {}) })
+  const cardBaseStats = summarizeStats(catalogCard?.base_stats || {})
+  const cardMaxStats = summarizeStats(catalogCard?.max_stats || {})
   const cardPayload = {
     name: card.name,
     position: card.position,
@@ -257,7 +269,13 @@ function buildPrompt({ lang, card, catalogCard, profile, players, formation, coa
     source: card.source || catalogCard?.source || null,
     playing_style: card.style || catalogCard?.playing_style || null,
     native_skills: sanitizeList([...(card.skills || []), ...(catalogCard?.player_skills || [])], 14),
-    stats: cardStats,
+    base_stats: cardBaseStats,
+    max_stats: hasStats(catalogCard?.max_stats) ? cardMaxStats : null,
+    stats_basis: {
+      source: 'pack_card_base_stats',
+      note: 'Questi sono valori base/non buildati della carta pack. Non trattarli come build finale.',
+      has_final_build_stats: hasStats(catalogCard?.max_stats)
+    },
     position_compatibility: catalogCard?.position_compatibility || null,
     data_quality: catalogCard ? 'catalog_match' : 'release_basic'
   }
@@ -314,6 +332,13 @@ FOCUS:
 - Se trovi una combo reale, mettila al centro. Se manca metà combo, dillo.
 - Usa il RAG per interpretare movimenti da stile, meccaniche eFootball, movimenti collettivi, abilità e situazioni di gioco. Non copiarlo: applicalo ai dati del cliente.
 - Scrivi corto e denso. Niente tema. Ogni campo deve essere leggibile in pochi secondi.
+
+REGOLE SULLE STATISTICHE:
+- Le statistiche della CARTA PACK sono valori base/non buildati, salvo quando max_stats è presente. Non chiamarle mai valori finali.
+- Le statistiche dei giocatori in ROSA sono dati salvati dal cliente e possono essere già editati/buildati. Non confrontarle numericamente in modo secco con una carta pack base.
+- Evita frasi tipo "velocità 73 lo espone", "aereo 84 basta", "passaggio 65 non migliora" se stai usando solo base_stats della carta.
+- Usa i numeri base solo come indizi di profilo, sempre insieme a stile, skill native, ruolo, combo e dati della rosa.
+- Se serve parlare di limite statistico, scrivi "dai valori base della carta" o "a build non definita", non come verdetto assoluto.
 
 SEMANTICA:
 - Usa termini da coach/community: movimento, skill nativa, combo, catena, rotazione, non prioritaria, luxury pick, riferimento in area, attacca spazio, dà ampiezza, tiene posizione, non cambia gerarchie.
@@ -503,7 +528,7 @@ export async function POST(req) {
       performanceRes
     ] = await Promise.all([
       admin.from('user_profiles').select('first_name, nickname, team_name, ai_weak_point, ai_learn_goals, ai_notes, input_delay, connection_quality, pass_level').eq('user_id', userId).maybeSingle(),
-      admin.from('players').select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, skills, com_skills, form, base_stats, original_positions, height, weight').eq('user_id', userId).limit(60),
+      admin.from('players').select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, skills, com_skills, form, base_stats, original_positions, height, weight, current_level, level_cap, active_booster_name').eq('user_id', userId).limit(60),
       admin.from('playing_styles').select('id, name'),
       admin.from('formation_layout').select('formation, slot_positions, updated_at').eq('user_id', userId).maybeSingle(),
       admin.from('coaches').select('coach_name, playing_style_competence, connection, stat_boosters, updated_at').eq('user_id', userId).eq('is_active', true).maybeSingle(),

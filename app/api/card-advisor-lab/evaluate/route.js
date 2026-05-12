@@ -490,6 +490,12 @@ function sameRolePlayers(card, players, stylesLookup) {
         skills,
         skillLabels: skills.map(skill => skillLabel(skill, 'it')).filter(Boolean),
         signals: signalsFromStats(player.base_stats || {}),
+        statsBasis: {
+          source: 'saved_roster_stats',
+          currentLevel: player.current_level || null,
+          levelCap: player.level_cap || null,
+          activeBoosterName: player.active_booster_name || null
+        },
         slotIndex: player.slot_index,
         competence: getPositionCompetence(player, card.position),
         isNativePosition: player?.position === card.position
@@ -944,6 +950,11 @@ function roleRelevantStatEdges(position, technical, bestAlternative, lang) {
 
 function statEdgeLine(position, technical, bestAlternative, lang) {
   if (!bestAlternative?.signals) return ''
+  if (technical?.dataSource === 'efhub') {
+    return lang === 'en'
+      ? `Use stat numbers as profile clues only: this pack card is read from base values, while your roster can contain edited builds.`
+      : `Usa i numeri solo come indizi di profilo: questa carta pack è letta a valori base, mentre la tua rosa può contenere build editate.`
+  }
   const edges = roleRelevantStatEdges(position, technical, bestAlternative, lang)
     .filter(([, value]) => Number.isFinite(value) && Math.abs(value) >= 5)
     .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
@@ -1832,7 +1843,7 @@ export async function POST(req) {
     ] = await Promise.all([
       admin.from('user_profiles').select('first_name, nickname, team_name, ai_weak_point, ai_learn_goals, ai_notes, input_delay, connection_quality, pass_level').eq('user_id', userId).maybeSingle(),
       admin.from('formation_layout').select('formation, slot_positions').eq('user_id', userId).maybeSingle(),
-      admin.from('players').select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, skills, com_skills, form, base_stats, original_positions, height, weight').eq('user_id', userId).limit(60),
+      admin.from('players').select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, skills, com_skills, form, base_stats, original_positions, height, weight, current_level, level_cap, active_booster_name').eq('user_id', userId).limit(60),
       admin.from('playing_styles').select('id, name'),
       admin.from('coaches').select('coach_name, playing_style_competence, connection, stat_boosters').eq('user_id', userId).eq('is_active', true).maybeSingle(),
       admin.from('team_tactical_settings').select('team_playing_style, individual_instructions').eq('user_id', userId).maybeSingle(),
