@@ -2266,10 +2266,12 @@ function PremiumPlayerModal({
   slot,
   onClose,
   onSave,
+  onBuildCoach,
   onRemoveFromSlot,
   onDeletePlayer,
   onOpenReplace,
   saving,
+  building,
   lang,
   t
 }) {
@@ -2480,6 +2482,23 @@ function PremiumPlayerModal({
           <EnterpriseSection title={lang === 'en' ? 'Player setup' : 'Setup giocatore'}>
             <div className="nr-form-grid">
               <EnterpriseInput label="OVR" value={form.overall_rating} type="number" onChange={(value) => setForm((prev) => ({ ...prev, overall_rating: value }))} />
+            </div>
+            <div className="nr-build-coach-inline">
+              <div>
+                <strong>{lang === 'en' ? 'Build Coach' : 'Build Coach'}</strong>
+                <p>{lang === 'en'
+                  ? 'Optimizes growth points for gameplay, role and squad synergy.'
+                  : 'Ottimizza i punti crescita per gameplay, ruolo e sinergia rosa.'}</p>
+              </div>
+              <button
+                type="button"
+                className="nr-primary-button"
+                onClick={() => onBuildCoach?.(player)}
+                disabled={saving || building}
+              >
+                {building ? <RefreshCw size={14} className="nr-spin" /> : <Sparkles size={14} />}
+                {building ? (lang === 'en' ? 'Calculating...' : 'Calcolo...') : (lang === 'en' ? 'Recalculate build' : 'Ricalcola build')}
+              </button>
             </div>
             <div className="nr-role-editor-card">
               <div className="nr-role-editor-head">
@@ -2793,6 +2812,8 @@ export default withAuth(function NuovaRosaLabPage() {
   const [confirmModal, setConfirmModal] = React.useState(null)
   const [showPremiumEditorModal, setShowPremiumEditorModal] = React.useState(false)
   const [savingPlayerEditor, setSavingPlayerEditor] = React.useState(false)
+  const [buildingRoster, setBuildingRoster] = React.useState(false)
+  const [buildingPlayerId, setBuildingPlayerId] = React.useState(null)
   const [savingTacticalSettings, setSavingTacticalSettings] = React.useState(false)
   const [fieldEditMode, setFieldEditMode] = React.useState(false)
   const [customPositions, setCustomPositions] = React.useState({})
@@ -4210,6 +4231,123 @@ export default withAuth(function NuovaRosaLabPage() {
     }
   }, [fetchRoster, lang, refreshDiagnosticAfterSave, selectedPlayer, showToast, t])
 
+  const runBuildCoachForPlayer = React.useCallback(async (player) => {
+    if (!player?.id) return
+    setBuildingPlayerId(player.id)
+    try {
+      let token = getTokenFallback()
+      if (!token && supabase) {
+        const { data: session } = await supabase.auth.getSession()
+        token = session?.session?.access_token
+      }
+      if (!token) throw new Error(t('sessionExpired'))
+
+      const response = await fetch(`/api/build-coach/player/${player.id}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      const data = await safeJsonResponse(response, lang === 'en' ? 'Unable to calculate build.' : 'Impossibile calcolare la build.')
+      await fetchRoster()
+      await refreshDiagnosticAfterSave()
+      const after = data?.result?.after_overall
+      showToast(
+        lang === 'en'
+          ? `Build Coach applied${after ? `: OVR ${after}` : ''}.`
+          : `Build Coach applicata${after ? `: OVR ${after}` : ''}.`,
+        'success'
+      )
+      setShowPremiumEditorModal(false)
+      setSelectedPlayer(null)
+    } catch (err) {
+      console.error('[NuovaRosaLab] build coach player error:', err)
+      const { message } = mapErrorToUserMessage(err, lang === 'en' ? 'Unable to calculate build.' : 'Impossibile calcolare la build.', lang)
+      showToast(message, 'error')
+    } finally {
+      setBuildingPlayerId(null)
+    }
+  }, [fetchRoster, lang, refreshDiagnosticAfterSave, showToast, t])
+
+  const requestBuildCoachForPlayer = React.useCallback((player) => {
+    if (!player?.id) return
+    setConfirmModal({
+      ...showConfirmConfig({
+        title: lang === 'en' ? 'Recalculate player build' : 'Ricalcola build giocatore',
+        message: lang === 'en'
+          ? 'Build Coach will optimize this player growth points using role, skills and squad context. You can edit the player later.'
+          : 'Build Coach ottimizzera i punti crescita di questo giocatore usando ruolo, abilita e contesto rosa. Potrai modificarlo in seguito.',
+        confirmLabel: lang === 'en' ? 'Recalculate build' : 'Ricalcola build',
+        cancelLabel: t('cancel'),
+        variant: 'info'
+      }),
+      onConfirm: async () => {
+        setConfirmModal(null)
+        await runBuildCoachForPlayer(player)
+      },
+      onCancel: () => setConfirmModal(null)
+    })
+  }, [lang, runBuildCoachForPlayer, t])
+
+  const runBuildCoachForRoster = React.useCallback(async () => {
+    setBuildingRoster(true)
+    try {
+      let token = getTokenFallback()
+      if (!token && supabase) {
+        const { data: session } = await supabase.auth.getSession()
+        token = session?.session?.access_token
+      }
+      if (!token) throw new Error(t('sessionExpired'))
+
+      const response = await fetch('/api/build-coach/roster', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      const data = await safeJsonResponse(response, lang === 'en' ? 'Unable to optimize squad.' : 'Impossibile ottimizzare la rosa.')
+      await fetchRoster()
+      await refreshDiagnosticAfterSave()
+      const summary = data?.summary || {}
+      showToast(
+        lang === 'en'
+          ? `Squad optimized: ${summary.updated || 0} players updated.`
+          : `Rosa ottimizzata: ${summary.updated || 0} giocatori aggiornati.`,
+        summary.skipped ? 'warning' : 'success'
+      )
+    } catch (err) {
+      console.error('[NuovaRosaLab] build coach roster error:', err)
+      const { message } = mapErrorToUserMessage(err, lang === 'en' ? 'Unable to optimize squad.' : 'Impossibile ottimizzare la rosa.', lang)
+      showToast(message, 'error')
+    } finally {
+      setBuildingRoster(false)
+    }
+  }, [fetchRoster, lang, refreshDiagnosticAfterSave, showToast, t])
+
+  const requestBuildCoachForRoster = React.useCallback(() => {
+    setConfirmModal({
+      ...showConfirmConfig({
+        title: lang === 'en' ? 'Optimize squad builds' : 'Ottimizza build rosa',
+        message: lang === 'en'
+          ? 'The platform will automatically complete growth builds for your players based on role, native skills, team style and squad synergy.'
+          : 'La piattaforma completera automaticamente le build crescita dei tuoi giocatori in base a ruolo, abilita native, stile squadra e sinergia rosa.',
+        details: lang === 'en'
+          ? 'You can still edit each player later.'
+          : 'Potrai comunque modificare ogni giocatore in seguito.',
+        confirmLabel: lang === 'en' ? 'Optimize squad' : 'Ottimizza rosa',
+        cancelLabel: t('cancel'),
+        variant: 'info'
+      }),
+      onConfirm: async () => {
+        setConfirmModal(null)
+        await runBuildCoachForRoster()
+      },
+      onCancel: () => setConfirmModal(null)
+    })
+  }, [lang, runBuildCoachForRoster, t])
+
   const handleSaveTacticalSettings = React.useCallback(async (settings) => {
     setSavingTacticalSettings(true)
     try {
@@ -4512,6 +4650,12 @@ export default withAuth(function NuovaRosaLabPage() {
                 <h2>{layout?.formation || '4-3-3'}</h2>
               </div>
               <div className="nr-field-actions">
+                <button type="button" className="nr-primary-button" onClick={requestBuildCoachForRoster} disabled={buildingRoster || loading}>
+                  {buildingRoster ? <RefreshCw size={14} className="nr-spin" /> : <Sparkles size={14} />}
+                  {buildingRoster
+                    ? (lang === 'en' ? 'Optimizing...' : 'Ottimizzazione...')
+                    : (lang === 'en' ? 'Optimize squad' : 'Ottimizza rosa')}
+                </button>
                 {fieldEditMode ? (
                   <>
                     <button type="button" className="nr-secondary-button" onClick={() => { setFieldEditMode(false); setCustomPositions({}) }} disabled={savingFieldLayout}>
@@ -4838,7 +4982,9 @@ export default withAuth(function NuovaRosaLabPage() {
           setSelectedPlayer(null)
         }}
         onSave={handlePremiumPlayerSave}
+        onBuildCoach={requestBuildCoachForPlayer}
         saving={savingPlayerEditor}
+        building={buildingPlayerId === selectedPlayer?.id}
         onRemoveFromSlot={handleRemoveFromSlot}
         onDeletePlayer={handleDeletePlayer}
         onOpenReplace={(player) => {
@@ -4894,6 +5040,15 @@ export default withAuth(function NuovaRosaLabPage() {
             radial-gradient(circle at 86% 18%, rgba(168, 85, 247, 0.18), transparent 28%),
             radial-gradient(circle at 50% 100%, rgba(52, 211, 153, 0.12), transparent 34%);
           z-index: -1;
+        }
+
+        .nr-spin {
+          animation: nrSpin 0.9s linear infinite;
+        }
+
+        @keyframes nrSpin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
 
         .nr-card,
@@ -6623,6 +6778,32 @@ export default withAuth(function NuovaRosaLabPage() {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 12px;
+        }
+
+        .nr-build-coach-inline {
+          margin-top: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          padding: 12px;
+          border-radius: 14px;
+          border: 1px solid rgba(0, 212, 255, 0.2);
+          background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(168, 85, 247, 0.08));
+        }
+
+        .nr-build-coach-inline strong {
+          display: block;
+          color: #fff;
+          font-size: 13px;
+          margin-bottom: 4px;
+        }
+
+        .nr-build-coach-inline p {
+          margin: 0;
+          color: rgba(255, 255, 255, 0.68);
+          font-size: 12px;
+          line-height: 1.35;
         }
 
         .nr-form-field {

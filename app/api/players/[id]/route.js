@@ -149,7 +149,7 @@ export async function PATCH(req, { params }) {
 
     const { data: existingPlayer, error: existingPlayerError } = await supabase
       .from('players')
-      .select('id, player_name, position, card_type, overall_rating, age, nationality, club_name, role, base_stats, skills, com_skills, available_boosters, photo_slots, metadata, original_positions')
+      .select('id, player_name, position, card_type, overall_rating, age, nationality, club_name, role, base_stats, skills, com_skills, available_boosters, photo_slots, metadata, original_positions, level_cap, current_level, development_points, position_ratings')
       .eq('id', id)
       .eq('user_id', userId)
       .single()
@@ -162,7 +162,8 @@ export async function PATCH(req, { params }) {
     const allowedFields = [
       'player_name', 'position', 'card_type', 'overall_rating', 'age', 'nationality', 'club_name', 'role',
       'base_stats', 'skills', 'com_skills', 'available_boosters', 
-      'photo_slots', 'metadata', 'updated_at', 'slot_index', 'original_positions'
+      'photo_slots', 'metadata', 'updated_at', 'slot_index', 'original_positions',
+      'level_cap', 'current_level', 'development_points', 'position_ratings'
     ]
     
     const updateData = {}
@@ -202,6 +203,16 @@ export async function PATCH(req, { params }) {
     if (body.overall_rating !== undefined) {
       const nextValue = sanitizeNumber(body.overall_rating)
       updateData.overall_rating = nextValue ?? existingPlayer.overall_rating
+    }
+
+    if (body.level_cap !== undefined) {
+      const nextValue = sanitizeNumber(body.level_cap)
+      updateData.level_cap = nextValue ?? existingPlayer.level_cap
+    }
+
+    if (body.current_level !== undefined) {
+      const nextValue = sanitizeNumber(body.current_level)
+      updateData.current_level = nextValue ?? existingPlayer.current_level
     }
 
     if (body.age !== undefined) {
@@ -260,6 +271,18 @@ export async function PATCH(req, { params }) {
       updateData.metadata = hasObjectValue(body.metadata)
         ? { ...(existingPlayer.metadata || {}), ...body.metadata }
         : existingPlayer.metadata
+    }
+
+    if (body.development_points !== undefined) {
+      updateData.development_points = hasObjectValue(body.development_points)
+        ? { ...(existingPlayer.development_points || {}), ...body.development_points }
+        : existingPlayer.development_points
+    }
+
+    if (body.position_ratings !== undefined) {
+      updateData.position_ratings = hasObjectValue(body.position_ratings)
+        ? { ...(existingPlayer.position_ratings || {}), ...body.position_ratings }
+        : existingPlayer.position_ratings
     }
 
     if (body.original_positions !== undefined) {
