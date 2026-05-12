@@ -30,21 +30,31 @@ const EFHUB_POSITION_MAP = {
   RWF: 'EDA'
 }
 
-const CATALOG_SELECT = [
+const CARD_ADVISOR_SELECT = [
   'source',
   'source_player_id',
+  'source_url',
   'player_name',
   'position',
+  'category',
   'card_type',
-  'rating',
-  'overall_level_1',
-  'overall_max_level',
+  'overall_display',
+  'image_url',
   'playing_style',
   'player_skills',
+  'ai_playstyles',
   'base_stats',
   'max_stats',
-  'catalog_ready',
-  'needs_review'
+  'position_compatibility',
+  'height',
+  'weight',
+  'age',
+  'foot',
+  'data_quality',
+  'completeness_score',
+  'enrichment_status',
+  'error_message',
+  'source_payload'
 ].join(',')
 
 function roleFamily(position = '') {
@@ -375,17 +385,16 @@ function signalsFromStats(stats) {
   }
 }
 
-async function fetchCatalogCandidates(admin, card) {
+async function fetchCardAdvisorCandidates(admin, card) {
   const tasks = []
-  if (card.sourcePlayerId && card.source === 'pesdb') {
+  if (card.sourcePlayerId) {
     tasks.push(
       admin
-        .from('player_catalog')
-        .select(CATALOG_SELECT)
-        .eq('source', 'pesdb')
+        .from('card_advisor_cards')
+        .select(CARD_ADVISOR_SELECT)
+        .eq('source', card.source || 'efhub')
         .eq('source_player_id', card.sourcePlayerId)
-        .eq('catalog_ready', true)
-        .eq('needs_review', false)
+        .eq('is_active', true)
         .limit(8)
     )
   }
@@ -393,13 +402,12 @@ async function fetchCatalogCandidates(admin, card) {
   if (safeName) {
     tasks.push(
       admin
-        .from('player_catalog')
-        .select(CATALOG_SELECT)
+        .from('card_advisor_cards')
+        .select(CARD_ADVISOR_SELECT)
         .ilike('player_name', `%${safeName}%`)
-        .eq('source', 'pesdb')
+        .eq('source', card.source || 'efhub')
         .eq('position', card.position)
-        .eq('catalog_ready', true)
-        .eq('needs_review', false)
+        .eq('is_active', true)
         .limit(12)
     )
   }
@@ -427,10 +435,10 @@ function candidateScore(card, candidate) {
   if (candidateName === cardName) score += 28
   if (candidateName.includes(cardName) || cardName.includes(candidateName)) score += 12
   if (candidate.position === card.position) score += 12
-  if (candidate.catalog_ready) score += 8
-  if (candidate.needs_review) score -= 12
+  if (candidate.enrichment_status === 'complete') score += 12
+  if (candidate.enrichment_status === 'partial') score += 4
   const baseOverall = Number(card.overall) || 0
-  const candidateOverall = Number(candidate.overall_level_1 || candidate.rating || 0)
+  const candidateOverall = Number(candidate.overall_display || 0)
   if (baseOverall && candidateOverall) {
     score -= Math.min(15, Math.abs(baseOverall - candidateOverall) * 2)
   }
@@ -463,7 +471,7 @@ function cardTechnicalSignals(card, catalogCard) {
     style,
     mergedSkills,
     ...statSignals,
-    cardOverall: Number(card.overall) || Number(catalogCard?.overall_level_1) || Number(catalogCard?.rating) || 0,
+    cardOverall: Number(card.overall) || Number(catalogCard?.overall_display) || 0,
     hasCompleteCardData: Boolean(catalogCard?.base_stats || catalogCard?.max_stats),
     dataSource: catalogCard?.source || card.source || 'unknown'
   }
@@ -1809,9 +1817,9 @@ export async function POST(req) {
     }
     const admin = createClient(supabaseUrl, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } })
     const userId = await buildUserId(userData, admin)()
-    const efhubDetail = await fetchEfhubCardDetail(card)
-    const catalogCandidates = efhubDetail ? [] : await fetchCatalogCandidates(admin, card).catch(() => [])
-    const catalogCard = efhubDetail || pickCatalogCard(card, catalogCandidates)
+    const cardAdvisorCandidates = await fetchCardAdvisorCandidates(admin, card).catch(() => [])
+    const efhubDetail = cardAdvisorCandidates.length > 0 ? null : await fetchEfhubCardDetail(card)
+    const catalogCard = pickCatalogCard(card, cardAdvisorCandidates) || efhubDetail
     const [
       profileRes,
       formationRes,

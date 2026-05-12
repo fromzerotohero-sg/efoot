@@ -34,7 +34,7 @@ const copy = {
     build: 'Cosa aggiunge',
     verdict: 'Lettura',
     strengths: 'Perché conta',
-    risks: 'Rischio tecnico',
+    risks: 'Attenzione d’uso',
     nativeSkills: 'Profilo tecnico',
     teamFit: 'Sinergia con la tua squadra',
     teamSynergyScore: 'Sinergia squadra',
@@ -58,7 +58,7 @@ const copy = {
     hideDetails: 'Nascondi dettagli',
     synergyDetails: 'Dettaglio sinergia',
     noRosterTitle: 'Analisi carta disponibile',
-    noRosterText: 'Senza rosa leggiamo stile, ruolo e profilo tecnico. Con la rosa aggiungiamo doppioni, alternative e priorita reali.',
+    noRosterText: 'Senza rosa leggiamo stile, ruolo e profilo tecnico. Con la rosa aggiungiamo sinergie, movimenti e priorita reali.',
     selectedHint: 'Clicca una carta per vedere il dettaglio.',
     topPick: 'Sinergia alta',
     goodPick: 'Sinergia buona',
@@ -82,14 +82,14 @@ const copy = {
     moduleFit: 'Fit modulo',
     systemSynergy: 'Lettura sinergie',
     noFormationTitle: 'Formazione non salvata',
-    noFormationText: 'Hai giocatori in rosa: posso valutare ruolo, doppioni e alternative, ma per sapere se entra nei titolari serve una formazione salvata.',
+    noFormationText: 'Hai giocatori in rosa: posso valutare ruolo e profilo, ma per leggere gli incastri con titolari e riserve serve una formazione salvata.',
     noCoachText: 'Aggiungi il coach attivo per leggere stile squadra e competenze.',
     saveFormationCta: 'Salva formazione per il fit titolari',
     addCoachCta: 'Aggiungi coach per lettura completa',
     analyzeSynergy: 'Analizza sinergia',
     checkingRoster: 'Controllo rosa...',
     rosterReadyTitle: 'Rosa trovata: consiglio personalizzato disponibile',
-    rosterReadyText: 'Questa carta verra confrontata con titolari, riserve, modulo e priorita reali della tua squadra.',
+    rosterReadyText: 'Questa carta viene letta con titolari, riserve, modulo e priorita reali della tua squadra.',
     rosterMissingTitle: 'Rosa non ancora caricata',
     rosterMissingText: 'La pagina continua a dare valutazione generale. Per sapere se la carta entra davvero nella tua squadra, serve caricare almeno la rosa base.',
     rosterUnavailableTitle: 'Valutazione generale disponibile',
@@ -106,7 +106,7 @@ const copy = {
     mainLever: 'Leva principale',
     coachContext: 'Contesto coach',
     recommendedUse: 'Uso consigliato',
-    coinRisk: 'Rischio coins',
+    coinRisk: '',
     purchaseAdvice: 'Consiglio finale',
     cardValue: 'Cosa offre la carta',
     loadingDecision: 'Sto leggendo la carta completa...',
@@ -127,7 +127,7 @@ const copy = {
     build: 'What it adds',
     verdict: 'Read',
     strengths: 'Why it matters',
-    risks: 'Technical risk',
+    risks: 'Usage note',
     nativeSkills: 'Technical profile',
     teamFit: 'Team synergy',
     teamSynergyScore: 'Team synergy',
@@ -151,7 +151,7 @@ const copy = {
     hideDetails: 'Hide details',
     synergyDetails: 'Synergy details',
     noRosterTitle: 'Card profile available',
-    noRosterText: 'Without a roster we read style, role, and technical profile. With the roster we add duplicates, alternatives, and real priorities.',
+    noRosterText: 'Without a roster we read style, role, and technical profile. With the roster we add synergies, movements, and real priorities.',
     selectedHint: 'Click a card to inspect details.',
     topPick: 'High synergy',
     goodPick: 'Good synergy',
@@ -175,7 +175,7 @@ const copy = {
     moduleFit: 'Module fit',
     systemSynergy: 'Synergy read',
     noFormationTitle: 'Formation not saved',
-    noFormationText: 'You have players in the roster: I can read role, duplicates, and alternatives, but a saved formation is needed to know if the card enters the starters.',
+    noFormationText: 'You have players in the roster: I can read role and profile, but a saved formation is needed to read links with starters and reserves.',
     noCoachText: 'Add the active coach to read team style and competences.',
     saveFormationCta: 'Save formation for starter fit',
     addCoachCta: 'Add coach for full read',
@@ -199,7 +199,7 @@ const copy = {
     mainLever: 'Main lever',
     coachContext: 'Coach context',
     recommendedUse: 'Recommended use',
-    coinRisk: 'Coin risk',
+    coinRisk: '',
     purchaseAdvice: 'Final advice',
     cardValue: 'What the card offers',
     loadingDecision: 'Reading the full card...',
@@ -535,7 +535,7 @@ function getFitSummary(card, rosterSummary, labels, lang) {
       title: labels.rosterMissingTitle,
       text: lang === 'en'
         ? `${card.name} is read as a technical profile: role, style and native skills. Add your roster to unlock the team synergy read.`
-        : `${card.name} viene letto come profilo tecnico: ruolo, stile e abilita native. Aggiungi la rosa per sbloccare la sinergia squadra.`,
+        : `${card.name} ha una lettura tecnica chiara: ruolo, stile e abilita native. Aggiungi la rosa per sbloccare la sinergia squadra.`,
       priority: labels.cardProfileOnly,
       alternatives: [],
       cta: labels.loadRoster,
@@ -573,7 +573,7 @@ function getFitSummary(card, rosterSummary, labels, lang) {
       ? `${card.name} is read against the movements already present in your players, especially the spaces occupied around ${card.position}.`
       : `${card.name} covers a lane that is not clearly occupied in your saved formation.`
     : best
-      ? `${card.name} viene letto sui movimenti già presenti nei tuoi giocatori, soprattutto gli spazi occupati attorno a ${card.position}.`
+      ? `${card.name} si lega ai movimenti già presenti nei tuoi giocatori, soprattutto agli spazi occupati attorno a ${card.position}.`
       : `${card.name} copre una corsia non occupata in modo chiaro nella formazione salvata.`
 
   if (depth === 'formation') {

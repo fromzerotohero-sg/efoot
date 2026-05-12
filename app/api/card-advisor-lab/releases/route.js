@@ -1,9 +1,29 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const EFHUB_HOME_URL = 'https://efhub.com/it'
+
+const RELEASE_SELECT = 'id, source, source_release_id, source_url, release_name, release_date, category, status, last_synced_at'
+const CARD_SELECT = [
+  'release_id',
+  'source',
+  'source_player_id',
+  'source_url',
+  'player_name',
+  'position',
+  'overall_display',
+  'category',
+  'image_url',
+  'card_type',
+  'playing_style',
+  'player_skills',
+  'ai_playstyles',
+  'enrichment_status',
+  'completeness_score'
+].join(',')
 
 function decodeHtml(value = '') {
   return String(value)
@@ -95,8 +115,104 @@ function parseReleases(markup) {
   return releases
 }
 
+function createAdminClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supabaseUrl || !serviceKey) return null
+  return createClient(supabaseUrl, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  })
+}
+
+function normalizeDbCard(row) {
+  return {
+    id: `${row.source || 'efhub'}-${row.release_id}-${row.source_player_id}`,
+    source: row.source || 'efhub',
+    sourcePlayerId: row.source_player_id,
+    sourceUrl: row.source_url,
+    name: row.player_name,
+    position: row.position,
+    overall: Number(row.overall_display) || null,
+    category: row.category || row.card_type || 'Special',
+    style: row.playing_style || '',
+    skills: Array.isArray(row.player_skills) ? row.player_skills : [],
+    aiPlaystyles: Array.isArray(row.ai_playstyles) ? row.ai_playstyles : [],
+    imageUrl: row.image_url,
+    enrichmentStatus: row.enrichment_status,
+    completenessScore: row.completeness_score
+  }
+}
+
+function normalizeDbRelease(release, cardsByRelease) {
+  const cards = cardsByRelease.get(release.id) || []
+  return {
+    id: release.source_release_id || release.id,
+    source: release.source || 'efhub',
+    sourceUrl: release.source_url || EFHUB_HOME_URL,
+    name: release.release_name,
+    date: release.release_date || '',
+    status: release.status || 'active',
+    category: release.category || 'Special',
+    cards: cards.map(normalizeDbCard)
+  }
+}
+
+async function fetchDbReleases() {
+  const admin = createAdminClient()
+  if (!admin) return []
+
+  const [releasesRes, cardsRes] = await Promise.all([
+    admin
+      .from('card_advisor_releases')
+      .select(RELEASE_SELECT)
+      .eq('source', 'efhub')
+      .eq('is_active', true)
+      .order('last_synced_at', { ascending: false }),
+    admin
+      .from('card_advisor_cards')
+      .select(CARD_SELECT)
+      .eq('source', 'efhub')
+      .eq('is_active', true)
+      .order('overall_display', { ascending: false })
+  ])
+
+  if (releasesRes.error || cardsRes.error) {
+    console.warn('[card-advisor-lab:releases] DB source unavailable:', releasesRes.error || cardsRes.error)
+    return []
+  }
+
+  const cardsByRelease = new Map()
+  ;(cardsRes.data || []).forEach(card => {
+    const current = cardsByRelease.get(card.release_id) || []
+    current.push(card)
+    cardsByRelease.set(card.release_id, current)
+  })
+
+  return (releasesRes.data || [])
+    .map(release => normalizeDbRelease(release, cardsByRelease))
+    .filter(release => release.cards.length > 0)
+}
+
 export async function GET() {
   try {
+    const dbReleases = await fetchDbReleases()
+    const dbTotalCards = dbReleases.reduce((sum, release) => sum + release.cards.length, 0)
+    if (dbReleases.length > 0 && dbTotalCards > 0) {
+      return NextResponse.json(
+        {
+          source: 'card_advisor_cards',
+          sourceUrl: EFHUB_HOME_URL,
+          fetchedAt: new Date().toISOString(),
+          releases: dbReleases
+        },
+        {
+          headers: {
+            'Cache-Control': 'public, max-age=300, s-maxage=900'
+          }
+        }
+      )
+    }
+
     const response = await fetch(EFHUB_HOME_URL, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; FromZeroToHeroCardAdvisor/1.0)',
