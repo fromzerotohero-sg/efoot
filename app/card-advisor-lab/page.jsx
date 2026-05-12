@@ -39,6 +39,15 @@ const copy = {
     teamFit: 'Sinergia con la tua squadra',
     teamSynergyScore: 'Sinergia squadra',
     coachAdvice: 'Consiglio',
+    quickReadTitle: 'Lettura rapida gratis',
+    freeReadBadge: 'Gratis',
+    proUnlockTitle: 'Verdetto Pro IA',
+    proUnlockText: 'Sblocca la risposta completa: non solo se la carta è buona, ma se vale davvero per la tua rosa.',
+    proUnlockBullets: ['Decisione netta: prendere, evitare o solo rotazione', 'Combo reali con titolari, riserve, stile e coach', 'Uso pratico: dove rende e quando lasciarla stare'],
+    proUnlockButton: 'Sblocca verdetto Pro',
+    proUnlockedBadge: 'Sbloccato',
+    baseDetailsShow: 'Vedi dettagli base',
+    baseDetailsHide: 'Nascondi dettagli base',
     deepAnalysisCta: 'Sblocca analisi premium',
     deepAnalysisCost: '2 HP',
     deepAnalysisLoading: 'Sto preparando l’analisi dettagliata...',
@@ -132,6 +141,15 @@ const copy = {
     teamFit: 'Team synergy',
     teamSynergyScore: 'Team synergy',
     coachAdvice: 'Advice',
+    quickReadTitle: 'Free quick read',
+    freeReadBadge: 'Free',
+    proUnlockTitle: 'Pro AI verdict',
+    proUnlockText: 'Unlock the complete answer: not just whether the card is good, but whether it is truly worth it for your roster.',
+    proUnlockBullets: ['Clear decision: take, skip, or rotation only', 'Real combos with starters, bench, style, and coach', 'Practical use: where it works and when to avoid it'],
+    proUnlockButton: 'Unlock Pro verdict',
+    proUnlockedBadge: 'Unlocked',
+    baseDetailsShow: 'Show base details',
+    baseDetailsHide: 'Hide base details',
     deepAnalysisCta: 'Unlock premium analysis',
     deepAnalysisCost: '2 HP',
     deepAnalysisLoading: 'Preparing detailed analysis...',
@@ -718,6 +736,7 @@ function DetailPanel({
 }) {
   const [showSynergyDetails, setShowSynergyDetails] = React.useState(false)
   const [showDeepFullReport, setShowDeepFullReport] = React.useState(false)
+  const [showBaseDetails, setShowBaseDetails] = React.useState(false)
   const verdict = getVerdictMeta(card.verdict, labels)
   const fitSummary = getFitSummary(card, rosterSummary, labels, lang)
   const serverEval = evaluation || null
@@ -791,18 +810,22 @@ function DetailPanel({
             <CheckCircle2 size={18} style={{ color: verdict.color }} />
             <span>{labels.verdict}: <strong style={{ color: verdict.color }}>{effectiveTitle}</strong></span>
           </div>
-          <div className="team-synergy-card">
-            <div className="team-synergy-head">
-              <span>{labels.teamSynergyScore}</span>
+          <div className="quick-read-card">
+            <div className="quick-read-top">
+              <span>{labels.quickReadTitle}</span>
+              <strong>{labels.freeReadBadge}</strong>
+            </div>
+            <div className="quick-read-score">
+              <div>
+                <small>{labels.teamSynergyScore}</small>
+                <b>{teamSynergyLabel}</b>
+              </div>
               <strong>{teamSynergyScore}%</strong>
             </div>
-            <div className="team-synergy-bar" aria-label={`${labels.teamSynergyScore}: ${teamSynergyScore}%`}>
+            <div className="quick-read-bar" aria-label={`${labels.teamSynergyScore}: ${teamSynergyScore}%`}>
               <span style={{ width: `${teamSynergyScore}%` }} />
             </div>
-            <div className="team-synergy-caption">
-              <strong>{teamSynergyLabel}</strong>
-              <p>{teamSynergySummary}</p>
-            </div>
+            <p>{teamSynergySummary}</p>
             {teamSynergyDetails.length > 0 && (
               <>
                 <button
@@ -841,14 +864,22 @@ function DetailPanel({
         </div>
       )}
 
-      <div className="deep-analysis-entry">
-        <div>
-          <span>{labels.deepAnalysisTitle}</span>
-          <p>{deepAnalysis ? deepAnalysis.headline : `${labels.deepAnalysisCta} · ${labels.deepAnalysisCost}`}</p>
+      <div className={`deep-analysis-entry ${deepAnalysis ? 'deep-analysis-entry-unlocked' : ''}`}>
+        <div className="deep-analysis-entry-copy">
+          <div className="deep-analysis-entry-title">
+            <span>{deepAnalysis ? labels.proUnlockedBadge : labels.deepAnalysisCost}</span>
+            <h3>{deepAnalysis ? labels.deepAnalysisTitle : labels.proUnlockTitle}</h3>
+          </div>
+          <p>{deepAnalysis ? deepAnalysis.headline : labels.proUnlockText}</p>
+          {!deepAnalysis && (
+            <ul>
+              {labels.proUnlockBullets.map(item => <li key={item}>{item}</li>)}
+            </ul>
+          )}
         </div>
         {!deepAnalysis && (
           <button type="button" onClick={onRequestDeepAnalysis} disabled={deepAnalysisLoading}>
-            {deepAnalysisLoading ? labels.deepAnalysisLoading : `${labels.deepAnalysisCta} · ${labels.deepAnalysisCost}`}
+            {deepAnalysisLoading ? labels.deepAnalysisLoading : labels.proUnlockButton}
           </button>
         )}
       </div>
@@ -915,49 +946,61 @@ function DetailPanel({
         </div>
       )}
 
-      <div className="detail-grid">
-        <article>
-          <h3><TrendingUp size={18} /> {labels.mainLever}</h3>
-          <div className="pill-row">
-            <StatPill>{lever}</StatPill>
-          </div>
-        </article>
+      <div className="base-details-shell">
+        <button
+          type="button"
+          className="base-details-toggle"
+          onClick={() => setShowBaseDetails(value => !value)}
+          aria-expanded={showBaseDetails}
+        >
+          {showBaseDetails ? labels.baseDetailsHide : labels.baseDetailsShow}
+          <ChevronRight size={15} />
+        </button>
+        {showBaseDetails && (
+          <>
+            <div className="detail-grid">
+              <article>
+                <h3><TrendingUp size={18} /> {labels.mainLever}</h3>
+                <div className="pill-row">
+                  <StatPill>{lever}</StatPill>
+                </div>
+              </article>
 
-        <article>
-          <h3><Sparkles size={18} /> {labels.nativeSkills}</h3>
-          <div className="pill-row">
-            {(serverEval?.technicalProfile || card.skills).length > 0
-              ? (serverEval?.technicalProfile || card.skills).map(item => <StatPill key={item}>{item}</StatPill>)
-              : <StatPill>{labels.noNativeSkills}</StatPill>}
-          </div>
-        </article>
-
-      </div>
-
-      <div className="fit-panel">
-        <div>
-          <h3><Users size={18} /> {labels.howToUse}</h3>
-          <p>{recommendedUseLine}</p>
-          <div className="fit-summary-grid">
-            <div>
-              <span>{labels.priorityVerdict}</span>
-              <strong>{teamSynergyLabel}</strong>
+              <article>
+                <h3><Sparkles size={18} /> {labels.nativeSkills}</h3>
+                <div className="pill-row">
+                  {(serverEval?.technicalProfile || card.skills).length > 0
+                    ? (serverEval?.technicalProfile || card.skills).map(item => <StatPill key={item}>{item}</StatPill>)
+                    : <StatPill>{labels.noNativeSkills}</StatPill>}
+                </div>
+              </article>
             </div>
-          </div>
-          {serverEval?.context?.hasCoach && effectiveCoachText && (
-            <div className="fit-logic-list">
-              <span>{labels.coachContext}: {effectiveCoachText}</span>
+
+            <div className="fit-panel synergy-read-card">
+              <div className="synergy-read-content">
+                <div className="synergy-read-head">
+                  <h3><Users size={18} /> {labels.howToUse}</h3>
+                  <span>{teamSynergyLabel}</span>
+                </div>
+                <p>{recommendedUseLine}</p>
+                {serverEval?.context?.hasCoach && effectiveCoachText && (
+                  <div className="synergy-read-context">
+                    <ShieldCheck size={14} />
+                    <span>{effectiveCoachText}</span>
+                  </div>
+                )}
+              </div>
+              {effectiveCta && (
+                <button
+                  type="button"
+                  onClick={effectiveCta.target === 'coach' ? onOpenCoach : onOpenFormation}
+                >
+                  {effectiveCta.label}
+                  <ArrowRight size={16} />
+                </button>
+              )}
             </div>
-          )}
-        </div>
-        {effectiveCta && (
-          <button
-            type="button"
-            onClick={effectiveCta.target === 'coach' ? onOpenCoach : onOpenFormation}
-          >
-            {effectiveCta.label}
-            <ArrowRight size={16} />
-          </button>
+          </>
         )}
       </div>
 
@@ -2183,15 +2226,55 @@ export default withAuth(function CardAdvisorLabPage() {
           align-items: center;
           justify-content: space-between;
           gap: 14px;
-          border: 1px solid rgba(251,191,36,0.22);
-          border-radius: 18px;
-          padding: 14px;
+          border: 1px solid rgba(251,191,36,0.34);
+          border-radius: 22px;
+          padding: 16px;
           background:
-            radial-gradient(circle at 0% 0%, rgba(251,191,36,0.12), transparent 36%),
-            rgba(255,255,255,0.04);
+            radial-gradient(circle at 0% 0%, rgba(251,191,36,0.18), transparent 38%),
+            radial-gradient(circle at 100% 0%, rgba(249,115,22,0.14), transparent 40%),
+            rgba(255,255,255,0.055);
+          box-shadow: 0 18px 45px rgba(0,0,0,0.18);
         }
 
-        .deep-analysis-entry span,
+        .deep-analysis-entry-unlocked {
+          border-color: rgba(0,212,255,0.22);
+          background:
+            radial-gradient(circle at 0% 0%, rgba(0,212,255,0.11), transparent 38%),
+            rgba(255,255,255,0.045);
+        }
+
+        .deep-analysis-entry-copy {
+          display: grid;
+          gap: 9px;
+          min-width: 0;
+        }
+
+        .deep-analysis-entry-title {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .deep-analysis-entry-title h3 {
+          margin: 0;
+          color: #fff;
+          font-size: clamp(18px, 2.5vw, 23px);
+          letter-spacing: -0.02em;
+        }
+
+        .deep-analysis-entry-title span {
+          display: inline-flex;
+          align-items: center;
+          border: 1px solid rgba(251,191,36,0.34);
+          border-radius: 999px;
+          background: rgba(251,191,36,0.14);
+          color: #facc15;
+          padding: 5px 9px;
+          font-size: 11px;
+          font-weight: 950;
+          white-space: nowrap;
+        }
+
         .deep-analysis-summary span {
           display: block;
           color: #facc15;
@@ -2204,9 +2287,30 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .deep-analysis-entry p {
           margin: 0;
+          color: rgba(255,255,255,0.82);
+          font-size: 14px;
+          line-height: 1.55;
+          max-width: 72ch;
+        }
+
+        .deep-analysis-entry ul {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 7px;
+          margin: 0;
+          padding: 0;
+          list-style: none;
+        }
+
+        .deep-analysis-entry li {
+          border: 1px solid rgba(251,191,36,0.18);
+          border-radius: 999px;
+          background: rgba(5,8,20,0.34);
           color: rgba(255,255,255,0.78);
-          font-size: 13px;
-          line-height: 1.45;
+          padding: 6px 9px;
+          font-size: 12px;
+          font-weight: 750;
+          line-height: 1.25;
         }
 
         .deep-analysis-entry button {
@@ -2219,6 +2323,7 @@ export default withAuth(function CardAdvisorLabPage() {
           font-weight: 950;
           cursor: pointer;
           white-space: nowrap;
+          box-shadow: 0 12px 28px rgba(249,115,22,0.24);
         }
 
         .deep-analysis-entry button:disabled {
@@ -2498,6 +2603,91 @@ export default withAuth(function CardAdvisorLabPage() {
           line-height: 1.45;
         }
 
+        .quick-read-card {
+          margin-top: 16px;
+          border: 1px solid rgba(0,212,255,0.16);
+          border-radius: 18px;
+          padding: 14px;
+          background:
+            radial-gradient(circle at 0% 0%, rgba(0,212,255,0.09), transparent 36%),
+            rgba(5,8,20,0.42);
+        }
+
+        .quick-read-top,
+        .quick-read-score {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
+        .quick-read-top span {
+          color: var(--primary-cyan);
+          font-size: 11px;
+          font-weight: 950;
+          letter-spacing: 0.10em;
+          text-transform: uppercase;
+        }
+
+        .quick-read-top strong {
+          border: 1px solid rgba(255,255,255,0.12);
+          border-radius: 999px;
+          background: rgba(255,255,255,0.06);
+          color: rgba(255,255,255,0.72);
+          padding: 4px 8px;
+          font-size: 10px;
+          font-weight: 900;
+          text-transform: uppercase;
+        }
+
+        .quick-read-score {
+          margin-top: 10px;
+        }
+
+        .quick-read-score small {
+          display: block;
+          color: rgba(255,255,255,0.50);
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          margin-bottom: 3px;
+        }
+
+        .quick-read-score b {
+          color: #fff;
+          font-size: 17px;
+        }
+
+        .quick-read-score > strong {
+          color: #86efac;
+          font-size: 22px;
+          letter-spacing: -0.04em;
+        }
+
+        .quick-read-bar {
+          margin-top: 10px;
+          height: 7px;
+          border-radius: 999px;
+          overflow: hidden;
+          background: linear-gradient(90deg, rgba(244,63,94,0.28), rgba(251,191,36,0.26), rgba(34,197,94,0.28));
+        }
+
+        .quick-read-bar span {
+          display: block;
+          height: 100%;
+          border-radius: inherit;
+          background: linear-gradient(90deg, #f97316, #facc15, #22c55e);
+          box-shadow: 0 0 16px rgba(34,197,94,0.24);
+        }
+
+        .quick-read-card > p {
+          margin: 10px 0 0;
+          color: rgba(255,255,255,0.74);
+          font-size: 13px;
+          line-height: 1.55;
+        }
+
         .detail-grid {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2559,6 +2749,105 @@ export default withAuth(function CardAdvisorLabPage() {
           align-items: center;
           justify-content: space-between;
           gap: 16px;
+        }
+
+        .base-details-shell {
+          margin-top: 14px;
+        }
+
+        .base-details-toggle {
+          border: 1px solid rgba(255,255,255,0.14);
+          border-radius: 999px;
+          background: rgba(255,255,255,0.045);
+          color: rgba(255,255,255,0.74);
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          min-height: 34px;
+          padding: 7px 12px;
+          font-size: 12px;
+          font-weight: 900;
+          cursor: pointer;
+        }
+
+        .base-details-toggle[aria-expanded="true"] svg {
+          transform: rotate(90deg);
+        }
+
+        .synergy-read-card {
+          position: relative;
+          overflow: hidden;
+          border-color: rgba(0,212,255,0.16);
+          background:
+            radial-gradient(circle at 0% 0%, rgba(0,212,255,0.09), transparent 34%),
+            radial-gradient(circle at 100% 0%, rgba(34,197,94,0.08), transparent 40%),
+            rgba(255,255,255,0.038);
+        }
+
+        .synergy-read-card::before {
+          content: '';
+          position: absolute;
+          inset: 14px auto 14px 0;
+          width: 3px;
+          border-radius: 999px;
+          background: linear-gradient(180deg, var(--primary-cyan), rgba(34,197,94,0.75));
+        }
+
+        .synergy-read-content {
+          position: relative;
+          display: grid;
+          gap: 10px;
+          min-width: 0;
+        }
+
+        .synergy-read-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
+        .synergy-read-head h3 {
+          margin: 0;
+        }
+
+        .synergy-read-head > span {
+          flex: 0 0 auto;
+          border: 1px solid rgba(34,197,94,0.26);
+          border-radius: 999px;
+          background: rgba(34,197,94,0.10);
+          color: #86efac;
+          padding: 6px 10px;
+          font-size: 11px;
+          font-weight: 950;
+          letter-spacing: 0.02em;
+          white-space: nowrap;
+        }
+
+        .synergy-read-card p {
+          max-width: 78ch;
+          color: rgba(255,255,255,0.78);
+        }
+
+        .synergy-read-context {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          width: fit-content;
+          max-width: 100%;
+          border: 1px solid rgba(0,212,255,0.20);
+          background: rgba(0,212,255,0.075);
+          color: rgba(255,255,255,0.78);
+          border-radius: 999px;
+          padding: 7px 10px;
+          font-size: 12px;
+          font-weight: 750;
+          line-height: 1.35;
+        }
+
+        .synergy-read-context svg {
+          flex: 0 0 auto;
+          color: var(--primary-cyan);
         }
 
         .fit-logic-list {
