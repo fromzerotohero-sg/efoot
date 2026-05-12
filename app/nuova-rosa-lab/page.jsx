@@ -4674,11 +4674,14 @@ export default withAuth(function NuovaRosaLabPage() {
                 <h2>{layout?.formation || '4-3-3'}</h2>
               </div>
               <div className="nr-field-actions">
-                <button type="button" className="nr-primary-button" onClick={requestBuildCoachForRoster} disabled={buildingRoster || loading}>
+                <button type="button" className="nr-build-coach-main-button" onClick={requestBuildCoachForRoster} disabled={buildingRoster || loading}>
                   {buildingRoster ? <RefreshCw size={14} className="nr-spin" /> : <Sparkles size={14} />}
-                  {buildingRoster
-                    ? (lang === 'en' ? 'Optimizing...' : 'Ottimizzazione...')
-                    : (lang === 'en' ? 'Optimize squad' : 'Ottimizza rosa')}
+                  <span>
+                    <strong>{buildingRoster
+                      ? (lang === 'en' ? 'Optimizing...' : 'Ottimizzazione...')
+                      : (lang === 'en' ? 'Optimize squad' : 'Ottimizza rosa')}</strong>
+                    <small>{lang === 'en' ? 'Build Coach' : 'Build Coach'}</small>
+                  </span>
                 </button>
                 {fieldEditMode ? (
                   <>
@@ -4690,7 +4693,7 @@ export default withAuth(function NuovaRosaLabPage() {
                     </button>
                   </>
                 ) : (
-                  <button type="button" className="nr-secondary-button" onClick={() => setFieldEditMode(true)}>
+                  <button type="button" className="nr-move-players-button" onClick={() => setFieldEditMode(true)}>
                     {lang === 'en' ? 'Move players' : 'Sposta giocatori'}
                   </button>
                 )}
@@ -5751,9 +5754,85 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-field-actions {
           display: flex;
-          gap: 8px;
+          gap: 10px;
           flex-wrap: wrap;
           justify-content: flex-end;
+          align-items: center;
+          padding: 8px;
+          border-radius: 18px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(4, 8, 18, 0.42);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+          backdrop-filter: blur(10px);
+        }
+
+        .nr-build-coach-main-button {
+          border: 1px solid rgba(34, 211, 238, 0.62);
+          background:
+            radial-gradient(circle at 16% 18%, rgba(255, 255, 255, 0.18), transparent 22%),
+            linear-gradient(135deg, rgba(6, 182, 212, 0.92), rgba(124, 58, 237, 0.9));
+          color: #fff;
+          padding: 10px 15px;
+          min-height: 48px;
+          border-radius: 15px;
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          cursor: pointer;
+          box-shadow: 0 10px 26px rgba(6, 182, 212, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+          transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+        }
+
+        .nr-build-coach-main-button:hover:not(:disabled) {
+          transform: translateY(-1px);
+          filter: brightness(1.08);
+          box-shadow: 0 14px 32px rgba(6, 182, 212, 0.34), 0 0 22px rgba(168, 85, 247, 0.24);
+        }
+
+        .nr-build-coach-main-button:disabled {
+          opacity: 0.58;
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        .nr-build-coach-main-button span {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          line-height: 1.05;
+        }
+
+        .nr-build-coach-main-button strong {
+          font-size: 13px;
+          letter-spacing: 0.01em;
+        }
+
+        .nr-build-coach-main-button small {
+          margin-top: 3px;
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          opacity: 0.78;
+        }
+
+        .nr-move-players-button {
+          border: 1px solid rgba(148, 163, 184, 0.28);
+          background: rgba(15, 23, 42, 0.72);
+          color: rgba(255, 255, 255, 0.82);
+          padding: 11px 14px;
+          min-height: 44px;
+          border-radius: 13px;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          cursor: pointer;
+          transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+        }
+
+        .nr-move-players-button:hover {
+          transform: translateY(-1px);
+          border-color: rgba(148, 163, 184, 0.55);
+          background: rgba(15, 23, 42, 0.94);
         }
 
         .nr-reserve-grid {
