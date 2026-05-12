@@ -4316,7 +4316,7 @@ export default withAuth(function NuovaRosaLabPage() {
     }
   }, [fetchRoster, lang, refreshDiagnosticAfterSave, selectedPlayer, showToast, t])
 
-  const runBuildCoachForPlayer = React.useCallback(async (player) => {
+  const runBuildCoachForPlayer = React.useCallback(async (player, options = {}) => {
     if (!player?.id) return
     setBuildingPlayerId(player.id)
     setBuildCoachOverlay({
@@ -4351,6 +4351,11 @@ export default withAuth(function NuovaRosaLabPage() {
       const updatedData = await safeJsonResponse(updatedResponse, lang === 'en' ? 'Unable to reload player.' : 'Impossibile ricaricare il giocatore.')
       if (updatedData?.player) {
         setSelectedPlayer(updatedData.player)
+        if (options.openEditor) {
+          setSelectedSlot(updatedData.player.slot_index != null ? slots.find((entry) => entry.slot_index === updatedData.player.slot_index) || null : null)
+          setShowAssignModal(false)
+          setShowPremiumEditorModal(true)
+        }
       }
       await fetchRoster()
       await refreshDiagnosticAfterSave()
@@ -4369,9 +4374,9 @@ export default withAuth(function NuovaRosaLabPage() {
       setBuildingPlayerId(null)
       setBuildCoachOverlay(null)
     }
-  }, [fetchRoster, lang, refreshDiagnosticAfterSave, showToast, t])
+  }, [fetchRoster, lang, refreshDiagnosticAfterSave, showToast, slots, t])
 
-  const requestBuildCoachForPlayer = React.useCallback((player) => {
+  const requestBuildCoachForPlayer = React.useCallback((player, options = {}) => {
     if (!player?.id) return
     setConfirmModal({
       ...showConfirmConfig({
@@ -4385,7 +4390,7 @@ export default withAuth(function NuovaRosaLabPage() {
       }),
       onConfirm: async () => {
         setConfirmModal(null)
-        await runBuildCoachForPlayer(player)
+        await runBuildCoachForPlayer(player, options)
       },
       onCancel: () => setConfirmModal(null)
     })
@@ -4788,26 +4793,16 @@ export default withAuth(function NuovaRosaLabPage() {
             </div>
           </section>
           <section className="nr-workspace-block">
-            <div className="nr-workspace-head nr-card-head">
-              <div>
-                <span className="nr-mini-kicker">{t('nuovaRosaWorkspace')}</span>
-                <h2>{lang === 'en' ? 'Pitch' : 'Campo'}</h2>
+            {fieldEditMode && (
+              <div className="nr-field-edit-actions">
+                <button type="button" className="nr-secondary-button" onClick={() => { setFieldEditMode(false); setCustomPositions({}) }} disabled={savingFieldLayout}>
+                  {t('cancel')}
+                </button>
+                <button type="button" className="nr-primary-button" onClick={() => saveFieldLayout()} disabled={savingFieldLayout}>
+                  {savingFieldLayout ? (lang === 'en' ? 'Saving...' : 'Salvataggio...') : (lang === 'en' ? 'Save positions' : 'Salva posizioni')}
+                </button>
               </div>
-              <div className="nr-field-actions">
-                {fieldEditMode ? (
-                  <>
-                    <button type="button" className="nr-secondary-button" onClick={() => { setFieldEditMode(false); setCustomPositions({}) }} disabled={savingFieldLayout}>
-                      {t('cancel')}
-                    </button>
-                    <button type="button" className="nr-primary-button" onClick={() => saveFieldLayout()} disabled={savingFieldLayout}>
-                      {savingFieldLayout ? (lang === 'en' ? 'Saving...' : 'Salvataggio...') : (lang === 'en' ? 'Save positions' : 'Salva posizioni')}
-                    </button>
-                  </>
-                ) : (
-                  null
-                )}
-              </div>
-            </div>
+            )}
             <div className="nr-field-shell">
               <div className="nr-field-formation-badge">
                 <span>{lang === 'en' ? 'Formation' : 'Formazione'}</span>
@@ -5090,7 +5085,7 @@ export default withAuth(function NuovaRosaLabPage() {
         onClose={() => setBuildCoachPlayerPickerOpen(false)}
         onPick={(player) => {
           setBuildCoachPlayerPickerOpen(false)
-          requestBuildCoachForPlayer(player)
+          requestBuildCoachForPlayer(player, { openEditor: true })
         }}
         lang={lang}
       />
@@ -5587,6 +5582,13 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-workspace-head {
           padding: 0 2px;
           margin-bottom: 6px;
+        }
+
+        .nr-field-edit-actions {
+          display: flex;
+          justify-content: flex-end;
+          gap: 10px;
+          margin-bottom: 8px;
         }
 
         .nr-reserve-section {
