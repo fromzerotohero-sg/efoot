@@ -4352,7 +4352,20 @@ export default withAuth(function NuovaRosaLabPage() {
       if (updatedData?.player) {
         setSelectedPlayer(updatedData.player)
         if (options.openEditor) {
-          setSelectedSlot(updatedData.player.slot_index != null ? slots.find((entry) => entry.slot_index === updatedData.player.slot_index) || null : null)
+          const slotIndex = updatedData.player.slot_index != null ? Number(updatedData.player.slot_index) : null
+          const baseSlots = completeSlotPositions(
+            layout?.slot_positions && typeof layout.slot_positions === 'object'
+              ? layout.slot_positions
+              : DEFAULT_SLOT_POSITIONS
+          )
+          setSelectedSlot(slotIndex !== null
+            ? {
+                slot_index: slotIndex,
+                x: Number(baseSlots?.[slotIndex]?.x ?? 50),
+                y: Number(baseSlots?.[slotIndex]?.y ?? 50),
+                position: baseSlots?.[slotIndex]?.position || updatedData.player.position || '?'
+              }
+            : null)
           setShowAssignModal(false)
           setShowPremiumEditorModal(true)
         }
@@ -4374,7 +4387,7 @@ export default withAuth(function NuovaRosaLabPage() {
       setBuildingPlayerId(null)
       setBuildCoachOverlay(null)
     }
-  }, [fetchRoster, lang, refreshDiagnosticAfterSave, showToast, slots, t])
+  }, [fetchRoster, lang, layout, refreshDiagnosticAfterSave, showToast, t])
 
   const requestBuildCoachForPlayer = React.useCallback((player, options = {}) => {
     if (!player?.id) return
