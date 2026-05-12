@@ -863,6 +863,18 @@ function DetailPanel({
                 </ul>
               )}
             </div>
+          {deepAnalysisLoading && (
+            <div className="deep-analysis-inline-loader" aria-live="polite">
+              <span className="deep-analysis-inline-logo" aria-hidden="true">
+                <span className="deep-analysis-inline-scan" />
+                <img src="/logo.png" alt="" />
+              </span>
+              <span>
+                <b>AI Coach</b>
+                <small>{labels.deepAnalysisLoading}</small>
+              </span>
+            </div>
+          )}
             {!deepAnalysis && (
               <button type="button" onClick={onRequestDeepAnalysis} disabled={deepAnalysisLoading}>
                 {deepAnalysisLoading ? labels.deepAnalysisLoading : labels.proUnlockButton}
@@ -1090,12 +1102,6 @@ function CardDetailsModal({
       onClick={onClose}
     >
       <div className="card-details-modal-inner" onClick={(event) => event.stopPropagation()}>
-        <BrandAnalysisOverlay
-          show={evaluating || deepAnalysisLoading}
-          labels={labels}
-          lang={lang}
-          mode={deepAnalysisLoading ? 'deep' : 'evaluation'}
-        />
         <DetailPanel
           card={card}
           labels={labels}
@@ -1111,32 +1117,6 @@ function CardDetailsModal({
           onOpenCoach={onOpenCoach}
           onClose={onClose}
         />
-      </div>
-    </div>
-  )
-}
-
-function BrandAnalysisOverlay({ show, labels, lang, mode = 'evaluation' }) {
-  if (!show) return null
-  const isDeep = mode === 'deep'
-  const title = isDeep
-    ? (lang === 'en' ? 'Preparing Pro AI verdict' : 'Preparo il verdetto IA Pro')
-    : (lang === 'en' ? 'Reading the card' : 'Sto leggendo la carta')
-  const text = isDeep ? labels.deepAnalysisLoading : labels.loadingDecision
-
-  return (
-    <div className="brand-analysis-overlay" role="status" aria-live="polite">
-      <div className="brand-analysis-core">
-        <div className="brand-analysis-logo-wrap" aria-hidden="true">
-          <span className="brand-analysis-scanline" />
-          <span className="brand-analysis-orbit" />
-          <img src="/logo.png" alt="" className="brand-analysis-logo" />
-        </div>
-        <div className="brand-analysis-copy">
-          <span>AI COACH</span>
-          <strong>{title}</strong>
-          <p>{text}</p>
-        </div>
       </div>
     </div>
   )
@@ -2677,6 +2657,79 @@ export default withAuth(function CardAdvisorLabPage() {
           cursor: wait;
         }
 
+        .deep-analysis-inline-loader {
+          flex: 0 0 auto;
+          display: inline-flex;
+          align-items: center;
+          gap: 9px;
+          min-width: min(230px, 100%);
+          border: 1px solid rgba(0, 212, 255, 0.26);
+          border-radius: 16px;
+          background:
+            linear-gradient(135deg, rgba(0, 212, 255, 0.10), rgba(138, 43, 226, 0.10)),
+            rgba(2, 4, 12, 0.42);
+          padding: 8px 10px;
+          color: #fff;
+        }
+
+        .deep-analysis-inline-logo {
+          position: relative;
+          width: 42px;
+          height: 42px;
+          flex: 0 0 42px;
+          display: grid;
+          place-items: center;
+          border-radius: 13px;
+          border: 1px solid rgba(0, 212, 255, 0.22);
+          background: rgba(0, 212, 255, 0.08);
+          overflow: hidden;
+        }
+
+        .deep-analysis-inline-logo img {
+          width: 34px;
+          max-height: 34px;
+          object-fit: contain;
+          filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.42));
+          animation: brandInterference 1.15s steps(2, end) infinite;
+        }
+
+        .deep-analysis-inline-scan {
+          position: absolute;
+          z-index: 2;
+          left: 5px;
+          right: 5px;
+          height: 2px;
+          border-radius: 999px;
+          background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.95), transparent);
+          box-shadow: 0 0 12px rgba(0, 212, 255, 0.7);
+          animation: brandInlineScan 1.2s ease-in-out infinite;
+        }
+
+        .deep-analysis-inline-loader span:last-child {
+          min-width: 0;
+          display: grid;
+          gap: 2px;
+        }
+
+        .deep-analysis-inline-loader b {
+          color: #67e8f9;
+          font-size: 11px;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+
+        .deep-analysis-inline-loader small {
+          color: rgba(255,255,255,0.72);
+          font-size: 11px;
+          line-height: 1.25;
+        }
+
+        @keyframes brandInlineScan {
+          0% { top: 6px; opacity: 0; }
+          20%, 78% { opacity: 1; }
+          100% { top: calc(100% - 8px); opacity: 0; }
+        }
+
         .deep-analysis-error {
           margin: 10px 0 0;
           color: #ff9d9d;
@@ -3376,19 +3429,14 @@ export default withAuth(function CardAdvisorLabPage() {
             padding: 14px;
           }
 
-          .brand-analysis-core {
-            padding: 22px 16px 20px;
-            border-radius: 22px;
-          }
-
-          .brand-analysis-logo-wrap {
-            width: 112px;
-            height: 112px;
-          }
-
-          .brand-analysis-logo {
-            width: 88px;
-            max-height: 88px;
+          .detail-close-button {
+            position: fixed;
+            top: max(10px, env(safe-area-inset-top, 0px));
+            right: max(10px, env(safe-area-inset-right, 0px));
+            z-index: 1405;
+            margin: 0;
+            border-color: rgba(0, 212, 255, 0.28);
+            background: rgba(2,4,12,0.88);
           }
 
           .release-card {
@@ -3461,6 +3509,10 @@ export default withAuth(function CardAdvisorLabPage() {
           .deep-analysis-entry {
             flex-direction: column;
             align-items: stretch;
+          }
+
+          .deep-analysis-inline-loader {
+            width: 100%;
           }
 
           .fit-summary-grid {
