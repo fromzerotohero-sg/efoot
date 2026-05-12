@@ -2814,6 +2814,7 @@ export default withAuth(function NuovaRosaLabPage() {
   const [savingPlayerEditor, setSavingPlayerEditor] = React.useState(false)
   const [buildingRoster, setBuildingRoster] = React.useState(false)
   const [buildingPlayerId, setBuildingPlayerId] = React.useState(null)
+  const [buildCoachOverlay, setBuildCoachOverlay] = React.useState(null)
   const [savingTacticalSettings, setSavingTacticalSettings] = React.useState(false)
   const [fieldEditMode, setFieldEditMode] = React.useState(false)
   const [customPositions, setCustomPositions] = React.useState({})
@@ -4234,6 +4235,12 @@ export default withAuth(function NuovaRosaLabPage() {
   const runBuildCoachForPlayer = React.useCallback(async (player) => {
     if (!player?.id) return
     setBuildingPlayerId(player.id)
+    setBuildCoachOverlay({
+      title: lang === 'en' ? 'Calculating player build' : 'Calcolo build giocatore',
+      message: lang === 'en'
+        ? 'Build Coach is applying growth points and updating the visible stats.'
+        : 'Build Coach sta applicando i punti crescita e aggiornando le statistiche visibili.'
+    })
     try {
       let token = getTokenFallback()
       if (!token && supabase) {
@@ -4250,6 +4257,17 @@ export default withAuth(function NuovaRosaLabPage() {
         }
       })
       const data = await safeJsonResponse(response, lang === 'en' ? 'Unable to calculate build.' : 'Impossibile calcolare la build.')
+      const updatedResponse = await fetch(`/api/players/${player.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Cache-Control': 'no-cache'
+        },
+        cache: 'no-store'
+      })
+      const updatedData = await safeJsonResponse(updatedResponse, lang === 'en' ? 'Unable to reload player.' : 'Impossibile ricaricare il giocatore.')
+      if (updatedData?.player) {
+        setSelectedPlayer(updatedData.player)
+      }
       await fetchRoster()
       await refreshDiagnosticAfterSave()
       const after = data?.result?.after_overall
@@ -4259,14 +4277,13 @@ export default withAuth(function NuovaRosaLabPage() {
           : `Build Coach applicata${after ? `: OVR ${after}` : ''}.`,
         'success'
       )
-      setShowPremiumEditorModal(false)
-      setSelectedPlayer(null)
     } catch (err) {
       console.error('[NuovaRosaLab] build coach player error:', err)
       const { message } = mapErrorToUserMessage(err, lang === 'en' ? 'Unable to calculate build.' : 'Impossibile calcolare la build.', lang)
       showToast(message, 'error')
     } finally {
       setBuildingPlayerId(null)
+      setBuildCoachOverlay(null)
     }
   }, [fetchRoster, lang, refreshDiagnosticAfterSave, showToast, t])
 
@@ -4292,6 +4309,12 @@ export default withAuth(function NuovaRosaLabPage() {
 
   const runBuildCoachForRoster = React.useCallback(async () => {
     setBuildingRoster(true)
+    setBuildCoachOverlay({
+      title: lang === 'en' ? 'Optimizing squad' : 'Ottimizzazione rosa',
+      message: lang === 'en'
+        ? 'Build Coach is completing growth builds for starters and reserves. This may take a few seconds.'
+        : 'Build Coach sta completando le build crescita di titolari e riserve. Potrebbero servire alcuni secondi.'
+    })
     try {
       let token = getTokenFallback()
       if (!token && supabase) {
@@ -4323,6 +4346,7 @@ export default withAuth(function NuovaRosaLabPage() {
       showToast(message, 'error')
     } finally {
       setBuildingRoster(false)
+      setBuildCoachOverlay(null)
     }
   }, [fetchRoster, lang, refreshDiagnosticAfterSave, showToast, t])
 
@@ -5013,6 +5037,20 @@ export default withAuth(function NuovaRosaLabPage() {
           onConfirm={confirmModal.onConfirm}
           onCancel={confirmModal.onCancel}
         />
+      )}
+
+      {buildCoachOverlay && (
+        <div className="nr-build-coach-overlay" role="status" aria-live="polite">
+          <div className="nr-build-coach-progress-card">
+            <div className="nr-build-coach-progress-icon">
+              <RefreshCw size={22} className="nr-spin" />
+            </div>
+            <div>
+              <strong>{buildCoachOverlay.title}</strong>
+              <p>{buildCoachOverlay.message}</p>
+            </div>
+          </div>
+        </div>
       )}
 
       {toast && (
@@ -6804,6 +6842,58 @@ export default withAuth(function NuovaRosaLabPage() {
           color: rgba(255, 255, 255, 0.68);
           font-size: 12px;
           line-height: 1.35;
+        }
+
+        .nr-build-coach-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 100600;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 18px;
+          background: rgba(3, 7, 18, 0.62);
+          backdrop-filter: blur(8px);
+        }
+
+        .nr-build-coach-progress-card {
+          width: min(430px, calc(100vw - 28px));
+          display: flex;
+          align-items: flex-start;
+          gap: 14px;
+          padding: 18px;
+          border-radius: 18px;
+          border: 1px solid rgba(0, 212, 255, 0.32);
+          background:
+            linear-gradient(135deg, rgba(0, 212, 255, 0.12), rgba(168, 85, 247, 0.12)),
+            rgba(8, 13, 29, 0.96);
+          box-shadow: 0 18px 60px rgba(0, 0, 0, 0.48);
+        }
+
+        .nr-build-coach-progress-icon {
+          width: 42px;
+          height: 42px;
+          flex: 0 0 42px;
+          display: grid;
+          place-items: center;
+          border-radius: 14px;
+          color: var(--primary-cyan, #00d4ff);
+          background: rgba(0, 212, 255, 0.1);
+          border: 1px solid rgba(0, 212, 255, 0.22);
+        }
+
+        .nr-build-coach-progress-card strong {
+          display: block;
+          color: #fff;
+          font-size: 16px;
+          margin-bottom: 6px;
+        }
+
+        .nr-build-coach-progress-card p {
+          margin: 0;
+          color: rgba(255, 255, 255, 0.72);
+          line-height: 1.45;
+          font-size: 13px;
         }
 
         .nr-form-field {

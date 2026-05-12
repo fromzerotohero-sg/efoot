@@ -67,7 +67,15 @@ export async function fetchRosterContext(admin, userId) {
 
 function getSlotPosition(player, layout) {
   if (player?.slot_index === null || player?.slot_index === undefined) return null
-  const slots = Array.isArray(layout?.slot_positions) ? layout.slot_positions : []
+  const rawSlots = layout?.slot_positions
+  const slots = Array.isArray(rawSlots)
+    ? rawSlots
+    : rawSlots && typeof rawSlots === 'object'
+      ? Object.entries(rawSlots).map(([slotIndex, value]) => ({
+          ...(value && typeof value === 'object' ? value : {}),
+          slot_index: Number(value?.slot_index ?? slotIndex)
+        }))
+      : []
   const slot = slots.find((entry) => Number(entry?.slot_index) === Number(player.slot_index))
   return slot?.position || null
 }
