@@ -427,10 +427,10 @@ function getVerdictMeta(verdict, labels) {
   return map[verdict] || map.situational
 }
 
-function CardImage({ card, labels, large = false }) {
+function CardImage({ card, labels }) {
   const [failed, setFailed] = React.useState(!card.imageUrl)
   return (
-    <div className={`card-art ${large ? 'card-art-large' : ''}`}>
+    <div className="card-art">
       {!failed ? (
         <img
           src={proxiedImageUrl(card.imageUrl)}
@@ -751,7 +751,9 @@ function DetailPanel({
         </button>
       )}
       <div className="detail-hero">
-        <CardImage card={card} labels={labels} large />
+        <div className="detail-card-preview">
+          <CardImage card={card} labels={labels} />
+        </div>
         <div className="detail-copy">
           <span className="mini-kicker">{labels.currentRelease}</span>
           <h2>{card.name}</h2>
@@ -1790,11 +1792,6 @@ export default withAuth(function CardAdvisorLabPage() {
           box-shadow: inset 0 0 0 2px rgba(255,255,255,0.08), 0 0 20px rgba(138,43,226,0.18);
         }
 
-        .card-art-large {
-          width: min(215px, 28vw);
-          flex: 0 0 auto;
-        }
-
         .card-art img {
           width: 100%;
           height: 100%;
@@ -1982,6 +1979,15 @@ export default withAuth(function CardAdvisorLabPage() {
           gap: 20px;
           align-items: stretch;
           min-width: 0;
+          width: 100%;
+        }
+
+        .detail-card-preview {
+          width: 215px;
+          flex: 0 0 215px;
+        }
+
+        .detail-card-preview .card-art {
           width: 100%;
         }
 
@@ -2494,8 +2500,7 @@ export default withAuth(function CardAdvisorLabPage() {
             flex-direction: column;
           }
 
-          .card-art-large {
-            width: min(215px, 70vw);
+          .detail-card-preview {
             align-self: center;
           }
         }
@@ -2530,8 +2535,7 @@ export default withAuth(function CardAdvisorLabPage() {
             min-width: 0;
           }
 
-          .card-art-large {
-            width: min(215px, 70vw);
+          .detail-card-preview {
             align-self: center;
           }
         }
@@ -2625,8 +2629,9 @@ export default withAuth(function CardAdvisorLabPage() {
             margin-top: 2px;
           }
 
-          .card-art-large {
+          .detail-card-preview {
             width: min(215px, 70vw);
+            flex-basis: min(215px, 70vw);
           }
 
           .detail-metrics {
