@@ -450,7 +450,7 @@ function CardImage({ card, labels, large = false }) {
       )}
       <div className="card-art-brand-layer" aria-hidden="true">
         <span className="card-art-brand-logo" />
-        <span className="card-art-brand-stamp">FZH</span>
+        <span className="card-art-brand-stamp" />
       </div>
       <div className="card-art-top">
         <span>{card.overall}</span>
@@ -1822,16 +1822,22 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .card-art-brand-stamp {
           position: absolute;
-          top: 10px;
-          right: 10px;
+          top: 8px;
+          right: 8px;
+          z-index: 2;
+          display: block;
+          width: 17%;
+          min-width: 30px;
+          max-width: 46px;
+          aspect-ratio: 1.9;
           border-radius: 999px;
-          padding: 4px 8px;
-          background: rgba(1, 6, 18, 0.62);
-          border: 1px solid rgba(255,255,255,0.34);
-          color: rgba(255,255,255,0.88);
-          font-size: 10px;
-          font-weight: 900;
-          letter-spacing: 0.14em;
+          background:
+            url('/logo.png') center / 78% auto no-repeat,
+            linear-gradient(135deg, rgba(1,6,18,0.98), rgba(18,26,52,0.94));
+          border: 1px solid rgba(255,255,255,0.38);
+          box-shadow:
+            0 2px 8px rgba(0,0,0,0.45),
+            inset 0 0 0 1px rgba(0,212,255,0.18);
         }
 
         .card-art::after {
