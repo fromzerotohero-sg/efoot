@@ -1872,6 +1872,81 @@ function ReserveStarterSlotModal({ show, player, slotChoices, assigning, onClose
   )
 }
 
+function BuildCoachPlayerPickerModal({ show, players, buildingPlayerId, onClose, onPick, lang }) {
+  if (!show) return null
+  const sortedPlayers = [...(Array.isArray(players) ? players : [])]
+    .filter((player) => player?.id && player?.player_name)
+    .sort((a, b) => {
+      const firstSlot = a.slot_index == null ? 99 : Number(a.slot_index)
+      const secondSlot = b.slot_index == null ? 99 : Number(b.slot_index)
+      if (firstSlot !== secondSlot) return firstSlot - secondSlot
+      return String(a.player_name || '').localeCompare(String(b.player_name || ''))
+    })
+
+  return (
+    <EnterpriseModalFrame
+      show={show}
+      onClose={() => {
+        if (!buildingPlayerId) onClose()
+      }}
+      title={lang === 'en' ? 'Choose player' : 'Scegli giocatore'}
+      subtitle={lang === 'en' ? 'Build Coach single player' : 'Build Coach singolo giocatore'}
+      className="nr-picker-shell"
+    >
+      <div className="nr-picker-body single">
+        <div className="nr-picker-results">
+          <section>
+            <div className="nr-section-head">
+              <div>
+                <h3>{lang === 'en' ? 'Starters and reserves' : 'Titolari e riserve'}</h3>
+                <p>{lang === 'en'
+                  ? 'Select a player already in your squad to recalculate the gameplay build.'
+                  : 'Seleziona un giocatore gia nella rosa per ricalcolare la build gameplay.'}</p>
+              </div>
+            </div>
+            <div className="nr-catalog-list">
+              {sortedPlayers.map((player) => {
+                const thumb = getPlayerCardImage(player)
+                const isBuilding = buildingPlayerId === player.id
+                return (
+                  <button
+                    key={player.id}
+                    type="button"
+                    className="nr-bench-item"
+                    onClick={() => onPick(player)}
+                    disabled={!!buildingPlayerId}
+                  >
+                    <div className="nr-reserve-card-media">
+                      {thumb ? (
+                        <img src={thumb} alt={player.player_name} loading="lazy" draggable={false} />
+                      ) : (
+                        <div className="nr-reserve-initials">{getPlayerInitials(player.player_name)}</div>
+                      )}
+                    </div>
+                    <div className="nr-bench-item-copy">
+                      <strong>{player.player_name}</strong>
+                      <span>
+                        {player.slot_index == null
+                          ? (lang === 'en' ? 'Reserve' : 'Riserva')
+                          : `${lang === 'en' ? 'Starter' : 'Titolare'} · Slot ${Number(player.slot_index) + 1}`}
+                        {' · '}
+                        {player.position || '-'} · OVR {player.overall_rating ?? '-'}
+                      </span>
+                    </div>
+                    <span className="nr-reserve-position-pill">
+                      {isBuilding ? (lang === 'en' ? 'Calculating' : 'Calcolo') : 'Build'}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </section>
+        </div>
+      </div>
+    </EnterpriseModalFrame>
+  )
+}
+
 const MAX_RESERVES = 12
 const GK_GOAL_AREA = { xMin: 36, xMax: 64, yMin: 83, yMax: 96 }
 const DEFAULT_SLOT_POSITIONS = {
@@ -2823,6 +2898,7 @@ export default withAuth(function NuovaRosaLabPage() {
   const [buildingRoster, setBuildingRoster] = React.useState(false)
   const [buildingPlayerId, setBuildingPlayerId] = React.useState(null)
   const [buildCoachOverlay, setBuildCoachOverlay] = React.useState(null)
+  const [buildCoachPlayerPickerOpen, setBuildCoachPlayerPickerOpen] = React.useState(false)
   const [savingTacticalSettings, setSavingTacticalSettings] = React.useState(false)
   const [fieldEditMode, setFieldEditMode] = React.useState(false)
   const [customPositions, setCustomPositions] = React.useState({})
@@ -4440,6 +4516,8 @@ export default withAuth(function NuovaRosaLabPage() {
     }))
   }, [slots, startersBySlot])
 
+  const allRosterPlayers = React.useMemo(() => [...titolari, ...riserve], [titolari, riserve])
+
   const handleFieldPositionChange = React.useCallback((slotIndex, position) => {
     const allAttackSlots = []
     Object.entries(customPositions || {}).forEach(([idx, pos]) => {
@@ -4614,8 +4692,6 @@ export default withAuth(function NuovaRosaLabPage() {
       <section className="nr-hero-card">
         <div className="nr-hero-copy">
           <h1>{lang === 'en' ? 'My squad' : 'La mia rosa'}</h1>
-        </div>
-        <div className="nr-hero-side">
           <div className="nr-coach-header-panel">
             <button
               type="button"
@@ -4675,22 +4751,49 @@ export default withAuth(function NuovaRosaLabPage() {
         </section>
       ) : (
         <div className="nr-main-stack">
+          <section className="nr-build-workspace-row">
+            <div className="nr-formation-side-label">
+              <span>{lang === 'en' ? 'Workspace' : 'Workspace'}</span>
+              <small>{lang === 'en' ? 'Formation' : 'Formazione'}</small>
+              <strong>{layout?.formation || '4-3-3'}</strong>
+            </div>
+            <div className="nr-build-coach-command-card">
+              <div className="nr-build-coach-command-head">
+                <div>
+                  <span className="nr-mini-kicker">Build Coach</span>
+                  <p>{lang === 'en' ? 'Choose what to optimize' : 'Scegli cosa vuoi ottimizzare'}</p>
+                </div>
+                <Sparkles size={20} />
+              </div>
+              <div className="nr-build-coach-command-grid">
+                <button type="button" className="nr-build-coach-action primary" onClick={requestBuildCoachForRoster} disabled={buildingRoster || loading}>
+                  {buildingRoster ? <RefreshCw size={18} className="nr-spin" /> : <Sparkles size={18} />}
+                  <span>
+                    <strong>{lang === 'en' ? 'Optimize formation' : 'Ottimizza formazione'}</strong>
+                    <small>{lang === 'en' ? 'Improve the whole squad' : 'Migliora tutta la rosa'}</small>
+                  </span>
+                </button>
+                <button type="button" className="nr-build-coach-action" onClick={() => setBuildCoachPlayerPickerOpen(true)} disabled={buildingRoster || allRosterPlayers.length === 0}>
+                  <User size={18} />
+                  <span>
+                    <strong>{lang === 'en' ? 'Optimize player' : 'Ottimizza giocatore'}</strong>
+                    <small>{lang === 'en' ? 'Select a card' : 'Seleziona una card'}</small>
+                  </span>
+                </button>
+              </div>
+              <button type="button" className="nr-move-players-wide-button" onClick={() => setFieldEditMode(true)} disabled={fieldEditMode}>
+                <ArrowRight size={14} />
+                {lang === 'en' ? 'Move players' : 'Sposta giocatori'}
+              </button>
+            </div>
+          </section>
           <section className="nr-workspace-block">
             <div className="nr-workspace-head nr-card-head">
               <div>
                 <span className="nr-mini-kicker">{t('nuovaRosaWorkspace')}</span>
-                <h2>{layout?.formation || '4-3-3'}</h2>
+                <h2>{lang === 'en' ? 'Pitch' : 'Campo'}</h2>
               </div>
               <div className="nr-field-actions">
-                <button type="button" className="nr-build-coach-main-button" onClick={requestBuildCoachForRoster} disabled={buildingRoster || loading}>
-                  {buildingRoster ? <RefreshCw size={14} className="nr-spin" /> : <Sparkles size={14} />}
-                  <span>
-                    <strong>{buildingRoster
-                      ? (lang === 'en' ? 'Optimizing...' : 'Ottimizzazione...')
-                      : (lang === 'en' ? 'Optimize squad' : 'Ottimizza rosa')}</strong>
-                    <small>{lang === 'en' ? 'Build Coach' : 'Build Coach'}</small>
-                  </span>
-                </button>
                 {fieldEditMode ? (
                   <>
                     <button type="button" className="nr-secondary-button" onClick={() => { setFieldEditMode(false); setCustomPositions({}) }} disabled={savingFieldLayout}>
@@ -4701,13 +4804,15 @@ export default withAuth(function NuovaRosaLabPage() {
                     </button>
                   </>
                 ) : (
-                  <button type="button" className="nr-move-players-button" onClick={() => setFieldEditMode(true)}>
-                    {lang === 'en' ? 'Move players' : 'Sposta giocatori'}
-                  </button>
+                  null
                 )}
               </div>
             </div>
             <div className="nr-field-shell">
+              <div className="nr-field-formation-badge">
+                <span>{lang === 'en' ? 'Formation' : 'Formazione'}</span>
+                <strong>{layout?.formation || '4-3-3'}</strong>
+              </div>
               <div className={`nr-field ${fieldEditMode ? 'is-editing' : ''}`} data-field-container>
                 <div className="nr-field-texture" />
                 <div className="nr-field-dark-vignette" />
@@ -4978,6 +5083,18 @@ export default withAuth(function NuovaRosaLabPage() {
         lang={lang}
       />
 
+      <BuildCoachPlayerPickerModal
+        show={buildCoachPlayerPickerOpen}
+        players={allRosterPlayers}
+        buildingPlayerId={buildingPlayerId}
+        onClose={() => setBuildCoachPlayerPickerOpen(false)}
+        onPick={(player) => {
+          setBuildCoachPlayerPickerOpen(false)
+          requestBuildCoachForPlayer(player)
+        }}
+        lang={lang}
+      />
+
       <QuickPlayerPanel
         player={showAssignModal ? selectedPlayer : null}
         slot={selectedSlot}
@@ -5110,8 +5227,7 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-hero-card {
           padding: clamp(10px, 2vw, 16px);
-          display: grid;
-          grid-template-columns: minmax(150px, 0.42fr) minmax(280px, 1fr);
+          display: block;
           gap: 14px;
           margin-bottom: 16px;
           position: relative;
@@ -5144,7 +5260,9 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-hero-copy {
           display: flex;
-          align-items: center;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 12px;
         }
 
         .nr-hero-copy h1 {
@@ -5152,6 +5270,7 @@ export default withAuth(function NuovaRosaLabPage() {
           line-height: 1.05;
           letter-spacing: -0.03em;
           text-shadow: 0 0 32px rgba(0, 212, 255, 0.18);
+          margin: 0;
         }
 
         .nr-hero-copy p {
@@ -5326,6 +5445,142 @@ export default withAuth(function NuovaRosaLabPage() {
           gap: 10px;
         }
 
+        .nr-build-workspace-row {
+          display: grid;
+          grid-template-columns: minmax(86px, 0.34fr) minmax(220px, 1fr);
+          gap: 12px;
+          align-items: stretch;
+        }
+
+        .nr-formation-side-label {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          gap: 4px;
+          min-height: 112px;
+          padding: 12px 4px 12px 0;
+          color: rgba(255, 255, 255, 0.74);
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+        }
+
+        .nr-formation-side-label span,
+        .nr-formation-side-label small {
+          font-size: 11px;
+          color: rgba(0, 212, 255, 0.75);
+        }
+
+        .nr-formation-side-label strong {
+          color: #fff;
+          font-size: clamp(26px, 5vw, 34px);
+          letter-spacing: -0.05em;
+          line-height: 1;
+          text-transform: none;
+        }
+
+        .nr-build-coach-command-card {
+          border-radius: 20px;
+          border: 1px solid rgba(0, 212, 255, 0.22);
+          background:
+            radial-gradient(circle at 100% 0%, rgba(0, 212, 255, 0.18), transparent 32%),
+            linear-gradient(180deg, rgba(9, 14, 31, 0.96), rgba(5, 8, 20, 0.95));
+          padding: 14px;
+          box-shadow: 0 14px 40px rgba(0, 0, 0, 0.28);
+        }
+
+        .nr-build-coach-command-head {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 12px;
+          margin-bottom: 12px;
+        }
+
+        .nr-build-coach-command-head p {
+          margin: 4px 0 0;
+          color: rgba(255, 255, 255, 0.65);
+          font-size: 12px;
+        }
+
+        .nr-build-coach-command-head > svg {
+          color: var(--primary-cyan, #00d4ff);
+          filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.4));
+        }
+
+        .nr-build-coach-command-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+          margin-bottom: 10px;
+        }
+
+        .nr-build-coach-action,
+        .nr-move-players-wide-button {
+          width: 100%;
+          border-radius: 14px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(15, 23, 42, 0.78);
+          color: #fff;
+          min-height: 62px;
+          padding: 12px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: flex-start;
+          gap: 10px;
+          text-align: left;
+          cursor: pointer;
+          transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .nr-build-coach-action.primary {
+          border-color: rgba(34, 211, 238, 0.48);
+          background: linear-gradient(135deg, rgba(6, 182, 212, 0.9), rgba(124, 58, 237, 0.9));
+          box-shadow: 0 10px 24px rgba(34, 211, 238, 0.2);
+        }
+
+        .nr-build-coach-action:hover:not(:disabled),
+        .nr-move-players-wide-button:hover:not(:disabled) {
+          transform: translateY(-1px);
+          border-color: rgba(0, 212, 255, 0.48);
+          background: rgba(15, 23, 42, 0.95);
+        }
+
+        .nr-build-coach-action.primary:hover:not(:disabled) {
+          background: linear-gradient(135deg, rgba(8, 211, 238, 0.96), rgba(139, 92, 246, 0.96));
+          box-shadow: 0 14px 30px rgba(34, 211, 238, 0.28);
+        }
+
+        .nr-build-coach-action:disabled,
+        .nr-move-players-wide-button:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        .nr-build-coach-action span {
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .nr-build-coach-action strong {
+          font-size: 13px;
+          line-height: 1.1;
+        }
+
+        .nr-build-coach-action small {
+          color: rgba(255, 255, 255, 0.72);
+          font-size: 11px;
+        }
+
+        .nr-move-players-wide-button {
+          min-height: 42px;
+          justify-content: center;
+          text-align: center;
+          color: rgba(255, 255, 255, 0.86);
+        }
+
         .nr-workspace-head {
           padding: 0 2px;
           margin-bottom: 6px;
@@ -5345,6 +5600,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-field-shell {
+          position: relative;
           border-radius: 14px;
           overflow: hidden;
           border: 1px solid rgba(0, 212, 255, 0.14);
@@ -5365,6 +5621,35 @@ export default withAuth(function NuovaRosaLabPage() {
           aspect-ratio: 2 / 3;
           margin: 0 auto 18px;
           box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+        }
+
+        .nr-field-formation-badge {
+          position: absolute;
+          top: 10px;
+          left: 10px;
+          z-index: 4;
+          display: inline-flex;
+          align-items: baseline;
+          gap: 7px;
+          padding: 6px 9px;
+          border-radius: 999px;
+          border: 1px solid rgba(0, 212, 255, 0.2);
+          background: rgba(3, 7, 18, 0.54);
+          color: rgba(255, 255, 255, 0.8);
+          backdrop-filter: blur(7px);
+          pointer-events: none;
+        }
+
+        .nr-field-formation-badge span {
+          font-size: 9px;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          color: rgba(0, 212, 255, 0.75);
+        }
+
+        .nr-field-formation-badge strong {
+          font-size: 13px;
+          color: #fff;
         }
 
         .nr-field {
