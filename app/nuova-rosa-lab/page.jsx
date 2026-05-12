@@ -4007,7 +4007,7 @@ export default withAuth(function NuovaRosaLabPage() {
         slotIndex === null
           ? (lang === 'en' ? 'Reserve added successfully.' : 'Riserva aggiunta con successo.')
           : (lang === 'en' ? 'Player added successfully.' : 'Giocatore aggiunto con successo.'),
-        'success'
+        'upgrade'
       )
       return data
     } catch (err) {
@@ -4422,7 +4422,7 @@ export default withAuth(function NuovaRosaLabPage() {
         lang === 'en'
           ? `Squad optimized: ${summary.updated || 0} players updated.`
           : `Rosa ottimizzata: ${summary.updated || 0} giocatori aggiornati.`,
-        summary.skipped ? 'warning' : 'success'
+        summary.skipped ? 'warning' : 'upgrade'
       )
     } catch (err) {
       console.error('[NuovaRosaLab] build coach roster error:', err)
@@ -5171,9 +5171,12 @@ export default withAuth(function NuovaRosaLabPage() {
         <div className="nr-build-coach-overlay" role="status" aria-live="polite">
           <div className="nr-build-coach-progress-card">
             <div className="nr-build-coach-progress-icon">
-              <RefreshCw size={22} className="nr-spin" />
+              <span className="nr-build-coach-logo-scan" />
+              <span className="nr-build-coach-logo-orbit" />
+              <img src="/logo.png" alt="" />
             </div>
             <div>
+              <span className="nr-build-coach-progress-kicker">AI Coach</span>
               <strong>{buildCoachOverlay.title}</strong>
               <p>{buildCoachOverlay.message}</p>
             </div>
@@ -7218,6 +7221,14 @@ export default withAuth(function NuovaRosaLabPage() {
           border-color: rgba(52, 211, 153, 0.35);
         }
 
+        .nr-toast.upgrade {
+          border-color: rgba(251, 191, 36, 0.42);
+          background:
+            radial-gradient(circle at 0% 50%, rgba(251, 191, 36, 0.16), transparent 38%),
+            rgba(6, 10, 22, 0.96);
+          box-shadow: 0 12px 34px rgba(251, 146, 60, 0.2), 0 0 0 1px rgba(251, 191, 36, 0.08) inset;
+        }
+
         .nr-section-card {
           border-radius: 18px;
           border: 1px solid rgba(255, 255, 255, 0.06);
@@ -7281,18 +7292,63 @@ export default withAuth(function NuovaRosaLabPage() {
             linear-gradient(135deg, rgba(0, 212, 255, 0.12), rgba(168, 85, 247, 0.12)),
             rgba(8, 13, 29, 0.96);
           box-shadow: 0 18px 60px rgba(0, 0, 0, 0.48);
+          overflow: hidden;
         }
 
         .nr-build-coach-progress-icon {
-          width: 42px;
-          height: 42px;
-          flex: 0 0 42px;
+          position: relative;
+          width: 54px;
+          height: 54px;
+          flex: 0 0 54px;
           display: grid;
           place-items: center;
-          border-radius: 14px;
+          border-radius: 16px;
           color: var(--primary-cyan, #00d4ff);
-          background: rgba(0, 212, 255, 0.1);
+          background:
+            radial-gradient(circle, rgba(0, 212, 255, 0.12), rgba(168, 85, 247, 0.08) 62%, transparent 76%);
           border: 1px solid rgba(0, 212, 255, 0.22);
+          overflow: hidden;
+          isolation: isolate;
+        }
+
+        .nr-build-coach-progress-icon img {
+          position: relative;
+          z-index: 2;
+          width: 42px;
+          max-height: 42px;
+          object-fit: contain;
+          filter: drop-shadow(0 0 9px rgba(0, 212, 255, 0.48));
+          animation: nrBrandInterference 1.18s steps(2, end) infinite;
+        }
+
+        .nr-build-coach-logo-orbit {
+          position: absolute;
+          inset: 5px;
+          border-radius: 14px;
+          border: 1px dashed rgba(255, 255, 255, 0.18);
+          animation: nrBrandOrbit 3.8s linear infinite;
+        }
+
+        .nr-build-coach-logo-scan {
+          position: absolute;
+          z-index: 3;
+          left: 6px;
+          right: 6px;
+          height: 2px;
+          border-radius: 999px;
+          background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.95), transparent);
+          box-shadow: 0 0 12px rgba(0, 212, 255, 0.72);
+          animation: nrBrandLogoScan 1.35s ease-in-out infinite;
+        }
+
+        .nr-build-coach-progress-kicker {
+          display: inline-flex;
+          margin-bottom: 4px;
+          color: #67e8f9;
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
         }
 
         .nr-build-coach-progress-card strong {
@@ -7307,6 +7363,24 @@ export default withAuth(function NuovaRosaLabPage() {
           color: rgba(255, 255, 255, 0.72);
           line-height: 1.45;
           font-size: 13px;
+        }
+
+        @keyframes nrBrandInterference {
+          0%, 100% { transform: translate(0, 0) skewX(0deg); opacity: 1; }
+          12% { transform: translate(-1px, 1px) skewX(-1deg); }
+          20% { transform: translate(1px, -1px) skewX(1deg); filter: drop-shadow(2px 0 rgba(255, 0, 102, 0.30)) drop-shadow(-2px 0 rgba(0, 212, 255, 0.44)); }
+          44% { transform: translate(0, 0); }
+          62% { transform: translate(-1px, 0) skewX(0.6deg); }
+        }
+
+        @keyframes nrBrandLogoScan {
+          0% { top: 7px; opacity: 0; }
+          20%, 78% { opacity: 1; }
+          100% { top: calc(100% - 9px); opacity: 0; }
+        }
+
+        @keyframes nrBrandOrbit {
+          to { transform: rotate(360deg); }
         }
 
         .nr-form-field {
