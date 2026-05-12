@@ -1777,9 +1777,9 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .card-art {
-          --card-image-scale: 1.055;
-          --card-image-x: 4.8%;
-          --card-image-y: -0.8%;
+          --card-image-scale: 1.035;
+          --card-image-x: 2.4%;
+          --card-image-y: -0.4%;
           aspect-ratio: 3 / 4.12;
           border-radius: 16px;
           overflow: hidden;
