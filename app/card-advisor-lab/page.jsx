@@ -44,6 +44,7 @@ const copy = {
     deepAnalysisLoading: 'Sto preparando l’analisi dettagliata...',
     deepAnalysisError: 'Analisi dettagliata non disponibile. Riprova tra poco.',
     deepAnalysisTitle: 'Analisi dettagliata IA',
+    deepKeyReasoning: 'Ragionamenti chiave',
     deepPros: 'Pro',
     deepCons: 'Contro',
     deepSynergies: 'Sinergie',
@@ -134,6 +135,7 @@ const copy = {
     deepAnalysisLoading: 'Preparing detailed analysis...',
     deepAnalysisError: 'Detailed analysis unavailable. Please try again shortly.',
     deepAnalysisTitle: 'Detailed AI analysis',
+    deepKeyReasoning: 'Key reasoning',
     deepPros: 'Pros',
     deepCons: 'Cons',
     deepSynergies: 'Synergies',
@@ -836,6 +838,17 @@ function DetailPanel({
             <h3>{deepAnalysis.headline}</h3>
             <p>{deepAnalysis.summary}</p>
           </div>
+          {deepAnalysis.key_reasoning?.length > 0 && (
+            <div className="deep-reasoning-list">
+              <h4>{labels.deepKeyReasoning}</h4>
+              {deepAnalysis.key_reasoning.map(item => (
+                <article key={`${item.label}-${item.text}`}>
+                  {item.label && <span>{item.label}</span>}
+                  <p>{item.text}</p>
+                </article>
+              ))}
+            </div>
+          )}
           <div className="deep-analysis-grid">
             <article>
               <h4>{labels.deepPros}</h4>
@@ -2190,6 +2203,42 @@ export default withAuth(function CardAdvisorLabPage() {
           color: rgba(255,255,255,0.80);
           line-height: 1.65;
           font-size: 14px;
+        }
+
+        .deep-reasoning-list {
+          margin-top: 14px;
+          display: grid;
+          gap: 10px;
+        }
+
+        .deep-reasoning-list h4 {
+          margin: 0;
+          color: #fff;
+          font-size: 15px;
+        }
+
+        .deep-reasoning-list article {
+          border: 1px solid rgba(0,212,255,0.14);
+          border-radius: 15px;
+          padding: 12px;
+          background: rgba(0,212,255,0.045);
+        }
+
+        .deep-reasoning-list article span {
+          display: block;
+          color: var(--primary-cyan);
+          font-size: 11px;
+          font-weight: 950;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          margin-bottom: 6px;
+        }
+
+        .deep-reasoning-list article p {
+          margin: 0;
+          color: rgba(255,255,255,0.80);
+          line-height: 1.58;
+          font-size: 13px;
         }
 
         .deep-analysis-grid,

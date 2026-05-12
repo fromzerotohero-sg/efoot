@@ -221,15 +221,19 @@ FOCUS:
 - La domanda centrale non è "la carta è forte?", ma "questa carta crea valore reale per questa rosa?".
 - Se la rosa è presente, parla in modo personalizzato e deciso.
 - Se la rosa non è presente, fai solo review carta basata su stile, skill e stats disponibili.
+- Quando un dato è presente, usa forma assertiva: "nella tua rosa c'è", "i tuoi dati mostrano", "hai già". Non usare "se hai" o "potrebbe" per dati già disponibili.
+- Usa il condizionale solo quando il dato manca o quando stai indicando una scelta strategica del cliente.
 - Non parlare di overall/rating come criterio.
 - Non inventare nomi, skill, problemi o ruoli non presenti nei dati.
 - Stili e abilità sono diversi: lo stile spiega il movimento; le abilità spiegano cosa sa fare.
 - Se trovi una combo reale, mettila al centro. Se manca metà combo, dillo.
-- Usa il RAG solo come conoscenza eFootball, non come testo da copiare.
+- Usa il RAG per interpretare movimenti da stile, meccaniche eFootball, movimenti collettivi, abilità e situazioni di gioco. Non copiarlo: applicalo ai dati del cliente.
 
 SEMANTICA:
 - Usa termini da coach/community: movimento, skill nativa, combo, catena, rotazione, non prioritaria, luxury pick, riferimento in area, attacca spazio, dà ampiezza, tiene posizione, non cambia gerarchie.
 - Evita: "fit stile 56%", "bonus sistema", "sinergia principale", "stat edge", "overall", "rating", "buildalo", "potenzialo", "allenalo".
+- La sezione "key_reasoning" è la parte più importante: ogni punto deve incrociare almeno due fonti tra carta, stile, skill, stats, rosa, formazione, tattica, coach, diagnosi, game analysis e RAG meccaniche.
+- Ogni ragionamento deve chiudere con una conseguenza pratica: cosa cambia, cosa sfruttare, cosa evitare o perché non è priorità.
 
 CARTA
 ${JSON.stringify(cardPayload, null, 2)}
@@ -251,6 +255,9 @@ Restituisci SOLO JSON valido con questa struttura:
     "key_skills": ["skill rilevanti"],
     "best_use": "uso ideale"
   },
+  "key_reasoning": [
+    { "label": "Catena / movimento / dato incrociato", "text": "micro-ragionamento personalizzato e assertivo" }
+  ],
   "pros": ["3-5 pro concreti"],
   "cons": ["2-4 contro concreti"],
   "synergies": ["3-5 sinergie o combo, incluse combo assenti se importanti"],
@@ -268,6 +275,7 @@ function normalizeDeepAnalysis(payload, lang) {
         verdict: 'situational',
         summary: 'The detailed analysis could not be completed. Use the base Card Advisor read for now.',
         card_identity: { movement: '', key_skills: [], best_use: '' },
+        key_reasoning: [],
         pros: [],
         cons: [],
         synergies: [],
@@ -280,6 +288,7 @@ function normalizeDeepAnalysis(payload, lang) {
         verdict: 'situational',
         summary: 'Non è stato possibile completare l’analisi dettagliata. Usa per ora la lettura base del Card Advisor.',
         card_identity: { movement: '', key_skills: [], best_use: '' },
+        key_reasoning: [],
         pros: [],
         cons: [],
         synergies: [],
@@ -290,6 +299,15 @@ function normalizeDeepAnalysis(payload, lang) {
 
   if (!payload || typeof payload !== 'object') return fallback
   const arr = (value) => Array.isArray(value) ? value.map(item => sanitize(item, 260)).filter(Boolean).slice(0, 5) : []
+  const reasoning = (value) => Array.isArray(value)
+    ? value
+        .map(item => ({
+          label: sanitize(item?.label || '', 70),
+          text: sanitize(item?.text || item, 360)
+        }))
+        .filter(item => item.text)
+        .slice(0, 6)
+    : []
   return {
     headline: sanitize(payload.headline, 120) || fallback.headline,
     verdict: ['take', 'premium_rotation', 'situational', 'luxury_pick', 'not_priority', 'skip'].includes(payload.verdict) ? payload.verdict : 'situational',
@@ -299,6 +317,7 @@ function normalizeDeepAnalysis(payload, lang) {
       key_skills: arr(payload.card_identity?.key_skills),
       best_use: sanitize(payload.card_identity?.best_use, 260)
     },
+    key_reasoning: reasoning(payload.key_reasoning),
     pros: arr(payload.pros),
     cons: arr(payload.cons),
     synergies: arr(payload.synergies),
