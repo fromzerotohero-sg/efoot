@@ -1736,9 +1736,12 @@ export default withAuth(function CardAdvisorLabPage() {
           transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
+        .release-card:hover {
+          transform: translateY(-2px);
+        }
+
         .release-card:hover,
         .release-card.selected {
-          transform: translateY(-2px);
           border-color: rgba(0,212,255,0.45);
           box-shadow: 0 0 22px rgba(0,212,255,0.14);
         }
@@ -1799,8 +1802,7 @@ export default withAuth(function CardAdvisorLabPage() {
         .card-art img {
           width: 100%;
           height: 100%;
-          object-fit: fill;
-          object-position: center;
+          object-fit: cover;
           display: block;
         }
 
