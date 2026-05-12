@@ -1777,6 +1777,9 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .card-art {
+          --card-image-scale: 1.08;
+          --card-image-x: 1.8%;
+          --card-image-y: -1.4%;
           aspect-ratio: 3 / 4.12;
           border-radius: 16px;
           overflow: hidden;
@@ -1797,6 +1800,9 @@ export default withAuth(function CardAdvisorLabPage() {
           width: 100%;
           height: 100%;
           object-fit: cover;
+          object-position: center top;
+          transform: translate(var(--card-image-x), var(--card-image-y)) scale(var(--card-image-scale));
+          transform-origin: center top;
           display: block;
         }
 
@@ -1822,18 +1828,21 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .card-art-brand-stamp {
           position: absolute;
-          top: 6px;
-          right: -1px;
+          top: 7px;
+          right: 5px;
           z-index: 2;
           display: block;
-          width: 32%;
-          min-width: 56px;
-          max-width: 92px;
-          aspect-ratio: 2.15;
-          border-radius: 999px 0 0 999px;
+          width: clamp(48px, 24%, 68px);
+          aspect-ratio: 2.05;
+        }
+
+        .card-art-brand-stamp::before {
+          content: '';
+          position: absolute;
+          inset: -3px -7px -3px -2px;
+          border-radius: 999px;
           background: linear-gradient(135deg, rgba(1,6,18,0.99), rgba(18,26,52,0.97));
           border: 1px solid rgba(255,255,255,0.38);
-          border-right: 0;
           box-shadow:
             0 2px 8px rgba(0,0,0,0.45),
             inset 0 0 0 1px rgba(0,212,255,0.18);
@@ -1842,7 +1851,7 @@ export default withAuth(function CardAdvisorLabPage() {
         .card-art-brand-stamp::after {
           content: '';
           position: absolute;
-          inset: 3px 8px 3px 7px;
+          inset: 3px 5px;
           background: url('/logo.png') center / contain no-repeat;
         }
 
