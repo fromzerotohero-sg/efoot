@@ -465,6 +465,21 @@ function StatPill({ children }) {
   return <span className="stat-pill">{children}</span>
 }
 
+function DeepAnalysisSection({ tone, icon: Icon, title, items }) {
+  const cleanItems = Array.isArray(items) ? items.filter(Boolean) : []
+  if (cleanItems.length === 0) return null
+
+  return (
+    <article className={`deep-analysis-card deep-analysis-card-${tone}`}>
+      <h4>
+        <Icon size={16} />
+        <span>{title}</span>
+      </h4>
+      <ul>{cleanItems.map(item => <li key={item}>{item}</li>)}</ul>
+    </article>
+  )
+}
+
 function listFor(card, key, lang) {
   if (lang === 'en' && Array.isArray(card[`${key}En`])) return card[`${key}En`]
   return card[key] || []
@@ -868,34 +883,28 @@ function DetailPanel({
           {showDeepFullReport && (
             <>
               <div className="deep-analysis-grid">
-                <article>
-                  <h4>{labels.deepPros}</h4>
-                  <ul>{(deepAnalysis.pros || []).map(item => <li key={item}>{item}</li>)}</ul>
-                </article>
-                <article>
-                  <h4>{labels.deepCons}</h4>
-                  <ul>{(deepAnalysis.cons || []).map(item => <li key={item}>{item}</li>)}</ul>
-                </article>
-                <article>
-                  <h4>{labels.deepSynergies}</h4>
-                  <ul>{(deepAnalysis.synergies || []).map(item => <li key={item}>{item}</li>)}</ul>
-                </article>
-                <article>
-                  <h4>{labels.deepHowToUse}</h4>
-                  <ul>{(deepAnalysis.how_to_use || []).map(item => <li key={item}>{item}</li>)}</ul>
-                </article>
+                <DeepAnalysisSection tone="pro" icon={CheckCircle2} title={labels.deepPros} items={deepAnalysis.pros} />
+                <DeepAnalysisSection tone="cons" icon={AlertTriangle} title={labels.deepCons} items={deepAnalysis.cons} />
+                <DeepAnalysisSection tone="synergy" icon={Users} title={labels.deepSynergies} items={deepAnalysis.synergies} />
+                <DeepAnalysisSection tone="use" icon={Zap} title={labels.deepHowToUse} items={deepAnalysis.how_to_use} />
               </div>
               {(deepAnalysis.when_to_avoid?.length > 0 || deepAnalysis.final_decision) && (
                 <div className="deep-analysis-final">
                   {deepAnalysis.when_to_avoid?.length > 0 && (
-                    <div>
-                      <h4>{labels.deepWhenAvoid}</h4>
+                    <div className="deep-analysis-card deep-analysis-card-avoid">
+                      <h4>
+                        <AlertTriangle size={16} />
+                        <span>{labels.deepWhenAvoid}</span>
+                      </h4>
                       <ul>{deepAnalysis.when_to_avoid.map(item => <li key={item}>{item}</li>)}</ul>
                     </div>
                   )}
                   {deepAnalysis.final_decision && (
-                    <div>
-                      <h4>{labels.deepFinalDecision}</h4>
+                    <div className="deep-analysis-card deep-analysis-card-decision">
+                      <h4>
+                        <ShieldCheck size={16} />
+                        <span>{labels.deepFinalDecision}</span>
+                      </h4>
                       <p>{deepAnalysis.final_decision}</p>
                     </div>
                   )}
@@ -2312,18 +2321,123 @@ export default withAuth(function CardAdvisorLabPage() {
           margin-top: 14px;
         }
 
-        .deep-analysis-grid article,
-        .deep-analysis-final > div {
-          border: 1px solid rgba(255,255,255,0.10);
+        .deep-analysis-card {
+          --deep-tone: rgba(255,255,255,0.34);
+          --deep-tone-soft: rgba(255,255,255,0.07);
+          --deep-tone-glow: rgba(255,255,255,0.06);
+          position: relative;
+          overflow: hidden;
+          border: 1px solid var(--deep-tone-soft);
           border-radius: 16px;
           padding: 13px;
-          background: rgba(255,255,255,0.045);
+          background:
+            radial-gradient(circle at 100% 0%, var(--deep-tone-glow), transparent 42%),
+            rgba(255,255,255,0.045);
         }
 
-        .deep-analysis-grid h4,
-        .deep-analysis-final h4 {
+        .deep-analysis-card::before {
+          content: '';
+          position: absolute;
+          inset: 0 auto 0 0;
+          width: 3px;
+          background: linear-gradient(180deg, var(--deep-tone), transparent);
+          opacity: 0.95;
+        }
+
+        .deep-analysis-card h4 {
+          position: relative;
           margin: 0 0 9px;
-          color: #fff;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: var(--deep-tone);
+          font-size: 14px;
+          font-weight: 950;
+        }
+
+        .deep-analysis-card h4 svg {
+          flex: 0 0 auto;
+          padding: 3px;
+          border-radius: 999px;
+          background: var(--deep-tone-soft);
+          color: var(--deep-tone);
+        }
+
+        .deep-analysis-card ul {
+          position: relative;
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          display: grid;
+          gap: 8px;
+        }
+
+        .deep-analysis-card li {
+          position: relative;
+          margin: 0;
+          padding-left: 15px;
+          color: rgba(255,255,255,0.77);
+          font-size: 13px;
+          line-height: 1.55;
+        }
+
+        .deep-analysis-card li::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 0.68em;
+          width: 6px;
+          height: 6px;
+          border-radius: 999px;
+          background: var(--deep-tone);
+          box-shadow: 0 0 12px var(--deep-tone);
+        }
+
+        .deep-analysis-card-pro {
+          --deep-tone: #86efac;
+          --deep-tone-soft: rgba(34,197,94,0.22);
+          --deep-tone-glow: rgba(34,197,94,0.12);
+        }
+
+        .deep-analysis-card-cons {
+          --deep-tone: #fda4af;
+          --deep-tone-soft: rgba(244,63,94,0.22);
+          --deep-tone-glow: rgba(244,63,94,0.12);
+        }
+
+        .deep-analysis-card-synergy {
+          --deep-tone: #67e8f9;
+          --deep-tone-soft: rgba(0,212,255,0.22);
+          --deep-tone-glow: rgba(0,212,255,0.12);
+        }
+
+        .deep-analysis-card-use {
+          --deep-tone: #facc15;
+          --deep-tone-soft: rgba(251,191,36,0.24);
+          --deep-tone-glow: rgba(251,191,36,0.13);
+        }
+
+        .deep-analysis-card-avoid {
+          --deep-tone: #fdba74;
+          --deep-tone-soft: rgba(249,115,22,0.24);
+          --deep-tone-glow: rgba(249,115,22,0.13);
+        }
+
+        .deep-analysis-card-decision {
+          --deep-tone: #facc15;
+          --deep-tone-soft: rgba(251,191,36,0.30);
+          --deep-tone-glow: rgba(0,212,255,0.10);
+          background:
+            radial-gradient(circle at 0% 0%, rgba(251,191,36,0.13), transparent 38%),
+            radial-gradient(circle at 100% 0%, rgba(0,212,255,0.12), transparent 42%),
+            rgba(255,255,255,0.055);
+        }
+
+        .deep-analysis-card-decision p {
+          position: relative;
+          margin: 0;
+          color: rgba(255,255,255,0.84);
+          line-height: 1.65;
           font-size: 14px;
         }
 
