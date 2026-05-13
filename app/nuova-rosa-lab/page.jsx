@@ -5201,11 +5201,20 @@ export default withAuth(function NuovaRosaLabPage() {
       )}
 
       <style jsx global>{`
+        body:has(.nr-page) {
+          background:
+            radial-gradient(circle at 18% 8%, rgba(0, 212, 255, 0.22), transparent 28%),
+            radial-gradient(circle at 86% 12%, rgba(124, 58, 237, 0.22), transparent 30%),
+            radial-gradient(circle at 50% 95%, rgba(251, 191, 36, 0.12), transparent 32%),
+            linear-gradient(135deg, #020510 0%, #061226 40%, #030712 100%) !important;
+        }
+
         .nr-page {
           width: min(1440px, 100%);
           margin: 0 auto;
           padding: clamp(18px, 3vw, 32px);
           position: relative;
+          isolation: isolate;
         }
 
         .nr-page:before {
@@ -5214,10 +5223,30 @@ export default withAuth(function NuovaRosaLabPage() {
           inset: 0;
           pointer-events: none;
           background:
-            radial-gradient(circle at 12% 8%, rgba(0, 212, 255, 0.18), transparent 30%),
-            radial-gradient(circle at 86% 18%, rgba(168, 85, 247, 0.18), transparent 28%),
-            radial-gradient(circle at 50% 100%, rgba(52, 211, 153, 0.12), transparent 34%);
+            linear-gradient(115deg, transparent 0 17%, rgba(0, 212, 255, 0.08) 17.3% 17.7%, transparent 18% 42%, rgba(124, 58, 237, 0.08) 42.2% 42.6%, transparent 43%),
+            radial-gradient(circle at 12% 8%, rgba(0, 212, 255, 0.20), transparent 30%),
+            radial-gradient(circle at 86% 18%, rgba(168, 85, 247, 0.20), transparent 28%),
+            radial-gradient(circle at 50% 100%, rgba(52, 211, 153, 0.11), transparent 34%);
           z-index: -1;
+        }
+
+        .nr-page:after {
+          content: '';
+          position: fixed;
+          inset: 0;
+          z-index: -1;
+          pointer-events: none;
+          opacity: 0.42;
+          background-image:
+            linear-gradient(rgba(0, 212, 255, 0.055) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 212, 255, 0.045) 1px, transparent 1px),
+            radial-gradient(1px 1px at 16% 24%, rgba(255,255,255,0.85), transparent),
+            radial-gradient(1px 1px at 74% 18%, rgba(0,212,255,0.9), transparent),
+            radial-gradient(1.5px 1.5px at 82% 68%, rgba(251,191,36,0.75), transparent),
+            radial-gradient(1px 1px at 32% 82%, rgba(255,255,255,0.75), transparent);
+          background-size: 58px 58px, 58px 58px, 420px 420px, 520px 520px, 640px 640px, 480px 480px;
+          mask-image: linear-gradient(180deg, black, rgba(0,0,0,0.85), transparent 94%);
+          animation: nrArenaDrift 18s linear infinite;
         }
 
         .nr-spin {
@@ -5227,6 +5256,11 @@ export default withAuth(function NuovaRosaLabPage() {
         @keyframes nrSpin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+
+        @keyframes nrArenaDrift {
+          from { transform: translate3d(0, 0, 0); }
+          to { transform: translate3d(-58px, -58px, 0); }
         }
 
         .nr-card,
