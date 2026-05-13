@@ -320,6 +320,41 @@ function getShortPlayerName(name = '') {
   return lastName.length > 10 ? `${lastName.slice(0, 9)}.` : lastName
 }
 
+const BUILD_SLIDER_ORDER = [
+  'shooting',
+  'passing',
+  'dribbling',
+  'dexterity',
+  'lowerBodyStrength',
+  'aerialStrength',
+  'defending',
+  'gk1',
+  'gk2',
+  'gk3'
+]
+
+const BUILD_SLIDER_LABELS = {
+  shooting: { it: 'Tiro', en: 'Shooting' },
+  passing: { it: 'Passaggio', en: 'Passing' },
+  dribbling: { it: 'Dribbling', en: 'Dribbling' },
+  dexterity: { it: 'Destrezza', en: 'Dexterity' },
+  lowerBodyStrength: { it: 'Forza arti inferiori', en: 'Lower body' },
+  aerialStrength: { it: 'Forza in aria', en: 'Aerial strength' },
+  defending: { it: 'Difesa', en: 'Defending' },
+  gk1: { it: 'PT 1', en: 'GK 1' },
+  gk2: { it: 'PT 2', en: 'GK 2' },
+  gk3: { it: 'PT 3', en: 'GK 3' }
+}
+
+function getPlayerBuildCoachData(player) {
+  return player?.development_points?.build_coach || player?.metadata?.build_coach || null
+}
+
+function getBuildSliderLabel(key, lang) {
+  const label = BUILD_SLIDER_LABELS[key]
+  return label ? (lang === 'en' ? label.en : label.it) : key
+}
+
 function getTokenFallback() {
   return localStorage.getItem('auth_token')
 }
@@ -2492,6 +2527,13 @@ function PremiumPlayerModal({
   const roleCount = originalPositionsDraft.length
   const visibleSkills = showAllSkills ? skillsDraft : skillsDraft.slice(0, 10)
   const hiddenSkillsCount = Math.max(0, skillsDraft.length - visibleSkills.length)
+  const buildCoachData = getPlayerBuildCoachData(player)
+  const buildSliders = buildCoachData?.sliders && typeof buildCoachData.sliders === 'object'
+    ? buildCoachData.sliders
+    : null
+  const buildPointsUsed = buildCoachData?.points_used ?? buildCoachData?.pointsUsed ?? null
+  const buildPointsAvailable = buildCoachData?.points_available ?? buildCoachData?.pointsAvailable ?? null
+  const buildTargetPosition = buildCoachData?.target_position || buildCoachData?.targetPosition || null
 
   return (
     <EnterpriseModalFrame
@@ -2583,6 +2625,30 @@ function PremiumPlayerModal({
                 {building ? (lang === 'en' ? 'Calculating...' : 'Calcolo...') : (lang === 'en' ? 'Recalculate build' : 'Ricalcola build')}
               </button>
             </div>
+            {buildSliders && (
+              <div className="nr-build-copy-card">
+                <div className="nr-build-copy-head">
+                  <div>
+                    <strong>{lang === 'en' ? 'Build ready for the game' : 'Build pronta per il gioco'}</strong>
+                    <p>{lang === 'en'
+                      ? 'Use these progression values in the game if you want to reproduce this build.'
+                      : 'Usa questi valori nella schermata progressione del gioco se vuoi replicare questa build.'}</p>
+                  </div>
+                  <div className="nr-build-copy-meta">
+                    {buildTargetPosition && <span>{buildTargetPosition}</span>}
+                    {buildPointsUsed !== null && buildPointsAvailable !== null && <span>{buildPointsUsed}/{buildPointsAvailable} PT</span>}
+                  </div>
+                </div>
+                <div className="nr-build-slider-grid">
+                  {BUILD_SLIDER_ORDER.map((key) => (
+                    <div key={key} className={`nr-build-slider-chip ${Number(buildSliders[key] || 0) > 0 ? 'is-active' : ''}`}>
+                      <span>{getBuildSliderLabel(key, lang)}</span>
+                      <strong>{Number(buildSliders[key] || 0)}</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="nr-role-editor-card">
               <div className="nr-role-editor-head">
                 <div>
@@ -7324,6 +7390,98 @@ export default withAuth(function NuovaRosaLabPage() {
           color: rgba(255, 255, 255, 0.68);
           font-size: 12px;
           line-height: 1.35;
+        }
+
+        .nr-build-copy-card {
+          margin-top: 12px;
+          padding: 12px;
+          border-radius: 14px;
+          border: 1px solid rgba(251, 191, 36, 0.24);
+          background:
+            radial-gradient(circle at 0% 0%, rgba(251, 191, 36, 0.12), transparent 36%),
+            rgba(255, 255, 255, 0.035);
+        }
+
+        .nr-build-copy-head {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 12px;
+          margin-bottom: 10px;
+        }
+
+        .nr-build-copy-head strong {
+          display: block;
+          color: #fff;
+          font-size: 13px;
+          margin-bottom: 4px;
+        }
+
+        .nr-build-copy-head p {
+          margin: 0;
+          color: rgba(255, 255, 255, 0.66);
+          font-size: 12px;
+          line-height: 1.35;
+        }
+
+        .nr-build-copy-meta {
+          display: flex;
+          gap: 6px;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+          flex: 0 0 auto;
+        }
+
+        .nr-build-copy-meta span {
+          border: 1px solid rgba(251, 191, 36, 0.24);
+          background: rgba(251, 191, 36, 0.08);
+          color: #fde68a;
+          border-radius: 999px;
+          padding: 5px 8px;
+          font-size: 11px;
+          font-weight: 900;
+          white-space: nowrap;
+        }
+
+        .nr-build-slider-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 7px;
+        }
+
+        .nr-build-slider-chip {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          border-radius: 11px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(2, 6, 18, 0.44);
+          padding: 7px 9px;
+          min-height: 36px;
+        }
+
+        .nr-build-slider-chip.is-active {
+          border-color: rgba(0, 212, 255, 0.25);
+          background:
+            linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(124, 58, 237, 0.08)),
+            rgba(2, 6, 18, 0.52);
+        }
+
+        .nr-build-slider-chip span {
+          color: rgba(255, 255, 255, 0.76);
+          font-size: 11px;
+          font-weight: 800;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .nr-build-slider-chip strong {
+          color: #d9f99d;
+          font-size: 14px;
+          font-weight: 950;
+          font-variant-numeric: tabular-nums;
         }
 
         .nr-build-coach-overlay {
