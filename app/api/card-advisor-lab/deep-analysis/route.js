@@ -7,6 +7,7 @@ import { deductCredits, refundCredits } from '@/lib/creditService'
 import { getRelevantSections } from '@/lib/ragHelper'
 import { getCoachPoliciesText, getCoachSharedCoreText } from '@/lib/coachPromptRules'
 import { getSkillDisplayLabel, getSkillEnglishItalianGlossary } from '@/lib/playerSkillLabels.js'
+import { CARD_ADVISOR_SELECT, searchCardAdvisorCardsByName } from '@/lib/cardAdvisorCardsLookup.js'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -55,33 +56,6 @@ const STYLE_AND_MECHANIC_GLOSSARY_IT = [
 
 const IT_TERM_GLOSSARY = [...getSkillEnglishItalianGlossary(), ...STYLE_AND_MECHANIC_GLOSSARY_IT]
   .sort((a, b) => b[0].length - a[0].length)
-
-const CARD_ADVISOR_SELECT = [
-  'source',
-  'source_player_id',
-  'source_url',
-  'player_name',
-  'position',
-  'category',
-  'card_type',
-  'overall_display',
-  'image_url',
-  'playing_style',
-  'player_skills',
-  'ai_playstyles',
-  'base_stats',
-  'max_stats',
-  'position_compatibility',
-  'height',
-  'weight',
-  'age',
-  'foot',
-  'data_quality',
-  'completeness_score',
-  'enrichment_status',
-  'error_message',
-  'source_payload'
-].join(',')
 
 function sanitize(value, maxLen = 500) {
   const text = String(value ?? '').replace(/\r\n|\r|\n/g, ' ').trim()
@@ -225,19 +199,28 @@ async function resolveUserId(userData, admin) {
 
 async function fetchCardAdvisorCard(admin, card) {
   const safeName = String(card.name || '').replace(/[%_]/g, '').trim()
-  let query = admin.from('card_advisor_cards')
-    .select(CARD_ADVISOR_SELECT)
-    .eq('is_active', true)
-    .limit(8)
+  let data = []
 
   if (card.sourcePlayerId) {
-    query = query.eq('source', card.source || 'efhub').eq('source_player_id', card.sourcePlayerId)
+    const { data: rows } = await admin
+      .from('card_advisor_cards')
+      .select(CARD_ADVISOR_SELECT)
+      .eq('is_active', true)
+      .eq('source', card.source || 'efhub')
+      .eq('source_player_id', card.sourcePlayerId)
+      .limit(8)
+    data = rows || []
   } else {
     if (!safeName) return null
-    query = query.ilike('player_name', `%${safeName}%`).eq('position', card.position)
+    const { rows } = await searchCardAdvisorCardsByName(admin, {
+      name: card.name,
+      source: card.source || 'efhub',
+      position: card.position,
+      limit: 24
+    })
+    data = rows || []
   }
 
-  const { data } = await query
   if (!Array.isArray(data) || data.length === 0) return null
   return data
     .sort((a, b) => {

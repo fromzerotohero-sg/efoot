@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { getSkillDisplayLabel } from '@/lib/playerSkillLabels.js'
+import { CARD_ADVISOR_SELECT, searchCardAdvisorCardsByName } from '@/lib/cardAdvisorCardsLookup.js'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -30,33 +31,6 @@ const EFHUB_POSITION_MAP = {
   LWF: 'ESA',
   RWF: 'EDA'
 }
-
-const CARD_ADVISOR_SELECT = [
-  'source',
-  'source_player_id',
-  'source_url',
-  'player_name',
-  'position',
-  'category',
-  'card_type',
-  'overall_display',
-  'image_url',
-  'playing_style',
-  'player_skills',
-  'ai_playstyles',
-  'base_stats',
-  'max_stats',
-  'position_compatibility',
-  'height',
-  'weight',
-  'age',
-  'foot',
-  'data_quality',
-  'completeness_score',
-  'enrichment_status',
-  'error_message',
-  'source_payload'
-].join(',')
 
 function roleFamily(position = '') {
   if (POSITION_GROUPS.gk.includes(position)) return 'gk'
@@ -382,14 +356,12 @@ async function fetchCardAdvisorCandidates(admin, card) {
   const safeName = sanitizeIlike(card.name)
   if (safeName) {
     tasks.push(
-      admin
-        .from('card_advisor_cards')
-        .select(CARD_ADVISOR_SELECT)
-        .ilike('player_name', `%${safeName}%`)
-        .eq('source', card.source || 'efhub')
-        .eq('position', card.position)
-        .eq('is_active', true)
-        .limit(12)
+      searchCardAdvisorCardsByName(admin, {
+        name: card.name,
+        source: card.source || 'efhub',
+        position: card.position,
+        limit: 12
+      }).then(({ rows }) => ({ data: rows, error: null }))
     )
   }
   if (tasks.length === 0) return []
