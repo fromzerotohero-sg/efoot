@@ -29,6 +29,99 @@ function safeLike(value) {
   return String(value || '').replace(/[%_]/g, '').trim()
 }
 
+/**
+ * Ricerca catalogo: preferisce RPC Postgres con `unaccent` (v. migration
+ * `20260513_player_catalog_search_unaccent.sql`) così "Ibrahimovic" trova
+ * "Ibrahimović". Se la RPC non esiste ancora, fallback su ILIKE classico.
+ */
+async function queryPlayerCatalog(supabase, { q, cardType, limit, offset, sort }) {
+  const sortKey = sort || 'name_asc'
+  const { data, error } = await supabase.rpc('rpc_player_catalog_search', {
+    p_q: q || '',
+    p_card_type: cardType || null,
+    p_sort: sortKey,
+    p_limit: limit,
+    p_offset: offset
+  })
+
+  if (!error && data && typeof data === 'object' && Array.isArray(data.rows)) {
+    return {
+      rows: data.rows,
+      total: Number(data.total ?? data.rows.length)
+    }
+  }
+
+  if (error) {
+    console.warn('[player-catalog/search] rpc_player_catalog_search:', error.message || error)
+  }
+
+  let legacy = supabase
+    .from('player_catalog')
+    .select(`
+        id,
+        source,
+        source_player_id,
+        card_type,
+        player_name,
+        position,
+        overall_level_1,
+        overall_max_level,
+        playing_style,
+        pack_name,
+        source_card_front_url,
+        source_card_back_url,
+        catalog_ready,
+        needs_review,
+        data_quality,
+        completeness_score,
+        position_compatibility,
+        players_payload,
+        player_identity_id,
+        player_identity_key,
+        card_instance_key
+      `, { count: 'exact' })
+    .eq('source', 'pesdb')
+    .eq('catalog_ready', true)
+    .eq('needs_review', false)
+
+  if (cardType) {
+    legacy = legacy.eq('card_type', cardType)
+  }
+
+  if (q) {
+    legacy = legacy.or([
+      `player_name.ilike.%${q}%`,
+      `position.ilike.%${q}%`,
+      `card_type.ilike.%${q}%`,
+      `playing_style.ilike.%${q}%`,
+      `pack_name.ilike.%${q}%`
+    ].join(','))
+  }
+
+  if (sortKey === 'ovr_desc') {
+    legacy = legacy
+      .order('overall_level_1', { ascending: false, nullsFirst: false })
+      .order('player_name', { ascending: true, nullsFirst: false })
+  } else if (sortKey === 'role_asc') {
+    legacy = legacy
+      .order('position', { ascending: true, nullsFirst: false })
+      .order('player_name', { ascending: true, nullsFirst: false })
+  } else {
+    legacy = legacy.order('player_name', { ascending: true, nullsFirst: false })
+  }
+
+  legacy = legacy.range(offset, offset + limit - 1)
+
+  const { data: legacyData, error: legacyError, count } = await legacy
+  if (legacyError) {
+    throw legacyError
+  }
+  return {
+    rows: legacyData || [],
+    total: typeof count === 'number' ? count : (legacyData || []).length
+  }
+}
+
 function slotCompatibility(slotPosition = '', cardPosition = '') {
   const slot = String(slotPosition || '').toUpperCase().trim()
   const card = String(cardPosition || '').toUpperCase().trim()
@@ -103,72 +196,22 @@ export async function GET(req) {
     const offset = Number.isFinite(offsetRaw) ? Math.max(0, offsetRaw) : 0
     const sort = toText(searchParams.get('sort')) || 'name_asc'
 
-    let query = supabase
-      .from('player_catalog')
-      .select(`
-        id,
-        source,
-        source_player_id,
-        card_type,
-        player_name,
-        position,
-        overall_level_1,
-        overall_max_level,
-        playing_style,
-        pack_name,
-        source_card_front_url,
-        source_card_back_url,
-        catalog_ready,
-        needs_review,
-        data_quality,
-        completeness_score,
-        position_compatibility,
-        players_payload,
-        player_identity_id,
-        player_identity_key,
-        card_instance_key
-      `, { count: 'exact' })
-      .eq('source', 'pesdb')
-      .eq('catalog_ready', true)
-      .eq('needs_review', false)
-
-    if (cardType) {
-      query = query.eq('card_type', cardType)
-    }
-
-    if (q) {
-      query = query.or([
-        `player_name.ilike.%${q}%`,
-        `position.ilike.%${q}%`,
-        `card_type.ilike.%${q}%`,
-        `playing_style.ilike.%${q}%`,
-        `pack_name.ilike.%${q}%`
-      ].join(','))
-    }
-
-    if (sort === 'ovr_desc') {
-      query = query
-        .order('overall_level_1', { ascending: false, nullsFirst: false })
-        .order('player_name', { ascending: true, nullsFirst: false })
-    } else if (sort === 'role_asc') {
-      query = query
-        .order('position', { ascending: true, nullsFirst: false })
-        .order('player_name', { ascending: true, nullsFirst: false })
-    } else {
-      query = query.order('player_name', { ascending: true, nullsFirst: false })
-    }
-
-    query = query.range(offset, offset + limit - 1)
-
-    const { data, error, count } = await query
-
-    if (error) {
-      console.error('[player-catalog/search] Query error:', error)
+    let data
+    let total
+    try {
+      ;({ rows: data, total } = await queryPlayerCatalog(supabase, {
+        q,
+        cardType,
+        limit,
+        offset,
+        sort
+      }))
+    } catch (queryError) {
+      console.error('[player-catalog/search] Query error:', queryError)
       return NextResponse.json({ error: 'Failed to load catalog' }, { status: 500 })
     }
 
     const results = (data || []).map((row) => normalizeResult(row, slotPosition))
-    const total = typeof count === 'number' ? count : results.length
 
     return NextResponse.json({
       results,
