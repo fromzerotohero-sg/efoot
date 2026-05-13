@@ -1081,10 +1081,34 @@ function CardDetailsModal({
 
   React.useEffect(() => {
     if (!card) return
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    const html = document.documentElement
+    const body = document.body
+    const scrollY = window.scrollY
+    const prev = {
+      htmlOverflow: html.style.overflow,
+      bodyOverflow: body.style.overflow,
+      bodyPosition: body.style.position,
+      bodyTop: body.style.top,
+      bodyLeft: body.style.left,
+      bodyRight: body.style.right,
+      bodyWidth: body.style.width
+    }
+    html.style.overflow = 'hidden'
+    body.style.overflow = 'hidden'
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.left = '0'
+    body.style.right = '0'
+    body.style.width = '100%'
     return () => {
-      document.body.style.overflow = prevOverflow
+      html.style.overflow = prev.htmlOverflow
+      body.style.overflow = prev.bodyOverflow
+      body.style.position = prev.bodyPosition
+      body.style.top = prev.bodyTop
+      body.style.left = prev.bodyLeft
+      body.style.right = prev.bodyRight
+      body.style.width = prev.bodyWidth
+      window.scrollTo(0, scrollY)
     }
   }, [card])
 
@@ -1829,11 +1853,10 @@ export default withAuth(function CardAdvisorLabPage() {
           max-height: min(880px, calc(100vh - 32px));
           max-height: min(880px, calc(100dvh - 32px));
           min-height: 0;
-          overflow-y: auto;
+          overflow-y: scroll;
           overflow-x: hidden;
           -webkit-overflow-scrolling: touch;
           overscroll-behavior-y: contain;
-          touch-action: pan-y;
           border-radius: 24px;
           box-shadow: 0 0 50px rgba(0, 212, 255, 0.22);
           isolation: isolate;
@@ -2035,6 +2058,8 @@ export default withAuth(function CardAdvisorLabPage() {
           top: auto;
           box-sizing: border-box;
           width: 100%;
+          min-width: 0;
+          overflow-x: hidden;
         }
 
         .detail-close-button {
@@ -2464,6 +2489,9 @@ export default withAuth(function CardAdvisorLabPage() {
           border: 1px solid rgba(0,212,255,0.18);
           border-radius: 18px;
           padding: 16px;
+          min-width: 0;
+          overflow-wrap: anywhere;
+          word-break: break-word;
           background:
             radial-gradient(circle at 8% 0%, rgba(0,212,255,0.12), transparent 32%),
             rgba(255,255,255,0.045);
@@ -2498,7 +2526,8 @@ export default withAuth(function CardAdvisorLabPage() {
           margin-top: 10px;
           color: #facc15;
           font-size: 13px;
-          line-height: 1.5;
+          line-height: 1.55;
+          overflow-wrap: anywhere;
         }
 
         .deep-analysis-entry {
@@ -3075,6 +3104,9 @@ export default withAuth(function CardAdvisorLabPage() {
           border: 1px solid rgba(0,212,255,0.16);
           border-radius: 18px;
           padding: 14px;
+          min-width: 0;
+          overflow-wrap: anywhere;
+          word-break: break-word;
           background:
             radial-gradient(circle at 0% 0%, rgba(0,212,255,0.09), transparent 36%),
             rgba(5,8,20,0.42);
@@ -3450,12 +3482,19 @@ export default withAuth(function CardAdvisorLabPage() {
             max-height: calc(100vh - 16px);
             max-height: calc(100dvh - 16px);
             padding-bottom: max(14px, env(safe-area-inset-bottom, 0px));
+            scroll-padding-bottom: max(100px, calc(env(safe-area-inset-bottom, 0px) + 72px));
             border-radius: 22px 22px 12px 12px;
           }
 
           .card-details-modal .detail-panel {
             padding: 14px;
             padding-bottom: max(18px, calc(14px + env(safe-area-inset-bottom, 0px)));
+          }
+
+          .coach-advice-card,
+          .quick-read-card,
+          .deep-analysis-report {
+            padding-right: max(14px, calc(12px + env(safe-area-inset-right, 0px)));
           }
 
           .detail-close-button {
