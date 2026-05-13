@@ -4447,7 +4447,17 @@ export default withAuth(function NuovaRosaLabPage() {
       )
     } catch (err) {
       console.error('[NuovaRosaLab] build coach player error:', err)
-      const { message } = mapErrorToUserMessage(err, lang === 'en' ? 'Unable to calculate build.' : 'Impossibile calcolare la build.', lang)
+      const rawMessage = String(err?.message || '')
+      const isNonProgression = rawMessage.includes('non_progression_card_type') || rawMessage.includes('max_level_one')
+      const { message } = mapErrorToUserMessage(
+        err,
+        isNonProgression
+          ? (lang === 'en'
+              ? 'This card type has fixed progression in the game and cannot be optimized.'
+              : 'Questo tipo di carta ha progressione fissa nel gioco e non puo essere ottimizzato.')
+          : (lang === 'en' ? 'Unable to calculate build.' : 'Impossibile calcolare la build.'),
+        lang
+      )
       showToast(message, 'error')
     } finally {
       setBuildingPlayerId(null)
@@ -5000,6 +5010,24 @@ export default withAuth(function NuovaRosaLabPage() {
                     </div>
                     <span className="nr-reserve-position-pill">{player.position || '-'}</span>
                     <ChevronRight size={14} />
+                    <button
+                      type="button"
+                      className="nr-reserve-edit"
+                      onClick={(event) => {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        setSelectedSlot(null)
+                        setSelectedPlayer(player)
+                        setShowAssignModal(false)
+                        setShowPremiumEditorModal(true)
+                      }}
+                      onMouseDown={(event) => event.stopPropagation()}
+                      onTouchStart={(event) => event.stopPropagation()}
+                      aria-label={lang === 'en' ? 'Edit reserve' : 'Modifica riserva'}
+                      title={lang === 'en' ? 'Edit reserve' : 'Modifica riserva'}
+                    >
+                      <Pencil size={14} />
+                    </button>
                     <button
                       type="button"
                       className="nr-reserve-remove"
@@ -6345,6 +6373,31 @@ export default withAuth(function NuovaRosaLabPage() {
           transition: all 0.3s ease;
           box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
           z-index: 2;
+        }
+
+        .nr-reserve-edit {
+          position: absolute;
+          top: 8px;
+          right: 42px;
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, rgba(0, 212, 255, 0.22), rgba(124, 58, 237, 0.24));
+          border: 1px solid rgba(0, 212, 255, 0.48);
+          color: #ffffff;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.22s ease;
+          box-shadow: 0 2px 8px rgba(0, 212, 255, 0.28);
+          z-index: 2;
+        }
+
+        .nr-reserve-edit:hover {
+          transform: scale(1.12);
+          border-color: rgba(0, 212, 255, 0.72);
+          box-shadow: 0 4px 14px rgba(0, 212, 255, 0.42);
         }
 
         .nr-reserve-remove:hover {

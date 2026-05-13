@@ -87,12 +87,53 @@ export async function findCatalogCardForPlayer(admin, player) {
   const source = metadata.catalog_source || metadata.source || 'pesdb'
   const { data } = await admin
     .from('player_catalog')
-    .select('id, source, source_player_id, player_name, position, max_level, height, base_stats, players_payload')
+    .select('id, source, source_player_id, player_name, position, card_type, card_category, max_level, height, base_stats, players_payload')
     .eq('source', source)
     .eq('source_player_id', String(sourcePlayerId))
     .limit(1)
     .maybeSingle()
   return data || null
+}
+
+function normalizeCardType(value) {
+  return String(value || '').toLowerCase().trim()
+}
+
+function isNonProgressionCardType(value) {
+  const normalized = normalizeCardType(value)
+  if (!normalized) return false
+  return (
+    normalized.includes('trending') ||
+    normalized.includes('potw') ||
+    normalized.includes('player of the week') ||
+    normalized.includes('players of the week') ||
+    normalized.includes('otw') ||
+    normalized.includes('one to watch') ||
+    normalized.includes('card strike arena')
+  )
+}
+
+function getEffectiveCardType(player, catalogCard) {
+  return (
+    player?.metadata?.catalog_card_type ||
+    player?.metadata?.card_category ||
+    player?.card_type ||
+    catalogCard?.card_type ||
+    catalogCard?.card_category ||
+    catalogCard?.players_payload?.card_type
+  )
+}
+
+function getNonProgressionReason(player, catalogCard) {
+  const cardType = getEffectiveCardType(player, catalogCard)
+  if (isNonProgressionCardType(cardType)) {
+    return { blocked: true, reason: 'non_progression_card_type', cardType }
+  }
+  const maxLevel = Number(catalogCard?.max_level ?? catalogCard?.players_payload?.level_cap ?? player?.level_cap)
+  if (Number.isFinite(maxLevel) && maxLevel <= 1) {
+    return { blocked: true, reason: 'max_level_one', cardType }
+  }
+  return { blocked: false, reason: null, cardType }
 }
 
 function withFallbacks(player, catalogCard) {
@@ -180,6 +221,17 @@ export function buildPlayerUpdatePayload({ player, build, contextEstimated = [] 
 
 export async function calculateAndPersistPlayerBuild({ admin, userId, player, rosterContext, save = true }) {
   const catalogCard = await findCatalogCardForPlayer(admin, player)
+  const nonProgression = getNonProgressionReason(player, catalogCard)
+  if (nonProgression.blocked) {
+    return {
+      ok: false,
+      player_id: player.id,
+      player_name: player.player_name,
+      error: nonProgression.reason,
+      card_type: nonProgression.cardType,
+      estimated_fields: []
+    }
+  }
   const fallback = withFallbacks(player, catalogCard)
   const slotPosition = getSlotPosition(fallback.player, rosterContext.layout)
   const build = calculateGameplayBuild({
