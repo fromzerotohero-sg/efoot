@@ -1,7 +1,30 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
-import { applyBoosters, applyCoachEffects, computeOverallRating, normalizeEfhubPosition, normalizeStatsToEfhub } from '@/lib/efootballBuildRules'
+import { computeOverallRating, normalizeEfhubPosition, normalizeStatsToEfhub } from '@/lib/efootballBuildRules'
+
+const BASE_STATS_BUCKETS = ['attacking', 'defending', 'athleticism', 'goalkeeping']
+
+/** Deep-merge stat buckets so a partial PATCH (es. solo attacking) non cancella le altre chiavi nel bucket. */
+function mergePlayerBaseStats(existing, patch) {
+  const base = existing && typeof existing === 'object' && !Array.isArray(existing) ? existing : {}
+  if (!patch || typeof patch !== 'object' || Array.isArray(patch)) return base
+  const next = { ...base }
+  for (const [key, value] of Object.entries(patch)) {
+    if (
+      value &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      BASE_STATS_BUCKETS.includes(key)
+    ) {
+      const prevBucket = base[key] && typeof base[key] === 'object' && !Array.isArray(base[key]) ? base[key] : {}
+      next[key] = { ...prevBucket, ...value }
+    } else if (value !== undefined) {
+      next[key] = value
+    }
+  }
+  return next
+}
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -238,7 +261,7 @@ export async function PATCH(req, { params }) {
 
     if (body.base_stats !== undefined) {
       updateData.base_stats = hasObjectValue(body.base_stats)
-        ? { ...(existingPlayer.base_stats || {}), ...body.base_stats }
+        ? mergePlayerBaseStats(existingPlayer.base_stats || {}, body.base_stats)
         : existingPlayer.base_stats
     }
 
@@ -292,29 +315,17 @@ export async function PATCH(req, { params }) {
         : existingPlayer.original_positions
     }
     
-    // Always update updated_at
-    if ((updateData.base_stats && body.base_stats !== undefined) || body.available_boosters !== undefined) {
+    // Stesso criterio di ~5 commit fa: OVR da sole statistiche base (nested) normalizzate, senza booster/coach.
+    // Booster e coach restano nel Build Coach e altrove; qui evitano OVR/position_ratings incoerenti al salvataggio.
+    if (updateData.base_stats && body.base_stats !== undefined) {
       const targetPosition = normalizeEfhubPosition(updateData.position || existingPlayer.position)
       const height = body.height ?? body.height_cm ?? existingPlayer.height
       const weakFootAccuracy = updateData.metadata?.weak_foot_accuracy || existingPlayer.metadata?.weak_foot_accuracy || 2
-      const { data: activeCoach } = await supabase
-        .from('coaches')
-        .select('playing_style_competence, stat_boosters')
-        .eq('user_id', userId)
-        .eq('is_active', true)
-        .maybeSingle()
-      const { data: tacticalSettings } = await supabase
-        .from('team_tactical_settings')
-        .select('team_playing_style')
-        .eq('user_id', userId)
-        .maybeSingle()
-      const statsWithBoosters = applyBoosters(updateData.base_stats || existingPlayer.base_stats || {}, updateData.available_boosters || existingPlayer.available_boosters || [])
-      const statsWithCoach = applyCoachEffects(statsWithBoosters, activeCoach, tacticalSettings?.team_playing_style)
       const recalculatedOverall = computeOverallRating({
         position: targetPosition,
         height,
         weakFootAccuracy,
-        stats: normalizeStatsToEfhub(statsWithCoach)
+        stats: normalizeStatsToEfhub(updateData.base_stats || existingPlayer.base_stats || {})
       })
       if (Number.isFinite(recalculatedOverall)) {
         updateData.overall_rating = recalculatedOverall
