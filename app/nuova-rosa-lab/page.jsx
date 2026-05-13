@@ -13,6 +13,7 @@ import { PHOTO_TYPE_KEYS, getPhotoTypeConfig } from '@/lib/playerPhotoTypes'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 import { getFormationNameFromSlotPositions } from '@/lib/validateFormationLimits'
+import { pickBilingualList } from '@/lib/gameplayBuildCoach'
 import {
   AlertTriangle,
   ArrowRight,
@@ -347,7 +348,10 @@ const BUILD_SLIDER_LABELS = {
 }
 
 function getPlayerBuildCoachData(player) {
-  return player?.development_points?.build_coach || player?.metadata?.build_coach || null
+  const meta = player?.metadata?.build_coach
+  const dev = player?.development_points?.build_coach
+  if (!meta && !dev) return null
+  return { ...(dev || {}), ...(meta || {}) }
 }
 
 function getBuildSliderLabel(key, lang) {
@@ -2563,6 +2567,8 @@ function PremiumPlayerModal({
   const buildPointsUsed = buildCoachData?.points_used ?? buildCoachData?.pointsUsed ?? null
   const buildPointsAvailable = buildCoachData?.points_available ?? buildCoachData?.pointsAvailable ?? null
   const buildTargetPosition = buildCoachData?.target_position || buildCoachData?.targetPosition || null
+  const buildReasonsLines = pickBilingualList(buildCoachData?.reasons, lang)
+  const buildWarningLines = pickBilingualList(buildCoachData?.warnings, lang)
 
   return (
     <EnterpriseModalFrame
@@ -2678,6 +2684,27 @@ function PremiumPlayerModal({
                 </div>
               </div>
             )}
+            {(buildReasonsLines.length > 0 || buildWarningLines.length > 0) && (
+              <div className="nr-build-coach-notes">
+                {buildWarningLines.length > 0 ? (
+                  <div className="nr-build-coach-notes-warn" role="status">
+                    {buildWarningLines.map((line, idx) => (
+                      <p key={`bcw-${idx}`}>{line}</p>
+                    ))}
+                  </div>
+                ) : null}
+                {buildReasonsLines.length > 0 ? (
+                  <div className="nr-build-coach-notes-reasons">
+                    <strong>{lang === 'en' ? 'Why this build' : 'Perché questa build'}</strong>
+                    <ul>
+                      {buildReasonsLines.map((line, idx) => (
+                        <li key={`bcr-${idx}`}>{line}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            )}
             <div className="nr-role-editor-card">
               <div className="nr-role-editor-head">
                 <div>
@@ -2695,7 +2722,7 @@ function PremiumPlayerModal({
                     className="nr-role-chip"
                     title={t(getPositionRoleTranslationKey(entry.position))}
                   >
-                    {entry.position} · {entry.competence || 'Alta'}
+                    {entry.position} · {entry.competence || (lang === 'en' ? 'High' : 'Alta')}
                   </span>
                 )) : (
                   <span className="nr-skill-empty">{lang === 'en' ? 'No playable roles set.' : 'Nessun ruolo giocabile impostato.'}</span>
@@ -7554,9 +7581,51 @@ export default withAuth(function NuovaRosaLabPage() {
           color: rgba(255, 255, 255, 0.76);
           font-size: 11px;
           font-weight: 800;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
+          min-width: 0;
+          white-space: normal;
+          overflow-wrap: break-word;
+          line-height: 1.2;
+        }
+
+        .nr-build-coach-notes {
+          margin-top: 10px;
+          padding: 12px 14px;
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(0, 0, 0, 0.22);
+        }
+
+        .nr-build-coach-notes-warn {
+          margin-bottom: 10px;
+          font-size: 12px;
+          color: rgba(255, 196, 120, 0.95);
+        }
+
+        .nr-build-coach-notes-warn p {
+          margin: 0 0 4px;
+        }
+
+        .nr-build-coach-notes-warn p:last-child {
+          margin-bottom: 0;
+        }
+
+        .nr-build-coach-notes-reasons strong {
+          display: block;
+          font-size: 12px;
+          margin-bottom: 6px;
+          color: rgba(255, 255, 255, 0.9);
+        }
+
+        .nr-build-coach-notes-reasons ul {
+          margin: 0;
+          padding-left: 18px;
+          font-size: 12px;
+          line-height: 1.4;
+          color: rgba(255, 255, 255, 0.78);
+        }
+
+        .nr-build-coach-notes-reasons li {
+          margin-bottom: 4px;
         }
 
         .nr-build-slider-chip strong {
@@ -7974,6 +8043,12 @@ export default withAuth(function NuovaRosaLabPage() {
           gap: 10px;
         }
 
+        @media (max-width: 1500px) and (min-width: 1101px) {
+          .nr-reference-main-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+
         .nr-reference-support-grid {
           display: grid;
           grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.9fr);
@@ -7999,16 +8074,19 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-stat-compact-row {
           display: grid;
           grid-template-columns: minmax(0, 1fr) auto;
-          align-items: center;
-          gap: 10px;
+          align-items: start;
+          gap: 8px 10px;
         }
 
         .nr-stat-compact-label {
           margin: 0;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          font-size: 12px;
+          min-width: 0;
+          white-space: normal;
+          overflow-wrap: break-word;
+          word-break: break-word;
+          hyphens: auto;
+          line-height: 1.25;
+          font-size: 11.5px;
           color: rgba(255, 255, 255, 0.82);
         }
 
