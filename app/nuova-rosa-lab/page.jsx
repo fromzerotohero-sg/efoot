@@ -13,24 +13,13 @@ import { PHOTO_TYPE_KEYS, getPhotoTypeConfig } from '@/lib/playerPhotoTypes'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 import { getFormationNameFromSlotPositions } from '@/lib/validateFormationLimits'
-import {
-  coerceBuildSlidersForRole,
-  isBuildMacroBlockedForPlayer,
-  pickBilingualList,
-  previewGameplayBuildFromSliders,
-  sanitizeSliders as sanitizeBuildCoachSliders,
-  setBuildSliderTicks,
-  tryApplyBuildSliderDelta
-} from '@/lib/gameplayBuildCoach'
-import { MAX_TACCE_PER_MACRO } from '@/lib/efootballProgressionCost'
-import { PROGRESSION_SLIDERS } from '@/lib/efootballBuildRules'
+import { pickBilingualList } from '@/lib/gameplayBuildCoach'
 import {
   AlertTriangle,
   ArrowRight,
   Camera,
   CheckCircle2,
   ChevronRight,
-  Minus,
   Pencil,
   Plus,
   RefreshCw,
@@ -348,83 +337,6 @@ const BUILD_SLIDER_ORDER = [
   'gk3'
 ]
 
-/** Campo form editor ↔ stat interna progression (EFHub camelCase) */
-const EFHUB_STAT_TO_FORM_FIELD = {
-  offensiveAwareness: 'offensive_awareness',
-  finishing: 'finishing',
-  lowPass: 'low_pass',
-  loftedPass: 'lofted_pass',
-  ballControl: 'ball_control',
-  dribbling: 'dribbling',
-  tightPossession: 'tight_possession',
-  heading: 'heading',
-  setPieceTaking: 'set_piece_taking',
-  curl: 'curl',
-  defensiveAwareness: 'defensive_awareness',
-  ballWinning: 'defensive_engagement',
-  aggression: 'aggression',
-  trackingBack: 'tackling',
-  speed: 'speed',
-  acceleration: 'acceleration',
-  kickingPower: 'kicking_power',
-  physicalContact: 'physical_contact',
-  balance: 'balance',
-  stamina: 'stamina',
-  jump: 'jump',
-  gkAwareness: 'gk_awareness',
-  gkCatching: 'gk_catching',
-  gkClearing: 'gk_parrying',
-  gkReflexes: 'gk_reflexes',
-  gkReach: 'gk_reach'
-}
-
-const MACRO_FORM_FIELDS = Object.fromEntries(
-  PROGRESSION_SLIDERS.map((entry) => [
-    entry.key,
-    entry.affectedStats.map((s) => EFHUB_STAT_TO_FORM_FIELD[s]).filter(Boolean)
-  ])
-)
-
-function getMacroAffectedStatLabels(macroKey, t) {
-  const slider = PROGRESSION_SLIDERS.find((s) => s.key === macroKey)
-  if (!slider) return []
-  const tKeyByFormField = {
-    offensive_awareness: 'offensive_awareness',
-    finishing: 'finishing',
-    low_pass: 'low_pass',
-    lofted_pass: 'lofted_pass',
-    dribbling: 'dribbling',
-    ball_control: 'ball_control',
-    tight_possession: 'tight_possession',
-    heading: 'heading',
-    set_piece_taking: 'place_kicking',
-    curl: 'curl',
-    defensive_awareness: 'defensive_awareness',
-    defensive_engagement: 'defensive_engagement',
-    tackling: 'tackling',
-    aggression: 'aggression',
-    speed: 'speed',
-    acceleration: 'acceleration',
-    kicking_power: 'kicking_power',
-    physical_contact: 'physical_contact',
-    balance: 'balance',
-    stamina: 'stamina',
-    jump: 'jump',
-    gk_awareness: 'goalkeeping',
-    gk_catching: 'gk_catching',
-    gk_parrying: 'gk_parrying',
-    gk_reflexes: 'gk_reflexes',
-    gk_reach: 'gk_reach'
-  }
-  return slider.affectedStats
-    .map((s) => {
-      const ff = EFHUB_STAT_TO_FORM_FIELD[s]
-      const tk = ff ? tKeyByFormField[ff] : null
-      return tk ? t(tk) : null
-    })
-    .filter(Boolean)
-}
-
 const BUILD_SLIDER_LABELS = {
   shooting: { it: 'Tiro', en: 'Shooting' },
   passing: { it: 'Passaggio', en: 'Passing' },
@@ -525,7 +437,7 @@ function getStatToneClass(value) {
   return 'low'
 }
 
-function CompactStatInput({ label, value, onChange, emphasized = false, progressionMacroMode = false }) {
+function CompactStatInput({ label, value, onChange }) {
   const toneClass = getStatToneClass(value)
   const numericValue = Number(value)
   const safeValue = Number.isFinite(numericValue) ? numericValue : 0
@@ -534,20 +446,8 @@ function CompactStatInput({ label, value, onChange, emphasized = false, progress
     onChange(String(nextValue))
   }
 
-  if (progressionMacroMode) {
-    const display = value === '' || value === null || value === undefined ? '—' : String(value)
-    return (
-      <div className={`nr-stat-compact-row nr-stat-compact-row--macro-readonly${emphasized ? ' nr-stat-compact-row--macro-focus' : ''}`}>
-        <span className="nr-stat-compact-label">{label}</span>
-        <div className={`nr-stat-macro-readonly-pill tone-${toneClass}`} title={label}>
-          {display}
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className={`nr-stat-compact-row${emphasized ? ' nr-stat-compact-row--macro-focus' : ''}`}>
+    <div className="nr-stat-compact-row">
       <span className="nr-stat-compact-label">{label}</span>
       <div className={`nr-stat-stepper tone-${toneClass}`}>
         <button type="button" onClick={() => adjustValue(-1)} aria-label={`Decrease ${label}`}>
@@ -2492,16 +2392,6 @@ function normalizeBaseStatsForEditor(baseStats = {}) {
   }
 }
 
-function mapPreviewBaseStatsToFormFields(previewBaseStats = {}) {
-  const flat = normalizeBaseStatsForEditor(previewBaseStats)
-  const out = {}
-  for (const key of Object.keys(flat)) {
-    const v = flat[key]
-    out[key] = v === '' || v == null ? '' : String(Number(v))
-  }
-  return out
-}
-
 function buildBaseStatsPayloadFromEditor(form) {
   const toNum = (value) => {
     if (value === '' || value === null || value === undefined) return null
@@ -2565,7 +2455,7 @@ function clampBoosterEntryForSlot(entry, slotIndex) {
   return n
 }
 
-function BoosterHexBadge({ active, level, onClick, disabled, ariaLabel, title }) {
+function BoosterHexBadge({ active, level, onClick, disabled, ariaLabel }) {
   const filterId = React.useId().replace(/:/g, 'booster')
   const stroke = active ? '#5cf0ff' : '#6b7389'
   const fillHex = active ? 'rgba(0, 48, 62, 0.72)' : 'rgba(26, 30, 42, 0.92)'
@@ -2605,17 +2495,16 @@ function BoosterHexBadge({ active, level, onClick, disabled, ariaLabel, title })
     return (
       <button
         type="button"
-        title={title}
         className={`nr-booster-hex-badge nr-booster-hex-badge--interactive ${active ? 'nr-booster-hex-badge--active' : 'nr-booster-hex-badge--idle'}`}
         onClick={onClick}
-        aria-label={ariaLabel || title || 'Booster'}
+        aria-label={ariaLabel || 'Booster'}
       >
         {inner}
       </button>
     )
   }
   return (
-    <div className={`nr-booster-hex-badge ${active ? 'nr-booster-hex-badge--active' : 'nr-booster-hex-badge--idle'}`} title={title}>
+    <div className={`nr-booster-hex-badge ${active ? 'nr-booster-hex-badge--active' : 'nr-booster-hex-badge--idle'}`}>
       {inner}
     </div>
   )
@@ -2679,8 +2568,11 @@ function PremiumPlayerModal({
   const [showAllSkills, setShowAllSkills] = React.useState(false)
   const [originalPositionsDraft, setOriginalPositionsDraft] = React.useState([])
   const [showPositionEditor, setShowPositionEditor] = React.useState(false)
-  const [interactiveBuildSliders, setInteractiveBuildSliders] = React.useState(null)
-  const [macroExplainFocus, setMacroExplainFocus] = React.useState(null)
+  const [saveConfirmOpen, setSaveConfirmOpen] = React.useState(false)
+
+  React.useEffect(() => {
+    if (!show) setSaveConfirmOpen(false)
+  }, [show])
 
   React.useEffect(() => {
     if (!show || !player) return
@@ -2706,27 +2598,7 @@ function PremiumPlayerModal({
         ? player.available_boosters.map((entry, idx) => clampBoosterEntryForSlot(entry, idx))
         : []
     )
-    setInteractiveBuildSliders(null)
-    setMacroExplainFocus(null)
-
-    const coachSliders = getPlayerBuildCoachData(player)?.sliders
-    if (coachSliders && typeof coachSliders === 'object') {
-      const raw = sanitizeBuildCoachSliders(coachSliders)
-      const coerced = coerceBuildSlidersForRole(player, raw, slot?.position ?? null)
-      if (JSON.stringify(raw) !== JSON.stringify(coerced)) {
-        const preview = previewGameplayBuildFromSliders({
-          player,
-          sliders: coerced,
-          slotPosition: slot?.position ?? null
-        })
-        setForm((prev) => ({
-          ...prev,
-          ...mapPreviewBaseStatsToFormFields(preview.finalBaseStats),
-          overall_rating: String(preview.afterOverall)
-        }))
-      }
-    }
-  }, [show, player, slot?.position])
+  }, [show, player])
 
   if (!show || !player) return null
 
@@ -2794,6 +2666,23 @@ function PremiumPlayerModal({
     setBoostersDraft((prev) => prev.filter((_, idx) => idx !== index))
   }
 
+  const handleBoosterHexClick = (slotIndex) => {
+    if (slotIndex === 0) {
+      if (!boostersDraft[0]) {
+        if (boostersDraft.length === 0) addBooster()
+        return
+      }
+      const raw = Number(boostersDraft[0]?.level || parseBoosterLevel(boostersDraft[0]?.effect || '+1'))
+      const cur = Math.min(5, Math.max(1, raw))
+      const next = cur >= 5 ? 1 : cur + 1
+      updateBoosterLevel(0, next)
+      return
+    }
+    if (slotIndex === 1 && !boostersDraft[1] && boostersDraft.length === 1) {
+      addBooster()
+    }
+  }
+
   const boosterCount = boostersDraft.length
   const roleCount = originalPositionsDraft.length
   const visibleSkills = showAllSkills ? skillsDraft : skillsDraft.slice(0, 10)
@@ -2808,147 +2697,28 @@ function PremiumPlayerModal({
   const buildReasonsLines = pickBilingualList(buildCoachData?.reasons, lang)
   const buildWarningLines = pickBilingualList(buildCoachData?.warnings, lang)
 
-  const slotProgressionPosition = slot?.position ?? null
-
-  const effectiveBuildSliders = buildSliders
-    ? coerceBuildSlidersForRole(
-      player,
-      sanitizeBuildCoachSliders(interactiveBuildSliders ?? buildSliders),
-      slotProgressionPosition
-    )
-    : null
-  const buildAllocationLivePreview = effectiveBuildSliders && player
-    ? previewGameplayBuildFromSliders({
-      player,
-      sliders: effectiveBuildSliders,
-      slotPosition: slotProgressionPosition
-    })
-    : null
-  const liveBuildPointsUsed =
-    buildAllocationLivePreview?.pointsUsed ?? buildPointsUsed
-  const liveBuildPointsAvailable =
-    buildAllocationLivePreview?.pointsAvailable ?? buildPointsAvailable
-
-  const applyPreviewToForm = (slidersSnapshot) => {
-    const preview = previewGameplayBuildFromSliders({
-      player,
-      sliders: slidersSnapshot,
-      slotPosition: slotProgressionPosition
-    })
-    setForm((prev) => ({
-      ...prev,
-      ...mapPreviewBaseStatsToFormFields(preview.finalBaseStats),
-      overall_rating: String(preview.afterOverall)
-    }))
-  }
-
-  const handleBuildMacroSliderInput = (key, rawValue) => {
-    if (!buildSliders) return
-    const cur = coerceBuildSlidersForRole(
-      player,
-      sanitizeBuildCoachSliders(interactiveBuildSliders ?? buildSliders),
-      slotProgressionPosition
-    )
-    const next = setBuildSliderTicks({
-      player,
-      sliders: cur,
-      key,
-      targetTicks: rawValue,
-      slotPosition: slotProgressionPosition
-    })
-    setInteractiveBuildSliders(next)
-    applyPreviewToForm(next)
-  }
-
-  const handleBuildMacroNudge = (key, delta) => {
-    if (!buildSliders) return
-    const cur = coerceBuildSlidersForRole(
-      player,
-      sanitizeBuildCoachSliders(interactiveBuildSliders ?? buildSliders),
-      slotProgressionPosition
-    )
-    const next = tryApplyBuildSliderDelta({
-      player,
-      sliders: cur,
-      key,
-      delta,
-      slotPosition: slotProgressionPosition
-    })
-    if (!next) return
-    setInteractiveBuildSliders(next)
-    applyPreviewToForm(next)
-  }
-
-  const statEmphasized = (formField) =>
-    Boolean(buildSliders && macroExplainFocus && MACRO_FORM_FIELDS[macroExplainFocus]?.includes(formField))
-
-  const getEditorSavePayload = () => {
-    const sliderPayloadPreview =
-      buildSliders && interactiveBuildSliders != null
-        ? previewGameplayBuildFromSliders({
-          player,
-          sliders: coerceBuildSlidersForRole(
-            player,
-            sanitizeBuildCoachSliders(interactiveBuildSliders ?? buildSliders),
-            slotProgressionPosition
-          ),
-          slotPosition: slotProgressionPosition
-        })
-        : null
-
-    const payload = {
-      player_name: form.player_name.trim(),
-      position: originalPositionsDraft[0]?.position || form.position,
-      overall_rating: form.overall_rating ? Number(form.overall_rating) : null,
-      card_type: form.card_type,
-      role: form.role,
-      age: form.age ? Number(form.age) : null,
-      nationality: form.nationality,
-      club_name: form.club_name,
-      skills: skillsDraft,
-      available_boosters: boostersDraft.map((entry, idx) => {
-        const maxLevel = idx === 1 ? 1 : 5
-        const level = Math.min(maxLevel, Math.max(1, Number(entry?.level) || parseBoosterLevel(entry?.effect)))
-        return {
-          name: String(entry?.name || '').trim(),
-          effect: `+${level}`
-        }
-      }),
-      original_positions: originalPositionsDraft,
-      base_stats: buildBaseStatsPayloadFromEditor(form),
-      metadata: { catalog_booster_reminder: false }
-    }
-
-    if (sliderPayloadPreview?.ok && interactiveBuildSliders != null) {
-      const preview = sliderPayloadPreview
-      const now = new Date().toISOString()
-      const prevDp = player.development_points || {}
-      const prevBc = prevDp.build_coach || {}
-      payload.development_points = {
-        ...prevDp,
-        build_coach: {
-          ...prevBc,
-          sliders: preview.sliders,
-          points_used: preview.pointsUsed,
-          points_available: preview.pointsAvailable,
-          target_position: preview.targetPosition,
-          updated_at: now
-        }
+  const getEditorSavePayload = () => ({
+    player_name: form.player_name.trim(),
+    position: originalPositionsDraft[0]?.position || form.position,
+    overall_rating: form.overall_rating ? Number(form.overall_rating) : null,
+    card_type: form.card_type,
+    role: form.role,
+    age: form.age ? Number(form.age) : null,
+    nationality: form.nationality,
+    club_name: form.club_name,
+    skills: skillsDraft,
+    available_boosters: boostersDraft.map((entry, idx) => {
+      const maxLevel = idx === 1 ? 1 : 5
+      const level = Math.min(maxLevel, Math.max(1, Number(entry?.level) || parseBoosterLevel(entry?.effect)))
+      return {
+        name: String(entry?.name || '').trim(),
+        effect: `+${level}`
       }
-      payload.metadata = {
-        catalog_booster_reminder: false,
-        build_coach: {
-          ...(player.metadata?.build_coach || {}),
-          after: {
-            ...(player.metadata?.build_coach?.after || {}),
-            overall_rating: preview.afterOverall
-          }
-        }
-      }
-    }
-
-    return payload
-  }
+    }),
+    original_positions: originalPositionsDraft,
+    base_stats: buildBaseStatsPayloadFromEditor(form),
+    metadata: { catalog_booster_reminder: false }
+  })
 
   return (
     <EnterpriseModalFrame
@@ -2970,11 +2740,7 @@ function PremiumPlayerModal({
             </div>
             <div className="nr-premium-overall">
               <span>OVR</span>
-              <strong>
-                {buildAllocationLivePreview != null && Number.isFinite(buildAllocationLivePreview.afterOverall)
-                  ? buildAllocationLivePreview.afterOverall
-                  : (player.overall_rating ?? '-')}
-              </strong>
+              <strong>{player.overall_rating ?? '-'}</strong>
             </div>
           </div>
 
@@ -3044,6 +2810,51 @@ function PremiumPlayerModal({
                 {building ? (lang === 'en' ? 'Calculating...' : 'Calcolo...') : (lang === 'en' ? 'Recalculate build' : 'Ricalcola build')}
               </button>
             </div>
+            {buildSliders && (
+              <div className="nr-build-copy-card">
+                <div className="nr-build-copy-head">
+                  <div>
+                    <strong>{lang === 'en' ? 'Build ready for the game' : 'Build pronta per il gioco'}</strong>
+                    <p>{lang === 'en'
+                      ? 'Use these progression values in the game if you want to reproduce this build.'
+                      : 'Usa questi valori nella schermata progressione del gioco se vuoi replicare questa build.'}</p>
+                  </div>
+                  <div className="nr-build-copy-meta">
+                    {buildTargetPosition && <span>{buildTargetPosition}</span>}
+                    {buildPointsUsed !== null && buildPointsAvailable !== null && <span>{buildPointsUsed}/{buildPointsAvailable} PT</span>}
+                  </div>
+                </div>
+                <div className="nr-build-slider-grid">
+                  {BUILD_SLIDER_ORDER.map((key) => (
+                    <div key={key} className={`nr-build-slider-chip ${Number(buildSliders[key] || 0) > 0 ? 'is-active' : ''}`}>
+                      <span>{getBuildSliderLabel(key, lang)}</span>
+                      <strong>{Number(buildSliders[key] || 0)}</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {(buildReasonsLines.length > 0 || buildWarningLines.length > 0) && (
+              <div className="nr-build-coach-notes">
+                {buildWarningLines.length > 0 ? (
+                  <div className="nr-build-coach-notes-warn" role="status">
+                    {buildWarningLines.map((line, idx) => (
+                      <p key={`bcw-${idx}`}>{line}</p>
+                    ))}
+                  </div>
+                ) : null}
+                {buildReasonsLines.length > 0 ? (
+                  <div className="nr-build-coach-notes-reasons">
+                    <strong>{lang === 'en' ? 'Why this build' : 'Perché questa build'}</strong>
+                    <ul>
+                      {buildReasonsLines.map((line, idx) => (
+                        <li key={`bcr-${idx}`}>{line}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            )}
             <div className="nr-role-editor-card">
               <div className="nr-role-editor-head">
                 <div>
@@ -3069,196 +2880,11 @@ function PremiumPlayerModal({
               </div>
             </div>
             <p className="nr-setup-readonly-note">
-              {buildSliders
-                ? (lang === 'en'
-                  ? 'With Build Coach active, change stats using the macros on the left; numbers on the right update live (no per-stat +/-). Base identity fields still follow catalog/photo.'
-                  : 'Con Build Coach attivo modifica le statistiche con le macro a sinistra; i numeri a destra si aggiornano in tempo reale (niente +/- per singola stat). I dati anagrafici restano da catalogo/foto.')
-                : (lang === 'en'
-                  ? 'Base data (name, age, club, nationality) syncs from catalog/photo source. You can edit OVR, playable roles and performance stats here.'
-                  : 'I dati base (nome, eta, club, nazionalita) seguono la sorgente catalogo/foto. Qui puoi modificare OVR, ruoli giocabili e statistiche.')}
+              {lang === 'en'
+                ? 'Base data (name, age, club, nationality) syncs from catalog/photo source. You can edit OVR, playable roles and performance stats here.'
+                : 'I dati base (nome, eta, club, nazionalita) seguono la sorgente catalogo/foto. Qui puoi modificare OVR, ruoli giocabili e statistiche.'}
             </p>
           </EnterpriseSection>
-
-          <div className={`nr-premium-progression-workspace${buildSliders ? ' has-build' : ''}`}>
-            {buildSliders ? (
-              <aside className="nr-build-dock" aria-label={lang === 'en' ? 'Progression points' : 'Punti progressione'}>
-                <div className="nr-build-copy-card">
-                  <div className="nr-build-copy-head">
-                    <div>
-                      <strong>{lang === 'en' ? 'Build ready for the game' : 'Build pronta per il gioco'}</strong>
-                      <p>{lang === 'en'
-                        ? 'Macros are next to the stats they change. PT budget follows max level, like in eFootball.'
-                        : 'Le macro sono accanto alle stat che modificano. Il budget PT segue il livello massimo, come in eFootball.'}</p>
-                    </div>
-                    <div className="nr-build-copy-meta">
-                      {buildTargetPosition && <span>{buildTargetPosition}</span>}
-                      {liveBuildPointsUsed !== null && liveBuildPointsAvailable !== null && (
-                        <span>{liveBuildPointsUsed}/{liveBuildPointsAvailable} PT</span>
-                      )}
-                    </div>
-                  </div>
-                  <p className="nr-pt-budget-note">
-                    {lang === 'en'
-                      ? `Total PT is set by max level (${player.level_cap ?? '?'}): you distribute it across macros (you do not type PT manually). The three GK “PT” tracks exist only for goalkeepers; outfield roles use the other macros, matching eFootball / EFHub.`
-                      : `I PT totali li fissa il livello massimo (${player.level_cap ?? '?'}): li distribuisci sulle macro (non si digitano a mano). Le tre macro PT portiere esistono solo in porta; fuori porta si usano le altre macro, come in eFootball / EFHub.`}
-                  </p>
-                  <p className="nr-build-slider-hint">
-                    {lang === 'en'
-                      ? 'Hover a macro to highlight stats. Drag or +/- ; costs and role locks match the game.'
-                      : 'Passa sul macro per evidenziare le stat. Trascina o +/-; costi e blocchi ruolo come nel gioco.'}
-                  </p>
-                  <div className="nr-build-slider-grid nr-build-slider-grid--interactive">
-                    {BUILD_SLIDER_ORDER.filter((key) => !isBuildMacroBlockedForPlayer(player, key, slotProgressionPosition)).map((key) => {
-                      const ticks = Number(effectiveBuildSliders?.[key] || 0)
-                      const canInc =
-                        tryApplyBuildSliderDelta({
-                          player,
-                          sliders: effectiveBuildSliders,
-                          key,
-                          delta: 1,
-                          slotPosition: slotProgressionPosition
-                        }) != null
-                      const canDec = ticks > 0
-                      const affectedLabels = getMacroAffectedStatLabels(key, t)
-                      return (
-                        <div
-                          key={key}
-                          role="group"
-                          className={`nr-build-slider-row ${ticks > 0 ? 'is-active' : ''}`}
-                          onMouseEnter={() => setMacroExplainFocus(key)}
-                          onMouseLeave={() => setMacroExplainFocus((prev) => (prev === key ? null : prev))}
-                        >
-                          <div className="nr-build-slider-row-top">
-                            <span className="nr-build-slider-row-label">{getBuildSliderLabel(key, lang)}</span>
-                            <span className="nr-build-slider-row-val" aria-hidden="true">{ticks}</span>
-                          </div>
-                          {affectedLabels.length > 0 ? (
-                            <p className="nr-build-slider-affected">
-                              {lang === 'en' ? 'Affects: ' : 'Modifica: '}
-                              <span>{affectedLabels.join(lang === 'en' ? ', ' : ', ')}</span>
-                            </p>
-                          ) : null}
-                          <div className="nr-build-slider-row-bottom">
-                            <input
-                              type="range"
-                              min={0}
-                              max={MAX_TACCE_PER_MACRO}
-                              step={1}
-                              value={ticks}
-                              disabled={saving || building}
-                              onChange={(event) => handleBuildMacroSliderInput(key, Number(event.target.value))}
-                              aria-label={getBuildSliderLabel(key, lang)}
-                            />
-                            <div className="nr-build-slider-row-controls">
-                              <button
-                                type="button"
-                                className="nr-build-macro-nudge"
-                                disabled={!canDec || saving || building}
-                                onClick={() => handleBuildMacroNudge(key, -1)}
-                                aria-label={lang === 'en' ? 'Decrease' : 'Diminuisci'}
-                              >
-                                <Minus size={14} />
-                              </button>
-                              <button
-                                type="button"
-                                className="nr-build-macro-nudge"
-                                disabled={!canInc || saving || building}
-                                onClick={() => handleBuildMacroNudge(key, 1)}
-                                aria-label={lang === 'en' ? 'Increase' : 'Aumenta'}
-                              >
-                                <Plus size={14} />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-                {(buildReasonsLines.length > 0 || buildWarningLines.length > 0) && (
-                  <div className="nr-build-coach-notes">
-                    {buildWarningLines.length > 0 ? (
-                      <div className="nr-build-coach-notes-warn" role="status">
-                        {buildWarningLines.map((line, idx) => (
-                          <p key={`bcw-${idx}`}>{line}</p>
-                        ))}
-                      </div>
-                    ) : null}
-                    {buildReasonsLines.length > 0 ? (
-                      <div className="nr-build-coach-notes-reasons">
-                        <strong>{lang === 'en' ? 'Why this build' : 'Perché questa build'}</strong>
-                        <ul>
-                          {buildReasonsLines.map((line, idx) => (
-                            <li key={`bcr-${idx}`}>{line}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    ) : null}
-                  </div>
-                )}
-              </aside>
-            ) : null}
-            <div className={buildSliders ? 'nr-premium-stats-beside-build' : undefined}>
-          <div className="nr-reference-main-grid">
-            <section className="nr-reference-left">
-              <EnterpriseSection title={t('attacking')}>
-                <div className="nr-stat-pairs">
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('offensive_awareness')} label={t('offensive_awareness')} value={form.offensive_awareness} onChange={(value) => setForm((prev) => ({ ...prev, offensive_awareness: value }))} />
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('finishing')} label={t('finishing')} value={form.finishing} onChange={(value) => setForm((prev) => ({ ...prev, finishing: value }))} />
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('low_pass')} label={t('low_pass')} value={form.low_pass} onChange={(value) => setForm((prev) => ({ ...prev, low_pass: value }))} />
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('lofted_pass')} label={t('lofted_pass')} value={form.lofted_pass} onChange={(value) => setForm((prev) => ({ ...prev, lofted_pass: value }))} />
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('dribbling')} label={t('dribbling')} value={form.dribbling} onChange={(value) => setForm((prev) => ({ ...prev, dribbling: value }))} />
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('ball_control')} label={t('ball_control')} value={form.ball_control} onChange={(value) => setForm((prev) => ({ ...prev, ball_control: value }))} />
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('tight_possession')} label={t('tight_possession')} value={form.tight_possession} onChange={(value) => setForm((prev) => ({ ...prev, tight_possession: value }))} />
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('heading')} label={t('heading')} value={form.heading} onChange={(value) => setForm((prev) => ({ ...prev, heading: value }))} />
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('set_piece_taking')} label={t('place_kicking')} value={form.set_piece_taking} onChange={(value) => setForm((prev) => ({ ...prev, set_piece_taking: value }))} />
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('curl')} label={t('curl')} value={form.curl} onChange={(value) => setForm((prev) => ({ ...prev, curl: value }))} />
-                </div>
-              </EnterpriseSection>
-            </section>
-
-            <section className="nr-reference-center">
-              <EnterpriseSection title={t('defending')}>
-                <div className="nr-stat-pairs">
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('defensive_awareness')} label={t('defensive_awareness')} value={form.defensive_awareness} onChange={(value) => setForm((prev) => ({ ...prev, defensive_awareness: value }))} />
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('defensive_engagement')} label={t('defensive_engagement')} value={form.defensive_engagement} onChange={(value) => setForm((prev) => ({ ...prev, defensive_engagement: value }))} />
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('tackling')} label={t('tackling')} value={form.tackling} onChange={(value) => setForm((prev) => ({ ...prev, tackling: value }))} />
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('aggression')} label={t('aggression')} value={form.aggression} onChange={(value) => setForm((prev) => ({ ...prev, aggression: value }))} />
-                </div>
-              </EnterpriseSection>
-
-            </section>
-
-            <section className="nr-reference-right">
-              <EnterpriseSection title={t('athleticism')}>
-                <div className="nr-stat-pairs">
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('speed')} label={t('speed')} value={form.speed} onChange={(value) => setForm((prev) => ({ ...prev, speed: value }))} />
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('acceleration')} label={t('acceleration')} value={form.acceleration} onChange={(value) => setForm((prev) => ({ ...prev, acceleration: value }))} />
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('kicking_power')} label={t('kicking_power')} value={form.kicking_power} onChange={(value) => setForm((prev) => ({ ...prev, kicking_power: value }))} />
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('physical_contact')} label={t('physical_contact')} value={form.physical_contact} onChange={(value) => setForm((prev) => ({ ...prev, physical_contact: value }))} />
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('balance')} label={t('balance')} value={form.balance} onChange={(value) => setForm((prev) => ({ ...prev, balance: value }))} />
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('stamina')} label={t('stamina')} value={form.stamina} onChange={(value) => setForm((prev) => ({ ...prev, stamina: value }))} />
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('jump')} label={t('jump')} value={form.jump} onChange={(value) => setForm((prev) => ({ ...prev, jump: value }))} />
-                </div>
-              </EnterpriseSection>
-            </section>
-
-            {(!buildSliders || !isBuildMacroBlockedForPlayer(player, 'gk1', slotProgressionPosition)) ? (
-            <section className="nr-reference-goalkeeping">
-              <EnterpriseSection title={t('goalkeeping')}>
-                <div className="nr-stat-pairs">
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('gk_awareness')} label={t('goalkeeping')} value={form.gk_awareness} onChange={(value) => setForm((prev) => ({ ...prev, gk_awareness: value }))} />
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('gk_catching')} label={t('gk_catching')} value={form.gk_catching} onChange={(value) => setForm((prev) => ({ ...prev, gk_catching: value }))} />
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('gk_parrying')} label={t('gk_parrying')} value={form.gk_parrying} onChange={(value) => setForm((prev) => ({ ...prev, gk_parrying: value }))} />
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('gk_reflexes')} label={t('gk_reflexes')} value={form.gk_reflexes} onChange={(value) => setForm((prev) => ({ ...prev, gk_reflexes: value }))} />
-                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('gk_reach')} label={t('gk_reach')} value={form.gk_reach} onChange={(value) => setForm((prev) => ({ ...prev, gk_reach: value }))} />
-                </div>
-              </EnterpriseSection>
-            </section>
-            ) : null}
-          </div>
-            </div>
-          </div>
 
           <div className="nr-premium-toolbar-row">
             <div className="nr-secondary-actions">
@@ -3280,6 +2906,63 @@ function PremiumPlayerModal({
                 {lang === 'en' ? 'Delete permanently' : 'Elimina definitivamente'}
               </button>
             </div>
+          </div>
+
+          <div className="nr-reference-main-grid">
+            <section className="nr-reference-left">
+              <EnterpriseSection title={t('attacking')}>
+                <div className="nr-stat-pairs">
+                  <CompactStatInput label={t('offensive_awareness')} value={form.offensive_awareness} onChange={(value) => setForm((prev) => ({ ...prev, offensive_awareness: value }))} />
+                  <CompactStatInput label={t('finishing')} value={form.finishing} onChange={(value) => setForm((prev) => ({ ...prev, finishing: value }))} />
+                  <CompactStatInput label={t('low_pass')} value={form.low_pass} onChange={(value) => setForm((prev) => ({ ...prev, low_pass: value }))} />
+                  <CompactStatInput label={t('lofted_pass')} value={form.lofted_pass} onChange={(value) => setForm((prev) => ({ ...prev, lofted_pass: value }))} />
+                  <CompactStatInput label={t('dribbling')} value={form.dribbling} onChange={(value) => setForm((prev) => ({ ...prev, dribbling: value }))} />
+                  <CompactStatInput label={t('ball_control')} value={form.ball_control} onChange={(value) => setForm((prev) => ({ ...prev, ball_control: value }))} />
+                  <CompactStatInput label={t('tight_possession')} value={form.tight_possession} onChange={(value) => setForm((prev) => ({ ...prev, tight_possession: value }))} />
+                  <CompactStatInput label={t('heading')} value={form.heading} onChange={(value) => setForm((prev) => ({ ...prev, heading: value }))} />
+                  <CompactStatInput label={t('place_kicking')} value={form.set_piece_taking} onChange={(value) => setForm((prev) => ({ ...prev, set_piece_taking: value }))} />
+                  <CompactStatInput label={t('curl')} value={form.curl} onChange={(value) => setForm((prev) => ({ ...prev, curl: value }))} />
+                </div>
+              </EnterpriseSection>
+            </section>
+
+            <section className="nr-reference-center">
+              <EnterpriseSection title={t('defending')}>
+                <div className="nr-stat-pairs">
+                  <CompactStatInput label={t('defensive_awareness')} value={form.defensive_awareness} onChange={(value) => setForm((prev) => ({ ...prev, defensive_awareness: value }))} />
+                  <CompactStatInput label={t('defensive_engagement')} value={form.defensive_engagement} onChange={(value) => setForm((prev) => ({ ...prev, defensive_engagement: value }))} />
+                  <CompactStatInput label={t('tackling')} value={form.tackling} onChange={(value) => setForm((prev) => ({ ...prev, tackling: value }))} />
+                  <CompactStatInput label={t('aggression')} value={form.aggression} onChange={(value) => setForm((prev) => ({ ...prev, aggression: value }))} />
+                </div>
+              </EnterpriseSection>
+
+            </section>
+
+            <section className="nr-reference-right">
+              <EnterpriseSection title={t('athleticism')}>
+                <div className="nr-stat-pairs">
+                  <CompactStatInput label={t('speed')} value={form.speed} onChange={(value) => setForm((prev) => ({ ...prev, speed: value }))} />
+                  <CompactStatInput label={t('acceleration')} value={form.acceleration} onChange={(value) => setForm((prev) => ({ ...prev, acceleration: value }))} />
+                  <CompactStatInput label={t('kicking_power')} value={form.kicking_power} onChange={(value) => setForm((prev) => ({ ...prev, kicking_power: value }))} />
+                  <CompactStatInput label={t('physical_contact')} value={form.physical_contact} onChange={(value) => setForm((prev) => ({ ...prev, physical_contact: value }))} />
+                  <CompactStatInput label={t('balance')} value={form.balance} onChange={(value) => setForm((prev) => ({ ...prev, balance: value }))} />
+                  <CompactStatInput label={t('stamina')} value={form.stamina} onChange={(value) => setForm((prev) => ({ ...prev, stamina: value }))} />
+                  <CompactStatInput label={t('jump')} value={form.jump} onChange={(value) => setForm((prev) => ({ ...prev, jump: value }))} />
+                </div>
+              </EnterpriseSection>
+            </section>
+
+            <section className="nr-reference-goalkeeping">
+              <EnterpriseSection title={t('goalkeeping')}>
+                <div className="nr-stat-pairs">
+                  <CompactStatInput label={t('goalkeeping')} value={form.gk_awareness} onChange={(value) => setForm((prev) => ({ ...prev, gk_awareness: value }))} />
+                  <CompactStatInput label={t('gk_catching')} value={form.gk_catching} onChange={(value) => setForm((prev) => ({ ...prev, gk_catching: value }))} />
+                  <CompactStatInput label={t('gk_parrying')} value={form.gk_parrying} onChange={(value) => setForm((prev) => ({ ...prev, gk_parrying: value }))} />
+                  <CompactStatInput label={t('gk_reflexes')} value={form.gk_reflexes} onChange={(value) => setForm((prev) => ({ ...prev, gk_reflexes: value }))} />
+                  <CompactStatInput label={t('gk_reach')} value={form.gk_reach} onChange={(value) => setForm((prev) => ({ ...prev, gk_reach: value }))} />
+                </div>
+              </EnterpriseSection>
+            </section>
           </div>
 
           <div className="nr-reference-support-grid">
@@ -3335,27 +3018,45 @@ function PremiumPlayerModal({
             </section>
 
             <section className="nr-reference-boosters">
-              <EnterpriseSection title={lang === 'en' ? 'Boosters' : 'Boosters'}>
+              <EnterpriseSection
+                title={lang === 'en' ? 'Boosters' : 'Boosters'}
+                actions={
+                  boostersDraft.length < 2 ? (
+                    <button
+                      type="button"
+                      className="nr-icon-button nr-booster-toolbar-plus"
+                      onClick={addBooster}
+                      title={lang === 'en' ? 'Add slot' : 'Aggiungi slot'}
+                      aria-label={lang === 'en' ? 'Add booster slot' : 'Aggiungi slot booster'}
+                    >
+                      <Plus size={16} />
+                    </button>
+                  ) : null
+                }
+              >
                 <div className="nr-booster-slot-grid">
                   {[0, 1].map((slotIndex) => {
                     const booster = boostersDraft[slotIndex]
                     const selectedPreset = booster?.preset || detectBoosterPreset(booster?.name)
                     const rawLevel = Number(booster?.level || parseBoosterLevel(booster?.effect || '+1'))
                     const activeLevel = slotIndex === 1 ? Math.min(1, rawLevel) : Math.min(5, rawLevel)
-                    const hexAddOnly = !booster && (
-                      (slotIndex === 0 && boostersDraft.length === 0)
-                      || (slotIndex === 1 && boostersDraft.length === 1)
-                    )
-                    const addHint = lang === 'en' ? 'Add booster' : 'Aggiungi booster'
+                    const hexClickable = slotIndex === 0
+                      ? (!booster ? boostersDraft.length === 0 : true)
+                      : (!booster ? boostersDraft.length === 1 : false)
+                    const hexAria = !booster
+                      ? (lang === 'en' ? `Slot ${slotIndex + 1}: add booster` : `Slot ${slotIndex + 1}: aggiungi booster`)
+                      : slotIndex === 0
+                        ? (lang === 'en' ? `Main booster +${activeLevel}, tap to change` : `Booster principale +${activeLevel}, tocca per cambiare`)
+                        : (lang === 'en' ? `Link booster +1` : `Collegamento +1`)
                     return (
                       <div key={`booster-slot-${slotIndex}`} className="nr-booster-slot-card nr-booster-slot-card--ef">
                         <div className="nr-booster-slot-top">
                           <BoosterHexBadge
                             active={Boolean(booster)}
                             level={booster ? activeLevel : null}
-                            onClick={hexAddOnly ? addBooster : undefined}
-                            title={hexAddOnly ? addHint : undefined}
-                            ariaLabel={hexAddOnly ? addHint : undefined}
+                            onClick={hexClickable ? () => handleBoosterHexClick(slotIndex) : undefined}
+                            disabled={false}
+                            ariaLabel={hexAria}
                           />
                           <div className="nr-booster-slot-top-copy">
                             <div className="nr-booster-row-head">
@@ -3398,27 +3099,6 @@ function PremiumPlayerModal({
                                 placeholder={lang === 'en' ? 'Custom' : 'Personalizzato'}
                               />
                             ) : null}
-                            <div className="nr-booster-level-compact">
-                              <span className="nr-booster-level-compact-lbl">
-                                {lang === 'en' ? 'Level' : 'Livello'}
-                              </span>
-                              {slotIndex === 0 ? (
-                                <div className="nr-booster-level-buttons nr-booster-level-buttons--inline">
-                                  {[1, 2, 3, 4, 5].map((levelValue) => (
-                                    <button
-                                      key={`${slotIndex}-${levelValue}`}
-                                      type="button"
-                                      className={`nr-booster-level-btn ${activeLevel === levelValue ? 'is-active' : ''}`}
-                                      onClick={() => updateBoosterLevel(0, levelValue)}
-                                    >
-                                      +{levelValue}
-                                    </button>
-                                  ))}
-                                </div>
-                              ) : (
-                                <span className="nr-booster-level-pill" title={lang === 'en' ? 'Link slot: +1 only' : 'Collegamento: solo +1'}>+1</span>
-                              )}
-                            </div>
                           </>
                         ) : null}
                       </div>
@@ -3439,12 +3119,28 @@ function PremiumPlayerModal({
           type="button"
           className="nr-primary-button"
           disabled={saving}
-          onClick={() => onSave(getEditorSavePayload())}
+          onClick={() => setSaveConfirmOpen(true)}
         >
           {saving ? (lang === 'en' ? 'Saving...' : 'Salvataggio...') : (lang === 'en' ? 'Save player' : 'Salva giocatore')}
           <Save size={16} />
         </button>
       </div>
+      <ConfirmModal
+        show={saveConfirmOpen}
+        variant="info"
+        title={lang === 'en' ? 'Save changes?' : 'Salvare le modifiche?'}
+        message={lang === 'en'
+          ? 'Confirm to write these edits to the player profile.'
+          : 'Conferma per salvare le modifiche sul profilo del giocatore.'}
+        confirmLabel={lang === 'en' ? 'Yes' : 'Sì'}
+        cancelLabel={lang === 'en' ? 'No' : 'No'}
+        onConfirm={() => {
+          setSaveConfirmOpen(false)
+          onSave(getEditorSavePayload())
+        }}
+        onCancel={() => setSaveConfirmOpen(false)}
+        disabled={saving}
+      />
       {showPositionEditor && (
         <PositionSelectionModal
           playerName={player.player_name}
@@ -8029,167 +7725,6 @@ export default withAuth(function NuovaRosaLabPage() {
           gap: 7px;
         }
 
-        .nr-build-slider-grid--interactive {
-          grid-template-columns: 1fr;
-          gap: 8px;
-        }
-
-        .nr-build-slider-hint {
-          margin: 0 0 8px;
-          font-size: 11px;
-          line-height: 1.35;
-          color: rgba(255, 255, 255, 0.55);
-        }
-
-        .nr-pt-budget-note {
-          margin: 0 0 8px;
-          font-size: 11px;
-          line-height: 1.35;
-          color: rgba(147, 197, 253, 0.92);
-        }
-
-        .nr-premium-progression-workspace {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-          margin-top: 2px;
-        }
-
-        .nr-premium-progression-workspace.has-build {
-          display: grid;
-          grid-template-columns: minmax(280px, 0.36fr) minmax(0, 1fr);
-          gap: 16px;
-          align-items: start;
-        }
-
-        @media (max-width: 1080px) {
-          .nr-premium-progression-workspace.has-build {
-            grid-template-columns: 1fr;
-          }
-        }
-
-        .nr-build-dock {
-          position: sticky;
-          top: 8px;
-          z-index: 3;
-          max-height: min(70vh, 640px);
-          overflow: auto;
-          padding-right: 4px;
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-          min-width: 0;
-        }
-
-        .nr-premium-stats-beside-build {
-          min-width: 0;
-          overflow-x: auto;
-          -webkit-overflow-scrolling: touch;
-        }
-
-        .nr-premium-progression-workspace.has-build .nr-reference-main-grid {
-          grid-template-columns: repeat(2, minmax(220px, 1fr));
-          gap: 12px;
-        }
-
-        @media (min-width: 1320px) {
-          .nr-premium-progression-workspace.has-build .nr-reference-main-grid {
-            grid-template-columns: repeat(3, minmax(200px, 1fr));
-          }
-        }
-
-        .nr-build-slider-row {
-          display: flex;
-          flex-direction: column;
-          gap: 5px;
-          border-radius: 11px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          background: rgba(2, 6, 18, 0.44);
-          padding: 8px 10px;
-        }
-
-        .nr-build-slider-row-top {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 8px;
-        }
-
-        .nr-build-slider-row-bottom {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .nr-build-slider-affected {
-          margin: 0;
-          font-size: 10px;
-          line-height: 1.35;
-          color: rgba(253, 224, 71, 0.78);
-        }
-
-        .nr-build-slider-affected span {
-          color: rgba(255, 255, 255, 0.84);
-        }
-
-        .nr-build-slider-row.is-active {
-          border-color: rgba(0, 212, 255, 0.22);
-          background:
-            linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(124, 58, 237, 0.06)),
-            rgba(2, 6, 18, 0.52);
-        }
-
-        .nr-build-slider-row.is-blocked {
-          opacity: 0.42;
-        }
-
-        .nr-build-slider-row-label {
-          color: rgba(255, 255, 255, 0.78);
-          font-size: 11px;
-          font-weight: 800;
-          line-height: 1.2;
-        }
-
-        .nr-build-slider-row-controls {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          justify-content: flex-end;
-        }
-
-        .nr-build-macro-nudge {
-          width: 28px;
-          height: 28px;
-          border-radius: 8px;
-          border: 1px solid rgba(255, 255, 255, 0.14);
-          background: rgba(0, 0, 0, 0.35);
-          color: #e2e8f0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          padding: 0;
-        }
-
-        .nr-build-macro-nudge:disabled {
-          opacity: 0.35;
-          cursor: not-allowed;
-        }
-
-        .nr-build-slider-row input[type='range'] {
-          width: 100%;
-          min-width: 0;
-        }
-
-        .nr-build-slider-row-val {
-          font-size: 13px;
-          font-weight: 950;
-          font-variant-numeric: tabular-nums;
-          color: #d9f99d;
-          min-width: 1.75ch;
-          text-align: center;
-        }
-
         .nr-build-slider-chip {
           display: flex;
           align-items: center;
@@ -8548,6 +8083,10 @@ export default withAuth(function NuovaRosaLabPage() {
           letter-spacing: 0.04em;
         }
 
+        .nr-booster-toolbar-plus {
+          opacity: 0.92;
+        }
+
         .nr-form-field--tight {
           margin-top: 4px;
         }
@@ -8557,40 +8096,6 @@ export default withAuth(function NuovaRosaLabPage() {
           font-weight: 650;
           color: rgba(255, 255, 255, 0.5);
           margin-bottom: 4px;
-        }
-
-        .nr-booster-level-compact {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          margin-top: 4px;
-        }
-
-        .nr-booster-level-compact-lbl {
-          font-size: 11px;
-          font-weight: 650;
-          color: rgba(255, 255, 255, 0.55);
-        }
-
-        .nr-booster-level-buttons--inline {
-          display: grid;
-          grid-template-columns: repeat(5, minmax(0, 1fr));
-          gap: 6px;
-        }
-
-        .nr-booster-level-pill {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          min-width: 44px;
-          padding: 8px 10px;
-          border-radius: 10px;
-          border: 1px solid rgba(0, 212, 255, 0.35);
-          background: rgba(0, 212, 255, 0.12);
-          color: #7ceeff;
-          font-size: 13px;
-          font-weight: 800;
-          align-self: flex-start;
         }
 
         .nr-booster-slot-card--ef {
@@ -8663,7 +8168,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-premium-player-shell {
-          width: min(1380px, calc(100vw - 24px));
+          width: min(1320px, calc(100vw - 24px));
           max-height: min(94vh, 980px);
           overflow: auto;
         }
@@ -8836,22 +8341,10 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-stat-compact-row {
-          display: flex;
-          flex-direction: column;
-          align-items: stretch;
-          gap: 6px;
-        }
-
-        .nr-stat-compact-row--macro-readonly {
-          gap: 5px;
-        }
-
-        .nr-stat-compact-row--macro-focus {
-          border-radius: 10px;
-          padding: 4px 6px;
-          margin: -4px -6px;
-          box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.55);
-          background: rgba(14, 165, 233, 0.08);
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          align-items: start;
+          gap: 8px 10px;
         }
 
         .nr-stat-compact-label {
@@ -8859,58 +8352,14 @@ export default withAuth(function NuovaRosaLabPage() {
           min-width: 0;
           white-space: normal;
           overflow-wrap: break-word;
-          word-break: normal;
-          hyphens: none;
-          line-height: 1.35;
-          font-size: 12.5px;
-          font-weight: 750;
-          color: rgba(255, 255, 255, 0.88);
-        }
-
-        .nr-stat-macro-readonly-pill {
-          align-self: flex-end;
-          min-width: 52px;
-          padding: 6px 12px;
-          border-radius: 999px;
-          text-align: center;
-          font-size: 13px;
-          font-weight: 950;
-          font-variant-numeric: tabular-nums;
-          border: 1px solid rgba(255, 255, 255, 0.14);
-          background: rgba(9, 14, 30, 0.95);
-          color: #fff;
-        }
-
-        .nr-stat-macro-readonly-pill.tone-elite {
-          border-color: rgba(64, 222, 122, 0.55);
-          box-shadow: inset 0 0 0 1px rgba(64, 222, 122, 0.22);
-          color: #8affb3;
-        }
-
-        .nr-stat-macro-readonly-pill.tone-good {
-          border-color: rgba(172, 222, 64, 0.5);
-          box-shadow: inset 0 0 0 1px rgba(172, 222, 64, 0.2);
-          color: #d9ff7e;
-        }
-
-        .nr-stat-macro-readonly-pill.tone-ok {
-          border-color: rgba(251, 191, 36, 0.52);
-          box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.2);
-          color: #ffd878;
-        }
-
-        .nr-stat-macro-readonly-pill.tone-low {
-          border-color: rgba(255, 83, 83, 0.52);
-          box-shadow: inset 0 0 0 1px rgba(255, 83, 83, 0.22);
-          color: #ffb4b4;
-        }
-
-        .nr-stat-macro-readonly-pill.tone-neutral {
+          word-break: break-word;
+          hyphens: auto;
+          line-height: 1.25;
+          font-size: 11.5px;
           color: rgba(255, 255, 255, 0.82);
         }
 
         .nr-stat-stepper {
-          align-self: flex-end;
           display: grid;
           grid-template-columns: 28px 46px 28px;
           align-items: center;
@@ -9380,10 +8829,6 @@ export default withAuth(function NuovaRosaLabPage() {
           .nr-booster-level-buttons--single {
             grid-template-columns: 1fr;
             max-width: 100px;
-          }
-
-          .nr-booster-level-buttons--inline {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
           }
 
           .nr-reserve-grid {
