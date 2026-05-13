@@ -863,18 +863,6 @@ function DetailPanel({
                 </ul>
               )}
             </div>
-          {deepAnalysisLoading && (
-            <div className="deep-analysis-inline-loader" aria-live="polite">
-              <span className="deep-analysis-inline-logo" aria-hidden="true">
-                <span className="deep-analysis-inline-scan" />
-                <img src="/logo.png" alt="" />
-              </span>
-              <span>
-                <b>AI Coach</b>
-                <small>{labels.deepAnalysisLoading}</small>
-              </span>
-            </div>
-          )}
             {!deepAnalysis && (
               <button type="button" onClick={onRequestDeepAnalysis} disabled={deepAnalysisLoading}>
                 {deepAnalysisLoading ? labels.deepAnalysisLoading : labels.proUnlockButton}
@@ -1101,7 +1089,26 @@ function CardDetailsModal({
       aria-label={`${card.name} ${labels.verdict}`}
       onClick={onClose}
     >
-      <div className="card-details-modal-inner" onClick={(event) => event.stopPropagation()}>
+      <div
+        className={`card-details-modal-inner${deepAnalysisLoading ? ' card-details-modal-inner--deep-loading' : ''}`}
+        onClick={(event) => event.stopPropagation()}
+      >
+        {deepAnalysisLoading && (
+          <div className="brand-analysis-overlay" role="status" aria-live="polite" aria-busy="true">
+            <div className="brand-analysis-core">
+              <div className="brand-analysis-logo-wrap">
+                <span className="brand-analysis-orbit" aria-hidden="true" />
+                <span className="brand-analysis-scanline" aria-hidden="true" />
+                <img className="brand-analysis-logo" src="/logo.png" alt="" />
+              </div>
+              <div className="brand-analysis-copy">
+                <span>AI COACH</span>
+                <strong>{labels.deepAnalysisTitle}</strong>
+                <p>{labels.deepAnalysisLoading}</p>
+              </div>
+            </div>
+          </div>
+        )}
         <DetailPanel
           card={card}
           labels={labels}
@@ -1816,16 +1823,20 @@ export default withAuth(function CardAdvisorLabPage() {
           box-shadow: 0 0 50px rgba(0, 212, 255, 0.22);
         }
 
+        .card-details-modal-inner--deep-loading {
+          overflow: hidden;
+          touch-action: none;
+        }
+
         .brand-analysis-overlay {
-          position: sticky;
-          top: 0;
+          position: absolute;
           inset: 0;
-          z-index: 12;
-          min-height: min(520px, calc(100vh - 48px));
+          z-index: 2000;
           display: flex;
           align-items: center;
           justify-content: center;
           padding: 18px;
+          border-radius: 24px;
           background:
             radial-gradient(circle at 50% 38%, rgba(0, 212, 255, 0.20), transparent 28%),
             radial-gradient(circle at 48% 42%, rgba(138, 43, 226, 0.18), transparent 35%),
