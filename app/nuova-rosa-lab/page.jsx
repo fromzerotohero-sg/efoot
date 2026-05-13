@@ -4771,9 +4771,15 @@ export default withAuth(function NuovaRosaLabPage() {
         <div className="nr-main-stack">
           <section className="nr-build-workspace-row">
             <div className="nr-formation-side-label">
-              <span>{lang === 'en' ? 'Workspace' : 'Workspace'}</span>
-              <small>{lang === 'en' ? 'Formation' : 'Formazione'}</small>
-              <strong>{layout?.formation || '4-3-3'}</strong>
+              <div>
+                <span>{lang === 'en' ? 'Workspace' : 'Workspace'}</span>
+                <small>{lang === 'en' ? 'Formation' : 'Formazione'}</small>
+                <strong>{layout?.formation || '4-3-3'}</strong>
+              </div>
+              <button type="button" className="nr-move-players-side-button" onClick={() => setFieldEditMode(true)} disabled={fieldEditMode}>
+                <ArrowRight size={13} />
+                {lang === 'en' ? 'Move' : 'Sposta'}
+              </button>
             </div>
             <div className="nr-build-coach-command-card">
               <div className="nr-build-coach-command-head">
@@ -4799,10 +4805,6 @@ export default withAuth(function NuovaRosaLabPage() {
                   </span>
                 </button>
               </div>
-              <button type="button" className="nr-move-players-wide-button" onClick={() => setFieldEditMode(true)} disabled={fieldEditMode}>
-                <ArrowRight size={14} />
-                {lang === 'en' ? 'Move players' : 'Sposta giocatori'}
-              </button>
             </div>
           </section>
           <section className="nr-workspace-block">
@@ -5466,8 +5468,8 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-formation-side-label {
           display: flex;
           flex-direction: column;
-          justify-content: center;
-          gap: 4px;
+          justify-content: space-between;
+          gap: 10px;
           min-height: 112px;
           padding: 12px 4px 12px 0;
           color: rgba(255, 255, 255, 0.74);
@@ -5487,6 +5489,37 @@ export default withAuth(function NuovaRosaLabPage() {
           letter-spacing: -0.05em;
           line-height: 1;
           text-transform: none;
+        }
+
+        .nr-move-players-side-button {
+          width: min(118px, 100%);
+          border: 1px solid rgba(148, 163, 184, 0.28);
+          background: rgba(15, 23, 42, 0.72);
+          color: rgba(255, 255, 255, 0.84);
+          min-height: 36px;
+          border-radius: 12px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 8px 10px;
+          cursor: pointer;
+          font-size: 11px;
+          font-weight: 850;
+          text-transform: none;
+          letter-spacing: 0;
+          transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+        }
+
+        .nr-move-players-side-button:hover:not(:disabled) {
+          transform: translateY(-1px);
+          border-color: rgba(148, 163, 184, 0.55);
+          background: rgba(15, 23, 42, 0.94);
+        }
+
+        .nr-move-players-side-button:disabled {
+          opacity: 0.48;
+          cursor: not-allowed;
         }
 
         .nr-build-coach-command-card {
@@ -5525,8 +5558,7 @@ export default withAuth(function NuovaRosaLabPage() {
           margin-bottom: 10px;
         }
 
-        .nr-build-coach-action,
-        .nr-move-players-wide-button {
+        .nr-build-coach-action {
           width: 100%;
           border-radius: 14px;
           border: 1px solid rgba(255, 255, 255, 0.1);
@@ -5549,8 +5581,7 @@ export default withAuth(function NuovaRosaLabPage() {
           box-shadow: 0 10px 24px rgba(34, 211, 238, 0.2);
         }
 
-        .nr-build-coach-action:hover:not(:disabled),
-        .nr-move-players-wide-button:hover:not(:disabled) {
+        .nr-build-coach-action:hover:not(:disabled) {
           transform: translateY(-1px);
           border-color: rgba(0, 212, 255, 0.48);
           background: rgba(15, 23, 42, 0.95);
@@ -5561,8 +5592,7 @@ export default withAuth(function NuovaRosaLabPage() {
           box-shadow: 0 14px 30px rgba(34, 211, 238, 0.28);
         }
 
-        .nr-build-coach-action:disabled,
-        .nr-move-players-wide-button:disabled {
+        .nr-build-coach-action:disabled {
           opacity: 0.5;
           cursor: not-allowed;
           transform: none;
@@ -5583,13 +5613,6 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-build-coach-action small {
           color: rgba(255, 255, 255, 0.72);
           font-size: 11px;
-        }
-
-        .nr-move-players-wide-button {
-          min-height: 42px;
-          justify-content: center;
-          text-align: center;
-          color: rgba(255, 255, 255, 0.86);
         }
 
         .nr-workspace-head {
