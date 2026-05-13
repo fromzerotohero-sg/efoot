@@ -22,6 +22,7 @@ import {
   tryApplyBuildSliderDelta
 } from '@/lib/gameplayBuildCoach'
 import { MAX_TACCE_PER_MACRO } from '@/lib/efootballProgressionCost'
+import { PLAYER_SKILL_PRESETS, getSkillDisplayLabel, normalizeSkillKey } from '@/lib/playerSkillLabels'
 import {
   AlertTriangle,
   ArrowRight,
@@ -2188,111 +2189,9 @@ function applyMedCcHysteresis(previousRole, computedRole, x, y) {
   return computedRole
 }
 
-const PLAYER_SKILL_PRESETS = [
-  'Double Touch',
-  'Sole Control',
-  'Flip Flap',
-  'Marseille Turn',
-  'Sombrero',
-  'Cut Behind & Turn',
-  'Scissors Feint',
-  'Step On Skill Control',
-  'Heading',
-  'Long-Range Curler',
-  'Long-Range Shooting',
-  'Knuckle Shot',
-  'Dipping Shot',
-  'Rising Shot',
-  'Acrobatic Finishing',
-  'Heel Trick',
-  'First-time Shot',
-  'One-touch Pass',
-  'Through Passing',
-  'Weighted Pass',
-  'Pinpoint Crossing',
-  'Outside Curler',
-  'Rabona',
-  'No Look Pass',
-  'Low Lofted Pass',
-  'GK Low Punt',
-  'GK High Punt',
-  'Long Throw',
-  'GK Long Throw',
-  'Penalty Specialist',
-  'Gamesmanship',
-  'Man Marking',
-  'Track Back',
-  'Interception',
-  'Blocker',
-  'Aerial Superiority',
-  'Sliding Tackle',
-  'Acrobatic Clearance',
-  'Captaincy',
-  'Super-sub',
-  'Fighting Spirit'
-]
-
-const PLAYER_SKILL_LABELS = {
-  'Double Touch': { en: 'Double Touch', it: 'Doppio tocco' },
-  'Sole Control': { en: 'Sole Control', it: 'Controllo di suola' },
-  'Flip Flap': { en: 'Flip Flap', it: 'Elastico' },
-  'Marseille Turn': { en: 'Marseille Turn', it: 'Veronica' },
-  Sombrero: { en: 'Sombrero', it: 'Sombrero' },
-  'Cut Behind & Turn': { en: 'Cut Behind & Turn', it: 'Taglio dietro e cambio direzione' },
-  'Scissors Feint': { en: 'Scissors Feint', it: 'Doppio passo' },
-  'Step On Skill Control': { en: 'Step On Skill Control', it: 'Controllo abilita con suola' },
-  Heading: { en: 'Heading', it: 'Colpo di testa' },
-  'Long-Range Curler': { en: 'Long-Range Curler', it: 'Tiro a giro da lontano' },
-  'Long-Range Shooting': { en: 'Long-Range Shooting', it: 'Tiro dalla distanza' },
-  'Knuckle Shot': { en: 'Knuckle Shot', it: 'Tiro a effetto imprevedibile' },
-  'Dipping Shot': { en: 'Dipping Shot', it: 'Tiro a scendere' },
-  'Rising Shot': { en: 'Rising Shot', it: 'Tiro a salire' },
-  'Acrobatic Finishing': { en: 'Acrobatic Finishing', it: 'Finalizzazione acrobatica' },
-  'Heel Trick': { en: 'Heel Trick', it: 'Colpo di tacco' },
-  'First-time Shot': { en: 'First-time Shot', it: 'Tiro di prima' },
-  'One-touch Pass': { en: 'One-touch Pass', it: 'Passaggio di prima' },
-  'Through Passing': { en: 'Through Passing', it: 'Passaggio filtrante' },
-  'Weighted Pass': { en: 'Weighted Pass', it: 'Passaggio calibrato' },
-  'Pinpoint Crossing': { en: 'Pinpoint Crossing', it: 'Cross preciso' },
-  'Outside Curler': { en: 'Outside Curler', it: 'Esterno a giro' },
-  Rabona: { en: 'Rabona', it: 'Rabona' },
-  'No Look Pass': { en: 'No Look Pass', it: 'Passaggio no look' },
-  'Low Lofted Pass': { en: 'Low Lofted Pass', it: 'Passaggio alto teso' },
-  'GK Low Punt': { en: 'GK Low Punt', it: 'Rinvio basso PT' },
-  'GK High Punt': { en: 'GK High Punt', it: 'Rinvio alto PT' },
-  'Long Throw': { en: 'Long Throw', it: 'Rimessa lunga' },
-  'GK Long Throw': { en: 'GK Long Throw', it: 'Rimessa lunga PT' },
-  'Penalty Specialist': { en: 'Penalty Specialist', it: 'Specialista rigori' },
-  Gamesmanship: { en: 'Gamesmanship', it: 'Malizia' },
-  'Man Marking': { en: 'Man Marking', it: 'Marcatura a uomo' },
-  'Track Back': { en: 'Track Back', it: 'Ripiegamento' },
-  Interception: { en: 'Interception', it: 'Intercettazione' },
-  Blocker: { en: 'Blocker', it: 'Blocco' },
-  'Aerial Superiority': { en: 'Aerial Superiority', it: 'Superiorita aerea' },
-  'Sliding Tackle': { en: 'Sliding Tackle', it: 'Scivolata' },
-  'Acrobatic Clearance': { en: 'Acrobatic Clearance', it: 'Rinvio acrobatico' },
-  Captaincy: { en: 'Captaincy', it: 'Leadership' },
-  'Super-sub': { en: 'Super-sub', it: 'Super riserva' },
-  'Fighting Spirit': { en: 'Fighting Spirit', it: 'Spirito combattivo' }
-}
-
-function normalizePlayerSkillKey(skill) {
-  return String(skill || '').toLowerCase().replace(/[^a-z0-9]/g, '')
-}
-
-function getPlayerSkillLabel(skill, lang) {
-  const raw = String(skill || '').trim()
-  const labels = PLAYER_SKILL_LABELS[raw]
-    || PLAYER_SKILL_LABELS[
-      Object.keys(PLAYER_SKILL_LABELS).find((key) => normalizePlayerSkillKey(key) === normalizePlayerSkillKey(raw))
-    ]
-  if (!labels) return String(skill || '')
-  return lang === 'en' ? labels.en : labels.it
-}
-
 function hasPlayerSkill(skills, skill) {
-  const normalized = normalizePlayerSkillKey(skill)
-  return (Array.isArray(skills) ? skills : []).some((entry) => normalizePlayerSkillKey(entry) === normalized)
+  const normalized = normalizeSkillKey(skill)
+  return (Array.isArray(skills) ? skills : []).some((entry) => normalizeSkillKey(entry) === normalized)
 }
 
 function parseBoosterLevel(rawEffect) {
@@ -3140,7 +3039,7 @@ function PremiumPlayerModal({
                       <option value="">{t('nuovaRosaChooseOfficialSkill')}</option>
                       {PLAYER_SKILL_PRESETS.map((skill) => (
                         <option key={skill} value={skill} disabled={hasPlayerSkill(skillsDraft, skill)}>
-                          {getPlayerSkillLabel(skill, lang)}
+                          {getSkillDisplayLabel(skill, lang)}
                         </option>
                       ))}
                     </select>
@@ -3151,7 +3050,7 @@ function PremiumPlayerModal({
                 <div className="nr-skill-chip-row">
                   {visibleSkills.length > 0 ? visibleSkills.map((skill) => (
                     <button key={skill} type="button" className="nr-skill-chip" onClick={() => removeSkill(skill)}>
-                      {getPlayerSkillLabel(skill, lang)}
+                      {getSkillDisplayLabel(skill, lang)}
                       <X size={12} />
                     </button>
                   )) : (

@@ -343,7 +343,7 @@ REGOLE SULLE STATISTICHE:
 SEMANTICA:
 - Usa termini da coach/community: movimento, skill nativa, combo, catena, rotazione, non prioritaria, luxury pick, riferimento in area, attacca spazio, dà ampiezza, tiene posizione, non cambia gerarchie.
 - Evita: "fit stile 56%", "bonus sistema", "sinergia principale", "stat edge", "overall", "rating", "buildalo", "potenzialo", "allenalo".
-- Se rispondi in italiano, traduci in italiano anche stili, skill e tag tecnici quando possibile: non lasciare frasi con "Pinpoint Crossing", "Edged Crossing", "Acceleration Burst", "Hole Player", "Blocker", "Interception" se puoi dire "Cross calibrato", "Cross tagliente", "Scatto esplosivo", "Giocatore chiave", "Blocco", "Intercettazione".
+- Se rispondi in italiano, traduci in italiano anche stili, skill e tag tecnici quando possibile: non lasciare frasi con "Pinpoint Crossing", "Edged Crossing", "Acceleration Burst", "Hole Player", "Blocker", "Interception" se puoi dire "Cross preciso", "Cross tagliente", "Scatto esplosivo", "Giocatore chiave", "Muro", "Intercettazione" (allineato a Gestione rosa / inserimento manuale).
 - La sezione "key_reasoning" è la parte più importante: ogni punto deve incrociare almeno due fonti tra carta, stile, skill, stats, rosa, formazione, tattica, coach, diagnosi, game analysis e RAG meccaniche.
 - Ogni ragionamento deve chiudere con una conseguenza pratica: cosa cambia, cosa sfruttare, cosa evitare o perché non è priorità.
 

@@ -17,6 +17,7 @@ import {
   Users,
   Zap
 } from 'lucide-react'
+import { getSkillDisplayLabel } from '@/lib/playerSkillLabels'
 
 const copy = {
   it: {
@@ -1014,7 +1015,9 @@ function DetailPanel({
                 <h3><Sparkles size={18} /> {labels.nativeSkills}</h3>
                 <div className="pill-row">
                   {(serverEval?.technicalProfile || card.skills).length > 0
-                    ? (serverEval?.technicalProfile || card.skills).map(item => <StatPill key={item}>{item}</StatPill>)
+                    ? (serverEval?.technicalProfile || card.skills).map((item) => (
+                      <StatPill key={item}>{getSkillDisplayLabel(item, lang)}</StatPill>
+                    ))
                     : <StatPill>{labels.noNativeSkills}</StatPill>}
                 </div>
               </article>

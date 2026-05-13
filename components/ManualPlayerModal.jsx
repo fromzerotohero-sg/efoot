@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react'
 import { useTranslation } from '@/lib/i18n'
 import { supabase } from '@/lib/supabaseClient'
 import { X, User, ChevronDown, ChevronUp, Zap, Shield, Star, Check, Gift } from 'lucide-react'
+import { SKILL_CATEGORIES } from '@/lib/playerSkillLabels'
 
 /**
  * ManualPlayerModal — Inserimento manuale giocatore (0 HP).
@@ -38,15 +39,6 @@ const CARD_TYPES = ['Standard', 'Trending', 'In evidenza', 'In risalto', 'Epico'
 const CARD_COLORS = {
   Standard: '#666', Trending: '#00bcd4', 'In evidenza': '#2196f3',
   'In risalto': '#9c27b0', Epico: '#7c3aed', Leggendario: '#f59e0b'
-}
-
-const SKILL_CATEGORIES = {
-  'Tiro': ['Tiro al volo', 'Tiro a giro', 'Tiro Potente', 'Tiro a scendere', 'Tiro a salire', 'A giro da distante', 'Colpo di testa', 'Tiro acrobatico'],
-  'Passaggio': ['Passaggio di prima', 'Passaggio calibrato', 'Passaggio filtrante', 'Cross preciso', 'Lancio lungo preciso', 'Passaggio dosato', 'Rabona'],
-  'Dribbling': ['Doppio tocco', 'Finta doppio passo', 'Elastico', 'Controllo di suola', 'Stop acrobatico', 'Protezione'],
-  'Difesa': ['Intercettazione', 'Marcatura', 'Contrasto Aggressivo', 'Scivolata', 'Muro', 'Caposaldo'],
-  'Portiere': ['Traiettoria bassa PT', 'Rilancio del PT', 'Para-rigori', 'Uscita portiere'],
-  'Speciali': ['Leader', 'Tornante', 'Super riserva', 'Specialista punizioni', 'Specialista rigori']
 }
 
 const inputStyle = {

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
+import { getSkillDisplayLabel } from '@/lib/playerSkillLabels.js'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -238,26 +239,6 @@ const EFHUB_STYLE_LABELS = {
   roamingFlank: { it: 'Taglio al centro', en: 'Roaming Flank' }
 }
 
-const EFHUB_SKILL_LABELS = {
-  heading: { it: 'Colpo di testa', en: 'Heading' },
-  manMarking: { it: 'Marcatura a uomo', en: 'Man Marking' },
-  interception: { it: 'Intercettazione', en: 'Interception' },
-  blocker: { it: 'Blocco', en: 'Blocker' },
-  aerialSuperiority: { it: 'Dominio aereo', en: 'Aerial Superiority' },
-  slidingTackle: { it: 'Scivolata', en: 'Sliding Tackle' },
-  acrobaticClearance: { it: 'Rinvio acrobatico', en: 'Acrobatic Clearance' },
-  oneTouchPass: { it: 'Passaggio di prima', en: 'One-touch Pass' },
-  throughPassing: { it: 'Passaggio filtrante', en: 'Through Passing' },
-  pinpointCrossing: { it: 'Cross calibrato', en: 'Pinpoint Crossing' },
-  scissorsFeint: { it: 'Finta doppio passo', en: 'Scissors Feint' },
-  crossOverTurn: { it: 'Svolta secca', en: 'Cross Over Turn' },
-  cutBehindTurn: { it: 'Taglia alle spalle e gira', en: 'Cut Behind & Turn' },
-  firstTimeShot: { it: 'Tiro di prima', en: 'First-time Shot' },
-  longRangeShooting: { it: 'Tiro dalla distanza', en: 'Long Range Shooting' },
-  fightingSpirit: { it: 'Spirito combattivo', en: 'Fighting Spirit' },
-  doubleTouch: { it: 'Doppio tocco', en: 'Double Touch' }
-}
-
 function humanizeCamelCase(value = '') {
   return String(value || '')
     .replace(/([a-z])([A-Z])/g, '$1 $2')
@@ -283,7 +264,7 @@ function styleLabel(value, lang) {
 }
 
 function skillLabel(value, lang) {
-  return labelFromMap(EFHUB_SKILL_LABELS, value, lang)
+  return getSkillDisplayLabel(value, lang)
 }
 
 function teamStyleLabel(value, lang) {
@@ -570,7 +551,7 @@ function technicalProfile(card, signals, lang) {
   if (styleTag) tags.unshift(styleTag)
   const skillTags = signals.mergedSkills
     .slice(0, 2)
-    .map(skill => labelFromMap(EFHUB_SKILL_LABELS, skill, lang))
+    .map(skill => skillLabel(skill, lang))
     .filter(Boolean)
   return [...tags, ...skillTags].slice(0, 5).filter(Boolean)
 }
