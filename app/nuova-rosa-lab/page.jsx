@@ -93,9 +93,11 @@ function buildPlayerPayloadFromCatalog(card, slotIndex = null) {
     ? card.players_payload
     : {}
 
+  const resolvedBoosters = resolveCatalogAvailableBoosters(payload, card)
   const metadata = {
     ...(payload.metadata && typeof payload.metadata === 'object' ? payload.metadata : {}),
-    ...buildCatalogMetadata(card)
+    ...buildCatalogMetadata(card),
+    ...(resolvedBoosters.usedCatalogDefaults ? { catalog_booster_reminder: true } : {})
   }
 
   return {
@@ -110,6 +112,7 @@ function buildPlayerPayloadFromCatalog(card, slotIndex = null) {
       card.overall_max_level ??
       null,
     slot_index: slotIndex,
+    available_boosters: resolvedBoosters.boosters,
     metadata
   }
 }
@@ -2287,7 +2290,7 @@ function parseBoosterLevel(rawEffect) {
   const match = String(rawEffect || '').match(/([+-]?\d+)/)
   const parsed = match ? Number(match[1]) : 1
   if (!Number.isFinite(parsed) || parsed < 1) return 1
-  if (parsed > 4) return 4
+  if (parsed > 5) return 5
   return parsed
 }
 
@@ -2307,6 +2310,40 @@ function normalizeBoosterEntry(entry) {
     effect: `+${level}`,
     preset,
     level
+  }
+}
+
+/** PESDB `players_payload` spesso non include booster; in gioco ogni carta ha slot con categorie predefinite. */
+function getDefaultCatalogBoostersByPosition(position) {
+  const pos = String(position || '').toUpperCase().trim()
+  const pair = (a, b) => [
+    normalizeBoosterEntry({ name: a, effect: '+1' }),
+    normalizeBoosterEntry({ name: b, effect: '+1' })
+  ]
+  if (pos === 'PT') return pair('Portiere', 'Fisicità')
+  if (pos === 'P') return pair('Tiro', 'Istinto da attaccante')
+  if (pos === 'SP') return pair('Tiro', 'Passaggio')
+  if (pos === 'TRQ') return pair('Fantasista', 'Tecnica')
+  if (pos === 'CLS' || pos === 'CLD') return pair('Crossatore', 'Agilità')
+  if (pos === 'ESA' || pos === 'EDA') return pair('Agilità', 'Tiro')
+  if (pos === 'MED' || pos === 'CC') return pair('Tuttocampo', 'Passaggio')
+  if (pos === 'DC' || pos === 'TD' || pos === 'TS') return pair('Difesa', 'Pilastro difensivo')
+  return pair('Tecnica', 'Passaggio')
+}
+
+function resolveCatalogAvailableBoosters(payload, card) {
+  const raw = Array.isArray(payload?.available_boosters)
+    ? payload.available_boosters
+    : Array.isArray(payload?.boosters)
+      ? payload.boosters
+      : []
+  const normalized = raw.map((entry) => normalizeBoosterEntry(entry)).filter((entry) => String(entry?.name || '').trim())
+  if (normalized.length > 0) {
+    return { boosters: normalized, usedCatalogDefaults: false }
+  }
+  return {
+    boosters: getDefaultCatalogBoostersByPosition(payload?.position || card?.position),
+    usedCatalogDefaults: true
   }
 }
 
@@ -2411,6 +2448,52 @@ function buildBaseStatsPayloadFromEditor(form) {
   return output
 }
 
+/** eFootball: slot collegamento (secondo) ammette solo booster +1. */
+function clampBoosterEntryForSlot(entry, slotIndex) {
+  const n = normalizeBoosterEntry(entry)
+  if (slotIndex === 1 && n.level > 1) return { ...n, level: 1, effect: '+1' }
+  return n
+}
+
+function BoosterHexBadge({ active, lang }) {
+  const filterId = React.useId().replace(/:/g, 'booster')
+  const stroke = active ? '#5cf0ff' : '#6b7389'
+  const fillHex = active ? 'rgba(0, 48, 62, 0.72)' : 'rgba(26, 30, 42, 0.92)'
+  return (
+    <div className={`nr-booster-hex-badge ${active ? 'nr-booster-hex-badge--active' : 'nr-booster-hex-badge--idle'}`}>
+      <svg viewBox="0 0 80 80" width="54" height="54" aria-hidden="true" focusable="false" className="nr-booster-hex-svg">
+        <defs>
+          <filter id={filterId} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2.2" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        <g filter={active ? `url(#${filterId})` : undefined}>
+          <polygon
+            points="40,7 69,24 69,56 40,73 11,56 11,24"
+            fill={fillHex}
+            stroke={stroke}
+            strokeWidth="3.2"
+            strokeLinejoin="round"
+          />
+        </g>
+        <g stroke={stroke} fill="none" strokeLinecap="round" vectorEffect="non-scaling-stroke">
+          <circle cx="40" cy="40" r="11.5" strokeWidth="2.7" strokeDasharray="48 24" transform="rotate(-95 40 40)" />
+          <line strokeWidth="2.7" x1="26" y1="40" x2="54" y2="40" />
+        </g>
+      </svg>
+      <span className="nr-booster-hex-caption">
+        {active
+          ? (lang === 'en' ? 'Booster on' : 'Booster attivo')
+          : (lang === 'en' ? 'Empty slot' : 'Slot vuoto')}
+      </span>
+    </div>
+  )
+}
+
 function PremiumPlayerModal({
   show,
   player,
@@ -2491,7 +2574,7 @@ function PremiumPlayerModal({
     setShowPositionEditor(false)
     setBoostersDraft(
       Array.isArray(player.available_boosters)
-        ? player.available_boosters.map((entry) => normalizeBoosterEntry(entry))
+        ? player.available_boosters.map((entry, idx) => clampBoosterEntryForSlot(entry, idx))
         : []
     )
   }, [show, player])
@@ -2519,7 +2602,9 @@ function PremiumPlayerModal({
     const defaultPreset = BOOSTER_PRESETS[0]?.value || 'custom'
     setBoostersDraft((prev) => {
       if (prev.length >= 2) return prev
-      return [...prev, normalizeBoosterEntry({ name: defaultPreset, effect: '+1' })]
+      const slotIndex = prev.length
+      const entry = normalizeBoosterEntry({ name: defaultPreset, effect: '+1' })
+      return [...prev, clampBoosterEntryForSlot(entry, slotIndex)]
     })
   }
 
@@ -2531,23 +2616,27 @@ function PremiumPlayerModal({
     setBoostersDraft((prev) => prev.map((entry, idx) => {
       if (idx !== index) return entry
       if (presetValue === 'custom') {
-        return { ...(entry || {}), preset: 'custom', name: entry?.name || '' }
+        const next = { ...(entry || {}), preset: 'custom', name: entry?.name || '' }
+        return index === 1 ? clampBoosterEntryForSlot(next, 1) : next
       }
-      return {
+      const next = {
         ...(entry || {}),
         preset: presetValue,
         name: presetValue
       }
+      return index === 1 ? clampBoosterEntryForSlot(next, 1) : next
     }))
   }
 
   const updateBoosterLevel = (index, level) => {
+    const maxLevel = index === 1 ? 1 : 5
+    const nextLevel = Math.min(maxLevel, Math.max(1, Number(level) || 1))
     setBoostersDraft((prev) => prev.map((entry, idx) => {
       if (idx !== index) return entry
       return {
         ...(entry || {}),
-        level,
-        effect: `+${level}`
+        level: nextLevel,
+        effect: `+${nextLevel}`
       }
     }))
   }
@@ -2557,6 +2646,9 @@ function PremiumPlayerModal({
   }
 
   const boosterCount = boostersDraft.length
+  const catalogMeta = player?.metadata && typeof player.metadata === 'object' ? player.metadata : {}
+  const showCatalogBoosterAlert = catalogMeta.catalog_booster_reminder === true
+    || (Boolean(catalogMeta.catalog_source) && catalogMeta.catalog_link_method === 'catalog_picker' && catalogMeta.catalog_booster_reminder !== false)
   const roleCount = originalPositionsDraft.length
   const visibleSkills = showAllSkills ? skillsDraft : skillsDraft.slice(0, 10)
   const hiddenSkillsCount = Math.max(0, skillsDraft.length - visibleSkills.length)
@@ -2877,25 +2969,60 @@ function PremiumPlayerModal({
                   </button>
                 }
               >
+                {showCatalogBoosterAlert ? (
+                  <div className="nr-warning-box nr-booster-catalog-alert" role="status">
+                    <AlertTriangle size={16} />
+                    <span>
+                      {lang === 'en'
+                        ? 'Catalog data does not include real boosters: the slots below are placeholders. Set categories and levels to match your card (main slot +1 to +5, link slot +1 only).'
+                        : 'Il catalogo non include i booster reali: gli slot qui sotto sono solo esempio. Imposta categoria e livello come sulla carta (slot principale +1 fino a +5, slot collegamento solo +1).'}
+                    </span>
+                  </div>
+                ) : null}
                 <div className="nr-booster-slot-grid">
                   {[0, 1].map((slotIndex) => {
                     const booster = boostersDraft[slotIndex]
                     const selectedPreset = booster?.preset || detectBoosterPreset(booster?.name)
-                    const activeLevel = Number(booster?.level || parseBoosterLevel(booster?.effect || '+1'))
+                    const rawLevel = Number(booster?.level || parseBoosterLevel(booster?.effect || '+1'))
+                    const activeLevel = slotIndex === 1 ? Math.min(1, rawLevel) : Math.min(5, rawLevel)
+                    const levelOptions = slotIndex === 1 ? [1] : [1, 2, 3, 4, 5]
+                    const slotRole = slotIndex === 0
+                      ? (lang === 'en' ? 'Main booster' : 'Booster principale')
+                      : (lang === 'en' ? 'Link booster' : 'Booster collegamento')
                     return (
-                      <div key={`booster-slot-${slotIndex}`} className="nr-booster-slot-card">
-                        <div className="nr-booster-row-head">
-                          <span>{lang === 'en' ? `Slot ${slotIndex + 1}` : `Slot ${slotIndex + 1}`}</span>
-                          {booster ? (
-                            <button type="button" className="nr-icon-button" onClick={() => removeBooster(slotIndex)}>
-                              <X size={12} />
-                            </button>
-                          ) : null}
+                      <div key={`booster-slot-${slotIndex}`} className="nr-booster-slot-card nr-booster-slot-card--ef">
+                        <div className="nr-booster-slot-top">
+                          <BoosterHexBadge active={Boolean(booster)} lang={lang} />
+                          <div className="nr-booster-slot-top-copy">
+                            <div className="nr-booster-row-head">
+                              <div className="nr-booster-slot-titles">
+                                <span className="nr-booster-slot-role">{slotRole}</span>
+                                <span className="nr-booster-slot-label">{lang === 'en' ? `Slot ${slotIndex + 1}` : `Slot ${slotIndex + 1}`}</span>
+                              </div>
+                              {booster ? (
+                                <button
+                                  type="button"
+                                  className="nr-icon-button"
+                                  onClick={() => removeBooster(slotIndex)}
+                                  aria-label={lang === 'en' ? 'Remove booster' : 'Rimuovi booster'}
+                                >
+                                  <X size={12} />
+                                </button>
+                              ) : null}
+                            </div>
+                            {slotIndex === 1 ? (
+                              <p className="nr-booster-slot-rule">
+                                {lang === 'en'
+                                  ? 'In eFootball the link slot is always +1.'
+                                  : 'In eFootball lo slot collegamento e sempre +1.'}
+                              </p>
+                            ) : null}
+                          </div>
                         </div>
                         {booster ? (
                           <>
                             <label className="nr-form-field">
-                              <span>{lang === 'en' ? 'Booster' : 'Booster'}</span>
+                              <span>{lang === 'en' ? 'Category' : 'Categoria'}</span>
                               <select
                                 value={selectedPreset}
                                 onChange={(event) => updateBoosterPreset(slotIndex, event.target.value)}
@@ -2916,22 +3043,37 @@ function PremiumPlayerModal({
                                 placeholder={lang === 'en' ? 'Custom booster' : 'Booster personalizzato'}
                               />
                             ) : null}
-                            <div className="nr-booster-level-buttons">
-                              {[1, 2, 3, 4].map((levelValue) => (
-                                <button
-                                  key={`${slotIndex}-${levelValue}`}
-                                  type="button"
-                                  className={`nr-booster-level-btn ${activeLevel === levelValue ? 'is-active' : ''}`}
-                                  onClick={() => updateBoosterLevel(slotIndex, levelValue)}
-                                >
-                                  +{levelValue}
-                                </button>
-                              ))}
+                            <div className="nr-booster-level-wrap">
+                              <span className="nr-booster-level-label">
+                                {lang === 'en' ? 'Bonus level' : 'Livello bonus'}
+                              </span>
+                              <div
+                                className={
+                                  slotIndex === 1
+                                    ? 'nr-booster-level-buttons nr-booster-level-buttons--single'
+                                    : 'nr-booster-level-buttons'
+                                }
+                              >
+                                {levelOptions.map((levelValue) => (
+                                  <button
+                                    key={`${slotIndex}-${levelValue}`}
+                                    type="button"
+                                    className={`nr-booster-level-btn ${activeLevel === levelValue ? 'is-active' : ''}`}
+                                    onClick={() => updateBoosterLevel(slotIndex, levelValue)}
+                                  >
+                                    +{levelValue}
+                                  </button>
+                                ))}
+                              </div>
                             </div>
                           </>
                         ) : (
-                          <div className="nr-empty-state">
-                            <span>{lang === 'en' ? 'No booster in this slot.' : 'Nessun booster in questo slot.'}</span>
+                          <div className="nr-booster-empty-msg">
+                            <span>
+                              {lang === 'en'
+                                ? 'No booster in this slot. Use “Add booster slot” above.'
+                                : 'Nessun booster in questo slot. Usa “Aggiungi slot booster” sopra.'}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -2962,12 +3104,17 @@ function PremiumPlayerModal({
             nationality: form.nationality,
             club_name: form.club_name,
             skills: skillsDraft,
-            available_boosters: boostersDraft.map((entry) => ({
-              name: String(entry?.name || '').trim(),
-              effect: String(entry?.effect || '').trim() || '+1'
-            })),
+            available_boosters: boostersDraft.map((entry, idx) => {
+              const maxLevel = idx === 1 ? 1 : 5
+              const level = Math.min(maxLevel, Math.max(1, Number(entry?.level) || parseBoosterLevel(entry?.effect)))
+              return {
+                name: String(entry?.name || '').trim(),
+                effect: `+${level}`
+              }
+            }),
             original_positions: originalPositionsDraft,
-            base_stats: buildBaseStatsPayloadFromEditor(form)
+            base_stats: buildBaseStatsPayloadFromEditor(form),
+            metadata: { catalog_booster_reminder: false }
           })}
         >
           {saving ? (lang === 'en' ? 'Saving...' : 'Salvataggio...') : (lang === 'en' ? 'Save player' : 'Salva giocatore')}
@@ -7430,6 +7577,16 @@ export default withAuth(function NuovaRosaLabPage() {
           background: rgba(255, 149, 0, 0.08);
         }
 
+        .nr-booster-catalog-alert {
+          margin-bottom: 14px;
+          align-items: flex-start;
+          text-align: left;
+        }
+
+        .nr-booster-catalog-alert span {
+          text-align: left;
+        }
+
         .nr-toast {
           position: fixed;
           right: 18px;
@@ -7832,8 +7989,107 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-booster-level-buttons {
           display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
+          grid-template-columns: repeat(5, minmax(0, 1fr));
           gap: 8px;
+        }
+
+        .nr-booster-level-buttons--single {
+          grid-template-columns: 1fr;
+          max-width: 100px;
+        }
+
+        .nr-booster-level-wrap {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          margin-top: 4px;
+        }
+
+        .nr-booster-level-label {
+          font-size: 11px;
+          font-weight: 650;
+          color: rgba(255, 255, 255, 0.55);
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+        }
+
+        .nr-booster-hex-badge {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
+          flex-shrink: 0;
+        }
+
+        .nr-booster-hex-badge--active .nr-booster-hex-svg {
+          filter: drop-shadow(0 0 12px rgba(0, 212, 255, 0.5));
+        }
+
+        .nr-booster-hex-caption {
+          font-size: 9px;
+          font-weight: 800;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: rgba(255, 255, 255, 0.48);
+          max-width: 72px;
+          text-align: center;
+          line-height: 1.25;
+        }
+
+        .nr-booster-hex-badge--active .nr-booster-hex-caption {
+          color: #8aefff;
+        }
+
+        .nr-booster-slot-top {
+          display: flex;
+          gap: 14px;
+          align-items: flex-start;
+          margin-bottom: 2px;
+        }
+
+        .nr-booster-slot-top-copy {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .nr-booster-slot-titles {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .nr-booster-slot-role {
+          font-size: 11px;
+          font-weight: 800;
+          color: #7ce8ff;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+        }
+
+        .nr-booster-slot-label {
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.52);
+        }
+
+        .nr-booster-slot-rule {
+          margin: 8px 0 0;
+          font-size: 11px;
+          line-height: 1.45;
+          color: rgba(255, 205, 140, 0.92);
+        }
+
+        .nr-booster-empty-msg {
+          padding: 6px 0 2px;
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.55);
+          line-height: 1.45;
+        }
+
+        .nr-booster-slot-card--ef {
+          border-color: rgba(0, 212, 255, 0.26);
+          background:
+            radial-gradient(circle at 0% 0%, rgba(0, 212, 255, 0.12), transparent 42%),
+            linear-gradient(180deg, rgba(8, 18, 28, 0.55), rgba(10, 12, 22, 0.96));
         }
 
         .nr-booster-level-btn {
@@ -8554,7 +8810,12 @@ export default withAuth(function NuovaRosaLabPage() {
           }
 
           .nr-booster-level-buttons {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+
+          .nr-booster-level-buttons--single {
+            grid-template-columns: 1fr;
+            max-width: 100px;
           }
 
           .nr-reserve-grid {
