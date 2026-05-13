@@ -2455,13 +2455,14 @@ function clampBoosterEntryForSlot(entry, slotIndex) {
   return n
 }
 
-function BoosterHexBadge({ active, lang }) {
+function BoosterHexBadge({ active, level, onClick, disabled, ariaLabel }) {
   const filterId = React.useId().replace(/:/g, 'booster')
   const stroke = active ? '#5cf0ff' : '#6b7389'
   const fillHex = active ? 'rgba(0, 48, 62, 0.72)' : 'rgba(26, 30, 42, 0.92)'
-  return (
-    <div className={`nr-booster-hex-badge ${active ? 'nr-booster-hex-badge--active' : 'nr-booster-hex-badge--idle'}`}>
-      <svg viewBox="0 0 80 80" width="54" height="54" aria-hidden="true" focusable="false" className="nr-booster-hex-svg">
+  const interactive = Boolean(onClick) && !disabled
+  const inner = (
+    <>
+      <svg viewBox="0 0 80 80" width="56" height="56" aria-hidden="true" focusable="false" className="nr-booster-hex-svg">
         <defs>
           <filter id={filterId} x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="2.2" result="blur" />
@@ -2485,11 +2486,26 @@ function BoosterHexBadge({ active, lang }) {
           <line strokeWidth="2.7" x1="26" y1="40" x2="54" y2="40" />
         </g>
       </svg>
-      <span className="nr-booster-hex-caption">
-        {active
-          ? (lang === 'en' ? 'Booster on' : 'Booster attivo')
-          : (lang === 'en' ? 'Empty slot' : 'Slot vuoto')}
-      </span>
+      {active && level != null ? (
+        <span className="nr-booster-hex-level">+{level}</span>
+      ) : null}
+    </>
+  )
+  if (interactive) {
+    return (
+      <button
+        type="button"
+        className={`nr-booster-hex-badge nr-booster-hex-badge--interactive ${active ? 'nr-booster-hex-badge--active' : 'nr-booster-hex-badge--idle'}`}
+        onClick={onClick}
+        aria-label={ariaLabel || 'Booster'}
+      >
+        {inner}
+      </button>
+    )
+  }
+  return (
+    <div className={`nr-booster-hex-badge ${active ? 'nr-booster-hex-badge--active' : 'nr-booster-hex-badge--idle'}`}>
+      {inner}
     </div>
   )
 }
@@ -2552,6 +2568,11 @@ function PremiumPlayerModal({
   const [showAllSkills, setShowAllSkills] = React.useState(false)
   const [originalPositionsDraft, setOriginalPositionsDraft] = React.useState([])
   const [showPositionEditor, setShowPositionEditor] = React.useState(false)
+  const [saveConfirmOpen, setSaveConfirmOpen] = React.useState(false)
+
+  React.useEffect(() => {
+    if (!show) setSaveConfirmOpen(false)
+  }, [show])
 
   React.useEffect(() => {
     if (!show || !player) return
@@ -2645,10 +2666,24 @@ function PremiumPlayerModal({
     setBoostersDraft((prev) => prev.filter((_, idx) => idx !== index))
   }
 
+  const handleBoosterHexClick = (slotIndex) => {
+    if (slotIndex === 0) {
+      if (!boostersDraft[0]) {
+        if (boostersDraft.length === 0) addBooster()
+        return
+      }
+      const raw = Number(boostersDraft[0]?.level || parseBoosterLevel(boostersDraft[0]?.effect || '+1'))
+      const cur = Math.min(5, Math.max(1, raw))
+      const next = cur >= 5 ? 1 : cur + 1
+      updateBoosterLevel(0, next)
+      return
+    }
+    if (slotIndex === 1 && !boostersDraft[1] && boostersDraft.length === 1) {
+      addBooster()
+    }
+  }
+
   const boosterCount = boostersDraft.length
-  const catalogMeta = player?.metadata && typeof player.metadata === 'object' ? player.metadata : {}
-  const showCatalogBoosterAlert = catalogMeta.catalog_booster_reminder === true
-    || (Boolean(catalogMeta.catalog_source) && catalogMeta.catalog_link_method === 'catalog_picker' && catalogMeta.catalog_booster_reminder !== false)
   const roleCount = originalPositionsDraft.length
   const visibleSkills = showAllSkills ? skillsDraft : skillsDraft.slice(0, 10)
   const hiddenSkillsCount = Math.max(0, skillsDraft.length - visibleSkills.length)
@@ -2661,6 +2696,29 @@ function PremiumPlayerModal({
   const buildTargetPosition = buildCoachData?.target_position || buildCoachData?.targetPosition || null
   const buildReasonsLines = pickBilingualList(buildCoachData?.reasons, lang)
   const buildWarningLines = pickBilingualList(buildCoachData?.warnings, lang)
+
+  const getEditorSavePayload = () => ({
+    player_name: form.player_name.trim(),
+    position: originalPositionsDraft[0]?.position || form.position,
+    overall_rating: form.overall_rating ? Number(form.overall_rating) : null,
+    card_type: form.card_type,
+    role: form.role,
+    age: form.age ? Number(form.age) : null,
+    nationality: form.nationality,
+    club_name: form.club_name,
+    skills: skillsDraft,
+    available_boosters: boostersDraft.map((entry, idx) => {
+      const maxLevel = idx === 1 ? 1 : 5
+      const level = Math.min(maxLevel, Math.max(1, Number(entry?.level) || parseBoosterLevel(entry?.effect)))
+      return {
+        name: String(entry?.name || '').trim(),
+        effect: `+${level}`
+      }
+    }),
+    original_positions: originalPositionsDraft,
+    base_stats: buildBaseStatsPayloadFromEditor(form),
+    metadata: { catalog_booster_reminder: false }
+  })
 
   return (
     <EnterpriseModalFrame
@@ -2963,42 +3021,46 @@ function PremiumPlayerModal({
               <EnterpriseSection
                 title={lang === 'en' ? 'Boosters' : 'Boosters'}
                 actions={
-                  <button type="button" className="nr-secondary-button" onClick={addBooster} disabled={boostersDraft.length >= 2}>
-                    <Plus size={14} />
-                    {lang === 'en' ? 'Add booster slot' : 'Aggiungi slot booster'}
-                  </button>
+                  boostersDraft.length < 2 ? (
+                    <button
+                      type="button"
+                      className="nr-icon-button nr-booster-toolbar-plus"
+                      onClick={addBooster}
+                      title={lang === 'en' ? 'Add slot' : 'Aggiungi slot'}
+                      aria-label={lang === 'en' ? 'Add booster slot' : 'Aggiungi slot booster'}
+                    >
+                      <Plus size={16} />
+                    </button>
+                  ) : null
                 }
               >
-                {showCatalogBoosterAlert ? (
-                  <div className="nr-warning-box nr-booster-catalog-alert" role="status">
-                    <AlertTriangle size={16} />
-                    <span>
-                      {lang === 'en'
-                        ? 'Catalog data does not include real boosters: the slots below are placeholders. Set categories and levels to match your card (main slot +1 to +5, link slot +1 only).'
-                        : 'Il catalogo non include i booster reali: gli slot qui sotto sono solo esempio. Imposta categoria e livello come sulla carta (slot principale +1 fino a +5, slot collegamento solo +1).'}
-                    </span>
-                  </div>
-                ) : null}
                 <div className="nr-booster-slot-grid">
                   {[0, 1].map((slotIndex) => {
                     const booster = boostersDraft[slotIndex]
                     const selectedPreset = booster?.preset || detectBoosterPreset(booster?.name)
                     const rawLevel = Number(booster?.level || parseBoosterLevel(booster?.effect || '+1'))
                     const activeLevel = slotIndex === 1 ? Math.min(1, rawLevel) : Math.min(5, rawLevel)
-                    const levelOptions = slotIndex === 1 ? [1] : [1, 2, 3, 4, 5]
-                    const slotRole = slotIndex === 0
-                      ? (lang === 'en' ? 'Main booster' : 'Booster principale')
-                      : (lang === 'en' ? 'Link booster' : 'Booster collegamento')
+                    const hexClickable = slotIndex === 0
+                      ? (!booster ? boostersDraft.length === 0 : true)
+                      : (!booster ? boostersDraft.length === 1 : false)
+                    const hexAria = !booster
+                      ? (lang === 'en' ? `Slot ${slotIndex + 1}: add booster` : `Slot ${slotIndex + 1}: aggiungi booster`)
+                      : slotIndex === 0
+                        ? (lang === 'en' ? `Main booster +${activeLevel}, tap to change` : `Booster principale +${activeLevel}, tocca per cambiare`)
+                        : (lang === 'en' ? `Link booster +1` : `Collegamento +1`)
                     return (
                       <div key={`booster-slot-${slotIndex}`} className="nr-booster-slot-card nr-booster-slot-card--ef">
                         <div className="nr-booster-slot-top">
-                          <BoosterHexBadge active={Boolean(booster)} lang={lang} />
+                          <BoosterHexBadge
+                            active={Boolean(booster)}
+                            level={booster ? activeLevel : null}
+                            onClick={hexClickable ? () => handleBoosterHexClick(slotIndex) : undefined}
+                            disabled={false}
+                            ariaLabel={hexAria}
+                          />
                           <div className="nr-booster-slot-top-copy">
                             <div className="nr-booster-row-head">
-                              <div className="nr-booster-slot-titles">
-                                <span className="nr-booster-slot-role">{slotRole}</span>
-                                <span className="nr-booster-slot-label">{lang === 'en' ? `Slot ${slotIndex + 1}` : `Slot ${slotIndex + 1}`}</span>
-                              </div>
+                              <span className="nr-booster-slot-only">{slotIndex + 1}</span>
                               {booster ? (
                                 <button
                                   type="button"
@@ -3010,20 +3072,14 @@ function PremiumPlayerModal({
                                 </button>
                               ) : null}
                             </div>
-                            {slotIndex === 1 ? (
-                              <p className="nr-booster-slot-rule">
-                                {lang === 'en'
-                                  ? 'In eFootball the link slot is always +1.'
-                                  : 'In eFootball lo slot collegamento e sempre +1.'}
-                              </p>
-                            ) : null}
                           </div>
                         </div>
                         {booster ? (
                           <>
-                            <label className="nr-form-field">
-                              <span>{lang === 'en' ? 'Category' : 'Categoria'}</span>
+                            <label className="nr-form-field nr-form-field--tight">
+                              <span className="nr-booster-cat-lbl">{lang === 'en' ? 'Type' : 'Tipo'}</span>
                               <select
+                                aria-label={lang === 'en' ? 'Booster category' : 'Categoria booster'}
                                 value={selectedPreset}
                                 onChange={(event) => updateBoosterPreset(slotIndex, event.target.value)}
                               >
@@ -3037,45 +3093,14 @@ function PremiumPlayerModal({
                             </label>
                             {selectedPreset === 'custom' ? (
                               <EnterpriseInput
-                                label={lang === 'en' ? 'Custom name' : 'Nome personalizzato'}
+                                label={lang === 'en' ? 'Name' : 'Nome'}
                                 value={String(booster?.name || '')}
                                 onChange={(value) => updateBooster(slotIndex, 'name', value)}
-                                placeholder={lang === 'en' ? 'Custom booster' : 'Booster personalizzato'}
+                                placeholder={lang === 'en' ? 'Custom' : 'Personalizzato'}
                               />
                             ) : null}
-                            <div className="nr-booster-level-wrap">
-                              <span className="nr-booster-level-label">
-                                {lang === 'en' ? 'Bonus level' : 'Livello bonus'}
-                              </span>
-                              <div
-                                className={
-                                  slotIndex === 1
-                                    ? 'nr-booster-level-buttons nr-booster-level-buttons--single'
-                                    : 'nr-booster-level-buttons'
-                                }
-                              >
-                                {levelOptions.map((levelValue) => (
-                                  <button
-                                    key={`${slotIndex}-${levelValue}`}
-                                    type="button"
-                                    className={`nr-booster-level-btn ${activeLevel === levelValue ? 'is-active' : ''}`}
-                                    onClick={() => updateBoosterLevel(slotIndex, levelValue)}
-                                  >
-                                    +{levelValue}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
                           </>
-                        ) : (
-                          <div className="nr-booster-empty-msg">
-                            <span>
-                              {lang === 'en'
-                                ? 'No booster in this slot. Use “Add booster slot” above.'
-                                : 'Nessun booster in questo slot. Usa “Aggiungi slot booster” sopra.'}
-                            </span>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
                     )
                   })}
@@ -3094,33 +3119,28 @@ function PremiumPlayerModal({
           type="button"
           className="nr-primary-button"
           disabled={saving}
-          onClick={() => onSave({
-            player_name: form.player_name.trim(),
-            position: originalPositionsDraft[0]?.position || form.position,
-            overall_rating: form.overall_rating ? Number(form.overall_rating) : null,
-            card_type: form.card_type,
-            role: form.role,
-            age: form.age ? Number(form.age) : null,
-            nationality: form.nationality,
-            club_name: form.club_name,
-            skills: skillsDraft,
-            available_boosters: boostersDraft.map((entry, idx) => {
-              const maxLevel = idx === 1 ? 1 : 5
-              const level = Math.min(maxLevel, Math.max(1, Number(entry?.level) || parseBoosterLevel(entry?.effect)))
-              return {
-                name: String(entry?.name || '').trim(),
-                effect: `+${level}`
-              }
-            }),
-            original_positions: originalPositionsDraft,
-            base_stats: buildBaseStatsPayloadFromEditor(form),
-            metadata: { catalog_booster_reminder: false }
-          })}
+          onClick={() => setSaveConfirmOpen(true)}
         >
           {saving ? (lang === 'en' ? 'Saving...' : 'Salvataggio...') : (lang === 'en' ? 'Save player' : 'Salva giocatore')}
           <Save size={16} />
         </button>
       </div>
+      <ConfirmModal
+        show={saveConfirmOpen}
+        variant="info"
+        title={lang === 'en' ? 'Save changes?' : 'Salvare le modifiche?'}
+        message={lang === 'en'
+          ? 'Confirm to write these edits to the player profile.'
+          : 'Conferma per salvare le modifiche sul profilo del giocatore.'}
+        confirmLabel={lang === 'en' ? 'Yes' : 'Sì'}
+        cancelLabel={lang === 'en' ? 'No' : 'No'}
+        onConfirm={() => {
+          setSaveConfirmOpen(false)
+          onSave(getEditorSavePayload())
+        }}
+        onCancel={() => setSaveConfirmOpen(false)}
+        disabled={saving}
+      />
       {showPositionEditor && (
         <PositionSelectionModal
           playerName={player.player_name}
@@ -7577,16 +7597,6 @@ export default withAuth(function NuovaRosaLabPage() {
           background: rgba(255, 149, 0, 0.08);
         }
 
-        .nr-booster-catalog-alert {
-          margin-bottom: 14px;
-          align-items: flex-start;
-          text-align: left;
-        }
-
-        .nr-booster-catalog-alert span {
-          text-align: left;
-        }
-
         .nr-toast {
           position: fixed;
           right: 18px;
@@ -8014,30 +8024,44 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-booster-hex-badge {
+          position: relative;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 4px;
+          gap: 2px;
           flex-shrink: 0;
+        }
+
+        .nr-booster-hex-badge--interactive {
+          cursor: pointer;
+          border: none;
+          padding: 0;
+          margin: 0;
+          background: transparent;
+          font: inherit;
+          border-radius: 14px;
+        }
+
+        .nr-booster-hex-badge--interactive:focus-visible {
+          outline: 2px solid rgba(0, 212, 255, 0.55);
+          outline-offset: 3px;
+        }
+
+        .nr-booster-hex-level {
+          font-size: 13px;
+          font-weight: 900;
+          color: #8aebff;
+          line-height: 1;
+          margin-top: -4px;
+          text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+
+        .nr-booster-hex-badge--idle .nr-booster-hex-level {
+          display: none;
         }
 
         .nr-booster-hex-badge--active .nr-booster-hex-svg {
           filter: drop-shadow(0 0 12px rgba(0, 212, 255, 0.5));
-        }
-
-        .nr-booster-hex-caption {
-          font-size: 9px;
-          font-weight: 800;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: rgba(255, 255, 255, 0.48);
-          max-width: 72px;
-          text-align: center;
-          line-height: 1.25;
-        }
-
-        .nr-booster-hex-badge--active .nr-booster-hex-caption {
-          color: #8aefff;
         }
 
         .nr-booster-slot-top {
@@ -8052,37 +8076,26 @@ export default withAuth(function NuovaRosaLabPage() {
           min-width: 0;
         }
 
-        .nr-booster-slot-titles {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-        }
-
-        .nr-booster-slot-role {
-          font-size: 11px;
+        .nr-booster-slot-only {
+          font-size: 16px;
           font-weight: 800;
-          color: #7ce8ff;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
+          color: rgba(255, 255, 255, 0.88);
+          letter-spacing: 0.04em;
         }
 
-        .nr-booster-slot-label {
-          font-size: 12px;
-          color: rgba(255, 255, 255, 0.52);
+        .nr-booster-toolbar-plus {
+          opacity: 0.92;
         }
 
-        .nr-booster-slot-rule {
-          margin: 8px 0 0;
+        .nr-form-field--tight {
+          margin-top: 4px;
+        }
+
+        .nr-booster-cat-lbl {
           font-size: 11px;
-          line-height: 1.45;
-          color: rgba(255, 205, 140, 0.92);
-        }
-
-        .nr-booster-empty-msg {
-          padding: 6px 0 2px;
-          font-size: 12px;
-          color: rgba(255, 255, 255, 0.55);
-          line-height: 1.45;
+          font-weight: 650;
+          color: rgba(255, 255, 255, 0.5);
+          margin-bottom: 4px;
         }
 
         .nr-booster-slot-card--ef {
