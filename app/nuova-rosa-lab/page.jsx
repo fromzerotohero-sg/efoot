@@ -4770,17 +4770,6 @@ export default withAuth(function NuovaRosaLabPage() {
       ) : (
         <div className="nr-main-stack">
           <section className="nr-build-workspace-row">
-            <div className="nr-formation-side-label">
-              <div>
-                <span>{lang === 'en' ? 'Workspace' : 'Workspace'}</span>
-                <small>{lang === 'en' ? 'Formation' : 'Formazione'}</small>
-                <strong>{layout?.formation || '4-3-3'}</strong>
-              </div>
-              <button type="button" className="nr-move-players-side-button" onClick={() => setFieldEditMode(true)} disabled={fieldEditMode}>
-                <ArrowRight size={13} />
-                {lang === 'en' ? 'Move' : 'Sposta'}
-              </button>
-            </div>
             <div className="nr-build-coach-command-card">
               <div className="nr-build-coach-command-head">
                 <div>
@@ -4803,6 +4792,16 @@ export default withAuth(function NuovaRosaLabPage() {
                     <strong>{lang === 'en' ? 'Optimize player' : 'Ottimizza giocatore'}</strong>
                     <small>{lang === 'en' ? 'Select a card' : 'Seleziona una card'}</small>
                   </span>
+                </button>
+              </div>
+              <div className="nr-build-coach-secondary-grid">
+                <div className="nr-formation-inline-tile">
+                  <span>{lang === 'en' ? 'Formation' : 'Modulo'}</span>
+                  <strong>{layout?.formation || '4-3-3'}</strong>
+                </div>
+                <button type="button" className="nr-move-players-wide-button" onClick={() => setFieldEditMode(true)} disabled={fieldEditMode}>
+                  <ArrowRight size={14} />
+                  <span>{lang === 'en' ? 'Move players' : 'Muovi giocatori'}</span>
                 </button>
               </div>
             </div>
@@ -5459,67 +5458,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-build-workspace-row {
-          display: grid;
-          grid-template-columns: minmax(86px, 0.34fr) minmax(220px, 1fr);
-          gap: 12px;
-          align-items: stretch;
-        }
-
-        .nr-formation-side-label {
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          gap: 10px;
-          min-height: 112px;
-          padding: 12px 4px 12px 0;
-          color: rgba(255, 255, 255, 0.74);
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-        }
-
-        .nr-formation-side-label span,
-        .nr-formation-side-label small {
-          font-size: 11px;
-          color: rgba(0, 212, 255, 0.75);
-        }
-
-        .nr-formation-side-label strong {
-          color: #fff;
-          font-size: clamp(26px, 5vw, 34px);
-          letter-spacing: -0.05em;
-          line-height: 1;
-          text-transform: none;
-        }
-
-        .nr-move-players-side-button {
-          width: min(118px, 100%);
-          border: 1px solid rgba(148, 163, 184, 0.28);
-          background: rgba(15, 23, 42, 0.72);
-          color: rgba(255, 255, 255, 0.84);
-          min-height: 36px;
-          border-radius: 12px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
-          padding: 8px 10px;
-          cursor: pointer;
-          font-size: 11px;
-          font-weight: 850;
-          text-transform: none;
-          letter-spacing: 0;
-          transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
-        }
-
-        .nr-move-players-side-button:hover:not(:disabled) {
-          transform: translateY(-1px);
-          border-color: rgba(148, 163, 184, 0.55);
-          background: rgba(15, 23, 42, 0.94);
-        }
-
-        .nr-move-players-side-button:disabled {
-          opacity: 0.48;
-          cursor: not-allowed;
+          display: block;
         }
 
         .nr-build-coach-command-card {
@@ -5558,7 +5497,15 @@ export default withAuth(function NuovaRosaLabPage() {
           margin-bottom: 10px;
         }
 
-        .nr-build-coach-action {
+        .nr-build-coach-secondary-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .nr-build-coach-action,
+        .nr-formation-inline-tile,
+        .nr-move-players-wide-button {
           width: 100%;
           border-radius: 14px;
           border: 1px solid rgba(255, 255, 255, 0.1);
@@ -5575,13 +5522,51 @@ export default withAuth(function NuovaRosaLabPage() {
           transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
         }
 
+        .nr-formation-inline-tile {
+          cursor: default;
+          min-height: 46px;
+          justify-content: center;
+          text-align: center;
+          flex-direction: column;
+          gap: 2px;
+          padding: 8px 10px;
+          background:
+            radial-gradient(circle at 0% 0%, rgba(0, 212, 255, 0.12), transparent 40%),
+            rgba(15, 23, 42, 0.7);
+        }
+
+        .nr-formation-inline-tile span {
+          color: rgba(0, 212, 255, 0.78);
+          font-size: 10px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+        }
+
+        .nr-formation-inline-tile strong {
+          color: #fff;
+          font-size: 20px;
+          line-height: 1;
+          letter-spacing: -0.04em;
+        }
+
+        .nr-move-players-wide-button {
+          min-height: 46px;
+          justify-content: center;
+          text-align: center;
+          color: rgba(255, 255, 255, 0.88);
+          font-weight: 850;
+          background: rgba(15, 23, 42, 0.72);
+        }
+
         .nr-build-coach-action.primary {
           border-color: rgba(34, 211, 238, 0.48);
           background: linear-gradient(135deg, rgba(6, 182, 212, 0.9), rgba(124, 58, 237, 0.9));
           box-shadow: 0 10px 24px rgba(34, 211, 238, 0.2);
         }
 
-        .nr-build-coach-action:hover:not(:disabled) {
+        .nr-build-coach-action:hover:not(:disabled),
+        .nr-move-players-wide-button:hover:not(:disabled) {
           transform: translateY(-1px);
           border-color: rgba(0, 212, 255, 0.48);
           background: rgba(15, 23, 42, 0.95);
@@ -5592,7 +5577,8 @@ export default withAuth(function NuovaRosaLabPage() {
           box-shadow: 0 14px 30px rgba(34, 211, 238, 0.28);
         }
 
-        .nr-build-coach-action:disabled {
+        .nr-build-coach-action:disabled,
+        .nr-move-players-wide-button:disabled {
           opacity: 0.5;
           cursor: not-allowed;
           transform: none;
