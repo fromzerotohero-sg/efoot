@@ -632,7 +632,7 @@ function userDisplayName(profile = {}) {
 }
 
 function skillText(skills = []) {
-  return toAscii((Array.isArray(skills) ? skills : []).join(' '))
+  return toAscii((Array.isArray(skills) ? skills : []).map((s) => getSkillDisplayLabel(String(s || '').trim(), 'it')).join(' '))
 }
 
 function bestAerialTarget(players = []) {
@@ -821,14 +821,15 @@ function topAlternativeDescriptions(sameRole, targetPosition, lang) {
 }
 
 function skillGroups(technical) {
-  const text = toAscii(technical.mergedSkills.join(' '))
+  const merged = Array.isArray(technical.mergedSkills) ? technical.mergedSkills : []
+  const text = toAscii(merged.map((s) => getSkillDisplayLabel(String(s || '').trim(), 'it')).join(' '))
   return {
-    crossing: /(cross|pinpoint|calibrato|lofted|passaggio calibrato)/.test(text) || technical.pass >= 76,
-    defensive: /(interception|intercett|marking|marcat|block|muro|tackle|scivolata|caposaldo)/.test(text) || technical.defend >= 78,
+    crossing: /(cross|preciso|pinpoint|calibrato|loft|dosato|passaggio calibrato)/.test(text) || technical.pass >= 76,
+    defensive: /(interception|intercett|marking|marcat|block|muro|blocco|tackle|scivolata|caposaldo)/.test(text) || technical.defend >= 78,
     aerial: /(heading|colpo di testa|aerial|dominio|svettante)/.test(text) || technical.aerial >= 78,
-    dribble: /(double|scissors|turn|feint|finta|svolta|taglia|gira)/.test(text),
-    passing: /(one touch|through|filtrante|passaggio)/.test(text) || technical.pass >= 78,
-    finishing: /(first time|long range|finishing|tiro|finalizzazione)/.test(text) || technical.finish >= 80,
+    dribble: /(double|doppio|scissors|finta|turn|feint|svolta|taglia|gira|elastico)/.test(text),
+    passing: /(one touch|through|filtrante|prima|passaggio)/.test(text) || technical.pass >= 78,
+    finishing: /(first time|tiro di prima|tiro al volo|long range|distanza|finishing|tiro|finalizzazione)/.test(text) || technical.finish >= 80,
     fighting: /(fighting|spirito|leader)/.test(text)
   }
 }

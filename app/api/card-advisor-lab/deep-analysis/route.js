@@ -6,6 +6,7 @@ import { checkRateLimit } from '@/lib/rateLimiter'
 import { deductCredits, refundCredits } from '@/lib/creditService'
 import { getRelevantSections } from '@/lib/ragHelper'
 import { getCoachPoliciesText, getCoachSharedCoreText } from '@/lib/coachPromptRules'
+import { getSkillDisplayLabel, getSkillEnglishItalianGlossary } from '@/lib/playerSkillLabels.js'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -13,65 +14,47 @@ export const dynamic = 'force-dynamic'
 const DEEP_ANALYSIS_COST = 2
 const MODEL = process.env.CARD_ADVISOR_DEEP_MODEL || 'gpt-5.2'
 
-const IT_TERM_GLOSSARY = [
+/** Stili / meccaniche (non coperti da skill giocatore in playerSkillLabels). */
+const STYLE_AND_MECHANIC_GLOSSARY_IT = [
   ['Acceleration Burst', 'Scatto esplosivo'],
-  ['Aerial Superiority', 'Dominio aereo'],
-  ['Acrobatic Clearance', 'Rinvio acrobatico'],
-  ['Acrobatic Finishing', 'Finalizzazione acrobatica'],
   ['Anchor Man', 'Collante'],
-  ['Blocker', 'Blocco'],
   ['Box To Box', 'Box-to-box'],
   ['Build Up', 'Sviluppo'],
-  ['Captaincy', 'Leadership'],
   ['Classic No. 10', 'Classico numero 10'],
   ['Creative Playmaker', 'Regista creativo'],
   ['Cross Specialist', 'Specialista cross'],
-  ['Cut Behind Turn', 'Taglio alle spalle e giro'],
-  ['Deep-Lying Forward', 'Fulcro di gioco'],
-  ['Defensive Full-back', 'Terzino difensivo'],
-  ['Destroyer', 'Distruttore'],
-  ['Double Touch', 'Doppio tocco'],
   ['Dummy Runner', 'Finto nove'],
   ['Edged Crossing', 'Cross tagliente'],
   ['Extra Frontman', 'Difensore offensivo'],
-  ['First-time Shot', 'Tiro di prima'],
-  ['Fighting Spirit', 'Spirito combattivo'],
   ['Fox In The Box', 'Rapace d’area'],
   ['Full-back Finisher', 'Terzino finalizzatore'],
   ['Goal Poacher', 'Opportunista'],
-  ['Heading', 'Colpo di testa'],
   ['Hole Player', 'Giocatore chiave'],
   ['Incisive Run', 'Inserimento incisivo'],
-  ['Interception', 'Intercettazione'],
   ['Long Ball Expert', 'Specialista lancio lungo'],
-  ['Long Range Shooting', 'Tiro dalla distanza'],
-  ['Long-Range Curler', 'Tiro a giro dalla distanza'],
-  ['Low Lofted Pass', 'Pallonetto basso'],
   ['Low Screamer', 'Rasoterra potente'],
   ['Magnetic Feet', 'Piedi magnetici'],
-  ['Man Marking', 'Marcatura a uomo'],
   ['Mazing Run', 'Corsa ubriacante'],
   ['Momentum Dribbling', 'Dribbling in slancio'],
   ['Offensive Goalkeeper', 'Portiere offensivo'],
   ['Offensive Wingback', 'Terzino offensivo'],
-  ['One-touch Pass', 'Passaggio di prima'],
   ['Orchestrator', 'Regista'],
-  ['Outside Curler', 'Esterno a giro'],
   ['Phenomenal Finishing', 'Finalizzazione fenomenale'],
   ['Phenomenal Passing', 'Passaggio fenomenale'],
-  ['Pinpoint Crossing', 'Cross calibrato'],
   ['Prolific Winger', 'Ala prolifica'],
-  ['Rising Shots', 'Tiro ascendente'],
+  ['Rising Shots', 'Tiro a salire'],
   ['Roaming Flank', 'Taglio al centro'],
-  ['Sliding Tackle', 'Scivolata'],
   ['Speeding Bullet', 'Proiettile veloce'],
-  ['Super Sub', 'Super riserva'],
-  ['Through Passing', 'Passaggio filtrante'],
-  ['Track Back', 'Rientro difensivo'],
   ['Visionary Pass', 'Passaggio visionario'],
-  ['Weighted Pass', 'Passaggio calibrato'],
+  ['Defensive Full-back', 'Terzino difensivo'],
+  ['Offensive Full-back', 'Terzino offensivo'],
+  ['Destroyer', 'Distruttore'],
+  ['Deep-Lying Forward', 'Fulcro di gioco'],
   ['Tackle', 'Contrasto']
 ]
+
+const IT_TERM_GLOSSARY = [...getSkillEnglishItalianGlossary(), ...STYLE_AND_MECHANIC_GLOSSARY_IT]
+  .sort((a, b) => b[0].length - a[0].length)
 
 const CARD_ADVISOR_SELECT = [
   'source',
@@ -190,7 +173,17 @@ function sanitizeList(items = [], maxItems = 8, maxLen = 60) {
     .slice(0, maxItems)
 }
 
-function compactPlayer(player, stylesLookup = {}) {
+function canonSkillsForPrompt(rawList, lang, maxItems = 14, maxLen = 60) {
+  const code = lang === 'en' ? 'en' : 'it'
+  const unique = [...new Set(
+    (Array.isArray(rawList) ? rawList : [])
+      .map((s) => getSkillDisplayLabel(String(s || '').trim(), code))
+      .filter(Boolean)
+  )]
+  return sanitizeList(unique, maxItems, maxLen)
+}
+
+function compactPlayer(player, stylesLookup = {}, lang = 'it') {
   const skills = [
     ...(Array.isArray(player?.skills) ? player.skills : []),
     ...(Array.isArray(player?.com_skills) ? player.com_skills : [])
@@ -200,7 +193,7 @@ function compactPlayer(player, stylesLookup = {}) {
     position: player?.position || null,
     starter: Number(player?.slot_index) >= 0 && Number(player?.slot_index) <= 10,
     style: (player?.playing_style_id && stylesLookup[player.playing_style_id]) || player?.role || null,
-    skills: sanitizeList(skills, 8),
+    skills: canonSkillsForPrompt(skills, lang, 8),
     saved_stats: summarizeStats(player?.base_stats || {}),
     stats_basis: {
       source: 'saved_roster_stats',
@@ -258,7 +251,7 @@ async function fetchCardAdvisorCard(admin, card) {
     })[0]
 }
 
-function buildPrompt({ lang, card, catalogCard, profile, players, formation, coach, tacticalSettings, patterns, gameAnalysis, diagnostic, feedback, performance, ragKnowledge }) {
+function buildPrompt({ lang, card, catalogCard, profile, players, stylesLookup = {}, formation, coach, tacticalSettings, patterns, gameAnalysis, diagnostic, feedback, performance, ragKnowledge }) {
   const isEn = lang === 'en'
   const cardBaseStats = summarizeStats(catalogCard?.base_stats || {})
   const cardMaxStats = summarizeStats(catalogCard?.max_stats || {})
@@ -268,7 +261,7 @@ function buildPrompt({ lang, card, catalogCard, profile, players, formation, coa
     category: card.category,
     source: card.source || catalogCard?.source || null,
     playing_style: card.style || catalogCard?.playing_style || null,
-    native_skills: sanitizeList([...(card.skills || []), ...(catalogCard?.player_skills || [])], 14),
+    native_skills: canonSkillsForPrompt([...(card.skills || []), ...(catalogCard?.player_skills || [])], lang, 14),
     base_stats: cardBaseStats,
     max_stats: hasStats(catalogCard?.max_stats) ? cardMaxStats : null,
     stats_basis: {
@@ -280,7 +273,7 @@ function buildPrompt({ lang, card, catalogCard, profile, players, formation, coa
     data_quality: catalogCard ? 'catalog_match' : 'release_basic'
   }
 
-  const compactPlayers = players.map(player => compactPlayer(player, {}))
+  const compactPlayers = players.map(player => compactPlayer(player, stylesLookup, lang))
   const starters = compactPlayers.filter(player => player.starter)
   const reserves = compactPlayers.filter(player => !player.starter)
 
@@ -343,7 +336,8 @@ REGOLE SULLE STATISTICHE:
 SEMANTICA:
 - Usa termini da coach/community: movimento, skill nativa, combo, catena, rotazione, non prioritaria, luxury pick, riferimento in area, attacca spazio, dà ampiezza, tiene posizione, non cambia gerarchie.
 - Evita: "fit stile 56%", "bonus sistema", "sinergia principale", "stat edge", "overall", "rating", "buildalo", "potenzialo", "allenalo".
-- Se rispondi in italiano, traduci in italiano anche stili, skill e tag tecnici quando possibile: non lasciare frasi con "Pinpoint Crossing", "Edged Crossing", "Acceleration Burst", "Hole Player", "Blocker", "Interception" se puoi dire "Cross preciso", "Cross tagliente", "Scatto esplosivo", "Giocatore chiave", "Muro", "Intercettazione" (allineato a Gestione rosa / inserimento manuale).
+- Se rispondi in italiano, traduci in italiano anche stili, skill e tag tecnici quando possibile: non lasciare frasi con termini inglesi se esiste già l’italiano nel glossario interno (stessi nomi delle liste native_skills / skills della rosa).
+- REGOLE SULLE SKILL (obbligatorie): i campi native_skills e roster.*.skills nel JSON sono nomi già normalizzati nella lingua della risposta (${isEn ? 'inglese' : 'italiano'}) — citane esattamente quelli, senza sostituirli con sinonimi diversi. Non attribuire a un giocatore una skill assente dalla sua lista. Non confondere skill simili (es. cross preciso vs passaggio filtrante; tiro al volo vs tiro dalla distanza; muro vs intercettazione). Per “combo” tra carta e rosa, verifica che la skill compaia in entrambe le liste o spiega che manca il collegamento.
 - La sezione "key_reasoning" è la parte più importante: ogni punto deve incrociare almeno due fonti tra carta, stile, skill, stats, rosa, formazione, tattica, coach, diagnosi, game analysis e RAG meccaniche.
 - Ogni ragionamento deve chiudere con una conseguenza pratica: cosa cambia, cosa sfruttare, cosa evitare o perché non è priorità.
 
@@ -542,7 +536,6 @@ export async function POST(req) {
 
     const stylesLookup = {}
     ;(stylesRes.data || []).forEach(style => { stylesLookup[style.id] = style.name })
-    const players = (playersRes.data || []).map(player => compactPlayer(player, stylesLookup))
     const feedback = (feedbackRes.data || []).map(row => ({
       summary: sanitize(row.conversation_summary, 400),
       insights: Array.isArray(row.insights) ? row.insights.slice(0, 4) : []
@@ -556,6 +549,7 @@ export async function POST(req) {
       catalogCard,
       profile: profileRes.data || {},
       players: playersRes.data || [],
+      stylesLookup,
       formation: formationRes.data || null,
       coach: coachRes.data || null,
       tacticalSettings: tacticalRes.data || null,
