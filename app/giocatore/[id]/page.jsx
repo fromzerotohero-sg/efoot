@@ -10,6 +10,7 @@ import { getPhotoTypeStyle } from '@/lib/playerPhotoTypes'
 import { MAX_IMAGE_UPLOAD_BYTES } from '@/lib/uploadConstants'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
+import { getSkillDisplayLabel } from '@/lib/playerSkillLabels'
 import ManualPlayerModal from '@/components/ManualPlayerModal'
 import ManualBoostersModal from '@/components/ManualBoostersModal'
 
@@ -944,7 +945,7 @@ function StatsSection({ player, photoSlots, isExpanded, onToggle, onFileSelect, 
 
 // Componente Sezione Abilità (design unificato: stats = Abilità, colore neon-purple)
 function SkillsSection({ player, photoSlots, isExpanded, onToggle, onFileSelect, uploading, onEdit }) {
-  const { t } = useTranslation()
+  const { t, lang } = useTranslation()
   const style = getPhotoTypeStyle('stats')
   if (!player) return null
   
@@ -999,7 +1000,7 @@ function SkillsSection({ player, photoSlots, isExpanded, onToggle, onFileSelect,
                         fontWeight: 500,
                         color: 'var(--neon-purple)'
                       }}>
-                        {skill}
+                        {getSkillDisplayLabel(skill, lang)}
                       </div>
                     ))}
                   </div>
@@ -1027,7 +1028,7 @@ function SkillsSection({ player, photoSlots, isExpanded, onToggle, onFileSelect,
                         fontWeight: 500,
                         color: '#a855f7'
                       }}>
-                        {skill}
+                        {getSkillDisplayLabel(skill, lang)}
                       </div>
                     ))}
                   </div>

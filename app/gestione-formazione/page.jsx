@@ -18,6 +18,7 @@ import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import { PHOTO_TYPE_KEYS, getPhotoTypeConfig } from '@/lib/playerPhotoTypes'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
+import { getSkillDisplayLabel } from '@/lib/playerSkillLabels'
 
 // =====================================================
 // FEATURE FLAG - Sicurezza modifiche window.confirm
@@ -4487,7 +4488,7 @@ function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUplo
                               textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
                               boxShadow: '0 2px 4px rgba(251, 191, 36, 0.2)'
                             }}>
-                              {skill}
+                              {getSkillDisplayLabel(skill, lang)}
                             </span>
                           ))}
                         </div>
@@ -4509,7 +4510,7 @@ function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUplo
                               textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
                               boxShadow: '0 2px 4px rgba(251, 191, 36, 0.2)'
                             }}>
-                              {skill}
+                              {getSkillDisplayLabel(skill, lang)}
                             </span>
                           ))}
                         </div>
