@@ -14,6 +14,7 @@ import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 import { getFormationNameFromSlotPositions } from '@/lib/validateFormationLimits'
 import {
+  coerceBuildSlidersForRole,
   isBuildMacroBlockedForPlayer,
   pickBilingualList,
   previewGameplayBuildFromSliders,
@@ -524,13 +525,25 @@ function getStatToneClass(value) {
   return 'low'
 }
 
-function CompactStatInput({ label, value, onChange, emphasized = false }) {
+function CompactStatInput({ label, value, onChange, emphasized = false, progressionMacroMode = false }) {
   const toneClass = getStatToneClass(value)
   const numericValue = Number(value)
   const safeValue = Number.isFinite(numericValue) ? numericValue : 0
   const adjustValue = (delta) => {
     const nextValue = Math.max(0, Math.min(99, safeValue + delta))
     onChange(String(nextValue))
+  }
+
+  if (progressionMacroMode) {
+    const display = value === '' || value === null || value === undefined ? '—' : String(value)
+    return (
+      <div className={`nr-stat-compact-row nr-stat-compact-row--macro-readonly${emphasized ? ' nr-stat-compact-row--macro-focus' : ''}`}>
+        <span className="nr-stat-compact-label">{label}</span>
+        <div className={`nr-stat-macro-readonly-pill tone-${toneClass}`} title={label}>
+          {display}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -2695,7 +2708,25 @@ function PremiumPlayerModal({
     )
     setInteractiveBuildSliders(null)
     setMacroExplainFocus(null)
-  }, [show, player])
+
+    const coachSliders = getPlayerBuildCoachData(player)?.sliders
+    if (coachSliders && typeof coachSliders === 'object') {
+      const raw = sanitizeBuildCoachSliders(coachSliders)
+      const coerced = coerceBuildSlidersForRole(player, raw, slot?.position ?? null)
+      if (JSON.stringify(raw) !== JSON.stringify(coerced)) {
+        const preview = previewGameplayBuildFromSliders({
+          player,
+          sliders: coerced,
+          slotPosition: slot?.position ?? null
+        })
+        setForm((prev) => ({
+          ...prev,
+          ...mapPreviewBaseStatsToFormFields(preview.finalBaseStats),
+          overall_rating: String(preview.afterOverall)
+        }))
+      }
+    }
+  }, [show, player, slot?.position])
 
   if (!show || !player) return null
 
@@ -2780,7 +2811,11 @@ function PremiumPlayerModal({
   const slotProgressionPosition = slot?.position ?? null
 
   const effectiveBuildSliders = buildSliders
-    ? sanitizeBuildCoachSliders(interactiveBuildSliders ?? buildSliders)
+    ? coerceBuildSlidersForRole(
+      player,
+      sanitizeBuildCoachSliders(interactiveBuildSliders ?? buildSliders),
+      slotProgressionPosition
+    )
     : null
   const buildAllocationLivePreview = effectiveBuildSliders && player
     ? previewGameplayBuildFromSliders({
@@ -2809,7 +2844,11 @@ function PremiumPlayerModal({
 
   const handleBuildMacroSliderInput = (key, rawValue) => {
     if (!buildSliders) return
-    const cur = sanitizeBuildCoachSliders(interactiveBuildSliders ?? buildSliders)
+    const cur = coerceBuildSlidersForRole(
+      player,
+      sanitizeBuildCoachSliders(interactiveBuildSliders ?? buildSliders),
+      slotProgressionPosition
+    )
     const next = setBuildSliderTicks({
       player,
       sliders: cur,
@@ -2823,7 +2862,11 @@ function PremiumPlayerModal({
 
   const handleBuildMacroNudge = (key, delta) => {
     if (!buildSliders) return
-    const cur = sanitizeBuildCoachSliders(interactiveBuildSliders ?? buildSliders)
+    const cur = coerceBuildSlidersForRole(
+      player,
+      sanitizeBuildCoachSliders(interactiveBuildSliders ?? buildSliders),
+      slotProgressionPosition
+    )
     const next = tryApplyBuildSliderDelta({
       player,
       sliders: cur,
@@ -2844,7 +2887,11 @@ function PremiumPlayerModal({
       buildSliders && interactiveBuildSliders != null
         ? previewGameplayBuildFromSliders({
           player,
-          sliders: sanitizeBuildCoachSliders(interactiveBuildSliders ?? buildSliders),
+          sliders: coerceBuildSlidersForRole(
+            player,
+            sanitizeBuildCoachSliders(interactiveBuildSliders ?? buildSliders),
+            slotProgressionPosition
+          ),
           slotPosition: slotProgressionPosition
         })
         : null
@@ -3022,33 +3069,15 @@ function PremiumPlayerModal({
               </div>
             </div>
             <p className="nr-setup-readonly-note">
-              {lang === 'en'
-                ? 'Base data (name, age, club, nationality) syncs from catalog/photo source. You can edit OVR, playable roles and performance stats here.'
-                : 'I dati base (nome, eta, club, nazionalita) seguono la sorgente catalogo/foto. Qui puoi modificare OVR, ruoli giocabili e statistiche.'}
+              {buildSliders
+                ? (lang === 'en'
+                  ? 'With Build Coach active, change stats using the macros on the left; numbers on the right update live (no per-stat +/-). Base identity fields still follow catalog/photo.'
+                  : 'Con Build Coach attivo modifica le statistiche con le macro a sinistra; i numeri a destra si aggiornano in tempo reale (niente +/- per singola stat). I dati anagrafici restano da catalogo/foto.')
+                : (lang === 'en'
+                  ? 'Base data (name, age, club, nationality) syncs from catalog/photo source. You can edit OVR, playable roles and performance stats here.'
+                  : 'I dati base (nome, eta, club, nazionalita) seguono la sorgente catalogo/foto. Qui puoi modificare OVR, ruoli giocabili e statistiche.')}
             </p>
           </EnterpriseSection>
-
-          <div className="nr-premium-toolbar-row">
-            <div className="nr-secondary-actions">
-              {player.slot_index !== null && player.slot_index !== undefined && (
-                <>
-                  <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player)}>
-                    {lang === 'en' ? 'Replace from catalog' : 'Sostituisci da catalogo'}
-                  </button>
-                  <button type="button" className="nr-secondary-button" onClick={() => onRemoveFromSlot(player.id)}>
-                    {lang === 'en' ? 'Move to reserves' : 'Sposta in riserva'}
-                  </button>
-                </>
-              )}
-            </div>
-            <div className="nr-danger-zone">
-              <span>{lang === 'en' ? 'Danger area' : 'Area pericolosa'}</span>
-              <button type="button" className="nr-danger-button" onClick={() => onDeletePlayer(player.id)}>
-                <Trash2 size={14} />
-                {lang === 'en' ? 'Delete permanently' : 'Elimina definitivamente'}
-              </button>
-            </div>
-          </div>
 
           <div className={`nr-premium-progression-workspace${buildSliders ? ' has-build' : ''}`}>
             {buildSliders ? (
@@ -3070,8 +3099,8 @@ function PremiumPlayerModal({
                   </div>
                   <p className="nr-pt-budget-note">
                     {lang === 'en'
-                      ? `Total PT is set by max level (${player.level_cap ?? '?'}): you distribute it across macros, you do not type PT manually.`
-                      : `I PT totali li fissa il livello massimo (${player.level_cap ?? '?'}): li distribuisci sulle macro, non si digitano a mano.`}
+                      ? `Total PT is set by max level (${player.level_cap ?? '?'}): you distribute it across macros (you do not type PT manually). The three GK “PT” tracks exist only for goalkeepers; outfield roles use the other macros, matching eFootball / EFHub.`
+                      : `I PT totali li fissa il livello massimo (${player.level_cap ?? '?'}): li distribuisci sulle macro (non si digitano a mano). Le tre macro PT portiere esistono solo in porta; fuori porta si usano le altre macro, come in eFootball / EFHub.`}
                   </p>
                   <p className="nr-build-slider-hint">
                     {lang === 'en'
@@ -3079,11 +3108,9 @@ function PremiumPlayerModal({
                       : 'Passa sul macro per evidenziare le stat. Trascina o +/-; costi e blocchi ruolo come nel gioco.'}
                   </p>
                   <div className="nr-build-slider-grid nr-build-slider-grid--interactive">
-                    {BUILD_SLIDER_ORDER.map((key) => {
-                      const blocked = isBuildMacroBlockedForPlayer(player, key, slotProgressionPosition)
+                    {BUILD_SLIDER_ORDER.filter((key) => !isBuildMacroBlockedForPlayer(player, key, slotProgressionPosition)).map((key) => {
                       const ticks = Number(effectiveBuildSliders?.[key] || 0)
                       const canInc =
-                        !blocked &&
                         tryApplyBuildSliderDelta({
                           player,
                           sliders: effectiveBuildSliders,
@@ -3091,21 +3118,21 @@ function PremiumPlayerModal({
                           delta: 1,
                           slotPosition: slotProgressionPosition
                         }) != null
-                      const canDec = !blocked && ticks > 0
+                      const canDec = ticks > 0
                       const affectedLabels = getMacroAffectedStatLabels(key, t)
                       return (
                         <div
                           key={key}
                           role="group"
-                          className={`nr-build-slider-row ${ticks > 0 ? 'is-active' : ''} ${blocked ? 'is-blocked' : ''}`}
-                          onMouseEnter={() => !blocked && setMacroExplainFocus(key)}
+                          className={`nr-build-slider-row ${ticks > 0 ? 'is-active' : ''}`}
+                          onMouseEnter={() => setMacroExplainFocus(key)}
                           onMouseLeave={() => setMacroExplainFocus((prev) => (prev === key ? null : prev))}
                         >
                           <div className="nr-build-slider-row-top">
                             <span className="nr-build-slider-row-label">{getBuildSliderLabel(key, lang)}</span>
                             <span className="nr-build-slider-row-val" aria-hidden="true">{ticks}</span>
                           </div>
-                          {!blocked && affectedLabels.length > 0 ? (
+                          {affectedLabels.length > 0 ? (
                             <p className="nr-build-slider-affected">
                               {lang === 'en' ? 'Affects: ' : 'Modifica: '}
                               <span>{affectedLabels.join(lang === 'en' ? ', ' : ', ')}</span>
@@ -3117,8 +3144,8 @@ function PremiumPlayerModal({
                               min={0}
                               max={MAX_TACCE_PER_MACRO}
                               step={1}
-                              value={blocked ? 0 : ticks}
-                              disabled={blocked || saving || building}
+                              value={ticks}
+                              disabled={saving || building}
                               onChange={(event) => handleBuildMacroSliderInput(key, Number(event.target.value))}
                               aria-label={getBuildSliderLabel(key, lang)}
                             />
@@ -3176,16 +3203,16 @@ function PremiumPlayerModal({
             <section className="nr-reference-left">
               <EnterpriseSection title={t('attacking')}>
                 <div className="nr-stat-pairs">
-                  <CompactStatInput emphasized={statEmphasized('offensive_awareness')} label={t('offensive_awareness')} value={form.offensive_awareness} onChange={(value) => setForm((prev) => ({ ...prev, offensive_awareness: value }))} />
-                  <CompactStatInput emphasized={statEmphasized('finishing')} label={t('finishing')} value={form.finishing} onChange={(value) => setForm((prev) => ({ ...prev, finishing: value }))} />
-                  <CompactStatInput emphasized={statEmphasized('low_pass')} label={t('low_pass')} value={form.low_pass} onChange={(value) => setForm((prev) => ({ ...prev, low_pass: value }))} />
-                  <CompactStatInput emphasized={statEmphasized('lofted_pass')} label={t('lofted_pass')} value={form.lofted_pass} onChange={(value) => setForm((prev) => ({ ...prev, lofted_pass: value }))} />
-                  <CompactStatInput emphasized={statEmphasized('dribbling')} label={t('dribbling')} value={form.dribbling} onChange={(value) => setForm((prev) => ({ ...prev, dribbling: value }))} />
-                  <CompactStatInput emphasized={statEmphasized('ball_control')} label={t('ball_control')} value={form.ball_control} onChange={(value) => setForm((prev) => ({ ...prev, ball_control: value }))} />
-                  <CompactStatInput emphasized={statEmphasized('tight_possession')} label={t('tight_possession')} value={form.tight_possession} onChange={(value) => setForm((prev) => ({ ...prev, tight_possession: value }))} />
-                  <CompactStatInput emphasized={statEmphasized('heading')} label={t('heading')} value={form.heading} onChange={(value) => setForm((prev) => ({ ...prev, heading: value }))} />
-                  <CompactStatInput emphasized={statEmphasized('set_piece_taking')} label={t('place_kicking')} value={form.set_piece_taking} onChange={(value) => setForm((prev) => ({ ...prev, set_piece_taking: value }))} />
-                  <CompactStatInput emphasized={statEmphasized('curl')} label={t('curl')} value={form.curl} onChange={(value) => setForm((prev) => ({ ...prev, curl: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('offensive_awareness')} label={t('offensive_awareness')} value={form.offensive_awareness} onChange={(value) => setForm((prev) => ({ ...prev, offensive_awareness: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('finishing')} label={t('finishing')} value={form.finishing} onChange={(value) => setForm((prev) => ({ ...prev, finishing: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('low_pass')} label={t('low_pass')} value={form.low_pass} onChange={(value) => setForm((prev) => ({ ...prev, low_pass: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('lofted_pass')} label={t('lofted_pass')} value={form.lofted_pass} onChange={(value) => setForm((prev) => ({ ...prev, lofted_pass: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('dribbling')} label={t('dribbling')} value={form.dribbling} onChange={(value) => setForm((prev) => ({ ...prev, dribbling: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('ball_control')} label={t('ball_control')} value={form.ball_control} onChange={(value) => setForm((prev) => ({ ...prev, ball_control: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('tight_possession')} label={t('tight_possession')} value={form.tight_possession} onChange={(value) => setForm((prev) => ({ ...prev, tight_possession: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('heading')} label={t('heading')} value={form.heading} onChange={(value) => setForm((prev) => ({ ...prev, heading: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('set_piece_taking')} label={t('place_kicking')} value={form.set_piece_taking} onChange={(value) => setForm((prev) => ({ ...prev, set_piece_taking: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('curl')} label={t('curl')} value={form.curl} onChange={(value) => setForm((prev) => ({ ...prev, curl: value }))} />
                 </div>
               </EnterpriseSection>
             </section>
@@ -3193,10 +3220,10 @@ function PremiumPlayerModal({
             <section className="nr-reference-center">
               <EnterpriseSection title={t('defending')}>
                 <div className="nr-stat-pairs">
-                  <CompactStatInput emphasized={statEmphasized('defensive_awareness')} label={t('defensive_awareness')} value={form.defensive_awareness} onChange={(value) => setForm((prev) => ({ ...prev, defensive_awareness: value }))} />
-                  <CompactStatInput emphasized={statEmphasized('defensive_engagement')} label={t('defensive_engagement')} value={form.defensive_engagement} onChange={(value) => setForm((prev) => ({ ...prev, defensive_engagement: value }))} />
-                  <CompactStatInput emphasized={statEmphasized('tackling')} label={t('tackling')} value={form.tackling} onChange={(value) => setForm((prev) => ({ ...prev, tackling: value }))} />
-                  <CompactStatInput emphasized={statEmphasized('aggression')} label={t('aggression')} value={form.aggression} onChange={(value) => setForm((prev) => ({ ...prev, aggression: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('defensive_awareness')} label={t('defensive_awareness')} value={form.defensive_awareness} onChange={(value) => setForm((prev) => ({ ...prev, defensive_awareness: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('defensive_engagement')} label={t('defensive_engagement')} value={form.defensive_engagement} onChange={(value) => setForm((prev) => ({ ...prev, defensive_engagement: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('tackling')} label={t('tackling')} value={form.tackling} onChange={(value) => setForm((prev) => ({ ...prev, tackling: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('aggression')} label={t('aggression')} value={form.aggression} onChange={(value) => setForm((prev) => ({ ...prev, aggression: value }))} />
                 </div>
               </EnterpriseSection>
 
@@ -3205,29 +3232,53 @@ function PremiumPlayerModal({
             <section className="nr-reference-right">
               <EnterpriseSection title={t('athleticism')}>
                 <div className="nr-stat-pairs">
-                  <CompactStatInput emphasized={statEmphasized('speed')} label={t('speed')} value={form.speed} onChange={(value) => setForm((prev) => ({ ...prev, speed: value }))} />
-                  <CompactStatInput emphasized={statEmphasized('acceleration')} label={t('acceleration')} value={form.acceleration} onChange={(value) => setForm((prev) => ({ ...prev, acceleration: value }))} />
-                  <CompactStatInput emphasized={statEmphasized('kicking_power')} label={t('kicking_power')} value={form.kicking_power} onChange={(value) => setForm((prev) => ({ ...prev, kicking_power: value }))} />
-                  <CompactStatInput emphasized={statEmphasized('physical_contact')} label={t('physical_contact')} value={form.physical_contact} onChange={(value) => setForm((prev) => ({ ...prev, physical_contact: value }))} />
-                  <CompactStatInput emphasized={statEmphasized('balance')} label={t('balance')} value={form.balance} onChange={(value) => setForm((prev) => ({ ...prev, balance: value }))} />
-                  <CompactStatInput emphasized={statEmphasized('stamina')} label={t('stamina')} value={form.stamina} onChange={(value) => setForm((prev) => ({ ...prev, stamina: value }))} />
-                  <CompactStatInput emphasized={statEmphasized('jump')} label={t('jump')} value={form.jump} onChange={(value) => setForm((prev) => ({ ...prev, jump: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('speed')} label={t('speed')} value={form.speed} onChange={(value) => setForm((prev) => ({ ...prev, speed: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('acceleration')} label={t('acceleration')} value={form.acceleration} onChange={(value) => setForm((prev) => ({ ...prev, acceleration: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('kicking_power')} label={t('kicking_power')} value={form.kicking_power} onChange={(value) => setForm((prev) => ({ ...prev, kicking_power: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('physical_contact')} label={t('physical_contact')} value={form.physical_contact} onChange={(value) => setForm((prev) => ({ ...prev, physical_contact: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('balance')} label={t('balance')} value={form.balance} onChange={(value) => setForm((prev) => ({ ...prev, balance: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('stamina')} label={t('stamina')} value={form.stamina} onChange={(value) => setForm((prev) => ({ ...prev, stamina: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('jump')} label={t('jump')} value={form.jump} onChange={(value) => setForm((prev) => ({ ...prev, jump: value }))} />
                 </div>
               </EnterpriseSection>
             </section>
 
+            {(!buildSliders || !isBuildMacroBlockedForPlayer(player, 'gk1', slotProgressionPosition)) ? (
             <section className="nr-reference-goalkeeping">
               <EnterpriseSection title={t('goalkeeping')}>
                 <div className="nr-stat-pairs">
-                  <CompactStatInput emphasized={statEmphasized('gk_awareness')} label={t('goalkeeping')} value={form.gk_awareness} onChange={(value) => setForm((prev) => ({ ...prev, gk_awareness: value }))} />
-                  <CompactStatInput emphasized={statEmphasized('gk_catching')} label={t('gk_catching')} value={form.gk_catching} onChange={(value) => setForm((prev) => ({ ...prev, gk_catching: value }))} />
-                  <CompactStatInput emphasized={statEmphasized('gk_parrying')} label={t('gk_parrying')} value={form.gk_parrying} onChange={(value) => setForm((prev) => ({ ...prev, gk_parrying: value }))} />
-                  <CompactStatInput emphasized={statEmphasized('gk_reflexes')} label={t('gk_reflexes')} value={form.gk_reflexes} onChange={(value) => setForm((prev) => ({ ...prev, gk_reflexes: value }))} />
-                  <CompactStatInput emphasized={statEmphasized('gk_reach')} label={t('gk_reach')} value={form.gk_reach} onChange={(value) => setForm((prev) => ({ ...prev, gk_reach: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('gk_awareness')} label={t('goalkeeping')} value={form.gk_awareness} onChange={(value) => setForm((prev) => ({ ...prev, gk_awareness: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('gk_catching')} label={t('gk_catching')} value={form.gk_catching} onChange={(value) => setForm((prev) => ({ ...prev, gk_catching: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('gk_parrying')} label={t('gk_parrying')} value={form.gk_parrying} onChange={(value) => setForm((prev) => ({ ...prev, gk_parrying: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('gk_reflexes')} label={t('gk_reflexes')} value={form.gk_reflexes} onChange={(value) => setForm((prev) => ({ ...prev, gk_reflexes: value }))} />
+                  <CompactStatInput progressionMacroMode={Boolean(buildSliders)} emphasized={statEmphasized('gk_reach')} label={t('gk_reach')} value={form.gk_reach} onChange={(value) => setForm((prev) => ({ ...prev, gk_reach: value }))} />
                 </div>
               </EnterpriseSection>
             </section>
+            ) : null}
           </div>
+            </div>
+          </div>
+
+          <div className="nr-premium-toolbar-row">
+            <div className="nr-secondary-actions">
+              {player.slot_index !== null && player.slot_index !== undefined && (
+                <>
+                  <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player)}>
+                    {lang === 'en' ? 'Replace from catalog' : 'Sostituisci da catalogo'}
+                  </button>
+                  <button type="button" className="nr-secondary-button" onClick={() => onRemoveFromSlot(player.id)}>
+                    {lang === 'en' ? 'Move to reserves' : 'Sposta in riserva'}
+                  </button>
+                </>
+              )}
+            </div>
+            <div className="nr-danger-zone">
+              <span>{lang === 'en' ? 'Danger area' : 'Area pericolosa'}</span>
+              <button type="button" className="nr-danger-button" onClick={() => onDeletePlayer(player.id)}>
+                <Trash2 size={14} />
+                {lang === 'en' ? 'Delete permanently' : 'Elimina definitivamente'}
+              </button>
             </div>
           </div>
 
@@ -8006,8 +8057,8 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-premium-progression-workspace.has-build {
           display: grid;
-          grid-template-columns: minmax(280px, 0.4fr) minmax(0, 1fr);
-          gap: 14px;
+          grid-template-columns: minmax(280px, 0.36fr) minmax(0, 1fr);
+          gap: 16px;
           align-items: start;
         }
 
@@ -8032,6 +8083,19 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-premium-stats-beside-build {
           min-width: 0;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .nr-premium-progression-workspace.has-build .nr-reference-main-grid {
+          grid-template-columns: repeat(2, minmax(220px, 1fr));
+          gap: 12px;
+        }
+
+        @media (min-width: 1320px) {
+          .nr-premium-progression-workspace.has-build .nr-reference-main-grid {
+            grid-template-columns: repeat(3, minmax(200px, 1fr));
+          }
         }
 
         .nr-build-slider-row {
@@ -8599,7 +8663,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-premium-player-shell {
-          width: min(1320px, calc(100vw - 24px));
+          width: min(1380px, calc(100vw - 24px));
           max-height: min(94vh, 980px);
           overflow: auto;
         }
@@ -8772,16 +8836,20 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-stat-compact-row {
-          display: grid;
-          grid-template-columns: minmax(0, 1fr) auto;
-          align-items: start;
-          gap: 8px 10px;
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 6px;
+        }
+
+        .nr-stat-compact-row--macro-readonly {
+          gap: 5px;
         }
 
         .nr-stat-compact-row--macro-focus {
           border-radius: 10px;
-          padding: 2px 4px;
-          margin: -2px -4px;
+          padding: 4px 6px;
+          margin: -4px -6px;
           box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.55);
           background: rgba(14, 165, 233, 0.08);
         }
@@ -8791,14 +8859,58 @@ export default withAuth(function NuovaRosaLabPage() {
           min-width: 0;
           white-space: normal;
           overflow-wrap: break-word;
-          word-break: break-word;
-          hyphens: auto;
-          line-height: 1.25;
-          font-size: 11.5px;
+          word-break: normal;
+          hyphens: none;
+          line-height: 1.35;
+          font-size: 12.5px;
+          font-weight: 750;
+          color: rgba(255, 255, 255, 0.88);
+        }
+
+        .nr-stat-macro-readonly-pill {
+          align-self: flex-end;
+          min-width: 52px;
+          padding: 6px 12px;
+          border-radius: 999px;
+          text-align: center;
+          font-size: 13px;
+          font-weight: 950;
+          font-variant-numeric: tabular-nums;
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          background: rgba(9, 14, 30, 0.95);
+          color: #fff;
+        }
+
+        .nr-stat-macro-readonly-pill.tone-elite {
+          border-color: rgba(64, 222, 122, 0.55);
+          box-shadow: inset 0 0 0 1px rgba(64, 222, 122, 0.22);
+          color: #8affb3;
+        }
+
+        .nr-stat-macro-readonly-pill.tone-good {
+          border-color: rgba(172, 222, 64, 0.5);
+          box-shadow: inset 0 0 0 1px rgba(172, 222, 64, 0.2);
+          color: #d9ff7e;
+        }
+
+        .nr-stat-macro-readonly-pill.tone-ok {
+          border-color: rgba(251, 191, 36, 0.52);
+          box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.2);
+          color: #ffd878;
+        }
+
+        .nr-stat-macro-readonly-pill.tone-low {
+          border-color: rgba(255, 83, 83, 0.52);
+          box-shadow: inset 0 0 0 1px rgba(255, 83, 83, 0.22);
+          color: #ffb4b4;
+        }
+
+        .nr-stat-macro-readonly-pill.tone-neutral {
           color: rgba(255, 255, 255, 0.82);
         }
 
         .nr-stat-stepper {
+          align-self: flex-end;
           display: grid;
           grid-template-columns: 28px 46px 28px;
           align-items: center;
