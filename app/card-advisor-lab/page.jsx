@@ -1079,6 +1079,15 @@ function CardDetailsModal({
     }
   }, [card, onClose])
 
+  React.useEffect(() => {
+    if (!card) return
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prevOverflow
+    }
+  }, [card])
+
   if (!card) return null
 
   return (
@@ -1811,16 +1820,23 @@ export default withAuth(function CardAdvisorLabPage() {
           padding: clamp(12px, 3vw, 28px);
           background: rgba(2, 4, 12, 0.82);
           backdrop-filter: blur(10px);
+          overscroll-behavior: none;
         }
 
         .card-details-modal-inner {
           position: relative;
           width: min(1040px, calc(100vw - clamp(24px, 6vw, 56px)));
           max-height: min(880px, calc(100vh - 32px));
+          max-height: min(880px, calc(100dvh - 32px));
+          min-height: 0;
           overflow-y: auto;
           overflow-x: hidden;
+          -webkit-overflow-scrolling: touch;
+          overscroll-behavior-y: contain;
+          touch-action: pan-y;
           border-radius: 24px;
           box-shadow: 0 0 50px rgba(0, 212, 255, 0.22);
+          isolation: isolate;
         }
 
         .card-details-modal-inner--deep-loading {
@@ -2288,8 +2304,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .detail-panel {
           padding: clamp(16px, 3vw, 22px);
-          position: sticky;
-          top: 18px;
+          position: relative;
         }
 
         .detail-hero {
@@ -3433,11 +3448,14 @@ export default withAuth(function CardAdvisorLabPage() {
           .card-details-modal-inner {
             width: 100%;
             max-height: calc(100vh - 16px);
+            max-height: calc(100dvh - 16px);
+            padding-bottom: max(14px, env(safe-area-inset-bottom, 0px));
             border-radius: 22px 22px 12px 12px;
           }
 
           .card-details-modal .detail-panel {
             padding: 14px;
+            padding-bottom: max(18px, calc(14px + env(safe-area-inset-bottom, 0px)));
           }
 
           .detail-close-button {
