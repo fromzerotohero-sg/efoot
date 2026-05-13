@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
-import { computeOverallRating, normalizeEfhubPosition, normalizeStatsToEfhub } from '@/lib/efootballBuildRules'
+import { applyBoosters, applyCoachEffects, computeOverallRating, normalizeEfhubPosition, normalizeStatsToEfhub } from '@/lib/efootballBuildRules'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -150,7 +150,7 @@ export async function PATCH(req, { params }) {
 
     const { data: existingPlayer, error: existingPlayerError } = await supabase
       .from('players')
-      .select('id, player_name, position, card_type, overall_rating, age, nationality, club_name, role, base_stats, skills, com_skills, available_boosters, photo_slots, metadata, original_positions, level_cap, current_level, development_points, position_ratings')
+      .select('id, player_name, position, card_type, overall_rating, age, height, weight, nationality, club_name, role, base_stats, skills, com_skills, available_boosters, photo_slots, metadata, original_positions, level_cap, current_level, development_points, position_ratings')
       .eq('id', id)
       .eq('user_id', userId)
       .single()
@@ -293,15 +293,28 @@ export async function PATCH(req, { params }) {
     }
     
     // Always update updated_at
-    if (updateData.base_stats && body.base_stats !== undefined) {
+    if ((updateData.base_stats && body.base_stats !== undefined) || body.available_boosters !== undefined) {
       const targetPosition = normalizeEfhubPosition(updateData.position || existingPlayer.position)
       const height = body.height ?? body.height_cm ?? existingPlayer.height
       const weakFootAccuracy = updateData.metadata?.weak_foot_accuracy || existingPlayer.metadata?.weak_foot_accuracy || 2
+      const { data: activeCoach } = await supabase
+        .from('coaches')
+        .select('playing_style_competence, stat_boosters')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .maybeSingle()
+      const { data: tacticalSettings } = await supabase
+        .from('team_tactical_settings')
+        .select('team_playing_style')
+        .eq('user_id', userId)
+        .maybeSingle()
+      const statsWithBoosters = applyBoosters(updateData.base_stats || existingPlayer.base_stats || {}, updateData.available_boosters || existingPlayer.available_boosters || [])
+      const statsWithCoach = applyCoachEffects(statsWithBoosters, activeCoach, tacticalSettings?.team_playing_style)
       const recalculatedOverall = computeOverallRating({
         position: targetPosition,
         height,
         weakFootAccuracy,
-        stats: normalizeStatsToEfhub(updateData.base_stats)
+        stats: normalizeStatsToEfhub(statsWithCoach)
       })
       if (Number.isFinite(recalculatedOverall)) {
         updateData.overall_rating = recalculatedOverall
