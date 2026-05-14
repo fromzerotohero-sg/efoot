@@ -154,6 +154,7 @@ function HomePage() {
   const hasMissingSetup = hasActiveCoach === false || !gameAnalysisLastCapture || stats.titolari < 11
   const showSetupBanner = !loading && !hideSetupBanner
   const setupBannerStorageKey = 'dashboard_setup_banner_hidden_v1'
+  const rosterSetupState = stats.titolari <= 0 ? 'empty' : stats.titolari < 11 ? 'partial' : 'complete'
   React.useEffect(() => {
     if (typeof window === 'undefined') return
     try {
@@ -262,13 +263,18 @@ function HomePage() {
       },
       {
         key: 'roster_review',
-        label: stats.titolari < 11 ? t('setupReminderMissingRoster') : t('setupTipRosterReview'),
+        label:
+          rosterSetupState === 'empty'
+            ? t('setupReminderMissingRosterEmpty')
+            : rosterSetupState === 'partial'
+              ? t('setupReminderMissingRosterPartial')
+              : t('setupTipRosterReview'),
         onClick: () => router.push('/gestione-formazione'),
         isMissing: stats.titolari < 11
       }
     ]
     return tips
-  }, [gameAnalysisLastCapture, hasActiveCoach, stats.titolari, t, router])
+  }, [gameAnalysisLastCapture, hasActiveCoach, rosterSetupState, stats.titolari, t, router])
 
   React.useEffect(() => {
     if (!showSetupBanner) return
@@ -281,11 +287,21 @@ function HomePage() {
   // Reset indice quando cambiano gli elementi mancanti
   const reminderItems = bannerTips.filter(item => item.isMissing)
   const missingCount = reminderItems.length
-  // Notifica setup: priorità (rosso = alta, giallo = media, verde = completo). Non invasiva, icona responsive, messaggio = importanza di completare.
-  const setupStatus = missingCount >= 2 ? 'critical' : missingCount === 1 ? 'partial' : 'complete'
+  // Notifica setup: differenzia chiaramente "nessuna rosa" da "rosa da completare"
+  const setupStatus = rosterSetupState === 'empty'
+    ? 'roster_missing'
+    : rosterSetupState === 'partial'
+      ? 'roster_partial'
+      : missingCount >= 2
+        ? 'critical'
+        : missingCount === 1
+          ? 'partial'
+          : 'complete'
   const setupStatusConfig = {
-    critical: { color: '#FF3B30', bg: 'rgba(255, 59, 48, 0.1)', border: 'rgba(255, 59, 48, 0.3)', icon: AlertCircle, labelKey: 'setupStatusCritical', iconOpacity: 1 },
-    partial: { color: '#FF9500', bg: 'rgba(255, 149, 0, 0.1)', border: 'rgba(255, 149, 0, 0.3)', icon: AlertCircle, labelKey: 'setupStatusPartial', iconOpacity: 1 },
+    roster_missing: { color: '#FFD76A', bg: 'rgba(255, 215, 106, 0.10)', border: 'rgba(255, 215, 106, 0.24)', icon: AlertCircle, labelKey: 'setupStatusRosterMissing', iconOpacity: 1 },
+    roster_partial: { color: '#67E8F9', bg: 'rgba(0, 212, 255, 0.08)', border: 'rgba(0, 212, 255, 0.20)', icon: AlertCircle, labelKey: 'setupStatusRosterPartial', iconOpacity: 1 },
+    critical: { color: '#FFB84D', bg: 'rgba(255, 184, 77, 0.10)', border: 'rgba(255, 184, 77, 0.24)', icon: AlertCircle, labelKey: 'setupStatusCritical', iconOpacity: 1 },
+    partial: { color: '#8BE9A8', bg: 'rgba(139, 233, 168, 0.08)', border: 'rgba(139, 233, 168, 0.18)', icon: AlertCircle, labelKey: 'setupStatusPartial', iconOpacity: 1 },
     complete: { color: '#34C759', bg: 'rgba(52, 199, 89, 0.1)', border: 'rgba(52, 199, 89, 0.3)', icon: CheckCircle2, labelKey: 'setupStatusComplete', iconOpacity: 1 }
   }
   const statusCfg = setupStatusConfig[setupStatus]

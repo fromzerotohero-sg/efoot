@@ -172,10 +172,10 @@ export default function CoachSuggestions({
       if (!hasActiveCoach && !isInCooldown('missing_active_coach')) {
         return {
           id: 'missing_active_coach',
-          priority: 2,
+          priority: 1,
           icon: AlertCircle,
-          iconColor: '#FFD76A',
-          bgGradient: 'linear-gradient(135deg, rgba(255, 215, 106, 0.15) 0%, rgba(255, 215, 106, 0.05) 100%)',
+          iconColor: '#A7F3D0',
+          bgGradient: 'linear-gradient(135deg, rgba(110, 231, 183, 0.12) 0%, rgba(16, 185, 129, 0.04) 100%)',
           title: t('coachSuggestionCoachMissingTitle'),
           message: t('coachSuggestionCoachMissingMessage'),
           primaryAction: {
@@ -289,8 +289,8 @@ export default function CoachSuggestions({
         {
           id: 'rotation_coach_tip',
           icon: AlertCircle,
-          iconColor: '#FFD76A',
-          bgGradient: 'linear-gradient(135deg, rgba(255, 215, 106, 0.15) 0%, rgba(255, 215, 106, 0.05) 100%)',
+          iconColor: '#A7F3D0',
+          bgGradient: 'linear-gradient(135deg, rgba(110, 231, 183, 0.12) 0%, rgba(16, 185, 129, 0.04) 100%)',
           title: t('coachSuggestionCoachMissingTitle'),
           message: t('coachSuggestionCoachMissingMessage'),
           actionLabel: t('coachSuggestionActionCoaches'),
@@ -391,8 +391,8 @@ export default function CoachSuggestions({
         className={`coach-live-container ${isExpanded ? 'expanded' : ''}`}
         style={{
           background: 'linear-gradient(145deg, rgba(5, 8, 21, 0.98) 0%, rgba(10, 14, 39, 0.98) 100%)',
-          borderTop: `2px solid ${currentMessage.iconColor}`,
-          boxShadow: `0 -8px 32px ${currentMessage.iconColor}30`
+          borderTop: `1px solid ${currentMessage.iconColor}`,
+          boxShadow: `0 -8px 26px ${currentMessage.iconColor}18`
         }}
       >
         {/* Handle per swipe su mobile */}
@@ -411,7 +411,7 @@ export default function CoachSuggestions({
               style={{
                 background: currentMessage.bgGradient,
                 borderColor: currentMessage.iconColor,
-                boxShadow: `0 0 20px ${currentMessage.iconColor}40`
+                boxShadow: `0 0 14px ${currentMessage.iconColor}22`
               }}
             >
               <IconComponent 
@@ -451,7 +451,7 @@ export default function CoachSuggestions({
               onClick={currentMessage.primaryAction.onClick}
               style={{
                 background: `linear-gradient(135deg, ${currentMessage.iconColor} 0%, ${currentMessage.iconColor}dd 100%)`,
-                boxShadow: `0 4px 15px ${currentMessage.iconColor}40`
+                boxShadow: `0 4px 12px ${currentMessage.iconColor}24`
               }}
             >
               {currentMessage.primaryAction.label}
