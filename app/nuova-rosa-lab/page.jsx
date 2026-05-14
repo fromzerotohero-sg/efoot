@@ -6202,7 +6202,8 @@ export default withAuth(function NuovaRosaLabPage() {
           position: fixed;
           top: max(16px, env(safe-area-inset-top, 0px));
           right: 16px;
-          z-index: 2147483000;
+          /* Keep above picker content, but below global confirm modals. */
+          z-index: 100300;
           width: 46px;
           height: 46px;
           border-color: rgba(255, 255, 255, 0.28);
@@ -7220,7 +7221,8 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-modal-backdrop {
           position: fixed;
           inset: 0;
-          z-index: 2147482000;
+          /* Page-level picker/backdrop layer (global ConfirmModal stays above). */
+          z-index: 100200;
           background: rgba(7, 10, 20, 0.8);
           display: flex;
           align-items: flex-start;
