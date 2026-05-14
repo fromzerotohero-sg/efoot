@@ -995,7 +995,7 @@ function HomePage() {
           }}
         >
           <div
-            className="neon-card card-advisor-entry-modal"
+            className="neon-card card-advisor-entry-modal card-advisor-preview-modal"
             style={{
               width: 'min(760px, 100%)',
               padding: 'clamp(24px, 4vw, 34px)',
@@ -1008,7 +1008,7 @@ function HomePage() {
           >
             <div style={{ position: 'absolute', inset: '-40% -20% auto auto', width: '280px', height: '280px', borderRadius: '999px', background: 'rgba(255, 203, 5, 0.16)', filter: 'blur(18px)' }} />
             <div style={{ position: 'absolute', inset: 'auto auto -35% -15%', width: '260px', height: '260px', borderRadius: '999px', background: 'rgba(0, 212, 255, 0.14)', filter: 'blur(18px)' }} />
-            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+            <div className="card-advisor-preview-copy" style={{ textAlign: 'center', marginBottom: '24px' }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 13px', borderRadius: '999px', background: 'rgba(255, 203, 5, 0.12)', border: '1px solid rgba(255, 203, 5, 0.28)', color: '#ffcb05', fontWeight: 800, fontSize: '13px', marginBottom: '14px', position: 'relative' }}>
                 <Zap size={15} />
                 {lang === 'en' ? 'New card releases' : 'Nuove carte uscite'}
@@ -1022,24 +1022,12 @@ function HomePage() {
                   : 'Non giudichiamo le carte solo dall’overall. Le confrontiamo con la tua rosa reale, le tue esigenze e le tue performance per dirti se prenderle, saltarle o usarle solo come rotazione.'}
               </p>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '22px', position: 'relative' }}>
-              {[
-                lang === 'en' ? 'Fit with starters and bench' : 'Fit con titolari e panchina',
-                lang === 'en' ? 'Reads your weaknesses and priorities' : 'Legge debolezze e priorità',
-                lang === 'en' ? 'Clear verdict: sign, skip, rotation' : 'Verdetto chiaro: prendi, salta, rotazione'
-              ].map((item) => (
-                <div key={item} style={{ padding: '13px', borderRadius: '16px', background: 'rgba(255,255,255,0.045)', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.86)', fontSize: '13px', lineHeight: 1.45 }}>
-                  <CheckCircle2 size={15} style={{ color: '#34C759', marginBottom: '8px' }} />
-                  <div>{item}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{ position: 'relative', maxWidth: '440px', margin: '0 auto 18px', display: 'grid', gap: '10px' }}>
+            <div className="card-advisor-access-status" style={{ position: 'relative', maxWidth: '440px', margin: '0 auto 12px', display: 'grid', gap: '10px' }}>
               <div style={{ textAlign: 'center', color: '#ffcb05', fontSize: '13px', fontWeight: 800 }}>
                 {lang === 'en' ? 'Available now' : 'Disponibile ora'}
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', position: 'relative' }}>
+            <div className="card-advisor-access-actions" style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', position: 'relative', marginBottom: '18px' }}>
               <button
                 type="button"
                 onClick={openCardAdvisor}
@@ -1076,6 +1064,18 @@ function HomePage() {
               >
                 {lang === 'en' ? 'Continue in Pro' : 'Continua nel Pro'}
               </button>
+            </div>
+            <div className="card-advisor-benefit-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '0', position: 'relative' }}>
+              {[
+                lang === 'en' ? 'Fit with starters and bench' : 'Fit con titolari e panchina',
+                lang === 'en' ? 'Reads your weaknesses and priorities' : 'Legge debolezze e priorità',
+                lang === 'en' ? 'Clear verdict: sign, skip, rotation' : 'Verdetto chiaro: prendi, salta, rotazione'
+              ].map((item) => (
+                <div key={item} style={{ padding: '13px', borderRadius: '16px', background: 'rgba(255,255,255,0.045)', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.86)', fontSize: '13px', lineHeight: 1.45 }}>
+                  <CheckCircle2 size={15} style={{ color: '#34C759', marginBottom: '8px' }} />
+                  <div>{item}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -1453,6 +1453,59 @@ function HomePage() {
 
           .card-advisor-entry-modal h2 {
             font-size: 26px !important;
+          }
+
+          .card-advisor-preview-modal {
+            max-height: calc(100dvh - 104px - env(safe-area-inset-bottom, 0px)) !important;
+            padding: 15px !important;
+          }
+
+          .card-advisor-preview-copy {
+            margin-bottom: 12px !important;
+          }
+
+          .card-advisor-preview-copy h2 {
+            font-size: 25px !important;
+            line-height: 1.04 !important;
+            margin-bottom: 8px !important;
+          }
+
+          .card-advisor-preview-copy p {
+            font-size: 14px !important;
+            line-height: 1.42 !important;
+          }
+
+          .card-advisor-access-status {
+            margin-bottom: 8px !important;
+          }
+
+          .card-advisor-access-actions {
+            gap: 8px !important;
+            margin-bottom: 12px !important;
+          }
+
+          .card-advisor-access-actions .neon-button {
+            width: 100% !important;
+            min-height: 46px !important;
+            padding: 11px 14px !important;
+          }
+
+          .card-advisor-benefit-grid {
+            grid-template-columns: 1fr !important;
+            gap: 8px !important;
+          }
+
+          .card-advisor-benefit-grid > div {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            padding: 9px 11px !important;
+            border-radius: 12px !important;
+          }
+
+          .card-advisor-benefit-grid svg {
+            margin-bottom: 0 !important;
+            flex-shrink: 0 !important;
           }
         }
       `}</style>

@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { createPortal } from 'react-dom'
 import { withAuth } from '@/components/AuthWrapper'
 import { supabase } from '@/lib/supabaseClient'
 import { getPositionRoleTranslationKey, useTranslation } from '@/lib/i18n'
@@ -43,6 +44,11 @@ import {
   User,
   X
 } from 'lucide-react'
+
+function ModalPortal({ children }) {
+  if (typeof document === 'undefined') return null
+  return createPortal(children, document.body)
+}
 
 function toKey(value) {
   return String(value || '')
@@ -425,6 +431,7 @@ function EnterpriseModalFrame({ show, onClose, title, subtitle, children, classN
   if (!show) return null
 
   return (
+    <ModalPortal>
     <div className="nr-modal-backdrop" onClick={onClose}>
       <div className={`nr-modal-shell ${className}`.trim()} onClick={(event) => event.stopPropagation()}>
         <div className="nr-modal-header">
@@ -439,6 +446,7 @@ function EnterpriseModalFrame({ show, onClose, title, subtitle, children, classN
         {children}
       </div>
     </div>
+    </ModalPortal>
   )
 }
 
@@ -1250,6 +1258,7 @@ function CatalogPickerModal({
   const goBackToChoice = () => setSlotFlow('choice')
 
   return (
+    <ModalPortal>
     <div className="nr-modal-backdrop" onClick={onClose}>
       <div className={`nr-modal-shell nr-picker-shell ${isReserveMode ? 'reserve-mode' : 'slot-mode'}`} onClick={(event) => event.stopPropagation()}>
         <div className="nr-modal-header">
@@ -1396,6 +1405,7 @@ function CatalogPickerModal({
         )}
       </div>
     </div>
+    </ModalPortal>
   )
 }
 
@@ -6197,14 +6207,13 @@ export default withAuth(function NuovaRosaLabPage() {
           position: fixed;
           top: max(16px, env(safe-area-inset-top, 0px));
           right: 16px;
-          z-index: 100230;
+          z-index: 2147483000;
           width: 46px;
           height: 46px;
           border-color: rgba(255, 255, 255, 0.28);
           background: rgba(3, 7, 18, 0.96);
           color: #fff;
           box-shadow: 0 18px 48px rgba(0, 0, 0, 0.46), 0 0 0 1px rgba(0, 212, 255, 0.18);
-          backdrop-filter: blur(14px);
         }
 
         .nr-field-shell {
@@ -7216,7 +7225,7 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-modal-backdrop {
           position: fixed;
           inset: 0;
-          z-index: 100200;
+          z-index: 2147482000;
           background: rgba(7, 10, 20, 0.8);
           display: flex;
           align-items: flex-start;
@@ -8976,6 +8985,9 @@ export default withAuth(function NuovaRosaLabPage() {
             align-items: flex-start;
             justify-content: stretch;
             padding: max(10px, env(safe-area-inset-top, 0px)) 0 max(72px, env(safe-area-inset-bottom, 0px));
+            background: rgba(3, 7, 18, 0.98);
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
           }
 
           .nr-page {
@@ -9091,6 +9103,8 @@ export default withAuth(function NuovaRosaLabPage() {
             padding: 12px;
             padding-bottom: max(180px, calc(env(safe-area-inset-bottom, 0px) + 156px));
             margin: 0;
+            box-shadow: none;
+            contain: content;
           }
 
           .nr-modal-header {
@@ -9100,6 +9114,9 @@ export default withAuth(function NuovaRosaLabPage() {
           .nr-modal-header .nr-icon-button {
             top: max(10px, env(safe-area-inset-top, 0px));
             right: 10px;
+            width: 44px;
+            height: 44px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.38);
           }
 
           .nr-modal-shell::after {
@@ -9161,6 +9178,13 @@ export default withAuth(function NuovaRosaLabPage() {
           .nr-upload-inline-button {
             min-width: 96px;
             padding: 0 10px;
+          }
+
+          .nr-catalog-card,
+          .nr-secondary-button,
+          .nr-primary-button,
+          .nr-icon-button {
+            transition: none !important;
           }
 
           .nr-picker-shell.reserve-mode .nr-picker-body {
