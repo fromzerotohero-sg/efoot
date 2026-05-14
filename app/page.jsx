@@ -95,6 +95,8 @@ function HomePage() {
   const [hasActiveCoach, setHasActiveCoach] = React.useState(false)
   const [reminderRotationIndex, setReminderRotationIndex] = React.useState(0)
   const [hideSetupBanner, setHideSetupBanner] = React.useState(false)
+  const [showEntryChoiceModal, setShowEntryChoiceModal] = React.useState(false)
+  const [showCardAdvisorLogoBurst, setShowCardAdvisorLogoBurst] = React.useState(false)
   const [showCardAdvisorModal, setShowCardAdvisorModal] = React.useState(false)
   const [cardAdvisorCode, setCardAdvisorCode] = React.useState('')
   const [cardAdvisorUnlocking, setCardAdvisorUnlocking] = React.useState(false)
@@ -103,7 +105,8 @@ function HomePage() {
   const [confirmModal, setConfirmModal] = React.useState(null) // { show, title, message, onConfirm, onCancel }
   const [coachChatInitialMessage, setCoachChatInitialMessage] = React.useState(null)
   const [importingStarterPack, setImportingStarterPack] = React.useState(false)
-  const cardAdvisorModalSessionKey = 'dashboard_card_advisor_modal_seen_session_v1'
+  const cardAdvisorLogoTimerRef = React.useRef(null)
+  const cardAdvisorModalSessionKey = 'dashboard_card_advisor_choice_seen_session_v2'
 
   React.useEffect(() => {
     setGameAnalysisNavOpen(showGameAnalysisModal)
@@ -112,6 +115,14 @@ function HomePage() {
   React.useEffect(() => {
     return () => setGameAnalysisNavOpen(false)
   }, [setGameAnalysisNavOpen])
+
+  React.useEffect(() => {
+    return () => {
+      if (cardAdvisorLogoTimerRef.current) {
+        clearTimeout(cardAdvisorLogoTimerRef.current)
+      }
+    }
+  }, [])
 
   // Bottom nav su /: apre analisi senza Link → ?openGameAnalysis (niente doppia navigazione)
   React.useEffect(() => {
@@ -122,18 +133,6 @@ function HomePage() {
     return () => {
       if (typeof window !== 'undefined') {
         window.removeEventListener(OPEN_GAME_ANALYSIS_MODAL_EVENT, onOpen)
-      }
-    }
-  }, [])
-
-  React.useEffect(() => {
-    const onOpen = () => setShowCardAdvisorModal(true)
-    if (typeof window !== 'undefined') {
-      window.addEventListener('open-card-advisor-entry', onOpen)
-    }
-    return () => {
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('open-card-advisor-entry', onOpen)
       }
     }
   }, [])
@@ -179,6 +178,7 @@ function HomePage() {
     try {
       sessionStorage.setItem(cardAdvisorModalSessionKey, '1')
     } catch {}
+    setShowEntryChoiceModal(false)
     setShowCardAdvisorModal(false)
     setCardAdvisorCode('')
     setCardAdvisorError('')
@@ -189,10 +189,44 @@ function HomePage() {
     try {
       sessionStorage.setItem(cardAdvisorModalSessionKey, '1')
     } catch {}
+    setShowEntryChoiceModal(false)
     setShowCardAdvisorModal(false)
     setCardAdvisorCode('')
     setCardAdvisorError('')
   }, [])
+
+  const playCardAdvisorLogoIntro = React.useCallback(() => {
+    setShowEntryChoiceModal(false)
+    setShowCardAdvisorModal(false)
+    setShowCardAdvisorLogoBurst(true)
+    setCardAdvisorCode('')
+    setCardAdvisorError('')
+    if (cardAdvisorLogoTimerRef.current) {
+      clearTimeout(cardAdvisorLogoTimerRef.current)
+    }
+    cardAdvisorLogoTimerRef.current = setTimeout(() => {
+      setShowCardAdvisorLogoBurst(false)
+      setShowCardAdvisorModal(true)
+    }, 1200)
+  }, [])
+
+  const chooseCardAdvisorEntry = React.useCallback(() => {
+    playCardAdvisorLogoIntro()
+  }, [playCardAdvisorLogoIntro])
+
+  React.useEffect(() => {
+    const onOpen = () => {
+      playCardAdvisorLogoIntro()
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('open-card-advisor-entry', onOpen)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('open-card-advisor-entry', onOpen)
+      }
+    }
+  }, [playCardAdvisorLogoIntro])
 
   const unlockCardAdvisor = React.useCallback(async () => {
     const code = cardAdvisorCode.trim()
@@ -227,9 +261,9 @@ function HomePage() {
     if (typeof window === 'undefined') return
     try {
       const alreadySeenThisSession = sessionStorage.getItem(cardAdvisorModalSessionKey) === '1'
-      if (!alreadySeenThisSession) setShowCardAdvisorModal(true)
+      if (!alreadySeenThisSession) setShowEntryChoiceModal(true)
     } catch {
-      setShowCardAdvisorModal(true)
+      setShowEntryChoiceModal(true)
     }
   }, [loading])
 
@@ -658,7 +692,10 @@ function HomePage() {
             }
           }}
           onOpenGameAnalysis={() => setShowGameAnalysisModal(true)}
-          onOpenCardAdvisor={() => setShowCardAdvisorModal(true)}
+          onOpenCardAdvisor={() => {
+            setShowEntryChoiceModal(false)
+            setShowCardAdvisorModal(true)
+          }}
         />
       </Suspense>
       
@@ -855,6 +892,126 @@ function HomePage() {
                 </>
               )}
             </button>
+          </div>
+        </div>
+      )}
+
+      {showCardAdvisorLogoBurst && (
+        <div
+          className="card-advisor-logo-burst-overlay"
+          aria-hidden="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1210,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'radial-gradient(circle, rgba(0, 212, 255, 0.20), rgba(3, 7, 18, 0.74) 52%, rgba(3, 7, 18, 0.88))',
+            backdropFilter: 'blur(12px)',
+            pointerEvents: 'none'
+          }}
+        >
+          <div className="card-advisor-logo-burst">
+            <img src="/logo.png" alt="" />
+          </div>
+        </div>
+      )}
+
+      {showEntryChoiceModal && (
+        <div
+          className="card-advisor-entry-overlay"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'radial-gradient(circle at top left, rgba(0, 212, 255, 0.16), transparent 32%), radial-gradient(circle at bottom right, rgba(255, 203, 5, 0.16), transparent 34%), rgba(3, 7, 18, 0.88)',
+            backdropFilter: 'blur(10px)',
+            zIndex: 1200,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+        >
+          <div
+            className="neon-card card-advisor-entry-modal"
+            style={{
+              width: 'min(680px, 100%)',
+              padding: 'clamp(22px, 4vw, 32px)',
+              border: '1px solid rgba(0, 212, 255, 0.26)',
+              background: 'linear-gradient(145deg, rgba(5, 12, 28, 0.98), rgba(10, 15, 34, 0.98))',
+              boxShadow: '0 0 44px rgba(0, 212, 255, 0.18), inset 0 1px 0 rgba(255,255,255,0.08)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+          >
+            <div style={{ textAlign: 'center', marginBottom: '22px', position: 'relative' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '7px 12px', borderRadius: '999px', background: 'rgba(0, 212, 255, 0.10)', border: '1px solid rgba(0, 212, 255, 0.25)', color: 'var(--neon-cyan)', fontWeight: 800, fontSize: '13px', marginBottom: '14px' }}>
+                <Shield size={15} />
+                {lang === 'en' ? 'Choose your mode' : 'Scegli come entrare'}
+              </div>
+              <h2 style={{ fontSize: 'clamp(28px, 5.4vw, 40px)', lineHeight: 1.04, fontWeight: 900, color: '#FFFFFF', margin: '0 0 10px 0' }}>
+                {lang === 'en' ? 'Continue in Pro or try card analysis?' : 'Continui nel Pro o provi Analisi Carte?'}
+              </h2>
+              <p style={{ margin: 0, color: 'rgba(255,255,255,0.76)', lineHeight: 1.6, fontSize: '15px' }}>
+                {lang === 'en'
+                  ? 'Pro remains your full dashboard. Card analysis opens the preview for new releases with the access key.'
+                  : 'Il Pro resta la tua dashboard completa. Analisi Carte apre la preview delle nuove uscite con chiave di accesso.'}
+              </p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', position: 'relative' }}>
+              <button
+                type="button"
+                onClick={continueProDashboard}
+                className="neon-button"
+                style={{
+                  minHeight: '142px',
+                  padding: '18px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  textAlign: 'left',
+                  background: 'rgba(0, 212, 255, 0.08)',
+                  borderColor: 'rgba(0, 212, 255, 0.28)',
+                  color: '#FFFFFF'
+                }}
+              >
+                <Shield size={26} style={{ color: 'var(--neon-cyan)' }} />
+                <strong style={{ fontSize: '18px' }}>{lang === 'en' ? 'Continue in Pro' : 'Continua nel Pro'}</strong>
+                <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.68)', lineHeight: 1.45 }}>
+                  {lang === 'en' ? 'Open dashboard, roster, matches and all Pro tools.' : 'Apri dashboard, rosa, partite e tutti gli strumenti Pro.'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={chooseCardAdvisorEntry}
+                className="neon-button"
+                style={{
+                  minHeight: '142px',
+                  padding: '18px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  textAlign: 'left',
+                  background: 'linear-gradient(135deg, rgba(255, 203, 5, 0.20), rgba(168, 85, 247, 0.16), rgba(0, 212, 255, 0.12))',
+                  borderColor: 'rgba(255, 203, 5, 0.42)',
+                  color: '#FFFFFF',
+                  boxShadow: '0 0 26px rgba(255, 203, 5, 0.16)'
+                }}
+              >
+                <Zap size={26} style={{ color: '#ffcb05' }} />
+                <strong style={{ fontSize: '18px' }}>{lang === 'en' ? 'Card analysis' : 'Analisi Carte'}</strong>
+                <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.72)', lineHeight: 1.45 }}>
+                  {lang === 'en' ? 'Evaluate new cards against your real roster.' : 'Valuta le nuove carte in base alla tua rosa reale.'}
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1303,6 +1460,57 @@ function HomePage() {
       <style jsx>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+
+        @keyframes cardAdvisorLogoVibe {
+          0% { transform: scale(0.78) rotate(0deg); opacity: 0; filter: drop-shadow(0 0 0 rgba(0, 212, 255, 0)); }
+          12% { transform: scale(1.05) rotate(-3deg); opacity: 1; }
+          24% { transform: scale(1.12) rotate(3deg); }
+          36% { transform: scale(1.08) rotate(-2deg); }
+          52% { transform: scale(1.15) rotate(2deg); }
+          72% { transform: scale(1.06) rotate(0deg); opacity: 1; }
+          100% { transform: scale(0.92) rotate(0deg); opacity: 0; filter: drop-shadow(0 0 30px rgba(0, 212, 255, 0.65)); }
+        }
+
+        @keyframes cardAdvisorLogoRing {
+          0% { transform: scale(0.65); opacity: 0; }
+          35% { opacity: 0.85; }
+          100% { transform: scale(1.85); opacity: 0; }
+        }
+
+        .card-advisor-logo-burst {
+          width: 132px;
+          height: 132px;
+          border-radius: 999px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          background: radial-gradient(circle, rgba(0, 212, 255, 0.18), rgba(255, 203, 5, 0.12), transparent 70%);
+        }
+
+        .card-advisor-logo-burst::before,
+        .card-advisor-logo-burst::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: 999px;
+          border: 1px solid rgba(0, 212, 255, 0.55);
+          animation: cardAdvisorLogoRing 1.2s ease-out both;
+        }
+
+        .card-advisor-logo-burst::after {
+          border-color: rgba(255, 203, 5, 0.50);
+          animation-delay: 0.18s;
+        }
+
+        .card-advisor-logo-burst img {
+          width: 86px;
+          height: 86px;
+          object-fit: contain;
+          border-radius: 22px;
+          animation: cardAdvisorLogoVibe 1.2s ease-in-out both;
+          filter: drop-shadow(0 0 18px rgba(0, 212, 255, 0.70)) drop-shadow(0 0 14px rgba(255, 203, 5, 0.38));
         }
 
         @media (max-width: 640px) {
