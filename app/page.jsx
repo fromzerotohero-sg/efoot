@@ -91,10 +91,14 @@ function HomePage() {
   const [reminderRotationIndex, setReminderRotationIndex] = React.useState(0)
   const [hideSetupBanner, setHideSetupBanner] = React.useState(false)
   const [showCardAdvisorModal, setShowCardAdvisorModal] = React.useState(false)
+  const [cardAdvisorCode, setCardAdvisorCode] = React.useState('')
+  const [cardAdvisorUnlocking, setCardAdvisorUnlocking] = React.useState(false)
+  const [cardAdvisorError, setCardAdvisorError] = React.useState('')
   const [userProfile, setUserProfile] = React.useState(null)
   const [confirmModal, setConfirmModal] = React.useState(null) // { show, title, message, onConfirm, onCancel }
   const [coachChatInitialMessage, setCoachChatInitialMessage] = React.useState(null)
   const [importingStarterPack, setImportingStarterPack] = React.useState(false)
+  const cardAdvisorModalSessionKey = 'dashboard_card_advisor_modal_seen_session_v1'
 
   React.useEffect(() => {
     setGameAnalysisNavOpen(showGameAnalysisModal)
@@ -155,9 +159,62 @@ function HomePage() {
   }, [])
 
   const openCardAdvisor = React.useCallback(() => {
+    try {
+      sessionStorage.setItem(cardAdvisorModalSessionKey, '1')
+    } catch {}
     setShowCardAdvisorModal(false)
+    setCardAdvisorCode('')
+    setCardAdvisorError('')
     router.push('/card-advisor-lab')
   }, [router])
+
+  const continueProDashboard = React.useCallback(() => {
+    try {
+      sessionStorage.setItem(cardAdvisorModalSessionKey, '1')
+    } catch {}
+    setShowCardAdvisorModal(false)
+    setCardAdvisorCode('')
+    setCardAdvisorError('')
+  }, [])
+
+  const unlockCardAdvisor = React.useCallback(async () => {
+    const code = cardAdvisorCode.trim()
+    if (!code) {
+      setCardAdvisorError(lang === 'en' ? 'Enter the access key.' : 'Inserisci la chiave di accesso.')
+      return
+    }
+
+    setCardAdvisorUnlocking(true)
+    setCardAdvisorError('')
+    try {
+      const response = await fetch('/api/card-advisor-access/unlock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ code })
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(payload?.error || (lang === 'en' ? 'Invalid access key.' : 'Chiave di accesso non valida.'))
+      }
+      openCardAdvisor()
+    } catch (err) {
+      setCardAdvisorError(err?.message || (lang === 'en' ? 'Unable to unlock card analysis.' : 'Impossibile sbloccare l’analisi carte.'))
+    } finally {
+      setCardAdvisorUnlocking(false)
+    }
+  }, [cardAdvisorCode, lang, openCardAdvisor])
+
+  React.useEffect(() => {
+    if (loading) return
+    if (typeof window === 'undefined') return
+    try {
+      const alreadySeenThisSession = sessionStorage.getItem(cardAdvisorModalSessionKey) === '1'
+      if (!alreadySeenThisSession) setShowCardAdvisorModal(true)
+    } catch {
+      setShowCardAdvisorModal(true)
+    }
+  }, [loading])
 
   const bannerTips = React.useMemo(() => {
     const tips = [
@@ -838,10 +895,53 @@ function HomePage() {
                 </div>
               ))}
             </div>
+            <div style={{ position: 'relative', maxWidth: '440px', margin: '0 auto 18px', display: 'grid', gap: '10px' }}>
+              <div style={{ textAlign: 'center', color: '#ffcb05', fontSize: '13px', fontWeight: 800 }}>
+                {lang === 'en' ? 'Available tomorrow at 18:00' : 'Disponibile da domani alle 18:00'}
+              </div>
+              <input
+                type="password"
+                value={cardAdvisorCode}
+                onChange={(event) => setCardAdvisorCode(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault()
+                    unlockCardAdvisor()
+                  }
+                }}
+                placeholder={lang === 'en' ? 'Enter early access key' : 'Inserisci chiave di accesso'}
+                autoComplete="off"
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '14px 16px',
+                  borderRadius: '14px',
+                  border: '1px solid rgba(255, 203, 5, 0.28)',
+                  background: 'rgba(255,255,255,0.055)',
+                  color: '#FFFFFF',
+                  outline: 'none',
+                  fontSize: '14px'
+                }}
+              />
+              {cardAdvisorError && (
+                <div style={{
+                  padding: '10px 12px',
+                  borderRadius: '12px',
+                  background: 'rgba(255, 59, 48, 0.12)',
+                  border: '1px solid rgba(255, 59, 48, 0.28)',
+                  color: '#FFB4B4',
+                  fontSize: '13px',
+                  textAlign: 'center'
+                }}>
+                  {cardAdvisorError}
+                </div>
+              )}
+            </div>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', position: 'relative' }}>
               <button
                 type="button"
-                onClick={openCardAdvisor}
+                onClick={unlockCardAdvisor}
+                disabled={cardAdvisorUnlocking}
                 className="neon-button"
                 style={{
                   minHeight: '52px',
@@ -854,15 +954,19 @@ function HomePage() {
                   borderColor: 'rgba(255, 203, 5, 0.42)',
                   color: '#FFFFFF',
                   fontWeight: 900,
-                  boxShadow: '0 0 24px rgba(255, 203, 5, 0.18)'
+                  boxShadow: '0 0 24px rgba(255, 203, 5, 0.18)',
+                  opacity: cardAdvisorUnlocking ? 0.72 : 1,
+                  cursor: cardAdvisorUnlocking ? 'wait' : 'pointer'
                 }}
               >
                 <BarChart3 size={18} />
-                {lang === 'en' ? 'Analyze new cards' : 'Analizza le nuove carte'}
+                {cardAdvisorUnlocking
+                  ? (lang === 'en' ? 'Checking key...' : 'Controllo chiave...')
+                  : (lang === 'en' ? 'Enter card analysis' : 'Entra nell’analisi carte')}
               </button>
               <button
                 type="button"
-                onClick={() => setShowCardAdvisorModal(false)}
+                onClick={continueProDashboard}
                 className="neon-button"
                 style={{
                   minHeight: '52px',
@@ -872,7 +976,7 @@ function HomePage() {
                   color: 'rgba(255,255,255,0.82)'
                 }}
               >
-                {lang === 'en' ? 'Not now' : 'Non ora'}
+                {lang === 'en' ? 'Continue in Pro' : 'Continua nel Pro'}
               </button>
             </div>
           </div>
@@ -913,65 +1017,6 @@ function HomePage() {
         onSuccess={fetchGameAnalysisCapture} 
         lastCaptureDate={gameAnalysisLastCapture} 
       />
-
-      {/* Credits Bar: montata in layout per aggiornamento immediato dopo ogni API (credits-consumed) */}
-
-      <button
-        type="button"
-        onClick={() => setShowCardAdvisorModal(true)}
-        className="neon-card"
-        style={{
-          width: '100%',
-          padding: 0,
-          marginBottom: '20px',
-          border: '1px solid rgba(255, 203, 5, 0.28)',
-          background: 'linear-gradient(135deg, rgba(255, 203, 5, 0.14), rgba(168, 85, 247, 0.13) 48%, rgba(0, 212, 255, 0.12))',
-          boxShadow: '0 0 30px rgba(168, 85, 247, 0.16), inset 0 1px 0 rgba(255,255,255,0.07)',
-          cursor: 'pointer',
-          overflow: 'hidden',
-          textAlign: 'left',
-          position: 'relative'
-        }}
-      >
-        <div style={{ position: 'absolute', top: '-60px', right: '-40px', width: '180px', height: '180px', borderRadius: '999px', background: 'rgba(255, 203, 5, 0.20)', filter: 'blur(18px)' }} />
-        <div style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap', position: 'relative' }}>
-          <div style={{ minWidth: 0, flex: '1 1 260px' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '6px 10px', borderRadius: '999px', background: 'rgba(3, 7, 18, 0.38)', border: '1px solid rgba(255,255,255,0.10)', color: '#ffcb05', fontSize: '12px', fontWeight: 800, marginBottom: '10px' }}>
-              <Zap size={14} />
-              {lang === 'en' ? 'New releases' : 'Nuove uscite'}
-            </div>
-            <div style={{ fontSize: 'clamp(19px, 4vw, 24px)', fontWeight: 900, color: '#FFFFFF', marginBottom: '6px' }}>
-              {lang === 'en' ? 'Analyze the new cards before spending' : 'Analizza le nuove carte prima di spendere'}
-            </div>
-            <div style={{ fontSize: '14px', lineHeight: 1.6, color: 'rgba(255,255,255,0.78)' }}>
-              {lang === 'en'
-                ? 'We evaluate each card against your real roster, needs and performance data. Not hype: fit, priority, verdict.'
-                : 'Valutiamo ogni carta sulla tua rosa reale, sulle tue esigenze e sui tuoi dati performance. Non hype: fit, priorità, verdetto.'}
-            </div>
-          </div>
-          <span
-            style={{
-              minHeight: '48px',
-              padding: '11px 16px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              borderRadius: '14px',
-              background: 'rgba(3, 7, 18, 0.42)',
-              border: '1px solid rgba(255, 203, 5, 0.34)',
-              color: '#FFFFFF',
-              fontSize: '14px',
-              fontWeight: 900,
-              flexShrink: 0
-            }}
-          >
-            <BarChart3 size={17} />
-            {lang === 'en' ? 'Open analysis' : 'Apri analisi'}
-            <ArrowRight size={16} />
-          </span>
-        </div>
-      </button>
 
       {/* Task Widget (Obiettivi Settimanali) */}
       <div data-tour-id="tour-dashboard-task">
