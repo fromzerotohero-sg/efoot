@@ -69,6 +69,8 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
 
   // Sezioni espandibili — in edit mode, apri le sezioni con dati mancanti
   const [expandedSections, setExpandedSections] = useState({ stats: false, skills: false, boosters: false, details: false })
+  /** Se false, PATCH non invia overall_rating così il server ricalcola da base_stats (vedi app/api/players/[id]/route.js). */
+  const [overallRatingTouched, setOverallRatingTouched] = useState(false)
 
   // Dati form
   const [form, setForm] = useState({
@@ -84,6 +86,7 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
   useEffect(() => {
     if (!show) return
     setError(''); setSuccess(false)
+    setOverallRatingTouched(false)
 
     if (existingPlayer) {
       // EDIT MODE: pre-popola con dati esistenti
@@ -233,10 +236,14 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
         if (Object.keys(mergedBaseStats.defending).length === 0) delete mergedBaseStats.defending
         if (Object.keys(mergedBaseStats.athleticism).length === 0) delete mergedBaseStats.athleticism
 
+        const trimmedOvr = String(form.overall_rating ?? '').trim()
+        const includeLockedOvr =
+          overallRatingTouched && trimmedOvr !== '' && Number.isFinite(Number(trimmedOvr))
+
         const updateData = {
           player_name: form.player_name.trim(),
           position: form.position,
-          overall_rating: form.overall_rating ? Number(form.overall_rating) : existingPlayer.overall_rating,
+          ...(includeLockedOvr ? { overall_rating: Number(trimmedOvr) } : {}),
           card_type: form.card_type,
           form: form.form || existingPlayer.form || 'B',
           base_stats: Object.keys(mergedBaseStats).length > 0 ? mergedBaseStats : existingPlayer.base_stats || {},
@@ -390,7 +397,11 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
               <div>
                 <label style={labelStyle}>Overall</label>
                 <input type="number" style={inputStyle} min="40" max="120" placeholder="40-120"
-                  value={form.overall_rating} onChange={e => updateForm('overall_rating', e.target.value)} />
+                  value={form.overall_rating}
+                  onChange={(e) => {
+                    setOverallRatingTouched(true)
+                    updateForm('overall_rating', e.target.value)
+                  }} />
               </div>
             </div>
 
