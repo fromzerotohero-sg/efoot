@@ -1457,15 +1457,6 @@ export default withAuth(function CardAdvisorLabPage() {
         </div>
 
         <div className="release-tabs-shell">
-          <button
-            type="button"
-            className="release-tabs-hint"
-            onClick={scrollReleaseTabs}
-            aria-label={labels.packScrollHint}
-          >
-            <span>{labels.packScrollHint}</span>
-            <ChevronRight size={14} />
-          </button>
           <div ref={releaseTabsRef} className="release-tabs" role="tablist" aria-label={labels.releaseTitle}>
             <button
               type="button"
@@ -1487,6 +1478,15 @@ export default withAuth(function CardAdvisorLabPage() {
               </button>
             ))}
           </div>
+          <button
+            type="button"
+            className="release-tabs-hint"
+            onClick={scrollReleaseTabs}
+            aria-label={labels.packScrollHint}
+          >
+            <span>{labels.packScrollHint}</span>
+            <ChevronRight size={14} />
+          </button>
         </div>
 
         <RosterStatusPanel
@@ -1702,13 +1702,13 @@ export default withAuth(function CardAdvisorLabPage() {
         .release-tabs-shell {
           position: relative;
           margin: 0 0 18px;
-          padding-top: 20px;
+          padding-top: 0;
         }
 
         .release-tabs-shell::after {
           content: '';
           position: absolute;
-          top: 20px;
+          top: 0;
           right: 0;
           bottom: 10px;
           width: 46px;
@@ -1718,27 +1718,21 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .release-tabs-hint {
-          position: absolute;
-          top: 0;
-          right: 4px;
-          z-index: 2;
+          position: static;
           display: inline-flex;
           align-items: center;
           gap: 4px;
-          border: 1px solid rgba(0,212,255,0.28);
+          align-self: flex-end;
+          margin-top: 8px;
+          border: 1px solid rgba(0,212,255,0.16);
           border-radius: 999px;
-          background:
-            linear-gradient(90deg, rgba(0,212,255,0.12), rgba(138,43,226,0.10)),
-            rgba(2,4,12,0.86);
-          color: rgba(103,232,249,0.82);
+          background: rgba(2,4,12,0.42);
+          color: rgba(255,255,255,0.64);
           font-size: 11px;
-          font-weight: 900;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-          padding: 5px 8px;
+          font-weight: 700;
+          letter-spacing: 0.02em;
+          padding: 4px 8px;
           cursor: pointer;
-          box-shadow: 0 0 16px rgba(0,212,255,0.10);
-          animation: packHintPulse 1.9s ease-in-out infinite;
         }
 
         .release-tabs-hint svg {
@@ -1748,8 +1742,8 @@ export default withAuth(function CardAdvisorLabPage() {
         .release-tabs-hint:hover,
         .release-tabs-hint:focus-visible {
           color: #fff;
-          border-color: rgba(0,212,255,0.56);
-          box-shadow: 0 0 20px rgba(0,212,255,0.18);
+          border-color: rgba(0,212,255,0.32);
+          background: rgba(0,212,255,0.08);
           outline: none;
         }
 

@@ -15,6 +15,18 @@ const SLOTS = [
 
 const MAX_DATAURL_BYTES = 1.8 * 1024 * 1024 // ~1.8MB per immagine per stare sotto limite body con 2 foto
 const RESIZE_MAX_WIDTH = 1200
+const ANALYSIS_EXAMPLE_IMAGES = [
+  {
+    key: 'slot1',
+    src: '/examples/game-analysis/analisi-tiro-comandi.jpg',
+    slotLabel: 'gameAnalysisSlot1'
+  },
+  {
+    key: 'slot2',
+    src: '/examples/game-analysis/analisi-passaggio-dribbling-difesa.jpg',
+    slotLabel: 'gameAnalysisSlot2'
+  }
+]
 
 const overlayStyle = {
   position: 'fixed',
@@ -195,6 +207,40 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
             {t('gameAnalysisLastCapture')}: {lastCaptureDate}
           </div>
         )}
+
+        <div
+          style={{
+            marginBottom: '20px',
+            padding: '14px',
+            borderRadius: '14px',
+            border: '1px solid rgba(0, 212, 255, 0.18)',
+            background: 'rgba(0, 212, 255, 0.04)'
+          }}
+        >
+          <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--neon-cyan)', marginBottom: '10px', textAlign: 'center' }}>
+            {lang === 'en' ? 'Correct screen examples' : 'Esempi schermate corrette'}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+            {ANALYSIS_EXAMPLE_IMAGES.map((item) => (
+              <div key={item.key} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.76)', textAlign: 'center' }}>
+                  {t(item.slotLabel)}
+                </div>
+                <img
+                  src={item.src}
+                  alt={t(item.slotLabel)}
+                  style={{
+                    width: '100%',
+                    aspectRatio: '16 / 9',
+                    objectFit: 'cover',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(255,255,255,0.12)'
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit}>
           {/* Due slot distinti come gestione rosa: il cliente vede sempre quale ha caricato e quale manca */}
