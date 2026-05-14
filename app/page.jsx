@@ -98,9 +98,6 @@ function HomePage() {
   const [showEntryChoiceModal, setShowEntryChoiceModal] = React.useState(false)
   const [showCardAdvisorLogoBurst, setShowCardAdvisorLogoBurst] = React.useState(false)
   const [showCardAdvisorModal, setShowCardAdvisorModal] = React.useState(false)
-  const [cardAdvisorCode, setCardAdvisorCode] = React.useState('')
-  const [cardAdvisorUnlocking, setCardAdvisorUnlocking] = React.useState(false)
-  const [cardAdvisorError, setCardAdvisorError] = React.useState('')
   const [userProfile, setUserProfile] = React.useState(null)
   const [confirmModal, setConfirmModal] = React.useState(null) // { show, title, message, onConfirm, onCancel }
   const [coachChatInitialMessage, setCoachChatInitialMessage] = React.useState(null)
@@ -180,8 +177,6 @@ function HomePage() {
     } catch {}
     setShowEntryChoiceModal(false)
     setShowCardAdvisorModal(false)
-    setCardAdvisorCode('')
-    setCardAdvisorError('')
     router.push('/card-advisor-lab')
   }, [router])
 
@@ -191,16 +186,12 @@ function HomePage() {
     } catch {}
     setShowEntryChoiceModal(false)
     setShowCardAdvisorModal(false)
-    setCardAdvisorCode('')
-    setCardAdvisorError('')
   }, [])
 
   const playCardAdvisorLogoIntro = React.useCallback(() => {
     setShowEntryChoiceModal(false)
     setShowCardAdvisorModal(false)
     setShowCardAdvisorLogoBurst(true)
-    setCardAdvisorCode('')
-    setCardAdvisorError('')
     if (cardAdvisorLogoTimerRef.current) {
       clearTimeout(cardAdvisorLogoTimerRef.current)
     }
@@ -227,34 +218,6 @@ function HomePage() {
       }
     }
   }, [playCardAdvisorLogoIntro])
-
-  const unlockCardAdvisor = React.useCallback(async () => {
-    const code = cardAdvisorCode.trim()
-    if (!code) {
-      setCardAdvisorError(lang === 'en' ? 'Enter the access key.' : 'Inserisci la chiave di accesso.')
-      return
-    }
-
-    setCardAdvisorUnlocking(true)
-    setCardAdvisorError('')
-    try {
-      const response = await fetch('/api/card-advisor-access/unlock', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({ code })
-      })
-      const payload = await response.json().catch(() => ({}))
-      if (!response.ok) {
-        throw new Error(payload?.error || (lang === 'en' ? 'Invalid access key.' : 'Chiave di accesso non valida.'))
-      }
-      openCardAdvisor()
-    } catch (err) {
-      setCardAdvisorError(err?.message || (lang === 'en' ? 'Unable to unlock card analysis.' : 'Impossibile sbloccare l’analisi carte.'))
-    } finally {
-      setCardAdvisorUnlocking(false)
-    }
-  }, [cardAdvisorCode, lang, openCardAdvisor])
 
   React.useEffect(() => {
     if (loading) return
@@ -955,8 +918,8 @@ function HomePage() {
               </h2>
               <p style={{ margin: 0, color: 'rgba(255,255,255,0.76)', lineHeight: 1.6, fontSize: '15px' }}>
                 {lang === 'en'
-                  ? 'Pro remains your full dashboard. Card analysis opens the preview for new releases with the access key.'
-                  : 'Il Pro resta la tua dashboard completa. Analisi Carte apre la preview delle nuove uscite con chiave di accesso.'}
+                  ? 'Pro remains your full dashboard. Card analysis opens the preview for new releases.'
+                  : 'Il Pro resta la tua dashboard completa. Analisi Carte apre la preview delle nuove uscite.'}
               </p>
             </div>
 
@@ -1073,51 +1036,13 @@ function HomePage() {
             </div>
             <div style={{ position: 'relative', maxWidth: '440px', margin: '0 auto 18px', display: 'grid', gap: '10px' }}>
               <div style={{ textAlign: 'center', color: '#ffcb05', fontSize: '13px', fontWeight: 800 }}>
-                {lang === 'en' ? 'Available tomorrow at 18:00' : 'Disponibile da domani alle 18:00'}
+                {lang === 'en' ? 'Available now' : 'Disponibile ora'}
               </div>
-              <input
-                type="password"
-                value={cardAdvisorCode}
-                onChange={(event) => setCardAdvisorCode(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    event.preventDefault()
-                    unlockCardAdvisor()
-                  }
-                }}
-                placeholder={lang === 'en' ? 'Enter early access key' : 'Inserisci chiave di accesso'}
-                autoComplete="off"
-                style={{
-                  width: '100%',
-                  boxSizing: 'border-box',
-                  padding: '14px 16px',
-                  borderRadius: '14px',
-                  border: '1px solid rgba(255, 203, 5, 0.28)',
-                  background: 'rgba(255,255,255,0.055)',
-                  color: '#FFFFFF',
-                  outline: 'none',
-                  fontSize: '14px'
-                }}
-              />
-              {cardAdvisorError && (
-                <div style={{
-                  padding: '10px 12px',
-                  borderRadius: '12px',
-                  background: 'rgba(255, 59, 48, 0.12)',
-                  border: '1px solid rgba(255, 59, 48, 0.28)',
-                  color: '#FFB4B4',
-                  fontSize: '13px',
-                  textAlign: 'center'
-                }}>
-                  {cardAdvisorError}
-                </div>
-              )}
             </div>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', position: 'relative' }}>
               <button
                 type="button"
-                onClick={unlockCardAdvisor}
-                disabled={cardAdvisorUnlocking}
+                onClick={openCardAdvisor}
                 className="neon-button"
                 style={{
                   minHeight: '52px',
@@ -1131,14 +1056,11 @@ function HomePage() {
                   color: '#FFFFFF',
                   fontWeight: 900,
                   boxShadow: '0 0 24px rgba(255, 203, 5, 0.18)',
-                  opacity: cardAdvisorUnlocking ? 0.72 : 1,
-                  cursor: cardAdvisorUnlocking ? 'wait' : 'pointer'
+                  cursor: 'pointer'
                 }}
               >
                 <BarChart3 size={18} />
-                {cardAdvisorUnlocking
-                  ? (lang === 'en' ? 'Checking key...' : 'Controllo chiave...')
-                  : (lang === 'en' ? 'Enter card analysis' : 'Entra nell’analisi carte')}
+                {lang === 'en' ? 'Enter card analysis' : 'Entra nell’analisi carte'}
               </button>
               <button
                 type="button"
