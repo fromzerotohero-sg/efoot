@@ -2463,13 +2463,13 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .card-art-name {
           position: absolute;
-          left: 0;
-          right: 0;
-          bottom: 12px;
+          left: 8px;
+          right: 8px;
+          bottom: 5px;
           z-index: 3;
-          min-height: 42px;
-          padding: 9px 14px;
-          background: #02040c;
+          min-height: 52px;
+          padding: 10px 12px 13px;
+          background: linear-gradient(180deg, rgba(2, 4, 12, 0.98), #02040c 52%, #02040c 100%);
           color: #fff;
           font-size: 13px;
           font-weight: 900;
@@ -2479,7 +2479,7 @@ export default withAuth(function CardAdvisorLabPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 -8px 18px rgba(0,0,0,0.38);
+          box-shadow: 0 -14px 24px rgba(0,0,0,0.56);
         }
 
         .detail-panel {
@@ -3856,7 +3856,9 @@ export default withAuth(function CardAdvisorLabPage() {
 
           .card-art-name {
             font-size: 11px;
-            padding: 7px 6px;
+            min-height: 46px;
+            padding: 8px 6px 10px;
+            bottom: 4px;
           }
 
           .card-art-top {

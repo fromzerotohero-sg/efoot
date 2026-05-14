@@ -205,6 +205,16 @@ function HomePage() {
     playCardAdvisorLogoIntro()
   }, [playCardAdvisorLogoIntro])
 
+  const backToEntryChoice = React.useCallback(() => {
+    if (cardAdvisorLogoTimerRef.current) {
+      clearTimeout(cardAdvisorLogoTimerRef.current)
+      cardAdvisorLogoTimerRef.current = null
+    }
+    setShowCardAdvisorLogoBurst(false)
+    setShowCardAdvisorModal(false)
+    setShowEntryChoiceModal(true)
+  }, [])
+
   React.useEffect(() => {
     const onOpen = () => {
       playCardAdvisorLogoIntro()
@@ -1052,17 +1062,17 @@ function HomePage() {
               </button>
               <button
                 type="button"
-                onClick={continueProDashboard}
+                onClick={backToEntryChoice}
                 className="neon-button"
                 style={{
-                  minHeight: '52px',
-                  padding: '13px 18px',
-                  background: 'rgba(255,255,255,0.045)',
-                  borderColor: 'rgba(255,255,255,0.14)',
-                  color: 'rgba(255,255,255,0.82)'
+                  minHeight: '46px',
+                  padding: '11px 16px',
+                  background: 'rgba(255,255,255,0.035)',
+                  borderColor: 'rgba(255,255,255,0.12)',
+                  color: 'rgba(255,255,255,0.72)'
                 }}
               >
-                {lang === 'en' ? 'Continue in Pro' : 'Continua nel Pro'}
+                {lang === 'en' ? 'Back' : 'Indietro'}
               </button>
             </div>
             <div className="card-advisor-benefit-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '0', position: 'relative' }}>
@@ -1485,9 +1495,12 @@ function HomePage() {
           }
 
           .card-advisor-access-actions .neon-button {
-            width: 100% !important;
             min-height: 46px !important;
             padding: 11px 14px !important;
+          }
+
+          .card-advisor-access-actions .neon-button:first-child {
+            width: 100% !important;
           }
 
           .card-advisor-benefit-grid {
