@@ -2204,11 +2204,6 @@ export default withAuth(function CardAdvisorLabPage() {
           to { transform: rotate(360deg); }
         }
 
-        @keyframes cardScrollCue {
-          0%, 100% { transform: translate(-50%, 0); opacity: 0.58; }
-          50% { transform: translate(-50%, 7px); opacity: 1; }
-        }
-
         .card-details-modal .detail-panel {
           position: relative;
           top: auto;
@@ -3805,29 +3800,6 @@ export default withAuth(function CardAdvisorLabPage() {
             padding-bottom: max(96px, calc(env(safe-area-inset-bottom, 0px) + 92px));
             scroll-padding-bottom: max(150px, calc(env(safe-area-inset-bottom, 0px) + 128px));
             border-radius: 22px 22px 12px 12px;
-          }
-
-          .card-details-modal-inner::after {
-            content: '⌄';
-            position: fixed;
-            left: 50%;
-            bottom: max(18px, calc(env(safe-area-inset-bottom, 0px) + 14px));
-            z-index: 1410;
-            width: 34px;
-            height: 34px;
-            display: grid;
-            place-items: center;
-            border: 1px solid rgba(0, 212, 255, 0.38);
-            border-radius: 999px;
-            background: rgba(2, 4, 12, 0.82);
-            color: #67e8f9;
-            font-size: 24px;
-            font-weight: 900;
-            line-height: 1;
-            pointer-events: none;
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.18);
-            transform: translateX(-50%);
-            animation: cardScrollCue 1.35s ease-in-out infinite;
           }
 
           .card-details-modal .detail-panel {
