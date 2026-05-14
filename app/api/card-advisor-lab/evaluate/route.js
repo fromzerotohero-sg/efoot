@@ -67,15 +67,31 @@ function buildUserId(userData, admin) {
   return async function resolve() {
     let userId = userData.user.id
     if (userData.user.user_metadata?.is_metalgate_user) {
-      const { data: existingProfile } = await admin
+      const { data: existingProfile, error } = await admin
         .from('user_profiles')
         .select('user_id')
         .eq('metalgate_user_id', userId)
-        .single()
-      if (!existingProfile?.user_id) throw new Error('User profile not found')
-      userId = existingProfile.user_id
+        .maybeSingle()
+      if (error) {
+        console.warn('[card-advisor-lab:evaluate] user profile lookup failed:', error.message || error)
+      }
+      userId = existingProfile?.user_id || null
     }
     return userId
+  }
+}
+
+async function safeSupabaseQuery(promise, fallback, label) {
+  try {
+    const result = await promise
+    if (result?.error) {
+      console.warn(`[card-advisor-lab:evaluate] ${label} unavailable:`, result.error.message || result.error)
+      return fallback
+    }
+    return result?.data ?? fallback
+  } catch (error) {
+    console.warn(`[card-advisor-lab:evaluate] ${label} failed:`, error?.message || error)
+    return fallback
   }
 }
 
@@ -1643,37 +1659,50 @@ export async function POST(req) {
     const cardAdvisorCandidates = await fetchCardAdvisorCandidates(admin, card).catch(() => [])
     const efhubDetail = cardAdvisorCandidates.length > 0 ? null : await fetchEfhubCardDetail(card)
     const catalogCard = pickCatalogCard(card, cardAdvisorCandidates) || efhubDetail
+
     const [
-      profileRes,
-      formationRes,
-      playersRes,
-      stylesRes,
-      coachRes,
-      tacticalRes,
-      patternsRes,
-      gameAnalysisRes
-    ] = await Promise.all([
-      admin.from('user_profiles').select('first_name, nickname, team_name, ai_weak_point, ai_learn_goals, ai_notes, input_delay, connection_quality, pass_level').eq('user_id', userId).maybeSingle(),
-      admin.from('formation_layout').select('formation, slot_positions').eq('user_id', userId).maybeSingle(),
-      admin.from('players').select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, skills, com_skills, form, base_stats, original_positions, height, weight, current_level, level_cap, active_booster_name').eq('user_id', userId).limit(60),
-      admin.from('playing_styles').select('id, name'),
-      admin.from('coaches').select('coach_name, playing_style_competence, connection, stat_boosters').eq('user_id', userId).eq('is_active', true).maybeSingle(),
-      admin.from('team_tactical_settings').select('team_playing_style, individual_instructions').eq('user_id', userId).maybeSingle(),
-      admin.from('team_tactical_patterns').select('formation_usage, playing_style_usage, recurring_issues, attack_areas_avg, recovery_zones_avg').eq('user_id', userId).maybeSingle(),
-      admin.from('user_game_analysis').select('stats, captured_at').eq('user_id', userId).maybeSingle()
-    ])
+      profile,
+      formation,
+      players,
+      styles,
+      coach,
+      tacticalSettings,
+      patterns,
+      gameAnalysis
+    ] = userId
+      ? await Promise.all([
+        safeSupabaseQuery(admin.from('user_profiles').select('first_name, nickname, team_name, ai_weak_point, ai_learn_goals, ai_notes, input_delay, connection_quality, pass_level').eq('user_id', userId).maybeSingle(), {}, 'profile'),
+        safeSupabaseQuery(admin.from('formation_layout').select('formation, slot_positions').eq('user_id', userId).maybeSingle(), null, 'formation'),
+        safeSupabaseQuery(admin.from('players').select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, skills, com_skills, form, base_stats, original_positions, height, weight, current_level, level_cap, active_booster_name').eq('user_id', userId).limit(60), [], 'players'),
+        safeSupabaseQuery(admin.from('playing_styles').select('id, name'), [], 'playing styles'),
+        safeSupabaseQuery(admin.from('coaches').select('coach_name, playing_style_competence, connection, stat_boosters').eq('user_id', userId).eq('is_active', true).maybeSingle(), null, 'coach'),
+        safeSupabaseQuery(admin.from('team_tactical_settings').select('team_playing_style, individual_instructions').eq('user_id', userId).maybeSingle(), null, 'tactical settings'),
+        safeSupabaseQuery(admin.from('team_tactical_patterns').select('formation_usage, playing_style_usage, recurring_issues, attack_areas_avg, recovery_zones_avg').eq('user_id', userId).maybeSingle(), {}, 'tactical patterns'),
+        safeSupabaseQuery(admin.from('user_game_analysis').select('stats, captured_at').eq('user_id', userId).maybeSingle(), null, 'game analysis')
+      ])
+      : await Promise.all([
+        Promise.resolve({}),
+        Promise.resolve(null),
+        Promise.resolve([]),
+        safeSupabaseQuery(admin.from('playing_styles').select('id, name'), [], 'playing styles'),
+        Promise.resolve(null),
+        Promise.resolve(null),
+        Promise.resolve({}),
+        Promise.resolve(null)
+      ])
+
     const stylesLookup = {}
-    ;(stylesRes.data || []).forEach(style => { stylesLookup[style.id] = style.name })
+    ;(styles || []).forEach(style => { stylesLookup[style.id] = style.name })
     const evaluation = evaluate({
       card,
       catalogCard,
-      players: playersRes.data || [],
-      formation: formationRes.data || null,
-      coach: coachRes.data || null,
-      tacticalSettings: tacticalRes.data || null,
-      profile: profileRes.data || {},
-      patterns: patternsRes.data || {},
-      gameAnalysis: gameAnalysisRes.data || null,
+      players: players || [],
+      formation: formation || null,
+      coach: coach || null,
+      tacticalSettings: tacticalSettings || null,
+      profile: profile || {},
+      patterns: patterns || {},
+      gameAnalysis: gameAnalysis || null,
       stylesLookup,
       lang
     })
