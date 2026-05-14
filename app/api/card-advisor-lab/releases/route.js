@@ -193,11 +193,49 @@ async function fetchDbReleases() {
     .filter(release => release.cards.length > 0)
 }
 
+async function fetchLiveReleases() {
+  const response = await fetch(EFHUB_HOME_URL, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (compatible; FromZeroToHeroCardAdvisor/1.0)',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+    },
+    cache: 'no-store'
+  })
+
+  if (!response.ok) {
+    throw new Error(`Unable to load card releases (${response.status})`)
+  }
+
+  const markup = await response.text()
+  return parseReleases(markup)
+}
+
+function releaseIds(releases = []) {
+  return releases.map(release => String(release.id || '').trim()).filter(Boolean)
+}
+
+function dbMatchesLive(dbReleases = [], liveReleases = []) {
+  const liveIds = releaseIds(liveReleases)
+  if (liveIds.length === 0) return true
+
+  const dbIds = new Set(releaseIds(dbReleases))
+  return liveIds.every(id => dbIds.has(id))
+}
+
 export async function GET() {
   try {
     const dbReleases = await fetchDbReleases()
     const dbTotalCards = dbReleases.reduce((sum, release) => sum + release.cards.length, 0)
-    if (dbReleases.length > 0 && dbTotalCards > 0) {
+
+    let liveReleases = []
+    try {
+      liveReleases = await fetchLiveReleases()
+    } catch (liveError) {
+      console.warn('[card-advisor-lab:releases] live source unavailable:', liveError)
+    }
+    const liveTotalCards = liveReleases.reduce((sum, release) => sum + release.cards.length, 0)
+
+    if (dbReleases.length > 0 && dbTotalCards > 0 && dbMatchesLive(dbReleases, liveReleases)) {
       return NextResponse.json(
         {
           source: 'card_advisor_cards',
@@ -213,23 +251,22 @@ export async function GET() {
       )
     }
 
-    const response = await fetch(EFHUB_HOME_URL, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; FromZeroToHeroCardAdvisor/1.0)',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-      },
-      cache: 'no-store'
-    })
-
-    if (!response.ok) {
-      return NextResponse.json({ error: 'Unable to load card releases' }, { status: response.status })
-    }
-
-    const markup = await response.text()
-    const releases = parseReleases(markup)
-    const totalCards = releases.reduce((sum, release) => sum + release.cards.length, 0)
-
-    if (releases.length === 0 || totalCards === 0) {
+    if (liveReleases.length === 0 || liveTotalCards === 0) {
+      if (dbReleases.length > 0 && dbTotalCards > 0) {
+        return NextResponse.json(
+          {
+            source: 'card_advisor_cards',
+            sourceUrl: EFHUB_HOME_URL,
+            fetchedAt: new Date().toISOString(),
+            releases: dbReleases
+          },
+          {
+            headers: {
+              'Cache-Control': 'public, max-age=300, s-maxage=900'
+            }
+          }
+        )
+      }
       return NextResponse.json({ error: 'No card releases found' }, { status: 502 })
     }
 
@@ -238,7 +275,7 @@ export async function GET() {
         source: 'efhub',
         sourceUrl: EFHUB_HOME_URL,
         fetchedAt: new Date().toISOString(),
-        releases
+        releases: liveReleases
       },
       {
         headers: {
