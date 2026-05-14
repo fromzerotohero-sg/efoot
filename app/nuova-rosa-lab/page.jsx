@@ -1942,7 +1942,7 @@ function BuildCoachPlayerPickerModal({ show, players, buildingPlayerId, onClose,
         if (!buildingPlayerId) onClose()
       }}
       title={lang === 'en' ? 'Choose player' : 'Scegli giocatore'}
-      subtitle={lang === 'en' ? 'Build Coach single player' : 'Build Coach singolo giocatore'}
+      subtitle={lang === 'en' ? 'Guided build for one player' : 'Build guidata singolo giocatore'}
       className="nr-picker-shell"
     >
       <div className="nr-picker-body single">
@@ -1952,8 +1952,8 @@ function BuildCoachPlayerPickerModal({ show, players, buildingPlayerId, onClose,
               <div>
                 <h3>{lang === 'en' ? 'Starters and reserves' : 'Titolari e riserve'}</h3>
                 <p>{lang === 'en'
-                  ? 'Select a player already in your squad to recalculate the gameplay build.'
-                  : 'Seleziona un giocatore gia nella rosa per ricalcolare la build gameplay.'}</p>
+                  ? 'Choose a player already in your squad: we will suggest a game-ready progression build.'
+                  : 'Scegli un giocatore gia nella rosa: ti suggeriamo una build pronta da replicare in gioco.'}</p>
               </div>
             </div>
             <div className="nr-catalog-list">
@@ -1986,7 +1986,7 @@ function BuildCoachPlayerPickerModal({ show, players, buildingPlayerId, onClose,
                       </span>
                     </div>
                     <span className="nr-reserve-position-pill">
-                      {isBuilding ? (lang === 'en' ? 'Calculating' : 'Calcolo') : 'Build'}
+                      {isBuilding ? (lang === 'en' ? 'Calculating' : 'Calcolo') : (lang === 'en' ? 'Optimize' : 'Ottimizza')}
                     </span>
                   </button>
                 )
@@ -2798,10 +2798,10 @@ function PremiumPlayerModal({
             </div>
             <div className="nr-build-coach-inline">
               <div>
-                <strong>{lang === 'en' ? 'Build Coach' : 'Build Coach'}</strong>
+                <strong>{lang === 'en' ? 'Guided build' : 'Build guidata'}</strong>
                 <p>{lang === 'en'
-                  ? 'Optimizes growth points for gameplay, role and squad synergy.'
-                  : 'Ottimizza i punti crescita per gameplay, ruolo e sinergia rosa.'}</p>
+                  ? 'Suggested growth points for role, card strengths and your squad.'
+                  : 'Punti crescita consigliati per ruolo, qualità della carta e rosa.'}</p>
               </div>
               <button
                 type="button"
@@ -2810,14 +2810,14 @@ function PremiumPlayerModal({
                 disabled={saving || building}
               >
                 {building ? <RefreshCw size={14} className="nr-spin" /> : <Sparkles size={14} />}
-                {building ? (lang === 'en' ? 'Calculating...' : 'Calcolo...') : (lang === 'en' ? 'Recalculate build' : 'Ricalcola build')}
+                {building ? (lang === 'en' ? 'Calculating...' : 'Calcolo...') : (lang === 'en' ? 'Suggest build' : 'Consiglia build')}
               </button>
             </div>
             {buildSliders && (
               <div className="nr-build-copy-card">
                 <div className="nr-build-copy-head">
                   <div>
-                    <strong>{lang === 'en' ? 'Build ready for the game' : 'Build pronta per il gioco'}</strong>
+                    <strong>{lang === 'en' ? 'Build ready to copy in game' : 'Build pronta da copiare in gioco'}</strong>
                     <p>{lang === 'en'
                       ? 'Use these progression values in the game if you want to reproduce this build.'
                       : 'Usa questi valori nella schermata progressione del gioco se vuoi replicare questa build.'}</p>
@@ -2831,8 +2831,8 @@ function PremiumPlayerModal({
                 </div>
                 <p className="nr-build-slider-hint">
                   {lang === 'en'
-                    ? 'Drag or use +/- : PT costs and role locks match the game; stats and OVR update live.'
-                    : 'Trascina o usa +/-: costi PT e blocchi ruolo come nel gioco; statistiche e OVR si aggiornano in tempo reale.'}
+                    ? 'Adjust the sliders: PT costs and role limits follow the game, stats and OVR update live.'
+                    : 'Regola gli slider: costi PT e limiti ruolo seguono il gioco, statistiche e OVR si aggiornano in tempo reale.'}
                 </p>
                 <div className="nr-build-slider-grid nr-build-slider-grid--interactive">
                   {BUILD_SLIDER_ORDER.map((key) => {
@@ -2902,7 +2902,7 @@ function PremiumPlayerModal({
                 ) : null}
                 {buildReasonsLines.length > 0 ? (
                   <div className="nr-build-coach-notes-reasons">
-                    <strong>{lang === 'en' ? 'Why this build' : 'Perché questa build'}</strong>
+                    <strong>{lang === 'en' ? 'Why these points' : 'Perché questi punti'}</strong>
                     <ul>
                       {buildReasonsLines.map((line, idx) => (
                         <li key={`bcr-${idx}`}>{line}</li>
@@ -4653,10 +4653,10 @@ export default withAuth(function NuovaRosaLabPage() {
     if (!player?.id) return
     setBuildingPlayerId(player.id)
     setBuildCoachOverlay({
-      title: lang === 'en' ? 'Calculating player build' : 'Calcolo build giocatore',
+      title: lang === 'en' ? 'Preparing player build' : 'Preparo la build giocatore',
       message: lang === 'en'
-        ? 'Build Coach is applying growth points and updating the visible stats.'
-        : 'Build Coach sta applicando i punti crescita e aggiornando le statistiche visibili.'
+        ? 'We are assigning growth points and updating the visible stats.'
+        : 'Stiamo assegnando i punti crescita e aggiornando le statistiche visibili.'
     })
     try {
       let token = getTokenFallback()
@@ -4708,8 +4708,8 @@ export default withAuth(function NuovaRosaLabPage() {
       const after = data?.result?.after_overall
       showToast(
         lang === 'en'
-          ? `Build Coach applied${after ? `: OVR ${after}` : ''}.`
-          : `Build Coach applicata${after ? `: OVR ${after}` : ''}.`,
+          ? `Build updated${after ? `: OVR ${after}` : ''}.`
+          : `Build aggiornata${after ? `: OVR ${after}` : ''}.`,
         'success'
       )
     } catch (err) {
@@ -4736,11 +4736,11 @@ export default withAuth(function NuovaRosaLabPage() {
     if (!player?.id) return
     setConfirmModal({
       ...showConfirmConfig({
-        title: lang === 'en' ? 'Recalculate player build' : 'Ricalcola build giocatore',
+        title: lang === 'en' ? 'Suggest player build' : 'Consiglia build giocatore',
         message: lang === 'en'
-          ? 'Build Coach will optimize this player growth points using role, skills and squad context. You can edit the player later.'
-          : 'Build Coach ottimizzera i punti crescita di questo giocatore usando ruolo, abilita e contesto rosa. Potrai modificarlo in seguito.',
-        confirmLabel: lang === 'en' ? 'Recalculate build' : 'Ricalcola build',
+          ? 'We will suggest growth points for this player using role, native skills and squad context. You can edit everything later.'
+          : 'Consigliamo i punti crescita di questo giocatore usando ruolo, abilita native e contesto rosa. Potrai modificare tutto in seguito.',
+        confirmLabel: lang === 'en' ? 'Suggest build' : 'Consiglia build',
         cancelLabel: t('cancel'),
         variant: 'info'
       }),
@@ -4757,8 +4757,8 @@ export default withAuth(function NuovaRosaLabPage() {
     setBuildCoachOverlay({
       title: lang === 'en' ? 'Optimizing squad' : 'Ottimizzazione rosa',
       message: lang === 'en'
-        ? 'Build Coach is completing growth builds for starters and reserves. This may take a few seconds.'
-        : 'Build Coach sta completando le build crescita di titolari e riserve. Potrebbero servire alcuni secondi.'
+        ? 'We are preparing growth builds for starters and reserves. This may take a few seconds.'
+        : 'Stiamo preparando le build crescita di titolari e riserve. Potrebbero servire alcuni secondi.'
     })
     try {
       let token = getTokenFallback()
@@ -4800,12 +4800,12 @@ export default withAuth(function NuovaRosaLabPage() {
       ...showConfirmConfig({
         title: lang === 'en' ? 'Optimize squad builds' : 'Ottimizza build rosa',
         message: lang === 'en'
-          ? 'The platform will automatically complete growth builds for your players based on role, native skills, team style and squad synergy.'
-          : 'La piattaforma completera automaticamente le build crescita dei tuoi giocatori in base a ruolo, abilita native, stile squadra e sinergia rosa.',
+          ? 'We will prepare growth builds for your players based on role, native skills, team style and squad needs.'
+          : 'Prepariamo le build crescita dei tuoi giocatori in base a ruolo, abilita native, stile squadra e bisogni della rosa.',
         details: lang === 'en'
-          ? 'You can still edit each player later.'
-          : 'Potrai comunque modificare ogni giocatore in seguito.',
-        confirmLabel: lang === 'en' ? 'Optimize squad' : 'Ottimizza rosa',
+          ? 'Nothing is final: you can still edit every player after the suggestion.'
+          : 'Nulla e definitivo: potrai modificare ogni giocatore dopo il suggerimento.',
+        confirmLabel: lang === 'en' ? 'Prepare builds' : 'Prepara build',
         cancelLabel: t('cancel'),
         variant: 'info'
       }),
@@ -5116,8 +5116,8 @@ export default withAuth(function NuovaRosaLabPage() {
             <div className="nr-build-coach-command-card">
               <div className="nr-build-coach-command-head">
                 <div>
-                  <span className="nr-mini-kicker">Build Coach</span>
-                  <p>{lang === 'en' ? 'Choose what to optimize' : 'Scegli cosa vuoi ottimizzare'}</p>
+                  <span className="nr-mini-kicker">{lang === 'en' ? 'Guided builds' : 'Build guidate'}</span>
+                  <p>{lang === 'en' ? 'Choose where you want a suggestion' : 'Scegli dove vuoi un consiglio'}</p>
                 </div>
                 <Sparkles size={20} />
               </div>
@@ -5125,15 +5125,15 @@ export default withAuth(function NuovaRosaLabPage() {
                 <button type="button" className="nr-build-coach-action primary" onClick={requestBuildCoachForRoster} disabled={buildingRoster || loading}>
                   {buildingRoster ? <RefreshCw size={18} className="nr-spin" /> : <Sparkles size={18} />}
                   <span>
-                    <strong>{lang === 'en' ? 'Optimize formation' : 'Ottimizza formazione'}</strong>
-                    <small>{lang === 'en' ? 'Improve the whole squad' : 'Migliora tutta la rosa'}</small>
+                    <strong>{lang === 'en' ? 'Prepare squad builds' : 'Prepara build rosa'}</strong>
+                    <small>{lang === 'en' ? 'Suggested points for starters and reserves' : 'Punti consigliati per titolari e riserve'}</small>
                   </span>
                 </button>
                 <button type="button" className="nr-build-coach-action" onClick={() => setBuildCoachPlayerPickerOpen(true)} disabled={buildingRoster || allRosterPlayers.length === 0}>
                   <User size={18} />
                   <span>
-                    <strong>{lang === 'en' ? 'Optimize player' : 'Ottimizza giocatore'}</strong>
-                    <small>{lang === 'en' ? 'Select a card' : 'Seleziona una card'}</small>
+                    <strong>{lang === 'en' ? 'Suggest one build' : 'Consiglia una build'}</strong>
+                    <small>{lang === 'en' ? 'Pick a player to review' : 'Scegli un giocatore da rivedere'}</small>
                   </span>
                 </button>
               </div>
