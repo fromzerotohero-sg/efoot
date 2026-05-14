@@ -2308,19 +2308,23 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .card-art-name {
           position: absolute;
-          left: 12px;
-          right: 12px;
+          left: 0;
+          right: 0;
           bottom: 12px;
           z-index: 3;
-          border-radius: 10px;
-          padding: 9px 8px;
-          background: rgba(2,4,12,0.82);
+          min-height: 42px;
+          padding: 9px 14px;
+          background: #02040c;
           color: #fff;
           font-size: 13px;
           font-weight: 900;
           text-align: center;
           text-transform: uppercase;
           letter-spacing: 0.04em;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 -8px 18px rgba(0,0,0,0.38);
         }
 
         .detail-panel {
