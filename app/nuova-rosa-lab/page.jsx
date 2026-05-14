@@ -22,7 +22,7 @@ import {
   tryApplyBuildSliderDelta
 } from '@/lib/gameplayBuildCoach'
 import { MAX_TACCE_PER_MACRO } from '@/lib/efootballProgressionCost'
-import { PLAYER_SKILL_PRESETS, getSkillDisplayLabel, normalizeSkillKey } from '@/lib/playerSkillLabels'
+import { PLAYER_SKILL_PRESETS, getSkillDisplayLabel, normalizePlayerSkillsArray, normalizeSkillKey } from '@/lib/playerSkillLabels'
 import {
   AlertTriangle,
   ArrowRight,
@@ -2585,7 +2585,7 @@ function PremiumPlayerModal({
       club_name: player.club_name || '',
       ...normalizedStats
     })
-    setSkillsDraft(Array.isArray(player.skills) ? player.skills : [])
+    setSkillsDraft(normalizePlayerSkillsArray(Array.isArray(player.skills) ? player.skills : []))
     setSelectedSkillPreset('')
     setShowAllSkills(false)
     setOriginalPositionsDraft(buildInitialPositionsFromPlayer(player))
@@ -2762,7 +2762,7 @@ function PremiumPlayerModal({
       age: form.age ? Number(form.age) : null,
       nationality: form.nationality,
       club_name: form.club_name,
-      skills: skillsDraft,
+      skills: normalizePlayerSkillsArray(skillsDraft),
       available_boosters: boostersDraft.map((entry, idx) => {
         const maxLevel = idx === 1 ? 1 : 5
         const level = Math.min(maxLevel, Math.max(1, Number(entry?.level) || parseBoosterLevel(entry?.effect)))

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { computeOverallRating, normalizeEfhubPosition, normalizeStatsToEfhub } from '@/lib/efootballBuildRules'
+import { normalizePlayerSkillsArray } from '@/lib/playerSkillLabels'
 
 const BASE_STATS_BUCKETS = ['attacking', 'defending', 'athleticism', 'goalkeeping']
 
@@ -267,16 +268,16 @@ export async function PATCH(req, { params }) {
 
     if (body.skills !== undefined) {
       const existing = Array.isArray(existingPlayer.skills) ? existingPlayer.skills : []
-      updateData.skills = hasArrayValue(body.skills)
-        ? [...existing, ...body.skills].filter((value, index, array) => array.indexOf(value) === index)
-        : existing
+      updateData.skills = normalizePlayerSkillsArray(
+        hasArrayValue(body.skills) ? [...existing, ...body.skills] : existing
+      )
     }
 
     if (body.com_skills !== undefined) {
       const existing = Array.isArray(existingPlayer.com_skills) ? existingPlayer.com_skills : []
-      updateData.com_skills = hasArrayValue(body.com_skills)
-        ? [...existing, ...body.com_skills].filter((value, index, array) => array.indexOf(value) === index)
-        : existing
+      updateData.com_skills = normalizePlayerSkillsArray(
+        hasArrayValue(body.com_skills) ? [...existing, ...body.com_skills] : existing
+      )
     }
 
     if (body.available_boosters !== undefined) {

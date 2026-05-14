@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
+import { normalizePlayerSkillsArray } from '@/lib/playerSkillLabels'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -170,8 +171,8 @@ export async function POST(req) {
       team: toText(player.team),
       overall_rating: typeof player.overall_rating === 'number' ? player.overall_rating : toInt(player.overall_rating),
       base_stats: player.base_stats && typeof player.base_stats === 'object' ? player.base_stats : {},
-      skills: Array.isArray(player.skills) ? player.skills : [],
-      com_skills: Array.isArray(player.com_skills) ? player.com_skills : [],
+      skills: normalizePlayerSkillsArray(player.skills),
+      com_skills: normalizePlayerSkillsArray(player.com_skills),
       position_ratings: player.position_ratings && typeof player.position_ratings === 'object' ? player.position_ratings : {},
       available_boosters: Array.isArray(player.boosters) ? player.boosters : [],
       height: toInt(player.height_cm),
@@ -252,11 +253,11 @@ export async function POST(req) {
         // Merge skills e com_skills (unisci array, rimuovi duplicati)
         const existingSkills = Array.isArray(existingPlayerInSlot.skills) ? existingPlayerInSlot.skills : []
         const newSkills = Array.isArray(playerData.skills) ? playerData.skills : []
-        const mergedSkills = [...existingSkills, ...newSkills].filter((v, i, a) => a.indexOf(v) === i)
+        const mergedSkills = normalizePlayerSkillsArray([...existingSkills, ...newSkills])
         
         const existingComSkills = Array.isArray(existingPlayerInSlot.com_skills) ? existingPlayerInSlot.com_skills : []
         const newComSkills = Array.isArray(playerData.com_skills) ? playerData.com_skills : []
-        const mergedComSkills = [...existingComSkills, ...newComSkills].filter((v, i, a) => a.indexOf(v) === i)
+        const mergedComSkills = normalizePlayerSkillsArray([...existingComSkills, ...newComSkills])
         
         // Merge boosters (preferisci nuovi se presenti)
         const mergedBoosters = playerData.available_boosters && Array.isArray(playerData.available_boosters) && playerData.available_boosters.length > 0

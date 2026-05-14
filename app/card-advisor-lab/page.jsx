@@ -17,7 +17,7 @@ import {
   Users,
   Zap
 } from 'lucide-react'
-import { getSkillDisplayLabel } from '@/lib/playerSkillLabels'
+import { getSkillDisplayLabel, normalizePlayerSkillsArray } from '@/lib/playerSkillLabels'
 import { supabase, getValidAccessToken } from '@/lib/supabaseClient'
 
 /** Metalgate `auth_token` oppure JWT Supabase aggiornato (come CreditsBar / grafici-comparazione). */
@@ -854,6 +854,9 @@ function DetailPanel({
   const teamSynergyDetails = Array.isArray(teamSynergy?.details) ? teamSynergy.details : []
   const coachAdvice = teamSynergy?.coachAdvice || null
   const recommendedUseLine = teamSynergy?.useLine || serverEval?.recommendedUse || fitReadLines[1] || effectiveFitText
+  const technicalProfileList = Array.isArray(serverEval?.technicalProfile) && serverEval.technicalProfile.length > 0
+    ? serverEval.technicalProfile
+    : normalizePlayerSkillsArray(card?.skills || [])
   return (
     <section className="detail-panel">
       {onClose && (
@@ -1044,8 +1047,8 @@ function DetailPanel({
               <article>
                 <h3><Sparkles size={18} /> {labels.nativeSkills}</h3>
                 <div className="pill-row">
-                  {(serverEval?.technicalProfile || card.skills).length > 0
-                    ? (serverEval?.technicalProfile || card.skills).map((item) => (
+                  {technicalProfileList.length > 0
+                    ? technicalProfileList.map((item) => (
                       <StatPill key={item}>{getSkillDisplayLabel(item, lang)}</StatPill>
                     ))
                     : <StatPill>{labels.noNativeSkills}</StatPill>}
