@@ -315,9 +315,9 @@ export async function PATCH(req, { params }) {
         : existingPlayer.original_positions
     }
     
-    // Stesso criterio di ~5 commit fa: OVR da sole statistiche base (nested) normalizzate, senza booster/coach.
-    // Booster e coach restano nel Build Coach e altrove; qui evitano OVR/position_ratings incoerenti al salvataggio.
-    if (updateData.base_stats && body.base_stats !== undefined) {
+    // Se il client invia un OVR (es. build guidata), rispettalo: puo includere booster/coach attivi.
+    // Altrimenti ricalcola dalle sole statistiche base per i salvataggi manuali senza OVR esplicito.
+    if (updateData.base_stats && body.base_stats !== undefined && body.overall_rating === undefined) {
       const targetPosition = normalizeEfhubPosition(updateData.position || existingPlayer.position)
       const height = body.height ?? body.height_cm ?? existingPlayer.height
       const weakFootAccuracy = updateData.metadata?.weak_foot_accuracy || existingPlayer.metadata?.weak_foot_accuracy || 2
