@@ -26,7 +26,6 @@ import {
   ArrowRight,
   Settings,
   BarChart3,
-  UserCheck,
   ChevronDown,
   ChevronUp,
   Trash2,
@@ -258,7 +257,7 @@ function HomePage() {
       {
         key: 'coach_status',
         label: hasActiveCoach ? t('setupTipCoachReview') : t('setupReminderMissingCoach'),
-        onClick: () => router.push('/allenatori'),
+        onClick: () => router.push('/nuova-rosa-lab'),
         isMissing: !hasActiveCoach
       },
       {
@@ -1232,19 +1231,6 @@ function HomePage() {
                   </span>
                 </button>
 
-                {/* Coach AI */}
-                <button
-                  onClick={() => router.push('/allenatori')}
-                  className="dashboard-action-card dashboard-action-card--coaches"
-                >
-                  <span className="dashboard-action-icon">
-                    <UserCheck size={24} />
-                  </span>
-                  <span className="dashboard-action-copy">
-                    <strong>{t('coachesLink')}</strong>
-                    <small>{lang === 'en' ? 'Active coach and boosts' : 'Coach attivo e boost'}</small>
-                  </span>
-                </button>
               </div>
             </div>
 
@@ -1353,7 +1339,7 @@ function HomePage() {
         gameAnalysisLastCapture={gameAnalysisLastCapture}
         onOpenGameAnalysis={() => setShowGameAnalysisModal(true)}
         onOpenCoachFeedback={() => setShowCoachFeedback(true)}
-        onOpenCoaches={() => router.push('/allenatori')}
+        onOpenCoaches={() => router.push('/nuova-rosa-lab')}
       />
 
       <style jsx>{`
@@ -1520,12 +1506,6 @@ function HomePage() {
           color: #a855f7;
           background: rgba(168, 85, 247, 0.12);
           box-shadow: 0 0 18px rgba(168, 85, 247, 0.18);
-        }
-
-        .dashboard-action-card--coaches .dashboard-action-icon {
-          color: #f97316;
-          background: rgba(249, 115, 22, 0.12);
-          box-shadow: 0 0 18px rgba(249, 115, 22, 0.16);
         }
 
         .card-advisor-logo-burst {
