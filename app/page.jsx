@@ -1151,6 +1151,103 @@ function HomePage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Colonna Sinistra */}
           <div className="space-y-6">
+            {/* Quick Links / Azioni Rapide */}
+            <div data-tour-id="tour-dashboard-nav" className="neon-card" style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '20px' }}>
+                <div>
+                  <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px', color: '#FFFFFF' }}>
+                    <Settings size={20} color="var(--neon-cyan)" />
+                    {t('navigation')}
+                  </h2>
+                  <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.5, color: 'rgba(255,255,255,0.62)' }}>
+                    {lang === 'en' ? 'Jump straight into the tools that improve your team.' : 'Vai subito negli strumenti che fanno crescere la squadra.'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="dashboard-action-grid">
+                {/* Rosa */}
+                <button
+                  onClick={() => router.push('/gestione-formazione')}
+                  className="dashboard-action-card dashboard-action-card--roster"
+                >
+                  <span className="dashboard-action-icon">
+                    <Users size={26} />
+                  </span>
+                  <span className="dashboard-action-copy">
+                    <strong>{lang === 'en' ? 'Squad' : 'Rosa'}</strong>
+                    <small>{lang === 'en' ? 'Players, roles and formation' : 'Giocatori, ruoli e formazione'}</small>
+                  </span>
+                  <ArrowRight size={18} className="dashboard-action-arrow" />
+                </button>
+
+                {/* Analisi Carte Nuove */}
+                <button
+                  onClick={() => setShowCardAdvisorModal(true)}
+                  className="dashboard-action-card dashboard-action-card--cards"
+                >
+                  <span className="dashboard-action-icon">
+                    <Zap size={26} />
+                  </span>
+                  <span className="dashboard-action-copy">
+                    <strong>{lang === 'en' ? 'New card analysis' : 'Analisi carte nuove'}</strong>
+                    <small>{lang === 'en' ? 'Compare packs with your real roster' : 'Confronta i pack con la tua rosa reale'}</small>
+                  </span>
+                  <ArrowRight size={18} className="dashboard-action-arrow" />
+                </button>
+
+                {/* Palestra Coach */}
+                <button
+                  onClick={() => setShowCoachFeedback(true)}
+                  className="dashboard-action-card dashboard-action-card--coach-gym dashboard-action-card--wide"
+                >
+                  <span className="dashboard-action-icon">
+                    <Dumbbell size={28} />
+                  </span>
+                  <span className="dashboard-action-copy">
+                    <strong>{t('palestraCoachTitle')}</strong>
+                    <small>
+                      {lang === 'en'
+                        ? 'Tell the coach what happened in game and turn it into tactical feedback.'
+                        : 'Racconta cosa succede in partita e trasformalo in feedback tattico.'}
+                    </small>
+                  </span>
+                  <span className="dashboard-action-badge">
+                    {lang === 'en' ? 'Coach check-in' : 'Check-in coach'}
+                  </span>
+                </button>
+
+                {/* Analisi Partita Rapida */}
+                <button
+                  data-tour-id="tour-dashboard-game-analysis"
+                  onClick={() => setShowGameAnalysisModal(true)}
+                  className="dashboard-action-card dashboard-action-card--stats"
+                >
+                  <span className="dashboard-action-icon">
+                    <BarChart3 size={24} />
+                  </span>
+                  <span className="dashboard-action-copy">
+                    <strong>{t('gameAnalysisTitle')}</strong>
+                    <small>{lang === 'en' ? 'Upload game stats' : 'Carica statistiche di gioco'}</small>
+                  </span>
+                </button>
+
+                {/* Coach AI */}
+                <button
+                  onClick={() => router.push('/allenatori')}
+                  className="dashboard-action-card dashboard-action-card--coaches"
+                >
+                  <span className="dashboard-action-icon">
+                    <UserCheck size={24} />
+                  </span>
+                  <span className="dashboard-action-copy">
+                    <strong>{t('coachesLink')}</strong>
+                    <small>{lang === 'en' ? 'Active coach and boosts' : 'Coach attivo e boost'}</small>
+                  </span>
+                </button>
+              </div>
+            </div>
+
             {/* Panoramica Squadra */}
             <div data-tour-id="tour-dashboard-squad" className="neon-card" style={{ padding: '24px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: '#FFFFFF' }}>
@@ -1191,152 +1288,6 @@ function HomePage() {
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* Quick Links / Azioni Rapide */}
-            <div data-tour-id="tour-dashboard-nav" className="neon-card" style={{ padding: '24px' }}>
-              <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: '#FFFFFF' }}>
-                <Settings size={20} color="var(--neon-cyan)" />
-                {t('navigation')}
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Analisi Partita Rapida */}
-                <button
-                  data-tour-id="tour-dashboard-game-analysis"
-                onClick={() => setShowGameAnalysisModal(true)}
-                  className="neon-button"
-                  style={{ 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '12px',
-                    padding: '20px',
-                    background: 'rgba(13, 25, 48, 0.9)',
-                    borderColor: 'rgba(0, 212, 255, 0.15)',
-                    color: '#FFFFFF',
-                    height: '100%',
-                    borderRadius: '12px'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(0, 161, 166, 0.1)'
-                    e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.5)'
-                    e.currentTarget.style.color = 'var(--neon-cyan)'
-                    e.currentTarget.style.transform = 'translateY(-2px)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'var(--bg-elevated)'
-                    e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.15)'
-                    e.currentTarget.style.color = '#FFFFFF'
-                    e.currentTarget.style.transform = 'translateY(0)'
-                  }}
-                >
-                  <BarChart3 size={24} style={{ color: '#a855f7', filter: 'drop-shadow(0 0 6px rgba(168, 85, 247, 0.6))' }} />
-                  <span style={{ fontWeight: 500, textAlign: 'center' }}>{t('gameAnalysisTitle')}</span>
-                </button>
-
-                {/* Analisi Carte Nuove */}
-                <button
-                  onClick={() => setShowCardAdvisorModal(true)}
-                  className="neon-button"
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '12px',
-                    padding: '20px',
-                    background: 'rgba(13, 25, 48, 0.9)',
-                    borderColor: 'rgba(255, 203, 5, 0.22)',
-                    color: '#FFFFFF',
-                    height: '100%',
-                    borderRadius: '12px'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 203, 5, 0.10)'
-                    e.currentTarget.style.borderColor = 'rgba(255, 203, 5, 0.55)'
-                    e.currentTarget.style.color = '#ffcb05'
-                    e.currentTarget.style.transform = 'translateY(-2px)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'var(--bg-elevated)'
-                    e.currentTarget.style.borderColor = 'rgba(255, 203, 5, 0.22)'
-                    e.currentTarget.style.color = '#FFFFFF'
-                    e.currentTarget.style.transform = 'translateY(0)'
-                  }}
-                >
-                  <Zap size={24} style={{ color: '#ffcb05', filter: 'drop-shadow(0 0 7px rgba(255, 203, 5, 0.7))' }} />
-                  <span style={{ fontWeight: 500, textAlign: 'center' }}>{lang === 'en' ? 'New card analysis' : 'Analisi carte nuove'}</span>
-                </button>
-
-                {/* Coach AI */}
-                <button
-                  onClick={() => router.push('/allenatori')}
-                  className="neon-button"
-                  style={{ 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '12px',
-                    padding: '20px',
-                    background: 'rgba(13, 25, 48, 0.9)',
-                    borderColor: 'rgba(0, 212, 255, 0.15)',
-                    color: '#FFFFFF',
-                    height: '100%',
-                    borderRadius: '12px'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(221, 166, 47, 0.1)'
-                    e.currentTarget.style.borderColor = 'var(--border-gold)'
-                    e.currentTarget.style.color = 'var(--primary-gold)'
-                    e.currentTarget.style.transform = 'translateY(-2px)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'var(--bg-elevated)'
-                    e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.15)'
-                    e.currentTarget.style.color = '#FFFFFF'
-                    e.currentTarget.style.transform = 'translateY(0)'
-                  }}
-                >
-                  <UserCheck size={24} style={{ color: '#f97316', filter: 'drop-shadow(0 0 6px rgba(249, 115, 22, 0.6))' }} />
-                  <span style={{ fontWeight: 500 }}>{t('coachesLink')}</span>
-                </button>
-
-                {/* Palestra Coach */}
-                <button
-                  onClick={() => setShowCoachFeedback(true)}
-                  className="neon-button"
-                  style={{ 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '12px',
-                    padding: '20px',
-                    background: 'rgba(13, 25, 48, 0.9)',
-                    borderColor: 'rgba(0, 212, 255, 0.15)',
-                    color: '#FFFFFF',
-                    height: '100%',
-                    borderRadius: '12px'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(0, 161, 166, 0.1)'
-                    e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.5)'
-                    e.currentTarget.style.color = 'var(--neon-cyan)'
-                    e.currentTarget.style.transform = 'translateY(-2px)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'var(--bg-elevated)'
-                    e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.15)'
-                    e.currentTarget.style.color = '#FFFFFF'
-                    e.currentTarget.style.transform = 'translateY(0)'
-                  }}
-                >
-                  <Dumbbell size={24} style={{ color: '#00d4ff', filter: 'drop-shadow(0 0 6px rgba(0, 212, 255, 0.6))' }} />
-                  <span style={{ fontWeight: 500 }}>{t('palestraCoachTitle')}</span>
-                </button>
               </div>
             </div>
           </div>
@@ -1426,6 +1377,157 @@ function HomePage() {
           100% { transform: scale(1.85); opacity: 0; }
         }
 
+        .dashboard-action-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
+        }
+
+        .dashboard-action-card {
+          position: relative;
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          min-height: 106px;
+          padding: 18px;
+          overflow: hidden;
+          border: 1px solid rgba(0, 212, 255, 0.16);
+          border-radius: 18px;
+          background: linear-gradient(135deg, rgba(10, 18, 38, 0.96), rgba(13, 25, 48, 0.86));
+          color: #FFFFFF;
+          text-align: left;
+          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02), 0 10px 28px rgba(0,0,0,0.22);
+          transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+        }
+
+        .dashboard-action-card::before {
+          content: '';
+          position: absolute;
+          inset: -40% -20% auto auto;
+          width: 160px;
+          height: 160px;
+          border-radius: 999px;
+          background: radial-gradient(circle, rgba(0, 212, 255, 0.16), transparent 68%);
+          pointer-events: none;
+          transition: opacity 180ms ease, transform 180ms ease;
+        }
+
+        .dashboard-action-card:hover {
+          transform: translateY(-3px);
+          border-color: rgba(0, 212, 255, 0.52);
+          box-shadow: 0 0 24px rgba(0, 212, 255, 0.12), 0 16px 34px rgba(0,0,0,0.32);
+        }
+
+        .dashboard-action-card:hover::before {
+          transform: scale(1.08);
+        }
+
+        .dashboard-action-card--wide {
+          grid-column: 1 / -1;
+          min-height: 118px;
+        }
+
+        .dashboard-action-icon {
+          position: relative;
+          z-index: 1;
+          width: 48px;
+          height: 48px;
+          flex: 0 0 48px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 16px;
+          background: rgba(0, 212, 255, 0.10);
+          color: var(--neon-cyan);
+          box-shadow: 0 0 18px rgba(0, 212, 255, 0.16);
+        }
+
+        .dashboard-action-copy {
+          position: relative;
+          z-index: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+          min-width: 0;
+        }
+
+        .dashboard-action-copy strong {
+          font-size: 16px;
+          font-weight: 800;
+          line-height: 1.2;
+        }
+
+        .dashboard-action-copy small {
+          font-size: 12px;
+          line-height: 1.35;
+          color: rgba(255,255,255,0.64);
+        }
+
+        .dashboard-action-arrow {
+          position: relative;
+          z-index: 1;
+          margin-left: auto;
+          color: rgba(255,255,255,0.66);
+        }
+
+        .dashboard-action-badge {
+          position: relative;
+          z-index: 1;
+          margin-left: auto;
+          padding: 7px 10px;
+          border: 1px solid rgba(0, 212, 255, 0.30);
+          border-radius: 999px;
+          color: #8ff2ff;
+          background: rgba(0, 212, 255, 0.08);
+          font-size: 12px;
+          font-weight: 800;
+          white-space: nowrap;
+        }
+
+        .dashboard-action-card--roster {
+          border-color: rgba(0, 212, 255, 0.28);
+          background: linear-gradient(135deg, rgba(0, 161, 166, 0.20), rgba(13, 25, 48, 0.92));
+        }
+
+        .dashboard-action-card--cards {
+          border-color: rgba(255, 203, 5, 0.34);
+          background: linear-gradient(135deg, rgba(255, 203, 5, 0.16), rgba(13, 25, 48, 0.92));
+        }
+
+        .dashboard-action-card--cards::before {
+          background: radial-gradient(circle, rgba(255, 203, 5, 0.22), transparent 68%);
+        }
+
+        .dashboard-action-card--cards .dashboard-action-icon {
+          color: #ffcb05;
+          background: rgba(255, 203, 5, 0.12);
+          box-shadow: 0 0 20px rgba(255, 203, 5, 0.18);
+        }
+
+        .dashboard-action-card--coach-gym {
+          border-color: rgba(0, 212, 255, 0.38);
+          background:
+            linear-gradient(135deg, rgba(0, 212, 255, 0.16), rgba(79, 70, 229, 0.12)),
+            rgba(13, 25, 48, 0.94);
+        }
+
+        .dashboard-action-card--coach-gym .dashboard-action-icon {
+          color: #67e8f9;
+          background: rgba(0, 212, 255, 0.14);
+        }
+
+        .dashboard-action-card--stats .dashboard-action-icon {
+          color: #a855f7;
+          background: rgba(168, 85, 247, 0.12);
+          box-shadow: 0 0 18px rgba(168, 85, 247, 0.18);
+        }
+
+        .dashboard-action-card--coaches .dashboard-action-icon {
+          color: #f97316;
+          background: rgba(249, 115, 22, 0.12);
+          box-shadow: 0 0 18px rgba(249, 115, 22, 0.16);
+        }
+
         .card-advisor-logo-burst {
           width: 132px;
           height: 132px;
@@ -1462,6 +1564,23 @@ function HomePage() {
         }
 
         @media (max-width: 640px) {
+          .dashboard-action-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .dashboard-action-card {
+            min-height: 96px;
+            padding: 16px;
+          }
+
+          .dashboard-action-card--wide {
+            min-height: 112px;
+          }
+
+          .dashboard-action-badge {
+            display: none;
+          }
+
           .card-advisor-entry-overlay {
             align-items: flex-start !important;
             justify-content: center !important;
