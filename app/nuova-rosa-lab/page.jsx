@@ -783,16 +783,22 @@ function CoachCatalogModal({
       className="nr-picker-shell nr-coach-picker-shell"
     >
       <div className="nr-picker-toolbar">
-        <label className="nr-search-input">
-          <Search size={16} />
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={(event) => onSearchChange(event.target.value)}
-            placeholder={lang === 'en' ? 'Search coach name' : 'Cerca nome allenatore'}
-            disabled={saving}
-          />
-        </label>
+        <div className="nr-picker-search-actions">
+          <label className="nr-search-input">
+            <Search size={16} />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(event) => onSearchChange(event.target.value)}
+              placeholder={lang === 'en' ? 'Search coach name' : 'Cerca nome allenatore'}
+              disabled={saving}
+            />
+          </label>
+          <button type="button" className="nr-secondary-button nr-upload-inline-button" onClick={onUploadFallback} disabled={saving}>
+            <Upload size={14} />
+            {lang === 'en' ? 'Upload photos' : 'Carica le foto'}
+          </button>
+        </div>
         <div className="nr-catalog-meta">
           <span>
             {total > 0
@@ -842,15 +848,9 @@ function CoachCatalogModal({
                 ))
               ) : (
                 <div className="nr-empty-state">
-                  <span>
-                    {lang === 'en'
-                      ? 'Cannot find your coach in the catalog?'
-                      : 'Non trovi il tuo allenatore nel catalogo?'}
-                  </span>
-                  <button type="button" className="nr-secondary-button" onClick={onUploadFallback} disabled={saving}>
-                    <Upload size={14} />
-                    {lang === 'en' ? 'Upload photos' : 'Carica le foto'}
-                  </button>
+                  {lang === 'en'
+                    ? 'No coaches found. If your coach is missing, use Upload photos next to search.'
+                    : 'Nessun allenatore trovato. Se manca il tuo allenatore, usa Carica le foto accanto alla ricerca.'}
                 </div>
               )}
             </div>
@@ -1310,22 +1310,24 @@ function CatalogPickerModal({
                   {lang === 'en' ? 'Back to choices' : 'Torna alle scelte'}
                 </button>
               )}
-              <button type="button" className="nr-secondary-button" onClick={onUploadFallback}>
-                <Upload size={14} />
-                {lang === 'en' ? 'Upload from photo' : 'Carica da foto'}
-              </button>
             </div>
 
             <div className="nr-picker-toolbar">
-              <label className="nr-search-input">
-                <Search size={16} />
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(event) => onSearchChange(event.target.value)}
-                  placeholder={lang === 'en' ? 'Search player, role, or card type' : 'Cerca giocatore, ruolo o tipo carta'}
-                />
-              </label>
+              <div className="nr-picker-search-actions">
+                <label className="nr-search-input">
+                  <Search size={16} />
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(event) => onSearchChange(event.target.value)}
+                    placeholder={lang === 'en' ? 'Search player, role, or card type' : 'Cerca giocatore, ruolo o tipo carta'}
+                  />
+                </label>
+                <button type="button" className="nr-secondary-button nr-upload-inline-button" onClick={onUploadFallback}>
+                  <Upload size={14} />
+                  {lang === 'en' ? 'Upload photo' : 'Carica foto'}
+                </button>
+              </div>
               <div className="nr-catalog-meta">
                 <span>{resultCountLabel}</span>
                 <label>
@@ -3340,22 +3342,6 @@ export default withAuth(function NuovaRosaLabPage() {
   const [starterReservePickerSlot, setStarterReservePickerSlot] = React.useState(null)
 
   const activeTeamPlaystyle = tacticalSettings?.team_playing_style || null
-  const hasOpenModal = Boolean(
-    pickerOpen ||
-    showAssignModal ||
-    confirmModal ||
-    showPremiumEditorModal ||
-    showPhotoUploadModal ||
-    showPhotoReviewModal ||
-    positionModalCtx ||
-    catalogPositionCtx ||
-    coachCatalogOpen ||
-    showCoachPhotoUploadModal ||
-    showCoachDetailsModal ||
-    reserveSlotPickerPlayer ||
-    starterReservePickerSlot ||
-    buildCoachPlayerPickerOpen
-  )
 
   const showToast = React.useCallback((message, type = 'success') => {
     setToast({ message, type })
@@ -3366,35 +3352,6 @@ export default withAuth(function NuovaRosaLabPage() {
     const timer = window.setTimeout(() => setToast(null), 3200)
     return () => window.clearTimeout(timer)
   }, [toast])
-
-  React.useEffect(() => {
-    if (!hasOpenModal) return
-
-    const scrollY = window.scrollY
-    const { body, documentElement } = document
-    const previous = {
-      htmlOverflow: documentElement.style.overflow,
-      bodyOverflow: body.style.overflow,
-      bodyPosition: body.style.position,
-      bodyTop: body.style.top,
-      bodyWidth: body.style.width
-    }
-
-    documentElement.style.overflow = 'hidden'
-    body.style.overflow = 'hidden'
-    body.style.position = 'fixed'
-    body.style.top = `-${scrollY}px`
-    body.style.width = '100%'
-
-    return () => {
-      documentElement.style.overflow = previous.htmlOverflow
-      body.style.overflow = previous.bodyOverflow
-      body.style.position = previous.bodyPosition
-      body.style.top = previous.bodyTop
-      body.style.width = previous.bodyWidth
-      window.scrollTo(0, scrollY)
-    }
-  }, [hasOpenModal])
 
   const fetchRoster = React.useCallback(async () => {
     setLoading(true)
@@ -6231,20 +6188,23 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-modal-header {
-          position: sticky;
-          top: -18px;
-          z-index: 40;
-          padding: 18px 0 12px;
-          margin: -18px 0 16px;
-          background:
-            linear-gradient(180deg, rgba(4, 7, 18, 0.98) 0%, rgba(8, 13, 32, 0.94) 72%, rgba(8, 13, 32, 0) 100%);
-          backdrop-filter: blur(18px);
+          position: relative;
+          padding-right: 56px;
         }
 
         .nr-modal-header .nr-icon-button {
           flex-shrink: 0;
-          position: relative;
-          z-index: 2;
+          position: fixed;
+          top: max(16px, env(safe-area-inset-top, 0px));
+          right: 16px;
+          z-index: 100230;
+          width: 46px;
+          height: 46px;
+          border-color: rgba(255, 255, 255, 0.28);
+          background: rgba(3, 7, 18, 0.96);
+          color: #fff;
+          box-shadow: 0 18px 48px rgba(0, 0, 0, 0.46), 0 0 0 1px rgba(0, 212, 255, 0.18);
+          backdrop-filter: blur(14px);
         }
 
         .nr-field-shell {
@@ -7259,9 +7219,9 @@ export default withAuth(function NuovaRosaLabPage() {
           z-index: 100200;
           background: rgba(7, 10, 20, 0.8);
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           justify-content: center;
-          padding: 14px;
+          padding: max(18px, env(safe-area-inset-top, 0px)) 14px max(42px, env(safe-area-inset-bottom, 0px));
           overflow-y: auto;
           overscroll-behavior: contain;
           -webkit-overflow-scrolling: touch;
@@ -7269,12 +7229,13 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-modal-shell {
           width: min(1280px, calc(100vw - 24px));
-          max-height: min(92vh, 920px);
+          max-height: none;
           position: relative;
-          overflow: auto;
+          overflow: visible;
           overscroll-behavior: contain;
           -webkit-overflow-scrolling: touch;
           padding: 18px;
+          margin: auto 0;
         }
 
         .nr-picker-body {
@@ -7776,6 +7737,13 @@ export default withAuth(function NuovaRosaLabPage() {
           margin-bottom: 14px;
         }
 
+        .nr-picker-search-actions {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          align-items: stretch;
+          gap: 10px;
+        }
+
         .nr-search-input {
           width: 100%;
           display: flex;
@@ -7788,12 +7756,21 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-search-input input {
+          min-width: 0;
           width: 100%;
           border: 0;
           outline: none;
           background: transparent;
           color: #fff;
           font-size: 14px;
+          -webkit-appearance: none;
+          appearance: none;
+          touch-action: manipulation;
+        }
+
+        .nr-upload-inline-button {
+          min-height: 46px;
+          white-space: nowrap;
         }
 
         .nr-catalog-meta {
@@ -8996,9 +8973,9 @@ export default withAuth(function NuovaRosaLabPage() {
 
         @media (max-width: 768px) {
           .nr-modal-backdrop {
-            align-items: flex-end;
+            align-items: flex-start;
             justify-content: stretch;
-            padding: 0;
+            padding: max(10px, env(safe-area-inset-top, 0px)) 0 max(72px, env(safe-area-inset-bottom, 0px));
           }
 
           .nr-page {
@@ -9107,18 +9084,22 @@ export default withAuth(function NuovaRosaLabPage() {
 
           .nr-modal-shell {
             width: 100%;
-            max-height: 100dvh;
+            max-height: none;
             border-radius: 18px 18px 0 0;
-            align-self: flex-end;
-            overflow-y: auto;
+            align-self: flex-start;
+            overflow: visible;
             padding: 12px;
-            padding-bottom: max(132px, calc(env(safe-area-inset-bottom, 0px) + 116px));
+            padding-bottom: max(180px, calc(env(safe-area-inset-bottom, 0px) + 156px));
+            margin: 0;
           }
 
           .nr-modal-header {
-            top: -12px;
-            padding-top: 12px;
-            margin-top: -12px;
+            padding-right: 58px;
+          }
+
+          .nr-modal-header .nr-icon-button {
+            top: max(10px, env(safe-area-inset-top, 0px));
+            right: 10px;
           }
 
           .nr-modal-shell::after {
@@ -9153,13 +9134,33 @@ export default withAuth(function NuovaRosaLabPage() {
           .nr-quick-shell,
           .nr-picker-shell,
           .nr-premium-player-shell {
-            padding-bottom: max(132px, calc(env(safe-area-inset-bottom, 0px) + 116px));
+            padding-bottom: max(180px, calc(env(safe-area-inset-bottom, 0px) + 156px));
           }
 
           .nr-quick-body,
           .nr-picker-results,
           .nr-premium-sections {
-            padding-bottom: 8px;
+            max-height: none;
+            overflow: visible;
+            padding-bottom: 28px;
+          }
+
+          .nr-picker-search-actions {
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 8px;
+          }
+
+          .nr-search-input {
+            padding: 11px 10px;
+          }
+
+          .nr-search-input input {
+            font-size: 16px;
+          }
+
+          .nr-upload-inline-button {
+            min-width: 96px;
+            padding: 0 10px;
           }
 
           .nr-picker-shell.reserve-mode .nr-picker-body {
