@@ -767,6 +767,14 @@ function RosterStatusPanel({ labels, rosterSummary, onLoadRoster, onOpenCoach })
   )
 }
 
+function synergyLabelFromScore(score, labels, fallback) {
+  const numericScore = Number(score)
+  if (!Number.isFinite(numericScore) || numericScore <= 0) return fallback || labels.synergyMedium
+  if (numericScore >= 75) return labels.synergyHigh
+  if (numericScore >= 55) return labels.synergyMedium
+  return labels.synergyLow
+}
+
 function DetailPanel({
   card,
   labels,
@@ -785,11 +793,9 @@ function DetailPanel({
   const [showSynergyDetails, setShowSynergyDetails] = React.useState(false)
   const [showDeepFullReport, setShowDeepFullReport] = React.useState(false)
   const [showBaseDetails, setShowBaseDetails] = React.useState(false)
-  const verdict = getVerdictMeta(card.verdict, labels)
   const fitSummary = getFitSummary(card, rosterSummary, labels, lang)
   const serverEval = evaluation || null
   const lever = serverEval?.mainLever || (lang === 'en' ? (card.leverEn || card.lever) : card.lever)
-  const effectiveTitle = evaluating ? labels.loadingDecision : (serverEval?.title || fitSummary.title)
   const effectivePriority = evaluating ? '...' : (serverEval?.teamSynergy?.label || serverEval?.decision?.label || serverEval?.synergyLevel || fitSummary.priority)
   const effectiveFitText = serverEval?.whyItMatters?.length ? serverEval.whyItMatters.join(' ') : fitSummary.text
   const effectiveCoachText = serverEval?.context?.activeCoachName
@@ -807,19 +813,15 @@ function DetailPanel({
   const teamSynergyScore = evaluating
     ? 0
     : Math.max(0, Math.min(100, Number(teamSynergy?.score || serverEval?.score || card.score || 0)))
-  const teamSynergyLabel = evaluating ? '...' : (teamSynergy?.label || effectivePriority)
+  const teamSynergyLabel = evaluating
+    ? '...'
+    : synergyLabelFromScore(teamSynergyScore, labels, teamSynergy?.label || effectivePriority)
   const teamSynergySummary = evaluating
     ? (lang === 'en' ? 'Reading squad context…' : 'Leggo il contesto rosa…')
     : (teamSynergy?.summary || fitReadLines[0] || effectiveFitText)
   const teamSynergyDetails = Array.isArray(teamSynergy?.details) ? teamSynergy.details : []
   const coachAdvice = teamSynergy?.coachAdvice || null
   const recommendedUseLine = teamSynergy?.useLine || serverEval?.recommendedUse || fitReadLines[1] || effectiveFitText
-  const heroProfile = serverEval?.technicalProfile?.find(item => item.toLowerCase().startsWith(lang === 'en' ? 'style:' : 'stile:'))
-  const readableStyle = heroProfile
-    ? heroProfile.replace(/^Style:\s*/i, '').replace(/^Stile:\s*/i, '')
-    : card.style && card.style !== 'Profilo da analizzare'
-      ? card.style
-      : labels.analyzeSynergy
   return (
     <section className="detail-panel">
       {onClose && (
@@ -837,27 +839,7 @@ function DetailPanel({
           <CardImage card={card} labels={labels} />
         </div>
         <div className="detail-copy">
-          <span className="mini-kicker">{labels.currentRelease}</span>
           <h2>{card.name}</h2>
-          <p>{card.category} · {card.position} · {readableStyle}</p>
-          <div className="detail-metrics">
-            <div>
-              <span>{labels.cardScore}</span>
-              <strong>{teamSynergyLabel}</strong>
-            </div>
-            <div>
-              <span>{labels.cardIdentity}</span>
-              <strong>{readableStyle}</strong>
-            </div>
-            <div>
-              <span>{labels.role}</span>
-              <strong>{card.position}</strong>
-            </div>
-          </div>
-          <div className="verdict-banner" style={{ borderColor: verdict.color }}>
-            <CheckCircle2 size={18} style={{ color: verdict.color }} />
-            <span>{labels.verdict}: <strong style={{ color: verdict.color }}>{effectiveTitle}</strong></span>
-          </div>
           <div className="advisor-section-marker advisor-section-marker-premium">
             <span>{labels.premiumSectionLabel}</span>
             <small>{labels.premiumSectionHint}</small>
