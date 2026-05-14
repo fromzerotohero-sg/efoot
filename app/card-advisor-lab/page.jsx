@@ -18,6 +18,17 @@ import {
   Zap
 } from 'lucide-react'
 import { getSkillDisplayLabel } from '@/lib/playerSkillLabels'
+import { supabase, getValidAccessToken } from '@/lib/supabaseClient'
+
+/** Metalgate `auth_token` oppure JWT Supabase aggiornato (come CreditsBar / grafici-comparazione). */
+async function resolveClientAuthBearer() {
+  if (typeof window === 'undefined') return null
+  let token = localStorage.getItem('auth_token')
+  if (!token && supabase) {
+    token = await getValidAccessToken()
+  }
+  return token || null
+}
 
 const copy = {
   it: {
@@ -1241,7 +1252,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
   const requestDeepAnalysis = React.useCallback(async () => {
     if (!detailsCard?.id || deepAnalysesByCard[detailsCard.id] || deepAnalysisLoadingId) return
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+    const token = await resolveClientAuthBearer()
     if (!token) return
 
     setDeepAnalysisLoadingId(detailsCard.id)
@@ -1286,7 +1297,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
     async function loadRosterSummary() {
       try {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+        const token = await resolveClientAuthBearer()
         if (!token) {
           if (active) setRosterSummary({ status: 'missing', totalPlayers: 0, starters: 0, formation: '-' })
           return
@@ -1338,7 +1349,7 @@ export default withAuth(function CardAdvisorLabPage() {
     async function loadEvaluation() {
       if (!detailsCard?.id) return
       if (evaluationsByCard[detailsCard.id]) return
-      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+      const token = await resolveClientAuthBearer()
       if (!token) return
 
       setEvaluatingCardId(detailsCard.id)
