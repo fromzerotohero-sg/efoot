@@ -39,14 +39,19 @@ import {
   Dumbbell
 } from 'lucide-react'
 
-/** Legge query URL: openCoach=1 → Palestra Coach; openAssistantChat=1 → chat principale (Assistant) con messaggio grafici; openGameAnalysis=1 → GameAnalysisModal. */
-function OpenCoachListener({ onOpenCoach, onOpenAssistantChat, onOpenGameAnalysis }) {
+/** Legge query URL: openCoach=1 → Palestra Coach; openAssistantChat=1 → chat principale; openGameAnalysis=1 → GameAnalysisModal; openCardAdvisor=1 → popup carte. */
+function OpenCoachListener({ onOpenCoach, onOpenAssistantChat, onOpenGameAnalysis, onOpenCardAdvisor }) {
   const searchParams = useSearchParams()
   const router = useRouter()
   // useLayoutEffect: apre modal prima del paint così non si vede la dashboard “vuota” un frame
   React.useLayoutEffect(() => {
     if (searchParams?.get('openGameAnalysis') === '1') {
       onOpenGameAnalysis?.()
+      router.replace('/', { scroll: false })
+      return
+    }
+    if (searchParams?.get('openCardAdvisor') === '1') {
+      onOpenCardAdvisor?.()
       router.replace('/', { scroll: false })
       return
     }
@@ -59,7 +64,7 @@ function OpenCoachListener({ onOpenCoach, onOpenAssistantChat, onOpenGameAnalysi
       onOpenCoach()
       router.replace('/', { scroll: false })
     }
-  }, [searchParams, onOpenCoach, onOpenAssistantChat, onOpenGameAnalysis, router])
+  }, [searchParams, onOpenCoach, onOpenAssistantChat, onOpenGameAnalysis, onOpenCardAdvisor, router])
   return null
 }
 
@@ -117,6 +122,18 @@ function HomePage() {
     return () => {
       if (typeof window !== 'undefined') {
         window.removeEventListener(OPEN_GAME_ANALYSIS_MODAL_EVENT, onOpen)
+      }
+    }
+  }, [])
+
+  React.useEffect(() => {
+    const onOpen = () => setShowCardAdvisorModal(true)
+    if (typeof window !== 'undefined') {
+      window.addEventListener('open-card-advisor-entry', onOpen)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('open-card-advisor-entry', onOpen)
       }
     }
   }, [])
@@ -641,6 +658,7 @@ function HomePage() {
             }
           }}
           onOpenGameAnalysis={() => setShowGameAnalysisModal(true)}
+          onOpenCardAdvisor={() => setShowCardAdvisorModal(true)}
         />
       </Suspense>
       
@@ -843,6 +861,7 @@ function HomePage() {
 
       {showCardAdvisorModal && (
         <div
+          className="card-advisor-entry-overlay"
           style={{
             position: 'fixed',
             inset: 0,
@@ -856,7 +875,7 @@ function HomePage() {
           }}
         >
           <div
-            className="neon-card"
+            className="neon-card card-advisor-entry-modal"
             style={{
               width: 'min(760px, 100%)',
               padding: 'clamp(24px, 4vw, 34px)',
@@ -1112,6 +1131,40 @@ function HomePage() {
                   <span style={{ fontWeight: 500, textAlign: 'center' }}>{t('gameAnalysisTitle')}</span>
                 </button>
 
+                {/* Analisi Carte Nuove */}
+                <button
+                  onClick={() => setShowCardAdvisorModal(true)}
+                  className="neon-button"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '12px',
+                    padding: '20px',
+                    background: 'rgba(13, 25, 48, 0.9)',
+                    borderColor: 'rgba(255, 203, 5, 0.22)',
+                    color: '#FFFFFF',
+                    height: '100%',
+                    borderRadius: '12px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 203, 5, 0.10)'
+                    e.currentTarget.style.borderColor = 'rgba(255, 203, 5, 0.55)'
+                    e.currentTarget.style.color = '#ffcb05'
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'var(--bg-elevated)'
+                    e.currentTarget.style.borderColor = 'rgba(255, 203, 5, 0.22)'
+                    e.currentTarget.style.color = '#FFFFFF'
+                    e.currentTarget.style.transform = 'translateY(0)'
+                  }}
+                >
+                  <Zap size={24} style={{ color: '#ffcb05', filter: 'drop-shadow(0 0 7px rgba(255, 203, 5, 0.7))' }} />
+                  <span style={{ fontWeight: 500, textAlign: 'center' }}>{lang === 'en' ? 'New card analysis' : 'Analisi carte nuove'}</span>
+                </button>
+
                 {/* Coach AI */}
                 <button
                   onClick={() => router.push('/allenatori')}
@@ -1250,6 +1303,27 @@ function HomePage() {
       <style jsx>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 640px) {
+          .card-advisor-entry-overlay {
+            align-items: flex-start !important;
+            justify-content: center !important;
+            padding: 10px 10px calc(92px + env(safe-area-inset-bottom, 0px)) !important;
+            overflow-y: auto !important;
+          }
+
+          .card-advisor-entry-modal {
+            width: min(100%, 390px) !important;
+            max-height: calc(100dvh - 112px - env(safe-area-inset-bottom, 0px)) !important;
+            overflow-y: auto !important;
+            padding: 18px !important;
+            border-radius: 18px !important;
+          }
+
+          .card-advisor-entry-modal h2 {
+            font-size: 26px !important;
+          }
         }
       `}</style>
     </main>

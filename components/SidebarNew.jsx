@@ -14,6 +14,7 @@ import {
   Calendar,
   BarChart3,
   Shield,
+  Sparkles,
   LogOut,
   Menu,
   X,
@@ -367,6 +368,49 @@ export default function SidebarNew() {
             >
               <UsersIcon size={18} style={{ filter: isActive('/gestione-formazione') ? 'drop-shadow(0 0 5px rgba(0, 212, 255, 0.8))' : 'none' }} />
               <span>{t('yourSquad')}</span>
+            </Link>
+
+            {/* Analisi Carte */}
+            <Link
+              href="/?openCardAdvisor=1"
+              onClick={() => setIsOpen(false)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 16px',
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: 700,
+                background: isActive('/card-advisor-lab')
+                  ? 'linear-gradient(145deg, rgba(255, 203, 5, 0.18) 0%, rgba(168, 85, 247, 0.10) 100%)'
+                  : 'rgba(255, 203, 5, 0.06)',
+                color: isActive('/card-advisor-lab') ? '#ffcb05' : 'rgba(255, 255, 255, 0.72)',
+                border: isActive('/card-advisor-lab')
+                  ? '1px solid rgba(255, 203, 5, 0.48)'
+                  : '1px solid rgba(255, 203, 5, 0.18)',
+                boxShadow: isActive('/card-advisor-lab') ? '0 0 20px rgba(255, 203, 5, 0.16)' : 'none',
+                transition: 'all 0.3s ease',
+                cursor: 'pointer',
+                textDecoration: 'none'
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive('/card-advisor-lab')) {
+                  e.currentTarget.style.background = 'rgba(255, 203, 5, 0.10)'
+                  e.currentTarget.style.color = '#ffcb05'
+                  e.currentTarget.style.borderColor = 'rgba(255, 203, 5, 0.34)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive('/card-advisor-lab')) {
+                  e.currentTarget.style.background = 'rgba(255, 203, 5, 0.06)'
+                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.72)'
+                  e.currentTarget.style.borderColor = 'rgba(255, 203, 5, 0.18)'
+                }
+              }}
+            >
+              <Sparkles size={18} style={{ filter: 'drop-shadow(0 0 5px rgba(255, 203, 5, 0.75))' }} />
+              <span>{lang === 'en' ? 'Card analysis' : 'Analisi carte'}</span>
             </Link>
 
             {/* Cronologia Partite */}

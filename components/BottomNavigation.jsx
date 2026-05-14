@@ -10,7 +10,8 @@ import {
   LayoutGrid,
   Plus,
   Users,
-  Calendar
+  Calendar,
+  Sparkles
 } from 'lucide-react'
 
 export default function BottomNavigation() {
@@ -40,6 +41,11 @@ export default function BottomNavigation() {
       href: '/match',
       icon: Calendar,
       label: lang === 'en' ? 'Matches' : 'Partite'
+    },
+    {
+      href: '/?openCardAdvisor=1',
+      icon: Sparkles,
+      label: lang === 'en' ? 'Cards' : 'Carte'
     },
     {
       href: '/gestione-formazione',
@@ -91,12 +97,15 @@ export default function BottomNavigation() {
         {navItems.map((item) => {
           const Icon = item.icon
           const isStatShortcut = typeof item.href === 'string' && item.href.includes('openGameAnalysis=1')
+          const isCardAdvisorShortcut = typeof item.href === 'string' && item.href.includes('openCardAdvisor=1')
           const isDashboard = item.href === '/'
           // Dashboard e Stat condividono la route `/`: il modal analisi è evidenziato su Stat, non su Dashboard
           const active = isStatShortcut
             ? gameAnalysisModalOpen
-            : isDashboard
-              ? pathname === '/' && !gameAnalysisModalOpen
+            : isCardAdvisorShortcut
+              ? pathname?.startsWith('/card-advisor-lab')
+              : isDashboard
+                ? pathname === '/' && !gameAnalysisModalOpen
               : isActive(item.href)
 
           const inner = (
@@ -125,7 +134,7 @@ export default function BottomNavigation() {
           )
 
           // Già su /: niente navigazione verso ?openGameAnalysis (evita flash + doppio replace)
-          if (isStatShortcut && pathname === '/') {
+          if ((isStatShortcut || isCardAdvisorShortcut) && pathname === '/') {
             return (
               <button
                 key={item.label}
@@ -133,7 +142,11 @@ export default function BottomNavigation() {
                 aria-label={item.label}
                 onClick={() => {
                   if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new CustomEvent(OPEN_GAME_ANALYSIS_MODAL_EVENT))
+                    if (isStatShortcut) {
+                      window.dispatchEvent(new CustomEvent(OPEN_GAME_ANALYSIS_MODAL_EVENT))
+                    } else {
+                      window.dispatchEvent(new CustomEvent('open-card-advisor-entry'))
+                    }
                   }
                 }}
                 style={{

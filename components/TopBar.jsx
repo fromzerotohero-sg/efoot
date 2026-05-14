@@ -52,9 +52,10 @@ export default function TopBar() {
               width: '40px',
               height: '40px',
               borderRadius: '10px',
-              background: 'rgba(0, 212, 255, 0.1)',
-              border: '1px solid rgba(0, 212, 255, 0.35)',
-              color: 'var(--neon-cyan)',
+              background: 'linear-gradient(135deg, rgba(255, 203, 5, 0.22), rgba(0, 212, 255, 0.12))',
+              border: '1px solid rgba(255, 203, 5, 0.55)',
+              color: '#ffcb05',
+              boxShadow: '0 0 16px rgba(255, 203, 5, 0.22), inset 0 1px 0 rgba(255,255,255,0.12)',
               flexShrink: 0
             }}
           >
