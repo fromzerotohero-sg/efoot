@@ -1138,7 +1138,7 @@ function CoachDetailsModal({ show, coach, onClose, onReplaceFromCatalog, onRepla
   )
 }
 
-function EnterpriseReservePicker({ reserves, lang, onPick, slotPosition, onAddNew }) {
+function EnterpriseReservePicker({ reserves, lang, onPick, slotPosition, onAddNew, pickDisabled = false }) {
   const orderedReserves = [...reserves].sort((first, second) => {
     const firstFit = getSlotCompatibility(slotPosition, first.position) === 'perfect' ? 0 : 1
     const secondFit = getSlotCompatibility(slotPosition, second.position) === 'perfect' ? 0 : 1
@@ -1151,7 +1151,7 @@ function EnterpriseReservePicker({ reserves, lang, onPick, slotPosition, onAddNe
         {orderedReserves.length > 0 ? orderedReserves.map((player) => {
           const compatibility = getSlotCompatibility(slotPosition, player.position)
           return (
-          <button key={player.id} type="button" className="nr-bench-item" onClick={() => onPick(player)}>
+          <button key={player.id} type="button" className="nr-bench-item" onClick={() => onPick(player)} disabled={pickDisabled}>
             <div className="nr-bench-item-copy">
               <strong>{player.player_name}</strong>
               <span>{player.position || '-'} · {player.role || player.playing_style_name || '-'} · {compatibilityLabel(compatibility, lang)}</span>
@@ -1791,6 +1791,8 @@ function QuickPlayerPanel({
   onUploadPhoto,
   onCompletePhotoProfile,
   onMoveReserveToStarter,
+  onReplaceWithReserve,
+  benchReserveCount = 0,
   lang
 }) {
   if (!player) return null
@@ -1857,6 +1859,11 @@ function QuickPlayerPanel({
                 {lang === 'en' ? 'Replace from catalog' : 'Sostituisci da catalogo'}
               </button>
             )}
+            {slot?.slot_index != null && benchReserveCount > 0 && (
+              <button type="button" className="nr-secondary-button" onClick={() => onReplaceWithReserve?.()}>
+                {lang === 'en' ? 'Replace with reserve' : 'Sostituisci con riserva'}
+              </button>
+            )}
             {slot?.slot_index != null && (
               <button type="button" className="nr-secondary-button" onClick={() => onRemoveFromSlot(player.id)}>
                 {lang === 'en' ? 'Move to reserves' : 'Sposta in riserva'}
@@ -1886,6 +1893,38 @@ function QuickPlayerPanel({
         </div>
       </div>
     </div>
+  )
+}
+
+function StarterReserveReplacementModal({ show, slot, reserves, assigning, onClose, onPickReserve, lang }) {
+  if (!show || !slot) return null
+  const slotPosition = slot.position || ''
+
+  return (
+    <EnterpriseModalFrame
+      show={show}
+      onClose={() => {
+        if (!assigning) onClose()
+      }}
+      title={lang === 'en' ? 'Replace with reserve' : 'Sostituisci con riserva'}
+      subtitle={
+        lang === 'en'
+          ? `Slot ${slotPosition || '?'} · ${slot.slot_index + 1}. The current starter moves to the bench (direct swap if the bench is full).`
+          : `Slot ${slotPosition || '?'} · ${slot.slot_index + 1}. Il titolare attuale va in panchina (scambio diretto anche se la panchina e piena).`
+      }
+      className="nr-picker-shell"
+    >
+      <div className="nr-picker-body single">
+        <EnterpriseReservePicker
+          reserves={reserves}
+          lang={lang}
+          slotPosition={slotPosition}
+          onPick={onPickReserve}
+          onAddNew={onClose}
+          pickDisabled={assigning}
+        />
+      </div>
+    </EnterpriseModalFrame>
   )
 }
 
@@ -3290,6 +3329,7 @@ export default withAuth(function NuovaRosaLabPage() {
   const [coachPhotoImages, setCoachPhotoImages] = React.useState([])
   const [showCoachDetailsModal, setShowCoachDetailsModal] = React.useState(false)
   const [reserveSlotPickerPlayer, setReserveSlotPickerPlayer] = React.useState(null)
+  const [starterReservePickerSlot, setStarterReservePickerSlot] = React.useState(null)
 
   const activeTeamPlaystyle = tacticalSettings?.team_playing_style || null
 
@@ -4636,14 +4676,30 @@ export default withAuth(function NuovaRosaLabPage() {
     setShowAssignModal(false)
     setSelectedPlayer(null)
     setSelectedSlot(null)
+    setStarterReservePickerSlot(null)
     setReserveSlotPickerPlayer(player)
   }, [])
+
+  const openStarterReservePicker = React.useCallback((slot) => {
+    if (!slot || riserve.length === 0) return
+    setShowAssignModal(false)
+    setSelectedPlayer(null)
+    setReserveSlotPickerPlayer(null)
+    setStarterReservePickerSlot(slot)
+  }, [riserve.length])
 
   const handleMoveReserveToStarterSlot = React.useCallback(async (slot) => {
     if (!reserveSlotPickerPlayer?.id || !slot) return
     setReserveSlotPickerPlayer(null)
     await handleSelectReserveForSlot(reserveSlotPickerPlayer, slot)
   }, [handleSelectReserveForSlot, reserveSlotPickerPlayer])
+
+  const handlePickReserveForStarterSlot = React.useCallback(async (reservePlayer) => {
+    if (!starterReservePickerSlot || !reservePlayer?.id) return
+    const slot = starterReservePickerSlot
+    setStarterReservePickerSlot(null)
+    await handleSelectReserveForSlot(reservePlayer, slot)
+  }, [handleSelectReserveForSlot, starterReservePickerSlot])
 
   const handleDeletePlayer = React.useCallback((playerId, isReserve = false) => {
     setConfirmModal({
@@ -5532,6 +5588,16 @@ export default withAuth(function NuovaRosaLabPage() {
         lang={lang}
       />
 
+      <StarterReserveReplacementModal
+        show={!!starterReservePickerSlot}
+        slot={starterReservePickerSlot}
+        reserves={riserve}
+        assigning={assigning}
+        onClose={() => setStarterReservePickerSlot(null)}
+        onPickReserve={handlePickReserveForStarterSlot}
+        lang={lang}
+      />
+
       <BuildCoachPlayerPickerModal
         show={buildCoachPlayerPickerOpen}
         players={allRosterPlayers}
@@ -5557,6 +5623,8 @@ export default withAuth(function NuovaRosaLabPage() {
         onUploadPhoto={() => openPhotoUploadFlow('slot', selectedSlot)}
         onCompletePhotoProfile={openPhotoCompletionFlow}
         onMoveReserveToStarter={openReserveStarterSlotPicker}
+        onReplaceWithReserve={() => openStarterReservePicker(selectedSlot)}
+        benchReserveCount={riserve.length}
         onOpenReplace={(player, openEditor = false) => {
           if (openEditor) {
             setShowAssignModal(false)
