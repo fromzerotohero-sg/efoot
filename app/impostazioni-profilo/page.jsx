@@ -4,7 +4,7 @@ import React from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
-import { Save, SkipForward, RefreshCw, User, Gamepad2, Brain, CheckCircle2, AlertCircle, BarChart3, X, Wallet, Zap } from 'lucide-react'
+import { Save, SkipForward, RefreshCw, User, Gamepad2, Brain, CheckCircle2, AlertCircle, X, Wallet, Zap } from 'lucide-react'
 import CoachFeedbackChat from '@/components/CoachFeedbackChat'
 
 export default function ImpostazioniProfiloPage() {
@@ -229,28 +229,49 @@ export default function ImpostazioniProfiloPage() {
     }
   }
 
-  const profileSignals = [
-    profile.first_name,
-    profile.last_name,
-    profile.current_division,
-    profile.favorite_team,
-    profile.team_name,
-    profile.ai_name,
-    profile.how_to_remember,
-    profile.hours_per_week,
-    ...(Array.isArray(profile.common_problems) ? profile.common_problems : [])
-  ]
-  const completedSignals = profileSignals.filter(value => {
-    if (Array.isArray(value)) return value.length > 0
-    return value !== null && value !== undefined && String(value).trim().length > 0
-  }).length
-  const profileSignalTotal = profileSignals.length || 1
   const safeCompletionScore = Math.max(0, Math.min(100, Number(completionScore) || 0))
   const profileGradient = safeCompletionScore >= 87.5
     ? 'conic-gradient(#00ff88 0deg, #00ff88 var(--score-angle), rgba(255,255,255,0.08) var(--score-angle), rgba(255,255,255,0.08) 360deg)'
     : safeCompletionScore >= 50
       ? 'conic-gradient(#00d4ff 0deg, #00d4ff var(--score-angle), rgba(255,255,255,0.08) var(--score-angle), rgba(255,255,255,0.08) 360deg)'
       : 'conic-gradient(#ffcb05 0deg, #ffcb05 var(--score-angle), rgba(255,255,255,0.08) var(--score-angle), rgba(255,255,255,0.08) 360deg)'
+  const cleanValue = (value) => {
+    if (Array.isArray(value)) return value.filter(Boolean).join(', ')
+    if (value === null || value === undefined || value === '') return null
+    return String(value)
+  }
+  const profileOverviewCards = [
+    {
+      label: lang === 'en' ? 'Division' : 'Divisione',
+      value: cleanValue(profile.current_division),
+      hint: lang === 'en' ? 'Competitive level' : 'Livello competitivo'
+    },
+    {
+      label: lang === 'en' ? 'In-game team' : 'Team in game',
+      value: cleanValue(profile.team_name || profile.favorite_team),
+      hint: lang === 'en' ? 'Identity used in analyses' : 'Identita usata nelle analisi'
+    },
+    {
+      label: lang === 'en' ? 'Platform' : 'Piattaforma',
+      value: cleanValue(profileData?.platform),
+      hint: lang === 'en' ? 'From Coach Gym' : 'Da Palestra Coach'
+    },
+    {
+      label: lang === 'en' ? 'Pass level' : 'Livello passaggi',
+      value: cleanValue(profileData?.pass_level),
+      hint: lang === 'en' ? 'Control profile' : 'Profilo comandi'
+    },
+    {
+      label: lang === 'en' ? 'Weak point' : 'Punto debole',
+      value: cleanValue(profileData?.ai_weak_point || profile.common_problems),
+      hint: lang === 'en' ? 'What the coach should watch' : 'Cosa deve osservare il coach'
+    },
+    {
+      label: lang === 'en' ? 'Favourite player' : 'Giocatore preferito',
+      value: cleanValue(profileData?.favourite_player_name),
+      hint: lang === 'en' ? 'Useful for examples' : 'Utile per esempi e consigli'
+    }
+  ]
 
   if (loading) {
     return (
@@ -279,11 +300,7 @@ export default function ImpostazioniProfiloPage() {
               : 'Il profilo e la memoria del coach: piu e completo, piu ogni consiglio diventa personale.'}
           </p>
           <div className="profile-hero-actions">
-            <a href="/grafici-comparazione" className="profile-hero-link profile-hero-link--primary">
-              <BarChart3 size={17} />
-              {lang === 'en' ? 'View profile charts' : 'Vedi grafici profilo'}
-            </a>
-            <a href="/gestione-profilo" className="profile-hero-link">
+            <a href="/gestione-profilo" className="profile-hero-link profile-hero-link--primary">
               <Wallet size={17} />
               {t('goToHeroPoints')}
             </a>
@@ -311,21 +328,13 @@ export default function ImpostazioniProfiloPage() {
       </section>
 
       <section className="profile-metric-grid" aria-label={lang === 'en' ? 'Profile overview' : 'Panoramica profilo'}>
-        <div className="profile-metric-card">
-          <span>{lang === 'en' ? 'AI memory' : 'Memoria AI'}</span>
-          <strong>{Math.round(safeCompletionScore)}%</strong>
-          <small>{lang === 'en' ? 'Personalization level' : 'Livello personalizzazione'}</small>
-        </div>
-        <div className="profile-metric-card">
-          <span>{lang === 'en' ? 'Filled signals' : 'Segnali compilati'}</span>
-          <strong>{completedSignals}/{profileSignalTotal}</strong>
-          <small>{lang === 'en' ? 'Useful fields for the coach' : 'Campi utili al coach'}</small>
-        </div>
-        <div className="profile-metric-card">
-          <span>{lang === 'en' ? 'Next best step' : 'Prossimo passo'}</span>
-          <strong>{profile.team_name ? (lang === 'en' ? 'Coach gym' : 'Palestra') : (lang === 'en' ? 'Team name' : 'Nome team')}</strong>
-          <small>{profile.team_name ? t('palestraCoachTitle') : t('teamNameInGame')}</small>
-        </div>
+        {profileOverviewCards.map((card) => (
+          <div className={`profile-metric-card ${card.value ? '' : 'profile-metric-card--empty'}`} key={card.label}>
+            <span>{card.label}</span>
+            <strong>{card.value || (lang === 'en' ? 'Missing' : 'Da completare')}</strong>
+            <small>{card.hint}</small>
+          </div>
+        ))}
       </section>
 
       {/* Toast: feedback vicino all'azione (visibile anche se la sezione è in basso) */}
@@ -376,58 +385,6 @@ export default function ImpostazioniProfiloPage() {
           </button>
         </div>
       )}
-
-      {/* Barra Profilazione (stile allineato a Dashboard / AIKnowledgeBar) */}
-      <div style={{
-        backgroundColor: '#1a1d24',
-        borderRadius: '16px',
-        padding: 'clamp(16px, 4vw, 24px)',
-        marginBottom: '24px',
-        border: '1px solid rgba(255,255,255,0.06)',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.2)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-          <BarChart3 size={20} color="#00d4ff" />
-          <h2 style={{ margin: 0, fontSize: 'clamp(16px, 4vw, 18px)', fontWeight: '600' }}>{t('profiling')}</h2>
-        </div>
-        
-        {/* Progress Bar */}
-        <div style={{
-          width: '100%',
-          height: '24px',
-          backgroundColor: '#2a2a2a',
-          borderRadius: '12px',
-          overflow: 'hidden',
-          marginBottom: '8px',
-          position: 'relative'
-        }}>
-          <div style={{
-            width: `${completionScore}%`,
-            height: '100%',
-            backgroundColor: completionScore >= 87.5 ? '#00ff88' : completionScore >= 50 ? '#00d4ff' : '#ffaa00',
-            transition: 'width 0.3s ease',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            paddingRight: '8px',
-            fontSize: '12px',
-            fontWeight: '600',
-            color: '#000'
-          }}>
-            {completionScore > 10 && `${Math.round(completionScore)}%`}
-          </div>
-        </div>
-        
-        <div style={{ fontSize: '14px', color: '#888', marginBottom: '8px' }}>
-          {completionScore >= 100
-            ? getLevelText(completionLevel)
-            : `${Math.round(completionScore)}% — ${t('completeFor100')}`}
-        </div>
-        
-        <div style={{ fontSize: '13px', color: '#666', fontStyle: 'italic' }}>
-          {t('moreYouAnswer')}
-        </div>
-      </div>
 
       {/* Banner Palestra Coach - Dati Tecnici (responsive: stack su mobile) */}
       <div style={{
@@ -771,113 +728,6 @@ export default function ImpostazioniProfiloPage() {
         </div>
       </div>
 
-      {/* Sezione: Preferenze IA */}
-      <div data-tour-id="tour-profile-ai" style={{
-        backgroundColor: '#1a1a1a',
-        borderRadius: '12px',
-        padding: '20px',
-        marginBottom: '24px',
-        border: '1px solid #2a2a2a'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-          <Brain size={20} color="#00d4ff" />
-          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>{t('aiPreferences')}</h2>
-        </div>
-
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#888' }}>
-            {t('aiName')}
-          </label>
-          <input
-            type="text"
-            value={profile.ai_name}
-            onChange={(e) => setProfile(prev => ({ ...prev, ai_name: e.target.value }))}
-            placeholder={t('aiNamePlaceholder')}
-            maxLength={255}
-            style={{
-              width: '100%',
-              padding: '12px',
-              backgroundColor: '#0a0a0a',
-              border: '1px solid #2a2a2a',
-              borderRadius: '8px',
-              color: '#ffffff',
-              fontSize: '16px'
-            }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#888' }}>
-            {t('howToRemember')}
-          </label>
-          <textarea
-            value={profile.how_to_remember}
-            onChange={(e) => setProfile(prev => ({ ...prev, how_to_remember: e.target.value }))}
-            placeholder={t('howToRememberPlaceholder')}
-            maxLength={1000}
-            rows={4}
-            style={{
-              width: '100%',
-              padding: '12px',
-              backgroundColor: '#0a0a0a',
-              border: '1px solid #2a2a2a',
-              borderRadius: '8px',
-              color: '#ffffff',
-              fontSize: '16px',
-              fontFamily: 'inherit',
-              resize: 'vertical'
-            }}
-          />
-        </div>
-
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button
-            onClick={() => handleSave(t('aiPreferences'))}
-            disabled={saving}
-            style={{
-              flex: 1,
-              padding: '12px',
-              backgroundColor: saving ? '#2a2a2a' : '#00d4ff',
-              color: '#000',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: '600',
-              cursor: saving ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px'
-            }}
-          >
-            <Save size={18} />
-            {saving ? t('saving') : t('save')}
-          </button>
-          <button
-            onClick={() => handleSkip(t('aiPreferences'))}
-            style={{
-              padding: '12px 20px',
-              backgroundColor: 'transparent',
-              color: '#888',
-              border: '1px solid #2a2a2a',
-              borderRadius: '8px',
-              fontSize: '16px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            <SkipForward size={18} />
-            {t('skip')}
-          </button>
-        </div>
-      </div>
-
-      <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', marginBottom: '24px' }}>
-        {t('aiInfoHintInProfile')}
-      </p>
-
       {/* Bottone Completa Profilo */}
       <button
         data-tour-id="tour-profile-complete"
@@ -1118,9 +968,18 @@ export default function ImpostazioniProfiloPage() {
           letter-spacing: -0.03em;
         }
 
+        .profile-metric-card--empty {
+          border-style: dashed;
+          opacity: 0.78;
+        }
+
+        .profile-metric-card--empty strong {
+          color: rgba(255, 255, 255, 0.72);
+          font-size: clamp(18px, 3.3vw, 24px);
+        }
+
         .profile-page :global([data-tour-id='tour-profile-personal']),
-        .profile-page :global([data-tour-id='tour-profile-game']),
-        .profile-page :global([data-tour-id='tour-profile-ai']) {
+        .profile-page :global([data-tour-id='tour-profile-game']) {
           border: 1px solid rgba(0, 212, 255, 0.14) !important;
           border-radius: 22px !important;
           background:
