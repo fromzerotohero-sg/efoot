@@ -5622,6 +5622,11 @@ export default withAuth(function NuovaRosaLabPage() {
           to { transform: rotate(360deg); }
         }
 
+        @keyframes nrScrollCue {
+          0%, 100% { transform: translate(-50%, 0); opacity: 0.58; }
+          50% { transform: translate(-50%, 7px); opacity: 1; }
+        }
+
         @keyframes nrArenaDrift {
           from { transform: translate3d(0, 0, 0); }
           to { transform: translate3d(-58px, -58px, 0); }
@@ -7047,6 +7052,7 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-modal-shell {
           width: min(1280px, calc(100vw - 24px));
           max-height: min(92vh, 920px);
+          position: relative;
           overflow: auto;
           overscroll-behavior: contain;
           -webkit-overflow-scrolling: touch;
@@ -8889,6 +8895,35 @@ export default withAuth(function NuovaRosaLabPage() {
             overflow-y: auto;
             padding: 12px;
             padding-bottom: max(132px, calc(env(safe-area-inset-bottom, 0px) + 116px));
+          }
+
+          .nr-modal-shell::after {
+            content: '⌄';
+            position: fixed;
+            left: 50%;
+            bottom: max(18px, calc(env(safe-area-inset-bottom, 0px) + 14px));
+            z-index: 100260;
+            width: 34px;
+            height: 34px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(0, 212, 255, 0.38);
+            border-radius: 999px;
+            background: rgba(2, 4, 12, 0.82);
+            color: #67e8f9;
+            font-size: 24px;
+            font-weight: 900;
+            line-height: 1;
+            pointer-events: none;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.18);
+            transform: translateX(-50%);
+            animation: nrScrollCue 1.35s ease-in-out infinite;
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .nr-modal-shell::after {
+              animation: none !important;
+            }
           }
 
           .nr-quick-shell,
