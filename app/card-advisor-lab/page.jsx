@@ -102,6 +102,7 @@ const copy = {
     currentRelease: 'Pack corrente',
     allCards: 'Tutte le carte',
     activePacks: 'Cerca nel catalogo',
+    packScrollHint: 'Scorri pack',
     searchPlaceholder: 'Cerca giocatore, ruolo o pack...',
     cardsAvailable: 'carte disponibili',
     noCardsFound: 'Nessuna carta trovata con questi filtri.',
@@ -217,6 +218,7 @@ const copy = {
     currentRelease: 'Current pack',
     allCards: 'All cards',
     activePacks: 'Search catalog',
+    packScrollHint: 'Scroll packs',
     searchPlaceholder: 'Search player, role, or pack...',
     cardsAvailable: 'cards available',
     noCardsFound: 'No cards found with these filters.',
@@ -1441,26 +1443,32 @@ export default withAuth(function CardAdvisorLabPage() {
           </div>
         </div>
 
-        <div className="release-tabs" role="tablist" aria-label={labels.releaseTitle}>
-          <button
-            type="button"
-            className={releaseId === 'all' ? 'active' : ''}
-            onClick={() => setReleaseId('all')}
-          >
-            <strong>{labels.allCards}</strong>
-            <span>{activeReleases.reduce((sum, release) => sum + release.cards.length, 0)}</span>
-          </button>
-          {activeReleases.map(release => (
+        <div className="release-tabs-shell">
+          <div className="release-tabs-hint" aria-hidden="true">
+            <span>{labels.packScrollHint}</span>
+            <ChevronRight size={14} />
+          </div>
+          <div className="release-tabs" role="tablist" aria-label={labels.releaseTitle}>
             <button
-              key={release.id}
               type="button"
-              className={releaseId === release.id ? 'active' : ''}
-              onClick={() => setReleaseId(release.id)}
+              className={releaseId === 'all' ? 'active' : ''}
+              onClick={() => setReleaseId('all')}
             >
-              <strong>{release.name}</strong>
-              <span>{release.status === 'needs_review' ? labels.needsSourceReview : `${release.cards.length} ${labels.cardsAvailable}`}</span>
+              <strong>{labels.allCards}</strong>
+              <span>{activeReleases.reduce((sum, release) => sum + release.cards.length, 0)}</span>
             </button>
-          ))}
+            {activeReleases.map(release => (
+              <button
+                key={release.id}
+                type="button"
+                className={releaseId === release.id ? 'active' : ''}
+                onClick={() => setReleaseId(release.id)}
+              >
+                <strong>{release.name}</strong>
+                <span>{release.status === 'needs_review' ? labels.needsSourceReview : `${release.cards.length} ${labels.cardsAvailable}`}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         <RosterStatusPanel
@@ -1673,23 +1681,74 @@ export default withAuth(function CardAdvisorLabPage() {
           font-size: 11px;
         }
 
+        .release-tabs-shell {
+          position: relative;
+          margin: 0 0 18px;
+          padding-top: 20px;
+        }
+
+        .release-tabs-shell::after {
+          content: '';
+          position: absolute;
+          top: 20px;
+          right: 0;
+          bottom: 10px;
+          width: 46px;
+          pointer-events: none;
+          border-radius: 0 18px 18px 0;
+          background: linear-gradient(90deg, transparent, rgba(5,8,20,0.92));
+        }
+
+        .release-tabs-hint {
+          position: absolute;
+          top: 0;
+          right: 4px;
+          z-index: 2;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          color: rgba(103,232,249,0.82);
+          font-size: 11px;
+          font-weight: 900;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+        }
+
         .release-tabs {
           display: flex;
           overflow-x: auto;
+          scroll-snap-type: x proximity;
           gap: 10px;
-          margin: 0 0 18px;
-          padding: 2px 2px 10px;
+          margin: 0;
+          padding: 2px 42px 10px 2px;
           scrollbar-width: thin;
+          scrollbar-color: rgba(0,212,255,0.55) rgba(255,255,255,0.08);
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .release-tabs::-webkit-scrollbar {
+          height: 5px;
+        }
+
+        .release-tabs::-webkit-scrollbar-track {
+          background: rgba(255,255,255,0.08);
+          border-radius: 999px;
+        }
+
+        .release-tabs::-webkit-scrollbar-thumb {
+          background: linear-gradient(90deg, rgba(0,212,255,0.8), rgba(138,43,226,0.72));
+          border-radius: 999px;
         }
 
         .release-tabs button {
           cursor: pointer;
           color: rgba(255,255,255,0.74);
-          flex: 0 0 min(260px, 78vw);
+          flex: 0 0 clamp(150px, 28vw, 230px);
           justify-content: space-between;
           text-align: left;
           white-space: normal;
-          min-height: 54px;
+          min-height: 58px;
+          scroll-snap-align: start;
         }
 
         .release-tabs button.active {
@@ -1703,6 +1762,9 @@ export default withAuth(function CardAdvisorLabPage() {
           min-width: 0;
           overflow: hidden;
           text-overflow: ellipsis;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
         }
 
         .release-tabs button span {
@@ -3555,6 +3617,10 @@ export default withAuth(function CardAdvisorLabPage() {
           .release-tabs {
             justify-content: flex-start;
             min-width: 0;
+          }
+
+          .release-tabs button {
+            flex-basis: min(172px, 48vw);
           }
 
           .detail-card-preview {
