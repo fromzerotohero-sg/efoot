@@ -53,6 +53,12 @@ const copy = {
     coachAdvice: 'Consiglio',
     quickReadTitle: 'Lettura rapida gratis',
     freeReadBadge: 'Gratis',
+    chartInsightTitleMissing: 'Vuoi un consiglio ancora più su misura?',
+    chartInsightTextMissing: 'Carica i tuoi Grafici: l’AI capirà meglio come giochi davvero e leggerà questa carta sulla tua rosa reale.',
+    chartInsightTitleReady: 'Grafici collegati',
+    chartInsightTextReady: 'Il verdetto userà anche i tuoi Grafici per capire ritmo, problemi e priorità della tua rosa.',
+    chartInsightCta: 'Vai ai Grafici',
+    chartInsightRefreshCta: 'Aggiorna Grafici',
     proUnlockTitle: 'Verdetto Pro IA',
     proUnlockText: 'Sì / no / panchina — sulla tua rosa vera, non sulla carta isolata.',
     proUnlockBullets: ['Verdetto netto: prendi, salta o rotazione', 'Fit con titolari, panchina, stile, coach', 'Dove brilla e quando evitarla'],
@@ -162,6 +168,12 @@ const copy = {
     coachAdvice: 'Advice',
     quickReadTitle: 'Free quick read',
     freeReadBadge: 'Free',
+    chartInsightTitleMissing: 'Want an even more tailored read?',
+    chartInsightTextMissing: 'Add your Charts: the AI will better understand how you really play and read this card against your real squad.',
+    chartInsightTitleReady: 'Charts linked',
+    chartInsightTextReady: 'The verdict will also use your Charts to understand rhythm, issues and squad priorities.',
+    chartInsightCta: 'Go to Charts',
+    chartInsightRefreshCta: 'Refresh Charts',
     proUnlockTitle: 'Pro AI verdict',
     proUnlockText: 'Yes / no / bench — on your real roster, not the card in a vacuum.',
     proUnlockBullets: ['Clear call: sign, skip, or rotation', 'Fit with starters, bench, style, coach', 'Where it shines — when to pass'],
@@ -775,6 +787,23 @@ function synergyLabelFromScore(score, labels, fallback) {
   return labels.synergyLow
 }
 
+function ChartInsightCard({ labels, hasGameAnalysis, onOpenGameAnalysis }) {
+  return (
+    <div className={`chart-insight-card ${hasGameAnalysis ? 'chart-insight-card-ready' : ''}`}>
+      <div className="chart-insight-icon" aria-hidden="true">
+        <BarChart3 size={18} />
+      </div>
+      <div className="chart-insight-copy">
+        <h3>{hasGameAnalysis ? labels.chartInsightTitleReady : labels.chartInsightTitleMissing}</h3>
+        <p>{hasGameAnalysis ? labels.chartInsightTextReady : labels.chartInsightTextMissing}</p>
+      </div>
+      <button type="button" onClick={onOpenGameAnalysis}>
+        {hasGameAnalysis ? labels.chartInsightRefreshCta : labels.chartInsightCta}
+      </button>
+    </div>
+  )
+}
+
 function DetailPanel({
   card,
   labels,
@@ -788,6 +817,7 @@ function DetailPanel({
   onRequestDeepAnalysis,
   onOpenFormation,
   onOpenCoach,
+  onOpenGameAnalysis,
   onClose
 }) {
   const [showSynergyDetails, setShowSynergyDetails] = React.useState(false)
@@ -840,6 +870,11 @@ function DetailPanel({
         </div>
         <div className="detail-copy">
           <h2>{card.name}</h2>
+          <ChartInsightCard
+            labels={labels}
+            hasGameAnalysis={Boolean(rosterSummary?.hasGameAnalysis)}
+            onOpenGameAnalysis={onOpenGameAnalysis}
+          />
           <div className="advisor-section-marker advisor-section-marker-premium">
             <span>{labels.premiumSectionLabel}</span>
             <small>{labels.premiumSectionHint}</small>
@@ -1061,6 +1096,7 @@ function CardDetailsModal({
   onRequestDeepAnalysis,
   onOpenFormation,
   onOpenCoach,
+  onOpenGameAnalysis,
   onClose
 }) {
   React.useEffect(() => {
@@ -1151,6 +1187,7 @@ function CardDetailsModal({
           onRequestDeepAnalysis={onRequestDeepAnalysis}
           onOpenFormation={onOpenFormation}
           onOpenCoach={onOpenCoach}
+          onOpenGameAnalysis={onOpenGameAnalysis}
           onClose={onClose}
         />
       </div>
@@ -1472,6 +1509,7 @@ export default withAuth(function CardAdvisorLabPage() {
         onRequestDeepAnalysis={requestDeepAnalysis}
         onOpenFormation={() => router.push('/gestione-formazione')}
         onOpenCoach={() => router.push('/allenatori')}
+        onOpenGameAnalysis={() => router.push('/?openGameAnalysis=1')}
         onClose={() => setDetailsCardId(null)}
       />
 
@@ -1864,14 +1902,19 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .brand-analysis-overlay {
-          position: absolute;
+          position: fixed;
           inset: 0;
           z-index: 2000;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 18px;
-          border-radius: 24px;
+          min-height: 100vh;
+          min-height: 100dvh;
+          padding:
+            max(18px, env(safe-area-inset-top, 0px))
+            max(18px, env(safe-area-inset-right, 0px))
+            max(18px, env(safe-area-inset-bottom, 0px))
+            max(18px, env(safe-area-inset-left, 0px));
           background:
             radial-gradient(circle at 50% 38%, rgba(0, 212, 255, 0.20), transparent 28%),
             radial-gradient(circle at 48% 42%, rgba(138, 43, 226, 0.18), transparent 35%),
@@ -1883,6 +1926,7 @@ export default withAuth(function CardAdvisorLabPage() {
         .brand-analysis-core {
           position: relative;
           width: min(430px, calc(100vw - 42px));
+          max-height: calc(100dvh - 36px);
           display: grid;
           justify-items: center;
           gap: 18px;
@@ -2604,6 +2648,82 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .advisor-section-marker-free span {
           color: #67e8f9;
+        }
+
+        .chart-insight-card {
+          margin-top: 10px;
+          display: grid;
+          grid-template-columns: auto minmax(0, 1fr) auto;
+          align-items: center;
+          gap: 12px;
+          border: 1px solid rgba(0,212,255,0.22);
+          border-radius: 18px;
+          padding: 12px;
+          background:
+            radial-gradient(circle at 0% 0%, rgba(0,212,255,0.12), transparent 40%),
+            rgba(5,8,20,0.46);
+          box-shadow: 0 14px 34px rgba(0,0,0,0.16);
+          min-width: 0;
+        }
+
+        .chart-insight-card-ready {
+          border-color: rgba(34,197,94,0.24);
+          background:
+            radial-gradient(circle at 0% 0%, rgba(34,197,94,0.11), transparent 40%),
+            rgba(5,8,20,0.46);
+        }
+
+        .chart-insight-icon {
+          width: 38px;
+          height: 38px;
+          border-radius: 14px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          color: #67e8f9;
+          background: rgba(0,212,255,0.10);
+          box-shadow: inset 0 0 0 1px rgba(0,212,255,0.18);
+        }
+
+        .chart-insight-card-ready .chart-insight-icon {
+          color: #86efac;
+          background: rgba(34,197,94,0.10);
+          box-shadow: inset 0 0 0 1px rgba(34,197,94,0.18);
+        }
+
+        .chart-insight-copy {
+          min-width: 0;
+        }
+
+        .chart-insight-copy h3 {
+          margin: 0 0 4px;
+          color: #fff;
+          font-size: 15px;
+          letter-spacing: -0.01em;
+        }
+
+        .chart-insight-copy p {
+          margin: 0;
+          color: rgba(255,255,255,0.72);
+          font-size: 12px;
+          line-height: 1.45;
+        }
+
+        .chart-insight-card button {
+          border: 1px solid rgba(0,212,255,0.34);
+          border-radius: 999px;
+          background: rgba(0,212,255,0.09);
+          color: #67e8f9;
+          font-weight: 900;
+          font-size: 12px;
+          padding: 9px 12px;
+          white-space: nowrap;
+        }
+
+        .chart-insight-card-ready button {
+          border-color: rgba(34,197,94,0.30);
+          background: rgba(34,197,94,0.09);
+          color: #86efac;
         }
 
         .deep-analysis-entry-featured {
@@ -3442,6 +3562,27 @@ export default withAuth(function CardAdvisorLabPage() {
           }
         }
 
+        @media (max-height: 680px) {
+          .brand-analysis-core {
+            gap: 12px;
+            padding: 18px 16px 16px;
+          }
+
+          .brand-analysis-logo-wrap {
+            width: 104px;
+            height: 104px;
+          }
+
+          .brand-analysis-logo {
+            width: 82px;
+            max-height: 82px;
+          }
+
+          .brand-analysis-copy p {
+            margin-top: 6px;
+          }
+        }
+
         @media (max-width: 720px) {
           .card-advisor-page {
             padding: 10px;
@@ -3492,9 +3633,19 @@ export default withAuth(function CardAdvisorLabPage() {
           }
 
           .coach-advice-card,
+          .chart-insight-card,
           .quick-read-card,
           .deep-analysis-report {
             padding-right: max(14px, calc(12px + env(safe-area-inset-right, 0px)));
+          }
+
+          .chart-insight-card {
+            grid-template-columns: auto minmax(0, 1fr);
+          }
+
+          .chart-insight-card button {
+            grid-column: 1 / -1;
+            width: 100%;
           }
 
           .detail-close-button {
