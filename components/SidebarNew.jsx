@@ -17,9 +17,7 @@ import {
   LogOut,
   Menu,
   X,
-  MessageSquare,
-  PlayCircle,
-  ExternalLink
+  MessageSquare
 } from 'lucide-react'
 import SidebarGuideTour from '@/components/SidebarGuideTour'
 import { useSidebar } from '@/components/SidebarContext'
@@ -30,16 +28,6 @@ export default function SidebarNew() {
   const router = useRouter()
   const { isOpen, setIsOpen } = useSidebar()
   const [expandedMenus, setExpandedMenus] = React.useState({ home: true, profile: false, matches: false })
-  const tutorialVideos = [
-    {
-      href: 'https://www.youtube.com/watch?v=vXv3mhiPQGs',
-      label: t('videoTutorialRoster')
-    },
-    {
-      href: 'https://www.youtube.com/watch?v=TVqSDdNQILM&feature=youtu.be',
-      label: t('videoTutorialCoachGym')
-    }
-  ]
 
   const handleLogout = () => {
     fetch('/api/prelaunch/logout', { method: 'POST' }).catch(() => {})
@@ -521,110 +509,6 @@ export default function SidebarNew() {
 
             {/* Guida Tour - Mostrami come */}
             <SidebarGuideTour onClick={() => setIsOpen(false)} />
-
-            <div
-              style={{
-                marginTop: '10px',
-                padding: '14px 12px',
-                borderRadius: '14px',
-                border: '1px solid rgba(245, 158, 11, 0.35)',
-                background: 'linear-gradient(180deg, rgba(120, 53, 15, 0.2) 0%, rgba(69, 26, 3, 0.12) 100%)',
-                boxShadow: '0 10px 24px rgba(120, 53, 15, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.04)'
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  marginBottom: '10px'
-                }}
-              >
-                <PlayCircle size={18} color="#fbbf24" style={{ flexShrink: 0 }} />
-                <div style={{ minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontSize: '13px',
-                      fontWeight: 700,
-                      color: '#fef3c7',
-                      lineHeight: 1.2
-                    }}
-                  >
-                    {t('videoTutorials')}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '11px',
-                      color: 'rgba(255, 251, 235, 0.72)',
-                      lineHeight: 1.35,
-                      marginTop: '2px'
-                    }}
-                  >
-                    {t('videoTutorialsSubtitle')}
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {tutorialVideos.map((video) => (
-                  <a
-                    key={video.href}
-                    href={video.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setIsOpen(false)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '10px',
-                      minHeight: '44px',
-                      padding: '10px 12px',
-                      borderRadius: '12px',
-                      textDecoration: 'none',
-                      background: 'rgba(255, 255, 255, 0.04)',
-                      border: '1px solid rgba(251, 191, 36, 0.18)',
-                      color: '#fff7ed',
-                      transition: 'all 0.25s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(245, 158, 11, 0.14)'
-                      e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.4)'
-                      e.currentTarget.style.boxShadow = '0 0 18px rgba(245, 158, 11, 0.18)'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'
-                      e.currentTarget.style.borderColor = 'rgba(251, 191, 36, 0.18)'
-                      e.currentTarget.style.boxShadow = 'none'
-                    }}
-                    aria-label={`${video.label} - ${t('watchOnYoutube')}`}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        minWidth: 0,
-                        flex: 1
-                      }}
-                    >
-                      <PlayCircle size={16} color="#f59e0b" style={{ flexShrink: 0 }} />
-                      <span
-                        style={{
-                          fontSize: '13px',
-                          fontWeight: 600,
-                          lineHeight: 1.35,
-                          minWidth: 0
-                        }}
-                      >
-                        {video.label}
-                      </span>
-                    </div>
-                    <ExternalLink size={14} color="rgba(255, 247, 237, 0.72)" style={{ flexShrink: 0 }} />
-                  </a>
-                ))}
-              </div>
-            </div>
 
             {/* Divider */}
             <div style={{ 
