@@ -1213,6 +1213,7 @@ export default withAuth(function CardAdvisorLabPage() {
   const [deepAnalysesByCard, setDeepAnalysesByCard] = React.useState({})
   const [deepAnalysisLoadingId, setDeepAnalysisLoadingId] = React.useState(null)
   const [deepAnalysisErrors, setDeepAnalysisErrors] = React.useState({})
+  const releaseTabsRef = React.useRef(null)
   const cards = React.useMemo(() => {
     const baseCards = releaseId === 'all'
       ? activeReleases.flatMap(release => release.cards.map(card => ({ ...card, releaseName: release.name, releaseStatus: release.status })))
@@ -1232,6 +1233,15 @@ export default withAuth(function CardAdvisorLabPage() {
   }, [activeReleases, releaseId, searchQuery])
   const [selectedId, setSelectedId] = React.useState(cards[0]?.id)
   const [detailsCardId, setDetailsCardId] = React.useState(null)
+
+  const scrollReleaseTabs = React.useCallback(() => {
+    const node = releaseTabsRef.current
+    if (!node) return
+    node.scrollBy({
+      left: Math.max(180, Math.round(node.clientWidth * 0.72)),
+      behavior: 'smooth'
+    })
+  }, [])
 
   React.useEffect(() => {
     setSelectedId(cards[0]?.id)
@@ -1444,11 +1454,16 @@ export default withAuth(function CardAdvisorLabPage() {
         </div>
 
         <div className="release-tabs-shell">
-          <div className="release-tabs-hint" aria-hidden="true">
+          <button
+            type="button"
+            className="release-tabs-hint"
+            onClick={scrollReleaseTabs}
+            aria-label={labels.packScrollHint}
+          >
             <span>{labels.packScrollHint}</span>
             <ChevronRight size={14} />
-          </div>
-          <div className="release-tabs" role="tablist" aria-label={labels.releaseTitle}>
+          </button>
+          <div ref={releaseTabsRef} className="release-tabs" role="tablist" aria-label={labels.releaseTitle}>
             <button
               type="button"
               className={releaseId === 'all' ? 'active' : ''}
@@ -1707,11 +1722,37 @@ export default withAuth(function CardAdvisorLabPage() {
           display: inline-flex;
           align-items: center;
           gap: 4px;
+          border: 1px solid rgba(0,212,255,0.28);
+          border-radius: 999px;
+          background:
+            linear-gradient(90deg, rgba(0,212,255,0.12), rgba(138,43,226,0.10)),
+            rgba(2,4,12,0.86);
           color: rgba(103,232,249,0.82);
           font-size: 11px;
           font-weight: 900;
           text-transform: uppercase;
           letter-spacing: 0.08em;
+          padding: 5px 8px;
+          cursor: pointer;
+          box-shadow: 0 0 16px rgba(0,212,255,0.10);
+          animation: packHintPulse 1.9s ease-in-out infinite;
+        }
+
+        .release-tabs-hint svg {
+          transition: transform 0.18s ease;
+        }
+
+        .release-tabs-hint:hover,
+        .release-tabs-hint:focus-visible {
+          color: #fff;
+          border-color: rgba(0,212,255,0.56);
+          box-shadow: 0 0 20px rgba(0,212,255,0.18);
+          outline: none;
+        }
+
+        .release-tabs-hint:hover svg,
+        .release-tabs-hint:focus-visible svg {
+          transform: translateX(3px);
         }
 
         .release-tabs {
@@ -1771,6 +1812,11 @@ export default withAuth(function CardAdvisorLabPage() {
           color: rgba(255,255,255,0.60);
           font-size: 11px;
           flex-shrink: 0;
+        }
+
+        @keyframes packHintPulse {
+          0%, 100% { transform: translateX(0); opacity: 0.82; }
+          50% { transform: translateX(3px); opacity: 1; }
         }
 
         .lab-grid {
@@ -3077,23 +3123,58 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .deep-report-toggle {
+          position: relative;
+          overflow: hidden;
           margin-top: 14px;
-          border: 1px solid rgba(251,191,36,0.32);
+          border: 1px solid rgba(251,191,36,0.58);
           border-radius: 999px;
-          background: rgba(251,191,36,0.08);
+          background:
+            linear-gradient(135deg, rgba(251,191,36,0.18), rgba(249,115,22,0.14)),
+            rgba(5,8,20,0.60);
           color: #fff;
-          min-height: 36px;
-          padding: 8px 12px;
+          min-height: 40px;
+          padding: 9px 14px;
           display: inline-flex;
           align-items: center;
           gap: 7px;
           font-size: 12px;
-          font-weight: 900;
+          font-weight: 950;
           cursor: pointer;
+          box-shadow:
+            0 0 24px rgba(251,191,36,0.12),
+            inset 0 0 0 1px rgba(255,255,255,0.06);
+          transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .deep-report-toggle::before {
+          content: '';
+          position: absolute;
+          inset: -40% auto -40% -45%;
+          width: 42%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+          transform: skewX(-18deg);
+          animation: reportCtaSweep 2.8s ease-in-out infinite;
+          pointer-events: none;
+        }
+
+        .deep-report-toggle:hover,
+        .deep-report-toggle:focus-visible {
+          transform: translateY(-1px);
+          border-color: rgba(251,191,36,0.82);
+          box-shadow:
+            0 0 28px rgba(251,191,36,0.20),
+            inset 0 0 0 1px rgba(255,255,255,0.08);
+          outline: none;
         }
 
         .deep-report-toggle[aria-expanded="true"] svg {
           transform: rotate(90deg);
+        }
+
+        @keyframes reportCtaSweep {
+          0%, 45% { transform: translateX(0) skewX(-18deg); opacity: 0; }
+          55% { opacity: 1; }
+          100% { transform: translateX(360%) skewX(-18deg); opacity: 0; }
         }
 
         .deep-analysis-grid,
@@ -3225,19 +3306,44 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .team-synergy-details-toggle {
+          position: relative;
+          overflow: hidden;
           margin-top: 12px;
-          border: 1px solid rgba(0,212,255,0.34);
+          border: 1px solid rgba(0,212,255,0.54);
           border-radius: 999px;
-          background: rgba(0,212,255,0.09);
+          background:
+            linear-gradient(135deg, rgba(0,212,255,0.14), rgba(34,197,94,0.08)),
+            rgba(5,8,20,0.56);
           color: #fff;
           display: inline-flex;
           align-items: center;
           gap: 7px;
-          min-height: 34px;
-          padding: 7px 12px;
+          min-height: 38px;
+          padding: 8px 13px;
           font-size: 12px;
-          font-weight: 900;
+          font-weight: 950;
           cursor: pointer;
+          box-shadow: 0 0 20px rgba(0,212,255,0.10);
+          transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .team-synergy-details-toggle::before {
+          content: '';
+          position: absolute;
+          inset: -40% auto -40% -45%;
+          width: 40%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+          transform: skewX(-18deg);
+          animation: reportCtaSweep 3.2s ease-in-out infinite;
+          pointer-events: none;
+        }
+
+        .team-synergy-details-toggle:hover,
+        .team-synergy-details-toggle:focus-visible {
+          transform: translateY(-1px);
+          border-color: rgba(0,212,255,0.82);
+          box-shadow: 0 0 24px rgba(0,212,255,0.18);
+          outline: none;
         }
 
         .team-synergy-details-toggle[aria-expanded="true"] svg {
