@@ -210,8 +210,8 @@ export function buildPlayerUpdatePayload({ player, build, contextEstimated = [] 
           overall_rating: build.afterOverall,
           overall_decimal: build.afterOverallDecimal
         },
-        boosters_considered: false,
-        coach_stat_boosts_considered: false,
+        boosters_considered: Boolean(build.boostersConsidered),
+        coach_stat_boosts_considered: Boolean(build.coachConsidered),
         created_at: now
       }
     },
@@ -238,6 +238,7 @@ export async function calculateAndPersistPlayerBuild({ admin, userId, player, ro
     player: fallback.player,
     roster: rosterContext.players,
     teamStyle: rosterContext.tacticalSettings?.team_playing_style,
+    coach: rosterContext.activeCoach,
     slotPosition,
     catalogCard
   })

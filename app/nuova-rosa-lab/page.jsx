@@ -2465,6 +2465,8 @@ function PremiumPlayerModal({
   onOpenReplace,
   saving,
   building,
+  activeCoach,
+  tacticalSettings,
   lang,
   t
 }) {
@@ -2629,7 +2631,9 @@ function PremiumPlayerModal({
     ? previewGameplayBuildFromSliders({
       player,
       sliders: effectiveBuildSliders,
-      slotPosition: slotProgressionPosition
+      slotPosition: slotProgressionPosition,
+      coach: activeCoach,
+      teamStyle: tacticalSettings?.team_playing_style
     })
     : null
   const liveBuildPointsUsed =
@@ -2641,7 +2645,9 @@ function PremiumPlayerModal({
     const preview = previewGameplayBuildFromSliders({
       player,
       sliders: slidersSnapshot,
-      slotPosition: slotProgressionPosition
+      slotPosition: slotProgressionPosition,
+      coach: activeCoach,
+      teamStyle: tacticalSettings?.team_playing_style
     })
     setForm((prev) => ({
       ...prev,
@@ -2685,7 +2691,9 @@ function PremiumPlayerModal({
         ? previewGameplayBuildFromSliders({
           player,
           sliders: sanitizeBuildCoachSliders(interactiveBuildSliders ?? buildSliders),
-          slotPosition: slotProgressionPosition
+          slotPosition: slotProgressionPosition,
+          coach: activeCoach,
+          teamStyle: tacticalSettings?.team_playing_style
         })
         : null
 
@@ -2843,8 +2851,8 @@ function PremiumPlayerModal({
                   <div>
                     <strong>{lang === 'en' ? 'Build ready to copy in game' : 'Build pronta da copiare in gioco'}</strong>
                     <p>{lang === 'en'
-                      ? 'Use these progression values in the game if you want to reproduce this build. The shown OVR does not include boosters or coach bonuses.'
-                      : 'Usa questi valori nella schermata progressione del gioco se vuoi replicare questa build. L’OVR mostrato non include booster o bonus coach.'}</p>
+                      ? 'Use these progression values in the game if you want to reproduce this build. The shown OVR includes active boosters and coach bonuses when available.'
+                      : 'Usa questi valori nella schermata progressione del gioco se vuoi replicare questa build. L’OVR mostrato include booster e bonus coach attivi quando disponibili.'}</p>
                   </div>
                   <div className="nr-build-copy-meta">
                     {buildTargetPosition && <span>{buildTargetPosition}</span>}
@@ -2855,8 +2863,8 @@ function PremiumPlayerModal({
                 </div>
                 <p className="nr-build-slider-hint">
                   {lang === 'en'
-                    ? 'Adjust the sliders: PT costs and role limits follow the game, stats and base OVR update live.'
-                    : 'Regola gli slider: costi PT e limiti ruolo seguono il gioco, statistiche e OVR base si aggiornano in tempo reale.'}
+                    ? 'Adjust the sliders: PT costs and role limits follow the game, stats and final OVR update live.'
+                    : 'Regola gli slider: costi PT e limiti ruolo seguono il gioco, statistiche e OVR finale si aggiornano in tempo reale.'}
                 </p>
                 <div className="nr-build-slider-grid nr-build-slider-grid--interactive">
                   {BUILD_SLIDER_ORDER.map((key) => {
@@ -4275,16 +4283,14 @@ export default withAuth(function NuovaRosaLabPage() {
       onConfirm: () => {
         setConfirmModal(null)
         closePicker()
-        setSelectedSlot(existingPlayer.slot_index != null
-          ? slots.find((slot) => Number(slot.slot_index) === Number(existingPlayer.slot_index)) || null
-          : null)
+        setSelectedSlot(null)
         setSelectedPlayer(existingPlayer)
         setShowAssignModal(false)
         setShowPremiumEditorModal(true)
       },
       onCancel: () => setConfirmModal(null)
     })
-  }, [closePicker, lang, slots])
+  }, [closePicker, lang])
 
   const handleSaveCatalogCardToSlot = React.useCallback((card) => {
     if (!selectedSlot || !card) return
@@ -4811,8 +4817,8 @@ export default withAuth(function NuovaRosaLabPage() {
           ? 'We will suggest growth points for this player using role, native skills, team style and squad context. Highest OVR is not always the best choice.'
           : 'Consigliamo i punti crescita usando ruolo, abilita native, stile squadra e contesto rosa. L’OVR più alto non è sempre la scelta migliore.',
         details: lang === 'en'
-          ? 'The OVR shown after the build is the base card OVR: boosters and coach bonuses are not added to that number. You can edit everything later.'
-          : 'L’OVR mostrato dopo la build è quello base della carta: booster e bonus coach non sono sommati in quel numero. Potrai modificare tutto in seguito.',
+          ? 'The OVR shown after the build follows the game view: active boosters and coach bonuses are included when available. You can edit everything later.'
+          : 'L’OVR mostrato dopo la build segue la vista del gioco: include booster e bonus coach attivi quando disponibili. Potrai modificare tutto in seguito.',
         confirmLabel: lang === 'en' ? 'Suggest build' : 'Consiglia build',
         cancelLabel: t('cancel'),
         variant: 'info'
@@ -4876,8 +4882,8 @@ export default withAuth(function NuovaRosaLabPage() {
           ? 'We will prepare growth builds based on role, native skills, team style and squad needs, not just the highest possible OVR.'
           : 'Prepariamo le build in base a ruolo, abilita native, stile squadra e bisogni della rosa, non solo all’OVR più alto possibile.',
         details: lang === 'en'
-          ? 'Shown OVR values are base OVR without boosters or coach bonuses. Nothing is final: you can edit every player after the suggestion.'
-          : 'Gli OVR mostrati sono OVR base, senza booster o bonus coach. Nulla è definitivo: potrai modificare ogni giocatore dopo il suggerimento.',
+          ? 'Shown OVR values include active boosters and coach bonuses when available. Nothing is final: you can edit every player after the suggestion.'
+          : 'Gli OVR mostrati includono booster e bonus coach attivi quando disponibili. Nulla è definitivo: potrai modificare ogni giocatore dopo il suggerimento.',
         confirmLabel: lang === 'en' ? 'Prepare builds' : 'Prepara build',
         cancelLabel: t('cancel'),
         variant: 'info'
@@ -5206,7 +5212,7 @@ export default withAuth(function NuovaRosaLabPage() {
                   <User size={18} />
                   <span>
                     <strong>{lang === 'en' ? 'Suggest one build' : 'Consiglia una build'}</strong>
-                    <small>{lang === 'en' ? 'Base OVR excludes boosters and coach' : 'OVR base senza booster e coach'}</small>
+                    <small>{lang === 'en' ? 'Final OVR with active bonuses' : 'OVR finale con bonus attivi'}</small>
                   </span>
                 </button>
               </div>
@@ -5591,6 +5597,8 @@ export default withAuth(function NuovaRosaLabPage() {
           }
         }}
         lang={lang}
+        activeCoach={activeCoach}
+        tacticalSettings={tacticalSettings}
         t={t}
       />
 
