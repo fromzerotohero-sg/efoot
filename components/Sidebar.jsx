@@ -42,9 +42,14 @@ export default function Sidebar() {
       exact: true
     },
     {
-      href: '/gestione-formazione',
+      href: '/impostazioni-profilo',
+      icon: UserCircle,
+      label: t('profile') || 'Profilo',
+    },
+    {
+      href: '/nuova-rosa-lab',
       icon: Users,
-      label: t('squadManagement') || 'Gestione Squadra',
+      label: t('roster') || 'Rosa',
     },
     {
       href: '/match/new',
@@ -60,16 +65,6 @@ export default function Sidebar() {
       href: '/contromisure-pre-partita',
       icon: Shield,
       label: t('countermeasures') || 'Contromisure',
-    },
-    {
-      href: '/allenatori',
-      icon: Zap,
-      label: t('coaches') || 'Allenatori',
-    },
-    {
-      href: '/impostazioni-profilo',
-      icon: UserCircle,
-      label: t('profile') || 'Profilo',
     },
     {
       href: '/guida',

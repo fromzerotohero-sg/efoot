@@ -8,7 +8,7 @@ import { Save, SkipForward, RefreshCw, User, Gamepad2, Brain, CheckCircle2, Aler
 import CoachFeedbackChat from '@/components/CoachFeedbackChat'
 
 export default function ImpostazioniProfiloPage() {
-  const { t } = useTranslation()
+  const { t, lang } = useTranslation()
   const router = useRouter()
   
   // Stato profilo
@@ -229,6 +229,29 @@ export default function ImpostazioniProfiloPage() {
     }
   }
 
+  const profileSignals = [
+    profile.first_name,
+    profile.last_name,
+    profile.current_division,
+    profile.favorite_team,
+    profile.team_name,
+    profile.ai_name,
+    profile.how_to_remember,
+    profile.hours_per_week,
+    ...(Array.isArray(profile.common_problems) ? profile.common_problems : [])
+  ]
+  const completedSignals = profileSignals.filter(value => {
+    if (Array.isArray(value)) return value.length > 0
+    return value !== null && value !== undefined && String(value).trim().length > 0
+  }).length
+  const profileSignalTotal = profileSignals.length || 1
+  const safeCompletionScore = Math.max(0, Math.min(100, Number(completionScore) || 0))
+  const profileGradient = safeCompletionScore >= 87.5
+    ? 'conic-gradient(#00ff88 0deg, #00ff88 var(--score-angle), rgba(255,255,255,0.08) var(--score-angle), rgba(255,255,255,0.08) 360deg)'
+    : safeCompletionScore >= 50
+      ? 'conic-gradient(#00d4ff 0deg, #00d4ff var(--score-angle), rgba(255,255,255,0.08) var(--score-angle), rgba(255,255,255,0.08) 360deg)'
+      : 'conic-gradient(#ffcb05 0deg, #ffcb05 var(--score-angle), rgba(255,255,255,0.08) var(--score-angle), rgba(255,255,255,0.08) 360deg)'
+
   if (loading) {
     return (
       <main style={{ padding: '32px 24px', minHeight: '100vh', textAlign: 'center' }}>
@@ -239,37 +262,71 @@ export default function ImpostazioniProfiloPage() {
   }
 
   return (
-    <main data-tour-id="tour-profile-intro" className="p-6 max-w-3xl mx-auto">
+    <main data-tour-id="tour-profile-intro" className="profile-page">
       {/* Page Header */}
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold neon-text mb-8">
-            <User size={24} color="var(--primary-cyan)" />
+      <section className="profile-hero">
+        <div className="profile-hero-copy">
+          <span className="profile-kicker">
+            <User size={16} />
+            {lang === 'en' ? 'Player identity' : 'Identita giocatore'}
+          </span>
+          <h1>
             {t('profileSettings')}
           </h1>
-          <p className="text-sm text-[rgba(0, 212, 255, 0.7)]">
-            {t('completeYourProfile')}
+          <p>
+            {lang === 'en'
+              ? 'Your profile is the memory layer of the coach: the more complete it is, the more personal every suggestion becomes.'
+              : 'Il profilo e la memoria del coach: piu e completo, piu ogni consiglio diventa personale.'}
           </p>
+          <div className="profile-hero-actions">
+            <a href="/grafici-comparazione" className="profile-hero-link profile-hero-link--primary">
+              <BarChart3 size={17} />
+              {lang === 'en' ? 'View profile charts' : 'Vedi grafici profilo'}
+            </a>
+            <a href="/gestione-profilo" className="profile-hero-link">
+              <Wallet size={17} />
+              {t('goToHeroPoints')}
+            </a>
+          </div>
         </div>
-        <a
-          href="/gestione-profilo"
-          className="neon-button"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '8px 14px',
-            backgroundColor: 'rgba(255, 149, 0, 0.1)',
-            borderColor: 'var(--border-orange)',
-            color: 'var(--primary-orange)',
-            fontSize: '14px',
-            textDecoration: 'none'
-          }}
-        >
-          <Wallet size={16} />
-          {t('goToHeroPoints')}
-        </a>
-      </div>
+
+        <div className="profile-score-panel">
+          <div
+            className="profile-score-orb"
+            style={{
+              '--score-angle': `${safeCompletionScore * 3.6}deg`,
+              background: profileGradient
+            }}
+          >
+            <div>
+              <strong>{Math.round(safeCompletionScore)}%</strong>
+              <span>{t('profiling')}</span>
+            </div>
+          </div>
+          <div className="profile-score-caption">
+            <strong>{getLevelText(completionLevel)}</strong>
+            <span>{safeCompletionScore >= 100 ? t('guideProfileComplete') : t('completeFor100')}</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="profile-metric-grid" aria-label={lang === 'en' ? 'Profile overview' : 'Panoramica profilo'}>
+        <div className="profile-metric-card">
+          <span>{lang === 'en' ? 'AI memory' : 'Memoria AI'}</span>
+          <strong>{Math.round(safeCompletionScore)}%</strong>
+          <small>{lang === 'en' ? 'Personalization level' : 'Livello personalizzazione'}</small>
+        </div>
+        <div className="profile-metric-card">
+          <span>{lang === 'en' ? 'Filled signals' : 'Segnali compilati'}</span>
+          <strong>{completedSignals}/{profileSignalTotal}</strong>
+          <small>{lang === 'en' ? 'Useful fields for the coach' : 'Campi utili al coach'}</small>
+        </div>
+        <div className="profile-metric-card">
+          <span>{lang === 'en' ? 'Next best step' : 'Prossimo passo'}</span>
+          <strong>{profile.team_name ? (lang === 'en' ? 'Coach gym' : 'Palestra') : (lang === 'en' ? 'Team name' : 'Nome team')}</strong>
+          <small>{profile.team_name ? t('palestraCoachTitle') : t('teamNameInGame')}</small>
+        </div>
+      </section>
 
       {/* Toast: feedback vicino all'azione (visibile anche se la sezione è in basso) */}
       {toast && (
@@ -855,6 +912,313 @@ export default function ImpostazioniProfiloPage() {
         userProfile={profileData}
         lastMatch={null}
       />
+      <style jsx>{`
+        .profile-page {
+          width: min(1180px, 100%);
+          margin: 0 auto;
+          padding: clamp(14px, 3vw, 28px);
+          min-height: 100vh;
+        }
+
+        .profile-hero {
+          position: relative;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(220px, 300px);
+          gap: 22px;
+          margin-bottom: 18px;
+          padding: clamp(20px, 4vw, 32px);
+          overflow: hidden;
+          border: 1px solid rgba(0, 212, 255, 0.26);
+          border-radius: 26px;
+          background:
+            radial-gradient(circle at 12% 0%, rgba(0, 212, 255, 0.20), transparent 34%),
+            radial-gradient(circle at 90% 10%, rgba(255, 203, 5, 0.14), transparent 30%),
+            linear-gradient(135deg, rgba(8, 14, 31, 0.98), rgba(9, 24, 43, 0.92));
+          box-shadow: 0 18px 60px rgba(0, 0, 0, 0.32), 0 0 34px rgba(0, 212, 255, 0.10);
+        }
+
+        .profile-hero::after {
+          content: '';
+          position: absolute;
+          inset: auto -20% -45% 35%;
+          height: 190px;
+          border-radius: 999px;
+          background: radial-gradient(circle, rgba(0, 212, 255, 0.16), transparent 70%);
+          pointer-events: none;
+        }
+
+        .profile-hero-copy,
+        .profile-score-panel {
+          position: relative;
+          z-index: 1;
+        }
+
+        .profile-kicker {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 12px;
+          padding: 7px 10px;
+          border: 1px solid rgba(0, 212, 255, 0.28);
+          border-radius: 999px;
+          background: rgba(0, 212, 255, 0.08);
+          color: #8ff2ff;
+          font-size: 12px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+        }
+
+        .profile-hero h1 {
+          margin: 0 0 10px;
+          color: #fff;
+          font-size: clamp(30px, 5vw, 48px);
+          font-weight: 900;
+          line-height: 0.98;
+          letter-spacing: -0.04em;
+        }
+
+        .profile-hero p {
+          max-width: 640px;
+          margin: 0;
+          color: rgba(255, 255, 255, 0.74);
+          font-size: clamp(14px, 2.2vw, 16px);
+          line-height: 1.65;
+        }
+
+        .profile-hero-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          margin-top: 20px;
+        }
+
+        .profile-hero-link {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          min-height: 44px;
+          padding: 10px 14px;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 999px;
+          color: rgba(255, 255, 255, 0.86);
+          background: rgba(255, 255, 255, 0.05);
+          text-decoration: none;
+          font-size: 14px;
+          font-weight: 800;
+          transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+        }
+
+        .profile-hero-link:hover {
+          transform: translateY(-2px);
+          border-color: rgba(0, 212, 255, 0.45);
+          background: rgba(0, 212, 255, 0.10);
+        }
+
+        .profile-hero-link--primary {
+          color: #001018;
+          border-color: rgba(0, 212, 255, 0.82);
+          background: linear-gradient(135deg, #00d4ff, #67e8f9);
+          box-shadow: 0 0 22px rgba(0, 212, 255, 0.24);
+        }
+
+        .profile-score-panel {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 14px;
+          min-height: 230px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 24px;
+          background: rgba(255, 255, 255, 0.045);
+          backdrop-filter: blur(10px);
+        }
+
+        .profile-score-orb {
+          width: 152px;
+          height: 152px;
+          display: grid;
+          place-items: center;
+          border-radius: 999px;
+          box-shadow: 0 0 32px rgba(0, 212, 255, 0.16);
+        }
+
+        .profile-score-orb > div {
+          width: 116px;
+          height: 116px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          border-radius: 999px;
+          background: rgba(5, 8, 20, 0.94);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .profile-score-orb strong {
+          color: #fff;
+          font-size: 34px;
+          font-weight: 900;
+          line-height: 1;
+        }
+
+        .profile-score-orb span,
+        .profile-score-caption span {
+          color: rgba(255, 255, 255, 0.58);
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .profile-score-caption {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
+          text-align: center;
+        }
+
+        .profile-score-caption strong {
+          color: #fff;
+          font-size: 16px;
+        }
+
+        .profile-metric-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 12px;
+          margin-bottom: 24px;
+        }
+
+        .profile-metric-card {
+          min-height: 116px;
+          padding: 18px;
+          border: 1px solid rgba(0, 212, 255, 0.16);
+          border-radius: 18px;
+          background: linear-gradient(135deg, rgba(10, 18, 38, 0.94), rgba(13, 25, 48, 0.78));
+          box-shadow: 0 12px 34px rgba(0, 0, 0, 0.20);
+        }
+
+        .profile-metric-card span,
+        .profile-metric-card small {
+          display: block;
+          color: rgba(255, 255, 255, 0.58);
+          font-size: 12px;
+          line-height: 1.35;
+        }
+
+        .profile-metric-card strong {
+          display: block;
+          margin: 8px 0 4px;
+          color: #fff;
+          font-size: clamp(22px, 4vw, 30px);
+          font-weight: 900;
+          line-height: 1.05;
+          letter-spacing: -0.03em;
+        }
+
+        .profile-page :global([data-tour-id='tour-profile-personal']),
+        .profile-page :global([data-tour-id='tour-profile-game']),
+        .profile-page :global([data-tour-id='tour-profile-ai']) {
+          border: 1px solid rgba(0, 212, 255, 0.14) !important;
+          border-radius: 22px !important;
+          background:
+            linear-gradient(135deg, rgba(10, 18, 38, 0.96), rgba(13, 25, 48, 0.82)) !important;
+          box-shadow: 0 14px 42px rgba(0, 0, 0, 0.24) !important;
+        }
+
+        .profile-page :global(input),
+        .profile-page :global(select),
+        .profile-page :global(textarea) {
+          min-height: 48px !important;
+          padding: 14px 15px !important;
+          border: 1px solid rgba(0, 212, 255, 0.18) !important;
+          border-radius: 14px !important;
+          background: rgba(4, 10, 24, 0.86) !important;
+          color: #fff !important;
+          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02) !important;
+          outline: none !important;
+          transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease !important;
+        }
+
+        .profile-page :global(textarea) {
+          min-height: 130px !important;
+          line-height: 1.5 !important;
+        }
+
+        .profile-page :global(input:focus),
+        .profile-page :global(select:focus),
+        .profile-page :global(textarea:focus) {
+          border-color: rgba(0, 212, 255, 0.72) !important;
+          background: rgba(5, 13, 30, 0.96) !important;
+          box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.12), 0 0 22px rgba(0, 212, 255, 0.12) !important;
+        }
+
+        .profile-page :global(label) {
+          color: rgba(255, 255, 255, 0.70) !important;
+          font-weight: 700 !important;
+        }
+
+        @media (max-width: 900px) {
+          .profile-hero {
+            grid-template-columns: 1fr;
+          }
+
+          .profile-score-panel {
+            min-height: auto;
+            padding: 18px;
+            flex-direction: row;
+            justify-content: flex-start;
+          }
+
+          .profile-score-orb {
+            width: 118px;
+            height: 118px;
+            flex: 0 0 118px;
+          }
+
+          .profile-score-orb > div {
+            width: 88px;
+            height: 88px;
+          }
+
+          .profile-score-orb strong {
+            font-size: 26px;
+          }
+
+          .profile-score-caption {
+            align-items: flex-start;
+            text-align: left;
+          }
+
+          .profile-metric-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .profile-page {
+            padding: 12px;
+          }
+
+          .profile-hero {
+            border-radius: 20px;
+          }
+
+          .profile-hero-actions {
+            flex-direction: column;
+          }
+
+          .profile-hero-link {
+            width: 100%;
+          }
+
+          .profile-page :global(button) {
+            min-height: 46px;
+          }
+        }
+      `}</style>
     </main>
   )
 }
