@@ -3794,14 +3794,14 @@ export default withAuth(function CardAdvisorLabPage() {
             width: 100%;
             max-height: calc(100vh - 16px);
             max-height: calc(100dvh - 16px);
-            padding-bottom: max(14px, env(safe-area-inset-bottom, 0px));
-            scroll-padding-bottom: max(100px, calc(env(safe-area-inset-bottom, 0px) + 72px));
+            padding-bottom: max(96px, calc(env(safe-area-inset-bottom, 0px) + 92px));
+            scroll-padding-bottom: max(150px, calc(env(safe-area-inset-bottom, 0px) + 128px));
             border-radius: 22px 22px 12px 12px;
           }
 
           .card-details-modal .detail-panel {
             padding: 14px;
-            padding-bottom: max(18px, calc(14px + env(safe-area-inset-bottom, 0px)));
+            padding-bottom: max(118px, calc(env(safe-area-inset-bottom, 0px) + 112px));
           }
 
           .coach-advice-card,
