@@ -317,6 +317,30 @@ function isSameExtractedPlayer(existingPlayer, extractedPlayer) {
   return Boolean(existingName && extractedName && existingName === extractedName)
 }
 
+function findCatalogDuplicatePlayer(card, players = []) {
+  if (!card) return null
+  const sourcePlayerId = String(card.source_player_id || card.sourcePlayerId || '').trim()
+  const cardName = String(card.player_name || card.name || '').trim().toLowerCase()
+  const cardAge = card?.players_payload?.age != null ? Number(card.players_payload.age) : (card?.age != null ? Number(card.age) : null)
+
+  return (Array.isArray(players) ? players : []).find((player) => {
+    const metadata = player?.metadata || {}
+    const playerSourceId = String(
+      metadata.catalog_source_player_id ||
+      metadata.source_player_id ||
+      metadata.sourcePlayerId ||
+      player?.source_player_id ||
+      ''
+    ).trim()
+    if (sourcePlayerId && playerSourceId && sourcePlayerId === playerSourceId) return true
+
+    const playerName = String(player?.player_name || '').trim().toLowerCase()
+    const playerAge = player?.age != null ? Number(player.age) : null
+    if (cardName && playerName && cardAge && playerAge) return cardName === playerName && cardAge === playerAge
+    return Boolean(cardName && playerName && cardName === playerName)
+  }) || null
+}
+
 function getPlayerInitials(name = '') {
   const parts = String(name || '')
     .trim()
@@ -4228,8 +4252,48 @@ export default withAuth(function NuovaRosaLabPage() {
     await savePlayer()
   }, [extractedPlayerData, fetchRoster, lang, positionModalCtx, refreshDiagnosticAfterSave, resetPhotoPositionFlow, riserve, selectedOriginalPositions, showToast, t, titolari])
 
+  const showCatalogDuplicateAlert = React.useCallback((existingPlayer, card) => {
+    if (!existingPlayer) return
+    const location = existingPlayer.slot_index == null
+      ? (lang === 'en' ? 'reserves' : 'riserve')
+      : `${lang === 'en' ? 'starter slot' : 'slot titolare'} ${Number(existingPlayer.slot_index) + 1}`
+    const playerName = existingPlayer.player_name || card?.player_name || card?.name || (lang === 'en' ? 'This player' : 'Questo giocatore')
+
+    setConfirmModal({
+      ...showConfirmConfig({
+        title: lang === 'en' ? 'Player already in squad' : 'Giocatore già in rosa',
+        message: lang === 'en'
+          ? `${playerName} is already saved in your squad.`
+          : `${playerName} è già salvato nella tua rosa.`,
+        details: lang === 'en'
+          ? `You can find him in ${location}. Open his card to edit data, photos, boosters or build.`
+          : `Lo trovi in ${location}. Apri la scheda per modificare dati, foto, booster o build.`,
+        confirmLabel: lang === 'en' ? 'Open player card' : 'Apri scheda',
+        cancelLabel: lang === 'en' ? 'Close' : 'Chiudi',
+        variant: 'info'
+      }),
+      onConfirm: () => {
+        setConfirmModal(null)
+        closePicker()
+        setSelectedSlot(existingPlayer.slot_index != null
+          ? slots.find((slot) => Number(slot.slot_index) === Number(existingPlayer.slot_index)) || null
+          : null)
+        setSelectedPlayer(existingPlayer)
+        setShowAssignModal(false)
+        setShowPremiumEditorModal(true)
+      },
+      onCancel: () => setConfirmModal(null)
+    })
+  }, [closePicker, lang, slots])
+
   const handleSaveCatalogCardToSlot = React.useCallback((card) => {
     if (!selectedSlot || !card) return
+
+    const duplicate = findCatalogDuplicatePlayer(card, [...titolari, ...riserve])
+    if (duplicate) {
+      showCatalogDuplicateAlert(duplicate, card)
+      return
+    }
 
     const compatibility = getSlotCompatibility(selectedSlot.position, card.position)
     const isOutOfRole = compatibility === 'out_of_role'
@@ -4263,12 +4327,18 @@ export default withAuth(function NuovaRosaLabPage() {
       },
       onCancel: () => setConfirmModal(null)
     })
-  }, [selectedSlot, lang, t])
+  }, [lang, riserve, selectedSlot, showCatalogDuplicateAlert, t, titolari])
 
   const handleSaveCatalogCardAsReserve = React.useCallback((card) => {
     if (!card) return
     if (riserve.length >= MAX_RESERVES) {
       showToast(t('maxReservesReached'), 'error')
+      return
+    }
+
+    const duplicate = findCatalogDuplicatePlayer(card, [...titolari, ...riserve])
+    if (duplicate) {
+      showCatalogDuplicateAlert(duplicate, card)
       return
     }
 
@@ -4296,7 +4366,7 @@ export default withAuth(function NuovaRosaLabPage() {
       },
       onCancel: () => setConfirmModal(null)
     })
-  }, [lang, riserve.length, showToast, t])
+  }, [lang, riserve, showCatalogDuplicateAlert, showToast, t, titolari])
 
   const createPlayerFromCatalog = React.useCallback(async (card, { slotIndex = null, forcedOutOfRole = false, originalPositions = [] } = {}) => {
     if (!card) return
