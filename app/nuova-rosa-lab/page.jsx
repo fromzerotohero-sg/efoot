@@ -9101,7 +9101,6 @@ export default withAuth(function NuovaRosaLabPage() {
             padding-bottom: max(180px, calc(env(safe-area-inset-bottom, 0px) + 156px));
             margin: 0;
             box-shadow: none;
-            contain: content;
           }
 
           .nr-modal-header {
@@ -9160,7 +9159,10 @@ export default withAuth(function NuovaRosaLabPage() {
           }
 
           .nr-premium-player-shell {
-            max-height: 100dvh;
+            max-height: calc(100dvh - max(20px, env(safe-area-inset-top, 0px)) - max(20px, env(safe-area-inset-bottom, 0px)));
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
             padding-bottom: max(118px, calc(env(safe-area-inset-bottom, 0px) + 104px));
           }
 

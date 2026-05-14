@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from '@/lib/i18n'
 import { AlertCircle, AlertTriangle, Info, X } from 'lucide-react'
 
@@ -26,6 +27,7 @@ export default function ConfirmModal({
   const { t } = useTranslation()
 
   if (!show) return null
+  if (typeof document === 'undefined') return null
 
   const variantConfig = {
     error: {
@@ -62,7 +64,7 @@ export default function ConfirmModal({
         color: 'var(--primary-cyan)'
       }
 
-  return (
+  const modal = (
     <>
       {/* Pulsanti colonna + altezza touch su mobile; sopra FAB AssistantChat (z-index ~10050) */}
       <style>{`
@@ -110,8 +112,8 @@ export default function ConfirmModal({
         display: 'flex',
         alignItems: isSheet ? 'flex-end' : 'center',
         justifyContent: 'center',
-        // Must stay above page-level modals (e.g. nuova-rosa-lab uses 100200/100300)
-        zIndex: 100500,
+        // Must stay above page-level modals/overlays (e.g. nuova-rosa-lab uses 100200-100600)
+        zIndex: 100900,
         padding: isSheet ? 0 : 'max(8px, env(safe-area-inset-top, 0px)) max(10px, env(safe-area-inset-right, 0px)) max(8px, env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px))',
         paddingBottom: isSheet ? 'env(safe-area-inset-bottom, 0)' : undefined,
         animation: 'fadeIn 0.2s ease-out',
@@ -256,4 +258,6 @@ export default function ConfirmModal({
     </div>
     </>
   )
+
+  return createPortal(modal, document.body)
 }
