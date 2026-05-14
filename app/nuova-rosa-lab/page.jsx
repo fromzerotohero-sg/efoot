@@ -2800,8 +2800,8 @@ function PremiumPlayerModal({
               <div>
                 <strong>{lang === 'en' ? 'Guided build' : 'Build guidata'}</strong>
                 <p>{lang === 'en'
-                  ? 'Suggested growth points for role, card strengths and your squad.'
-                  : 'Punti crescita consigliati per ruolo, qualità della carta e rosa.'}</p>
+                  ? 'Suggested growth points for role, native skills, team style and squad needs. Highest OVR is not always the best build.'
+                  : 'Punti crescita consigliati per ruolo, abilità native, stile squadra e bisogni della rosa. L’OVR più alto non è sempre la build migliore.'}</p>
               </div>
               <button
                 type="button"
@@ -2819,8 +2819,8 @@ function PremiumPlayerModal({
                   <div>
                     <strong>{lang === 'en' ? 'Build ready to copy in game' : 'Build pronta da copiare in gioco'}</strong>
                     <p>{lang === 'en'
-                      ? 'Use these progression values in the game if you want to reproduce this build.'
-                      : 'Usa questi valori nella schermata progressione del gioco se vuoi replicare questa build.'}</p>
+                      ? 'Use these progression values in the game if you want to reproduce this build. The shown OVR does not include boosters or coach bonuses.'
+                      : 'Usa questi valori nella schermata progressione del gioco se vuoi replicare questa build. L’OVR mostrato non include booster o bonus coach.'}</p>
                   </div>
                   <div className="nr-build-copy-meta">
                     {buildTargetPosition && <span>{buildTargetPosition}</span>}
@@ -2831,8 +2831,8 @@ function PremiumPlayerModal({
                 </div>
                 <p className="nr-build-slider-hint">
                   {lang === 'en'
-                    ? 'Adjust the sliders: PT costs and role limits follow the game, stats and OVR update live.'
-                    : 'Regola gli slider: costi PT e limiti ruolo seguono il gioco, statistiche e OVR si aggiornano in tempo reale.'}
+                    ? 'Adjust the sliders: PT costs and role limits follow the game, stats and base OVR update live.'
+                    : 'Regola gli slider: costi PT e limiti ruolo seguono il gioco, statistiche e OVR base si aggiornano in tempo reale.'}
                 </p>
                 <div className="nr-build-slider-grid nr-build-slider-grid--interactive">
                   {BUILD_SLIDER_ORDER.map((key) => {
@@ -4738,8 +4738,11 @@ export default withAuth(function NuovaRosaLabPage() {
       ...showConfirmConfig({
         title: lang === 'en' ? 'Suggest player build' : 'Consiglia build giocatore',
         message: lang === 'en'
-          ? 'We will suggest growth points for this player using role, native skills and squad context. You can edit everything later.'
-          : 'Consigliamo i punti crescita di questo giocatore usando ruolo, abilita native e contesto rosa. Potrai modificare tutto in seguito.',
+          ? 'We will suggest growth points for this player using role, native skills, team style and squad context. Highest OVR is not always the best choice.'
+          : 'Consigliamo i punti crescita usando ruolo, abilita native, stile squadra e contesto rosa. L’OVR più alto non è sempre la scelta migliore.',
+        details: lang === 'en'
+          ? 'The OVR shown after the build is the base card OVR: boosters and coach bonuses are not added to that number. You can edit everything later.'
+          : 'L’OVR mostrato dopo la build è quello base della carta: booster e bonus coach non sono sommati in quel numero. Potrai modificare tutto in seguito.',
         confirmLabel: lang === 'en' ? 'Suggest build' : 'Consiglia build',
         cancelLabel: t('cancel'),
         variant: 'info'
@@ -4800,11 +4803,11 @@ export default withAuth(function NuovaRosaLabPage() {
       ...showConfirmConfig({
         title: lang === 'en' ? 'Optimize squad builds' : 'Ottimizza build rosa',
         message: lang === 'en'
-          ? 'We will prepare growth builds for your players based on role, native skills, team style and squad needs.'
-          : 'Prepariamo le build crescita dei tuoi giocatori in base a ruolo, abilita native, stile squadra e bisogni della rosa.',
+          ? 'We will prepare growth builds based on role, native skills, team style and squad needs, not just the highest possible OVR.'
+          : 'Prepariamo le build in base a ruolo, abilita native, stile squadra e bisogni della rosa, non solo all’OVR più alto possibile.',
         details: lang === 'en'
-          ? 'Nothing is final: you can still edit every player after the suggestion.'
-          : 'Nulla e definitivo: potrai modificare ogni giocatore dopo il suggerimento.',
+          ? 'Shown OVR values are base OVR without boosters or coach bonuses. Nothing is final: you can edit every player after the suggestion.'
+          : 'Gli OVR mostrati sono OVR base, senza booster o bonus coach. Nulla è definitivo: potrai modificare ogni giocatore dopo il suggerimento.',
         confirmLabel: lang === 'en' ? 'Prepare builds' : 'Prepara build',
         cancelLabel: t('cancel'),
         variant: 'info'
@@ -5126,14 +5129,14 @@ export default withAuth(function NuovaRosaLabPage() {
                   {buildingRoster ? <RefreshCw size={18} className="nr-spin" /> : <Sparkles size={18} />}
                   <span>
                     <strong>{lang === 'en' ? 'Prepare squad builds' : 'Prepara build rosa'}</strong>
-                    <small>{lang === 'en' ? 'Suggested points for starters and reserves' : 'Punti consigliati per titolari e riserve'}</small>
+                    <small>{lang === 'en' ? 'Not just highest OVR: role and squad needs' : 'Non solo OVR alto: ruolo e bisogni rosa'}</small>
                   </span>
                 </button>
                 <button type="button" className="nr-build-coach-action" onClick={() => setBuildCoachPlayerPickerOpen(true)} disabled={buildingRoster || allRosterPlayers.length === 0}>
                   <User size={18} />
                   <span>
                     <strong>{lang === 'en' ? 'Suggest one build' : 'Consiglia una build'}</strong>
-                    <small>{lang === 'en' ? 'Pick a player to review' : 'Scegli un giocatore da rivedere'}</small>
+                    <small>{lang === 'en' ? 'Base OVR excludes boosters and coach' : 'OVR base senza booster e coach'}</small>
                   </span>
                 </button>
               </div>
