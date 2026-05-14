@@ -24,21 +24,10 @@ export default function PrelaunchGate({ children }) {
           credentials: 'same-origin',
         })
         const payload = await response.json().catch(() => ({}))
-        const isAuthenticated = Boolean(payload?.isAuthenticated)
         const gateEnabled = Boolean(payload?.gateEnabled)
         const hasAccess = Boolean(payload?.hasAccess)
 
         if (!mounted) return
-
-        if (!isAuthenticated) {
-          if (isAccessPage) {
-            router.replace('/login')
-            return
-          }
-
-          setState({ checking: false, allowRender: true })
-          return
-        }
 
         if (!gateEnabled) {
           if (isAccessPage) {

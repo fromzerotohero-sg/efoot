@@ -164,6 +164,43 @@ export default function AccessPage() {
             {t('prelaunchAccountCreated')}
           </p>
 
+          <div style={{
+            margin: '18px 0',
+            padding: '18px',
+            borderRadius: '18px',
+            background: 'linear-gradient(135deg, rgba(255, 203, 5, 0.12), rgba(168, 85, 247, 0.10), rgba(0, 212, 255, 0.10))',
+            border: '1px solid rgba(255, 203, 5, 0.24)',
+            boxShadow: '0 0 24px rgba(255, 203, 5, 0.08)'
+          }}>
+            <div style={{
+              fontSize: '13px',
+              fontWeight: 800,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: '#ffcb05',
+              marginBottom: '8px'
+            }}>
+              Coming soon
+            </div>
+            <div style={{
+              fontSize: 'clamp(20px, 3vw, 28px)',
+              lineHeight: 1.15,
+              fontWeight: 900,
+              color: '#FFFFFF',
+              marginBottom: '8px'
+            }}>
+              Disponibile da domani alle 18:00
+            </div>
+            <p style={{
+              margin: 0,
+              fontSize: '14px',
+              lineHeight: 1.6,
+              color: 'rgba(255,255,255,0.74)'
+            }}>
+              Se hai ricevuto una chiave di accesso anticipato, inseriscila per entrare subito nella piattaforma.
+            </p>
+          </div>
+
           <p style={{
             fontSize: '15px',
             lineHeight: 1.7,
@@ -244,11 +281,11 @@ export default function AccessPage() {
             </div>
 
             <h2 style={{ fontSize: '28px', lineHeight: 1.1, fontWeight: 800, margin: '0 0 12px', color: '#FFFFFF' }}>
-              {t('prelaunchCodeTitle')}
+              Chiave di accesso anticipato
             </h2>
 
             <p style={{ margin: '0 0 22px', color: 'rgba(255,255,255,0.72)', lineHeight: 1.65, fontSize: '15px' }}>
-              {t('prelaunchCodeText')}
+              Inserisci la chiave riservata per sbloccare l’accesso prima dell’apertura pubblica.
             </p>
 
             <form onSubmit={handleUnlock} style={{ display: 'grid', gap: '14px' }}>

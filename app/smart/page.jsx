@@ -291,15 +291,21 @@ export default withAuth(function SmartPage() {
     }
   }, [smartChatSuggestions])
 
+  React.useEffect(() => {
+    if (!loadingContext && !enabled) {
+      router.replace('/card-advisor-lab')
+    }
+  }, [enabled, loadingContext, router])
+
   if (!enabled) {
     return (
       <main className="max-w-4xl mx-auto p-6">
         <div className="neon-card" style={{ padding: '32px', textAlign: 'center' }}>
           <h1 className="neon-text" style={{ fontSize: '28px', marginBottom: '12px' }}>
-            {lang === 'en' ? 'Smart Coach is not enabled' : 'La versione Smart non è attiva'}
+            {lang === 'en' ? 'Redirecting to card analysis...' : 'Ti porto all’analisi carte...'}
           </h1>
-          <button className="btn primary" onClick={() => router.push('/gestione-formazione')}>
-            {lang === 'en' ? 'Open Pro' : 'Apri il Pro'}
+          <button className="btn primary" onClick={() => router.push('/card-advisor-lab')}>
+            {lang === 'en' ? 'Open card analysis' : 'Apri analisi carte'}
           </button>
         </div>
       </main>

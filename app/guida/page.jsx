@@ -110,7 +110,7 @@ export default function GuidaPage() {
         : 'Il tuo centro di comando: punteggio AI Knowledge, obiettivi settimanali, panoramica squadra e navigazione rapida a tutte le funzioni.',
       steps: [
         lang === 'en' ? 'Check your AI Knowledge score (0-100%)' : 'Controlla il tuo punteggio AI Knowledge (0-100%)',
-        lang === 'en' ? 'Choose Smart or Pro from the coach mode entry' : 'Scegli Smart o Pro dall\'ingresso modalita coach',
+        lang === 'en' ? 'Open new card analysis to check releases against your roster' : 'Apri l’analisi carte nuove per valutarle sulla tua rosa',
         lang === 'en' ? 'View weekly goals and track progress' : 'Visualizza obiettivi settimanali e traccia i progressi',
         lang === 'en' ? 'Monitor weekly goals and app progress' : 'Monitora obiettivi settimanali e progressi nell\'app',
         lang === 'en' ? 'Access Mission Center for daily challenges' : 'Accedi al Centro Missioni per sfide giornaliere',
@@ -139,20 +139,20 @@ export default function GuidaPage() {
       ]
     },
     {
-      id: 'smart-coach',
+      id: 'card-advisor',
       icon: Sparkles,
       color: 'var(--neon-cyan)',
-      path: '/smart',
-      title: lang === 'en' ? 'Smart Coach' : 'Smart Coach',
+      path: '/card-advisor-lab',
+      title: lang === 'en' ? 'New Card Analysis' : 'Analisi Carte Nuove',
       description: lang === 'en'
-        ? 'Fast entry experience: upload 2D screenshots of your team and opponent to get chat support and pre-match countermeasures without loading the full Pro setup.'
-        : 'Esperienza di ingresso rapida: carica schermate 2D della tua squadra e dell\'avversario per ottenere chat e contromisure pre-partita senza caricare tutta la configurazione Pro.',
+        ? 'Evaluate new releases against your real roster, needs and performance data before spending coins.'
+        : 'Valuta le nuove uscite sulla tua rosa reale, sulle tue esigenze e sui tuoi dati performance prima di spendere coins.',
       steps: [
-        lang === 'en' ? 'Upload your 2D team screenshot to create the Smart context' : 'Carica la schermata 2D della tua squadra per creare il contesto Smart',
-        lang === 'en' ? 'Upload the opponent 2D screenshot to generate real countermeasures' : 'Carica la schermata 2D avversaria per generare contromisure reali',
-        lang === 'en' ? 'Use Smart chat for immediate tactical priorities' : 'Usa la chat Smart per priorita tattiche immediate',
-        lang === 'en' ? 'Use Smart when you want speed, then switch to Pro for deeper precision' : 'Usa Smart quando vuoi velocita, poi passa a Pro per una precisione piu profonda',
-        lang === 'en' ? 'Smart costs: chat 1 HP, extraction 2 HP, countermeasures 2 HP' : 'Costi Smart: chat 1 HP, estrazione 2 HP, contromisure 2 HP'
+        lang === 'en' ? 'Open the latest card releases' : 'Apri le ultime carte uscite',
+        lang === 'en' ? 'Compare the card with starters, bench, coach and team style' : 'Confronta la carta con titolari, panchina, coach e stile squadra',
+        lang === 'en' ? 'Unlock a clear verdict: sign, skip or rotation' : 'Sblocca un verdetto chiaro: prendi, salta o rotazione',
+        lang === 'en' ? 'Use roster and performance context instead of hype or overall only' : 'Usa contesto rosa e performance, non hype o solo overall',
+        lang === 'en' ? 'Use it whenever a new pack drops' : 'Usala ogni volta che esce un nuovo pack'
       ]
     },
     {

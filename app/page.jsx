@@ -18,8 +18,6 @@ import CoachSuggestions from '@/components/CoachSuggestions'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import { withAuth } from '@/components/AuthWrapper'
-import { isEnabled } from '@/lib/featureFlags'
-import { SMART_COACH_FLAG } from '@/lib/smartCoach'
 import { 
   Users, 
   RefreshCw, 
@@ -36,7 +34,6 @@ import {
   BookOpen,
   Zap,
   User,
-  Brain,
   Calendar,
   Radio,
   Dumbbell
@@ -69,7 +66,6 @@ function OpenCoachListener({ onOpenCoach, onOpenAssistantChat, onOpenGameAnalysi
 function HomePage() {
   const { t, lang } = useTranslation()
   const router = useRouter()
-  const smartEntryEnabled = isEnabled(SMART_COACH_FLAG)
   const { setIsOpen: setGameAnalysisNavOpen } = useGameAnalysisModalNav()
   const mountedRef = React.useRef(true)
   const [retryTrigger, setRetryTrigger] = React.useState(0)
@@ -94,12 +90,11 @@ function HomePage() {
   const [hasActiveCoach, setHasActiveCoach] = React.useState(false)
   const [reminderRotationIndex, setReminderRotationIndex] = React.useState(0)
   const [hideSetupBanner, setHideSetupBanner] = React.useState(false)
-  const [showCoachModeModal, setShowCoachModeModal] = React.useState(false)
+  const [showCardAdvisorModal, setShowCardAdvisorModal] = React.useState(false)
   const [userProfile, setUserProfile] = React.useState(null)
   const [confirmModal, setConfirmModal] = React.useState(null) // { show, title, message, onConfirm, onCancel }
   const [coachChatInitialMessage, setCoachChatInitialMessage] = React.useState(null)
   const [importingStarterPack, setImportingStarterPack] = React.useState(false)
-  const coachModeSessionKey = 'dashboard_coach_mode_modal_seen_session_v1'
 
   React.useEffect(() => {
     setGameAnalysisNavOpen(showGameAnalysisModal)
@@ -159,19 +154,9 @@ function HomePage() {
     } catch {}
   }, [])
 
-  const openSmartMode = React.useCallback(() => {
-    try {
-      sessionStorage.setItem(coachModeSessionKey, '1')
-    } catch {}
-    setShowCoachModeModal(false)
-    router.push('/smart')
-  }, [router])
-
-  const openProMode = React.useCallback(() => {
-    try {
-      sessionStorage.setItem(coachModeSessionKey, '1')
-    } catch {}
-    setShowCoachModeModal(false)
+  const openCardAdvisor = React.useCallback(() => {
+    setShowCardAdvisorModal(false)
+    router.push('/card-advisor-lab')
   }, [router])
 
   const bannerTips = React.useMemo(() => {
@@ -226,18 +211,6 @@ function HomePage() {
   React.useEffect(() => {
     setReminderRotationIndex(0)
   }, [missingCount])
-
-  React.useEffect(() => {
-    if (!smartEntryEnabled) return
-    if (loading) return
-    if (typeof window === 'undefined') return
-    try {
-      const alreadySeenThisSession = sessionStorage.getItem(coachModeSessionKey) === '1'
-      setShowCoachModeModal(!alreadySeenThisSession)
-    } catch {
-      setShowCoachModeModal(true)
-    }
-  }, [loading, smartEntryEnabled])
 
   const currentBannerTip = bannerTips.length > 0
     ? bannerTips[((reminderRotationIndex * 7) + 3) % bannerTips.length]
@@ -811,13 +784,13 @@ function HomePage() {
         </div>
       )}
 
-      {smartEntryEnabled && showCoachModeModal && (
+      {showCardAdvisorModal && (
         <div
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(3, 7, 18, 0.82)',
-            backdropFilter: 'blur(8px)',
+            background: 'radial-gradient(circle at top left, rgba(255, 203, 5, 0.18), transparent 30%), radial-gradient(circle at bottom right, rgba(168, 85, 247, 0.22), transparent 35%), rgba(3, 7, 18, 0.86)',
+            backdropFilter: 'blur(10px)',
             zIndex: 1200,
             display: 'flex',
             alignItems: 'center',
@@ -828,101 +801,79 @@ function HomePage() {
           <div
             className="neon-card"
             style={{
-              width: 'min(900px, 100%)',
-              padding: '24px',
-              border: '1px solid rgba(0, 212, 255, 0.24)',
-              background: 'rgba(5, 12, 28, 0.95)'
+              width: 'min(760px, 100%)',
+              padding: 'clamp(24px, 4vw, 34px)',
+              border: '1px solid rgba(255, 203, 5, 0.34)',
+              background: 'linear-gradient(145deg, rgba(5, 12, 28, 0.98), rgba(14, 10, 38, 0.98))',
+              boxShadow: '0 0 50px rgba(168, 85, 247, 0.24), 0 0 36px rgba(0, 212, 255, 0.16), inset 0 1px 0 rgba(255,255,255,0.08)',
+              position: 'relative',
+              overflow: 'hidden'
             }}
           >
+            <div style={{ position: 'absolute', inset: '-40% -20% auto auto', width: '280px', height: '280px', borderRadius: '999px', background: 'rgba(255, 203, 5, 0.16)', filter: 'blur(18px)' }} />
+            <div style={{ position: 'absolute', inset: 'auto auto -35% -15%', width: '260px', height: '260px', borderRadius: '999px', background: 'rgba(0, 212, 255, 0.14)', filter: 'blur(18px)' }} />
             <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-              <h2 style={{ fontSize: 'clamp(24px, 5vw, 32px)', fontWeight: 800, color: '#FFFFFF', margin: '0 0 10px 0' }}>
-                {lang === 'en' ? 'How do you want to start today?' : 'Come vuoi iniziare oggi?'}
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 13px', borderRadius: '999px', background: 'rgba(255, 203, 5, 0.12)', border: '1px solid rgba(255, 203, 5, 0.28)', color: '#ffcb05', fontWeight: 800, fontSize: '13px', marginBottom: '14px', position: 'relative' }}>
+                <Zap size={15} />
+                {lang === 'en' ? 'New card releases' : 'Nuove carte uscite'}
+              </div>
+              <h2 style={{ fontSize: 'clamp(28px, 6vw, 42px)', lineHeight: 1.02, fontWeight: 900, color: '#FFFFFF', margin: '0 0 12px 0', position: 'relative' }}>
+                {lang === 'en' ? 'Find out if a new card is really worth it' : 'Scopri se una nuova carta vale davvero'}
               </h2>
-              <p style={{ margin: 0, fontSize: 'clamp(14px, 2.6vw, 16px)', color: 'rgba(255,255,255,0.78)', lineHeight: 1.6 }}>
+              <p style={{ margin: 0, fontSize: 'clamp(15px, 2.8vw, 17px)', color: 'rgba(255,255,255,0.8)', lineHeight: 1.7, position: 'relative' }}>
                 {lang === 'en'
-                  ? 'You can start immediately with a quick analysis or open the full coach experience.'
-                  : 'Puoi iniziare subito con un’analisi rapida oppure aprire la versione completa del coach.'}
+                  ? 'We do not judge cards only by overall. We compare the new releases with your real roster, your team needs, and your performance data to tell you whether to sign, skip, or keep as rotation.'
+                  : 'Non giudichiamo le carte solo dall’overall. Le confrontiamo con la tua rosa reale, le tue esigenze e le tue performance per dirti se prenderle, saltarle o usarle solo come rotazione.'}
               </p>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={openSmartMode}
-                className="neon-button"
-                style={{
-                  textAlign: 'left',
-                  padding: '20px',
-                  minHeight: '190px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'flex-start',
-                  justifyContent: 'space-between',
-                  gap: '16px',
-                  background: 'rgba(255, 215, 106, 0.08)',
-                  borderColor: 'rgba(255, 215, 106, 0.35)',
-                  color: '#FFFFFF'
-                }}
-              >
-                <div>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(255, 215, 106, 0.14)', marginBottom: '14px' }}>
-                    <Brain size={20} style={{ color: '#FFD76A' }} />
-                  </div>
-                  <div style={{ fontSize: '20px', fontWeight: 800, marginBottom: '8px' }}>
-                    {lang === 'en' ? 'Start fast' : 'Inizia veloce'}
-                  </div>
-                  <div style={{ fontSize: '14px', lineHeight: 1.6, color: 'rgba(255,255,255,0.8)' }}>
-                    {lang === 'en'
-                      ? 'Upload your 2D formation and immediately get AI coaching and pre-match countermeasures.'
-                      : 'Carica la tua formazione 2D e ricevi subito coach IA e contromisure pre-partita.'}
-                  </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '22px', position: 'relative' }}>
+              {[
+                lang === 'en' ? 'Fit with starters and bench' : 'Fit con titolari e panchina',
+                lang === 'en' ? 'Reads your weaknesses and priorities' : 'Legge debolezze e priorità',
+                lang === 'en' ? 'Clear verdict: sign, skip, rotation' : 'Verdetto chiaro: prendi, salta, rotazione'
+              ].map((item) => (
+                <div key={item} style={{ padding: '13px', borderRadius: '16px', background: 'rgba(255,255,255,0.045)', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.86)', fontSize: '13px', lineHeight: 1.45 }}>
+                  <CheckCircle2 size={15} style={{ color: '#34C759', marginBottom: '8px' }} />
+                  <div>{item}</div>
                 </div>
-                <span style={{ fontSize: '14px', fontWeight: 700, color: '#FFD76A' }}>
-                  {lang === 'en' ? 'Use Smart' : 'Usa Smart'}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={openProMode}
-                className="neon-button"
-                style={{
-                  textAlign: 'left',
-                  padding: '20px',
-                  minHeight: '190px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'flex-start',
-                  justifyContent: 'space-between',
-                  gap: '16px',
-                  background: 'rgba(0, 212, 255, 0.08)',
-                  borderColor: 'rgba(0, 212, 255, 0.30)',
-                  color: '#FFFFFF'
-                }}
-              >
-                <div>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(0, 212, 255, 0.14)', marginBottom: '14px' }}>
-                    <Users size={20} style={{ color: 'var(--neon-cyan)' }} />
-                  </div>
-                  <div style={{ fontSize: '20px', fontWeight: 800, marginBottom: '8px' }}>
-                    {lang === 'en' ? 'Go deeper' : 'Vai in profondità'}
-                  </div>
-                  <div style={{ fontSize: '14px', lineHeight: 1.6, color: 'rgba(255,255,255,0.8)' }}>
-                    {lang === 'en'
-                      ? 'Manage roster, reserves, player details, and advanced coaching.'
-                      : 'Gestisci rosa, riserve, dettagli giocatori e coaching avanzato.'}
-                  </div>
-                </div>
-                <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--neon-cyan)' }}>
-                  {lang === 'en' ? 'Use Pro' : 'Usa Pro'}
-                </span>
-              </button>
+              ))}
             </div>
-
-            <div style={{ marginTop: '16px', textAlign: 'center', fontSize: '13px', color: 'rgba(255,255,255,0.66)' }}>
-              {lang === 'en'
-                ? 'You can switch modes anytime from the dashboard.'
-                : 'Potrai cambiare modalità in qualsiasi momento dalla dashboard.'}
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', position: 'relative' }}>
+              <button
+                type="button"
+                onClick={openCardAdvisor}
+                className="neon-button"
+                style={{
+                  minHeight: '52px',
+                  padding: '13px 20px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '9px',
+                  background: 'linear-gradient(135deg, rgba(255, 203, 5, 0.22), rgba(168, 85, 247, 0.20), rgba(0, 212, 255, 0.18))',
+                  borderColor: 'rgba(255, 203, 5, 0.42)',
+                  color: '#FFFFFF',
+                  fontWeight: 900,
+                  boxShadow: '0 0 24px rgba(255, 203, 5, 0.18)'
+                }}
+              >
+                <BarChart3 size={18} />
+                {lang === 'en' ? 'Analyze new cards' : 'Analizza le nuove carte'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCardAdvisorModal(false)}
+                className="neon-button"
+                style={{
+                  minHeight: '52px',
+                  padding: '13px 18px',
+                  background: 'rgba(255,255,255,0.045)',
+                  borderColor: 'rgba(255,255,255,0.14)',
+                  color: 'rgba(255,255,255,0.82)'
+                }}
+              >
+                {lang === 'en' ? 'Not now' : 'Non ora'}
+              </button>
             </div>
           </div>
         </div>
@@ -965,43 +916,62 @@ function HomePage() {
 
       {/* Credits Bar: montata in layout per aggiornamento immediato dopo ogni API (credits-consumed) */}
 
-      {smartEntryEnabled && (
-        <div className="neon-card" style={{ padding: '20px', marginBottom: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: '18px', fontWeight: 700, color: '#FFFFFF', marginBottom: '6px' }}>
-                {lang === 'en' ? 'Try your coach in 30 seconds' : 'Prova il tuo coach in 30 secondi'}
-              </div>
-              <div style={{ fontSize: '14px', lineHeight: 1.6, color: 'rgba(255,255,255,0.74)' }}>
-                {lang === 'en'
-                  ? 'Analyze your team and get instant countermeasures.'
-                  : 'Analizza la tua squadra e ricevi contromisure istantanee.'}
-              </div>
+      <button
+        type="button"
+        onClick={() => setShowCardAdvisorModal(true)}
+        className="neon-card"
+        style={{
+          width: '100%',
+          padding: 0,
+          marginBottom: '20px',
+          border: '1px solid rgba(255, 203, 5, 0.28)',
+          background: 'linear-gradient(135deg, rgba(255, 203, 5, 0.14), rgba(168, 85, 247, 0.13) 48%, rgba(0, 212, 255, 0.12))',
+          boxShadow: '0 0 30px rgba(168, 85, 247, 0.16), inset 0 1px 0 rgba(255,255,255,0.07)',
+          cursor: 'pointer',
+          overflow: 'hidden',
+          textAlign: 'left',
+          position: 'relative'
+        }}
+      >
+        <div style={{ position: 'absolute', top: '-60px', right: '-40px', width: '180px', height: '180px', borderRadius: '999px', background: 'rgba(255, 203, 5, 0.20)', filter: 'blur(18px)' }} />
+        <div style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap', position: 'relative' }}>
+          <div style={{ minWidth: 0, flex: '1 1 260px' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '6px 10px', borderRadius: '999px', background: 'rgba(3, 7, 18, 0.38)', border: '1px solid rgba(255,255,255,0.10)', color: '#ffcb05', fontSize: '12px', fontWeight: 800, marginBottom: '10px' }}>
+              <Zap size={14} />
+              {lang === 'en' ? 'New releases' : 'Nuove uscite'}
             </div>
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={openSmartMode}
-                className="neon-button"
-                style={{
-                  minHeight: '48px',
-                  padding: '10px 18px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  background: 'rgba(255, 215, 106, 0.08)',
-                  borderColor: 'rgba(255, 215, 106, 0.35)',
-                  color: '#FFD76A'
-                }}
-              >
-                <Brain size={16} />
-                {lang === 'en' ? 'Open Smart' : 'Apri Smart'}
-              </button>
+            <div style={{ fontSize: 'clamp(19px, 4vw, 24px)', fontWeight: 900, color: '#FFFFFF', marginBottom: '6px' }}>
+              {lang === 'en' ? 'Analyze the new cards before spending' : 'Analizza le nuove carte prima di spendere'}
+            </div>
+            <div style={{ fontSize: '14px', lineHeight: 1.6, color: 'rgba(255,255,255,0.78)' }}>
+              {lang === 'en'
+                ? 'We evaluate each card against your real roster, needs and performance data. Not hype: fit, priority, verdict.'
+                : 'Valutiamo ogni carta sulla tua rosa reale, sulle tue esigenze e sui tuoi dati performance. Non hype: fit, priorità, verdetto.'}
             </div>
           </div>
+          <span
+            style={{
+              minHeight: '48px',
+              padding: '11px 16px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              borderRadius: '14px',
+              background: 'rgba(3, 7, 18, 0.42)',
+              border: '1px solid rgba(255, 203, 5, 0.34)',
+              color: '#FFFFFF',
+              fontSize: '14px',
+              fontWeight: 900,
+              flexShrink: 0
+            }}
+          >
+            <BarChart3 size={17} />
+            {lang === 'en' ? 'Open analysis' : 'Apri analisi'}
+            <ArrowRight size={16} />
+          </span>
         </div>
-      )}
+      </button>
 
       {/* Task Widget (Obiettivi Settimanali) */}
       <div data-tour-id="tour-dashboard-task">
