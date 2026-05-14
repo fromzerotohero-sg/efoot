@@ -23,6 +23,7 @@ import {
 } from '@/lib/gameplayBuildCoach'
 import { MAX_TACCE_PER_MACRO } from '@/lib/efootballProgressionCost'
 import { PLAYER_SKILL_PRESETS, getSkillDisplayLabel, normalizePlayerSkillsArray, normalizeSkillKey } from '@/lib/playerSkillLabels'
+import { resolvePlayerCardImageUrl } from '@/lib/playerCardImage'
 import {
   AlertTriangle,
   ArrowRight,
@@ -255,17 +256,6 @@ function buildInitialPositionsFromPlayer(player) {
       .filter(Boolean)
   }
   return player?.position ? [{ position: player.position, competence: 'Alta' }] : []
-}
-
-function getPlayerCardImage(player) {
-  return (
-    player?.metadata?.catalog_card_front_url ||
-    player?.metadata?.source_card_front_url ||
-    player?.extracted_data?.metadata?.catalog_card_front_url ||
-    player?.extracted_data?.metadata?.source_card_front_url ||
-    player?.extracted_data?.source_card_front_url ||
-    null
-  )
 }
 
 function hasPlayerStats(player) {
@@ -529,7 +519,7 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
   const suppressClickForFieldDragRef = React.useRef(false)
   /** After opening from pointer release (edit mode), skip one synthetic click to avoid double-open on desktop */
   const skipNextSyntheticCardClickRef = React.useRef(false)
-  const slotThumb = React.useMemo(() => player?.photo_url || getPlayerCardImage(player), [player])
+  const slotThumb = React.useMemo(() => resolvePlayerCardImageUrl(player), [player])
   const roleLabel = isEditMode ? (slot.position || player.position || '-') : (player.position || slot.position || '-')
   const overallLabel = player?.overall_rating ?? player?.position_ratings?.[roleLabel] ?? '-'
   const initialsLabel = getPlayerInitials(player.player_name)
@@ -1813,7 +1803,7 @@ function QuickPlayerPanel({
   lang
 }) {
   if (!player) return null
-  const cardImage = getPlayerCardImage(player)
+  const cardImage = resolvePlayerCardImageUrl(player)
   const profileCompletion = getPhotoProfileCompletion(player, lang)
   const actionableMissing = profileCompletion.missing.filter((section) => section.key !== 'boosters')
   const missingLabels = actionableMissing.map((section) => section.label).join(', ')
@@ -2038,7 +2028,7 @@ function BuildCoachPlayerPickerModal({ show, players, buildingPlayerId, onClose,
             </div>
             <div className="nr-catalog-list">
               {sortedPlayers.map((player) => {
-                const thumb = getPlayerCardImage(player)
+                const thumb = resolvePlayerCardImageUrl(player)
                 const isBuilding = buildingPlayerId === player.id
                 return (
                   <button
@@ -2526,7 +2516,7 @@ function PremiumPlayerModal({
   lang,
   t
 }) {
-  const cardImage = getPlayerCardImage(player)
+  const cardImage = resolvePlayerCardImageUrl(player)
   const [form, setForm] = React.useState({
     player_name: '',
     position: '',
@@ -5395,7 +5385,7 @@ export default withAuth(function NuovaRosaLabPage() {
             )}
             <div className="nr-reserve-grid">
               {riserve.length > 0 ? riserve.map((player) => {
-                const reserveThumb = player.photo_url || getPlayerCardImage(player)
+                const reserveThumb = resolvePlayerCardImageUrl(player)
                 return (
                   <div
                     key={player.id}

@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { normalizePlayerSkillsArray } from '@/lib/playerSkillLabels'
+import { enrichPlayerMetadataWithCardImage } from '@/lib/playerCardImage'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -188,7 +189,7 @@ export async function POST(req) {
       active_booster_name: Array.isArray(player.boosters) && player.boosters[0]?.name ? String(player.boosters[0].name) : null,
       development_points: {},
       extracted_data: player,
-      metadata: {
+      metadata: enrichPlayerMetadataWithCardImage(player, {
         ...(player.metadata && typeof player.metadata === 'object' ? player.metadata : {}),
         source: player?.metadata?.catalog_source ? player.metadata.catalog_source : 'screenshot_extractor',
         saved_at: new Date().toISOString(),
@@ -201,7 +202,7 @@ export async function POST(req) {
         goals: player.goals || null,
         assists: player.assists || null,
         player_face_description: player.player_face_description || null
-      },
+      }),
       // slot_index: accetta dal body (0-10 per titolari, null per riserve)
       slot_index: player.slot_index !== undefined && player.slot_index !== null 
         ? Math.max(0, Math.min(10, Number(player.slot_index))) 
@@ -306,11 +307,14 @@ export async function POST(req) {
           available_boosters: mergedBoosters,
           extracted_data: mergedExtractedData,
           // Metadata: merge invece di sovrascrivere
-          metadata: {
-            ...(existingPlayerInSlot.metadata || {}),
-            ...(playerData.metadata || {}),
-            saved_at: new Date().toISOString()
-          },
+          metadata: enrichPlayerMetadataWithCardImage(
+            { ...playerData, extracted_data: mergedExtractedData },
+            {
+              ...(existingPlayerInSlot.metadata || {}),
+              ...(playerData.metadata || {}),
+              saved_at: new Date().toISOString()
+            }
+          ),
           updated_at: new Date().toISOString()
         }
         
