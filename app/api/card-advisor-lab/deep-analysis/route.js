@@ -8,6 +8,7 @@ import { getRelevantSections } from '@/lib/ragHelper'
 import { getCoachPoliciesText, getCoachSharedCoreText } from '@/lib/coachPromptRules'
 import { getSkillDisplayLabel, getSkillEnglishItalianGlossary } from '@/lib/playerSkillLabels.js'
 import { CARD_ADVISOR_SELECT, searchCardAdvisorCardsByName } from '@/lib/cardAdvisorCardsLookup.js'
+import { fetchEfhubCardDetail } from '@/lib/efhubPlayerDetail.js'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -91,6 +92,7 @@ function normalizeCard(raw = {}) {
     id: String(raw.id || raw.sourcePlayerId || ''),
     name: String(raw.name || '').trim(),
     position: String(raw.position || '').trim(),
+    overall: Number(raw.overall) || null,
     category: String(raw.category || '').trim(),
     style: String(raw.style || '').trim(),
     skills: Array.isArray(raw.skills) ? raw.skills : [],
@@ -232,6 +234,53 @@ async function fetchCardAdvisorCard(admin, card) {
       const qualityB = b.enrichment_status === 'complete' ? 4 : b.enrichment_status === 'partial' ? 1 : 0
       return (nameB + posB + qualityB) - (nameA + posA + qualityA)
     })[0]
+}
+
+function catalogRowHasCompletePackStats(row) {
+  return Boolean(
+    row &&
+    row.enrichment_status === 'complete' &&
+    row.base_stats &&
+    typeof row.base_stats === 'object' &&
+    Object.keys(row.base_stats).length > 0
+  )
+}
+
+async function resolveCatalogCardForDeepAnalysis(admin, card) {
+  const row = await fetchCardAdvisorCard(admin, card).catch(() => null)
+  if (catalogRowHasCompletePackStats(row)) return row
+
+  const source = (String(card.source || 'efhub').trim() || 'efhub')
+  const id = String(card.sourcePlayerId || '').trim()
+  if (source !== 'efhub' || !id) return row
+
+  const live = await fetchEfhubCardDetail({
+    ...card,
+    source: 'efhub',
+    sourcePlayerId: id,
+    overall: card.overall != null ? Number(card.overall) : null
+  })
+  if (!live?.base_stats || typeof live.base_stats !== 'object' || Object.keys(live.base_stats).length === 0) {
+    return row
+  }
+
+  return {
+    ...(row || {}),
+    ...live,
+    base_stats: live.base_stats,
+    max_stats: live.max_stats ?? row?.max_stats ?? null,
+    playing_style: live.playing_style || row?.playing_style || card.style || '',
+    player_skills:
+      Array.isArray(live.player_skills) && live.player_skills.length
+        ? live.player_skills
+        : row?.player_skills || [],
+    player_name: live.player_name || row?.player_name || card.name,
+    position: live.position || row?.position || card.position,
+    enrichment_status: 'complete',
+    overall_display: row?.overall_display ?? live.overall_level_1 ?? null,
+    source: 'efhub',
+    source_player_id: id
+  }
 }
 
 function buildPrompt({ lang, card, catalogCard, profile, players, stylesLookup = {}, formation, coach, tacticalSettings, patterns, gameAnalysis, diagnostic, feedback, performance, ragKnowledge }) {
@@ -462,8 +511,12 @@ export async function POST(req) {
     const lang = body.lang === 'en' ? 'en' : 'it'
     if (!card.name || !card.position) return NextResponse.json({ error: 'Invalid card' }, { status: 400 })
 
-    const catalogCard = await fetchCardAdvisorCard(admin, card).catch(() => null)
-    const hasUsableCardData = catalogCard?.enrichment_status === 'complete' && catalogCard?.base_stats && Object.keys(catalogCard.base_stats).length > 0
+    const catalogCard = await resolveCatalogCardForDeepAnalysis(admin, card)
+    const hasUsableCardData =
+      catalogCard?.enrichment_status === 'complete' &&
+      catalogCard?.base_stats &&
+      typeof catalogCard.base_stats === 'object' &&
+      Object.keys(catalogCard.base_stats).length > 0
     if (!hasUsableCardData) {
       return NextResponse.json(
         {
