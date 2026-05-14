@@ -782,13 +782,6 @@ function CoachCatalogModal({
       subtitle={lang === 'en' ? 'Coach catalog' : 'Catalogo allenatori'}
       className="nr-picker-shell nr-coach-picker-shell"
     >
-      <div className="nr-picker-subnav">
-        <button type="button" className="nr-secondary-button" onClick={onUploadFallback} disabled={saving}>
-          <Upload size={14} />
-          {lang === 'en' ? 'Upload from photo' : 'Carica da foto'}
-        </button>
-      </div>
-
       <div className="nr-picker-toolbar">
         <label className="nr-search-input">
           <Search size={16} />
@@ -849,7 +842,15 @@ function CoachCatalogModal({
                 ))
               ) : (
                 <div className="nr-empty-state">
-                  {lang === 'en' ? 'No coaches found with this search.' : 'Nessun allenatore trovato con questa ricerca.'}
+                  <span>
+                    {lang === 'en'
+                      ? 'Cannot find your coach in the catalog?'
+                      : 'Non trovi il tuo allenatore nel catalogo?'}
+                  </span>
+                  <button type="button" className="nr-secondary-button" onClick={onUploadFallback} disabled={saving}>
+                    <Upload size={14} />
+                    {lang === 'en' ? 'Upload photos' : 'Carica le foto'}
+                  </button>
                 </div>
               )}
             </div>
@@ -3339,6 +3340,22 @@ export default withAuth(function NuovaRosaLabPage() {
   const [starterReservePickerSlot, setStarterReservePickerSlot] = React.useState(null)
 
   const activeTeamPlaystyle = tacticalSettings?.team_playing_style || null
+  const hasOpenModal = Boolean(
+    pickerOpen ||
+    showAssignModal ||
+    confirmModal ||
+    showPremiumEditorModal ||
+    showPhotoUploadModal ||
+    showPhotoReviewModal ||
+    positionModalCtx ||
+    catalogPositionCtx ||
+    coachCatalogOpen ||
+    showCoachPhotoUploadModal ||
+    showCoachDetailsModal ||
+    reserveSlotPickerPlayer ||
+    starterReservePickerSlot ||
+    buildCoachPlayerPickerOpen
+  )
 
   const showToast = React.useCallback((message, type = 'success') => {
     setToast({ message, type })
@@ -3349,6 +3366,35 @@ export default withAuth(function NuovaRosaLabPage() {
     const timer = window.setTimeout(() => setToast(null), 3200)
     return () => window.clearTimeout(timer)
   }, [toast])
+
+  React.useEffect(() => {
+    if (!hasOpenModal) return
+
+    const scrollY = window.scrollY
+    const { body, documentElement } = document
+    const previous = {
+      htmlOverflow: documentElement.style.overflow,
+      bodyOverflow: body.style.overflow,
+      bodyPosition: body.style.position,
+      bodyTop: body.style.top,
+      bodyWidth: body.style.width
+    }
+
+    documentElement.style.overflow = 'hidden'
+    body.style.overflow = 'hidden'
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.width = '100%'
+
+    return () => {
+      documentElement.style.overflow = previous.htmlOverflow
+      body.style.overflow = previous.bodyOverflow
+      body.style.position = previous.bodyPosition
+      body.style.top = previous.bodyTop
+      body.style.width = previous.bodyWidth
+      window.scrollTo(0, scrollY)
+    }
+  }, [hasOpenModal])
 
   const fetchRoster = React.useCallback(async () => {
     setLoading(true)
@@ -5242,12 +5288,6 @@ export default withAuth(function NuovaRosaLabPage() {
                   ? (lang === 'en' ? 'Change catalog' : 'Cambia da catalogo')
                   : (lang === 'en' ? 'Choose catalog' : 'Scegli catalogo')}
               </button>
-              <button type="button" className="nr-secondary-button" onClick={openCoachPhotoUpload} disabled={savingCoach}>
-                <Upload size={14} />
-                {activeCoach?.coach_name
-                  ? (lang === 'en' ? 'Replace photo' : 'Sostituisci da foto')
-                  : (lang === 'en' ? 'Upload photo' : 'Carica foto')}
-              </button>
             </div>
           </div>
         </div>
@@ -6188,6 +6228,23 @@ export default withAuth(function NuovaRosaLabPage() {
           align-items: flex-start;
           gap: 12px;
           margin-bottom: 16px;
+        }
+
+        .nr-modal-header {
+          position: sticky;
+          top: -18px;
+          z-index: 40;
+          padding: 18px 0 12px;
+          margin: -18px 0 16px;
+          background:
+            linear-gradient(180deg, rgba(4, 7, 18, 0.98) 0%, rgba(8, 13, 32, 0.94) 72%, rgba(8, 13, 32, 0) 100%);
+          backdrop-filter: blur(18px);
+        }
+
+        .nr-modal-header .nr-icon-button {
+          flex-shrink: 0;
+          position: relative;
+          z-index: 2;
         }
 
         .nr-field-shell {
@@ -9056,6 +9113,12 @@ export default withAuth(function NuovaRosaLabPage() {
             overflow-y: auto;
             padding: 12px;
             padding-bottom: max(132px, calc(env(safe-area-inset-bottom, 0px) + 116px));
+          }
+
+          .nr-modal-header {
+            top: -12px;
+            padding-top: 12px;
+            margin-top: -12px;
           }
 
           .nr-modal-shell::after {
