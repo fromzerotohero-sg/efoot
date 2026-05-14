@@ -877,6 +877,7 @@ function tacticalUseLine(card, technical, tacticalStyle, lang) {
   const style = toAscii(tacticalStyle)
   const groups = skillGroups(technical)
   const cardStyle = toAscii(technical.style)
+  const hasDefensiveSkill = groups.defensive || technical.defend >= 72
   if (family === 'def') {
     if ((cardStyle.includes('full back finisher') || cardStyle.includes('terzino finalizzatore')) && groups.crossing) {
       return lang === 'en'
