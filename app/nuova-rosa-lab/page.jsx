@@ -320,11 +320,19 @@ function isSameExtractedPlayer(existingPlayer, extractedPlayer) {
 function findCatalogDuplicatePlayer(card, players = []) {
   if (!card) return null
   const sourcePlayerId = String(card.source_player_id || card.sourcePlayerId || '').trim()
+  const cardInstanceKey = String(card.card_instance_key || '').trim()
+  const identityKey = String(card.player_identity_key || '').trim()
   const cardName = String(card.player_name || card.name || '').trim().toLowerCase()
   const cardAge = card?.players_payload?.age != null ? Number(card.players_payload.age) : (card?.age != null ? Number(card.age) : null)
 
   return (Array.isArray(players) ? players : []).find((player) => {
     const metadata = player?.metadata || {}
+    const playerInstanceKey = String(metadata.catalog_card_instance_key || '').trim()
+    if (cardInstanceKey && playerInstanceKey && cardInstanceKey === playerInstanceKey) return true
+
+    const playerIdentityKey = String(metadata.catalog_player_identity_key || '').trim()
+    if (identityKey && playerIdentityKey && identityKey === playerIdentityKey) return true
+
     const playerSourceId = String(
       metadata.catalog_source_player_id ||
       metadata.source_player_id ||
@@ -400,17 +408,26 @@ function getTokenFallback() {
   return localStorage.getItem('auth_token')
 }
 
-function showConfirmConfig({ title, message, details, confirmLabel, cancelLabel, confirmVariant = 'primary' }) {
+function showConfirmConfig({
+  title,
+  message,
+  details,
+  confirmLabel,
+  cancelLabel,
+  confirmVariant = 'primary',
+  variant = 'warning',
+  presentation = 'sheet'
+}) {
   return {
     show: true,
     title,
     message,
     details,
-    variant: 'warning',
+    variant,
     confirmLabel,
     cancelLabel,
     confirmVariant,
-    presentation: 'sheet'
+    presentation
   }
 }
 
@@ -4473,6 +4490,14 @@ export default withAuth(function NuovaRosaLabPage() {
       return
     }
 
+    const duplicateLate = findCatalogDuplicatePlayer(catalogPositionCtx.card, [...titolari, ...riserve])
+    if (duplicateLate) {
+      setCatalogPositionCtx(null)
+      setSelectedOriginalPositions([])
+      showCatalogDuplicateAlert(duplicateLate, catalogPositionCtx.card)
+      return
+    }
+
     setAssigning(true)
     try {
       const savedPlayer = await createPlayerFromCatalog(catalogPositionCtx.card, {
@@ -4487,7 +4512,7 @@ export default withAuth(function NuovaRosaLabPage() {
     } finally {
       setAssigning(false)
     }
-  }, [catalogPositionCtx, createPlayerFromCatalog, riserve.length, selectedOriginalPositions, showToast, t])
+  }, [catalogPositionCtx, createPlayerFromCatalog, riserve.length, selectedOriginalPositions, showCatalogDuplicateAlert, showToast, t, titolari, riserve])
 
   const handleSelectReserveForSlot = React.useCallback(async (player, targetSlot = selectedSlot) => {
     if (!targetSlot || !player?.id) return
