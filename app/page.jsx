@@ -1141,11 +1141,6 @@ function HomePage() {
         lastCaptureDate={gameAnalysisLastCapture} 
       />
 
-      {/* Task Widget (Obiettivi Settimanali) */}
-      <div data-tour-id="tour-dashboard-task">
-        <TaskWidget />
-      </div>
-
         {/* Dashboard Main Grid - Layout aggiornato: 2 colonne */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Colonna Sinistra */}
@@ -1232,6 +1227,10 @@ function HomePage() {
                 </button>
 
               </div>
+            </div>
+
+            <div data-tour-id="tour-dashboard-task">
+              <TaskWidget />
             </div>
 
             {/* Panoramica Squadra */}

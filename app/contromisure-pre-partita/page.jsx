@@ -380,8 +380,8 @@ export default function CountermeasuresPreMatchPage() {
               <h2>{t('uploadOpponentFormation')}</h2>
               <p>
                 {lang === 'en'
-                  ? 'Upload a clear opponent formation screenshot. The platform reads structure first, then generates concrete tactical actions.'
-                  : 'Carica uno screenshot chiaro della formazione avversaria. La piattaforma legge prima la struttura, poi genera azioni tattiche concrete.'}
+                  ? 'Clear squad screen → structure read, tactical tips generated.'
+                  : 'Screenshot nitido del modulo avversario → lettura modulo e suggerimenti tattici.'}
               </p>
             </div>
             <div className="counter-upload-logo" aria-hidden="true">
@@ -426,14 +426,13 @@ export default function CountermeasuresPreMatchPage() {
                 <div className="counter-upload-icon">
                   <Camera size={30} />
                 </div>
-                <div style={{ fontSize: 'clamp(14px, 3vw, 16px)', fontWeight: 600, marginBottom: '8px' }}>
+                <div style={{ fontSize: 'clamp(14px, 3vw, 16px)', fontWeight: 600, marginBottom: '6px' }}>
                   {t('uploadPhoto')}
                 </div>
-                <div style={{ fontSize: 'clamp(12px, 2.5vw, 14px)', opacity: 0.8 }}>
-                  {t('uploadPhotoDescription')}
-                </div>
-                <div style={{ fontSize: 'clamp(11px, 2vw, 12px)', opacity: 0.6, marginTop: '6px' }}>
-                  {t('countermeasuresAutoStart')}
+                <div style={{ fontSize: 'clamp(12px, 2.5vw, 13px)', opacity: 0.78, lineHeight: 1.35 }}>
+                  {lang === 'en'
+                    ? 'PNG/JPG • extraction and counters run automatically'
+                    : 'PNG/JPG nitido • estrazione e contromisure in automatico'}
                 </div>
               </div>
               <div className="counter-cta-row">
