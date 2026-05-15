@@ -2413,6 +2413,7 @@ function mapPreviewBaseStatsToFormFields(previewBaseStats = {}) {
   return out
 }
 
+/** Solo persistenza: blocca OVR troppo bassi o crolli sospetti. L'anteprima live non deve usare questa funzione. */
 function isSafeBuildPreviewForSave(preview, player) {
   const nextOverall = Number(preview?.afterOverall)
   if (!Number.isFinite(nextOverall)) return false
@@ -2605,11 +2606,34 @@ function PremiumPlayerModal({
 
   React.useEffect(() => {
     if (!show || !player) return
-    const normalizedStats = normalizeBaseStatsForEditor(player.base_stats || {})
+    const slotProgressionPosition = slot?.position ?? null
+    let normalizedStats = normalizeBaseStatsForEditor(player.base_stats || {})
+    let overallRatingStr = player.overall_rating != null ? String(player.overall_rating) : ''
+    const savedBuild = getPlayerBuildCoachData(player)
+    const rawSavedSliders = savedBuild?.sliders && typeof savedBuild.sliders === 'object' ? savedBuild.sliders : null
+    const savedSliders = rawSavedSliders ? sanitizeBuildCoachSliders(rawSavedSliders) : null
+    const hasSavedSliders = savedSliders && Object.keys(savedSliders).length > 0
+    if (hasSavedSliders) {
+      const openPreview = previewGameplayBuildFromSliders({
+        player,
+        sliders: savedSliders,
+        slotPosition: slotProgressionPosition,
+        coach: activeCoach,
+        teamStyle: tacticalSettings?.team_playing_style
+      })
+      if (
+        openPreview?.finalBaseStats &&
+        typeof openPreview.finalBaseStats === 'object' &&
+        Number.isFinite(openPreview.afterOverall)
+      ) {
+        normalizedStats = { ...normalizedStats, ...mapPreviewBaseStatsToFormFields(openPreview.finalBaseStats) }
+        overallRatingStr = String(openPreview.afterOverall)
+      }
+    }
     setForm({
       player_name: player.player_name || '',
       position: player.position || '',
-      overall_rating: player.overall_rating != null ? String(player.overall_rating) : '',
+      overall_rating: overallRatingStr,
       card_type: player.card_type || '',
       role: player.role || player.playing_style_name || '',
       age: player.age != null ? String(player.age) : '',
@@ -2627,8 +2651,8 @@ function PremiumPlayerModal({
         ? player.available_boosters.map((entry, idx) => clampBoosterEntryForSlot(entry, idx))
         : []
     )
-    setInteractiveBuildSliders(null)
-  }, [show, player])
+    setInteractiveBuildSliders(hasSavedSliders ? savedSliders : null)
+  }, [show, player, slot?.position])
 
   if (!show || !player) return null
 
@@ -2737,7 +2761,8 @@ function PremiumPlayerModal({
       coach: activeCoach,
       teamStyle: tacticalSettings?.team_playing_style
     })
-    if (!isSafeBuildPreviewForSave(preview, player)) return
+    if (!preview || !Number.isFinite(Number(preview.afterOverall))) return
+    if (!preview.finalBaseStats || typeof preview.finalBaseStats !== 'object') return
     setForm((prev) => ({
       ...prev,
       ...mapPreviewBaseStatsToFormFields(preview.finalBaseStats),
