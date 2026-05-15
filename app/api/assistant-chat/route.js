@@ -3,10 +3,11 @@ import { createClient } from '@supabase/supabase-js'
 import { callOpenAIWithRetry } from '@/lib/openaiHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
-import { getRelevantSections, classifyQuestion } from '@/lib/ragHelper'
+import { getRelevantSections } from '@/lib/ragHelper'
+import { getPlayerStyleDisplayName } from '@/lib/playingStyleResolve'
 import { deductCredits, AI_COST, handleCreditOperationError } from '@/lib/creditService'
 import { getCoachPoliciesText, getCoachSharedCoreText } from '@/lib/coachPromptRules'
-import { getSkillDisplayLabel } from '@/lib/playerSkillLabels'
+import { getSkillDisplayLabel, canonicalSkillStorageName } from '@/lib/playerSkillLabels'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -417,7 +418,7 @@ async function buildPersonalContext(userId, lang = 'it') {
     // Players (titolari + riserve) - include skills, forma, altezza/peso per ragionamento enterprise
     const { data: playersData, error: playersError } = await admin
       .from('players')
-      .select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, photo_slots, base_stats, original_positions, card_type, skills, com_skills, form, height, weight')
+      .select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, photo_slots, base_stats, original_positions, card_type, skills, com_skills, form, height, weight, extracted_data')
       .eq('user_id', userId)
       .order('slot_index', { ascending: true, nullsFirst: false })
       .limit(50)
@@ -498,12 +499,24 @@ async function buildPersonalContext(userId, lang = 'it') {
     const skillsRosterPrefix = lang === 'en' ? ' skills: ' : ' abilità: '
     const formatSkillsForContext = (arr) =>
       (Array.isArray(arr) ? arr : [])
-        .map((s) => getSkillDisplayLabel(s, skillLang))
+        .map((s) => getSkillDisplayLabel(canonicalSkillStorageName(s) || s, skillLang))
         .filter(Boolean)
+
+    /** Stile carta in lingua contesto: FK DB + resolve EN→IT + fallback OCR in extracted_data */
+    function styleNameForRosterLine(p) {
+      const ex = p?.extracted_data && typeof p.extracted_data === 'object' ? p.extracted_data : {}
+      const merged = {
+        ...p,
+        role: p?.role || ex.role || ex.playing_style || ex.playing_style_name,
+        playing_style: ex.playing_style || ex.playing_style_name
+      }
+      const name = getPlayerStyleDisplayName(merged, stylesLookup)
+      return name && String(name).trim() ? String(name).trim() : '-'
+    }
 
     let rosterLines = []
     for (const p of titolari) {
-      const styleName = (p.playing_style_id && stylesLookup[p.playing_style_id]) || (p.role ? String(p.role).trim() : '') || '-'
+      const styleName = styleNameForRosterLine(p)
       const prof = getProfilazione(p.photo_slots)
       const comp = getCompetenze(p.original_positions)
       const statsStr = formatStatsForContext(p.base_stats)
@@ -518,7 +531,7 @@ async function buildPersonalContext(userId, lang = 'it') {
     const reservesHeader = L.reserves + ':'
     rosterLines.push(reservesHeader)
     for (const p of riserve.slice(0, 15)) {
-      const styleName = (p.playing_style_id && stylesLookup[p.playing_style_id]) || (p.role ? String(p.role).trim() : '') || '-'
+      const styleName = styleNameForRosterLine(p)
       const prof = getProfilazione(p.photo_slots)
       const comp = getCompetenze(p.original_positions)
       const statsStr = formatStatsForContext(p.base_stats)
@@ -993,15 +1006,13 @@ export async function POST(req) {
       context = { profile: {}, currentPage: currentPage || '', appState: safeAppState }
     }
 
-    // RAG eFootball: se la domanda riguarda eFootball, carica sezioni rilevanti da info_rag
+    // RAG eFootball: sempre sezioni rilevanti da info_rag (la coach deve poter incrociare meccaniche/stili anche se il messaggio contiene parole tipo "upload" o navigazione)
     let efootballKnowledge = ''
-    if (classifyQuestion(message) === 'efootball') {
-      try {
-        efootballKnowledge = getRelevantSections(message, 18000)
-        if (efootballKnowledge && process.env.NODE_ENV !== 'production') console.log('[assistant-chat] RAG eFootball: loaded sections')
-      } catch (ragError) {
-        console.error('[assistant-chat] RAG error (non-blocking):', ragError.message)
-      }
+    try {
+      efootballKnowledge = getRelevantSections(message, 18000)
+      if (efootballKnowledge && process.env.NODE_ENV !== 'production') console.log('[assistant-chat] RAG eFootball: loaded sections')
+    } catch (ragError) {
+      console.error('[assistant-chat] RAG error (non-blocking):', ragError.message)
     }
 
     // Contesto personale: se esiste diagnostic in cache usalo (RIASSUNTO ANALISI), altrimenti fallback buildPersonalContext (ROSA E DATI)
