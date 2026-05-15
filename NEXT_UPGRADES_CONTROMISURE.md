@@ -1,5 +1,7 @@
 # Prossimi Upgrade Contromisure
 
+> **Piano matchup / cambio modulo (rosa + 11 avversari + storico):** vedi [docs/AGGIORNAMENTO_CONTROMISURE.md](docs/AGGIORNAMENTO_CONTROMISURE.md) — stato *pianificato*, da implementare.
+
 ## Obiettivo
 Rendere `contromisure-pre-partita` piu' coerente con cio' che e' realmente visibile in una singola foto della formazione avversaria, mantenendo l'output finale asciutto e operativo.
 
