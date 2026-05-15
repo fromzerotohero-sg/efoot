@@ -2354,32 +2354,32 @@ function normalizeBaseStatsForEditor(baseStats = {}) {
   }
 
   return {
-    offensive_awareness: getStat(attacking, 'offensive_awareness', 'Offensive Awareness'),
+    offensive_awareness: getStat(attacking, 'offensive_awareness', 'offensiveAwareness', 'Offensive Awareness'),
     finishing: getStat(attacking, 'finishing', 'Finishing'),
-    low_pass: getStat(attacking, 'low_pass', 'Low Pass'),
-    lofted_pass: getStat(attacking, 'lofted_pass', 'Lofted Pass'),
+    low_pass: getStat(attacking, 'low_pass', 'lowPass', 'Low Pass'),
+    lofted_pass: getStat(attacking, 'lofted_pass', 'loftedPass', 'Lofted Pass'),
     dribbling: getStat(attacking, 'dribbling', 'Dribbling'),
-    ball_control: getStat(attacking, 'ball_control', 'Ball Control'),
-    tight_possession: getStat(attacking, 'tight_possession', 'Tight Possession'),
+    ball_control: getStat(attacking, 'ball_control', 'ballControl', 'Ball Control'),
+    tight_possession: getStat(attacking, 'tight_possession', 'tightPossession', 'Tight Possession'),
     heading: getStat(attacking, 'heading', 'Heading'),
-    set_piece_taking: getStat(attacking, 'set_piece_taking', 'Set Piece Taking'),
+    set_piece_taking: getStat(attacking, 'set_piece_taking', 'setPieceTaking', 'place_kicking', 'Set Piece Taking'),
     curl: getStat(attacking, 'curl', 'Curl'),
-    defensive_awareness: getStat(defending, 'defensive_awareness', 'Defensive Awareness'),
-    defensive_engagement: getStat(defending, 'defensive_engagement', 'Defensive Engagement'),
-    tackling: getStat(defending, 'tackling', 'Tackling'),
+    defensive_awareness: getStat(defending, 'defensive_awareness', 'defensiveAwareness', 'Defensive Awareness'),
+    defensive_engagement: getStat(defending, 'defensive_engagement', 'ballWinning', 'Defensive Engagement'),
+    tackling: getStat(defending, 'tackling', 'trackingBack', 'Tackling'),
     aggression: getStat(defending, 'aggression', 'Aggression'),
     speed: getStat(athleticism, 'speed', 'Speed'),
     acceleration: getStat(athleticism, 'acceleration', 'Acceleration'),
-    kicking_power: getStat(athleticism, 'kicking_power', 'Kicking Power'),
-    physical_contact: getStat(athleticism, 'physical_contact', 'Physical Contact'),
+    kicking_power: getStat(athleticism, 'kicking_power', 'kickingPower', 'Kicking Power'),
+    physical_contact: getStat(athleticism, 'physical_contact', 'physicalContact', 'strength', 'Physical Contact'),
     balance: getStat(athleticism, 'balance', 'Balance', 'Body Control'),
     stamina: getStat(athleticism, 'stamina', 'Stamina'),
     jump: getStat(athleticism, 'jump', 'Jump', 'Jumping'),
-    gk_awareness: getStat(goalkeeping, 'gk_awareness', 'GK Awareness'),
-    gk_catching: getStat(goalkeeping, 'gk_catching', 'GK Catching'),
-    gk_parrying: getStat(goalkeeping, 'gk_parrying', 'GK Parrying'),
-    gk_reflexes: getStat(goalkeeping, 'gk_reflexes', 'GK Reflexes'),
-    gk_reach: getStat(goalkeeping, 'gk_reach', 'GK Reach')
+    gk_awareness: getStat(goalkeeping, 'gk_awareness', 'gkAwareness', 'awareness', 'GK Awareness'),
+    gk_catching: getStat(goalkeeping, 'gk_catching', 'gkCatching', 'catching', 'GK Catching'),
+    gk_parrying: getStat(goalkeeping, 'gk_parrying', 'gkClearing', 'parrying', 'GK Parrying'),
+    gk_reflexes: getStat(goalkeeping, 'gk_reflexes', 'gkReflexes', 'reflexes', 'GK Reflexes'),
+    gk_reach: getStat(goalkeeping, 'gk_reach', 'gkReach', 'reach', 'GK Reach')
   }
 }
 
@@ -2391,6 +2391,15 @@ function mapPreviewBaseStatsToFormFields(previewBaseStats = {}) {
     out[key] = v === '' || v == null ? '' : String(Number(v))
   }
   return out
+}
+
+function isSafeBuildPreviewForSave(preview, player) {
+  const nextOverall = Number(preview?.afterOverall)
+  if (!Number.isFinite(nextOverall)) return false
+  const currentOverall = Number(player?.overall_rating)
+  if (nextOverall < 70) return false
+  if (Number.isFinite(currentOverall) && currentOverall >= 85 && nextOverall < currentOverall - 20) return false
+  return true
 }
 
 function buildBaseStatsPayloadFromEditor(form) {
@@ -2708,6 +2717,7 @@ function PremiumPlayerModal({
       coach: activeCoach,
       teamStyle: tacticalSettings?.team_playing_style
     })
+    if (!isSafeBuildPreviewForSave(preview, player)) return
     setForm((prev) => ({
       ...prev,
       ...mapPreviewBaseStatsToFormFields(preview.finalBaseStats),
@@ -2779,7 +2789,12 @@ function PremiumPlayerModal({
       metadata: { catalog_booster_reminder: false }
     }
 
-    if (sliderPayloadPreview?.ok && interactiveBuildSliders != null) {
+    const shouldPersistBuildPreview =
+      sliderPayloadPreview?.ok &&
+      interactiveBuildSliders != null &&
+      isSafeBuildPreviewForSave(sliderPayloadPreview, player)
+
+    if (shouldPersistBuildPreview) {
       const preview = sliderPayloadPreview
       const now = new Date().toISOString()
       const prevDp = player.development_points || {}
