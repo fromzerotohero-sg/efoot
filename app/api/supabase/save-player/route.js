@@ -29,6 +29,28 @@ function toText(v) {
   return typeof v === 'string' && v.trim().length ? v.trim() : null
 }
 
+/** Campi solo client → non salvare in extracted_data JSONB */
+function omitSaveClientFlags(p) {
+  if (!p || typeof p !== 'object') return p
+  const { refresh_original_positions, ...rest } = p
+  return rest
+}
+
+function normalizeOriginalPositionsInput(raw) {
+  if (!Array.isArray(raw) || raw.length === 0) return null
+  const out = []
+  for (const entry of raw) {
+    const position = typeof entry === 'string' ? toText(entry) : toText(entry?.position)
+    if (!position) continue
+    const competence =
+      typeof entry === 'object' && entry?.competence && String(entry.competence).trim()
+        ? String(entry.competence).trim()
+        : 'Alta'
+    out.push({ position, competence })
+  }
+  return out.length ? out : null
+}
+
 export async function POST(req) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -88,6 +110,8 @@ export async function POST(req) {
     if (!player || !player.player_name) {
       return NextResponse.json({ error: 'Player data is required' }, { status: 400 })
     }
+
+    const refreshOriginalPositions = Boolean(player.refresh_original_positions)
 
     // Lookup playing_style_id: PESDB/catalogo in EN → nome IT in playing_styles
     let playingStyleId = null
@@ -189,8 +213,8 @@ export async function POST(req) {
       level_cap: toInt(player.level_cap),
       active_booster_name: Array.isArray(player.boosters) && player.boosters[0]?.name ? String(player.boosters[0].name) : null,
       development_points: {},
-      extracted_data: player,
-      metadata: enrichPlayerMetadataWithCardImage(player, {
+      extracted_data: omitSaveClientFlags(player),
+      metadata: enrichPlayerMetadataWithCardImage(omitSaveClientFlags(player), {
         ...(player.metadata && typeof player.metadata === 'object' ? player.metadata : {}),
         source: player?.metadata?.catalog_source ? player.metadata.catalog_source : 'screenshot_extractor',
         saved_at: new Date().toISOString(),
@@ -236,9 +260,11 @@ export async function POST(req) {
         // Giocatore già presente nello slot → UPDATE con merge dati
         if (process.env.NODE_ENV !== 'production') console.log(`[save-player] Player already exists in slot ${playerData.slot_index}, updating: id=${existingPlayerInSlot.id}`)
         
-        // Se giocatore esiste già, NON sovrascrivere original_positions (mantieni originali)
+        const normalizedOpRefresh = normalizeOriginalPositionsInput(player.original_positions)
+        const shouldApplyOpRefresh = refreshOriginalPositions && normalizedOpRefresh
+
         delete playerData.original_positions
-        
+
         // Merge photo_slots (solo se newPhotoSlots ha valori, altrimenti mantieni existing)
         const existingPhotoSlots = existingPlayerInSlot.photo_slots || {}
         const newPhotoSlots = playerData.photo_slots || {}
@@ -269,7 +295,7 @@ export async function POST(req) {
         // Merge extracted_data
         const mergedExtractedData = {
           ...(existingPlayerInSlot.extracted_data || {}),
-          ...playerData.extracted_data
+          ...omitSaveClientFlags(playerData.extracted_data || {})
         }
         
         // Validazione dimensione JSONB rimossa - Supabase gestisce automaticamente i limiti
@@ -282,6 +308,18 @@ export async function POST(req) {
           ? Math.max(existingOverall, newOverall) 
           : (newOverall != null ? newOverall : existingOverall)
         
+        const existingMeta =
+          existingPlayerInSlot.metadata && typeof existingPlayerInSlot.metadata === 'object'
+            ? { ...existingPlayerInSlot.metadata }
+            : {}
+        if (shouldApplyOpRefresh) {
+          delete existingMeta.intentional_slot_vs_card
+          delete existingMeta.intentional_slot_position
+          delete existingMeta.intentional_slot_vs_card_at
+          delete existingMeta.forced_out_of_role
+          delete existingMeta.forced_slot_position
+        }
+
         const updateData = {
           // Campi base (sovrascrivibili solo se presenti nei nuovi dati)
           ...(playerData.player_name && { player_name: playerData.player_name }),
@@ -300,6 +338,7 @@ export async function POST(req) {
           ...(playerData.level_cap !== null && playerData.level_cap !== undefined && { level_cap: playerData.level_cap }),
           ...(playerData.active_booster_name && { active_booster_name: playerData.active_booster_name }),
           ...(playerData.playing_style_id && { playing_style_id: playerData.playing_style_id }),
+          ...(shouldApplyOpRefresh && { original_positions: normalizedOpRefresh }),
           // Campi merged (sempre aggiornati)
           photo_slots: mergedPhotoSlots,
           base_stats: mergedBaseStats,
@@ -311,7 +350,7 @@ export async function POST(req) {
           metadata: enrichPlayerMetadataWithCardImage(
             { ...playerData, extracted_data: mergedExtractedData },
             {
-              ...(existingPlayerInSlot.metadata || {}),
+              ...existingMeta,
               ...(playerData.metadata || {}),
               saved_at: new Date().toISOString()
             }

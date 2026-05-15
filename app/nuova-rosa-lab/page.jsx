@@ -4447,6 +4447,7 @@ export default withAuth(function NuovaRosaLabPage() {
             player: {
               ...extractedPlayerData,
               original_positions: selectedOriginalPositions,
+              refresh_original_positions: selectedOriginalPositions.length > 0,
               slot_index: slotIndexToSave,
               photo_slots: positionModalCtx.photoSlots || extractedPlayerData.photo_slots
             }
@@ -4600,6 +4601,7 @@ export default withAuth(function NuovaRosaLabPage() {
       if (originalPositions.length > 0) {
         playerPayload.original_positions = originalPositions
         playerPayload.position = originalPositions[0]?.position || playerPayload.position
+        playerPayload.refresh_original_positions = true
       }
       if (forcedOutOfRole) {
         playerPayload.metadata = {

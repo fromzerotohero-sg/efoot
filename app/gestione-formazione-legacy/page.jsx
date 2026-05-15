@@ -1613,6 +1613,7 @@ export default function GestioneFormazionePage() {
                   player: {
                     ...currentExtractedData,
                     original_positions: currentSelectedPositions,
+                    refresh_original_positions: currentSelectedPositions?.length > 0,
                     slot_index: slotIndexToSave,
                     photo_slots: currentExtractedData.photo_slots
                   }
@@ -1660,6 +1661,7 @@ export default function GestioneFormazionePage() {
           player: {
             ...extractedPlayerData,
             original_positions: selectedOriginalPositions,  // NUOVO: posizioni selezionate
+            refresh_original_positions: selectedOriginalPositions?.length > 0,
             slot_index: slotIndexToSave,
             photo_slots: positionModalCtx?.photoSlots || extractedPlayerData.photo_slots
           }

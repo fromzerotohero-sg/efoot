@@ -217,7 +217,15 @@ export default function AssistantChat({
   const chatSetupCta = useMemo(() => {
     const profile = setupContext?.profile || userProfile || {}
     const players = Array.isArray(setupContext?.players) ? setupContext.players : []
-    const startersCount = players.filter(player => Number.isInteger(player?.slot_index) && player.slot_index >= 0 && player.slot_index <= 10).length
+    const slotNum = (p) => {
+      const s = p?.slot_index
+      const n = typeof s === 'string' ? parseInt(s, 10) : s
+      return Number.isFinite(n) ? n : NaN
+    }
+    const startersCount = players.filter((p) => {
+      const n = slotNum(p)
+      return Number.isInteger(n) && n >= 0 && n <= 10
+    }).length
     const hasProfile = !!(profile?.first_name || profile?.team_name || profile?.current_division || profile?.profile_completion_score > 0)
     const hasRoster = startersCount >= 11
     const hasGameAnalysis = !!(setupContext?.gameAnalysis?.captured_at || setupContext?.gameAnalysis?.stats)
@@ -269,27 +277,14 @@ export default function AssistantChat({
     const loadProfile = async () => {
       try {
         let token = localStorage.getItem('auth_token')
-        let userId = null
-        
-        if (token) {
-           const userData = localStorage.getItem('metalgate_user')
-           if (userData) {
-             userId = JSON.parse(userData).id
-           }
-        } else {
-           const { data: session } = await supabase.auth.getSession()
-           if (session?.session) {
-             token = session.session.access_token
-             userId = session.session.user.id
-           }
+        if (!token && supabase) {
+          const { data: session } = await supabase.auth.getSession()
+          if (session?.session) {
+            token = session.session.access_token
+          }
         }
-        
-        if (!userId) return
-        
-        // Use standard Supabase query if available (public/RLS allowing)
-        // Or if custom token, we might need to rely on API or assume basic profile if not fetchable directly
-        // Ideally we should use an API that supports the custom token
-        
+        if (!token) return
+
         const dashboardRes = await fetch('/api/dashboard', {
           headers: { 'Authorization': `Bearer ${token}` }
         })

@@ -4,6 +4,7 @@ import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { normalizePlayerSkillsArray } from '@/lib/playerSkillLabels'
 import { lookupPlayingStyleId, resolvePlayingStyleDbName } from '@/lib/playingStyleResolve'
+import { buildSlotRoleAugmentsForStarter } from '@/lib/playerSlotRoleMetadata'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -140,7 +141,7 @@ export async function PATCH(req) {
       // Caso 1: Assegna giocatore esistente (da riserve o altro slot)
       const { data: player, error: playerError } = await admin
         .from('players')
-        .select('id, user_id, player_name, age, position, original_positions')
+        .select('id, user_id, player_name, age, position, original_positions, metadata')
         .eq('id', player_id)
         .eq('user_id', userId)
         .single()
@@ -232,16 +233,18 @@ export async function PATCH(req) {
       }
 
       // 2. Assign the new player to the slot
-      // Adatta position e original_positions allo slot
+      // Adatta position allo slot; competenze carta restano in original_positions.
       const positionUpdate = {
         slot_index: slot_index, // Explicitly set slot_index
         position: slotPosition || player.position,
         updated_at: new Date().toISOString()
       }
-      
-      if ((!player.original_positions || player.original_positions.length === 0) && player.position) {
-        positionUpdate.original_positions = [{ position: player.position, competence: 'Alta' }]
-      }
+
+      const { augments } = buildSlotRoleAugmentsForStarter({
+        playerRow: player,
+        slotPosition
+      })
+      Object.assign(positionUpdate, augments)
 
       const { error: assignError } = await admin
         .from('players')

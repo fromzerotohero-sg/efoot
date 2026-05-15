@@ -5,6 +5,7 @@ import { normalizeEfhubPosition } from '@/lib/efootballBuildRules'
 import { computePlayerFieldOverall } from '@/lib/playerOverallPipeline'
 import { normalizePlayerSkillsArray } from '@/lib/playerSkillLabels'
 import { lookupPlayingStyleId } from '@/lib/playingStyleResolve'
+import { buildSlotRoleAugmentsForStarter, metadataAfterMovingToReserves } from '@/lib/playerSlotRoleMetadata'
 
 const BASE_STATS_BUCKETS = ['attacking', 'defending', 'athleticism', 'goalkeeping']
 
@@ -176,7 +177,7 @@ export async function PATCH(req, { params }) {
 
     const { data: existingPlayer, error: existingPlayerError } = await supabase
       .from('players')
-      .select('id, player_name, position, card_type, overall_rating, age, height, weight, nationality, club_name, role, playing_style_id, base_stats, skills, com_skills, available_boosters, photo_slots, metadata, original_positions, level_cap, current_level, development_points, position_ratings')
+      .select('id, player_name, position, card_type, overall_rating, age, height, weight, nationality, club_name, role, playing_style_id, base_stats, skills, com_skills, available_boosters, photo_slots, metadata, original_positions, level_cap, current_level, development_points, position_ratings, slot_index')
       .eq('id', id)
       .eq('user_id', userId)
       .single()
@@ -360,6 +361,47 @@ export async function PATCH(req, { params }) {
           ...(existingPlayer.position_ratings || {}),
           ...(updateData.position_ratings || {}),
           [computed.targetPosition]: computed.afterOverall
+        }
+      }
+    }
+
+    // Spostamento titolare/riserva: stessi flag metadata della assign-player-to-slot (Coach / FIT)
+    if (body.slot_index !== undefined) {
+      const raw = body.slot_index
+      const toReserves = raw === null || raw === '' || raw === undefined
+      const nextSlot = toReserves ? null : Number(raw)
+      const mergedMetadata = {
+        ...(existingPlayer.metadata && typeof existingPlayer.metadata === 'object' ? existingPlayer.metadata : {}),
+        ...(updateData.metadata && typeof updateData.metadata === 'object' ? updateData.metadata : {})
+      }
+      if (toReserves || Number.isNaN(nextSlot)) {
+        const cleared = metadataAfterMovingToReserves(mergedMetadata)
+        if (cleared) updateData.metadata = cleared
+      } else if (nextSlot >= 0 && nextSlot <= 10) {
+        const { data: formationRow } = await supabase
+          .from('formation_layout')
+          .select('slot_positions')
+          .eq('user_id', userId)
+          .maybeSingle()
+        const slotPos = formationRow?.slot_positions?.[nextSlot]?.position || null
+        const mergedPosition =
+          updateData.position !== undefined ? updateData.position : existingPlayer.position
+        const mergedOriginalPositions =
+          updateData.original_positions !== undefined
+            ? updateData.original_positions
+            : existingPlayer.original_positions
+        const { augments } = buildSlotRoleAugmentsForStarter({
+          playerRow: {
+            position: mergedPosition,
+            original_positions: mergedOriginalPositions,
+            metadata: existingPlayer.metadata
+          },
+          slotPosition: slotPos,
+          metadataBase: mergedMetadata
+        })
+        if (augments.metadata) updateData.metadata = augments.metadata
+        if (augments.original_positions !== undefined && updateData.original_positions === undefined) {
+          updateData.original_positions = augments.original_positions
         }
       }
     }
