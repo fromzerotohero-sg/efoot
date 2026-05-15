@@ -520,7 +520,7 @@ export default function AssistantChat({
           .chat-launcher {
             animation: chat-launcher-pulse 2s ease-in-out infinite;
           }
-          .ai-badge {
+          .hero-chat-badge {
             animation: pulse-dot 2s ease-in-out infinite;
           }
         `}</style>
@@ -593,13 +593,18 @@ export default function AssistantChat({
             width: isMobileViewport ? '56px' : '72px',
             height: isMobileViewport ? '56px' : '72px',
             borderRadius: '50%',
-            overflow: 'hidden',
+            overflow: 'visible',
             flexShrink: 0
           }}>
             <img 
-              src="/chat-button.png" 
-              alt="AI Coach" 
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+              src="/logo.png" 
+              alt="Hero Chat" 
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 0 12px rgba(0, 212, 255, 0.65))'
+              }} 
             />
           </div>
           
@@ -620,39 +625,41 @@ export default function AssistantChat({
               textShadow: '0 0 10px rgba(0, 212, 255, 0.8)'
             }}
           >
-            {t('askCoach') || 'Chiedi al Coach'}
+            Hero Chat
           </span>
           
-          {/* Badge AI */}
+          {/* Badge Hero Chat */}
           <div 
-            className="ai-badge"
+            className="hero-chat-badge"
             style={{
               position: 'absolute',
-              top: '-2px',
-              right: '-2px',
-              width: '20px',
-              height: '20px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #00d4ff 0%, #00a1a6 100%)',
+              right: isMobileViewport ? '-18px' : '-28px',
+              bottom: isMobileViewport ? '-2px' : '2px',
+              minWidth: isMobileViewport ? '58px' : '72px',
+              height: isMobileViewport ? '22px' : '24px',
+              padding: '0 8px',
+              borderRadius: '999px',
+              background: 'linear-gradient(135deg, #00d4ff 0%, #67e8f9 100%)',
               border: '2px solid #050814',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '9px',
-              fontWeight: 700,
-              color: '#000',
+              fontSize: isMobileViewport ? '9px' : '10px',
+              fontWeight: 900,
+              letterSpacing: '0.02em',
+              color: '#06101f',
               boxShadow: '0 0 10px rgba(0, 212, 255, 0.8)',
               zIndex: 2
             }}
           >
-            AI
+            Hero Chat
           </div>
         </button>
       </>
     )
   }
   
-  // Sfondo chat: brand hero con logo vibrante al posto del giocatore.
+  // Sfondo chat: glow leggero, senza elementi sopra ai messaggi.
   const chatBgOverlay = [
     'radial-gradient(circle at 50% 24%, rgba(0,212,255,0.22), transparent 30%)',
     'radial-gradient(circle at 50% 42%, rgba(138,43,226,0.14), transparent 42%)',
@@ -717,132 +724,6 @@ export default function AssistantChat({
   
   return (
     <div style={containerStyle} className={`assistantchat-shell ${isMobilePopup ? 'assistantchat-mobile' : ''}`}>
-      <style>{`
-        .assistantchat-brand-bg {
-          position: absolute;
-          inset: 74px 0 96px;
-          display: grid;
-          place-items: start center;
-          padding-top: 18px;
-          pointer-events: none;
-          z-index: 0;
-          overflow: hidden;
-        }
-
-        .assistantchat-brand-bg::before {
-          content: '';
-          position: absolute;
-          width: 360px;
-          height: 360px;
-          top: -6px;
-          border-radius: 50%;
-          border: 1px solid rgba(0, 212, 255, 0.22);
-          box-shadow:
-            0 0 42px rgba(0, 212, 255, 0.16),
-            inset 0 0 46px rgba(138, 43, 226, 0.12);
-          animation: assistantBrandPulse 2.2s ease-in-out infinite;
-        }
-
-        .assistantchat-brand-bg::after {
-          content: '';
-          position: absolute;
-          width: 320px;
-          height: 320px;
-          top: 14px;
-          border-radius: 50%;
-          border: 1px dashed rgba(255, 255, 255, 0.16);
-          animation: assistantBrandOrbit 6s linear infinite;
-        }
-
-        .assistantchat-brand-logo-wrap {
-          position: relative;
-          width: 140px;
-          height: 140px;
-          display: grid;
-          place-items: center;
-          border-radius: 34px;
-          background: radial-gradient(circle, rgba(0, 212, 255, 0.14), rgba(138, 43, 226, 0.08) 58%, transparent 74%);
-          opacity: 0.88;
-        }
-
-        .assistantchat-brand-logo-wrap::before,
-        .assistantchat-brand-logo-wrap::after {
-          content: '';
-          position: absolute;
-          inset: 16px;
-          border-radius: 28px;
-          border: 1px solid rgba(0, 212, 255, 0.28);
-          box-shadow: 0 0 24px rgba(0, 212, 255, 0.18);
-        }
-
-        .assistantchat-brand-logo-wrap::after {
-          inset: 6px;
-          border-color: rgba(255, 203, 5, 0.16);
-          animation: assistantBrandPulse 1.8s ease-in-out infinite;
-        }
-
-        .assistantchat-brand-logo-wrap img {
-          position: relative;
-          z-index: 2;
-          width: 108px;
-          max-height: 108px;
-          object-fit: contain;
-          filter:
-            drop-shadow(0 0 13px rgba(0, 212, 255, 0.52))
-            drop-shadow(0 0 25px rgba(138, 43, 226, 0.26));
-          animation: assistantBrandInterference 1.15s steps(2, end) infinite;
-        }
-
-        .assistantchat-brand-orbit {
-          position: absolute;
-          inset: 7px;
-          border-radius: 30px;
-          border: 1px dashed rgba(255, 255, 255, 0.20);
-          animation: assistantBrandOrbit 3.8s linear infinite;
-        }
-
-        .assistantchat-brand-scanline {
-          position: absolute;
-          z-index: 3;
-          left: 18px;
-          right: 18px;
-          height: 2px;
-          border-radius: 999px;
-          background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.95), transparent);
-          box-shadow: 0 0 12px rgba(0, 212, 255, 0.72);
-          animation: assistantBrandScan 1.35s ease-in-out infinite;
-        }
-
-        @keyframes assistantBrandInterference {
-          0%, 100% { transform: translate(0, 0) skewX(0deg); opacity: 1; }
-          12% { transform: translate(-1px, 1px) skewX(-1deg); }
-          20% { transform: translate(1px, -1px) skewX(1deg); filter: drop-shadow(2px 0 rgba(255, 0, 102, 0.30)) drop-shadow(-2px 0 rgba(0, 212, 255, 0.48)); }
-          44% { transform: translate(0, 0); }
-          62% { transform: translate(-1px, 0) skewX(0.6deg); }
-        }
-
-        @keyframes assistantBrandScan {
-          0% { top: 18px; opacity: 0; }
-          20%, 78% { opacity: 1; }
-          100% { top: calc(100% - 20px); opacity: 0; }
-        }
-
-        @keyframes assistantBrandOrbit {
-          to { transform: rotate(360deg); }
-        }
-
-        @keyframes assistantBrandPulse {
-          0%, 100% { transform: scale(1); opacity: 0.72; }
-          50% { transform: scale(1.045); opacity: 1; }
-        }
-      `}</style>
-      <div className="assistantchat-brand-bg" aria-hidden="true">
-        <div className="assistantchat-brand-logo-wrap">
-          <span className="assistantchat-brand-orbit" />
-          <span className="assistantchat-brand-scanline" />
-          <img src="/logo.png" alt="" />
-        </div>
-      </div>
       {isMobilePopup && (
         <style jsx global>{`
           .assistantchat-mobile {
@@ -874,16 +755,25 @@ export default function AssistantChat({
             width: '40px',
             height: '40px',
             borderRadius: '50%',
-            overflow: 'hidden',
+            overflow: 'visible',
             border: '2px solid rgba(0, 212, 255, 0.8)',
             boxShadow: '0 0 10px rgba(0, 212, 255, 0.5)',
             flexShrink: 0
           }}>
-            <img src="/chat-button.png" alt="AI Coach" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img
+              src="/logo.png"
+              alt="Hero Chat"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 0 9px rgba(0, 212, 255, 0.55))'
+              }}
+            />
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, color: 'var(--neon-cyan)', fontSize: '16px', textShadow: '0 0 8px rgba(0, 212, 255, 0.4)' }}>
-              {titleOverride || userProfile?.ai_name || t('yourCoach') || t('yourCoachAI')}
+              {titleOverride || userProfile?.ai_name || 'Hero Chat'}
             </div>
             {(subtitleOverride || userProfile?.first_name) && (
               <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>
@@ -940,15 +830,43 @@ export default function AssistantChat({
         {messages.length === 0 && (
           <div style={{ textAlign: 'center', padding: '20px', opacity: 0.9 }}>
             <div style={{
-              width: '80px',
-              height: '80px',
+              width: '92px',
+              height: '72px',
               margin: '0 auto 16px',
-              borderRadius: '50%',
-              overflow: 'hidden',
-              border: '2px solid rgba(0, 212, 255, 0.8)',
-              boxShadow: '0 0 20px rgba(0, 212, 255, 0.4)'
+              borderRadius: '22px',
+              display: 'grid',
+              placeItems: 'center',
+              border: '1px solid rgba(0, 212, 255, 0.28)',
+              background: 'radial-gradient(circle, rgba(0, 212, 255, 0.14), rgba(138, 43, 226, 0.08) 62%, transparent 78%)',
+              boxShadow: '0 0 22px rgba(0, 212, 255, 0.26)'
             }}>
-              <img src="/chat-button.png" alt="AI Coach" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img
+                src="/logo.png"
+                alt="Hero Chat"
+                style={{
+                  width: '76px',
+                  maxHeight: '58px',
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0 0 12px rgba(0, 212, 255, 0.55))'
+                }}
+              />
+            </div>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '10px',
+              padding: '5px 12px',
+              borderRadius: '999px',
+              background: 'rgba(0, 212, 255, 0.12)',
+              border: '1px solid rgba(0, 212, 255, 0.28)',
+              color: '#67e8f9',
+              fontSize: '11px',
+              fontWeight: 900,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase'
+            }}>
+              Hero Chat
             </div>
             <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--neon-cyan)', marginBottom: '8px' }}>
               {userProfile?.first_name 
@@ -1101,12 +1019,21 @@ export default function AssistantChat({
                 width: '28px',
                 height: '28px',
                 borderRadius: '50%',
-                overflow: 'hidden',
+                overflow: 'visible',
                 border: '1px solid rgba(0, 212, 255, 0.6)',
                 flexShrink: 0,
                 marginTop: '4px'
               }}>
-                <img src="/chat-button.png" alt="AI Coach" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img
+                  src="/logo.png"
+                  alt="Hero Chat"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    filter: 'drop-shadow(0 0 7px rgba(0, 212, 255, 0.55))'
+                  }}
+                />
               </div>
             )}
             <div
