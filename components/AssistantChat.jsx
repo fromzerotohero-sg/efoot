@@ -717,12 +717,7 @@ export default function AssistantChat({
   
   return (
     <div style={containerStyle} className={`assistantchat-shell ${isMobilePopup ? 'assistantchat-mobile' : ''}`}>
-      <style jsx>{`
-        .assistantchat-shell > :not(.assistantchat-brand-bg) {
-          position: relative;
-          z-index: 1;
-        }
-
+      <style>{`
         .assistantchat-brand-bg {
           position: absolute;
           inset: 74px 0 96px;
