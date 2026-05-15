@@ -1208,6 +1208,7 @@ function CatalogPickerModal({
   onSelectReserve,
   onLoadMore,
   onUploadFallback,
+  onCatalogViewChange,
   lang
 }) {
   const isReserveMode = mode === 'reserve'
@@ -1219,11 +1220,20 @@ function CatalogPickerModal({
     setSlotFlow(isReserveMode ? 'catalog' : 'choice')
   }, [show, isReserveMode, slot?.slot_index])
 
+  const showCatalog = isReserveMode || slotFlow === 'catalog'
+
+  React.useEffect(() => {
+    if (!show) {
+      onCatalogViewChange?.(false)
+      return
+    }
+    onCatalogViewChange?.(showCatalog)
+  }, [show, showCatalog, onCatalogViewChange])
+
   if (!show) return null
 
   const showChoice = !isReserveMode && slotFlow === 'choice'
   const showReserves = !isReserveMode && slotFlow === 'reserves'
-  const showCatalog = isReserveMode || slotFlow === 'catalog'
   const sortOptions = [
     { id: 'name_asc', label: lang === 'en' ? 'Name A-Z' : 'Nome A-Z' },
     { id: 'ovr_desc', label: lang === 'en' ? 'OVR high first' : 'OVR piu alto' },
@@ -3331,7 +3341,10 @@ export default withAuth(function NuovaRosaLabPage() {
   const [pickerResults, setPickerResults] = React.useState([])
   const [pickerTotal, setPickerTotal] = React.useState(0)
   const [pickerHasMore, setPickerHasMore] = React.useState(false)
+  const [pickerCatalogActive, setPickerCatalogActive] = React.useState(false)
   const catalogLoadSeqRef = React.useRef(0)
+  const catalogAbortRef = React.useRef(null)
+  const pickerQueryRef = React.useRef('')
   const [confirmModal, setConfirmModal] = React.useState(null)
   const [showPremiumEditorModal, setShowPremiumEditorModal] = React.useState(false)
   const [savingPlayerEditor, setSavingPlayerEditor] = React.useState(false)
@@ -3468,13 +3481,34 @@ export default withAuth(function NuovaRosaLabPage() {
     } catch (_) {}
   }, [])
 
-  const handlePickerSearchChange = React.useCallback((value) => {
+  const resetPickerCatalogResults = React.useCallback(() => {
+    if (catalogAbortRef.current) {
+      catalogAbortRef.current.abort()
+      catalogAbortRef.current = null
+    }
     catalogLoadSeqRef.current += 1
-    setPickerQuery(value)
     setPickerResults([])
     setPickerTotal(0)
     setPickerHasMore(false)
     setPickerLoading(true)
+  }, [])
+
+  const handlePickerSearchChange = React.useCallback((value) => {
+    pickerQueryRef.current = value
+    setPickerQuery(value)
+    resetPickerCatalogResults()
+  }, [resetPickerCatalogResults])
+
+  const handlePickerSortChange = React.useCallback((value) => {
+    setPickerSort(value)
+    resetPickerCatalogResults()
+  }, [resetPickerCatalogResults])
+
+  const handleCatalogViewChange = React.useCallback((active) => {
+    setPickerCatalogActive(active)
+    if (active) {
+      setPickerLoading(true)
+    }
   }, [])
 
   const loadCatalog = React.useCallback(async (slot, query = '', mode = 'slot', options = {}) => {
@@ -3482,7 +3516,17 @@ export default withAuth(function NuovaRosaLabPage() {
     const offset = Number(options.offset || 0)
     const append = !!options.append
     const sort = options.sort || 'name_asc'
+    const normalizedQuery = String(query ?? '').trim()
     const requestSeq = ++catalogLoadSeqRef.current
+
+    if (!append && catalogAbortRef.current) {
+      catalogAbortRef.current.abort()
+    }
+    const abortController = new AbortController()
+    if (!append) {
+      catalogAbortRef.current = abortController
+    }
+
     if (append) {
       setPickerLoadingMore(true)
     } else {
@@ -3497,7 +3541,7 @@ export default withAuth(function NuovaRosaLabPage() {
       if (!token) throw new Error(t('sessionExpired'))
 
       const params = new URLSearchParams({
-        q: query,
+        q: normalizedQuery,
         limit: '80',
         offset: String(offset),
         sort
@@ -3509,10 +3553,12 @@ export default withAuth(function NuovaRosaLabPage() {
         headers: {
           Authorization: `Bearer ${token}`
         },
-        cache: 'no-store'
+        cache: 'no-store',
+        signal: abortController.signal
       })
       const data = await safeJsonResponse(response, 'Catalog load failed')
       if (requestSeq !== catalogLoadSeqRef.current) return
+      if (!append && normalizedQuery !== String(pickerQueryRef.current || '').trim()) return
       const nextResults = Array.isArray(data.results) ? data.results : []
       setPickerResults((prev) => {
         if (!append) return nextResults
@@ -3522,6 +3568,7 @@ export default withAuth(function NuovaRosaLabPage() {
       setPickerTotal(Number(data.total || 0))
       setPickerHasMore(!!data.hasMore)
     } catch (err) {
+      if (err?.name === 'AbortError') return
       if (requestSeq !== catalogLoadSeqRef.current) return
       console.error('[NuovaRosaLab] catalog error:', err)
       showToast(lang === 'en' ? 'Unable to load the catalog.' : 'Impossibile caricare il catalogo.', 'error')
@@ -3536,18 +3583,25 @@ export default withAuth(function NuovaRosaLabPage() {
         setPickerLoadingMore(false)
       } else {
         setPickerLoading(false)
+        if (catalogAbortRef.current === abortController) {
+          catalogAbortRef.current = null
+        }
       }
     }
   }, [lang, showToast, t])
 
   React.useEffect(() => {
-    if (!pickerOpen) return
+    pickerQueryRef.current = pickerQuery
+  }, [pickerQuery])
+
+  React.useEffect(() => {
+    if (!pickerOpen || !pickerCatalogActive) return
     if (pickerMode !== 'reserve' && !selectedSlot) return
     const timer = window.setTimeout(() => {
       loadCatalog(selectedSlot, pickerQuery, pickerMode, { sort: pickerSort })
     }, 180)
     return () => window.clearTimeout(timer)
-  }, [pickerOpen, selectedSlot, pickerQuery, pickerMode, pickerSort, loadCatalog])
+  }, [pickerOpen, pickerCatalogActive, selectedSlot, pickerQuery, pickerMode, pickerSort, loadCatalog])
 
   const loadMoreCatalog = React.useCallback(() => {
     if (pickerLoading || pickerLoadingMore || !pickerHasMore) return
@@ -3559,16 +3613,23 @@ export default withAuth(function NuovaRosaLabPage() {
   }, [loadCatalog, pickerHasMore, pickerLoading, pickerLoadingMore, pickerMode, pickerQuery, pickerResults.length, pickerSort, selectedSlot])
 
   const openPickerForSlot = React.useCallback((slot) => {
+    if (catalogAbortRef.current) {
+      catalogAbortRef.current.abort()
+      catalogAbortRef.current = null
+    }
     catalogLoadSeqRef.current += 1
     setShowAssignModal(false)
     setSelectedPlayer(null)
     setSelectedSlot(slot)
     setPickerMode('slot')
+    pickerQueryRef.current = ''
     setPickerQuery('')
     setPickerSort('name_asc')
     setPickerResults([])
     setPickerTotal(0)
     setPickerHasMore(false)
+    setPickerLoading(false)
+    setPickerCatalogActive(false)
     setCatalogPositionCtx(null)
     setPickerOpen(true)
   }, [])
@@ -3578,21 +3639,32 @@ export default withAuth(function NuovaRosaLabPage() {
       showToast(t('maxReservesReached'), 'error')
       return
     }
+    if (catalogAbortRef.current) {
+      catalogAbortRef.current.abort()
+      catalogAbortRef.current = null
+    }
     catalogLoadSeqRef.current += 1
     setSelectedSlot(null)
     setShowAssignModal(false)
     setSelectedPlayer(null)
     setPickerMode('reserve')
+    pickerQueryRef.current = ''
     setPickerQuery('')
     setPickerSort('name_asc')
     setPickerResults([])
     setPickerTotal(0)
     setPickerHasMore(false)
+    setPickerLoading(false)
+    setPickerCatalogActive(true)
     setCatalogPositionCtx(null)
     setPickerOpen(true)
   }, [riserve.length, showToast, t])
 
   const closePicker = React.useCallback(() => {
+    if (catalogAbortRef.current) {
+      catalogAbortRef.current.abort()
+      catalogAbortRef.current = null
+    }
     catalogLoadSeqRef.current += 1
     setPickerOpen(false)
     setPickerMode('slot')
@@ -3601,6 +3673,7 @@ export default withAuth(function NuovaRosaLabPage() {
     setPickerResults([])
     setPickerTotal(0)
     setPickerHasMore(false)
+    setPickerCatalogActive(false)
     setCatalogPositionCtx(null)
   }, [])
 
@@ -5519,7 +5592,8 @@ export default withAuth(function NuovaRosaLabPage() {
         searchQuery={pickerQuery}
         onSearchChange={handlePickerSearchChange}
         sort={pickerSort}
-        onSortChange={setPickerSort}
+        onSortChange={handlePickerSortChange}
+        onCatalogViewChange={handleCatalogViewChange}
         loading={pickerLoading}
         loadingMore={pickerLoadingMore}
         results={pickerResults}
