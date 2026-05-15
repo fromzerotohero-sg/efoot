@@ -17,6 +17,7 @@ import {
   responseViolatesDeepLineDefenderRule,
   temperatureForDeepLineGuard
 } from '@/lib/deepLineDefenderGuard'
+import { getCardSlotCodesFromOriginalPositions, normPosCode } from '@/lib/playerSlotRoleMetadata'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -362,6 +363,7 @@ const CONTEXT_LABELS = {
     boxTitle: 'CONTESTO PERSONALE CLIENTE - DATI REALI DELLA ROSA',
     boxSubtitle: 'USA QUESTI DATI - PERSONALIZZA - CITA NOMI REALI - NON GENERICO',
     positionNote: 'POSIZIONE: per ogni giocatore vedi "position" (ruolo assegnato in formazione) e "competenze" (posizioni ideali dalla card, es. CC Alta, MED Intermedia). Se position è diverso dalle competenze (es. competenze=CC Alta ma position=DC), CORREGGI: "X è centrocampista (CC) dalla card, non DC. Meglio schierarlo come CC o cambiare ruolo in Gestione Formazione." Siamo noi i coach: non assecondare l\'errore del cliente. ECCEZIONE: se il giocatore ha il tag [scelta confermata: ruolo campo vs carta] nel riassunto rosa, il mismatch è stato accettato in app (catalogo fuori ruolo o assegnazione slot): non trattarlo come errore del cliente; spiega trade-off (copertura, fisico, istruzioni) e come compensare.',
+    slotWhitelistNote: 'REGOLA CODICI (vincolante): su ogni riga c\'è "slot carta: A/B/C…" = unici codici modulo ammessi dalla carta (original_positions DB). Se proponi uno spostamento o citi Nome (CODICE), il CODICE deve essere uno di quella lista o la position già tra parentesi iniziali per quel nome. Se vedi "; eccezione campo: X", il cliente ha accettato fuori carta: puoi citare anche X. Non inventare codici: i metadata JSON non sostituiscono questa lista.',
     rosterSlotAdaptSuffix: ' [scelta confermata: ruolo campo vs carta]',
     statsNote: 'STATS: vel, acc, res, fin, pas, tac (RAG §1). forma:↑=ottima, forma:↓=bassa. h/w=altezza/peso (duelli aerei). ABILITÀ: elencate. Usa stili+stats+abilità+forma+h/w per ragionamento. Ogni dato ha utilità.',
     teamStyle: 'Stile squadra',
@@ -390,6 +392,7 @@ const CONTEXT_LABELS = {
     boxTitle: 'PERSONAL CLIENT CONTEXT - REAL ROSA DATA',
     boxSubtitle: 'USE THIS DATA - PERSONALIZE - CITE REAL NAMES - NOT GENERIC',
     positionNote: 'POSITION: for each player see "position" (assigned role) and "competenze" (ideal positions from card, e.g. CM High, DM Intermediate). If position differs from competenze (e.g. competenze=CM High but position=CB), CORRECT: "X is midfielder (CM) from card, not CB. Better field him as CM or change role in Formation Manager." We are the coaches: do not indulge client errors. EXCEPTION: if the player line has the tag [confirmed choice: field role vs card], the mismatch was accepted in-app (catalog out-of-role or slot assignment): do not treat it as a user mistake; explain trade-offs (cover, stamina, instructions) and how to compensate.',
+    slotWhitelistNote: 'CODE RULE (binding): each roster line includes "card slots: A/B/C…" = the only module codes allowed by the card (original_positions in DB). If you suggest a move or write Name (CODE), CODE must be from that list or the opening position in parentheses for that player. If you see "; field override: X", the user accepted off-card: you may also cite X. Do not invent codes: JSON metadata does not replace this list.',
     rosterSlotAdaptSuffix: ' [confirmed choice: field role vs card]',
     statsNote: 'STATS (if present): vel=Speed, acc=Acceleration, res=Stamina (RAG §1), fin=Finishing, pas=Passing, tac=Tackling. SKILLS: listed in roster. Use styles + stats + skills for tactical reasoning.',
     teamStyle: 'Team style',
@@ -476,6 +479,24 @@ async function buildPersonalContext(userId, lang = 'it') {
       return meta.intentional_slot_vs_card === true || meta.forced_out_of_role === true
     }
 
+    /** Whitelist codici modulo per il coach: carta + eventuale eccezione campo accettata in app. */
+    function formatSlotWhitelistForRosterLine(p) {
+      const cardSlots = getCardSlotCodesFromOriginalPositions(p.original_positions)
+      let extra = ''
+      if (intentionalSlotAdaptation(p.metadata)) {
+        const ip = normPosCode(p.position)
+        if (ip && !cardSlots.includes(ip)) {
+          extra = lang === 'en' ? `; field override: ${ip}` : `; eccezione campo: ${ip}`
+        }
+      }
+      if (cardSlots.length === 0) {
+        if (!extra) return ''
+        return lang === 'en' ? ` | card slots: —${extra}` : ` | slot carta: —${extra}`
+      }
+      const label = lang === 'en' ? 'card slots' : 'slot carta'
+      return ` | ${label}: ${cardSlots.join('/')}${extra}`
+    }
+
     /** Statistiche chiave per ragionamento tattico (RAG §1). Formato compatto. */
     function formatStatsForContext(baseStats) {
       if (!baseStats || typeof baseStats !== 'object') return ''
@@ -545,7 +566,8 @@ async function buildPersonalContext(userId, lang = 'it') {
       const statsPart = statsStr ? ` | stats: ${statsStr}` : ''
       const extra = [formStr, physStr].filter(Boolean).join(' ')
       const adapt = intentionalSlotAdaptation(p.metadata) ? L.rosterSlotAdaptSuffix : ''
-      rosterLines.push(`  ${p.player_name || '?'} (${p.position || '?'}, ${styleName}, ${p.overall_rating ?? '-'}${statsPart}${extra ? ' | ' + extra : ''} | profilazione: ${prof}, competenze: ${comp}${skillsStr})${adapt}`)
+      const slotWhitelist = formatSlotWhitelistForRosterLine(p)
+      rosterLines.push(`  ${p.player_name || '?'} (${p.position || '?'}, ${styleName}, ${p.overall_rating ?? '-'}${statsPart}${extra ? ' | ' + extra : ''} | profilazione: ${prof}, competenze: ${comp}${slotWhitelist}${skillsStr})${adapt}`)
     }
     const reservesHeader = L.reserves + ':'
     rosterLines.push(reservesHeader)
@@ -561,7 +583,8 @@ async function buildPersonalContext(userId, lang = 'it') {
       const statsPart = statsStr ? ` | stats: ${statsStr}` : ''
       const extra = [formStr, physStr].filter(Boolean).join(' ')
       const adapt = intentionalSlotAdaptation(p.metadata) ? L.rosterSlotAdaptSuffix : ''
-      rosterLines.push(`  ${p.player_name || '?'} (${p.position || '?'}, ${styleName}, ${p.overall_rating ?? '-'}${statsPart}${extra ? ' | ' + extra : ''} | profilazione: ${prof}, competenze: ${comp}${skillsStr})${adapt}`)
+      const slotWhitelist = formatSlotWhitelistForRosterLine(p)
+      rosterLines.push(`  ${p.player_name || '?'} (${p.position || '?'}, ${styleName}, ${p.overall_rating ?? '-'}${statsPart}${extra ? ' | ' + extra : ''} | profilazione: ${prof}, competenze: ${comp}${slotWhitelist}${skillsStr})${adapt}`)
     }
     if (riserve.length > 15) rosterLines.push(`  ... altri ${riserve.length - 15} riserve`)
 
@@ -710,6 +733,8 @@ async function buildPersonalContext(userId, lang = 'it') {
       '',
       L.positionNote,
       '',
+      L.slotWhitelistNote,
+      '',
       L.statsNote,
       '',
       L.starters,
@@ -768,6 +793,7 @@ function buildPersonalizedPromptV2(userMessage, context, language = 'it', efootb
   const capsuleIt = `ENGINE (OBBLIGATORIO, token-budget):
 - INPUT: ROSA (stile card, stats vel/acc/res/fin/pas/tac, abilità, forma ↑/↓, h/w, competenze), MATCH/PATTERN (result, formation/stile, opponent formation, attack_areas, voti cliente, recurring_issues), COACH (competenze stile), TATTICA (stile squadra + istruzioni), RAG (limiti + movimenti/situazioni + community).
 - DISAMBIGUA RAG §5 (OBBLIGATORIO): "Linea bassa" / Deep line = ISTRUZIONE individuale negli slot SENZA palla: NON assegnabile a DC/TD/TS (mai su centrali/terzini). La "linea difensiva" della squadra (frecce, Impostazioni squadra) è un'altra meccanica: se vuoi difesa più arretrata, parla di quella o di marcatura/copertura, NON di "Linea bassa" su un DC.
+- CODICI MODULO: su ogni riga rosa c'è "slot carta: …" (whitelist DB). Per Nome (CODICE) o "metti X in …" usa solo codici di quella lista (o position iniziale / eccezione campo se presente sulla riga). Mai inventare un codice non listato.
 - MICRO-SCORE: FIT (position = competenze), COACH_OK(style>=70; contrattacco→contropiede_veloce), SPD (vel+acc+Scatto), PASS (pas+filtrante/di prima/dosato), WIN (tac+Intercettazione/Marcatura/Contrasto/Blocco), AIR_DEF (h/w+Dominio palle alte+Superiorità aerea), AIR_ATK (h/w+Colpo di testa), SUB (Riserva di lusso=Super riserva).
 - DECISIONE: scegli 1 leva principale + max 2 secondarie: (1) Fix FIT, (2) Fix mismatch coach/stile squadra, (3) Aggancia top recurring_issue, (4) 1-2 cambi titolari/riserve (vedi SOSTITUZIONI sotto), (5) 1 istruzione max 5, (6) gameplay solo "cosa fare" da §7.
 - VIETATO suggerire cambio formazione/modulo a meno che il cliente non lo chieda esplicitamente. Lavora sempre sulla formazione attuale salvata.
@@ -781,6 +807,7 @@ OUTPUT: 2-4 frasi operative, rispondi alla domanda specifica (es. tiro/passaggio
   const capsuleEn = `ENGINE (REQUIRED, token-budget):
 - INPUT: ROSTER (card style, stats spd/acc/sta/fin/pas/tac, skills, form ↑/↓, h/w, competences), MATCH/PATTERN (result, formation/style, opponent formation, attack_areas, client ratings, recurring_issues), COACH (style competence), TACTICS (team style + instructions), RAG (limits + movements/situations + community).
 - DISAMBIGUATE RAG §5 (REQUIRED): "Deep line" / Linea bassa = INDIVIDUAL instruction in WITHOUT-BALL slots: NOT assignable to CB/RB/LB (never on centre-backs/full-backs). Team defensive line depth (d-pad arrows / team settings) is a DIFFERENT mechanic: if you want a deeper block, refer to that or marking/coverage—do NOT say "Deep line on a CB".
+- MODULE CODES: each roster line has "card slots: …" (DB whitelist). For Name (CODE) or "field X as …" use only codes from that list (or opening position / field override if present on the line). Never invent a code not listed.
 - MICRO-SCORES: FIT (position = competences), COACH_OK(style>=70; contrattacco→contropiede_veloce), SPD (spd+acc+Sprint), PASS (pas+Through ball/One-touch/Weighted), WIN (tac+Interception/Man marking/Aggressive tackle/Block), AIR_DEF (h/w+High ball dominance+Aerial superiority), AIR_ATK (h/w+Heading), SUB (Luxury sub=Super sub).
 - DECISION: pick 1 main lever + max 2 secondary: (1) Fix FIT, (2) Fix coach/team-style mismatch, (3) Anchor top recurring_issue, (4) 1-2 lineup changes (see SUBSTITUTIONS below), (5) 1 instruction max 5, (6) gameplay "what to do" only from §7.
 - FORBIDDEN to suggest formation/module changes unless explicitly asked. Always work with the current saved formation.
