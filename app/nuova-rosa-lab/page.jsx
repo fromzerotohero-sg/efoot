@@ -3331,6 +3331,7 @@ export default withAuth(function NuovaRosaLabPage() {
   const [pickerResults, setPickerResults] = React.useState([])
   const [pickerTotal, setPickerTotal] = React.useState(0)
   const [pickerHasMore, setPickerHasMore] = React.useState(false)
+  const catalogLoadSeqRef = React.useRef(0)
   const [confirmModal, setConfirmModal] = React.useState(null)
   const [showPremiumEditorModal, setShowPremiumEditorModal] = React.useState(false)
   const [savingPlayerEditor, setSavingPlayerEditor] = React.useState(false)
@@ -3467,11 +3468,21 @@ export default withAuth(function NuovaRosaLabPage() {
     } catch (_) {}
   }, [])
 
+  const handlePickerSearchChange = React.useCallback((value) => {
+    catalogLoadSeqRef.current += 1
+    setPickerQuery(value)
+    setPickerResults([])
+    setPickerTotal(0)
+    setPickerHasMore(false)
+    setPickerLoading(true)
+  }, [])
+
   const loadCatalog = React.useCallback(async (slot, query = '', mode = 'slot', options = {}) => {
     if (mode !== 'reserve' && !slot) return
     const offset = Number(options.offset || 0)
     const append = !!options.append
     const sort = options.sort || 'name_asc'
+    const requestSeq = ++catalogLoadSeqRef.current
     if (append) {
       setPickerLoadingMore(true)
     } else {
@@ -3501,6 +3512,7 @@ export default withAuth(function NuovaRosaLabPage() {
         cache: 'no-store'
       })
       const data = await safeJsonResponse(response, 'Catalog load failed')
+      if (requestSeq !== catalogLoadSeqRef.current) return
       const nextResults = Array.isArray(data.results) ? data.results : []
       setPickerResults((prev) => {
         if (!append) return nextResults
@@ -3510,6 +3522,7 @@ export default withAuth(function NuovaRosaLabPage() {
       setPickerTotal(Number(data.total || 0))
       setPickerHasMore(!!data.hasMore)
     } catch (err) {
+      if (requestSeq !== catalogLoadSeqRef.current) return
       console.error('[NuovaRosaLab] catalog error:', err)
       showToast(lang === 'en' ? 'Unable to load the catalog.' : 'Impossibile caricare il catalogo.', 'error')
       if (!append) {
@@ -3518,6 +3531,7 @@ export default withAuth(function NuovaRosaLabPage() {
         setPickerHasMore(false)
       }
     } finally {
+      if (requestSeq !== catalogLoadSeqRef.current) return
       if (append) {
         setPickerLoadingMore(false)
       } else {
@@ -3545,6 +3559,7 @@ export default withAuth(function NuovaRosaLabPage() {
   }, [loadCatalog, pickerHasMore, pickerLoading, pickerLoadingMore, pickerMode, pickerQuery, pickerResults.length, pickerSort, selectedSlot])
 
   const openPickerForSlot = React.useCallback((slot) => {
+    catalogLoadSeqRef.current += 1
     setShowAssignModal(false)
     setSelectedPlayer(null)
     setSelectedSlot(slot)
@@ -3563,6 +3578,7 @@ export default withAuth(function NuovaRosaLabPage() {
       showToast(t('maxReservesReached'), 'error')
       return
     }
+    catalogLoadSeqRef.current += 1
     setSelectedSlot(null)
     setShowAssignModal(false)
     setSelectedPlayer(null)
@@ -3577,6 +3593,7 @@ export default withAuth(function NuovaRosaLabPage() {
   }, [riserve.length, showToast, t])
 
   const closePicker = React.useCallback(() => {
+    catalogLoadSeqRef.current += 1
     setPickerOpen(false)
     setPickerMode('slot')
     setPickerQuery('')
@@ -5500,7 +5517,7 @@ export default withAuth(function NuovaRosaLabPage() {
         slot={selectedSlot}
         mode={pickerMode}
         searchQuery={pickerQuery}
-        onSearchChange={setPickerQuery}
+        onSearchChange={handlePickerSearchChange}
         sort={pickerSort}
         onSortChange={setPickerSort}
         loading={pickerLoading}
