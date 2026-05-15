@@ -3,6 +3,7 @@
 import React from 'react'
 import { Menu, X, ShoppingCart, Home } from 'lucide-react'
 import CreditsBar from '@/components/CreditsBar'
+import { InstallAppPromptButton } from '@/components/InstallAppPrompt'
 import LanguageSwitch from '@/components/LanguageSwitch'
 import { useSidebar } from '@/components/SidebarContext'
 
@@ -99,6 +100,8 @@ export default function TopBar() {
           flexShrink: 0,
           justifyContent: 'flex-end'
         }}>
+          <InstallAppPromptButton />
+
           {/* CreditsBar - desktop only */}
           <div className="hidden lg:block">
             <CreditsBar />

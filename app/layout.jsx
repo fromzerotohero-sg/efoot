@@ -10,10 +10,20 @@ import { GameAnalysisModalNavProvider } from '@/components/GameAnalysisModalNavC
 export const metadata = {
   title: 'From Zero to Hero - eFootball AI Coach',
   description: 'Coach AI per eFootball: rosa, partite, analisi e consigli tattici personalizzati.',
+  applicationName: 'Zero to Hero',
+  appleWebApp: {
+    capable: true,
+    title: 'Zero to Hero',
+    statusBarStyle: 'black-translucent',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  themeColor: '#03050c',
   icons: {
-    icon: '/logo.png',
+    icon: [{ url: '/logo.png', type: 'image/png' }],
     shortcut: '/logo.png',
-    apple: '/logo.png',
+    apple: [{ url: '/logo.png', sizes: '180x180', type: 'image/png' }],
   },
 }
 

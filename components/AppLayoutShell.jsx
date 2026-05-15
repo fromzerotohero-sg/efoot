@@ -7,6 +7,7 @@ import TopBar from '@/components/TopBar'
 import BottomNavigation from '@/components/BottomNavigation'
 import AssistantChat from '@/components/AssistantChat'
 import LiveCoachLauncher from '@/components/LiveCoachLauncher'
+import InstallAppPrompt from '@/components/InstallAppPrompt'
 import PrelaunchGate from '@/components/PrelaunchGate'
 import { isPrelaunchPublicPath } from '@/lib/prelaunchRoutes'
 
@@ -45,6 +46,7 @@ export default function AppLayoutShell({ children }) {
       </div>
 
       <BottomNavigation />
+      <InstallAppPrompt />
       <LiveCoachLauncher showLauncherButton={false} />
       {!hideDefaultAssistantLauncher && <AssistantChat mode="popup" />}
     </>
