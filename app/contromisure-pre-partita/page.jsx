@@ -47,6 +47,32 @@ export default function CountermeasuresPreMatchPage() {
   const [palestraLastMatch, setPalestraLastMatch] = React.useState(null)
   const [palestraOpenLoading, setPalestraOpenLoading] = React.useState(false)
 
+  const isProcessing = extracting || generating
+  const processingCopy = React.useMemo(() => {
+    if (extracting) {
+      return {
+        kicker: lang === 'en' ? 'Reading opponent setup' : 'Lettura assetto avversario',
+        title: lang === 'en' ? 'Hero AI is extracting the formation' : 'Hero AI sta estraendo la formazione',
+        text: lang === 'en'
+          ? 'We identify formation, player slots, coach clues and playing style before creating the tactical answer.'
+          : 'Identifichiamo modulo, slot giocatori, indizi sul coach e stile di gioco prima di creare la risposta tattica.',
+        steps: lang === 'en'
+          ? ['Formation map', 'Players and coach', 'Tactical context']
+          : ['Mappa modulo', 'Giocatori e coach', 'Contesto tattico']
+      }
+    }
+    return {
+      kicker: lang === 'en' ? 'Building countermeasures' : 'Costruzione contromisure',
+      title: lang === 'en' ? 'Hero AI is turning data into a match plan' : 'Hero AI trasforma i dati in piano partita',
+      text: lang === 'en'
+        ? 'We cross the opponent shape with your pre-match logic to produce priorities, risks and actionable instructions.'
+        : 'Incrociamo struttura avversaria e logica pre-partita per produrre priorità, rischi e istruzioni operative.',
+      steps: lang === 'en'
+        ? ['Threats', 'Weak points', 'Practical CTAs']
+        : ['Minacce', 'Punti deboli', 'CTA pratiche']
+    }
+  }, [extracting, lang])
+
   const openPalestraCoach = React.useCallback(async () => {
     setPalestraOpenLoading(true)
     try {
@@ -272,9 +298,8 @@ export default function CountermeasuresPreMatchPage() {
   }
 
   return (
-    <main data-tour-id="tour-counter-intro" style={{ 
+    <main className="counter-page" data-tour-id="tour-counter-intro" style={{ 
       minHeight: '100vh', 
-      className: 'neon-card',
       padding: 'clamp(16px, 4vw, 24px)',
       paddingTop: '80px',
       color: '#fff'
@@ -322,13 +347,50 @@ export default function CountermeasuresPreMatchPage() {
         </div>
       )}
 
+      {isProcessing && (
+        <section className="counter-processing-card" role="status" aria-live="polite" aria-busy="true">
+          <div className="counter-processing-logo">
+            <span className="counter-logo-orbit" aria-hidden="true" />
+            <span className="counter-logo-scan" aria-hidden="true" />
+            <img src="/logo.png" alt="" />
+          </div>
+          <div className="counter-processing-copy">
+            <span>{processingCopy.kicker}</span>
+            <strong>{processingCopy.title}</strong>
+            <p>{processingCopy.text}</p>
+            <div className="counter-processing-steps">
+              {processingCopy.steps.map((step, index) => (
+                <em key={step}>
+                  <CheckCircle2 size={13} />
+                  {index + 1}. {step}
+                </em>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Upload Sezione */}
       {!extractedFormation && (
-        <div data-tour-id="tour-counter-upload" className="neon-card" style={{ padding: 'clamp(16px, 4vw, 24px)', marginBottom: '24px' }}>
-          <h2 style={{ fontSize: 'clamp(18px, 4vw, 20px)', fontWeight: 700, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Shield size={24} style={{ color: '#fbbf24', filter: 'drop-shadow(0 0 8px rgba(251, 191, 36, 0.8))' }} />
-            {t('uploadOpponentFormation')}
-          </h2>
+        <div data-tour-id="tour-counter-upload" className="counter-upload-card">
+          <div className="counter-upload-head">
+            <div>
+              <div className="counter-kicker">
+                <Shield size={14} />
+                {lang === 'en' ? 'Pre-match counter plan' : 'Piano contromisure pre-partita'}
+              </div>
+              <h2>{t('uploadOpponentFormation')}</h2>
+              <p>
+                {lang === 'en'
+                  ? 'Upload a clear opponent formation screenshot. The platform reads structure first, then generates concrete tactical actions.'
+                  : 'Carica uno screenshot chiaro della formazione avversaria. La piattaforma legge prima la struttura, poi genera azioni tattiche concrete.'}
+              </p>
+            </div>
+            <div className="counter-upload-logo" aria-hidden="true">
+              <span />
+              <img src="/logo.png" alt="" />
+            </div>
+          </div>
           
           {!uploadImage ? (
             <div>
@@ -363,7 +425,9 @@ export default function CountermeasuresPreMatchPage() {
                   position: 'relative'
                 }}
               >
-                <Camera size={48} style={{ marginBottom: '16px', color: '#fbbf24', filter: 'drop-shadow(0 0 12px rgba(251, 191, 36, 0.9))' }} />
+                <div className="counter-upload-icon">
+                  <Camera size={30} />
+                </div>
                 <div style={{ fontSize: 'clamp(14px, 3vw, 16px)', fontWeight: 600, marginBottom: '8px' }}>
                   {t('uploadPhoto')}
                 </div>
@@ -374,13 +438,12 @@ export default function CountermeasuresPreMatchPage() {
                   {t('countermeasuresAutoStart')}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '14px' }}>
+              <div className="counter-cta-row">
                 <button
                   type="button"
                   onClick={() => document.getElementById('counter-upload-input')?.click()}
-                  className="neon-button"
+                  className="counter-primary-cta"
                   disabled={extracting}
-                  style={{ flex: '1 1 180px', minHeight: '48px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
                   <Upload size={16} />
                   {t('upload')}
@@ -388,9 +451,8 @@ export default function CountermeasuresPreMatchPage() {
                 <button
                   type="button"
                   onClick={() => document.getElementById('counter-camera-input')?.click()}
-                  className="neon-button"
+                  className="counter-secondary-cta"
                   disabled={extracting}
-                  style={{ flex: '1 1 180px', minHeight: '48px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                 >
                   <Camera size={16} />
                   {t('cameraCaptureTitle')}
@@ -408,14 +470,14 @@ export default function CountermeasuresPreMatchPage() {
               </div>
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
                 {extracting ? (
-                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px', minHeight: '44px' }}>
-                    <RefreshCw size={20} style={{ animation: 'spin 1s linear infinite', color: 'var(--neon-orange)' }} />
+                  <div className="counter-inline-processing">
+                    <RefreshCw size={18} style={{ animation: 'spin 1s linear infinite' }} />
                     <span>{t('extracting')}</span>
                   </div>
                 ) : (
                   <button
                     onClick={() => runFullPipeline(uploadImage)}
-                    className="btn primary"
+                    className="counter-primary-cta"
                     style={{ flex: 1, minWidth: '200px' }}
                   >
                     <RefreshCw size={16} />
@@ -429,7 +491,7 @@ export default function CountermeasuresPreMatchPage() {
                     setCountermeasures(null)
                     setError(null)
                   }}
-                  className="neon-button"
+                  className="counter-secondary-cta"
                   disabled={extracting || generating}
                 >
                   <X size={16} />
@@ -1027,6 +1089,96 @@ export default function CountermeasuresPreMatchPage() {
       />
 
       <style jsx>{`
+        :global(body:has(.counter-page)) {
+          background:
+            radial-gradient(circle at 16% 8%, rgba(0, 212, 255, 0.22), transparent 28%),
+            radial-gradient(circle at 86% 14%, rgba(124, 58, 237, 0.22), transparent 30%),
+            radial-gradient(circle at 48% 96%, rgba(251, 191, 36, 0.13), transparent 32%),
+            linear-gradient(135deg, #020510 0%, #061226 40%, #030712 100%) !important;
+        }
+
+        :global(body:has(.counter-page)::before),
+        :global(body:has(.counter-page)::after) {
+          opacity: 0 !important;
+        }
+
+        .counter-page {
+          width: min(1180px, 100%);
+          margin: 0 auto;
+          position: relative;
+          isolation: isolate;
+        }
+
+        .counter-page::before {
+          content: '';
+          position: fixed;
+          inset: 0;
+          pointer-events: none;
+          z-index: -1;
+          background:
+            linear-gradient(115deg, transparent 0 16%, rgba(0, 212, 255, 0.08) 16.3% 16.7%, transparent 17% 42%, rgba(124, 58, 237, 0.08) 42.2% 42.6%, transparent 43%),
+            radial-gradient(circle at 12% 8%, rgba(0, 212, 255, 0.20), transparent 30%),
+            radial-gradient(circle at 86% 18%, rgba(168, 85, 247, 0.20), transparent 28%),
+            radial-gradient(circle at 50% 100%, rgba(52, 211, 153, 0.11), transparent 34%);
+        }
+
+        .counter-page::after {
+          content: '';
+          position: fixed;
+          inset: 0;
+          z-index: -1;
+          pointer-events: none;
+          opacity: 0.42;
+          background-image:
+            linear-gradient(rgba(0, 212, 255, 0.055) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 212, 255, 0.045) 1px, transparent 1px),
+            radial-gradient(1px 1px at 16% 24%, rgba(255,255,255,0.85), transparent),
+            radial-gradient(1px 1px at 74% 18%, rgba(0,212,255,0.9), transparent),
+            radial-gradient(1.5px 1.5px at 82% 68%, rgba(251,191,36,0.75), transparent),
+            radial-gradient(1px 1px at 32% 82%, rgba(255,255,255,0.75), transparent);
+          background-size: 58px 58px, 58px 58px, 420px 420px, 520px 520px, 640px 640px, 480px 480px;
+          mask-image: linear-gradient(180deg, black, rgba(0,0,0,0.85), transparent 94%);
+          animation: counterArenaDrift 18s linear infinite;
+        }
+
+        .counter-page :global(.neon-card) {
+          border: 1px solid rgba(0, 212, 255, 0.22) !important;
+          border-radius: 22px !important;
+          background:
+            radial-gradient(circle at top right, rgba(0, 212, 255, 0.10), transparent 34%),
+            linear-gradient(180deg, rgba(8, 12, 28, 0.94), rgba(5, 8, 20, 0.94)) !important;
+          box-shadow:
+            0 18px 46px rgba(0, 0, 0, 0.32),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.04) !important;
+          backdrop-filter: blur(16px);
+        }
+
+        .counter-page :global(.neon-card)::before {
+          opacity: 0.32;
+        }
+
+        .counter-page :global(.neon-card[data-tour-id='tour-counter-extracted']) {
+          border-color: rgba(34, 197, 94, 0.28) !important;
+          background:
+            radial-gradient(circle at top right, rgba(34, 197, 94, 0.14), transparent 34%),
+            linear-gradient(180deg, rgba(6, 26, 24, 0.94), rgba(5, 8, 20, 0.94)) !important;
+        }
+
+        .counter-page :global(.neon-card[data-tour-id='tour-counter-result']) {
+          border-color: rgba(0, 212, 255, 0.30) !important;
+          background:
+            radial-gradient(circle at top left, rgba(0, 212, 255, 0.14), transparent 32%),
+            radial-gradient(circle at bottom right, rgba(124, 58, 237, 0.10), transparent 34%),
+            linear-gradient(180deg, rgba(5, 17, 34, 0.95), rgba(5, 8, 20, 0.95)) !important;
+        }
+
+        .counter-page :global(.neon-card[data-tour-id='tour-counter-postmatch']) {
+          border-color: rgba(251, 191, 36, 0.28) !important;
+          background:
+            radial-gradient(circle at top right, rgba(251, 191, 36, 0.13), transparent 34%),
+            linear-gradient(180deg, rgba(28, 21, 10, 0.92), rgba(5, 8, 20, 0.95)) !important;
+        }
+
         @keyframes spin {
           to { transform: rotate(360deg); }
         }
@@ -1034,11 +1186,300 @@ export default function CountermeasuresPreMatchPage() {
           0%, 100% { border-color: rgba(251, 191, 36, 0.5); box-shadow: 0 0 0 rgba(251, 191, 36, 0); }
           50% { border-color: rgba(251, 191, 36, 0.8); box-shadow: 0 0 20px rgba(251, 191, 36, 0.3); }
         }
+
+        @keyframes counterArenaDrift {
+          from { transform: translate3d(0, 0, 0); }
+          to { transform: translate3d(-58px, -58px, 0); }
+        }
         .upload-area {
           animation: pulse-border 2s infinite;
         }
         .upload-area:hover {
           animation: none;
+        }
+
+        .counter-upload-card,
+        .counter-processing-card {
+          position: relative;
+          overflow: hidden;
+          border: 1px solid rgba(0, 212, 255, 0.20);
+          border-radius: 24px;
+          background:
+            radial-gradient(circle at top right, rgba(0, 212, 255, 0.16), transparent 34%),
+            radial-gradient(circle at bottom left, rgba(255, 203, 5, 0.10), transparent 32%),
+            linear-gradient(135deg, rgba(5, 10, 24, 0.96), rgba(8, 18, 34, 0.94));
+          box-shadow: 0 20px 48px rgba(0, 0, 0, 0.30), 0 0 30px rgba(0, 212, 255, 0.10);
+        }
+
+        .counter-upload-card {
+          padding: clamp(18px, 4vw, 26px);
+          margin-bottom: 24px;
+        }
+
+        .counter-upload-head {
+          position: relative;
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 18px;
+          margin-bottom: 20px;
+        }
+
+        .counter-kicker {
+          width: fit-content;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 10px;
+          padding: 6px 10px;
+          border-radius: 999px;
+          color: #67e8f9;
+          background: rgba(0, 212, 255, 0.10);
+          border: 1px solid rgba(0, 212, 255, 0.22);
+          font-size: 11px;
+          font-weight: 950;
+          letter-spacing: 0.09em;
+          text-transform: uppercase;
+        }
+
+        .counter-upload-head h2 {
+          margin: 0;
+          color: #fff;
+          font-size: clamp(24px, 5.5vw, 34px);
+          line-height: 1.03;
+          font-weight: 950;
+        }
+
+        .counter-upload-head p {
+          max-width: 68ch;
+          margin: 10px 0 0;
+          color: rgba(255, 255, 255, 0.72);
+          font-size: 14px;
+          line-height: 1.6;
+        }
+
+        .counter-upload-logo {
+          position: relative;
+          flex: 0 0 82px;
+          width: 82px;
+          height: 82px;
+          display: grid;
+          place-items: center;
+          border-radius: 24px;
+          background: radial-gradient(circle, rgba(0, 212, 255, 0.16), rgba(138, 43, 226, 0.08) 58%, transparent 76%);
+        }
+
+        .counter-upload-logo span {
+          position: absolute;
+          inset: 8px;
+          border-radius: 20px;
+          border: 1px dashed rgba(255, 255, 255, 0.22);
+          animation: counterBrandOrbit 4.2s linear infinite;
+        }
+
+        .counter-upload-logo img,
+        .counter-processing-logo img {
+          position: relative;
+          z-index: 2;
+          width: 64px;
+          max-height: 64px;
+          object-fit: contain;
+          filter: drop-shadow(0 0 12px rgba(0, 212, 255, 0.52));
+          animation: counterBrandInterference 1.2s steps(2, end) infinite;
+        }
+
+        .counter-upload-icon {
+          width: 64px;
+          height: 64px;
+          margin: 0 auto 16px;
+          display: grid;
+          place-items: center;
+          border-radius: 20px;
+          color: #06101f;
+          background: linear-gradient(135deg, #ffcb05, #f97316);
+          box-shadow: 0 0 24px rgba(255, 203, 5, 0.26);
+        }
+
+        .counter-cta-row {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
+          margin-top: 14px;
+        }
+
+        .counter-primary-cta,
+        .counter-secondary-cta {
+          min-height: 50px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 9px;
+          border-radius: 16px;
+          font-size: 14px;
+          font-weight: 900;
+          cursor: pointer;
+          transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+        }
+
+        .counter-primary-cta {
+          border: none;
+          color: #06101f;
+          background: linear-gradient(135deg, #00d4ff, #67e8f9);
+          box-shadow: 0 0 22px rgba(0, 212, 255, 0.22);
+        }
+
+        .counter-secondary-cta {
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          color: #fff;
+          background: rgba(255, 255, 255, 0.07);
+        }
+
+        .counter-primary-cta:hover,
+        .counter-secondary-cta:hover {
+          transform: translateY(-1px);
+        }
+
+        .counter-primary-cta:disabled,
+        .counter-secondary-cta:disabled {
+          cursor: not-allowed;
+          opacity: 0.62;
+          transform: none;
+        }
+
+        .counter-inline-processing {
+          flex: 1;
+          min-height: 48px;
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          color: #ffcb05;
+          font-weight: 800;
+        }
+
+        .counter-processing-card {
+          display: flex;
+          align-items: center;
+          gap: 18px;
+          padding: clamp(16px, 4vw, 22px);
+          margin-bottom: 24px;
+        }
+
+        .counter-processing-logo {
+          position: relative;
+          width: 116px;
+          height: 116px;
+          flex: 0 0 116px;
+          display: grid;
+          place-items: center;
+          border-radius: 30px;
+          background: radial-gradient(circle, rgba(0, 212, 255, 0.16), rgba(138, 43, 226, 0.08) 58%, transparent 76%);
+        }
+
+        .counter-logo-orbit {
+          position: absolute;
+          inset: 8px;
+          border-radius: 26px;
+          border: 1px dashed rgba(255, 255, 255, 0.22);
+          animation: counterBrandOrbit 3.8s linear infinite;
+        }
+
+        .counter-logo-scan {
+          position: absolute;
+          z-index: 3;
+          left: 16px;
+          right: 16px;
+          height: 2px;
+          border-radius: 999px;
+          background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.95), transparent);
+          box-shadow: 0 0 12px rgba(0, 212, 255, 0.72);
+          animation: counterBrandScan 1.35s ease-in-out infinite;
+        }
+
+        .counter-processing-copy span {
+          display: inline-flex;
+          margin-bottom: 7px;
+          color: #67e8f9;
+          font-size: 11px;
+          font-weight: 950;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+
+        .counter-processing-copy strong {
+          display: block;
+          color: #fff;
+          font-size: clamp(18px, 4vw, 24px);
+          line-height: 1.12;
+        }
+
+        .counter-processing-copy p {
+          margin: 8px 0 0;
+          color: rgba(255, 255, 255, 0.72);
+          line-height: 1.55;
+          font-size: 14px;
+        }
+
+        .counter-processing-steps {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 13px;
+        }
+
+        .counter-processing-steps em {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 7px 10px;
+          border-radius: 999px;
+          color: rgba(255, 255, 255, 0.88);
+          background: rgba(255, 255, 255, 0.07);
+          border: 1px solid rgba(255, 255, 255, 0.10);
+          font-size: 12px;
+          font-style: normal;
+          font-weight: 800;
+        }
+
+        @keyframes counterBrandOrbit {
+          to { transform: rotate(360deg); }
+        }
+
+        @keyframes counterBrandScan {
+          0% { top: 16px; opacity: 0; }
+          20%, 78% { opacity: 1; }
+          100% { top: calc(100% - 18px); opacity: 0; }
+        }
+
+        @keyframes counterBrandInterference {
+          0%, 100% { transform: translate(0, 0) skewX(0deg); opacity: 1; }
+          12% { transform: translate(-1px, 1px) skewX(-1deg); }
+          20% { transform: translate(1px, -1px) skewX(1deg); filter: drop-shadow(2px 0 rgba(255, 0, 102, 0.26)) drop-shadow(-2px 0 rgba(0, 212, 255, 0.44)); }
+          44% { transform: translate(0, 0); }
+          62% { transform: translate(-1px, 0) skewX(0.6deg); }
+        }
+
+        @media (max-width: 720px) {
+          .counter-upload-head,
+          .counter-processing-card {
+            align-items: flex-start;
+            flex-direction: column;
+          }
+
+          .counter-upload-logo {
+            width: 72px;
+            height: 72px;
+            flex-basis: 72px;
+          }
+
+          .counter-cta-row {
+            grid-template-columns: 1fr;
+          }
+
+          .counter-processing-logo {
+            width: 94px;
+            height: 94px;
+            flex-basis: 94px;
+          }
         }
       `}</style>
     </main>

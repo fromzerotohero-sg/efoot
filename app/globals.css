@@ -72,10 +72,12 @@ body {
     Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Template: stadio notturno (eFootball) + overlay scuro per leggibilità */
+  /* Premium platform background: same visual direction as Nuova Rosa */
   background:
-    linear-gradient(180deg, rgba(2, 4, 12, 0.35) 0%, rgba(2, 6, 18, 0.25) 50%, rgba(0, 4, 14, 0.45) 100%),
-    url('/backgrounds/stadium-night.png') center center / cover no-repeat fixed;
+    radial-gradient(circle at 18% 8%, rgba(0, 212, 255, 0.22), transparent 28%),
+    radial-gradient(circle at 86% 12%, rgba(124, 58, 237, 0.22), transparent 30%),
+    radial-gradient(circle at 50% 95%, rgba(251, 191, 36, 0.12), transparent 32%),
+    linear-gradient(135deg, #020510 0%, #061226 40%, #030712 100%);
   min-height: 100vh;
   color: var(--text-primary);
   position: relative;
@@ -84,69 +86,45 @@ body {
   line-height: 1.5;
 }
 
-/* Starfield Background Effect (sottile sopra template stadio) */
+/* Premium arena grid/glow layer */
 body::before {
   content: '';
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  opacity: 0.35;
+  inset: 0;
+  opacity: 0.42;
   background-image:
-    radial-gradient(1px 1px at 20px 30px, #ffffff, transparent),
-    radial-gradient(1.5px 1.5px at 40px 70px, rgba(255,255,255,0.8), transparent),
-    radial-gradient(1px 1px at 50px 90px, #ffffff, transparent),
-    radial-gradient(1.5px 1.5px at 130px 80px, rgba(0,212,255,0.8), transparent),
-    radial-gradient(2px 2px at 70px 120px, #ffffff, transparent),
-    radial-gradient(1px 1px at 150px 150px, rgba(255,255,255,0.8), transparent),
-    radial-gradient(1.5px 1.5px at 180px 40px, #ffffff, transparent),
-    radial-gradient(2px 2px at 220px 180px, rgba(0,212,255,0.8), transparent),
-    radial-gradient(1px 1px at 300px 200px, #ffffff, transparent),
-    radial-gradient(2.5px 2.5px at 350px 100px, rgba(0,212,255,0.9), transparent),
-    radial-gradient(1.5px 1.5px at 400px 250px, rgba(255,255,255,0.8), transparent),
-    radial-gradient(1px 1px at 450px 50px, #ffffff, transparent),
-    radial-gradient(2px 2px at 500px 300px, rgba(0,212,255,0.8), transparent),
-    radial-gradient(1.5px 1.5px at 550px 150px, #ffffff, transparent),
-    radial-gradient(1px 1px at 600px 200px, rgba(0,212,255,0.7), transparent),
-    radial-gradient(2.5px 2.5px at 650px 80px, rgba(255,255,255,0.8), transparent),
-    radial-gradient(1px 1px at 700px 280px, #ffffff, transparent),
-    radial-gradient(2px 2px at 750px 120px, rgba(0,212,255,0.8), transparent),
-    radial-gradient(1.5px 1.5px at 800px 350px, rgba(255,255,255,0.8), transparent),
-    radial-gradient(1px 1px at 850px 60px, #ffffff, transparent),
-    radial-gradient(2px 2px at 900px 220px, #ffffff, transparent),
-    radial-gradient(2.5px 2.5px at 950px 180px, rgba(0,212,255,0.9), transparent),
-    radial-gradient(1px 1px at 1000px 300px, rgba(255,255,255,0.8), transparent),
-    radial-gradient(1.5px 1.5px at 1050px 100px, #ffffff, transparent),
-    radial-gradient(2px 2px at 1100px 250px, rgba(0,212,255,0.7), transparent),
-    radial-gradient(1px 1px at 1150px 50px, #ffffff, transparent),
-    radial-gradient(2px 2px at 1180px 380px, rgba(255,255,255,0.8), transparent);
-  background-size: 1200px 400px;
-  animation: twinkle 3s ease-in-out infinite alternate;
+    linear-gradient(rgba(0, 212, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.045) 1px, transparent 1px),
+    radial-gradient(1px 1px at 16% 24%, rgba(255,255,255,0.85), transparent),
+    radial-gradient(1px 1px at 74% 18%, rgba(0,212,255,0.9), transparent),
+    radial-gradient(1.5px 1.5px at 82% 68%, rgba(251,191,36,0.75), transparent),
+    radial-gradient(1px 1px at 32% 82%, rgba(255,255,255,0.75), transparent);
+  background-size: 58px 58px, 58px 58px, 420px 420px, 520px 520px, 640px 640px, 480px 480px;
+  -webkit-mask-image: linear-gradient(180deg, black, rgba(0,0,0,0.85), transparent 94%);
+  mask-image: linear-gradient(180deg, black, rgba(0,0,0,0.85), transparent 94%);
+  animation: arena-drift 18s linear infinite;
   pointer-events: none;
   z-index: 0;
 }
 
-/* Nebula Glow Effects */
+/* Ambient premium glow */
 body::after {
   content: '';
   position: fixed;
-  top: -30%;
-  right: -10%;
-  width: 1000px;
-  height: 1000px;
-  background: 
-    radial-gradient(circle at center, rgba(0, 212, 255, 0.15) 0%, transparent 60%),
-    radial-gradient(circle at 80% 20%, rgba(0, 161, 166, 0.1) 0%, transparent 50%);
-  filter: blur(80px);
+  inset: 0;
+  background:
+    linear-gradient(115deg, transparent 0 17%, rgba(0, 212, 255, 0.08) 17.3% 17.7%, transparent 18% 42%, rgba(124, 58, 237, 0.08) 42.2% 42.6%, transparent 43%),
+    radial-gradient(circle at 12% 8%, rgba(0, 212, 255, 0.20), transparent 30%),
+    radial-gradient(circle at 86% 18%, rgba(168, 85, 247, 0.20), transparent 28%),
+    radial-gradient(circle at 50% 100%, rgba(52, 211, 153, 0.11), transparent 34%);
   pointer-events: none;
   z-index: 0;
   mix-blend-mode: screen;
 }
 
-@keyframes twinkle {
-  0% { opacity: 0.6; transform: scale(1); }
-  100% { opacity: 1; transform: scale(1.02); }
+@keyframes arena-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-58px, -58px, 0); }
 }
 
 /* Layout Responsive - Campo full width, pannello sotto collassabile */
