@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
+import { normalizePlayerSkillsArray } from '@/lib/playerSkillLabels'
+import { lookupPlayingStyleId, resolvePlayingStyleDbName } from '@/lib/playingStyleResolve'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -274,30 +276,51 @@ export async function PATCH(req) {
 
     } else if (player_data) {
       // Caso 2: Crea nuovo giocatore e assegna slot
-      // Usa logica simile a save-player
+      // Allinea a save-player: FK playing_styles + skill canonical EN + ruolo IT da catalogo EN
+      let playingStyleId = null
+      let resolvedRole = toText(player_data.role)
+      const playingStyleName =
+        toText(player_data.playing_style) || resolvedRole
+      if (playingStyleName) {
+        const { id, name } = await lookupPlayingStyleId(admin, playingStyleName)
+        if (id) {
+          playingStyleId = id
+          resolvedRole = name || resolvePlayingStyleDbName(playingStyleName) || resolvedRole
+        } else {
+          const mapped = resolvePlayingStyleDbName(playingStyleName)
+          if (mapped) resolvedRole = mapped
+        }
+      }
+
+      const mergedMeta =
+        player_data.metadata && typeof player_data.metadata === 'object'
+          ? { ...player_data.metadata }
+          : {}
       const playerData = {
         user_id: userId,
         player_name: toText(player_data.player_name),
         position: slotPosition || toText(player_data.position),  // NUOVO: adatta a slot (se disponibile)
         card_type: toText(player_data.card_type),
         team: toText(player_data.team),
-        overall_rating: typeof player_data.overall_rating === 'number' 
-          ? player_data.overall_rating 
+        overall_rating: typeof player_data.overall_rating === 'number'
+          ? player_data.overall_rating
           : toInt(player_data.overall_rating),
-        base_stats: player_data.base_stats && typeof player_data.base_stats === 'object' 
-          ? player_data.base_stats 
+        base_stats: player_data.base_stats && typeof player_data.base_stats === 'object'
+          ? player_data.base_stats
           : {},
-        skills: Array.isArray(player_data.skills) ? player_data.skills : [],
-        com_skills: Array.isArray(player_data.com_skills) ? player_data.com_skills : [],
+        skills: normalizePlayerSkillsArray(player_data.skills),
+        com_skills: normalizePlayerSkillsArray(player_data.com_skills),
+        role: resolvedRole,
+        playing_style_id: playingStyleId,
         slot_index: slot_index, // Assegna slot
-        // NUOVO: original_positions - salva originali dalla card
-        original_positions: Array.isArray(player_data.original_positions) 
-          ? player_data.original_positions 
-          : (player_data.position ? [{ position: player_data.position, competence: "Alta" }] : []),
+        original_positions: Array.isArray(player_data.original_positions)
+          ? player_data.original_positions
+          : (player_data.position ? [{ position: player_data.position, competence: 'Alta' }] : []),
         metadata: {
-          source: 'formation_assignment',
+          ...mergedMeta,
           saved_at: new Date().toISOString(),
-          player_face_description: player_data.player_face_description || null
+          player_face_description: player_data.player_face_description || mergedMeta.player_face_description || null,
+          ...(mergedMeta.catalog_source || mergedMeta.catalog_link_method ? {} : { source: 'formation_assignment' })
         },
         extracted_data: player_data
       }

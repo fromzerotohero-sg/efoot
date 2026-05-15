@@ -4,6 +4,7 @@ import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { normalizePlayerSkillsArray } from '@/lib/playerSkillLabels'
 import { enrichPlayerMetadataWithCardImage } from '@/lib/playerCardImage'
+import { lookupPlayingStyleId, resolvePlayingStyleDbName } from '@/lib/playingStyleResolve'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -88,18 +89,18 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Player data is required' }, { status: 400 })
     }
 
-    // Lookup playing_style_id: da player.playing_style oppure da player.role (es. "Collante" spesso arriva solo in role)
+    // Lookup playing_style_id: PESDB/catalogo in EN → nome IT in playing_styles
     let playingStyleId = null
+    let resolvedRole = toText(player.role)
     const playingStyleName = toText(player.playing_style) || toText(player.role)
     if (playingStyleName) {
-      const { data: playingStyle } = await admin
-        .from('playing_styles')
-        .select('id, name')
-        .ilike('name', playingStyleName.trim())
-        .maybeSingle()
-
-      if (playingStyle?.id) {
-        playingStyleId = playingStyle.id
+      const { id, name } = await lookupPlayingStyleId(admin, playingStyleName)
+      if (id) {
+        playingStyleId = id
+        resolvedRole = name || resolvePlayingStyleDbName(playingStyleName) || resolvedRole
+      } else {
+        const mapped = resolvePlayingStyleDbName(playingStyleName)
+        if (mapped) resolvedRole = mapped
       }
     }
 
@@ -182,7 +183,7 @@ export async function POST(req) {
       nationality: toText(player.nationality) || toText(player.region_or_nationality),
       club_name: toText(player.club_name),
       form: toText(player.form),
-      role: toText(player.role),
+      role: resolvedRole,
       playing_style_id: playingStyleId,
       current_level: toInt(player.level_current),
       level_cap: toInt(player.level_cap),

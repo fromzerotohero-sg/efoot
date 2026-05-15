@@ -4,6 +4,7 @@ import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { normalizeEfhubPosition } from '@/lib/efootballBuildRules'
 import { computePlayerFieldOverall } from '@/lib/playerOverallPipeline'
 import { normalizePlayerSkillsArray } from '@/lib/playerSkillLabels'
+import { lookupPlayingStyleId } from '@/lib/playingStyleResolve'
 
 const BASE_STATS_BUCKETS = ['attacking', 'defending', 'athleticism', 'goalkeeping']
 
@@ -175,7 +176,7 @@ export async function PATCH(req, { params }) {
 
     const { data: existingPlayer, error: existingPlayerError } = await supabase
       .from('players')
-      .select('id, player_name, position, card_type, overall_rating, age, height, weight, nationality, club_name, role, base_stats, skills, com_skills, available_boosters, photo_slots, metadata, original_positions, level_cap, current_level, development_points, position_ratings')
+      .select('id, player_name, position, card_type, overall_rating, age, height, weight, nationality, club_name, role, playing_style_id, base_stats, skills, com_skills, available_boosters, photo_slots, metadata, original_positions, level_cap, current_level, development_points, position_ratings')
       .eq('id', id)
       .eq('user_id', userId)
       .single()
@@ -259,6 +260,27 @@ export async function PATCH(req, { params }) {
     if (body.role !== undefined) {
       const nextValue = sanitizeText(body.role)
       updateData.role = nextValue || existingPlayer.role
+    }
+
+    // playing_style da catalogo/client EN: aggiorna FK + normalizza role IT (come save-player)
+    if (body.role !== undefined || body.playing_style !== undefined) {
+      const hint =
+        (body.playing_style !== undefined ? sanitizeText(body.playing_style) : '') ||
+        (body.role !== undefined ? (updateData.role != null ? String(updateData.role).trim() : '') : '') ||
+        (existingPlayer.role ? String(existingPlayer.role).trim() : '')
+      if (hint) {
+        const { id: styleRowId, name: canonicalStyleName } = await lookupPlayingStyleId(supabase, hint)
+        if (styleRowId) {
+          updateData.playing_style_id = styleRowId
+          if (canonicalStyleName) {
+            if (body.role !== undefined && sanitizeText(body.role)) {
+              updateData.role = canonicalStyleName
+            } else if (body.playing_style !== undefined && sanitizeText(body.playing_style)) {
+              updateData.role = canonicalStyleName
+            }
+          }
+        }
+      }
     }
 
     if (body.base_stats !== undefined) {

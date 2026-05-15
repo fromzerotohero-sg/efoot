@@ -6,6 +6,8 @@ import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { getRelevantSections, classifyQuestion } from '@/lib/ragHelper'
 import { deductCredits, AI_COST, handleCreditOperationError } from '@/lib/creditService'
 import { getCoachPoliciesText, getCoachSharedCoreText } from '@/lib/coachPromptRules'
+import { getPlayerStyleDisplayName } from '@/lib/playingStyleResolve'
+import { buildPlayingStyleFitWarnings, formatFitWarningsBlock } from '@/lib/playingStyleFitWarnings'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -433,11 +435,13 @@ async function buildPersonalContext(userId, lang = 'it') {
     }
 
     // Playing styles lookup
-    const { data: stylesData } = await admin.from('playing_styles').select('id, name')
+    const { data: stylesData } = await admin.from('playing_styles').select('id, name, compatible_positions')
     const stylesLookup = {}
     if (stylesData) {
       stylesData.forEach(s => { stylesLookup[s.id] = s.name || '' })
     }
+    const fitWarnings = buildPlayingStyleFitWarnings(roster, stylesData || [], lang === 'en' ? 'en' : 'it')
+    const fitBlock = formatFitWarningsBlock(fitWarnings, lang === 'en' ? 'en' : 'it')
 
     // Profilazione: card, statistiche, abilita/booster da photo_slots
     function getProfilazione(photoSlots) {
@@ -496,7 +500,7 @@ async function buildPersonalContext(userId, lang = 'it') {
 
     let rosterLines = []
     for (const p of titolari) {
-      const styleName = (p.playing_style_id && stylesLookup[p.playing_style_id]) || (p.role ? String(p.role).trim() : '') || '-'
+      const styleName = getPlayerStyleDisplayName(p, stylesLookup) || '-'
       const prof = getProfilazione(p.photo_slots)
       const comp = getCompetenze(p.original_positions)
       const statsStr = formatStatsForContext(p.base_stats)
@@ -511,7 +515,7 @@ async function buildPersonalContext(userId, lang = 'it') {
     const reservesHeader = L.reserves + ':'
     rosterLines.push(reservesHeader)
     for (const p of riserve.slice(0, 15)) {
-      const styleName = (p.playing_style_id && stylesLookup[p.playing_style_id]) || (p.role ? String(p.role).trim() : '') || '-'
+      const styleName = getPlayerStyleDisplayName(p, stylesLookup) || '-'
       const prof = getProfilazione(p.photo_slots)
       const comp = getCompetenze(p.original_positions)
       const statsStr = formatStatsForContext(p.base_stats)
@@ -661,11 +665,12 @@ async function buildPersonalContext(userId, lang = 'it') {
     }
 
     const parts = [
-      '????????????????????????????????????????????????????????????????????',
-      `?  ${L.boxTitle}                                                       ?`,
-      `?  ${L.boxSubtitle}                                                    ?`,
-      '????????????????????????????????????????????????????????????????????',
+      '======================================================================',
+      L.boxTitle,
+      L.boxSubtitle,
+      '======================================================================',
       dispositionLine,
+      ...(fitBlock ? ['', fitBlock] : []),
       '',
       L.positionNote,
       '',
@@ -729,7 +734,8 @@ function buildPersonalizedPromptV2(userMessage, context, language = 'it', efootb
 - MICRO-SCORE: FIT (position = competenze), COACH_OK(style>=70; contrattacco→contropiede_veloce), SPD (vel+acc+Scatto), PASS (pas+filtrante/di prima/dosato), WIN (tac+Intercettazione/Marcatura/Contrasto/Blocco), AIR_DEF (h/w+Dominio palle alte+Superiorità aerea), AIR_ATK (h/w+Colpo di testa), SUB (Riserva di lusso=Super riserva).
 - DECISIONE: scegli 1 leva principale + max 2 secondarie: (1) Fix FIT, (2) Fix mismatch coach/stile squadra, (3) Aggancia top recurring_issue, (4) 1-2 cambi titolari/riserve (vedi SOSTITUZIONI sotto), (5) 1 istruzione max 5, (6) gameplay solo "cosa fare" da §7.
 - VIETATO suggerire cambio formazione/modulo a meno che il cliente non lo chieda esplicitamente. Lavora sempre sulla formazione attuale salvata.
-- SOSTITUZIONI (leva 4, incrocio enterprise): (1) Sintomo da Statistiche di gioco, recurring_issues, voti partite o domanda. (2) Ruolo da rafforzare: tiro=fin+abilita tiro; passaggio=pas+abilita passaggio; difesa=tac+WIN. (3) Titolari: chi è in quel ruolo, forma, voti, stile giocatore. (4) Riserve: chi ha fin/pas/tac, abilita che compensano e stile giocatore adatto (RAG §2: es. Punta avanzata/Opportunista per finalizzazione, Regista/Classico 10 per passaggio, Collante/Anchor per difesa); posizione compatibile; incrocia con stile squadra e competenza allenatore (riassunto Tattica e Allenatore). (5) Un solo cambio concreto: Far uscire [titolare], far entrare [riserva]: [motivo da dati]. Usa sempre riassunto (Rosa stile+fin/pas/tac+abilita, Statistiche di gioco, Andamento/voti, Tattica, Allenatore, Build, Sinergie, Leve) e RAG §2/§8 quando rilevante.
+- SOSTITUZIONI (leva 4, incrocio enterprise): (1) Sintomo da Statistiche di gioco, recurring_issues, voti partite o domanda. (2) Ruolo da rafforzare: tiro=fin+abilita tiro; passaggio=pas+abilita passaggio; difesa=tac+WIN. (3) Titolari: chi è in quel ruolo, forma, voti, stile giocatore. (4) Riserve: chi ha fin/pas/tac, abilita che compensano e stile giocatore adatto (RAG §2: es. Punta avanzata/Opportunista per finalizzazione, Regista/Classico n°10/Giocatore chiave per creazione da TRQ, Collante/Anchor solo su MED per copertura); posizione compatibile con lo stile card; incrocia con stile squadra e competenza allenatore (riassunto Tattica e Allenatore). (5) Un solo cambio concreto: Far uscire [titolare], far entrare [riserva]: [motivo da dati]. Usa sempre riassunto (Rosa stile+fin/pas/tac+abilita, Statistiche di gioco, Andamento/voti, Tattica, Allenatore, Build, Sinergie, Leve) e RAG §2/§8 quando rilevante.
+- VINCOLO STILE↔RUOLO (gioco): **Collante (Anchor Man) = solo MED/DMF**. MAI suggerire Collante per TRQ/AMF/trequartista. Per TRQ usa RAG §2: Regista creativo, Classico n°10, Giocatore chiave, Senza palla, Punta arretrata, ecc. "Tra le linee" è stile CC/MED, non Collante.
 - INVERSE: sintomo?cause?leva: fasce (attack_areas wide)?esterni senza WIN/Rientro difensivo?copertura/istruzioni; attacco sterile?PASS basso o stile incoerente?regista/cambio stile/modulo; palle alte?AIR_DEF basso?DC/MED più forti+piazzati.
 - RISPOSTE PRATICHE: quando la domanda riguarda partita, matchup o correzioni concrete, preferisci frasi condizionali osservabili: "se/quando succede X, fai Y". Aggiungi se utile una azione consigliata, un passaggio/giocata consigliata, una cosa da evitare e un check rapido.
 - AVVERSARIO: usa nomi di giocatori avversari solo se sono presenti nei dati reali del contesto. Se non ci sono, parla per ruolo o zona: mediano, trequartista, ala, terzino, fascia, corridoio centrale.
@@ -740,7 +746,8 @@ OUTPUT: 2-4 frasi operative, rispondi alla domanda specifica (es. tiro/passaggio
 - MICRO-SCORES: FIT (position = competences), COACH_OK(style>=70; contrattacco→contropiede_veloce), SPD (spd+acc+Sprint), PASS (pas+Through ball/One-touch/Weighted), WIN (tac+Interception/Man marking/Aggressive tackle/Block), AIR_DEF (h/w+High ball dominance+Aerial superiority), AIR_ATK (h/w+Heading), SUB (Luxury sub=Super sub).
 - DECISION: pick 1 main lever + max 2 secondary: (1) Fix FIT, (2) Fix coach/team-style mismatch, (3) Anchor top recurring_issue, (4) 1-2 lineup changes (see SUBSTITUTIONS below), (5) 1 instruction max 5, (6) gameplay "what to do" only from §7.
 - FORBIDDEN to suggest formation/module changes unless explicitly asked. Always work with the current saved formation.
-- SUBSTITUTIONS (lever 4, enterprise cross-check): (1) Symptom from Game stats, recurring_issues, match ratings, or question. (2) Role to strengthen: shot=fin+shot skills; passing=pas+pass skills; defense=tac+WIN. (3) Starters: who is in that role, form, ratings, player style. (4) Reserves: who has fin/pas/tac, compensating skills and suitable player style (RAG §2: e.g. Adv Striker/Goal Poacher for finishing, Orchestrator/Classic 10 for passing, Anchor Man for defense); compatible position; cross-check with team style and coach competence (summary Tactics and Coach). (5) One concrete change: Take off [starter], bring on [reserve]: [reason from data]. Always use summary (Roster style+fin/pas/tac+skills, Game stats, Form/ratings, Tactics, Coach, Build, Synergies, Levers) and RAG §2/§8 when relevant.
+- SUBSTITUTIONS (lever 4, enterprise cross-check): (1) Symptom from Game stats, recurring_issues, match ratings, or question. (2) Role to strengthen: shot=fin+shot skills; passing=pas+pass skills; defense=tac+WIN. (3) Starters: who is in that role, form, ratings, player style. (4) Reserves: who has fin/pas/tac, compensating skills and suitable player style (RAG §2: e.g. Adv Striker/Goal Poacher for finishing, Orchestrator/Creative playmaker/Hole Player for AMF creation, Anchor Man **only on DM** for cover); card style must fit the slot; cross-check with team style and coach competence (summary Tactics and Coach). (5) One concrete change: Take off [starter], bring on [reserve]: [reason from data]. Always use summary (Roster style+fin/pas/tac+skills, Game stats, Form/ratings, Tactics, Coach, Build, Synergies, Levers) and RAG §2/§8 when relevant.
+- STYLE↔POSITION HARD RULE: **Anchor Man (Collante) = DM/MED only**. NEVER recommend Collante for TRQ/AMF. For AMF use RAG §2: Creative playmaker, Classic No. 10, Hole Player, Dummy Runner, Deep-Lying Forward, etc. "Hole Player / Tra le linee" styles are **not** Anchor Man.
 - INVERSE: symptom?cause?lever: wide threat (attack_areas wide)?wide players lack WIN/track back?coverage/instructions; stale attack?low PASS or mismatch style?add creator/change style/formation; aerial goals?low AIR_DEF?stronger CB/DM + set pieces.
 - PRACTICAL ANSWERS: when the question is about match situations, matchup fixes, or concrete corrections, prefer observable conditional phrasing: "if/when X happens, do Y". Add, when useful, one recommended action, one recommended pass/play, one thing to avoid, and a quick check.
 - OPPONENT DATA: use opponent player names only if they are present in real context data. Otherwise speak by role or zone: DM, AMF, winger, fullback, flank, central lane.
@@ -804,6 +811,7 @@ MAPPATURA TERMINI OBBLIGATORIA: "Link-up / Link up / linkup / Collegamento" = ca
 MECCANICHE CANCEL/SKILL AVANZATE: segui RAG §7.12. Usa prima i termini ufficiali (Super Cancel, Kick Cancel, Kick Feint, Double Touch) e tratta "tess/croqueta interrotta" solo come alias community tra parentesi.
 ANTI-EXPLOIT: vietato coaching basato su macro/script/bug abuse; non suggerire spam continuo della stessa skill. Dai sempre una variante sicura se il timing non riesce.
 INCROCI: Usa tutto il riassunto (Rosa con stile giocatore+fin/pas/tac+abilità, Statistiche di gioco, Andamento/voti, Tattica=stile squadra, Allenatore e competenze, Build, Sinergie, Leve) e RAG §2 (stili giocatore: quando serve quale, es. Punta avanzata per finalizzazione), §4 (stile squadra), §8 (abilità). Lo stile giocatore è molto importante per fit e sostituzioni.
+STILE↔POSIZIONE (DB): Se nel contesto compare "POSITION VS STILE GIOCATORE", sono mismatch reali tra slot salvato e compatibilità carta: citarli e non suggerire stili impossibili per quel ruolo (es. Collante non è una opzione TRQ).
 Risposta CONCRETA: rispondi alla domanda specifica (es. "sbaglio a tirare?" → consigli su tiro e percentuali reali; "passaggi?" → passaggio e abilità in rosa). Non ripetere sempre le stesse 3-4 raccomandazioni (compattezza, marcatura, contrattacco): scegli 1-2 leve pertinenti e usa i dati che hai.
 Per consigli pratici in partita o di matchup, preferisci la forma: trigger -> azione -> passaggio/giocata consigliata -> evita. Usa nomi dei giocatori avversari solo se compaiono nel contesto reale; altrimenti usa ruolo o zona.
 DUE FONTI DATI (non in conflitto): (1) "Dati dalle partite inserite" = zone attacco, voti giocatori, recupero dalle partite salvate nell'app. (2) "Statistiche di gioco (Analisi eFootball, ultime 10 partite)" = aggregate dalla schermata Analisi eFootball (screenshot). Usa entrambe: sono complementari (stesso giocatore da angolazioni o periodi diversi).
@@ -830,6 +838,7 @@ MANDATORY TERM MAPPING: "Link-up / Link up / linkup / Collegamento" = coach "Con
 CANCEL/SKILL ADVANCED MECHANICS: follow RAG §7.12. Use official names first (Super Cancel, Kick Cancel, Kick Feint, Double Touch) and treat "tess/croqueta interrupted" only as community aliases in parentheses.
 ANTI-EXPLOIT: never coach macro/script/bug abuse, and do not recommend continuous spam of one skill. Always provide a safer fallback option if timing is unstable.
 CROSS-CHECKS: Use the full summary (Roster with player style+fin/pas/tac+skills, Game stats, Form/ratings, Tactics=team style, Coach and competences, Build, Synergies, Levers) and RAG §2 (player styles: when to use which, e.g. Adv Striker for finishing), §4 (team style), §8 (skills). Player style is very important for fit and substitutions.
+STYLE↔POSITION (DB): If the context includes "POSITION VS PLAYER STYLE", those are real mismatches between saved slot and card compatibility—mention them and never recommend impossible styles for that role (e.g. Anchor Man is not an AMF/TRQ option).
 CONCRETE answer: answer the specific question (e.g. "am I shooting wrong?" → advice on shooting and real percentages; "passing?" → passing and roster skills). Do not repeat the same 3-4 recommendations every time (compactness, marking, counter): pick 1-2 relevant levers and use the data you have.
 For practical in-match or matchup advice, prefer: trigger -> action -> recommended pass/play -> avoid. Use opponent player names only if they appear in the real context; otherwise use role or zone labels.
 TWO DATA SOURCES (not in conflict): (1) "Data from entered matches" = attack zones, player ratings, recovery from matches saved in the app. (2) "Game stats (eFootball Analisi, last 10 matches)" = aggregates from the eFootball Analysis screen (screenshot). Use both: they are complementary (same player from different angles or time windows).

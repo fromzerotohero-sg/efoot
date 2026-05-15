@@ -27,6 +27,7 @@ import {
 import { MAX_TACCE_PER_MACRO } from '@/lib/efootballProgressionCost'
 import { PLAYER_SKILL_PRESETS, getSkillDisplayLabel, normalizePlayerSkillsArray, normalizeSkillKey } from '@/lib/playerSkillLabels'
 import { resolvePlayerCardImageUrl } from '@/lib/playerCardImage'
+import { resolvePlayingStyleDbName } from '@/lib/playingStyleResolve'
 import {
   AlertTriangle,
   ArrowRight,
@@ -113,6 +114,12 @@ function buildPlayerPayloadFromCatalog(card, slotIndex = null) {
     : {}
 
   const resolvedBoosters = resolveCatalogAvailableBoosters(payload, card)
+  const rawPlayingStyle =
+    payload.role ||
+    payload.playing_style ||
+    card.playing_style ||
+    null
+  const italianPlayingStyle = resolvePlayingStyleDbName(rawPlayingStyle)
   const metadata = {
     ...(payload.metadata && typeof payload.metadata === 'object' ? payload.metadata : {}),
     ...buildCatalogMetadata(card),
@@ -124,7 +131,8 @@ function buildPlayerPayloadFromCatalog(card, slotIndex = null) {
     player_name: payload.player_name || card.player_name,
     position: payload.position || card.position,
     card_type: payload.card_type || card.card_type,
-    role: payload.role || card.playing_style || null,
+    role: italianPlayingStyle || rawPlayingStyle || null,
+    playing_style: italianPlayingStyle || rawPlayingStyle || null,
     overall_rating:
       payload.overall_rating ??
       card.overall_level_1 ??
