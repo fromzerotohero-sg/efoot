@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
-import { 
+import {
   BookOpen,
   LayoutGrid,
   User,
@@ -15,10 +15,7 @@ import {
   BarChart3,
   Shield,
   Sparkles,
-  LogOut,
-  Menu,
-  X,
-  MessageSquare
+  LogOut
 } from 'lucide-react'
 import SidebarGuideTour from '@/components/SidebarGuideTour'
 import { useSidebar } from '@/components/SidebarContext'
@@ -28,7 +25,6 @@ export default function SidebarNew() {
   const pathname = usePathname()
   const router = useRouter()
   const { isOpen, setIsOpen } = useSidebar()
-  const [expandedMenus, setExpandedMenus] = React.useState({ home: true, profile: false, matches: false })
 
   const handleLogout = () => {
     fetch('/api/prelaunch/logout', { method: 'POST' }).catch(() => {})
@@ -45,9 +41,100 @@ export default function SidebarNew() {
     return pathname?.startsWith(href)
   }
 
+  const navSections = [
+    {
+      title: lang === 'en' ? 'START' : 'INIZIA',
+      items: [
+        { href: '/', icon: LayoutGrid, label: t('dashboard'), isActive: () => pathname === '/' },
+        { href: '/guida', icon: BookOpen, label: t('guide') }
+      ]
+    },
+    {
+      title: lang === 'en' ? 'YOUR CLUB' : 'IL TUO CLUB',
+      items: [
+        { href: '/impostazioni-profilo', icon: User, label: t('profile') },
+        { href: '/gestione-formazione', icon: UsersIcon, label: t('yourSquad') }
+      ]
+    },
+    {
+      title: lang === 'en' ? 'BEFORE THE MATCH' : 'PRIMA DEL MATCH',
+      items: [
+        { href: '/contromisure-pre-partita', icon: Shield, label: t('countermeasures') },
+        {
+          href: '/?openCardAdvisor=1',
+          icon: Sparkles,
+          label: lang === 'en' ? 'Card analysis' : 'Analisi carte',
+          variant: 'gold',
+          isActive: () => isActive('/card-advisor-lab')
+        }
+      ]
+    },
+    {
+      title: lang === 'en' ? 'AFTER THE MATCH' : 'DOPO IL MATCH',
+      items: [
+        { href: '/match', icon: Calendar, label: t('matchHistory') },
+        { href: '/grafici-comparazione', icon: BarChart3, label: t('charts') }
+      ]
+    },
+    {
+      title: lang === 'en' ? 'SUPPORT' : 'ASSISTENZA',
+      items: [
+        { type: 'tour' },
+        { href: '/gestione-profilo', icon: Wallet, label: lang === 'en' ? 'Analysis cost' : 'Costo analisi' }
+      ]
+    }
+  ]
+
+  const getItemActive = (item) => item.isActive ? item.isActive() : isActive(item.href)
+
+  const getNavItemStyle = (item, active) => {
+    const isGold = item.variant === 'gold'
+    const activeColor = isGold ? '#ffcb05' : '#00d4ff'
+    const borderColor = isGold ? 'rgba(255, 203, 5, 0.48)' : 'rgba(0, 212, 255, 0.4)'
+    const idleBorder = isGold ? 'rgba(255, 203, 5, 0.18)' : 'transparent'
+    const activeBg = isGold
+      ? 'linear-gradient(145deg, rgba(255, 203, 5, 0.18) 0%, rgba(168, 85, 247, 0.10) 100%)'
+      : 'linear-gradient(145deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 161, 166, 0.1) 100%)'
+
+    return {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
+      padding: '10px 14px',
+      borderRadius: '12px',
+      fontSize: '14px',
+      fontWeight: isGold ? 700 : 600,
+      background: active ? activeBg : (isGold ? 'rgba(255, 203, 5, 0.06)' : 'transparent'),
+      color: active ? activeColor : (isGold ? 'rgba(255, 255, 255, 0.72)' : 'rgba(255, 255, 255, 0.62)'),
+      border: `1px solid ${active ? borderColor : idleBorder}`,
+      boxShadow: active
+        ? (isGold ? '0 0 20px rgba(255, 203, 5, 0.16)' : '0 0 20px rgba(0, 212, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)')
+        : 'none',
+      transition: 'all 0.3s ease',
+      cursor: 'pointer',
+      textDecoration: 'none',
+      textShadow: active ? `0 0 10px ${isGold ? 'rgba(255, 203, 5, 0.45)' : 'rgba(0, 212, 255, 0.5)'}` : 'none'
+    }
+  }
+
+  const handleNavMouseEnter = (e, item, active) => {
+    if (active) return
+    const isGold = item.variant === 'gold'
+    e.currentTarget.style.background = isGold ? 'rgba(255, 203, 5, 0.10)' : 'rgba(0, 212, 255, 0.08)'
+    e.currentTarget.style.color = isGold ? '#ffcb05' : '#00d4ff'
+    e.currentTarget.style.borderColor = isGold ? 'rgba(255, 203, 5, 0.34)' : 'rgba(0, 212, 255, 0.25)'
+  }
+
+  const handleNavMouseLeave = (e, item, active) => {
+    if (active) return
+    const isGold = item.variant === 'gold'
+    e.currentTarget.style.background = isGold ? 'rgba(255, 203, 5, 0.06)' : 'transparent'
+    e.currentTarget.style.color = isGold ? 'rgba(255, 255, 255, 0.72)' : 'rgba(255, 255, 255, 0.62)'
+    e.currentTarget.style.borderColor = isGold ? 'rgba(255, 203, 5, 0.18)' : 'transparent'
+  }
+
   return (
     <>
-      {/* Overlay for mobile */}
       {isOpen && (
         <div
           className="lg:hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-40"
@@ -56,10 +143,9 @@ export default function SidebarNew() {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-screen w-64 
+          fixed top-0 left-0 h-screen w-64
           bg-gradient-to-b from-[rgba(13,20,40,0.95)] to-[rgba(5,12,25,0.98)]
           border-r border-[rgba(0,212,255,0.2)]
           flex flex-col z-40 transition-transform duration-300 ease-in-out
@@ -72,18 +158,17 @@ export default function SidebarNew() {
           boxShadow: '0 0 20px rgba(0, 212, 255, 0.5)'
         }}
       >
-        {/* Logo/Brand */}
         <div className="p-4 border-b border-[rgba(0,212,255,0.15)] flex justify-center items-center relative overflow-hidden">
           <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-[rgba(0,212,255,0.5)] to-transparent" />
-          <Image 
-            src="/logo.png" 
+          <Image
+            src="/logo.png"
             alt={t('appName')}
             width={240}
             height={80}
-            style={{ 
-              width: '100%', 
-              height: 'auto', 
-              maxWidth: '220px', 
+            style={{
+              width: '100%',
+              height: 'auto',
+              maxWidth: '220px',
               objectFit: 'contain',
               filter: 'drop-shadow(0 0 10px rgba(0, 212, 255, 0.3))'
             }}
@@ -91,477 +176,65 @@ export default function SidebarNew() {
           />
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-4 px-3">
-          <div className="space-y-2">
-            {/* Guida */}
-            <Link
-              href="/guida"
-              onClick={() => setIsOpen(false)}
+          <div className="space-y-5">
+            {navSections.map((section) => (
+              <div key={section.title}>
+                <div
+                  style={{
+                    padding: '0 12px 7px',
+                    fontSize: '10px',
+                    fontWeight: 900,
+                    letterSpacing: '1.5px',
+                    color: 'rgba(0, 212, 255, 0.58)',
+                    textTransform: 'uppercase'
+                  }}
+                >
+                  {section.title}
+                </div>
+
+                <div className="space-y-1">
+                  {section.items.map((item) => {
+                    if (item.type === 'tour') {
+                      return <SidebarGuideTour key="tour" onClick={() => setIsOpen(false)} />
+                    }
+
+                    const Icon = item.icon
+                    const active = getItemActive(item)
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setIsOpen(false)}
+                        style={getNavItemStyle(item, active)}
+                        onMouseEnter={(e) => handleNavMouseEnter(e, item, active)}
+                        onMouseLeave={(e) => handleNavMouseLeave(e, item, active)}
+                      >
+                        <Icon
+                          size={18}
+                          style={{
+                            filter: active || item.variant === 'gold'
+                              ? `drop-shadow(0 0 5px ${item.variant === 'gold' ? 'rgba(255, 203, 5, 0.75)' : 'rgba(0, 212, 255, 0.8)'})`
+                              : 'none'
+                          }}
+                        />
+                        <span>{item.label}</span>
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+
+            <div
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                fontSize: '14px',
-                fontWeight: 600,
-                background: isActive('/guida') 
-                  ? 'linear-gradient(145deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 161, 166, 0.1) 100%)' 
-                  : 'transparent',
-                color: isActive('/guida') ? '#00d4ff' : 'rgba(255, 255, 255, 0.6)',
-                border: isActive('/guida') 
-                  ? '1px solid rgba(0, 212, 255, 0.4)' 
-                  : '1px solid transparent',
-                boxShadow: isActive('/guida') 
-                  ? '0 0 20px rgba(0, 212, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)' 
-                  : 'none',
-                transition: 'all 0.3s ease',
-                cursor: 'pointer',
-                textDecoration: 'none',
-                textShadow: isActive('/guida') ? '0 0 10px rgba(0, 212, 255, 0.5)' : 'none'
+                height: '1px',
+                background: 'linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.3), transparent)',
+                margin: '16px 0'
               }}
-              onMouseEnter={(e) => {
-                if (!isActive('/guida')) {
-                  e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)'
-                  e.currentTarget.style.color = '#00d4ff'
-                  e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.25)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive('/guida')) {
-                  e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)'
-                  e.currentTarget.style.borderColor = 'transparent'
-                }
-              }}
-            >
-              <BookOpen size={18} style={{ filter: isActive('/guida') ? 'drop-shadow(0 0 5px rgba(0, 212, 255, 0.8))' : 'none' }} />
-              <span>{t('guide')}</span>
-            </Link>
+            />
 
-            {/* Dashboard */}
-            <Link
-              href="/"
-              onClick={() => setIsOpen(false)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                fontSize: '14px',
-                fontWeight: 600,
-                background: (isActive('/') && pathname === '/') 
-                  ? 'linear-gradient(145deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 161, 166, 0.1) 100%)' 
-                  : 'transparent',
-                color: (isActive('/') && pathname === '/') ? '#00d4ff' : 'rgba(255, 255, 255, 0.6)',
-                border: (isActive('/') && pathname === '/') 
-                  ? '1px solid rgba(0, 212, 255, 0.4)' 
-                  : '1px solid transparent',
-                boxShadow: (isActive('/') && pathname === '/') 
-                  ? '0 0 20px rgba(0, 212, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)' 
-                  : 'none',
-                transition: 'all 0.3s ease',
-                cursor: 'pointer',
-                textDecoration: 'none',
-                textShadow: (isActive('/') && pathname === '/') ? '0 0 10px rgba(0, 212, 255, 0.5)' : 'none'
-              }}
-              onMouseEnter={(e) => {
-                if (!(isActive('/') && pathname === '/')) {
-                  e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)'
-                  e.currentTarget.style.color = '#00d4ff'
-                  e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.25)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!(isActive('/') && pathname === '/')) {
-                  e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)'
-                  e.currentTarget.style.borderColor = 'transparent'
-                }
-              }}
-            >
-              <LayoutGrid size={18} style={{ filter: (isActive('/') && pathname === '/') ? 'drop-shadow(0 0 5px rgba(0, 212, 255, 0.8))' : 'none' }} />
-              <span>{t('dashboard')}</span>
-            </Link>
-
-            {/* Coach AI */}
-            <Link
-              href="/assistant"
-              onClick={() => setIsOpen(false)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                fontSize: '14px',
-                fontWeight: 600,
-                background: isActive('/assistant') 
-                  ? 'linear-gradient(145deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 161, 166, 0.1) 100%)' 
-                  : 'transparent',
-                color: isActive('/assistant') ? '#00d4ff' : 'rgba(255, 255, 255, 0.6)',
-                border: isActive('/assistant') 
-                  ? '1px solid rgba(0, 212, 255, 0.4)' 
-                  : '1px solid transparent',
-                boxShadow: isActive('/assistant') 
-                  ? '0 0 20px rgba(0, 212, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)' 
-                  : 'none',
-                transition: 'all 0.3s ease',
-                cursor: 'pointer',
-                textDecoration: 'none',
-                textShadow: isActive('/assistant') ? '0 0 10px rgba(0, 212, 255, 0.5)' : 'none'
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive('/assistant')) {
-                  e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)'
-                  e.currentTarget.style.color = '#00d4ff'
-                  e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.25)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive('/assistant')) {
-                  e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)'
-                  e.currentTarget.style.borderColor = 'transparent'
-                }
-              }}
-            >
-              <MessageSquare size={18} style={{ filter: isActive('/assistant') ? 'drop-shadow(0 0 5px rgba(0, 212, 255, 0.8))' : 'none' }} />
-              <span>{t('coachAI')}</span>
-            </Link>
-
-            {/* Profilo */}
-            <Link
-              href="/impostazioni-profilo"
-              onClick={() => setIsOpen(false)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                fontSize: '14px',
-                fontWeight: 600,
-                background: isActive('/impostazioni-profilo') 
-                  ? 'linear-gradient(145deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 161, 166, 0.1) 100%)' 
-                  : 'transparent',
-                color: isActive('/impostazioni-profilo') ? '#00d4ff' : 'rgba(255, 255, 255, 0.6)',
-                border: isActive('/impostazioni-profilo') 
-                  ? '1px solid rgba(0, 212, 255, 0.4)' 
-                  : '1px solid transparent',
-                boxShadow: isActive('/impostazioni-profilo') 
-                  ? '0 0 20px rgba(0, 212, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)' 
-                  : 'none',
-                transition: 'all 0.3s ease',
-                cursor: 'pointer',
-                textDecoration: 'none',
-                textShadow: isActive('/impostazioni-profilo') ? '0 0 10px rgba(0, 212, 255, 0.5)' : 'none'
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive('/impostazioni-profilo')) {
-                  e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)'
-                  e.currentTarget.style.color = '#00d4ff'
-                  e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.25)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive('/impostazioni-profilo')) {
-                  e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)'
-                  e.currentTarget.style.borderColor = 'transparent'
-                }
-              }}
-            >
-              <User size={18} style={{ filter: isActive('/impostazioni-profilo') ? 'drop-shadow(0 0 5px rgba(0, 212, 255, 0.8))' : 'none' }} />
-              <span>{t('profile')}</span>
-            </Link>
-
-            {/* Hero Points / Gestione profilo */}
-            <Link
-              href="/gestione-profilo"
-              onClick={() => setIsOpen(false)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                fontSize: '14px',
-                fontWeight: 600,
-                background: isActive('/gestione-profilo')
-                  ? 'linear-gradient(145deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 161, 166, 0.1) 100%)'
-                  : 'transparent',
-                color: isActive('/gestione-profilo') ? '#00d4ff' : 'rgba(255, 255, 255, 0.6)',
-                border: isActive('/gestione-profilo')
-                  ? '1px solid rgba(0, 212, 255, 0.4)'
-                  : '1px solid transparent',
-                boxShadow: isActive('/gestione-profilo')
-                  ? '0 0 20px rgba(0, 212, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-                  : 'none',
-                transition: 'all 0.3s ease',
-                cursor: 'pointer',
-                textDecoration: 'none',
-                textShadow: isActive('/gestione-profilo') ? '0 0 10px rgba(0, 212, 255, 0.5)' : 'none'
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive('/gestione-profilo')) {
-                  e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)'
-                  e.currentTarget.style.color = '#00d4ff'
-                  e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.25)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive('/gestione-profilo')) {
-                  e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)'
-                  e.currentTarget.style.borderColor = 'transparent'
-                }
-              }}
-            >
-              <Wallet size={18} style={{ filter: isActive('/gestione-profilo') ? 'drop-shadow(0 0 5px rgba(0, 212, 255, 0.8))' : 'none' }} />
-              <span>{lang === 'en' ? 'Analysis cost' : 'Costo analisi'}</span>
-            </Link>
-
-            {/* La tua squadra */}
-            <Link
-              href="/gestione-formazione"
-              onClick={() => setIsOpen(false)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                fontSize: '14px',
-                fontWeight: 600,
-                background: isActive('/gestione-formazione') 
-                  ? 'linear-gradient(145deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 161, 166, 0.1) 100%)' 
-                  : 'transparent',
-                color: isActive('/gestione-formazione') ? '#00d4ff' : 'rgba(255, 255, 255, 0.6)',
-                border: isActive('/gestione-formazione') 
-                  ? '1px solid rgba(0, 212, 255, 0.4)' 
-                  : '1px solid transparent',
-                boxShadow: isActive('/gestione-formazione') 
-                  ? '0 0 20px rgba(0, 212, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)' 
-                  : 'none',
-                transition: 'all 0.3s ease',
-                cursor: 'pointer',
-                textDecoration: 'none',
-                textShadow: isActive('/gestione-formazione') ? '0 0 10px rgba(0, 212, 255, 0.5)' : 'none'
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive('/gestione-formazione')) {
-                  e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)'
-                  e.currentTarget.style.color = '#00d4ff'
-                  e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.25)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive('/gestione-formazione')) {
-                  e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)'
-                  e.currentTarget.style.borderColor = 'transparent'
-                }
-              }}
-            >
-              <UsersIcon size={18} style={{ filter: isActive('/gestione-formazione') ? 'drop-shadow(0 0 5px rgba(0, 212, 255, 0.8))' : 'none' }} />
-              <span>{t('yourSquad')}</span>
-            </Link>
-
-            {/* Analisi Carte */}
-            <Link
-              href="/?openCardAdvisor=1"
-              onClick={() => setIsOpen(false)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                fontSize: '14px',
-                fontWeight: 700,
-                background: isActive('/card-advisor-lab')
-                  ? 'linear-gradient(145deg, rgba(255, 203, 5, 0.18) 0%, rgba(168, 85, 247, 0.10) 100%)'
-                  : 'rgba(255, 203, 5, 0.06)',
-                color: isActive('/card-advisor-lab') ? '#ffcb05' : 'rgba(255, 255, 255, 0.72)',
-                border: isActive('/card-advisor-lab')
-                  ? '1px solid rgba(255, 203, 5, 0.48)'
-                  : '1px solid rgba(255, 203, 5, 0.18)',
-                boxShadow: isActive('/card-advisor-lab') ? '0 0 20px rgba(255, 203, 5, 0.16)' : 'none',
-                transition: 'all 0.3s ease',
-                cursor: 'pointer',
-                textDecoration: 'none'
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive('/card-advisor-lab')) {
-                  e.currentTarget.style.background = 'rgba(255, 203, 5, 0.10)'
-                  e.currentTarget.style.color = '#ffcb05'
-                  e.currentTarget.style.borderColor = 'rgba(255, 203, 5, 0.34)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive('/card-advisor-lab')) {
-                  e.currentTarget.style.background = 'rgba(255, 203, 5, 0.06)'
-                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.72)'
-                  e.currentTarget.style.borderColor = 'rgba(255, 203, 5, 0.18)'
-                }
-              }}
-            >
-              <Sparkles size={18} style={{ filter: 'drop-shadow(0 0 5px rgba(255, 203, 5, 0.75))' }} />
-              <span>{lang === 'en' ? 'Card analysis' : 'Analisi carte'}</span>
-            </Link>
-
-            {/* Cronologia Partite */}
-            <Link
-              href="/match"
-              onClick={() => setIsOpen(false)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                fontSize: '14px',
-                fontWeight: 600,
-                background: isActive('/match') 
-                  ? 'linear-gradient(145deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 161, 166, 0.1) 100%)' 
-                  : 'transparent',
-                color: isActive('/match') ? '#00d4ff' : 'rgba(255, 255, 255, 0.6)',
-                border: isActive('/match') 
-                  ? '1px solid rgba(0, 212, 255, 0.4)' 
-                  : '1px solid transparent',
-                boxShadow: isActive('/match') 
-                  ? '0 0 20px rgba(0, 212, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)' 
-                  : 'none',
-                transition: 'all 0.3s ease',
-                cursor: 'pointer',
-                textDecoration: 'none',
-                textShadow: isActive('/match') ? '0 0 10px rgba(0, 212, 255, 0.5)' : 'none'
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive('/match')) {
-                  e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)'
-                  e.currentTarget.style.color = '#00d4ff'
-                  e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.25)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive('/match')) {
-                  e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)'
-                  e.currentTarget.style.borderColor = 'transparent'
-                }
-              }}
-            >
-              <Calendar size={18} style={{ filter: isActive('/match') ? 'drop-shadow(0 0 5px rgba(0, 212, 255, 0.8))' : 'none' }} />
-              <span>{t('matchHistory')}</span>
-            </Link>
-
-            {/* Grafici e Comparazione */}
-            <Link
-              href="/grafici-comparazione"
-              onClick={() => setIsOpen(false)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                fontSize: '14px',
-                fontWeight: 600,
-                background: isActive('/grafici-comparazione') 
-                  ? 'linear-gradient(145deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 161, 166, 0.1) 100%)' 
-                  : 'transparent',
-                color: isActive('/grafici-comparazione') ? '#00d4ff' : 'rgba(255, 255, 255, 0.6)',
-                border: isActive('/grafici-comparazione') 
-                  ? '1px solid rgba(0, 212, 255, 0.4)' 
-                  : '1px solid transparent',
-                boxShadow: isActive('/grafici-comparazione') 
-                  ? '0 0 20px rgba(0, 212, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)' 
-                  : 'none',
-                transition: 'all 0.3s ease',
-                cursor: 'pointer',
-                textDecoration: 'none',
-                textShadow: isActive('/grafici-comparazione') ? '0 0 10px rgba(0, 212, 255, 0.5)' : 'none'
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive('/grafici-comparazione')) {
-                  e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)'
-                  e.currentTarget.style.color = '#00d4ff'
-                  e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.25)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive('/grafici-comparazione')) {
-                  e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)'
-                  e.currentTarget.style.borderColor = 'transparent'
-                }
-              }}
-            >
-              <BarChart3 size={18} style={{ filter: isActive('/grafici-comparazione') ? 'drop-shadow(0 0 5px rgba(0, 212, 255, 0.8))' : 'none' }} />
-              <span>{t('charts')}</span>
-            </Link>
-
-            {/* Contromisure */}
-            <Link
-              href="/contromisure-pre-partita"
-              onClick={() => setIsOpen(false)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                fontSize: '14px',
-                fontWeight: 600,
-                background: isActive('/contromisure-pre-partita') 
-                  ? 'linear-gradient(145deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 161, 166, 0.1) 100%)' 
-                  : 'transparent',
-                color: isActive('/contromisure-pre-partita') ? '#00d4ff' : 'rgba(255, 255, 255, 0.6)',
-                border: isActive('/contromisure-pre-partita') 
-                  ? '1px solid rgba(0, 212, 255, 0.4)' 
-                  : '1px solid transparent',
-                boxShadow: isActive('/contromisure-pre-partita') 
-                  ? '0 0 20px rgba(0, 212, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)' 
-                  : 'none',
-                transition: 'all 0.3s ease',
-                cursor: 'pointer',
-                textDecoration: 'none',
-                textShadow: isActive('/contromisure-pre-partita') ? '0 0 10px rgba(0, 212, 255, 0.5)' : 'none'
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive('/contromisure-pre-partita')) {
-                  e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)'
-                  e.currentTarget.style.color = '#00d4ff'
-                  e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.25)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive('/contromisure-pre-partita')) {
-                  e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)'
-                  e.currentTarget.style.borderColor = 'transparent'
-                }
-              }}
-            >
-              <Shield size={18} style={{ filter: isActive('/contromisure-pre-partita') ? 'drop-shadow(0 0 5px rgba(0, 212, 255, 0.8))' : 'none' }} />
-              <span>{t('countermeasures')}</span>
-            </Link>
-
-            {/* Guida Tour - Mostrami come */}
-            <SidebarGuideTour onClick={() => setIsOpen(false)} />
-
-            {/* Divider */}
-            <div style={{ 
-              height: '1px', 
-              background: 'linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.3), transparent)',
-              margin: '16px 0' 
-            }} />
-
-            {/* Logout - Visibile su tutti i device */}
             <button
               onClick={() => {
                 setIsOpen(false)
@@ -601,48 +274,10 @@ export default function SidebarNew() {
               <LogOut size={18} style={{ filter: 'drop-shadow(0 0 3px rgba(255, 80, 80, 0.5))' }} />
               <span style={{ textShadow: '0 0 5px rgba(255, 80, 80, 0.3)' }}>{t('logout')}</span>
             </button>
-            
-            {/* Spazio extra per mobile */}
+
             <div className="lg:hidden" style={{ height: '100px' }} />
           </div>
         </nav>
-
-        {/* Bottom section - Logout - Solo Desktop */}
-        <div className="hidden lg:block p-4 border-t border-[rgba(0,212,255,0.15)] bg-[rgba(5,8,20,0.8)]">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg transition-all duration-300 group"
-            style={{ 
-              background: 'transparent',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              color: 'rgba(255, 255, 255, 0.5)',
-              fontWeight: 500,
-              fontSize: '14px',
-              letterSpacing: '0.3px'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(0, 212, 255, 0.05)';
-              e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.3)';
-              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.9)';
-              e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 212, 255, 0.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.5)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
-          >
-            <LogOut size={16} style={{ 
-              transition: 'all 0.3s ease',
-              opacity: 0.6,
-              display: 'flex',
-              alignItems: 'center',
-              marginTop: '1px'
-            }} className="group-hover:opacity-100" />
-            <span>{t('logout')}</span>
-          </button>
-        </div>
       </aside>
     </>
   )
