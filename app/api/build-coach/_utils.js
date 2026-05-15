@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
+import { efhubStatsToPlayerBaseStats, normalizeStatsToEfhub } from '@/lib/efootballBuildRules'
 import { calculateGameplayBuild } from '@/lib/gameplayBuildCoach'
 
 export async function resolveBuildCoachContext(req) {
@@ -87,7 +88,7 @@ export async function findCatalogCardForPlayer(admin, player) {
   const source = metadata.catalog_source || metadata.source || 'pesdb'
   const { data } = await admin
     .from('player_catalog')
-    .select('id, source, source_player_id, player_name, position, card_type, card_category, max_level, height, base_stats, players_payload')
+    .select('id, source, source_player_id, player_name, position, card_type, card_category, max_level, overall_max_level, height, base_stats, players_payload')
     .eq('source', source)
     .eq('source_player_id', String(sourcePlayerId))
     .limit(1)
@@ -162,15 +163,17 @@ function withFallbacks(player, catalogCard) {
   return { player: next, estimated }
 }
 
-export function buildPlayerUpdatePayload({ player, build, contextEstimated = [] }) {
+export function buildPlayerUpdatePayload({ player, build, contextEstimated = [], catalogCard = null }) {
   const now = new Date().toISOString()
   const previousMetadata = player.metadata && typeof player.metadata === 'object' ? player.metadata : {}
   const previousDevelopment = player.development_points && typeof player.development_points === 'object' ? player.development_points : {}
   const estimatedFields = Array.from(new Set([...(build.estimatedFields || []), ...contextEstimated]))
-  const originalBaseStats = previousMetadata?.build_coach?.before?.base_stats || build.sourceBaseStats || player.base_stats || {}
+  const baselineNested = efhubStatsToPlayerBaseStats(normalizeStatsToEfhub(build.baseStats))
+  const effectiveNested = efhubStatsToPlayerBaseStats(normalizeStatsToEfhub(build.finalInGameStats))
+  const catalogOverallMax = catalogCard?.overall_max_level ?? catalogCard?.players_payload?.overall_max_level
 
   return {
-    base_stats: build.finalBaseStats,
+    base_stats: baselineNested,
     overall_rating: build.afterOverall,
     level_cap: build.levelCap || player.level_cap,
     development_points: {
@@ -204,16 +207,26 @@ export function buildPlayerUpdatePayload({ player, build, contextEstimated = [] 
         warnings: build.warnings,
         before: {
           overall_rating: player.overall_rating,
-          base_stats: originalBaseStats
+          base_stats:
+            previousMetadata?.build_coach?.before?.base_stats &&
+            typeof previousMetadata.build_coach.before.base_stats === 'object' &&
+            Object.keys(previousMetadata.build_coach.before.base_stats).length > 0
+              ? previousMetadata.build_coach.before.base_stats
+              : baselineNested
         },
         after: {
           overall_rating: build.afterOverall,
-          overall_decimal: build.afterOverallDecimal
+          overall_decimal: build.afterOverallDecimal,
+          effective_base_stats: effectiveNested,
+          overall_cap: build.overallCap ?? null
         },
         boosters_considered: Boolean(build.boostersConsidered),
         coach_stat_boosts_considered: Boolean(build.coachConsidered),
         created_at: now
-      }
+      },
+      ...(catalogOverallMax != null && Number.isFinite(Number(catalogOverallMax))
+        ? { catalog_overall_max_level: Math.floor(Number(catalogOverallMax)) }
+        : {})
     },
     updated_at: now
   }
@@ -253,7 +266,12 @@ export async function calculateAndPersistPlayerBuild({ admin, userId, player, ro
     }
   }
 
-  const updatePayload = buildPlayerUpdatePayload({ player: fallback.player, build, contextEstimated: fallback.estimated })
+  const updatePayload = buildPlayerUpdatePayload({
+    player: fallback.player,
+    build,
+    contextEstimated: fallback.estimated,
+    catalogCard
+  })
 
   if (save) {
     const { error } = await admin

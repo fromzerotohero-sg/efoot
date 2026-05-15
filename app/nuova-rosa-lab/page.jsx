@@ -16,6 +16,8 @@ import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 import { getFormationNameFromSlotPositions } from '@/lib/validateFormationLimits'
 import {
   isBuildMacroBlockedForPlayer,
+  nestedBaselineStatsFromGameplayPreview,
+  nestedEffectiveStatsFromGameplayPreview,
   pickBilingualList,
   previewGameplayBuildFromSliders,
   sanitizeSliders as sanitizeBuildCoachSliders,
@@ -2806,6 +2808,14 @@ function PremiumPlayerModal({
 
     if (shouldPersistBuildPreview) {
       const preview = sliderPayloadPreview
+      const baselineNested =
+        nestedBaselineStatsFromGameplayPreview(preview) ||
+        (player.base_stats && typeof player.base_stats === 'object' && Object.keys(player.base_stats).length > 0
+          ? player.base_stats
+          : null)
+      if (baselineNested) payload.base_stats = baselineNested
+      payload.overall_rating = preview.afterOverall
+
       const now = new Date().toISOString()
       const prevDp = player.development_points || {}
       const prevBc = prevDp.build_coach || {}
@@ -2826,7 +2836,9 @@ function PremiumPlayerModal({
           ...(player.metadata?.build_coach || {}),
           after: {
             ...(player.metadata?.build_coach?.after || {}),
-            overall_rating: preview.afterOverall
+            overall_rating: preview.afterOverall,
+            overall_cap: preview.overallCap ?? null,
+            effective_base_stats: nestedEffectiveStatsFromGameplayPreview(preview)
           }
         }
       }

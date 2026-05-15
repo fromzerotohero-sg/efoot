@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
-import { computeOverallRating, normalizeEfhubPosition, normalizeStatsToEfhub } from '@/lib/efootballBuildRules'
+import { normalizeEfhubPosition } from '@/lib/efootballBuildRules'
+import { computePlayerFieldOverall } from '@/lib/playerOverallPipeline'
 import { normalizePlayerSkillsArray } from '@/lib/playerSkillLabels'
 
 const BASE_STATS_BUCKETS = ['attacking', 'defending', 'athleticism', 'goalkeeping']
@@ -319,21 +320,24 @@ export async function PATCH(req, { params }) {
     // Se il client invia un OVR (es. build guidata), rispettalo: puo includere booster/coach attivi.
     // Altrimenti ricalcola dalle sole statistiche base per i salvataggi manuali senza OVR esplicito.
     if (updateData.base_stats && body.base_stats !== undefined && body.overall_rating === undefined) {
-      const targetPosition = normalizeEfhubPosition(updateData.position || existingPlayer.position)
-      const height = body.height ?? body.height_cm ?? existingPlayer.height
-      const weakFootAccuracy = updateData.metadata?.weak_foot_accuracy || existingPlayer.metadata?.weak_foot_accuracy || 2
-      const recalculatedOverall = computeOverallRating({
-        position: targetPosition,
-        height,
-        weakFootAccuracy,
-        stats: normalizeStatsToEfhub(updateData.base_stats || existingPlayer.base_stats || {})
+      const mergedPlayer = {
+        ...existingPlayer,
+        ...updateData,
+        base_stats: updateData.base_stats,
+        development_points: updateData.development_points ?? existingPlayer.development_points,
+        available_boosters: updateData.available_boosters ?? existingPlayer.available_boosters,
+        active_booster_name: updateData.active_booster_name ?? existingPlayer.active_booster_name
+      }
+      const computed = computePlayerFieldOverall({
+        player: mergedPlayer,
+        slotPosition: updateData.position || existingPlayer.position
       })
-      if (Number.isFinite(recalculatedOverall)) {
-        updateData.overall_rating = recalculatedOverall
+      if (computed?.afterOverall != null && Number.isFinite(computed.afterOverall)) {
+        updateData.overall_rating = computed.afterOverall
         updateData.position_ratings = {
           ...(existingPlayer.position_ratings || {}),
           ...(updateData.position_ratings || {}),
-          [targetPosition]: recalculatedOverall
+          [computed.targetPosition]: computed.afterOverall
         }
       }
     }

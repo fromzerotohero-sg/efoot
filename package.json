@@ -9,7 +9,8 @@
     "dev": "next dev -p 4031",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "repair:build-coach-baseline": "node scripts/repair-build-coach-baselines.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.47.10",
