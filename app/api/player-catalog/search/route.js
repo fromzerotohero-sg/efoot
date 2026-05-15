@@ -29,6 +29,75 @@ function safeLike(value) {
   return String(value || '').replace(/[%_]/g, '').trim()
 }
 
+function normalizeSearchText(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+}
+
+function getLegacyRelevance(row, q) {
+  const needle = normalizeSearchText(q)
+  if (!needle) return 0
+  const name = normalizeSearchText(row?.player_name)
+  if (name.startsWith(needle)) return 0
+  if (name.includes(` ${needle}`)) return 1
+  if (name.includes(needle)) return 2
+  if (needle.length >= 3 && normalizeSearchText(row?.position).includes(needle)) return 3
+  if (needle.length >= 3 && normalizeSearchText(row?.card_type).includes(needle)) return 4
+  if (needle.length >= 3 && normalizeSearchText(row?.playing_style).includes(needle)) return 5
+  if (needle.length >= 3 && normalizeSearchText(row?.pack_name).includes(needle)) return 6
+  return 99
+}
+
+function sortLegacyRows(rows, { q, sort }) {
+  const sortKey = sort || 'name_asc'
+  return [...rows].sort((left, right) => {
+    const relevanceDelta = getLegacyRelevance(left, q) - getLegacyRelevance(right, q)
+    if (relevanceDelta !== 0) return relevanceDelta
+    if (sortKey === 'ovr_desc' || (sortKey === 'name_asc' && q)) {
+      const ovrDelta = Number(right?.overall_level_1 || 0) - Number(left?.overall_level_1 || 0)
+      if (ovrDelta !== 0) return ovrDelta
+    }
+    if (sortKey === 'role_asc') {
+      const roleDelta = String(left?.position || '').localeCompare(String(right?.position || ''))
+      if (roleDelta !== 0) return roleDelta
+    }
+    return String(left?.player_name || '').localeCompare(String(right?.player_name || ''))
+  })
+}
+
+function normalizeRpcCatalogResponse(data) {
+  if (!data) return null
+  if (typeof data === 'string') {
+    try {
+      return normalizeRpcCatalogResponse(JSON.parse(data))
+    } catch (_) {
+      return null
+    }
+  }
+  if (Array.isArray(data)) {
+    const first = data[0]
+    if (first?.rpc_player_catalog_search) {
+      return normalizeRpcCatalogResponse(first.rpc_player_catalog_search)
+    }
+    if (Array.isArray(first?.rows)) {
+      return {
+        rows: first.rows,
+        total: Number(first.total ?? first.rows.length)
+      }
+    }
+    return null
+  }
+  if (typeof data === 'object' && Array.isArray(data.rows)) {
+    return {
+      rows: data.rows,
+      total: Number(data.total ?? data.rows.length)
+    }
+  }
+  return null
+}
+
 /**
  * Ricerca catalogo: preferisce RPC Postgres con `unaccent` (v. migration
  * `20260513_player_catalog_search_unaccent.sql`) così "Ibrahimovic" trova
@@ -44,15 +113,15 @@ async function queryPlayerCatalog(supabase, { q, cardType, limit, offset, sort }
     p_offset: offset
   })
 
-  if (!error && data && typeof data === 'object' && Array.isArray(data.rows)) {
-    return {
-      rows: data.rows,
-      total: Number(data.total ?? data.rows.length)
-    }
+  const rpcResult = !error ? normalizeRpcCatalogResponse(data) : null
+  if (rpcResult) {
+    return rpcResult
   }
 
   if (error) {
     console.warn('[player-catalog/search] rpc_player_catalog_search:', error.message || error)
+  } else {
+    console.warn('[player-catalog/search] unexpected rpc_player_catalog_search response shape')
   }
 
   let legacy = supabase
@@ -89,13 +158,16 @@ async function queryPlayerCatalog(supabase, { q, cardType, limit, offset, sort }
   }
 
   if (q) {
-    legacy = legacy.or([
-      `player_name.ilike.%${q}%`,
-      `position.ilike.%${q}%`,
-      `card_type.ilike.%${q}%`,
-      `playing_style.ilike.%${q}%`,
-      `pack_name.ilike.%${q}%`
-    ].join(','))
+    const filters = [`player_name.ilike.%${q}%`]
+    if (q.length >= 3) {
+      filters.push(
+        `position.ilike.%${q}%`,
+        `card_type.ilike.%${q}%`,
+        `playing_style.ilike.%${q}%`,
+        `pack_name.ilike.%${q}%`
+      )
+    }
+    legacy = legacy.or(filters.join(','))
   }
 
   if (sortKey === 'ovr_desc') {
@@ -110,15 +182,24 @@ async function queryPlayerCatalog(supabase, { q, cardType, limit, offset, sort }
     legacy = legacy.order('player_name', { ascending: true, nullsFirst: false })
   }
 
-  legacy = legacy.range(offset, offset + limit - 1)
+  if (q) {
+    legacy = legacy.range(0, 4999)
+  } else {
+    legacy = legacy.range(offset, offset + limit - 1)
+  }
 
   const { data: legacyData, error: legacyError, count } = await legacy
   if (legacyError) {
     throw legacyError
   }
+  const legacyRows = legacyData || []
+  const rows = q
+    ? sortLegacyRows(legacyRows, { q, sort: sortKey }).slice(offset, offset + limit)
+    : legacyRows
+
   return {
-    rows: legacyData || [],
-    total: typeof count === 'number' ? count : (legacyData || []).length
+    rows,
+    total: typeof count === 'number' ? count : legacyRows.length
   }
 }
 
