@@ -304,34 +304,32 @@ export default function CountermeasuresPreMatchPage() {
       paddingTop: '80px',
       color: '#fff'
     }}>
-      {/* Header sticky: resta visibile su mobile quando si scrolla, così il contesto "Contromisure pre-partita" non si perde */}
+      {/* Header pagina: non fixed, così non collide con la top nav mobile. */}
       <div
+        className="counter-page-header"
         style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 50,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          flexWrap: 'wrap',
+          flexWrap: 'nowrap',
           gap: '12px',
-          padding: '12px clamp(16px, 4vw, 24px)',
-          background: 'linear-gradient(180deg, rgba(10,10,10,0.98) 0%, rgba(10,10,10,0.95) 70%, transparent 100%)',
+          marginBottom: '18px',
+          padding: '10px 12px',
+          background: 'linear-gradient(135deg, rgba(5, 10, 24, 0.92), rgba(8, 18, 34, 0.86))',
           backdropFilter: 'saturate(180%) blur(12px)',
-          borderBottom: '1px solid rgba(255, 140, 0, 0.2)',
+          border: '1px solid rgba(0, 212, 255, 0.18)',
+          borderRadius: '18px',
+          boxShadow: '0 14px 36px rgba(0, 0, 0, 0.22)',
           boxSizing: 'border-box'
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
           <button
             onClick={() => router.push('/')}
-            className="neon-button"
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}
+            className="counter-back-button"
           >
             <ArrowLeft size={18} />
-            {t('back')}
+            <span>{t('back')}</span>
           </button>
           <h1 className="neon-text" style={{ fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 700, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {t('countermeasuresLive')}
@@ -1177,6 +1175,53 @@ export default function CountermeasuresPreMatchPage() {
           background:
             radial-gradient(circle at top right, rgba(251, 191, 36, 0.13), transparent 34%),
             linear-gradient(180deg, rgba(28, 21, 10, 0.92), rgba(5, 8, 20, 0.95)) !important;
+        }
+
+        .counter-back-button {
+          min-height: 42px;
+          min-width: 42px;
+          padding: 0 13px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          flex-shrink: 0;
+          border: 1px solid rgba(0, 212, 255, 0.28);
+          border-radius: 14px;
+          color: #fff;
+          background: rgba(0, 212, 255, 0.08);
+          box-shadow: 0 0 18px rgba(0, 212, 255, 0.12);
+          font-size: 13px;
+          font-weight: 900;
+          cursor: pointer;
+        }
+
+        .counter-back-button:hover {
+          border-color: rgba(0, 212, 255, 0.48);
+          background: rgba(0, 212, 255, 0.14);
+        }
+
+        @media (max-width: 640px) {
+          .counter-page-header {
+            margin-top: 4px;
+            padding: 8px;
+          }
+
+          .counter-back-button {
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            border-radius: 15px;
+          }
+
+          .counter-back-button span {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            white-space: nowrap;
+          }
         }
 
         @keyframes spin {

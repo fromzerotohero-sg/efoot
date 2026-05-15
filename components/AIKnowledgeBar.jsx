@@ -30,7 +30,7 @@ function useIsMobile() {
  * level badges with icons, shimmer progress bar
  */
 export default function AIKnowledgeBar() {
-  const { t } = useTranslation()
+  const { t, lang } = useTranslation()
   const router = useRouter()
   const isMobile = useIsMobile()
   const [score, setScore] = useState(0)
@@ -302,39 +302,60 @@ export default function AIKnowledgeBar() {
   }
 
   return (
-    <div style={{...styles.card, padding: isMobile ? '16px' : '24px'}}>
+    <div style={{...styles.card, padding: isMobile ? '16px' : '22px'}}>
       {/* Animated border glow effect */}
       <div style={{ ...styles.cardGlow, background: currentLevel.gradient }} />
+      <div style={{ ...styles.brandAura, background: `radial-gradient(circle, ${currentLevel.glow} 0%, transparent 68%)` }} />
       
       <div style={{position: 'relative', zIndex: 1}}>
-        {/* Header row: Title + Avatar */}
-        <div style={{...styles.header, marginBottom: isMobile ? '12px' : '16px'}}>
+        {/* Header row: Title + brand mark */}
+        <div style={{...styles.header, marginBottom: isMobile ? '14px' : '18px'}}>
           <div style={styles.titleSection}>
+            <div style={{ ...styles.badgeRow, color: currentLevel.color, borderColor: `${currentLevel.color}55`, background: `${currentLevel.color}14` }}>
+              <LevelIcon size={13} />
+              <span style={styles.badgeText}>HERO INTELLIGENCE</span>
+            </div>
             <h2 style={{...styles.title, fontSize: isMobile ? '18px' : '20px'}}>{t('aiKnowledge')}</h2>
+            <p style={styles.subtitle}>
+              {isMobile
+                ? (lang === 'en' ? 'More data means sharper coaching.' : 'Più dati carichi, più il coach diventa preciso.')
+                : (lang === 'en'
+                    ? 'Measures how well Hero knows your profile, roster and matches for sharper advice.'
+                    : 'Misura quanto Hero conosce profilo, rosa e partite per darti consigli più precisi.')}
+            </p>
           </div>
           
-          {/* Avatar - sempre visibile ma più piccolo su mobile */}
+          {/* Brand mark: sostituisce il vecchio omino con il logo Hero */}
           <div style={{
-            ...styles.avatarContainer, 
-            width: isMobile ? '40px' : '56px',
-            height: isMobile ? '40px' : '56px',
-            boxShadow: `0 0 ${isMobile ? '15px' : '30px'} ${currentLevel.glow}`
+            ...styles.avatarContainer,
+            width: isMobile ? '52px' : '64px',
+            height: isMobile ? '52px' : '64px',
+            boxShadow: `0 0 ${isMobile ? '18px' : '34px'} ${currentLevel.glow}`
           }}>
             <div style={{ ...styles.avatarRing, borderColor: currentLevel.color }}>
-              <img src="/coach.jpg" alt="AI Coach" style={styles.avatar} />
+              <img src="/logo.png" alt="Hero" style={styles.avatar} />
             </div>
             <div style={{ ...styles.levelDot, background: currentLevel.gradient }} />
           </div>
         </div>
 
         {/* Score display */}
-        <div style={styles.scoreSection}>
-          <span style={{...styles.scoreValue, fontSize: isMobile ? '40px' : '48px'}}>{Math.round(animatedScore)}</span>
-          <span style={{...styles.scorePercent, fontSize: isMobile ? '20px' : '24px'}}>%</span>
+        <div style={styles.scoreRow}>
+          <div style={styles.scoreSection}>
+            <span style={{...styles.scoreValue, fontSize: isMobile ? '42px' : '50px'}}>{Math.round(animatedScore)}</span>
+            <span style={{...styles.scorePercent, fontSize: isMobile ? '18px' : '22px'}}>%</span>
+          </div>
+          <span style={{ ...styles.scoreLabel, borderColor: `${currentLevel.color}42`, color: currentLevel.color }}>
+            {score < 65
+              ? (lang === 'en' ? 'Growing' : 'In crescita')
+              : score < 85
+                ? (lang === 'en' ? 'Almost complete' : 'Quasi completo')
+                : (lang === 'en' ? 'Match ready' : 'Pronto partita')}
+          </span>
         </div>
 
         {/* Premium Progress Bar */}
-        <div style={{...styles.progressContainer, marginBottom: isMobile ? '12px' : '16px'}}>
+        <div style={{...styles.progressContainer, marginBottom: isMobile ? '14px' : '18px'}}>
           <div style={styles.progressTrack}>
             <div
               style={{
@@ -366,7 +387,7 @@ export default function AIKnowledgeBar() {
         </div>
 
         {/* Level badge */}
-        <div style={{...styles.levelSection, marginBottom: isMobile ? '0' : '16px', gap: isMobile ? '8px' : '12px'}}>
+        <div style={{...styles.levelSection, marginBottom: 0, gap: isMobile ? '8px' : '12px'}}>
           <div style={{ ...styles.levelBadge, background: `${currentLevel.color}20`, borderColor: currentLevel.color }}>
             <LevelIcon size={isMobile ? 14 : 16} color={currentLevel.color} />
             <span style={{ ...styles.levelText, color: currentLevel.color }}>
@@ -393,28 +414,39 @@ export default function AIKnowledgeBar() {
 const styles = {
   card: {
     position: 'relative',
-    background: 'rgba(10, 14, 28, 0.6)',
+    background: 'linear-gradient(145deg, rgba(6, 12, 30, 0.92), rgba(13, 18, 43, 0.86))',
     backdropFilter: 'blur(20px)',
     WebkitBackdropFilter: 'blur(20px)',
-    borderRadius: '20px',
-    border: '1px solid rgba(0, 212, 255, 0.2)',
+    borderRadius: '24px',
+    border: '1px solid rgba(0, 212, 255, 0.28)',
     overflow: 'hidden',
-    marginBottom: '24px',
+    marginBottom: '18px',
+    boxShadow: '0 24px 70px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255,255,255,0.08)',
   },
   cardGlow: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: '2px',
+    height: '3px',
     opacity: 0.8,
+  },
+  brandAura: {
+    position: 'absolute',
+    width: '180px',
+    height: '180px',
+    right: '-70px',
+    top: '-76px',
+    opacity: 0.46,
+    filter: 'blur(4px)',
+    pointerEvents: 'none',
   },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: '12px',
-    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: '16px',
+    flexWrap: 'nowrap',
   },
   titleSection: {
     display: 'flex',
@@ -424,26 +456,37 @@ const styles = {
     minWidth: '0',
   },
   badgeRow: {
-    display: 'flex',
+    display: 'inline-flex',
     alignItems: 'center',
-    gap: '6px',
+    gap: '7px',
+    width: 'fit-content',
+    padding: '6px 10px',
+    border: '1px solid',
+    borderRadius: '999px',
+    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.07)',
   },
   badgeText: {
     fontSize: '10px',
-    fontWeight: '700',
-    letterSpacing: '1.5px',
-    color: 'var(--neon-cyan)',
-    opacity: 0.8,
+    fontWeight: '900',
+    letterSpacing: '1.2px',
+    color: 'currentColor',
   },
   title: {
     margin: 0,
-    fontWeight: '700',
+    fontWeight: '900',
     color: '#FFFFFF',
     letterSpacing: '-0.5px',
   },
+  subtitle: {
+    margin: 0,
+    maxWidth: '420px',
+    color: 'rgba(255,255,255,0.66)',
+    fontSize: '13px',
+    lineHeight: 1.45,
+  },
   avatarContainer: {
     position: 'relative',
-    borderRadius: '50%',
+    borderRadius: '22px',
     transition: 'all 0.3s ease',
     flexShrink: 0,
   },
@@ -460,31 +503,39 @@ const styles = {
   avatarRing: {
     width: '100%',
     height: '100%',
-    borderRadius: '50%',
+    borderRadius: '22px',
     border: '2px solid',
-    padding: '2px',
+    padding: '5px',
+    background: 'radial-gradient(circle at 35% 25%, rgba(255,255,255,0.22), rgba(0, 212, 255, 0.08) 38%, rgba(5, 8, 20, 0.72) 100%)',
     transition: 'all 0.3s ease',
   },
   avatar: {
     width: '100%',
     height: '100%',
-    borderRadius: '50%',
-    objectFit: 'cover',
+    borderRadius: '17px',
+    objectFit: 'contain',
+    filter: 'drop-shadow(0 0 10px rgba(0, 212, 255, 0.55))',
   },
   levelDot: {
     position: 'absolute',
-    bottom: '0',
-    right: '0',
-    width: '14px',
-    height: '14px',
+    bottom: '-1px',
+    right: '-1px',
+    width: '15px',
+    height: '15px',
     borderRadius: '50%',
     border: '2px solid rgba(10, 14, 28, 0.8)',
+  },
+  scoreRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '12px',
+    marginBottom: '14px',
   },
   scoreSection: {
     display: 'flex',
     alignItems: 'baseline',
     gap: '2px',
-    marginBottom: '16px',
   },
   scoreValue: {
     fontWeight: '800',
@@ -499,20 +550,33 @@ const styles = {
     fontWeight: '600',
     color: 'rgba(255,255,255,0.5)',
   },
+  scoreLabel: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    minHeight: '30px',
+    padding: '6px 10px',
+    border: '1px solid',
+    borderRadius: '999px',
+    background: 'rgba(255,255,255,0.045)',
+    fontSize: '12px',
+    fontWeight: '800',
+    whiteSpace: 'nowrap',
+  },
   progressContainer: {
     position: 'relative',
   },
   progressTrack: {
     width: '100%',
-    height: '8px',
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderRadius: '4px',
+    height: '9px',
+    backgroundColor: 'rgba(2, 6, 18, 0.74)',
+    borderRadius: '999px',
     overflow: 'hidden',
     position: 'relative',
+    boxShadow: 'inset 0 1px 4px rgba(0,0,0,0.45)',
   },
   progressFill: {
     height: '100%',
-    borderRadius: '4px',
+    borderRadius: '999px',
     transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)',
     position: 'relative',
     overflow: 'hidden',
@@ -554,11 +618,11 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '6px',
-    padding: '6px 12px',
-    borderRadius: '20px',
+    padding: '7px 12px',
+    borderRadius: '999px',
     border: '1px solid',
     fontSize: '13px',
-    fontWeight: '600',
+    fontWeight: '800',
     whiteSpace: 'nowrap',
   },
   levelText: {
