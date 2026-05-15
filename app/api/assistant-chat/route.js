@@ -6,6 +6,7 @@ import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { getRelevantSections, classifyQuestion } from '@/lib/ragHelper'
 import { deductCredits, AI_COST, handleCreditOperationError } from '@/lib/creditService'
 import { getCoachPoliciesText, getCoachSharedCoreText } from '@/lib/coachPromptRules'
+import { getSkillDisplayLabel } from '@/lib/playerSkillLabels'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -493,6 +494,12 @@ async function buildPersonalContext(userId, lang = 'it') {
       .filter(p => p.slot_index != null && p.slot_index >= 0 && p.slot_index <= 10)
       .sort((a, b) => (Number(a.slot_index) || 0) - (Number(b.slot_index) || 0))
     const riserve = roster.filter(p => p.slot_index == null)
+    const skillLang = lang === 'en' ? 'en' : 'it'
+    const skillsRosterPrefix = lang === 'en' ? ' skills: ' : ' abilità: '
+    const formatSkillsForContext = (arr) =>
+      (Array.isArray(arr) ? arr : [])
+        .map((s) => getSkillDisplayLabel(s, skillLang))
+        .filter(Boolean)
 
     let rosterLines = []
     for (const p of titolari) {
@@ -503,7 +510,7 @@ async function buildPersonalContext(userId, lang = 'it') {
       const formStr = formatFormForContext(p.form)
       const physStr = formatPhysForContext(p.height, p.weight)
       const skillsArr = [...(Array.isArray(p.skills) ? p.skills : []), ...(Array.isArray(p.com_skills) ? p.com_skills : [])].slice(0, 5)
-      const skillsStr = skillsArr.length > 0 ? ` abilità: ${skillsArr.join(', ')}` : ''
+      const skillsStr = skillsArr.length > 0 ? `${skillsRosterPrefix}${formatSkillsForContext(skillsArr).join(', ')}` : ''
       const statsPart = statsStr ? ` | stats: ${statsStr}` : ''
       const extra = [formStr, physStr].filter(Boolean).join(' ')
       rosterLines.push(`  ${p.player_name || '?'} (${p.position || '?'}, ${styleName}, ${p.overall_rating ?? '-'}${statsPart}${extra ? ' | ' + extra : ''} | profilazione: ${prof}, competenze: ${comp}${skillsStr})`)
@@ -518,7 +525,7 @@ async function buildPersonalContext(userId, lang = 'it') {
       const formStr = formatFormForContext(p.form)
       const physStr = formatPhysForContext(p.height, p.weight)
       const skillsArr = [...(Array.isArray(p.skills) ? p.skills : []), ...(Array.isArray(p.com_skills) ? p.com_skills : [])].slice(0, 5)
-      const skillsStr = skillsArr.length > 0 ? ` abilità: ${skillsArr.join(', ')}` : ''
+      const skillsStr = skillsArr.length > 0 ? `${skillsRosterPrefix}${formatSkillsForContext(skillsArr).join(', ')}` : ''
       const statsPart = statsStr ? ` | stats: ${statsStr}` : ''
       const extra = [formStr, physStr].filter(Boolean).join(' ')
       rosterLines.push(`  ${p.player_name || '?'} (${p.position || '?'}, ${styleName}, ${p.overall_rating ?? '-'}${statsPart}${extra ? ' | ' + extra : ''} | profilazione: ${prof}, competenze: ${comp}${skillsStr})`)
