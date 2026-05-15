@@ -728,6 +728,73 @@ export default function ImpostazioniProfiloPage() {
         </div>
       </div>
 
+      {/* Sezione: Personalizzazione Coach */}
+      <div data-tour-id="tour-profile-coach-personalization" className="profile-coach-personalization">
+        <div className="profile-section-heading">
+          <Brain size={20} color="#00d4ff" />
+          <div>
+            <h2>{lang === 'en' ? 'Coach personalization' : 'Personalizzazione Coach'}</h2>
+            <p>
+              {lang === 'en'
+                ? 'Choose how the coach talks to you. These details change the tone and memory of chat and live coach.'
+                : 'Scegli come il coach parla con te. Questi dettagli cambiano tono e memoria di chat e live coach.'}
+            </p>
+          </div>
+        </div>
+
+        <div className="profile-personalization-grid">
+          <div>
+            <label>
+              {lang === 'en' ? 'What should the coach call you?' : 'Come vuoi che ti chiami?'}
+            </label>
+            <input
+              type="text"
+              value={profile.first_name}
+              onChange={(e) => setProfile(prev => ({ ...prev, first_name: e.target.value }))}
+              placeholder={t('placeholderYourName')}
+              maxLength={255}
+            />
+          </div>
+
+          <div>
+            <label>
+              {lang === 'en' ? 'Coach name' : 'Nome del tuo coach'}
+            </label>
+            <input
+              type="text"
+              value={profile.ai_name}
+              onChange={(e) => setProfile(prev => ({ ...prev, ai_name: e.target.value }))}
+              placeholder={t('aiNamePlaceholder')}
+              maxLength={255}
+            />
+          </div>
+        </div>
+
+        <div style={{ marginTop: '16px' }}>
+          <label>
+            {lang === 'en' ? 'Coach memory note' : 'Nota memoria per il coach'}
+          </label>
+          <textarea
+            value={profile.how_to_remember}
+            onChange={(e) => setProfile(prev => ({ ...prev, how_to_remember: e.target.value }))}
+            placeholder={t('howToRememberPlaceholder')}
+            maxLength={1000}
+            rows={4}
+          />
+        </div>
+
+        <div className="profile-personalization-actions">
+          <button
+            onClick={() => handleSave(lang === 'en' ? 'Coach personalization' : 'Personalizzazione Coach')}
+            disabled={saving}
+            className="profile-save-button"
+          >
+            <Save size={18} />
+            {saving ? t('saving') : t('save')}
+          </button>
+        </div>
+      </div>
+
       {/* Bottone Completa Profilo */}
       <button
         data-tour-id="tour-profile-complete"
@@ -979,12 +1046,73 @@ export default function ImpostazioniProfiloPage() {
         }
 
         .profile-page :global([data-tour-id='tour-profile-personal']),
-        .profile-page :global([data-tour-id='tour-profile-game']) {
+        .profile-page :global([data-tour-id='tour-profile-game']),
+        .profile-coach-personalization {
           border: 1px solid rgba(0, 212, 255, 0.14) !important;
           border-radius: 22px !important;
           background:
             linear-gradient(135deg, rgba(10, 18, 38, 0.96), rgba(13, 25, 48, 0.82)) !important;
           box-shadow: 0 14px 42px rgba(0, 0, 0, 0.24) !important;
+        }
+
+        .profile-coach-personalization {
+          padding: 20px;
+          margin-bottom: 24px;
+        }
+
+        .profile-section-heading {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          margin-bottom: 18px;
+        }
+
+        .profile-section-heading h2 {
+          margin: 0 0 5px;
+          color: #fff;
+          font-size: 18px;
+          font-weight: 800;
+        }
+
+        .profile-section-heading p {
+          margin: 0;
+          color: rgba(255, 255, 255, 0.62);
+          font-size: 13px;
+          line-height: 1.5;
+        }
+
+        .profile-personalization-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 14px;
+        }
+
+        .profile-personalization-actions {
+          display: flex;
+          justify-content: flex-end;
+          margin-top: 16px;
+        }
+
+        .profile-save-button {
+          min-height: 46px;
+          padding: 12px 18px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          border: none;
+          border-radius: 14px;
+          color: #001018;
+          background: linear-gradient(135deg, #00d4ff, #67e8f9);
+          font-size: 15px;
+          font-weight: 900;
+          cursor: pointer;
+          box-shadow: 0 0 22px rgba(0, 212, 255, 0.20);
+        }
+
+        .profile-save-button:disabled {
+          cursor: not-allowed;
+          opacity: 0.65;
         }
 
         .profile-page :global(input),
@@ -1054,6 +1182,10 @@ export default function ImpostazioniProfiloPage() {
           .profile-metric-grid {
             grid-template-columns: 1fr;
           }
+
+          .profile-personalization-grid {
+            grid-template-columns: 1fr;
+          }
         }
 
         @media (max-width: 640px) {
@@ -1075,6 +1207,11 @@ export default function ImpostazioniProfiloPage() {
 
           .profile-page :global(button) {
             min-height: 46px;
+          }
+
+          .profile-personalization-actions,
+          .profile-save-button {
+            width: 100%;
           }
         }
       `}</style>

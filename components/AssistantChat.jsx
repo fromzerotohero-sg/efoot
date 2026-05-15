@@ -26,6 +26,7 @@ export default function AssistantChat({
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [userProfile, setUserProfile] = useState(null)
+  const [setupContext, setSetupContext] = useState(null)
   const [lastSuggestions, setLastSuggestions] = useState([]) // 3 suggerimenti cliccabili dopo ogni risposta
   const [suggestionsExpanded, setSuggestionsExpanded] = useState(false) // riquadro suggerimenti collassato = più spazio chat
   const [isListening, setIsListening] = useState(false)
@@ -212,6 +213,56 @@ export default function AssistantChat({
     if (page.includes('allenatori')) return ['Quale stile abbinare al mio allenatore con la rosa?', 'Le mie statistiche di gioco sono adatte ai giocatori che ho?', 'Quali priorità con questo allenatore?']
     return ['Le mie statistiche di analisi sono adatte alla rosa che ho?', 'Uso i comandi (passaggio, tiro, difesa) in modo coerente con le abilità della rosa?', 'In base a partite e dati, su cosa mi conviene lavorare prima?']
   }, [currentPage, lang, initialSuggestionsOverride])
+
+  const chatSetupCta = useMemo(() => {
+    const profile = setupContext?.profile || userProfile || {}
+    const players = Array.isArray(setupContext?.players) ? setupContext.players : []
+    const startersCount = players.filter(player => Number.isInteger(player?.slot_index) && player.slot_index >= 0 && player.slot_index <= 10).length
+    const hasProfile = !!(profile?.first_name || profile?.team_name || profile?.current_division || profile?.profile_completion_score > 0)
+    const hasRoster = startersCount >= 11
+    const hasGameAnalysis = !!(setupContext?.gameAnalysis?.captured_at || setupContext?.gameAnalysis?.stats)
+    const items = [
+      {
+        id: 'profile',
+        done: hasProfile,
+        label: lang === 'en' ? 'Profile' : 'Profilo',
+        text: lang === 'en' ? 'Tell the coach who you are.' : 'Dici al coach chi sei.',
+        cta: lang === 'en' ? 'Complete profile' : 'Completa profilo',
+        action: () => { if (typeof window !== 'undefined') window.location.href = '/impostazioni-profilo' }
+      },
+      {
+        id: 'roster',
+        done: hasRoster,
+        label: lang === 'en' ? 'Roster' : 'Rosa',
+        text: lang === 'en' ? `${Math.min(startersCount, 11)}/11 starters saved.` : `${Math.min(startersCount, 11)}/11 titolari salvati.`,
+        cta: lang === 'en' ? 'Open roster' : 'Apri rosa',
+        action: () => { if (typeof window !== 'undefined') window.location.href = '/nuova-rosa-lab' }
+      },
+      {
+        id: 'game-analysis',
+        done: hasGameAnalysis,
+        label: lang === 'en' ? 'Game stats' : 'Statistiche di gioco',
+        text: lang === 'en' ? 'Most important for advice on shot, passing and defence.' : 'Fondamentali per consigli su tiro, passaggi e difesa.',
+        cta: lang === 'en' ? 'Upload stats' : 'Carica statistiche',
+        action: () => {
+          if (typeof window === 'undefined') return
+          if (currentPage === '/') {
+            window.dispatchEvent(new CustomEvent('open-game-analysis-modal'))
+          } else {
+            window.location.href = '/?openGameAnalysis=1'
+          }
+          setIsOpen(false)
+        }
+      }
+    ]
+    const missing = items.filter(item => !item.done)
+    return {
+      items,
+      missing,
+      shouldShow: missing.length > 0,
+      primary: missing.find(item => item.id === 'game-analysis') || missing[0]
+    }
+  }, [currentPage, lang, setupContext, userProfile])
   
   // Carica profilo utente al mount
   useEffect(() => {
@@ -239,18 +290,16 @@ export default function AssistantChat({
         // Or if custom token, we might need to rely on API or assume basic profile if not fetchable directly
         // Ideally we should use an API that supports the custom token
         
-        if (token && localStorage.getItem('auth_token')) {
-           // Custom token path: fetch from dashboard API which includes profile
-           const res = await fetch('/api/dashboard', {
-             headers: { 'Authorization': `Bearer ${token}` }
-           })
-           if (res.ok) {
-             const data = await res.json()
-             if (data.profile) {
-               setUserProfile(data.profile)
-               handleGreeting(data.profile)
-             }
-           }
+        const dashboardRes = await fetch('/api/dashboard', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        if (dashboardRes.ok) {
+          const data = await dashboardRes.json()
+          setSetupContext(data)
+          if (data.profile) {
+            setUserProfile(data.profile)
+            handleGreeting(data.profile)
+          }
         } else {
            // Fallback or Supabase session: try to use API first if token available, 
            // otherwise (if really needed) we could fallback to supabase but we want to avoid it.
@@ -603,14 +652,18 @@ export default function AssistantChat({
     )
   }
   
-  // Sfondo chat: immagine centrata (bicycle kick neon) + overlay per leggibilità
-  const chatBgImage = "url('/backgrounds/chat-bicycle.png')"
-  const chatBgOverlay = 'linear-gradient(180deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.88) 100%)'
+  // Sfondo chat: brand hero con logo vibrante al posto del giocatore.
+  const chatBgOverlay = [
+    'radial-gradient(circle at 50% 24%, rgba(0,212,255,0.22), transparent 30%)',
+    'radial-gradient(circle at 50% 42%, rgba(138,43,226,0.14), transparent 42%)',
+    'linear-gradient(180deg, rgba(0,0,0,0.74) 0%, rgba(0,0,0,0.90) 100%)'
+  ].join(', ')
   const chatBgCommon = {
-    backgroundImage: `${chatBgOverlay}, ${chatBgImage}`,
+    backgroundImage: chatBgOverlay,
     backgroundPosition: 'center',
     backgroundSize: 'cover',
-    backgroundRepeat: 'no-repeat'
+    backgroundRepeat: 'no-repeat',
+    isolation: 'isolate'
   }
 
   // Stile per modalità page (full-screen) vs popup
@@ -663,7 +716,138 @@ export default function AssistantChat({
           })
   
   return (
-    <div style={containerStyle} className={isMobilePopup ? 'assistantchat-mobile' : undefined}>
+    <div style={containerStyle} className={`assistantchat-shell ${isMobilePopup ? 'assistantchat-mobile' : ''}`}>
+      <style jsx>{`
+        .assistantchat-shell > :not(.assistantchat-brand-bg) {
+          position: relative;
+          z-index: 1;
+        }
+
+        .assistantchat-brand-bg {
+          position: absolute;
+          inset: 74px 0 96px;
+          display: grid;
+          place-items: start center;
+          padding-top: 18px;
+          pointer-events: none;
+          z-index: 0;
+          overflow: hidden;
+        }
+
+        .assistantchat-brand-bg::before {
+          content: '';
+          position: absolute;
+          width: 360px;
+          height: 360px;
+          top: -6px;
+          border-radius: 50%;
+          border: 1px solid rgba(0, 212, 255, 0.22);
+          box-shadow:
+            0 0 42px rgba(0, 212, 255, 0.16),
+            inset 0 0 46px rgba(138, 43, 226, 0.12);
+          animation: assistantBrandPulse 2.2s ease-in-out infinite;
+        }
+
+        .assistantchat-brand-bg::after {
+          content: '';
+          position: absolute;
+          width: 320px;
+          height: 320px;
+          top: 14px;
+          border-radius: 50%;
+          border: 1px dashed rgba(255, 255, 255, 0.16);
+          animation: assistantBrandOrbit 6s linear infinite;
+        }
+
+        .assistantchat-brand-logo-wrap {
+          position: relative;
+          width: 140px;
+          height: 140px;
+          display: grid;
+          place-items: center;
+          border-radius: 34px;
+          background: radial-gradient(circle, rgba(0, 212, 255, 0.14), rgba(138, 43, 226, 0.08) 58%, transparent 74%);
+          opacity: 0.88;
+        }
+
+        .assistantchat-brand-logo-wrap::before,
+        .assistantchat-brand-logo-wrap::after {
+          content: '';
+          position: absolute;
+          inset: 16px;
+          border-radius: 28px;
+          border: 1px solid rgba(0, 212, 255, 0.28);
+          box-shadow: 0 0 24px rgba(0, 212, 255, 0.18);
+        }
+
+        .assistantchat-brand-logo-wrap::after {
+          inset: 6px;
+          border-color: rgba(255, 203, 5, 0.16);
+          animation: assistantBrandPulse 1.8s ease-in-out infinite;
+        }
+
+        .assistantchat-brand-logo-wrap img {
+          position: relative;
+          z-index: 2;
+          width: 108px;
+          max-height: 108px;
+          object-fit: contain;
+          filter:
+            drop-shadow(0 0 13px rgba(0, 212, 255, 0.52))
+            drop-shadow(0 0 25px rgba(138, 43, 226, 0.26));
+          animation: assistantBrandInterference 1.15s steps(2, end) infinite;
+        }
+
+        .assistantchat-brand-orbit {
+          position: absolute;
+          inset: 7px;
+          border-radius: 30px;
+          border: 1px dashed rgba(255, 255, 255, 0.20);
+          animation: assistantBrandOrbit 3.8s linear infinite;
+        }
+
+        .assistantchat-brand-scanline {
+          position: absolute;
+          z-index: 3;
+          left: 18px;
+          right: 18px;
+          height: 2px;
+          border-radius: 999px;
+          background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.95), transparent);
+          box-shadow: 0 0 12px rgba(0, 212, 255, 0.72);
+          animation: assistantBrandScan 1.35s ease-in-out infinite;
+        }
+
+        @keyframes assistantBrandInterference {
+          0%, 100% { transform: translate(0, 0) skewX(0deg); opacity: 1; }
+          12% { transform: translate(-1px, 1px) skewX(-1deg); }
+          20% { transform: translate(1px, -1px) skewX(1deg); filter: drop-shadow(2px 0 rgba(255, 0, 102, 0.30)) drop-shadow(-2px 0 rgba(0, 212, 255, 0.48)); }
+          44% { transform: translate(0, 0); }
+          62% { transform: translate(-1px, 0) skewX(0.6deg); }
+        }
+
+        @keyframes assistantBrandScan {
+          0% { top: 18px; opacity: 0; }
+          20%, 78% { opacity: 1; }
+          100% { top: calc(100% - 20px); opacity: 0; }
+        }
+
+        @keyframes assistantBrandOrbit {
+          to { transform: rotate(360deg); }
+        }
+
+        @keyframes assistantBrandPulse {
+          0%, 100% { transform: scale(1); opacity: 0.72; }
+          50% { transform: scale(1.045); opacity: 1; }
+        }
+      `}</style>
+      <div className="assistantchat-brand-bg" aria-hidden="true">
+        <div className="assistantchat-brand-logo-wrap">
+          <span className="assistantchat-brand-orbit" />
+          <span className="assistantchat-brand-scanline" />
+          <img src="/logo.png" alt="" />
+        </div>
+      </div>
       {isMobilePopup && (
         <style jsx global>{`
           .assistantchat-mobile {
@@ -786,6 +970,75 @@ export default function AssistantChat({
                 ? 'Specific questions → better answers. Use suggestions or ask your own!' 
                 : 'Domande specifiche → risposte migliori. Usa i suggerimenti o chiedi tu!'}
             </div>
+            {chatSetupCta.shouldShow && (
+              <div style={{
+                marginTop: '16px',
+                padding: '14px',
+                border: '1px solid rgba(0, 212, 255, 0.28)',
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.10), rgba(255, 203, 5, 0.06))',
+                textAlign: 'left'
+              }}>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '10px' }}>
+                  <Sparkles size={18} color="#00d4ff" style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <div>
+                    <strong style={{ display: 'block', color: '#fff', fontSize: '14px', marginBottom: '3px' }}>
+                      {lang === 'en' ? 'Make my advice personal' : 'Rendi i consigli davvero tuoi'}
+                    </strong>
+                    <span style={{ display: 'block', color: 'rgba(255,255,255,0.68)', fontSize: '12px', lineHeight: 1.45 }}>
+                      {lang === 'en'
+                        ? 'You can ask now, but with profile, roster and game stats I stop being generic.'
+                        : 'Puoi chiedere anche ora, ma con profilo, rosa e statistiche smetto di essere generico.'}
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gap: '7px', marginBottom: '12px' }}>
+                  {chatSetupCta.items.map(item => (
+                    <div key={item.id} style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      gap: '10px',
+                      padding: '8px 10px',
+                      borderRadius: '12px',
+                      border: `1px solid ${item.done ? 'rgba(34,197,94,0.28)' : item.id === 'game-analysis' ? 'rgba(255,203,5,0.34)' : 'rgba(255,255,255,0.08)'}`,
+                      background: item.done ? 'rgba(34,197,94,0.08)' : 'rgba(0,0,0,0.18)'
+                    }}>
+                      <div style={{ minWidth: 0 }}>
+                        <span style={{ display: 'block', color: item.done ? '#86efac' : '#fff', fontSize: '12px', fontWeight: 800 }}>
+                          {item.done ? '✓ ' : ''}{item.label}
+                        </span>
+                        <small style={{ display: 'block', color: 'rgba(255,255,255,0.58)', fontSize: '11px', lineHeight: 1.35 }}>
+                          {item.text}
+                        </small>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {chatSetupCta.primary && (
+                  <button
+                    type="button"
+                    onClick={chatSetupCta.primary.action}
+                    style={{
+                      width: '100%',
+                      minHeight: '40px',
+                      border: 'none',
+                      borderRadius: '12px',
+                      background: chatSetupCta.primary.id === 'game-analysis'
+                        ? 'linear-gradient(135deg, #ffcb05, #f97316)'
+                        : 'linear-gradient(135deg, #00d4ff, #67e8f9)',
+                      color: '#06101f',
+                      fontSize: '13px',
+                      fontWeight: 900,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {chatSetupCta.primary.cta}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
         {/* Mostra suggerimenti iniziali anche dopo il saluto (nessun messaggio utente ancora) — no typing */}
@@ -799,6 +1052,45 @@ export default function AssistantChat({
             </div>
           )
         })()}
+        {messages.length > 0 && chatSetupCta.shouldShow && chatSetupCta.primary && (
+          <div style={{
+            alignSelf: 'stretch',
+            padding: '12px',
+            border: '1px solid rgba(255, 203, 5, 0.28)',
+            borderRadius: '14px',
+            background: 'linear-gradient(135deg, rgba(255,203,5,0.11), rgba(0,212,255,0.08))'
+          }}>
+            <strong style={{ display: 'block', color: '#fff', fontSize: '13px', marginBottom: '4px' }}>
+              {chatSetupCta.primary.id === 'game-analysis'
+                ? (lang === 'en' ? 'Missing game stats' : 'Mancano le statistiche di gioco')
+                : (lang === 'en' ? 'Missing setup data' : 'Mancano dati per personalizzare')}
+            </strong>
+            <span style={{ display: 'block', color: 'rgba(255,255,255,0.68)', fontSize: '12px', lineHeight: 1.45, marginBottom: '10px' }}>
+              {lang === 'en'
+                ? 'I can answer anyway, but this step makes the coach much more precise.'
+                : 'Posso rispondere comunque, ma questo passaggio rende il coach molto più preciso.'}
+            </span>
+            <button
+              type="button"
+              onClick={chatSetupCta.primary.action}
+              style={{
+                minHeight: '36px',
+                padding: '0 14px',
+                border: 'none',
+                borderRadius: '999px',
+                background: chatSetupCta.primary.id === 'game-analysis'
+                  ? 'linear-gradient(135deg, #ffcb05, #f97316)'
+                  : 'linear-gradient(135deg, #00d4ff, #67e8f9)',
+                color: '#06101f',
+                fontSize: '12px',
+                fontWeight: 900,
+                cursor: 'pointer'
+              }}
+            >
+              {chatSetupCta.primary.cta}
+            </button>
+          </div>
+        )}
         
         {messages.map((msg, idx) => (
           <div key={idx} style={{ 
