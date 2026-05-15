@@ -7,6 +7,8 @@ import { InstallAppPromptButton } from '@/components/InstallAppPrompt'
 import LanguageSwitch from '@/components/LanguageSwitch'
 import { useSidebar } from '@/components/SidebarContext'
 
+const HOME_DASHBOARD_URL = 'https://home.fromzerotohero.io/dashboard'
+
 export default function TopBar() {
   const { isOpen, setIsOpen } = useSidebar()
 
@@ -63,12 +65,14 @@ export default function TopBar() {
             {isOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
 
-          {/* Home icon */}
+          {/* Home → Command Center (stessa scheda, ecosistema FZTH) */}
           <button
             type="button"
-            onClick={() => window.open('https://fromzerotohero.io/', '_self')}
-            aria-label="Vai alla Home FromZeroToHero"
-            title="Vai alla Home"
+            onClick={() => {
+              window.location.assign(HOME_DASHBOARD_URL)
+            }}
+            aria-label="Vai alla dashboard From Zero to Hero"
+            title="Command Center"
             style={{
               display: 'flex',
               alignItems: 'center',
