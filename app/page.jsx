@@ -1033,71 +1033,112 @@ function HomePage() {
           >
             <div style={{ position: 'absolute', inset: '-40% -20% auto auto', width: '280px', height: '280px', borderRadius: '999px', background: 'rgba(255, 203, 5, 0.16)', filter: 'blur(18px)' }} />
             <div style={{ position: 'absolute', inset: 'auto auto -35% -15%', width: '260px', height: '260px', borderRadius: '999px', background: 'rgba(0, 212, 255, 0.14)', filter: 'blur(18px)' }} />
-            <div className="card-advisor-preview-copy" style={{ textAlign: 'center', marginBottom: '24px' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 13px', borderRadius: '999px', background: 'rgba(255, 203, 5, 0.12)', border: '1px solid rgba(255, 203, 5, 0.28)', color: '#ffcb05', fontWeight: 800, fontSize: '13px', marginBottom: '14px', position: 'relative' }}>
+            <button
+              type="button"
+              onClick={() => setShowCardAdvisorModal(false)}
+              aria-label={lang === 'en' ? 'Close card analysis preview' : 'Chiudi anteprima analisi carte'}
+              style={{
+                position: 'absolute',
+                top: '14px',
+                right: '14px',
+                width: '36px',
+                height: '36px',
+                borderRadius: '12px',
+                border: '1px solid rgba(255,255,255,0.14)',
+                background: 'rgba(255,255,255,0.06)',
+                color: 'rgba(255,255,255,0.78)',
+                cursor: 'pointer',
+                zIndex: 2,
+                fontSize: '22px',
+                lineHeight: 1
+              }}
+            >
+              ×
+            </button>
+            <div className="card-advisor-preview-copy" style={{ textAlign: 'center', marginBottom: '22px', paddingTop: '4px' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 13px', borderRadius: '999px', background: 'linear-gradient(135deg, rgba(255, 203, 5, 0.18), rgba(0, 212, 255, 0.12))', border: '1px solid rgba(255, 203, 5, 0.34)', color: '#ffcb05', fontWeight: 900, fontSize: '13px', marginBottom: '14px', position: 'relative', boxShadow: '0 0 18px rgba(255, 203, 5, 0.16)' }}>
                 <Zap size={15} />
                 {lang === 'en' ? 'New card releases' : 'Nuove carte uscite'}
               </div>
-              <h2 style={{ fontSize: 'clamp(28px, 6vw, 42px)', lineHeight: 1.02, fontWeight: 900, color: '#FFFFFF', margin: '0 0 12px 0', position: 'relative' }}>
-                {lang === 'en' ? 'Find out if a new card is really worth it' : 'Scopri se una nuova carta vale davvero'}
+              <h2 style={{ fontSize: 'clamp(26px, 6vw, 40px)', lineHeight: 1.02, fontWeight: 950, color: '#FFFFFF', margin: '0 0 12px 0', position: 'relative', letterSpacing: '-0.04em' }}>
+                {lang === 'en' ? 'Open Card Advisor' : 'Apri Card Advisor'}
               </h2>
-              <p style={{ margin: 0, fontSize: 'clamp(15px, 2.8vw, 17px)', color: 'rgba(255,255,255,0.8)', lineHeight: 1.7, position: 'relative' }}>
+              <p style={{ margin: '0 auto', maxWidth: '560px', fontSize: 'clamp(15px, 2.8vw, 17px)', color: 'rgba(255,255,255,0.78)', lineHeight: 1.65, position: 'relative' }}>
                 {lang === 'en'
-                  ? 'We do not judge cards only by overall. We compare the new releases with your real roster, your team needs, and your performance data to tell you whether to sign, skip, or keep as rotation.'
-                  : 'Non giudichiamo le carte solo dall’overall. Le confrontiamo con la tua rosa reale, le tue esigenze e le tue performance per dirti se prenderle, saltarle o usarle solo come rotazione.'}
+                  ? 'Compare new releases with your real roster and get a clear verdict: sign, skip, or rotation.'
+                  : 'Confronta le nuove carte con la tua rosa reale e ricevi un verdetto chiaro: prendi, salta o rotazione.'}
               </p>
             </div>
-            <div className="card-advisor-access-status" style={{ position: 'relative', maxWidth: '440px', margin: '0 auto 12px', display: 'grid', gap: '10px' }}>
-              <div style={{ textAlign: 'center', color: '#ffcb05', fontSize: '13px', fontWeight: 800 }}>
-                {lang === 'en' ? 'Available now' : 'Disponibile ora'}
-              </div>
-            </div>
-            <div className="card-advisor-access-actions" style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', position: 'relative', marginBottom: '18px' }}>
+            <div className="card-advisor-access-actions" style={{ display: 'grid', gap: '12px', justifyItems: 'center', position: 'relative', margin: '0 auto 18px', maxWidth: '520px' }}>
               <button
                 type="button"
                 onClick={openCardAdvisor}
-                className="neon-button"
+                className="btn primary"
                 style={{
-                  minHeight: '52px',
-                  padding: '13px 20px',
+                  width: '100%',
+                  minHeight: '64px',
+                  padding: '16px 22px',
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '9px',
-                  background: 'linear-gradient(135deg, rgba(255, 203, 5, 0.22), rgba(168, 85, 247, 0.20), rgba(0, 212, 255, 0.18))',
-                  borderColor: 'rgba(255, 203, 5, 0.42)',
+                  gap: '12px',
+                  background: 'linear-gradient(135deg, #ffcb05 0%, #00d4ff 48%, #8a2be2 100%)',
+                  border: '1px solid rgba(255, 255, 255, 0.35)',
+                  borderColor: 'rgba(255, 255, 255, 0.35)',
                   color: '#FFFFFF',
-                  fontWeight: 900,
-                  boxShadow: '0 0 24px rgba(255, 203, 5, 0.18)',
-                  cursor: 'pointer'
+                  fontWeight: 950,
+                  fontSize: 'clamp(15px, 3.8vw, 18px)',
+                  letterSpacing: '-0.01em',
+                  borderRadius: '18px',
+                  boxShadow: '0 0 28px rgba(255, 203, 5, 0.38), 0 0 34px rgba(0, 212, 255, 0.26), inset 0 1px 0 rgba(255,255,255,0.35)',
+                  cursor: 'pointer',
+                  transform: 'translateZ(0)',
+                  textShadow: '0 1px 12px rgba(3, 5, 12, 0.45)'
                 }}
               >
-                <BarChart3 size={18} />
-                {lang === 'en' ? 'Enter card analysis' : 'Entra nell’analisi carte'}
+                <span
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '12px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'rgba(3, 5, 12, 0.24)',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22)'
+                  }}
+                >
+                  <BarChart3 size={20} />
+                </span>
+                <span>{lang === 'en' ? 'Start Card Advisor now' : 'Avvia Card Advisor ora'}</span>
+                <ArrowRight size={20} />
               </button>
               <button
                 type="button"
                 onClick={backToEntryChoice}
-                className="neon-button"
                 style={{
-                  minHeight: '46px',
-                  padding: '11px 16px',
-                  background: 'rgba(255,255,255,0.035)',
-                  borderColor: 'rgba(255,255,255,0.12)',
-                  color: 'rgba(255,255,255,0.72)'
+                  minHeight: '38px',
+                  padding: '8px 12px',
+                  background: 'transparent',
+                  border: 0,
+                  color: 'rgba(255,255,255,0.58)',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  textUnderlineOffset: '4px'
                 }}
               >
                 {lang === 'en' ? 'Back' : 'Indietro'}
               </button>
             </div>
-            <div className="card-advisor-benefit-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '0', position: 'relative' }}>
+            <div className="card-advisor-benefit-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px', margin: '0 auto', maxWidth: '620px', position: 'relative' }}>
               {[
                 lang === 'en' ? 'Fit with starters and bench' : 'Fit con titolari e panchina',
                 lang === 'en' ? 'Reads your weaknesses and priorities' : 'Legge debolezze e priorità',
                 lang === 'en' ? 'Clear verdict: sign, skip, rotation' : 'Verdetto chiaro: prendi, salta, rotazione'
               ].map((item) => (
-                <div key={item} style={{ padding: '13px', borderRadius: '16px', background: 'rgba(255,255,255,0.045)', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.86)', fontSize: '13px', lineHeight: 1.45 }}>
-                  <CheckCircle2 size={15} style={{ color: '#34C759', marginBottom: '8px' }} />
+                <div key={item} style={{ display: 'flex', alignItems: 'center', gap: '9px', padding: '11px 12px', borderRadius: '14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(0, 212, 255, 0.14)', color: 'rgba(255,255,255,0.82)', fontSize: '13px', lineHeight: 1.35 }}>
+                  <CheckCircle2 size={15} style={{ color: '#34C759', flexShrink: 0 }} />
                   <div>{item}</div>
                 </div>
               ))}
