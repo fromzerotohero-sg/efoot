@@ -103,6 +103,7 @@ const copy = {
     allCards: 'Tutte le carte',
     activePacks: 'Cerca nel catalogo',
     packScrollHint: 'Scorri pack',
+    packTypeAll: 'Catalogo completo',
     searchPlaceholder: 'Cerca giocatore, ruolo o pack...',
     cardsAvailable: 'carte disponibili',
     noCardsFound: 'Nessuna carta trovata con questi filtri.',
@@ -220,6 +221,7 @@ const copy = {
     allCards: 'All cards',
     activePacks: 'Search catalog',
     packScrollHint: 'Scroll packs',
+    packTypeAll: 'Full catalog',
     searchPlaceholder: 'Search player, role, or pack...',
     cardsAvailable: 'cards available',
     noCardsFound: 'No cards found with these filters.',
@@ -419,9 +421,56 @@ function makeRelease(id, name, date, category, rows, status = 'active') {
     id,
     name,
     date,
+    category,
     status,
     cards: rows.map(([playerName, overall, position, style]) => makeCard(playerName, overall, position, category, style))
   }
+}
+
+function getReleaseCategory(release) {
+  if (release?.category) return String(release.category).trim()
+  const fromCard = release?.cards?.[0]?.category
+  if (fromCard) return String(fromCard).trim()
+  const name = String(release?.name || '')
+  if (/standout/i.test(name)) return 'Standout'
+  if (/highlight/i.test(name)) return 'Highlight'
+  if (/selection/i.test(name)) return 'Selection'
+  if (/collaboration|collab/i.test(name)) return 'Collaboration'
+  if (/encore/i.test(name)) return 'Encore'
+  if (/j1\s*league/i.test(name)) return 'J1 League'
+  if (/brasileir/i.test(name)) return 'Brasileirao'
+  if (/worldwide/i.test(name)) return 'Worldwide Clubs'
+  return 'Pack'
+}
+
+function getReleaseTabTitle(release) {
+  const name = String(release?.name || '').trim()
+  const category = getReleaseCategory(release)
+  if (!name) return category
+  let title = name.replace(new RegExp(`^${category}\\s+`, 'i'), '').trim() || name
+  title = title
+    .replace(/\s*25-26\s*season'?s?\s*best/gi, " '25-26")
+    .replace(/\s+campaign\s+\d{4}/gi, '')
+    .replace(/\s+selection\s+/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (title.length > 42) title = `${title.slice(0, 40).trim()}…`
+  return title
+}
+
+function ReleaseTabButton({ active, title, typeLabel, onClick }) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      className={`release-tab${active ? ' is-active' : ''}`}
+      onClick={onClick}
+    >
+      <span className="release-tab-type">{typeLabel}</span>
+      <strong className="release-tab-title">{title}</strong>
+    </button>
+  )
 }
 
 const releases = [
@@ -1275,15 +1324,6 @@ export default withAuth(function CardAdvisorLabPage() {
   const [selectedId, setSelectedId] = React.useState(cards[0]?.id)
   const [detailsCardId, setDetailsCardId] = React.useState(null)
 
-  const scrollReleaseTabs = React.useCallback(() => {
-    const node = releaseTabsRef.current
-    if (!node) return
-    node.scrollBy({
-      left: Math.max(180, Math.round(node.clientWidth * 0.72)),
-      behavior: 'smooth'
-    })
-  }, [])
-
   React.useEffect(() => {
     setSelectedId(cards[0]?.id)
   }, [cards])
@@ -1473,9 +1513,8 @@ export default withAuth(function CardAdvisorLabPage() {
       <section className="release-shell">
         <div className="release-header">
           <div className="release-header-copy">
-            <span className="mini-kicker">{labels.releaseTitle}</span>
             <div className="release-title-row">
-              <h2>{selectedRelease.name}</h2>
+              <h2>{labels.releaseTitle}</h2>
               <RosterLinkedChip labels={labels} rosterSummary={rosterSummary} />
             </div>
             <p className="release-source-note">{labels.sourceNote}</p>
@@ -1490,44 +1529,30 @@ export default withAuth(function CardAdvisorLabPage() {
                 placeholder={labels.searchPlaceholder}
               />
             </label>
-            <div className="release-count">
-              <strong>{cards.length}</strong>
-              <span>{labels.cardsAvailable}</span>
-            </div>
+            <p className="release-result-count" aria-live="polite">
+              <strong>{cards.length}</strong> {labels.cardsAvailable}
+            </p>
           </div>
         </div>
 
         <div className="release-tabs-shell">
           <div ref={releaseTabsRef} className="release-tabs" role="tablist" aria-label={labels.releaseTitle}>
-            <button
-              type="button"
-              className={releaseId === 'all' ? 'active' : ''}
+            <ReleaseTabButton
+              active={releaseId === 'all'}
+              title={labels.allCards}
+              typeLabel={labels.packTypeAll}
               onClick={() => setReleaseId('all')}
-            >
-              <strong>{labels.allCards}</strong>
-              <span>{activeReleases.reduce((sum, release) => sum + release.cards.length, 0)}</span>
-            </button>
+            />
             {activeReleases.map(release => (
-              <button
+              <ReleaseTabButton
                 key={release.id}
-                type="button"
-                className={releaseId === release.id ? 'active' : ''}
+                active={releaseId === release.id}
+                title={getReleaseTabTitle(release)}
+                typeLabel={release.status === 'needs_review' ? labels.needsSourceReview : getReleaseCategory(release)}
                 onClick={() => setReleaseId(release.id)}
-              >
-                <strong>{release.name}</strong>
-                <span>{release.status === 'needs_review' ? labels.needsSourceReview : `${release.cards.length} ${labels.cardsAvailable}`}</span>
-              </button>
+              />
             ))}
           </div>
-          <button
-            type="button"
-            className="release-tabs-hint"
-            onClick={scrollReleaseTabs}
-            aria-label={labels.packScrollHint}
-          >
-            <span>{labels.packScrollHint}</span>
-            <ChevronRight size={14} />
-          </button>
         </div>
 
         <RosterStatusPanel
@@ -1646,7 +1671,6 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .hero-badges span,
-        .release-tabs button,
         .stat-pill,
         .score-row span {
           display: inline-flex;
@@ -1794,26 +1818,20 @@ export default withAuth(function CardAdvisorLabPage() {
           box-shadow: 0 0 18px rgba(0,212,255,0.12);
         }
 
-        .release-count {
-          min-width: 112px;
-          border: 1px solid rgba(255,255,255,0.10);
-          border-radius: 14px;
-          background: rgba(255,255,255,0.05);
-          padding: 9px 12px;
-        }
-
-        .release-count strong {
-          display: block;
-          color: #fff;
-          font-size: 22px;
-          line-height: 1;
-        }
-
-        .release-count span {
-          display: block;
-          margin-top: 4px;
+        .release-result-count {
+          margin: 0;
+          align-self: flex-end;
           color: rgba(255,255,255,0.58);
-          font-size: 11px;
+          font-size: 12px;
+          line-height: 1.35;
+          text-align: right;
+          white-space: nowrap;
+        }
+
+        .release-result-count strong {
+          color: #fff;
+          font-size: 15px;
+          font-weight: 800;
         }
 
         .release-tabs-shell {
@@ -1834,106 +1852,86 @@ export default withAuth(function CardAdvisorLabPage() {
           background: linear-gradient(90deg, transparent, rgba(5,8,20,0.92));
         }
 
-        .release-tabs-hint {
-          position: static;
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          align-self: flex-end;
-          margin-top: 8px;
-          border: 1px solid rgba(0,212,255,0.16);
-          border-radius: 999px;
-          background: rgba(2,4,12,0.42);
-          color: rgba(255,255,255,0.64);
-          font-size: 11px;
-          font-weight: 700;
-          letter-spacing: 0.02em;
-          padding: 4px 8px;
-          cursor: pointer;
-        }
-
-        .release-tabs-hint svg {
-          transition: transform 0.18s ease;
-        }
-
-        .release-tabs-hint:hover,
-        .release-tabs-hint:focus-visible {
-          color: #fff;
-          border-color: rgba(0,212,255,0.32);
-          background: rgba(0,212,255,0.08);
-          outline: none;
-        }
-
-        .release-tabs-hint:hover svg,
-        .release-tabs-hint:focus-visible svg {
-          transform: translateX(3px);
-        }
-
         .release-tabs {
           display: flex;
           overflow-x: auto;
-          scroll-snap-type: x proximity;
-          gap: 10px;
+          scroll-snap-type: x mandatory;
+          gap: 8px;
           margin: 0;
-          padding: 2px 42px 10px 2px;
-          scrollbar-width: thin;
-          scrollbar-color: rgba(0,212,255,0.55) rgba(255,255,255,0.08);
+          padding: 2px 40px 2px 2px;
+          scrollbar-width: none;
           -webkit-overflow-scrolling: touch;
         }
 
         .release-tabs::-webkit-scrollbar {
-          height: 5px;
+          display: none;
         }
 
-        .release-tabs::-webkit-scrollbar-track {
-          background: rgba(255,255,255,0.08);
-          border-radius: 999px;
-        }
-
-        .release-tabs::-webkit-scrollbar-thumb {
-          background: linear-gradient(90deg, rgba(0,212,255,0.8), rgba(138,43,226,0.72));
-          border-radius: 999px;
-        }
-
-        .release-tabs button {
+        .release-tab {
           cursor: pointer;
-          color: rgba(255,255,255,0.74);
-          flex: 0 0 clamp(150px, 28vw, 230px);
-          justify-content: space-between;
+          flex: 0 0 auto;
+          width: clamp(148px, 40vw, 188px);
+          min-height: 56px;
+          padding: 9px 11px 9px 13px;
+          border: 1px solid rgba(255,255,255,0.12);
+          border-radius: 14px;
+          background: rgba(255,255,255,0.04);
+          color: rgba(255,255,255,0.88);
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          justify-content: center;
+          gap: 5px;
           text-align: left;
-          white-space: normal;
-          min-height: 58px;
           scroll-snap-align: start;
+          transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
         }
 
-        .release-tabs button.active {
-          background: linear-gradient(135deg, rgba(34,197,94,0.32), rgba(22,163,74,0.24));
-          border-color: rgba(74, 222, 128, 0.85);
-          color: #ecfdf5;
-          box-shadow: 0 0 18px rgba(34,197,94,0.28);
-        }
-
-        .release-tabs button.active strong {
-          color: #fff;
-        }
-
-        .release-tabs button.active span {
-          color: rgba(187, 247, 208, 0.92);
-        }
-
-        .release-tabs button strong {
-          min-width: 0;
+        .release-tab-type {
+          width: 100%;
+          color: rgba(255,255,255,0.52);
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.07em;
+          text-transform: uppercase;
+          line-height: 1.15;
+          white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+        }
+
+        .release-tab-title {
+          width: 100%;
+          margin: 0;
+          color: #fff;
+          font-size: 12px;
+          font-weight: 700;
+          line-height: 1.3;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
+          overflow: hidden;
         }
 
-        .release-tabs button span {
-          color: rgba(255,255,255,0.60);
-          font-size: 11px;
-          flex-shrink: 0;
+        .release-tab.is-active {
+          border-color: rgba(74, 222, 128, 0.78);
+          background: linear-gradient(145deg, rgba(34,197,94,0.2), rgba(22,163,74,0.1));
+          box-shadow:
+            inset 3px 0 0 #4ade80,
+            0 0 16px rgba(34,197,94,0.2);
+        }
+
+        .release-tab.is-active .release-tab-type {
+          color: #86efac;
+        }
+
+        .release-tab.is-active .release-tab-title {
+          color: #f0fdf4;
+        }
+
+        .release-tab:focus-visible {
+          outline: 2px solid rgba(74, 222, 128, 0.65);
+          outline-offset: 2px;
         }
 
         @keyframes packHintPulse {
@@ -3896,26 +3894,27 @@ export default withAuth(function CardAdvisorLabPage() {
             grid-column: 1 / -1;
           }
 
-          .release-count {
-            width: auto;
-            min-width: 88px;
-            padding: 8px 10px;
-          }
-
-          .release-count strong {
-            font-size: 18px;
+          .release-result-count {
+            grid-column: 2;
+            grid-row: 1;
+            align-self: center;
+            font-size: 11px;
           }
 
           .release-tabs {
             justify-content: flex-start;
             min-width: 0;
-            margin-bottom: 0;
-            padding-bottom: 6px;
+            padding-right: 28px;
           }
 
-          .release-tabs button {
-            flex-basis: min(148px, 44vw);
-            min-height: 50px;
+          .release-tab {
+            width: min(156px, 44vw);
+            min-height: 52px;
+            padding: 8px 10px 8px 12px;
+          }
+
+          .release-tab-title {
+            font-size: 11px;
           }
 
           .roster-status-panel {
