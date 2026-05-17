@@ -55,10 +55,10 @@ const copy = {
     freeReadBadge: 'Gratis',
     chartInsightTitleMissing: 'Vuoi un consiglio ancora più su misura?',
     chartInsightTextMissing: 'Carica le Statistiche di gioco: il verdetto capirà meglio come giochi davvero e leggerà questa carta sulla tua rosa reale.',
-    chartInsightTitleReady: 'Grafici collegati',
-    chartInsightTextReady: 'Il verdetto userà anche le tue Statistiche di gioco per capire ritmo, problemi e priorità della rosa.',
-    chartInsightCta: 'Carica Statistiche',
-    chartInsightRefreshCta: 'Aggiorna Statistiche',
+    chartInsightTitleReady: 'Statistiche collegate',
+    chartInsightTextReady: 'Opzionale: migliora il contesto del verdetto Pro.',
+    chartInsightCta: 'Carica statistiche',
+    chartInsightRefreshCta: 'Aggiorna',
     proUnlockTitle: 'Verdetto Pro',
     proUnlockText: 'Ti dice se vale prenderla, saltarla o usarla solo come rotazione — sulla tua rosa reale.',
     proUnlockBullets: ['Decisione chiara: prendi, salta o rotazione', 'Fit con titolari, panchina, stile e coach', 'Dove brilla e quando evitarla'],
@@ -171,10 +171,10 @@ const copy = {
     freeReadBadge: 'Free',
     chartInsightTitleMissing: 'Want an even more tailored read?',
     chartInsightTextMissing: 'Add your Game Stats: the verdict will better understand how you really play and read this card against your real squad.',
-    chartInsightTitleReady: 'Charts linked',
-    chartInsightTextReady: 'The verdict will also use your Game Stats to understand rhythm, issues and squad priorities.',
-    chartInsightCta: 'Add Game Stats',
-    chartInsightRefreshCta: 'Refresh Stats',
+    chartInsightTitleReady: 'Stats linked',
+    chartInsightTextReady: 'Optional: improves context for the Pro verdict.',
+    chartInsightCta: 'Add stats',
+    chartInsightRefreshCta: 'Refresh',
     proUnlockTitle: 'Pro verdict',
     proUnlockText: 'It tells you whether to sign, skip, or use this card as rotation — on your real roster.',
     proUnlockBullets: ['Clear decision: sign, skip, or rotation', 'Fit with starters, bench, style and coach', 'Where it shines — when to pass'],
@@ -791,15 +791,15 @@ function synergyLabelFromScore(score, labels, fallback) {
 
 function ChartInsightCard({ labels, hasGameAnalysis, onOpenGameAnalysis }) {
   return (
-    <div className={`chart-insight-card ${hasGameAnalysis ? 'chart-insight-card-ready' : ''}`}>
+    <div className={`chart-insight-card chart-insight-card-secondary ${hasGameAnalysis ? 'chart-insight-card-ready' : ''}`}>
       <div className="chart-insight-icon" aria-hidden="true">
-        <BarChart3 size={18} />
+        <BarChart3 size={14} />
       </div>
       <div className="chart-insight-copy">
         <h3>{hasGameAnalysis ? labels.chartInsightTitleReady : labels.chartInsightTitleMissing}</h3>
         <p>{hasGameAnalysis ? labels.chartInsightTextReady : labels.chartInsightTextMissing}</p>
       </div>
-      <button type="button" onClick={onOpenGameAnalysis}>
+      <button type="button" className="chart-insight-link" onClick={onOpenGameAnalysis}>
         {hasGameAnalysis ? labels.chartInsightRefreshCta : labels.chartInsightCta}
       </button>
     </div>
@@ -875,11 +875,6 @@ function DetailPanel({
         </div>
         <div className="detail-copy">
           <h2>{card.name}</h2>
-          <ChartInsightCard
-            labels={labels}
-            hasGameAnalysis={Boolean(rosterSummary?.hasGameAnalysis)}
-            onOpenGameAnalysis={onOpenGameAnalysis}
-          />
           <div className="advisor-section-marker advisor-section-marker-premium">
             <span>{labels.premiumSectionLabel}</span>
             <small>{labels.premiumSectionHint}</small>
@@ -903,6 +898,11 @@ function DetailPanel({
               </button>
             )}
           </div>
+          <ChartInsightCard
+            labels={labels}
+            hasGameAnalysis={Boolean(rosterSummary?.hasGameAnalysis)}
+            onOpenGameAnalysis={onOpenGameAnalysis}
+          />
           <div className="advisor-section-marker advisor-section-marker-free">
             <span>{labels.freeSectionLabel}</span>
             <small>{labels.freeSectionHint}</small>
@@ -2831,8 +2831,63 @@ export default withAuth(function CardAdvisorLabPage() {
           color: #86efac;
         }
 
+        .chart-insight-card-secondary {
+          margin-top: 10px;
+          padding: 8px 10px;
+          gap: 8px;
+          border-radius: 12px;
+          border-color: rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.03);
+          box-shadow: none;
+        }
+
+        .chart-insight-card-secondary.chart-insight-card-ready {
+          border-color: rgba(255,255,255,0.10);
+          background: rgba(34,197,94,0.04);
+        }
+
+        .chart-insight-card-secondary .chart-insight-icon {
+          width: 28px;
+          height: 28px;
+          border-radius: 10px;
+          box-shadow: none;
+        }
+
+        .chart-insight-card-secondary .chart-insight-copy h3 {
+          font-size: 12px;
+          font-weight: 650;
+          color: rgba(255,255,255,0.82);
+        }
+
+        .chart-insight-card-secondary .chart-insight-copy p {
+          font-size: 11px;
+          color: rgba(255,255,255,0.52);
+          line-height: 1.35;
+        }
+
+        .chart-insight-card-secondary .chart-insight-link {
+          border: none;
+          border-radius: 8px;
+          background: transparent;
+          color: rgba(0,212,255,0.78);
+          font-weight: 650;
+          font-size: 11px;
+          padding: 2px 4px;
+          text-decoration: underline;
+          text-underline-offset: 2px;
+          white-space: nowrap;
+        }
+
+        .chart-insight-card-secondary.chart-insight-card-ready .chart-insight-link {
+          color: rgba(134,239,172,0.82);
+        }
+
+        .chart-insight-card-secondary .chart-insight-link:hover {
+          color: #fff;
+        }
+
         .deep-analysis-entry-featured {
-          margin-top: 8px;
+          margin-top: 10px;
           border-width: 1.5px;
           border-color: rgba(251,191,36,0.56);
           background:
@@ -3808,13 +3863,22 @@ export default withAuth(function CardAdvisorLabPage() {
             padding-right: max(14px, calc(12px + env(safe-area-inset-right, 0px)));
           }
 
-          .chart-insight-card {
+          .chart-insight-card:not(.chart-insight-card-secondary) {
             grid-template-columns: auto minmax(0, 1fr);
           }
 
-          .chart-insight-card button {
+          .chart-insight-card:not(.chart-insight-card-secondary) button {
             grid-column: 1 / -1;
             width: 100%;
+          }
+
+          .chart-insight-card-secondary {
+            grid-template-columns: auto minmax(0, 1fr) auto;
+          }
+
+          .chart-insight-card-secondary .chart-insight-link {
+            grid-column: auto;
+            width: auto;
           }
 
           .detail-close-button {

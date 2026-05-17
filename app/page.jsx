@@ -100,7 +100,6 @@ function HomePage() {
   const [userProfile, setUserProfile] = React.useState(null)
   const [confirmModal, setConfirmModal] = React.useState(null) // { show, title, message, onConfirm, onCancel }
   const [coachChatInitialMessage, setCoachChatInitialMessage] = React.useState(null)
-  const [importingStarterPack, setImportingStarterPack] = React.useState(false)
   const cardAdvisorLogoTimerRef = React.useRef(null)
   const cardAdvisorModalSessionKey = 'dashboard_card_advisor_choice_seen_session_v2'
 
@@ -419,79 +418,7 @@ function HomePage() {
     setRetryTrigger((n) => n + 1)
   }, [])
 
-  const showDashboardStarterPackCta = !loading && stats.totalPlayers <= 5
-
-  const handleImportStarterPack = React.useCallback(() => {
-    setConfirmModal({
-      show: true,
-      title: lang === 'en' ? 'Temporary formation' : 'Formazione provvisoria',
-      message: lang === 'en'
-        ? 'This is a formation that lets you test the platform without uploading your own players.\n\nRECOMMENDATION: take the time you need and upload or replace the pre-loaded players with your real squad when you are ready.'
-        : 'Questa è una formazione per permetterti di testare la piattaforma senza caricare i tuoi giocatori.\n\nCONSIGLIO: prenditi il tempo necessario e carica o sostituisci i giocatori pre-caricati con quelli della tua rosa reale quando sei pronto.',
-      confirmLabel: lang === 'en' ? 'I understand' : 'Ho capito',
-      cancelLabel: t('cancel'),
-      variant: 'info',
-      confirmVariant: 'primary',
-      onConfirm: async () => {
-        setConfirmModal(null)
-        setImportingStarterPack(true)
-        setError(null)
-
-        try {
-          let token = localStorage.getItem('auth_token')
-
-          if (!token && supabase) {
-            const { data: session } = await supabase.auth.getSession()
-            token = session?.session?.access_token
-          }
-
-          if (!token) {
-            throw new Error(t('sessionExpired'))
-          }
-
-          const res = await fetch('/api/starter-pack/import', {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Accept-Language': lang === 'en' ? 'en' : 'it'
-            }
-          })
-
-          const data = await safeJsonResponse(res, t('starterPackImportError'))
-          setRetryTrigger((n) => n + 1)
-          const insertedPlayers = Number(data?.insertedPlayers || 0)
-          const isPartialStarterPack = insertedPlayers > 0 && insertedPlayers < 11
-          setConfirmModal({
-            show: true,
-            title: lang === 'en' ? 'Players loaded' : 'Giocatori caricati',
-            message: isPartialStarterPack
-              ? (lang === 'en'
-                  ? `We loaded ${insertedPlayers} temporary players. Some formation slots may still be empty: open your squad, take your time, and complete or replace the pre-loaded players with your real ones.`
-                  : `Abbiamo caricato ${insertedPlayers} giocatori provvisori. Alcuni slot della formazione potrebbero essere ancora vuoti: apri la rosa, prenditi il tempo necessario e completa o sostituisci i giocatori pre-caricati con quelli reali.`)
-              : (lang === 'en'
-                  ? `We loaded ${insertedPlayers} temporary players. Open your squad to review them and replace them whenever you are ready.`
-                  : `Abbiamo caricato ${insertedPlayers} giocatori provvisori. Apri la rosa per controllarli e sostituirli quando sei pronto.`),
-            confirmLabel: lang === 'en' ? 'Open squad' : 'Apri rosa',
-            cancelLabel: lang === 'en' ? 'Stay here' : 'Resta qui',
-            variant: isPartialStarterPack ? 'warning' : 'info',
-            confirmVariant: 'primary',
-            onConfirm: () => {
-              setConfirmModal(null)
-              router.push('/gestione-formazione')
-            },
-            onCancel: () => setConfirmModal(null)
-          })
-        } catch (err) {
-          console.error('[Dashboard] starter pack import error:', err)
-          const { message } = mapErrorToUserMessage(err, t('starterPackImportError'), lang)
-          setError(message)
-        } finally {
-          setImportingStarterPack(false)
-        }
-      },
-      onCancel: () => setConfirmModal(null)
-    })
-  }, [lang, router, supabase, t])
+  const showCatalogRosterCta = !loading && stats.titolari < 11
 
   const fetchGameAnalysisCapture = React.useCallback(async () => {
     try {
@@ -829,56 +756,45 @@ function HomePage() {
         </div>
       )}
 
-      {showDashboardStarterPackCta && (
+      {showCatalogRosterCta && (
         <div
           className="neon-card"
           style={{
-            padding: '20px',
+            padding: '18px 20px',
             marginBottom: '20px',
-            border: '1px solid rgba(0, 212, 255, 0.28)',
-            background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.10), rgba(168, 85, 247, 0.08))'
+            border: '1px solid rgba(0, 212, 255, 0.22)',
+            background: 'rgba(0, 212, 255, 0.06)'
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
             <div style={{ minWidth: 0, flex: '1 1 260px' }}>
               <div style={{ fontSize: '18px', fontWeight: 800, color: '#FFFFFF', marginBottom: '6px' }}>
-                {lang === 'en' ? 'Start with a temporary formation' : 'Inizia con una formazione provvisoria'}
+                {lang === 'en' ? 'Build your squad from the catalog' : 'Costruisci la rosa dal catalogo'}
               </div>
               <div style={{ fontSize: '14px', lineHeight: 1.6, color: 'rgba(255,255,255,0.76)' }}>
                 {lang === 'en'
-                  ? 'Click here if you want to test the platform before uploading your real players.'
-                  : 'Clicca qui per iniziare con una formazione provvisoria e provare la piattaforma prima di caricare i tuoi giocatori.'}
+                  ? 'Search player builds, save them to your slots and complete your 11 starters.'
+                  : 'Cerca le build, salva i giocatori negli slot e completa gli 11 titolari.'}
               </div>
             </div>
             <button
               type="button"
-              onClick={handleImportStarterPack}
-              disabled={importingStarterPack}
+              onClick={() => router.push('/gestione-formazione')}
               className="neon-button"
               style={{
-                minHeight: '48px',
-                padding: '12px 18px',
+                minHeight: '44px',
+                padding: '10px 16px',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
                 color: 'var(--neon-cyan)',
-                cursor: importingStarterPack ? 'wait' : 'pointer',
-                opacity: importingStarterPack ? 0.75 : 1,
                 flexShrink: 0
               }}
             >
-              {importingStarterPack ? (
-                <>
-                  <RefreshCw size={16} className="animate-spin" />
-                  {t('starterPackImportLoading')}
-                </>
-              ) : (
-                <>
-                  <Zap size={16} />
-                  {lang === 'en' ? 'Click here to start' : 'Clicca qui per iniziare'}
-                </>
-              )}
+              <Users size={16} />
+              {lang === 'en' ? 'Open squad' : 'Apri la rosa'}
+              <ArrowRight size={16} />
             </button>
           </div>
         </div>
