@@ -125,6 +125,7 @@ const copy = {
     checkingRoster: 'Controllo rosa...',
     rosterReadyTitle: 'Rosa collegata',
     rosterReadyText: 'Confronto con titolari, panchina, modulo e priorità.',
+    rosterLinkedChip: 'Rosa collegata',
     rosterMissingTitle: 'Manca la rosa',
     rosterMissingText: 'Lettura generale ora. Con la rosa: consiglio su misura.',
     rosterUnavailableTitle: 'Lettura generale',
@@ -241,6 +242,7 @@ const copy = {
     checkingRoster: 'Checking roster...',
     rosterReadyTitle: 'Roster linked',
     rosterReadyText: 'Compared to starters, bench, formation, priorities.',
+    rosterLinkedChip: 'Roster linked',
     rosterMissingTitle: 'No roster yet',
     rosterMissingText: 'General read now. Add roster for tailored advice.',
     rosterUnavailableTitle: 'General read',
@@ -722,12 +724,48 @@ function ReleaseCard({ card, selected, labels, onSelect }) {
   )
 }
 
+function isRosterLinkedForAdvisor(rosterSummary) {
+  return rosterSummary?.status === 'ready'
+    && rosterSummary?.hasFormation
+    && rosterSummary.depth !== 'roster_only'
+}
+
+function RosterLinkedChip({ labels, rosterSummary }) {
+  if (!isRosterLinkedForAdvisor(rosterSummary)) return null
+  const formation = rosterSummary.formation || '-'
+  const starters = rosterSummary.starters ?? 0
+  return (
+    <span className="roster-linked-chip" title={labels.rosterReadyText}>
+      <CheckCircle2 size={14} aria-hidden="true" />
+      <span>{labels.rosterLinkedChip}</span>
+      <em>{starters} · {formation}</em>
+    </span>
+  )
+}
+
 function RosterStatusPanel({ labels, rosterSummary, onLoadRoster, onOpenCoach }) {
   const isLoading = rosterSummary.status === 'loading'
   const isReady = rosterSummary.status === 'ready'
   const isUnavailable = rosterSummary.status === 'unavailable'
   const isRosterOnly = rosterSummary.depth === 'roster_only'
   const isFormationOnly = rosterSummary.depth === 'formation'
+
+  if (rosterSummary.depth === 'system') {
+    return null
+  }
+
+  if (isFormationOnly) {
+    return (
+      <div className="roster-nudge-banner">
+        <p>{labels.noCoachText}</p>
+        <button type="button" onClick={onOpenCoach}>
+          {labels.addCoachCta}
+          <ArrowRight size={16} />
+        </button>
+      </div>
+    )
+  }
+
   const title = isLoading
     ? labels.checkingRoster
     : isReady
@@ -1434,10 +1472,13 @@ export default withAuth(function CardAdvisorLabPage() {
 
       <section className="release-shell">
         <div className="release-header">
-          <div>
+          <div className="release-header-copy">
             <span className="mini-kicker">{labels.releaseTitle}</span>
-            <h2>{selectedRelease.name}</h2>
-            <p>{labels.sourceNote}</p>
+            <div className="release-title-row">
+              <h2>{selectedRelease.name}</h2>
+              <RosterLinkedChip labels={labels} rosterSummary={rosterSummary} />
+            </div>
+            <p className="release-source-note">{labels.sourceNote}</p>
           </div>
           <div className="release-toolbar">
             <label className="release-search">
@@ -1560,7 +1601,7 @@ export default withAuth(function CardAdvisorLabPage() {
         .lab-hero {
           display: block;
           padding: clamp(22px, 4vw, 36px);
-          margin-bottom: 22px;
+          margin-bottom: 14px;
           overflow: hidden;
         }
 
@@ -1629,13 +1670,89 @@ export default withAuth(function CardAdvisorLabPage() {
           justify-content: space-between;
           align-items: flex-start;
           gap: 16px;
-          margin-bottom: 20px;
+          margin-bottom: 12px;
         }
 
         .release-header h2 {
-          margin: 6px 0;
+          margin: 0;
           font-size: clamp(24px, 4vw, 36px);
           color: #fff;
+        }
+
+        .release-title-row {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 10px;
+          margin: 6px 0 4px;
+        }
+
+        .release-header-copy:has(.roster-linked-chip) .release-source-note {
+          display: none;
+        }
+
+        .roster-linked-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          border: 1px solid rgba(74, 222, 128, 0.72);
+          background: linear-gradient(135deg, rgba(34,197,94,0.22), rgba(22,163,74,0.14));
+          color: #ecfdf5;
+          border-radius: 999px;
+          padding: 6px 10px;
+          font-size: 11px;
+          font-weight: 800;
+          line-height: 1.2;
+          box-shadow: 0 0 14px rgba(34,197,94,0.18);
+          white-space: nowrap;
+        }
+
+        .roster-linked-chip svg {
+          color: #4ade80;
+          flex-shrink: 0;
+        }
+
+        .roster-linked-chip em {
+          font-style: normal;
+          color: rgba(187, 247, 208, 0.95);
+          font-weight: 700;
+        }
+
+        .roster-nudge-banner {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          margin: 0 0 14px;
+          padding: 10px 12px;
+          border: 1px solid rgba(251,191,36,0.28);
+          border-radius: 14px;
+          background: rgba(251,191,36,0.08);
+        }
+
+        .roster-nudge-banner p {
+          margin: 0;
+          flex: 1 1 200px;
+          color: rgba(255,255,255,0.78);
+          font-size: 13px;
+          line-height: 1.45;
+        }
+
+        .roster-nudge-banner button {
+          border: 1px solid rgba(0,212,255,0.42);
+          border-radius: 12px;
+          background: linear-gradient(135deg, rgba(0,212,255,0.18), rgba(138,43,226,0.20));
+          color: #fff;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          min-height: 40px;
+          padding: 8px 12px;
+          font-weight: 800;
+          font-size: 12px;
+          cursor: pointer;
+          flex-shrink: 0;
         }
 
         .release-toolbar {
@@ -1701,7 +1818,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .release-tabs-shell {
           position: relative;
-          margin: 0 0 18px;
+          margin: 0 0 12px;
           padding-top: 0;
         }
 
@@ -1790,10 +1907,18 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .release-tabs button.active {
-          background: linear-gradient(135deg, rgba(0,212,255,0.22), rgba(138,43,226,0.22));
-          border-color: rgba(0,212,255,0.48);
+          background: linear-gradient(135deg, rgba(34,197,94,0.32), rgba(22,163,74,0.24));
+          border-color: rgba(74, 222, 128, 0.85);
+          color: #ecfdf5;
+          box-shadow: 0 0 18px rgba(34,197,94,0.28);
+        }
+
+        .release-tabs button.active strong {
           color: #fff;
-          box-shadow: 0 0 18px rgba(0,212,255,0.16);
+        }
+
+        .release-tabs button.active span {
+          color: rgba(187, 247, 208, 0.92);
         }
 
         .release-tabs button strong {
@@ -3759,26 +3884,51 @@ export default withAuth(function CardAdvisorLabPage() {
 
           .release-toolbar {
             width: 100%;
-            flex-direction: column;
-            align-items: stretch;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: end;
+            gap: 10px;
           }
 
           .release-search {
             min-width: 0;
             width: 100%;
+            grid-column: 1 / -1;
           }
 
           .release-count {
-            width: 100%;
+            width: auto;
+            min-width: 88px;
+            padding: 8px 10px;
+          }
+
+          .release-count strong {
+            font-size: 18px;
           }
 
           .release-tabs {
             justify-content: flex-start;
             min-width: 0;
+            margin-bottom: 0;
+            padding-bottom: 6px;
           }
 
           .release-tabs button {
-            flex-basis: min(172px, 48vw);
+            flex-basis: min(148px, 44vw);
+            min-height: 50px;
+          }
+
+          .roster-status-panel {
+            padding: 12px;
+            margin-bottom: 12px;
+          }
+
+          .roster-metrics {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+
+          .roster-metrics strong {
+            font-size: 16px;
           }
 
           .detail-card-preview {
@@ -3819,13 +3969,35 @@ export default withAuth(function CardAdvisorLabPage() {
           }
 
           .hero-copy h1 {
-            font-size: clamp(34px, 13vw, 48px);
+            font-size: clamp(28px, 11vw, 40px);
             letter-spacing: -0.05em;
+            margin-top: 8px;
+          }
+
+          .hero-copy p {
+            font-size: 14px;
+            line-height: 1.5;
+          }
+
+          .hero-badges {
+            margin-top: 12px;
+            gap: 8px;
           }
 
           .hero-badges span {
-            width: 100%;
-            justify-content: center;
+            width: auto;
+            justify-content: flex-start;
+            padding: 6px 10px;
+            font-size: 11px;
+          }
+
+          .release-title-row h2 {
+            font-size: 22px;
+          }
+
+          .roster-linked-chip {
+            padding: 5px 8px;
+            font-size: 10px;
           }
 
           .cards-grid,
