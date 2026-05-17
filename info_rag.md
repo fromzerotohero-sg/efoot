@@ -98,14 +98,17 @@ Valori di riferimento per costruzione squadra. Le statistiche restano FISSE sull
 
 **IMPORTANTE**: Gli stili giocatore (Opportunista, Collante, Box-to-Box, ecc.) sono **CARATTERISTICHE FISSE** della card. NON si possono modificare.
 
+**Elenco ufficiale (24 stili card, IT)**: Ala prolifica, attacante di rientro, Box-to-Box, Classico n°10, Collante, Frontale extra, Fulcro di gioco, Giocatore chiave, Incontrista, Onnipresente, Opportunista, Orchestratore, Portiere difensivo, Portiere offensivo, Rapace d'area, Regista creativo, Senza palla, Specialista di cross, Sviluppo, Taglio al centro, Terzino difensivo, Terzino mattatore, Terzino offensivo, Tra le linee.
+
+**NON sono stili card** (non usarli sulla rosa né dire "non ce l'hai"): *Punta avanzata*, *Adv. Striker*, *Advanced Striker* — termini obsoleti/guide esterne. Per **profondità e inserimenti negli spazi** usa **Giocatore chiave**; per **filtranti e gol in area** usa **Opportunista**; per **cross/ribalzi** usa **Rapace d'area**. *Punta arretrata* in chat = nome vecchio: in gioco è **attacante di rientro** *(Deep-Lying Forward)*.
+
 ### 2.1 Stili Senza Palla (Comportamento senza possesso)
 
 #### Attaccanti e Centrocampisti Offensivi
-- **Opportunista** (P): Gioca a contatto con ultimo difensore, scatta verso porta appena si presenta un'opportunità, sovraffolla l'area per creare caos e occasioni. **Quando serve**: squadre con passaggi filtranti, palle in profondità, gioco veloce e contropiede. **Perché**: sempre pronto ad anticipare i passaggi in profondità; stile diretto, adattabile a gameplay veloce. *(Poacher)*
-- **Punta avanzata** (P/SP): Punta che si inserisce in profondità, corre negli spazi per creare occasioni. **Quando serve**: stili diretti, palle in profondità. *(Adv. Striker)*
+- **Opportunista** (P): Resta **in linea con l'ultimo difensore avversario** (fuorigioco), scatta verso porta sul filtrante/occasione, sovraffolla l'area. **NON** significa "giocare come un difensore". **Quando serve**: passaggi filtranti, palle in profondità, contropiede. *(Goal Poacher)*
 - **Senza palla** (P/SP/TRQ): Attira difensori per creare spazi per inserimenti. **Quando serve**: squadre che cercano imprevedibilità; crea spazi per compagni. *(Dummy Runner)*
 - **Rapace d'area** (P): Sempre in agguato in area di rigore per finalizzare; ottimo su cross e ribalzi. **Quando serve**: cross, attaccanti con centrocampisti/esterni che forniscono assist. *(Fox in the Box)*
-- **Punta arretrata** (P/SP/TRQ): Arretra in mezzo al campo per impostare, contribuisce alla costruzione. **Quando serve**: possesso palla, squadre che costruiscono dal basso. **Perché**: idealmente abbinato a esterni veloci che corrono oltre i difensori. *(Deep-Lying Forward)*
+- **attacante di rientro** (P/SP/TRQ): Arretra in mezzo al campo per impostare, contribuisce alla costruzione. **Quando serve**: possesso palla, squadre che costruiscono dal basso. **Perché**: idealmente abbinato a esterni veloci che corrono oltre i difensori. *(Deep-Lying Forward — non "Punta arretrata")*
 - **Fulcro di gioco** (P): Protegge palla con fisico, riferimento offensivo. **Quando serve**: gioco aereo, sponde, attaccanti fisici. **Perché**: presenza fisica, crea spazio per esterni e trequartisti. *(Target Man)*
 - **Specialista di cross** (EDA/ESA/CLD/CLS): Resta sulla fascia per crossare
 - **Classico n° 10** (SP/TRQ): Playmaker, avvia attacchi con passaggi intelligenti, minimizza sforzo difensivo. **Quando serve**: gioco lento e ragionato, possesso palla, controllo partita. **Perché**: gestisce il ritmo, meno coinvolto in fase difensiva.
@@ -348,7 +351,7 @@ Comportamento quando IA controlla giocatore in possesso:
 - **Compattezza**: Squadra si stringe in zona ristretta; linee ravvicinate. **Quando serve**: fase difensiva, proteggere risultato. **Rosa**: Incontrista, Collante, Rientro difensivo; res alta, tac alto. **Moduli**: tutti (gestione vantaggio).
 
 ### 7.6 Situazioni di gioco
-- **Transizione positiva** (riconquista → attacco): accelerazione immediata, passaggio verticale rapido; primi 5 secondi critici. **Rosa**: vel 90+, acc alto, Scatto, Passaggio filtrante; Opportunista, Punta avanzata, Giocatore chiave.
+- **Transizione positiva** (riconquista → attacco): accelerazione immediata, passaggio verticale rapido; primi 5 secondi critici. **Rosa**: vel 90+, acc alto, Scatto, Passaggio filtrante; Opportunista, Giocatore chiave, Ala prolifica.
 - **Transizione negativa** (perdita palla → difesa): ripiegamento immediato, pressione su portatore; primi 3 secondi per pressing, poi ripiegare. **Rosa**: tac alto, Rientro difensivo, Intercettazione, Incontrista; res alto.
 - **Finalizzazione**: 1v1 portiere (spiazzamento o potenza); area affollata (tiro al volo o deviazione); fuori area (tiro potente piazzato). **Rosa**: Tiro al volo, fin alta; Tiro potente, Distanza per fuori area.
 - **Gestione vantaggio**: abbassare ritmo, possesso sicuro, passaggi corti; ultimi 10-15 minuti. **Rosa**: res alta, Rientro difensivo, Marcatura; Collante, Passaggio di prima; Compattezza.
@@ -416,7 +419,7 @@ Fonti: [Efootball Arena – How to Build a Competitive Dream Team](https://efoot
 
 **Allocazione per ruolo (quando suggerire chi schierare)**:
 - Creatori (TrQ, registi): controllo palla e passaggio massimizzati; Passaggio filtrante, Passaggio di prima.
-- Attaccanti: finalizzazione e velocità; mix tra velocità (Opportunista, Punta avanzata) e potenza (Fulcro, Rapace d'area).
+- Attaccanti: finalizzazione e velocità; mix tra velocità/inserimento (Opportunista, Giocatore chiave) e potenza/area (Fulcro di gioco, Rapace d'area).
 - Centrocampisti: bilanciare difesa e creazione; mediani versatili (Collante, Box-to-Box).
 - Difesa: almeno un MED/CDM solido davanti alla linea; mai trascurare i terzini.
 
@@ -685,8 +688,9 @@ Le policy comportamentali per il Coach AI (errori da evitare, terminologia, anti
 
 ---
 
-**Versione**: 8.5.1 ENTERPRISE | **Data**: 10 Febbraio 2026
+**Versione**: 8.5.2 ENTERPRISE | **Data**: 17 Maggio 2026
 **Principio**: FISSO vs CONFIGURABILE | **Terminologia**: Ufficiale eFootball
+**Changelog 8.5.2**: §2 allineato ai 24 stili card reali: rimosso *Punta avanzata* / Adv. Striker (non esistono); *Punta arretrata* → **attacante di rientro**; chiarito Opportunista (linea fuorigioco, non "difensore").
 **Changelog 8.5**: §10 (NOTE CRITICHE) spostato da RAG a system prompt assistant-chat. Policy Coach AI ora in COACH_AI_POLICIES_* (sempre attive). RAG contiene solo meccaniche eFootball (§1-9).
 **Changelog 8.4**: §2.2 Attivazione stile e posizione ("passiva spenta se fuori ruolo"): stile non si attiva fuori competenza; §9.2 cross-ref; regola 5 FUORI RUOLO in NOTE CRITICHE; esempi risposta su giocatore che non rende.
 **Changelog 8.3**: §7.10 Consigli community Dream Team; §7.11 Squadra bloccata + Smart Assist.
