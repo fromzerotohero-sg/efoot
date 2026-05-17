@@ -638,16 +638,112 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
   )
 }
 
+function SlotEmptyCard({ slot, onEmptyClick, isEditMode = false, onPositionChange }) {
+  const [dragging, setDragging] = React.useState(false)
+  const [dragOffset, setDragOffset] = React.useState({ x: 0, y: 0 })
+  const suppressClickForFieldDragRef = React.useRef(false)
+  const skipNextSyntheticClickRef = React.useRef(false)
+
+  React.useEffect(() => {
+    if (!isEditMode) suppressClickForFieldDragRef.current = false
+  }, [isEditMode])
+
+  const handlePointerStart = (event) => {
+    if (!isEditMode) return
+    event.stopPropagation()
+    suppressClickForFieldDragRef.current = false
+    const isTouch = event.type.startsWith('touch')
+    const container = event.currentTarget.closest('[data-field-container]')
+    if (!container) return
+    const rect = container.getBoundingClientRect()
+    const startX = isTouch ? event.touches[0].clientX : event.clientX
+    const startY = isTouch ? event.touches[0].clientY : event.clientY
+    const startSlotX = Number(slot.x)
+    const startSlotY = Number(slot.y)
+    let lastPosition = { x: startSlotX, y: startSlotY }
+    setDragging(true)
+
+    const onMove = (moveEvent) => {
+      const moveIsTouch = moveEvent.type.startsWith('touch')
+      const currentX = moveIsTouch ? moveEvent.touches[0].clientX : moveEvent.clientX
+      const currentY = moveIsTouch ? moveEvent.touches[0].clientY : moveEvent.clientY
+      const deltaX = currentX - startX
+      const deltaY = currentY - startY
+      if (deltaX * deltaX + deltaY * deltaY > FIELD_SLOT_DRAG_THRESHOLD_PX * FIELD_SLOT_DRAG_THRESHOLD_PX) {
+        suppressClickForFieldDragRef.current = true
+      }
+      let nextX = clampPercent(startSlotX + ((currentX - startX) / rect.width) * 100)
+      let nextY = clampPercent(startSlotY + ((currentY - startY) / rect.height) * 100)
+      if (slot.slot_index === 0) {
+        const clamped = clampPointerForGkSlot(nextX, nextY)
+        nextX = clamped.x
+        nextY = clamped.y
+      }
+      lastPosition = { x: nextX, y: nextY }
+      setDragOffset({ x: deltaX, y: deltaY })
+      if (moveIsTouch) moveEvent.preventDefault()
+    }
+
+    const onEnd = () => {
+      const hadRealDrag = suppressClickForFieldDragRef.current
+      setDragging(false)
+      setDragOffset({ x: 0, y: 0 })
+      if (hadRealDrag) {
+        onPositionChange?.(slot.slot_index, lastPosition)
+      } else if (isEditMode) {
+        skipNextSyntheticClickRef.current = true
+        onEmptyClick(slot)
+      }
+      if (isTouch) {
+        document.removeEventListener('touchmove', onMove)
+        document.removeEventListener('touchend', onEnd)
+      } else {
+        document.removeEventListener('mousemove', onMove)
+        document.removeEventListener('mouseup', onEnd)
+      }
+    }
+
+    if (isTouch) {
+      document.addEventListener('touchmove', onMove, { passive: false })
+      document.addEventListener('touchend', onEnd)
+    } else {
+      document.addEventListener('mousemove', onMove)
+      document.addEventListener('mouseup', onEnd)
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      className={`nr-slot-empty ${isEditMode ? 'is-draggable' : ''} ${dragging ? 'is-dragging' : ''}`}
+      style={dragging ? { transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)` } : undefined}
+      onClick={() => {
+        if (skipNextSyntheticClickRef.current) {
+          skipNextSyntheticClickRef.current = false
+          return
+        }
+        if (suppressClickForFieldDragRef.current) {
+          suppressClickForFieldDragRef.current = false
+          return
+        }
+        if (!isEditMode) onEmptyClick(slot)
+      }}
+      onMouseDown={isEditMode ? handlePointerStart : undefined}
+      onTouchStart={isEditMode ? handlePointerStart : undefined}
+    >
+      <Plus size={18} />
+      <span>{slot.position || '?'}</span>
+    </button>
+  )
+}
+
 function SlotCard({ slot, player, onEmptyClick, onPlayerClick, onRemove, lang, isEditMode = false, onPositionChange }) {
   return (
     <div className="nr-slot-card" style={{ left: `${slot.x}%`, top: `${slot.y}%` }}>
       {player ? (
         <SlotPlayerCard player={player} slot={slot} onClick={onPlayerClick} onRemove={onRemove} lang={lang} isEditMode={isEditMode} onPositionChange={onPositionChange} />
       ) : (
-        <button type="button" className="nr-slot-empty" onClick={() => onEmptyClick(slot)}>
-          <Plus size={18} />
-          <span>{slot.position || '?'}</span>
-        </button>
+        <SlotEmptyCard slot={slot} onEmptyClick={onEmptyClick} isEditMode={isEditMode} onPositionChange={onPositionChange} />
       )}
     </div>
   )
@@ -5398,7 +5494,7 @@ export default withAuth(function NuovaRosaLabPage() {
                 </div>
                 <button type="button" className="nr-move-players-wide-button" onClick={() => setFieldEditMode(true)} disabled={fieldEditMode}>
                   <ArrowRight size={14} />
-                  <span>{lang === 'en' ? 'Move players' : 'Muovi giocatori'}</span>
+                  <span>{lang === 'en' ? 'Move positions' : 'Muovi posizioni'}</span>
                 </button>
               </div>
             </div>
@@ -6582,12 +6678,14 @@ export default withAuth(function NuovaRosaLabPage() {
           z-index: 0;
         }
 
-        .nr-slot-filled.is-draggable {
+        .nr-slot-filled.is-draggable,
+        .nr-slot-empty.is-draggable {
           cursor: move;
           touch-action: none;
         }
 
-        .nr-slot-filled.is-dragging {
+        .nr-slot-filled.is-dragging,
+        .nr-slot-empty.is-dragging {
           opacity: 0.75;
           z-index: 10;
         }
