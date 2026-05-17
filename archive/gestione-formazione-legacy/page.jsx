@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import React, { Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -24,7 +24,7 @@ import { getSkillDisplayLabel } from '@/lib/playerSkillLabels'
 // FEATURE FLAG - Sicurezza modifiche window.confirm
 // =====================================================
 // Imposta a true SOLO quando hai testato TUTTO su Vercel
-// MODALITÀ SICURA: true = ConfirmModal (UI coerente, i18n); false = window.confirm
+// MODALIT├Ç SICURA: true = ConfirmModal (UI coerente, i18n); false = window.confirm
 const USE_CONFIRM_MODAL = true
 // =====================================================
 
@@ -64,11 +64,11 @@ function clampPointerForGkSlot(x, y) {
  */
 async function showConfirmSafe({ fallback, modalConfig, setConfirmModal }) {
   if (!USE_CONFIRM_MODAL) {
-    // MODALITÀ SICURA: usa window.confirm (vecchio metodo funzionante)
+    // MODALIT├Ç SICURA: usa window.confirm (vecchio metodo funzionante)
     return fallback()
   }
   
-  // MODALITÀ NUOVA: usa ConfirmModal con Promise
+  // MODALIT├Ç NUOVA: usa ConfirmModal con Promise
   return new Promise((resolve) => {
     setConfirmModal({
       show: true,
@@ -108,7 +108,7 @@ function DuplicatePlayerConfirmModal({ state, t }) {
         playerName: state.playerName || '',
         playerAge: '',
         slotIndex: ''
-      }) || `Il giocatore "${state.playerName || ''}" sembra già presente in formazione.`}
+      }) || `Il giocatore "${state.playerName || ''}" sembra gi├á presente in formazione.`}
       details={t('duplicateInFormationDetails')}
       variant="warning"
       confirmLabel={t('replace')}
@@ -230,7 +230,7 @@ export default function GestioneFormazionePage() {
       }
       
       if (!token) {
-        // Se non c'è token, AuthWrapper gestirà il redirect, ma qui mostriamo loading o errore
+        // Se non c'├¿ token, AuthWrapper gestir├á il redirect, ma qui mostriamo loading o errore
         setError(t('sessionExpiredRedirect'))
         return
       }
@@ -370,10 +370,10 @@ export default function GestioneFormazionePage() {
     title: t('duplicatePlayerTitle'),
     message: lang === 'en'
       ? `Player "${playerName || t('thisPlayer')}" seems already present in your roster.`
-      : `Il giocatore "${playerName || t('thisPlayer')}" sembra già presente nella tua rosa.`,
+      : `Il giocatore "${playerName || t('thisPlayer')}" sembra gi├á presente nella tua rosa.`,
     details: lang === 'en'
       ? 'To avoid duplicates, you can continue and replace the saved copy, or cancel and keep the current one.'
-      : 'Per evitare duplicati, puoi continuare e sostituire quello già salvato oppure annullare e mantenere quello attuale.'
+      : 'Per evitare duplicati, puoi continuare e sostituire quello gi├á salvato oppure annullare e mantenere quello attuale.'
   }), [lang, t])
 
   const buildOutOfRoleGuidance = React.useCallback((playerName, slotPosition) => ({
@@ -390,10 +390,10 @@ export default function GestioneFormazionePage() {
     title: t('duplicatePlayerTitle'),
     message: lang === 'en'
       ? `Player "${playerName || t('thisPlayer')}" seems already present among your starters.`
-      : `Il giocatore "${playerName || t('thisPlayer')}" sembra già presente tra i tuoi titolari.`,
+      : `Il giocatore "${playerName || t('thisPlayer')}" sembra gi├á presente tra i tuoi titolari.`,
     details: lang === 'en'
       ? 'To avoid duplicates, update the saved player instead of loading a new reserve copy.'
-      : 'Per evitare duplicati, aggiorna il giocatore già salvato invece di caricare una nuova copia in riserva.'
+      : 'Per evitare duplicati, aggiorna il giocatore gi├á salvato invece di caricare una nuova copia in riserva.'
   }), [lang, t])
 
   /** Aggiorna il riassunto analisi (diagnostic) in cache dopo un salvataggio che modifica rosa/tattica/formazione. Fire-and-forget. */
@@ -530,7 +530,7 @@ export default function GestioneFormazionePage() {
   }, [toast])
 
   // Correzione DX/SX: se un layout salvato ha TD/TS invertiti, normalizziamo in base a X.
-  // DX = x alto, SX = x basso. Solo normalizzazione in memoria (non persiste finché non salvi).
+  // DX = x alto, SX = x basso. Solo normalizzazione in memoria (non persiste finch├® non salvi).
   const normalizeSlotPositionsDxSx = React.useCallback((slotPositions) => {
     const out = { ...(slotPositions || {}) }
     for (const [k, v] of Object.entries(out)) {
@@ -556,8 +556,8 @@ export default function GestioneFormazionePage() {
   const clampPercent = (v, min = 5, max = 95) => Math.max(min, Math.min(max, Number(v)))
 
   // Snap verticale proporzionato (stile eFootball): oltre alle linee principali,
-  // il centrocampo è diviso in sotto-fasce vicine (MED e CC possono essere molto vicini).
-  // Manteniamo libertà su X; su Y guidiamo per leggibilità e coerenza.
+  // il centrocampo ├¿ diviso in sotto-fasce vicine (MED e CC possono essere molto vicini).
+  // Manteniamo libert├á su X; su Y guidiamo per leggibilit├á e coerenza.
   const snapYToBand = (roleCode, y) => {
     const yy = clampPercent(y)
     const role = String(roleCode || '').trim().toUpperCase()
@@ -566,18 +566,18 @@ export default function GestioneFormazionePage() {
     const BANDS = {
       GK: 90,
       DEF: 66,
-      // Centrocampo: MED e CC hanno più spazio; TRQ più stretto (più vicino al CC)
-      DMF: 58,  // MED/DMF — più vicino alla linea difesa (più spazio mediano)
+      // Centrocampo: MED e CC hanno pi├╣ spazio; TRQ pi├╣ stretto (pi├╣ vicino al CC)
+      DMF: 58,  // MED/DMF ÔÇö pi├╣ vicino alla linea difesa (pi├╣ spazio mediano)
       CMF: 50,  // CC/CMF
-      AMF: 46,  // TRQ/AMF (trequarti) — fascia più alta, meno “ovunque”
-      // Attacco su sotto-fasce: SP deve stare un filo più basso (più "spazio" rispetto al CF)
+      AMF: 46,  // TRQ/AMF (trequarti) ÔÇö fascia pi├╣ alta, meno ÔÇ£ovunqueÔÇØ
+      // Attacco su sotto-fasce: SP deve stare un filo pi├╣ basso (pi├╣ "spazio" rispetto al CF)
       CF: 28,
       SP: 34,
       WING: 30,
       FWD: 30
     }
 
-    // Se il ruolo è esplicito, preferisci la fascia "giusta"
+    // Se il ruolo ├¿ esplicito, preferisci la fascia "giusta"
     if (role === 'PT') return BANDS.GK
     if (['DC', 'TD', 'TS'].includes(role)) return BANDS.DEF
     if (['MED', 'DMF'].includes(role)) return BANDS.DMF
@@ -589,7 +589,7 @@ export default function GestioneFormazionePage() {
     if (role === 'P') return 26
     if (['P', 'SP', 'CF', 'ESA', 'EDA', 'EDE', 'LWF', 'RWF'].includes(role)) return BANDS.FWD
 
-    // Fallback: allineato a calculatePositionFromCoordinates (difesa da y≥63)
+    // Fallback: allineato a calculatePositionFromCoordinates (difesa da yÔëÑ63)
     if (yy > 80) return BANDS.GK
     if (yy >= 63) return BANDS.DEF
     if (yy >= 54) return BANDS.DMF
@@ -622,7 +622,7 @@ export default function GestioneFormazionePage() {
   }, [])
 
   // Normalizza alias ruolo in un set canonico UI (coerente con PositionSelectionModal / i18n).
-  // Non cambia mai ciò che salviamo a DB: agisce solo sulla resa a schermo.
+  // Non cambia mai ci├▓ che salviamo a DB: agisce solo sulla resa a schermo.
   const normalizeRoleCodeForUi = React.useCallback((code) => {
     const c = String(code || '?').trim().toUpperCase()
     if (!c || c === '?') return '?'
@@ -638,7 +638,7 @@ export default function GestioneFormazionePage() {
     return c
   }, [])
 
-  // Render: mappa codici ruolo verso label coerente IT/EN, senza cambiare ciò che salviamo.
+  // Render: mappa codici ruolo verso label coerente IT/EN, senza cambiare ci├▓ che salviamo.
   const formatRoleLabel = React.useCallback((code) => {
     const c = normalizeRoleCodeForUi(code)
     if (!c || c === '?') return '?'
@@ -703,14 +703,14 @@ export default function GestioneFormazionePage() {
   }, [lang, normalizeRoleCodeForUi])
 
   // Calcola ruolo in base alle coordinate x,y sul campo
-  // Nota: per distinguere P vs SP usa la classifica relativa degli slot in attacco, basata su slotIndex (non su match “quasi uguale” di coordinate).
+  // Nota: per distinguere P vs SP usa la classifica relativa degli slot in attacco, basata su slotIndex (non su match ÔÇ£quasi ugualeÔÇØ di coordinate).
   const calculatePositionFromCoordinates = (slotIndex, x, y, attackSlots = null) => {
     // y: 0-100 (0 = porta avversaria, 100 = nostra porta)
     // x: 0-100 (0 = sinistra, 100 = destra)
     const xx = clampPercent(x)
     const yy = clampPercent(y)
-    // Soglie coerenti: DC più ampio (piu liberta in zona centrale),
-    // terzini davvero laterali; MED/CC ampi; TRQ solo striscia sotto l’attacco
+    // Soglie coerenti: DC pi├╣ ampio (piu liberta in zona centrale),
+    // terzini davvero laterali; MED/CC ampi; TRQ solo striscia sotto lÔÇÖattacco
     const CENTER_X_LO = 26
     const CENTER_X_HI = 74
     const WING_L = 28
@@ -721,7 +721,7 @@ export default function GestioneFormazionePage() {
       return 'PT'
     }
     
-    // Difesa: y tra 63-80 (la fascia 60-62 è centrocampo — meno DC “verso il centrocampo”)
+    // Difesa: y tra 63-80 (la fascia 60-62 ├¿ centrocampo ÔÇö meno DC ÔÇ£verso il centrocampoÔÇØ)
     if (yy >= 63 && yy <= 80) {
       if (xx < 24) return 'TS'  // Terzino sinistro (piu laterale)
       if (xx > 76) return 'TD'  // Terzino destro (piu laterale)
@@ -734,9 +734,9 @@ export default function GestioneFormazionePage() {
       if (xx > WING_R) return 'CLD'  // Centrocampista laterale destro (destra campo)
       // TRQ: striscia avanzata stretta (solo y 40-44, centro)
       if (yy >= 40 && yy <= 44 && xx >= CENTER_X_LO && xx <= CENTER_X_HI) return 'TRQ'
-      // CC: cuore centrale (più compatto — più spazio al MED sotto)
+      // CC: cuore centrale (pi├╣ compatto ÔÇö pi├╣ spazio al MED sotto)
       if (xx >= CENTER_X_LO && xx <= CENTER_X_HI && yy >= 45 && yy <= 52) return 'CC'
-      // MED: fascia centrale ampia (mediano “respira” fino alla linea difesa)
+      // MED: fascia centrale ampia (mediano ÔÇ£respiraÔÇØ fino alla linea difesa)
       if (xx >= CENTER_X_LO && xx <= CENTER_X_HI && yy >= 50 && yy <= 62) return 'MED'
       return 'MED'
     }
@@ -745,9 +745,9 @@ export default function GestioneFormazionePage() {
     if (yy < 40) {
       if (xx < 30) return 'ESA'  // Estremo sinistro avanzato / Ala sinistra (sinistra campo)
       if (xx > 70) return 'EDA'  // Estremo destro avanzato / Ala destra (destra campo)
-      // TRQ in attacco: solo striscia vicina alla linea centrocampo (più coerente con MED/CC)
+      // TRQ in attacco: solo striscia vicina alla linea centrocampo (pi├╣ coerente con MED/CC)
       if (yy >= 36 && yy <= 40 && xx >= 30 && xx <= 70) {
-        // Se è in zona centrale (x: 48-52) e molto avanzato (y: 30-31), probabilmente è CF, non TRQ
+        // Se ├¿ in zona centrale (x: 48-52) e molto avanzato (y: 30-31), probabilmente ├¿ CF, non TRQ
         if (yy >= 30 && yy <= 31 && xx >= 48 && xx <= 52) {
           // Lascia che vada a logica CF/SP/P
         } else {
@@ -755,22 +755,22 @@ export default function GestioneFormazionePage() {
         }
       }
       
-      // Logica relativa per P vs SP se ci sono più giocatori in attacco
+      // Logica relativa per P vs SP se ci sono pi├╣ giocatori in attacco
       if (attackSlots && attackSlots.length > 1) {
-        // Ordina per y (dal più avanzato al più arretrato)
+        // Ordina per y (dal pi├╣ avanzato al pi├╣ arretrato)
         const sorted = [...attackSlots].sort((a, b) => {
-          // y più piccolo = più avanzato; tie-break su x per stabilità
+          // y pi├╣ piccolo = pi├╣ avanzato; tie-break su x per stabilit├á
           if (a.y !== b.y) return a.y - b.y
           return (a.x ?? 50) - (b.x ?? 50)
         })
         const currentIndex = sorted.findIndex(s => Number(s.slotIndex) === Number(slotIndex))
         
         if (currentIndex === 0) {
-          return 'P'  // Il più avanzato → Punta
+          return 'P'  // Il pi├╣ avanzato ÔåÆ Punta
         } else if (currentIndex === 1) {
-          return 'SP' // Il secondo → Seconda Punta
+          return 'SP' // Il secondo ÔåÆ Seconda Punta
         } else {
-          return 'SP' // Altri → Seconda Punta
+          return 'SP' // Altri ÔåÆ Seconda Punta
         }
       }
       
@@ -792,7 +792,7 @@ export default function GestioneFormazionePage() {
         allSlotsInAttack.push({ slotIndex: Number(idx), x: pos.x, y: pos.y })
       }
     })
-    // Aggiungi anche il nuovo slot se è in attacco
+    // Aggiungi anche il nuovo slot se ├¿ in attacco
     if (newPosition.y < 40) {
       allSlotsInAttack.push({ slotIndex: Number(slotIndex), x: newPosition.x, y: newPosition.y })
     }
@@ -883,11 +883,11 @@ export default function GestioneFormazionePage() {
         const pName = String(p.player_name || '').trim().toLowerCase()
         const pAge = p.age != null ? Number(p.age) : null
         
-        // Match esatto se nome+età corrispondono
+        // Match esatto se nome+et├á corrispondono
         if (playerName && pName && playerAge && pAge) {
           return pName === playerName && pAge === playerAge && p.slot_index !== selectedSlot.slot_index
         }
-        // Fallback: solo nome se età non disponibile
+        // Fallback: solo nome se et├á non disponibile
         if (playerName && pName) {
           return pName === playerName && p.slot_index !== selectedSlot.slot_index
         }
@@ -960,12 +960,12 @@ export default function GestioneFormazionePage() {
 
       const slotPosition = selectedSlot.position
 
-      // Verifica se posizione slot è originale
+      // Verifica se posizione slot ├¿ originale
       const isOriginalPosition = originalPositions.some(
         op => op.position && op.position.toUpperCase() === slotPosition.toUpperCase()
       )
 
-      // Se NON è originale, chiedi conferma con competenza
+      // Se NON ├¿ originale, chiedi conferma con competenza
       if (!isOriginalPosition && originalPositions.length > 0 && slotPosition) {
         const roleGuidance = buildOutOfRoleGuidance(playerToAssign.player_name, slotPosition)
         
@@ -989,7 +989,7 @@ export default function GestioneFormazionePage() {
           setAssigning(false)
           return
         }
-        // Se conferma, cliente si prende responsabilità → procedi
+        // Se conferma, cliente si prende responsabilit├á ÔåÆ procedi
       }
 
       let token = localStorage.getItem('auth_token')
@@ -1071,7 +1071,7 @@ export default function GestioneFormazionePage() {
       }
       
       if (!res.ok) {
-        // Se è errore di duplicato riserva, gestisci
+        // Se ├¿ errore di duplicato riserva, gestisci
         if (data.duplicate_reserve_id) {
           const duplicateGuidance = buildDuplicateGuidance(data.duplicate_player_name || t('thisPlayer'))
           // FIX RC-002: Sostituzione window.confirm con ConfirmModal (feature flag)
@@ -1117,7 +1117,7 @@ export default function GestioneFormazionePage() {
             showToast(
               lang === 'en'
                 ? 'No changes made. The current player remains in place.'
-                : 'Nessuna modifica effettuata. Il giocatore attuale rimane dov’è.',
+                : 'Nessuna modifica effettuata. Il giocatore attuale rimane dovÔÇÖ├¿.',
               'warning'
             )
             return
@@ -1331,13 +1331,13 @@ export default function GestioneFormazionePage() {
           if (!playerData) {
             playerData = extractData.player
           } else {
-            // Validazione: verifica che nome+età corrispondano (se presenti)
+            // Validazione: verifica che nome+et├á corrispondano (se presenti)
             const currentName = String(extractData.player.player_name || '').trim().toLowerCase()
             const currentAge = extractData.player.age != null ? Number(extractData.player.age) : null
             const existingName = String(playerData.player_name || '').trim().toLowerCase()
             const existingAge = playerData.age != null ? Number(playerData.age) : null
             
-            // Se entrambi hanno nome+età, devono corrispondere
+            // Se entrambi hanno nome+et├á, devono corrispondere
             if (currentName && existingName && currentAge && existingAge) {
               if (currentName !== existingName || currentAge !== existingAge) {
                 throw new Error(`${t('imagesDifferentPlayers')}: "${playerData.player_name}" (${existingAge}) vs "${extractData.player.player_name}" (${currentAge})`)
@@ -1345,7 +1345,7 @@ export default function GestioneFormazionePage() {
             }
             
             // Merge dati aggiuntivi
-            // IMPORTANTE: overall_rating viene gestito DOPO il loop per usare il valore più alto tra tutte le foto
+            // IMPORTANTE: overall_rating viene gestito DOPO il loop per usare il valore pi├╣ alto tra tutte le foto
             const { overall_rating, ...extractDataWithoutRating } = extractData.player
             playerData = {
               ...playerData,
@@ -1360,7 +1360,7 @@ export default function GestioneFormazionePage() {
           // Salva sempre i dati estratti (inclusa la prima foto) per calcolare Math.max() dopo
           allExtractedData[img.type] = extractData.player
           
-          // Traccia foto caricate: card=Statistiche, stats=Abilità, skills=Booster (design unificato)
+          // Traccia foto caricate: card=Statistiche, stats=Abilit├á, skills=Booster (design unificato)
           if (img.type === 'card') {
             photoSlots.card = true
             if (extractData.player?.base_stats && Object.keys(extractData.player.base_stats || {}).length > 0) {
@@ -1382,7 +1382,7 @@ export default function GestioneFormazionePage() {
       // Se tutte le immagini sono fallite, mostra errore specifico
       if (!playerData || !playerData.player_name) {
         if (errors.length > 0) {
-          // Se c'è un errore di quota OpenAI, mostralo chiaramente
+          // Se c'├¿ un errore di quota OpenAI, mostralo chiaramente
           const quotaError = errors.find(e => e.includes('quota') || e.includes('billing'))
           if (quotaError) {
             throw new Error(t('openAQuotaError'))
@@ -1393,8 +1393,8 @@ export default function GestioneFormazionePage() {
         throw new Error(t('errorPlayerDataNotExtracted'))
       }
 
-      // FIX: overall_rating - l'overall_rating è presente in tutte e tre le foto (card, statistiche, abilità)
-      // Usa il valore più alto tra quelli estratti (per evitare errori dell'AI che estrae valori più bassi)
+      // FIX: overall_rating - l'overall_rating ├¿ presente in tutte e tre le foto (card, statistiche, abilit├á)
+      // Usa il valore pi├╣ alto tra quelli estratti (per evitare errori dell'AI che estrae valori pi├╣ bassi)
       const allRatings = Object.values(allExtractedData)
         .map(p => p?.overall_rating)
         .filter(r => r != null && r > 0)
@@ -1413,7 +1413,7 @@ export default function GestioneFormazionePage() {
         const fallbackLater = lang === 'en'
           ? 'You can complete missing info later from player details.'
           : 'Puoi completare i dati mancanti in seguito dai dettagli giocatore.'
-        const msg = `${chunks.join(' • ')}. ${fallbackLater}`
+        const msg = `${chunks.join(' ÔÇó ')}. ${fallbackLater}`
         showToast(msg, 'warning')
       }
 
@@ -1464,7 +1464,7 @@ export default function GestioneFormazionePage() {
       }
       if (!token) throw new Error(t('sessionExpired'))
 
-      // Modal in modalità EDIT: aggiorna solo original_positions del player esistente
+      // Modal in modalit├á EDIT: aggiorna solo original_positions del player esistente
       if (positionModalCtx.mode === 'edit' && positionModalCtx.playerId) {
         const patchRes = await fetch(`/api/players/${positionModalCtx.playerId}`, {
           method: 'PATCH',
@@ -1485,12 +1485,12 @@ export default function GestioneFormazionePage() {
         return
       }
 
-      // Modal in modalità NEW: salvataggio completo via save-player
+      // Modal in modalit├á NEW: salvataggio completo via save-player
       const slotIndexToSave = positionModalCtx.mode === 'new'
         ? (positionModalCtx.slotIndex ?? extractedPlayerData.slot_index ?? null)
         : (extractedPlayerData.slot_index ?? null)
 
-      // Validazione duplicati titolari: verifica se stesso giocatore (nome+età) già presente nei titolari
+      // Validazione duplicati titolari: verifica se stesso giocatore (nome+et├á) gi├á presente nei titolari
       // (solo se stiamo salvando un titolare in uno slot 0-10)
       const playerName = String(extractedPlayerData.player_name || '').trim().toLowerCase()
       const playerAge = extractedPlayerData.age != null ? Number(extractedPlayerData.age) : null
@@ -1500,11 +1500,11 @@ export default function GestioneFormazionePage() {
         const pName = String(p.player_name || '').trim().toLowerCase()
         const pAge = p.age != null ? Number(p.age) : null
 
-        // Match esatto se nome+età corrispondono
+        // Match esatto se nome+et├á corrispondono
         if (playerName && pName && playerAge && pAge) {
           return pName === playerName && pAge === playerAge && p.slot_index !== slotIndexToSave
         }
-        // Fallback: solo nome se età non disponibile
+        // Fallback: solo nome se et├á non disponibile
         if (playerName && pName) {
           return pName === playerName && p.slot_index !== slotIndexToSave
         }
@@ -1647,7 +1647,7 @@ export default function GestioneFormazionePage() {
             setUploadingPlayer(false)
           }
         })
-        return // Ferma qui, il modal gestirà la continuazione
+        return // Ferma qui, il modal gestir├á la continuazione
       }
 
       // Salva giocatore con original_positions
@@ -1738,7 +1738,7 @@ export default function GestioneFormazionePage() {
     setMissingData({ required: [], optional: [] })
     setExtractedPlayerData(null)
     // Mantieni uploadImages e selectedSlot per permettere ricarica
-    // L'utente può chiudere e riaprire modal upload
+    // L'utente pu├▓ chiudere e riaprire modal upload
   }
 
   // Handler per salva comunque (solo dati opzionali mancanti)
@@ -1831,7 +1831,7 @@ export default function GestioneFormazionePage() {
 
       // Quando cambio formazione, mantieni i giocatori nei loro slot_index (0-10)
       // Cambiano solo le posizioni visuali (x, y) e i ruoli (position)
-      // Preserva tutti gli slot 0-10 se c'è già una formazione con giocatori
+      // Preserva tutti gli slot 0-10 se c'├¿ gi├á una formazione con giocatori
       let preserveSlots = null
       if (layout?.slot_positions && titolari.length > 0) {
         // Tutte le formazioni usano sempre slot 0-10, quindi preserviamo tutti
@@ -1939,7 +1939,7 @@ export default function GestioneFormazionePage() {
       const playersOutOfRole = []
       const playersToUpdate = []
       
-      // Per ogni slot MODIFICATO, verifica se ruolo è originale
+      // Per ogni slot MODIFICATO, verifica se ruolo ├¿ originale
       for (const [slotIndex, customPos] of Object.entries(customPositions)) {
         const slotIdx = Number(slotIndex)
         const playerInSlot = titolari.find(p => p.slot_index === slotIdx)
@@ -1951,7 +1951,7 @@ export default function GestioneFormazionePage() {
             ? playerInSlot.original_positions
             : (playerInSlot.position ? [{ position: playerInSlot.position, competence: "Alta" }] : [])
           
-          // Verifica se nuovo ruolo è tra quelli originali
+          // Verifica se nuovo ruolo ├¿ tra quelli originali
           const isOriginalRole = originalPositions.some(
             op => op.position && op.position.toUpperCase() === newRole.toUpperCase()
           )
@@ -2055,7 +2055,7 @@ export default function GestioneFormazionePage() {
         updatedSlotPositions
       )
       
-      // 2. Aggiorna position dei giocatori (layout già salvato, API legge posizioni corrette)
+      // 2. Aggiorna position dei giocatori (layout gi├á salvato, API legge posizioni corrette)
       for (const [slotIndex, customPos] of Object.entries(customPositions)) {
         const slotIdx = Number(slotIndex)
         const playerInSlot = titolari.find(p => p.slot_index === slotIdx)
@@ -2155,13 +2155,13 @@ export default function GestioneFormazionePage() {
           if (!playerData) {
             playerData = extractData.player
           } else {
-            // Validazione: verifica che nome+età corrispondano (se presenti)
+            // Validazione: verifica che nome+et├á corrispondano (se presenti)
             const currentName = String(extractData.player.player_name || '').trim().toLowerCase()
             const currentAge = extractData.player.age != null ? Number(extractData.player.age) : null
             const existingName = String(playerData.player_name || '').trim().toLowerCase()
             const existingAge = playerData.age != null ? Number(playerData.age) : null
             
-            // Se entrambi hanno nome+età, devono corrispondere
+            // Se entrambi hanno nome+et├á, devono corrispondere
             if (currentName && existingName && currentAge && existingAge) {
               if (currentName !== existingName || currentAge !== existingAge) {
                 throw new Error(`${t('imagesDifferentPlayers')}: "${playerData.player_name}" (${existingAge}) vs "${extractData.player.player_name}" (${currentAge})`)
@@ -2169,7 +2169,7 @@ export default function GestioneFormazionePage() {
             }
             
             // Merge dati aggiuntivi
-            // IMPORTANTE: overall_rating viene gestito DOPO il loop per usare il valore più alto tra tutte le foto
+            // IMPORTANTE: overall_rating viene gestito DOPO il loop per usare il valore pi├╣ alto tra tutte le foto
             const { overall_rating, ...extractDataWithoutRating } = extractData.player
             playerData = {
               ...playerData,
@@ -2184,7 +2184,7 @@ export default function GestioneFormazionePage() {
           // Salva sempre i dati estratti (inclusa la prima foto) per calcolare Math.max() dopo
           allExtractedData[img.type] = extractData.player
           
-          // Traccia foto caricate: card=Statistiche, stats=Abilità, skills=Booster (design unificato)
+          // Traccia foto caricate: card=Statistiche, stats=Abilit├á, skills=Booster (design unificato)
           if (img.type === 'card') {
             photoSlots.card = true
             if (extractData.player?.base_stats && Object.keys(extractData.player.base_stats || {}).length > 0) {
@@ -2206,7 +2206,7 @@ export default function GestioneFormazionePage() {
       // Se tutte le immagini sono fallite, mostra errore specifico
       if (!playerData || !playerData.player_name) {
         if (errors.length > 0) {
-          // Se c'è un errore di quota OpenAI, mostralo chiaramente
+          // Se c'├¿ un errore di quota OpenAI, mostralo chiaramente
           const quotaError = errors.find(e => e.includes('quota') || e.includes('billing'))
           if (quotaError) {
             throw new Error(t('openAQuotaError'))
@@ -2217,8 +2217,8 @@ export default function GestioneFormazionePage() {
         throw new Error(t('errorPlayerDataNotExtracted'))
       }
 
-      // FIX: overall_rating - l'overall_rating è presente in tutte e tre le foto (card, statistiche, abilità)
-      // Usa il valore più alto tra quelli estratti (per evitare errori dell'AI che estrae valori più bassi)
+      // FIX: overall_rating - l'overall_rating ├¿ presente in tutte e tre le foto (card, statistiche, abilit├á)
+      // Usa il valore pi├╣ alto tra quelli estratti (per evitare errori dell'AI che estrae valori pi├╣ bassi)
       const allRatings = Object.values(allExtractedData)
         .map(p => p?.overall_rating)
         .filter(r => r != null && r > 0)
@@ -2226,7 +2226,7 @@ export default function GestioneFormazionePage() {
         playerData.overall_rating = Math.max(...allRatings)
       }
 
-      // Validazione duplicati riserve: verifica se stesso giocatore (nome+età) già presente nelle riserve
+      // Validazione duplicati riserve: verifica se stesso giocatore (nome+et├á) gi├á presente nelle riserve
       const playerName = String(playerData.player_name || '').trim().toLowerCase()
       const playerAge = playerData.age != null ? Number(playerData.age) : null
       
@@ -2234,11 +2234,11 @@ export default function GestioneFormazionePage() {
         const pName = String(p.player_name || '').trim().toLowerCase()
         const pAge = p.age != null ? Number(p.age) : null
         
-        // Match esatto se nome+età corrispondono
+        // Match esatto se nome+et├á corrispondono
         if (playerName && pName && playerAge && pAge) {
           return pName === playerName && pAge === playerAge
         }
-        // Fallback: solo nome se età non disponibile
+        // Fallback: solo nome se et├á non disponibile
         if (playerName && pName) {
           return pName === playerName
         }
@@ -2321,7 +2321,7 @@ export default function GestioneFormazionePage() {
     )
   }
 
-  // Se non c'è layout, mostra messaggio con opzioni
+  // Se non c'├¿ layout, mostra messaggio con opzioni
   const noLayoutContent = !layout || !layout.slot_positions
   const totalRosterPlayers = titolari.length + riserve.length
   const showStarterPackCta = !isEditMode && !starterPackDismissed && totalRosterPlayers <= 5
@@ -2518,7 +2518,7 @@ export default function GestioneFormazionePage() {
             <Settings size={16} />
             {layout?.formation ? t('changeFormation') : (t('selectFormation') || t('createFormationBtn'))}
           </button>
-          {/* Matita e personalizza: solo se c'è già un layout */}
+          {/* Matita e personalizza: solo se c'├¿ gi├á un layout */}
           {layout?.formation && layout?.slot_positions && Object.keys(layout.slot_positions).length > 0 && (
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
               <button
@@ -2709,7 +2709,7 @@ export default function GestioneFormazionePage() {
         </div>
       )}
 
-      {/* Se non c'è layout, mostra messaggio */}
+      {/* Se non c'├¿ layout, mostra messaggio */}
       {noLayoutContent && (
         <div data-tour-id="tour-formation-upload" className="neon-card" style={{ padding: '48px 24px', textAlign: 'center', marginBottom: '24px' }}>
           <Info size={48} style={{ marginBottom: '16px', opacity: 0.5, color: 'var(--neon-blue)' }} />
@@ -2828,7 +2828,7 @@ export default function GestioneFormazionePage() {
       {/* Campo 2D - Full Width come prima */}
       {!noLayoutContent && (
       <>
-        {/* Indicatore Modalità Edit */}
+        {/* Indicatore Modalit├á Edit */}
         {isEditMode && (
           <div style={{
             padding: '12px 16px',
@@ -2879,7 +2879,7 @@ export default function GestioneFormazionePage() {
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 0 60px rgba(34, 197, 94, 0.05)',
         overflow: 'hidden'
       }}>
-        {/* Pattern texture erba - ridotto opacità */}
+        {/* Pattern texture erba - ridotto opacit├á */}
         <div style={{
           position: 'absolute',
           top: 0,
@@ -2913,7 +2913,7 @@ export default function GestioneFormazionePage() {
           pointerEvents: 'none'
         }} />
 
-        {/* Linea centrocampo - più visibile */}
+        {/* Linea centrocampo - pi├╣ visibile */}
         <div style={{
           position: 'absolute',
           top: '50%',
@@ -2925,7 +2925,7 @@ export default function GestioneFormazionePage() {
           boxShadow: '0 0 12px rgba(255, 255, 255, 0.4)'
         }} />
         
-        {/* Cerchio centrocampo - più visibile */}
+        {/* Cerchio centrocampo - pi├╣ visibile */}
         <div style={{
           position: 'absolute',
           top: '50%',
@@ -2949,7 +2949,7 @@ export default function GestioneFormazionePage() {
           boxShadow: '0 0 8px rgba(255, 255, 255, 0.4)'
         }} />
 
-        {/* Area di rigore superiore - più visibile */}
+        {/* Area di rigore superiore - pi├╣ visibile */}
         <div style={{
           position: 'absolute',
           top: '8%',
@@ -2973,7 +2973,7 @@ export default function GestioneFormazionePage() {
           boxShadow: '0 -2px 8px rgba(255, 255, 255, 0.2)'
         }} />
 
-        {/* Area di rigore inferiore - più visibile */}
+        {/* Area di rigore inferiore - pi├╣ visibile */}
         <div style={{
           position: 'absolute',
           bottom: '8%',
@@ -2997,7 +2997,7 @@ export default function GestioneFormazionePage() {
           boxShadow: '0 2px 8px rgba(255, 255, 255, 0.2)'
         }} />
 
-        {/* Linee laterali - più visibili */}
+        {/* Linee laterali - pi├╣ visibili */}
         <div style={{
           position: 'absolute',
           top: 0,
@@ -3017,7 +3017,7 @@ export default function GestioneFormazionePage() {
           boxShadow: '0 0 8px rgba(255, 255, 255, 0.3)'
         }} />
 
-        {/* Linee orizzontali (zone campo) - più visibili */}
+        {/* Linee orizzontali (zone campo) - pi├╣ visibili */}
         <div style={{
           position: 'absolute',
           top: '25%',
@@ -3238,7 +3238,7 @@ export default function GestioneFormazionePage() {
                 player={player}
                 onClick={() => {
                   if (selectedSlot && showAssignModal) {
-                    // Se il modal di assegnazione è aperto, assegna il giocatore
+                    // Se il modal di assegnazione ├¿ aperto, assegna il giocatore
                     handleAssignFromReserve(player.id)
                   } else {
                     // Altrimenti, apri il modal con le statistiche
@@ -3469,7 +3469,7 @@ export default function GestioneFormazionePage() {
         }
       `}</style>
 
-      {/* ConfirmModal per duplicato giocatore (qui per scope: duplicateConfirmModal è stato di GestioneFormazionePage) */}
+      {/* ConfirmModal per duplicato giocatore (qui per scope: duplicateConfirmModal ├¿ stato di GestioneFormazionePage) */}
       <DuplicatePlayerConfirmModal state={duplicateConfirmModal} t={t} />
 
       {/* ConfirmModal generico per sostituire window.confirm */}
@@ -3572,7 +3572,7 @@ function SlotCard({ slot, onClick, onRemove, onDelete, isEditMode = false, onPos
     return 'rgba(239, 68, 68, 0.8)'
   }
 
-  // Calcola colore hover (stesso colore, opacità maggiore)
+  // Calcola colore hover (stesso colore, opacit├á maggiore)
   function getProfileBorderColorHover(photoSlots, p) {
     const baseColor = getProfileBorderColor(photoSlots, p)
     return baseColor.replace('0.8', '1.0').replace('0.6', '1.0')
@@ -3597,7 +3597,7 @@ function SlotCard({ slot, onClick, onRemove, onDelete, isEditMode = false, onPos
     const startX = isTouch ? e.touches[0].clientX : e.clientX
     const startY = isTouch ? e.touches[0].clientY : e.clientY
     
-    // Importante: offsetX/offsetY è un offset VISIVO anti-collisione.
+    // Importante: offsetX/offsetY ├¿ un offset VISIVO anti-collisione.
     // Non deve finire salvato nelle coordinate; quindi lo usiamo solo per il rendering, non come base di persistenza.
     const startPercentX = position.x
     const startPercentY = position.y
@@ -4168,12 +4168,12 @@ function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUplo
         <div style={{ marginBottom: '20px', padding: '16px', background: 'rgba(0, 212, 255, 0.1)', borderRadius: '10px', border: '1px solid rgba(0, 212, 255, 0.2)' }}>
           {slot && (
             <div style={{ fontSize: '13px', marginBottom: '8px', opacity: 0.8 }}>
-              <strong>{t('slot')} {slot.slot_index}</strong> • {slot.position?.position || '?'}
+              <strong>{t('slot')} {slot.slot_index}</strong> ÔÇó {slot.position?.position || '?'}
             </div>
           )}
           {!slot && currentPlayer && (
             <div style={{ fontSize: '13px', marginBottom: '8px', opacity: 0.8 }}>
-              <strong>{t('riserve')}</strong> • {currentPlayer.position || '?'}
+              <strong>{t('riserve')}</strong> ÔÇó {currentPlayer.position || '?'}
             </div>
           )}
           {currentPlayer && (
@@ -4192,7 +4192,7 @@ function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUplo
                 )}
               </div>
               
-              {/* Info aggiuntive: Età, Club, Nazionalità, Stile */}
+              {/* Info aggiuntive: Et├á, Club, Nazionalit├á, Stile */}
               <div style={{ 
                 display: 'flex', 
                 flexWrap: 'wrap', 
@@ -4229,7 +4229,7 @@ function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUplo
                     alignItems: 'center',
                     gap: '4px'
                   }}>
-                    🏆 {currentPlayer.club_name || currentPlayer.team}
+                    ­ƒÅå {currentPlayer.club_name || currentPlayer.team}
                   </div>
                 )}
                 {currentPlayer.nationality && (
@@ -4245,7 +4245,7 @@ function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUplo
                     alignItems: 'center',
                     gap: '4px'
                   }}>
-                    🌍 {currentPlayer.nationality}
+                    ­ƒîì {currentPlayer.nationality}
                   </div>
                 )}
                 {(currentPlayer.playing_style_name || currentPlayer.role) && (
@@ -4261,7 +4261,7 @@ function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUplo
                     alignItems: 'center',
                     gap: '4px'
                   }}>
-                    ⚽ {currentPlayer.playing_style_name || currentPlayer.role}
+                    ÔÜ¢ {currentPlayer.playing_style_name || currentPlayer.role}
                   </div>
                 )}
               </div>
@@ -4436,7 +4436,7 @@ function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUplo
               </div>
             )}
 
-            {/* Sezione Abilità */}
+            {/* Sezione Abilit├á */}
             {hasSkills ? (
               <div style={{
                 background: 'rgba(251, 191, 36, 0.1)',
@@ -4780,7 +4780,7 @@ function AssignModal({ slot, currentPlayer, riserve, onAssignFromReserve, onUplo
   )
 }
 
-// Mappa chiave → componente icona Lucide (design unificato con pagina giocatore)
+// Mappa chiave ÔåÆ componente icona Lucide (design unificato con pagina giocatore)
 const UPLOAD_MODAL_ICONS = { card: BarChart3, stats: Zap, skills: Gift }
 
 const PLAYER_UPLOAD_EXAMPLES = [
@@ -4793,7 +4793,7 @@ const PLAYER_UPLOAD_EXAMPLES = [
   {
     key: 'skills',
     src: '/examples/player-upload/thuram-abilita.png',
-    labelIt: 'Abilità',
+    labelIt: 'Abilit├á',
     labelEn: 'Skills'
   },
   {
@@ -4819,7 +4819,7 @@ function PlayerUploadExamples({ lang }) {
       <div style={{ fontSize: '12px', lineHeight: 1.5, color: 'rgba(255,255,255,0.72)', marginBottom: '12px' }}>
         {lang === 'en'
           ? 'Use these exact screens as a reference: stats, skills and boosters must be readable.'
-          : 'Usa queste schermate come riferimento: statistiche, abilità e booster devono essere leggibili.'}
+          : 'Usa queste schermate come riferimento: statistiche, abilit├á e booster devono essere leggibili.'}
       </div>
       <div style={{
         display: 'grid',
@@ -4868,8 +4868,8 @@ function PlayerUploadExamples({ lang }) {
   )
 }
 
-// 🎨 Upload Player Modal - Design unificato (stessi colori/icone della pagina giocatore)
-// onSwitchToManual: opzionale; se presente e slot è per il campo (slot_index != null), mostra link per passare a inserimento manuale
+// ­ƒÄ¿ Upload Player Modal - Design unificato (stessi colori/icone della pagina giocatore)
+// onSwitchToManual: opzionale; se presente e slot ├¿ per il campo (slot_index != null), mostra link per passare a inserimento manuale
 function UploadPlayerModal({ slot, images, onImagesChange, onUpload, onClose, uploading, onSwitchToManual, onOptimizeError }) {
   const { t, lang } = useTranslation()
   const labelByKey = {
@@ -4976,7 +4976,7 @@ function UploadPlayerModal({ slot, images, onImagesChange, onUpload, onClose, up
           </button>
         </div>
 
-        {/* 🎨 ENTERPRISE: Step indicator */}
+        {/* ­ƒÄ¿ ENTERPRISE: Step indicator */}
         <div style={{ 
           display: 'flex', 
           justifyContent: 'center', 
@@ -5006,7 +5006,7 @@ function UploadPlayerModal({ slot, images, onImagesChange, onUpload, onClose, up
                   border: `2px solid ${isComplete ? type.color : 'rgba(255,255,255,0.2)'}`,
                   transition: 'all 0.3s ease'
                 }}>
-                  {isComplete ? '✓' : idx + 1}
+                  {isComplete ? 'Ô£ô' : idx + 1}
                 </div>
                 {idx < imageTypes.length - 1 && (
                   <div style={{
@@ -5062,7 +5062,7 @@ function UploadPlayerModal({ slot, images, onImagesChange, onUpload, onClose, up
                           fontWeight: 600
                         }}
                       >
-                        ✕
+                        Ô£ò
                       </button>
                     </div>
                     <img
@@ -5079,7 +5079,7 @@ function UploadPlayerModal({ slot, images, onImagesChange, onUpload, onClose, up
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: '13px', opacity: 0.8 }}>{t('uploadedPhotoLabel')}</span>
                       <span style={{ fontSize: '11px', padding: '2px 8px', background: color, color: '#000', borderRadius: '4px', fontWeight: 700 }}>
-                        ✓
+                        Ô£ô
                       </span>
                     </div>
                   </>
@@ -5164,7 +5164,7 @@ function UploadPlayerModal({ slot, images, onImagesChange, onUpload, onClose, up
           })}
         </div>
 
-        {/* 🎨 ENTERPRISE: Actions con progress indicator */}
+        {/* ­ƒÄ¿ ENTERPRISE: Actions con progress indicator */}
         <div style={{ 
           display: 'flex', 
           gap: '12px', 
@@ -6015,7 +6015,7 @@ function FormationSelectorModal({ onSelect, onClose, loading }) {
                         }}
                         onClick={() => setExpandedBase(isExpanded ? null : base)}
                       >
-                        <span style={{ fontSize: '12px' }}>{isExpanded ? '▼' : '▶'}</span>
+                        <span style={{ fontSize: '12px' }}>{isExpanded ? 'Ôû╝' : 'ÔûÂ'}</span>
                         <strong style={{ fontSize: '16px' }}>{base}</strong>
                         <span style={{ opacity: 0.6, fontSize: '12px' }}>
                           ({matchingVariations.length} {t('variationsCount')})
