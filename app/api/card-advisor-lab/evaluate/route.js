@@ -4,6 +4,7 @@ import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { getSkillDisplayLabel } from '@/lib/playerSkillLabels.js'
 import { CARD_ADVISOR_SELECT, searchCardAdvisorCardsByName } from '@/lib/cardAdvisorCardsLookup.js'
 import { fetchEfhubCardDetail } from '@/lib/efhubPlayerDetail.js'
+import { getPlayerDisplayStats } from '@/lib/playerEffectiveStats.js'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -316,7 +317,7 @@ function sameRolePlayers(card, players, stylesLookup) {
         style: styleName(player, stylesLookup),
         skills,
         skillLabels: skills.map(skill => skillLabel(skill, 'it')).filter(Boolean),
-        signals: signalsFromStats(player.base_stats || {}),
+        signals: signalsFromStats(getPlayerDisplayStats(player) || {}),
         statsBasis: {
           source: 'saved_roster_stats',
           currentLevel: player.current_level || null,

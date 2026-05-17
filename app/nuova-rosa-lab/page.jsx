@@ -33,6 +33,7 @@ import {
   buildPhotoPlayerSavePayload,
   resolveOriginalPositionsFromCatalogCard
 } from '@/lib/playerSavePayload'
+import { getPlayerDisplayStats } from '@/lib/playerEffectiveStats'
 import {
   AlertTriangle,
   ArrowRight,
@@ -2649,7 +2650,7 @@ function PremiumPlayerModal({
   React.useEffect(() => {
     if (!show || !player) return
     const slotProgressionPosition = slot?.position ?? null
-    let normalizedStats = normalizeBaseStatsForEditor(player.base_stats || {})
+    let normalizedStats = normalizeBaseStatsForEditor(getPlayerDisplayStats(player) || {})
     let overallRatingStr = player.overall_rating != null ? String(player.overall_rating) : ''
     const savedBuild = getPlayerBuildCoachData(player)
     const rawSavedSliders = savedBuild?.sliders && typeof savedBuild.sliders === 'object' ? savedBuild.sliders : null
@@ -2694,7 +2695,7 @@ function PremiumPlayerModal({
         : []
     )
     setInteractiveBuildSliders(hasSavedSliders ? savedSliders : null)
-  }, [show, player, slot?.position])
+  }, [show, player, player?.updated_at, slot?.position])
 
   if (!show || !player) return null
 
@@ -2883,17 +2884,21 @@ function PremiumPlayerModal({
 
     if (shouldPersistBuildPreview) {
       const preview = sliderPayloadPreview
+      const effectiveNested = nestedEffectiveStatsFromGameplayPreview(preview)
       const baselineNested =
         nestedBaselineStatsFromGameplayPreview(preview) ||
-        (player.base_stats && typeof player.base_stats === 'object' && Object.keys(player.base_stats).length > 0
-          ? player.base_stats
+        (player.metadata?.build_coach?.before?.base_stats &&
+        typeof player.metadata.build_coach.before.base_stats === 'object' &&
+        Object.keys(player.metadata.build_coach.before.base_stats).length > 0
+          ? player.metadata.build_coach.before.base_stats
           : null)
-      if (baselineNested) payload.base_stats = baselineNested
+      if (effectiveNested) payload.base_stats = effectiveNested
       payload.overall_rating = preview.afterOverall
 
       const now = new Date().toISOString()
       const prevDp = player.development_points || {}
       const prevBc = prevDp.build_coach || {}
+      const prevMetaBc = player.metadata?.build_coach || {}
       payload.development_points = {
         ...prevDp,
         build_coach: {
@@ -2908,12 +2913,20 @@ function PremiumPlayerModal({
       payload.metadata = {
         catalog_booster_reminder: false,
         build_coach: {
-          ...(player.metadata?.build_coach || {}),
+          ...prevMetaBc,
+          ...(baselineNested
+            ? {
+                before: {
+                  ...(prevMetaBc.before || {}),
+                  base_stats: baselineNested
+                }
+              }
+            : {}),
           after: {
-            ...(player.metadata?.build_coach?.after || {}),
+            ...(prevMetaBc.after || {}),
             overall_rating: preview.afterOverall,
             overall_cap: preview.overallCap ?? null,
-            effective_base_stats: nestedEffectiveStatsFromGameplayPreview(preview)
+            effective_base_stats: effectiveNested
           }
         }
       }
@@ -2930,6 +2943,7 @@ function PremiumPlayerModal({
       subtitle={lang === 'en' ? 'Player editor' : 'Editor giocatore'}
       className="nr-premium-player-shell"
     >
+      <div className="nr-premium-player-scroll">
       <div className="nr-premium-player-layout">
         <section className="nr-premium-hero">
           <div className="nr-premium-hero-top">
@@ -3373,20 +3387,32 @@ function PremiumPlayerModal({
           </div>
         </section>
       </div>
+      </div>
 
-      <div className="nr-modal-footer">
-        <button type="button" className="nr-secondary-button" onClick={onClose} disabled={saving}>
-          {lang === 'en' ? 'Cancel' : 'Annulla'}
-        </button>
-        <button
-          type="button"
-          className="nr-primary-button"
-          disabled={saving}
-          onClick={() => onSave(getEditorSavePayload())}
-        >
-          {saving ? (lang === 'en' ? 'Saving...' : 'Salvataggio...') : (lang === 'en' ? 'Save player' : 'Salva giocatore')}
-          <Save size={16} />
-        </button>
+      <div className="nr-modal-footer nr-modal-footer--sticky">
+        <p className="nr-modal-footer-hint">
+          {buildSliders
+            ? (lang === 'en'
+              ? 'Build is saved automatically when you use Suggest build. Use Save if you changed stats, skills or boosters.'
+              : 'La build si salva da sola con Consiglia build. Usa Salva se hai modificato statistiche, abilita o booster.')
+            : (lang === 'en'
+              ? 'Save to keep changes to this player.'
+              : 'Salva per confermare le modifiche al giocatore.')}
+        </p>
+        <div className="nr-modal-footer-actions">
+          <button type="button" className="nr-secondary-button" onClick={onClose} disabled={saving || building}>
+            {lang === 'en' ? 'Cancel' : 'Annulla'}
+          </button>
+          <button
+            type="button"
+            className="nr-primary-button"
+            disabled={saving || building}
+            onClick={() => onSave(getEditorSavePayload())}
+          >
+            {saving ? (lang === 'en' ? 'Saving...' : 'Salvataggio...') : (lang === 'en' ? 'Save player' : 'Salva giocatore')}
+            <Save size={16} />
+          </button>
+        </div>
       </div>
       {showPositionEditor && (
         <PositionSelectionModal
@@ -5061,8 +5087,8 @@ export default withAuth(function NuovaRosaLabPage() {
       const after = data?.result?.after_overall
       showToast(
         lang === 'en'
-          ? `Build updated${after ? `: OVR ${after}` : ''}.`
-          : `Build aggiornata${after ? `: OVR ${after}` : ''}.`,
+          ? `Build saved (stats + OVR${after ? ` ${after}` : ''}). Use Save only if you edit skills or boosters.`
+          : `Build salvata (statistiche + OVR${after ? ` ${after}` : ''}). Usa Salva solo se modifichi abilita o booster.`,
         'success'
       )
     } catch (err) {
@@ -8731,7 +8757,48 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-premium-player-shell {
           width: min(1320px, calc(100vw - 24px));
           max-height: min(94vh, 980px);
-          overflow: auto;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+
+        .nr-premium-player-scroll {
+          flex: 1;
+          min-height: 0;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .nr-modal-footer--sticky {
+          flex-shrink: 0;
+          margin-top: 0;
+          padding: 12px 0 0;
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
+          background: linear-gradient(180deg, rgba(8, 12, 28, 0.72), rgba(8, 12, 28, 0.98));
+          position: sticky;
+          bottom: 0;
+          z-index: 6;
+        }
+
+        .nr-modal-footer-hint {
+          margin: 0 0 10px;
+          font-size: 12px;
+          line-height: 1.45;
+          color: rgba(255, 255, 255, 0.62);
+          flex: 1 1 100%;
+        }
+
+        .nr-modal-footer-actions {
+          display: flex;
+          justify-content: flex-end;
+          gap: 10px;
+          flex-wrap: wrap;
+          width: 100%;
+        }
+
+        .nr-modal-footer.nr-modal-footer--sticky {
+          flex-direction: column;
+          align-items: stretch;
         }
 
         .nr-premium-player-layout {
@@ -9312,8 +9379,7 @@ export default withAuth(function NuovaRosaLabPage() {
           }
 
           .nr-quick-shell,
-          .nr-picker-shell,
-          .nr-premium-player-shell {
+          .nr-picker-shell {
             padding-bottom: max(180px, calc(env(safe-area-inset-bottom, 0px) + 156px));
           }
 
@@ -9356,10 +9422,16 @@ export default withAuth(function NuovaRosaLabPage() {
 
           .nr-premium-player-shell {
             max-height: calc(100dvh - max(20px, env(safe-area-inset-top, 0px)) - max(20px, env(safe-area-inset-bottom, 0px)));
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            overscroll-behavior: contain;
-            padding-bottom: max(118px, calc(env(safe-area-inset-bottom, 0px) + 104px));
+            overflow: hidden;
+            padding-bottom: 0;
+          }
+
+          .nr-premium-player-scroll {
+            padding-bottom: 12px;
+          }
+
+          .nr-modal-footer.nr-modal-footer--sticky {
+            padding: 10px 0 max(12px, env(safe-area-inset-bottom, 0px));
           }
 
           .nr-premium-hero {
@@ -9409,7 +9481,7 @@ export default withAuth(function NuovaRosaLabPage() {
             min-height: 0;
           }
 
-          .nr-modal-footer {
+          .nr-modal-footer:not(.nr-modal-footer--sticky) {
             position: static;
             margin: 12px 0 0;
             padding: 10px 0 max(96px, calc(env(safe-area-inset-bottom, 0px) + 84px));

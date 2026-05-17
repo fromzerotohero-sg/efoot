@@ -7,6 +7,7 @@ import { getRelevantSections, classifyQuestion } from '@/lib/ragHelper'
 import { deductCredits, AI_COST, handleCreditOperationError } from '@/lib/creditService'
 import { getCoachPoliciesText, getCoachSharedCoreText } from '@/lib/coachPromptRules'
 import { getPlayerStyleDisplayName } from '@/lib/playingStyleResolve'
+import { getPlayerDisplayStats } from '@/lib/playerEffectiveStats'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -500,7 +501,7 @@ async function buildPersonalContext(userId, lang = 'it') {
       const styleName = getPlayerStyleDisplayName(p, stylesLookup) || '-'
       const prof = getProfilazione(p.photo_slots)
       const comp = getCompetenze(p.original_positions)
-      const statsStr = formatStatsForContext(p.base_stats)
+      const statsStr = formatStatsForContext(getPlayerDisplayStats(p))
       const formStr = formatFormForContext(p.form)
       const physStr = formatPhysForContext(p.height, p.weight)
       const skillsArr = [...(Array.isArray(p.skills) ? p.skills : []), ...(Array.isArray(p.com_skills) ? p.com_skills : [])].slice(0, 5)
@@ -515,7 +516,7 @@ async function buildPersonalContext(userId, lang = 'it') {
       const styleName = getPlayerStyleDisplayName(p, stylesLookup) || '-'
       const prof = getProfilazione(p.photo_slots)
       const comp = getCompetenze(p.original_positions)
-      const statsStr = formatStatsForContext(p.base_stats)
+      const statsStr = formatStatsForContext(getPlayerDisplayStats(p))
       const formStr = formatFormForContext(p.form)
       const physStr = formatPhysForContext(p.height, p.weight)
       const skillsArr = [...(Array.isArray(p.skills) ? p.skills : []), ...(Array.isArray(p.com_skills) ? p.com_skills : [])].slice(0, 5)

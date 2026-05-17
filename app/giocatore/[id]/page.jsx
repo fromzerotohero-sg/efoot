@@ -13,6 +13,7 @@ import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 import { getSkillDisplayLabel } from '@/lib/playerSkillLabels'
 import ManualPlayerModal from '@/components/ManualPlayerModal'
 import ManualBoostersModal from '@/components/ManualBoostersModal'
+import { getPlayerDisplayStats } from '@/lib/playerEffectiveStats'
 
 export default function PlayerDetailPage() {
   const { t, lang } = useTranslation()
@@ -549,7 +550,7 @@ export default function PlayerDetailPage() {
   }
 
   const photoSlots = player.photo_slots || {}
-  const baseStats = player.base_stats || {}
+  const baseStats = getPlayerDisplayStats(player) || {}
   const skills = player.skills || []
   const comSkills = player.com_skills || []
   const boosters = player.available_boosters || []
@@ -805,7 +806,7 @@ function StatsSection({ player, photoSlots, isExpanded, onToggle, onFileSelect, 
   const style = getPhotoTypeStyle('card')
   if (!player) return null
   
-  const baseStats = player.base_stats || {}
+  const baseStats = getPlayerDisplayStats(player) || {}
   const hasStats = (photoSlots.statistiche || (baseStats && Object.keys(baseStats).length > 0)) && baseStats && Object.keys(baseStats).length > 0
 
   return (
