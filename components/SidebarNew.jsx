@@ -65,6 +65,7 @@ export default function SidebarNew() {
           icon: Sparkles,
           label: lang === 'en' ? 'Card analysis' : 'Analisi carte',
           variant: 'gold',
+          badge: 'new',
           isActive: () => isActive('/card-advisor-lab')
         }
       ]
@@ -131,6 +132,32 @@ export default function SidebarNew() {
     e.currentTarget.style.background = isGold ? 'rgba(255, 203, 5, 0.06)' : 'transparent'
     e.currentTarget.style.color = isGold ? 'rgba(255, 255, 255, 0.72)' : 'rgba(255, 255, 255, 0.62)'
     e.currentTarget.style.borderColor = isGold ? 'rgba(255, 203, 5, 0.18)' : 'transparent'
+  }
+
+  const renderNavBadge = (item) => {
+    if (item.badge !== 'new') return null
+    return (
+      <span
+        aria-label={lang === 'en' ? 'New' : 'Novità'}
+        style={{
+          flexShrink: 0,
+          marginLeft: 'auto',
+          padding: '2px 7px',
+          borderRadius: '999px',
+          fontSize: '9px',
+          fontWeight: 800,
+          letterSpacing: '0.6px',
+          textTransform: 'uppercase',
+          lineHeight: 1.2,
+          color: '#FFFFFF',
+          background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+          border: '1px solid rgba(134, 239, 172, 0.55)',
+          boxShadow: '0 0 10px rgba(34, 197, 94, 0.35)'
+        }}
+      >
+        {lang === 'en' ? 'NEW' : 'NOVITÀ'}
+      </span>
+    )
   }
 
   return (
@@ -219,7 +246,8 @@ export default function SidebarNew() {
                               : 'none'
                           }}
                         />
-                        <span>{item.label}</span>
+                        <span style={{ flex: 1, minWidth: 0 }}>{item.label}</span>
+                        {renderNavBadge(item)}
                       </Link>
                     )
                   })}
