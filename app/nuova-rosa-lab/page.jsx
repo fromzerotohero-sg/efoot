@@ -29,6 +29,11 @@ import { PLAYER_SKILL_PRESETS, getSkillDisplayLabel, normalizePlayerSkillsArray,
 import { resolvePlayerCardImageUrl } from '@/lib/playerCardImage'
 import { resolvePlayingStyleDbName } from '@/lib/playingStyleResolve'
 import {
+  buildCatalogPlayerSavePayload,
+  buildPhotoPlayerSavePayload,
+  resolveOriginalPositionsFromCatalogCard
+} from '@/lib/playerSavePayload'
+import {
   AlertTriangle,
   ArrowRight,
   Camera,
@@ -92,56 +97,18 @@ function compatibilityLabel(compatibility, lang) {
   return lang === 'en' ? 'Unknown' : 'Non definito'
 }
 
-function buildCatalogMetadata(card) {
-  return {
-    catalog_source: card?.source || null,
-    catalog_source_player_id: card?.source_player_id || null,
-    catalog_card_instance_key: card?.card_instance_key || null,
-    catalog_player_identity_key: card?.player_identity_key || null,
-    catalog_card_type: card?.card_type || null,
-    catalog_pack_name: card?.pack_name || null,
-    catalog_card_front_url: card?.source_card_front_url || null,
-    catalog_card_back_url: card?.source_card_back_url || null,
-    catalog_link_method: 'catalog_picker',
-    catalog_link_confidence: 'high',
-    catalog_linked_at: new Date().toISOString()
-  }
-}
-
-function buildPlayerPayloadFromCatalog(card, slotIndex = null) {
+function buildPlayerPayloadFromCatalog(card, slotIndex = null, { originalPositions = null, fieldPosition = null } = {}) {
   const payload = card?.players_payload && typeof card.players_payload === 'object'
     ? card.players_payload
     : {}
-
   const resolvedBoosters = resolveCatalogAvailableBoosters(payload, card)
-  const rawPlayingStyle =
-    payload.role ||
-    payload.playing_style ||
-    card.playing_style ||
-    null
-  const italianPlayingStyle = resolvePlayingStyleDbName(rawPlayingStyle)
-  const metadata = {
-    ...(payload.metadata && typeof payload.metadata === 'object' ? payload.metadata : {}),
-    ...buildCatalogMetadata(card),
-    ...(resolvedBoosters.usedCatalogDefaults ? { catalog_booster_reminder: true } : {})
-  }
-
-  return {
-    ...payload,
-    player_name: payload.player_name || card.player_name,
-    position: payload.position || card.position,
-    card_type: payload.card_type || card.card_type,
-    role: italianPlayingStyle || rawPlayingStyle || null,
-    playing_style: italianPlayingStyle || rawPlayingStyle || null,
-    overall_rating:
-      payload.overall_rating ??
-      card.overall_level_1 ??
-      card.overall_max_level ??
-      null,
-    slot_index: slotIndex,
-    available_boosters: resolvedBoosters.boosters,
-    metadata
-  }
+  return buildCatalogPlayerSavePayload(card, {
+    slotIndex,
+    originalPositions,
+    fieldPosition,
+    availableBoosters: resolvedBoosters.boosters,
+    metadataExtra: resolvedBoosters.usedCatalogDefaults ? { catalog_booster_reminder: true } : {}
+  })
 }
 
 function buildCoachPayloadFromCatalog(coach) {
@@ -234,28 +201,7 @@ function formatCoachLabel(key, t) {
 }
 
 function buildInitialPositionsFromCatalogCard(card) {
-  const payload = card?.players_payload && typeof card.players_payload === 'object'
-    ? card.players_payload
-    : {}
-  const sourcePositions = Array.isArray(payload.original_positions) && payload.original_positions.length > 0
-    ? payload.original_positions
-    : Array.isArray(card?.original_positions) && card.original_positions.length > 0
-      ? card.original_positions
-      : []
-  const normalized = sourcePositions
-    .map((entry) => {
-      const position = typeof entry === 'string' ? entry : entry?.position
-      if (!position) return null
-      return {
-        position,
-        competence: typeof entry === 'object' && entry?.competence ? entry.competence : 'Alta'
-      }
-    })
-    .filter(Boolean)
-
-  if (normalized.length > 0) return normalized
-  const mainPosition = payload.position || card?.position
-  return mainPosition ? [{ position: mainPosition, competence: 'Alta' }] : []
+  return resolveOriginalPositionsFromCatalogCard(card)
 }
 
 function buildInitialPositionsFromPlayer(player) {
@@ -4229,6 +4175,7 @@ export default withAuth(function NuovaRosaLabPage() {
       setPositionModalCtx({
         mode: photoUploadMode === 'complete' ? 'complete' : 'photo',
         slotIndex,
+        slotPosition: photoUploadMode === 'slot' ? photoUploadSlot?.position : null,
         uploadMode: photoUploadMode,
         photoSlots
       })
@@ -4444,13 +4391,12 @@ export default withAuth(function NuovaRosaLabPage() {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            player: {
-              ...extractedPlayerData,
-              original_positions: selectedOriginalPositions,
-              refresh_original_positions: selectedOriginalPositions.length > 0,
-              slot_index: slotIndexToSave,
-              photo_slots: positionModalCtx.photoSlots || extractedPlayerData.photo_slots
-            }
+            player: buildPhotoPlayerSavePayload(extractedPlayerData, {
+              originalPositions: selectedOriginalPositions,
+              slotIndex: slotIndexToSave,
+              fieldPosition: positionModalCtx.slotPosition || photoUploadSlot?.position || null,
+              photoSlots: positionModalCtx.photoSlots || extractedPlayerData.photo_slots
+            })
           })
         })
         await safeJsonResponse(response, t('errorSavingPlayerGeneric'))
@@ -4539,6 +4485,7 @@ export default withAuth(function NuovaRosaLabPage() {
           card,
           mode: 'slot',
           slotIndex: selectedSlot.slot_index,
+          slotPosition: selectedSlot.position || null,
           forcedOutOfRole: isOutOfRole
         })
       },
@@ -4585,9 +4532,8 @@ export default withAuth(function NuovaRosaLabPage() {
     })
   }, [lang, riserve, showCatalogDuplicateAlert, showToast, t, titolari])
 
-  const createPlayerFromCatalog = React.useCallback(async (card, { slotIndex = null, forcedOutOfRole = false, originalPositions = [] } = {}) => {
+  const createPlayerFromCatalog = React.useCallback(async (card, { slotIndex = null, slotPosition = null, forcedOutOfRole = false, originalPositions = [] } = {}) => {
     if (!card) return
-    if (slotIndex !== null && !selectedSlot) return
 
     try {
       let token = getTokenFallback()
@@ -4597,17 +4543,15 @@ export default withAuth(function NuovaRosaLabPage() {
       }
       if (!token) throw new Error(t('sessionExpired'))
 
-      const playerPayload = buildPlayerPayloadFromCatalog(card, slotIndex)
-      if (originalPositions.length > 0) {
-        playerPayload.original_positions = originalPositions
-        playerPayload.position = originalPositions[0]?.position || playerPayload.position
-        playerPayload.refresh_original_positions = true
-      }
+      const playerPayload = buildPlayerPayloadFromCatalog(card, slotIndex, {
+        originalPositions: originalPositions.length > 0 ? originalPositions : null,
+        fieldPosition: slotIndex !== null ? slotPosition : null
+      })
       if (forcedOutOfRole) {
         playerPayload.metadata = {
           ...(playerPayload.metadata || {}),
           forced_out_of_role: true,
-          forced_slot_position: selectedSlot?.position || null
+          forced_slot_position: slotPosition || null
         }
       }
 
@@ -4636,7 +4580,7 @@ export default withAuth(function NuovaRosaLabPage() {
       const { message } = mapErrorToUserMessage(err, t('errorSavingPlayerGeneric'), lang)
       showToast(message, 'error')
     }
-  }, [selectedSlot, lang, t, fetchRoster, closePicker, refreshDiagnosticAfterSave, showToast])
+  }, [lang, t, fetchRoster, closePicker, refreshDiagnosticAfterSave, showToast])
 
   const handleSaveCatalogPlayerWithPositions = React.useCallback(async () => {
     if (!catalogPositionCtx?.card || selectedOriginalPositions.length === 0) return
@@ -4657,6 +4601,7 @@ export default withAuth(function NuovaRosaLabPage() {
     try {
       const savedPlayer = await createPlayerFromCatalog(catalogPositionCtx.card, {
         slotIndex: catalogPositionCtx.slotIndex,
+        slotPosition: catalogPositionCtx.slotPosition || null,
         forcedOutOfRole: catalogPositionCtx.forcedOutOfRole,
         originalPositions: selectedOriginalPositions
       })

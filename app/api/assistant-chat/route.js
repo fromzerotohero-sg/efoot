@@ -3,21 +3,12 @@ import { createClient } from '@supabase/supabase-js'
 import { callOpenAIWithRetry } from '@/lib/openaiHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
-import { getRelevantSections } from '@/lib/ragHelper'
-import { getPlayerStyleDisplayName } from '@/lib/playingStyleResolve'
+import { getRelevantSections, classifyQuestion } from '@/lib/ragHelper'
 import { deductCredits, AI_COST, handleCreditOperationError } from '@/lib/creditService'
 import { getCoachPoliciesText, getCoachSharedCoreText } from '@/lib/coachPromptRules'
-import { getSkillDisplayLabel, canonicalSkillStorageName } from '@/lib/playerSkillLabels'
+import { getPlayerStyleDisplayName } from '@/lib/playingStyleResolve'
 import { buildPlayingStyleFitWarnings, formatFitWarningsBlock } from '@/lib/playingStyleFitWarnings'
-import {
-  getDeepLineDefenderCorrectionPrefix,
-  getDeepLineGuardSystemAddendum,
-  getDeepLineGuardUserAppendix,
-  isDeepLineOnDefenderQuestion,
-  responseViolatesDeepLineDefenderRule,
-  temperatureForDeepLineGuard
-} from '@/lib/deepLineDefenderGuard'
-import { getCardSlotCodesFromOriginalPositions, normPosCode } from '@/lib/playerSlotRoleMetadata'
+import { getCardSlotCodesFromOriginalPositions } from '@/lib/playerSlotRoleMetadata'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -362,9 +353,7 @@ const CONTEXT_LABELS = {
     competenceHint: 'Competenze stili TATTICI (chiavi distinte: contrattacco → contropiede_veloce; solo >= 70 consigliabili):',
     boxTitle: 'CONTESTO PERSONALE CLIENTE - DATI REALI DELLA ROSA',
     boxSubtitle: 'USA QUESTI DATI - PERSONALIZZA - CITA NOMI REALI - NON GENERICO',
-    positionNote: 'POSIZIONE: per ogni giocatore vedi "position" (ruolo assegnato in formazione) e "competenze" (posizioni ideali dalla card, es. CC Alta, MED Intermedia). Se position è diverso dalle competenze (es. competenze=CC Alta ma position=DC), CORREGGI: "X è centrocampista (CC) dalla card, non DC. Meglio schierarlo come CC o cambiare ruolo in Gestione Formazione." Siamo noi i coach: non assecondare l\'errore del cliente. ECCEZIONE: se il giocatore ha il tag [scelta confermata: ruolo campo vs carta] nel riassunto rosa, il mismatch è stato accettato in app (catalogo fuori ruolo o assegnazione slot): non trattarlo come errore del cliente; spiega trade-off (copertura, fisico, istruzioni) e come compensare.',
-    slotWhitelistNote: 'REGOLA CODICI (vincolante): su ogni riga c\'è "slot carta: A/B/C…" = unici codici modulo ammessi dalla carta (original_positions DB). Se proponi uno spostamento o citi Nome (CODICE), il CODICE deve essere uno di quella lista o la position già tra parentesi iniziali per quel nome. Se vedi "; eccezione campo: X", il cliente ha accettato fuori carta: puoi citare anche X. Non inventare codici: i metadata JSON non sostituiscono questa lista.',
-    rosterSlotAdaptSuffix: ' [scelta confermata: ruolo campo vs carta]',
+    positionNote: 'POSIZIONE: per ogni giocatore vedi "position" (ruolo assegnato in formazione) e "competenze" (posizioni ideali dalla card, es. CC Alta, MED Intermedia). Se position è diverso dalle competenze (es. competenze=CC Alta ma position=DC), CORREGGI: "X è centrocampista (CC) dalla card, non DC. Meglio schierarlo come CC o cambiare ruolo in Gestione Formazione." Siamo noi i coach: non assecondare l\'errore del cliente.',
     statsNote: 'STATS: vel, acc, res, fin, pas, tac (RAG §1). forma:↑=ottima, forma:↓=bassa. h/w=altezza/peso (duelli aerei). ABILITÀ: elencate. Usa stili+stats+abilità+forma+h/w per ragionamento. Ogni dato ha utilità.',
     teamStyle: 'Stile squadra',
     individualInstructions: 'Istruzioni individuali',
@@ -391,9 +380,7 @@ const CONTEXT_LABELS = {
     competenceHint: 'Style competences (contrattacco → contropiede_veloce; only >= 70 advisable):',
     boxTitle: 'PERSONAL CLIENT CONTEXT - REAL ROSA DATA',
     boxSubtitle: 'USE THIS DATA - PERSONALIZE - CITE REAL NAMES - NOT GENERIC',
-    positionNote: 'POSITION: for each player see "position" (assigned role) and "competenze" (ideal positions from card, e.g. CM High, DM Intermediate). If position differs from competenze (e.g. competenze=CM High but position=CB), CORRECT: "X is midfielder (CM) from card, not CB. Better field him as CM or change role in Formation Manager." We are the coaches: do not indulge client errors. EXCEPTION: if the player line has the tag [confirmed choice: field role vs card], the mismatch was accepted in-app (catalog out-of-role or slot assignment): do not treat it as a user mistake; explain trade-offs (cover, stamina, instructions) and how to compensate.',
-    slotWhitelistNote: 'CODE RULE (binding): each roster line includes "card slots: A/B/C…" = the only module codes allowed by the card (original_positions in DB). If you suggest a move or write Name (CODE), CODE must be from that list or the opening position in parentheses for that player. If you see "; field override: X", the user accepted off-card: you may also cite X. Do not invent codes: JSON metadata does not replace this list.',
-    rosterSlotAdaptSuffix: ' [confirmed choice: field role vs card]',
+    positionNote: 'POSITION: for each player see "position" (assigned role) and "competenze" (ideal positions from card, e.g. CM High, DM Intermediate). If position differs from competenze (e.g. competenze=CM High but position=CB), CORRECT: "X is midfielder (CM) from card, not CB. Better field him as CM or change role in Formation Manager." We are the coaches: do not indulge client errors.',
     statsNote: 'STATS (if present): vel=Speed, acc=Acceleration, res=Stamina (RAG §1), fin=Finishing, pas=Passing, tac=Tackling. SKILLS: listed in roster. Use styles + stats + skills for tactical reasoning.',
     teamStyle: 'Team style',
     individualInstructions: 'Individual instructions',
@@ -432,7 +419,7 @@ async function buildPersonalContext(userId, lang = 'it') {
     // Players (titolari + riserve) - include skills, forma, altezza/peso per ragionamento enterprise
     const { data: playersData, error: playersError } = await admin
       .from('players')
-      .select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, photo_slots, base_stats, original_positions, card_type, skills, com_skills, form, height, weight, extracted_data, metadata')
+      .select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, photo_slots, base_stats, original_positions, card_type, skills, com_skills, form, height, weight, extracted_data')
       .eq('user_id', userId)
       .order('slot_index', { ascending: true, nullsFirst: false })
       .limit(50)
@@ -474,29 +461,6 @@ async function buildPersonalContext(userId, lang = 'it') {
         .join(', ') || 'non impostate'
     }
 
-    function intentionalSlotAdaptation(meta) {
-      if (!meta || typeof meta !== 'object') return false
-      return meta.intentional_slot_vs_card === true || meta.forced_out_of_role === true
-    }
-
-    /** Whitelist codici modulo per il coach: carta + eventuale eccezione campo accettata in app. */
-    function formatSlotWhitelistForRosterLine(p) {
-      const cardSlots = getCardSlotCodesFromOriginalPositions(p.original_positions)
-      let extra = ''
-      if (intentionalSlotAdaptation(p.metadata)) {
-        const ip = normPosCode(p.position)
-        if (ip && !cardSlots.includes(ip)) {
-          extra = lang === 'en' ? `; field override: ${ip}` : `; eccezione campo: ${ip}`
-        }
-      }
-      if (cardSlots.length === 0) {
-        if (!extra) return ''
-        return lang === 'en' ? ` | card slots: —${extra}` : ` | slot carta: —${extra}`
-      }
-      const label = lang === 'en' ? 'card slots' : 'slot carta'
-      return ` | ${label}: ${cardSlots.join('/')}${extra}`
-    }
-
     /** Statistiche chiave per ragionamento tattico (RAG §1). Formato compatto. */
     function formatStatsForContext(baseStats) {
       if (!baseStats || typeof baseStats !== 'object') return ''
@@ -534,57 +498,39 @@ async function buildPersonalContext(userId, lang = 'it') {
       .filter(p => p.slot_index != null && p.slot_index >= 0 && p.slot_index <= 10)
       .sort((a, b) => (Number(a.slot_index) || 0) - (Number(b.slot_index) || 0))
     const riserve = roster.filter(p => p.slot_index == null)
-    const skillLang = lang === 'en' ? 'en' : 'it'
-    const skillsRosterPrefix = lang === 'en' ? ' skills: ' : ' abilità: '
-    const formatSkillsForContext = (arr) =>
-      (Array.isArray(arr) ? arr : [])
-        .map((s) => getSkillDisplayLabel(canonicalSkillStorageName(s) || s, skillLang))
-        .filter(Boolean)
-
-    /** Stile carta in lingua contesto: FK DB + resolve EN→IT + fallback OCR in extracted_data */
-    function styleNameForRosterLine(p) {
-      const ex = p?.extracted_data && typeof p.extracted_data === 'object' ? p.extracted_data : {}
-      const merged = {
-        ...p,
-        role: p?.role || ex.role || ex.playing_style || ex.playing_style_name,
-        playing_style: ex.playing_style || ex.playing_style_name
-      }
-      const name = getPlayerStyleDisplayName(merged, stylesLookup)
-      return name && String(name).trim() ? String(name).trim() : '-'
-    }
 
     let rosterLines = []
     for (const p of titolari) {
-      const styleName = styleNameForRosterLine(p)
+      const styleName = getPlayerStyleDisplayName(p, stylesLookup) || '-'
       const prof = getProfilazione(p.photo_slots)
       const comp = getCompetenze(p.original_positions)
       const statsStr = formatStatsForContext(p.base_stats)
       const formStr = formatFormForContext(p.form)
       const physStr = formatPhysForContext(p.height, p.weight)
       const skillsArr = [...(Array.isArray(p.skills) ? p.skills : []), ...(Array.isArray(p.com_skills) ? p.com_skills : [])].slice(0, 5)
-      const skillsStr = skillsArr.length > 0 ? `${skillsRosterPrefix}${formatSkillsForContext(skillsArr).join(', ')}` : ''
+      const skillsStr = skillsArr.length > 0 ? ` abilità: ${skillsArr.join(', ')}` : ''
+      const cardSlots = getCardSlotCodesFromOriginalPositions(p.original_positions)
+      const cardSlotsStr = cardSlots.length > 0 ? ` | slot carta: ${cardSlots.join('/')}` : ''
       const statsPart = statsStr ? ` | stats: ${statsStr}` : ''
       const extra = [formStr, physStr].filter(Boolean).join(' ')
-      const adapt = intentionalSlotAdaptation(p.metadata) ? L.rosterSlotAdaptSuffix : ''
-      const slotWhitelist = formatSlotWhitelistForRosterLine(p)
-      rosterLines.push(`  ${p.player_name || '?'} (${p.position || '?'}, ${styleName}, ${p.overall_rating ?? '-'}${statsPart}${extra ? ' | ' + extra : ''} | profilazione: ${prof}, competenze: ${comp}${slotWhitelist}${skillsStr})${adapt}`)
+      rosterLines.push(`  ${p.player_name || '?'} (${p.position || '?'}, ${styleName}, ${p.overall_rating ?? '-'}${statsPart}${extra ? ' | ' + extra : ''} | profilazione: ${prof}, competenze: ${comp}${cardSlotsStr}${skillsStr})`)
     }
     const reservesHeader = L.reserves + ':'
     rosterLines.push(reservesHeader)
     for (const p of riserve.slice(0, 15)) {
-      const styleName = styleNameForRosterLine(p)
+      const styleName = getPlayerStyleDisplayName(p, stylesLookup) || '-'
       const prof = getProfilazione(p.photo_slots)
       const comp = getCompetenze(p.original_positions)
       const statsStr = formatStatsForContext(p.base_stats)
       const formStr = formatFormForContext(p.form)
       const physStr = formatPhysForContext(p.height, p.weight)
       const skillsArr = [...(Array.isArray(p.skills) ? p.skills : []), ...(Array.isArray(p.com_skills) ? p.com_skills : [])].slice(0, 5)
-      const skillsStr = skillsArr.length > 0 ? `${skillsRosterPrefix}${formatSkillsForContext(skillsArr).join(', ')}` : ''
+      const skillsStr = skillsArr.length > 0 ? ` abilità: ${skillsArr.join(', ')}` : ''
+      const cardSlots = getCardSlotCodesFromOriginalPositions(p.original_positions)
+      const cardSlotsStr = cardSlots.length > 0 ? ` | slot carta: ${cardSlots.join('/')}` : ''
       const statsPart = statsStr ? ` | stats: ${statsStr}` : ''
       const extra = [formStr, physStr].filter(Boolean).join(' ')
-      const adapt = intentionalSlotAdaptation(p.metadata) ? L.rosterSlotAdaptSuffix : ''
-      const slotWhitelist = formatSlotWhitelistForRosterLine(p)
-      rosterLines.push(`  ${p.player_name || '?'} (${p.position || '?'}, ${styleName}, ${p.overall_rating ?? '-'}${statsPart}${extra ? ' | ' + extra : ''} | profilazione: ${prof}, competenze: ${comp}${slotWhitelist}${skillsStr})${adapt}`)
+      rosterLines.push(`  ${p.player_name || '?'} (${p.position || '?'}, ${styleName}, ${p.overall_rating ?? '-'}${statsPart}${extra ? ' | ' + extra : ''} | profilazione: ${prof}, competenze: ${comp}${cardSlotsStr}${skillsStr})`)
     }
     if (riserve.length > 15) rosterLines.push(`  ... altri ${riserve.length - 15} riserve`)
 
@@ -607,7 +553,11 @@ async function buildPersonalContext(userId, lang = 'it') {
     if (counts.mid) summaryParts.push(lang === 'en' ? `${counts.mid} midfield` : `${counts.mid} centrocampo`)
     if (counts.fwd) summaryParts.push(lang === 'en' ? `${counts.fwd} forwards` : `${counts.fwd} attaccanti`)
     const dispositionSummary = summaryParts.length ? ` (${summaryParts.join(', ')})` : ''
-    const dispositionLine = `${L.dispositionInField}: ${positionsOrdered || L.formationNotSet}.${dispositionSummary}`
+    const savedFormation = formationRow?.formation ? String(formationRow.formation).trim() : ''
+    const formationPrefix = savedFormation
+      ? (lang === 'en' ? `Module ${savedFormation}. ` : `Modulo ${savedFormation}. `)
+      : ''
+    const dispositionLine = `${formationPrefix}${L.dispositionInField}: ${positionsOrdered || L.formationNotSet}.${dispositionSummary}`
 
     // Matches (ultime 10) - con formazione avversario, voti, zone attacco (enterprise)
     const { data: matchesData } = await admin
@@ -733,8 +683,6 @@ async function buildPersonalContext(userId, lang = 'it') {
       '',
       L.positionNote,
       '',
-      L.slotWhitelistNote,
-      '',
       L.statsNote,
       '',
       L.starters,
@@ -792,8 +740,6 @@ function buildPersonalizedPromptV2(userMessage, context, language = 'it', efootb
   // Capsule ultra-compatta: incroci + inverse reasoning, senza tasti/pulsanti, senza uso app.
   const capsuleIt = `ENGINE (OBBLIGATORIO, token-budget):
 - INPUT: ROSA (stile card, stats vel/acc/res/fin/pas/tac, abilità, forma ↑/↓, h/w, competenze), MATCH/PATTERN (result, formation/stile, opponent formation, attack_areas, voti cliente, recurring_issues), COACH (competenze stile), TATTICA (stile squadra + istruzioni), RAG (limiti + movimenti/situazioni + community).
-- DISAMBIGUA RAG §5 (OBBLIGATORIO): "Linea bassa" / Deep line = ISTRUZIONE individuale negli slot SENZA palla: NON assegnabile a DC/TD/TS (mai su centrali/terzini). La "linea difensiva" della squadra (frecce, Impostazioni squadra) è un'altra meccanica: se vuoi difesa più arretrata, parla di quella o di marcatura/copertura, NON di "Linea bassa" su un DC.
-- CODICI MODULO: su ogni riga rosa c'è "slot carta: …" (whitelist DB). Per Nome (CODICE) o "metti X in …" usa solo codici di quella lista (o position iniziale / eccezione campo se presente sulla riga). Mai inventare un codice non listato.
 - MICRO-SCORE: FIT (position = competenze), COACH_OK(style>=70; contrattacco→contropiede_veloce), SPD (vel+acc+Scatto), PASS (pas+filtrante/di prima/dosato), WIN (tac+Intercettazione/Marcatura/Contrasto/Blocco), AIR_DEF (h/w+Dominio palle alte+Superiorità aerea), AIR_ATK (h/w+Colpo di testa), SUB (Riserva di lusso=Super riserva).
 - DECISIONE: scegli 1 leva principale + max 2 secondarie: (1) Fix FIT, (2) Fix mismatch coach/stile squadra, (3) Aggancia top recurring_issue, (4) 1-2 cambi titolari/riserve (vedi SOSTITUZIONI sotto), (5) 1 istruzione max 5, (6) gameplay solo "cosa fare" da §7.
 - VIETATO suggerire cambio formazione/modulo a meno che il cliente non lo chieda esplicitamente. Lavora sempre sulla formazione attuale salvata.
@@ -806,8 +752,6 @@ OUTPUT: 2-4 frasi operative, rispondi alla domanda specifica (es. tiro/passaggio
 
   const capsuleEn = `ENGINE (REQUIRED, token-budget):
 - INPUT: ROSTER (card style, stats spd/acc/sta/fin/pas/tac, skills, form ↑/↓, h/w, competences), MATCH/PATTERN (result, formation/style, opponent formation, attack_areas, client ratings, recurring_issues), COACH (style competence), TACTICS (team style + instructions), RAG (limits + movements/situations + community).
-- DISAMBIGUATE RAG §5 (REQUIRED): "Deep line" / Linea bassa = INDIVIDUAL instruction in WITHOUT-BALL slots: NOT assignable to CB/RB/LB (never on centre-backs/full-backs). Team defensive line depth (d-pad arrows / team settings) is a DIFFERENT mechanic: if you want a deeper block, refer to that or marking/coverage—do NOT say "Deep line on a CB".
-- MODULE CODES: each roster line has "card slots: …" (DB whitelist). For Name (CODE) or "field X as …" use only codes from that list (or opening position / field override if present on the line). Never invent a code not listed.
 - MICRO-SCORES: FIT (position = competences), COACH_OK(style>=70; contrattacco→contropiede_veloce), SPD (spd+acc+Sprint), PASS (pas+Through ball/One-touch/Weighted), WIN (tac+Interception/Man marking/Aggressive tackle/Block), AIR_DEF (h/w+High ball dominance+Aerial superiority), AIR_ATK (h/w+Heading), SUB (Luxury sub=Super sub).
 - DECISION: pick 1 main lever + max 2 secondary: (1) Fix FIT, (2) Fix coach/team-style mismatch, (3) Anchor top recurring_issue, (4) 1-2 lineup changes (see SUBSTITUTIONS below), (5) 1 instruction max 5, (6) gameplay "what to do" only from §7.
 - FORBIDDEN to suggest formation/module changes unless explicitly asked. Always work with the current saved formation.
@@ -883,7 +827,6 @@ DUE FONTI DATI (non in conflitto): (1) "Dati dalle partite inserite" = zone atta
 Se nel RIASSUNTO ANALISI è presente la sezione "Statistiche di gioco (Analisi eFootball, ultime 10 partite)" (tipo gol, tiro, passaggio, dribbling, difesa, comandi speciali), usala per consigli mirati: es. diversificare tipi di tiro, aumentare uso pressing/comandi, lavorare su passaggio o difesa in base alle percentuali reali. Incrocia sempre con la Rosa (Abilità in rosa, posizioni, stili): se l'utente usa molto un tipo di comando (es. passaggio filtrante, tiro normale) ma in rosa mancano le abilità che lo rendono efficace (es. Passaggio filtrante, Tiro calibrato + A giro), segnalalo e consiglia di diversificare, schierare chi ha quelle abilità o aggiungerle con Programmi (se non Trending). Usa la mappatura comando→abilità del RAG (§7.9 se presente). Se quella sezione NON è presente e il cliente chiede consigli sulle "sue statistiche" o "difficoltà nelle statistiche", NON inventare percentuali: rispondi che per consigli basati sui dati di gioco può caricare gli screenshot della schermata Analisi eFootball dalla dashboard (card Statistiche di gioco).
 Se nel RIASSUNTO c'è Connessione/Input delay/Ritardo (es. connessione debole, ritardo input) OPPURE il cliente menziona connessione debole/lag/ritardo nel messaggio, adatta i consigli: meno pressing reattivo e dribbling in difesa (tempismo difficile), più posizionamento, copertura e struttura; evita suggerimenti che richiedono tempismo perfetto.
 PRIORITÀ PROFILO: Se nel RIASSUNTO (sezione Informazioni per l'IA) sono presenti "Punto debole" e/o "Cosa vuole imparare" e/o "Note per l'IA", usali come priorità: orienta almeno un consiglio sul punto debole e sugli obiettivi di apprendimento quando rilevanti alla domanda; rispetta le note come focus quando possibile. NON citare mai al cliente l'elenco (es. "hai indicato che hai difficoltà in..."); usa il dato solo per orientare i consigli.
-VINCOLI ISTRUZIONI (RAG §5): "Linea bassa" / Deep line negli slot difensivi (senza palla) NON è assegnabile ai difensori (DC, TD, TS). Non consigliarla su centrali o terzini; se un DC ha quell'istruzione, segnala l'errore e suggerisci istruzioni ammesse (es. marcatura, contropiede) o spostamento ruolo.
 
 OUTPUT COACH: 2-4 frasi operative, rispondi alla domanda specifica; varia i consigli; "In sintesi" solo se utile.`
 
@@ -912,7 +855,7 @@ If the ANALYSIS SUMMARY includes "Game stats (eFootball Analisi, last 10 matches
 If the SUMMARY has Connection/Input delay/Lag (e.g. weak connection, input delay) OR the client mentions weak connection/lag/delay in the message, adapt advice: less reactive pressing and dribbling in defence (timing is harder), more positioning, coverage and structure; avoid suggestions that require perfect timing.
 PROFILE PRIORITY: If the SUMMARY (Informazioni per l'IA / AI info section) includes "Punto debole" (Weak point) and/or "Cosa vuole imparare" (Learn goals) and/or "Note per l'IA" (Notes for AI), use them as priorities: steer at least one piece of advice toward the weak point and learning goals when relevant to the question; respect the notes as focus when possible. Never quote the list back to the client (e.g. "you indicated you have difficulties in..."); use the data only to steer advice.
 
-CONSTRAINTS: only roster names; only 5 configurable team styles (Possession, Quick Counter, Long Ball Counter, Long Ball, Out Wide); contrattacco → contropiede_veloce and require coach competence >=70; individual instructions only max 5; formation limits §3.4; no Tactical(fouls) on defenders; no Box-to-box (Tornante) on an Anchor Man DM, especially if Collante/Anchor Man; High ball dominance = Heading; Deep line / Linea bassa (istruzione individuale slot difensivo): MAI su DC/TD/TS (difensori), coerente con RAG §5.
+CONSTRAINTS: only roster names; only 5 configurable team styles (Possession, Quick Counter, Long Ball Counter, Long Ball, Out Wide); contrattacco → contropiede_veloce and require coach competence >=70; individual instructions only max 5; formation limits §3.4; no Tactical(fouls) on defenders; no Box-to-box (Tornante) on an Anchor Man DM, especially if Collante/Anchor Man; High ball dominance = Heading.
 
 COACH OUTPUT: 2-4 imperative sentences; answer the specific question; vary advice; "In summary" only when useful.`
 
@@ -1032,8 +975,6 @@ export async function POST(req) {
       )
     }
 
-    const deepLineDefenderGuard = isDeepLineOnDefenderQuestion(message)
-
     const safeCurrentPage = typeof currentPage === 'string' && currentPage.length > MAX_CURRENT_PAGE_LENGTH
       ? currentPage.slice(0, MAX_CURRENT_PAGE_LENGTH)
       : (currentPage || '')
@@ -1063,13 +1004,15 @@ export async function POST(req) {
       context = { profile: {}, currentPage: currentPage || '', appState: safeAppState }
     }
 
-    // RAG eFootball: sempre sezioni rilevanti da info_rag (la coach deve poter incrociare meccaniche/stili anche se il messaggio contiene parole tipo "upload" o navigazione)
+    // RAG eFootball: se la domanda riguarda eFootball, carica sezioni rilevanti da info_rag
     let efootballKnowledge = ''
-    try {
-      efootballKnowledge = getRelevantSections(message, 18000)
-      if (efootballKnowledge && process.env.NODE_ENV !== 'production') console.log('[assistant-chat] RAG eFootball: loaded sections')
-    } catch (ragError) {
-      console.error('[assistant-chat] RAG error (non-blocking):', ragError.message)
+    if (classifyQuestion(message) === 'efootball') {
+      try {
+        efootballKnowledge = getRelevantSections(message, 18000)
+        if (efootballKnowledge && process.env.NODE_ENV !== 'production') console.log('[assistant-chat] RAG eFootball: loaded sections')
+      } catch (ragError) {
+        console.error('[assistant-chat] RAG error (non-blocking):', ragError.message)
+      }
     }
 
     // Contesto personale: se esiste diagnostic in cache usalo (RIASSUNTO ANALISI), altrimenti fallback buildPersonalContext (ROSA E DATI)
@@ -1150,9 +1093,6 @@ export async function POST(req) {
     let prompt
     try {
       prompt = buildPersonalizedPromptV2(message, context, lang, efootballKnowledge, personalContextSummary, history.length > 0, contextBlockLabel)
-      if (deepLineDefenderGuard) {
-        prompt += `\n\n${getDeepLineGuardUserAppendix(lang)}`
-      }
       if (!prompt || prompt.trim().length === 0) {
         throw new Error('Empty prompt generated')
       }
@@ -1195,10 +1135,7 @@ export async function POST(req) {
     const model = rawModel || 'gpt-5.2'
     if (process.env.NODE_ENV !== 'production') console.log('[assistant-chat] Request model:', model, '(OPENAI_MODEL=' + (process.env.OPENAI_MODEL ? 'set' : 'unset') + ')')
     
-    let systemContent = buildSystemContentV2(lang)
-    if (deepLineDefenderGuard) {
-      systemContent += `\n\n${getDeepLineGuardSystemAddendum(lang)}`
-    }
+    const systemContent = buildSystemContentV2(lang)
 
     const openAIMessages = [
       { role: 'system', content: systemContent },
@@ -1209,7 +1146,7 @@ export async function POST(req) {
     const requestBody = {
       model: model,
       messages: openAIMessages,
-      temperature: deepLineDefenderGuard ? temperatureForDeepLineGuard(0.7) : 0.7,
+      temperature: 0.7,
       max_completion_tokens: 800 // gpt-5.2 richiede max_completion_tokens (max_tokens deprecato)
     }
     
@@ -1326,10 +1263,7 @@ export async function POST(req) {
 
     // Estrai 3 suggerimenti cliccabili dal blocco SUGGERIMENTI (se presente) e pulisci il testo mostrato
     const { cleanContent, suggestions } = parseSuggestionsFromContent(rawContent)
-    let sanitizedContent = sanitizeCoachOutput(cleanContent, lang)
-    if (deepLineDefenderGuard && responseViolatesDeepLineDefenderRule(sanitizedContent)) {
-      sanitizedContent = getDeepLineDefenderCorrectionPrefix(lang) + sanitizedContent
-    }
+    const sanitizedContent = sanitizeCoachOutput(cleanContent, lang)
     const responseWithReminder = finalizeCoachReply({
       content: sanitizedContent,
       message,
