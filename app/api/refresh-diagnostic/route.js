@@ -107,7 +107,7 @@ export async function POST(req) {
     const [profileRes, formationRes, playersRes, stylesRes, matchesRes, tacticalRes, coachRes, patternsRes, gameAnalysisRes, feedbackRes] = await Promise.all([
       admin.from('user_profiles').select('first_name, last_name, team_name, common_problems, ai_name, current_division, hours_per_week, connection_quality, slow_opponent_connection_issues, input_delay, pass_level, smart_assist, platform, favourite_player_name, ai_weak_point, ai_learn_goals, ai_notes').eq('user_id', userId).maybeSingle(),
       admin.from('formation_layout').select('formation').eq('user_id', userId).maybeSingle(),
-      admin.from('players').select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, skills, com_skills, form, base_stats, original_positions, height, weight, extracted_data').eq('user_id', userId).order('slot_index', { ascending: true, nullsFirst: false }).limit(50),
+      admin.from('players').select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, skills, com_skills, form, base_stats, original_positions').eq('user_id', userId).order('slot_index', { ascending: true, nullsFirst: false }).limit(50),
       admin.from('playing_styles').select('id, name'),
       admin.from('matches').select('opponent_name, result, formation_played, playing_style_played, match_date, opponent_formation_id, player_ratings, attack_areas, team_stats').eq('user_id', userId).order('match_date', { ascending: false }).limit(20),
       admin.from('team_tactical_settings').select('team_playing_style, individual_instructions').eq('user_id', userId).maybeSingle(),

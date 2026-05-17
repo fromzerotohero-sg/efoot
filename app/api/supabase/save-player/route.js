@@ -5,6 +5,10 @@ import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { normalizePlayerSkillsArray } from '@/lib/playerSkillLabels'
 import { enrichPlayerMetadataWithCardImage } from '@/lib/playerCardImage'
 import { lookupPlayingStyleId, resolvePlayingStyleDbName } from '@/lib/playingStyleResolve'
+import {
+  isCatalogPlayerSave,
+  resolvePlayingStyleNameFromPlayer
+} from '@/lib/playerSavePayload'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -112,11 +116,12 @@ export async function POST(req) {
     }
 
     const refreshOriginalPositions = Boolean(player.refresh_original_positions)
+    const fromCatalog = isCatalogPlayerSave(player)
 
     // Lookup playing_style_id: PESDB/catalogo in EN → nome IT in playing_styles
     let playingStyleId = null
     let resolvedRole = toText(player.role)
-    const playingStyleName = toText(player.playing_style) || toText(player.role)
+    const playingStyleName = resolvePlayingStyleNameFromPlayer(player)
     if (playingStyleName) {
       const { id, name } = await lookupPlayingStyleId(admin, playingStyleName)
       if (id) {
@@ -216,7 +221,7 @@ export async function POST(req) {
       extracted_data: omitSaveClientFlags(player),
       metadata: enrichPlayerMetadataWithCardImage(omitSaveClientFlags(player), {
         ...(player.metadata && typeof player.metadata === 'object' ? player.metadata : {}),
-        source: player?.metadata?.catalog_source ? player.metadata.catalog_source : 'screenshot_extractor',
+        source: fromCatalog ? 'player_catalog' : (player?.metadata?.source || 'screenshot_extractor'),
         saved_at: new Date().toISOString(),
         weak_foot_frequency: player.weak_foot_frequency || null,
         weak_foot_accuracy: player.weak_foot_accuracy || null,
@@ -261,7 +266,9 @@ export async function POST(req) {
         if (process.env.NODE_ENV !== 'production') console.log(`[save-player] Player already exists in slot ${playerData.slot_index}, updating: id=${existingPlayerInSlot.id}`)
         
         const normalizedOpRefresh = normalizeOriginalPositionsInput(player.original_positions)
-        const shouldApplyOpRefresh = refreshOriginalPositions && normalizedOpRefresh
+        const shouldApplyOpRefresh =
+          normalizedOpRefresh &&
+          (refreshOriginalPositions || fromCatalog)
 
         delete playerData.original_positions
 
@@ -273,24 +280,45 @@ export async function POST(req) {
           ? { ...existingPhotoSlots, ...newPhotoSlots }
           : existingPhotoSlots
         
-        // Merge base_stats (preferisci nuovi se presenti)
-        const mergedBaseStats = playerData.base_stats && Object.keys(playerData.base_stats).length > 0
-          ? { ...(existingPlayerInSlot.base_stats || {}), ...playerData.base_stats }
-          : existingPlayerInSlot.base_stats
-        
-        // Merge skills e com_skills (unisci array, rimuovi duplicati)
-        const existingSkills = Array.isArray(existingPlayerInSlot.skills) ? existingPlayerInSlot.skills : []
         const newSkills = Array.isArray(playerData.skills) ? playerData.skills : []
-        const mergedSkills = normalizePlayerSkillsArray([...existingSkills, ...newSkills])
-        
-        const existingComSkills = Array.isArray(existingPlayerInSlot.com_skills) ? existingPlayerInSlot.com_skills : []
         const newComSkills = Array.isArray(playerData.com_skills) ? playerData.com_skills : []
-        const mergedComSkills = normalizePlayerSkillsArray([...existingComSkills, ...newComSkills])
-        
-        // Merge boosters (preferisci nuovi se presenti)
-        const mergedBoosters = playerData.available_boosters && Array.isArray(playerData.available_boosters) && playerData.available_boosters.length > 0
-          ? playerData.available_boosters
-          : existingPlayerInSlot.available_boosters
+        const hasNewStats =
+          playerData.base_stats &&
+          typeof playerData.base_stats === 'object' &&
+          Object.keys(playerData.base_stats).length > 0
+
+        // Catalogo: sostituisci abilità/stats (no merge con giocatore precedente nello slot)
+        const mergedBaseStats = fromCatalog
+          ? (hasNewStats ? playerData.base_stats : existingPlayerInSlot.base_stats || {})
+          : hasNewStats
+            ? { ...(existingPlayerInSlot.base_stats || {}), ...playerData.base_stats }
+            : existingPlayerInSlot.base_stats
+
+        const mergedSkills = fromCatalog
+          ? normalizePlayerSkillsArray(newSkills)
+          : normalizePlayerSkillsArray([
+              ...(Array.isArray(existingPlayerInSlot.skills) ? existingPlayerInSlot.skills : []),
+              ...newSkills
+            ])
+
+        const mergedComSkills = fromCatalog
+          ? normalizePlayerSkillsArray(newComSkills)
+          : normalizePlayerSkillsArray([
+              ...(Array.isArray(existingPlayerInSlot.com_skills) ? existingPlayerInSlot.com_skills : []),
+              ...newComSkills
+            ])
+
+        const mergedBoosters =
+          fromCatalog &&
+          playerData.available_boosters &&
+          Array.isArray(playerData.available_boosters) &&
+          playerData.available_boosters.length > 0
+            ? playerData.available_boosters
+            : playerData.available_boosters &&
+                Array.isArray(playerData.available_boosters) &&
+                playerData.available_boosters.length > 0
+              ? playerData.available_boosters
+              : existingPlayerInSlot.available_boosters
         
         // Merge extracted_data
         const mergedExtractedData = {
@@ -331,13 +359,17 @@ export async function POST(req) {
           ...(playerData.nationality && { nationality: playerData.nationality }),
           ...(playerData.club_name && { club_name: playerData.club_name }),
           ...(playerData.form && { form: playerData.form }),
-          ...(playerData.role && { role: playerData.role }),
+          ...(fromCatalog
+            ? { role: resolvedRole || playerData.role || null }
+            : playerData.role && { role: playerData.role }),
           ...(playerData.height !== null && playerData.height !== undefined && { height: playerData.height }),
           ...(playerData.weight !== null && playerData.weight !== undefined && { weight: playerData.weight }),
           ...(playerData.current_level !== null && playerData.current_level !== undefined && { current_level: playerData.current_level }),
           ...(playerData.level_cap !== null && playerData.level_cap !== undefined && { level_cap: playerData.level_cap }),
           ...(playerData.active_booster_name && { active_booster_name: playerData.active_booster_name }),
-          ...(playerData.playing_style_id && { playing_style_id: playerData.playing_style_id }),
+          ...(fromCatalog
+            ? { playing_style_id: playingStyleId }
+            : playerData.playing_style_id && { playing_style_id: playerData.playing_style_id }),
           ...(shouldApplyOpRefresh && { original_positions: normalizedOpRefresh }),
           // Campi merged (sempre aggiornati)
           photo_slots: mergedPhotoSlots,
