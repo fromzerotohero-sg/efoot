@@ -176,13 +176,18 @@ export function buildPlayerUpdatePayload({ player, build, contextEstimated = [],
   const previousDevelopment = player.development_points && typeof player.development_points === 'object' ? player.development_points : {}
   const estimatedFields = Array.from(new Set([...(build.estimatedFields || []), ...contextEstimated]))
   const baselineNested = efhubStatsToPlayerBaseStats(normalizeStatsToEfhub(build.baseStats))
-  const effectiveNested = efhubStatsToPlayerBaseStats(normalizeStatsToEfhub(build.finalInGameStats))
+  const useFieldSnapshot = Boolean(build.coachConsidered || build.fieldBoostersConsidered)
+  const effectiveEfhubStats =
+    useFieldSnapshot && build.finalFieldStats ? build.finalFieldStats : build.finalInGameStats
+  const effectiveNested = efhubStatsToPlayerBaseStats(normalizeStatsToEfhub(effectiveEfhubStats))
+  const displayOverall =
+    useFieldSnapshot && Number.isFinite(build.fieldOverall) ? build.fieldOverall : build.afterOverall
   const catalogOverallMax = catalogCard?.overall_max_level ?? catalogCard?.players_payload?.overall_max_level
   const beforeBaseStats = baselineNested
 
   return {
     base_stats: effectiveNested,
-    overall_rating: build.afterOverall,
+    overall_rating: displayOverall,
     level_cap: build.levelCap || resolveProgressionLevelCap(player, catalogCard) || player.level_cap,
     development_points: {
       ...previousDevelopment,
@@ -199,10 +204,10 @@ export function buildPlayerUpdatePayload({ player, build, contextEstimated = [],
     position_ratings: (() => {
       const ratings = {
         ...(player.position_ratings && typeof player.position_ratings === 'object' ? player.position_ratings : {}),
-        [build.targetPosition]: build.afterOverall
+        [build.targetPosition]: displayOverall
       }
       const appPosition = String(player.position || '').trim().toUpperCase()
-      if (appPosition) ratings[appPosition] = build.afterOverall
+      if (appPosition) ratings[appPosition] = displayOverall
       return ratings
     })(),
     metadata: {
@@ -223,12 +228,15 @@ export function buildPlayerUpdatePayload({ player, build, contextEstimated = [],
           base_stats: beforeBaseStats
         },
         after: {
-          overall_rating: build.afterOverall,
+          overall_rating: displayOverall,
           overall_decimal: build.afterOverallDecimal,
+          play_profile_overall: build.inGameOverall ?? build.afterOverall,
+          field_overall: build.fieldOverall ?? null,
           effective_base_stats: effectiveNested,
           overall_cap: build.overallCap ?? null
         },
         boosters_considered: Boolean(build.boostersConsidered),
+        field_boosters_considered: Boolean(build.fieldBoostersConsidered),
         coach_stat_boosts_considered: Boolean(build.coachConsidered),
         created_at: now
       },

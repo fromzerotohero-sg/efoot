@@ -18,6 +18,8 @@ import {
   isBuildMacroBlockedForPlayer,
   nestedBaselineStatsFromGameplayPreview,
   nestedEffectiveStatsFromGameplayPreview,
+  nestedFieldStatsFromGameplayPreview,
+  catalogCardFromPlayerSnapshot,
   pickBilingualList,
   previewGameplayBuildFromSliders,
   buildPlayerForPlayProfilePreview,
@@ -2500,8 +2502,23 @@ function mapPreviewBaseStatsToFormFields(previewBaseStats = {}) {
   return out
 }
 
-function playProfileStatsFromPreview(preview) {
-  return preview?.playProfileStatsNested || nestedEffectiveStatsFromGameplayPreview(preview)
+function preferFieldStatsContext(activeCoach, teamPlayingStyle, boostersDraft = []) {
+  if (activeCoach || teamPlayingStyle) return true
+  return boostersDraft.filter((entry) => String(entry?.name || '').trim()).length > 1
+}
+
+function statsFromBuildPreview(preview, preferField = false) {
+  if (!preview) return null
+  if (preferField) {
+    return preview.fieldStatsNested || nestedFieldStatsFromGameplayPreview(preview) || null
+  }
+  return preview.playProfileStatsNested || nestedEffectiveStatsFromGameplayPreview(preview) || null
+}
+
+function overallFromBuildPreview(preview, preferField = false) {
+  if (!preview) return null
+  if (preferField && Number.isFinite(preview.fieldOverall)) return preview.fieldOverall
+  return preview.playProfileOverall ?? preview.afterOverall ?? null
 }
 
 function buildBoostersDraftForPreview(boostersDraft = [], player = {}) {
@@ -2725,6 +2742,9 @@ function PremiumPlayerModal({
     const savedSliders = rawSavedSliders ? sanitizeBuildCoachSliders(rawSavedSliders) : null
     const hasSavedSliders = savedSliders && Object.keys(savedSliders).length > 0
     if (hasSavedSliders) {
+      const catalogCard = catalogCardFromPlayerSnapshot(player)
+      const teamPlayingStyle = tacticalSettings?.team_playing_style ?? null
+      const preferField = preferFieldStatsContext(activeCoach, teamPlayingStyle, player.available_boosters || [])
       const previewPlayer = buildPlayerForPlayProfilePreview(player, {
         activeBoosterName: player.active_booster_name,
         availableBoosters: player.available_boosters
@@ -2732,12 +2752,16 @@ function PremiumPlayerModal({
       const openPreview = previewGameplayBuildFromSliders({
         player: previewPlayer,
         sliders: savedSliders,
-        slotPosition: slotProgressionPosition
+        slotPosition: slotProgressionPosition,
+        catalogCard,
+        coach: activeCoach,
+        teamStyle: teamPlayingStyle
       })
-      const profileStats = playProfileStatsFromPreview(openPreview)
-      if (profileStats && typeof profileStats === 'object' && Number.isFinite(openPreview.afterOverall)) {
+      const profileStats = statsFromBuildPreview(openPreview, preferField)
+      const previewOvr = overallFromBuildPreview(openPreview, preferField)
+      if (profileStats && typeof profileStats === 'object' && Number.isFinite(previewOvr)) {
         normalizedStats = { ...normalizedStats, ...mapPreviewBaseStatsToFormFields(profileStats) }
-        overallRatingStr = String(openPreview.afterOverall)
+        overallRatingStr = String(previewOvr)
       }
     }
     setForm({
@@ -2762,7 +2786,7 @@ function PremiumPlayerModal({
         : []
     )
     setInteractiveBuildSliders(hasSavedSliders ? savedSliders : null)
-  }, [show, player, player?.updated_at, slot?.position])
+  }, [show, player, player?.updated_at, slot?.position, activeCoach, tacticalSettings?.team_playing_style])
 
   if (!show || !player) return null
 
@@ -2846,6 +2870,8 @@ function PremiumPlayerModal({
 
   const slotProgressionPosition = slot?.position ?? null
   const teamPlayingStyle = tacticalSettings?.team_playing_style ?? null
+  const buildCatalogCard = catalogCardFromPlayerSnapshot(player)
+  const preferFieldStats = preferFieldStatsContext(activeCoach, teamPlayingStyle, boostersDraft)
 
   const effectiveBuildSliders = buildSliders
     ? sanitizeBuildCoachSliders(interactiveBuildSliders ?? buildSliders)
@@ -2860,6 +2886,7 @@ function PremiumPlayerModal({
       player: previewPlayer,
       sliders: effectiveBuildSliders,
       slotPosition: slotProgressionPosition,
+      catalogCard: buildCatalogCard,
       coach: activeCoach,
       teamStyle: teamPlayingStyle
     })
@@ -2874,16 +2901,18 @@ function PremiumPlayerModal({
       player: previewPlayer,
       sliders: slidersSnapshot,
       slotPosition: slotProgressionPosition,
+      catalogCard: buildCatalogCard,
       coach: activeCoach,
       teamStyle: teamPlayingStyle
     })
-    const profileStats = playProfileStatsFromPreview(preview)
-    if (!preview || !Number.isFinite(Number(preview.afterOverall))) return
+    const profileStats = statsFromBuildPreview(preview, preferFieldStats)
+    const previewOvr = overallFromBuildPreview(preview, preferFieldStats)
+    if (!preview || !Number.isFinite(Number(previewOvr))) return
     if (!profileStats || typeof profileStats !== 'object') return
     setForm((prev) => ({
       ...prev,
       ...mapPreviewBaseStatsToFormFields(profileStats),
-      overall_rating: String(preview.afterOverall)
+      overall_rating: String(previewOvr)
     }))
   }
 
@@ -2895,7 +2924,8 @@ function PremiumPlayerModal({
       sliders: cur,
       key,
       targetTicks: rawValue,
-      slotPosition: slotProgressionPosition
+      slotPosition: slotProgressionPosition,
+      catalogCard: buildCatalogCard
     })
     setInteractiveBuildSliders(next)
     applyPreviewToForm(next)
@@ -2909,7 +2939,8 @@ function PremiumPlayerModal({
       sliders: cur,
       key,
       delta,
-      slotPosition: slotProgressionPosition
+      slotPosition: slotProgressionPosition,
+      catalogCard: buildCatalogCard
     })
     if (!next) return
     setInteractiveBuildSliders(next)
@@ -2923,6 +2954,7 @@ function PremiumPlayerModal({
           player: previewPlayer,
           sliders: sanitizeBuildCoachSliders(interactiveBuildSliders ?? buildSliders),
           slotPosition: slotProgressionPosition,
+          catalogCard: buildCatalogCard,
           coach: activeCoach,
           teamStyle: teamPlayingStyle
         })
@@ -2959,7 +2991,7 @@ function PremiumPlayerModal({
 
     if (shouldPersistBuildPreview) {
       const preview = sliderPayloadPreview
-      const effectiveNested = playProfileStatsFromPreview(preview)
+      const effectiveNested = statsFromBuildPreview(preview, preferFieldStats)
       const baselineNested = nestedBaselineStatsFromGameplayPreview(preview)
       if (effectiveNested) payload.base_stats = effectiveNested
       payload.overall_rating = preview.fieldOverall ?? preview.afterOverall
@@ -3036,8 +3068,8 @@ function PremiumPlayerModal({
             <div className="nr-premium-overall">
               <span>OVR</span>
               <strong>
-                {buildAllocationLivePreview != null && Number.isFinite(buildAllocationLivePreview.afterOverall)
-                  ? buildAllocationLivePreview.afterOverall
+                {buildAllocationLivePreview != null && Number.isFinite(overallFromBuildPreview(buildAllocationLivePreview, preferFieldStats))
+                  ? overallFromBuildPreview(buildAllocationLivePreview, preferFieldStats)
                   : rosterFormationOvr(player, slot)}
               </strong>
             </div>
