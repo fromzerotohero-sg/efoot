@@ -1,7 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { efhubStatsToPlayerBaseStats, normalizeStatsToEfhub } from '@/lib/efootballBuildRules'
-import { calculateGameplayBuild, resolveProgressionLevelCap } from '@/lib/gameplayBuildCoach'
+import {
+  calculateGameplayBuild,
+  resolveCatalogProgressionLevelCap,
+  resolveProgressionLevelCap
+} from '@/lib/gameplayBuildCoach'
 import {
   BUILD_COACH_CATALOG_SELECT,
   enrichCatalogCardForBuildCoach
@@ -153,13 +157,16 @@ function withFallbacks(player, catalogCard) {
     estimated.push('base_stats')
   }
 
-  const resolvedLevelCap = resolveProgressionLevelCap(next, catalogCard)
+  const catalogLevelCap = resolveCatalogProgressionLevelCap(catalogCard)
   const currentLevelCap = Number(next.level_cap)
-  if (!Number.isFinite(currentLevelCap) || currentLevelCap <= 1) {
-    if (resolvedLevelCap && resolvedLevelCap > 1) {
-      next.level_cap = resolvedLevelCap
-      estimated.push('level_cap')
+  if (catalogLevelCap && catalogLevelCap > 1) {
+    next.metadata = {
+      ...(next.metadata && typeof next.metadata === 'object' ? next.metadata : {}),
+      efhub_db_level_cap: catalogLevelCap
     }
+  }
+  if (!Number.isFinite(currentLevelCap) || currentLevelCap <= 1) {
+    estimated.push('level_cap')
   }
 
   if (!next.height) {

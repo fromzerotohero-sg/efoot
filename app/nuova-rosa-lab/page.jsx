@@ -2526,6 +2526,7 @@ function resolveActiveBoosterName(boostersDraft = [], player = {}) {
 
 /** Solo persistenza: blocca OVR troppo bassi o crolli sospetti. L'anteprima live non deve usare questa funzione. */
 function isSafeBuildPreviewForSave(preview, player) {
+  if (!preview?.ok || preview?.overBudget) return false
   const nextOverall = Number(preview?.afterOverall)
   if (!Number.isFinite(nextOverall)) return false
   const currentOverall = Number(player?.overall_rating)
@@ -2868,6 +2869,7 @@ function PremiumPlayerModal({
     buildAllocationLivePreview?.pointsUsed ?? buildPointsUsed
   const liveBuildPointsAvailable =
     buildAllocationLivePreview?.pointsAvailable ?? buildPointsAvailable
+  const liveBuildOverBudget = Boolean(buildAllocationLivePreview?.overBudget)
 
   const applyPreviewToForm = (slidersSnapshot) => {
     const preview = previewGameplayBuildFromSliders({
@@ -3121,7 +3123,12 @@ function PremiumPlayerModal({
                   <div className="nr-build-copy-meta">
                     {buildTargetPosition && <span>{buildTargetPosition}</span>}
                     {liveBuildPointsUsed !== null && liveBuildPointsAvailable !== null && (
-                      <span>{liveBuildPointsUsed}/{liveBuildPointsAvailable} PT</span>
+                      <span className={liveBuildOverBudget ? 'nr-build-pt-over' : undefined}>
+                        {liveBuildPointsUsed}/{liveBuildPointsAvailable} PT
+                        {liveBuildOverBudget
+                          ? (lang === 'en' ? ' · over budget' : ' · budget superato')
+                          : ''}
+                      </span>
                     )}
                   </div>
                 </div>
