@@ -13,6 +13,39 @@ import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 import { ArrowLeft, Upload, AlertCircle, CheckCircle2, RefreshCw, X, Camera, Shield, Target, Users, Settings, ChevronDown, ChevronUp, Brain, MessageCircle, Trophy, Radio, Sparkles, Mic } from 'lucide-react'
 
+const FORMATION_OCR_EXAMPLE = {
+  src: '/examples/formation-upload/formazione-game-plan-esempio.png',
+  alt: { it: 'Esempio schermata Game Plan eFootball con modulo 4-3-1-2', en: 'Example eFootball Game Plan screen with 4-3-1-2 formation' }
+}
+
+function FormationUploadExample({ lang }) {
+  const isEn = lang === 'en'
+  return (
+    <section className="counter-formation-example" aria-label={isEn ? 'Formation screenshot example' : 'Esempio screenshot formazione'}>
+      <div className="counter-formation-example-copy">
+        <strong>{isEn ? 'Correct screenshot example' : 'Esempio screenshot corretto'}</strong>
+        <p>
+          {isEn
+            ? 'Use the opponent Game Plan screen: all 11 starters visible, formation label (e.g. 4-3-1-2), coach and ratings readable. Do not use single-player stat screens.'
+            : 'Usa la schermata Game Plan avversaria: tutti gli 11 titolari visibili, modulo leggibile (es. 4-3-1-2), coach e valutazioni nitidi. Non usare le schede singolo giocatore.'}
+        </p>
+      </div>
+      <a
+        href={FORMATION_OCR_EXAMPLE.src}
+        target="_blank"
+        rel="noreferrer"
+        className="counter-formation-example-card"
+      >
+        <img
+          src={FORMATION_OCR_EXAMPLE.src}
+          alt={FORMATION_OCR_EXAMPLE.alt[isEn ? 'en' : 'it']}
+        />
+        <span>{isEn ? 'Game Plan · full squad view' : 'Game Plan · vista squadra completa'}</span>
+      </a>
+    </section>
+  )
+}
+
 /** Estrae testo in lingua da valore stringa o oggetto bilingue { it, en } (coerente con analyze-match) */
 function pickLang(val, lang) {
   if (val == null) return ''
@@ -380,8 +413,8 @@ export default function CountermeasuresPreMatchPage() {
               <h2>{t('uploadOpponentFormation')}</h2>
               <p>
                 {lang === 'en'
-                  ? 'Clear squad screen → structure read, tactical tips generated.'
-                  : 'Screenshot nitido del modulo avversario → lettura modulo e suggerimenti tattici.'}
+                  ? 'Game Plan screen with all 11 starters → formation read, tactical tips generated.'
+                  : 'Schermata Game Plan con tutti gli 11 titolari → lettura modulo e suggerimenti tattici.'}
               </p>
             </div>
             <div className="counter-upload-logo" aria-hidden="true">
@@ -392,6 +425,7 @@ export default function CountermeasuresPreMatchPage() {
           
           {!uploadImage ? (
             <div>
+              <FormationUploadExample lang={lang} />
               <input
                 id="counter-upload-input"
                 type="file"
@@ -1300,6 +1334,59 @@ export default function CountermeasuresPreMatchPage() {
           color: rgba(255, 255, 255, 0.72);
           font-size: 14px;
           line-height: 1.6;
+        }
+
+        .counter-formation-example {
+          margin-bottom: 18px;
+          padding: 14px;
+          border-radius: 16px;
+          border: 1px solid rgba(251, 191, 36, 0.28);
+          background: rgba(251, 191, 36, 0.06);
+        }
+
+        .counter-formation-example-copy strong {
+          display: block;
+          margin-bottom: 6px;
+          font-size: 13px;
+          font-weight: 800;
+          color: #fbbf24;
+        }
+
+        .counter-formation-example-copy p {
+          margin: 0 0 12px;
+          font-size: 12px;
+          line-height: 1.5;
+          color: rgba(255, 255, 255, 0.76);
+        }
+
+        .counter-formation-example-card {
+          display: block;
+          text-decoration: none;
+          color: inherit;
+        }
+
+        .counter-formation-example-card img {
+          width: 100%;
+          max-height: 280px;
+          object-fit: contain;
+          object-position: top center;
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          background: rgba(0, 0, 0, 0.35);
+        }
+
+        .counter-formation-example-card span {
+          display: block;
+          margin-top: 8px;
+          text-align: center;
+          font-size: 12px;
+          font-weight: 700;
+          color: rgba(255, 255, 255, 0.72);
+        }
+
+        .counter-formation-example-card:hover img {
+          border-color: rgba(251, 191, 36, 0.45);
+          box-shadow: 0 0 18px rgba(251, 191, 36, 0.18);
         }
 
         .counter-upload-logo {
