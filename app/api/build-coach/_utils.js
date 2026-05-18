@@ -196,10 +196,15 @@ export function buildPlayerUpdatePayload({ player, build, contextEstimated = [],
         updated_at: now
       }
     },
-    position_ratings: {
-      ...(player.position_ratings && typeof player.position_ratings === 'object' ? player.position_ratings : {}),
-      [build.targetPosition]: build.afterOverall
-    },
+    position_ratings: (() => {
+      const ratings = {
+        ...(player.position_ratings && typeof player.position_ratings === 'object' ? player.position_ratings : {}),
+        [build.targetPosition]: build.afterOverall
+      }
+      const appPosition = String(player.position || '').trim().toUpperCase()
+      if (appPosition) ratings[appPosition] = build.afterOverall
+      return ratings
+    })(),
     metadata: {
       ...previousMetadata,
       build_coach: {

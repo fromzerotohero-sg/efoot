@@ -486,7 +486,12 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
   const skipNextSyntheticCardClickRef = React.useRef(false)
   const slotThumb = React.useMemo(() => resolvePlayerCardImageUrl(player), [player])
   const roleLabel = isEditMode ? (slot.position || player.position || '-') : (player.position || slot.position || '-')
-  const overallLabel = player?.overall_rating ?? player?.position_ratings?.[roleLabel] ?? '-'
+  const rosterPosition = String(player?.position || roleLabel || '').trim().toUpperCase()
+  const overallLabel =
+    player?.position_ratings?.[rosterPosition] ??
+    player?.overall_rating ??
+    player?.position_ratings?.[roleLabel] ??
+    '-'
   const initialsLabel = getPlayerInitials(player.player_name)
 
   React.useEffect(() => {
