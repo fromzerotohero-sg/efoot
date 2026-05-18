@@ -407,6 +407,8 @@ Quando nel RIASSUNTO ANALISI è presente la sezione **"Statistiche di gioco (Ana
 
 Fonti: [Efootball Arena – How to Build a Competitive Dream Team](https://efootballarena.blog/how-to-build-a-competitive-efootball-dream-team/), creator (tipo Mattiotti: Analisi, Build, Voti). Adattati per **rosa esistente** e consiglio tattico.
 
+**Regola per l'AI (build / meta)**: Non copiare formazioni o build "meta" generiche. Ogni consiglio deve essere **funzionale** per il cliente: incrocia rosa (stili card, stats vel/fin/pas/tac, abilità), stile squadra e coach (competenza ≥70), Connection, **movimenti** (§7.5–7.7), difficoltà dichiarate o ricorrenti e Statistiche di gioco se presenti. Il blocco "Sintesi rosa" nel RIASSUNTO non è la progressione PT (slider Shooting/Defending): quella si configura in gioco/Gestione rosa; qui si consiglia solo in base a dati tattici disponibili.
+
 **Spina dorsale (priorità costruzione)**: PT → DC → CC → A → Terzini. Una squadra competitiva si fonda su: portiere solido, difensori centrali, centrocampisti, attaccante di riferimento; i terzini completano.
 
 **Formazioni meta e quando suggerirle**:
@@ -432,7 +434,7 @@ Fonti: [Efootball Arena – How to Build a Competitive Dream Team](https://efoot
 4. Schierare stellari fuori posizione (competenza posizione influenza forza complessiva).
 5. Squadra solo offensiva: serve equilibrio attacco-difesa.
 
-**Adattamento al meta**: Se meta difensiva → 4-2-3-1; se meta contropiedi → 4-2-2-2; se meta possesso → 4-3-3 Narrow. Flessibilità chiave; consigliare sempre in base a rosa + competenza allenatore (≥70).
+**Adattamento al meta** (solo dopo incrocio dati): Se meta difensiva e il cliente perde su transizioni/ali → valutare 4-2-3-1 se la rosa ha mediani e ali adatti; se meta contropiedi e ha punte Opportunista/Giocatore chiave veloci → 4-2-2-2 può avere senso; se possesso e registi forti → 4-3-3 Narrow. Mai imporre un modulo senza motivo legato ai suoi dati.
 
 ### 7.11 Squadra bloccata – Checklist e Smart Assist (frustrazioni community)
 
@@ -688,8 +690,9 @@ Le policy comportamentali per il Coach AI (errori da evitare, terminologia, anti
 
 ---
 
-**Versione**: 8.5.2 ENTERPRISE | **Data**: 17 Maggio 2026
+**Versione**: 8.5.3 ENTERPRISE | **Data**: 17 Maggio 2026
 **Principio**: FISSO vs CONFIGURABILE | **Terminologia**: Ufficiale eFootball
+**Changelog 8.5.3**: §7.10 regola build/meta funzionale (movimenti, difficolta, dati cliente; Sintesi rosa ≠ progressione PT).
 **Changelog 8.5.2**: §2 allineato ai 24 stili card reali: rimosso *Punta avanzata* / Adv. Striker (non esistono); *Punta arretrata* → **attacante di rientro**; chiarito Opportunista (linea fuorigioco, non "difensore").
 **Changelog 8.5**: §10 (NOTE CRITICHE) spostato da RAG a system prompt assistant-chat. Policy Coach AI ora in COACH_AI_POLICIES_* (sempre attive). RAG contiene solo meccaniche eFootball (§1-9).
 **Changelog 8.4**: §2.2 Attivazione stile e posizione ("passiva spenta se fuori ruolo"): stile non si attiva fuori competenza; §9.2 cross-ref; regola 5 FUORI RUOLO in NOTE CRITICHE; esempi risposta su giocatore che non rende.
