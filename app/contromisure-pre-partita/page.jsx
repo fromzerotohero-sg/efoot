@@ -21,15 +21,15 @@ const FORMATION_OCR_EXAMPLE = {
 function FormationUploadExample({ lang }) {
   const isEn = lang === 'en'
   return (
-    <section className="counter-formation-example" aria-label={isEn ? 'Formation screenshot example' : 'Esempio screenshot formazione'}>
-      <div className="counter-formation-example-copy">
-        <strong>{isEn ? 'Example screenshot' : 'Esempio di screenshot'}</strong>
-        <p>
-          {isEn
-            ? 'Use the opponent Game Plan screen: all 11 starters visible, formation label readable. Not single-player cards.'
-            : 'Usa la schermata Game Plan avversaria: 11 titolari visibili, modulo leggibile. Non le schede singolo giocatore.'}
-        </p>
-      </div>
+    <div
+      className="counter-formation-example-inline"
+      aria-label={isEn ? 'Formation screenshot example' : 'Esempio screenshot formazione'}
+    >
+      <p className="counter-formation-example-hint">
+        {isEn
+          ? 'Example: opponent Game Plan (11 starters). Tap thumbnail to enlarge.'
+          : 'Esempio: Game Plan avversario (11 titolari). Tocca la miniatura per ingrandire.'}
+      </p>
       <div className="counter-formation-example-grid">
         <a
           href={FORMATION_OCR_EXAMPLE.src}
@@ -44,7 +44,7 @@ function FormationUploadExample({ lang }) {
           <span>Game Plan</span>
         </a>
       </div>
-    </section>
+    </div>
   )
 }
 
@@ -427,7 +427,6 @@ export default function CountermeasuresPreMatchPage() {
           
           {!uploadImage ? (
             <div>
-              <FormationUploadExample lang={lang} />
               <input
                 id="counter-upload-input"
                 type="file"
@@ -459,6 +458,7 @@ export default function CountermeasuresPreMatchPage() {
                   position: 'relative'
                 }}
               >
+                <FormationUploadExample lang={lang} />
                 <div className="counter-upload-icon">
                   <Camera size={30} />
                 </div>
@@ -1338,34 +1338,24 @@ export default function CountermeasuresPreMatchPage() {
           line-height: 1.6;
         }
 
-        .counter-formation-example {
-          margin-bottom: 18px;
-          border-radius: 16px;
-          border: 1px solid rgba(0, 212, 255, 0.18);
-          background:
-            radial-gradient(circle at top left, rgba(0, 212, 255, 0.1), transparent 34%),
-            rgba(255, 255, 255, 0.025);
-          padding: 14px;
+        .counter-formation-example-inline {
+          margin: 0 auto 14px;
+          max-width: 132px;
+          text-align: center;
         }
 
-        .counter-formation-example-copy strong {
-          display: block;
-          color: #fff;
-          font-size: 14px;
-          margin-bottom: 4px;
-        }
-
-        .counter-formation-example-copy p {
-          margin: 0 0 12px;
-          color: rgba(255, 255, 255, 0.7);
-          font-size: 12px;
-          line-height: 1.45;
+        .counter-formation-example-hint {
+          margin: 0 0 8px;
+          color: rgba(255, 255, 255, 0.72);
+          font-size: 11px;
+          line-height: 1.35;
         }
 
         .counter-formation-example-grid {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 10px;
+          display: block;
+          width: 100%;
+          max-width: 132px;
+          margin: 0 auto;
         }
 
         .counter-formation-example-card {
@@ -1386,9 +1376,9 @@ export default function CountermeasuresPreMatchPage() {
 
         .counter-formation-example-card img {
           width: 100%;
-          height: clamp(76px, 15vw, 108px);
+          height: clamp(64px, 14vw, 88px);
           object-fit: cover;
-          object-position: 68% center;
+          object-position: 72% center;
           display: block;
         }
 
@@ -1434,7 +1424,7 @@ export default function CountermeasuresPreMatchPage() {
         .counter-upload-icon {
           width: 64px;
           height: 64px;
-          margin: 0 auto 16px;
+          margin: 0 auto 12px;
           display: grid;
           place-items: center;
           border-radius: 20px;
