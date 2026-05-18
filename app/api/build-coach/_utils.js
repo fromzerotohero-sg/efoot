@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { efhubStatsToPlayerBaseStats, normalizeStatsToEfhub } from '@/lib/efootballBuildRules'
-import { calculateGameplayBuild } from '@/lib/gameplayBuildCoach'
+import { calculateGameplayBuild, resolveProgressionLevelCap } from '@/lib/gameplayBuildCoach'
 
 export async function resolveBuildCoachContext(req) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -130,8 +130,8 @@ function getNonProgressionReason(player, catalogCard) {
   if (isNonProgressionCardType(cardType)) {
     return { blocked: true, reason: 'non_progression_card_type', cardType }
   }
-  const maxLevel = Number(catalogCard?.max_level ?? catalogCard?.players_payload?.level_cap ?? player?.level_cap)
-  if (Number.isFinite(maxLevel) && maxLevel <= 1) {
+  const levelCap = resolveProgressionLevelCap(player, catalogCard)
+  if (levelCap == null || levelCap <= 1) {
     return { blocked: true, reason: 'max_level_one', cardType }
   }
   return { blocked: false, reason: null, cardType }
@@ -150,7 +150,7 @@ function withFallbacks(player, catalogCard) {
   }
 
   if (!next.level_cap) {
-    const fallbackLevel = catalogCard?.max_level || catalogCard?.players_payload?.level_cap || next.extracted_data?.level_cap || next.metadata?.level_cap || 30
+    const fallbackLevel = resolveProgressionLevelCap(next, catalogCard) || 30
     next.level_cap = fallbackLevel
     estimated.push('level_cap')
   }

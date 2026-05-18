@@ -5094,14 +5094,19 @@ export default withAuth(function NuovaRosaLabPage() {
     } catch (err) {
       console.error('[NuovaRosaLab] build coach player error:', err)
       const rawMessage = String(err?.message || '')
-      const isNonProgression = rawMessage.includes('non_progression_card_type') || rawMessage.includes('max_level_one')
+      const isMaxLevelOne = rawMessage.includes('max_level_one')
+      const isNonProgressionType = rawMessage.includes('non_progression_card_type')
       const { message } = mapErrorToUserMessage(
         err,
-        isNonProgression
+        isMaxLevelOne
           ? (lang === 'en'
-              ? 'This card type has fixed progression in the game and cannot be optimized.'
-              : 'Questo tipo di carta ha progressione fissa nel gioco e non puo essere ottimizzato.')
-          : (lang === 'en' ? 'Unable to calculate build.' : 'Impossibile calcolare la build.'),
+              ? 'No growth points for this card (max level 1). If the card levels up in-game, set the correct max level on the player profile.'
+              : 'Nessun punto crescita per questa carta (livello massimo 1). Se in gioco si potenzia, imposta il livello massimo corretto nel profilo giocatore.')
+          : isNonProgressionType
+            ? (lang === 'en'
+                ? 'This card type has fixed progression in the game and cannot be optimized.'
+                : 'Questo tipo di carta ha progressione fissa nel gioco e non può essere ottimizzata.')
+            : (lang === 'en' ? 'Unable to calculate build.' : 'Impossibile calcolare la build.'),
         lang
       )
       showToast(message, 'error')

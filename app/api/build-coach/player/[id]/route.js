@@ -30,7 +30,15 @@ export async function POST(req, { params }) {
     })
 
     if (!result.ok) {
-      return NextResponse.json({ error: result.error, result }, { status: 422 })
+      const messages = {
+        max_level_one: 'Questa carta non ha punti crescita utilizzabili (livello massimo 1). Se in gioco si potenzia, imposta il livello massimo corretto nel profilo giocatore.',
+        non_progression_card_type: 'Questo tipo di carta ha progressione fissa nel gioco e non può ricevere una build automatica.'
+      }
+      return NextResponse.json({
+        error: result.error,
+        message: messages[result.error] || result.error,
+        result
+      }, { status: 422 })
     }
 
     return NextResponse.json({ ok: true, result })
