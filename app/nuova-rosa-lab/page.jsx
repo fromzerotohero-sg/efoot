@@ -20,6 +20,7 @@ import {
   nestedEffectiveStatsFromGameplayPreview,
   pickBilingualList,
   previewGameplayBuildFromSliders,
+  buildPlayerForPlayProfilePreview,
   sanitizeSliders as sanitizeBuildCoachSliders,
   setBuildSliderTicks,
   tryApplyBuildSliderDelta
@@ -2461,6 +2462,28 @@ function mapPreviewBaseStatsToFormFields(previewBaseStats = {}) {
   return out
 }
 
+function playProfileStatsFromPreview(preview) {
+  return preview?.playProfileStatsNested || nestedEffectiveStatsFromGameplayPreview(preview)
+}
+
+function buildBoostersDraftForPreview(boostersDraft = [], player = {}) {
+  return boostersDraft.map((entry, idx) => {
+    const maxLevel = idx === 1 ? 1 : 5
+    const level = Math.min(maxLevel, Math.max(1, Number(entry?.level) || parseBoosterLevel(entry?.effect)))
+    return {
+      name: String(entry?.name || '').trim(),
+      effect: `+${level}`
+    }
+  })
+}
+
+function resolveActiveBoosterName(boostersDraft = [], player = {}) {
+  const names = boostersDraft.map((entry) => String(entry?.name || '').trim()).filter(Boolean)
+  const current = String(player?.active_booster_name || '').trim()
+  if (current && names.some((name) => name.toLowerCase() === current.toLowerCase())) return current
+  return names[0] || null
+}
+
 /** Solo persistenza: blocca OVR troppo bassi o crolli sospetti. L'anteprima live non deve usare questa funzione. */
 function isSafeBuildPreviewForSave(preview, player) {
   const nextOverall = Number(preview?.afterOverall)
@@ -2662,19 +2685,18 @@ function PremiumPlayerModal({
     const savedSliders = rawSavedSliders ? sanitizeBuildCoachSliders(rawSavedSliders) : null
     const hasSavedSliders = savedSliders && Object.keys(savedSliders).length > 0
     if (hasSavedSliders) {
-      const openPreview = previewGameplayBuildFromSliders({
-        player,
-        sliders: savedSliders,
-        slotPosition: slotProgressionPosition,
-        coach: activeCoach,
-        teamStyle: tacticalSettings?.team_playing_style
+      const previewPlayer = buildPlayerForPlayProfilePreview(player, {
+        activeBoosterName: player.active_booster_name,
+        availableBoosters: player.available_boosters
       })
-      if (
-        openPreview?.finalBaseStats &&
-        typeof openPreview.finalBaseStats === 'object' &&
-        Number.isFinite(openPreview.afterOverall)
-      ) {
-        normalizedStats = { ...normalizedStats, ...mapPreviewBaseStatsToFormFields(openPreview.finalBaseStats) }
+      const openPreview = previewGameplayBuildFromSliders({
+        player: previewPlayer,
+        sliders: savedSliders,
+        slotPosition: slotProgressionPosition
+      })
+      const profileStats = playProfileStatsFromPreview(openPreview)
+      if (profileStats && typeof profileStats === 'object' && Number.isFinite(openPreview.afterOverall)) {
+        normalizedStats = { ...normalizedStats, ...mapPreviewBaseStatsToFormFields(profileStats) }
         overallRatingStr = String(openPreview.afterOverall)
       }
     }
@@ -2787,13 +2809,16 @@ function PremiumPlayerModal({
   const effectiveBuildSliders = buildSliders
     ? sanitizeBuildCoachSliders(interactiveBuildSliders ?? buildSliders)
     : null
+  const previewBoosters = buildBoostersDraftForPreview(boostersDraft, player)
+  const previewPlayer = buildPlayerForPlayProfilePreview(player, {
+    activeBoosterName: resolveActiveBoosterName(boostersDraft, player),
+    availableBoosters: previewBoosters
+  })
   const buildAllocationLivePreview = effectiveBuildSliders && player
     ? previewGameplayBuildFromSliders({
-      player,
+      player: previewPlayer,
       sliders: effectiveBuildSliders,
-      slotPosition: slotProgressionPosition,
-      coach: activeCoach,
-      teamStyle: tacticalSettings?.team_playing_style
+      slotPosition: slotProgressionPosition
     })
     : null
   const liveBuildPointsUsed =
@@ -2803,17 +2828,16 @@ function PremiumPlayerModal({
 
   const applyPreviewToForm = (slidersSnapshot) => {
     const preview = previewGameplayBuildFromSliders({
-      player,
+      player: previewPlayer,
       sliders: slidersSnapshot,
-      slotPosition: slotProgressionPosition,
-      coach: activeCoach,
-      teamStyle: tacticalSettings?.team_playing_style
+      slotPosition: slotProgressionPosition
     })
+    const profileStats = playProfileStatsFromPreview(preview)
     if (!preview || !Number.isFinite(Number(preview.afterOverall))) return
-    if (!preview.finalBaseStats || typeof preview.finalBaseStats !== 'object') return
+    if (!profileStats || typeof profileStats !== 'object') return
     setForm((prev) => ({
       ...prev,
-      ...mapPreviewBaseStatsToFormFields(preview.finalBaseStats),
+      ...mapPreviewBaseStatsToFormFields(profileStats),
       overall_rating: String(preview.afterOverall)
     }))
   }
@@ -2851,18 +2875,16 @@ function PremiumPlayerModal({
     const sliderPayloadPreview =
       buildSliders && interactiveBuildSliders != null
         ? previewGameplayBuildFromSliders({
-          player,
+          player: previewPlayer,
           sliders: sanitizeBuildCoachSliders(interactiveBuildSliders ?? buildSliders),
-          slotPosition: slotProgressionPosition,
-          coach: activeCoach,
-          teamStyle: tacticalSettings?.team_playing_style
+          slotPosition: slotProgressionPosition
         })
         : null
 
     const payload = {
       player_name: form.player_name.trim(),
       position: originalPositionsDraft[0]?.position || form.position,
-      overall_rating: form.overall_rating ? Number(form.overall_rating) : null,
+      overall_rating: null,
       card_type: form.card_type,
       role: form.role,
       age: form.age ? Number(form.age) : null,
@@ -2877,12 +2899,7 @@ function PremiumPlayerModal({
           effect: `+${level}`
         }
       }),
-      active_booster_name: (() => {
-        const names = boostersDraft.map((entry) => String(entry?.name || '').trim()).filter(Boolean)
-        const current = String(player?.active_booster_name || '').trim()
-        if (current && names.some((name) => name.toLowerCase() === current.toLowerCase())) return current
-        return names[0] || null
-      })(),
+      active_booster_name: resolveActiveBoosterName(boostersDraft, player),
       original_positions: originalPositionsDraft,
       base_stats: buildBaseStatsPayloadFromEditor(form),
       metadata: { catalog_booster_reminder: false }
@@ -2895,10 +2912,16 @@ function PremiumPlayerModal({
 
     if (shouldPersistBuildPreview) {
       const preview = sliderPayloadPreview
-      const effectiveNested = nestedEffectiveStatsFromGameplayPreview(preview)
+      const effectiveNested = playProfileStatsFromPreview(preview)
       const baselineNested = nestedBaselineStatsFromGameplayPreview(preview)
       if (effectiveNested) payload.base_stats = effectiveNested
       payload.overall_rating = preview.afterOverall
+      const appPosition = String(payload.position || player.position || '').trim().toUpperCase()
+      payload.position_ratings = {
+        ...(player.position_ratings && typeof player.position_ratings === 'object' ? player.position_ratings : {}),
+        ...(preview.targetPosition ? { [preview.targetPosition]: preview.afterOverall } : {}),
+        ...(appPosition ? { [appPosition]: preview.afterOverall } : {})
+      }
 
       const now = new Date().toISOString()
       const prevDp = player.development_points || {}
