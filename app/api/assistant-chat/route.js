@@ -7,6 +7,7 @@ import { getRelevantSections, classifyQuestion } from '@/lib/ragHelper'
 import { deductCredits, AI_COST, handleCreditOperationError } from '@/lib/creditService'
 import { getCoachPoliciesText, getCoachSharedCoreText } from '@/lib/coachPromptRules'
 import { getPlayerStyleDisplayName } from '@/lib/playingStyleResolve'
+import { formatBuildCoachSnippet, formatBuildProgressionSection } from '@/lib/playerBuildCoachPrompt'
 import { getPlayerDisplayStats } from '@/lib/playerEffectiveStats'
 
 export const runtime = 'nodejs'
@@ -418,7 +419,7 @@ async function buildPersonalContext(userId, lang = 'it') {
     // Players (titolari + riserve) - include skills, forma, altezza/peso per ragionamento enterprise
     const { data: playersData, error: playersError } = await admin
       .from('players')
-      .select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, photo_slots, base_stats, original_positions, card_type, skills, com_skills, form, height, weight, extracted_data')
+      .select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, photo_slots, base_stats, original_positions, card_type, skills, com_skills, form, height, weight, extracted_data, metadata, development_points')
       .eq('user_id', userId)
       .order('slot_index', { ascending: true, nullsFirst: false })
       .limit(50)
@@ -508,7 +509,8 @@ async function buildPersonalContext(userId, lang = 'it') {
       const skillsStr = skillsArr.length > 0 ? ` abilità: ${skillsArr.join(', ')}` : ''
       const statsPart = statsStr ? ` | stats: ${statsStr}` : ''
       const extra = [formStr, physStr].filter(Boolean).join(' ')
-      rosterLines.push(`  ${p.player_name || '?'} (${p.position || '?'}, ${styleName}, ${p.overall_rating ?? '-'}${statsPart}${extra ? ' | ' + extra : ''} | profilazione: ${prof}, competenze: ${comp}${skillsStr})`)
+      const buildSnip = formatBuildCoachSnippet(p, lang)
+      rosterLines.push(`  ${p.player_name || '?'} (${p.position || '?'}, ${styleName}, ${p.overall_rating ?? '-'}${statsPart}${extra ? ' | ' + extra : ''} | profilazione: ${prof}, competenze: ${comp}${skillsStr}${buildSnip})`)
     }
     const reservesHeader = L.reserves + ':'
     rosterLines.push(reservesHeader)
@@ -523,9 +525,12 @@ async function buildPersonalContext(userId, lang = 'it') {
       const skillsStr = skillsArr.length > 0 ? ` abilità: ${skillsArr.join(', ')}` : ''
       const statsPart = statsStr ? ` | stats: ${statsStr}` : ''
       const extra = [formStr, physStr].filter(Boolean).join(' ')
-      rosterLines.push(`  ${p.player_name || '?'} (${p.position || '?'}, ${styleName}, ${p.overall_rating ?? '-'}${statsPart}${extra ? ' | ' + extra : ''} | profilazione: ${prof}, competenze: ${comp}${skillsStr})`)
+      const buildSnip = formatBuildCoachSnippet(p, lang)
+      rosterLines.push(`  ${p.player_name || '?'} (${p.position || '?'}, ${styleName}, ${p.overall_rating ?? '-'}${statsPart}${extra ? ' | ' + extra : ''} | profilazione: ${prof}, competenze: ${comp}${skillsStr}${buildSnip})`)
     }
     if (riserve.length > 15) rosterLines.push(`  ... altri ${riserve.length - 15} riserve`)
+
+    const buildProgressionBlock = formatBuildProgressionSection(roster, lang)
 
     // Disposizione reale in campo (da titolari per slot), non dal nome modulo formation
     const positionsOrdered = titolari.map(p => (p.position || '?').trim() || '?').join(', ')
@@ -684,7 +689,8 @@ async function buildPersonalContext(userId, lang = 'it') {
       '',
       tacticsText,
       coachText,
-      ...(patternText ? ['', patternText] : [])
+      ...(patternText ? ['', patternText] : []),
+      ...(buildProgressionBlock ? ['', buildProgressionBlock] : [])
     ]
     let summary = parts.join('\n')
     if (summary.length > MAX_PERSONAL_CONTEXT_CHARS) {
@@ -732,7 +738,7 @@ function buildPersonalizedPromptV2(userMessage, context, language = 'it', efootb
 - DECISIONE: scegli 1 leva principale + max 2 secondarie: (1) Fix FIT, (2) Fix mismatch coach/stile squadra, (3) Aggancia top recurring_issue, (4) 1-2 cambi titolari/riserve (vedi SOSTITUZIONI sotto), (5) 1 istruzione max 5, (6) gameplay solo "cosa fare" da §7.
 - VIETATO suggerire cambio formazione/modulo a meno che il cliente non lo chieda esplicitamente. Lavora sempre sulla formazione attuale salvata.
 - SOSTITUZIONI (leva 4, incrocio enterprise): (1) Sintomo da Statistiche di gioco, recurring_issues, voti partite o domanda. (2) Ruolo da rafforzare: tiro=fin+abilita tiro; passaggio=pas+abilita passaggio; difesa=tac+WIN. (3) Titolari: chi è in quel ruolo, forma, voti, stile giocatore. (4) Riserve: chi ha fin/pas/tac, abilita che compensano e stile giocatore adatto (RAG §2: es. Opportunista/Rapace d'area per finalizzazione, Giocatore chiave per inserimenti, Regista/Classico 10 per passaggio, Collante per difesa); posizione compatibile; incrocia con stile squadra e competenza allenatore (riassunto Tattica e Allenatore). (5) Un solo cambio concreto: Far uscire [titolare], far entrare [riserva]: [motivo da dati]. Usa sempre riassunto (Rosa stile+fin/pas/tac+abilita, Statistiche di gioco, Andamento/voti, Tattica, Allenatore, Sintesi rosa, Sinergie, Leve) e RAG §2/§7/§8 quando rilevante.
-- BUILD/META: consigli funzionali ai movimenti e alle difficolta del cliente (ricorrenti, punto debole, statistiche uso); non tier list generica; non numeri slider PT se assenti nel contesto.
+- BUILD/META: consigli funzionali a movimenti e difficolta. Se chiede "build giuste/vanno bene": usa sezione Build progressione PT + Motivi app; non contraddire build generate dall app senza dati.
 - INVERSE: sintomo?cause?leva: fasce (attack_areas wide)?esterni senza WIN/Rientro difensivo?copertura/istruzioni; attacco sterile?PASS basso o stile incoerente?regista/cambio stile/modulo; palle alte?AIR_DEF basso?DC/MED più forti+piazzati.
 - RISPOSTE PRATICHE: quando la domanda riguarda partita, matchup o correzioni concrete, preferisci frasi condizionali osservabili: "se/quando succede X, fai Y". Aggiungi se utile una azione consigliata, un passaggio/giocata consigliata, una cosa da evitare e un check rapido.
 - AVVERSARIO: usa nomi di giocatori avversari solo se sono presenti nei dati reali del contesto. Se non ci sono, parla per ruolo o zona: mediano, trequartista, ala, terzino, fascia, corridoio centrale.
@@ -744,7 +750,7 @@ OUTPUT: 2-4 frasi operative, rispondi alla domanda specifica (es. tiro/passaggio
 - DECISION: pick 1 main lever + max 2 secondary: (1) Fix FIT, (2) Fix coach/team-style mismatch, (3) Anchor top recurring_issue, (4) 1-2 lineup changes (see SUBSTITUTIONS below), (5) 1 instruction max 5, (6) gameplay "what to do" only from §7.
 - FORBIDDEN to suggest formation/module changes unless explicitly asked. Always work with the current saved formation.
 - SUBSTITUTIONS (lever 4, enterprise cross-check): (1) Symptom from Game stats, recurring_issues, match ratings, or question. (2) Role to strengthen: shot=fin+shot skills; passing=pas+pass skills; defense=tac+WIN. (3) Starters: who is in that role, form, ratings, player style. (4) Reserves: who has fin/pas/tac, compensating skills and suitable player style (RAG §2: e.g. Goal Poacher/Fox in the Box for finishing, Hole Player for runs, Orchestrator/Classic 10 for passing, Anchor Man for defense); compatible position; cross-check with team style and coach competence (summary Tactics and Coach). (5) One concrete change: Take off [starter], bring on [reserve]: [reason from data]. Always use summary (Roster style+fin/pas/tac+skills, Game stats, Form/ratings, Tactics, Coach, Roster summary, Synergies, Levers) and RAG §2/§7/§8 when relevant.
-- BUILD/META: functional advice for movements and the client's difficulties (recurring issues, weak point, command-use stats); no generic tier list; no PT slider numbers unless in context.
+- BUILD/META: functional advice for movements and difficulties. If they ask builds ok/correct: use Progression builds section + app Why lines; do not contradict app-generated builds without data.
 - INVERSE: symptom?cause?lever: wide threat (attack_areas wide)?wide players lack WIN/track back?coverage/instructions; stale attack?low PASS or mismatch style?add creator/change style/formation; aerial goals?low AIR_DEF?stronger CB/DM + set pieces.
 - PRACTICAL ANSWERS: when the question is about match situations, matchup fixes, or concrete corrections, prefer observable conditional phrasing: "if/when X happens, do Y". Add, when useful, one recommended action, one recommended pass/play, one thing to avoid, and a quick check.
 - OPPONENT DATA: use opponent player names only if they are present in real context data. Otherwise speak by role or zone: DM, AMF, winger, fullback, flank, central lane.
