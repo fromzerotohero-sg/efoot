@@ -23,25 +23,27 @@ function FormationUploadExample({ lang }) {
   return (
     <section className="counter-formation-example" aria-label={isEn ? 'Formation screenshot example' : 'Esempio screenshot formazione'}>
       <div className="counter-formation-example-copy">
-        <strong>{isEn ? 'Correct screenshot example' : 'Esempio screenshot corretto'}</strong>
+        <strong>{isEn ? 'Example screenshot' : 'Esempio di screenshot'}</strong>
         <p>
           {isEn
-            ? 'Use the opponent Game Plan screen: all 11 starters visible, formation label (e.g. 4-3-1-2), coach and ratings readable. Do not use single-player stat screens.'
-            : 'Usa la schermata Game Plan avversaria: tutti gli 11 titolari visibili, modulo leggibile (es. 4-3-1-2), coach e valutazioni nitidi. Non usare le schede singolo giocatore.'}
+            ? 'Use the opponent Game Plan screen: all 11 starters visible, formation label readable. Not single-player cards.'
+            : 'Usa la schermata Game Plan avversaria: 11 titolari visibili, modulo leggibile. Non le schede singolo giocatore.'}
         </p>
       </div>
-      <a
-        href={FORMATION_OCR_EXAMPLE.src}
-        target="_blank"
-        rel="noreferrer"
-        className="counter-formation-example-card"
-      >
-        <img
-          src={FORMATION_OCR_EXAMPLE.src}
-          alt={FORMATION_OCR_EXAMPLE.alt[isEn ? 'en' : 'it']}
-        />
-        <span>{isEn ? 'Game Plan · full squad view (tap to enlarge)' : 'Game Plan · vista squadra completa (tocca per ingrandire)'}</span>
-      </a>
+      <div className="counter-formation-example-grid">
+        <a
+          href={FORMATION_OCR_EXAMPLE.src}
+          target="_blank"
+          rel="noreferrer"
+          className="counter-formation-example-card"
+        >
+          <img
+            src={FORMATION_OCR_EXAMPLE.src}
+            alt={FORMATION_OCR_EXAMPLE.alt[isEn ? 'en' : 'it']}
+          />
+          <span>Game Plan</span>
+        </a>
+      </div>
     </section>
   )
 }
@@ -1338,64 +1340,65 @@ export default function CountermeasuresPreMatchPage() {
 
         .counter-formation-example {
           margin-bottom: 18px;
-          padding: 14px;
           border-radius: 16px;
-          border: 1px solid rgba(251, 191, 36, 0.28);
-          background: rgba(251, 191, 36, 0.06);
-          overflow: visible;
+          border: 1px solid rgba(0, 212, 255, 0.18);
+          background:
+            radial-gradient(circle at top left, rgba(0, 212, 255, 0.1), transparent 34%),
+            rgba(255, 255, 255, 0.025);
+          padding: 14px;
         }
 
         .counter-formation-example-copy strong {
           display: block;
-          margin-bottom: 6px;
-          font-size: 13px;
-          font-weight: 800;
-          color: #fbbf24;
+          color: #fff;
+          font-size: 14px;
+          margin-bottom: 4px;
         }
 
         .counter-formation-example-copy p {
           margin: 0 0 12px;
+          color: rgba(255, 255, 255, 0.7);
           font-size: 12px;
-          line-height: 1.5;
-          color: rgba(255, 255, 255, 0.76);
+          line-height: 1.45;
+        }
+
+        .counter-formation-example-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 10px;
         }
 
         .counter-formation-example-card {
           display: block;
+          overflow: hidden;
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(0, 0, 0, 0.18);
+          color: #fff;
           text-decoration: none;
-          color: inherit;
+          transition: transform 0.18s ease, border-color 0.18s ease;
+        }
+
+        .counter-formation-example-card:hover {
+          transform: translateY(-1px);
+          border-color: rgba(0, 212, 255, 0.36);
         }
 
         .counter-formation-example-card img {
-          display: block;
           width: 100%;
-          height: auto;
-          max-height: none;
-          object-fit: contain;
-          object-position: center;
-          border-radius: 12px;
-          border: 1px solid rgba(255, 255, 255, 0.14);
-          background: rgba(0, 0, 0, 0.35);
-        }
-
-        @media (max-width: 640px) {
-          .counter-formation-example-card img {
-            max-height: min(72vw, 340px);
-          }
+          height: clamp(76px, 15vw, 108px);
+          object-fit: cover;
+          object-position: 68% center;
+          display: block;
         }
 
         .counter-formation-example-card span {
           display: block;
-          margin-top: 8px;
+          padding: 7px 6px;
           text-align: center;
-          font-size: 12px;
+          color: rgba(255, 255, 255, 0.88);
+          font-size: 11px;
           font-weight: 700;
-          color: rgba(255, 255, 255, 0.72);
-        }
-
-        .counter-formation-example-card:hover img {
-          border-color: rgba(251, 191, 36, 0.45);
-          box-shadow: 0 0 18px rgba(251, 191, 36, 0.18);
         }
 
         .counter-upload-logo {
