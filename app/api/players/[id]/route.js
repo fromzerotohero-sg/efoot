@@ -351,16 +351,32 @@ export async function PATCH(req, { params }) {
         available_boosters: updateData.available_boosters ?? existingPlayer.available_boosters,
         active_booster_name: updateData.active_booster_name ?? existingPlayer.active_booster_name
       }
+      const [{ data: activeCoach }, { data: tacticalSettings }] = await Promise.all([
+        supabase
+          .from('coaches')
+          .select('id, coach_name, playing_style_competence, stat_boosters, is_active')
+          .eq('user_id', userId)
+          .eq('is_active', true)
+          .maybeSingle(),
+        supabase
+          .from('team_tactical_settings')
+          .select('team_playing_style')
+          .eq('user_id', userId)
+          .maybeSingle()
+      ])
       const computed = computePlayerFieldOverall({
         player: mergedPlayer,
-        slotPosition: updateData.position || existingPlayer.position
+        slotPosition: updateData.position || existingPlayer.position,
+        coach: activeCoach,
+        teamStyle: tacticalSettings?.team_playing_style
       })
-      if (computed?.afterOverall != null && Number.isFinite(computed.afterOverall)) {
-        updateData.overall_rating = computed.afterOverall
+      const squadOvr = computed?.fieldOverall ?? computed?.afterOverall
+      if (squadOvr != null && Number.isFinite(squadOvr)) {
+        updateData.overall_rating = squadOvr
         updateData.position_ratings = {
           ...(existingPlayer.position_ratings || {}),
           ...(updateData.position_ratings || {}),
-          [computed.targetPosition]: computed.afterOverall
+          [computed.targetPosition]: squadOvr
         }
       }
     }

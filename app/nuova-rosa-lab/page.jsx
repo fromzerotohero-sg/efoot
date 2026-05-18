@@ -34,7 +34,7 @@ import {
   buildPhotoPlayerSavePayload,
   resolveOriginalPositionsFromCatalogCard
 } from '@/lib/playerSavePayload'
-import { getPlayerDisplayStats } from '@/lib/playerEffectiveStats'
+import { getPlayerDisplayStats, getPlayerDisplayOverall } from '@/lib/playerEffectiveStats'
 import {
   AlertTriangle,
   ArrowRight,
@@ -353,6 +353,17 @@ function getPlayerBuildCoachData(player) {
   return { ...(dev || {}), ...(meta || {}) }
 }
 
+function rosterFormationOvr(player, slot = null, activeCoach = null, tacticalSettings = null) {
+  const resolved = getPlayerDisplayOverall(player, {
+    slotPosition: slot?.position ?? null,
+    coach: activeCoach,
+    teamStyle: tacticalSettings?.team_playing_style ?? null,
+    context: 'field'
+  })
+  if (resolved != null) return resolved
+  return player?.overall_rating ?? '-'
+}
+
 function getBuildSliderLabel(key, lang) {
   const label = BUILD_SLIDER_LABELS[key]
   return label ? (lang === 'en' ? label.en : label.it) : key
@@ -479,7 +490,17 @@ function CompactStatInput({ label, value, onChange }) {
 
 const FIELD_SLOT_DRAG_THRESHOLD_PX = 10
 
-function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = false, onPositionChange }) {
+function SlotPlayerCard({
+  player,
+  slot,
+  onClick,
+  onRemove,
+  lang,
+  isEditMode = false,
+  onPositionChange,
+  activeCoach = null,
+  tacticalSettings = null
+}) {
   const [dragging, setDragging] = React.useState(false)
   const [dragOffset, setDragOffset] = React.useState({ x: 0, y: 0 })
   const suppressClickForFieldDragRef = React.useRef(false)
@@ -488,11 +509,7 @@ function SlotPlayerCard({ player, slot, onClick, onRemove, lang, isEditMode = fa
   const slotThumb = React.useMemo(() => resolvePlayerCardImageUrl(player), [player])
   const roleLabel = isEditMode ? (slot.position || player.position || '-') : (player.position || slot.position || '-')
   const rosterPosition = String(player?.position || roleLabel || '').trim().toUpperCase()
-  const overallLabel =
-    player?.position_ratings?.[rosterPosition] ??
-    player?.overall_rating ??
-    player?.position_ratings?.[roleLabel] ??
-    '-'
+  const overallLabel = rosterFormationOvr(player, slot, activeCoach, tacticalSettings)
   const initialsLabel = getPlayerInitials(player.player_name)
 
   React.useEffect(() => {
@@ -744,11 +761,32 @@ function SlotEmptyCard({ slot, onEmptyClick, isEditMode = false, onPositionChang
   )
 }
 
-function SlotCard({ slot, player, onEmptyClick, onPlayerClick, onRemove, lang, isEditMode = false, onPositionChange }) {
+function SlotCard({
+  slot,
+  player,
+  onEmptyClick,
+  onPlayerClick,
+  onRemove,
+  lang,
+  isEditMode = false,
+  onPositionChange,
+  activeCoach = null,
+  tacticalSettings = null
+}) {
   return (
     <div className="nr-slot-card" style={{ left: `${slot.x}%`, top: `${slot.y}%` }}>
       {player ? (
-        <SlotPlayerCard player={player} slot={slot} onClick={onPlayerClick} onRemove={onRemove} lang={lang} isEditMode={isEditMode} onPositionChange={onPositionChange} />
+        <SlotPlayerCard
+          player={player}
+          slot={slot}
+          onClick={onPlayerClick}
+          onRemove={onRemove}
+          lang={lang}
+          isEditMode={isEditMode}
+          onPositionChange={onPositionChange}
+          activeCoach={activeCoach}
+          tacticalSettings={tacticalSettings}
+        />
       ) : (
         <SlotEmptyCard slot={slot} onEmptyClick={onEmptyClick} isEditMode={isEditMode} onPositionChange={onPositionChange} />
       )}
@@ -2134,7 +2172,7 @@ function BuildCoachPlayerPickerModal({ show, players, buildingPlayerId, onClose,
                           ? (lang === 'en' ? 'Reserve' : 'Riserva')
                           : `${lang === 'en' ? 'Starter' : 'Titolare'} · Slot ${Number(player.slot_index) + 1}`}
                         {' · '}
-                        {player.position || '-'} · OVR {player.overall_rating ?? '-'}
+                        {player.position || '-'} · OVR {rosterFormationOvr(player)}
                       </span>
                     </div>
                     <span className="nr-reserve-position-pill">
@@ -2477,11 +2515,13 @@ function buildBoostersDraftForPreview(boostersDraft = [], player = {}) {
   })
 }
 
+/** Solo booster equipaggiato in rosa — senza active_booster_name non si applica nessuno (come Play). */
 function resolveActiveBoosterName(boostersDraft = [], player = {}) {
-  const names = boostersDraft.map((entry) => String(entry?.name || '').trim()).filter(Boolean)
   const current = String(player?.active_booster_name || '').trim()
-  if (current && names.some((name) => name.toLowerCase() === current.toLowerCase())) return current
-  return names[0] || null
+  if (!current) return null
+  const names = boostersDraft.map((entry) => String(entry?.name || '').trim()).filter(Boolean)
+  if (names.some((name) => name.toLowerCase() === current.toLowerCase())) return current
+  return null
 }
 
 /** Solo persistenza: blocca OVR troppo bassi o crolli sospetti. L'anteprima live non deve usare questa funzione. */
@@ -2805,6 +2845,7 @@ function PremiumPlayerModal({
   const buildWarningLines = pickBilingualList(buildCoachData?.warnings, lang)
 
   const slotProgressionPosition = slot?.position ?? null
+  const teamPlayingStyle = tacticalSettings?.team_playing_style ?? null
 
   const effectiveBuildSliders = buildSliders
     ? sanitizeBuildCoachSliders(interactiveBuildSliders ?? buildSliders)
@@ -2818,7 +2859,9 @@ function PremiumPlayerModal({
     ? previewGameplayBuildFromSliders({
       player: previewPlayer,
       sliders: effectiveBuildSliders,
-      slotPosition: slotProgressionPosition
+      slotPosition: slotProgressionPosition,
+      coach: activeCoach,
+      teamStyle: teamPlayingStyle
     })
     : null
   const liveBuildPointsUsed =
@@ -2830,7 +2873,9 @@ function PremiumPlayerModal({
     const preview = previewGameplayBuildFromSliders({
       player: previewPlayer,
       sliders: slidersSnapshot,
-      slotPosition: slotProgressionPosition
+      slotPosition: slotProgressionPosition,
+      coach: activeCoach,
+      teamStyle: teamPlayingStyle
     })
     const profileStats = playProfileStatsFromPreview(preview)
     if (!preview || !Number.isFinite(Number(preview.afterOverall))) return
@@ -2877,7 +2922,9 @@ function PremiumPlayerModal({
         ? previewGameplayBuildFromSliders({
           player: previewPlayer,
           sliders: sanitizeBuildCoachSliders(interactiveBuildSliders ?? buildSliders),
-          slotPosition: slotProgressionPosition
+          slotPosition: slotProgressionPosition,
+          coach: activeCoach,
+          teamStyle: teamPlayingStyle
         })
         : null
 
@@ -2915,12 +2962,14 @@ function PremiumPlayerModal({
       const effectiveNested = playProfileStatsFromPreview(preview)
       const baselineNested = nestedBaselineStatsFromGameplayPreview(preview)
       if (effectiveNested) payload.base_stats = effectiveNested
-      payload.overall_rating = preview.afterOverall
+      payload.overall_rating = preview.fieldOverall ?? preview.afterOverall
       const appPosition = String(payload.position || player.position || '').trim().toUpperCase()
       payload.position_ratings = {
         ...(player.position_ratings && typeof player.position_ratings === 'object' ? player.position_ratings : {}),
-        ...(preview.targetPosition ? { [preview.targetPosition]: preview.afterOverall } : {}),
-        ...(appPosition ? { [appPosition]: preview.afterOverall } : {})
+        ...(preview.targetPosition
+          ? { [preview.targetPosition]: preview.fieldOverall ?? preview.afterOverall }
+          : {}),
+        ...(appPosition ? { [appPosition]: preview.fieldOverall ?? preview.afterOverall } : {})
       }
 
       const now = new Date().toISOString()
@@ -2952,7 +3001,9 @@ function PremiumPlayerModal({
             : {}),
           after: {
             ...(prevMetaBc.after || {}),
-            overall_rating: preview.afterOverall,
+            play_profile_overall: preview.playProfileOverall ?? preview.afterOverall,
+            field_overall: preview.fieldOverall ?? preview.afterOverall,
+            overall_rating: preview.playProfileOverall ?? preview.afterOverall,
             overall_cap: preview.overallCap ?? null,
             effective_base_stats: effectiveNested
           }
@@ -2987,7 +3038,7 @@ function PremiumPlayerModal({
               <strong>
                 {buildAllocationLivePreview != null && Number.isFinite(buildAllocationLivePreview.afterOverall)
                   ? buildAllocationLivePreview.afterOverall
-                  : (player.overall_rating ?? '-')}
+                  : rosterFormationOvr(player, slot)}
               </strong>
             </div>
           </div>
@@ -4810,7 +4861,7 @@ export default withAuth(function NuovaRosaLabPage() {
       }
     }
 
-    const playerSummary = `${player.player_name} · ${player.position || '-'} · OVR ${player.overall_rating ?? '-'}`
+    const playerSummary = `${player.player_name} · ${player.position || '-'} · OVR ${rosterFormationOvr(player)}`
     const targetSummary = targetSlot.position ? `${targetSlot.position}` : (lang === 'en' ? 'selected slot' : 'slot selezionato')
     const isOutOfRole = !isOriginal && targetSlot.position
     setConfirmModal({
@@ -5218,8 +5269,8 @@ export default withAuth(function NuovaRosaLabPage() {
           ? 'We will prepare growth builds based on role, native skills, team style and squad needs, not just the highest possible OVR.'
           : 'Prepariamo le build in base a ruolo, abilita native, stile squadra e bisogni della rosa, non solo all’OVR più alto possibile.',
         details: lang === 'en'
-          ? 'Shown OVR values include active boosters and coach bonuses when available. Nothing is final: you can edit every player after the suggestion.'
-          : 'Gli OVR mostrati includono booster e bonus coach attivi quando disponibili. Nulla è definitivo: potrai modificare ogni giocatore dopo il suggerimento.',
+          ? 'Card profile stats and OVR match eFootball Play (level-1 base + your PT + equipped booster only). Coach bonuses are not on the card profile. You can edit every player after the suggestion.'
+          : 'Statistiche e OVR del profilo carta come in eFootball Play (base livello 1 + PT + solo booster equipaggiato). I bonus allenatore non compaiono sul profilo carta. Potrai modificare ogni giocatore dopo il suggerimento.',
         confirmLabel: lang === 'en' ? 'Prepare builds' : 'Prepara build',
         cancelLabel: t('cancel'),
         variant: 'info'
@@ -5603,6 +5654,8 @@ export default withAuth(function NuovaRosaLabPage() {
                     lang={lang}
                     isEditMode={fieldEditMode}
                     onPositionChange={handleFieldPositionChange}
+                    activeCoach={activeCoach}
+                    tacticalSettings={tacticalSettings}
                   />
                 ))}
               </div>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
+import { enrichPlayersForFormation } from '@/lib/playProfileDisplay'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -88,10 +89,16 @@ export async function GET(request) {
 
     if (playersError) throw new Error(`Players error: ${playersError.message}`)
 
+    const formationPlayers = enrichPlayersForFormation(players || [], {
+      layout: layoutData,
+      activeCoach: coachData,
+      tacticalSettings
+    })
+
     return NextResponse.json({
       layout: layoutData,
       playingStyles: playingStyles || [],
-      players: players || [],
+      players: formationPlayers,
       activeCoach: coachData,
       tacticalSettings: tacticalSettings
     })

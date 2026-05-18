@@ -13,7 +13,7 @@ import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 import { getSkillDisplayLabel } from '@/lib/playerSkillLabels'
 import ManualPlayerModal from '@/components/ManualPlayerModal'
 import ManualBoostersModal from '@/components/ManualBoostersModal'
-import { getPlayerDisplayStats } from '@/lib/playerEffectiveStats'
+import { getPlayerDisplayStats, getPlayerDisplayOverall } from '@/lib/playerEffectiveStats'
 
 export default function PlayerDetailPage() {
   const { t, lang } = useTranslation()
@@ -647,7 +647,7 @@ export default function PlayerDetailPage() {
           {player.overall_rating && (
             <div>
               <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '4px' }}>{t('overallRating')}</div>
-              <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--neon-blue)' }}>{player.overall_rating}</div>
+              <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--neon-blue)' }}>{getPlayerDisplayOverall(player)}</div>
             </div>
           )}
           {player.age && (
