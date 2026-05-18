@@ -40,7 +40,7 @@ function FormationUploadExample({ lang }) {
           src={FORMATION_OCR_EXAMPLE.src}
           alt={FORMATION_OCR_EXAMPLE.alt[isEn ? 'en' : 'it']}
         />
-        <span>{isEn ? 'Game Plan · full squad view' : 'Game Plan · vista squadra completa'}</span>
+        <span>{isEn ? 'Game Plan · full squad view (tap to enlarge)' : 'Game Plan · vista squadra completa (tocca per ingrandire)'}</span>
       </a>
     </section>
   )
@@ -1342,6 +1342,7 @@ export default function CountermeasuresPreMatchPage() {
           border-radius: 16px;
           border: 1px solid rgba(251, 191, 36, 0.28);
           background: rgba(251, 191, 36, 0.06);
+          overflow: visible;
         }
 
         .counter-formation-example-copy strong {
@@ -1366,13 +1367,21 @@ export default function CountermeasuresPreMatchPage() {
         }
 
         .counter-formation-example-card img {
+          display: block;
           width: 100%;
-          max-height: 280px;
+          height: auto;
+          max-height: none;
           object-fit: contain;
-          object-position: top center;
+          object-position: center;
           border-radius: 12px;
           border: 1px solid rgba(255, 255, 255, 0.14);
           background: rgba(0, 0, 0, 0.35);
+        }
+
+        @media (max-width: 640px) {
+          .counter-formation-example-card img {
+            max-height: min(72vw, 340px);
+          }
         }
 
         .counter-formation-example-card span {
