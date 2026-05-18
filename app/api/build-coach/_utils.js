@@ -150,10 +150,13 @@ function withFallbacks(player, catalogCard) {
     estimated.push('base_stats')
   }
 
-  if (!next.level_cap) {
-    const fallbackLevel = resolveProgressionLevelCap(next, catalogCard) || 30
-    next.level_cap = fallbackLevel
-    estimated.push('level_cap')
+  const resolvedLevelCap = resolveProgressionLevelCap(next, catalogCard)
+  const currentLevelCap = Number(next.level_cap)
+  if (!Number.isFinite(currentLevelCap) || currentLevelCap <= 1) {
+    if (resolvedLevelCap && resolvedLevelCap > 1) {
+      next.level_cap = resolvedLevelCap
+      estimated.push('level_cap')
+    }
   }
 
   if (!next.height) {
@@ -182,7 +185,7 @@ export function buildPlayerUpdatePayload({ player, build, contextEstimated = [],
   return {
     base_stats: effectiveNested,
     overall_rating: build.afterOverall,
-    level_cap: build.levelCap || player.level_cap,
+    level_cap: build.levelCap || resolveProgressionLevelCap(player, catalogCard) || player.level_cap,
     development_points: {
       ...previousDevelopment,
       build_coach: {
