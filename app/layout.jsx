@@ -20,6 +20,9 @@ export const metadata = {
     telephone: false,
   },
   themeColor: '#03050c',
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
   icons: {
     icon: [{ url: '/logo.png', type: 'image/png' }],
     shortcut: '/logo.png',

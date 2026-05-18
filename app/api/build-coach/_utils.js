@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { efhubStatsToPlayerBaseStats, normalizeStatsToEfhub } from '@/lib/efootballBuildRules'
 import { calculateGameplayBuild, resolveProgressionLevelCap } from '@/lib/gameplayBuildCoach'
+import { BUILD_COACH_CATALOG_SELECT } from '@/lib/buildCoachServerUtils'
 
 export async function resolveBuildCoachContext(req) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -88,7 +89,7 @@ export async function findCatalogCardForPlayer(admin, player) {
   const source = metadata.catalog_source || metadata.source || 'pesdb'
   const { data } = await admin
     .from('player_catalog')
-    .select('id, source, source_player_id, player_name, position, card_type, card_category, max_level, overall_max_level, height, base_stats, players_payload')
+    .select(BUILD_COACH_CATALOG_SELECT)
     .eq('source', source)
     .eq('source_player_id', String(sourcePlayerId))
     .limit(1)
