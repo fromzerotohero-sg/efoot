@@ -2,7 +2,10 @@ import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { efhubStatsToPlayerBaseStats, normalizeStatsToEfhub } from '@/lib/efootballBuildRules'
 import { calculateGameplayBuild, resolveProgressionLevelCap } from '@/lib/gameplayBuildCoach'
-import { BUILD_COACH_CATALOG_SELECT } from '@/lib/buildCoachServerUtils'
+import {
+  BUILD_COACH_CATALOG_SELECT,
+  enrichCatalogCardForBuildCoach
+} from '@/lib/buildCoachServerUtils'
 
 export async function resolveBuildCoachContext(req) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -238,7 +241,10 @@ export function buildPlayerUpdatePayload({ player, build, contextEstimated = [],
 }
 
 export async function calculateAndPersistPlayerBuild({ admin, userId, player, rosterContext, save = true }) {
-  const catalogCard = await findCatalogCardForPlayer(admin, player)
+  const catalogCard = await enrichCatalogCardForBuildCoach(
+    player,
+    await findCatalogCardForPlayer(admin, player)
+  )
   const nonProgression = getNonProgressionReason(player, catalogCard)
   if (nonProgression.blocked) {
     return {
