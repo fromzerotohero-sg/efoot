@@ -9,6 +9,7 @@ import { getCoachPoliciesText, getCoachSharedCoreText } from '@/lib/coachPromptR
 import { getPlayerStyleDisplayName } from '@/lib/playingStyleResolve'
 import { formatBuildCoachSnippet, formatBuildProgressionSection } from '@/lib/playerBuildCoachPrompt'
 import { getPlayerDisplayStats } from '@/lib/playerEffectiveStats'
+import { buildRosterSkillAdvisorySection, formatPlayerSkillContext } from '@/lib/rosterSkillsContext'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -505,8 +506,10 @@ async function buildPersonalContext(userId, lang = 'it') {
       const statsStr = formatStatsForContext(getPlayerDisplayStats(p))
       const formStr = formatFormForContext(p.form)
       const physStr = formatPhysForContext(p.height, p.weight)
-      const skillsArr = [...(Array.isArray(p.skills) ? p.skills : []), ...(Array.isArray(p.com_skills) ? p.com_skills : [])].slice(0, 5)
-      const skillsStr = skillsArr.length > 0 ? ` abilità: ${skillsArr.join(', ')}` : ''
+      const skillsStr = (() => {
+        const ctx = formatPlayerSkillContext(p, lang)
+        return ctx ? ` | ${ctx}` : ''
+      })()
       const statsPart = statsStr ? ` | stats: ${statsStr}` : ''
       const extra = [formStr, physStr].filter(Boolean).join(' ')
       const buildSnip = formatBuildCoachSnippet(p, lang)
@@ -521,8 +524,10 @@ async function buildPersonalContext(userId, lang = 'it') {
       const statsStr = formatStatsForContext(getPlayerDisplayStats(p))
       const formStr = formatFormForContext(p.form)
       const physStr = formatPhysForContext(p.height, p.weight)
-      const skillsArr = [...(Array.isArray(p.skills) ? p.skills : []), ...(Array.isArray(p.com_skills) ? p.com_skills : [])].slice(0, 5)
-      const skillsStr = skillsArr.length > 0 ? ` abilità: ${skillsArr.join(', ')}` : ''
+      const skillsStr = (() => {
+        const ctx = formatPlayerSkillContext(p, lang)
+        return ctx ? ` | ${ctx}` : ''
+      })()
       const statsPart = statsStr ? ` | stats: ${statsStr}` : ''
       const extra = [formStr, physStr].filter(Boolean).join(' ')
       const buildSnip = formatBuildCoachSnippet(p, lang)
@@ -531,6 +536,13 @@ async function buildPersonalContext(userId, lang = 'it') {
     if (riserve.length > 15) rosterLines.push(`  ... altri ${riserve.length - 15} riserve`)
 
     const buildProgressionBlock = formatBuildProgressionSection(roster, lang)
+
+    const { data: gameAnalysisRow } = await admin
+      .from('user_game_analysis')
+      .select('stats, captured_at')
+      .eq('user_id', userId)
+      .maybeSingle()
+    const skillAdvisoryBlock = buildRosterSkillAdvisorySection(roster, gameAnalysisRow, lang)
 
     // Disposizione reale in campo (da titolari per slot), non dal nome modulo formation
     const positionsOrdered = titolari.map(p => (p.position || '?').trim() || '?').join(', ')
@@ -690,7 +702,8 @@ async function buildPersonalContext(userId, lang = 'it') {
       tacticsText,
       coachText,
       ...(patternText ? ['', patternText] : []),
-      ...(buildProgressionBlock ? ['', buildProgressionBlock] : [])
+      ...(buildProgressionBlock ? ['', buildProgressionBlock] : []),
+      ...(skillAdvisoryBlock ? ['', skillAdvisoryBlock] : [])
     ]
     let summary = parts.join('\n')
     if (summary.length > MAX_PERSONAL_CONTEXT_CHARS) {
