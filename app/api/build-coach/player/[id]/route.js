@@ -18,19 +18,8 @@ export async function POST(req, { params }) {
 
     const { admin, userId } = resolved
     const rosterContext = await fetchRosterContext(admin, userId)
-    let player = rosterContext.players.find((entry) => String(entry.id) === String(id))
+    const player = rosterContext.players.find((entry) => String(entry.id) === String(id))
     if (!player) return NextResponse.json({ error: 'Player not found' }, { status: 404 })
-
-    let body = {}
-    try {
-      body = await req.json()
-    } catch {
-      body = {}
-    }
-    const overrideLevelCap = Number(body?.level_cap)
-    if (Number.isFinite(overrideLevelCap) && overrideLevelCap > 1) {
-      player = { ...player, level_cap: Math.floor(overrideLevelCap) }
-    }
 
     const result = await calculateAndPersistPlayerBuild({
       admin,
