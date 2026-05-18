@@ -2872,6 +2872,12 @@ function PremiumPlayerModal({
           effect: `+${level}`
         }
       }),
+      active_booster_name: (() => {
+        const names = boostersDraft.map((entry) => String(entry?.name || '').trim()).filter(Boolean)
+        const current = String(player?.active_booster_name || '').trim()
+        if (current && names.some((name) => name.toLowerCase() === current.toLowerCase())) return current
+        return names[0] || null
+      })(),
       original_positions: originalPositionsDraft,
       base_stats: buildBaseStatsPayloadFromEditor(form),
       metadata: { catalog_booster_reminder: false }
@@ -2885,13 +2891,7 @@ function PremiumPlayerModal({
     if (shouldPersistBuildPreview) {
       const preview = sliderPayloadPreview
       const effectiveNested = nestedEffectiveStatsFromGameplayPreview(preview)
-      const baselineNested =
-        nestedBaselineStatsFromGameplayPreview(preview) ||
-        (player.metadata?.build_coach?.before?.base_stats &&
-        typeof player.metadata.build_coach.before.base_stats === 'object' &&
-        Object.keys(player.metadata.build_coach.before.base_stats).length > 0
-          ? player.metadata.build_coach.before.base_stats
-          : null)
+      const baselineNested = nestedBaselineStatsFromGameplayPreview(preview)
       if (effectiveNested) payload.base_stats = effectiveNested
       payload.overall_rating = preview.afterOverall
 

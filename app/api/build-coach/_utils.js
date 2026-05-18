@@ -178,12 +178,7 @@ export function buildPlayerUpdatePayload({ player, build, contextEstimated = [],
   const baselineNested = efhubStatsToPlayerBaseStats(normalizeStatsToEfhub(build.baseStats))
   const effectiveNested = efhubStatsToPlayerBaseStats(normalizeStatsToEfhub(build.finalInGameStats))
   const catalogOverallMax = catalogCard?.overall_max_level ?? catalogCard?.players_payload?.overall_max_level
-  const beforeBaseStats =
-    previousMetadata?.build_coach?.before?.base_stats &&
-    typeof previousMetadata.build_coach.before.base_stats === 'object' &&
-    Object.keys(previousMetadata.build_coach.before.base_stats).length > 0
-      ? previousMetadata.build_coach.before.base_stats
-      : baselineNested
+  const beforeBaseStats = baselineNested
 
   return {
     base_stats: effectiveNested,
