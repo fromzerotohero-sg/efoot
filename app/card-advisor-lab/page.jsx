@@ -34,7 +34,7 @@ async function resolveClientAuthBearer() {
 }
 
 function buildPreviewCacheKey(cardId, lang) {
-  return `${cardId}:${lang === 'en' ? 'en' : 'it'}`
+  return `v3:${cardId}:${lang === 'en' ? 'en' : 'it'}`
 }
 
 const copy = {
@@ -156,7 +156,12 @@ const copy = {
     loadingDecision: 'Analisi in corso…',
     noNativeSkills: 'Profilo tecnico non disponibile.',
     buildSectionTitle: 'Build e abilità',
-    buildSectionHint: 'PT consigliati + skill da valutare sul profilo.',
+    buildSectionHint: 'Distribuzione PT consigliata per la carta.',
+    buildOvrCard: 'OVR liv. 1',
+    buildOvrBuilt: 'OVR build',
+    buildWhyToggle: 'Perché',
+    buildWhyHide: 'Nascondi',
+    buildPtDiff: 'Differenza vs meta',
     buildMetaTitle: 'Build meta pack',
     buildMetaHint: 'Ruolo e stile community, senza la tua rosa.',
     buildRosterTitle: 'Build per la tua rosa',
@@ -292,7 +297,12 @@ const copy = {
     loadingDecision: 'Analyzing…',
     noNativeSkills: 'Technical profile unavailable.',
     buildSectionTitle: 'Build & skills',
-    buildSectionHint: 'Suggested PT spread + skills to consider.',
+    buildSectionHint: 'Suggested PT spread for this card.',
+    buildOvrCard: 'Lv.1 OVR',
+    buildOvrBuilt: 'Build OVR',
+    buildWhyToggle: 'Why',
+    buildWhyHide: 'Hide',
+    buildPtDiff: 'Diff vs meta',
     buildMetaTitle: 'Meta pack build',
     buildMetaHint: 'Community role/style weights, without your roster.',
     buildRosterTitle: 'Build for your squad',
@@ -936,11 +946,14 @@ function ChartInsightCard({ labels, hasGameAnalysis, onOpenGameAnalysis }) {
   )
 }
 
-function BuildPreviewCard({ title, hint, build, labels, lang }) {
+function BuildPreviewCard({ title, hint, build, labels, lang, highlightKeys = [] }) {
   const [copied, setCopied] = React.useState(false)
+  const [showWhy, setShowWhy] = React.useState(false)
   if (!build?.ok) return null
 
   const activeSliders = BUILD_SLIDER_ORDER.filter(key => Number(build.sliders?.[key]) > 0)
+  const highlightSet = new Set(highlightKeys)
+  const displayOvr = build.playOverall ?? build.cardOverall
   const handleCopy = async () => {
     const text = build.ptCopy || activeSliders.map(key => `${getBuildSliderLabel(key, lang)}: ${build.sliders[key]}`).join(' | ')
     if (!text || typeof navigator === 'undefined' || !navigator.clipboard) return
@@ -955,7 +968,7 @@ function BuildPreviewCard({ title, hint, build, labels, lang }) {
 
   return (
     <article className="build-preview-card">
-      <div className="build-preview-card-head">
+      <div className="build-preview-card-top">
         <div>
           <h4>{title}</h4>
           <p>{hint}</p>
@@ -965,28 +978,48 @@ function BuildPreviewCard({ title, hint, build, labels, lang }) {
           {copied ? labels.buildCopied : labels.buildCopyPt}
         </button>
       </div>
-      <div className="build-preview-stats">
-        <span>
-          {labels.buildPtUsed}: <strong>{build.pointsUsed}/{build.pointsAvailable}</strong>
-        </span>
-        {build.playOverall != null && (
-          <span>
-            {labels.buildPlayOvr}: <strong>{build.playOverall}</strong>
+      <div className="build-preview-ovr-row">
+        {build.cardOverall != null && (
+          <span className="build-preview-ovr-pill">
+            {labels.buildOvrCard} <strong>{build.cardOverall}</strong>
           </span>
         )}
+        {build.playOverall != null && build.playOverall !== build.cardOverall && (
+          <span className="build-preview-ovr-pill build-preview-ovr-pill-accent">
+            {labels.buildOvrBuilt} <strong>{build.playOverall}</strong>
+          </span>
+        )}
+        {build.playOverall == null && displayOvr != null && (
+          <span className="build-preview-ovr-pill build-preview-ovr-pill-accent">
+            OVR <strong>{displayOvr}</strong>
+          </span>
+        )}
+        <span className="build-preview-pt-pill">
+          {labels.buildPtUsed} <strong>{build.pointsUsed}/{build.pointsAvailable}</strong>
+        </span>
       </div>
-      <div className="build-preview-pt-grid">
+      <div className="build-preview-pt-row">
         {activeSliders.map(key => (
-          <div key={key} className="build-preview-pt-chip">
-            <span>{getBuildSliderLabel(key, lang)}</span>
-            <strong>{build.sliders[key]}</strong>
-          </div>
+          <span
+            key={key}
+            className={`build-preview-pt-tag${highlightSet.has(key) ? ' build-preview-pt-tag-diff' : ''}`}
+          >
+            {getBuildSliderLabel(key, lang)} <b>{build.sliders[key]}</b>
+          </span>
         ))}
       </div>
       {build.reasons?.length > 0 && (
-        <ul className="build-preview-reasons">
-          {build.reasons.map(reason => <li key={reason}>{reason}</li>)}
-        </ul>
+        <>
+          <button
+            type="button"
+            className="build-preview-why-toggle"
+            onClick={() => setShowWhy(value => !value)}
+          >
+            {showWhy ? labels.buildWhyHide : labels.buildWhyToggle}
+            <ChevronRight size={14} />
+          </button>
+          {showWhy && <p className="build-preview-why-text">{build.reasons[0]}</p>}
+        </>
       )}
     </article>
   )
@@ -1032,8 +1065,14 @@ function CardBuildPreviewSection({ preview, loading, labels, lang }) {
   }
 
   const skills = preview.skills || {}
+  const ptDiffKeys =
+    preview.meta?.ok && preview.roster?.ok
+      ? BUILD_SLIDER_ORDER.filter(
+          key => Number(preview.meta.sliders?.[key] || 0) !== Number(preview.roster.sliders?.[key] || 0)
+        )
+      : []
   return (
-    <div className="build-preview-shell">
+    <div className="build-preview-shell build-preview-shell-compact">
       <div className="build-preview-shell-head">
         <Hammer size={18} />
         <div>
@@ -1063,6 +1102,7 @@ function CardBuildPreviewSection({ preview, loading, labels, lang }) {
             build={preview.roster}
             labels={labels}
             lang={lang}
+            highlightKeys={ptDiffKeys}
           />
         ) : (
           <article className="build-preview-card build-preview-card-muted">
@@ -4059,11 +4099,106 @@ export default withAuth(function CardAdvisorLabPage() {
           color: rgba(255, 255, 255, 0.65);
         }
 
-        .build-preview-card-head {
+        .build-preview-shell-compact {
+          padding: 12px 14px;
+        }
+
+        .build-preview-card-top {
           display: flex;
           align-items: flex-start;
           justify-content: space-between;
           gap: 10px;
+          margin-bottom: 10px;
+        }
+
+        .build-preview-card-top h4 {
+          margin: 0;
+          font-size: 13px;
+        }
+
+        .build-preview-card-top p {
+          margin: 4px 0 0;
+          font-size: 11px;
+          line-height: 1.35;
+          color: rgba(255, 255, 255, 0.58);
+        }
+
+        .build-preview-ovr-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          margin-bottom: 10px;
+        }
+
+        .build-preview-ovr-pill,
+        .build-preview-pt-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 4px 9px;
+          border-radius: 999px;
+          font-size: 11px;
+          background: rgba(255, 255, 255, 0.06);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .build-preview-ovr-pill-accent {
+          border-color: rgba(0, 212, 255, 0.35);
+          background: rgba(0, 212, 255, 0.12);
+        }
+
+        .build-preview-ovr-pill strong,
+        .build-preview-pt-pill strong {
+          color: #fff;
+          font-size: 13px;
+        }
+
+        .build-preview-pt-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+
+        .build-preview-pt-tag {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 5px 8px;
+          border-radius: 8px;
+          font-size: 11px;
+          background: rgba(0, 0, 0, 0.28);
+          border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .build-preview-pt-tag b {
+          color: #00d4ff;
+          font-size: 12px;
+        }
+
+        .build-preview-pt-tag-diff {
+          border-color: rgba(251, 191, 36, 0.45);
+          background: rgba(251, 191, 36, 0.1);
+        }
+
+        .build-preview-why-toggle {
+          margin-top: 10px;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          border: none;
+          background: none;
+          color: rgba(0, 212, 255, 0.85);
+          font-size: 11px;
+          font-weight: 600;
+          cursor: pointer;
+          padding: 0;
+        }
+
+        .build-preview-why-text {
+          margin: 6px 0 0;
+          font-size: 11px;
+          line-height: 1.45;
+          color: rgba(255, 255, 255, 0.65);
         }
 
         .build-preview-copy {
