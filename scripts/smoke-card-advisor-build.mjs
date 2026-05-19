@@ -101,4 +101,11 @@ assert.ok(Array.isArray(preview.skills?.items), 'skills list expected')
 const metaPt = Object.values(preview.meta.sliders || {}).reduce((a, b) => a + b, 0)
 assert.ok(metaPt > 0, 'meta sliders should have ticks')
 
+assert.ok(preview.meta?.whyLead?.length > 20, 'meta whyLead should be substantive')
+assert.ok(Array.isArray(preview.meta?.reasonSections) && preview.meta.reasonSections.length >= 2, 'meta reason sections')
+assert.ok(
+  preview.roster?.reasonSections?.some(section => section.id === 'skills'),
+  'roster should include skills-driven section'
+)
+
 console.log('\nOK — Card Advisor build preview smoke test passed.')

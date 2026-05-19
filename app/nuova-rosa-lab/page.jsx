@@ -3417,8 +3417,8 @@ function PremiumPlayerModal({
                   </div>
                   <p className="nr-com-skills-hint">
                     {lang === 'en'
-                      ? 'Imported from catalog (e.g. Trickster, Mazing Run). Showtime skills like Acceleration Burst appear here when on the card.'
-                      : 'Importate dal catalogo (es. Trickster, Mazing Run). Skill Showtime come Scatto bruciante compaiono qui se presenti in carta.'}
+                      ? 'Imported from catalog (e.g. Trickster, Mazing Run). Labels follow the Italian glossary used in coach/RAG.'
+                      : 'Importate dal catalogo (es. Corsa ubriacante, Inserimento incisivo). Etichette in italiano come nel RAG coach; in DB restano i nomi inglesi.'}
                   </p>
                 </EnterpriseSection>
               </section>
