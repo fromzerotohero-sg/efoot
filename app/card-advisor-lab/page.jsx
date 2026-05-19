@@ -58,8 +58,6 @@ const copy = {
     teamFit: 'Sinergia con la tua squadra',
     teamSynergyScore: 'Sinergia squadra',
     coachAdvice: 'Consiglio',
-    quickReadTitle: 'Lettura rapida gratis',
-    freeReadBadge: 'Gratis',
     chartInsightTitleMissing: 'Vuoi un consiglio ancora più su misura?',
     chartInsightTextMissing: 'Carica le Statistiche di gioco: il verdetto capirà meglio come giochi davvero e leggerà questa carta sulla tua rosa reale.',
     chartInsightTitleReady: 'Statistiche collegate',
@@ -83,8 +81,6 @@ const copy = {
     deepAnalysisTitle: 'Verdetto Pro',
     premiumSectionLabel: 'Pro',
     premiumSectionHint: 'Decisione completa',
-    freeSectionLabel: 'Lettura gratuita',
-    freeSectionHint: 'Sintesi rapida',
     deepKeyReasoning: 'Ragionamenti chiave',
     deepPros: 'Pro',
     deepCons: 'Contro',
@@ -100,7 +96,7 @@ const copy = {
     synergyDetails: 'Dettaglio sinergia',
     noRosterTitle: 'Valutazione carta disponibile',
     noRosterText: 'Senza rosa: carta e stile. Con rosa: sinergie e priorità concrete.',
-    selectedHint: 'Tocca una carta per la lettura.',
+    selectedHint: 'Tocca una carta per aprire la scheda.',
     topPick: 'Sinergia alta',
     goodPick: 'Sinergia buona',
     situationalPick: 'Sinergia parziale',
@@ -129,7 +125,7 @@ const copy = {
     noCoachText: 'Coach attivo = stile e competenze nel verdetto.',
     saveFormationCta: 'Completa formazione',
     addCoachCta: 'Aggiungi coach',
-    analyzeSynergy: 'Valuta carta',
+    openCard: 'Apri scheda',
     checkingRoster: 'Controllo rosa...',
     rosterReadyTitle: 'Rosa collegata',
     rosterReadyText: 'Confronto con titolari, panchina, modulo e priorità.',
@@ -200,8 +196,6 @@ const copy = {
     teamFit: 'Team synergy',
     teamSynergyScore: 'Team synergy',
     coachAdvice: 'Advice',
-    quickReadTitle: 'Free quick read',
-    freeReadBadge: 'Free',
     chartInsightTitleMissing: 'Want an even more tailored read?',
     chartInsightTextMissing: 'Add your Game Stats: the verdict will better understand how you really play and read this card against your real squad.',
     chartInsightTitleReady: 'Stats linked',
@@ -225,8 +219,6 @@ const copy = {
     deepAnalysisTitle: 'Pro verdict',
     premiumSectionLabel: 'Pro',
     premiumSectionHint: 'Full decision',
-    freeSectionLabel: 'Free read',
-    freeSectionHint: 'Quick summary',
     deepKeyReasoning: 'Key reasoning',
     deepPros: 'Pros',
     deepCons: 'Cons',
@@ -242,7 +234,7 @@ const copy = {
     synergyDetails: 'Synergy details',
     noRosterTitle: 'Card evaluation available',
     noRosterText: 'No roster: card + style. With roster: real synergy and priorities.',
-    selectedHint: 'Tap a card for the read.',
+    selectedHint: 'Tap a card to open details.',
     topPick: 'High synergy',
     goodPick: 'Good synergy',
     situationalPick: 'Partial synergy',
@@ -271,7 +263,7 @@ const copy = {
     noCoachText: 'Active coach = style and competences in the verdict.',
     saveFormationCta: 'Complete formation',
     addCoachCta: 'Add coach',
-    analyzeSynergy: 'Evaluate card',
+    openCard: 'Open card',
     checkingRoster: 'Checking roster...',
     rosterReadyTitle: 'Roster linked',
     rosterReadyText: 'Compared to starters, bench, formation, priorities.',
@@ -708,102 +700,16 @@ function buildRosterSummary(data) {
   }
 }
 
-function getSameRolePlayers(rosterSummary, position) {
-  const players = Array.isArray(rosterSummary?.players) ? rosterSummary.players : []
-  return players
-    .filter(player => player?.position === position)
-    .sort((a, b) => {
-      const slotA = Number(a.slot_index)
-      const slotB = Number(b.slot_index)
-      const starterA = Number.isFinite(slotA) && slotA >= 0 && slotA <= 10 ? 1 : 0
-      const starterB = Number.isFinite(slotB) && slotB >= 0 && slotB <= 10 ? 1 : 0
-      return starterB - starterA
-    })
-    .slice(0, 3)
-}
-
 function getCoachConnectionLabel(activeCoach) {
   const connection = activeCoach?.connection
   if (!connection || typeof connection !== 'object') return ''
   return connection.name || connection.connection || connection.title || connection.label || ''
 }
 
-function getFitSummary(card, rosterSummary, labels, lang) {
-  const sameRole = getSameRolePlayers(rosterSummary, card.position)
-  const depth = rosterSummary?.depth || 'card_only'
-  if (depth === 'card_only') {
-    return {
-      title: labels.rosterMissingTitle,
-      text: lang === 'en'
-        ? `${card.name} is read as a technical profile: role, style and native skills. Add your roster to unlock the team synergy read.`
-        : `${card.name} ha una lettura tecnica chiara: ruolo, stile e abilita native. Aggiungi la rosa per sbloccare la sinergia squadra.`,
-      priority: labels.cardProfileOnly,
-      alternatives: [],
-      cta: labels.loadRoster,
-      ctaTarget: 'roster'
-    }
-  }
-
-  const best = sameRole[0]
-  const roleCount = rosterSummary.roleCounts?.[card.position] || 0
-  let priority = labels.synergyMedium
-  if (roleCount === 0) priority = labels.synergyHigh
-  if (roleCount >= 3) priority = labels.synergyLow
-
-  if (depth === 'roster_only') {
-    const text = lang === 'en'
-      ? best
-        ? `${card.name} adds a different profile in the ${card.position} zone, but a saved formation is needed to read movements around your starters.`
-        : `${card.name} covers a zone where your roster has less direct coverage. Save a formation to read the real movement fit.`
-      : best
-        ? `${card.name} aggiunge un profilo diverso nella zona ${card.position}, ma serve una formazione salvata per leggere i movimenti attorno ai titolari.`
-        : `${card.name} copre una zona dove la tua rosa ha meno copertura diretta. Salva una formazione per leggere il vero fit di movimento.`
-
-    return {
-      title: labels.noFormationTitle,
-      text,
-      priority: labels.rosterSynergy,
-      alternatives: sameRole,
-      cta: labels.saveFormationCta,
-      ctaTarget: 'formation'
-    }
-  }
-
-  const baseText = lang === 'en'
-    ? best
-      ? `${card.name} is read against the movements already present in your players, especially the spaces occupied around ${card.position}.`
-      : `${card.name} covers a lane that is not clearly occupied in your saved formation.`
-    : best
-      ? `${card.name} si lega ai movimenti già presenti nei tuoi giocatori, soprattutto agli spazi occupati attorno a ${card.position}.`
-      : `${card.name} copre una corsia non occupata in modo chiaro nella formazione salvata.`
-
-  if (depth === 'formation') {
-    return {
-      title: labels.moduleFit,
-      text: `${baseText} ${labels.noCoachText}`,
-      priority: labels.moduleFit,
-      alternatives: sameRole,
-      cta: labels.addCoachCta,
-      ctaTarget: 'coach'
-    }
-  }
-
-  return {
-    title: labels.howToUse,
-    text: lang === 'en'
-      ? `${baseText} The read includes style, movement chains and how the card changes your current spacing.`
-      : `${baseText} La lettura include stile, catene di movimento e come la carta cambia gli spazi attuali.`,
-    priority,
-    alternatives: sameRole,
-    cta: null,
-    ctaTarget: null
-  }
-}
-
 function ReleaseCard({ card, selected, labels, onSelect }) {
   const readableStyle = card.style && card.style !== 'Profilo da analizzare'
     ? card.style
-    : labels.analyzeSynergy
+    : labels.openCard
   return (
     <button
       type="button"
@@ -821,7 +727,7 @@ function ReleaseCard({ card, selected, labels, onSelect }) {
         </div>
         <div className="score-row">
           <span>{card.category}</span>
-          <strong>{labels.analyzeSynergy}</strong>
+          <strong>{labels.openCard}</strong>
         </div>
       </div>
     </button>
@@ -921,14 +827,6 @@ function RosterStatusPanel({ labels, rosterSummary, onLoadRoster, onOpenCoach })
       </div>
     </section>
   )
-}
-
-function synergyLabelFromScore(score, labels, fallback) {
-  const numericScore = Number(score)
-  if (!Number.isFinite(numericScore) || numericScore <= 0) return fallback || labels.synergyMedium
-  if (numericScore >= 72) return labels.synergyHigh
-  if (numericScore >= 58) return labels.synergyMedium
-  return labels.synergyLow
 }
 
 function ChartInsightCard({ labels, hasGameAnalysis, onOpenGameAnalysis }) {
@@ -1156,54 +1054,19 @@ function DetailPanel({
   labels,
   lang,
   rosterSummary,
-  evaluation,
-  evaluating,
   buildPreview,
   buildPreviewLoading,
   deepAnalysis,
   deepAnalysisLoading,
   deepAnalysisError,
   onRequestDeepAnalysis,
-  onOpenFormation,
-  onOpenCoach,
   onOpenGameAnalysis,
   onClose
 }) {
-  const [showSynergyDetails, setShowSynergyDetails] = React.useState(false)
   const [showDeepFullReport, setShowDeepFullReport] = React.useState(false)
   const [showBaseDetails, setShowBaseDetails] = React.useState(false)
-  const fitSummary = getFitSummary(card, rosterSummary, labels, lang)
-  const serverEval = evaluation || null
-  const lever = serverEval?.mainLever || (lang === 'en' ? (card.leverEn || card.lever) : card.lever)
-  const effectivePriority = evaluating ? '...' : (serverEval?.teamSynergy?.label || serverEval?.decision?.label || serverEval?.synergyLevel || fitSummary.priority)
-  const effectiveFitText = serverEval?.whyItMatters?.length ? serverEval.whyItMatters.join(' ') : fitSummary.text
-  const effectiveCoachText = serverEval?.context?.activeCoachName
-    ? (lang === 'en'
-        ? `Active coach: ${serverEval.context.activeCoachName}. Verdict uses style + competences.`
-        : `Coach attivo: ${serverEval.context.activeCoachName}. Verdetto su stile e competenze.`)
-    : ''
-  const fitReadLines = serverEval?.rosterRead?.length
-    ? serverEval.rosterRead
-    : effectiveFitText
-      ? [effectiveFitText]
-      : []
-  const effectiveCta = serverEval?.nextCta || (fitSummary.cta ? { label: fitSummary.cta, target: fitSummary.ctaTarget } : null)
-  const teamSynergy = serverEval?.teamSynergy || null
-  const teamSynergyScore = evaluating
-    ? 0
-    : Math.max(0, Math.min(100, Number(teamSynergy?.score || serverEval?.score || card.score || 0)))
-  const teamSynergyLabel = evaluating
-    ? '...'
-    : synergyLabelFromScore(teamSynergyScore, labels, teamSynergy?.label || effectivePriority)
-  const teamSynergySummary = evaluating
-    ? (lang === 'en' ? 'Reading squad context…' : 'Leggo il contesto rosa…')
-    : (teamSynergy?.summary || fitReadLines[0] || effectiveFitText)
-  const teamSynergyDetails = Array.isArray(teamSynergy?.details) ? teamSynergy.details : []
-  const coachAdvice = teamSynergy?.coachAdvice || null
-  const recommendedUseLine = teamSynergy?.useLine || serverEval?.recommendedUse || fitReadLines[1] || effectiveFitText
-  const technicalProfileList = Array.isArray(serverEval?.technicalProfile) && serverEval.technicalProfile.length > 0
-    ? serverEval.technicalProfile
-    : normalizePlayerSkillsArray(card?.skills || [])
+  const lever = lang === 'en' ? (card.leverEn || card.lever) : card.lever
+  const technicalProfileList = normalizePlayerSkillsArray(card?.skills || [])
   return (
     <section className="detail-panel">
       {onClose && (
@@ -1250,52 +1113,6 @@ function DetailPanel({
             hasGameAnalysis={Boolean(rosterSummary?.hasGameAnalysis)}
             onOpenGameAnalysis={onOpenGameAnalysis}
           />
-          <div className="advisor-section-marker advisor-section-marker-free">
-            <span>{labels.freeSectionLabel}</span>
-            <small>{labels.freeSectionHint}</small>
-          </div>
-          <div className="quick-read-card">
-            <div className="quick-read-top">
-              <span>{labels.quickReadTitle}</span>
-              <strong>{labels.freeReadBadge}</strong>
-            </div>
-            <div className="quick-read-score">
-              <div>
-                <small>{labels.teamSynergyScore}</small>
-                <b>{teamSynergyLabel}</b>
-              </div>
-              <strong>{teamSynergyScore}%</strong>
-            </div>
-            <div className="quick-read-bar" aria-label={`${labels.teamSynergyScore}: ${teamSynergyScore}%`}>
-              <span style={{ width: `${teamSynergyScore}%` }} />
-            </div>
-            <p>{teamSynergySummary}</p>
-            {teamSynergyDetails.length > 0 && (
-              <>
-                <button
-                  type="button"
-                  className="team-synergy-details-toggle"
-                  onClick={() => setShowSynergyDetails(value => !value)}
-                  aria-expanded={showSynergyDetails}
-                >
-                  {showSynergyDetails ? labels.hideDetails : labels.viewDetails}
-                  <ChevronRight size={15} />
-                </button>
-                {showSynergyDetails && (
-                  <div className="team-synergy-details" aria-label={labels.synergyDetails}>
-                    {teamSynergyDetails.map(detail => (
-                      <div key={detail.key} className="team-synergy-detail-item">
-                        <div>
-                          <span>{detail.label}</span>
-                        </div>
-                        <p>{detail.text}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
         </div>
       </div>
 
@@ -1306,14 +1123,6 @@ function DetailPanel({
         lang={lang}
       />
 
-      {coachAdvice && (
-        <div className="coach-advice-card">
-          <span>{labels.coachAdvice}</span>
-          <h3>{coachAdvice.title}</h3>
-          <p>{coachAdvice.text}</p>
-          {coachAdvice.action && <strong>{coachAdvice.action}</strong>}
-        </div>
-      )}
 
       <DeepAnalysisError error={deepAnalysisError} labels={labels} />
       {deepAnalysis && (
@@ -1410,30 +1219,6 @@ function DetailPanel({
               </article>
             </div>
 
-            <div className="fit-panel synergy-read-card">
-              <div className="synergy-read-content">
-                <div className="synergy-read-head">
-                  <h3><Users size={18} /> {labels.howToUse}</h3>
-                  <span>{teamSynergyLabel}</span>
-                </div>
-                <p>{recommendedUseLine}</p>
-                {serverEval?.context?.hasCoach && effectiveCoachText && (
-                  <div className="synergy-read-context">
-                    <ShieldCheck size={14} />
-                    <span>{effectiveCoachText}</span>
-                  </div>
-                )}
-              </div>
-              {effectiveCta && (
-                <button
-                  type="button"
-                  onClick={effectiveCta.target === 'coach' ? onOpenCoach : onOpenFormation}
-                >
-                  {effectiveCta.label}
-                  <ArrowRight size={16} />
-                </button>
-              )}
-            </div>
           </>
         )}
       </div>
@@ -1447,16 +1232,12 @@ function CardDetailsModal({
   labels,
   lang,
   rosterSummary,
-  evaluation,
-  evaluating,
   buildPreview,
   buildPreviewLoading,
   deepAnalysis,
   deepAnalysisLoading,
   deepAnalysisError,
   onRequestDeepAnalysis,
-  onOpenFormation,
-  onOpenCoach,
   onOpenGameAnalysis,
   onClose
 }) {
@@ -1540,16 +1321,12 @@ function CardDetailsModal({
           labels={labels}
           lang={lang}
           rosterSummary={rosterSummary}
-          evaluation={evaluation}
-          evaluating={evaluating}
           buildPreview={buildPreview}
           buildPreviewLoading={buildPreviewLoading}
           deepAnalysis={deepAnalysis}
           deepAnalysisLoading={deepAnalysisLoading}
           deepAnalysisError={deepAnalysisError}
           onRequestDeepAnalysis={onRequestDeepAnalysis}
-          onOpenFormation={onOpenFormation}
-          onOpenCoach={onOpenCoach}
           onOpenGameAnalysis={onOpenGameAnalysis}
           onClose={onClose}
         />
@@ -1569,8 +1346,6 @@ export default withAuth(function CardAdvisorLabPage() {
   const [releaseId, setReleaseId] = React.useState(releases[0].id)
   const [rosterSummary, setRosterSummary] = React.useState({ status: 'loading', totalPlayers: 0, starters: 0, formation: '-' })
   const [searchQuery, setSearchQuery] = React.useState('')
-  const [evaluationsByCard, setEvaluationsByCard] = React.useState({})
-  const [evaluatingCardId, setEvaluatingCardId] = React.useState(null)
   const [deepAnalysesByCard, setDeepAnalysesByCard] = React.useState({})
   const [deepAnalysisLoadingId, setDeepAnalysisLoadingId] = React.useState(null)
   const [deepAnalysisErrors, setDeepAnalysisErrors] = React.useState({})
@@ -1631,7 +1406,6 @@ export default withAuth(function CardAdvisorLabPage() {
 
   const selectedCard = cards.find(card => card.id === selectedId) || cards[0]
   const detailsCard = cards.find(card => card.id === detailsCardId) || null
-  const detailsEvaluation = detailsCard ? evaluationsByCard[detailsCard.id] : null
   const detailsDeepAnalysis = detailsCard ? deepAnalysesByCard[detailsCard.id] : null
   const detailsDeepAnalysisError = detailsCard ? deepAnalysisErrors[detailsCard.id] : ''
   const detailsBuildPreview = detailsCard
@@ -1730,43 +1504,6 @@ export default withAuth(function CardAdvisorLabPage() {
       active = false
     }
   }, [])
-
-  React.useEffect(() => {
-    let active = true
-
-    async function loadEvaluation() {
-      if (!detailsCard?.id) return
-      if (evaluationsByCard[detailsCard.id]) return
-      const token = await resolveClientAuthBearer()
-      if (!token) return
-
-      setEvaluatingCardId(detailsCard.id)
-      try {
-        const response = await fetch('/api/card-advisor-lab/evaluate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({ card: detailsCard, lang: lang === 'en' ? 'en' : 'it' })
-        })
-        if (!response.ok) throw new Error('Evaluation failed')
-        const data = await response.json()
-        if (active && data?.evaluation) {
-          setEvaluationsByCard(prev => ({ ...prev, [detailsCard.id]: data.evaluation }))
-        }
-      } catch (error) {
-        console.warn('[card-advisor-lab] evaluation unavailable:', error)
-      } finally {
-        if (active) setEvaluatingCardId(null)
-      }
-    }
-
-    loadEvaluation()
-    return () => {
-      active = false
-    }
-  }, [detailsCard, evaluationsByCard, lang])
 
   React.useEffect(() => {
     let active = true
@@ -1913,16 +1650,12 @@ export default withAuth(function CardAdvisorLabPage() {
         labels={labels}
         lang={lang === 'en' ? 'en' : 'it'}
         rosterSummary={rosterSummary}
-        evaluation={detailsEvaluation}
-        evaluating={detailsCard?.id === evaluatingCardId}
         buildPreview={detailsBuildPreview}
         buildPreviewLoading={detailsCard?.id === buildPreviewLoadingId}
         deepAnalysis={detailsDeepAnalysis}
         deepAnalysisLoading={detailsCard?.id === deepAnalysisLoadingId}
         deepAnalysisError={detailsDeepAnalysisError}
         onRequestDeepAnalysis={requestDeepAnalysis}
-        onOpenFormation={() => router.push('/gestione-formazione')}
-        onOpenCoach={() => router.push('/allenatori')}
         onOpenGameAnalysis={() => router.push('/?openGameAnalysis=1')}
         onClose={() => setDetailsCardId(null)}
       />
