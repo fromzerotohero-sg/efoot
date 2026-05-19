@@ -9,7 +9,8 @@ import { getCoachPoliciesText, getCoachSharedCoreText } from '@/lib/coachPromptR
 import {
   getSkillDisplayLabel,
   getSkillEnglishItalianGlossary,
-  localizeSkillTermsInText
+  localizeSkillTermsInText,
+  normalizePlayerSkillsArray
 } from '@/lib/playerSkillLabels.js'
 import { CARD_ADVISOR_SELECT, searchCardAdvisorCardsByName } from '@/lib/cardAdvisorCardsLookup.js'
 import { fetchEfhubCardDetail } from '@/lib/efhubPlayerDetail.js'
@@ -143,7 +144,7 @@ function sanitizeList(items = [], maxItems = 8, maxLen = 60) {
 function canonSkillsForPrompt(rawList, lang, maxItems = 14, maxLen = 60) {
   const code = lang === 'en' ? 'en' : 'it'
   const unique = [...new Set(
-    (Array.isArray(rawList) ? rawList : [])
+    normalizePlayerSkillsArray(Array.isArray(rawList) ? rawList : [])
       .map((s) => getSkillDisplayLabel(String(s || '').trim(), code))
       .filter(Boolean)
   )]
@@ -274,8 +275,36 @@ async function resolveCatalogCardForDeepAnalysis(admin, card) {
   }
 }
 
+function buildCardAdvisorRagQuery(card, catalogCard, tacticalSettings) {
+  const pos = String(card?.position || '').trim()
+  const style = String(card?.style || catalogCard?.playing_style || '').trim()
+  const teamStyle = String(tacticalSettings?.team_playing_style || '').trim()
+  return [
+    'stili giocatore',
+    'abilità giocatori',
+    'meccaniche eFootball',
+    'movimenti automatici',
+    pos,
+    style,
+    teamStyle,
+    'cross',
+    'passaggio filtrante',
+    'colpo di testa',
+    'intercettazione',
+    'modulo',
+    'formazione',
+    'contropiede',
+    'possesso',
+    'vie laterali'
+  ]
+    .filter(Boolean)
+    .join(' ')
+}
+
 function buildPrompt({ lang, card, catalogCard, profile, players, stylesLookup = {}, formation, coach, tacticalSettings, patterns, gameAnalysis, diagnostic, feedback, performance, ragKnowledge, skillDeltaSentence = '', purchaseFactsText = '' }) {
   const isEn = lang === 'en'
+  const coachPolicies = getCoachPoliciesText(lang)
+  const coachCore = getCoachSharedCoreText(lang)
   const cardBaseStats = summarizeStats(catalogCard?.base_stats || {})
   const cardMaxStats = summarizeStats(catalogCard?.max_stats || {})
   const cardPayload = {
@@ -335,6 +364,19 @@ RUOLO:
 - Devi produrre una analisi premium della carta per questo cliente.
 - Devi ragionare come un coach superiore: stile di gioco, movimento automatico, abilità native, statistiche, compagni, rosa, riserve, tattica, coach, diagnosi e dati partita.
 - Non devi mostrare il ragionamento interno. Devi mostrare il risultato finale, chiaro, sicuro e utile.
+- Domanda unica da rispondere: "La compro per come gioco OGGI (modulo in campo, titolari, game stats, profilo)?" — non tier list, non "carta forte in assoluto".
+
+POLITICHE COACH (allineate alla chat — obbligatorie):
+${coachPolicies}
+
+${coachCore}
+
+GERARCHIA FONTI (ordine di priorità — non invertire):
+1. FATTI ACQUISTO (modulo, titolare per ruolo pack, anchor confronto, regole naming)
+2. skill_delta_sentence (comune / solo carta / solo rosa — frase già calcolata)
+3. CONTESTO CLIENTE (rosa starters/reserves, tattica, coach, game_analysis, profilo, diagnosi)
+4. CARTA (native_skills, stile, base_stats pack)
+5. RAG EFOOTBALL — solo per interpretare stili/meccaniche/movimenti; mai per inventare skill, nomi o ruoli
 
 FOCUS:
 - La domanda centrale non è "la carta è forte?", ma "questa carta crea valore reale per questa rosa?".
@@ -378,6 +420,15 @@ POLICY POSIZIONI E ACQUISTO (obbligatoria — come Coach chat):
 - Se game stats e stile carta non matchano (es. cross specialist ma pochi cross nei dati): purchase_fit = not_your_playstyle o fits_if_formation_change con condizione chiara.
 - purchase_fit deve essere coerente con verdict e con FATTI ACQUISTO. setup_condition obbligatorio se purchase_fit è fits_if_formation_change o skill_only_no_slot.
 - Esempio SBAGLIATO: "Non cambia gerarchie su Maldini CLS". Esempio CORRETTO: "Non sostituisce Maldini (DC); oggi non hai CLS in campo — ha senso solo se cambi modulo per usare la fascia."
+- FATTI ACQUISTO + skill_delta_sentence hanno priorità su intuizioni generiche: non contraddirli. Se indicano doppione, titolare già ok o nessuno slot per il ruolo pack, non usare verdict "take" senza salto skill chiaro e condizione modulo esplicita se serve.
+
+COERENZA verdict ↔ purchase_fit (obbligatoria):
+- skip_duplicate / stesso nome titolare + skill quasi uguali → verdict skip o not_priority; purchase_fit skip_duplicate
+- Nessun titolare con ruolo pack in campo (FATTI ACQUISTO) → purchase_fit fits_if_formation_change o skill_only_no_slot; verdict al massimo situational; setup_condition obbligatorio
+- skill_delta indica "quasi uguale" / "non compri per skill nuove" → verdict not_priority, luxury_pick o situational; mai take
+- Salto skill chiaro + titolare stesso ruolo o buco ruolo reale → take, premium_rotation o fits_with_rotation
+- Game stats ≠ stile carta (es. pochi cross ma carta da fascia) → not_your_playstyle o fits_if_formation_change con condizione
+- Rosa assente → purchase_fit insufficient_data; verdict situational; solo review carta
 
 ${purchaseFactsText}
 
@@ -390,13 +441,29 @@ ${JSON.stringify(contextPayload, null, 2)}
 CONFRONTO ABILITÀ (una frase, già calcolata — allineati)
 ${skillDeltaSentence || (isEn ? 'No roster skill comparison available.' : 'Confronto abilità rosa non disponibile.')}
 
-RAG EFOOTBALL
+RAG EFOOTBALL (dizionario meccaniche — non è la rosa del cliente)
 ${ragKnowledge || 'Nessun RAG disponibile.'}
+
+USO RAG (obbligatorio):
+- Usa RAG per spiegare movimento da stile giocatore, meccaniche skill, stili squadra e situazioni di gioco coerenti con i dati cliente.
+- NON usare RAG per tier list, meta universale, "migliori giocatori", overall, o per aggiungere skill/nomi non presenti in CARTA o CONTESTO CLIENTE.
+- NON copiare paragrafi lunghi dal RAG: massimo 1-2 concetti applicati al caso.
+- Stili giocatore nel RAG ≠ abilità: rispetta la distinzione delle POLITICHE COACH.
+- Se RAG e FATTI ACQUISTO/skill_delta confliggono su ruoli o confronti, vincono FATTI ACQUISTO e skill_delta.
+
+CHECKLIST PRE-OUTPUT (verifica mentalmente prima del JSON):
+- Ho citato solo skill presenti in native_skills o roster.skills?
+- Ho usato il ruolo IN CAMPO per ogni giocatore rosa (non competenza come ruolo attuale)?
+- skill_delta_sentence e FATTI ACQUISTO sono rispettati in summary, pros e final_decision?
+- purchase_fit e verdict sono coerenti con la tabella sopra?
+- pros motivati da skill SOLO sulla carta (non dalle comuni)?
+- synergies = combo con altri reparti, non sostituiscono il confronto skill principale?
+- headline ≤55 caratteri, teaser — il verdetto completo sta in summary e final_decision?
 
 OUTPUT:
 Restituisci SOLO JSON valido con questa struttura:
 {
-  "headline": "titolo breve e deciso, massimo 55 caratteri",
+  "headline": "titolo breve e deciso, massimo 55 caratteri (teaser, non ripetere tutto il verdetto)",
   "verdict": "take|premium_rotation|situational|luxury_pick|not_priority|skip",
   "purchase_fit": "fits_current_setup|fits_with_rotation|fits_if_formation_change|skill_only_no_slot|not_your_playstyle|skip_duplicate|insufficient_data",
   "setup_condition": "vuoto se purchase_fit è fits_current_setup; altrimenti condizione modulo/ruolo max 160 caratteri",
@@ -609,7 +676,10 @@ export async function POST(req) {
       insights: Array.isArray(row.insights) ? row.insights.slice(0, 4) : []
     }))
     const performance = (performanceRes.data || []).slice(0, 12)
-    const ragKnowledge = getRelevantSections('stili giocatore abilità giocatori statistiche cross passaggio filtrante colpo di testa intercettazione movimenti eFootball', 9000)
+    const ragKnowledge = getRelevantSections(
+      buildCardAdvisorRagQuery(card, catalogCard, tacticalRes.data || null),
+      9000
+    )
 
     const players = playersRes.data || []
     const skillDeltaLine = buildSkillDeltaSentence({
