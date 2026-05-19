@@ -20,7 +20,7 @@ export const dynamic = 'force-dynamic'
 const DEEP_ANALYSIS_COST = 2
 const MODEL = process.env.CARD_ADVISOR_DEEP_MODEL || 'gpt-5.2'
 
-/** Stili di gioco (skill/comSkills: getSkillEnglishItalianGlossary in playerSkillLabels). */
+/** Stili di gioco COM; abilità native → getSkillEnglishItalianGlossary (IT ufficiale in-game). */
 const STYLE_AND_MECHANIC_GLOSSARY_IT = [
   ['Anchor Man', 'Collante'],
   ['Box To Box', 'Box-to-box'],
@@ -42,7 +42,9 @@ const STYLE_AND_MECHANIC_GLOSSARY_IT = [
   ['Offensive Full-back', 'Terzino offensivo'],
   ['Destroyer', 'Incontrista'],
   ['Deep-Lying Forward', 'Fulcro di gioco'],
-  ['Target Man', 'Fulcro di gioco']
+  ['Target Man', 'Fulcro di gioco'],
+  ['Second Striker', 'Seconda punta'],
+  ['False 9', 'Falso 9']
 ]
 
 const IT_TERM_GLOSSARY = [...getSkillEnglishItalianGlossary(), ...STYLE_AND_MECHANIC_GLOSSARY_IT]
