@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
+import { DEFAULT_SLOT_POSITIONS } from '@/lib/formationDefaultSlots'
 import { validateFormationLimits } from '@/lib/validateFormationLimits'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 
@@ -92,29 +93,11 @@ export async function POST(req) {
     // Completa slot mancanti se necessario (0-10)
     const completeSlotPositions = (slots) => {
       const complete = { ...(slots || {}) }
-      const defaultPositions = {
-        0: { x: 50, y: 90, position: 'PT' },
-        // DIFESA più compatta per evitare "vuoti" tra linee
-        1: { x: 20, y: 65, position: 'DC' },
-        2: { x: 40, y: 65, position: 'DC' },
-        3: { x: 60, y: 65, position: 'DC' },
-        4: { x: 80, y: 65, position: 'DC' },
-        // CENTROCAMPO su sotto-fasce vicine (MED vicino a CC)
-        5: { x: 30, y: 52, position: 'CC' },
-        6: { x: 50, y: 58, position: 'MED' },
-        7: { x: 70, y: 52, position: 'CC' },
-        // ATTACCO su sotto-fasce: SP un filo più basso del CF
-        8: { x: 25, y: 34, position: 'SP' },
-        9: { x: 50, y: 28, position: 'CF' },
-        10: { x: 75, y: 34, position: 'SP' }
-      }
-      
       for (let i = 0; i <= 10; i++) {
         if (!complete[i]) {
-          complete[i] = defaultPositions[i] || { x: 50, y: 50, position: '?' }
+          complete[i] = DEFAULT_SLOT_POSITIONS[i] || { x: 50, y: 50, position: '?' }
         }
       }
-      
       return complete
     }
     

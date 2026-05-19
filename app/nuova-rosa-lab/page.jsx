@@ -13,6 +13,7 @@ import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import { PHOTO_TYPE_KEYS, getPhotoTypeConfig } from '@/lib/playerPhotoTypes'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
+import { DEFAULT_FORMATION_NAME, DEFAULT_SLOT_POSITIONS } from '@/lib/formationDefaultSlots'
 import { getFormationNameFromSlotPositions } from '@/lib/validateFormationLimits'
 import {
   isBuildMacroBlockedForPlayer,
@@ -2193,20 +2194,6 @@ function BuildCoachPlayerPickerModal({ show, players, buildingPlayerId, onClose,
 
 const MAX_RESERVES = 12
 const GK_GOAL_AREA = { xMin: 36, xMax: 64, yMin: 83, yMax: 96 }
-const DEFAULT_SLOT_POSITIONS = {
-  0: { x: 50, y: 90, position: 'PT' },
-  1: { x: 20, y: 65, position: 'DC' },
-  2: { x: 40, y: 65, position: 'DC' },
-  3: { x: 60, y: 65, position: 'DC' },
-  4: { x: 80, y: 65, position: 'DC' },
-  5: { x: 30, y: 52, position: 'CC' },
-  6: { x: 50, y: 58, position: 'MED' },
-  7: { x: 70, y: 52, position: 'CC' },
-  8: { x: 25, y: 34, position: 'SP' },
-  9: { x: 50, y: 28, position: 'P' },
-  10: { x: 75, y: 34, position: 'SP' }
-}
-
 function normalizeLayoutPayload(layoutPayload, previousLayout = null) {
   const raw = layoutPayload && typeof layoutPayload === 'object' ? layoutPayload : {}
   const rawSlots = raw.slot_positions
@@ -2230,7 +2217,7 @@ function normalizeLayoutPayload(layoutPayload, previousLayout = null) {
     : (previousLayout?.slot_positions || DEFAULT_SLOT_POSITIONS)
 
   return {
-    formation: raw.formation || previousLayout?.formation || '4-3-3',
+    formation: raw.formation || previousLayout?.formation || DEFAULT_FORMATION_NAME,
     slot_positions: completeSlotPositions(baseSlots)
   }
 }
