@@ -10,6 +10,7 @@ import { getPlayerStyleDisplayName } from '@/lib/playingStyleResolve'
 import { formatBuildCoachSnippet, formatBuildProgressionSection } from '@/lib/playerBuildCoachPrompt'
 import { getPlayerDisplayStats } from '@/lib/playerEffectiveStats'
 import { buildRosterSkillAdvisorySection, formatPlayerSkillContext } from '@/lib/rosterSkillsContext'
+import { localizeSkillTermsInText } from '@/lib/playerSkillLabels.js'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -277,9 +278,15 @@ function enforceLinkUpGrounding({ message = '', summary = '', content = '', lang
   return out
 }
 
+function localizeCoachReplyText(text, lang = 'it') {
+  if (lang !== 'it') return String(text || '')
+  return localizeSkillTermsInText(String(text || ''), 'it')
+}
+
 function finalizeCoachReply({ content = '', message = '', summary = '', lang = 'it', reminder = '' }) {
   const grounded = enforceLinkUpGrounding({ message, summary, content, lang })
-  return appendMicroReminder(grounded, reminder)
+  const localized = localizeCoachReplyText(grounded, lang)
+  return appendMicroReminder(localized, reminder)
 }
 
 /**
@@ -824,6 +831,7 @@ SCOPE: solo consulenza tattica eFootball basata su ROSA, PARTITE, ALLENATORE, TA
 
 FONTI: Nomi/rosa/partite/allenatore/tattica = solo dal blocco contesto sotto (ROSA E DATI o RIASSUNTO ANALISI). Regole eFootball = solo dal blocco RAG. Se manca un dato, non inventare.
 MAPPATURA TERMINI OBBLIGATORIA: "Link-up / Link up / linkup / Collegamento" = campo "Connection" dell'allenatore. Se nel RIASSUNTO è presente "Connection:", NON dire mai che manca: cita nome connection e, se presenti, Focal Point e Key Man.
+ABILITÀ GIOCATORI: cita sempre i nomi italiani ufficiali come nel blocco rosa (es. Passaggio filtrante, Tiro di prima, Tiro a salire, Tiro dalla distanza). Vietato l'inglese (Through Passing, One-touch Pass, Rising Shot, First-time Shot, Long-Range Shooting, ecc.).
 MECCANICHE CANCEL/SKILL AVANZATE: segui RAG §7.12. Usa prima i termini ufficiali (Super Cancel, Kick Cancel, Kick Feint, Double Touch) e tratta "tess/croqueta interrotta" solo come alias community tra parentesi.
 ANTI-EXPLOIT: vietato coaching basato su macro/script/bug abuse; non suggerire spam continuo della stessa skill. Dai sempre una variante sicura se il timing non riesce.
 INCROCI: Usa tutto il riassunto (Rosa, Statistiche di gioco, Andamento/voti, Tattica, Allenatore, Sintesi rosa, Sinergie, Leve) e RAG §2/§4/§7/§8. Build/meta: solo consigli funzionali a movimenti e difficolta del cliente (dati reali), mai tier list senza incrocio. Progressione PT (slider): non inventare; se assente, consiglio tattico su stili/stats card. Stile giocatore cruciale per fit e sostituzioni.
@@ -1284,7 +1292,8 @@ export async function POST(req) {
     }
 
 
-    const finalSuggestions = (Array.isArray(suggestions) && suggestions.length > 0) ? suggestions : getDefaultSuggestions(lang, safeCurrentPage)
+    const rawSuggestions = (Array.isArray(suggestions) && suggestions.length > 0) ? suggestions : getDefaultSuggestions(lang, safeCurrentPage)
+    const finalSuggestions = rawSuggestions.map((s) => localizeCoachReplyText(s, lang))
     if (process.env.NODE_ENV !== 'production') console.log(`[assistant-chat] Success, model_used: ${model}`)
     return NextResponse.json(
       {
