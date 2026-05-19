@@ -693,7 +693,7 @@ function getFitSummary(card, rosterSummary, labels, lang) {
   const roleCount = rosterSummary.roleCounts?.[card.position] || 0
   let priority = labels.synergyMedium
   if (roleCount === 0) priority = labels.synergyHigh
-  if (roleCount >= 2) priority = labels.synergyLow
+  if (roleCount >= 3) priority = labels.synergyLow
 
   if (depth === 'roster_only') {
     const text = lang === 'en'
@@ -871,8 +871,8 @@ function RosterStatusPanel({ labels, rosterSummary, onLoadRoster, onOpenCoach })
 function synergyLabelFromScore(score, labels, fallback) {
   const numericScore = Number(score)
   if (!Number.isFinite(numericScore) || numericScore <= 0) return fallback || labels.synergyMedium
-  if (numericScore >= 75) return labels.synergyHigh
-  if (numericScore >= 55) return labels.synergyMedium
+  if (numericScore >= 72) return labels.synergyHigh
+  if (numericScore >= 58) return labels.synergyMedium
   return labels.synergyLow
 }
 

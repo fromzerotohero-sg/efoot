@@ -215,6 +215,137 @@ function signalsFromStats(stats) {
   }
 }
 
+/** OVR pack (base) → stima interna del tetto buildato per confronto equo con rosa. */
+function estimateCardCeilingOverall(card, catalogCard) {
+  const fromCatalog = Number(
+    catalogCard?.overall_max_level ??
+    catalogCard?.players_payload?.overall_max_level
+  )
+  if (Number.isFinite(fromCatalog) && fromCatalog > 0) return Math.min(99, Math.round(fromCatalog))
+
+  const base = Number(card.overall) || Number(catalogCard?.overall_display) || Number(catalogCard?.overall_level_1) || 0
+  if (!base) return 0
+
+  const baseStats = catalogCard?.base_stats
+  const maxStats = catalogCard?.max_stats
+  if (maxStats && typeof maxStats === 'object' && Object.keys(maxStats).length > 0) {
+    const baseSignals = baseStats ? signalsFromStats(baseStats) : null
+    const maxSignals = signalsFromStats(maxStats)
+    const maxTech = Math.max(maxSignals.pace, maxSignals.pass, maxSignals.defend, maxSignals.finish, maxSignals.gk)
+    const baseTech = baseSignals
+      ? Math.max(baseSignals.pace, baseSignals.pass, baseSignals.defend, baseSignals.finish, baseSignals.gk)
+      : 0
+    if (maxTech > baseTech && baseTech > 0) {
+      return Math.min(99, Math.round(base + (maxTech - baseTech) * 0.38))
+    }
+  }
+
+  const category = toAscii(`${card.category || ''} ${catalogCard?.card_type || ''}`)
+  const uplift = category.includes('big time') || category.includes('show time')
+    ? 8
+    : category.includes('epic')
+      ? 7
+      : category.includes('standout') || category.includes('highlight')
+        ? 6
+        : 5
+  return Math.min(99, base + uplift)
+}
+
+/** Stat di confronto rosa: base salvata, non profilo già buildato in campo. */
+function rosterComparisonSignals(player) {
+  const base = player?.base_stats
+  if (base && typeof base === 'object' && Object.keys(base).length > 0) {
+    return signalsFromStats(base)
+  }
+  const built = getPlayerDisplayStats(player) || {}
+  return signalsFromStats(built)
+}
+
+/** OVR rosa normalizzato per confronto con tetto carta (stima uplift da livello). */
+function rosterComparisonOverall(player) {
+  const base = player?.base_stats
+  if (base && typeof base === 'object') {
+    const fromBase = Number(base.overall ?? base.overall_rating ?? base.OVR ?? base.rating)
+    if (Number.isFinite(fromBase) && fromBase > 0) return Math.round(fromBase)
+  }
+
+  const built = Number(player?.overall_rating)
+  if (!Number.isFinite(built) || built <= 0) return null
+
+  const level = Number(player?.current_level)
+  const cap = Number(player?.level_cap)
+  if (Number.isFinite(level) && level > 1) {
+    const progress = Number.isFinite(cap) && cap > 1
+      ? clamp((level - 1) / Math.max(1, cap - 1), 0, 1)
+      : 0.65
+    const uplift = Math.round(4 + progress * 9)
+    return Math.max(1, built - uplift)
+  }
+  return Math.round(built)
+}
+
+function profileStrengthScore(signals, position) {
+  const family = roleFamily(position)
+  if (family === 'gk') return Math.max(signals.gk || 0, signals.pass || 0, signals.physical || 0)
+  if (family === 'def') return Math.max(signals.defend || 0, signals.pace || 0, signals.physical || 0, signals.aerial || 0)
+  if (family === 'mid') return Math.max(signals.pass || 0, signals.defend || 0, signals.pace || 0, signals.physical || 0)
+  return Math.max(signals.finish || 0, signals.pace || 0, signals.pass || 0, signals.aerial || 0)
+}
+
+function positiveStatEdgeCount(position, technical, alternative) {
+  if (!alternative?.signals) return 0
+  return roleRelevantStatEdges(position, technical, alternative, 'it')
+    .filter(([, value]) => Number.isFinite(value) && value >= 4)
+    .length
+}
+
+/** La carta (a potenziale) può migliorare l'alternativa rosa sullo stesso ruolo. */
+function cardBeatsAlternative(card, technical, alternative) {
+  if (!alternative) return true
+
+  const cardOvr = technical.comparisonOverall || technical.cardOverall
+  const altOvr = alternative.comparisonOverall ?? Number(alternative.overall) ?? 0
+  if (cardOvr && altOvr && cardOvr >= altOvr + 2) return true
+
+  const cardProfile = profileStrengthScore(technical, card.position)
+  const altProfile = profileStrengthScore(alternative.signals || {}, card.position)
+  if (cardProfile >= altProfile + 5) return true
+
+  const edges = positiveStatEdgeCount(card.position, technical, alternative)
+  if (edges >= 2) return true
+  if (edges >= 1 && cardOvr && altOvr && cardOvr >= altOvr - 1) return true
+
+  const cardSkills = Array.isArray(technical.mergedSkills) ? technical.mergedSkills.length : 0
+  const altSkills = Array.isArray(alternative.skills) ? alternative.skills.length : 0
+  if (cardSkills >= altSkills + 2 && cardOvr && altOvr && cardOvr >= altOvr) return true
+
+  return false
+}
+
+function classifyRosterConflict({ card, technical, sameRole, hasFormation }) {
+  const bestAlternative = sameRole[0] || null
+  const hasCoveredRole = sameRole.length > 0
+  const upgradeEdge = hasCoveredRole && cardBeatsAlternative(card, technical, bestAlternative)
+  const deepBench = sameRole.length >= 3
+  const duplicate = hasCoveredRole && deepBench && !upgradeEdge
+  const starterBlocked = hasFormation
+    && sameRole.some(player => {
+      const slot = Number(player.slotIndex)
+      return Number.isFinite(slot) && slot >= 0 && slot <= 10
+    })
+    && !upgradeEdge
+
+  return {
+    bestAlternative,
+    roleGap: sameRole.length === 0,
+    hasCoveredRole,
+    duplicate,
+    starterBlocked,
+    upgradeEdge,
+    rosterCrowded: sameRole.length >= 2
+  }
+}
+
 async function fetchCardAdvisorCandidates(admin, card) {
   const tasks = []
   if (card.sourcePlayerId) {
@@ -290,16 +421,19 @@ function cardTechnicalSignals(card, catalogCard) {
     .filter((item, index, arr) => arr.indexOf(item) === index)
 
   const style = String(card.style || catalogCard?.playing_style || '').trim()
-  const statSignals = signalsFromStats({
-    ...(catalogCard?.base_stats || {}),
-    ...(catalogCard?.max_stats || {})
-  })
+  const maxStats = catalogCard?.max_stats
+  const statSource = maxStats && typeof maxStats === 'object' && Object.keys(maxStats).length > 0
+    ? maxStats
+    : { ...(catalogCard?.base_stats || {}) }
+  const statSignals = signalsFromStats(statSource)
+  const comparisonOverall = estimateCardCeilingOverall(card, catalogCard)
 
   return {
     style,
     mergedSkills,
     ...statSignals,
     cardOverall: Number(card.overall) || Number(catalogCard?.overall_display) || 0,
+    comparisonOverall,
     hasCompleteCardData: Boolean(catalogCard?.base_stats || catalogCard?.max_stats),
     dataSource: catalogCard?.source || card.source || 'unknown'
   }
@@ -317,7 +451,8 @@ function sameRolePlayers(card, players, stylesLookup) {
         style: styleName(player, stylesLookup),
         skills,
         skillLabels: skills.map(skill => skillLabel(skill, 'it')).filter(Boolean),
-        signals: signalsFromStats(getPlayerDisplayStats(player) || {}),
+        signals: rosterComparisonSignals(player),
+        comparisonOverall: rosterComparisonOverall(player),
         statsBasis: {
           source: 'saved_roster_stats',
           currentLevel: player.current_level || null,
@@ -779,11 +914,6 @@ function roleRelevantStatEdges(position, technical, bestAlternative, lang) {
 
 function statEdgeLine(position, technical, bestAlternative, lang) {
   if (!bestAlternative?.signals) return ''
-  if (technical?.dataSource === 'efhub') {
-    return lang === 'en'
-      ? `Use stat numbers as profile clues only: this pack card is read from base values, while your roster can contain edited builds.`
-      : `Usa i numeri solo come indizi di profilo: questa carta pack è letta a valori base, mentre la tua rosa può contenere build editate.`
-  }
   const edges = roleRelevantStatEdges(position, technical, bestAlternative, lang)
     .filter(([, value]) => Number.isFinite(value) && Math.abs(value) >= 5)
     .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
@@ -800,7 +930,7 @@ function statEdgeLine(position, technical, bestAlternative, lang) {
     : `Rispetto a ${bestAlternative.name}, non emerge un vantaggio tecnico chiaro in ${label}.`
 }
 
-function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, duplicate, starterBlocked, lang }) {
+function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, duplicate, starterBlocked, upgradeEdge, rosterCrowded, lang }) {
   if (!hasCompleteCardData) {
     return {
       level: 'needs-card-data',
@@ -813,6 +943,20 @@ function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, dupl
       level: 'needs-roster',
       label: lang === 'en' ? 'Card value only' : 'Valore carta',
       title: lang === 'en' ? 'Good card read, team fit needs your roster' : 'Buona carta, fit squadra da completare'
+    }
+  }
+  if (upgradeEdge && (roleGap || score >= 68)) {
+    return {
+      level: 'buy',
+      label: lang === 'en' ? 'High team synergy' : 'Sinergia alta',
+      title: lang === 'en' ? 'Excellent fit for your team' : 'Ottimo fit per la tua squadra'
+    }
+  }
+  if (upgradeEdge && rosterCrowded) {
+    return {
+      level: 'watch',
+      label: lang === 'en' ? 'Upgrade option' : 'Opzione upgrade',
+      title: lang === 'en' ? 'Worth considering over your current option' : 'Da valutare rispetto all’opzione attuale'
     }
   }
   if (duplicate || starterBlocked) {
@@ -1000,7 +1144,7 @@ function decisionEvidence({ technical, sameRole, roleGap, duplicate, starterBloc
   }
 }
 
-function buildRosterRead({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, technical, tacticalStyle, patterns, profileRead, lang }) {
+function buildRosterRead({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, upgradeEdge, technical, tacticalStyle, patterns, profileRead, lang }) {
   const role = positionLabel(card.position, lang)
   const alternatives = topAlternativeDescriptions(sameRole, card.position, lang)
   const bestName = describeAlternative(bestAlternative, card.position, lang)
@@ -1019,6 +1163,17 @@ function buildRosterRead({ card, sameRole, bestAlternative, roleGap, duplicate, 
       lang === 'en'
         ? `${secondLine} This is the kind of card that can save coins later because it closes a real squad gap.`
         : `${secondLine} È il tipo di carta che può farti risparmiare coins dopo, perché chiude un buco reale della rosa.`
+    ]
+  }
+
+  if (upgradeEdge && (duplicate || starterBlocked || sameRole.length > 0)) {
+    return [
+      lang === 'en'
+        ? `${card.name} reads as an upgrade over ${bestName || 'your current option'} at ${card.position}. Key profile: ${movement}.`
+        : `${card.name} si legge come upgrade su ${bestName || 'l’opzione attuale'} in ${card.position}. Profilo chiave: ${movement}.`,
+      lang === 'en'
+        ? `${secondLine} Worth a spot in your shortlist if you want to strengthen this lane.`
+        : `${secondLine} Merita la shortlist se vuoi rinforzare questa corsia.`
     ]
   }
 
@@ -1044,10 +1199,10 @@ function buildRosterRead({ card, sameRole, bestAlternative, roleGap, duplicate, 
 }
 
 function teamSynergyLabel(score, lang) {
-  if (score >= 88) return lang === 'en' ? 'Wow synergy' : 'Sinergia wow'
-  if (score >= 76) return lang === 'en' ? 'High synergy' : 'Sinergia alta'
-  if (score >= 62) return lang === 'en' ? 'Good synergy' : 'Sinergia buona'
-  if (score >= 48) return lang === 'en' ? 'Medium synergy' : 'Sinergia media'
+  if (score >= 85) return lang === 'en' ? 'Wow synergy' : 'Sinergia wow'
+  if (score >= 72) return lang === 'en' ? 'High synergy' : 'Sinergia alta'
+  if (score >= 58) return lang === 'en' ? 'Good synergy' : 'Sinergia buona'
+  if (score >= 44) return lang === 'en' ? 'Medium synergy' : 'Sinergia media'
   return lang === 'en' ? 'Low synergy' : 'Sinergia bassa'
 }
 
@@ -1074,7 +1229,7 @@ function strongestTrait(technical, position, lang) {
   return ''
 }
 
-function teamSynergySummary({ card, score, hasRoster, technical, roleGap, duplicate, starterBlocked, evidence, tacticalStyle, profile, combo, lang }) {
+function teamSynergySummary({ card, score, hasRoster, technical, roleGap, duplicate, starterBlocked, bestAlternative, evidence, tacticalStyle, profile, combo, lang }) {
   const trait = strongestTrait(technical, card.position, lang)
   const style = teamStyleLabel(tacticalStyle, lang)
   const name = userDisplayName(profile)
@@ -1102,10 +1257,15 @@ function teamSynergySummary({ card, score, hasRoster, technical, roleGap, duplic
       ? `${card.name} fits your ${style || 'current system'} because it adds ${trait || 'a useful technical trait'} to the way you already play.`
       : `${intro}${card.name} si lega al tuo ${style || 'sistema attuale'} perché aggiunge ${trait || 'una qualità tecnica utile'} al modo in cui giochi già.`
   }
-  if (duplicate || starterBlocked) {
+  if ((duplicate || starterBlocked) && !evidence.upgradeEdge) {
     return lang === 'en'
       ? `${card.name} is useful as a different option in your roster, but it does not clearly change the main balance of your current players.`
       : `${intro}${card.name} è utile come opzione diversa nella tua rosa, ma non cambia in modo chiaro l’equilibrio principale dei tuoi giocatori attuali.`
+  }
+  if (evidence.upgradeEdge && (duplicate || starterBlocked || score >= 66)) {
+    return lang === 'en'
+      ? `${card.name} can upgrade your ${card.position} lane with a stronger profile than ${bestAlternative?.name || 'your current option'}.`
+      : `${intro}${card.name} può migliorare la corsia ${card.position} con un profilo più forte di ${bestAlternative?.name || 'l’opzione attuale'}.`
   }
   if (evidence.profileNeedFit) {
     return lang === 'en'
@@ -1150,11 +1310,16 @@ function teamSynergyReasons({ card, sameRole, bestAlternative, roleGap, duplicat
   return lines.slice(0, 3)
 }
 
-function synergyUseLine({ card, sameRole, bestAlternative, duplicate, starterBlocked, technical, tacticalStyle, profileRead, lang }) {
+function synergyUseLine({ card, sameRole, bestAlternative, duplicate, starterBlocked, upgradeEdge, technical, tacticalStyle, profileRead, lang }) {
   const movement = movementProfile(technical, card.position, lang)
   const trait = strongestTrait(technical, card.position, lang)
   const fitLine = tacticalStyleFit(technical, card.position, tacticalStyle, profileRead, lang)
   const currentReference = bestAlternative?.name
+  if (upgradeEdge && currentReference) {
+    return lang === 'en'
+      ? `${card.name} profiles as an upgrade on ${currentReference} at ${card.position}: ${movement}. ${fitLine || 'Worth testing in your main XI or as a strong rotation option.'}`
+      : `${card.name} si legge come upgrade su ${currentReference} in ${card.position}: ${movement}. ${fitLine || 'Da provare tra i titolari o come rotazione forte.'}`
+  }
   if (duplicate || starterBlocked) {
     return lang === 'en'
       ? `${card.name} is not the natural first choice for your current players. Use him when you want ${trait || movement}, without forcing him into the same spaces already owned by your key players.`
@@ -1284,7 +1449,7 @@ function coachAdvice({ card, hasRoster, technical, combo, duplicate, starterBloc
   }
 }
 
-function teamSynergyDetails({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, technical, tacticalStyle, profileRead, issues, gameRead, evidence, combo, lang }) {
+function teamSynergyDetails({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, upgradeEdge, technical, tacticalStyle, profileRead, issues, gameRead, evidence, combo, lang }) {
   const details = []
   const family = roleFamily(card.position)
   const teamStyle = teamStyleLabel(tacticalStyle, lang)
@@ -1344,18 +1509,22 @@ function teamSynergyDetails({ card, sameRole, bestAlternative, roleGap, duplicat
   details.push({
     key: 'squad',
     label: lang === 'en' ? 'Roster impact' : 'Impatto rosa',
-    score: roleGap ? 84 : duplicate || starterBlocked ? 46 : bestAlternative ? 62 : 58,
+    score: roleGap ? 84 : upgradeEdge ? 78 : duplicate || starterBlocked ? 50 : bestAlternative ? 64 : 60,
     text: roleGap
       ? (lang === 'en'
           ? `Clear squad value: you do not have a direct ${card.position} alternative with the same role coverage.`
           : `Valore rosa chiaro: non hai una vera alternativa diretta da ${card.position} con la stessa copertura.`)
-      : duplicate || starterBlocked
+      : upgradeEdge
         ? (lang === 'en'
-            ? `${joinedAlternatives(sameRole) || 'Your current options'} already cover this lane; the card must offer a different match plan.`
-            : `${joinedAlternatives(sameRole) || 'Le opzioni attuali'} coprono già questa zona; la carta deve offrirti un piano partita diverso.`)
-        : (lang === 'en'
-            ? `The role is covered, so the question is whether ${movement} gives you a better use case than ${bestAlternative?.name || 'your current option'}.`
-            : `Il ruolo è coperto, quindi la domanda è se il ${movement} ti dà un caso d’uso migliore di ${bestAlternative?.name || 'l’opzione attuale'}.`)
+            ? `Profile and potential point to an upgrade over ${bestAlternative?.name || 'your current option'} in the ${card.position} lane.`
+            : `Profilo e potenziale indicano un upgrade su ${bestAlternative?.name || 'l’opzione attuale'} nella corsia ${card.position}.`)
+        : duplicate || starterBlocked
+          ? (lang === 'en'
+              ? `${joinedAlternatives(sameRole) || 'Your current options'} already cover this lane; the card must offer a different match plan.`
+              : `${joinedAlternatives(sameRole) || 'Le opzioni attuali'} coprono già questa zona; la carta deve offrirti un piano partita diverso.`)
+          : (lang === 'en'
+              ? `The role is covered, so the question is whether ${movement} gives you a better use case than ${bestAlternative?.name || 'your current option'}.`
+              : `Il ruolo è coperto, quindi la domanda è se il ${movement} ti dà un caso d’uso migliore di ${bestAlternative?.name || 'l’opzione attuale'}.`)
   })
 
   const difficultyMatch = (
@@ -1392,33 +1561,39 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   const issues = issuesRead(patterns)
   const profileRead = profileSignals(profile, lang)
   const gameRead = gameSignals(gameAnalysis)
-  const bestAlternative = sameRole[0]
-  const roleGap = hasRoster && sameRole.length === 0
-  const hasCoveredRole = hasRoster && sameRole.length > 0
-  const duplicate = hasCoveredRole && sameRole.length >= 2
-  const starterBlocked = hasFormation && sameRole.some(player => Number(player.slotIndex) >= 0 && Number(player.slotIndex) <= 10)
+  const conflict = classifyRosterConflict({ card, technical, sameRole, hasFormation })
+  const bestAlternative = conflict.bestAlternative
+  const roleGap = hasRoster && conflict.roleGap
+  const duplicate = hasRoster && conflict.duplicate
+  const starterBlocked = hasRoster && conflict.starterBlocked
+  const upgradeEdge = hasRoster && conflict.upgradeEdge
+  const rosterCrowded = hasRoster && conflict.rosterCrowded
   const combo = hasRoster ? comboRead({ card, technical, players, issues, profileRead, gameRead, lang }) : null
-  const evidence = decisionEvidence({
-    technical,
-    sameRole,
-    roleGap,
-    duplicate,
-    starterBlocked,
-    tacticalStyle,
-    profileRead,
-    patterns,
-    position: card.position
-  })
+  const evidence = {
+    ...decisionEvidence({
+      technical,
+      sameRole,
+      roleGap,
+      duplicate,
+      starterBlocked,
+      tacticalStyle,
+      profileRead,
+      patterns,
+      position: card.position
+    }),
+    upgradeEdge
+  }
 
-  let score = technical.hasCompleteCardData ? 58 : 46
-  if (!hasRoster) score = technical.hasCompleteCardData ? 52 : 46
-  if (evidence.roleGap) score += 22
-  if (evidence.duplicate) score -= 12
-  if (evidence.starterBlocked) score -= 8
+  let score = technical.hasCompleteCardData ? 66 : 52
+  if (!hasRoster) score = technical.hasCompleteCardData ? 58 : 50
+  if (roleGap) score += 20
+  if (upgradeEdge) score += 14
+  if (duplicate) score -= 6
+  if (starterBlocked) score -= 4
   if (evidence.hasNativeEdge) score += 6
   if (evidence.hasTacticalFit) score += 6
-  if (evidence.teamStyleFit) score += 5
-  if (evidence.profileNeedFit) score += 5
+  if (evidence.teamStyleFit) score += 6
+  if (evidence.profileNeedFit) score += 6
   if (evidence.hasMapFit) score += 4
   if (issues.needDefence && (roleFamily(card.position) === 'def' || roleFamily(card.position) === 'gk')) score += 7
   if (issues.needBuild && roleFamily(card.position) === 'mid') score += 7
@@ -1428,10 +1603,11 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   if (profileRead.needBuild && roleFamily(card.position) === 'mid') score += 6
   if (profileRead.needFinishing && roleFamily(card.position) === 'att') score += 6
   if (technical.pace >= 82 || technical.pass >= 82 || technical.defend >= 82 || technical.finish >= 82 || technical.gk >= 82) score += 5
-  if (profileRead.networkRisk && roleFamily(card.position) === 'att') score -= 4
+  if (profileRead.networkRisk && roleFamily(card.position) === 'att') score -= 3
   if (gameRead.passAccuracy != null && gameRead.passAccuracy < 78 && roleFamily(card.position) === 'mid') score += 5
   if (gameRead.shotsConceded != null && gameRead.shotsConceded >= 7 && roleFamily(card.position) === 'def') score += 6
-  score = clamp(score, 20, 95)
+  if (rosterCrowded && !upgradeEdge && !roleGap) score -= 4
+  score = clamp(score, 28, 95)
 
   const decision = purchaseDecision({
     score,
@@ -1440,6 +1616,8 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
     roleGap,
     duplicate,
     starterBlocked,
+    upgradeEdge,
+    rosterCrowded,
     lang
   })
   const synergyLevel = decision.label
@@ -1461,6 +1639,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
         roleGap,
         duplicate,
         starterBlocked,
+        upgradeEdge,
         technical,
         tacticalStyle,
         patterns,
@@ -1476,36 +1655,44 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
       ? 'Do not make a coins decision until the full card detail is available.'
       : !hasRoster
         ? 'Without your roster, this is a card read only: the real risk is buying a duplicate.'
-        : duplicate
-          ? `Coin risk: ${joinedAlternatives(sameRole) || 'your current options'} already cover this role.`
-          : starterBlocked
-            ? `Coin risk: ${bestAlternative?.name || 'the starter'} already occupies this lane at a similar or higher level.`
-            : 'Coin risk is controlled if this role is one of your current priorities.'
+        : upgradeEdge
+          ? 'Coin risk is moderate: profile points to a real upgrade in this lane.'
+          : duplicate
+            ? `Coin risk: ${joinedAlternatives(sameRole) || 'your current options'} already cover this role.`
+            : starterBlocked
+              ? `Coin risk: ${bestAlternative?.name || 'the starter'} already occupies this lane at a similar or higher level.`
+              : 'Coin risk is controlled if this role is one of your current priorities.'
     : !technical.hasCompleteCardData
       ? 'Non prendere decisioni coins finché non è disponibile il dettaglio completo della carta.'
       : !hasRoster
         ? 'Senza rosa questa è solo lettura carta: il rischio reale è comprare un doppione.'
-        : duplicate
-          ? `Rischio coins: ${joinedAlternatives(sameRole) || 'le opzioni attuali'} coprono già questo ruolo.`
-          : starterBlocked
-            ? `Rischio coins: ${bestAlternative?.name || 'il titolare'} occupa già questa corsia a livello simile o superiore.`
-            : 'Rischio coins controllato se questo ruolo è una priorità reale.'
+        : upgradeEdge
+          ? 'Rischio coins moderato: il profilo indica un upgrade reale in questa corsia.'
+          : duplicate
+            ? `Rischio coins: ${joinedAlternatives(sameRole) || 'le opzioni attuali'} coprono già questo ruolo.`
+            : starterBlocked
+              ? `Rischio coins: ${bestAlternative?.name || 'il titolare'} occupa già questa corsia a livello simile o superiore.`
+              : 'Rischio coins controllato se questo ruolo è una priorità reale.'
 
   const purchaseAdvice = lang === 'en'
     ? !hasRoster
       ? 'Load your roster to turn this from a card read into a personal buy/skip verdict.'
       : decision.level === 'buy'
         ? `Prioritize ${card.name} if you want to spend coins on ${card.position}.`
-        : decision.level === 'avoid'
-          ? `${card.name} does not change your priorities enough: save coins for an uncovered role or a clearer upgrade.`
-          : `Keep ${card.name} on your shortlist only if ${card.position} is a priority.`
+        : decision.level === 'watch' && upgradeEdge
+          ? `Strong upgrade case for ${card.position}: compare ${card.name} with ${bestAlternative?.name || 'your starter'} before spending.`
+          : decision.level === 'avoid'
+            ? `${card.name} does not change your priorities enough: save coins for an uncovered role or a clearer upgrade.`
+            : `Keep ${card.name} on your shortlist only if ${card.position} is a priority.`
     : !hasRoster
       ? 'Carica la rosa per trasformare questa lettura carta in un verdetto personale compra/evita.'
       : decision.level === 'buy'
         ? `Dai priorità a ${card.name} se vuoi spendere coins su ${card.position}.`
-        : decision.level === 'avoid'
-          ? `${card.name} non cambia abbastanza le priorità: meglio tenere coins per un ruolo scoperto o un upgrade più netto.`
-          : `Tieni ${card.name} in lista solo se ${card.position} è una priorità.`
+        : decision.level === 'watch' && upgradeEdge
+          ? `Caso upgrade su ${card.position}: confronta ${card.name} con ${bestAlternative?.name || 'il titolare'} prima di spendere.`
+          : decision.level === 'avoid'
+            ? `${card.name} non cambia abbastanza le priorità: meglio tenere coins per un ruolo scoperto o un upgrade più netto.`
+            : `Tieni ${card.name} in lista solo se ${card.position} è una priorità.`
 
   const legacyTechnicalRisk = lang === 'en'
     ? duplicate
@@ -1550,6 +1737,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
       roleGap,
       duplicate,
       starterBlocked,
+      bestAlternative,
       evidence,
       tacticalStyle,
       profile,
@@ -1578,6 +1766,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
           bestAlternative,
           duplicate,
           starterBlocked,
+          upgradeEdge,
           technical,
           tacticalStyle,
           profileRead,
@@ -1591,6 +1780,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
       roleGap,
       duplicate,
       starterBlocked,
+      upgradeEdge,
       technical,
       tacticalStyle,
       profileRead,
