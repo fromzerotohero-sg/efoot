@@ -41,6 +41,10 @@ function buildPreviewCacheKey(cardId, lang) {
   return `v3:${cardId}:${lang === 'en' ? 'en' : 'it'}`
 }
 
+function deepAnalysisCacheKey(cardId, lang) {
+  return `${cardId}:${lang === 'en' ? 'en' : 'it'}`
+}
+
 const copy = {
   it: {
     eyebrow: 'Consiglio carte',
@@ -167,8 +171,8 @@ const copy = {
     buildMetaBadge: 'Benchmark',
     buildRosterBadge: 'Consigliata',
     buildPtDiff: 'Differenza vs meta',
-    buildMetaTitle: 'Build meta pack',
-    buildMetaHint: 'Ruolo e stile community, senza la tua rosa.',
+    buildMetaTitle: 'Build meta del pack',
+    buildMetaHint: 'Distribuzione PT più usata in community per ruolo/stile, senza la tua rosa.',
     buildRosterTitle: 'Build per la tua rosa',
     buildRosterHint: 'Modulo, coach e stile squadra applicati.',
     buildRosterMissing: 'Collega la rosa per la build personalizzata.',
@@ -640,6 +644,12 @@ function localizeDeepAnalysisText(text, lang) {
   return localizeSkillTermsInText(text, 'it')
 }
 
+function skillPillLabel(item, lang) {
+  if (!item) return ''
+  const raw = typeof item === 'string' ? item : item.skill || item.display
+  return getSkillDisplayLabel(raw, lang)
+}
+
 function DeepAnalysisSection({ tone, icon: Icon, title, items, lang }) {
   const cleanItems = Array.isArray(items) ? items.filter(Boolean) : []
   if (cleanItems.length === 0) return null
@@ -1087,7 +1097,7 @@ function CardBuildPreviewSection({ preview, loading, labels, lang }) {
               <div className="build-preview-skills-pills">
                 {skills.equippedNative.map(item => (
                   <span key={item.skill} className="build-preview-skill-pill">
-                    {item.display || item.skill}
+                    {skillPillLabel(item, lang)}
                   </span>
                 ))}
               </div>
@@ -1098,7 +1108,7 @@ function CardBuildPreviewSection({ preview, loading, labels, lang }) {
             <ul>
               {skills.items.map(item => (
                 <li key={item.skill}>
-                  <strong>{item.display || item.skill}</strong>
+                  <strong>{skillPillLabel(item, lang)}</strong>
                   <span>{item.reason}</span>
                 </li>
               ))}
@@ -1471,19 +1481,24 @@ export default withAuth(function CardAdvisorLabPage() {
 
   const selectedCard = cards.find(card => card.id === selectedId) || cards[0]
   const detailsCard = cards.find(card => card.id === detailsCardId) || null
-  const detailsDeepAnalysis = detailsCard ? deepAnalysesByCard[detailsCard.id] : null
-  const detailsDeepAnalysisError = detailsCard ? deepAnalysisErrors[detailsCard.id] : ''
+  const detailsDeepAnalysis = detailsCard
+    ? deepAnalysesByCard[deepAnalysisCacheKey(detailsCard.id, lang)]
+    : null
+  const detailsDeepAnalysisError = detailsCard
+    ? deepAnalysisErrors[deepAnalysisCacheKey(detailsCard.id, lang)]
+    : ''
   const detailsBuildPreview = detailsCard
     ? buildPreviewsByCard[buildPreviewCacheKey(detailsCard.id, lang)]
     : null
 
   const requestDeepAnalysis = React.useCallback(async () => {
-    if (!detailsCard?.id || deepAnalysesByCard[detailsCard.id] || deepAnalysisLoadingId) return
+    const analysisKey = deepAnalysisCacheKey(detailsCard.id, lang)
+    if (!detailsCard?.id || deepAnalysesByCard[analysisKey] || deepAnalysisLoadingId) return
     const token = await resolveClientAuthBearer()
     if (!token) return
 
     setDeepAnalysisLoadingId(detailsCard.id)
-    setDeepAnalysisErrors(prev => ({ ...prev, [detailsCard.id]: '' }))
+    setDeepAnalysisErrors(prev => ({ ...prev, [analysisKey]: '' }))
     try {
       const response = await fetch('/api/card-advisor-lab/deep-analysis', {
         method: 'POST',
@@ -1498,7 +1513,7 @@ export default withAuth(function CardAdvisorLabPage() {
         if (response.status === 402 || data?.code === 'insufficient_credits') {
           setDeepAnalysisErrors(prev => ({
             ...prev,
-            [detailsCard.id]: {
+            [analysisKey]: {
               type: 'credits',
               message: data?.error || labels.insufficientHpText,
               requiredCredits: data?.requiredCredits || 2
@@ -1508,11 +1523,11 @@ export default withAuth(function CardAdvisorLabPage() {
         }
         throw new Error(data?.error || labels.deepAnalysisError)
       }
-      setDeepAnalysesByCard(prev => ({ ...prev, [detailsCard.id]: data.analysis }))
+      setDeepAnalysesByCard(prev => ({ ...prev, [analysisKey]: data.analysis }))
     } catch (error) {
       setDeepAnalysisErrors(prev => ({
         ...prev,
-        [detailsCard.id]: error?.message || labels.deepAnalysisError
+        [analysisKey]: error?.message || labels.deepAnalysisError
       }))
     } finally {
       setDeepAnalysisLoadingId(null)
