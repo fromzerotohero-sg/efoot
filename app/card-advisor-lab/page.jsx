@@ -168,7 +168,8 @@ const copy = {
     buildLoading: 'Calcolo build…',
     buildUnavailable: 'Build non disponibile per questa carta.',
     buildCatalogMissing: 'Dati carta incompleti: build non calcolabile.',
-    buildNoProgression: 'Carta senza punti progressione.',
+    buildNoProgression: 'Solo POTW, Trending e OTW non usano PT su questa carta.',
+    buildMaxLevelOne: 'Dati livello max mancanti: build non calcolabile.',
     buildCopyPt: 'Copia PT',
     buildCopied: 'Copiato',
     buildSlotsFree: 'slot liberi',
@@ -303,7 +304,8 @@ const copy = {
     buildLoading: 'Computing build…',
     buildUnavailable: 'Build unavailable for this card.',
     buildCatalogMissing: 'Incomplete card data: build cannot be calculated.',
-    buildNoProgression: 'Card has no progression points.',
+    buildNoProgression: 'Only POTW, Trending and OTW cards skip PT on this profile.',
+    buildMaxLevelOne: 'Missing max level data: build cannot be calculated.',
     buildCopyPt: 'Copy PT',
     buildCopied: 'Copied',
     buildSlotsFree: 'free slots',
@@ -1011,9 +1013,11 @@ function CardBuildPreviewSection({ preview, loading, labels, lang }) {
     const message =
       preview.code === 'catalog_missing'
         ? labels.buildCatalogMissing
-        : preview.code === 'non_progression_card_type' || preview.code === 'max_level_one'
+        : preview.code === 'non_progression_card_type'
           ? labels.buildNoProgression
-          : labels.buildUnavailable
+          : preview.code === 'max_level_one'
+            ? labels.buildMaxLevelOne
+            : labels.buildUnavailable
     return (
       <div className="build-preview-shell build-preview-shell-muted">
         <div className="build-preview-shell-head">
@@ -1732,16 +1736,16 @@ export default withAuth(function CardAdvisorLabPage() {
         if (!response.ok) throw new Error('Build preview failed')
         const data = await response.json()
         if (active && data?.preview) {
-          setBuildPreviewsByCard(prev => ({ ...prev, [cacheKey]: data.preview }))
+          const preview = data.preview
+          const shouldCache =
+            preview.ok ||
+            preview.code === 'non_progression_card_type'
+          if (shouldCache) {
+            setBuildPreviewsByCard(prev => ({ ...prev, [cacheKey]: preview }))
+          }
         }
       } catch (error) {
         console.warn('[card-advisor-lab] build preview unavailable:', error)
-        if (active) {
-          setBuildPreviewsByCard(prev => ({
-            ...prev,
-            [cacheKey]: { ok: false, code: 'unavailable' }
-          }))
-        }
       } finally {
         if (active) setBuildPreviewLoadingId(null)
       }
