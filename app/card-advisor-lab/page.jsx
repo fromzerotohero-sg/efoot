@@ -19,7 +19,11 @@ import {
   Users,
   Zap
 } from 'lucide-react'
-import { getSkillDisplayLabel, normalizePlayerSkillsArray } from '@/lib/playerSkillLabels'
+import {
+  getSkillDisplayLabel,
+  localizeSkillTermsInText,
+  normalizePlayerSkillsArray
+} from '@/lib/playerSkillLabels'
 import { BUILD_SLIDER_ORDER, getBuildSliderLabel } from '@/lib/cardAdvisorBuildPreview'
 import { supabase, getValidAccessToken } from '@/lib/supabaseClient'
 
@@ -157,9 +161,7 @@ const copy = {
     buildOvrBuilt: 'OVR build',
     buildWhyToggle: 'Perché questa build',
     buildWhyHide: 'Nascondi',
-    buildWhyTitle: 'Analisi dettagliata',
-    buildWhyIntroRoster: 'Abbiamo incrociato rosa, modulo, coach, stile squadra e profilo carta.',
-    buildWhyIntroMeta: 'Riferimento community senza i dati della tua rosa.',
+    buildWhyTitle: 'Dettaglio',
     buildMetaBadge: 'Benchmark',
     buildRosterBadge: 'Consigliata',
     buildPtDiff: 'Differenza vs meta',
@@ -300,9 +302,7 @@ const copy = {
     buildOvrBuilt: 'Build OVR',
     buildWhyToggle: 'Why this build',
     buildWhyHide: 'Hide',
-    buildWhyTitle: 'Detailed analysis',
-    buildWhyIntroRoster: 'We cross-checked squad, formation, coach, team style and card profile.',
-    buildWhyIntroMeta: 'Community reference without your squad data.',
+    buildWhyTitle: 'Details',
     buildMetaBadge: 'Benchmark',
     buildRosterBadge: 'Recommended',
     buildPtDiff: 'Diff vs meta',
@@ -631,7 +631,12 @@ function StatPill({ children }) {
   return <span className="stat-pill">{children}</span>
 }
 
-function DeepAnalysisSection({ tone, icon: Icon, title, items }) {
+function localizeDeepAnalysisText(text, lang) {
+  if (lang === 'en' || !text) return text
+  return localizeSkillTermsInText(text, 'it')
+}
+
+function DeepAnalysisSection({ tone, icon: Icon, title, items, lang }) {
   const cleanItems = Array.isArray(items) ? items.filter(Boolean) : []
   if (cleanItems.length === 0) return null
 
@@ -641,7 +646,12 @@ function DeepAnalysisSection({ tone, icon: Icon, title, items }) {
         <Icon size={16} />
         <span>{title}</span>
       </h4>
-      <ul>{cleanItems.map(item => <li key={item}>{item}</li>)}</ul>
+      <ul>
+        {cleanItems.map(item => {
+          const display = localizeDeepAnalysisText(item, lang)
+          return <li key={item}>{display}</li>
+        })}
+      </ul>
     </article>
   )
 }
@@ -859,7 +869,7 @@ function ChartInsightCard({ labels, hasGameAnalysis, onOpenGameAnalysis }) {
 function BuildPreviewCard({ title, hint, build, labels, lang, variant = 'meta', highlightKeys = [] }) {
   const isRoster = variant === 'roster'
   const [copied, setCopied] = React.useState(false)
-  const [showWhy, setShowWhy] = React.useState(isRoster)
+  const [showWhy, setShowWhy] = React.useState(false)
   if (!build?.ok) return null
 
   const activeSliders = BUILD_SLIDER_ORDER.filter(key => Number(build.sliders?.[key]) > 0)
@@ -943,12 +953,9 @@ function BuildPreviewCard({ title, hint, build, labels, lang, variant = 'meta', 
           </button>
           {showWhy && (
             <div className="build-preview-why-body">
-              <p className="build-preview-why-intro">
-                {isRoster ? labels.buildWhyIntroRoster : labels.buildWhyIntroMeta}
-              </p>
               {reasonSections.map(section => (
                 <section key={section.id} className="build-preview-why-section">
-                  <h5>{section.title}</h5>
+                  {section.title ? <h5>{section.title}</h5> : null}
                   <ul>
                     {section.items.map((item, index) => (
                       <li key={`${section.id}-${index}`}>{item}</li>
@@ -1170,16 +1177,16 @@ function DetailPanel({
         <div className="deep-analysis-report">
           <div className="deep-analysis-summary">
             <span>{labels.deepAnalysisTitle}</span>
-            <h3>{deepAnalysis.headline}</h3>
-            <p>{deepAnalysis.summary}</p>
+            <h3>{localizeDeepAnalysisText(deepAnalysis.headline, lang)}</h3>
+            <p>{localizeDeepAnalysisText(deepAnalysis.summary, lang)}</p>
           </div>
           {deepAnalysis.key_reasoning?.length > 0 && (
             <div className="deep-reasoning-list">
               <h4>{labels.deepKeyReasoning}</h4>
               {deepAnalysis.key_reasoning.map(item => (
                 <article key={`${item.label}-${item.text}`}>
-                  {item.label && <span>{item.label}</span>}
-                  <p>{item.text}</p>
+                  {item.label && <span>{localizeDeepAnalysisText(item.label, lang)}</span>}
+                  <p>{localizeDeepAnalysisText(item.text, lang)}</p>
                 </article>
               ))}
             </div>
@@ -1196,10 +1203,10 @@ function DetailPanel({
           {showDeepFullReport && (
             <>
               <div className="deep-analysis-grid">
-                <DeepAnalysisSection tone="pro" icon={CheckCircle2} title={labels.deepPros} items={deepAnalysis.pros} />
-                <DeepAnalysisSection tone="cons" icon={AlertTriangle} title={labels.deepCons} items={deepAnalysis.cons} />
-                <DeepAnalysisSection tone="synergy" icon={Users} title={labels.deepSynergies} items={deepAnalysis.synergies} />
-                <DeepAnalysisSection tone="use" icon={Zap} title={labels.deepHowToUse} items={deepAnalysis.how_to_use} />
+                <DeepAnalysisSection tone="pro" icon={CheckCircle2} title={labels.deepPros} items={deepAnalysis.pros} lang={lang} />
+                <DeepAnalysisSection tone="cons" icon={AlertTriangle} title={labels.deepCons} items={deepAnalysis.cons} lang={lang} />
+                <DeepAnalysisSection tone="synergy" icon={Users} title={labels.deepSynergies} items={deepAnalysis.synergies} lang={lang} />
+                <DeepAnalysisSection tone="use" icon={Zap} title={labels.deepHowToUse} items={deepAnalysis.how_to_use} lang={lang} />
               </div>
               {(deepAnalysis.when_to_avoid?.length > 0 || deepAnalysis.final_decision) && (
                 <div className="deep-analysis-final">
@@ -1209,7 +1216,11 @@ function DetailPanel({
                         <AlertTriangle size={16} />
                         <span>{labels.deepWhenAvoid}</span>
                       </h4>
-                      <ul>{deepAnalysis.when_to_avoid.map(item => <li key={item}>{item}</li>)}</ul>
+                      <ul>
+                        {deepAnalysis.when_to_avoid.map(item => (
+                          <li key={item}>{localizeDeepAnalysisText(item, lang)}</li>
+                        ))}
+                      </ul>
                     </div>
                   )}
                   {deepAnalysis.final_decision && (
@@ -1218,7 +1229,7 @@ function DetailPanel({
                         <ShieldCheck size={16} />
                         <span>{labels.deepFinalDecision}</span>
                       </h4>
-                      <p>{deepAnalysis.final_decision}</p>
+                      <p>{localizeDeepAnalysisText(deepAnalysis.final_decision, lang)}</p>
                     </div>
                   )}
                 </div>
@@ -4073,13 +4084,6 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .build-preview-why-body {
           margin-top: 8px;
-        }
-
-        .build-preview-why-intro {
-          margin: 0 0 10px;
-          font-size: 11px;
-          line-height: 1.5;
-          color: rgba(255, 255, 255, 0.72);
         }
 
         .build-preview-why-section {

@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
 import { useGameAnalysisModalNav, OPEN_GAME_ANALYSIS_MODAL_EVENT, CLOSE_GAME_ANALYSIS_MODAL_EVENT } from '@/components/GameAnalysisModalNavContext'
 import { 
@@ -17,6 +17,7 @@ import {
 export default function BottomNavigation() {
   const { t, lang } = useTranslation()
   const pathname = usePathname()
+  const router = useRouter()
   const { isOpen: gameAnalysisModalOpen } = useGameAnalysisModalNav()
 
   const isActive = (href) => {
@@ -43,7 +44,7 @@ export default function BottomNavigation() {
       label: lang === 'en' ? 'Matches' : 'Partite'
     },
     {
-      href: '/?openCardAdvisor=1',
+      href: '/card-advisor-lab',
       icon: Sparkles,
       label: lang === 'en' ? 'Cards' : 'Carte'
     },
@@ -97,7 +98,7 @@ export default function BottomNavigation() {
         {navItems.map((item) => {
           const Icon = item.icon
           const isStatShortcut = typeof item.href === 'string' && item.href.includes('openGameAnalysis=1')
-          const isCardAdvisorShortcut = typeof item.href === 'string' && item.href.includes('openCardAdvisor=1')
+          const isCardAdvisorShortcut = item.href === '/card-advisor-lab'
           const isDashboard = item.href === '/'
           // Dashboard e Stat condividono la route `/`: il modal analisi è evidenziato su Stat, non su Dashboard
           const active = isStatShortcut
@@ -145,7 +146,7 @@ export default function BottomNavigation() {
                     if (isStatShortcut) {
                       window.dispatchEvent(new CustomEvent(OPEN_GAME_ANALYSIS_MODAL_EVENT))
                     } else {
-                      window.dispatchEvent(new CustomEvent('open-card-advisor-entry'))
+                      router.push('/card-advisor-lab')
                     }
                   }
                 }}

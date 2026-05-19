@@ -15,16 +15,22 @@ import {
   BarChart3,
   Shield,
   Sparkles,
-  LogOut
+  LogOut,
+  Upload
 } from 'lucide-react'
 import SidebarGuideTour from '@/components/SidebarGuideTour'
 import { useSidebar } from '@/components/SidebarContext'
+import {
+  useGameAnalysisModalNav,
+  OPEN_GAME_ANALYSIS_MODAL_EVENT
+} from '@/components/GameAnalysisModalNavContext'
 
 export default function SidebarNew() {
   const { t, lang } = useTranslation()
   const pathname = usePathname()
   const router = useRouter()
   const { isOpen, setIsOpen } = useSidebar()
+  const { isOpen: gameAnalysisModalOpen } = useGameAnalysisModalNav()
 
   const handleLogout = () => {
     fetch('/api/prelaunch/logout', { method: 'POST' }).catch(() => {})
@@ -53,7 +59,13 @@ export default function SidebarNew() {
       title: lang === 'en' ? 'YOUR CLUB' : 'IL TUO CLUB',
       items: [
         { href: '/impostazioni-profilo', icon: User, label: t('profile') },
-        { href: '/gestione-formazione', icon: UsersIcon, label: t('yourSquad') }
+        { href: '/gestione-formazione', icon: UsersIcon, label: t('yourSquad') },
+        {
+          href: '/?openGameAnalysis=1',
+          icon: Upload,
+          label: lang === 'en' ? 'Upload game stats' : 'Carica statistiche',
+          shortcut: 'gameAnalysis'
+        }
       ]
     },
     {
@@ -61,7 +73,7 @@ export default function SidebarNew() {
       items: [
         { href: '/contromisure-pre-partita', icon: Shield, label: t('countermeasures') },
         {
-          href: '/?openCardAdvisor=1',
+          href: '/card-advisor-lab',
           icon: Sparkles,
           label: lang === 'en' ? 'Card analysis' : 'Analisi carte',
           variant: 'gold',
@@ -86,7 +98,11 @@ export default function SidebarNew() {
     }
   ]
 
-  const getItemActive = (item) => item.isActive ? item.isActive() : isActive(item.href)
+  const getItemActive = (item) => {
+    if (item.shortcut === 'gameAnalysis') return gameAnalysisModalOpen
+    if (item.isActive) return item.isActive()
+    return isActive(item.href)
+  }
 
   const getNavItemStyle = (item, active) => {
     const isGold = item.variant === 'gold'
@@ -228,16 +244,11 @@ export default function SidebarNew() {
 
                     const Icon = item.icon
                     const active = getItemActive(item)
+                    const isGameAnalysisShortcut = item.shortcut === 'gameAnalysis'
+                    const navKey = item.shortcut || item.href
 
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setIsOpen(false)}
-                        style={getNavItemStyle(item, active)}
-                        onMouseEnter={(e) => handleNavMouseEnter(e, item, active)}
-                        onMouseLeave={(e) => handleNavMouseLeave(e, item, active)}
-                      >
+                    const navContent = (
+                      <>
                         <Icon
                           size={18}
                           style={{
@@ -248,6 +259,44 @@ export default function SidebarNew() {
                         />
                         <span style={{ flex: 1, minWidth: 0 }}>{item.label}</span>
                         {renderNavBadge(item)}
+                      </>
+                    )
+
+                    if (isGameAnalysisShortcut && pathname === '/') {
+                      return (
+                        <button
+                          key={navKey}
+                          type="button"
+                          onClick={() => {
+                            setIsOpen(false)
+                            if (typeof window !== 'undefined') {
+                              window.dispatchEvent(new CustomEvent(OPEN_GAME_ANALYSIS_MODAL_EVENT))
+                            }
+                          }}
+                          style={{
+                            ...getNavItemStyle(item, active),
+                            width: '100%',
+                            font: 'inherit'
+                          }}
+                          onMouseEnter={(e) => handleNavMouseEnter(e, item, active)}
+                          onMouseLeave={(e) => handleNavMouseLeave(e, item, active)}
+                        >
+                          {navContent}
+                        </button>
+                      )
+                    }
+
+                    return (
+                      <Link
+                        key={navKey}
+                        href={item.href}
+                        prefetch={isGameAnalysisShortcut ? false : undefined}
+                        onClick={() => setIsOpen(false)}
+                        style={getNavItemStyle(item, active)}
+                        onMouseEnter={(e) => handleNavMouseEnter(e, item, active)}
+                        onMouseLeave={(e) => handleNavMouseLeave(e, item, active)}
+                      >
+                        {navContent}
                       </Link>
                     )
                   })}

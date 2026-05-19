@@ -6,7 +6,11 @@ import { checkRateLimit } from '@/lib/rateLimiter'
 import { deductCredits, refundCredits } from '@/lib/creditService'
 import { getRelevantSections } from '@/lib/ragHelper'
 import { getCoachPoliciesText, getCoachSharedCoreText } from '@/lib/coachPromptRules'
-import { getSkillDisplayLabel, getSkillEnglishItalianGlossary } from '@/lib/playerSkillLabels.js'
+import {
+  getSkillDisplayLabel,
+  getSkillEnglishItalianGlossary,
+  localizeSkillTermsInText
+} from '@/lib/playerSkillLabels.js'
 import { CARD_ADVISOR_SELECT, searchCardAdvisorCardsByName } from '@/lib/cardAdvisorCardsLookup.js'
 import { fetchEfhubCardDetail } from '@/lib/efhubPlayerDetail.js'
 
@@ -68,13 +72,10 @@ function escapeRegExp(value = '') {
 }
 
 function localizeItalianTerms(value = '') {
-  let text = String(value || '')
-  IT_TERM_GLOSSARY
-    .slice()
-    .sort((a, b) => b[0].length - a[0].length)
-    .forEach(([en, it]) => {
-      text = text.replace(new RegExp(`\\b${escapeRegExp(en)}\\b`, 'gi'), it)
-    })
+  let text = localizeSkillTermsInText(String(value || ''), 'it')
+  IT_TERM_GLOSSARY.forEach(([en, it]) => {
+    text = text.replace(new RegExp(`\\b${escapeRegExp(en)}\\b`, 'gi'), it)
+  })
   return text
 }
 

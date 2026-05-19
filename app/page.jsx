@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import React, { Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -38,7 +38,7 @@ import {
   Dumbbell
 } from 'lucide-react'
 
-/** Legge query URL: openCoach=1 → Palestra Coach; openAssistantChat=1 → chat principale; openGameAnalysis=1 → GameAnalysisModal; openCardAdvisor=1 → popup carte. */
+/** Legge query URL: openCoach=1 → Palestra Coach; openAssistantChat=1 → chat principale; openGameAnalysis=1 → GameAnalysisModal; openCardAdvisor=1 → Card Advisor Lab. */
 function OpenCoachListener({ onOpenCoach, onOpenAssistantChat, onOpenGameAnalysis, onOpenCardAdvisor }) {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -51,7 +51,6 @@ function OpenCoachListener({ onOpenCoach, onOpenAssistantChat, onOpenGameAnalysi
     }
     if (searchParams?.get('openCardAdvisor') === '1') {
       onOpenCardAdvisor?.()
-      router.replace('/', { scroll: false })
       return
     }
     if (searchParams?.get('openAssistantChat') === '1') {
