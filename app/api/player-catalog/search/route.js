@@ -239,7 +239,9 @@ function normalizeResult(row, slotPosition) {
     completeness_score: row.completeness_score ?? null,
     position_compatibility: row.position_compatibility || {},
     compatibility: slotCompatibility(slotPosition, row.position),
-    players_payload: payload
+    players_payload: payload,
+    player_skills: Array.isArray(row.player_skills) ? row.player_skills : payload.player_skills || [],
+    ai_playstyles: Array.isArray(row.ai_playstyles) ? row.ai_playstyles : payload.ai_playstyles || payload.com_skills || []
   }
 }
 

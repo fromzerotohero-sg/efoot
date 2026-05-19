@@ -20,43 +20,29 @@ export const dynamic = 'force-dynamic'
 const DEEP_ANALYSIS_COST = 2
 const MODEL = process.env.CARD_ADVISOR_DEEP_MODEL || 'gpt-5.2'
 
-/** Stili / meccaniche (non coperti da skill giocatore in playerSkillLabels). */
+/** Stili di gioco (skill/comSkills: getSkillEnglishItalianGlossary in playerSkillLabels). */
 const STYLE_AND_MECHANIC_GLOSSARY_IT = [
-  ['Acceleration Burst', 'Scatto esplosivo'],
   ['Anchor Man', 'Collante'],
   ['Box To Box', 'Box-to-box'],
   ['Build Up', 'Sviluppo'],
   ['Classic No. 10', 'Classico numero 10'],
   ['Creative Playmaker', 'Regista creativo'],
-  ['Cross Specialist', 'Specialista cross'],
-  ['Dummy Runner', 'Finto nove'],
-  ['Edged Crossing', 'Cross tagliente'],
-  ['Extra Frontman', 'Difensore offensivo'],
-  ['Fox In The Box', 'Rapace d’area'],
-  ['Full-back Finisher', 'Terzino finalizzatore'],
+  ['Dummy Runner', 'Senza palla'],
+  ['Extra Frontman', 'Frontale extra'],
+  ['Fox In The Box', "Rapace d'area"],
+  ['Full-back Finisher', 'Terzino mattatore'],
   ['Goal Poacher', 'Opportunista'],
   ['Hole Player', 'Giocatore chiave'],
-  ['Incisive Run', 'Inserimento incisivo'],
-  ['Long Ball Expert', 'Specialista lancio lungo'],
-  ['Low Screamer', 'Rasoterra potente'],
-  ['Magnetic Feet', 'Piedi magnetici'],
-  ['Mazing Run', 'Corsa ubriacante'],
-  ['Momentum Dribbling', 'Dribbling in slancio'],
   ['Offensive Goalkeeper', 'Portiere offensivo'],
   ['Offensive Wingback', 'Terzino offensivo'],
-  ['Orchestrator', 'Regista'],
-  ['Phenomenal Finishing', 'Finalizzazione fenomenale'],
-  ['Phenomenal Passing', 'Passaggio fenomenale'],
+  ['Orchestrator', 'Orchestratore'],
   ['Prolific Winger', 'Ala prolifica'],
-  ['Rising Shots', 'Tiro a salire'],
   ['Roaming Flank', 'Taglio al centro'],
-  ['Speeding Bullet', 'Proiettile veloce'],
-  ['Visionary Pass', 'Passaggio visionario'],
   ['Defensive Full-back', 'Terzino difensivo'],
   ['Offensive Full-back', 'Terzino offensivo'],
-  ['Destroyer', 'Distruttore'],
+  ['Destroyer', 'Incontrista'],
   ['Deep-Lying Forward', 'Fulcro di gioco'],
-  ['Tackle', 'Contrasto']
+  ['Target Man', 'Fulcro di gioco']
 ]
 
 const IT_TERM_GLOSSARY = [...getSkillEnglishItalianGlossary(), ...STYLE_AND_MECHANIC_GLOSSARY_IT]

@@ -162,6 +162,8 @@ const copy = {
     buildWhyToggle: 'Perché questa build',
     buildWhyHide: 'Nascondi',
     buildWhyTitle: 'Dettaglio',
+    buildWhyIntroRoster: 'Incrociamo abilità in scheda, stile carta, modulo, coach e confronto col meta pack.',
+    buildWhyIntroMeta: 'Riferimento community senza la tua rosa: utile come benchmark, non come consiglio personalizzato.',
     buildMetaBadge: 'Benchmark',
     buildRosterBadge: 'Consigliata',
     buildPtDiff: 'Differenza vs meta',
@@ -303,6 +305,8 @@ const copy = {
     buildWhyToggle: 'Why this build',
     buildWhyHide: 'Hide',
     buildWhyTitle: 'Details',
+    buildWhyIntroRoster: 'We cross-check card skills, playing style, formation, coach, and the meta pack benchmark.',
+    buildWhyIntroMeta: 'Community reference without your squad — useful as a benchmark, not a personalised pick.',
     buildMetaBadge: 'Benchmark',
     buildRosterBadge: 'Recommended',
     buildPtDiff: 'Diff vs meta',
@@ -953,13 +957,19 @@ function BuildPreviewCard({ title, hint, build, labels, lang, variant = 'meta', 
           </button>
           {showWhy && (
             <div className="build-preview-why-body">
+              {(isRoster ? labels.buildWhyIntroRoster : labels.buildWhyIntroMeta) && (
+                <p className="build-preview-why-intro">
+                  {isRoster ? labels.buildWhyIntroRoster : labels.buildWhyIntroMeta}
+                </p>
+              )}
               {reasonSections.map(section => (
                 <section key={section.id} className="build-preview-why-section">
                   {section.title ? <h5>{section.title}</h5> : null}
                   <ul>
-                    {section.items.map((item, index) => (
-                      <li key={`${section.id}-${index}`}>{item}</li>
-                    ))}
+                    {section.items.map((item, index) => {
+                      const display = localizeDeepAnalysisText(item, lang)
+                      return <li key={`${section.id}-${index}`}>{display}</li>
+                    })}
                   </ul>
                 </section>
               ))}
@@ -4084,6 +4094,13 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .build-preview-why-body {
           margin-top: 8px;
+        }
+
+        .build-preview-why-intro {
+          margin: 0 0 10px;
+          font-size: 12px;
+          line-height: 1.45;
+          color: rgba(255, 255, 255, 0.72);
         }
 
         .build-preview-why-section {

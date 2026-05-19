@@ -2725,6 +2725,7 @@ function PremiumPlayerModal({
     gk_reach: ''
   })
   const [skillsDraft, setSkillsDraft] = React.useState([])
+  const [comSkillsDraft, setComSkillsDraft] = React.useState([])
   const [selectedSkillPreset, setSelectedSkillPreset] = React.useState('')
   const [boostersDraft, setBoostersDraft] = React.useState([])
   const [showAllSkills, setShowAllSkills] = React.useState(false)
@@ -2776,6 +2777,7 @@ function PremiumPlayerModal({
       ...normalizedStats
     })
     setSkillsDraft(normalizePlayerSkillsArray(Array.isArray(player.skills) ? player.skills : []))
+    setComSkillsDraft(normalizePlayerSkillsArray(Array.isArray(player.com_skills) ? player.com_skills : []))
     setSelectedSkillPreset('')
     setShowAllSkills(false)
     setOriginalPositionsDraft(buildInitialPositionsFromPlayer(player))
@@ -2970,6 +2972,7 @@ function PremiumPlayerModal({
       nationality: form.nationality,
       club_name: form.club_name,
       skills: normalizePlayerSkillsArray(skillsDraft),
+      com_skills: normalizePlayerSkillsArray(comSkillsDraft),
       available_boosters: boostersDraft.map((entry, idx) => {
         const maxLevel = idx === 1 ? 1 : 5
         const level = Math.min(maxLevel, Math.max(1, Number(entry?.level) || parseBoosterLevel(entry?.effect)))
@@ -3401,6 +3404,25 @@ function PremiumPlayerModal({
                 ) : null}
               </EnterpriseSection>
             </section>
+
+            {comSkillsDraft.length > 0 && (
+              <section className="nr-reference-com-skills">
+                <EnterpriseSection title={lang === 'en' ? 'COM skills / AI styles' : 'Abilità COM / stili IA'}>
+                  <div className="nr-skill-chip-row nr-skill-chip-row-com">
+                    {comSkillsDraft.map((skill) => (
+                      <span key={skill} className="nr-skill-chip nr-skill-chip-readonly">
+                        {getSkillDisplayLabel(skill, lang)}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="nr-com-skills-hint">
+                    {lang === 'en'
+                      ? 'Imported from catalog (e.g. Trickster, Mazing Run). Showtime skills like Acceleration Burst appear here when on the card.'
+                      : 'Importate dal catalogo (es. Trickster, Mazing Run). Skill Showtime come Scatto bruciante compaiono qui se presenti in carta.'}
+                  </p>
+                </EnterpriseSection>
+              </section>
+            )}
 
             <section className="nr-reference-boosters">
               <EnterpriseSection title={lang === 'en' ? 'Boosters' : 'Boosters'}>
