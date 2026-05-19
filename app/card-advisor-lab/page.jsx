@@ -10,6 +10,8 @@ import {
   BarChart3,
   CheckCircle2,
   ChevronRight,
+  Copy,
+  Hammer,
   X,
   ShieldCheck,
   Sparkles,
@@ -18,6 +20,7 @@ import {
   Zap
 } from 'lucide-react'
 import { getSkillDisplayLabel, normalizePlayerSkillsArray } from '@/lib/playerSkillLabels'
+import { BUILD_SLIDER_ORDER, getBuildSliderLabel } from '@/lib/cardAdvisorBuildPreview'
 import { supabase, getValidAccessToken } from '@/lib/supabaseClient'
 
 /** Metalgate `auth_token` oppure JWT Supabase aggiornato (come CreditsBar / grafici-comparazione). */
@@ -28,6 +31,10 @@ async function resolveClientAuthBearer() {
     token = await getValidAccessToken()
   }
   return token || null
+}
+
+function buildPreviewCacheKey(cardId, lang) {
+  return `${cardId}:${lang === 'en' ? 'en' : 'it'}`
 }
 
 const copy = {
@@ -148,6 +155,23 @@ const copy = {
     cardValue: 'Cosa offre la carta',
     loadingDecision: 'Analisi in corso…',
     noNativeSkills: 'Profilo tecnico non disponibile.',
+    buildSectionTitle: 'Build e abilità',
+    buildSectionHint: 'PT consigliati + skill da valutare sul profilo.',
+    buildMetaTitle: 'Build meta pack',
+    buildMetaHint: 'Ruolo e stile community, senza la tua rosa.',
+    buildRosterTitle: 'Build per la tua rosa',
+    buildRosterHint: 'Modulo, coach e stile squadra applicati.',
+    buildRosterMissing: 'Collega la rosa per la build personalizzata.',
+    buildSkillsTitle: 'Abilità consigliate',
+    buildPtUsed: 'PT',
+    buildPlayOvr: 'OVR gioco',
+    buildLoading: 'Calcolo build…',
+    buildUnavailable: 'Build non disponibile per questa carta.',
+    buildCatalogMissing: 'Dati carta incompleti: build non calcolabile.',
+    buildNoProgression: 'Carta senza punti progressione.',
+    buildCopyPt: 'Copia PT',
+    buildCopied: 'Copiato',
+    buildSlotsFree: 'slot liberi',
   },
   en: {
     eyebrow: 'Card advice',
@@ -266,6 +290,23 @@ const copy = {
     cardValue: 'What the card offers',
     loadingDecision: 'Analyzing…',
     noNativeSkills: 'Technical profile unavailable.',
+    buildSectionTitle: 'Build & skills',
+    buildSectionHint: 'Suggested PT spread + skills to consider.',
+    buildMetaTitle: 'Meta pack build',
+    buildMetaHint: 'Community role/style weights, without your roster.',
+    buildRosterTitle: 'Build for your squad',
+    buildRosterHint: 'Formation, coach and team style applied.',
+    buildRosterMissing: 'Link your roster for a personalized build.',
+    buildSkillsTitle: 'Suggested skills',
+    buildPtUsed: 'PT',
+    buildPlayOvr: 'In-game OVR',
+    buildLoading: 'Computing build…',
+    buildUnavailable: 'Build unavailable for this card.',
+    buildCatalogMissing: 'Incomplete card data: build cannot be calculated.',
+    buildNoProgression: 'Card has no progression points.',
+    buildCopyPt: 'Copy PT',
+    buildCopied: 'Copied',
+    buildSlotsFree: 'free slots',
   }
 }
 
@@ -893,6 +934,164 @@ function ChartInsightCard({ labels, hasGameAnalysis, onOpenGameAnalysis }) {
   )
 }
 
+function BuildPreviewCard({ title, hint, build, labels, lang }) {
+  const [copied, setCopied] = React.useState(false)
+  if (!build?.ok) return null
+
+  const activeSliders = BUILD_SLIDER_ORDER.filter(key => Number(build.sliders?.[key]) > 0)
+  const handleCopy = async () => {
+    const text = build.ptCopy || activeSliders.map(key => `${getBuildSliderLabel(key, lang)}: ${build.sliders[key]}`).join(' | ')
+    if (!text || typeof navigator === 'undefined' || !navigator.clipboard) return
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1800)
+    } catch (error) {
+      console.warn('[card-advisor-lab] copy PT failed:', error)
+    }
+  }
+
+  return (
+    <article className="build-preview-card">
+      <div className="build-preview-card-head">
+        <div>
+          <h4>{title}</h4>
+          <p>{hint}</p>
+        </div>
+        <button type="button" className="build-preview-copy" onClick={handleCopy}>
+          <Copy size={14} />
+          {copied ? labels.buildCopied : labels.buildCopyPt}
+        </button>
+      </div>
+      <div className="build-preview-stats">
+        <span>
+          {labels.buildPtUsed}: <strong>{build.pointsUsed}/{build.pointsAvailable}</strong>
+        </span>
+        {build.playOverall != null && (
+          <span>
+            {labels.buildPlayOvr}: <strong>{build.playOverall}</strong>
+          </span>
+        )}
+      </div>
+      <div className="build-preview-pt-grid">
+        {activeSliders.map(key => (
+          <div key={key} className="build-preview-pt-chip">
+            <span>{getBuildSliderLabel(key, lang)}</span>
+            <strong>{build.sliders[key]}</strong>
+          </div>
+        ))}
+      </div>
+      {build.reasons?.length > 0 && (
+        <ul className="build-preview-reasons">
+          {build.reasons.map(reason => <li key={reason}>{reason}</li>)}
+        </ul>
+      )}
+    </article>
+  )
+}
+
+function CardBuildPreviewSection({ preview, loading, labels, lang }) {
+  if (loading) {
+    return (
+      <div className="build-preview-shell build-preview-shell-loading" role="status" aria-live="polite">
+        <div className="build-preview-shell-head">
+          <Hammer size={18} />
+          <div>
+            <span>{labels.buildSectionTitle}</span>
+            <p>{labels.buildLoading}</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!preview) return null
+
+  if (!preview.ok) {
+    const message =
+      preview.code === 'catalog_missing'
+        ? labels.buildCatalogMissing
+        : preview.code === 'non_progression_card_type' || preview.code === 'max_level_one'
+          ? labels.buildNoProgression
+          : labels.buildUnavailable
+    return (
+      <div className="build-preview-shell build-preview-shell-muted">
+        <div className="build-preview-shell-head">
+          <Hammer size={18} />
+          <div>
+            <span>{labels.buildSectionTitle}</span>
+            <p>{message}</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const skills = preview.skills || {}
+  return (
+    <div className="build-preview-shell">
+      <div className="build-preview-shell-head">
+        <Hammer size={18} />
+        <div>
+          <span>{labels.buildSectionTitle}</span>
+          <p>{labels.buildSectionHint}</p>
+        </div>
+      </div>
+      <div className="build-preview-dual">
+        {preview.meta?.ok ? (
+          <BuildPreviewCard
+            title={labels.buildMetaTitle}
+            hint={labels.buildMetaHint}
+            build={preview.meta}
+            labels={labels}
+            lang={lang}
+          />
+        ) : (
+          <article className="build-preview-card build-preview-card-muted">
+            <h4>{labels.buildMetaTitle}</h4>
+            <p>{labels.buildUnavailable}</p>
+          </article>
+        )}
+        {preview.roster?.ok ? (
+          <BuildPreviewCard
+            title={labels.buildRosterTitle}
+            hint={labels.buildRosterHint}
+            build={preview.roster}
+            labels={labels}
+            lang={lang}
+          />
+        ) : (
+          <article className="build-preview-card build-preview-card-muted">
+            <h4>{labels.buildRosterTitle}</h4>
+            <p>{labels.buildRosterMissing}</p>
+          </article>
+        )}
+      </div>
+      {skills.available !== false && (skills.items?.length > 0 || skills.message) && (
+        <div className="build-preview-skills">
+          <h4>{labels.buildSkillsTitle}</h4>
+          {skills.slotsFree > 0 && (
+            <small>
+              {skills.slotsFree} {labels.buildSlotsFree}
+            </small>
+          )}
+          {skills.message && <p>{skills.message}</p>}
+          {skills.items?.length > 0 && (
+            <ul>
+              {skills.items.map(item => (
+                <li key={item.skill}>
+                  <strong>{item.display || item.skill}</strong>
+                  <span>{item.reason}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function DetailPanel({
   card,
   labels,
@@ -900,6 +1099,8 @@ function DetailPanel({
   rosterSummary,
   evaluation,
   evaluating,
+  buildPreview,
+  buildPreviewLoading,
   deepAnalysis,
   deepAnalysisLoading,
   deepAnalysisError,
@@ -1038,6 +1239,13 @@ function DetailPanel({
           </div>
         </div>
       </div>
+
+      <CardBuildPreviewSection
+        preview={buildPreview}
+        loading={buildPreviewLoading}
+        labels={labels}
+        lang={lang}
+      />
 
       {coachAdvice && (
         <div className="coach-advice-card">
@@ -1182,6 +1390,8 @@ function CardDetailsModal({
   rosterSummary,
   evaluation,
   evaluating,
+  buildPreview,
+  buildPreviewLoading,
   deepAnalysis,
   deepAnalysisLoading,
   deepAnalysisError,
@@ -1273,6 +1483,8 @@ function CardDetailsModal({
           rosterSummary={rosterSummary}
           evaluation={evaluation}
           evaluating={evaluating}
+          buildPreview={buildPreview}
+          buildPreviewLoading={buildPreviewLoading}
           deepAnalysis={deepAnalysis}
           deepAnalysisLoading={deepAnalysisLoading}
           deepAnalysisError={deepAnalysisError}
@@ -1303,6 +1515,8 @@ export default withAuth(function CardAdvisorLabPage() {
   const [deepAnalysesByCard, setDeepAnalysesByCard] = React.useState({})
   const [deepAnalysisLoadingId, setDeepAnalysisLoadingId] = React.useState(null)
   const [deepAnalysisErrors, setDeepAnalysisErrors] = React.useState({})
+  const [buildPreviewsByCard, setBuildPreviewsByCard] = React.useState({})
+  const [buildPreviewLoadingId, setBuildPreviewLoadingId] = React.useState(null)
   const releaseTabsRef = React.useRef(null)
   const cards = React.useMemo(() => {
     const baseCards = releaseId === 'all'
@@ -1361,6 +1575,9 @@ export default withAuth(function CardAdvisorLabPage() {
   const detailsEvaluation = detailsCard ? evaluationsByCard[detailsCard.id] : null
   const detailsDeepAnalysis = detailsCard ? deepAnalysesByCard[detailsCard.id] : null
   const detailsDeepAnalysisError = detailsCard ? deepAnalysisErrors[detailsCard.id] : ''
+  const detailsBuildPreview = detailsCard
+    ? buildPreviewsByCard[buildPreviewCacheKey(detailsCard.id, lang)]
+    : null
 
   const requestDeepAnalysis = React.useCallback(async () => {
     if (!detailsCard?.id || deepAnalysesByCard[detailsCard.id] || deepAnalysisLoadingId) return
@@ -1492,6 +1709,50 @@ export default withAuth(function CardAdvisorLabPage() {
     }
   }, [detailsCard, evaluationsByCard, lang])
 
+  React.useEffect(() => {
+    let active = true
+
+    async function loadBuildPreview() {
+      if (!detailsCard?.id) return
+      const cacheKey = buildPreviewCacheKey(detailsCard.id, lang)
+      if (buildPreviewsByCard[cacheKey]) return
+      const token = await resolveClientAuthBearer()
+      if (!token) return
+
+      setBuildPreviewLoadingId(detailsCard.id)
+      try {
+        const response = await fetch('/api/card-advisor-lab/build-preview', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ card: detailsCard, lang: lang === 'en' ? 'en' : 'it' })
+        })
+        if (!response.ok) throw new Error('Build preview failed')
+        const data = await response.json()
+        if (active && data?.preview) {
+          setBuildPreviewsByCard(prev => ({ ...prev, [cacheKey]: data.preview }))
+        }
+      } catch (error) {
+        console.warn('[card-advisor-lab] build preview unavailable:', error)
+        if (active) {
+          setBuildPreviewsByCard(prev => ({
+            ...prev,
+            [cacheKey]: { ok: false, code: 'unavailable' }
+          }))
+        }
+      } finally {
+        if (active) setBuildPreviewLoadingId(null)
+      }
+    }
+
+    loadBuildPreview()
+    return () => {
+      active = false
+    }
+  }, [detailsCard, buildPreviewsByCard, lang])
+
   const selectedRelease = releaseId === 'all'
     ? { name: labels.allCards, cards: activeReleases.flatMap(release => release.cards), status: 'active' }
     : activeReleases.find(release => release.id === releaseId) || activeReleases[0]
@@ -1595,6 +1856,8 @@ export default withAuth(function CardAdvisorLabPage() {
         rosterSummary={rosterSummary}
         evaluation={detailsEvaluation}
         evaluating={detailsCard?.id === evaluatingCardId}
+        buildPreview={detailsBuildPreview}
+        buildPreviewLoading={detailsCard?.id === buildPreviewLoadingId}
         deepAnalysis={detailsDeepAnalysis}
         deepAnalysisLoading={detailsCard?.id === deepAnalysisLoadingId}
         deepAnalysisError={detailsDeepAnalysisError}
@@ -3713,6 +3976,195 @@ export default withAuth(function CardAdvisorLabPage() {
           gap: 16px;
         }
 
+        .build-preview-shell {
+          margin-top: 16px;
+          padding: 14px 16px;
+          border-radius: 18px;
+          border: 1px solid rgba(0, 212, 255, 0.22);
+          background:
+            linear-gradient(145deg, rgba(0, 212, 255, 0.08), rgba(138, 43, 226, 0.06)),
+            rgba(4, 10, 24, 0.72);
+        }
+
+        .build-preview-shell-loading,
+        .build-preview-shell-muted {
+          opacity: 0.92;
+        }
+
+        .build-preview-shell-head {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          margin-bottom: 12px;
+        }
+
+        .build-preview-shell-head svg {
+          color: #00d4ff;
+          flex-shrink: 0;
+          margin-top: 2px;
+        }
+
+        .build-preview-shell-head span {
+          display: block;
+          font-size: 12px;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: rgba(0, 212, 255, 0.9);
+          font-weight: 700;
+        }
+
+        .build-preview-shell-head p {
+          margin: 4px 0 0;
+          color: rgba(255, 255, 255, 0.72);
+          font-size: 13px;
+          line-height: 1.45;
+        }
+
+        .build-preview-dual {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
+        }
+
+        .build-preview-card {
+          padding: 12px;
+          border-radius: 14px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.04);
+        }
+
+        .build-preview-card-muted {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          min-height: 120px;
+        }
+
+        .build-preview-card-muted h4,
+        .build-preview-card h4 {
+          margin: 0;
+          font-size: 14px;
+          color: #fff;
+        }
+
+        .build-preview-card-muted p,
+        .build-preview-card-head p {
+          margin: 6px 0 0;
+          font-size: 12px;
+          line-height: 1.4;
+          color: rgba(255, 255, 255, 0.65);
+        }
+
+        .build-preview-card-head {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 10px;
+        }
+
+        .build-preview-copy {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          border: 1px solid rgba(0, 212, 255, 0.35);
+          border-radius: 999px;
+          background: rgba(0, 212, 255, 0.1);
+          color: #b8f4ff;
+          font-size: 11px;
+          font-weight: 600;
+          padding: 6px 10px;
+          white-space: nowrap;
+          cursor: pointer;
+        }
+
+        .build-preview-stats {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px 14px;
+          margin: 10px 0;
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.72);
+        }
+
+        .build-preview-stats strong {
+          color: #fff;
+        }
+
+        .build-preview-pt-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 8px;
+        }
+
+        .build-preview-pt-chip {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          padding: 8px 10px;
+          border-radius: 10px;
+          background: rgba(0, 0, 0, 0.22);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          font-size: 12px;
+        }
+
+        .build-preview-pt-chip strong {
+          color: #00d4ff;
+          font-size: 14px;
+        }
+
+        .build-preview-reasons {
+          margin: 10px 0 0;
+          padding-left: 18px;
+          color: rgba(255, 255, 255, 0.7);
+          font-size: 12px;
+          line-height: 1.45;
+        }
+
+        .build-preview-skills {
+          margin-top: 12px;
+          padding-top: 12px;
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .build-preview-skills h4 {
+          margin: 0;
+          font-size: 14px;
+        }
+
+        .build-preview-skills small {
+          display: inline-block;
+          margin-top: 4px;
+          color: rgba(0, 212, 255, 0.85);
+          font-size: 11px;
+        }
+
+        .build-preview-skills ul {
+          margin: 10px 0 0;
+          padding: 0;
+          list-style: none;
+          display: grid;
+          gap: 8px;
+        }
+
+        .build-preview-skills li {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          padding: 8px 10px;
+          border-radius: 10px;
+          background: rgba(255, 255, 255, 0.04);
+        }
+
+        .build-preview-skills li strong {
+          font-size: 13px;
+        }
+
+        .build-preview-skills li span {
+          font-size: 11px;
+          color: rgba(255, 255, 255, 0.62);
+        }
+
         .base-details-shell {
           margin-top: 14px;
         }
@@ -4008,6 +4460,10 @@ export default withAuth(function CardAdvisorLabPage() {
             grid-template-columns: 1fr;
           }
 
+          .build-preview-dual {
+            grid-template-columns: 1fr;
+          }
+
           .card-details-modal {
             align-items: flex-end;
             padding: 8px;
@@ -4030,6 +4486,7 @@ export default withAuth(function CardAdvisorLabPage() {
           .coach-advice-card,
           .chart-insight-card,
           .quick-read-card,
+          .build-preview-shell,
           .deep-analysis-report {
             padding-right: max(14px, calc(12px + env(safe-area-inset-right, 0px)));
           }
