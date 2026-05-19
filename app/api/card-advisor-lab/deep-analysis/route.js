@@ -14,6 +14,7 @@ import {
 import { CARD_ADVISOR_SELECT, searchCardAdvisorCardsByName } from '@/lib/cardAdvisorCardsLookup.js'
 import { fetchEfhubCardDetail } from '@/lib/efhubPlayerDetail.js'
 import { buildSkillDeltaSentence } from '@/lib/cardAdvisorSkillCompare.js'
+import { buildPurchaseFactsBlock, normalizePurchaseFit } from '@/lib/cardAdvisorPurchaseContext.js'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -273,7 +274,7 @@ async function resolveCatalogCardForDeepAnalysis(admin, card) {
   }
 }
 
-function buildPrompt({ lang, card, catalogCard, profile, players, stylesLookup = {}, formation, coach, tacticalSettings, patterns, gameAnalysis, diagnostic, feedback, performance, ragKnowledge, skillDeltaSentence = '' }) {
+function buildPrompt({ lang, card, catalogCard, profile, players, stylesLookup = {}, formation, coach, tacticalSettings, patterns, gameAnalysis, diagnostic, feedback, performance, ragKnowledge, skillDeltaSentence = '', purchaseFactsText = '' }) {
   const isEn = lang === 'en'
   const cardBaseStats = summarizeStats(catalogCard?.base_stats || {})
   const cardMaxStats = summarizeStats(catalogCard?.max_stats || {})
@@ -365,6 +366,19 @@ SEMANTICA:
 - La sezione "key_reasoning" è la parte più importante: ogni punto deve incrociare almeno due fonti tra carta, stile, skill, stats, rosa, formazione, tattica, coach, diagnosi, game analysis e RAG meccaniche.
 - Ogni ragionamento deve chiudere con una conseguenza pratica: cosa cambia, cosa sfruttare, cosa evitare o perché non è priorità.
 
+POLICY POSIZIONI E ACQUISTO (obbligatoria — come Coach chat):
+- Nomi giocatori e skill: solo da CONTESTO CLIENTE, FATTI ACQUISTO e skill_delta_sentence. Se manca un dato, non inventare.
+- "position" in roster = ruolo ASSEGNATO in formazione (in campo). "original_positions" = competenze naturali sulla card: NON usarle come ruolo attuale.
+- Vietato: "Maldini CLS" se in rosa è DC. Obbligatorio: "Maldini (DC)" o "Maldini (DC in rosa)".
+- Vietato: "non cambia gerarchie su [Nome] [ruolo carta]" se non c'è titolare con quel ruolo in campo (vedi FATTI ACQUISTO).
+- Domanda centrale acquisto: la carta la compro per COME GIOCO OGGI (modulo, disposizione, game stats, profilo)? Non tier list.
+- Se la carta è utile nel ruolo pack ma NON c'è titolare in quel ruolo in campo: purchase_fit = fits_if_formation_change (o skill_only_no_slot) e in summary/final_decision scrivi esplicitamente "sì, comprala SE cambi modulo / schieri il ruolo" oppure "oggi no, a meno che...".
+- Se game stats e stile carta non matchano (es. cross specialist ma pochi cross nei dati): purchase_fit = not_your_playstyle o fits_if_formation_change con condizione chiara.
+- purchase_fit deve essere coerente con verdict e con FATTI ACQUISTO. setup_condition obbligatorio se purchase_fit è fits_if_formation_change o skill_only_no_slot.
+- Esempio SBAGLIATO: "Non cambia gerarchie su Maldini CLS". Esempio CORRETTO: "Non sostituisce Maldini (DC); oggi non hai CLS in campo — ha senso solo se cambi modulo per usare la fascia."
+
+${purchaseFactsText}
+
 CARTA
 ${JSON.stringify(cardPayload, null, 2)}
 
@@ -382,7 +396,9 @@ Restituisci SOLO JSON valido con questa struttura:
 {
   "headline": "titolo breve e deciso, massimo 55 caratteri",
   "verdict": "take|premium_rotation|situational|luxury_pick|not_priority|skip",
-  "summary": "massimo 2 frasi brevi, verdetto + motivo principale",
+  "purchase_fit": "fits_current_setup|fits_with_rotation|fits_if_formation_change|skill_only_no_slot|not_your_playstyle|skip_duplicate|insufficient_data",
+  "setup_condition": "vuoto se purchase_fit è fits_current_setup; altrimenti condizione modulo/ruolo max 160 caratteri",
+  "summary": "massimo 2 frasi brevi, verdetto acquisto + motivo principale",
   "card_identity": {
     "movement": "movimento automatico da stile, massimo 100 caratteri",
     "key_skills": ["skill rilevanti"],
@@ -430,7 +446,9 @@ function normalizeDeepAnalysis(payload, lang, skillDeltaLine = '') {
         how_to_use: [],
         when_to_avoid: [],
         final_decision: 'Use the base read until a new detailed analysis is available.',
-        skill_delta_line: ''
+        skill_delta_line: '',
+        purchase_fit: 'insufficient_data',
+        setup_condition: ''
       }
     : {
         headline: 'Analisi dettagliata non disponibile',
@@ -444,18 +462,26 @@ function normalizeDeepAnalysis(payload, lang, skillDeltaLine = '') {
         how_to_use: [],
         when_to_avoid: [],
         final_decision: 'Usa la lettura base finché non è disponibile una nuova analisi dettagliata.',
-        skill_delta_line: ''
+        skill_delta_line: '',
+        purchase_fit: 'insufficient_data',
+        setup_condition: ''
       }
 
   if (!payload || typeof payload !== 'object') {
     return {
       ...fallback,
-      skill_delta_line: skillDeltaLine ? clean(skillDeltaLine, 320) : ''
+      skill_delta_line: skillDeltaLine ? clean(skillDeltaLine, 320) : '',
+      purchase_fit: fallback.purchase_fit,
+      setup_condition: ''
     }
   }
+  const purchaseFit = normalizePurchaseFit(payload.purchase_fit) || fallback.purchase_fit
+  const setupCondition = clean(payload.setup_condition, 180)
   return {
     headline: clean(payload.headline, 120) || fallback.headline,
     verdict: ['take', 'premium_rotation', 'situational', 'luxury_pick', 'not_priority', 'skip'].includes(payload.verdict) ? payload.verdict : 'situational',
+    purchase_fit: purchaseFit,
+    setup_condition: setupCondition,
     summary: clean(payload.summary, 420) || fallback.summary,
     card_identity: {
       movement: clean(payload.card_identity?.movement, 130),
@@ -479,7 +505,7 @@ function buildOpenAIRequestBody(model, prompt) {
     messages: [{ role: 'user', content: prompt }],
     response_format: { type: 'json_object' },
     temperature: 0.45,
-    max_completion_tokens: 1600
+    max_completion_tokens: 1800
   }
 }
 
@@ -583,10 +609,21 @@ export async function POST(req) {
     const performance = (performanceRes.data || []).slice(0, 12)
     const ragKnowledge = getRelevantSections('stili giocatore abilità giocatori statistiche cross passaggio filtrante colpo di testa intercettazione movimenti eFootball', 9000)
 
+    const players = playersRes.data || []
     const skillDeltaLine = buildSkillDeltaSentence({
       card,
       catalogCard,
-      players: playersRes.data || [],
+      players,
+      profile: profileRes.data || {},
+      gameAnalysis: gameAnalysisRes.data || null,
+      patterns: patternsRes.data || {},
+      lang
+    })
+
+    const { text: purchaseFactsText } = buildPurchaseFactsBlock({
+      card,
+      players,
+      formation: formationRes.data || null,
       profile: profileRes.data || {},
       gameAnalysis: gameAnalysisRes.data || null,
       patterns: patternsRes.data || {},
@@ -598,7 +635,7 @@ export async function POST(req) {
       card,
       catalogCard,
       profile: profileRes.data || {},
-      players: playersRes.data || [],
+      players,
       stylesLookup,
       formation: formationRes.data || null,
       coach: coachRes.data || null,
@@ -609,7 +646,8 @@ export async function POST(req) {
       feedback,
       performance,
       ragKnowledge,
-      skillDeltaSentence: skillDeltaLine
+      skillDeltaSentence: skillDeltaLine,
+      purchaseFactsText
     })
 
     const requestBody = buildOpenAIRequestBody(MODEL, prompt)
