@@ -13,6 +13,7 @@ import {
 } from '@/lib/playerSkillLabels.js'
 import { CARD_ADVISOR_SELECT, searchCardAdvisorCardsByName } from '@/lib/cardAdvisorCardsLookup.js'
 import { fetchEfhubCardDetail } from '@/lib/efhubPlayerDetail.js'
+import { buildSkillDeltaSentence } from '@/lib/cardAdvisorSkillCompare.js'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -272,7 +273,7 @@ async function resolveCatalogCardForDeepAnalysis(admin, card) {
   }
 }
 
-function buildPrompt({ lang, card, catalogCard, profile, players, stylesLookup = {}, formation, coach, tacticalSettings, patterns, gameAnalysis, diagnostic, feedback, performance, ragKnowledge }) {
+function buildPrompt({ lang, card, catalogCard, profile, players, stylesLookup = {}, formation, coach, tacticalSettings, patterns, gameAnalysis, diagnostic, feedback, performance, ragKnowledge, skillDeltaSentence = '' }) {
   const isEn = lang === 'en'
   const cardBaseStats = summarizeStats(catalogCard?.base_stats || {})
   const cardMaxStats = summarizeStats(catalogCard?.max_stats || {})
@@ -359,6 +360,8 @@ SEMANTICA:
 - Evita: "fit stile 56%", "bonus sistema", "sinergia principale", "stat edge", "overall", "rating", "buildalo", "potenzialo", "allenalo".
 - Se rispondi in italiano, traduci in italiano anche stili, skill e tag tecnici quando possibile: non lasciare frasi con termini inglesi se esiste già l’italiano nel glossario interno (stessi nomi delle liste native_skills / skills della rosa).
 - REGOLE SULLE SKILL (obbligatorie): i campi native_skills e roster.*.skills nel JSON sono nomi già normalizzati nella lingua della risposta (${isEn ? 'inglese' : 'italiano'}) — citane esattamente quelli, senza sostituirli con sinonimi diversi. Non attribuire a un giocatore una skill assente dalla sua lista. Non confondere skill simili (es. cross preciso vs passaggio filtrante; tiro al volo vs tiro dalla distanza; muro vs intercettazione). Per “combo” tra carta e rosa, verifica che la skill compaia in entrambe le liste o spiega che manca il collegamento.
+- CONFRONTO ABILITÀ VS TITOLARE (obbligatorio): nel contesto c'è skill_delta_sentence — è la lettura ufficiale su comune vs diverso rispetto al titolare in rosa. Non contraddirla. Nei pros NON usare le skill in comune come motivo d'acquisto; il valore è nelle skill solo sulla carta. Valuta il comune come "non perdi la base", non come upgrade. Se skill_delta_sentence indica poco salto, rispetta un verdetto prudente.
+- Carte Epic, Legendary o Showtime: tono leggermente più pro-investimento solo se skill_delta_sentence mostra un salto utile per il profilo; se profilo quasi uguale al titolare, non spingere l'acquisto.
 - La sezione "key_reasoning" è la parte più importante: ogni punto deve incrociare almeno due fonti tra carta, stile, skill, stats, rosa, formazione, tattica, coach, diagnosi, game analysis e RAG meccaniche.
 - Ogni ragionamento deve chiudere con una conseguenza pratica: cosa cambia, cosa sfruttare, cosa evitare o perché non è priorità.
 
@@ -367,6 +370,9 @@ ${JSON.stringify(cardPayload, null, 2)}
 
 CONTESTO CLIENTE
 ${JSON.stringify(contextPayload, null, 2)}
+
+CONFRONTO ABILITÀ (una frase, già calcolata — allineati)
+${skillDeltaSentence || (isEn ? 'No roster skill comparison available.' : 'Confronto abilità rosa non disponibile.')}
 
 RAG EFOOTBALL
 ${ragKnowledge || 'Nessun RAG disponibile.'}
@@ -395,36 +401,7 @@ Restituisci SOLO JSON valido con questa struttura:
 `.trim()
 }
 
-function normalizeDeepAnalysis(payload, lang) {
-  const fallback = lang === 'en'
-    ? {
-        headline: 'Detailed card read unavailable',
-        verdict: 'situational',
-        summary: 'The detailed analysis could not be completed. Use the base Card Advisor read for now.',
-        card_identity: { movement: '', key_skills: [], best_use: '' },
-        key_reasoning: [],
-        pros: [],
-        cons: [],
-        synergies: [],
-        how_to_use: [],
-        when_to_avoid: [],
-        final_decision: 'Use the base read until a new detailed analysis is available.'
-      }
-    : {
-        headline: 'Analisi dettagliata non disponibile',
-        verdict: 'situational',
-        summary: 'Non è stato possibile completare l’analisi dettagliata. Usa per ora la lettura base del Card Advisor.',
-        card_identity: { movement: '', key_skills: [], best_use: '' },
-        key_reasoning: [],
-        pros: [],
-        cons: [],
-        synergies: [],
-        how_to_use: [],
-        when_to_avoid: [],
-        final_decision: 'Usa la lettura base finché non è disponibile una nuova analisi dettagliata.'
-      }
-
-  if (!payload || typeof payload !== 'object') return fallback
+function normalizeDeepAnalysis(payload, lang, skillDeltaLine = '') {
   const clean = (value, maxLen = 500) => {
     const text = sanitize(value, maxLen)
     return lang === 'en' ? text : localizeItalianTerms(text)
@@ -439,6 +416,43 @@ function normalizeDeepAnalysis(payload, lang) {
         .filter(item => item.text)
         .slice(0, 4)
     : []
+
+  const fallback = lang === 'en'
+    ? {
+        headline: 'Detailed card read unavailable',
+        verdict: 'situational',
+        summary: 'The detailed analysis could not be completed. Use the base Card Advisor read for now.',
+        card_identity: { movement: '', key_skills: [], best_use: '' },
+        key_reasoning: [],
+        pros: [],
+        cons: [],
+        synergies: [],
+        how_to_use: [],
+        when_to_avoid: [],
+        final_decision: 'Use the base read until a new detailed analysis is available.',
+        skill_delta_line: ''
+      }
+    : {
+        headline: 'Analisi dettagliata non disponibile',
+        verdict: 'situational',
+        summary: 'Non è stato possibile completare l’analisi dettagliata. Usa per ora la lettura base del Card Advisor.',
+        card_identity: { movement: '', key_skills: [], best_use: '' },
+        key_reasoning: [],
+        pros: [],
+        cons: [],
+        synergies: [],
+        how_to_use: [],
+        when_to_avoid: [],
+        final_decision: 'Usa la lettura base finché non è disponibile una nuova analisi dettagliata.',
+        skill_delta_line: ''
+      }
+
+  if (!payload || typeof payload !== 'object') {
+    return {
+      ...fallback,
+      skill_delta_line: skillDeltaLine ? clean(skillDeltaLine, 320) : ''
+    }
+  }
   return {
     headline: clean(payload.headline, 120) || fallback.headline,
     verdict: ['take', 'premium_rotation', 'situational', 'luxury_pick', 'not_priority', 'skip'].includes(payload.verdict) ? payload.verdict : 'situational',
@@ -454,7 +468,8 @@ function normalizeDeepAnalysis(payload, lang) {
     synergies: arr(payload.synergies, 3, 160),
     how_to_use: arr(payload.how_to_use, 3, 140),
     when_to_avoid: arr(payload.when_to_avoid, 2, 140),
-    final_decision: clean(payload.final_decision, 220) || fallback.final_decision
+    final_decision: clean(payload.final_decision, 220) || fallback.final_decision,
+    skill_delta_line: skillDeltaLine ? clean(skillDeltaLine, 320) : ''
   }
 }
 
@@ -568,6 +583,16 @@ export async function POST(req) {
     const performance = (performanceRes.data || []).slice(0, 12)
     const ragKnowledge = getRelevantSections('stili giocatore abilità giocatori statistiche cross passaggio filtrante colpo di testa intercettazione movimenti eFootball', 9000)
 
+    const skillDeltaLine = buildSkillDeltaSentence({
+      card,
+      catalogCard,
+      players: playersRes.data || [],
+      profile: profileRes.data || {},
+      gameAnalysis: gameAnalysisRes.data || null,
+      patterns: patternsRes.data || {},
+      lang
+    })
+
     const prompt = buildPrompt({
       lang,
       card,
@@ -583,7 +608,8 @@ export async function POST(req) {
       diagnostic: diagnosticRes.data || null,
       feedback,
       performance,
-      ragKnowledge
+      ragKnowledge,
+      skillDeltaSentence: skillDeltaLine
     })
 
     const requestBody = buildOpenAIRequestBody(MODEL, prompt)
@@ -596,7 +622,7 @@ export async function POST(req) {
       response = await callOpenAIWithRetry(apiKey, buildOpenAIRequestBody('gpt-4o', prompt), 'card-advisor-deep-analysis')
     }
     const payload = await parseOpenAIResponse(response, 'card-advisor-deep-analysis')
-    const analysis = normalizeDeepAnalysis(payload, lang)
+    const analysis = normalizeDeepAnalysis(payload, lang, skillDeltaLine)
 
     return NextResponse.json({
       success: true,

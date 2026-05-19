@@ -1228,6 +1228,11 @@ function DetailPanel({
             <span>{labels.deepAnalysisTitle}</span>
             <h3>{localizeDeepAnalysisText(deepAnalysis.headline, lang)}</h3>
             <p>{localizeDeepAnalysisText(deepAnalysis.summary, lang)}</p>
+            {deepAnalysis.skill_delta_line ? (
+              <p className="deep-analysis-skill-delta">
+                {localizeDeepAnalysisText(deepAnalysis.skill_delta_line, lang)}
+              </p>
+            ) : null}
           </div>
           {deepAnalysis.key_reasoning?.length > 0 && (
             <div className="deep-reasoning-list">
@@ -3519,6 +3524,15 @@ export default withAuth(function CardAdvisorLabPage() {
           color: rgba(255,255,255,0.80);
           line-height: 1.65;
           font-size: 14px;
+        }
+
+        .deep-analysis-skill-delta {
+          margin-top: 10px;
+          padding-top: 10px;
+          border-top: 1px solid rgba(250, 204, 21, 0.22);
+          color: rgba(255, 255, 255, 0.92);
+          font-size: 13px;
+          line-height: 1.55;
         }
 
         .deep-reasoning-list {
