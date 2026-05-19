@@ -77,6 +77,12 @@ const copy = {
     proUnlockBullets: ['Decisione chiara: prendi, salta o rotazione', 'Fit con titolari, panchina, stile e coach', 'Dove brilla e quando evitarla'],
     proUnlockButton: 'Sblocca verdetto Pro',
     proUnlockedBadge: 'Sbloccato',
+    proUnlockedTitle: 'Analisi pronta',
+    proFeaturedHookTop: 'Profilo forte: scopri se vale prenderla sulla tua rosa.',
+    proFeaturedHookGood: 'Carta interessante: analizza fit, skill e rotazione sulla tua rosa.',
+    proFeaturedHookSituational: 'Da valutare in contesto: confronto con i tuoi titolari.',
+    proFeaturedHookSkip: 'Prima di spendere: analisi Pro su fit e priorità in rosa.',
+    proUnlockedTeaser: 'Report personalizzato qui sotto — confronto skill, pro/contro e decisione.',
     insufficientHpTitle: 'HP insufficienti',
     insufficientHpText: 'Verdetto Pro = 2 HP. Ricarica e riprova.',
     rechargeHpCta: 'Ricarica HP',
@@ -233,6 +239,12 @@ const copy = {
     proUnlockBullets: ['Clear decision: sign, skip, or rotation', 'Fit with starters, bench, style and coach', 'Where it shines — when to pass'],
     proUnlockButton: 'Unlock Pro verdict',
     proUnlockedBadge: 'Unlocked',
+    proUnlockedTitle: 'Analysis ready',
+    proFeaturedHookTop: 'Strong profile: see if it is worth signing for your roster.',
+    proFeaturedHookGood: 'Interesting card: analyze fit, skills and rotation on your roster.',
+    proFeaturedHookSituational: 'Context matters: compare against your starters.',
+    proFeaturedHookSkip: 'Before you spend: Pro analysis on fit and roster priority.',
+    proUnlockedTeaser: 'Your personalized report is below — skill comparison, pros/cons and decision.',
     insufficientHpTitle: 'Not enough HP',
     insufficientHpText: 'Pro verdict = 2 HP. Recharge and retry.',
     rechargeHpCta: 'Recharge HP',
@@ -625,6 +637,18 @@ function getVerdictMeta(verdict, labels) {
     skip: { label: labels.skipPick, color: '#fb7185', bg: 'rgba(251,113,133,0.14)' }
   }
   return map[verdict] || map.situational
+}
+
+/** Testo del box Pro in hero: CTA / teaser, mai il verdetto AI (quello sta nel report sotto). */
+function getProFeaturedCopy(card, deepAnalysis, labels) {
+  if (deepAnalysis) return labels.proUnlockedTeaser
+  const hooks = {
+    top: labels.proFeaturedHookTop,
+    good: labels.proFeaturedHookGood,
+    situational: labels.proFeaturedHookSituational,
+    skip: labels.proFeaturedHookSkip
+  }
+  return hooks[card?.verdict] || labels.proUnlockText
 }
 
 function CardImage({ card, labels }) {
@@ -1190,9 +1214,9 @@ function DetailPanel({
             <div className="deep-analysis-entry-copy">
               <div className="deep-analysis-entry-title">
                 <span>{deepAnalysis ? labels.proUnlockedBadge : labels.deepAnalysisCost}</span>
-                <h3>{deepAnalysis ? labels.deepAnalysisTitle : labels.proUnlockTitle}</h3>
+                <h3>{deepAnalysis ? labels.proUnlockedTitle : labels.proUnlockTitle}</h3>
               </div>
-              <p>{deepAnalysis ? deepAnalysis.headline : labels.proUnlockText}</p>
+              <p>{getProFeaturedCopy(card, deepAnalysis, labels)}</p>
               {!deepAnalysis && (
                 <ul>
                   {labels.proUnlockBullets.map(item => <li key={item}>{item}</li>)}
