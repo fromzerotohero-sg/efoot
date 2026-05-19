@@ -85,6 +85,19 @@ const copy = {
     deepAnalysisCta: 'Sblocca verdetto Pro',
     deepAnalysisCost: '2 HP',
     deepAnalysisLoading: 'Preparo il verdetto…',
+    deepAnalysisLoadingKicker: 'Analisi coach',
+    deepAnalysisLoadingStatus: 'Incrocio carta, rosa e i tuoi dati…',
+    deepAnalysisLoadingTipLabel: 'Mentre aspetti',
+    deepAnalysisLoadingTips: [
+      'Carica le Statistiche di gioco dalla dashboard: il verdetto incrocia passaggio, tiro e difesa con come giochi davvero.',
+      'Collega rosa e formazione salvata: senza titolari e modulo il consiglio resta solo sulla carta, non sulla tua squadra.',
+      'Chat Coach (2 HP): chiedi cose precise — es. «Uso troppo il filtrante?» o «Con questa rosa sbaglio i tiri?» — non «come miglioro in generale?».',
+      'Evita domande vaghe o tier list: ogni messaggio parte da un dato tuo (statistiche, partita, nome giocatore, modulo).',
+      'Card Advisor = valutare se prendere la carta; la chat = come usarla in partita con la rosa che hai già.',
+      'Dopo le partite: salva risultato e voti, poi chiedi cosa cambiare in panchina, stile squadra o istruzioni.',
+      'Le funzioni con screenshot (partita, formazione, statistiche) costano HP: usale quando ti serve un dato reale, non a caso.',
+      'Più è completa la rosa (abilità, stile, coach attivo), più il verdetto Pro è specifico e meno generico.'
+    ],
     deepAnalysisError: 'Verdetto non disponibile. Riprova.',
     deepAnalysisTitle: 'Verdetto Pro',
     premiumSectionLabel: 'Pro',
@@ -228,6 +241,19 @@ const copy = {
     deepAnalysisCta: 'Unlock Pro verdict',
     deepAnalysisCost: '2 HP',
     deepAnalysisLoading: 'Preparing verdict…',
+    deepAnalysisLoadingKicker: 'Coach analysis',
+    deepAnalysisLoadingStatus: 'Cross-checking card, squad and your data…',
+    deepAnalysisLoadingTipLabel: 'While you wait',
+    deepAnalysisLoadingTips: [
+      'Upload Game Stats from the dashboard: the verdict crosses passing, shooting and defence with how you actually play.',
+      'Link your squad and saved formation: without your XI the advice stays card-only, not team-specific.',
+      'Coach chat (2 HP): ask specific questions — e.g. “Do I overuse through balls?” — not “how do I improve in general?”.',
+      'Skip vague questions and tier lists: tie every message to your data (stats, a match, a player name, formation).',
+      'Card Advisor = whether to buy the card; chat = how to use your current squad in matches.',
+      'After matches: save result and ratings, then ask what to change on the bench, team style or instructions.',
+      'Screenshot features (match, formation, stats) cost HP: use them when you need real data, not randomly.',
+      'The fuller your squad (skills, styles, active coach), the more specific the Pro verdict becomes.'
+    ],
     deepAnalysisError: 'Verdict unavailable. Retry shortly.',
     deepAnalysisTitle: 'Pro verdict',
     premiumSectionLabel: 'Pro',
@@ -1302,6 +1328,64 @@ function DetailPanel({
   )
 }
 
+function DeepAnalysisLoadingOverlay({ labels }) {
+  const tips = Array.isArray(labels.deepAnalysisLoadingTips) ? labels.deepAnalysisLoadingTips : []
+  const [tipIndex, setTipIndex] = React.useState(0)
+
+  React.useEffect(() => {
+    setTipIndex(0)
+    if (tips.length <= 1) return undefined
+    const id = window.setInterval(() => {
+      setTipIndex(index => (index + 1) % tips.length)
+    }, 5200)
+    return () => window.clearInterval(id)
+  }, [tips.length, labels.deepAnalysisLoadingTips])
+
+  const tip = tips[tipIndex] || labels.deepAnalysisLoading || ''
+
+  return (
+    <div
+      className="brand-analysis-overlay"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <div className="brand-analysis-core">
+        <div className="brand-analysis-logo-wrap">
+          <span className="brand-analysis-orbit" aria-hidden="true" />
+          <span className="brand-analysis-scanline" aria-hidden="true" />
+          <img className="brand-analysis-logo" src="/logo.png" alt="" />
+        </div>
+        <div className="brand-analysis-copy">
+          <span>{labels.deepAnalysisLoadingKicker || 'Analisi coach'}</span>
+          <strong>{labels.deepAnalysisTitle}</strong>
+          <p className="brand-analysis-loading-status">
+            {labels.deepAnalysisLoadingStatus || labels.deepAnalysisLoading}
+          </p>
+        </div>
+        {tip ? (
+          <div className="brand-analysis-tip" key={tipIndex}>
+            <span className="brand-analysis-tip-label">
+              {labels.deepAnalysisLoadingTipLabel || 'Mentre aspetti'}
+            </span>
+            <p className="brand-analysis-tip-text">{tip}</p>
+            {tips.length > 1 ? (
+              <div className="brand-analysis-tip-dots" aria-hidden="true">
+                {tips.map((_, index) => (
+                  <span
+                    key={index}
+                    className={index === tipIndex ? 'is-active' : ''}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 function CardDetailsModal({
   card,
   labels,
@@ -1375,22 +1459,7 @@ function CardDetailsModal({
         className={`card-details-modal-inner${deepAnalysisLoading ? ' card-details-modal-inner--deep-loading' : ''}`}
         onClick={(event) => event.stopPropagation()}
       >
-        {deepAnalysisLoading && (
-          <div className="brand-analysis-overlay" role="status" aria-live="polite" aria-busy="true">
-            <div className="brand-analysis-core">
-              <div className="brand-analysis-logo-wrap">
-                <span className="brand-analysis-orbit" aria-hidden="true" />
-                <span className="brand-analysis-scanline" aria-hidden="true" />
-                <img className="brand-analysis-logo" src="/logo.png" alt="" />
-              </div>
-              <div className="brand-analysis-copy">
-                <span>ANALISI COACH</span>
-                <strong>{labels.deepAnalysisTitle}</strong>
-                <p>{labels.deepAnalysisLoading}</p>
-              </div>
-            </div>
-          </div>
-        )}
+        {deepAnalysisLoading && <DeepAnalysisLoadingOverlay labels={labels} />}
         <DetailPanel
           card={card}
           labels={labels}
@@ -2412,12 +2481,68 @@ export default withAuth(function CardAdvisorLabPage() {
           letter-spacing: -0.03em;
         }
 
-        .brand-analysis-copy p {
+        .brand-analysis-loading-status {
           margin: 8px auto 0;
-          max-width: 30ch;
+          max-width: 32ch;
           color: rgba(255, 255, 255, 0.72);
-          line-height: 1.5;
+          line-height: 1.45;
           font-size: 13px;
+        }
+
+        .brand-analysis-tip {
+          position: relative;
+          z-index: 2;
+          width: min(100%, 380px);
+          margin-top: 4px;
+          padding: 14px 16px 12px;
+          border-radius: 18px;
+          border: 1px solid rgba(0, 212, 255, 0.22);
+          background: rgba(5, 10, 28, 0.72);
+          text-align: left;
+          animation: brandTipFade 0.4s ease;
+        }
+
+        .brand-analysis-tip-label {
+          display: block;
+          margin-bottom: 8px;
+          color: #facc15;
+          font-size: 10px;
+          font-weight: 950;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+        }
+
+        .brand-analysis-tip-text {
+          margin: 0;
+          color: rgba(255, 255, 255, 0.88);
+          font-size: 13px;
+          line-height: 1.55;
+        }
+
+        .brand-analysis-tip-dots {
+          display: flex;
+          justify-content: center;
+          gap: 6px;
+          margin-top: 12px;
+        }
+
+        .brand-analysis-tip-dots span {
+          width: 6px;
+          height: 6px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.22);
+          transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        .brand-analysis-tip-dots span.is-active {
+          background: #67e8f9;
+          transform: scale(1.25);
+          box-shadow: 0 0 8px rgba(103, 232, 249, 0.5);
+        }
+
+        @keyframes brandTipFade {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes brandInterference {
