@@ -155,8 +155,13 @@ const copy = {
     buildSectionHint: 'Distribuzione PT consigliata per la carta.',
     buildOvrCard: 'OVR liv. 1',
     buildOvrBuilt: 'OVR build',
-    buildWhyToggle: 'Perché',
+    buildWhyToggle: 'Perché questa build',
     buildWhyHide: 'Nascondi',
+    buildWhyTitle: 'Analisi dettagliata',
+    buildWhyIntroRoster: 'Abbiamo incrociato rosa, modulo, coach, stile squadra e profilo carta.',
+    buildWhyIntroMeta: 'Riferimento community senza i dati della tua rosa.',
+    buildMetaBadge: 'Benchmark',
+    buildRosterBadge: 'Consigliata',
     buildPtDiff: 'Differenza vs meta',
     buildMetaTitle: 'Build meta pack',
     buildMetaHint: 'Ruolo e stile community, senza la tua rosa.',
@@ -293,8 +298,13 @@ const copy = {
     buildSectionHint: 'Suggested PT spread for this card.',
     buildOvrCard: 'Lv.1 OVR',
     buildOvrBuilt: 'Build OVR',
-    buildWhyToggle: 'Why',
+    buildWhyToggle: 'Why this build',
     buildWhyHide: 'Hide',
+    buildWhyTitle: 'Detailed analysis',
+    buildWhyIntroRoster: 'We cross-checked squad, formation, coach, team style and card profile.',
+    buildWhyIntroMeta: 'Community reference without your squad data.',
+    buildMetaBadge: 'Benchmark',
+    buildRosterBadge: 'Recommended',
     buildPtDiff: 'Diff vs meta',
     buildMetaTitle: 'Meta pack build',
     buildMetaHint: 'Community role/style weights, without your roster.',
@@ -846,14 +856,21 @@ function ChartInsightCard({ labels, hasGameAnalysis, onOpenGameAnalysis }) {
   )
 }
 
-function BuildPreviewCard({ title, hint, build, labels, lang, highlightKeys = [] }) {
+function BuildPreviewCard({ title, hint, build, labels, lang, variant = 'meta', highlightKeys = [] }) {
+  const isRoster = variant === 'roster'
   const [copied, setCopied] = React.useState(false)
-  const [showWhy, setShowWhy] = React.useState(false)
+  const [showWhy, setShowWhy] = React.useState(isRoster)
   if (!build?.ok) return null
 
   const activeSliders = BUILD_SLIDER_ORDER.filter(key => Number(build.sliders?.[key]) > 0)
   const highlightSet = new Set(highlightKeys)
   const displayOvr = build.playOverall ?? build.cardOverall
+  const reasonSections =
+    Array.isArray(build.reasonSections) && build.reasonSections.length > 0
+      ? build.reasonSections
+      : build.reasons?.length > 0
+        ? [{ id: 'fallback', title: labels.buildWhyTitle, items: build.reasons }]
+        : []
   const handleCopy = async () => {
     const text = build.ptCopy || activeSliders.map(key => `${getBuildSliderLabel(key, lang)}: ${build.sliders[key]}`).join(' | ')
     if (!text || typeof navigator === 'undefined' || !navigator.clipboard) return
@@ -867,10 +884,15 @@ function BuildPreviewCard({ title, hint, build, labels, lang, highlightKeys = []
   }
 
   return (
-    <article className="build-preview-card">
+    <article className={`build-preview-card build-preview-card-${variant}`}>
       <div className="build-preview-card-top">
         <div>
-          <h4>{title}</h4>
+          <div className="build-preview-card-title-row">
+            <h4>{title}</h4>
+            <span className={`build-preview-card-badge build-preview-card-badge-${variant}`}>
+              {isRoster ? labels.buildRosterBadge : labels.buildMetaBadge}
+            </span>
+          </div>
           <p>{hint}</p>
         </div>
         <button type="button" className="build-preview-copy" onClick={handleCopy}>
@@ -908,18 +930,35 @@ function BuildPreviewCard({ title, hint, build, labels, lang, highlightKeys = []
           </span>
         ))}
       </div>
-      {build.reasons?.length > 0 && (
-        <>
+      {reasonSections.length > 0 && (
+        <div className="build-preview-why">
           <button
             type="button"
-            className="build-preview-why-toggle"
+            className={`build-preview-why-toggle build-preview-why-toggle-${variant}`}
             onClick={() => setShowWhy(value => !value)}
+            aria-expanded={showWhy}
           >
             {showWhy ? labels.buildWhyHide : labels.buildWhyToggle}
-            <ChevronRight size={14} />
+            <ChevronRight size={14} className={showWhy ? 'build-preview-why-chevron-open' : ''} />
           </button>
-          {showWhy && <p className="build-preview-why-text">{build.reasons[0]}</p>}
-        </>
+          {showWhy && (
+            <div className="build-preview-why-body">
+              <p className="build-preview-why-intro">
+                {isRoster ? labels.buildWhyIntroRoster : labels.buildWhyIntroMeta}
+              </p>
+              {reasonSections.map(section => (
+                <section key={section.id} className="build-preview-why-section">
+                  <h5>{section.title}</h5>
+                  <ul>
+                    {section.items.map((item, index) => (
+                      <li key={`${section.id}-${index}`}>{item}</li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </article>
   )
@@ -983,6 +1022,7 @@ function CardBuildPreviewSection({ preview, loading, labels, lang }) {
       <div className="build-preview-dual">
         {preview.meta?.ok ? (
           <BuildPreviewCard
+            variant="meta"
             title={labels.buildMetaTitle}
             hint={labels.buildMetaHint}
             build={preview.meta}
@@ -997,6 +1037,7 @@ function CardBuildPreviewSection({ preview, loading, labels, lang }) {
         )}
         {preview.roster?.ok ? (
           <BuildPreviewCard
+            variant="roster"
             title={labels.buildRosterTitle}
             hint={labels.buildRosterHint}
             build={preview.roster}
@@ -3825,6 +3866,78 @@ export default withAuth(function CardAdvisorLabPage() {
           background: rgba(255, 255, 255, 0.04);
         }
 
+        .build-preview-card-meta {
+          border-color: rgba(167, 139, 250, 0.35);
+          background: linear-gradient(165deg, rgba(88, 28, 135, 0.22) 0%, rgba(15, 23, 42, 0.55) 100%);
+          box-shadow: inset 0 1px 0 rgba(196, 181, 253, 0.12);
+        }
+
+        .build-preview-card-roster {
+          border-color: rgba(52, 211, 153, 0.4);
+          background: linear-gradient(165deg, rgba(6, 78, 59, 0.35) 0%, rgba(8, 47, 73, 0.5) 100%);
+          box-shadow: inset 0 1px 0 rgba(110, 231, 183, 0.14);
+        }
+
+        .build-preview-card-title-row {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        .build-preview-card-badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 2px 8px;
+          border-radius: 999px;
+          font-size: 9px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .build-preview-card-badge-meta {
+          color: #e9d5ff;
+          background: rgba(139, 92, 246, 0.25);
+          border: 1px solid rgba(167, 139, 250, 0.45);
+        }
+
+        .build-preview-card-badge-roster {
+          color: #a7f3d0;
+          background: rgba(16, 185, 129, 0.22);
+          border: 1px solid rgba(52, 211, 153, 0.5);
+        }
+
+        .build-preview-card-meta .build-preview-ovr-pill-accent {
+          border-color: rgba(167, 139, 250, 0.45);
+          background: rgba(139, 92, 246, 0.18);
+        }
+
+        .build-preview-card-roster .build-preview-ovr-pill-accent {
+          border-color: rgba(52, 211, 153, 0.45);
+          background: rgba(16, 185, 129, 0.18);
+        }
+
+        .build-preview-card-meta .build-preview-pt-tag b {
+          color: #c4b5fd;
+        }
+
+        .build-preview-card-roster .build-preview-pt-tag b {
+          color: #6ee7b7;
+        }
+
+        .build-preview-card-meta .build-preview-copy {
+          border-color: rgba(167, 139, 250, 0.4);
+          background: rgba(139, 92, 246, 0.15);
+          color: #e9d5ff;
+        }
+
+        .build-preview-card-roster .build-preview-copy {
+          border-color: rgba(52, 211, 153, 0.45);
+          background: rgba(16, 185, 129, 0.14);
+          color: #a7f3d0;
+        }
+
         .build-preview-card-muted {
           display: flex;
           flex-direction: column;
@@ -3923,30 +4036,105 @@ export default withAuth(function CardAdvisorLabPage() {
           font-size: 12px;
         }
 
-        .build-preview-pt-tag-diff {
-          border-color: rgba(251, 191, 36, 0.45);
-          background: rgba(251, 191, 36, 0.1);
+        .build-preview-card-roster .build-preview-pt-tag-diff {
+          border-color: rgba(251, 191, 36, 0.55);
+          background: rgba(251, 191, 36, 0.14);
+        }
+
+        .build-preview-why {
+          margin-top: 10px;
+          padding-top: 10px;
+          border-top: 1px dashed rgba(255, 255, 255, 0.1);
         }
 
         .build-preview-why-toggle {
-          margin-top: 10px;
           display: inline-flex;
           align-items: center;
           gap: 4px;
           border: none;
           background: none;
-          color: rgba(0, 212, 255, 0.85);
           font-size: 11px;
-          font-weight: 600;
+          font-weight: 700;
           cursor: pointer;
           padding: 0;
         }
 
-        .build-preview-why-text {
-          margin: 6px 0 0;
+        .build-preview-why-toggle-meta {
+          color: #c4b5fd;
+        }
+
+        .build-preview-why-toggle-roster {
+          color: #6ee7b7;
+        }
+
+        .build-preview-why-chevron-open {
+          transform: rotate(90deg);
+        }
+
+        .build-preview-why-body {
+          margin-top: 8px;
+        }
+
+        .build-preview-why-intro {
+          margin: 0 0 10px;
+          font-size: 11px;
+          line-height: 1.5;
+          color: rgba(255, 255, 255, 0.72);
+        }
+
+        .build-preview-why-section {
+          margin-bottom: 10px;
+        }
+
+        .build-preview-why-section h5 {
+          margin: 0 0 5px;
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        .build-preview-card-roster .build-preview-why-section h5 {
+          color: rgba(110, 231, 183, 0.85);
+        }
+
+        .build-preview-card-meta .build-preview-why-section h5 {
+          color: rgba(196, 181, 253, 0.9);
+        }
+
+        .build-preview-why-section ul {
+          margin: 0;
+          padding: 0;
+          list-style: none;
+          display: grid;
+          gap: 5px;
+        }
+
+        .build-preview-why-section li {
+          position: relative;
+          padding-left: 12px;
           font-size: 11px;
           line-height: 1.45;
-          color: rgba(255, 255, 255, 0.65);
+          color: rgba(255, 255, 255, 0.78);
+        }
+
+        .build-preview-why-section li::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 7px;
+          width: 4px;
+          height: 4px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.35);
+        }
+
+        .build-preview-card-roster .build-preview-why-section li::before {
+          background: #34d399;
+        }
+
+        .build-preview-card-meta .build-preview-why-section li::before {
+          background: #a78bfa;
         }
 
         .build-preview-copy {
