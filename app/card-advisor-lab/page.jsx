@@ -168,6 +168,7 @@ const copy = {
     buildRosterHint: 'Modulo, coach e stile squadra applicati.',
     buildRosterMissing: 'Collega la rosa per la build personalizzata.',
     buildSkillsTitle: 'Abilità consigliate',
+    buildNativeSkills: 'Sulla carta',
     buildPtUsed: 'PT',
     buildPlayOvr: 'OVR gioco',
     buildLoading: 'Calcolo build…',
@@ -309,6 +310,7 @@ const copy = {
     buildRosterHint: 'Formation, coach and team style applied.',
     buildRosterMissing: 'Link your roster for a personalized build.',
     buildSkillsTitle: 'Suggested skills',
+    buildNativeSkills: 'On card',
     buildPtUsed: 'PT',
     buildPlayOvr: 'In-game OVR',
     buildLoading: 'Computing build…',
@@ -1111,7 +1113,8 @@ function CardBuildPreviewSection({ preview, loading, labels, lang }) {
           </article>
         )}
       </div>
-      {skills.available !== false && (skills.items?.length > 0 || skills.message) && (
+      {skills.available !== false &&
+        (skills.items?.length > 0 || skills.message || skills.equippedNative?.length > 0) && (
         <div className="build-preview-skills">
           <h4>{labels.buildSkillsTitle}</h4>
           {skills.slotsFree > 0 && (
@@ -1119,7 +1122,19 @@ function CardBuildPreviewSection({ preview, loading, labels, lang }) {
               {skills.slotsFree} {labels.buildSlotsFree}
             </small>
           )}
-          {skills.message && <p>{skills.message}</p>}
+          {skills.equippedNative?.length > 0 && (
+            <div className="build-preview-skills-native" aria-label={labels.buildNativeSkills}>
+              <small className="build-preview-skills-native-label">{labels.buildNativeSkills}</small>
+              <div className="build-preview-skills-pills">
+                {skills.equippedNative.map(item => (
+                  <span key={item.skill} className="build-preview-skill-pill">
+                    {item.display || item.skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {skills.message && <p className="build-preview-skills-note">{skills.message}</p>}
           {skills.items?.length > 0 && (
             <ul>
               {skills.items.map(item => (
@@ -4276,6 +4291,41 @@ export default withAuth(function CardAdvisorLabPage() {
           margin-top: 4px;
           color: rgba(0, 212, 255, 0.85);
           font-size: 11px;
+        }
+
+        .build-preview-skills-native {
+          margin-top: 10px;
+        }
+
+        .build-preview-skills-native-label {
+          display: block;
+          margin-bottom: 6px;
+          color: rgba(255, 255, 255, 0.5);
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+        }
+
+        .build-preview-skills-pills {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+
+        .build-preview-skill-pill {
+          padding: 4px 8px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          font-size: 11px;
+          color: rgba(255, 255, 255, 0.88);
+        }
+
+        .build-preview-skills-note {
+          margin: 10px 0 0;
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.62);
+          line-height: 1.45;
         }
 
         .build-preview-skills ul {
