@@ -563,6 +563,7 @@ Nota affidabilita: "special double touch" e varianti "tess/croqueta interrotta" 
 - **Dribbling fulminei** (Showtime): Migliora le abilità di dribbling del giocatore vicino all'area di rigore avversaria. **Quando serve**: trequartisti/attaccanti che entrano in area.
 - **Scatto bruciante** (Showtime): Consente al giocatore di eseguire un tocco secco veloce da fermo o mentre si muove lentamente, con animazioni speciali. **Quando serve**: attaccanti che ricevono palla fermi e devono accelerare improvvisamente.
 - **Calamita ai piedi** (Showtime): Quando il giocatore ha la palla, aumenta la sua capacità di mantenerne il possesso in base al numero di avversari nel raggio di 5 metri (max 4 avversari). **Quando serve**: giocatori tecnici sotto pressing.
+- **Piedi magnetici** (= **Calamita ai piedi**, stesso effetto; nome EN catalogo: *Magnetic Feet*): non è un'abilità diversa. Usa la descrizione di Calamita ai piedi sopra. **Quando serve**: MED/CC/TrQ che ricevono palla in pressing o in zone affollate.
 - **Stop acrobatico**: Controllo palla acrobatico. **Quando serve**: passaggi difficili, posizioni scomode.
 - **Finta tiro**: Finta tiro per ingannare difensore. **Quando serve**: 1v1 in area.
 - **Finta passaggio**: Finta passaggio. **Quando serve**: aprire linee di passaggio.
@@ -581,8 +582,9 @@ Nota affidabilita: "special double touch" e varianti "tess/croqueta interrotta" 
 - **Tornante**: Rientra rapidamente in fase difensiva dopo fase offensiva. **Quando serve**: centrocampisti, Box-to-Box, ali offensive.
 - **Muro**: Maggiore efficacia nel bloccare passaggi e tiri. **Quando serve**: difensori centrali, mediani.
 - **Disimpegno acrobatico**: Stoppate/disimpegni acrobatici con i piedi anche quando il giocatore è in equilibrio precario o in aria. **Quando serve**: difensori, interventi di emergenza in area.
-- **Dominio palle alte**: Maggiore probabilità di vincere duelli aerei. **Quando serve**: difensori centrali, attaccanti fisici, cross.
-- **Dominio palle alte**: Abilità *difensiva* per duelli aerei; Colpo di testa (§8.1) è invece per tiro di testa in attacco. Su palla alta difensiva, con **posizionamento** e **timing** puoi anticipare l’avversario anche senza Dominio palle alte, ma l’abilità aumenta la probabilità di vincere il duello.
+- **Dominio palle alte**: Maggiore probabilità di vincere duelli aerei. **Quando serve**: difensori centrali, attaccanti fisici, cross. Abilità *difensiva* per duelli aerei; **Colpo di testa** (§8.1) è invece per conclusione di testa in attacco.
+- **Caccia all'ombra** / **Shadow Hunt** (Showtime, difesa): solo DC/TD/TS/MED difensivo. Si attiva automaticamente su passaggio filtrante dietro la linea: boost di velocità per recuperare e inseguire l'attaccante. **Quando serve**: difensori contro punta veloci e inserimenti. Non richiede input manuale.
+- **Contrasto a distanza** (= **Tackle in allungo** / *Long-Reach Tackle*): stesso concetto — tackle in piedi efficaci anche con avversario più lontano, da fermo o in movimento lento. **Quando serve**: DC/TD/TS/MED.
 
 ### 8.5 Abilità Portiere
 - **Riflessi Felini**: Parate ravvicinate miracolose. **Quando serve**: portieri, 1v1.
@@ -606,6 +608,7 @@ Nota affidabilita: "special double touch" e varianti "tess/croqueta interrotta" 
 ### 8.7 Abilità Speciali e Leadership
 - **Leader**: Ispira compagni, riduce impatto fatica squadra. **Quando serve**: partite lunghe, giocatori chiave.
 - **Specialista cross**: Cross più precisi e pericolosi. **Quando serve**: esterni, Vie laterali.
+- **Specialista di cross** (= *Cross Specialist*, stesso concetto di Specialista cross su carta Showtime).
 - **Specialista punizioni**: Punizioni più precise. **Quando serve**: tiratori punizioni.
 - **Specialista rigori**: Rigori più sicuri. **Quando serve**: tiratori designati.
 - **Tiratore**: Tiri da fuori area più precisi. **Quando serve**: centrocampisti offensivi, tiri da distanza.
@@ -639,6 +642,36 @@ Carta forte senza abilità corrette non renderà in game come dovrebbe. **Obblig
 **SPIRITO COMBATTIVO**: ideale per tutti gli 11; fondamentale per DC, MED, TrQ (spazi ridotti; TrQ con Resistenza bassa calano già al 30' – Spirito combattivo aiuta anche se sostituiti al 46').
 
 **RISERVA DI LUSSO**: agisce già dal primo minuto del secondo tempo (non solo dal 60'). Massima efficacia su game changer: farli subentrare al secondo tempo è molto più impattante che schierarli titolari.
+
+### 8.11 Showtime e abilità recenti (sinonimi IT/EN)
+
+**Regola per l'AI**: se in rosa compare un nome EN (catalogo/EFHub), usa l'effetto della riga IT corrispondente. Molte voci sono **sinonimi** di §8.1–8.4, non abilità extra da sommare due volte.
+
+| Nome in rosa (esempi) | Sinonimo / sezione | Effetto (sintesi verificata community/Konami) |
+|----------------------|-------------------|---------------------------------------------|
+| Piedi magnetici / Magnetic Feet | Calamita ai piedi §8.3 | Possesso sotto pressing (max 4 avversari entro ~5 m) |
+| Dribbling in slancio / Momentum Dribbling | Dribbling fulminei §8.3 | Più tocchi e controllo stretto in ultimo terzo |
+| Scatto bruciante / Acceleration Burst | §8.3 | Tocco secco rapido da fermo o movimento lento; cambio direzione |
+| Passaggio fenomenale / Phenomenal Passing | Passaggio illuminante §8.2 | Passaggi precisi anche da orientamento scomodo |
+| Finalizzazione fenomenale / Phenomenal Finishing | Istinto del gol §8.1 | Tiri più precisi da equilibrio/atipico |
+| Passaggio visionario / Visionary Pass | §8.2 | Passaggi più sicuri; migliora prima touch del ricevente |
+| Passaggi cruciali / Game-changing Pass | §8.2 | +accuratezza passaggi bassi/alti in ripresa se pareggio/svantaggio (2° tempo) |
+| Cross tagliente / Edged Crossing | §8.2 | Cross con caduta verticale (dip), utili da fascia |
+| Tiro a giro spiovente / Blitz Curler | A giro / tiro a giro §8.1 | Curva più marcata su tiri controllati |
+| Incornata / Bullet Header | Incornata §8.1 | Testate verso il basso più potenti/coerenti |
+| Difesa svettante / Aerial Fort | §8.4 | Duelli aerei migliori **in propria area** |
+| Fortezza / Fortress | §8.4 (condizionale) | +5% capacità difensive in 2° tempo se in vantaggio a intervallo |
+| Caccia all'ombra / Shadow Hunt | §8.4 | Recupero automatico su filtrante dietro la difesa |
+| Contrasto a distanza / Long-Reach Tackle | Tackle in allungo §8.4 | Tackle in piedi a distanza |
+| Rasoterra potente / Low Screamer | Sassata rasoterra §8.1 | Stunning shot rapido e basso con barra potenza <50% |
+| Specialista lancio lungo / Long Ball Expert | Lancio lungo preciso §8.2 | Lanci lunghi più accurati |
+| Cross anticipato / Early Crosser | Cross calibrato §8.2 | Cross anticipati più efficaci |
+| Inserimento incisivo / Incisive Run | — | Taglio da fascia verso porta (trait offensivo) |
+| Corsa ubriacante / Mazing Run | — | Penetrazione con dribbling stretto e svolte |
+| Proiettile veloce / Speeding Bullet | — | Inserimenti e progressioni in velocità |
+| Trickster | §8.3 (tecnico) | Skill move / dribbling flair in 1v1; utile su ali e TrQ tecnici |
+
+**Non in elenco rosa standard**: Attack Trigger, Willpower, GK Directing Defense, GK Spirit Roar — se compaiono su carta portiere/Showtime, citare solo l'effetto indicato in scheda senza inventare numeri.
 
 ---
 
@@ -692,6 +725,7 @@ Le policy comportamentali per il Coach AI (errori da evitare, terminologia, anti
 
 **Versione**: 8.5.3 ENTERPRISE | **Data**: 17 Maggio 2026
 **Principio**: FISSO vs CONFIGURABILE | **Terminologia**: Ufficiale eFootball
+**Changelog 8.5.4**: §8.3 alias Piedi magnetici = Calamita ai piedi; §8.4 Shadow Hunt e Contrasto a distanza; §8.11 tabella Showtime/sinonimi IT-EN (Magnetic Feet, Momentum Dribbling, Trickster, ecc.) per chat/contromisure; rimosso duplicato Dominio palle alte.
 **Changelog 8.5.3**: §7.10 regola build/meta funzionale (movimenti, difficolta, dati cliente; Sintesi rosa ≠ progressione PT).
 **Changelog 8.5.2**: §2 allineato ai 24 stili card reali: rimosso *Punta avanzata* / Adv. Striker (non esistono); *Punta arretrata* → **attacante di rientro**; chiarito Opportunista (linea fuorigioco, non "difensore").
 **Changelog 8.5**: §10 (NOTE CRITICHE) spostato da RAG a system prompt assistant-chat. Policy Coach AI ora in COACH_AI_POLICIES_* (sempre attive). RAG contiene solo meccaniche eFootball (§1-9).
