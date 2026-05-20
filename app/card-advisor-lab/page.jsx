@@ -73,9 +73,10 @@ const copy = {
     chartInsightCta: 'Carica statistiche',
     chartInsightRefreshCta: 'Aggiorna',
     proUnlockTitle: 'Verdetto Pro',
-    proUnlockText: 'Ti dice se vale prenderla, saltarla o usarla solo come rotazione — sulla tua rosa reale.',
+    proUnlockText: 'Prendi, salta o rotazione — sulla tua rosa reale.',
     proUnlockBullets: ['Decisione chiara: prendi, salta o rotazione', 'Fit con titolari, panchina, stile e coach', 'Dove brilla e quando evitarla'],
     proUnlockButton: 'Sblocca verdetto Pro',
+    proUnlockButtonCost: '2 HP',
     proUnlockedBadge: 'Sbloccato',
     proUnlockedTitle: 'Analisi pronta',
     proFeaturedHookTop: 'Profilo forte: scopri se vale prenderla sulla tua rosa.',
@@ -179,23 +180,28 @@ const copy = {
     loadingDecision: 'Analisi in corso…',
     noNativeSkills: 'Profilo tecnico non disponibile.',
     buildSectionTitle: 'Build e abilità',
-    buildSectionHint: 'Distribuzione PT consigliata per la carta.',
+    buildSectionHint: 'Due proposte di punti: confronto e build consigliata per la tua rosa.',
     buildOvrCard: 'OVR liv. 1',
     buildOvrBuilt: 'OVR build',
     buildWhyToggle: 'Perché questa build',
     buildWhyHide: 'Nascondi',
     buildWhyTitle: 'Dettaglio',
-    buildWhyIntroRoster: 'Il dettaglio sotto spiega cosa sentirai in partita — senza gergo da spreadsheet.',
-    buildWhyIntroMeta: 'Come la massa maxa questa carta. La colonna “Consigliata” è quella da applicare.',
-    buildMetaBadge: 'Benchmark',
+    buildWhyIntroRoster: 'Qui trovi perché questa build ha senso per te e cosa migliori in partita. Puoi applicarla con tranquillità.',
+    buildWhyIntroMeta: 'Solo un confronto rapido. La build da usare in gioco è quella Consigliata accanto.',
+    buildMetaBadge: 'Confronto',
     buildRosterBadge: 'Consigliata',
     buildPtDiff: 'Differenza vs meta',
     buildMetaTitle: 'Build meta del pack',
-    buildMetaHint: 'Distribuzione PT più usata in community per ruolo/stile, senza la tua rosa.',
+    buildMetaHint: 'Distribuzione tipica per questo ruolo — per confrontare, non da copiare così com’è.',
     buildRosterTitle: 'Build per la tua rosa',
-    buildRosterHint: 'Modulo, coach e stile squadra applicati.',
+    buildRosterHint: 'Pensata per modulo, allenatore e come giochi tu.',
     buildRosterMissing: 'Collega la rosa per la build personalizzata.',
-    buildSkillsTitle: 'Abilità consigliate',
+    buildSkillsTitle: 'Abilità sulla carta',
+    buildSkillsEquipped: 'già presenti',
+    buildSkillsSlotFree: 'slot libero',
+    buildSkillsSlotsFree: 'slot liberi',
+    buildSkillNextTitle: 'Prossima da valutare',
+    buildSkillNextHint: 'Solo se hai ancora uno slot libero in gioco.',
     buildNativeSkills: 'Sulla carta',
     buildPtUsed: 'PT',
     buildPlayOvr: 'OVR gioco',
@@ -235,9 +241,10 @@ const copy = {
     chartInsightCta: 'Add stats',
     chartInsightRefreshCta: 'Refresh',
     proUnlockTitle: 'Pro verdict',
-    proUnlockText: 'It tells you whether to sign, skip, or use this card as rotation — on your real roster.',
+    proUnlockText: 'Sign, skip, or rotation — on your real roster.',
     proUnlockBullets: ['Clear decision: sign, skip, or rotation', 'Fit with starters, bench, style and coach', 'Where it shines — when to pass'],
     proUnlockButton: 'Unlock Pro verdict',
+    proUnlockButtonCost: '2 HP',
     proUnlockedBadge: 'Unlocked',
     proUnlockedTitle: 'Analysis ready',
     proFeaturedHookTop: 'Strong profile: see if it is worth signing for your roster.',
@@ -341,23 +348,28 @@ const copy = {
     loadingDecision: 'Analyzing…',
     noNativeSkills: 'Technical profile unavailable.',
     buildSectionTitle: 'Build & skills',
-    buildSectionHint: 'Suggested PT spread for this card.',
+    buildSectionHint: 'Two point spreads: benchmark and the one recommended for your squad.',
     buildOvrCard: 'Lv.1 OVR',
     buildOvrBuilt: 'Build OVR',
     buildWhyToggle: 'Why this build',
     buildWhyHide: 'Hide',
     buildWhyTitle: 'Details',
-    buildWhyIntroRoster: 'Details below — what you will feel in matches, not spreadsheet jargon.',
-    buildWhyIntroMeta: 'How most players max this card. Use the “Recommended” column in-game.',
+    buildWhyIntroRoster: 'Why this build fits you and what improves on the pitch. You can apply it with confidence.',
+    buildWhyIntroMeta: 'A quick comparison only. Use the Recommended build next to it in-game.',
     buildMetaBadge: 'Benchmark',
     buildRosterBadge: 'Recommended',
     buildPtDiff: 'Diff vs meta',
     buildMetaTitle: 'Meta pack build',
-    buildMetaHint: 'Community role/style weights, without your roster.',
+    buildMetaHint: 'Typical spread for this role — to compare, not to copy as-is.',
     buildRosterTitle: 'Build for your squad',
-    buildRosterHint: 'Formation, coach and team style applied.',
+    buildRosterHint: 'Built for your formation, coach and how you play.',
     buildRosterMissing: 'Link your roster for a personalized build.',
-    buildSkillsTitle: 'Suggested skills',
+    buildSkillsTitle: 'Card skills',
+    buildSkillsEquipped: 'already on card',
+    buildSkillsSlotFree: 'free slot',
+    buildSkillsSlotsFree: 'free slots',
+    buildSkillNextTitle: 'Next to consider',
+    buildSkillNextHint: 'Only if you still have a free slot in-game.',
     buildNativeSkills: 'On card',
     buildPtUsed: 'PT',
     buildPlayOvr: 'In-game OVR',
@@ -1135,34 +1147,46 @@ function CardBuildPreviewSection({ preview, loading, labels, lang }) {
       {skills.available !== false &&
         (skills.items?.length > 0 || skills.message || skills.equippedNative?.length > 0) && (
         <div className="build-preview-skills">
-          <h4>{labels.buildSkillsTitle}</h4>
-          {skills.slotsFree > 0 && (
-            <small>
-              {skills.slotsFree} {labels.buildSlotsFree}
-            </small>
-          )}
+          <div className="build-preview-skills-head">
+            <h4>{labels.buildSkillsTitle}</h4>
+            <p className="build-preview-skills-meta">
+              {skills.equippedNative?.length > 0 ? (
+                <span>
+                  {skills.equippedNative.length} {labels.buildSkillsEquipped}
+                </span>
+              ) : null}
+              {skills.slotsFree > 0 ? (
+                <span className="build-preview-skills-meta-free">
+                  {skills.equippedNative?.length > 0 ? ' · ' : ''}
+                  {skills.slotsFree}{' '}
+                  {skills.slotsFree === 1 ? labels.buildSkillsSlotFree : labels.buildSkillsSlotsFree}
+                </span>
+              ) : null}
+            </p>
+          </div>
           {skills.equippedNative?.length > 0 && (
-            <div className="build-preview-skills-native" aria-label={labels.buildNativeSkills}>
-              <small className="build-preview-skills-native-label">{labels.buildNativeSkills}</small>
-              <div className="build-preview-skills-pills">
-                {skills.equippedNative.map(item => (
-                  <span key={item.skill} className="build-preview-skill-pill">
-                    {skillPillLabel(item, lang)}
-                  </span>
-                ))}
-              </div>
+            <div className="build-preview-skills-pills" aria-label={labels.buildNativeSkills}>
+              {skills.equippedNative.map(item => (
+                <span key={item.skill} className="build-preview-skill-pill">
+                  {skillPillLabel(item, lang)}
+                </span>
+              ))}
             </div>
           )}
-          {skills.message && <p className="build-preview-skills-note">{skills.message}</p>}
-          {skills.items?.length > 0 && (
-            <ul>
-              {skills.items.map(item => (
-                <li key={item.skill}>
+          {skills.items?.length > 0 && skills.slotsFree > 0 && (
+            <div className="build-preview-skill-next">
+              <span className="build-preview-skill-next-label">{labels.buildSkillNextTitle}</span>
+              <p className="build-preview-skill-next-hint">{labels.buildSkillNextHint}</p>
+              {skills.items.slice(0, 2).map(item => (
+                <div key={item.skill} className="build-preview-skill-next-card">
                   <strong>{skillPillLabel(item, lang)}</strong>
-                  <span>{item.reason}</span>
-                </li>
+                  {item.reason ? <span>{item.reason}</span> : null}
+                </div>
               ))}
-            </ul>
+            </div>
+          )}
+          {skills.slotsFree === 0 && skills.message && (
+            <p className="build-preview-skills-note">{skills.message}</p>
           )}
         </div>
       )}
@@ -1216,17 +1240,24 @@ function DetailPanel({
                 <span>{deepAnalysis ? labels.proUnlockedBadge : labels.deepAnalysisCost}</span>
                 <h3>{deepAnalysis ? labels.proUnlockedTitle : labels.proUnlockTitle}</h3>
               </div>
-              <p>{getProFeaturedCopy(card, deepAnalysis, labels)}</p>
-              {!deepAnalysis && (
-                <ul>
-                  {labels.proUnlockBullets.map(item => <li key={item}>{item}</li>)}
-                </ul>
-              )}
+              <p>{deepAnalysis ? getProFeaturedCopy(card, deepAnalysis, labels) : labels.proUnlockText}</p>
             </div>
             {!deepAnalysis && (
-              <button type="button" onClick={onRequestDeepAnalysis} disabled={deepAnalysisLoading}>
-                {deepAnalysisLoading ? labels.deepAnalysisLoading : labels.proUnlockButton}
-              </button>
+              <div className="deep-analysis-entry-cta">
+                <button
+                  type="button"
+                  className="deep-analysis-unlock-btn"
+                  onClick={onRequestDeepAnalysis}
+                  disabled={deepAnalysisLoading}
+                  aria-busy={deepAnalysisLoading}
+                >
+                  <Sparkles size={20} strokeWidth={2.25} aria-hidden />
+                  <span className="deep-analysis-unlock-btn-text">
+                    <strong>{deepAnalysisLoading ? labels.deepAnalysisLoading : labels.proUnlockButton}</strong>
+                    {!deepAnalysisLoading ? <small>{labels.proUnlockButtonCost}</small> : null}
+                  </span>
+                </button>
+              </div>
             )}
           </div>
           <ChartInsightCard
@@ -3300,6 +3331,9 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .deep-analysis-entry-featured {
           margin-top: 10px;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 14px;
           border-width: 1.5px;
           border-color: rgba(251,191,36,0.56);
           background:
@@ -3386,22 +3420,80 @@ export default withAuth(function CardAdvisorLabPage() {
           line-height: 1.25;
         }
 
-        .deep-analysis-entry button {
-          border: none;
-          border-radius: 999px;
-          background: linear-gradient(135deg, #facc15, #f97316);
-          color: #050814;
-          min-height: 40px;
-          padding: 9px 14px;
-          font-weight: 950;
-          cursor: pointer;
-          white-space: nowrap;
-          box-shadow: 0 12px 28px rgba(249,115,22,0.24);
+        .deep-analysis-entry-cta {
+          flex-shrink: 0;
         }
 
-        .deep-analysis-entry button:disabled {
-          opacity: 0.65;
+        .deep-analysis-unlock-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          width: 100%;
+          border: 2px solid rgba(255, 255, 255, 0.92);
+          border-radius: 14px;
+          background: linear-gradient(180deg, #fde047 0%, #facc15 38%, #f97316 100%);
+          color: #050814;
+          min-height: 52px;
+          padding: 12px 18px;
+          font-weight: 950;
+          cursor: pointer;
+          box-shadow:
+            0 0 0 1px rgba(251, 191, 36, 0.45) inset,
+            0 14px 34px rgba(249, 115, 22, 0.45),
+            0 0 28px rgba(250, 204, 21, 0.35);
+          animation: deep-analysis-unlock-pulse 2.2s ease-in-out infinite;
+          transition: transform 0.15s ease, filter 0.15s ease;
+        }
+
+        .deep-analysis-unlock-btn:hover:not(:disabled) {
+          transform: translateY(-2px) scale(1.02);
+          filter: brightness(1.06);
+        }
+
+        .deep-analysis-unlock-btn:active:not(:disabled) {
+          transform: translateY(0) scale(0.99);
+        }
+
+        .deep-analysis-unlock-btn:disabled {
+          opacity: 0.72;
           cursor: wait;
+          animation: none;
+        }
+
+        .deep-analysis-unlock-btn-text {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 1px;
+          line-height: 1.15;
+          text-align: left;
+        }
+
+        .deep-analysis-unlock-btn-text strong {
+          font-size: clamp(15px, 2.2vw, 17px);
+          letter-spacing: -0.02em;
+        }
+
+        .deep-analysis-unlock-btn-text small {
+          font-size: 12px;
+          font-weight: 800;
+          opacity: 0.82;
+        }
+
+        @keyframes deep-analysis-unlock-pulse {
+          0%, 100% {
+            box-shadow:
+              0 0 0 1px rgba(251, 191, 36, 0.45) inset,
+              0 14px 34px rgba(249, 115, 22, 0.42),
+              0 0 22px rgba(250, 204, 21, 0.28);
+          }
+          50% {
+            box-shadow:
+              0 0 0 1px rgba(255, 255, 255, 0.55) inset,
+              0 18px 40px rgba(249, 115, 22, 0.58),
+              0 0 36px rgba(250, 204, 21, 0.48);
+          }
         }
 
         .deep-analysis-inline-loader {
@@ -4412,44 +4504,93 @@ export default withAuth(function CardAdvisorLabPage() {
           border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        .build-preview-skills h4 {
+        .build-preview-skills-head {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: baseline;
+          justify-content: space-between;
+          gap: 6px 12px;
+        }
+
+        .build-preview-skills-head h4 {
           margin: 0;
           font-size: 14px;
         }
 
-        .build-preview-skills small {
-          display: inline-block;
-          margin-top: 4px;
-          color: rgba(0, 212, 255, 0.85);
-          font-size: 11px;
+        .build-preview-skills-meta {
+          margin: 0;
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.62);
         }
 
-        .build-preview-skills-native {
-          margin-top: 10px;
-        }
-
-        .build-preview-skills-native-label {
-          display: block;
-          margin-bottom: 6px;
-          color: rgba(255, 255, 255, 0.5);
-          font-size: 10px;
-          text-transform: uppercase;
-          letter-spacing: 0.06em;
+        .build-preview-skills-meta-free {
+          color: rgba(0, 212, 255, 0.9);
+          font-weight: 700;
         }
 
         .build-preview-skills-pills {
           display: flex;
           flex-wrap: wrap;
           gap: 6px;
+          margin-top: 10px;
         }
 
         .build-preview-skill-pill {
-          padding: 4px 8px;
+          padding: 5px 9px;
           border-radius: 999px;
-          background: rgba(255, 255, 255, 0.08);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(0, 212, 255, 0.08);
+          border: 1px solid rgba(0, 212, 255, 0.22);
           font-size: 11px;
-          color: rgba(255, 255, 255, 0.88);
+          color: rgba(255, 255, 255, 0.92);
+        }
+
+        .build-preview-skill-next {
+          margin-top: 12px;
+          padding: 10px 12px;
+          border-radius: 12px;
+          border: 1px solid rgba(0, 212, 255, 0.28);
+          background: rgba(0, 212, 255, 0.06);
+        }
+
+        .build-preview-skill-next-label {
+          display: block;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          color: rgba(0, 212, 255, 0.95);
+        }
+
+        .build-preview-skill-next-hint {
+          margin: 4px 0 8px;
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.68);
+          line-height: 1.4;
+        }
+
+        .build-preview-skill-next-card {
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+          padding: 10px 12px;
+          border-radius: 10px;
+          background: rgba(5, 8, 20, 0.55);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .build-preview-skill-next-card + .build-preview-skill-next-card {
+          margin-top: 8px;
+        }
+
+        .build-preview-skill-next-card strong {
+          font-size: 14px;
+          color: #fff;
+        }
+
+        .build-preview-skill-next-card span {
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.72);
+          line-height: 1.35;
         }
 
         .build-preview-skills-note {
@@ -4457,32 +4598,6 @@ export default withAuth(function CardAdvisorLabPage() {
           font-size: 12px;
           color: rgba(255, 255, 255, 0.62);
           line-height: 1.45;
-        }
-
-        .build-preview-skills ul {
-          margin: 10px 0 0;
-          padding: 0;
-          list-style: none;
-          display: grid;
-          gap: 8px;
-        }
-
-        .build-preview-skills li {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-          padding: 8px 10px;
-          border-radius: 10px;
-          background: rgba(255, 255, 255, 0.04);
-        }
-
-        .build-preview-skills li strong {
-          font-size: 13px;
-        }
-
-        .build-preview-skills li span {
-          font-size: 11px;
-          color: rgba(255, 255, 255, 0.62);
         }
 
         .base-details-shell {

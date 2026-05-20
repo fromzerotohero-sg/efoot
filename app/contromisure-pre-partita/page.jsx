@@ -21,6 +21,40 @@ function pickLang(val, lang) {
   return String(val)
 }
 
+function fillTemplate(template, vars) {
+  return Object.entries(vars).reduce(
+    (text, [key, value]) => text.replaceAll(`\${${key}}`, value ?? '?'),
+    template
+  )
+}
+
+/** Titolo sostituzione: ruolo riserva vs ruolo titolare uscente (evita "Thuram in CLS"). */
+function formatPlayerSubstitutionTitle(suggestion, t) {
+  const reserveName = suggestion.player_name || '?'
+  const reserveRole = suggestion.position || '?'
+  const outName = suggestion.replace_player_name || '?'
+  const outRole = suggestion.replace_position || '?'
+  const title = fillTemplate(t('replaceInStartingXI'), {
+    playerName: reserveName,
+    playerRole: reserveRole,
+    replacePlayerName: outName,
+    replacePlayerRole: outRole
+  })
+  const hint = fillTemplate(t('replaceInStartingXIHint'), { replacePlayerName: outName })
+  const rolesDiffer =
+    outRole &&
+    reserveRole &&
+    String(outRole).trim().toUpperCase() !== String(reserveRole).trim().toUpperCase()
+  const roleNote = rolesDiffer
+    ? fillTemplate(t('replaceInStartingXIRoleNote'), {
+        playerName: reserveName,
+        playerRole: reserveRole,
+        replacePlayerRole: outRole
+      })
+    : ''
+  return { title, hint, roleNote }
+}
+
 export default function CountermeasuresPreMatchPage() {
   const { t, lang } = useTranslation()
   const router = useRouter()
@@ -862,10 +896,22 @@ export default function CountermeasuresPreMatchPage() {
                         <div style={{ fontWeight: 600, marginBottom: '8px', fontSize: 'clamp(14px, 3vw, 16px)' }}>
                           {suggestion.action === 'add_to_starting_xi'
                             ? (suggestion.replace_player_name || suggestion.replace_player_id)
-                              ? t('replaceInStartingXI')
-                                    .replace('${replacePlayerName}', suggestion.replace_player_name || '?')
-                                    .replace('${playerName}', suggestion.player_name || '')
-                                    .replace('${position}', suggestion.position || '')
+                              ? (() => {
+                                  const sub = formatPlayerSubstitutionTitle(suggestion, t)
+                                  return (
+                                    <>
+                                      <div>{sub.title}</div>
+                                      <div style={{ fontWeight: 500, fontSize: 'clamp(12px, 2.8vw, 13px)', opacity: 0.85, marginTop: '6px' }}>
+                                        {sub.hint}
+                                      </div>
+                                      {sub.roleNote ? (
+                                        <div style={{ fontWeight: 500, fontSize: 'clamp(12px, 2.8vw, 13px)', color: 'var(--neon-blue)', marginTop: '4px' }}>
+                                          {sub.roleNote}
+                                        </div>
+                                      ) : null}
+                                    </>
+                                  )
+                                })()
                               : `${t('addToStartingXI')}: ${suggestion.player_name} (${suggestion.position || ''})`
                             : `${t('removeFromStartingXI')}: ${suggestion.player_name} (${suggestion.position || ''})`}
                         </div>

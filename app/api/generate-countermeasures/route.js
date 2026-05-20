@@ -634,8 +634,14 @@ if (process.env.NODE_ENV !== 'production') {
               reason = `Suggerimento "aggiungi ${suggestion.player_name}" non indica un titolare da sostituire (replace_player_id mancante o non in formazione)`
             } else {
               // Arricchisci replace_player_name se mancante
-              if (!replaceName && titolariMap.has(replaceId)) {
-                suggestion.replace_player_name = titolariMap.get(replaceId).player_name || titolariMap.get(replaceId).name || '?'
+              if (titolariMap.has(replaceId)) {
+                const replaced = titolariMap.get(replaceId)
+                if (!replaceName) {
+                  suggestion.replace_player_name = replaced.player_name || replaced.name || '?'
+                }
+                if (!suggestion.replace_position) {
+                  suggestion.replace_position = replaced.position || ''
+                }
               }
             }
           }
