@@ -15,7 +15,11 @@ import {
 import { CARD_ADVISOR_SELECT, searchCardAdvisorCardsByName } from '@/lib/cardAdvisorCardsLookup.js'
 import { fetchEfhubCardDetail } from '@/lib/efhubPlayerDetail.js'
 import { buildSkillDeltaSentence } from '@/lib/cardAdvisorSkillCompare.js'
-import { buildPurchaseFactsBlock, normalizePurchaseFit } from '@/lib/cardAdvisorPurchaseContext.js'
+import {
+  buildPurchaseFactsBlock,
+  effectiveFieldRole,
+  normalizePurchaseFit
+} from '@/lib/cardAdvisorPurchaseContext.js'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -151,14 +155,17 @@ function canonSkillsForPrompt(rawList, lang, maxItems = 14, maxLen = 60) {
   return sanitizeList(unique, maxItems, maxLen)
 }
 
-function compactPlayer(player, stylesLookup = {}, lang = 'it') {
+function compactPlayer(player, stylesLookup = {}, lang = 'it', formation = null) {
   const skills = [
     ...(Array.isArray(player?.skills) ? player.skills : []),
     ...(Array.isArray(player?.com_skills) ? player.com_skills : [])
   ]
+  const cardRole = String(player?.position || '').trim().toUpperCase() || null
+  const fieldPos = effectiveFieldRole(player, formation) || cardRole
   return {
     name: sanitize(player?.player_name, 60),
-    position: player?.position || null,
+    position: fieldPos,
+    ...(cardRole && fieldPos && cardRole !== fieldPos ? { card_role: cardRole } : {}),
     starter: Number(player?.slot_index) >= 0 && Number(player?.slot_index) <= 10,
     style: (player?.playing_style_id && stylesLookup[player.playing_style_id]) || player?.role || null,
     skills: canonSkillsForPrompt(skills, lang, 8),
@@ -334,7 +341,7 @@ function buildPrompt({ lang, card, catalogCard, profile, players, stylesLookup =
     data_quality: catalogCard ? 'catalog_match' : 'release_basic'
   }
 
-  const compactPlayers = players.map(player => compactPlayer(player, stylesLookup, lang))
+  const compactPlayers = players.map(player => compactPlayer(player, stylesLookup, lang, formation))
   const starters = compactPlayers.filter(player => player.starter)
   const reserves = compactPlayers.filter(player => !player.starter)
 
@@ -420,7 +427,7 @@ SEMANTICA:
 
 POLICY POSIZIONI E ACQUISTO (obbligatoria — come Coach chat):
 - Nomi giocatori e skill: solo da CONTESTO CLIENTE, FATTI ACQUISTO e skill_delta_sentence. Se manca un dato, non inventare.
-- "position" in roster = ruolo ASSEGNATO in formazione (in campo). "original_positions" = competenze naturali sulla card: NON usarle come ruolo attuale.
+- "position" in roster = ruolo sul modulo salvato (formation.slot_positions per slot_index). "card_role" se presente = ruolo scheda rosa quando diverso dal modulo. "original_positions" = competenze naturali: NON usarle come ruolo attuale.
 - Vietato: "Maldini CLS" se in rosa è DC. Obbligatorio: "Maldini (DC)" o "Maldini (DC in rosa)".
 - Vietato: confronto skill tra reparti diversi (difensore vs attaccante). Ronaldinho non è anchor per carte DC/TD/TS.
 - Vietato: "non cambia gerarchie su [Nome] [ruolo carta]" se non c'è titolare con quel ruolo in campo (vedi FATTI ACQUISTO).
@@ -695,6 +702,7 @@ export async function POST(req) {
       card,
       catalogCard,
       players,
+      formation: formationRes.data || null,
       profile: profileRes.data || {},
       gameAnalysis: gameAnalysisRes.data || null,
       patterns: patternsRes.data || {},
