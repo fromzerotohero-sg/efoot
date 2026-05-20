@@ -44,7 +44,6 @@ const COMPETENCE_LEVELS = [
 
 export default function PositionSelectionModal({
   playerName,
-  overallRating,
   mainPosition,
   selectedPositions,
   onPositionsChange,
@@ -158,7 +157,7 @@ export default function PositionSelectionModal({
           color: 'var(--text-secondary, #aaa)',
           fontSize: '14px'
         }}>
-          {playerName} - Overall {overallRating}
+          {playerName}
         </p>
         
         <p style={{ 

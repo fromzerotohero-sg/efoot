@@ -37,7 +37,7 @@ import {
   buildPhotoPlayerSavePayload,
   resolveOriginalPositionsFromCatalogCard
 } from '@/lib/playerSavePayload'
-import { getPlayerDisplayStats, getPlayerDisplayOverall } from '@/lib/playerEffectiveStats'
+import { getPlayerDisplayStats } from '@/lib/playerEffectiveStats'
 import {
   AlertTriangle,
   ArrowRight,
@@ -356,17 +356,6 @@ function getPlayerBuildCoachData(player) {
   return { ...(dev || {}), ...(meta || {}) }
 }
 
-function rosterFormationOvr(player, slot = null, activeCoach = null, tacticalSettings = null) {
-  const resolved = getPlayerDisplayOverall(player, {
-    slotPosition: slot?.position ?? null,
-    coach: activeCoach,
-    teamStyle: tacticalSettings?.team_playing_style ?? null,
-    context: 'field'
-  })
-  if (resolved != null) return resolved
-  return player?.overall_rating ?? '-'
-}
-
 function getBuildSliderLabel(key, lang) {
   const label = BUILD_SLIDER_LABELS[key]
   return label ? (lang === 'en' ? label.en : label.it) : key
@@ -500,9 +489,7 @@ function SlotPlayerCard({
   onRemove,
   lang,
   isEditMode = false,
-  onPositionChange,
-  activeCoach = null,
-  tacticalSettings = null
+  onPositionChange
 }) {
   const [dragging, setDragging] = React.useState(false)
   const [dragOffset, setDragOffset] = React.useState({ x: 0, y: 0 })
@@ -512,7 +499,6 @@ function SlotPlayerCard({
   const slotThumb = React.useMemo(() => resolvePlayerCardImageUrl(player), [player])
   const roleLabel = isEditMode ? (slot.position || player.position || '-') : (player.position || slot.position || '-')
   const rosterPosition = String(player?.position || roleLabel || '').trim().toUpperCase()
-  const overallLabel = rosterFormationOvr(player, slot, activeCoach, tacticalSettings)
   const initialsLabel = getPlayerInitials(player.player_name)
 
   React.useEffect(() => {
@@ -623,7 +609,6 @@ function SlotPlayerCard({
       onTouchStart={isEditMode ? handlePointerStart : undefined}
     >
       <div className="nr-slot-top-badge">
-        <strong>{overallLabel}</strong>
         <span>{roleLabel}</span>
       </div>
       <div className={`nr-slot-filled-main ${slotThumb ? 'has-photo' : 'has-initials'}`}>
@@ -772,9 +757,7 @@ function SlotCard({
   onRemove,
   lang,
   isEditMode = false,
-  onPositionChange,
-  activeCoach = null,
-  tacticalSettings = null
+  onPositionChange
 }) {
   return (
     <div className="nr-slot-card" style={{ left: `${slot.x}%`, top: `${slot.y}%` }}>
@@ -787,8 +770,6 @@ function SlotCard({
           lang={lang}
           isEditMode={isEditMode}
           onPositionChange={onPositionChange}
-          activeCoach={activeCoach}
-          tacticalSettings={tacticalSettings}
         />
       ) : (
         <SlotEmptyCard slot={slot} onEmptyClick={onEmptyClick} isEditMode={isEditMode} onPositionChange={onPositionChange} />
@@ -815,7 +796,6 @@ function CatalogCard({ card, lang, onSelect }) {
         <strong>{card.player_name}</strong>
         <p>{card.card_type} · {card.position} · {card.playing_style || '-'}</p>
         <div className="nr-catalog-card-meta">
-          <span>OVR {card.overall_level_1 ?? card.overall_max_level ?? '-'}</span>
           <em>{lang === 'en' ? 'Free catalog' : 'Catalogo libero'}</em>
         </div>
       </div>
@@ -1336,7 +1316,6 @@ function CatalogPickerModal({
   const showReserves = !isReserveMode && slotFlow === 'reserves'
   const sortOptions = [
     { id: 'name_asc', label: lang === 'en' ? 'Name A-Z' : 'Nome A-Z' },
-    { id: 'ovr_desc', label: lang === 'en' ? 'OVR high first' : 'OVR piu alto' },
     { id: 'role_asc', label: lang === 'en' ? 'Role A-Z' : 'Ruolo A-Z' }
   ]
   const resultCountLabel = total > 0
@@ -1783,7 +1762,7 @@ function PhotoExtractionReviewModal({
 }) {
   if (!show || !playerData) return null
 
-  const baseReady = Boolean(playerData.player_name && playerData.overall_rating && (playerData.position || playerData.original_positions?.length))
+  const baseReady = Boolean(playerData.player_name && (playerData.position || playerData.original_positions?.length))
   const isCompletion = mode === 'complete' && completionTarget
   const extractedStatsReady = hasPlayerStats(playerData)
   const extractedSkillsReady = hasPlayerSkills(playerData)
@@ -1801,7 +1780,7 @@ function PhotoExtractionReviewModal({
       key: 'base',
       label: lang === 'en' ? 'Base player data' : 'Dati base giocatore',
       ready: baseReady,
-      detail: `${playerData.player_name || '-'} · ${playerData.position || '-'} · OVR ${playerData.overall_rating ?? '-'}`
+      detail: `${playerData.player_name || '-'} · ${playerData.position || '-'}`
     },
     {
       key: 'stats',
@@ -1854,7 +1833,7 @@ function PhotoExtractionReviewModal({
           <div>
             <span className="nr-mini-kicker">{lang === 'en' ? 'Extracted player' : 'Giocatore estratto'}</span>
             <h3>{playerData.player_name || '-'}</h3>
-            <p>{playerData.position || '-'} · OVR {playerData.overall_rating ?? '-'}</p>
+            <p>{playerData.position || '-'}</p>
           </div>
           <CheckCircle2 size={28} />
         </div>
@@ -2175,7 +2154,7 @@ function BuildCoachPlayerPickerModal({ show, players, buildingPlayerId, onClose,
                           ? (lang === 'en' ? 'Reserve' : 'Riserva')
                           : `${lang === 'en' ? 'Starter' : 'Titolare'} · Slot ${Number(player.slot_index) + 1}`}
                         {' · '}
-                        {player.position || '-'} · OVR {rosterFormationOvr(player)}
+                        {player.position || '-'}
                       </span>
                     </div>
                     <span className="nr-reserve-position-pill">
@@ -2549,7 +2528,7 @@ function resolveInitialFieldCoachActive(player = {}, slot = null) {
   return Boolean(slot)
 }
 
-/** Solo persistenza: blocca OVR troppo bassi o crolli sospetti. L'anteprima live non deve usare questa funzione. */
+/** Solo persistenza: blocca valutazioni troppo basse o crolli sospetti. L'anteprima live non deve usare questa funzione. */
 function isSafeBuildPreviewForSave(preview, player) {
   const nextOverall = Number(preview?.afterOverall)
   if (!Number.isFinite(nextOverall)) return false
@@ -3125,14 +3104,6 @@ function PremiumPlayerModal({
               <h3>{player.player_name}</h3>
               <p>{player.role || player.playing_style_name || '-'} · {player.position || '-'}</p>
             </div>
-            <div className="nr-premium-overall">
-              <span>OVR</span>
-              <strong>
-                {buildAllocationLivePreview != null && Number.isFinite(overallFromBuildPreview(buildAllocationLivePreview, preferFieldStats))
-                  ? overallFromBuildPreview(buildAllocationLivePreview, preferFieldStats)
-                  : rosterFormationOvr(player, slot)}
-              </strong>
-            </div>
           </div>
 
           <div className="nr-premium-hero-main">
@@ -3181,15 +3152,12 @@ function PremiumPlayerModal({
 
         <section className="nr-premium-sections">
           <EnterpriseSection title={lang === 'en' ? 'Player setup' : 'Setup giocatore'}>
-            <div className="nr-form-grid">
-              <EnterpriseInput label="OVR" value={form.overall_rating} type="number" onChange={(value) => setForm((prev) => ({ ...prev, overall_rating: value }))} />
-            </div>
             <div className="nr-build-coach-inline">
               <div>
                 <strong>{lang === 'en' ? 'Guided build' : 'Build guidata'}</strong>
                 <p>{lang === 'en'
-                  ? 'Suggested growth points for role, native skills, team style and squad needs. Highest OVR is not always the best build.'
-                  : 'Punti crescita consigliati per ruolo, abilità native, stile squadra e bisogni della rosa. L’OVR più alto non è sempre la build migliore.'}</p>
+                  ? 'Suggested growth points for role, native skills, team style and squad needs.'
+                  : 'Punti crescita consigliati per ruolo, abilità native, stile squadra e bisogni della rosa.'}</p>
               </div>
               <button
                 type="button"
@@ -3207,8 +3175,8 @@ function PremiumPlayerModal({
                   <div>
                     <strong>{lang === 'en' ? 'Build ready to copy in game' : 'Build pronta da copiare in gioco'}</strong>
                     <p>{lang === 'en'
-                      ? 'Use these progression values in the game if you want to reproduce this build. The shown OVR includes active boosters and coach bonuses when available.'
-                      : 'Usa questi valori nella schermata progressione del gioco se vuoi replicare questa build. L’OVR mostrato include booster e bonus coach attivi quando disponibili.'}</p>
+                      ? 'Use these progression values in the game if you want to reproduce this build.'
+                      : 'Usa questi valori nella schermata progressione del gioco se vuoi replicare questa build.'}</p>
                   </div>
                   <div className="nr-build-copy-meta">
                     {buildTargetPosition && <span>{buildTargetPosition}</span>}
@@ -3219,8 +3187,8 @@ function PremiumPlayerModal({
                 </div>
                 <p className="nr-build-slider-hint">
                   {lang === 'en'
-                    ? 'Adjust the sliders: PT costs and role limits follow the game, stats and final OVR update live.'
-                    : 'Regola gli slider: costi PT e limiti ruolo seguono il gioco, statistiche e OVR finale si aggiornano in tempo reale.'}
+                    ? 'Adjust the sliders: PT costs, role limits and stats update live.'
+                    : 'Regola gli slider: costi PT, limiti ruolo e statistiche si aggiornano in tempo reale.'}
                 </p>
                 <div className="nr-build-slider-grid nr-build-slider-grid--interactive">
                   {BUILD_SLIDER_ORDER.map((key) => {
@@ -3326,8 +3294,8 @@ function PremiumPlayerModal({
             </div>
             <p className="nr-setup-readonly-note">
               {lang === 'en'
-                ? 'Base data (name, age, club, nationality) syncs from catalog/photo source. You can edit OVR, playable roles and performance stats here.'
-                : 'I dati base (nome, eta, club, nazionalita) seguono la sorgente catalogo/foto. Qui puoi modificare OVR, ruoli giocabili e statistiche.'}
+                ? 'Base data (name, age, club, nationality) syncs from catalog/photo source. You can edit playable roles and performance stats here.'
+                : 'I dati base (nome, eta, club, nazionalita) seguono la sorgente catalogo/foto. Qui puoi modificare ruoli giocabili e statistiche.'}
             </p>
           </EnterpriseSection>
 
@@ -3489,8 +3457,8 @@ function PremiumPlayerModal({
                     className={`nr-mini-toggle ${fieldCoachActive ? 'is-active' : ''}`}
                     onClick={() => setFieldCoachActive((value) => !value)}
                     title={lang === 'en'
-                      ? 'Use active coach bonuses in field OVR calculation'
-                      : 'Usa i bonus dell’allenatore attivo nel calcolo OVR campo'}
+                      ? 'Use active coach bonuses in the field calculation'
+                      : 'Usa i bonus dell’allenatore attivo nel calcolo campo'}
                   >
                     {fieldCoachActive
                       ? (lang === 'en' ? 'Coach field active' : 'Coach campo attivo')
@@ -3589,8 +3557,8 @@ function PremiumPlayerModal({
                               className={`nr-mini-toggle ${isFieldActive ? 'is-active' : ''}`}
                               onClick={() => toggleFieldBooster(boosterName)}
                               title={lang === 'en'
-                                ? 'Use this booster in field OVR calculation'
-                                : 'Usa questo booster nel calcolo OVR campo'}
+                                ? 'Use this booster in the field calculation'
+                                : 'Usa questo booster nel calcolo campo'}
                             >
                               {isFieldActive
                                 ? (lang === 'en' ? 'Field active' : 'Attivo in campo')
@@ -3637,7 +3605,6 @@ function PremiumPlayerModal({
       {showPositionEditor && (
         <PositionSelectionModal
           playerName={player.player_name}
-          overallRating={form.overall_rating || player.overall_rating}
           mainPosition={originalPositionsDraft[0]?.position || form.position || player.position}
           selectedPositions={originalPositionsDraft}
           onPositionsChange={setOriginalPositionsDraft}
@@ -3714,6 +3681,9 @@ export default withAuth(function NuovaRosaLabPage() {
   const [starterReservePickerSlot, setStarterReservePickerSlot] = React.useState(null)
 
   const activeTeamPlaystyle = tacticalSettings?.team_playing_style || null
+  const activeTeamPlaystyleLabel = activeTeamPlaystyle
+    ? (t(activeTeamPlaystyle) || String(activeTeamPlaystyle).replace(/_/g, ' '))
+    : (lang === 'en' ? 'Not set' : 'Non impostato')
 
   const showToast = React.useCallback((message, type = 'success') => {
     setToast({ message, type })
@@ -4344,9 +4314,6 @@ export default withAuth(function NuovaRosaLabPage() {
     if (!playerData.player_name || String(playerData.player_name).trim().length === 0) {
       missing.required.push({ field: 'player_name', label: lang === 'en' ? 'Player name' : 'Nome giocatore' })
     }
-    if (playerData.overall_rating == null || Number(playerData.overall_rating) === 0) {
-      missing.required.push({ field: 'overall_rating', label: 'OVR' })
-    }
     if (!playerData.position && (!Array.isArray(playerData.original_positions) || playerData.original_positions.length === 0)) {
       missing.required.push({ field: 'position', label: lang === 'en' ? 'Position' : 'Ruolo' })
     }
@@ -4802,7 +4769,7 @@ export default withAuth(function NuovaRosaLabPage() {
 
     const compatibility = getSlotCompatibility(selectedSlot.position, card.position)
     const isOutOfRole = compatibility === 'out_of_role'
-    const cardSummary = `${card.player_name} · ${card.position || '-'} · OVR ${card.overall_level_1 ?? card.overall_max_level ?? '-'}`
+    const cardSummary = `${card.player_name} · ${card.position || '-'}`
     const targetSummary = selectedSlot.position || (lang === 'en' ? 'selected slot' : 'slot selezionato')
 
     setConfirmModal({
@@ -4848,7 +4815,7 @@ export default withAuth(function NuovaRosaLabPage() {
       return
     }
 
-    const cardSummary = `${card.player_name} · ${card.position || '-'} · OVR ${card.overall_level_1 ?? card.overall_max_level ?? '-'}`
+    const cardSummary = `${card.player_name} · ${card.position || '-'}`
     setConfirmModal({
       ...showConfirmConfig({
         title: lang === 'en' ? 'Confirm reserve' : 'Conferma riserva',
@@ -5002,7 +4969,7 @@ export default withAuth(function NuovaRosaLabPage() {
       }
     }
 
-    const playerSummary = `${player.player_name} · ${player.position || '-'} · OVR ${rosterFormationOvr(player)}`
+    const playerSummary = `${player.player_name} · ${player.position || '-'}`
     const targetSummary = targetSlot.position ? `${targetSlot.position}` : (lang === 'en' ? 'selected slot' : 'slot selezionato')
     const isOutOfRole = !isOriginal && targetSlot.position
     setConfirmModal({
@@ -5304,11 +5271,10 @@ export default withAuth(function NuovaRosaLabPage() {
       }
       await fetchRoster()
       await refreshDiagnosticAfterSave()
-      const after = data?.result?.after_overall
       showToast(
         lang === 'en'
-          ? `Build saved (stats + OVR${after ? ` ${after}` : ''}). Use Save only if you edit skills or boosters.`
-          : `Build salvata (statistiche + OVR${after ? ` ${after}` : ''}). Usa Salva solo se modifichi abilita o booster.`,
+          ? 'Build saved (stats + progression points). Use Save only if you edit skills or boosters.'
+          : 'Build salvata (statistiche + punti crescita). Usa Salva solo se modifichi abilita o booster.',
         'success'
       )
     } catch (err) {
@@ -5342,11 +5308,11 @@ export default withAuth(function NuovaRosaLabPage() {
       ...showConfirmConfig({
         title: lang === 'en' ? 'Suggest player build' : 'Consiglia build giocatore',
         message: lang === 'en'
-          ? 'We will suggest growth points for this player using role, native skills, team style and squad context. Highest OVR is not always the best choice.'
-          : 'Consigliamo i punti crescita usando ruolo, abilita native, stile squadra e contesto rosa. L’OVR più alto non è sempre la scelta migliore.',
+          ? 'We will suggest growth points for this player using role, native skills, team style and squad context.'
+          : 'Consigliamo i punti crescita usando ruolo, abilita native, stile squadra e contesto rosa.',
         details: lang === 'en'
-          ? 'The OVR shown after the build follows the game view: active boosters and coach bonuses are included when available. You can edit everything later.'
-          : 'L’OVR mostrato dopo la build segue la vista del gioco: include booster e bonus coach attivi quando disponibili. Potrai modificare tutto in seguito.',
+          ? 'You can copy the progression values in-game and edit everything later.'
+          : 'Puoi copiare i valori crescita in gioco e modificare tutto in seguito.',
         confirmLabel: lang === 'en' ? 'Suggest build' : 'Consiglia build',
         cancelLabel: t('cancel'),
         variant: 'info'
@@ -5407,11 +5373,11 @@ export default withAuth(function NuovaRosaLabPage() {
       ...showConfirmConfig({
         title: lang === 'en' ? 'Optimize squad builds' : 'Ottimizza build rosa',
         message: lang === 'en'
-          ? 'We will prepare growth builds based on role, native skills, team style and squad needs, not just the highest possible OVR.'
-          : 'Prepariamo le build in base a ruolo, abilita native, stile squadra e bisogni della rosa, non solo all’OVR più alto possibile.',
+          ? 'We will prepare growth builds based on role, native skills, team style and squad needs.'
+          : 'Prepariamo le build in base a ruolo, abilita native, stile squadra e bisogni della rosa.',
         details: lang === 'en'
-          ? 'Card profile stats and OVR match eFootball Play (level-1 base + your PT + equipped booster only). Coach bonuses are not on the card profile. You can edit every player after the suggestion.'
-          : 'Statistiche e OVR del profilo carta come in eFootball Play (base livello 1 + PT + solo booster equipaggiato). I bonus allenatore non compaiono sul profilo carta. Potrai modificare ogni giocatore dopo il suggerimento.',
+          ? 'Card profile stats use level-1 base + your PT + equipped booster only. Coach bonuses are not on the card profile. You can edit every player after the suggestion.'
+          : 'Le statistiche del profilo carta usano base livello 1 + PT + solo booster equipaggiato. I bonus allenatore non compaiono sul profilo carta. Potrai modificare ogni giocatore dopo il suggerimento.',
         confirmLabel: lang === 'en' ? 'Prepare builds' : 'Prepara build',
         cancelLabel: t('cancel'),
         variant: 'info'
@@ -5727,14 +5693,14 @@ export default withAuth(function NuovaRosaLabPage() {
                   {buildingRoster ? <RefreshCw size={18} className="nr-spin" /> : <Sparkles size={18} />}
                   <span>
                     <strong>{lang === 'en' ? 'Prepare squad builds' : 'Prepara build rosa'}</strong>
-                    <small>{lang === 'en' ? 'Not just highest OVR: role and squad needs' : 'Non solo OVR alto: ruolo e bisogni rosa'}</small>
+                    <small>{lang === 'en' ? 'Role and squad needs' : 'Ruolo e bisogni rosa'}</small>
                   </span>
                 </button>
                 <button type="button" className="nr-build-coach-action" onClick={() => setBuildCoachPlayerPickerOpen(true)} disabled={buildingRoster || allRosterPlayers.length === 0}>
                   <User size={18} />
                   <span>
                     <strong>{lang === 'en' ? 'Suggest one build' : 'Consiglia una build'}</strong>
-                    <small>{lang === 'en' ? 'Final OVR with active bonuses' : 'OVR finale con bonus attivi'}</small>
+                    <small>{lang === 'en' ? 'Progression points and stats' : 'Punti crescita e statistiche'}</small>
                   </span>
                 </button>
               </div>
@@ -5763,8 +5729,14 @@ export default withAuth(function NuovaRosaLabPage() {
             )}
             <div className="nr-field-shell">
               <div className="nr-field-formation-badge">
-                <span>{lang === 'en' ? 'Formation' : 'Formazione'}</span>
-                <strong>{layout?.formation || '4-3-3'}</strong>
+                <div>
+                  <span>{lang === 'en' ? 'Formation' : 'Formazione'}</span>
+                  <strong>{layout?.formation || '4-3-3'}</strong>
+                </div>
+                <div>
+                  <span>{lang === 'en' ? 'Style' : 'Stile'}</span>
+                  <strong>{activeTeamPlaystyleLabel}</strong>
+                </div>
               </div>
               <div className={`nr-field ${fieldEditMode ? 'is-editing' : ''}`} data-field-container>
                 <div className="nr-field-texture" />
@@ -5795,8 +5767,6 @@ export default withAuth(function NuovaRosaLabPage() {
                     lang={lang}
                     isEditMode={fieldEditMode}
                     onPositionChange={handleFieldPositionChange}
-                    activeCoach={activeCoach}
-                    tacticalSettings={tacticalSettings}
                   />
                 ))}
               </div>
@@ -6021,7 +5991,6 @@ export default withAuth(function NuovaRosaLabPage() {
       {positionModalCtx && extractedPlayerData && positionModalCtx.uploadMode !== 'complete' && !showPhotoReviewModal && (
         <PositionSelectionModal
           playerName={extractedPlayerData.player_name}
-          overallRating={extractedPlayerData.overall_rating}
           mainPosition={extractedPlayerData.position}
           selectedPositions={selectedOriginalPositions}
           onPositionsChange={setSelectedOriginalPositions}
@@ -6034,7 +6003,6 @@ export default withAuth(function NuovaRosaLabPage() {
       {catalogPositionCtx?.card && (
         <PositionSelectionModal
           playerName={catalogPositionCtx.card.player_name}
-          overallRating={catalogPositionCtx.card.overall_level_1 ?? catalogPositionCtx.card.overall_max_level}
           mainPosition={catalogPositionCtx.card?.players_payload?.position || catalogPositionCtx.card.position}
           selectedPositions={selectedOriginalPositions}
           onPositionsChange={setSelectedOriginalPositions}
@@ -6689,15 +6657,21 @@ export default withAuth(function NuovaRosaLabPage() {
           left: 10px;
           z-index: 4;
           display: inline-flex;
-          align-items: baseline;
-          gap: 7px;
+          align-items: stretch;
+          gap: 10px;
           padding: 6px 9px;
-          border-radius: 999px;
+          border-radius: 14px;
           border: 1px solid rgba(0, 212, 255, 0.2);
           background: rgba(3, 7, 18, 0.54);
           color: rgba(255, 255, 255, 0.8);
           backdrop-filter: blur(7px);
           pointer-events: none;
+        }
+
+        .nr-field-formation-badge > div {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
         }
 
         .nr-field-formation-badge span {
@@ -6710,6 +6684,7 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-field-formation-badge strong {
           font-size: 13px;
           color: #fff;
+          white-space: nowrap;
         }
 
         .nr-field {
@@ -9087,29 +9062,6 @@ export default withAuth(function NuovaRosaLabPage() {
           color: rgba(255, 255, 255, 0.8);
         }
 
-        .nr-premium-overall {
-          min-width: 88px;
-          border-radius: 18px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          background: rgba(255, 255, 255, 0.05);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 12px;
-        }
-
-        .nr-premium-overall span {
-          font-size: 12px;
-          color: rgba(255, 255, 255, 0.62);
-        }
-
-        .nr-premium-overall strong {
-          font-size: 34px;
-          color: #fff;
-          line-height: 1;
-        }
-
         .nr-premium-card-frame {
           width: min(160px, 62%);
           aspect-ratio: 0.72;
@@ -9706,20 +9658,6 @@ export default withAuth(function NuovaRosaLabPage() {
           .nr-premium-hero-copy p {
             font-size: 13px;
             margin-top: 2px;
-          }
-
-          .nr-premium-overall {
-            min-width: 58px;
-            border-radius: 14px;
-            padding: 8px;
-          }
-
-          .nr-premium-overall span {
-            font-size: 10px;
-          }
-
-          .nr-premium-overall strong {
-            font-size: 24px;
           }
 
           .nr-premium-card-frame {
