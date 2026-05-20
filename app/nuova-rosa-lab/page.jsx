@@ -2535,11 +2535,9 @@ function resolveInitialFieldActiveBoosterNames(player = {}, boostersDraft = []) 
         : null
   const names = boostersDraft.map((entry) => String(entry?.name || '').trim()).filter(Boolean)
   const raw = metadataNames || (player?.active_booster_name ? [player.active_booster_name] : [])
-  const configured = raw
+  return raw
     .map((entry) => String(entry || '').trim())
     .filter((entry) => names.some((name) => name.toLowerCase() === entry.toLowerCase()))
-  if (configured.length > 0) return configured
-  return names[0] ? [names[0]] : []
 }
 
 function resolveInitialFieldCoachActive(player = {}, slot = null) {
@@ -3702,9 +3700,6 @@ export default withAuth(function NuovaRosaLabPage() {
   const [starterReservePickerSlot, setStarterReservePickerSlot] = React.useState(null)
 
   const activeTeamPlaystyle = tacticalSettings?.team_playing_style || null
-  const activeTeamPlaystyleLabel = activeTeamPlaystyle
-    ? (t(activeTeamPlaystyle) || String(activeTeamPlaystyle).replace(/_/g, ' '))
-    : (lang === 'en' ? 'Not set' : 'Non impostato')
 
   const showToast = React.useCallback((message, type = 'success') => {
     setToast({ message, type })
@@ -5750,14 +5745,8 @@ export default withAuth(function NuovaRosaLabPage() {
             )}
             <div className="nr-field-shell">
               <div className="nr-field-formation-badge">
-                <div>
-                  <span>{lang === 'en' ? 'Formation' : 'Formazione'}</span>
-                  <strong>{layout?.formation || '4-3-3'}</strong>
-                </div>
-                <div>
-                  <span>{lang === 'en' ? 'Style' : 'Stile'}</span>
-                  <strong>{activeTeamPlaystyleLabel}</strong>
-                </div>
+                <span>{lang === 'en' ? 'Formation' : 'Formazione'}</span>
+                <strong>{layout?.formation || '4-3-3'}</strong>
               </div>
               <div className={`nr-field ${fieldEditMode ? 'is-editing' : ''}`} data-field-container>
                 <div className="nr-field-texture" />
@@ -6682,21 +6671,15 @@ export default withAuth(function NuovaRosaLabPage() {
           left: 10px;
           z-index: 4;
           display: inline-flex;
-          align-items: stretch;
-          gap: 10px;
+          align-items: baseline;
+          gap: 7px;
           padding: 6px 9px;
-          border-radius: 14px;
+          border-radius: 999px;
           border: 1px solid rgba(0, 212, 255, 0.2);
           background: rgba(3, 7, 18, 0.54);
           color: rgba(255, 255, 255, 0.8);
           backdrop-filter: blur(7px);
           pointer-events: none;
-        }
-
-        .nr-field-formation-badge > div {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
         }
 
         .nr-field-formation-badge span {
@@ -6709,7 +6692,6 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-field-formation-badge strong {
           font-size: 13px;
           color: #fff;
-          white-space: nowrap;
         }
 
         .nr-field {
