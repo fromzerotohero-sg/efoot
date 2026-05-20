@@ -15,14 +15,12 @@ import {
   X,
   ShieldCheck,
   Sparkles,
-  TrendingUp,
   Users,
   Zap
 } from 'lucide-react'
 import {
   getSkillDisplayLabel,
   localizeSkillTermsInText,
-  normalizePlayerSkillsArray
 } from '@/lib/playerSkillLabels'
 import { BUILD_SLIDER_ORDER, getBuildSliderLabel } from '@/lib/cardAdvisorBuildPreview'
 import { supabase, getValidAccessToken } from '@/lib/supabaseClient'
@@ -184,10 +182,11 @@ const copy = {
     buildOvrCard: 'OVR liv. 1',
     buildOvrBuilt: 'OVR build',
     buildWhyToggle: 'Perché questa build',
+    buildWhyToggleMeta: 'Cosa mostra il confronto',
     buildWhyHide: 'Nascondi',
     buildWhyTitle: 'Dettaglio',
-    buildWhyIntroRoster: 'Qui trovi perché questa build ha senso per te e cosa migliori in partita. Puoi applicarla con tranquillità.',
-    buildWhyIntroMeta: 'Solo un confronto rapido. La build da usare in gioco è quella Consigliata accanto.',
+    buildWhyIntroRoster: 'Dettaglio opzionale: differenze rispetto al confronto e legame con le tue abilità.',
+    buildWhyIntroMeta: '',
     buildMetaBadge: 'Confronto',
     buildRosterBadge: 'Consigliata',
     buildPtDiff: 'Differenza vs meta',
@@ -352,10 +351,11 @@ const copy = {
     buildOvrCard: 'Lv.1 OVR',
     buildOvrBuilt: 'Build OVR',
     buildWhyToggle: 'Why this build',
+    buildWhyToggleMeta: 'What the benchmark shows',
     buildWhyHide: 'Hide',
     buildWhyTitle: 'Details',
-    buildWhyIntroRoster: 'Why this build fits you and what improves on the pitch. You can apply it with confidence.',
-    buildWhyIntroMeta: 'A quick comparison only. Use the Recommended build next to it in-game.',
+    buildWhyIntroRoster: 'Optional detail: how this differs from the benchmark and your skills.',
+    buildWhyIntroMeta: '',
     buildMetaBadge: 'Benchmark',
     buildRosterBadge: 'Recommended',
     buildPtDiff: 'Diff vs meta',
@@ -1024,7 +1024,7 @@ function BuildPreviewCard({ title, hint, build, labels, lang, variant = 'meta', 
             onClick={() => setShowWhy(value => !value)}
             aria-expanded={showWhy}
           >
-            {showWhy ? labels.buildWhyHide : labels.buildWhyToggle}
+            {showWhy ? labels.buildWhyHide : isRoster ? labels.buildWhyToggle : labels.buildWhyToggleMeta}
             <ChevronRight size={14} className={showWhy ? 'build-preview-why-chevron-open' : ''} />
           </button>
           {showWhy && (
@@ -1032,11 +1032,9 @@ function BuildPreviewCard({ title, hint, build, labels, lang, variant = 'meta', 
               {build.whyLead ? (
                 <p className="build-preview-why-lead">{localizeDeepAnalysisText(build.whyLead, lang)}</p>
               ) : null}
-              {(isRoster ? labels.buildWhyIntroRoster : labels.buildWhyIntroMeta) && (
-                <p className="build-preview-why-intro">
-                  {isRoster ? labels.buildWhyIntroRoster : labels.buildWhyIntroMeta}
-                </p>
-              )}
+              {isRoster && labels.buildWhyIntroRoster ? (
+                <p className="build-preview-why-intro">{labels.buildWhyIntroRoster}</p>
+              ) : null}
               {reasonSections.map(section => (
                 <section key={section.id} className="build-preview-why-section">
                   {section.title ? <h5>{section.title}</h5> : null}
@@ -1209,9 +1207,6 @@ function DetailPanel({
   onClose
 }) {
   const [showDeepFullReport, setShowDeepFullReport] = React.useState(false)
-  const [showBaseDetails, setShowBaseDetails] = React.useState(false)
-  const lever = lang === 'en' ? (card.leverEn || card.lever) : card.lever
-  const technicalProfileList = normalizePlayerSkillsArray(card?.skills || [])
   return (
     <section className="detail-panel">
       {onClose && (
@@ -1251,10 +1246,14 @@ function DetailPanel({
                   disabled={deepAnalysisLoading}
                   aria-busy={deepAnalysisLoading}
                 >
-                  <Sparkles size={20} strokeWidth={2.25} aria-hidden />
-                  <span className="deep-analysis-unlock-btn-text">
-                    <strong>{deepAnalysisLoading ? labels.deepAnalysisLoading : labels.proUnlockButton}</strong>
-                    {!deepAnalysisLoading ? <small>{labels.proUnlockButtonCost}</small> : null}
+                  <span className="deep-analysis-unlock-btn-orbit" aria-hidden />
+                  <span className="deep-analysis-unlock-btn-scan" aria-hidden />
+                  <span className="deep-analysis-unlock-btn-inner">
+                    <Sparkles size={20} strokeWidth={2.25} className="deep-analysis-unlock-btn-icon" aria-hidden />
+                    <span className="deep-analysis-unlock-btn-text">
+                      <strong>{deepAnalysisLoading ? labels.deepAnalysisLoading : labels.proUnlockButton}</strong>
+                      {!deepAnalysisLoading ? <small>{labels.proUnlockButtonCost}</small> : null}
+                    </span>
                   </span>
                 </button>
               </div>
@@ -1347,42 +1346,6 @@ function DetailPanel({
           )}
         </div>
       )}
-
-      <div className="base-details-shell">
-        <button
-          type="button"
-          className="base-details-toggle"
-          onClick={() => setShowBaseDetails(value => !value)}
-          aria-expanded={showBaseDetails}
-        >
-          {showBaseDetails ? labels.baseDetailsHide : labels.baseDetailsShow}
-          <ChevronRight size={15} />
-        </button>
-        {showBaseDetails && (
-          <>
-            <div className="detail-grid">
-              <article>
-                <h3><TrendingUp size={18} /> {labels.mainLever}</h3>
-                <div className="pill-row">
-                  <StatPill>{lever}</StatPill>
-                </div>
-              </article>
-
-              <article>
-                <h3><Sparkles size={18} /> {labels.nativeSkills}</h3>
-                <div className="pill-row">
-                  {technicalProfileList.length > 0
-                    ? technicalProfileList.map((item) => (
-                      <StatPill key={item}>{getSkillDisplayLabel(item, lang)}</StatPill>
-                    ))
-                    : <StatPill>{labels.noNativeSkills}</StatPill>}
-                </div>
-              </article>
-            </div>
-
-          </>
-        )}
-      </div>
 
     </section>
   )
@@ -3422,33 +3385,128 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .deep-analysis-entry-cta {
           flex-shrink: 0;
+          position: relative;
+          isolation: isolate;
+        }
+
+        .deep-analysis-entry-cta::before {
+          content: '';
+          position: absolute;
+          inset: -10px -6px;
+          border-radius: 22px;
+          background: radial-gradient(
+            ellipse at 50% 50%,
+            rgba(0, 212, 255, 0.28) 0%,
+            rgba(250, 204, 21, 0.2) 42%,
+            transparent 72%
+          );
+          animation: brandPulse 1.8s ease-in-out infinite;
+          pointer-events: none;
+          z-index: 0;
         }
 
         .deep-analysis-unlock-btn {
+          position: relative;
+          z-index: 1;
+          display: block;
+          width: 100%;
+          border: 1px solid rgba(0, 212, 255, 0.55);
+          border-radius: 16px;
+          padding: 0;
+          min-height: 56px;
+          cursor: pointer;
+          overflow: hidden;
+          isolation: isolate;
+          background:
+            linear-gradient(
+              125deg,
+              #fde047 0%,
+              #facc15 28%,
+              #fb923c 58%,
+              #f97316 78%,
+              #fde047 100%
+            );
+          background-size: 220% 220%;
+          color: #050814;
+          font-weight: 950;
+          box-shadow:
+            0 0 0 1px rgba(250, 204, 21, 0.35) inset,
+            0 0 24px rgba(0, 212, 255, 0.35),
+            0 16px 40px rgba(249, 115, 22, 0.42);
+          animation:
+            unlockBtnGradient 3.2s ease-in-out infinite,
+            unlockBtnGlow 1.8s ease-in-out infinite;
+          transition: transform 0.18s ease, filter 0.18s ease;
+        }
+
+        .deep-analysis-unlock-btn::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.42), transparent);
+          transform: translateX(-130%);
+          animation: brandSweep 2.4s ease-in-out infinite;
+          pointer-events: none;
+          z-index: 1;
+        }
+
+        .deep-analysis-unlock-btn::after {
+          content: '';
+          position: absolute;
+          inset: 3px;
+          border-radius: 13px;
+          border: 1px solid rgba(250, 204, 21, 0.45);
+          box-shadow: 0 0 18px rgba(0, 212, 255, 0.22);
+          animation: brandPulse 1.8s ease-in-out infinite;
+          pointer-events: none;
+          z-index: 2;
+        }
+
+        .deep-analysis-unlock-btn-orbit {
+          position: absolute;
+          inset: 7px;
+          border-radius: 12px;
+          border: 1px dashed rgba(255, 255, 255, 0.38);
+          animation: brandOrbit 3.8s linear infinite;
+          pointer-events: none;
+          z-index: 3;
+        }
+
+        .deep-analysis-unlock-btn-scan {
+          position: absolute;
+          z-index: 4;
+          left: 12px;
+          right: 12px;
+          height: 2px;
+          border-radius: 999px;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent);
+          box-shadow: 0 0 14px rgba(0, 212, 255, 0.75);
+          animation: unlockBtnScan 1.45s ease-in-out infinite;
+          pointer-events: none;
+        }
+
+        .deep-analysis-unlock-btn-inner {
+          position: relative;
+          z-index: 5;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 10px;
-          width: 100%;
-          border: 2px solid rgba(255, 255, 255, 0.92);
-          border-radius: 14px;
-          background: linear-gradient(180deg, #fde047 0%, #facc15 38%, #f97316 100%);
-          color: #050814;
-          min-height: 52px;
+          min-height: 56px;
           padding: 12px 18px;
-          font-weight: 950;
-          cursor: pointer;
-          box-shadow:
-            0 0 0 1px rgba(251, 191, 36, 0.45) inset,
-            0 14px 34px rgba(249, 115, 22, 0.45),
-            0 0 28px rgba(250, 204, 21, 0.35);
-          animation: deep-analysis-unlock-pulse 2.2s ease-in-out infinite;
-          transition: transform 0.15s ease, filter 0.15s ease;
+        }
+
+        .deep-analysis-unlock-btn-icon {
+          flex-shrink: 0;
+          filter:
+            drop-shadow(0 0 8px rgba(0, 212, 255, 0.55))
+            drop-shadow(0 0 12px rgba(138, 43, 226, 0.28));
+          animation: brandInterference 1.15s steps(2, end) infinite;
         }
 
         .deep-analysis-unlock-btn:hover:not(:disabled) {
           transform: translateY(-2px) scale(1.02);
-          filter: brightness(1.06);
+          filter: brightness(1.08) saturate(1.06);
         }
 
         .deep-analysis-unlock-btn:active:not(:disabled) {
@@ -3458,6 +3516,14 @@ export default withAuth(function CardAdvisorLabPage() {
         .deep-analysis-unlock-btn:disabled {
           opacity: 0.72;
           cursor: wait;
+          animation: none;
+        }
+
+        .deep-analysis-unlock-btn:disabled::before,
+        .deep-analysis-unlock-btn:disabled::after,
+        .deep-analysis-unlock-btn:disabled .deep-analysis-unlock-btn-orbit,
+        .deep-analysis-unlock-btn:disabled .deep-analysis-unlock-btn-scan,
+        .deep-analysis-unlock-btn:disabled .deep-analysis-unlock-btn-icon {
           animation: none;
         }
 
@@ -3481,19 +3547,32 @@ export default withAuth(function CardAdvisorLabPage() {
           opacity: 0.82;
         }
 
-        @keyframes deep-analysis-unlock-pulse {
+        @keyframes unlockBtnGradient {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+
+        @keyframes unlockBtnGlow {
           0%, 100% {
             box-shadow:
-              0 0 0 1px rgba(251, 191, 36, 0.45) inset,
-              0 14px 34px rgba(249, 115, 22, 0.42),
-              0 0 22px rgba(250, 204, 21, 0.28);
+              0 0 0 1px rgba(250, 204, 21, 0.35) inset,
+              0 0 20px rgba(0, 212, 255, 0.28),
+              0 14px 36px rgba(249, 115, 22, 0.38);
           }
           50% {
             box-shadow:
-              0 0 0 1px rgba(255, 255, 255, 0.55) inset,
-              0 18px 40px rgba(249, 115, 22, 0.58),
-              0 0 36px rgba(250, 204, 21, 0.48);
+              0 0 0 1px rgba(255, 255, 255, 0.45) inset,
+              0 0 32px rgba(0, 212, 255, 0.48),
+              0 0 28px rgba(250, 204, 21, 0.42),
+              0 18px 44px rgba(249, 115, 22, 0.52);
           }
+        }
+
+        @keyframes unlockBtnScan {
+          0% { top: 14px; opacity: 0; }
+          18% { opacity: 1; }
+          78% { opacity: 1; }
+          100% { top: calc(100% - 16px); opacity: 0; }
         }
 
         .deep-analysis-inline-loader {
@@ -4598,29 +4677,6 @@ export default withAuth(function CardAdvisorLabPage() {
           font-size: 12px;
           color: rgba(255, 255, 255, 0.62);
           line-height: 1.45;
-        }
-
-        .base-details-shell {
-          margin-top: 14px;
-        }
-
-        .base-details-toggle {
-          border: 1px solid rgba(255,255,255,0.14);
-          border-radius: 999px;
-          background: rgba(255,255,255,0.045);
-          color: rgba(255,255,255,0.74);
-          display: inline-flex;
-          align-items: center;
-          gap: 7px;
-          min-height: 34px;
-          padding: 7px 12px;
-          font-size: 12px;
-          font-weight: 900;
-          cursor: pointer;
-        }
-
-        .base-details-toggle[aria-expanded="true"] svg {
-          transform: rotate(90deg);
         }
 
         .synergy-read-card {
