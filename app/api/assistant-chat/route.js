@@ -310,6 +310,37 @@ function normalizeHistory(raw) {
   return out
 }
 
+function formatCompetencePositions(originalPositions) {
+  if (!Array.isArray(originalPositions) || originalPositions.length === 0) return ''
+  return originalPositions
+    .map((p) => {
+      if (typeof p === 'string') return p.trim()
+      if (!p?.position) return ''
+      return p.competence ? `${p.position} ${p.competence}` : p.position
+    })
+    .filter(Boolean)
+    .join(', ')
+}
+
+function getOutOfPositionStarterLines(players, lang = 'it') {
+  const starters = (Array.isArray(players) ? players : [])
+    .filter(p => p?.slot_index != null && p.slot_index >= 0 && p.slot_index <= 10)
+    .sort((a, b) => (Number(a.slot_index) || 0) - (Number(b.slot_index) || 0))
+
+  const lines = []
+  for (const p of starters) {
+    const current = String(p?.position || '').trim().toUpperCase()
+    const originals = Array.isArray(p?.original_positions) ? p.original_positions : []
+    if (!current || originals.length === 0) continue
+    const compatible = originals.some(op => String(typeof op === 'string' ? op : op?.position || '').trim().toUpperCase() === current)
+    if (compatible) continue
+    const comp = formatCompetencePositions(originals) || (lang === 'en' ? 'not set' : 'non impostate')
+    const slot = p.slot_index != null ? ` slot ${p.slot_index}` : ''
+    lines.push(`- ${p.player_name || '?'}${slot}: in campo ${current}; competenze card ${comp}`)
+  }
+  return lines
+}
+
 /**
  * Costruisce contesto personale per AI
  */
@@ -506,6 +537,13 @@ async function buildPersonalContext(userId, lang = 'it') {
     const riserve = roster.filter(p => p.slot_index == null)
 
     let rosterLines = []
+    const outOfPositionLines = getOutOfPositionStarterLines(titolari, lang)
+    if (outOfPositionLines.length > 0) {
+      rosterLines.push(lang === 'en'
+        ? 'OUT OF POSITION STARTERS (fix FIT before other changes):'
+        : 'TITOLARI FUORI POSIZIONE (correggi FIT prima di altri cambi):')
+      rosterLines.push(...outOfPositionLines.map(line => `  ${line}`))
+    }
     for (const p of titolari) {
       const styleName = getPlayerStyleDisplayName(p, stylesLookup) || '-'
       const prof = getProfilazione(p.photo_slots)
@@ -1053,11 +1091,22 @@ export async function POST(req) {
           const liveStyle = tacticalRow?.team_playing_style?.trim()
           const liveInstr = tacticalRow?.individual_instructions
           const numLive = (liveInstr && typeof liveInstr === 'object') ? Object.keys(liveInstr).length : 0
-          // Risolvi nomi giocatori per istruzioni (serve quando l'utente chiede in chat)
+          // Risolvi nomi giocatori per istruzioni e segnala fit live: la cache può non evidenziare fuori ruolo recenti.
           let instrLines = ''
+          let fitLines = ''
           try {
+            const { data: players } = await admin
+              .from('players')
+              .select('id, player_name, position, slot_index, original_positions')
+              .eq('user_id', userId)
+              .limit(23)
+            const outOfPosition = getOutOfPositionStarterLines(players || [], lang)
+            if (outOfPosition.length > 0) {
+              fitLines = lang === 'en'
+                ? `\n[LIVE] Out-of-position starters (fix FIT first):\n${outOfPosition.join('\n')}\n`
+                : `\n[AGGIORNAMENTO LIVE] Titolari fuori posizione (correggi FIT prima):\n${outOfPosition.join('\n')}\n`
+            }
             if (liveInstr && typeof liveInstr === 'object') {
-              const { data: players } = await admin.from('players').select('id, player_name').eq('user_id', userId).limit(50)
               const map = {}
               ;(players || []).forEach(p => { if (p?.id) map[String(p.id)] = p.player_name || '?' })
               const entries = Object.entries(liveInstr)
@@ -1077,7 +1126,9 @@ export async function POST(req) {
             const liveLine = lang === 'en'
               ? `[LIVE] Team style: ${liveStyle || 'not set'}. Individual instructions: ${numLive} active.${instrLines}\n`
               : `[AGGIORNAMENTO LIVE] Stile squadra: ${liveStyle || 'non impostato'}. Istruzioni individuali: ${numLive} attive.${instrLines}\n`
-            personalContextSummary = liveLine + personalContextSummary
+            personalContextSummary = liveLine + fitLines + personalContextSummary
+          } else if (fitLines) {
+            personalContextSummary = fitLines + personalContextSummary
           }
         } else if (cacheRow?.content && !cacheIsFresh && process.env.NODE_ENV !== 'production') {
           console.log('[assistant-chat] Diagnostic cache stale: using live context fallback')
