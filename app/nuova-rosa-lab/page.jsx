@@ -2520,12 +2520,33 @@ function buildBoostersDraftForPreview(boostersDraft = [], player = {}) {
 }
 
 /** Solo booster equipaggiato in rosa — senza active_booster_name non si applica nessuno (come Play). */
-function resolveActiveBoosterName(boostersDraft = [], player = {}) {
-  const current = String(player?.active_booster_name || '').trim()
-  if (!current) return null
+function resolveActiveBoosterName(boostersDraft = [], player = {}, fieldActiveBoosterNames = []) {
   const names = boostersDraft.map((entry) => String(entry?.name || '').trim()).filter(Boolean)
-  if (names.some((name) => name.toLowerCase() === current.toLowerCase())) return current
-  return null
+  const firstFieldActive = fieldActiveBoosterNames.find((name) =>
+    names.some((boosterName) => boosterName.toLowerCase() === String(name).toLowerCase())
+  )
+  return firstFieldActive || null
+}
+
+function resolveInitialFieldActiveBoosterNames(player = {}, boostersDraft = []) {
+  const metadataNames = Array.isArray(player?.metadata?.field_active_booster_names)
+    ? player.metadata.field_active_booster_names
+    : Array.isArray(player?.metadata?.active_field_booster_names)
+      ? player.metadata.active_field_booster_names
+      : Array.isArray(player?.metadata?.build_coach?.field_active_booster_names)
+        ? player.metadata.build_coach.field_active_booster_names
+        : null
+  const names = boostersDraft.map((entry) => String(entry?.name || '').trim()).filter(Boolean)
+  const raw = metadataNames || (player?.active_booster_name ? [player.active_booster_name] : [])
+  return raw
+    .map((entry) => String(entry || '').trim())
+    .filter((entry) => names.some((name) => name.toLowerCase() === entry.toLowerCase()))
+}
+
+function resolveInitialFieldCoachActive(player = {}, slot = null) {
+  const metadataValue = player?.metadata?.field_coach_active ?? player?.metadata?.build_coach?.field_coach_active
+  if (typeof metadataValue === 'boolean') return metadataValue
+  return Boolean(slot)
 }
 
 /** Solo persistenza: blocca OVR troppo bassi o crolli sospetti. L'anteprima live non deve usare questa funzione. */
@@ -2715,6 +2736,8 @@ function PremiumPlayerModal({
   const [comSkillsDraft, setComSkillsDraft] = React.useState([])
   const [selectedSkillPreset, setSelectedSkillPreset] = React.useState('')
   const [boostersDraft, setBoostersDraft] = React.useState([])
+  const [fieldActiveBoosterNames, setFieldActiveBoosterNames] = React.useState([])
+  const [fieldCoachActive, setFieldCoachActive] = React.useState(false)
   const [showAllSkills, setShowAllSkills] = React.useState(false)
   const [originalPositionsDraft, setOriginalPositionsDraft] = React.useState([])
   const [showPositionEditor, setShowPositionEditor] = React.useState(false)
@@ -2729,21 +2752,34 @@ function PremiumPlayerModal({
     const rawSavedSliders = savedBuild?.sliders && typeof savedBuild.sliders === 'object' ? savedBuild.sliders : null
     const savedSliders = rawSavedSliders ? sanitizeBuildCoachSliders(rawSavedSliders) : null
     const hasSavedSliders = savedSliders && Object.keys(savedSliders).length > 0
+    const initialBoosters = Array.isArray(player.available_boosters)
+      ? player.available_boosters.map((entry, idx) => clampBoosterEntryForSlot(entry, idx))
+      : []
+    const initialFieldActiveBoosterNames = resolveInitialFieldActiveBoosterNames(player, initialBoosters)
+    const initialFieldCoachActive = resolveInitialFieldCoachActive(player, slot)
     if (hasSavedSliders) {
       const catalogCard = catalogCardFromPlayerSnapshot(player)
       const teamPlayingStyle = tacticalSettings?.team_playing_style ?? null
-      const preferField = preferFieldStatsContext(activeCoach, teamPlayingStyle, player.available_boosters || [])
-      const previewPlayer = buildPlayerForPlayProfilePreview(player, {
-        activeBoosterName: player.active_booster_name,
-        availableBoosters: player.available_boosters
+      const previewCoach = initialFieldCoachActive ? activeCoach : null
+      const previewTeamStyle = initialFieldCoachActive ? teamPlayingStyle : null
+      const preferField = preferFieldStatsContext(previewCoach, previewTeamStyle, initialBoosters)
+      const previewPlayer = buildPlayerForPlayProfilePreview({
+        ...player,
+        metadata: {
+          ...(player.metadata && typeof player.metadata === 'object' ? player.metadata : {}),
+          field_active_booster_names: initialFieldActiveBoosterNames
+        }
+      }, {
+        activeBoosterName: resolveActiveBoosterName(initialBoosters, player, initialFieldActiveBoosterNames),
+        availableBoosters: initialBoosters
       })
       const openPreview = previewGameplayBuildFromSliders({
         player: previewPlayer,
         sliders: savedSliders,
         slotPosition: slotProgressionPosition,
         catalogCard,
-        coach: activeCoach,
-        teamStyle: teamPlayingStyle
+        coach: previewCoach,
+        teamStyle: previewTeamStyle
       })
       const profileStats = statsFromBuildPreview(openPreview, preferField)
       const previewOvr = overallFromBuildPreview(openPreview, preferField)
@@ -2769,11 +2805,9 @@ function PremiumPlayerModal({
     setShowAllSkills(false)
     setOriginalPositionsDraft(buildInitialPositionsFromPlayer(player))
     setShowPositionEditor(false)
-    setBoostersDraft(
-      Array.isArray(player.available_boosters)
-        ? player.available_boosters.map((entry, idx) => clampBoosterEntryForSlot(entry, idx))
-        : []
-    )
+    setBoostersDraft(initialBoosters)
+    setFieldActiveBoosterNames(initialFieldActiveBoosterNames)
+    setFieldCoachActive(initialFieldCoachActive)
     setInteractiveBuildSliders(hasSavedSliders ? savedSliders : null)
   }, [show, player, player?.updated_at, slot?.position, activeCoach, tacticalSettings?.team_playing_style])
 
@@ -2840,7 +2874,27 @@ function PremiumPlayerModal({
   }
 
   const removeBooster = (index) => {
-    setBoostersDraft((prev) => prev.filter((_, idx) => idx !== index))
+    setBoostersDraft((prev) => {
+      const removedName = String(prev[index]?.name || '').trim()
+      if (removedName) {
+        setFieldActiveBoosterNames((names) =>
+          names.filter((name) => String(name).toLowerCase() !== removedName.toLowerCase())
+        )
+      }
+      return prev.filter((_, idx) => idx !== index)
+    })
+  }
+
+  const toggleFieldBooster = (name) => {
+    const normalized = String(name || '').trim()
+    if (!normalized) return
+    setFieldActiveBoosterNames((prev) => {
+      const exists = prev.some((entry) => String(entry).toLowerCase() === normalized.toLowerCase())
+      if (exists) {
+        return prev.filter((entry) => String(entry).toLowerCase() !== normalized.toLowerCase())
+      }
+      return [...prev, normalized]
+    })
   }
 
   const boosterCount = boostersDraft.length
@@ -2860,14 +2914,22 @@ function PremiumPlayerModal({
   const slotProgressionPosition = slot?.position ?? null
   const teamPlayingStyle = tacticalSettings?.team_playing_style ?? null
   const buildCatalogCard = catalogCardFromPlayerSnapshot(player)
-  const preferFieldStats = preferFieldStatsContext(activeCoach, teamPlayingStyle, boostersDraft)
+  const previewCoach = fieldCoachActive ? activeCoach : null
+  const previewTeamStyle = fieldCoachActive ? teamPlayingStyle : null
+  const preferFieldStats = preferFieldStatsContext(previewCoach, previewTeamStyle, boostersDraft)
 
   const effectiveBuildSliders = buildSliders
     ? sanitizeBuildCoachSliders(interactiveBuildSliders ?? buildSliders)
     : null
   const previewBoosters = buildBoostersDraftForPreview(boostersDraft, player)
-  const previewPlayer = buildPlayerForPlayProfilePreview(player, {
-    activeBoosterName: resolveActiveBoosterName(boostersDraft, player),
+  const previewPlayer = buildPlayerForPlayProfilePreview({
+    ...player,
+    metadata: {
+      ...(player.metadata && typeof player.metadata === 'object' ? player.metadata : {}),
+      field_active_booster_names: fieldActiveBoosterNames
+    }
+  }, {
+    activeBoosterName: resolveActiveBoosterName(boostersDraft, player, fieldActiveBoosterNames),
     availableBoosters: previewBoosters
   })
   const buildAllocationLivePreview = effectiveBuildSliders && player
@@ -2876,8 +2938,8 @@ function PremiumPlayerModal({
       sliders: effectiveBuildSliders,
       slotPosition: slotProgressionPosition,
       catalogCard: buildCatalogCard,
-      coach: activeCoach,
-      teamStyle: teamPlayingStyle
+      coach: previewCoach,
+      teamStyle: previewTeamStyle
     })
     : null
   const liveBuildPointsUsed =
@@ -2891,8 +2953,8 @@ function PremiumPlayerModal({
       sliders: slidersSnapshot,
       slotPosition: slotProgressionPosition,
       catalogCard: buildCatalogCard,
-      coach: activeCoach,
-      teamStyle: teamPlayingStyle
+      coach: previewCoach,
+      teamStyle: previewTeamStyle
     })
     const profileStats = statsFromBuildPreview(preview, preferFieldStats)
     const previewOvr = overallFromBuildPreview(preview, preferFieldStats)
@@ -2944,8 +3006,8 @@ function PremiumPlayerModal({
           sliders: sanitizeBuildCoachSliders(interactiveBuildSliders ?? buildSliders),
           slotPosition: slotProgressionPosition,
           catalogCard: buildCatalogCard,
-          coach: activeCoach,
-          teamStyle: teamPlayingStyle
+          coach: previewCoach,
+          teamStyle: previewTeamStyle
         })
         : null
 
@@ -2968,10 +3030,14 @@ function PremiumPlayerModal({
           effect: `+${level}`
         }
       }),
-      active_booster_name: resolveActiveBoosterName(boostersDraft, player),
+      active_booster_name: resolveActiveBoosterName(boostersDraft, player, fieldActiveBoosterNames),
       original_positions: originalPositionsDraft,
       base_stats: buildBaseStatsPayloadFromEditor(form),
-      metadata: { catalog_booster_reminder: false }
+      metadata: {
+        catalog_booster_reminder: false,
+        field_active_booster_names: fieldActiveBoosterNames,
+        field_coach_active: fieldCoachActive
+      }
     }
 
     const shouldPersistBuildPreview =
@@ -3011,8 +3077,12 @@ function PremiumPlayerModal({
       }
       payload.metadata = {
         catalog_booster_reminder: false,
+        field_active_booster_names: fieldActiveBoosterNames,
+        field_coach_active: fieldCoachActive,
         build_coach: {
           ...prevMetaBc,
+          field_active_booster_names: fieldActiveBoosterNames,
+          field_coach_active: fieldCoachActive,
           ...(baselineNested
             ? {
                 before: {
@@ -3413,12 +3483,30 @@ function PremiumPlayerModal({
 
             <section className="nr-reference-boosters">
               <EnterpriseSection title={lang === 'en' ? 'Boosters' : 'Boosters'}>
+                {activeCoach ? (
+                  <button
+                    type="button"
+                    className={`nr-mini-toggle ${fieldCoachActive ? 'is-active' : ''}`}
+                    onClick={() => setFieldCoachActive((value) => !value)}
+                    title={lang === 'en'
+                      ? 'Use active coach bonuses in field OVR calculation'
+                      : 'Usa i bonus dell’allenatore attivo nel calcolo OVR campo'}
+                  >
+                    {fieldCoachActive
+                      ? (lang === 'en' ? 'Coach field active' : 'Coach campo attivo')
+                      : (lang === 'en' ? 'Coach field off' : 'Coach campo off')}
+                  </button>
+                ) : null}
                 <div className="nr-booster-slot-grid">
                   {[0, 1].map((slotIndex) => {
                     const booster = boostersDraft[slotIndex]
                     const selectedPreset = booster?.preset || detectBoosterPreset(booster?.name)
                     const rawLevel = Number(booster?.level || parseBoosterLevel(booster?.effect || '+1'))
                     const activeLevel = slotIndex === 1 ? Math.min(1, rawLevel) : Math.min(5, rawLevel)
+                    const boosterName = String(booster?.name || '').trim()
+                    const isFieldActive = boosterName
+                      ? fieldActiveBoosterNames.some((name) => String(name).toLowerCase() === boosterName.toLowerCase())
+                      : false
                     const hexAddOnly = !booster && (
                       (slotIndex === 0 && boostersDraft.length === 0)
                       || (slotIndex === 1 && boostersDraft.length === 1)
@@ -3496,6 +3584,18 @@ function PremiumPlayerModal({
                                 <span className="nr-booster-level-pill" title={lang === 'en' ? 'Link slot: +1 only' : 'Collegamento: solo +1'}>+1</span>
                               )}
                             </div>
+                            <button
+                              type="button"
+                              className={`nr-mini-toggle ${isFieldActive ? 'is-active' : ''}`}
+                              onClick={() => toggleFieldBooster(boosterName)}
+                              title={lang === 'en'
+                                ? 'Use this booster in field OVR calculation'
+                                : 'Usa questo booster nel calcolo OVR campo'}
+                            >
+                              {isFieldActive
+                                ? (lang === 'en' ? 'Field active' : 'Attivo in campo')
+                                : (lang === 'en' ? 'Field off' : 'Campo off')}
+                            </button>
                           </>
                         ) : null}
                       </div>
@@ -8832,6 +8932,25 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-booster-level-btn.is-active {
           border-color: rgba(0, 212, 255, 0.45);
+          background: rgba(0, 212, 255, 0.16);
+          color: #7ceeff;
+        }
+
+        .nr-mini-toggle {
+          margin-top: 8px;
+          border-radius: 999px;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          background: rgba(255, 255, 255, 0.04);
+          color: rgba(255, 255, 255, 0.72);
+          font-size: 11px;
+          font-weight: 750;
+          padding: 7px 10px;
+          cursor: pointer;
+          align-self: flex-start;
+        }
+
+        .nr-mini-toggle.is-active {
+          border-color: rgba(0, 212, 255, 0.46);
           background: rgba(0, 212, 255, 0.16);
           color: #7ceeff;
         }

@@ -310,6 +310,11 @@ export async function PATCH(req, { params }) {
         : existingPlayer.available_boosters
     }
 
+    if (body.active_booster_name !== undefined) {
+      const nextValue = sanitizeText(body.active_booster_name)
+      updateData.active_booster_name = nextValue || null
+    }
+
     if (body.photo_slots !== undefined) {
       updateData.photo_slots = hasObjectValue(body.photo_slots)
         ? { ...(existingPlayer.photo_slots || {}), ...body.photo_slots }
