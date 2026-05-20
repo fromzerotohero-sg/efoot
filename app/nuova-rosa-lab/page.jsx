@@ -3199,8 +3199,8 @@ function PremiumPlayerModal({
                 </p>
                 <p className="nr-build-slider-hint">
                   {lang === 'en'
-                    ? 'Visual build stats count only progression points. Coach, team style and boosters can change values in-game on eFootball, but are not added here.'
-                    : 'Le statistiche visive della build contano solo i punti progressione. Allenatore, stile squadra e booster possono cambiare i valori in campo su eFootball, ma qui non vengono sommati.'}
+                    ? 'These build stats are calculated from the progression points only, so you can copy the same PT setup in eFootball. Coach, team style and boosters are applied separately in-game.'
+                    : 'Queste statistiche build sono calcolate solo dai punti progressione, cosi puoi copiare gli stessi PT su eFootball. Allenatore, stile squadra e booster vengono applicati separatamente in campo.'}
                 </p>
                 <div className="nr-build-slider-grid nr-build-slider-grid--interactive">
                   {BUILD_SLIDER_ORDER.map((key) => {
@@ -3454,8 +3454,8 @@ function PremiumPlayerModal({
                   </div>
                   <p className="nr-com-skills-hint">
                     {lang === 'en'
-                      ? 'Imported from catalog (e.g. Trickster, Mazing Run). Labels follow the Italian glossary used in coach/RAG.'
-                      : 'Importate dal catalogo (es. Corsa ubriacante, Inserimento incisivo). Etichette in italiano come nel RAG coach; in DB restano i nomi inglesi.'}
+                      ? 'Imported from the player catalog. These labels help the AI read the card correctly and do not change the PT numbers shown above.'
+                      : 'Importate dal catalogo giocatore. Queste etichette aiutano l IA a leggere correttamente la carta e non modificano i numeri PT mostrati sopra.'}
                   </p>
                 </EnterpriseSection>
               </section>
