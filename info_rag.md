@@ -182,7 +182,7 @@ Comportamento quando IA controlla giocatore in possesso:
 ### 3.4 Limiti di schieramento per ruolo (regole di gioco)
 - **Attacco (A)**: 1-5 giocatori (max 2 P, max 1 EDA/ESA)
 - **Centrocampo (C)**: 1-6 giocatori (max 1 CLD/CLS)
-- **Difesa (D)**: 2-5 giocatori (max 3 DC, max 1 TD, max 1 TS; **almeno 1 terzino** TD o TS — non 4 DC)
+- **Difesa (D)**: 2-5 giocatori (fino a **3 DC**, max 1 TD, max 1 TS). **3 DC sono consentiti**. Se vuoi schierare un **4° difensore** quando hai già 3 DC, deve essere un **terzino** (TD o TS): vietato 4° DC. Con 3 DC già in campo, non aggiungere riserve DC se non esce un DC titolare; per aumentare la linea difensiva proponi TD/TS. Eccezione: una card principale DC può essere usata da terzino solo se nei dati ha posizione/competenza TD o TS, e va comunicata come TD/TS.
 - **Portiere (PT)**: posizione non modificabile
 
 ### 3.5 Ruoli e comportamenti tattici

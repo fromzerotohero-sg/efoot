@@ -115,13 +115,12 @@ export async function POST(req) {
       )
     }
 
-    // 2. Recupera rosa cliente completa (con slot_index per titolari/riserve)
+    // 2. Recupera rosa partita: 11 titolari (slot 0-10) + massimo 12 riserve (slot null)
     const { data: clientRoster, error: rosterError } = await admin
       .from('players')
       .select('id, player_name, position, overall_rating, base_stats, skills, com_skills, playing_style_id, slot_index, original_positions, photo_slots')
       .eq('user_id', userId)
       .order('overall_rating', { ascending: false })
-      .limit(100) // Max 100 giocatori
 
     const roster = clientRoster || []
     
@@ -137,11 +136,11 @@ export async function POST(req) {
       })
     }
 
-    // Titolari = slot_index 0-10, riserve = slot_index null (audit contromisure)
+    // Titolari = slot_index 0-10, riserve = slot_index null (max 12 da regole save-player)
     const titolari = roster
       .filter(p => p.slot_index != null && p.slot_index >= 0 && p.slot_index <= 10)
       .sort((a, b) => (Number(a.slot_index) || 0) - (Number(b.slot_index) || 0))
-    const riserve = roster.filter(p => p.slot_index == null)
+    const riserve = roster.filter(p => p.slot_index == null).slice(0, 12)
 
     // 3. Recupera formazione cliente
     const { data: clientFormation, error: formationLayoutError } = await admin
@@ -388,9 +387,9 @@ if (process.env.NODE_ENV !== 'production') {
       )
     }
 
-    // Validazione dimensione prompt (max 120KB: foto/contesto possono pesare di più)
+    // Validazione dimensione prompt: contromisure usa RAG + rosa completa, quindi serve margine.
     const promptSize = prompt.length
-    const MAX_PROMPT_SIZE = 120 * 1024
+    const MAX_PROMPT_SIZE = 180 * 1024
     if (promptSize > MAX_PROMPT_SIZE) {
       return NextResponse.json(
         { error: 'Countermeasures data too large. Please reduce data size.' },
@@ -432,7 +431,7 @@ if (process.env.NODE_ENV !== 'production') {
           ],
           response_format: { type: 'json_object' },
           temperature: 0.7,
-          max_completion_tokens: 2000
+          max_completion_tokens: 3000
         }
 
         if (process.env.NODE_ENV !== 'production') console.log(`[generate-countermeasures] Trying model: ${model}, prompt size: ${prompt.length} chars`)
@@ -653,7 +652,7 @@ if (process.env.NODE_ENV !== 'production') {
               const swapCheck = validateStartingXISwap(titolari, reserve || { position: suggestion.position }, replaceId)
               if (!swapCheck.valid) {
                 isValid = false
-                reason = `Sostituzione invalida per limiti difesa (${swapCheck.errors.join(', ')}): non si può avere 4 DC o zero terzini`
+                reason = `Sostituzione invalida per limiti difesa (${swapCheck.errors.join(', ')}): max 3 DC; il quarto difensore deve essere TD/TS`
               }
             }
           }
