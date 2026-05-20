@@ -1932,15 +1932,21 @@ function QuickPlayerPanel({
   const missingLabels = actionableMissing.map((section) => section.label).join(', ')
 
   return (
-    <div className="nr-modal-backdrop" onClick={onClose}>
-      <div className="nr-modal-shell nr-quick-shell" onClick={(event) => event.stopPropagation()}>
+    <ModalPortal>
+      <div className="nr-modal-backdrop" onClick={onClose}>
+        <div className="nr-modal-shell nr-quick-shell" onClick={(event) => event.stopPropagation()}>
         <div className="nr-modal-header">
           <div>
             <span className="nr-mini-kicker">{lang === 'en' ? 'Player details' : 'Dettaglio giocatore'}</span>
             <h2>{player.player_name}</h2>
             <p>{player.position || '-'} · {player.role || player.playing_style_name || player.card_type || '-'}</p>
           </div>
-          <button type="button" className="nr-icon-button" onClick={onClose}>
+          <button
+            type="button"
+            className="nr-icon-button"
+            onClick={onClose}
+            aria-label={lang === 'en' ? 'Close' : 'Chiudi'}
+          >
             <X size={18} />
           </button>
         </div>
@@ -2021,8 +2027,9 @@ function QuickPlayerPanel({
             </button>
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    </ModalPortal>
   )
 }
 
@@ -2495,7 +2502,7 @@ function preferFieldStatsContext(activeCoach, teamPlayingStyle, boostersDraft = 
 }
 
 function statsFromBuildPreview(preview, preferField = false) {
-  if (!preview) return null
+  if (!preview || preview.ok === false) return null
   if (preferField) {
     return preview.fieldStatsNested || nestedFieldStatsFromGameplayPreview(preview) || null
   }
@@ -2503,9 +2510,19 @@ function statsFromBuildPreview(preview, preferField = false) {
 }
 
 function overallFromBuildPreview(preview, preferField = false) {
-  if (!preview) return null
+  if (!preview || preview.ok === false) return null
   if (preferField && Number.isFinite(preview.fieldOverall)) return preview.fieldOverall
   return preview.playProfileOverall ?? preview.afterOverall ?? null
+}
+
+function statsFromProgressionPreview(preview) {
+  if (!preview || preview.ok === false) return null
+  return preview.finalBaseStats || nestedBaselineStatsFromGameplayPreview({ baseStats: preview.finalEfhubStats }) || null
+}
+
+function overallFromProgressionPreview(preview) {
+  if (!preview || preview.ok === false) return null
+  return preview.progressionOverall ?? preview.playProfileOverall ?? preview.afterOverall ?? null
 }
 
 function buildBoostersDraftForPreview(boostersDraft = [], player = {}) {
@@ -2732,7 +2749,6 @@ function PremiumPlayerModal({
     if (hasSavedSliders) {
       const catalogCard = catalogCardFromPlayerSnapshot(player)
       const teamPlayingStyle = tacticalSettings?.team_playing_style ?? null
-      const preferField = preferFieldStatsContext(activeCoach, teamPlayingStyle, player.available_boosters || [])
       const previewPlayer = buildPlayerForPlayProfilePreview(player, {
         activeBoosterName: player.active_booster_name,
         availableBoosters: player.available_boosters
@@ -2745,8 +2761,8 @@ function PremiumPlayerModal({
         coach: activeCoach,
         teamStyle: teamPlayingStyle
       })
-      const profileStats = statsFromBuildPreview(openPreview, preferField)
-      const previewOvr = overallFromBuildPreview(openPreview, preferField)
+      const profileStats = statsFromProgressionPreview(openPreview)
+      const previewOvr = overallFromProgressionPreview(openPreview)
       if (profileStats && typeof profileStats === 'object' && Number.isFinite(previewOvr)) {
         normalizedStats = { ...normalizedStats, ...mapPreviewBaseStatsToFormFields(profileStats) }
         overallRatingStr = String(previewOvr)
@@ -2860,7 +2876,6 @@ function PremiumPlayerModal({
   const slotProgressionPosition = slot?.position ?? null
   const teamPlayingStyle = tacticalSettings?.team_playing_style ?? null
   const buildCatalogCard = catalogCardFromPlayerSnapshot(player)
-  const preferFieldStats = preferFieldStatsContext(activeCoach, teamPlayingStyle, boostersDraft)
 
   const effectiveBuildSliders = buildSliders
     ? sanitizeBuildCoachSliders(interactiveBuildSliders ?? buildSliders)
@@ -2884,6 +2899,13 @@ function PremiumPlayerModal({
     buildAllocationLivePreview?.pointsUsed ?? buildPointsUsed
   const liveBuildPointsAvailable =
     buildAllocationLivePreview?.pointsAvailable ?? buildPointsAvailable
+  const buildPreviewOverBudget =
+    Boolean(buildAllocationLivePreview?.overBudget) ||
+    (
+      Number.isFinite(Number(liveBuildPointsUsed)) &&
+      Number.isFinite(Number(liveBuildPointsAvailable)) &&
+      Number(liveBuildPointsUsed) > Number(liveBuildPointsAvailable)
+    )
 
   const applyPreviewToForm = (slidersSnapshot) => {
     const preview = previewGameplayBuildFromSliders({
@@ -2894,8 +2916,8 @@ function PremiumPlayerModal({
       coach: activeCoach,
       teamStyle: teamPlayingStyle
     })
-    const profileStats = statsFromBuildPreview(preview, preferFieldStats)
-    const previewOvr = overallFromBuildPreview(preview, preferFieldStats)
+    const profileStats = statsFromProgressionPreview(preview)
+    const previewOvr = overallFromProgressionPreview(preview)
     if (!preview || !Number.isFinite(Number(previewOvr))) return
     if (!profileStats || typeof profileStats !== 'object') return
     setForm((prev) => ({
@@ -2981,17 +3003,17 @@ function PremiumPlayerModal({
 
     if (shouldPersistBuildPreview) {
       const preview = sliderPayloadPreview
-      const effectiveNested = statsFromBuildPreview(preview, preferFieldStats)
+      const effectiveNested = statsFromProgressionPreview(preview)
       const baselineNested = nestedBaselineStatsFromGameplayPreview(preview)
       if (effectiveNested) payload.base_stats = effectiveNested
-      payload.overall_rating = preview.fieldOverall ?? preview.afterOverall
+      payload.overall_rating = preview.progressionOverall ?? preview.playProfileOverall ?? preview.afterOverall
       const appPosition = String(payload.position || player.position || '').trim().toUpperCase()
       payload.position_ratings = {
         ...(player.position_ratings && typeof player.position_ratings === 'object' ? player.position_ratings : {}),
         ...(preview.targetPosition
-          ? { [preview.targetPosition]: preview.fieldOverall ?? preview.afterOverall }
+          ? { [preview.targetPosition]: preview.progressionOverall ?? preview.playProfileOverall ?? preview.afterOverall }
           : {}),
-        ...(appPosition ? { [appPosition]: preview.fieldOverall ?? preview.afterOverall } : {})
+        ...(appPosition ? { [appPosition]: preview.progressionOverall ?? preview.playProfileOverall ?? preview.afterOverall } : {})
       }
 
       const now = new Date().toISOString()
@@ -3023,9 +3045,11 @@ function PremiumPlayerModal({
             : {}),
           after: {
             ...(prevMetaBc.after || {}),
-            play_profile_overall: preview.playProfileOverall ?? preview.afterOverall,
-            field_overall: preview.fieldOverall ?? preview.afterOverall,
-            overall_rating: preview.playProfileOverall ?? preview.afterOverall,
+            play_profile_overall: preview.progressionOverall ?? preview.playProfileOverall ?? preview.afterOverall,
+            booster_profile_overall: preview.playProfileOverall ?? preview.afterOverall,
+            field_overall: preview.progressionOverall ?? preview.playProfileOverall ?? preview.afterOverall,
+            boosted_field_overall: preview.fieldOverall ?? preview.afterOverall,
+            overall_rating: preview.progressionOverall ?? preview.playProfileOverall ?? preview.afterOverall,
             overall_cap: preview.overallCap ?? null,
             effective_base_stats: effectiveNested
           }
@@ -3058,8 +3082,8 @@ function PremiumPlayerModal({
             <div className="nr-premium-overall">
               <span>OVR</span>
               <strong>
-                {buildAllocationLivePreview != null && Number.isFinite(overallFromBuildPreview(buildAllocationLivePreview, preferFieldStats))
-                  ? overallFromBuildPreview(buildAllocationLivePreview, preferFieldStats)
+                {buildAllocationLivePreview != null && Number.isFinite(overallFromProgressionPreview(buildAllocationLivePreview))
+                  ? overallFromProgressionPreview(buildAllocationLivePreview)
                   : rosterFormationOvr(player, slot)}
               </strong>
             </div>
@@ -3137,16 +3161,27 @@ function PremiumPlayerModal({
                   <div>
                     <strong>{lang === 'en' ? 'Build ready to copy in game' : 'Build pronta da copiare in gioco'}</strong>
                     <p>{lang === 'en'
-                      ? 'Use these progression values in the game if you want to reproduce this build. The shown OVR includes active boosters and coach bonuses when available.'
-                      : 'Usa questi valori nella schermata progressione del gioco se vuoi replicare questa build. L’OVR mostrato include booster e bonus coach attivi quando disponibili.'}</p>
+                      ? 'Use these progression values in the game if you want to reproduce this build. The shown OVR matches the card/progression profile, not the on-field coach bonus.'
+                      : 'Usa questi valori nella schermata progressione del gioco se vuoi replicare questa build. L’OVR mostrato corrisponde al profilo carta/progressione, non al bonus allenatore in campo.'}</p>
                   </div>
                   <div className="nr-build-copy-meta">
                     {buildTargetPosition && <span>{buildTargetPosition}</span>}
                     {liveBuildPointsUsed !== null && liveBuildPointsAvailable !== null && (
-                      <span>{liveBuildPointsUsed}/{liveBuildPointsAvailable} PT</span>
+                      <span className={buildPreviewOverBudget ? 'is-over-budget' : undefined}>
+                        {liveBuildPointsUsed}/{liveBuildPointsAvailable} PT
+                      </span>
                     )}
                   </div>
                 </div>
+                {buildPreviewOverBudget && (
+                  <div className="nr-build-coach-notes-warn" role="status">
+                    <p>
+                      {lang === 'en'
+                        ? 'This saved build uses more PT than this card variant allows. Check the selected card variant before copying it in game.'
+                        : 'Questa build salvata usa più PT di quelli consentiti da questa variante carta. Controlla la variante selezionata prima di copiarla in gioco.'}
+                    </p>
+                  </div>
+                )}
                 <p className="nr-build-slider-hint">
                   {lang === 'en'
                     ? 'Adjust the sliders: PT costs and role limits follow the game, stats and final OVR update live.'
@@ -3163,7 +3198,8 @@ function PremiumPlayerModal({
                         sliders: effectiveBuildSliders,
                         key,
                         delta: 1,
-                        slotPosition: slotProgressionPosition
+                        slotPosition: slotProgressionPosition,
+                        catalogCard: buildCatalogCard
                       }) != null
                     const canDec = !blocked && ticks > 0
                     return (
@@ -6559,6 +6595,26 @@ export default withAuth(function NuovaRosaLabPage() {
           box-shadow: 0 18px 48px rgba(0, 0, 0, 0.46), 0 0 0 1px rgba(0, 212, 255, 0.18);
         }
 
+        .nr-quick-shell {
+          width: min(560px, calc(100vw - 28px));
+        }
+
+        .nr-quick-shell .nr-modal-header {
+          position: relative;
+        }
+
+        .nr-quick-shell .nr-modal-header .nr-icon-button {
+          position: absolute;
+          top: 14px;
+          right: 14px;
+          z-index: 6;
+          width: 44px;
+          height: 44px;
+          border-color: rgba(255, 255, 255, 0.32);
+          background: rgba(8, 14, 32, 0.96);
+          box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+        }
+
         .nr-field-shell {
           position: relative;
           border-radius: 14px;
@@ -8322,6 +8378,12 @@ export default withAuth(function NuovaRosaLabPage() {
           white-space: nowrap;
         }
 
+        .nr-build-copy-meta span.is-over-budget {
+          border-color: rgba(248, 113, 113, 0.42);
+          background: rgba(127, 29, 29, 0.28);
+          color: #fecaca;
+        }
+
         .nr-build-slider-grid {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -9503,6 +9565,12 @@ export default withAuth(function NuovaRosaLabPage() {
             width: 44px;
             height: 44px;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.38);
+          }
+
+          .nr-quick-shell .nr-modal-header .nr-icon-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
           }
 
           .nr-quick-shell,

@@ -176,12 +176,12 @@ export function buildPlayerUpdatePayload({ player, build, contextEstimated = [],
   const previousDevelopment = player.development_points && typeof player.development_points === 'object' ? player.development_points : {}
   const estimatedFields = Array.from(new Set([...(build.estimatedFields || []), ...contextEstimated]))
   const baselineNested = efhubStatsToPlayerBaseStats(normalizeStatsToEfhub(build.baseStats))
-  const useFieldSnapshot = Boolean(build.coachConsidered || build.fieldBoostersConsidered)
-  const effectiveEfhubStats =
-    useFieldSnapshot && build.finalFieldStats ? build.finalFieldStats : build.finalInGameStats
-  const effectiveNested = efhubStatsToPlayerBaseStats(normalizeStatsToEfhub(effectiveEfhubStats))
+  const effectiveNested = efhubStatsToPlayerBaseStats(normalizeStatsToEfhub(build.finalInGameStats))
+  const fieldEffectiveNested = build.finalFieldStats
+    ? efhubStatsToPlayerBaseStats(normalizeStatsToEfhub(build.finalFieldStats))
+    : null
   const displayOverall =
-    useFieldSnapshot && Number.isFinite(build.fieldOverall) ? build.fieldOverall : build.afterOverall
+    build.progressionOverall ?? build.inGameOverall ?? build.afterOverall
   const catalogOverallMax = catalogCard?.overall_max_level ?? catalogCard?.players_payload?.overall_max_level
   const beforeBaseStats = baselineNested
 
@@ -229,10 +229,13 @@ export function buildPlayerUpdatePayload({ player, build, contextEstimated = [],
         },
         after: {
           overall_rating: displayOverall,
-          overall_decimal: build.afterOverallDecimal,
-          play_profile_overall: build.inGameOverall ?? build.afterOverall,
-          field_overall: build.fieldOverall ?? null,
+          overall_decimal: build.progressionOverallDecimal ?? build.afterOverallDecimal,
+          play_profile_overall: build.progressionOverall ?? build.inGameOverall ?? build.afterOverall,
+          booster_profile_overall: build.inGameOverall ?? build.afterOverall,
+          field_overall: displayOverall,
+          boosted_field_overall: build.fieldOverall ?? null,
           effective_base_stats: effectiveNested,
+          field_effective_base_stats: fieldEffectiveNested,
           overall_cap: build.overallCap ?? null
         },
         boosters_considered: Boolean(build.boostersConsidered),
