@@ -10,7 +10,6 @@ import urllib.request
 
 BASE_URL = "https://efhub.com"
 MANAGERS_URL = f"{BASE_URL}/data/managers.json"
-BOOSTS_URL = f"{BASE_URL}/data/boosts.json"
 SOURCE_VERSION = "efhub-managers-2026"
 USER_AGENT = "Mozilla/5.0 (compatible; EFootCoachCatalogImporter/1.0)"
 
@@ -20,6 +19,35 @@ PLAYSTYLE_KEY_MAP = {
     "LongBallCounter": "contrattacco",
     "OutWide": "vie_laterali",
     "LongBall": "passaggio_lungo",
+}
+
+MANAGER_ABILITY_STAT_MAP = {
+    0: ("offensiveAwareness", "Offensive Awareness"),
+    1: ("ballControl", "Ball Control"),
+    2: ("tightPossession", "Tight Possession"),
+    3: ("dribbling", "Dribbling"),
+    4: ("lowPass", "Low Pass"),
+    5: ("loftedPass", "Lofted Pass"),
+    6: ("finishing", "Finishing"),
+    7: ("setPieceTaking", "Place Kicking"),
+    8: ("curl", "Curl"),
+    9: ("heading", "Header"),
+    10: ("defensiveAwareness", "Defensive Awareness"),
+    11: ("ballWinning", "Defensive Engagement"),
+    12: ("trackingBack", "Tackling"),
+    13: ("aggression", "Aggression"),
+    14: ("kickingPower", "Kicking Power"),
+    15: ("speed", "Speed"),
+    16: ("acceleration", "Acceleration"),
+    17: ("balance", "Balance"),
+    18: ("physicalContact", "Physical Contact"),
+    19: ("jump", "Jump"),
+    20: ("gkAwareness", "GK Awareness"),
+    21: ("gkCatching", "GK Catching"),
+    22: ("gkClearing", "GK Parrying"),
+    23: ("gkReflexes", "GK Reflexes"),
+    24: ("gkReach", "GK Reach"),
+    25: ("stamina", "Stamina"),
 }
 
 
@@ -54,17 +82,6 @@ def chunks(items, size):
         yield items[index:index + size]
 
 
-def build_boost_index(boosts_payload):
-    boost_index = {}
-    for slot_name, boosts in boosts_payload.items():
-        for boost in boosts:
-            boost_index[boost.get("id")] = {
-                **boost,
-                "slot": slot_name,
-            }
-    return boost_index
-
-
 def normalize_playstyles(skills):
     return {
         target_key: int(skills[source_key])
@@ -73,48 +90,43 @@ def normalize_playstyles(skills):
     }
 
 
-def normalize_boosters(boost_ids, boost_index):
+def normalize_boosters(boost_ids):
     boosters = []
     for slot_index, boost_id in enumerate(boost_ids or [], start=1):
-        if boost_id in (-1, 0):
+        if boost_id == -1:
             continue
 
-        boost = boost_index.get(boost_id)
-        if not boost:
+        ability = MANAGER_ABILITY_STAT_MAP.get(boost_id)
+        if not ability:
             boosters.append({
                 "source_boost_id": boost_id,
                 "slot_index": slot_index,
-                "stat_name": f"Unknown boost {boost_id}",
+                "stat_name": f"Unknown manager ability {boost_id}",
                 "bonus": None,
                 "source": "efhub",
             })
             continue
 
+        stat_key, stat_name = ability
         boosters.append({
             "source_boost_id": boost_id,
             "slot_index": slot_index,
-            "stat_name": boost.get("name"),
-            "bonus": None,
-            "stats": {
-                key: value
-                for key, value in (boost.get("stats") or {}).items()
-                if value
-            },
-            "source": "efhub",
+            "stat_name": stat_name,
+            "bonus": 1,
+            "stats": {stat_key: 1},
+            "source": "efhub-manager-ability",
             "metadata": {
-                "japName": boost.get("japName"),
-                "version": boost.get("version"),
-                "slot": boost.get("slot"),
+                "ability_id": boost_id,
             },
         })
     return boosters
 
 
-def make_record(manager, boost_index, synced_at):
+def make_record(manager, synced_at):
     source_coach_id = str(manager["id"])
     image_url = f"https://efimg.com/efootballhub22/images/coach_cards/{source_coach_id}.png"
     playing_styles = normalize_playstyles(manager.get("skills") or {})
-    stat_boosters = normalize_boosters(manager.get("boosts") or [], boost_index)
+    stat_boosters = normalize_boosters(manager.get("boosts") or [])
 
     coach_payload = {
         "coach_name": manager.get("name"),
@@ -174,10 +186,8 @@ def load_records(input_json):
 
 def collect_records():
     managers = fetch_json(MANAGERS_URL)
-    boosts = fetch_json(BOOSTS_URL)
-    boost_index = build_boost_index(boosts)
     synced_at = datetime.now(timezone.utc).isoformat()
-    records = [make_record(manager, boost_index, synced_at) for manager in managers]
+    records = [make_record(manager, synced_at) for manager in managers]
     records.sort(key=lambda item: (item["coach_name"] or "", item["source_coach_id"]))
     return records
 
