@@ -2468,9 +2468,9 @@ function mapPreviewBaseStatsToFormFields(previewBaseStats = {}) {
   return out
 }
 
-function preferFieldStatsContext(activeCoach, teamPlayingStyle, boostersDraft = []) {
+function preferFieldStatsContext(activeCoach, teamPlayingStyle) {
   if (activeCoach || teamPlayingStyle) return true
-  return boostersDraft.filter((entry) => String(entry?.name || '').trim()).length > 1
+  return false
 }
 
 function statsFromBuildPreview(preview, preferField = false) {
@@ -2505,6 +2505,16 @@ function resolveActiveBoosterName(boostersDraft = [], player = {}, fieldActiveBo
     names.some((boosterName) => boosterName.toLowerCase() === String(name).toLowerCase())
   )
   return firstFieldActive || null
+}
+
+function resolveVisualActiveBoosterNames(boostersDraft = [], player = {}, fieldActiveBoosterNames = []) {
+  const names = boostersDraft.map((entry) => String(entry?.name || '').trim()).filter(Boolean)
+  if (names.length === 0) return []
+  const defaultName = String(player?.active_booster_name || '').trim()
+  const defaultMatch = names.find((name) => name.toLowerCase() === defaultName.toLowerCase())
+  if (defaultMatch) return [defaultMatch]
+  const activeName = resolveActiveBoosterName(boostersDraft, player, fieldActiveBoosterNames)
+  return activeName ? [activeName] : []
 }
 
 function resolveInitialFieldActiveBoosterNames(player = {}, boostersDraft = []) {
@@ -2735,21 +2745,22 @@ function PremiumPlayerModal({
       ? player.available_boosters.map((entry, idx) => clampBoosterEntryForSlot(entry, idx))
       : []
     const initialFieldActiveBoosterNames = resolveInitialFieldActiveBoosterNames(player, initialBoosters)
+    const initialVisualActiveBoosterNames = resolveVisualActiveBoosterNames(player.available_boosters || initialBoosters, player, initialFieldActiveBoosterNames)
     const initialFieldCoachActive = resolveInitialFieldCoachActive(player, slot)
     if (hasSavedSliders) {
       const catalogCard = catalogCardFromPlayerSnapshot(player)
       const teamPlayingStyle = tacticalSettings?.team_playing_style ?? null
       const previewCoach = initialFieldCoachActive ? activeCoach : null
       const previewTeamStyle = initialFieldCoachActive ? teamPlayingStyle : null
-      const preferField = preferFieldStatsContext(previewCoach, previewTeamStyle, initialBoosters)
+      const preferField = preferFieldStatsContext(previewCoach, previewTeamStyle)
       const previewPlayer = buildPlayerForPlayProfilePreview({
         ...player,
         metadata: {
           ...(player.metadata && typeof player.metadata === 'object' ? player.metadata : {}),
-          field_active_booster_names: initialFieldActiveBoosterNames
+          field_active_booster_names: initialVisualActiveBoosterNames
         }
       }, {
-        activeBoosterName: resolveActiveBoosterName(initialBoosters, player, initialFieldActiveBoosterNames),
+        activeBoosterName: initialVisualActiveBoosterNames[0] || null,
         availableBoosters: initialBoosters
       })
       const openPreview = previewGameplayBuildFromSliders({
@@ -2895,20 +2906,21 @@ function PremiumPlayerModal({
   const buildCatalogCard = catalogCardFromPlayerSnapshot(player)
   const previewCoach = fieldCoachActive ? activeCoach : null
   const previewTeamStyle = fieldCoachActive ? teamPlayingStyle : null
-  const preferFieldStats = preferFieldStatsContext(previewCoach, previewTeamStyle, boostersDraft)
+  const preferFieldStats = preferFieldStatsContext(previewCoach, previewTeamStyle)
 
   const effectiveBuildSliders = buildSliders
     ? sanitizeBuildCoachSliders(interactiveBuildSliders ?? buildSliders)
     : null
   const previewBoosters = buildBoostersDraftForPreview(boostersDraft, player)
+  const visualFieldActiveBoosterNames = resolveVisualActiveBoosterNames(boostersDraft, player, fieldActiveBoosterNames)
   const previewPlayer = buildPlayerForPlayProfilePreview({
     ...player,
     metadata: {
       ...(player.metadata && typeof player.metadata === 'object' ? player.metadata : {}),
-      field_active_booster_names: fieldActiveBoosterNames
+      field_active_booster_names: visualFieldActiveBoosterNames
     }
   }, {
-    activeBoosterName: resolveActiveBoosterName(boostersDraft, player, fieldActiveBoosterNames),
+    activeBoosterName: visualFieldActiveBoosterNames[0] || null,
     availableBoosters: previewBoosters
   })
   const buildAllocationLivePreview = effectiveBuildSliders && player
@@ -3189,6 +3201,11 @@ function PremiumPlayerModal({
                   {lang === 'en'
                     ? 'Adjust the sliders: PT costs, role limits and stats update live.'
                     : 'Regola gli slider: costi PT, limiti ruolo e statistiche si aggiornano in tempo reale.'}
+                </p>
+                <p className="nr-build-slider-hint">
+                  {lang === 'en'
+                    ? 'Visual stats count PT, active coach/style and only the default equipped booster. Extra boosters remain available to the AI analysis, but are not added to this visual preview.'
+                    : 'Le statistiche visive contano PT, allenatore/stile attivo e solo il booster default equipaggiato. I booster extra restano disponibili per l analisi IA, ma non vengono sommati in questa anteprima.'}
                 </p>
                 <div className="nr-build-slider-grid nr-build-slider-grid--interactive">
                   {BUILD_SLIDER_ORDER.map((key) => {
@@ -3557,12 +3574,12 @@ function PremiumPlayerModal({
                               className={`nr-mini-toggle ${isFieldActive ? 'is-active' : ''}`}
                               onClick={() => toggleFieldBooster(boosterName)}
                               title={lang === 'en'
-                                ? 'Use this booster in the field calculation'
-                                : 'Usa questo booster nel calcolo campo'}
+                                ? 'Keep this booster available to the AI analysis; visual stats only count the default equipped booster'
+                                : 'Mantieni questo booster disponibile per l analisi IA; le statistiche visive contano solo il booster default equipaggiato'}
                             >
                               {isFieldActive
-                                ? (lang === 'en' ? 'Field active' : 'Attivo in campo')
-                                : (lang === 'en' ? 'Field off' : 'Campo off')}
+                                ? (lang === 'en' ? 'AI active' : 'Attivo IA')
+                                : (lang === 'en' ? 'AI off' : 'IA off')}
                             </button>
                           </>
                         ) : null}
