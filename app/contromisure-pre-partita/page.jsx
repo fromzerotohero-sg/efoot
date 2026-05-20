@@ -28,27 +28,28 @@ function fillTemplate(template, vars) {
   )
 }
 
-/** Titolo sostituzione: ruolo riserva vs ruolo titolare uscente (evita "Thuram in CLS"). */
+/** Titolo sostituzione: ruolo slot (titolare uscente) vs ruolo card riserva. */
 function formatPlayerSubstitutionTitle(suggestion, t) {
   const reserveName = suggestion.player_name || '?'
-  const reserveRole = suggestion.position || '?'
+  const slotRole = suggestion.slot_role || suggestion.replace_position || '?'
+  const cardRole = suggestion.reserve_card_position || suggestion.position || '?'
   const outName = suggestion.replace_player_name || '?'
-  const outRole = suggestion.replace_position || '?'
+  const outRole = slotRole
   const title = fillTemplate(t('replaceInStartingXI'), {
     playerName: reserveName,
-    playerRole: reserveRole,
+    playerRole: cardRole,
     replacePlayerName: outName,
     replacePlayerRole: outRole
   })
   const hint = fillTemplate(t('replaceInStartingXIHint'), { replacePlayerName: outName })
   const rolesDiffer =
     outRole &&
-    reserveRole &&
-    String(outRole).trim().toUpperCase() !== String(reserveRole).trim().toUpperCase()
+    cardRole &&
+    String(outRole).trim().toUpperCase() !== String(cardRole).trim().toUpperCase()
   const roleNote = rolesDiffer
     ? fillTemplate(t('replaceInStartingXIRoleNote'), {
         playerName: reserveName,
-        playerRole: reserveRole,
+        playerRole: cardRole,
         replacePlayerRole: outRole
       })
     : ''
@@ -912,7 +913,14 @@ export default function CountermeasuresPreMatchPage() {
                                     </>
                                   )
                                 })()
-                              : `${t('addToStartingXI')}: ${suggestion.player_name} (${suggestion.position || ''})`
+                              : (
+                                  <>
+                                    <div>{fillTemplate(t('substitutionIncomplete'), { playerName: suggestion.player_name || '?' })}</div>
+                                    <div style={{ fontWeight: 500, fontSize: 'clamp(12px, 2.8vw, 13px)', opacity: 0.85, marginTop: '6px' }}>
+                                      {t('substitutionIncompleteHint')}
+                                    </div>
+                                  </>
+                                )
                             : `${t('removeFromStartingXI')}: ${suggestion.player_name} (${suggestion.position || ''})`}
                         </div>
                         <div style={{ fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: '1.6', opacity: 0.9 }}>

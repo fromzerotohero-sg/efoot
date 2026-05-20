@@ -6,6 +6,7 @@ import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { generateCountermeasuresPrompt, validateCountermeasuresOutput } from '@/lib/countermeasuresHelper'
 import { deductCredits, AI_COST, handleCreditOperationError } from '@/lib/creditService'
 import { validateIndividualInstruction } from '@/lib/tacticalInstructions'
+import { validateStartingXISwap } from '@/lib/formationDefenseRules'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -633,15 +634,26 @@ if (process.env.NODE_ENV !== 'production') {
               isValid = false
               reason = `Suggerimento "aggiungi ${suggestion.player_name}" non indica un titolare da sostituire (replace_player_id mancante o non in formazione)`
             } else {
-              // Arricchisci replace_player_name se mancante
-              if (titolariMap.has(replaceId)) {
-                const replaced = titolariMap.get(replaceId)
-                if (!replaceName) {
-                  suggestion.replace_player_name = replaced.player_name || replaced.name || '?'
-                }
-                if (!suggestion.replace_position) {
-                  suggestion.replace_position = replaced.position || ''
-                }
+              const replaced = titolariMap.get(replaceId)
+              const reserve = riserveMap.get(playerId)
+              if (!replaceName) {
+                suggestion.replace_player_name = replaced.player_name || replaced.name || '?'
+              }
+              const slotRole = String(replaced.position || suggestion.replace_position || '').trim()
+              if (!suggestion.replace_position) {
+                suggestion.replace_position = slotRole
+              }
+              suggestion.slot_role = slotRole
+              if (reserve?.position) {
+                suggestion.reserve_card_position = String(reserve.position).trim()
+              } else if (suggestion.position) {
+                suggestion.reserve_card_position = String(suggestion.position).trim()
+              }
+
+              const swapCheck = validateStartingXISwap(titolari, reserve || { position: suggestion.position }, replaceId)
+              if (!swapCheck.valid) {
+                isValid = false
+                reason = `Sostituzione invalida per limiti difesa (${swapCheck.errors.join(', ')}): non si può avere 4 DC o zero terzini`
               }
             }
           }

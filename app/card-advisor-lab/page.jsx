@@ -196,9 +196,11 @@ const copy = {
     buildRosterHint: 'Pensata per modulo, allenatore e come giochi tu.',
     buildRosterMissing: 'Collega la rosa per la build personalizzata.',
     buildSkillsTitle: 'Abilità sulla carta',
-    buildSkillsEquipped: 'già presenti',
-    buildSkillsSlotFree: 'slot libero',
-    buildSkillsSlotsFree: 'slot liberi',
+    buildSkillsOnCard: 'sulla carta',
+    buildSkillsFixed: 'fisse',
+    buildSkillsProgramSlots: 'slot programmi',
+    buildSkillsSlotFree: 'libero',
+    buildSkillsSlotsFree: 'liberi',
     buildSkillNextTitle: 'Prossima da valutare',
     buildSkillNextHint: 'Solo se hai ancora uno slot libero in gioco.',
     buildNativeSkills: 'Sulla carta',
@@ -365,9 +367,11 @@ const copy = {
     buildRosterHint: 'Built for your formation, coach and how you play.',
     buildRosterMissing: 'Link your roster for a personalized build.',
     buildSkillsTitle: 'Card skills',
-    buildSkillsEquipped: 'already on card',
-    buildSkillsSlotFree: 'free slot',
-    buildSkillsSlotsFree: 'free slots',
+    buildSkillsOnCard: 'on card',
+    buildSkillsFixed: 'fixed',
+    buildSkillsProgramSlots: 'program slots',
+    buildSkillsSlotFree: 'free',
+    buildSkillsSlotsFree: 'free',
     buildSkillNextTitle: 'Next to consider',
     buildSkillNextHint: 'Only if you still have a free slot in-game.',
     buildNativeSkills: 'On card',
@@ -1150,14 +1154,26 @@ function CardBuildPreviewSection({ preview, loading, labels, lang }) {
             <p className="build-preview-skills-meta">
               {skills.equippedNative?.length > 0 ? (
                 <span>
-                  {skills.equippedNative.length} {labels.buildSkillsEquipped}
+                  {skills.equippedNative.length} {labels.buildSkillsOnCard}
+                  {skills.fixedCount > 0 ? (
+                    <span>
+                      {' '}
+                      ({skills.fixedCount} {labels.buildSkillsFixed})
+                    </span>
+                  ) : null}
                 </span>
               ) : null}
-              {skills.slotsFree > 0 ? (
-                <span className="build-preview-skills-meta-free">
+              {typeof skills.programSlotUsed === 'number' ? (
+                <span>
                   {skills.equippedNative?.length > 0 ? ' · ' : ''}
-                  {skills.slotsFree}{' '}
-                  {skills.slotsFree === 1 ? labels.buildSkillsSlotFree : labels.buildSkillsSlotsFree}
+                  {labels.buildSkillsProgramSlots}: {skills.programSlotUsed}/6
+                  {skills.slotsFree > 0 ? (
+                    <span className="build-preview-skills-meta-free">
+                      {' '}
+                      ({skills.slotsFree}{' '}
+                      {skills.slotsFree === 1 ? labels.buildSkillsSlotFree : labels.buildSkillsSlotsFree})
+                    </span>
+                  ) : null}
                 </span>
               ) : null}
             </p>
@@ -1165,7 +1181,17 @@ function CardBuildPreviewSection({ preview, loading, labels, lang }) {
           {skills.equippedNative?.length > 0 && (
             <div className="build-preview-skills-pills" aria-label={labels.buildNativeSkills}>
               {skills.equippedNative.map(item => (
-                <span key={item.skill} className="build-preview-skill-pill">
+                <span
+                  key={item.skill}
+                  className={`build-preview-skill-pill${item.fixed ? ' build-preview-skill-pill-fixed' : ''}`}
+                  title={
+                    item.fixed
+                      ? lang === 'en'
+                        ? 'Fixed on card (not a program slot)'
+                        : 'Fissa sulla carta (non è uno slot programmi)'
+                      : undefined
+                  }
+                >
                   {skillPillLabel(item, lang)}
                 </span>
               ))}
@@ -4621,6 +4647,12 @@ export default withAuth(function CardAdvisorLabPage() {
           border: 1px solid rgba(0, 212, 255, 0.22);
           font-size: 11px;
           color: rgba(255, 255, 255, 0.92);
+        }
+
+        .build-preview-skill-pill-fixed {
+          background: rgba(250, 204, 21, 0.1);
+          border-color: rgba(250, 204, 21, 0.38);
+          color: rgba(255, 248, 220, 0.95);
         }
 
         .build-preview-skill-next {
