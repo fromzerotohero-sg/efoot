@@ -195,14 +195,9 @@ const copy = {
     buildRosterTitle: 'Build per la tua rosa',
     buildRosterHint: 'Pensata per modulo, allenatore e come giochi tu.',
     buildRosterMissing: 'Collega la rosa per la build personalizzata.',
-    buildSkillsTitle: 'Abilità sulla carta',
-    buildSkillsOnCard: 'sulla carta',
-    buildSkillsFixed: 'fisse',
-    buildSkillsProgramSlots: 'slot programmi',
-    buildSkillsSlotFree: 'libero',
-    buildSkillsSlotsFree: 'liberi',
-    buildSkillNextTitle: 'Prossima da valutare',
-    buildSkillNextHint: 'Solo se hai ancora uno slot libero in gioco.',
+    buildSkillsTitle: 'Abilità',
+    buildSkillNextTitle: 'Da valutare in programma',
+    buildSkillNextHint: 'Utile solo se puoi ancora aggiungere un’abilità con i punti progressione.',
     buildNativeSkills: 'Sulla carta',
     buildPtUsed: 'PT',
     buildPlayOvr: 'OVR gioco',
@@ -366,14 +361,9 @@ const copy = {
     buildRosterTitle: 'Build for your squad',
     buildRosterHint: 'Built for your formation, coach and how you play.',
     buildRosterMissing: 'Link your roster for a personalized build.',
-    buildSkillsTitle: 'Card skills',
-    buildSkillsOnCard: 'on card',
-    buildSkillsFixed: 'fixed',
-    buildSkillsProgramSlots: 'program slots',
-    buildSkillsSlotFree: 'free',
-    buildSkillsSlotsFree: 'free',
-    buildSkillNextTitle: 'Next to consider',
-    buildSkillNextHint: 'Only if you still have a free slot in-game.',
+    buildSkillsTitle: 'Skills',
+    buildSkillNextTitle: 'Worth adding in-game',
+    buildSkillNextHint: 'Only if you can still add a skill with progression points.',
     buildNativeSkills: 'On card',
     buildPtUsed: 'PT',
     buildPlayOvr: 'In-game OVR',
@@ -1151,32 +1141,6 @@ function CardBuildPreviewSection({ preview, loading, labels, lang }) {
         <div className="build-preview-skills">
           <div className="build-preview-skills-head">
             <h4>{labels.buildSkillsTitle}</h4>
-            <p className="build-preview-skills-meta">
-              {skills.equippedNative?.length > 0 ? (
-                <span>
-                  {skills.equippedNative.length} {labels.buildSkillsOnCard}
-                  {skills.fixedCount > 0 ? (
-                    <span>
-                      {' '}
-                      ({skills.fixedCount} {labels.buildSkillsFixed})
-                    </span>
-                  ) : null}
-                </span>
-              ) : null}
-              {typeof skills.programSlotUsed === 'number' ? (
-                <span>
-                  {skills.equippedNative?.length > 0 ? ' · ' : ''}
-                  {labels.buildSkillsProgramSlots}: {skills.programSlotUsed}/6
-                  {skills.slotsFree > 0 ? (
-                    <span className="build-preview-skills-meta-free">
-                      {' '}
-                      ({skills.slotsFree}{' '}
-                      {skills.slotsFree === 1 ? labels.buildSkillsSlotFree : labels.buildSkillsSlotsFree})
-                    </span>
-                  ) : null}
-                </span>
-              ) : null}
-            </p>
           </div>
           {skills.equippedNative?.length > 0 && (
             <div className="build-preview-skills-pills" aria-label={labels.buildNativeSkills}>
@@ -1184,13 +1148,6 @@ function CardBuildPreviewSection({ preview, loading, labels, lang }) {
                 <span
                   key={item.skill}
                   className={`build-preview-skill-pill${item.fixed ? ' build-preview-skill-pill-fixed' : ''}`}
-                  title={
-                    item.fixed
-                      ? lang === 'en'
-                        ? 'Fixed on card (not a program slot)'
-                        : 'Fissa sulla carta (non è uno slot programmi)'
-                      : undefined
-                  }
                 >
                   {skillPillLabel(item, lang)}
                 </span>
@@ -4620,17 +4577,6 @@ export default withAuth(function CardAdvisorLabPage() {
         .build-preview-skills-head h4 {
           margin: 0;
           font-size: 14px;
-        }
-
-        .build-preview-skills-meta {
-          margin: 0;
-          font-size: 12px;
-          color: rgba(255, 255, 255, 0.62);
-        }
-
-        .build-preview-skills-meta-free {
-          color: rgba(0, 212, 255, 0.9);
-          font-weight: 700;
         }
 
         .build-preview-skills-pills {
