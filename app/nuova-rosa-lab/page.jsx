@@ -19,7 +19,6 @@ import {
   isBuildMacroBlockedForPlayer,
   nestedBaselineStatsFromGameplayPreview,
   nestedEffectiveStatsFromGameplayPreview,
-  nestedFieldStatsFromGameplayPreview,
   catalogCardFromPlayerSnapshot,
   pickBilingualList,
   previewGameplayBuildFromSliders,
@@ -2468,23 +2467,18 @@ function mapPreviewBaseStatsToFormFields(previewBaseStats = {}) {
   return out
 }
 
-function preferFieldStatsContext(activeCoach, teamPlayingStyle) {
-  if (activeCoach || teamPlayingStyle) return true
+function preferFieldStatsContext() {
   return false
 }
 
-function statsFromBuildPreview(preview, preferField = false) {
+function statsFromBuildPreview(preview) {
   if (!preview) return null
-  if (preferField) {
-    return preview.fieldStatsNested || nestedFieldStatsFromGameplayPreview(preview) || null
-  }
-  return preview.playProfileStatsNested || nestedEffectiveStatsFromGameplayPreview(preview) || null
+  return preview.finalBaseStats || nestedEffectiveStatsFromGameplayPreview({ finalInGameStats: preview.finalEfhubStats }) || null
 }
 
-function overallFromBuildPreview(preview, preferField = false) {
+function overallFromBuildPreview(preview) {
   if (!preview) return null
-  if (preferField && Number.isFinite(preview.fieldOverall)) return preview.fieldOverall
-  return preview.playProfileOverall ?? preview.afterOverall ?? null
+  return preview.progressionOverall ?? preview.afterOverall ?? null
 }
 
 function buildBoostersDraftForPreview(boostersDraft = [], player = {}) {
@@ -3038,17 +3032,18 @@ function PremiumPlayerModal({
 
     if (shouldPersistBuildPreview) {
       const preview = sliderPayloadPreview
-      const effectiveNested = statsFromBuildPreview(preview, preferFieldStats)
+      const effectiveNested = statsFromBuildPreview(preview)
       const baselineNested = nestedBaselineStatsFromGameplayPreview(preview)
       if (effectiveNested) payload.base_stats = effectiveNested
-      payload.overall_rating = preview.fieldOverall ?? preview.afterOverall
+      payload.overall_rating = preview.progressionOverall ?? preview.afterOverall
       const appPosition = String(payload.position || player.position || '').trim().toUpperCase()
+      const visualOverall = preview.progressionOverall ?? preview.afterOverall
       payload.position_ratings = {
         ...(player.position_ratings && typeof player.position_ratings === 'object' ? player.position_ratings : {}),
         ...(preview.targetPosition
-          ? { [preview.targetPosition]: preview.fieldOverall ?? preview.afterOverall }
+          ? { [preview.targetPosition]: visualOverall }
           : {}),
-        ...(appPosition ? { [appPosition]: preview.fieldOverall ?? preview.afterOverall } : {})
+        ...(appPosition ? { [appPosition]: visualOverall } : {})
       }
 
       const now = new Date().toISOString()
@@ -3084,9 +3079,9 @@ function PremiumPlayerModal({
             : {}),
           after: {
             ...(prevMetaBc.after || {}),
-            play_profile_overall: preview.playProfileOverall ?? preview.afterOverall,
-            field_overall: preview.fieldOverall ?? preview.afterOverall,
-            overall_rating: preview.playProfileOverall ?? preview.afterOverall,
+            play_profile_overall: visualOverall,
+            field_overall: visualOverall,
+            overall_rating: visualOverall,
             overall_cap: preview.overallCap ?? null,
             effective_base_stats: effectiveNested
           }
@@ -3204,8 +3199,8 @@ function PremiumPlayerModal({
                 </p>
                 <p className="nr-build-slider-hint">
                   {lang === 'en'
-                    ? 'Visual stats count PT, active coach/style and only the default equipped booster. Extra boosters remain available to the AI analysis, but are not added to this visual preview.'
-                    : 'Le statistiche visive contano PT, allenatore/stile attivo e solo il booster default equipaggiato. I booster extra restano disponibili per l analisi IA, ma non vengono sommati in questa anteprima.'}
+                    ? 'Visual build stats count only progression points. Coach, team style and boosters can change values in-game on eFootball, but are not added here.'
+                    : 'Le statistiche visive della build contano solo i punti progressione. Allenatore, stile squadra e booster possono cambiare i valori in campo su eFootball, ma qui non vengono sommati.'}
                 </p>
                 <div className="nr-build-slider-grid nr-build-slider-grid--interactive">
                   {BUILD_SLIDER_ORDER.map((key) => {
@@ -3574,8 +3569,8 @@ function PremiumPlayerModal({
                               className={`nr-mini-toggle ${isFieldActive ? 'is-active' : ''}`}
                               onClick={() => toggleFieldBooster(boosterName)}
                               title={lang === 'en'
-                                ? 'Keep this booster available to the AI analysis; visual stats only count the default equipped booster'
-                                : 'Mantieni questo booster disponibile per l analisi IA; le statistiche visive contano solo il booster default equipaggiato'}
+                                ? 'Keep this booster available to the AI analysis; visual build stats count only PT'
+                                : 'Mantieni questo booster disponibile per l analisi IA; le statistiche visive della build contano solo i PT'}
                             >
                               {isFieldActive
                                 ? (lang === 'en' ? 'AI active' : 'Attivo IA')
