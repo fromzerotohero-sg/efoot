@@ -196,6 +196,9 @@ const copy = {
     buildRosterHint: 'Pensata per modulo, allenatore e come giochi tu.',
     buildRosterMissing: 'Collega la rosa per la build personalizzata.',
     buildSkillsTitle: 'Abilità',
+    skillSourceNoticeTitle: 'Lettura fonti verificata',
+    skillSourceNoticeText: 'Se una fonte mostra un nome tradotto diverso, non ti preoccupare: Card Advisor incrocia nome originale, ruolo, effetto reale e contesto della carta prima del verdetto.',
+    defenderRoleNoticeText: 'Per i difensori il criterio resta sempre difensivo: copertura, duelli, intercetti, fisico e uscita palla. Le skill offensive sono trattate solo come bonus secondario.',
     buildSkillNextTitle: 'Da valutare in programma',
     buildSkillNextHint: 'Utile solo se puoi ancora aggiungere un’abilità con i punti progressione.',
     buildNativeSkills: 'Sulla carta',
@@ -362,6 +365,9 @@ const copy = {
     buildRosterHint: 'Built for your formation, coach and how you play.',
     buildRosterMissing: 'Link your roster for a personalized build.',
     buildSkillsTitle: 'Skills',
+    skillSourceNoticeTitle: 'Verified source read',
+    skillSourceNoticeText: 'If a source shows a different translated name, don’t worry: Card Advisor cross-checks original name, role, real effect and card context before the verdict.',
+    defenderRoleNoticeText: 'For defenders, the standard stays defensive first: coverage, duels, interceptions, physical profile and ball exit. Attacking skills are treated only as secondary bonuses.',
     buildSkillNextTitle: 'Worth adding in-game',
     buildSkillNextHint: 'Only if you can still add a skill with progression points.',
     buildNativeSkills: 'On card',
@@ -746,6 +752,19 @@ function DeepAnalysisError({ error, labels }) {
   }
 
   return <p className="deep-analysis-error">{message || labels.deepAnalysisError}</p>
+}
+
+function SkillSourceNotice({ labels, isDefender = false }) {
+  return (
+    <div className={`skill-source-notice${isDefender ? ' skill-source-notice-defender' : ''}`} role="note">
+      <AlertTriangle size={16} aria-hidden="true" />
+      <div>
+        <strong>{labels.skillSourceNoticeTitle}</strong>
+        <p>{labels.skillSourceNoticeText}</p>
+        {isDefender ? <p>{labels.defenderRoleNoticeText}</p> : null}
+      </div>
+    </div>
+  )
 }
 
 function listFor(card, key, lang) {
@@ -1249,6 +1268,8 @@ function DetailPanel({
           />
         </div>
       </div>
+
+      <SkillSourceNotice labels={labels} isDefender={roleFamily(card.position) === 'def'} />
 
       <CardBuildPreviewSection
         preview={buildPreview}
@@ -3677,6 +3698,47 @@ export default withAuth(function CardAdvisorLabPage() {
           font-size: 12px;
           font-weight: 950;
           text-decoration: none;
+        }
+
+        .skill-source-notice {
+          margin: 12px 0 0;
+          display: flex;
+          gap: 10px;
+          align-items: flex-start;
+          border: 1px solid rgba(34,211,238,0.26);
+          border-radius: 16px;
+          padding: 12px;
+          background:
+            radial-gradient(circle at 0% 0%, rgba(34,211,238,0.12), transparent 38%),
+            linear-gradient(135deg, rgba(34,211,238,0.055), rgba(250,204,21,0.045));
+          color: rgba(255,255,255,0.84);
+        }
+
+        .skill-source-notice svg {
+          flex: 0 0 auto;
+          margin-top: 2px;
+          color: #22d3ee;
+        }
+
+        .skill-source-notice strong {
+          display: block;
+          margin-bottom: 4px;
+          color: #67e8f9;
+          font-size: 12px;
+          font-weight: 950;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .skill-source-notice p {
+          margin: 0;
+          color: rgba(255,255,255,0.78);
+          font-size: 12px;
+          line-height: 1.45;
+        }
+
+        .skill-source-notice p + p {
+          margin-top: 5px;
         }
 
         .deep-analysis-report {

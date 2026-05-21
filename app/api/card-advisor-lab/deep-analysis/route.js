@@ -19,7 +19,8 @@ import {
   buildPurchaseFactsBlock,
   effectiveFieldRole,
   isPremiumCatalogCard,
-  normalizePurchaseFit
+  normalizePurchaseFit,
+  roleFamily
 } from '@/lib/cardAdvisorPurchaseContext.js'
 import { buildSkillMechanicsContext } from '@/lib/playerSkillSemantics.js'
 
@@ -486,9 +487,10 @@ SEMANTICA:
 - Usa termini da coach/community: movimento, skill nativa, combo, catena, rotazione, non prioritaria, luxury pick, riferimento in area, attacca spazio, dà ampiezza, tiene posizione, non cambia gerarchie.
 - Evita: "fit stile 56%", "bonus sistema", "sinergia principale", "stat edge", "overall", "rating", "buildalo", "potenzialo", "allenalo".
 - Se rispondi in italiano, traduci in italiano anche stili, skill e tag tecnici quando possibile: non lasciare frasi con termini inglesi se esiste già l’italiano nel glossario interno (stessi nomi delle liste native_skills / skills della rosa).
+- ATTENZIONE NOMI ABILITÀ: fonti diverse (EFHub/PESDB/browser tradotto/Football Lab) possono usare nomea IT/EN diversa o ambigua. Non costruire il verdetto su una singola label se l'effetto/ruolo non torna: usa ruolo, reparto, meccanica e caution. In caso dubbio, parla di "skill di passaggio/lancio" o "bonus tiro da fuori" solo come dettaglio, non come motivo acquisto.
 - REGOLE SULLE SKILL (obbligatorie): i campi native_skills e roster.*.skills nel JSON sono nomi già normalizzati nella lingua della risposta (${isEn ? 'inglese' : 'italiano'}) — citane esattamente quelli, senza sostituirli con sinonimi diversi. Non attribuire a un giocatore una skill assente dalla sua lista. Non confondere skill simili (es. cross preciso vs passaggio filtrante; tiro al volo vs tiro dalla distanza; muro vs intercettazione). Per “combo” tra carta e rosa, verifica che la skill compaia in entrambe le liste o spiega che manca il collegamento.
 - native_skill_mechanics è il dizionario autorevole su cosa fanno le skill native della carta: usa effect/useful_for/caution per interpretarle. Se una caution limita l'impatto, rispettala nel verdetto.
-- Skill offensive su difensori/centrocampisti (es. Tiro dalla distanza, Tiro a salire) sono valore extra dal loro reparto, non una soluzione automatica ai problemi dell'attacco: se il problema utente è "attacco", distinguere sempre tra "aiuta da dietro/piazzati" e "non sostituisce una punta o un'ala".
+- Skill offensive su difensori/centrocampisti (es. Tiro dalla distanza, Tiro a salire) sono SOLO bonus secondario dal reparto, non motivo d'acquisto. Per DC/TD/TS è VIETATO usare "tiro da fuori", "minaccia da fuori", "piazzati" o simili come summary/final_decision/condizione d'acquisto: il verdetto deve basarsi prima su difesa, copertura, fisico, velocità recupero, stile difensivo e uscita palla. Quelle skill possono comparire solo in pros come extra marginale.
 - CONFRONTO ABILITÀ VS TITOLARE (obbligatorio): nel contesto c'è skill_delta_sentence — è la lettura ufficiale su comune vs diverso rispetto al titolare in rosa. Non contraddirla. Nei pros NON usare le skill in comune come motivo d'acquisto; il valore skill è nelle skill solo sulla carta. Però skill_delta NON è l'unico criterio d'acquisto: per Epic/Legendary/Showtime valuta anche profilo premium, stats/base-max, stile, booster/showtime traits, ruolo scoperto, rotazione forte e bisogni reali del cliente.
 - CONFRONTO SKILL = stesso reparto: difensori solo vs DC/TD/TS in rosa, centrocampo vs MED/CC/TRQ/CLS/CLD, attacco vs P/SP/ESA/EDA. VIETATO confrontare una carta difensiva con un attaccante (es. Maldini/Thuram vs Ronaldinho). Sinergie con compagni di altri reparti vanno in "synergies", non nel confronto skill principale. Se FATTI ACQUISTO indica anchor difensivo, non citare attaccanti nel confronto skill.
 - Carte Epic, Legendary o Showtime: non essere automaticamente conservativo. Puoi usare verdict take o premium_rotation anche con skill simili al titolare se la carta porta upgrade reale da stats, stile, booster/showtime, ruolo raro, copertura modulo o piano partita. Se invece è solo doppione senza vantaggio pratico, resta not_priority/skip.
@@ -620,6 +622,42 @@ function calibratePremiumVerdict(analysis, { card, catalogCard, anchorType, lang
       }
     })
   }
+  return patched
+}
+
+function suppressDefenderShootingPurchaseReason(analysis, { card, lang }) {
+  if (!analysis || roleFamily(card?.position) !== 'def') return analysis
+
+  const purchaseText = [
+    analysis.summary,
+    analysis.final_decision,
+    analysis.setup_condition
+  ].join(' ')
+  const shootingAsReason = /(tiro|tiri|minaccia).{0,28}(fuori|distanza|piazzat)|fuori area|long.?range|outside the box|set.?piece threat/i.test(purchaseText)
+  if (!shootingAsReason) return analysis
+
+  const patched = {
+    ...analysis,
+    summary: lang === 'en'
+      ? `${card.name} should be judged as a defender first: coverage, duels and ball exit. Shooting traits are only a secondary bonus, not the reason to buy.`
+      : `${card.name} va giudicato prima da difensore: copertura, duelli e uscita palla. Le skill tiro sono solo bonus secondario, non motivo d'acquisto.`,
+    final_decision: lang === 'en'
+      ? 'Buy/rotate only if you want a defender for coverage and build-up; do not buy a defender for long shots.'
+      : 'Compralo/ruotalo solo se vuoi un difensore per copertura e uscita palla; non un DC per tirare da fuori.',
+    setup_condition: ''
+  }
+
+  patched.key_reasoning = (patched.key_reasoning || []).map((item) => {
+    const blob = `${item.label || ''} ${item.text || ''}`
+    if (!/(tiro|tiri|minaccia|fuori|distanza|piazzat|long.?range|outside the box|set.?piece)/i.test(blob)) return item
+    return {
+      ...item,
+      text: lang === 'en'
+        ? 'Shooting traits are a minor bonus on dead balls; the real read is defensive reliability plus ball exit.'
+        : 'Le skill tiro sono bonus minore su piazzati/seconda palla; la lettura vera è tenuta difensiva più uscita palla.'
+    }
+  })
+
   return patched
 }
 
@@ -873,9 +911,13 @@ export async function POST(req) {
       response = await callOpenAIWithRetry(apiKey, buildOpenAIRequestBody('gpt-4o', prompt), 'card-advisor-deep-analysis')
     }
     const payload = await parseOpenAIResponse(response, 'card-advisor-deep-analysis')
-    const analysis = calibratePremiumVerdict(
-      normalizeDeepAnalysis(payload, lang, skillDeltaLine),
-      { card, catalogCard, anchorType: purchaseFacts.anchor?.type, lang }
+    const normalized = normalizeDeepAnalysis(payload, lang, skillDeltaLine)
+    const analysis = suppressDefenderShootingPurchaseReason(
+      calibratePremiumVerdict(
+        normalized,
+        { card, catalogCard, anchorType: purchaseFacts.anchor?.type, lang }
+      ),
+      { card, lang }
     )
 
     return NextResponse.json({
