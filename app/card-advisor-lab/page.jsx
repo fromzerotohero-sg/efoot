@@ -2276,7 +2276,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .cards-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(clamp(150px, 18vw, 190px), 1fr));
           gap: 14px;
         }
 
@@ -2699,6 +2699,7 @@ export default withAuth(function CardAdvisorLabPage() {
           border-radius: 16px;
           overflow: hidden;
           position: relative;
+          container-type: inline-size;
           background:
             radial-gradient(circle at 50% 35%, rgba(0,212,255,0.35), transparent 26%),
             linear-gradient(155deg, #17122f 0%, #09101f 42%, #2b1142 100%);
@@ -2735,18 +2736,18 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .card-art-brand-stamp {
           position: absolute;
-          top: 7px;
-          right: 5px;
+          top: clamp(5px, 2.4cqi, 10px);
+          right: clamp(4px, 2cqi, 9px);
           z-index: 2;
           display: block;
-          width: clamp(40px, 20%, 56px);
+          width: clamp(38px, 14cqi, 72px);
           aspect-ratio: 2.05;
         }
 
         .card-art-brand-stamp::before {
           content: '';
           position: absolute;
-          inset: -2px -4px -2px -1px;
+          inset: -6% -10% -6% -4%;
           border-radius: 999px;
           background: linear-gradient(135deg, rgba(1,6,18,0.99), rgba(18,26,52,0.97));
           border: 1px solid rgba(255,255,255,0.38);
@@ -2758,17 +2759,18 @@ export default withAuth(function CardAdvisorLabPage() {
         .card-art-brand-stamp::after {
           content: '';
           position: absolute;
-          inset: 3px 4px;
+          inset: 10% 12%;
           background: url('/logo.png') center / contain no-repeat;
         }
 
         .card-art::after {
           content: '';
           position: absolute;
-          inset: 8px;
+          inset: clamp(6px, 2.2cqi, 10px);
           border: 1px solid rgba(255,255,255,0.26);
           border-radius: 12px;
           pointer-events: none;
+          z-index: 2;
         }
 
         .card-art-fallback {
@@ -2845,8 +2847,8 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .card-art-top {
           position: absolute;
-          top: 14px;
-          left: 14px;
+          top: clamp(8px, 3.6cqi, 14px);
+          left: clamp(8px, 3.6cqi, 14px);
           z-index: 3;
           display: flex;
           flex-direction: column;
@@ -2855,27 +2857,28 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .card-art-top span {
-          font-size: clamp(26px, 5vw, 42px);
+          font-size: clamp(22px, 11cqi, 42px);
           font-weight: 950;
         }
 
         .card-art-top small {
-          margin-top: 4px;
+          margin-top: 0.35em;
+          font-size: clamp(10px, 4.2cqi, 14px);
           font-weight: 900;
           color: rgba(255,255,255,0.76);
         }
 
         .card-art-name {
           position: absolute;
-          left: 8px;
-          right: 8px;
-          bottom: 5px;
+          left: clamp(6px, 2.2cqi, 10px);
+          right: clamp(6px, 2.2cqi, 10px);
+          bottom: clamp(4px, 1.4cqi, 7px);
           z-index: 3;
-          min-height: 52px;
-          padding: 10px 12px 13px;
+          min-height: clamp(44px, 13.5cqi, 68px);
+          padding: clamp(8px, 2.4cqi, 12px) clamp(8px, 2.8cqi, 14px) clamp(9px, 2.8cqi, 14px);
           background: linear-gradient(180deg, rgba(2, 4, 12, 0.98), #02040c 52%, #02040c 100%);
           color: #fff;
-          font-size: 13px;
+          font-size: clamp(11px, 3.4cqi, 15px);
           font-weight: 900;
           text-align: center;
           text-transform: uppercase;
@@ -4835,7 +4838,7 @@ export default withAuth(function CardAdvisorLabPage() {
           }
 
           .cards-grid {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(clamp(140px, 16vw, 180px), 1fr));
           }
         }
 
@@ -4982,7 +4985,10 @@ export default withAuth(function CardAdvisorLabPage() {
             font-size: 10px;
           }
 
-          .cards-grid,
+          .cards-grid {
+            grid-template-columns: repeat(auto-fill, minmax(clamp(132px, 42vw, 168px), 1fr));
+          }
+
           .detail-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
           }
@@ -5071,29 +5077,14 @@ export default withAuth(function CardAdvisorLabPage() {
             font-size: 11px;
           }
 
-          .card-art-name {
-            font-size: 11px;
-            min-height: 46px;
-            padding: 8px 6px 10px;
-            bottom: 4px;
-          }
-
           .card-art-top {
-            top: 8px;
-            left: 8px;
             width: 36%;
             align-items: flex-start;
           }
 
           .card-art-top span {
-            font-size: clamp(24px, 11vw, 34px);
             line-height: 0.9;
             max-width: 100%;
-          }
-
-          .card-art-top small {
-            font-size: clamp(10px, 3.4vw, 13px);
-            margin-top: 2px;
           }
 
           .detail-card-preview {
