@@ -729,6 +729,28 @@ function rosterDiversificationProfile(cardTechnical, alternative, position, lang
   return { score, differentMovement, differentBody, cardMove, altMove, line }
 }
 
+function cardDistinctSkillsVsAlternative(technical, alternative) {
+  if (!alternative) return false
+  const norm = (skill) => toAscii(getSkillDisplayLabel(skill, 'it') || String(skill || ''))
+  const altKeys = new Set(
+    [...(alternative.skills || []), ...(alternative.skillLabels || [])]
+      .map(norm)
+      .filter(Boolean)
+  )
+  const cardSkills = Array.isArray(technical.mergedSkills) ? technical.mergedSkills : []
+  return cardSkills.some((skill) => {
+    const key = norm(skill)
+    return key && !altKeys.has(key)
+  })
+}
+
+function startersInRoleCount(sameRole = []) {
+  return sameRole.filter((player) => {
+    const slot = Number(player.slotIndex)
+    return Number.isFinite(slot) && slot >= 0 && slot <= 10
+  }).length
+}
+
 function mainLever(card, signals, roleGap, lang) {
   if (roleGap) return lang === 'en' ? `Role coverage on ${card.position}` : `Copertura ruolo ${card.position}`
   const family = roleFamily(card.position)
@@ -1703,6 +1725,17 @@ function coachAdvice({ card, hasRoster, technical, combo, duplicate, starterBloc
   }
 
   if (duplicate || starterBlocked) {
+    if (evidence.diversificationValue && !diversification?.differentMovement && evidence.rotationPoolValue) {
+      return {
+        title: lang === 'en' ? 'Elite rotation' : 'Rotazione d\'élite',
+        text: lang === 'en'
+          ? `${card.name} shares the movement style with your ${card.position} starters but brings different tools (${trait || movement}). Worth coins for rotation and match plans.`
+          : `${intro}${card.name} condivide il movimento con i titolari ${card.position} ma porta tool diversi (${trait || movement}). Vale coins per rotazione e piano partita.`,
+        action: lang === 'en'
+          ? 'Buy to rotate profiles in the same role — not only as a weekly starter.'
+          : 'Comprala per ruotare i profili nello stesso ruolo — non solo come titolare fisso.'
+      }
+    }
     if (evidence.diversificationValue) {
       return {
         title: lang === 'en' ? 'Diversify the lane' : 'Diversifica il reparto',
@@ -1888,11 +1921,16 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   const conflict = classifyRosterConflict({ card, technical, sameRole, hasFormation })
   const bestAlternative = conflict.bestAlternative
   const diversification = rosterDiversificationProfile(technical, bestAlternative, card.position, lang)
-  const diversificationValue = diversification.differentMovement || diversification.score >= 8
   const roleGap = hasRoster && conflict.roleGap
   const duplicate = hasRoster && conflict.duplicate
   const starterBlocked = hasRoster && conflict.starterBlocked
   const upgradeEdge = hasRoster && conflict.upgradeEdge
+  const crowdedRotationPool = startersInRoleCount(sameRole) >= 2
+  const distinctSkillRotation = cardDistinctSkillsVsAlternative(technical, bestAlternative)
+  const rotationPoolValue = technical.premiumCard && crowdedRotationPool && (distinctSkillRotation || !upgradeEdge)
+  const diversificationValue = diversification.differentMovement
+    || diversification.score >= 8
+    || rotationPoolValue
   const rosterCrowded = hasRoster && conflict.rosterCrowded
   const combo = hasRoster ? comboRead({ card, technical, players, issues, profileRead, gameRead, lang }) : null
   const evidence = {
@@ -1908,7 +1946,8 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
       position: card.position
     }),
     upgradeEdge,
-    diversificationValue
+    diversificationValue,
+    rotationPoolValue
   }
 
   let score = technical.hasCompleteCardData ? 66 : 52
@@ -1920,6 +1959,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   if (starterBlocked) score -= diversificationValue ? 1 : 4
   if (diversification.differentMovement) score += 8
   if (diversification.differentBody) score += 3
+  if (rotationPoolValue) score += 6
   if (evidence.hasNativeEdge) score += 6
   if (evidence.hasTacticalFit) score += 6
   if (evidence.teamStyleFit) score += 6

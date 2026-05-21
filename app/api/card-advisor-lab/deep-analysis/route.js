@@ -18,6 +18,7 @@ import { buildSkillDeltaSentence } from '@/lib/cardAdvisorSkillCompare.js'
 import {
   buildPurchaseFactsBlock,
   effectiveFieldRole,
+  isPremiumCatalogCard,
   normalizePurchaseFit
 } from '@/lib/cardAdvisorPurchaseContext.js'
 import { buildSkillMechanicsContext } from '@/lib/playerSkillSemantics.js'
@@ -512,6 +513,9 @@ COERENZA verdict ↔ purchase_fit (obbligatoria):
 - Nessun titolare con ruolo pack in campo (FATTI ACQUISTO) → purchase_fit fits_if_formation_change o skill_only_no_slot; verdict al massimo situational; setup_condition obbligatorio
 - skill_delta indica "quasi uguale" / "non compri per skill nuove" → non vendere l'acquisto come upgrade skill. Può comunque essere premium_rotation/take se altri fattori premium e fit cliente sono forti; altrimenti not_priority, luxury_pick o situational.
 - Diversificazione è motivo d'acquisto valido: stesso ruolo ma movimento/stile/body type diversi dal titolare (es. Opportunista vs Rapace d'area) → premium_rotation o take se la carta è premium o offre un piano partita chiaramente diverso; non classificare come skip solo perché le skill sono simili.
+- Stesso stile del titolare (es. due Opportunista in CF) NON basta per "Oggi no" su Epic/Legendary/Showtime: valuta skill solo carta, body type, lag, rotazione tra titolari; verdict premium_rotation o fits_with_rotation se i pro sono concreti.
+- Vietato final_decision "Oggi no" / "Non comprare" su carte premium con ≥2 pro, salvo skip_duplicate (stesso nome già titolare) o purchase_fit not_your_playstyle con motivo chiaro.
+- key_reasoning "gerarchie": non chiudere con "doppione funzionale" se la carta porta tool diversi (dribbling, tiro di prima, sassata) — scrivi rotazione d'élite / piano partita.
 - Salto skill chiaro + titolare stesso ruolo o buco ruolo reale → take, premium_rotation o fits_with_rotation
 - Game stats ≠ stile carta (es. pochi cross ma carta da fascia) → not_your_playstyle o fits_if_formation_change con condizione
 - Rosa assente → purchase_fit insufficient_data; verdict situational; solo review carta
@@ -570,6 +574,53 @@ Restituisci SOLO JSON valido con questa struttura:
   "final_decision": "decisione finale netta, massimo 180 caratteri"
 }
 `.trim()
+}
+
+function calibratePremiumVerdict(analysis, { card, catalogCard, anchorType, lang }) {
+  if (!analysis || !isPremiumCatalogCard(card, catalogCard) || anchorType === 'same_name') return analysis
+
+  const textBlob = [
+    analysis.final_decision,
+    analysis.summary,
+    analysis.headline,
+    ...(analysis.key_reasoning || []).map((row) => `${row.label} ${row.text}`),
+    ...(analysis.cons || [])
+  ].join(' ')
+
+  const harshVerdict = analysis.verdict === 'skip' || analysis.verdict === 'not_priority'
+  const saysNoBuy = /(oggi no|non compr|non ha senso compr|evita l.acquisto|do not buy|not today|skip purchase|non spendere)/i.test(textBlob)
+  const saysFunctionalDup = /(doppione funzionale|functional duplicate|non offre.*rotazione|doesn.t offer.*rotation|non cambia.*variet)/i.test(textBlob)
+  const hasPros = (analysis.pros || []).length >= 2
+  const hasSynergy = (analysis.synergies || []).length >= 1
+
+  if (!harshVerdict && !saysNoBuy && !saysFunctionalDup) return analysis
+  if (!hasPros && !hasSynergy) return analysis
+
+  const patched = { ...analysis }
+  if (harshVerdict || saysNoBuy) {
+    patched.verdict = 'premium_rotation'
+    if (patched.purchase_fit === 'skip_duplicate' || !patched.purchase_fit) {
+      patched.purchase_fit = 'fits_with_rotation'
+    }
+  }
+  if (saysNoBuy) {
+    patched.final_decision = lang === 'en'
+      ? 'Worth buying for elite rotation and match plans — not to replace your starter every week.'
+      : 'Ha senso comprarla per rotazione d\'élite e piano partita — non per sostituire il titolare ogni settimana.'
+  }
+  if (saysFunctionalDup) {
+    patched.key_reasoning = (patched.key_reasoning || []).map((item) => {
+      const blob = `${item.label} ${item.text}`
+      if (!/(doppione|duplicate|non offre|varietà offensiva|offensive variety)/i.test(blob)) return item
+      return {
+        ...item,
+        text: lang === 'en'
+          ? 'Same movement style as your starters, but different card tools — elite rotation, not a forced weekly starter.'
+          : 'Stesso movimento dei titolari, ma tool carta diversi — rotazione d\'élite, non titolare fisso obbligatorio.'
+      }
+    })
+  }
+  return patched
 }
 
 function normalizeDeepAnalysis(payload, lang, skillDeltaLine = '') {
@@ -779,15 +830,18 @@ export async function POST(req) {
       lang
     })
 
-    const { text: purchaseFactsText } = buildPurchaseFactsBlock({
+    const purchaseFacts = buildPurchaseFactsBlock({
       card,
+      catalogCard,
       players,
       formation: formationRes.data || null,
       profile: profileRes.data || {},
       gameAnalysis: gameAnalysisRes.data || null,
       patterns: patternsRes.data || {},
+      stylesLookup,
       lang
     })
+    const purchaseFactsText = purchaseFacts.text
 
     const prompt = buildPrompt({
       lang,
@@ -819,7 +873,10 @@ export async function POST(req) {
       response = await callOpenAIWithRetry(apiKey, buildOpenAIRequestBody('gpt-4o', prompt), 'card-advisor-deep-analysis')
     }
     const payload = await parseOpenAIResponse(response, 'card-advisor-deep-analysis')
-    const analysis = normalizeDeepAnalysis(payload, lang, skillDeltaLine)
+    const analysis = calibratePremiumVerdict(
+      normalizeDeepAnalysis(payload, lang, skillDeltaLine),
+      { card, catalogCard, anchorType: purchaseFacts.anchor?.type, lang }
+    )
 
     return NextResponse.json({
       success: true,
