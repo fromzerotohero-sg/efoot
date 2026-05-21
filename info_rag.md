@@ -612,7 +612,7 @@ Nota affidabilita: "special double touch" e varianti "tess/croqueta interrotta" 
 - **Specialista punizioni**: Punizioni più precise. **Quando serve**: tiratori punizioni.
 - **Specialista rigori**: Rigori più sicuri. **Quando serve**: tiratori designati.
 - **Tiratore**: Tiri da fuori area più precisi. **Quando serve**: centrocampisti offensivi, tiri da distanza.
-- **Lancio lungo**: Maggiore ampiezza lancio dalle mani (laterali/portieri). **Quando serve**: rinvii rapidi.
+- **Rimessa lunga / Rimessa lunga PT**: Maggiore ampiezza del lancio con le mani (laterali/portieri). **Quando serve**: rinvii rapidi.
 - **Riserva di lusso**: Prestazioni migliorate quando subentra in corso partita. **Quando serve**: panchinari d’impatto, cambi tattici.
 - **Spirito combattivo**: Prestazioni migliori sotto pressione e fatica. **Quando serve**: Box-to-Box, mediani, pressing. **Comunità**: ideale per tutti gli 11; fondamentale per DC, MED e TrQ (smistano palloni in spazi ridotti). I TrQ hanno spesso Resistenza bassa: anche se li sostituisci al 46', Spirito combattivo li aiuta già al primo tempo (intorno al 30' la Resistenza cala e influisce su lucidità e rapidità). Riduce impatto fatica, migliora anche gestione Resistenza.
 - **Astuzia** (Tattica): Maggiore probabilità di ottenere falli quando è in possesso di palla. **EVITARE su difensori**: Konami gestisce male l'abilità, effetto contrario – più falli a sfavore. Dare a centrocampisti/attaccanti se utile.

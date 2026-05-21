@@ -20,6 +20,7 @@ import {
   effectiveFieldRole,
   normalizePurchaseFit
 } from '@/lib/cardAdvisorPurchaseContext.js'
+import { buildSkillMechanicsContext } from '@/lib/playerSkillSemantics.js'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -92,9 +93,64 @@ function normalizeCard(raw = {}) {
     category: String(raw.category || '').trim(),
     style: String(raw.style || '').trim(),
     skills: Array.isArray(raw.skills) ? raw.skills : [],
+    height: Number(raw.height) || null,
+    weight: Number(raw.weight) || null,
     sourcePlayerId: String(raw.sourcePlayerId || '').trim(),
     source: String(raw.source || '').trim()
   }
+}
+
+function bodyTypeRead({ height, weight, position }, lang = 'it') {
+  const h = Number(height) || 0
+  const w = Number(weight) || 0
+  if (!h && !w) return null
+  const isEn = lang === 'en'
+  const pos = String(position || '').toUpperCase()
+  const isAttacker = ['P', 'CF', 'SP', 'ST', 'ESA', 'EDA'].includes(pos)
+  if (h >= 188 || w >= 85) {
+    return isEn
+      ? 'big body type: box reference, contact, aerial duels and shielding'
+      : 'body type fisico: riferimento in area, contatto, duelli aerei e protezione'
+  }
+  if (isAttacker && h <= 175) {
+    return isEn
+      ? 'compact body type: quick turns, tight control and separation'
+      : 'body type compatto: girate rapide, stretto e separazione'
+  }
+  return isEn
+    ? 'balanced body type: read with movement style, not only stats'
+    : 'body type equilibrato: da leggere insieme allo stile movimento, non solo alle stats'
+}
+
+function styleMovementRead(style, lang = 'it') {
+  const s = toAscii(style)
+  const isEn = lang === 'en'
+  if (s.includes('goal poacher') || s.includes('opportunista')) {
+    return isEn
+      ? 'Goal Poacher: last-line runner for through balls, depth and counterattacks; not the same as a static box striker.'
+      : 'Opportunista: attacca ultima linea, filtranti, profondità e contropiede; non è uguale a una punta statica da area.'
+  }
+  if (s.includes('fox in the box') || s.includes('rapace')) {
+    return isEn
+      ? 'Fox in the Box: central penalty-area finisher for crosses, rebounds and quick shots; do not judge it only by pace.'
+      : "Rapace d'area: finalizzatore centrale per cross, ribalzi e tiri rapidi; non giudicarlo solo dalla velocità."
+  }
+  if (s.includes('target man') || s.includes('fulcro')) {
+    return isEn
+      ? 'Target Man: physical reference for hold-up play, long balls and lay-offs.'
+      : 'Fulcro di gioco: riferimento fisico per sponde, lanci lunghi e protezione.'
+  }
+  if (s.includes('hole player') || s.includes('giocatore chiave')) {
+    return isEn
+      ? 'Hole Player: late runner from behind into scoring spaces.'
+      : 'Giocatore chiave: inserimenti da dietro negli spazi da gol.'
+  }
+  if (s.includes('prolific winger') || s.includes('ala prolifica')) {
+    return isEn
+      ? 'Prolific Winger: starts wide and attacks the box/final third.'
+      : 'Ala prolifica: parte larga e attacca area/ultimo terzo.'
+  }
+  return null
 }
 
 function collectNumbers(input, bucket = {}, path = '') {
@@ -323,13 +379,23 @@ function buildPrompt({ lang, card, catalogCard, profile, players, stylesLookup =
   const coachCore = getCoachSharedCoreText(lang)
   const cardBaseStats = summarizeStats(catalogCard?.base_stats || {})
   const cardMaxStats = summarizeStats(catalogCard?.max_stats || {})
+  const cardRawSkills = [...(card.skills || []), ...(catalogCard?.player_skills || [])]
+  const cardHeight = Number(card.height) || Number(catalogCard?.height) || null
+  const cardWeight = Number(card.weight) || Number(catalogCard?.weight) || null
+  const movementRead = styleMovementRead(card.style || catalogCard?.playing_style || '', lang)
+  const bodyRead = bodyTypeRead({ height: cardHeight, weight: cardWeight, position: card.position || catalogCard?.position }, lang)
   const cardPayload = {
     name: card.name,
     position: card.position,
     category: card.category,
     source: card.source || catalogCard?.source || null,
     playing_style: card.style || catalogCard?.playing_style || null,
-    native_skills: canonSkillsForPrompt([...(card.skills || []), ...(catalogCard?.player_skills || [])], lang, 14),
+    style_movement_read: movementRead,
+    height: cardHeight,
+    weight: cardWeight,
+    body_type_read: bodyRead,
+    native_skills: canonSkillsForPrompt(cardRawSkills, lang, 14),
+    native_skill_mechanics: buildSkillMechanicsContext(cardRawSkills, { lang, max: 12 }),
     base_stats: cardBaseStats,
     max_stats: hasStats(catalogCard?.max_stats) ? cardMaxStats : null,
     stats_basis: {
@@ -403,6 +469,7 @@ FOCUS:
 - Non parlare di overall/rating come criterio.
 - Non inventare nomi, skill, problemi o ruoli non presenti nei dati.
 - Stili e abilità sono diversi: lo stile spiega il movimento; le abilità spiegano cosa sa fare.
+- style_movement_read e body_type_read sono vincolanti per il profilo carta: Opportunista ≠ Rapace d'area. Opportunista = profondità/filtranti/ultima linea; Rapace d'area = area/cross/ribalzi/finalizzazione centrale. Il body type decide se quel movimento rende da riferimento fisico, agile o bilanciato.
 - Se trovi una combo reale, mettila al centro. Se manca metà combo, dillo.
 - Usa il RAG per interpretare movimenti da stile, meccaniche eFootball, movimenti collettivi, abilità e situazioni di gioco. Non copiarlo: applicalo ai dati del cliente.
 - Scrivi corto e denso. Niente tema. Ogni campo deve essere leggibile in pochi secondi.
@@ -419,9 +486,11 @@ SEMANTICA:
 - Evita: "fit stile 56%", "bonus sistema", "sinergia principale", "stat edge", "overall", "rating", "buildalo", "potenzialo", "allenalo".
 - Se rispondi in italiano, traduci in italiano anche stili, skill e tag tecnici quando possibile: non lasciare frasi con termini inglesi se esiste già l’italiano nel glossario interno (stessi nomi delle liste native_skills / skills della rosa).
 - REGOLE SULLE SKILL (obbligatorie): i campi native_skills e roster.*.skills nel JSON sono nomi già normalizzati nella lingua della risposta (${isEn ? 'inglese' : 'italiano'}) — citane esattamente quelli, senza sostituirli con sinonimi diversi. Non attribuire a un giocatore una skill assente dalla sua lista. Non confondere skill simili (es. cross preciso vs passaggio filtrante; tiro al volo vs tiro dalla distanza; muro vs intercettazione). Per “combo” tra carta e rosa, verifica che la skill compaia in entrambe le liste o spiega che manca il collegamento.
-- CONFRONTO ABILITÀ VS TITOLARE (obbligatorio): nel contesto c'è skill_delta_sentence — è la lettura ufficiale su comune vs diverso rispetto al titolare in rosa. Non contraddirla. Nei pros NON usare le skill in comune come motivo d'acquisto; il valore è nelle skill solo sulla carta. Valuta il comune come "non perdi la base", non come upgrade. Se skill_delta_sentence indica poco salto, rispetta un verdetto prudente.
+- native_skill_mechanics è il dizionario autorevole su cosa fanno le skill native della carta: usa effect/useful_for/caution per interpretarle. Se una caution limita l'impatto, rispettala nel verdetto.
+- Skill offensive su difensori/centrocampisti (es. Tiro dalla distanza, Tiro a salire) sono valore extra dal loro reparto, non una soluzione automatica ai problemi dell'attacco: se il problema utente è "attacco", distinguere sempre tra "aiuta da dietro/piazzati" e "non sostituisce una punta o un'ala".
+- CONFRONTO ABILITÀ VS TITOLARE (obbligatorio): nel contesto c'è skill_delta_sentence — è la lettura ufficiale su comune vs diverso rispetto al titolare in rosa. Non contraddirla. Nei pros NON usare le skill in comune come motivo d'acquisto; il valore skill è nelle skill solo sulla carta. Però skill_delta NON è l'unico criterio d'acquisto: per Epic/Legendary/Showtime valuta anche profilo premium, stats/base-max, stile, booster/showtime traits, ruolo scoperto, rotazione forte e bisogni reali del cliente.
 - CONFRONTO SKILL = stesso reparto: difensori solo vs DC/TD/TS in rosa, centrocampo vs MED/CC/TRQ/CLS/CLD, attacco vs P/SP/ESA/EDA. VIETATO confrontare una carta difensiva con un attaccante (es. Maldini/Thuram vs Ronaldinho). Sinergie con compagni di altri reparti vanno in "synergies", non nel confronto skill principale. Se FATTI ACQUISTO indica anchor difensivo, non citare attaccanti nel confronto skill.
-- Carte Epic, Legendary o Showtime: tono leggermente più pro-investimento solo se skill_delta_sentence mostra un salto utile per il profilo; se profilo quasi uguale al titolare, non spingere l'acquisto.
+- Carte Epic, Legendary o Showtime: non essere automaticamente conservativo. Puoi usare verdict take o premium_rotation anche con skill simili al titolare se la carta porta upgrade reale da stats, stile, booster/showtime, ruolo raro, copertura modulo o piano partita. Se invece è solo doppione senza vantaggio pratico, resta not_priority/skip.
 - La sezione "key_reasoning" è la parte più importante: ogni punto deve incrociare almeno due fonti tra carta, stile, skill, stats, rosa, formazione, tattica, coach, diagnosi, game analysis e RAG meccaniche.
 - Ogni ragionamento deve chiudere con una conseguenza pratica: cosa cambia, cosa sfruttare, cosa evitare o perché non è priorità.
 
@@ -436,12 +505,12 @@ POLICY POSIZIONI E ACQUISTO (obbligatoria — come Coach chat):
 - Se game stats e stile carta non matchano (es. cross specialist ma pochi cross nei dati): purchase_fit = not_your_playstyle o fits_if_formation_change con condizione chiara.
 - purchase_fit deve essere coerente con verdict e con FATTI ACQUISTO. setup_condition obbligatorio se purchase_fit è fits_if_formation_change o skill_only_no_slot.
 - Esempio SBAGLIATO: "Non cambia gerarchie su Maldini CLS". Esempio CORRETTO: "Non sostituisce Maldini (DC); oggi non hai CLS in campo — ha senso solo se cambi modulo per usare la fascia."
-- FATTI ACQUISTO + skill_delta_sentence hanno priorità su intuizioni generiche: non contraddirli. Se indicano doppione, titolare già ok o nessuno slot per il ruolo pack, non usare verdict "take" senza salto skill chiaro e condizione modulo esplicita se serve.
+- FATTI ACQUISTO + skill_delta_sentence hanno priorità su intuizioni generiche: non contraddirli. Se indicano doppione, titolare già ok o nessuno slot per il ruolo pack, non usare verdict "take" senza almeno un motivo premium concreto (stats/stile/booster/Showtime/rotazione/ruolo scoperto) e condizione modulo esplicita se serve.
 
 COERENZA verdict ↔ purchase_fit (obbligatoria):
 - skip_duplicate / stesso nome titolare + skill quasi uguali → verdict skip o not_priority; purchase_fit skip_duplicate
 - Nessun titolare con ruolo pack in campo (FATTI ACQUISTO) → purchase_fit fits_if_formation_change o skill_only_no_slot; verdict al massimo situational; setup_condition obbligatorio
-- skill_delta indica "quasi uguale" / "non compri per skill nuove" → verdict not_priority, luxury_pick o situational; mai take
+- skill_delta indica "quasi uguale" / "non compri per skill nuove" → non vendere l'acquisto come upgrade skill. Può comunque essere premium_rotation/take se altri fattori premium e fit cliente sono forti; altrimenti not_priority, luxury_pick o situational.
 - Salto skill chiaro + titolare stesso ruolo o buco ruolo reale → take, premium_rotation o fits_with_rotation
 - Game stats ≠ stile carta (es. pochi cross ma carta da fascia) → not_your_playstyle o fits_if_formation_change con condizione
 - Rosa assente → purchase_fit insufficient_data; verdict situational; solo review carta

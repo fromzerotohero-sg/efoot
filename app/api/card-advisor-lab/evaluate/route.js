@@ -58,6 +58,8 @@ function normalizeCard(raw = {}) {
     category: String(raw.category || '').trim(),
     style: String(raw.style || '').trim(),
     skills: Array.isArray(raw.skills) ? raw.skills : [],
+    height: Number(raw.height) || null,
+    weight: Number(raw.weight) || null,
     imageUrl: String(raw.imageUrl || '').trim(),
     sourcePlayerId: String(raw.sourcePlayerId || '').trim(),
     source: String(raw.source || '').trim()
@@ -251,6 +253,18 @@ function estimateCardCeilingOverall(card, catalogCard) {
   return Math.min(99, base + uplift)
 }
 
+function isPremiumAdvisorCard(card = {}, catalogCard = null) {
+  const text = toAscii([
+    card.category,
+    card.cardType,
+    card.card_type,
+    catalogCard?.category,
+    catalogCard?.card_type,
+    catalogCard?.card_category
+  ].filter(Boolean).join(' '))
+  return /(epic|legendary|big time|show time|showtime)/.test(text)
+}
+
 /** Stat di confronto rosa: base salvata, non profilo già buildato in campo. */
 function rosterComparisonSignals(player) {
   const base = player?.base_stats
@@ -427,13 +441,18 @@ function cardTechnicalSignals(card, catalogCard) {
     : { ...(catalogCard?.base_stats || {}) }
   const statSignals = signalsFromStats(statSource)
   const comparisonOverall = estimateCardCeilingOverall(card, catalogCard)
+  const height = Number(card.height) || Number(catalogCard?.height) || null
+  const weight = Number(card.weight) || Number(catalogCard?.weight) || null
 
   return {
     style,
     mergedSkills,
     ...statSignals,
+    height,
+    weight,
     cardOverall: Number(card.overall) || Number(catalogCard?.overall_display) || 0,
     comparisonOverall,
+    premiumCard: isPremiumAdvisorCard(card, catalogCard),
     hasCompleteCardData: Boolean(catalogCard?.base_stats || catalogCard?.max_stats),
     dataSource: catalogCard?.source || card.source || 'unknown'
   }
@@ -506,6 +525,7 @@ function connectionName(connection) {
 function technicalProfile(card, signals, lang) {
   const family = roleFamily(card.position)
   const tags = []
+  const body = bodyTypeProfile(signals, card.position, lang)
   if (family === 'gk') {
     if (signals.gk >= 80) tags.push(lang === 'en' ? 'Top shot-stopping' : 'Parate alto livello')
     if (signals.pass >= 76) tags.push(lang === 'en' ? 'Build-up from the back' : 'Uscita palla pulita')
@@ -531,6 +551,7 @@ function technicalProfile(card, signals, lang) {
     ? (lang === 'en' ? `Style: ${styleLabel}` : `Stile: ${styleLabel}`)
     : null
   if (styleTag) tags.unshift(styleTag)
+  if (body.label) tags.push(body.label)
   const skillTags = signals.mergedSkills
     .slice(0, 2)
     .map(skill => skillLabel(skill, lang))
@@ -538,9 +559,138 @@ function technicalProfile(card, signals, lang) {
   return [...tags, ...skillTags].slice(0, 5).filter(Boolean)
 }
 
+function bodyTypeProfile(technical = {}, position = '', lang = 'it') {
+  const height = Number(technical.height) || 0
+  const weight = Number(technical.weight) || 0
+  const family = roleFamily(position)
+  if (!height && !weight) return { label: '', use: '', score: 0 }
+
+  const isEn = lang === 'en'
+  const big = height >= 188 || weight >= 85
+  const compact = height > 0 && height <= 175
+  const balanced = !big && !compact
+
+  if (family === 'att') {
+    if (big) {
+      return {
+        label: isEn ? 'Big body type' : 'Body type fisico',
+        use: isEn ? 'box reference, aerial duels and shielding' : 'riferimento in area, duelli aerei e protezione',
+        score: 7
+      }
+    }
+    if (compact) {
+      return {
+        label: isEn ? 'Compact body type' : 'Body type compatto',
+        use: isEn ? 'quick turns, tight control and separation' : 'girate rapide, stretto e separazione',
+        score: 5
+      }
+    }
+  }
+
+  if (family === 'def' && big) {
+    return {
+      label: isEn ? 'Defensive physical frame' : 'Struttura fisica difensiva',
+      use: isEn ? 'box duels, contact and set-piece coverage' : 'duelli in area, contatto e palle ferme',
+      score: 6
+    }
+  }
+
+  return {
+    label: balanced ? (isEn ? 'Balanced body type' : 'Body type equilibrato') : '',
+    use: balanced ? (isEn ? 'balanced movement and contact profile' : 'profilo bilanciato tra movimento e contatto') : '',
+    score: balanced ? 3 : 0
+  }
+}
+
+function movementArchetype(technical = {}, position = '', lang = 'it') {
+  const style = toAscii(technical.style)
+  const body = bodyTypeProfile(technical, position, lang)
+  const isEn = lang === 'en'
+
+  if (style.includes('goal poacher') || style.includes('opportunista')) {
+    return {
+      key: 'goal_poacher',
+      label: isEn ? 'Goal Poacher movement' : 'Movimento Opportunista',
+      movement: isEn
+        ? 'plays on the last line and attacks depth on through balls'
+        : 'gioca sull’ultima linea e attacca la profondità sui filtranti',
+      buyWhen: isEn
+        ? 'you need runs behind the defence, counters or faster vertical attacks'
+        : 'ti servono corse alle spalle, contropiede o verticalità più rapida',
+      caution: isEn
+        ? 'less valuable if your attack is mostly crosses into a static box'
+        : 'meno centrale se attacchi soprattutto con cross su area statica',
+      score: 8 + Math.max(0, body.score - 3)
+    }
+  }
+
+  if (style.includes('fox in the box') || style.includes('rapace')) {
+    return {
+      key: 'fox_in_box',
+      label: isEn ? 'Fox in the Box movement' : 'Movimento Rapace d’area',
+      movement: isEn
+        ? 'stays central in the box for rebounds, crosses and quick finishes'
+        : 'resta centrale in area per ribalzi, cross e finalizzazioni rapide',
+      buyWhen: isEn
+        ? 'you create wide service, loose balls or need a fixed box finisher'
+        : 'crei cross, seconde palle o ti serve un finalizzatore fisso in area',
+      caution: isEn
+        ? 'not the same as a depth runner: do not judge it only by pace'
+        : 'non è come un attaccante di profondità: non valutarlo solo sulla velocità',
+      score: 8 + (body.score >= 7 ? 3 : 0)
+    }
+  }
+
+  if (style.includes('target man') || style.includes('fulcro')) {
+    return {
+      key: 'target_man',
+      label: isEn ? 'Target Man movement' : 'Movimento Fulcro di gioco',
+      movement: isEn ? 'shows as a physical reference and link player' : 'si offre da riferimento fisico e sponda',
+      buyWhen: isEn ? 'you need hold-up play, long balls or a body in the box' : 'ti servono sponde, lanci lunghi o corpo in area',
+      caution: isEn ? 'not ideal if you want constant runs behind' : 'non ideale se vuoi attacchi continui alle spalle',
+      score: 7 + body.score
+    }
+  }
+
+  if (style.includes('hole player') || style.includes('giocatore chiave')) {
+    return {
+      key: 'hole_player',
+      label: isEn ? 'Hole Player movement' : 'Movimento Giocatore chiave',
+      movement: isEn ? 'arrives from behind into scoring spaces' : 'si inserisce da dietro negli spazi da gol',
+      buyWhen: isEn ? 'you need late runs from midfield or second striker zones' : 'ti servono inserimenti da centrocampo o seconda punta',
+      caution: isEn ? 'needs service and space ahead' : 'ha bisogno di servizio e spazio davanti',
+      score: 7
+    }
+  }
+
+  if (style.includes('prolific winger') || style.includes('ala prolifica')) {
+    return {
+      key: 'prolific_winger',
+      label: isEn ? 'Prolific Winger movement' : 'Movimento Ala prolifica',
+      movement: isEn ? 'starts wide and attacks the final third' : 'parte largo e attacca l’ultimo terzo',
+      buyWhen: isEn ? 'you need width plus threat into the box' : 'ti servono ampiezza e minaccia verso l’area',
+      caution: isEn ? 'less useful if you never use wide lanes' : 'meno utile se non usi mai le corsie',
+      score: 6
+    }
+  }
+
+  return {
+    key: '',
+    label: '',
+    movement: movementProfile(technical, position, lang),
+    buyWhen: body.use,
+    caution: '',
+    score: body.score
+  }
+}
+
 function mainLever(card, signals, roleGap, lang) {
   if (roleGap) return lang === 'en' ? `Role coverage on ${card.position}` : `Copertura ruolo ${card.position}`
   const family = roleFamily(card.position)
+  const movement = movementArchetype(signals, card.position, lang)
+  if (movement.key === 'goal_poacher') return lang === 'en' ? 'Depth runs' : 'Attacco profondità'
+  if (movement.key === 'fox_in_box') return lang === 'en' ? 'Box finishing' : 'Presenza/finalizzazione in area'
+  if (movement.key === 'target_man') return lang === 'en' ? 'Physical reference' : 'Riferimento fisico'
   if (family === 'def') {
     if (signals.defend >= 80) return lang === 'en' ? 'Defensive timing and duels' : 'Tempo difensivo e duelli'
     return lang === 'en' ? 'Backline coverage' : 'Copertura linea difensiva'
@@ -830,7 +980,11 @@ function movementProfile(technical, position, lang) {
   if (style.includes('build up')) return lang === 'en' ? 'build-up defender movement' : 'movimento da difensore di costruzione'
   if (style.includes('box to box')) return lang === 'en' ? 'box-to-box support movement' : 'movimento continuo box-to-box'
   if (style.includes('orchestrator')) return lang === 'en' ? 'central build-up control' : 'controllo centrale della costruzione'
-  if (style.includes('goal poacher')) return lang === 'en' ? 'depth attack movement' : 'movimento ad attaccare la profondità'
+  if (style.includes('goal poacher') || style.includes('opportunista')) return lang === 'en' ? 'depth attack movement' : 'movimento ad attaccare la profondità'
+  if (style.includes('fox in the box') || style.includes('rapace')) return lang === 'en' ? 'central box-finisher movement' : 'movimento centrale da rapace d’area'
+  if (style.includes('target man') || style.includes('fulcro')) return lang === 'en' ? 'hold-up reference movement' : 'movimento da riferimento e sponda'
+  if (style.includes('hole player') || style.includes('giocatore chiave')) return lang === 'en' ? 'late box-arrival movement' : 'movimento di inserimento negli spazi'
+  if (style.includes('prolific winger') || style.includes('ala prolifica')) return lang === 'en' ? 'wide-to-box attacking movement' : 'movimento largo che attacca l’area'
   if (family === 'gk') return lang === 'en' ? 'goal stability profile' : 'profilo di stabilità porta'
   if (family === 'def') return lang === 'en' ? 'defensive control profile' : 'profilo di controllo difensivo'
   if (family === 'mid') return lang === 'en' ? 'midfield connection profile' : 'profilo di connessione a centrocampo'
@@ -842,12 +996,23 @@ function tacticalStyleFit(technical, position, tacticalStyle, profileRead, lang)
   const groups = skillGroups(technical)
   const family = roleFamily(position)
   const teamStyle = teamStyleLabel(tacticalStyle, lang)
+  const movement = movementArchetype(technical, position, lang)
   if ((style.includes('vie laterali') || style.includes('out wide')) && ['TD', 'TS', 'CLD', 'CLS', 'EDA', 'ESA'].includes(position) && groups.crossing) {
     return lang === 'en'
       ? `Fits ${teamStyle}: wide movement plus crossing can turn the lane into a real chance source.`
       : `Si lega a ${teamStyle}: movimento largo e cross possono trasformare quella corsia in una fonte reale di occasioni.`
   }
+  if ((style.includes('vie laterali') || style.includes('out wide')) && movement.key === 'fox_in_box') {
+    return lang === 'en'
+      ? `Fits ${teamStyle}: Fox in the Box movement gives wide service a central target.`
+      : `Si lega a ${teamStyle}: il movimento da Rapace d'area dà ai cross un riferimento centrale.`
+  }
   if ((style.includes('contropiede') || style.includes('counter')) && (technical.pace >= 78 || family === 'att')) {
+    if (movement.key === 'goal_poacher') {
+      return lang === 'en'
+        ? `Fits ${teamStyle}: Goal Poacher movement attacks the last line early.`
+        : `Si lega a ${teamStyle}: l'Opportunista attacca presto l'ultima linea.`
+    }
     return lang === 'en'
       ? `Fits ${teamStyle}: the value is early vertical attack, not slow possession.`
       : `Si lega a ${teamStyle}: il valore è attaccare verticale presto, non il possesso lento.`
@@ -930,7 +1095,7 @@ function statEdgeLine(position, technical, bestAlternative, lang) {
     : `Rispetto a ${bestAlternative.name}, non emerge un vantaggio tecnico chiaro in ${label}.`
 }
 
-function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, duplicate, starterBlocked, upgradeEdge, rosterCrowded, lang }) {
+function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, duplicate, starterBlocked, upgradeEdge, rosterCrowded, premiumCard, lang }) {
   if (!hasCompleteCardData) {
     return {
       level: 'needs-card-data',
@@ -957,6 +1122,20 @@ function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, dupl
       level: 'watch',
       label: lang === 'en' ? 'Upgrade option' : 'Opzione upgrade',
       title: lang === 'en' ? 'Worth considering over your current option' : 'Da valutare rispetto all’opzione attuale'
+    }
+  }
+  if ((duplicate || starterBlocked) && premiumCard && score >= 82) {
+    return {
+      level: 'buy',
+      label: lang === 'en' ? 'Premium rotation' : 'Rotazione premium',
+      title: lang === 'en' ? 'Buy if you want a premium role option' : 'Compra se vuoi un’opzione premium nel ruolo'
+    }
+  }
+  if ((duplicate || starterBlocked) && premiumCard && score >= 68) {
+    return {
+      level: 'watch',
+      label: lang === 'en' ? 'Premium option' : 'Opzione premium',
+      title: lang === 'en' ? 'Strong card, worth considering as rotation' : 'Carta forte, da valutare come rotazione'
     }
   }
   if (duplicate || starterBlocked) {
@@ -1258,6 +1437,11 @@ function teamSynergySummary({ card, score, hasRoster, technical, roleGap, duplic
       : `${intro}${card.name} si lega al tuo ${style || 'sistema attuale'} perché aggiunge ${trait || 'una qualità tecnica utile'} al modo in cui giochi già.`
   }
   if ((duplicate || starterBlocked) && !evidence.upgradeEdge) {
+    if (technical.premiumCard && score >= 68) {
+      return lang === 'en'
+        ? `${card.name} is a premium option for a covered role: not an automatic starter, but worth buying if you want elite rotation or a different match plan.`
+        : `${intro}${card.name} è un’opzione premium in un ruolo già coperto: non titolare automatico, ma da comprare se vuoi rotazione d’élite o un piano partita diverso.`
+    }
     return lang === 'en'
       ? `${card.name} is useful as a different option in your roster, but it does not clearly change the main balance of your current players.`
       : `${intro}${card.name} è utile come opzione diversa nella tua rosa, ma non cambia in modo chiaro l’equilibrio principale dei tuoi giocatori attuali.`
@@ -1280,6 +1464,7 @@ function teamSynergySummary({ card, score, hasRoster, technical, roleGap, duplic
 function teamSynergyReasons({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, technical, tacticalStyle, patterns, profileRead, evidence, combo, lang }) {
   const lines = []
   const trait = strongestTrait(technical, card.position, lang)
+  const movementRead = movementArchetype(technical, card.position, lang)
   const fitLine = tacticalStyleFit(technical, card.position, tacticalStyle, profileRead, lang)
   const edgeLine = statEdgeLine(card.position, technical, bestAlternative, lang)
   const mapLine = tacticalMapLine(patterns, card.position, lang)
@@ -1294,10 +1479,20 @@ function teamSynergyReasons({ card, sameRole, bestAlternative, roleGap, duplicat
       ? `Your current players already cover similar spaces, so this card matters when it gives you a different use.`
       : `I tuoi giocatori coprono già spazi simili, quindi questa carta conta quando ti dà un uso diverso.`)
   }
+  if (technical.premiumCard && (duplicate || starterBlocked)) {
+    addUniqueLine(lines, lang === 'en'
+      ? `Premium card: evaluate it also as elite rotation, special trait value or role plan, not only as a starter replacement.`
+      : `Carta premium: valutala anche come rotazione d'élite, valore tratto speciale o piano ruolo, non solo come sostituzione del titolare.`)
+  }
   if (trait) {
     addUniqueLine(lines, lang === 'en'
       ? `Adds ${trait}, a trait that changes how the role can be used.`
       : `Aggiunge ${trait}, una caratteristica che cambia come puoi usare quel ruolo.`)
+  }
+  if (movementRead.label) {
+    addUniqueLine(lines, lang === 'en'
+      ? `${movementRead.label}: ${movementRead.movement}; buy when ${movementRead.buyWhen}.`
+      : `${movementRead.label}: ${movementRead.movement}; compralo quando ${movementRead.buyWhen}.`)
   }
   if (fitLine) addUniqueLine(lines, fitLine)
   if (edgeLine) addUniqueLine(lines, edgeLine)
@@ -1311,7 +1506,10 @@ function teamSynergyReasons({ card, sameRole, bestAlternative, roleGap, duplicat
 }
 
 function synergyUseLine({ card, sameRole, bestAlternative, duplicate, starterBlocked, upgradeEdge, technical, tacticalStyle, profileRead, lang }) {
-  const movement = movementProfile(technical, card.position, lang)
+  const movementRead = movementArchetype(technical, card.position, lang)
+  const movement = movementRead.label
+    ? `${movementRead.label}: ${movementRead.movement}`
+    : movementProfile(technical, card.position, lang)
   const trait = strongestTrait(technical, card.position, lang)
   const fitLine = tacticalStyleFit(technical, card.position, tacticalStyle, profileRead, lang)
   const currentReference = bestAlternative?.name
@@ -1338,7 +1536,10 @@ function synergyUseLine({ card, sameRole, bestAlternative, duplicate, starterBlo
 function coachAdvice({ card, hasRoster, technical, combo, duplicate, starterBlocked, roleGap, evidence, tacticalStyle, profile, lang }) {
   const name = userDisplayName(profile)
   const intro = name && lang !== 'en' ? `${name}, ` : ''
-  const movement = movementProfile(technical, card.position, lang)
+  const movementRead = movementArchetype(technical, card.position, lang)
+  const movement = movementRead.label
+    ? `${movementRead.label}: ${movementRead.movement}`
+    : movementProfile(technical, card.position, lang)
   const trait = strongestTrait(technical, card.position, lang)
   const style = teamStyleLabel(tacticalStyle, lang)
 
@@ -1415,6 +1616,17 @@ function coachAdvice({ card, hasRoster, technical, combo, duplicate, starterBloc
   }
 
   if (duplicate || starterBlocked) {
+    if (technical.premiumCard) {
+      return {
+        title: lang === 'en' ? 'Premium rotation' : 'Rotazione premium',
+        text: lang === 'en'
+          ? `${card.name} does not need to erase your starter to be worth coins: as a premium card, value it for ${trait || movement}, rotation and match-plan flexibility.`
+          : `${intro}${card.name} non deve per forza cancellare il titolare per valere coins: da carta premium va valutato per ${trait || movement}, rotazione e flessibilità nel piano partita.`,
+        action: lang === 'en'
+          ? 'Buy if you want that premium option, not only if he starts every match.'
+          : 'Compralo se vuoi quell’opzione premium, non solo se parte titolare sempre.'
+      }
+    }
     return {
       title: lang === 'en' ? 'Not a priority' : 'Non è una priorità',
       text: lang === 'en'
@@ -1453,7 +1665,10 @@ function teamSynergyDetails({ card, sameRole, bestAlternative, roleGap, duplicat
   const details = []
   const family = roleFamily(card.position)
   const teamStyle = teamStyleLabel(tacticalStyle, lang)
-  const movement = movementProfile(technical, card.position, lang)
+  const movementRead = movementArchetype(technical, card.position, lang)
+  const movement = movementRead.label
+    ? `${movementRead.label}: ${movementRead.movement}`
+    : movementProfile(technical, card.position, lang)
   const physicalBase = Math.max(technical.physical || 0, technical.aerial || 0, family === 'def' ? technical.pace || 0 : 0)
   const physicalEdge = bestAlternative?.signals
     ? Math.max(
@@ -1469,6 +1684,16 @@ function teamSynergyDetails({ card, sameRole, bestAlternative, roleGap, duplicat
       label: combo.label,
       score: null,
       text: combo.detail || combo.text
+    })
+  }
+  if (movementRead.label) {
+    details.push({
+      key: 'movement_body',
+      label: lang === 'en' ? 'Movement and body type' : 'Movimento e body type',
+      score: clamp(55 + movementRead.score * 4, 45, 90),
+      text: lang === 'en'
+        ? `${movementRead.label}: ${movementRead.movement}. Best when ${movementRead.buyWhen}; caution: ${movementRead.caution || 'judge it with your role plan'}.`
+        : `${movementRead.label}: ${movementRead.movement}. Rende quando ${movementRead.buyWhen}; attenzione: ${movementRead.caution || 'valutalo col piano ruolo'}.`
     })
   }
 
@@ -1561,6 +1786,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   const issues = issuesRead(patterns)
   const profileRead = profileSignals(profile, lang)
   const gameRead = gameSignals(gameAnalysis)
+  const movementRead = movementArchetype(technical, card.position, lang)
   const conflict = classifyRosterConflict({ card, technical, sameRole, hasFormation })
   const bestAlternative = conflict.bestAlternative
   const roleGap = hasRoster && conflict.roleGap
@@ -1588,6 +1814,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   if (!hasRoster) score = technical.hasCompleteCardData ? 58 : 50
   if (roleGap) score += 20
   if (upgradeEdge) score += 14
+  if (technical.premiumCard && technical.hasCompleteCardData) score += 6
   if (duplicate) score -= 6
   if (starterBlocked) score -= 4
   if (evidence.hasNativeEdge) score += 6
@@ -1599,6 +1826,10 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   if (issues.needBuild && roleFamily(card.position) === 'mid') score += 7
   if (issues.needDepth && roleFamily(card.position) === 'att') score += 7
   if (issues.needAerial && technical.aerial >= 76) score += 5
+  if (movementRead.key === 'goal_poacher' && (issues.needDepth || /contropiede|counter/i.test(String(tacticalStyle || '')))) score += 7
+  if (movementRead.key === 'fox_in_box' && (issues.needAerial || technical.aerial >= 74 || /vie laterali|out wide/i.test(String(tacticalStyle || '')))) score += 7
+  if (movementRead.key === 'target_man' && (technical.physical >= 76 || technical.aerial >= 76)) score += 6
+  if (movementRead.key && movementRead.key !== 'goal_poacher' && movementRead.key !== 'fox_in_box' && movementRead.score >= 7) score += 4
   if (profileRead.needDef && roleFamily(card.position) === 'def') score += 6
   if (profileRead.needBuild && roleFamily(card.position) === 'mid') score += 6
   if (profileRead.needFinishing && roleFamily(card.position) === 'att') score += 6
@@ -1618,6 +1849,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
     starterBlocked,
     upgradeEdge,
     rosterCrowded,
+    premiumCard: technical.premiumCard,
     lang
   })
   const synergyLevel = decision.label
@@ -1678,7 +1910,9 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
     ? !hasRoster
       ? 'Load your roster to turn this from a card read into a personal buy/skip verdict.'
       : decision.level === 'buy'
-        ? `Prioritize ${card.name} if you want to spend coins on ${card.position}.`
+        ? technical.premiumCard
+          ? `Buy ${card.name} if you want a premium ${card.position} option, even as strong rotation.`
+          : `Prioritize ${card.name} if you want to spend coins on ${card.position}.`
         : decision.level === 'watch' && upgradeEdge
           ? `Strong upgrade case for ${card.position}: compare ${card.name} with ${bestAlternative?.name || 'your starter'} before spending.`
           : decision.level === 'avoid'
@@ -1687,7 +1921,9 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
     : !hasRoster
       ? 'Carica la rosa per trasformare questa lettura carta in un verdetto personale compra/evita.'
       : decision.level === 'buy'
-        ? `Dai priorità a ${card.name} se vuoi spendere coins su ${card.position}.`
+        ? technical.premiumCard
+          ? `Compra ${card.name} se vuoi un’opzione premium in ${card.position}, anche da rotazione forte.`
+          : `Dai priorità a ${card.name} se vuoi spendere coins su ${card.position}.`
         : decision.level === 'watch' && upgradeEdge
           ? `Caso upgrade su ${card.position}: confronta ${card.name} con ${bestAlternative?.name || 'il titolare'} prima di spendere.`
           : decision.level === 'avoid'
