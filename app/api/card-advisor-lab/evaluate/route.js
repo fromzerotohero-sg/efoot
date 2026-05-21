@@ -479,6 +479,8 @@ function sameRolePlayers(card, players, stylesLookup) {
           activeBoosterName: player.active_booster_name || null
         },
         slotIndex: player.slot_index,
+        height: Number(player.height) || 0,
+        weight: Number(player.weight) || 0,
         competence: getPositionCompetence(player, card.position),
         isNativePosition: player?.position === card.position
       }
@@ -682,6 +684,49 @@ function movementArchetype(technical = {}, position = '', lang = 'it') {
     caution: '',
     score: body.score
   }
+}
+
+/** Stesso ruolo ma profilo tattico diverso (movimento/body) — motivo d'acquisto per diversificare. */
+function rosterDiversificationProfile(cardTechnical, alternative, position, lang) {
+  const isEn = lang === 'en'
+  if (!alternative) {
+    return { score: 0, differentMovement: false, differentBody: false, line: '' }
+  }
+
+  const cardMove = movementArchetype(cardTechnical, position, lang)
+  const altMove = movementArchetype({ style: alternative.style }, position, lang)
+  const cardBody = bodyTypeProfile(cardTechnical, position, lang)
+  const altBody = bodyTypeProfile(
+    { height: alternative.height, weight: alternative.weight },
+    position,
+    lang
+  )
+
+  const differentMovement = Boolean(cardMove.key && altMove.key && cardMove.key !== altMove.key)
+  const differentBody = Boolean(
+    cardBody.label
+    && altBody.label
+    && cardBody.label !== altBody.label
+    && Math.abs(cardBody.score - altBody.score) >= 3
+  )
+
+  let score = 0
+  if (differentMovement) score += 10
+  if (differentBody) score += 4
+  if (cardMove.key && !altMove.key) score += 5
+
+  const altLabel = altMove.label || alternative.name
+  const line = differentMovement
+    ? isEn
+      ? `${cardMove.label} vs ${altLabel}: a different movement profile than your current ${alternative.name}.`
+      : `${cardMove.label} vs ${altLabel}: profilo di movimento diverso da ${alternative.name}.`
+    : differentBody
+      ? isEn
+        ? `Different body type than ${alternative.name}: another way to play that lane.`
+        : `Body type diverso da ${alternative.name}: un altro modo di interpretare quella corsia.`
+      : ''
+
+  return { score, differentMovement, differentBody, cardMove, altMove, line }
 }
 
 function mainLever(card, signals, roleGap, lang) {
@@ -1095,7 +1140,7 @@ function statEdgeLine(position, technical, bestAlternative, lang) {
     : `Rispetto a ${bestAlternative.name}, non emerge un vantaggio tecnico chiaro in ${label}.`
 }
 
-function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, duplicate, starterBlocked, upgradeEdge, rosterCrowded, premiumCard, lang }) {
+function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, duplicate, starterBlocked, upgradeEdge, rosterCrowded, premiumCard, diversificationValue, lang }) {
   if (!hasCompleteCardData) {
     return {
       level: 'needs-card-data',
@@ -1124,14 +1169,32 @@ function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, dupl
       title: lang === 'en' ? 'Worth considering over your current option' : 'Da valutare rispetto all’opzione attuale'
     }
   }
-  if ((duplicate || starterBlocked) && premiumCard && score >= 82) {
+  if ((duplicate || starterBlocked) && diversificationValue && score >= 72) {
+    return {
+      level: 'buy',
+      label: lang === 'en' ? 'Diversify your squad' : 'Diversifica la rosa',
+      title: lang === 'en'
+        ? 'Buy to add a different tactical profile in the same role'
+        : 'Compra per avere un profilo tattico diverso nello stesso ruolo'
+    }
+  }
+  if ((duplicate || starterBlocked) && diversificationValue && score >= 58) {
+    return {
+      level: 'watch',
+      label: lang === 'en' ? 'Tactical variety' : 'Varietà tattica',
+      title: lang === 'en'
+        ? 'Same role, different match plan — worth it if you like rotating'
+        : 'Stesso ruolo, piano partita diverso — vale se ti piace ruotare'
+    }
+  }
+  if ((duplicate || starterBlocked) && premiumCard && score >= (diversificationValue ? 74 : 82)) {
     return {
       level: 'buy',
       label: lang === 'en' ? 'Premium rotation' : 'Rotazione premium',
       title: lang === 'en' ? 'Buy if you want a premium role option' : 'Compra se vuoi un’opzione premium nel ruolo'
     }
   }
-  if ((duplicate || starterBlocked) && premiumCard && score >= 68) {
+  if ((duplicate || starterBlocked) && premiumCard && score >= (diversificationValue ? 58 : 68)) {
     return {
       level: 'watch',
       label: lang === 'en' ? 'Premium option' : 'Opzione premium',
@@ -1323,7 +1386,7 @@ function decisionEvidence({ technical, sameRole, roleGap, duplicate, starterBloc
   }
 }
 
-function buildRosterRead({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, upgradeEdge, technical, tacticalStyle, patterns, profileRead, lang }) {
+function buildRosterRead({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, upgradeEdge, diversification, technical, tacticalStyle, patterns, profileRead, lang }) {
   const role = positionLabel(card.position, lang)
   const alternatives = topAlternativeDescriptions(sameRole, card.position, lang)
   const bestName = describeAlternative(bestAlternative, card.position, lang)
@@ -1357,13 +1420,23 @@ function buildRosterRead({ card, sameRole, bestAlternative, roleGap, duplicate, 
   }
 
   if (duplicate || starterBlocked) {
+    if (diversification?.differentMovement) {
+      return [
+        lang === 'en'
+          ? `${card.name} does not replace ${bestName || 'your starter'} automatically, but adds a different movement profile (${movement}) in the same ${role} lane.`
+          : `${card.name} non sostituisce ${bestName || 'il titolare'} in automatico, ma aggiunge un profilo di movimento diverso (${movement}) nella stessa corsia ${role}.`,
+        lang === 'en'
+          ? `${secondLine} Strong pick if you want to diversify attacks or change match plans without rebuilding the squad.`
+          : `${secondLine} Ottima scelta se vuoi diversificare l’attacco o cambiare piano partita senza rifare la rosa.`
+      ]
+    }
     return [
       lang === 'en'
-        ? `${card.name} is not a priority because ${alternatives || bestName || 'your current options'} already cover ${card.position}. His profile is ${movement}.`
-        : `${card.name} non è prioritario perché ${alternatives || bestName || 'le opzioni attuali'} coprono già ${card.position}. Il suo profilo è ${movement}.`,
+        ? `${card.name} overlaps ${alternatives || bestName || 'your current options'} in ${card.position} with a similar profile (${movement}).`
+        : `${card.name} si sovrappone a ${alternatives || bestName || 'le opzioni attuali'} in ${card.position} con profilo simile (${movement}).`,
       lang === 'en'
-        ? `${secondLine} Otherwise you risk adding a duplicate without changing your team output.`
-        : `${secondLine} Altrimenti rischi di aggiungere un doppione senza cambiare davvero il rendimento della squadra.`
+        ? `${secondLine} Buy mainly if you want that specific profile; otherwise coins are better on an uncovered role.`
+        : `${secondLine} Compra soprattutto se vuoi proprio quel profilo; altrimenti i coins valgono di più su un ruolo scoperto.`
     ]
   }
 
@@ -1437,6 +1510,11 @@ function teamSynergySummary({ card, score, hasRoster, technical, roleGap, duplic
       : `${intro}${card.name} si lega al tuo ${style || 'sistema attuale'} perché aggiunge ${trait || 'una qualità tecnica utile'} al modo in cui giochi già.`
   }
   if ((duplicate || starterBlocked) && !evidence.upgradeEdge) {
+    if (evidence.diversificationValue) {
+      return lang === 'en'
+        ? `${card.name} diversifies your ${card.position} lane: same role as ${bestAlternative?.name || 'your starter'}, but a different movement and match plan.`
+        : `${intro}${card.name} diversifica la corsia ${card.position}: stesso ruolo di ${bestAlternative?.name || 'il titolare'}, ma movimento e piano partita diversi.`
+    }
     if (technical.premiumCard && score >= 68) {
       return lang === 'en'
         ? `${card.name} is a premium option for a covered role: not an automatic starter, but worth buying if you want elite rotation or a different match plan.`
@@ -1461,7 +1539,7 @@ function teamSynergySummary({ card, score, hasRoster, technical, roleGap, duplic
     : `${intro}${card.name} può aiutarti in scenari specifici, soprattutto quando ti serve ${trait || 'una soluzione tecnica diversa'}.`
 }
 
-function teamSynergyReasons({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, technical, tacticalStyle, patterns, profileRead, evidence, combo, lang }) {
+function teamSynergyReasons({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, technical, tacticalStyle, patterns, profileRead, evidence, combo, diversification, lang }) {
   const lines = []
   const trait = strongestTrait(technical, card.position, lang)
   const movementRead = movementArchetype(technical, card.position, lang)
@@ -1475,9 +1553,18 @@ function teamSynergyReasons({ card, sameRole, bestAlternative, roleGap, duplicat
       : `Copre un ruolo dove oggi non hai una vera alternativa diretta.`)
   }
   if (duplicate || starterBlocked) {
+    if (diversification?.line) {
+      addUniqueLine(lines, diversification.line)
+    } else {
+      addUniqueLine(lines, lang === 'en'
+        ? `Your current players already cover similar spaces, so this card matters when it gives you a different use.`
+        : `I tuoi giocatori coprono già spazi simili, quindi questa carta conta quando ti dà un uso diverso.`)
+    }
+  }
+  if (evidence.diversificationValue) {
     addUniqueLine(lines, lang === 'en'
-      ? `Your current players already cover similar spaces, so this card matters when it gives you a different use.`
-      : `I tuoi giocatori coprono già spazi simili, quindi questa carta conta quando ti dà un uso diverso.`)
+      ? `Buying here is about squad variety and rotation, not replacing your starter every week.`
+      : `L’acquisto qui è per varietà e rotazione, non per sostituire il titolare ogni settimana.`)
   }
   if (technical.premiumCard && (duplicate || starterBlocked)) {
     addUniqueLine(lines, lang === 'en'
@@ -1616,6 +1703,17 @@ function coachAdvice({ card, hasRoster, technical, combo, duplicate, starterBloc
   }
 
   if (duplicate || starterBlocked) {
+    if (evidence.diversificationValue) {
+      return {
+        title: lang === 'en' ? 'Diversify the lane' : 'Diversifica il reparto',
+        text: lang === 'en'
+          ? `${card.name} gives you another way to play ${card.position}: ${movement}. That is real value if you like rotating profiles, not only chasing a new starter.`
+          : `${intro}${card.name} ti dà un altro modo di giocare ${card.position}: ${movement}. È valore reale se ti piace ruotare i profili, non solo cercare un nuovo titolare.`,
+        action: lang === 'en'
+          ? 'Buy when you want tactical variety in the same role; rotate by match plan.'
+          : 'Compralo quando vuoi varietà tattica nello stesso ruolo; ruota in base al piano partita.'
+      }
+    }
     if (technical.premiumCard) {
       return {
         title: lang === 'en' ? 'Premium rotation' : 'Rotazione premium',
@@ -1789,6 +1887,8 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   const movementRead = movementArchetype(technical, card.position, lang)
   const conflict = classifyRosterConflict({ card, technical, sameRole, hasFormation })
   const bestAlternative = conflict.bestAlternative
+  const diversification = rosterDiversificationProfile(technical, bestAlternative, card.position, lang)
+  const diversificationValue = diversification.differentMovement || diversification.score >= 8
   const roleGap = hasRoster && conflict.roleGap
   const duplicate = hasRoster && conflict.duplicate
   const starterBlocked = hasRoster && conflict.starterBlocked
@@ -1807,7 +1907,8 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
       patterns,
       position: card.position
     }),
-    upgradeEdge
+    upgradeEdge,
+    diversificationValue
   }
 
   let score = technical.hasCompleteCardData ? 66 : 52
@@ -1815,8 +1916,10 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   if (roleGap) score += 20
   if (upgradeEdge) score += 14
   if (technical.premiumCard && technical.hasCompleteCardData) score += 6
-  if (duplicate) score -= 6
-  if (starterBlocked) score -= 4
+  if (duplicate) score -= diversificationValue ? 2 : 6
+  if (starterBlocked) score -= diversificationValue ? 1 : 4
+  if (diversification.differentMovement) score += 8
+  if (diversification.differentBody) score += 3
   if (evidence.hasNativeEdge) score += 6
   if (evidence.hasTacticalFit) score += 6
   if (evidence.teamStyleFit) score += 6
@@ -1850,6 +1953,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
     upgradeEdge,
     rosterCrowded,
     premiumCard: technical.premiumCard,
+    diversificationValue,
     lang
   })
   const synergyLevel = decision.label
@@ -1872,6 +1976,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
         duplicate,
         starterBlocked,
         upgradeEdge,
+        diversification,
         technical,
         tacticalStyle,
         patterns,
@@ -1890,9 +1995,13 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
         : upgradeEdge
           ? 'Coin risk is moderate: profile points to a real upgrade in this lane.'
           : duplicate
-            ? `Coin risk: ${joinedAlternatives(sameRole) || 'your current options'} already cover this role.`
+            ? diversificationValue
+              ? `Low coin risk if you buy to diversify: different movement profile from ${bestAlternative?.name || 'your starter'}.`
+              : `Coin risk: ${joinedAlternatives(sameRole) || 'your current options'} already cover this role with a similar profile.`
             : starterBlocked
-              ? `Coin risk: ${bestAlternative?.name || 'the starter'} already occupies this lane at a similar or higher level.`
+              ? diversificationValue
+                ? `Moderate coin risk: same starter lane, but ${card.name} changes your match plan in ${card.position}.`
+                : `Coin risk: ${bestAlternative?.name || 'the starter'} already occupies this lane at a similar or higher level.`
               : 'Coin risk is controlled if this role is one of your current priorities.'
     : !technical.hasCompleteCardData
       ? 'Non prendere decisioni coins finché non è disponibile il dettaglio completo della carta.'
@@ -1901,45 +2010,65 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
         : upgradeEdge
           ? 'Rischio coins moderato: il profilo indica un upgrade reale in questa corsia.'
           : duplicate
-            ? `Rischio coins: ${joinedAlternatives(sameRole) || 'le opzioni attuali'} coprono già questo ruolo.`
+            ? diversificationValue
+              ? `Rischio coins basso se compri per diversificare: profilo di movimento diverso da ${bestAlternative?.name || 'il titolare'}.`
+              : `Rischio coins: ${joinedAlternatives(sameRole) || 'le opzioni attuali'} coprono già questo ruolo con profilo simile.`
             : starterBlocked
-              ? `Rischio coins: ${bestAlternative?.name || 'il titolare'} occupa già questa corsia a livello simile o superiore.`
+              ? diversificationValue
+                ? `Rischio coins moderato: stesso titolare, ma ${card.name} cambia il piano partita in ${card.position}.`
+                : `Rischio coins: ${bestAlternative?.name || 'il titolare'} occupa già questa corsia a livello simile o superiore.`
               : 'Rischio coins controllato se questo ruolo è una priorità reale.'
 
   const purchaseAdvice = lang === 'en'
     ? !hasRoster
       ? 'Load your roster to turn this from a card read into a personal buy/skip verdict.'
       : decision.level === 'buy'
-        ? technical.premiumCard
-          ? `Buy ${card.name} if you want a premium ${card.position} option, even as strong rotation.`
-          : `Prioritize ${card.name} if you want to spend coins on ${card.position}.`
+        ? diversificationValue && !upgradeEdge
+          ? `Buy ${card.name} if you want to vary your ${card.position} lane without rebuilding the whole squad.`
+          : technical.premiumCard
+            ? `Buy ${card.name} if you want a premium ${card.position} option, even as strong rotation.`
+            : `Prioritize ${card.name} if you want to spend coins on ${card.position}.`
         : decision.level === 'watch' && upgradeEdge
           ? `Strong upgrade case for ${card.position}: compare ${card.name} with ${bestAlternative?.name || 'your starter'} before spending.`
-          : decision.level === 'avoid'
-            ? `${card.name} does not change your priorities enough: save coins for an uncovered role or a clearer upgrade.`
-            : `Keep ${card.name} on your shortlist only if ${card.position} is a priority.`
+          : decision.level === 'watch' && diversificationValue
+            ? `${card.name} makes sense as rotation/diversification in ${card.position}: same role, different tactical profile.`
+            : decision.level === 'avoid'
+              ? `${card.name} is too similar to what you already have: save coins for an uncovered role or a clearer upgrade.`
+              : `Keep ${card.name} on your shortlist for rotation or match-plan use in ${card.position}.`
     : !hasRoster
       ? 'Carica la rosa per trasformare questa lettura carta in un verdetto personale compra/evita.'
       : decision.level === 'buy'
-        ? technical.premiumCard
-          ? `Compra ${card.name} se vuoi un’opzione premium in ${card.position}, anche da rotazione forte.`
-          : `Dai priorità a ${card.name} se vuoi spendere coins su ${card.position}.`
+        ? diversificationValue && !upgradeEdge
+          ? `Compra ${card.name} se vuoi variare il reparto ${card.position} senza cambiare tutta la rosa.`
+          : technical.premiumCard
+            ? `Compra ${card.name} se vuoi un’opzione premium in ${card.position}, anche da rotazione forte.`
+            : `Dai priorità a ${card.name} se vuoi spendere coins su ${card.position}.`
         : decision.level === 'watch' && upgradeEdge
           ? `Caso upgrade su ${card.position}: confronta ${card.name} con ${bestAlternative?.name || 'il titolare'} prima di spendere.`
-          : decision.level === 'avoid'
-            ? `${card.name} non cambia abbastanza le priorità: meglio tenere coins per un ruolo scoperto o un upgrade più netto.`
-            : `Tieni ${card.name} in lista solo se ${card.position} è una priorità.`
+          : decision.level === 'watch' && diversificationValue
+            ? `${card.name} ha senso come rotazione/diversificazione in ${card.position}: stesso ruolo, profilo tattico diverso.`
+            : decision.level === 'avoid'
+              ? `${card.name} è troppo simile a ciò che hai già: coins meglio su ruolo scoperto o upgrade più netto.`
+              : `Tieni ${card.name} in lista se ${card.position} ti serve per rotazione o piano partita.`
 
   const legacyTechnicalRisk = lang === 'en'
     ? duplicate
-      ? 'Technical duplicate in your roster: keep this card as controlled rotation, not as first purchase target.'
+      ? diversificationValue
+        ? 'Same role, different tactical profile: strong rotation pick if you like varying match plans.'
+        : 'Similar profile to your roster: buy only if you specifically want this movement/style.'
       : starterBlocked
-        ? 'Starter lane is already occupied at similar level: use this card only with a clear role swap plan.'
+        ? diversificationValue
+          ? 'Starter lane is covered, but this card changes how you play the role — rotation value.'
+          : 'Starter lane is already occupied at similar level: use this card only with a clear role swap plan.'
         : 'Role usage is clear: keep this card in its native lane to preserve tactical value.'
     : duplicate
-      ? 'Doppione tecnico nella tua rosa: gestisci questa carta da rotazione controllata, non da primo target acquisto.'
+      ? diversificationValue
+        ? 'Stesso ruolo, profilo tattico diverso: ottima rotazione se ti piace variare il piano partita.'
+        : 'Profilo simile alla rosa: compra solo se vuoi proprio questo movimento/stile.'
       : starterBlocked
-        ? 'Corsia titolare gia occupata a livello simile: usa questa carta solo con un piano chiaro di cambio gerarchie.'
+        ? diversificationValue
+          ? 'Corsia titolare coperta, ma la carta cambia come giochi il ruolo — valore da rotazione.'
+          : 'Corsia titolare gia occupata a livello simile: usa questa carta solo con un piano chiaro di cambio gerarchie.'
         : 'Uso ruolo chiaro: mantieni la carta nella corsia naturale per preservare valore tattico.'
 
   const nextCta = !hasRoster
@@ -1993,6 +2122,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
       profileRead,
       evidence,
       combo,
+      diversification,
       lang
     }),
     useLine: hasRoster && technical.hasCompleteCardData

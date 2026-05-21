@@ -511,6 +511,7 @@ COERENZA verdict ↔ purchase_fit (obbligatoria):
 - skip_duplicate / stesso nome titolare + skill quasi uguali → verdict skip o not_priority; purchase_fit skip_duplicate
 - Nessun titolare con ruolo pack in campo (FATTI ACQUISTO) → purchase_fit fits_if_formation_change o skill_only_no_slot; verdict al massimo situational; setup_condition obbligatorio
 - skill_delta indica "quasi uguale" / "non compri per skill nuove" → non vendere l'acquisto come upgrade skill. Può comunque essere premium_rotation/take se altri fattori premium e fit cliente sono forti; altrimenti not_priority, luxury_pick o situational.
+- Diversificazione è motivo d'acquisto valido: stesso ruolo ma movimento/stile/body type diversi dal titolare (es. Opportunista vs Rapace d'area) → premium_rotation o take se la carta è premium o offre un piano partita chiaramente diverso; non classificare come skip solo perché le skill sono simili.
 - Salto skill chiaro + titolare stesso ruolo o buco ruolo reale → take, premium_rotation o fits_with_rotation
 - Game stats ≠ stile carta (es. pochi cross ma carta da fascia) → not_your_playstyle o fits_if_formation_change con condizione
 - Rosa assente → purchase_fit insufficient_data; verdict situational; solo review carta
