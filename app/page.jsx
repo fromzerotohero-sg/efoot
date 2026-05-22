@@ -15,6 +15,7 @@ import TaskWidget from '@/components/TaskWidget'
 import MissionCenter from '@/components/MissionCenter'
 import OnboardingFlow from '@/components/OnboardingFlow'
 import CoachSuggestions from '@/components/CoachSuggestions'
+import HeroCoachJourney from '@/components/HeroCoachJourney'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import { withAuth } from '@/components/AuthWrapper'
@@ -137,8 +138,8 @@ function HomePage() {
   }, [router])
 
   // Banner setup: sempre visibile quando non in loading. Se manca qualcosa: link a rotazione; altrimenti "Setup completo"
-  const hasMissingSetup = hasActiveCoach === false || !gameAnalysisLastCapture || stats.titolari < 11
-  const showSetupBanner = !loading && !hideSetupBanner
+  const hasSetupBannerItems = hasActiveCoach === false || stats.titolari < 11
+  const showSetupBanner = !loading && !hideSetupBanner && hasSetupBannerItems
   const setupBannerStorageKey = 'dashboard_setup_banner_hidden_v1'
   const rosterSetupState = stats.titolari <= 0 ? 'empty' : stats.titolari < 11 ? 'partial' : 'complete'
   React.useEffect(() => {
@@ -187,25 +188,14 @@ function HomePage() {
     }
   }, [openCardAdvisor])
 
-  React.useEffect(() => {
-    if (loading) return
-    if (typeof window === 'undefined') return
-    try {
-      const alreadySeenThisSession = sessionStorage.getItem(cardAdvisorModalSessionKey) === '1'
-      if (!alreadySeenThisSession) setShowEntryChoiceModal(true)
-    } catch {
-      setShowEntryChoiceModal(true)
-    }
-  }, [loading])
-
   const bannerTips = React.useMemo(() => {
     const tips = [
-      {
+      ...(gameAnalysisLastCapture ? [{
         key: 'stats_refresh',
-        label: gameAnalysisLastCapture ? t('setupTipStatsRefresh') : t('setupReminderMissingStats'),
+        label: t('setupTipStatsRefresh'),
         onClick: () => setShowGameAnalysisModal(true),
-        isMissing: !gameAnalysisLastCapture
-      },
+        isMissing: false
+      }] : []),
       {
         key: 'coach_gym',
         label: t('setupTipCoachGymCheckin'),
@@ -376,8 +366,6 @@ function HomePage() {
     setLoading(true)
     setRetryTrigger((n) => n + 1)
   }, [])
-
-  const showCatalogRosterCta = !loading && stats.titolari < 11
 
   const fetchGameAnalysisCapture = React.useCallback(async () => {
     try {
@@ -629,6 +617,19 @@ function HomePage() {
         <AIKnowledgeBar />
       </div>
 
+      <HeroCoachJourney
+        loading={loading}
+        stats={stats}
+        hasActiveCoach={hasActiveCoach}
+        gameAnalysisLastCapture={gameAnalysisLastCapture}
+        lang={lang}
+        onOpenRoster={() => router.push('/gestione-formazione')}
+        onOpenCoachSetup={() => router.push('/nuova-rosa-lab')}
+        onOpenGameAnalysis={() => setShowGameAnalysisModal(true)}
+        onOpenCardAdvisor={openCardAdvisor}
+        onOpenCoachFeedback={() => setShowCoachFeedback(true)}
+      />
+
       {/* Banner setup: visibile in UX, icona priorità (rosso/giallo/verde), comunica importanza di completare. */}
       {showSetupBanner && (
         <div
@@ -709,50 +710,6 @@ function HomePage() {
           >
             {t('setupReminderDismiss')}
           </button>
-        </div>
-      )}
-
-      {showCatalogRosterCta && (
-        <div
-          className="neon-card"
-          style={{
-            padding: '18px 20px',
-            marginBottom: '20px',
-            border: '1px solid rgba(0, 212, 255, 0.22)',
-            background: 'rgba(0, 212, 255, 0.06)'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            <div style={{ minWidth: 0, flex: '1 1 260px' }}>
-              <div style={{ fontSize: '18px', fontWeight: 800, color: '#FFFFFF', marginBottom: '6px' }}>
-                {lang === 'en' ? 'Build your squad from the catalog' : 'Costruisci la rosa dal catalogo'}
-              </div>
-              <div style={{ fontSize: '14px', lineHeight: 1.6, color: 'rgba(255,255,255,0.76)' }}>
-                {lang === 'en'
-                  ? 'Search player builds, save them to your slots and complete your 11 starters.'
-                  : 'Cerca le build, salva i giocatori negli slot e completa gli 11 titolari.'}
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => router.push('/gestione-formazione')}
-              className="neon-button"
-              style={{
-                minHeight: '44px',
-                padding: '10px 16px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                color: 'var(--neon-cyan)',
-                flexShrink: 0
-              }}
-            >
-              <Users size={16} />
-              {lang === 'en' ? 'Open squad' : 'Apri la rosa'}
-              <ArrowRight size={16} />
-            </button>
-          </div>
         </div>
       )}
 
