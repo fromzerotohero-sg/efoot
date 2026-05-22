@@ -2785,6 +2785,9 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .card-art {
+          width: 100%;
+          flex-shrink: 0;
+          align-self: stretch;
           aspect-ratio: 3 / 4.12;
           border-radius: 16px;
           overflow: hidden;
@@ -5140,7 +5143,13 @@ export default withAuth(function CardAdvisorLabPage() {
           .release-card {
             display: flex;
             flex-direction: column;
+            align-items: stretch;
             min-width: 0;
+          }
+
+          .release-card .card-art {
+            width: 100%;
+            min-height: 140px;
           }
 
           .release-card-body {
@@ -5217,7 +5226,14 @@ export default withAuth(function CardAdvisorLabPage() {
 
           .release-card {
             display: flex;
+            flex-direction: column;
+            align-items: stretch;
             max-width: 128px;
+          }
+
+          .release-card .card-art {
+            width: 100%;
+            min-height: 128px;
           }
 
           .detail-card-preview {
