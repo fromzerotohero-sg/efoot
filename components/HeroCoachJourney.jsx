@@ -143,11 +143,14 @@ function buildJourneyState({
         ? 'This is the fastest way to make the Coach understand how you really play: shooting, passing, defending and dribbling.'
         : 'E il modo piu veloce per far capire al Coach come giochi davvero: tiro, passaggi, difesa e dribbling.',
       primary: { label: isEn ? 'Upload stats' : 'Carica statistiche', action: actions.openGameAnalysis },
-      secondary: { label: isEn ? 'Check new cards' : 'Controlla nuovi giocatori', action: actions.openCardAdvisor },
+      secondary: { label: isEn ? 'Ask the Coach' : 'Chiedi al Coach', action: actions.openCoachFeedback },
       checkpoints: [
         { label: isEn ? 'Squad' : 'Rosa', done: true },
-        { label: isEn ? 'Coach' : 'Coach', done: true },
-        { label: isEn ? 'Game stats' : 'Statistiche', done: false }
+        {
+          label: isEn ? 'Coach & game stats' : 'Coach e statistiche',
+          done: hasGameStats,
+          partial: hasActiveCoach && !hasGameStats
+        }
       ]
     }
   }
@@ -167,6 +170,7 @@ function buildJourneyState({
       secondary: { label: isEn ? 'Refresh stats' : 'Aggiorna statistiche', action: actions.openGameAnalysis },
       checkpoints: [
         { label: isEn ? 'Squad' : 'Rosa', done: true },
+        { label: isEn ? 'Coach' : 'Coach', done: hasActiveCoach },
         { label: isEn ? 'Game stats' : 'Statistiche', done: true },
         { label: isEn ? 'Card fit' : 'Fit carte', done: false }
       ]
@@ -320,7 +324,15 @@ export default function HeroCoachJourney({
     } catch {}
   }
 
+  React.useEffect(() => {
+    if (journey.key !== 'engaged' || typeof window === 'undefined') return
+    try {
+      window.localStorage.removeItem(STORAGE_KEY)
+    } catch {}
+  }, [journey.key])
+
   if (loading) return null
+  if (journey.key === 'engaged') return null
 
   if (minimized) {
     return (
@@ -378,7 +390,13 @@ export default function HeroCoachJourney({
 
         <div className="hero-journey__checks">
           {journey.checkpoints.map((item) => (
-            <span key={item.label} className={item.done ? 'is-done' : ''}>
+            <span
+              key={item.label}
+              className={[
+                item.done ? 'is-done' : '',
+                item.partial ? 'is-partial' : ''
+              ].filter(Boolean).join(' ')}
+            >
               <CheckCircle2 size={14} />
               {item.label}
             </span>
@@ -622,6 +640,16 @@ const styles = `
     border-color: rgba(52, 199, 89, 0.32);
     color: #8be9a8;
     background: rgba(52, 199, 89, 0.09);
+  }
+
+  .hero-journey__checks span.is-partial {
+    border-color: rgba(255, 203, 5, 0.38);
+    color: #ffe08a;
+    background: rgba(255, 203, 5, 0.10);
+  }
+
+  .hero-journey__checks span.is-partial svg {
+    color: #8be9a8;
   }
 
   .hero-journey__actions {

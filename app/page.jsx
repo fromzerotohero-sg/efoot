@@ -30,7 +30,6 @@ import {
   ChevronDown,
   ChevronUp,
   Trash2,
-  Shield,
   BookOpen,
   Zap,
   User,
@@ -92,13 +91,9 @@ function HomePage() {
   const [showGameAnalysisModal, setShowGameAnalysisModal] = React.useState(false)
   const [gameAnalysisLastCapture, setGameAnalysisLastCapture] = React.useState(null)
   const [hasActiveCoach, setHasActiveCoach] = React.useState(false)
-  const [reminderRotationIndex, setReminderRotationIndex] = React.useState(0)
-  const [hideSetupBanner, setHideSetupBanner] = React.useState(false)
-  const [showEntryChoiceModal, setShowEntryChoiceModal] = React.useState(false)
   const [userProfile, setUserProfile] = React.useState(null)
   const [confirmModal, setConfirmModal] = React.useState(null) // { show, title, message, onConfirm, onCancel }
   const [coachChatInitialMessage, setCoachChatInitialMessage] = React.useState(null)
-  const cardAdvisorModalSessionKey = 'dashboard_card_advisor_choice_seen_session_v2'
 
   React.useEffect(() => {
     setGameAnalysisNavOpen(showGameAnalysisModal)
@@ -137,42 +132,9 @@ function HomePage() {
     }
   }, [router])
 
-  // Banner setup: sempre visibile quando non in loading. Se manca qualcosa: link a rotazione; altrimenti "Setup completo"
-  const hasSetupBannerItems = hasActiveCoach === false || stats.titolari < 11
-  const showSetupBanner = !loading && !hideSetupBanner && hasSetupBannerItems
-  const setupBannerStorageKey = 'dashboard_setup_banner_hidden_v1'
-  const rosterSetupState = stats.titolari <= 0 ? 'empty' : stats.titolari < 11 ? 'partial' : 'complete'
-  React.useEffect(() => {
-    if (typeof window === 'undefined') return
-    try {
-      const hidden = localStorage.getItem(setupBannerStorageKey) === '1'
-      setHideSetupBanner(hidden)
-    } catch {
-      setHideSetupBanner(false)
-    }
-  }, [])
-
-  const dismissSetupBanner = React.useCallback(() => {
-    setHideSetupBanner(true)
-    try {
-      localStorage.setItem(setupBannerStorageKey, '1')
-    } catch {}
-  }, [])
-
   const openCardAdvisor = React.useCallback(() => {
-    try {
-      sessionStorage.setItem(cardAdvisorModalSessionKey, '1')
-    } catch {}
-    setShowEntryChoiceModal(false)
     router.push('/card-advisor-lab')
   }, [router])
-
-  const continueProDashboard = React.useCallback(() => {
-    try {
-      sessionStorage.setItem(cardAdvisorModalSessionKey, '1')
-    } catch {}
-    setShowEntryChoiceModal(false)
-  }, [])
 
   React.useEffect(() => {
     const onOpen = () => {
@@ -187,78 +149,6 @@ function HomePage() {
       }
     }
   }, [openCardAdvisor])
-
-  const bannerTips = React.useMemo(() => {
-    const tips = [
-      ...(gameAnalysisLastCapture ? [{
-        key: 'stats_refresh',
-        label: t('setupTipStatsRefresh'),
-        onClick: () => setShowGameAnalysisModal(true),
-        isMissing: false
-      }] : []),
-      {
-        key: 'coach_gym',
-        label: t('setupTipCoachGymCheckin'),
-        onClick: () => setShowCoachFeedback(true),
-        isMissing: false
-      },
-      {
-        key: 'coach_status',
-        label: hasActiveCoach ? t('setupTipCoachReview') : t('setupReminderMissingCoach'),
-        onClick: () => router.push('/nuova-rosa-lab'),
-        isMissing: !hasActiveCoach
-      },
-      {
-        key: 'roster_review',
-        label:
-          rosterSetupState === 'empty'
-            ? t('setupReminderMissingRosterEmpty')
-            : rosterSetupState === 'partial'
-              ? t('setupReminderMissingRosterPartial')
-              : t('setupTipRosterReview'),
-        onClick: () => router.push('/gestione-formazione'),
-        isMissing: stats.titolari < 11
-      }
-    ]
-    return tips
-  }, [gameAnalysisLastCapture, hasActiveCoach, rosterSetupState, stats.titolari, t, router])
-
-  React.useEffect(() => {
-    if (!showSetupBanner) return
-    const interval = setInterval(() => {
-      setReminderRotationIndex((i) => i + 1)
-    }, 10000)
-    return () => clearInterval(interval)
-  }, [showSetupBanner])
-
-  // Reset indice quando cambiano gli elementi mancanti
-  const reminderItems = bannerTips.filter(item => item.isMissing)
-  const missingCount = reminderItems.length
-  // Notifica setup: differenzia chiaramente "nessuna rosa" da "rosa da completare"
-  const setupStatus = rosterSetupState === 'empty'
-    ? 'roster_missing'
-    : rosterSetupState === 'partial'
-      ? 'roster_partial'
-      : missingCount >= 2
-        ? 'critical'
-        : missingCount === 1
-          ? 'partial'
-          : 'complete'
-  const setupStatusConfig = {
-    roster_missing: { color: '#FFD76A', bg: 'rgba(255, 215, 106, 0.10)', border: 'rgba(255, 215, 106, 0.24)', icon: AlertCircle, labelKey: 'setupStatusRosterMissing', iconOpacity: 1 },
-    roster_partial: { color: '#67E8F9', bg: 'rgba(0, 212, 255, 0.08)', border: 'rgba(0, 212, 255, 0.20)', icon: AlertCircle, labelKey: 'setupStatusRosterPartial', iconOpacity: 1 },
-    critical: { color: '#FFB84D', bg: 'rgba(255, 184, 77, 0.10)', border: 'rgba(255, 184, 77, 0.24)', icon: AlertCircle, labelKey: 'setupStatusCritical', iconOpacity: 1 },
-    partial: { color: '#8BE9A8', bg: 'rgba(139, 233, 168, 0.08)', border: 'rgba(139, 233, 168, 0.18)', icon: AlertCircle, labelKey: 'setupStatusPartial', iconOpacity: 1 },
-    complete: { color: '#34C759', bg: 'rgba(52, 199, 89, 0.1)', border: 'rgba(52, 199, 89, 0.3)', icon: CheckCircle2, labelKey: 'setupStatusComplete', iconOpacity: 1 }
-  }
-  const statusCfg = setupStatusConfig[setupStatus]
-  React.useEffect(() => {
-    setReminderRotationIndex(0)
-  }, [missingCount])
-
-  const currentBannerTip = bannerTips.length > 0
-    ? bannerTips[((reminderRotationIndex * 7) + 3) % bannerTips.length]
-    : null
 
   React.useEffect(() => {
     mountedRef.current = true
@@ -629,188 +519,6 @@ function HomePage() {
         onOpenCardAdvisor={openCardAdvisor}
         onOpenCoachFeedback={() => setShowCoachFeedback(true)}
       />
-
-      {/* Banner setup: visibile in UX, icona priorità (rosso/giallo/verde), comunica importanza di completare. */}
-      {showSetupBanner && (
-        <div
-          data-tour-id="tour-dashboard-setup-banner"
-          id="setup-status-banner"
-          role="status"
-          aria-live="polite"
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            gap: '12px',
-            padding: '16px 20px',
-            background: statusCfg.bg,
-            border: `1px solid ${statusCfg.border}`,
-            borderRadius: '8px',
-            marginBottom: '20px',
-            fontSize: '14px',
-            lineHeight: 1.5,
-            color: '#FFFFFF',
-            boxShadow: 'var(--shadow-sm)'
-          }}
-        >
-          {(() => {
-            const Icon = statusCfg.icon
-            return (
-              <span
-                role="img"
-                aria-label={t(statusCfg.labelKey)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  width: 'clamp(20px, 5vw, 24px)',
-                  height: 'clamp(20px, 5vw, 24px)',
-                  minWidth: 20,
-                  minHeight: 20
-                }}
-                title={t(statusCfg.labelKey)}
-              >
-                <Icon size={18} color={statusCfg.color} strokeWidth={setupStatus === 'complete' ? 2 : 2.5} style={{ opacity: statusCfg.iconOpacity }} />
-              </span>
-            )
-          })()}
-          <span key={reminderRotationIndex} style={{ flex: '1 1 auto', minWidth: 0 }}>
-            {t('setupReminderIntro')}
-            {currentBannerTip ? (
-              <>
-                {' '}
-                {currentBannerTip.isMissing ? (lang === 'en' ? 'Missing:' : 'Manca:') : (lang === 'en' ? 'Tip:' : 'Consiglio:')}{' '}
-                <button
-                  key={`${reminderRotationIndex}-${currentBannerTip.key}`}
-                  type="button"
-                  onClick={currentBannerTip.onClick}
-                  style={{ background: 'none', border: 'none', color: 'var(--neon-blue)', textDecoration: 'underline', cursor: 'pointer', padding: 0, fontSize: 'inherit' }}
-                >
-                  {currentBannerTip.label}
-                </button>
-              </>
-            ) : (
-              <> · {t('setupReminderComplete')}</>
-            )}
-          </span>
-          <button
-            type="button"
-            onClick={dismissSetupBanner}
-            style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.18)',
-              color: 'rgba(255,255,255,0.82)',
-              borderRadius: '8px',
-              padding: '6px 10px',
-              cursor: 'pointer',
-              fontSize: '12px',
-              flexShrink: 0
-            }}
-          >
-            {t('setupReminderDismiss')}
-          </button>
-        </div>
-      )}
-
-      {showEntryChoiceModal && (
-        <div
-          className="card-advisor-entry-overlay"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'radial-gradient(circle at top left, rgba(0, 212, 255, 0.16), transparent 32%), radial-gradient(circle at bottom right, rgba(255, 203, 5, 0.16), transparent 34%), rgba(3, 7, 18, 0.88)',
-            backdropFilter: 'blur(10px)',
-            zIndex: 1200,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px'
-          }}
-        >
-          <div
-            className="neon-card card-advisor-entry-modal"
-            style={{
-              width: 'min(680px, 100%)',
-              padding: 'clamp(22px, 4vw, 32px)',
-              border: '1px solid rgba(0, 212, 255, 0.26)',
-              background: 'linear-gradient(145deg, rgba(5, 12, 28, 0.98), rgba(10, 15, 34, 0.98))',
-              boxShadow: '0 0 44px rgba(0, 212, 255, 0.18), inset 0 1px 0 rgba(255,255,255,0.08)',
-              position: 'relative',
-              overflow: 'hidden'
-            }}
-          >
-            <div style={{ textAlign: 'center', marginBottom: '22px', position: 'relative' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '7px 12px', borderRadius: '999px', background: 'rgba(0, 212, 255, 0.10)', border: '1px solid rgba(0, 212, 255, 0.25)', color: 'var(--neon-cyan)', fontWeight: 800, fontSize: '13px', marginBottom: '14px' }}>
-                <Shield size={15} />
-                {lang === 'en' ? 'Choose your mode' : 'Scegli come entrare'}
-              </div>
-              <h2 style={{ fontSize: 'clamp(28px, 5.4vw, 40px)', lineHeight: 1.04, fontWeight: 900, color: '#FFFFFF', margin: '0 0 10px 0' }}>
-                {lang === 'en' ? 'Continue in Pro or try card analysis?' : 'Continui nel Pro o provi Analisi Carte?'}
-              </h2>
-              <p style={{ margin: 0, color: 'rgba(255,255,255,0.76)', lineHeight: 1.6, fontSize: '15px' }}>
-                {lang === 'en'
-                  ? 'Pro remains your full dashboard. Card analysis opens Card Advisor for new releases.'
-                  : 'Il Pro resta la tua dashboard completa. Analisi Carte apre il Card Advisor sulle nuove uscite.'}
-              </p>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', position: 'relative' }}>
-              <button
-                type="button"
-                onClick={continueProDashboard}
-                className="neon-button"
-                style={{
-                  minHeight: '142px',
-                  padding: '18px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'flex-start',
-                  justifyContent: 'center',
-                  gap: '10px',
-                  textAlign: 'left',
-                  background: 'rgba(0, 212, 255, 0.08)',
-                  borderColor: 'rgba(0, 212, 255, 0.28)',
-                  color: '#FFFFFF'
-                }}
-              >
-                <Shield size={26} style={{ color: 'var(--neon-cyan)' }} />
-                <strong style={{ fontSize: '18px' }}>{lang === 'en' ? 'Continue in Pro' : 'Continua nel Pro'}</strong>
-                <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.68)', lineHeight: 1.45 }}>
-                  {lang === 'en' ? 'Open dashboard, roster, matches and all Pro tools.' : 'Apri dashboard, rosa, partite e tutti gli strumenti Pro.'}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={openCardAdvisor}
-                className="neon-button"
-                style={{
-                  minHeight: '142px',
-                  padding: '18px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'flex-start',
-                  justifyContent: 'center',
-                  gap: '10px',
-                  textAlign: 'left',
-                  background: 'linear-gradient(135deg, rgba(255, 203, 5, 0.20), rgba(168, 85, 247, 0.16), rgba(0, 212, 255, 0.12))',
-                  borderColor: 'rgba(255, 203, 5, 0.42)',
-                  color: '#FFFFFF',
-                  boxShadow: '0 0 26px rgba(255, 203, 5, 0.16)'
-                }}
-              >
-                <Zap size={26} style={{ color: '#ffcb05' }} />
-                <strong style={{ fontSize: '18px' }}>{lang === 'en' ? 'Card analysis' : 'Analisi Carte'}</strong>
-                <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.72)', lineHeight: 1.45 }}>
-                  {lang === 'en' ? 'Evaluate new cards against your real roster.' : 'Valuta le nuove carte in base alla tua rosa reale.'}
-                </span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
 
       <CoachFeedbackChat 
         show={showCoachFeedback} 
@@ -1213,25 +921,6 @@ function HomePage() {
 
           .dashboard-action-badge {
             display: none;
-          }
-
-          .card-advisor-entry-overlay {
-            align-items: flex-start !important;
-            justify-content: center !important;
-            padding: 10px 10px calc(92px + env(safe-area-inset-bottom, 0px)) !important;
-            overflow-y: auto !important;
-          }
-
-          .card-advisor-entry-modal {
-            width: min(100%, 390px) !important;
-            max-height: calc(100dvh - 112px - env(safe-area-inset-bottom, 0px)) !important;
-            overflow-y: auto !important;
-            padding: 18px !important;
-            border-radius: 18px !important;
-          }
-
-          .card-advisor-entry-modal h2 {
-            font-size: 26px !important;
           }
 
         }

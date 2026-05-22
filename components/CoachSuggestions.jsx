@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from '@/lib/i18n'
-import { X, ChevronRight, BarChart3, Dumbbell, AlertCircle, CheckCircle } from 'lucide-react'
+import { X, ChevronRight, Dumbbell, CheckCircle } from 'lucide-react'
 
 /**
  * CoachSuggestions - Suggeritore contestuale del coach
@@ -12,13 +12,12 @@ import { X, ChevronRight, BarChart3, Dumbbell, AlertCircle, CheckCircle } from '
  * - aiutare il cliente a ottenere più valore dal coach
  * - evitare tono da alert/funnel aggressivo
  *
- * Le Statistiche di gioco sono una sezione autonoma e importante:
- * possono essere suggerite anche senza partite salvate.
+ * Solo popup Palestra Coach (post-partita e promemoria settimanale).
+ * Rosa, statistiche e setup sono guidati da HeroCoachJourney in dashboard.
  */
 
 const COACH_STATE_KEY = 'coach_suggestions_state_v2'
 const COACH_COOLDOWN_HOURS = 2
-const CRITICAL_COOLDOWN_HOURS = 2
 const POST_MATCH_COOLDOWN_HOURS = 2
 const INITIAL_SUGGESTION_DELAY_MS = 1000
 const REMINDER_INTERVAL_MS = 4 * 60 * 1000
@@ -98,41 +97,7 @@ export default function CoachSuggestions({
         : 999
       const needsPalestra = daysSincePalestra > 7 && matchesCount >= 3
 
-      // 1. PRIORITA ALTA: mancano Statistiche di gioco (anche senza partite)
-      if (!hasStats && !isInCooldown('critical_no_data')) {
-        return {
-          id: 'critical_no_data',
-          priority: 3,
-          icon: BarChart3,
-          iconColor: '#00d4ff',
-          bgGradient: 'linear-gradient(135deg, rgba(0, 212, 255, 0.16) 0%, rgba(0, 161, 166, 0.05) 100%)',
-          title: t('coachSuggestionCriticalTitle'),
-          message: t(
-            matchesCount > 0
-              ? 'coachSuggestionCriticalMessageWithMatches'
-              : 'coachSuggestionCriticalMessage'
-          ),
-          primaryAction: {
-            label: t('coachSuggestionActionStats'),
-            onClick: () => {
-              saveCoachState({ 
-                cooldowns: { 
-                  ...getCoachState().cooldowns, 
-                  critical_no_data: new Date(now.getTime() + CRITICAL_COOLDOWN_HOURS * 60 * 60 * 1000).toISOString()
-                }
-              })
-              if (onOpenGameAnalysis) onOpenGameAnalysis()
-              dismiss()
-            }
-          },
-          secondaryAction: {
-            label: t('coachSuggestionLater'),
-            onClick: () => dismissWithCooldown('critical_no_data')
-          }
-        }
-      }
-
-      // 2. POST-PARTITA: Ha appena giocato ma non usa Palestra
+      // 1. POST-PARTITA: Ha appena giocato ma non usa Palestra
       // Controlla se ultima partita è nelle ultime 30 min e non ha usato Palestra recentemente
       const lastMatchMinutesAgo = lastMatchDate 
         ? (now - lastMatchDate) / (1000 * 60)
@@ -168,68 +133,7 @@ export default function CoachSuggestions({
         }
       }
 
-      // 3. PRIORITA MEDIA: manca coach attivo (coerenza stile/consigli)
-      if (!hasActiveCoach && !isInCooldown('missing_active_coach')) {
-        return {
-          id: 'missing_active_coach',
-          priority: 1,
-          icon: AlertCircle,
-          iconColor: '#A7F3D0',
-          bgGradient: 'linear-gradient(135deg, rgba(110, 231, 183, 0.12) 0%, rgba(16, 185, 129, 0.04) 100%)',
-          title: t('coachSuggestionCoachMissingTitle'),
-          message: t('coachSuggestionCoachMissingMessage'),
-          primaryAction: {
-            label: t('coachSuggestionActionCoaches'),
-            onClick: () => {
-              saveCoachState({ 
-                cooldowns: { 
-                  ...getCoachState().cooldowns, 
-                  missing_active_coach: new Date(now.getTime() + COACH_COOLDOWN_HOURS * 60 * 60 * 1000).toISOString()
-                }
-              })
-              if (onOpenCoaches) onOpenCoaches()
-              dismiss()
-            }
-          },
-          secondaryAction: {
-            label: t('coachSuggestionLater'),
-            onClick: () => dismissWithCooldown('missing_active_coach')
-          }
-        }
-      }
-
-      // 4. PRIMO ACCESSO: accompagnamento leggero verso Statistiche
-      const aiScore = userProfile.ai_knowledge_score || 0
-      if (!hasStats && aiScore < 30 && matchesCount === 0 && !isInCooldown('first_time_stats')) {
-        return {
-          id: 'first_time_stats',
-          priority: 1,
-          icon: BarChart3,
-          iconColor: '#FFD76A',
-          bgGradient: 'linear-gradient(135deg, rgba(255, 215, 106, 0.15) 0%, rgba(255, 215, 106, 0.05) 100%)',
-          title: t('coachSuggestionFirstTimeTitle'),
-          message: t('coachSuggestionFirstTimeMessage'),
-          primaryAction: {
-            label: t('coachSuggestionActionStats'),
-            onClick: () => {
-              saveCoachState({ 
-                cooldowns: { 
-                  ...getCoachState().cooldowns, 
-                  first_time_stats: new Date(now.getTime() + COACH_COOLDOWN_HOURS * 60 * 60 * 1000).toISOString()
-                }
-              })
-              if (onOpenGameAnalysis) onOpenGameAnalysis()
-              dismiss()
-            }
-          },
-          secondaryAction: {
-            label: t('coachSuggestionLater'),
-            onClick: () => dismissWithCooldown('first_time_stats')
-          }
-        }
-      }
-
-      // 5. PROMEMORIA PALESTRA: Non usa da settimane ma ha statistiche
+      // 2. PROMEMORIA PALESTRA: Non usa da settimane ma ha statistiche
       if (hasStats && needsPalestra && !isInCooldown('palestra_reminder')) {
         return {
           id: 'palestra_reminder',
@@ -256,77 +160,6 @@ export default function CoachSuggestions({
           secondaryAction: {
             label: t('coachSuggestionLater'),
             onClick: () => dismissWithCooldown('palestra_reminder')
-          }
-        }
-      }
-
-      // 6. FALLBACK: consigli coach frequenti a rotazione (anche senza trigger critici)
-      const fallbackPool = [
-        {
-          id: 'rotation_stats_tip',
-          icon: BarChart3,
-          iconColor: '#00d4ff',
-          bgGradient: 'linear-gradient(135deg, rgba(0, 212, 255, 0.16) 0%, rgba(0, 161, 166, 0.05) 100%)',
-          title: t('coachSuggestionCriticalTitle'),
-          message: t(hasStats ? 'coachSuggestionCriticalMessageWithMatches' : 'coachSuggestionCriticalMessage'),
-          actionLabel: t('coachSuggestionActionStats'),
-          action: () => {
-            if (onOpenGameAnalysis) onOpenGameAnalysis()
-          }
-        },
-        {
-          id: 'rotation_palestra_tip',
-          icon: Dumbbell,
-          iconColor: '#a855f7',
-          bgGradient: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(168, 85, 247, 0.05) 100%)',
-          title: t('coachSuggestionPalestraTitle'),
-          message: t('coachSuggestionPalestraMessage'),
-          actionLabel: t('coachSuggestionActionPalestra'),
-          action: () => {
-            if (onOpenCoachFeedback) onOpenCoachFeedback()
-          }
-        },
-        {
-          id: 'rotation_coach_tip',
-          icon: AlertCircle,
-          iconColor: '#A7F3D0',
-          bgGradient: 'linear-gradient(135deg, rgba(110, 231, 183, 0.12) 0%, rgba(16, 185, 129, 0.04) 100%)',
-          title: t('coachSuggestionCoachMissingTitle'),
-          message: t('coachSuggestionCoachMissingMessage'),
-          actionLabel: t('coachSuggestionActionCoaches'),
-          action: () => {
-            if (onOpenCoaches) onOpenCoaches()
-          }
-        }
-      ].filter(item => !isInCooldown(item.id))
-
-      if (fallbackPool.length > 0) {
-        const rotationSeed = Math.floor(now.getTime() / (7 * 60 * 1000))
-        const selected = fallbackPool[rotationSeed % fallbackPool.length]
-        return {
-          id: selected.id,
-          priority: 1,
-          icon: selected.icon,
-          iconColor: selected.iconColor,
-          bgGradient: selected.bgGradient,
-          title: selected.title,
-          message: selected.message,
-          primaryAction: {
-            label: selected.actionLabel,
-            onClick: () => {
-              saveCoachState({
-                cooldowns: {
-                  ...getCoachState().cooldowns,
-                  [selected.id]: new Date(now.getTime() + COACH_COOLDOWN_HOURS * 60 * 60 * 1000).toISOString()
-                }
-              })
-              selected.action()
-              dismiss()
-            }
-          },
-          secondaryAction: {
-            label: t('coachSuggestionLater'),
-            onClick: () => dismissWithCooldown(selected.id)
           }
         }
       }
