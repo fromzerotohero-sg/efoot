@@ -11,7 +11,6 @@ import {
   RotateCcw,
   ShieldCheck,
   Sparkles,
-  Target,
   Users,
   Zap
 } from 'lucide-react'
@@ -309,6 +308,9 @@ export default function HeroCoachJourney({
     ? (isEn ? `${balance} HP ready` : `${balance} HP pronti`)
     : (isEn ? 'HP gift ready' : 'HP omaggio pronti')
   const Icon = journey.Icon
+  const starters = getNumber(stats?.titolari)
+  const showXiCounter = journey.key === 'no_roster' || journey.key === 'roster_incomplete'
+  const xiFilled = journey.key === 'no_roster' ? 0 : Math.min(11, starters)
 
   const setDeferred = () => {
     setMinimized(true)
@@ -355,28 +357,40 @@ export default function HeroCoachJourney({
     <section className={`hero-journey hero-journey--${journey.tone}`} aria-label={isEn ? 'Coach journey' : 'Percorso Coach'}>
       <div className="hero-journey__field" aria-hidden="true">
         <span className="hero-journey__radar" />
-        <span className="hero-journey__lane hero-journey__lane--one" />
-        <span className="hero-journey__lane hero-journey__lane--two" />
       </div>
 
-      <div className="hero-journey__visual" aria-hidden="true">
-        <div className="hero-journey__orb">
-          <Target size={36} />
-          <span className="hero-journey__orb-ring" />
+      <div className="hero-journey__main">
+        <div className="hero-journey__head">
+          <div className="hero-journey__kicker">
+            <Icon size={13} />
+            <span>{journey.kicker}</span>
+          </div>
+          <div className="hero-journey__hp">
+            <Sparkles size={12} />
+            {giftLabel}
+          </div>
         </div>
-        <div className="hero-journey__hp">
-          <Sparkles size={14} />
-          {giftLabel}
-        </div>
-      </div>
 
-      <div className="hero-journey__content">
-        <div className="hero-journey__kicker">
-          <Icon size={15} />
-          <span>{journey.kicker}</span>
+        <div className="hero-journey__lead">
+          {showXiCounter ? (
+            <div className="hero-journey__xi" aria-hidden="true">
+              <strong>{xiFilled}/11</strong>
+              <div className="hero-journey__xi-dots">
+                {Array.from({ length: 11 }, (_, index) => (
+                  <span key={index} className={index < xiFilled ? 'is-on' : ''} />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="hero-journey__badge" aria-hidden="true">
+              <Icon size={20} />
+            </div>
+          )}
+          <div className="hero-journey__copy">
+            <h2>{journey.title}</h2>
+            <p>{journey.body}</p>
+          </div>
         </div>
-        <h2>{journey.title}</h2>
-        <p>{journey.body}</p>
 
         <div className="hero-journey__progress" aria-label={isEn ? 'Coach readiness progress' : 'Avanzamento preparazione Coach'}>
           <div>
@@ -389,33 +403,38 @@ export default function HeroCoachJourney({
         </div>
 
         <div className="hero-journey__checks">
-          {journey.checkpoints.map((item) => (
+          {journey.checkpoints.map((item, index) => {
+            const firstOpen = journey.checkpoints.findIndex((cp) => !cp.done && !cp.partial)
+            const isCurrent = !item.done && !item.partial && index === firstOpen
+            return (
             <span
               key={item.label}
               className={[
                 item.done ? 'is-done' : '',
-                item.partial ? 'is-partial' : ''
+                item.partial ? 'is-partial' : '',
+                isCurrent ? 'is-current' : ''
               ].filter(Boolean).join(' ')}
             >
-              <CheckCircle2 size={14} />
+              <CheckCircle2 size={12} />
               {item.label}
             </span>
-          ))}
+            )
+          })}
         </div>
-      </div>
 
-      <div className="hero-journey__actions">
-        <button type="button" className="hero-journey__primary" onClick={journey.primary.action}>
-          {journey.primary.label}
-          <ArrowRight size={17} />
-        </button>
-        <button type="button" className="hero-journey__secondary" onClick={journey.secondary.action}>
-          {journey.secondary.label}
-        </button>
-        <button type="button" className="hero-journey__defer" onClick={setDeferred}>
-          <Minimize2 size={14} />
-          {isEn ? 'Later' : 'Lo faccio dopo'}
-        </button>
+        <div className="hero-journey__actions">
+          <button type="button" className="hero-journey__primary" onClick={journey.primary.action}>
+            {journey.primary.label}
+            <ArrowRight size={15} />
+          </button>
+          <button type="button" className="hero-journey__secondary" onClick={journey.secondary.action}>
+            {journey.secondary.label}
+          </button>
+          <button type="button" className="hero-journey__defer" onClick={setDeferred}>
+            <Minimize2 size={12} />
+            {isEn ? 'Later' : 'Lo faccio dopo'}
+          </button>
+        </div>
       </div>
 
       <style jsx>{styles}</style>
@@ -428,23 +447,18 @@ const styles = `
   .hero-journey-mini {
     position: relative;
     overflow: hidden;
-    margin-bottom: 22px;
-    border: 1px solid rgba(0, 212, 255, 0.30);
+    margin-bottom: 14px;
+    border: 1px solid rgba(0, 212, 255, 0.24);
     background:
-      radial-gradient(circle at 15% 20%, rgba(0, 212, 255, 0.20), transparent 28%),
-      radial-gradient(circle at 88% 18%, rgba(255, 203, 5, 0.16), transparent 30%),
+      radial-gradient(circle at 12% 0%, rgba(0, 212, 255, 0.12), transparent 32%),
       linear-gradient(145deg, rgba(4, 10, 26, 0.98), rgba(9, 17, 38, 0.94));
-    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255,255,255,0.08);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255,255,255,0.06);
     color: #fff;
   }
 
   .hero-journey {
-    display: grid;
-    grid-template-columns: minmax(120px, 180px) minmax(0, 1fr) minmax(180px, 240px);
-    gap: 22px;
-    align-items: center;
-    padding: clamp(20px, 3vw, 30px);
-    border-radius: 26px;
+    padding: 14px 16px;
+    border-radius: 18px;
   }
 
   .hero-journey::before {
@@ -453,158 +467,181 @@ const styles = `
     inset: 0;
     border-radius: inherit;
     border: 1px solid transparent;
-    background: linear-gradient(120deg, rgba(0, 212, 255, 0.72), rgba(255, 203, 5, 0.42), rgba(168, 85, 247, 0.48), rgba(0, 212, 255, 0.72)) border-box;
+    background: linear-gradient(120deg, rgba(0, 212, 255, 0.45), rgba(255, 203, 5, 0.22), rgba(0, 212, 255, 0.45)) border-box;
     mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
     -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
     mask-composite: exclude;
     -webkit-mask-composite: xor;
-    opacity: 0.54;
+    opacity: 0.38;
     pointer-events: none;
   }
 
   .hero-journey__field {
     position: absolute;
     inset: 0;
-    opacity: 0.42;
+    opacity: 0.28;
     pointer-events: none;
-    background:
-      linear-gradient(90deg, transparent 49.5%, rgba(0, 212, 255, 0.15) 50%, transparent 50.5%),
-      linear-gradient(0deg, transparent 49.5%, rgba(255, 255, 255, 0.08) 50%, transparent 50.5%);
   }
 
   .hero-journey__radar {
     position: absolute;
-    width: 360px;
-    height: 360px;
-    right: -120px;
-    top: -150px;
+    width: 220px;
+    height: 220px;
+    right: -70px;
+    top: -90px;
     border-radius: 999px;
-    background: conic-gradient(from 180deg, transparent, rgba(0, 212, 255, 0.26), transparent 42%);
-    animation: heroRadar 9s linear infinite;
+    background: conic-gradient(from 180deg, transparent, rgba(0, 212, 255, 0.18), transparent 42%);
+    animation: heroRadar 12s linear infinite;
   }
 
-  .hero-journey__lane {
-    position: absolute;
-    left: 8%;
-    right: 8%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.20), transparent);
-  }
-
-  .hero-journey__lane--one { top: 32%; }
-  .hero-journey__lane--two { bottom: 28%; }
-
-  .hero-journey__visual,
-  .hero-journey__content,
-  .hero-journey__actions {
+  .hero-journey__main {
     position: relative;
     z-index: 1;
-  }
-
-  .hero-journey__visual {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 14px;
+    gap: 10px;
   }
 
-  .hero-journey__orb {
-    position: relative;
-    width: clamp(96px, 12vw, 132px);
-    height: clamp(96px, 12vw, 132px);
-    display: inline-flex;
+  .hero-journey__head {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    border-radius: 34px;
-    color: #9ff7ff;
-    background:
-      radial-gradient(circle at 35% 25%, rgba(255,255,255,0.24), transparent 20%),
-      linear-gradient(145deg, rgba(0, 212, 255, 0.20), rgba(5, 10, 25, 0.86));
-    border: 1px solid rgba(0, 212, 255, 0.46);
-    box-shadow: 0 0 42px rgba(0, 212, 255, 0.22), inset 0 1px 0 rgba(255,255,255,0.12);
-  }
-
-  .hero-journey__orb-ring {
-    position: absolute;
-    inset: -9px;
-    border: 1px solid rgba(0, 212, 255, 0.24);
-    border-radius: 40px;
-    animation: heroPulse 2.8s ease-in-out infinite;
-  }
-
-  .hero-journey__hp {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 8px 11px;
-    border: 1px solid rgba(255, 203, 5, 0.42);
-    border-radius: 999px;
-    color: #ffdf66;
-    background: rgba(255, 203, 5, 0.10);
-    font-size: 12px;
-    font-weight: 900;
-    letter-spacing: 0.2px;
-    box-shadow: 0 0 20px rgba(255, 203, 5, 0.12);
+    justify-content: space-between;
+    gap: 10px;
   }
 
   .hero-journey__kicker {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    width: fit-content;
-    padding: 7px 11px;
-    margin-bottom: 12px;
-    border: 1px solid rgba(0, 212, 255, 0.30);
+    gap: 6px;
+    padding: 4px 9px;
+    border: 1px solid rgba(0, 212, 255, 0.26);
     border-radius: 999px;
     color: #8ff2ff;
-    background: rgba(0, 212, 255, 0.08);
-    font-size: 12px;
+    background: rgba(0, 212, 255, 0.07);
+    font-size: 10px;
     font-weight: 900;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.6px;
+  }
+
+  .hero-journey__hp {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    border: 1px solid rgba(255, 203, 5, 0.34);
+    border-radius: 999px;
+    color: #ffdf66;
+    background: rgba(255, 203, 5, 0.08);
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.1px;
+    flex-shrink: 0;
+  }
+
+  .hero-journey__lead {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .hero-journey__xi {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    min-width: 52px;
+    padding: 8px 7px 6px;
+    border: 1px solid rgba(0, 212, 255, 0.28);
+    border-radius: 14px;
+    background: rgba(0, 212, 255, 0.06);
+  }
+
+  .hero-journey__xi strong {
+    font-size: 18px;
+    line-height: 1;
+    font-weight: 950;
+    letter-spacing: -0.4px;
+    color: #e8fdff;
+  }
+
+  .hero-journey__xi-dots {
+    display: grid;
+    grid-template-columns: repeat(4, 5px);
+    gap: 3px;
+  }
+
+  .hero-journey__xi-dots span {
+    width: 5px;
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.14);
+  }
+
+  .hero-journey__xi-dots span.is-on {
+    background: #00d4ff;
+    box-shadow: 0 0 6px rgba(0, 212, 255, 0.45);
+  }
+
+  .hero-journey__badge {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    color: #9ff7ff;
+    border: 1px solid rgba(0, 212, 255, 0.28);
+    background: rgba(0, 212, 255, 0.08);
+  }
+
+  .hero-journey__copy {
+    min-width: 0;
+    flex: 1;
   }
 
   .hero-journey h2 {
-    margin: 0 0 9px;
-    font-size: clamp(25px, 4vw, 38px);
-    line-height: 1.02;
-    font-weight: 950;
-    letter-spacing: -0.8px;
+    margin: 0 0 4px;
+    font-size: clamp(17px, 4.2vw, 22px);
+    line-height: 1.12;
+    font-weight: 900;
+    letter-spacing: -0.35px;
   }
 
   .hero-journey p {
-    max-width: 720px;
     margin: 0;
-    color: rgba(255,255,255,0.72);
-    font-size: 15px;
-    line-height: 1.58;
+    color: rgba(255,255,255,0.68);
+    font-size: 13px;
+    line-height: 1.45;
   }
 
   .hero-journey__progress {
-    margin-top: 18px;
+    margin-top: 2px;
   }
 
   .hero-journey__progress > div:first-child {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 8px;
-    color: rgba(255,255,255,0.62);
-    font-size: 12px;
+    gap: 8px;
+    margin-bottom: 5px;
+    color: rgba(255,255,255,0.58);
+    font-size: 11px;
     font-weight: 800;
   }
 
   .hero-journey__progress strong {
     color: #fff;
+    font-size: 11px;
   }
 
   .hero-journey__progress-track {
-    height: 9px;
+    height: 6px;
     overflow: hidden;
     border-radius: 999px;
-    background: rgba(255,255,255,0.08);
-    box-shadow: inset 0 1px 4px rgba(0,0,0,0.42);
+    background: rgba(255,255,255,0.07);
   }
 
   .hero-journey__progress-track span {
@@ -612,40 +649,51 @@ const styles = `
     height: 100%;
     border-radius: inherit;
     background: linear-gradient(90deg, #00d4ff, #ffcb05);
-    box-shadow: 0 0 20px rgba(0, 212, 255, 0.34);
+    box-shadow: 0 0 12px rgba(0, 212, 255, 0.28);
     transition: width 700ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .hero-journey__checks {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 14px;
+    gap: 6px;
+    margin-top: 0;
   }
 
   .hero-journey__checks span {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 7px 10px;
-    border: 1px solid rgba(255,255,255,0.10);
+    gap: 5px;
+    padding: 4px 8px;
+    border: 1px solid rgba(255,255,255,0.09);
     border-radius: 999px;
-    color: rgba(255,255,255,0.56);
-    background: rgba(255,255,255,0.045);
-    font-size: 12px;
+    color: rgba(255,255,255,0.48);
+    background: rgba(255,255,255,0.04);
+    font-size: 11px;
     font-weight: 800;
   }
 
+  .hero-journey__checks span.is-current {
+    border-color: rgba(0, 212, 255, 0.36);
+    color: #b8f6ff;
+    background: rgba(0, 212, 255, 0.10);
+  }
+
+  .hero-journey__checks span.is-current svg {
+    color: #00d4ff;
+    opacity: 0.55;
+  }
+
   .hero-journey__checks span.is-done {
-    border-color: rgba(52, 199, 89, 0.32);
-    color: #8be9a8;
-    background: rgba(52, 199, 89, 0.09);
+    border-color: rgba(52, 199, 89, 0.24);
+    color: rgba(139, 233, 168, 0.78);
+    background: rgba(52, 199, 89, 0.07);
   }
 
   .hero-journey__checks span.is-partial {
-    border-color: rgba(255, 203, 5, 0.38);
+    border-color: rgba(255, 203, 5, 0.32);
     color: #ffe08a;
-    background: rgba(255, 203, 5, 0.10);
+    background: rgba(255, 203, 5, 0.08);
   }
 
   .hero-journey__checks span.is-partial svg {
@@ -654,59 +702,75 @@ const styles = `
 
   .hero-journey__actions {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
   }
 
   .hero-journey__actions button {
-    min-height: 44px;
-    border: none;
     border-radius: 999px;
     cursor: pointer;
-    font-size: 13px;
     font-weight: 900;
-    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+    transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease, background 140ms ease;
   }
 
   .hero-journey__actions button:hover {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
   }
 
   .hero-journey__primary {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 0 18px;
-    background: linear-gradient(135deg, #ffcb05, #f97316);
-    color: #06101f;
-    box-shadow: 0 12px 30px rgba(255, 203, 5, 0.20);
+    gap: 6px;
+    min-height: 34px;
+    padding: 0 14px;
+    border: 1px solid rgba(0, 212, 255, 0.55);
+    background: linear-gradient(180deg, rgba(0, 212, 255, 0.22), rgba(0, 212, 255, 0.08));
+    color: #e8fdff;
+    font-size: 12px;
+    box-shadow: 0 0 18px rgba(0, 212, 255, 0.14);
   }
 
-  .hero-journey__secondary,
-  .hero-journey__defer {
-    padding: 0 16px;
-    color: rgba(255,255,255,0.82);
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.13) !important;
+  .hero-journey__primary:hover {
+    border-color: rgba(0, 212, 255, 0.78);
+    box-shadow: 0 0 22px rgba(0, 212, 255, 0.22);
+  }
+
+  .hero-journey__secondary {
+    min-height: 34px;
+    padding: 0 12px;
+    border: 1px solid rgba(255,255,255,0.14) !important;
+    background: rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.78);
+    font-size: 11px;
   }
 
   .hero-journey__defer {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    gap: 7px;
-    min-height: 38px !important;
-    color: rgba(255,255,255,0.58);
-    font-size: 12px !important;
+    gap: 5px;
+    min-height: 30px;
+    padding: 0 8px;
+    margin-left: auto;
+    border: none !important;
+    background: transparent !important;
+    color: rgba(255,255,255,0.46);
+    font-size: 11px;
+  }
+
+  .hero-journey__defer:hover {
+    color: rgba(255,255,255,0.68);
+    transform: none;
   }
 
   .hero-journey-mini {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 14px 16px;
-    border-radius: 18px;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 14px;
   }
 
   .hero-journey-mini__pulse {
@@ -767,81 +831,35 @@ const styles = `
     to { transform: rotate(360deg); }
   }
 
-  @keyframes heroPulse {
-    0%, 100% { transform: scale(1); opacity: 0.38; }
-    50% { transform: scale(1.06); opacity: 0.78; }
-  }
-
   @keyframes heroMiniPulse {
     0%, 100% { box-shadow: 0 0 0 0 rgba(255, 203, 5, 0.38); }
     50% { box-shadow: 0 0 0 9px rgba(255, 203, 5, 0); }
   }
 
-  @media (max-width: 900px) {
+  @media (max-width: 560px) {
     .hero-journey {
-      grid-template-columns: 1fr;
-      gap: 18px;
+      padding: 12px 14px;
+      border-radius: 16px;
     }
 
-    .hero-journey__visual {
-      align-items: flex-start;
-      flex-direction: row;
-      justify-content: space-between;
-    }
-
-    .hero-journey__orb {
-      width: 78px;
-      height: 78px;
-      border-radius: 24px;
-    }
-
-    .hero-journey__orb-ring {
-      border-radius: 30px;
+    .hero-journey__head {
+      flex-wrap: wrap;
     }
 
     .hero-journey__actions {
-      flex-direction: row;
-      flex-wrap: wrap;
+      gap: 6px;
     }
 
     .hero-journey__primary,
     .hero-journey__secondary {
-      flex: 1 1 190px;
+      flex: 1 1 calc(50% - 4px);
+      min-width: 0;
     }
 
     .hero-journey__defer {
       flex: 1 1 100%;
-    }
-  }
-
-  @media (max-width: 560px) {
-    .hero-journey {
-      padding: 18px;
-      border-radius: 22px;
-    }
-
-    .hero-journey__visual {
-      align-items: center;
-    }
-
-    .hero-journey__hp {
-      font-size: 11px;
-      padding: 7px 9px;
-    }
-
-    .hero-journey h2 {
-      font-size: 25px;
-    }
-
-    .hero-journey p {
-      font-size: 14px;
-    }
-
-    .hero-journey__primary,
-    .hero-journey__secondary,
-    .hero-journey__defer {
-      flex-basis: 100%;
-      width: 100%;
+      margin-left: 0;
+      justify-content: center;
     }
 
     .hero-journey-mini {
@@ -852,6 +870,14 @@ const styles = `
     .hero-journey-mini button {
       width: 100%;
       justify-content: center;
+      min-height: 32px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-journey__radar,
+    .hero-journey-mini__pulse {
+      animation: none;
     }
   }
 `

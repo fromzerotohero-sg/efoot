@@ -95,6 +95,7 @@ const copy = {
     proFeaturedHookSituational: 'Da valutare in contesto: confronto con i tuoi titolari.',
     proFeaturedHookSkip: 'Prima di spendere: analisi Pro su fit e priorità in rosa.',
     proUnlockedTeaser: 'Report personalizzato qui sotto — confronto skill, pro/contro e decisione.',
+    buildSectionHintAfterPro: 'Riferimento PT e skill — confronta col verdetto sopra.',
     insufficientHpTitle: 'HP insufficienti',
     insufficientHpText: 'Verdetto Pro = 2 HP. Ricarica e riprova.',
     rechargeHpCta: 'Ricarica HP',
@@ -261,6 +262,7 @@ const copy = {
     proFeaturedHookSituational: 'Context matters: compare against your starters.',
     proFeaturedHookSkip: 'Before you spend: Pro analysis on fit and roster priority.',
     proUnlockedTeaser: 'Your personalized report is below — skill comparison, pros/cons and decision.',
+    buildSectionHintAfterPro: 'PT and skills reference — compare with the verdict above.',
     insufficientHpTitle: 'Not enough HP',
     insufficientHpText: 'Pro verdict = 2 HP. Recharge and retry.',
     rechargeHpCta: 'Recharge HP',
@@ -658,9 +660,13 @@ function getVerdictMeta(verdict, labels) {
   return map[verdict] || map.situational
 }
 
-/** Testo del box Pro in hero: CTA / teaser, mai il verdetto AI (quello sta nel report sotto). */
-function getProFeaturedCopy(card, deepAnalysis, labels) {
-  if (deepAnalysis) return labels.proUnlockedTeaser
+/** Testo del box Pro in hero: CTA prima dello sblocco; dopo, anteprima del verdetto. */
+function getProFeaturedCopy(card, deepAnalysis, labels, lang) {
+  if (deepAnalysis) {
+    const line = localizeDeepAnalysisText(deepAnalysis.headline || deepAnalysis.summary, lang)
+    if (line) return line.length > 132 ? `${line.slice(0, 129)}…` : line
+    return labels.proUnlockedTeaser
+  }
   const hooks = {
     top: labels.proFeaturedHookTop,
     good: labels.proFeaturedHookGood,
@@ -1070,10 +1076,12 @@ function BuildPreviewCard({ title, hint, build, labels, lang, variant = 'meta', 
   )
 }
 
-function CardBuildPreviewSection({ preview, loading, labels, lang }) {
+function CardBuildPreviewSection({ preview, loading, labels, lang, hint, className = '' }) {
+  const sectionHint = hint || labels.buildSectionHint
+  const shellClass = ['build-preview-shell', className].filter(Boolean).join(' ')
   if (loading) {
     return (
-      <div className="build-preview-shell build-preview-shell-loading" role="status" aria-live="polite">
+      <div className={`${shellClass} build-preview-shell-loading`} role="status" aria-live="polite">
         <div className="build-preview-shell-head">
           <Hammer size={18} />
           <div>
@@ -1097,7 +1105,7 @@ function CardBuildPreviewSection({ preview, loading, labels, lang }) {
             ? labels.buildMaxLevelOne
             : labels.buildUnavailable
     return (
-      <div className="build-preview-shell build-preview-shell-muted">
+      <div className={`${shellClass} build-preview-shell-muted`}>
         <div className="build-preview-shell-head">
           <Hammer size={18} />
           <div>
@@ -1117,12 +1125,12 @@ function CardBuildPreviewSection({ preview, loading, labels, lang }) {
         )
       : []
   return (
-    <div className="build-preview-shell build-preview-shell-compact">
+    <div className={`${shellClass} build-preview-shell-compact`}>
       <div className="build-preview-shell-head">
         <Hammer size={18} />
         <div>
           <span>{labels.buildSectionTitle}</span>
-          <p>{labels.buildSectionHint}</p>
+          <p>{sectionHint}</p>
         </div>
       </div>
       <div className="build-preview-dual">
@@ -1213,7 +1221,24 @@ function DetailPanel({
   onClose
 }) {
   const [showDeepFullReport, setShowDeepFullReport] = React.useState(false)
+  const verdictRef = React.useRef(null)
+  const verdictScrollKeyRef = React.useRef(null)
   const insufficientHp = hpBalanceRemaining !== null && hpBalanceRemaining < DEEP_ANALYSIS_HP_COST
+
+  React.useEffect(() => {
+    if (!deepAnalysis || !card?.id) return undefined
+    const key = `${card.id}:${deepAnalysis.headline || deepAnalysis.summary || 'ok'}`
+    if (verdictScrollKeyRef.current === key) return undefined
+    verdictScrollKeyRef.current = key
+    const node = verdictRef.current
+    if (!node || typeof window === 'undefined') return undefined
+    const id = window.requestAnimationFrame(() => {
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      node.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'nearest' })
+    })
+    return () => window.cancelAnimationFrame(id)
+  }, [deepAnalysis, card?.id])
+
   return (
     <section className="detail-panel">
       {onClose && (
@@ -1240,9 +1265,9 @@ function DetailPanel({
             <div className="deep-analysis-entry-copy">
               <div className="deep-analysis-entry-title">
                 <span>{deepAnalysis ? labels.proUnlockedBadge : labels.deepAnalysisCost}</span>
-                <h3>{deepAnalysis ? labels.proUnlockedTitle : labels.proUnlockTitle}</h3>
+                <h3>{deepAnalysis ? labels.deepAnalysisTitle : labels.proUnlockTitle}</h3>
               </div>
-              <p>{deepAnalysis ? getProFeaturedCopy(card, deepAnalysis, labels) : labels.proUnlockText}</p>
+              <p>{deepAnalysis ? getProFeaturedCopy(card, deepAnalysis, labels, lang) : labels.proUnlockText}</p>
             </div>
             {!deepAnalysis && (
               <div className="deep-analysis-entry-cta">
@@ -1279,15 +1304,13 @@ function DetailPanel({
         </div>
       </div>
 
-      <CardBuildPreviewSection
-        preview={buildPreview}
-        loading={buildPreviewLoading}
-        labels={labels}
-        lang={lang}
-      />
-
       {deepAnalysis && (
-        <div className="deep-analysis-report">
+        <div
+          id="verdetto-pro"
+          ref={verdictRef}
+          className="deep-analysis-report"
+          tabIndex={-1}
+        >
           <div className="deep-analysis-summary">
             <span>{labels.deepAnalysisTitle}</span>
             <h3>{localizeDeepAnalysisText(deepAnalysis.headline, lang)}</h3>
@@ -1356,6 +1379,15 @@ function DetailPanel({
           )}
         </div>
       )}
+
+      <CardBuildPreviewSection
+        preview={buildPreview}
+        loading={buildPreviewLoading}
+        labels={labels}
+        lang={lang}
+        hint={deepAnalysis ? labels.buildSectionHintAfterPro : undefined}
+        className={deepAnalysis ? 'build-preview-shell-after-verdict' : ''}
+      />
 
     </section>
   )
@@ -3772,7 +3804,7 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .deep-analysis-report {
-          margin-top: 14px;
+          margin-top: 12px;
           border: 1px solid rgba(251,191,36,0.18);
           border-radius: 20px;
           padding: 16px;
@@ -4255,6 +4287,10 @@ export default withAuth(function CardAdvisorLabPage() {
           align-items: center;
           justify-content: space-between;
           gap: 16px;
+        }
+
+        .build-preview-shell-after-verdict {
+          margin-top: 12px;
         }
 
         .build-preview-shell {
