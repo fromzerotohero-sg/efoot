@@ -11,8 +11,19 @@ import {
   Plus,
   Users,
   Calendar,
-  Sparkles
+  CreditCard
 } from 'lucide-react'
+
+const CARDS_ACCENT = {
+  idleColor: '#d4b84a',
+  activeColor: '#ffe566',
+  idleBg: 'linear-gradient(135deg, rgba(255, 203, 5, 0.12), rgba(168, 85, 247, 0.08))',
+  activeBg: 'linear-gradient(135deg, rgba(255, 203, 5, 0.26), rgba(168, 85, 247, 0.18))',
+  idleBorder: 'rgba(255, 203, 5, 0.22)',
+  activeBorder: 'rgba(255, 203, 5, 0.42)',
+  idleGlow: '0 0 12px rgba(255, 203, 5, 0.14)',
+  activeGlow: '0 0 20px rgba(255, 203, 5, 0.28), 0 0 28px rgba(168, 85, 247, 0.16)'
+}
 
 export default function BottomNavigation() {
   const { t, lang } = useTranslation()
@@ -45,8 +56,9 @@ export default function BottomNavigation() {
     },
     {
       href: '/card-advisor-lab',
-      icon: Sparkles,
-      label: lang === 'en' ? 'Cards' : 'Carte'
+      icon: CreditCard,
+      label: lang === 'en' ? 'Cards' : 'Carte',
+      accent: 'cards'
     },
     {
       href: '/gestione-formazione',
@@ -109,6 +121,7 @@ export default function BottomNavigation() {
                 ? pathname === '/' && !gameAnalysisModalOpen
               : isActive(item.href)
 
+          const isCardsAccent = item.accent === 'cards'
           const inner = (
             <div style={{
               display: 'flex',
@@ -119,11 +132,25 @@ export default function BottomNavigation() {
               padding: '8px 12px',
               borderRadius: '12px',
               transition: 'all 0.2s',
-              background: active ? 'rgba(0, 212, 255, 0.15)' : 'transparent',
-              color: active ? 'var(--neon-cyan)' : 'rgba(255,255,255,0.5)',
+              background: isCardsAccent
+                ? (active ? CARDS_ACCENT.activeBg : CARDS_ACCENT.idleBg)
+                : (active ? 'rgba(0, 212, 255, 0.15)' : 'transparent'),
+              color: isCardsAccent
+                ? (active ? CARDS_ACCENT.activeColor : CARDS_ACCENT.idleColor)
+                : (active ? 'var(--neon-cyan)' : 'rgba(255,255,255,0.5)'),
+              border: isCardsAccent
+                ? `1px solid ${active ? CARDS_ACCENT.activeBorder : CARDS_ACCENT.idleBorder}`
+                : '1px solid transparent',
+              boxShadow: isCardsAccent
+                ? (active ? CARDS_ACCENT.activeGlow : CARDS_ACCENT.idleGlow)
+                : 'none',
               minWidth: '60px'
             }}>
-              <Icon size={22} strokeWidth={active ? 2.5 : 2} />
+              <Icon
+                size={22}
+                strokeWidth={active || isCardsAccent ? 2.5 : 2}
+                style={isCardsAccent ? { filter: 'drop-shadow(0 0 6px rgba(255, 203, 5, 0.45))' } : undefined}
+              />
               <span style={{
                 fontSize: '11px',
                 fontWeight: active ? 600 : 500,

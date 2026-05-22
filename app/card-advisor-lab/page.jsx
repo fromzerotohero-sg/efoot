@@ -25,6 +25,19 @@ import {
 import { BUILD_SLIDER_ORDER, getBuildSliderLabel } from '@/lib/cardAdvisorBuildPreview'
 import { supabase, getValidAccessToken } from '@/lib/supabaseClient'
 
+const HP_RECHARGE_URL = 'https://home.fromzerotohero.io/dashboard?usage'
+const DEEP_ANALYSIS_HP_COST = 2
+
+function getHpBalanceRemaining(usage) {
+  if (!usage) return null
+  const balance = Number(usage.balance_remaining)
+  if (Number.isFinite(balance)) return balance
+  const included = Number(usage.credits_included)
+  const used = Number(usage.credits_used)
+  if (!Number.isFinite(included) || !Number.isFinite(used)) return null
+  return Math.max(0, included - used)
+}
+
 /** Metalgate `auth_token` oppure JWT Supabase aggiornato (come CreditsBar / grafici-comparazione). */
 async function resolveClientAuthBearer() {
   if (typeof window === 'undefined') return null
@@ -732,6 +745,21 @@ function DeepAnalysisSection({ tone, icon: Icon, title, items, lang }) {
   )
 }
 
+function InsufficientHpCta({ labels, message }) {
+  return (
+    <div className="deep-analysis-error deep-analysis-error-credits deep-analysis-insufficient-cta">
+      <div>
+        <AlertTriangle size={17} />
+        <strong>{labels.insufficientHpTitle}</strong>
+      </div>
+      <p>{message || labels.insufficientHpText}</p>
+      <a href={HP_RECHARGE_URL} target="_blank" rel="noopener noreferrer">
+        {labels.rechargeHpCta}
+      </a>
+    </div>
+  )
+}
+
 function DeepAnalysisError({ error, labels }) {
   if (!error) return null
   const isStructured = typeof error === 'object'
@@ -739,16 +767,7 @@ function DeepAnalysisError({ error, labels }) {
   const message = isStructured ? error.message : error
 
   if (type === 'credits') {
-    return (
-      <div className="deep-analysis-error deep-analysis-error-credits">
-        <div>
-          <AlertTriangle size={17} />
-          <strong>{labels.insufficientHpTitle}</strong>
-        </div>
-        <p>{message || labels.insufficientHpText}</p>
-        <a href="/gestione-profilo">{labels.rechargeHpCta}</a>
-      </div>
-    )
+    return <InsufficientHpCta labels={labels} message={message} />
   }
 
   return <p className="deep-analysis-error">{message || labels.deepAnalysisError}</p>
@@ -1204,11 +1223,13 @@ function DetailPanel({
   deepAnalysis,
   deepAnalysisLoading,
   deepAnalysisError,
+  hpBalanceRemaining,
   onRequestDeepAnalysis,
   onOpenGameAnalysis,
   onClose
 }) {
   const [showDeepFullReport, setShowDeepFullReport] = React.useState(false)
+  const insufficientHp = hpBalanceRemaining !== null && hpBalanceRemaining < DEEP_ANALYSIS_HP_COST
   return (
     <section className="detail-panel">
       {onClose && (
@@ -1241,23 +1262,28 @@ function DetailPanel({
             </div>
             {!deepAnalysis && (
               <div className="deep-analysis-entry-cta">
-                <button
-                  type="button"
-                  className="deep-analysis-unlock-btn"
-                  onClick={onRequestDeepAnalysis}
-                  disabled={deepAnalysisLoading}
-                  aria-busy={deepAnalysisLoading}
-                >
-                  <span className="deep-analysis-unlock-btn-orbit" aria-hidden />
-                  <span className="deep-analysis-unlock-btn-scan" aria-hidden />
-                  <span className="deep-analysis-unlock-btn-inner">
-                    <Sparkles size={20} strokeWidth={2.25} className="deep-analysis-unlock-btn-icon" aria-hidden />
-                    <span className="deep-analysis-unlock-btn-text">
-                      <strong>{deepAnalysisLoading ? labels.deepAnalysisLoading : labels.proUnlockButton}</strong>
-                      {!deepAnalysisLoading ? <small>{labels.proUnlockButtonCost}</small> : null}
+                {insufficientHp ? (
+                  <InsufficientHpCta labels={labels} />
+                ) : (
+                  <button
+                    type="button"
+                    className="deep-analysis-unlock-btn"
+                    onClick={onRequestDeepAnalysis}
+                    disabled={deepAnalysisLoading}
+                    aria-busy={deepAnalysisLoading}
+                  >
+                    <span className="deep-analysis-unlock-btn-orbit" aria-hidden />
+                    <span className="deep-analysis-unlock-btn-scan" aria-hidden />
+                    <span className="deep-analysis-unlock-btn-inner">
+                      <Sparkles size={20} strokeWidth={2.25} className="deep-analysis-unlock-btn-icon" aria-hidden />
+                      <span className="deep-analysis-unlock-btn-text">
+                        <strong>{deepAnalysisLoading ? labels.deepAnalysisLoading : labels.proUnlockButton}</strong>
+                        {!deepAnalysisLoading ? <small>{labels.proUnlockButtonCost}</small> : null}
+                      </span>
                     </span>
-                  </span>
-                </button>
+                  </button>
+                )}
+                <DeepAnalysisError error={deepAnalysisError} labels={labels} />
               </div>
             )}
           </div>
@@ -1278,8 +1304,6 @@ function DetailPanel({
         lang={lang}
       />
 
-
-      <DeepAnalysisError error={deepAnalysisError} labels={labels} />
       {deepAnalysis && (
         <div className="deep-analysis-report">
           <div className="deep-analysis-summary">
@@ -1423,6 +1447,7 @@ function CardDetailsModal({
   deepAnalysis,
   deepAnalysisLoading,
   deepAnalysisError,
+  hpBalanceRemaining,
   onRequestDeepAnalysis,
   onOpenGameAnalysis,
   onClose
@@ -1497,6 +1522,7 @@ function CardDetailsModal({
           deepAnalysis={deepAnalysis}
           deepAnalysisLoading={deepAnalysisLoading}
           deepAnalysisError={deepAnalysisError}
+          hpBalanceRemaining={hpBalanceRemaining}
           onRequestDeepAnalysis={onRequestDeepAnalysis}
           onOpenGameAnalysis={onOpenGameAnalysis}
           onClose={onClose}
@@ -1522,6 +1548,11 @@ export default withAuth(function CardAdvisorLabPage() {
   const [deepAnalysisErrors, setDeepAnalysisErrors] = React.useState({})
   const [buildPreviewsByCard, setBuildPreviewsByCard] = React.useState({})
   const [buildPreviewLoadingId, setBuildPreviewLoadingId] = React.useState(null)
+  const [creditsUsage, setCreditsUsage] = React.useState(null)
+  const hpBalanceRemaining = React.useMemo(
+    () => getHpBalanceRemaining(creditsUsage),
+    [creditsUsage]
+  )
   const releaseTabsRef = React.useRef(null)
   const cards = React.useMemo(() => {
     const baseCards = releaseId === 'all'
@@ -1546,6 +1577,43 @@ export default withAuth(function CardAdvisorLabPage() {
   React.useEffect(() => {
     setSelectedId(cards[0]?.id)
   }, [cards])
+
+  const fetchCreditsUsage = React.useCallback(async () => {
+    try {
+      const token = await resolveClientAuthBearer()
+      if (!token) {
+        setCreditsUsage(null)
+        return
+      }
+      const response = await fetch('/api/credits/usage', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({}),
+        cache: 'no-store'
+      })
+      if (!response.ok) return
+      const payload = await response.json().catch(() => null)
+      setCreditsUsage(payload)
+    } catch {
+      // Il CTA resta sul bottone sblocco; l'errore 402 copre il caso dopo il click.
+    }
+  }, [])
+
+  React.useEffect(() => {
+    fetchCreditsUsage()
+    const onCreditsConsumed = () => fetchCreditsUsage()
+    if (typeof window !== 'undefined') {
+      window.addEventListener('credits-consumed', onCreditsConsumed)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('credits-consumed', onCreditsConsumed)
+      }
+    }
+  }, [fetchCreditsUsage])
 
   React.useEffect(() => {
     let active = true
@@ -1620,6 +1688,10 @@ export default withAuth(function CardAdvisorLabPage() {
         throw new Error(data?.error || labels.deepAnalysisError)
       }
       setDeepAnalysesByCard(prev => ({ ...prev, [analysisKey]: data.analysis }))
+      fetchCreditsUsage()
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('credits-consumed'))
+      }
     } catch (error) {
       setDeepAnalysisErrors(prev => ({
         ...prev,
@@ -1628,7 +1700,7 @@ export default withAuth(function CardAdvisorLabPage() {
     } finally {
       setDeepAnalysisLoadingId(null)
     }
-  }, [deepAnalysesByCard, deepAnalysisLoadingId, detailsCard, labels.deepAnalysisError, labels.insufficientHpText, lang])
+  }, [deepAnalysesByCard, deepAnalysisLoadingId, detailsCard, fetchCreditsUsage, labels.deepAnalysisError, labels.insufficientHpText, lang])
 
   React.useEffect(() => {
     let active = true
@@ -1831,6 +1903,7 @@ export default withAuth(function CardAdvisorLabPage() {
         deepAnalysis={detailsDeepAnalysis}
         deepAnalysisLoading={detailsCard?.id === deepAnalysisLoadingId}
         deepAnalysisError={detailsDeepAnalysisError}
+        hpBalanceRemaining={hpBalanceRemaining}
         onRequestDeepAnalysis={requestDeepAnalysis}
         onOpenGameAnalysis={() => router.push('/?openGameAnalysis=1')}
         onClose={() => setDetailsCardId(null)}
@@ -2276,7 +2349,8 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .cards-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(clamp(150px, 18vw, 190px), 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(140px, 168px));
+          justify-content: center;
           gap: 14px;
         }
 
@@ -2638,6 +2712,8 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .release-card {
           width: 100%;
+          max-width: 168px;
+          justify-self: center;
           text-align: left;
           color: #fff;
           border: 1px solid rgba(255,255,255,0.10);
@@ -2903,8 +2979,10 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .detail-card-preview {
-          width: 215px;
-          flex: 0 0 215px;
+          width: min(192px, 42vw);
+          max-width: 192px;
+          flex: 0 0 min(192px, 42vw);
+          margin: 0 auto;
         }
 
         .detail-card-preview .card-art {
@@ -3701,6 +3779,14 @@ export default withAuth(function CardAdvisorLabPage() {
           font-size: 12px;
           font-weight: 950;
           text-decoration: none;
+        }
+
+        .deep-analysis-insufficient-cta {
+          width: 100%;
+        }
+
+        .deep-analysis-entry-cta .deep-analysis-error-credits {
+          margin-top: 0;
         }
 
         .skill-source-notice {
@@ -4838,7 +4924,11 @@ export default withAuth(function CardAdvisorLabPage() {
           }
 
           .cards-grid {
-            grid-template-columns: repeat(auto-fill, minmax(clamp(140px, 16vw, 180px), 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(128px, 156px));
+          }
+
+          .release-card {
+            max-width: 156px;
           }
         }
 
@@ -4986,7 +5076,21 @@ export default withAuth(function CardAdvisorLabPage() {
           }
 
           .cards-grid {
-            grid-template-columns: repeat(auto-fill, minmax(clamp(132px, 42vw, 168px), 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(118px, 142px));
+            gap: 12px;
+          }
+
+          .release-card {
+            max-width: 142px;
+            padding: 8px;
+          }
+
+          .card-art-brand-logo {
+            inset: 15% 8% 19%;
+          }
+
+          .card-art-brand-stamp {
+            width: clamp(34px, 12cqi, 58px);
           }
 
           .detail-grid {
@@ -5088,8 +5192,9 @@ export default withAuth(function CardAdvisorLabPage() {
           }
 
           .detail-card-preview {
-            width: min(215px, 70vw);
-            flex-basis: min(215px, 70vw);
+            width: min(168px, 46vw);
+            max-width: 168px;
+            flex-basis: min(168px, 46vw);
           }
 
           .detail-metrics {
@@ -5129,13 +5234,24 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         @media (max-width: 420px) {
-          .detail-metrics,
-          .roster-metrics {
-            grid-template-columns: 1fr;
+          .cards-grid {
+            grid-template-columns: repeat(2, minmax(108px, 128px));
           }
 
           .release-card {
             display: flex;
+            max-width: 128px;
+          }
+
+          .detail-card-preview {
+            width: min(152px, 42vw);
+            max-width: 152px;
+            flex-basis: min(152px, 42vw);
+          }
+
+          .detail-metrics,
+          .roster-metrics {
+            grid-template-columns: 1fr;
           }
         }
 
