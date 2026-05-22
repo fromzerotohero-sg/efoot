@@ -1183,9 +1183,13 @@ export async function POST(req) {
       if (!deduction.success) {
         console.warn(`[assistant-chat] Credit deduction failed for user ${userId}: ${deduction.error}`)
         return NextResponse.json(
-          { 
-            error: lang === 'en' ? 'Insufficient credits. Please recharge to continue.' : 'Crediti insufficienti. Ricarica per continuare.',
-            details: deduction.error 
+          {
+            error:
+              lang === 'en'
+                ? 'Hero Points balance empty. Top up to keep chatting with your Coach.'
+                : 'Hero Points esauriti. Ricarica per continuare a chattare con il Coach.',
+            code: 'insufficient_credits',
+            details: deduction.error
           },
           { status: 402, headers: { 'Content-Language': lang } }
         )

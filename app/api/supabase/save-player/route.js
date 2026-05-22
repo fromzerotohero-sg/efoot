@@ -9,6 +9,7 @@ import {
   isCatalogPlayerSave,
   resolvePlayingStyleNameFromPlayer
 } from '@/lib/playerSavePayload'
+import { syncFormationLayoutOnPlayerSave } from '@/lib/saveDefaultFormationWithPlayer'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -109,7 +110,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Too many requests. Please try again later.', resetAt: rateLimit.resetAt }, { status: 429 })
     }
 
-    const { player } = await req.json()
+    const { player, formation_layout: formationLayoutSnap } = await req.json()
 
     if (!player || !player.player_name) {
       return NextResponse.json({ error: 'Player data is required' }, { status: 400 })
@@ -410,6 +411,16 @@ export async function POST(req) {
           console.log(`[save-player] Player updated: id=${updated.id}`)
         }
 
+        try {
+          await syncFormationLayoutOnPlayerSave(admin, userId, {
+            slotIndex: playerData.slot_index,
+            formation: formationLayoutSnap?.formation,
+            slot_positions: formationLayoutSnap?.slot_positions
+          })
+        } catch (formationErr) {
+          console.error('[save-player] formation sync failed (non-blocking):', formationErr)
+        }
+
         // Aggiorna AI Knowledge Score (async, non blocca risposta)
         if (supabaseUrl && serviceKey) {
           import('@/lib/aiKnowledgeHelper').then(({ updateAIKnowledgeScore }) => {
@@ -524,6 +535,16 @@ export async function POST(req) {
 
     if (process.env.NODE_ENV !== 'production') {
       console.log(`[save-player] Player saved: id=${inserted.id}`)
+    }
+
+    try {
+      await syncFormationLayoutOnPlayerSave(admin, userId, {
+        slotIndex: playerData.slot_index,
+        formation: formationLayoutSnap?.formation,
+        slot_positions: formationLayoutSnap?.slot_positions
+      })
+    } catch (formationErr) {
+      console.error('[save-player] formation sync failed (non-blocking):', formationErr)
     }
 
     // Aggiorna AI Knowledge Score (async, non blocca risposta)

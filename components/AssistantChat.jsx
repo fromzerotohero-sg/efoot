@@ -7,6 +7,8 @@ import { supabase } from '@/lib/supabaseClient'
 import { Brain, X, Send, Sparkles, ChevronDown, ChevronUp, Mic, MicOff } from 'lucide-react'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 
+const CREDITS_RECHARGE_URL = 'https://home.fromzerotohero.io/dashboard?usage'
+
 export default function AssistantChat({
   mode = 'popup',
   apiEndpoint = '/api/assistant-chat',
@@ -406,6 +408,18 @@ export default function AssistantChat({
         } catch (_) {
           // Risposta non JSON (es. 502/503 da Vercel)
         }
+        if (res.status === 402 || errorBody?.code === 'insufficient_credits') {
+          setMessages(prev => [
+            ...prev,
+            {
+              role: 'assistant',
+              content: t('chatCreditsPaused'),
+              timestamp: new Date(),
+              showRechargeCta: true
+            }
+          ])
+          return
+        }
         const errMsg = errorBody?.error || (res.status === 503 ? (lang === 'en' ? 'Service temporarily unavailable. Try again.' : 'Servizio temporaneamente non disponibile. Riprova.') : 'Error generating response')
         throw new Error(errMsg)
       }
@@ -439,8 +453,20 @@ export default function AssistantChat({
     } catch (error) {
       if (error?.name === 'AbortError' || sendAbortRef.current?.signal.aborted) return
       console.error('[AssistantChat] Error:', error)
-      const { message: friendlyMsg } = mapErrorToUserMessage(error, t('tryAgainInMoment'), lang)
-      const errorMsg = `${t('errorChatGeneric')} ${friendlyMsg} 😔`
+      const mapped = mapErrorToUserMessage(error, t('tryAgainInMoment'), lang)
+      if (mapped.code === 'INSUFFICIENT_CREDITS') {
+        setMessages(prev => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: t('chatCreditsPaused'),
+            timestamp: new Date(),
+            showRechargeCta: true
+          }
+        ])
+        return
+      }
+      const errorMsg = `${t('errorChatGeneric')} ${mapped.message}`
       setMessages(prev => [...prev, { role: 'assistant', content: errorMsg }])
     } finally {
       setLoading(false)
@@ -1050,6 +1076,29 @@ export default function AssistantChat({
                 ? <span style={{ display: 'block', maxWidth: '100%' }} dangerouslySetInnerHTML={renderRichText(msg.content)} />
                 : msg.content
               }
+              {msg.role === 'assistant' && msg.showRechargeCta && (
+                <a
+                  href={CREDITS_RECHARGE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginTop: '12px',
+                    padding: '10px 14px',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, rgba(255, 203, 5, 0.95), rgba(255, 180, 0, 0.88))',
+                    color: '#1a1200',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    textDecoration: 'none',
+                    boxShadow: '0 0 16px rgba(255, 203, 5, 0.35)'
+                  }}
+                >
+                  {t('chatCreditsRechargeCta')}
+                </a>
+              )}
             </div>
           </div>
         ))}

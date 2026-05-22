@@ -1910,7 +1910,10 @@ function teamSynergyDetails({ card, sameRole, bestAlternative, roleGap, duplicat
 function evaluate({ card, catalogCard, players, formation, coach, tacticalSettings, profile, patterns, gameAnalysis, stylesLookup, lang }) {
   const sameRole = sameRolePlayers(card, players, stylesLookup)
   const hasRoster = players.length > 0
-  const hasFormation = Boolean(formation?.formation) && players.some(player => player.slot_index != null && player.slot_index >= 0 && player.slot_index <= 10)
+  const startersOnPitch = players.filter(
+    (player) => player.slot_index != null && player.slot_index >= 0 && player.slot_index <= 10
+  ).length
+  const hasFormation = startersOnPitch >= 11
   const hasCoach = Boolean(coach?.coach_name)
   const tacticalStyle = tacticalSettings?.team_playing_style || ''
   const technical = cardTechnicalSignals(card, catalogCard)

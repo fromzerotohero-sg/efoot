@@ -2199,6 +2199,21 @@ function normalizeLayoutPayload(layoutPayload, previousLayout = null) {
     slot_positions: completeSlotPositions(baseSlots)
   }
 }
+
+/** Stato formazione attuale in Rosa → sync DB insieme al salvataggio giocatore (anche rosa vuota). */
+function formationLayoutPayloadFromState(layout) {
+  if (!layout?.slot_positions || typeof layout.slot_positions !== 'object') {
+    return {
+      formation: DEFAULT_FORMATION_NAME,
+      slot_positions: completeSlotPositions(DEFAULT_SLOT_POSITIONS)
+    }
+  }
+  return {
+    formation: String(layout.formation || DEFAULT_FORMATION_NAME).trim(),
+    slot_positions: layout.slot_positions
+  }
+}
+
 const BOOSTER_PRESETS = [
   { value: 'Tiro', labels: { en: 'Shooting', it: 'Tiro' } },
   { value: 'Calci di punizione', labels: { en: 'Set pieces', it: 'Calci di punizione' } },
@@ -4717,7 +4732,8 @@ export default withAuth(function NuovaRosaLabPage() {
               slotIndex: slotIndexToSave,
               fieldPosition: positionModalCtx.slotPosition || photoUploadSlot?.position || null,
               photoSlots: positionModalCtx.photoSlots || extractedPlayerData.photo_slots
-            })
+            }),
+            formation_layout: formationLayoutPayloadFromState(layout)
           })
         })
         await safeJsonResponse(response, t('errorSavingPlayerGeneric'))
@@ -4736,7 +4752,7 @@ export default withAuth(function NuovaRosaLabPage() {
     }
 
     await savePlayer()
-  }, [extractedPlayerData, fetchRoster, lang, positionModalCtx, refreshDiagnosticAfterSave, resetPhotoPositionFlow, riserve, selectedOriginalPositions, showToast, t, titolari])
+  }, [extractedPlayerData, fetchRoster, lang, layout, positionModalCtx, refreshDiagnosticAfterSave, resetPhotoPositionFlow, riserve, selectedOriginalPositions, showToast, t, titolari])
 
   const showCatalogDuplicateAlert = React.useCallback((existingPlayer, card) => {
     if (!existingPlayer) return
@@ -4882,7 +4898,10 @@ export default withAuth(function NuovaRosaLabPage() {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ player: playerPayload })
+        body: JSON.stringify({
+          player: playerPayload,
+          formation_layout: formationLayoutPayloadFromState(layout)
+        })
       })
 
       const data = await safeJsonResponse(response, t('errorSavingPlayerGeneric'))
@@ -4901,7 +4920,7 @@ export default withAuth(function NuovaRosaLabPage() {
       const { message } = mapErrorToUserMessage(err, t('errorSavingPlayerGeneric'), lang)
       showToast(message, 'error')
     }
-  }, [lang, t, fetchRoster, closePicker, refreshDiagnosticAfterSave, showToast])
+  }, [lang, layout, t, fetchRoster, closePicker, refreshDiagnosticAfterSave, showToast])
 
   const handleSaveCatalogPlayerWithPositions = React.useCallback(async () => {
     if (!catalogPositionCtx?.card || selectedOriginalPositions.length === 0) return
@@ -4961,7 +4980,8 @@ export default withAuth(function NuovaRosaLabPage() {
           },
           body: JSON.stringify({
             slot_index: targetSlot.slot_index,
-            player_id: player.id
+            player_id: player.id,
+            formation_layout: formationLayoutPayloadFromState(layout)
           })
         })
 
@@ -5010,7 +5030,7 @@ export default withAuth(function NuovaRosaLabPage() {
       },
       onCancel: () => setConfirmModal(null)
     })
-  }, [closePicker, fetchRoster, lang, refreshDiagnosticAfterSave, selectedSlot, showToast, t])
+  }, [closePicker, fetchRoster, lang, layout, refreshDiagnosticAfterSave, selectedSlot, showToast, t])
 
   const handleRemoveFromSlot = React.useCallback(async (playerId) => {
     if (riserve.length >= MAX_RESERVES) {

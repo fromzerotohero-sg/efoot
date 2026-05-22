@@ -159,10 +159,10 @@ const copy = {
     rosterSynergy: 'Sinergia rosa',
     moduleFit: 'Fit modulo',
     systemSynergy: 'Lettura sinergie',
-    noFormationTitle: 'Completa la formazione',
-    noFormationText: 'Rosa sì, modulo no: servono titolari e riserve in formazione salvata.',
+    noFormationTitle: 'Completa i titolari',
+    noFormationText: 'Servono 11 giocatori in campo (slot titolari) per il confronto con la tua rosa.',
     noCoachText: 'Coach attivo = stile e competenze nel verdetto.',
-    saveFormationCta: 'Completa formazione',
+    saveFormationCta: 'Completa titolari in Rosa',
     addCoachCta: 'Aggiungi coach',
     openCard: 'Apri scheda',
     checkingRoster: 'Controllo rosa...',
@@ -328,10 +328,10 @@ const copy = {
     rosterSynergy: 'Roster synergy',
     moduleFit: 'Module fit',
     systemSynergy: 'Synergy read',
-    noFormationTitle: 'Complete formation',
-    noFormationText: 'Roster yes, formation no: need a saved XI + bench layout.',
+    noFormationTitle: 'Complete your XI',
+    noFormationText: 'Need 11 starters on the pitch (slots 0–10) for squad-fit analysis.',
     noCoachText: 'Active coach = style and competences in the verdict.',
-    saveFormationCta: 'Complete formation',
+    saveFormationCta: 'Complete starters in Squad',
     addCoachCta: 'Add coach',
     openCard: 'Open card',
     checkingRoster: 'Checking roster...',
@@ -796,11 +796,14 @@ function proxiedImageUrl(src) {
   return `/api/card-advisor-lab/image?src=${encodeURIComponent(src)}`
 }
 
+const REQUIRED_STARTERS_FOR_FIT = 11
+
 function buildRosterSummary(data) {
   const players = Array.isArray(data?.players) ? data.players : []
   const starters = players.filter(player => player?.slot_index != null && Number(player.slot_index) >= 0 && Number(player.slot_index) <= 10)
   const hasRoster = players.length > 0
-  const hasFormation = Boolean(data?.layout?.formation) && starters.length > 0
+  // XI completo in campo: non dipende dal salvataggio modulo in DB (evita CTA fuorviante)
+  const hasFormation = starters.length >= REQUIRED_STARTERS_FOR_FIT
   const hasActiveCoach = Boolean(data?.activeCoach || data?.hasActiveCoach)
   const hasTacticalSettings = Boolean(data?.tacticalSettings?.team_playing_style)
   const roleCounts = players.reduce((acc, player) => {
@@ -813,7 +816,7 @@ function buildRosterSummary(data) {
     depth: !hasRoster ? 'card_only' : !hasFormation ? 'roster_only' : hasActiveCoach ? 'system' : 'formation',
     totalPlayers: players.length,
     starters: starters.length,
-    formation: data?.layout?.formation || '-',
+    formation: data?.layout?.formation || (hasFormation ? '4-3-3' : '-'),
     players,
     startersList: starters,
     roleCounts,

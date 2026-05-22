@@ -5,6 +5,7 @@ import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { normalizePlayerSkillsArray } from '@/lib/playerSkillLabels'
 import { lookupPlayingStyleId, resolvePlayingStyleDbName } from '@/lib/playingStyleResolve'
 import { buildSlotRoleAugmentsForStarter } from '@/lib/playerSlotRoleMetadata'
+import { syncFormationLayoutOnPlayerSave } from '@/lib/saveDefaultFormationWithPlayer'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -67,7 +68,7 @@ export async function PATCH(req) {
       return NextResponse.json({ error: 'Too many requests. Please try again later.', resetAt: rateLimit.resetAt }, { status: 429 })
     }
 
-    let { slot_index, player_id, player_data } = await req.json()
+    let { slot_index, player_id, player_data, formation_layout: formationLayoutSnap } = await req.json()
 
     // Ensure slot_index is a number
     slot_index = Number(slot_index)
@@ -82,15 +83,19 @@ export async function PATCH(req) {
       )
     }
 
-    // NUOVO: Recupera formazione layout per calcolare slotPosition
+    // Formazione: preferisci snapshot client (stato Rosa), altrimenti DB
     const { data: formationLayout } = await admin
       .from('formation_layout')
       .select('slot_positions')
       .eq('user_id', userId)
       .maybeSingle()
 
-    // Calcola posizione richiesta dallo slot
-    const slotPosition = formationLayout?.slot_positions?.[slot_index]?.position || null
+    const slotPositionsForRole =
+      formationLayoutSnap?.slot_positions && typeof formationLayoutSnap.slot_positions === 'object'
+        ? formationLayoutSnap.slot_positions
+        : formationLayout?.slot_positions
+
+    const slotPosition = slotPositionsForRole?.[slot_index]?.position || null
 
     // Se slot già occupato, libera vecchio giocatore
     const { data: existingPlayerInSlot } = await admin
@@ -259,6 +264,16 @@ export async function PATCH(req) {
 
       if (process.env.NODE_ENV !== 'production') console.log(`[assign-player-to-slot] Assigned player ${player_id} to slot ${slot_index} for user ${userId}`)
 
+      try {
+        await syncFormationLayoutOnPlayerSave(admin, userId, {
+          slotIndex: slot_index,
+          formation: formationLayoutSnap?.formation,
+          slot_positions: formationLayoutSnap?.slot_positions
+        })
+      } catch (formationErr) {
+        console.error('[assign-player-to-slot] formation sync failed (non-blocking):', formationErr)
+      }
+
       // Aggiorna AI Knowledge Score (async, non blocca risposta)
       if (supabaseUrl && serviceKey) {
         import('@/lib/aiKnowledgeHelper').then(({ updateAIKnowledgeScore }) => {
@@ -339,6 +354,16 @@ export async function PATCH(req) {
           { error: `Failed to create player: ${insertError.message}` },
           { status: 500 }
         )
+      }
+
+      try {
+        await syncFormationLayoutOnPlayerSave(admin, userId, {
+          slotIndex: slot_index,
+          formation: formationLayoutSnap?.formation,
+          slot_positions: formationLayoutSnap?.slot_positions
+        })
+      } catch (formationErr) {
+        console.error('[assign-player-to-slot] formation sync failed (non-blocking):', formationErr)
       }
 
       // Aggiorna AI Knowledge Score (async, non blocca risposta)
