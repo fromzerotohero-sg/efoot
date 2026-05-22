@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { supabase, getValidAccessToken } from '@/lib/supabaseClient'
+import { resolveAuthToken, buildAuthHeaders } from '@/lib/profileUxHelpers'
 import {
   ArrowRight,
   BarChart3,
@@ -16,18 +16,60 @@ import {
 } from 'lucide-react'
 
 const STORAGE_KEY = 'hero_coach_journey_minimized_v1'
+const CREDIT_FETCH_DELAYS_MS = [0, 400, 1200, 2500]
 
 function getNumber(value, fallback = 0) {
   const n = Number(value)
   return Number.isFinite(n) ? n : fallback
 }
 
-async function getAuthToken() {
-  if (typeof window === 'undefined') return null
-  const localToken = window.localStorage.getItem('auth_token')
-  if (localToken) return localToken
-  if (!supabase) return null
-  return getValidAccessToken()
+function waitMs(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function fetchCreditContextOnce() {
+  const token = await resolveAuthToken()
+  if (!token) {
+    return { token: null, credits: null, transactions: [], txOk: false, usedTotal: 0 }
+  }
+
+  const headers = buildAuthHeaders(token, { json: true })
+  const [usageRes, txRes] = await Promise.all([
+    fetch('/api/credits/usage', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({}),
+      cache: 'no-store'
+    }),
+    fetch('/api/credits/transactions?limit=30', {
+      headers: buildAuthHeaders(token),
+      cache: 'no-store'
+    })
+  ])
+
+  let credits = null
+  let transactions = []
+  let txOk = false
+  let usedTotal = 0
+
+  if (usageRes.ok) {
+    credits = await usageRes.json().catch(() => null)
+  }
+  if (txRes.ok) {
+    txOk = true
+    const payload = await txRes.json().catch(() => null)
+    transactions = Array.isArray(payload?.transactions) ? payload.transactions : []
+    usedTotal = getNumber(payload?.summary?.used_total)
+  }
+
+  return { token, credits, transactions, txOk, usedTotal }
+}
+
+function shouldRetryCreditFetch(result) {
+  if (!result.token) return true
+  if (!result.txOk) return true
+  if (result.transactions.length === 0 && result.usedTotal > 0) return true
+  return false
 }
 
 function getTransactionFlags(transactions = []) {
@@ -240,49 +282,48 @@ export default function HeroCoachJourney({
     } catch {}
   }, [])
 
+  const loadCreditContext = React.useCallback(async (signal) => {
+    try {
+      for (let attempt = 0; attempt < CREDIT_FETCH_DELAYS_MS.length; attempt += 1) {
+        if (signal?.aborted) return
+        if (attempt > 0) await waitMs(CREDIT_FETCH_DELAYS_MS[attempt])
+        if (signal?.aborted) return
+
+        const result = await fetchCreditContextOnce()
+        if (signal?.aborted) return
+
+        if (result.credits) setCredits(result.credits)
+        if (result.txOk) setTransactions(result.transactions)
+
+        if (!shouldRetryCreditFetch(result)) return
+      }
+    } catch {
+      // La guida resta utile anche senza contesto crediti.
+    }
+  }, [])
+
   React.useEffect(() => {
     if (loading) return
-    let cancelled = false
+    const ac = new AbortController()
+    loadCreditContext(ac.signal)
+    return () => ac.abort()
+  }, [loading, loadCreditContext])
 
-    const fetchCreditContext = async () => {
-      try {
-        const token = await getAuthToken()
-        if (!token || cancelled) return
-
-        const [usageRes, txRes] = await Promise.all([
-          fetch('/api/credits/usage', {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({}),
-            cache: 'no-store'
-          }),
-          fetch('/api/credits/transactions?limit=30', {
-            headers: { Authorization: `Bearer ${token}` },
-            cache: 'no-store'
-          })
-        ])
-
-        if (!cancelled && usageRes.ok) {
-          const payload = await usageRes.json().catch(() => null)
-          setCredits(payload)
-        }
-        if (!cancelled && txRes.ok) {
-          const payload = await txRes.json().catch(() => null)
-          setTransactions(Array.isArray(payload?.transactions) ? payload.transactions : [])
-        }
-      } catch {
-        // La guida resta utile anche senza contesto crediti.
-      }
+  React.useEffect(() => {
+    if (loading) return
+    const ac = new AbortController()
+    const onCreditsConsumed = () => loadCreditContext(ac.signal)
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') loadCreditContext(ac.signal)
     }
-
-    fetchCreditContext()
+    window.addEventListener('credits-consumed', onCreditsConsumed)
+    document.addEventListener('visibilitychange', onVisibility)
     return () => {
-      cancelled = true
+      ac.abort()
+      window.removeEventListener('credits-consumed', onCreditsConsumed)
+      document.removeEventListener('visibilitychange', onVisibility)
     }
-  }, [loading])
+  }, [loading, loadCreditContext])
 
   const actions = React.useMemo(() => ({
     openRoster: onOpenRoster,
