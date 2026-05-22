@@ -11,18 +11,18 @@ import {
   Plus,
   Users,
   Calendar,
-  CreditCard
+  Sparkles
 } from 'lucide-react'
 
 const CARDS_ACCENT = {
   idleColor: '#d4b84a',
   activeColor: '#ffe566',
-  idleBg: 'linear-gradient(135deg, rgba(255, 203, 5, 0.12), rgba(168, 85, 247, 0.08))',
-  activeBg: 'linear-gradient(135deg, rgba(255, 203, 5, 0.26), rgba(168, 85, 247, 0.18))',
-  idleBorder: 'rgba(255, 203, 5, 0.22)',
-  activeBorder: 'rgba(255, 203, 5, 0.42)',
-  idleGlow: '0 0 12px rgba(255, 203, 5, 0.14)',
-  activeGlow: '0 0 20px rgba(255, 203, 5, 0.28), 0 0 28px rgba(168, 85, 247, 0.16)'
+  idleBg: 'linear-gradient(135deg, rgba(255, 203, 5, 0.14), rgba(255, 180, 0, 0.08))',
+  activeBg: 'linear-gradient(135deg, rgba(255, 203, 5, 0.28), rgba(255, 180, 0, 0.16))',
+  idleBorder: 'rgba(255, 203, 5, 0.28)',
+  activeBorder: 'rgba(255, 215, 0, 0.5)',
+  idleGlow: '0 0 12px rgba(255, 203, 5, 0.2)',
+  activeGlow: '0 0 20px rgba(255, 203, 5, 0.35), 0 0 32px rgba(255, 180, 0, 0.2)'
 }
 
 export default function BottomNavigation() {
@@ -56,7 +56,7 @@ export default function BottomNavigation() {
     },
     {
       href: '/card-advisor-lab',
-      icon: CreditCard,
+      icon: Sparkles,
       label: lang === 'en' ? 'Cards' : 'Carte',
       accent: 'cards'
     },
@@ -149,7 +149,7 @@ export default function BottomNavigation() {
               <Icon
                 size={22}
                 strokeWidth={active || isCardsAccent ? 2.5 : 2}
-                style={isCardsAccent ? { filter: 'drop-shadow(0 0 6px rgba(255, 203, 5, 0.45))' } : undefined}
+                style={isCardsAccent ? { filter: 'drop-shadow(0 0 8px rgba(255, 203, 5, 0.55))' } : undefined}
               />
               <span style={{
                 fontSize: '11px',
