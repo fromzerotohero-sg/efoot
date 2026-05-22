@@ -5633,6 +5633,29 @@ export default withAuth(function NuovaRosaLabPage() {
     }
   }, [customPositions, fetchRoster, lang, layout, refreshDiagnosticAfterSave, showToast, t, titolari])
 
+  const showFormationHelp = React.useCallback(() => {
+    setConfirmModal({
+      ...showConfirmConfig({
+        title: lang === 'en' ? 'Customize your formation' : 'Personalizzazione modulo 100%',
+        message: lang === 'en'
+          ? 'Move your players on the pitch and save the positions exactly how you like to play.'
+          : 'Sposta i tuoi giocatori sul campo e salva le posizioni come meglio ti piace.',
+        details: lang === 'en'
+          ? 'Tap "Move positions", drag the players into your preferred shape, then press "Save positions". You can personalize the shape without rebuilding your squad.'
+          : 'Clicca "Muovi posizioni", trascina i giocatori nella disposizione che vuoi usare e poi premi "Salva posizioni". Puoi personalizzare la forma senza rifare la rosa.',
+        confirmLabel: lang === 'en' ? 'Move positions' : 'Muovi posizioni',
+        cancelLabel: t('cancel'),
+        variant: 'info',
+        confirmVariant: 'primary'
+      }),
+      onConfirm: () => {
+        setConfirmModal(null)
+        setFieldEditMode(true)
+      },
+      onCancel: () => setConfirmModal(null)
+    })
+  }, [lang, t])
+
   return (
     <main className="nr-page">
       <section className="nr-hero-card">
@@ -5717,10 +5740,10 @@ export default withAuth(function NuovaRosaLabPage() {
                 </button>
               </div>
               <div className="nr-build-coach-secondary-grid">
-                <div className="nr-formation-inline-tile">
+                <button type="button" className="nr-formation-inline-tile" onClick={showFormationHelp}>
                   <span>{lang === 'en' ? 'Formation' : 'Modulo'}</span>
                   <strong>{layout?.formation || '4-3-3'}</strong>
-                </div>
+                </button>
                 <button type="button" className="nr-move-players-wide-button" onClick={() => setFieldEditMode(true)} disabled={fieldEditMode}>
                   <ArrowRight size={14} />
                   <span>{lang === 'en' ? 'Move positions' : 'Muovi posizioni'}</span>
@@ -6516,7 +6539,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-formation-inline-tile {
-          cursor: default;
+          cursor: pointer;
           min-height: 46px;
           justify-content: center;
           text-align: center;
@@ -6526,6 +6549,12 @@ export default withAuth(function NuovaRosaLabPage() {
           background:
             radial-gradient(circle at 0% 0%, rgba(0, 212, 255, 0.12), transparent 40%),
             rgba(15, 23, 42, 0.7);
+        }
+
+        .nr-formation-inline-tile:hover:not(:disabled) {
+          transform: translateY(-1px);
+          border-color: rgba(34, 211, 238, 0.42);
+          box-shadow: 0 12px 26px rgba(0, 212, 255, 0.12);
         }
 
         .nr-formation-inline-tile span {
