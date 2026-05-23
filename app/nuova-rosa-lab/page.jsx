@@ -5763,6 +5763,7 @@ export default withAuth(function NuovaRosaLabPage() {
                 <button type="button" className="nr-formation-inline-tile" onClick={showFormationHelp}>
                   <span>{lang === 'en' ? 'Formation' : 'Modulo'}</span>
                   <strong>{layout?.formation || '4-3-3'}</strong>
+                  <em className="nr-formation-inline-style">{activeTeamPlaystyleLabel}</em>
                 </button>
                 <button type="button" className="nr-move-players-wide-button" onClick={() => setFieldEditMode(true)} disabled={fieldEditMode}>
                   <ArrowRight size={14} />
@@ -5783,16 +5784,6 @@ export default withAuth(function NuovaRosaLabPage() {
               </div>
             )}
             <div className="nr-field-shell">
-              <div className="nr-field-formation-badge">
-                <div>
-                  <span>{lang === 'en' ? 'Formation' : 'Formazione'}</span>
-                  <strong>{layout?.formation || '4-3-3'}</strong>
-                </div>
-                <div>
-                  <span>{lang === 'en' ? 'Style' : 'Stile'}</span>
-                  <strong>{activeTeamPlaystyleLabel}</strong>
-                </div>
-              </div>
               <div className={`nr-field ${fieldEditMode ? 'is-editing' : ''}`} data-field-container>
                 <div className="nr-field-texture" />
                 <div className="nr-field-dark-vignette" />
@@ -6560,11 +6551,11 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-formation-inline-tile {
           cursor: pointer;
-          min-height: 46px;
+          min-height: 58px;
           justify-content: center;
           text-align: center;
           flex-direction: column;
-          gap: 2px;
+          gap: 1px;
           padding: 8px 10px;
           background:
             radial-gradient(circle at 0% 0%, rgba(0, 212, 255, 0.12), transparent 40%),
@@ -6590,6 +6581,18 @@ export default withAuth(function NuovaRosaLabPage() {
           font-size: 20px;
           line-height: 1;
           letter-spacing: -0.04em;
+        }
+
+        .nr-formation-inline-style {
+          font-style: normal;
+          font-size: 11px;
+          font-weight: 700;
+          line-height: 1.25;
+          color: rgba(255, 255, 255, 0.76);
+          max-width: 100%;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .nr-move-players-wide-button {
@@ -6710,42 +6713,6 @@ export default withAuth(function NuovaRosaLabPage() {
           aspect-ratio: 2 / 3;
           margin: 0 auto 18px;
           box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
-        }
-
-        .nr-field-formation-badge {
-          position: absolute;
-          top: 10px;
-          left: 10px;
-          z-index: 4;
-          display: inline-flex;
-          align-items: stretch;
-          gap: 10px;
-          padding: 6px 9px;
-          border-radius: 14px;
-          border: 1px solid rgba(0, 212, 255, 0.2);
-          background: rgba(3, 7, 18, 0.54);
-          color: rgba(255, 255, 255, 0.8);
-          backdrop-filter: blur(7px);
-          pointer-events: none;
-        }
-
-        .nr-field-formation-badge > div {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-
-        .nr-field-formation-badge span {
-          font-size: 9px;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-          color: rgba(0, 212, 255, 0.75);
-        }
-
-        .nr-field-formation-badge strong {
-          font-size: 13px;
-          color: #fff;
-          white-space: nowrap;
         }
 
         .nr-field {
