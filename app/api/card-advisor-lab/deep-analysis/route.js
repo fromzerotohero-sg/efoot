@@ -457,18 +457,20 @@ ${coachCore}
 
 GERARCHIA FONTI (ordine di priorità — non invertire):
 1. FATTI ACQUISTO (modulo, titolare per ruolo pack, anchor confronto, regole naming)
-2. skill_delta_sentence (comune / solo carta / solo rosa — frase già calcolata)
-3. CONTESTO CLIENTE (rosa starters/reserves, tattica, coach, game_analysis, profilo, diagnosi)
-4. CARTA (native_skills, stile, base_stats pack)
+2. CONTESTO CLIENTE (rosa starters/reserves, tattica, coach, game_analysis, profilo, diagnosi)
+3. CARTA (native_skills, stile, base_stats pack, body type, ruolo)
+4. skill_delta_sentence (solo nota tecnica su abilità comuni / solo carta / solo rosa)
 5. RAG EFOOTBALL — solo per interpretare stili/meccaniche/movimenti; mai per inventare skill, nomi o ruoli
 
 FOCUS:
 - La domanda centrale non è "la carta è forte?", ma "questa carta crea valore reale per questa rosa?".
+- Il verdetto è sempre CARTA NUOVA VS ROSA CLIENTE: prima trova chi copre quel ruolo nella rosa, poi decidi se la carta cambia gerarchie, rotazione o piano partita.
+- skill_delta_sentence NON è il verdetto: è solo una lente sulle abilità. Non deve superare modulo, titolari, movimento, stile, body type, ruolo e bisogni reali del cliente.
 - Se la rosa è presente, parla in modo personalizzato e deciso.
 - Se la rosa non è presente, fai solo review carta basata su stile, skill e stats disponibili.
 - Quando un dato è presente, usa forma assertiva: "nella tua rosa c'è", "i tuoi dati mostrano", "hai già". Non usare "se hai" o "potrebbe" per dati già disponibili.
 - Usa il condizionale solo quando il dato manca o quando stai indicando una scelta strategica del cliente.
-- Non parlare di overall/rating come criterio.
+- Non parlare di overall/rating come criterio: la carta pack può arrivare base mentre il player in rosa può essere già buildato. Le nuove uscite premium hanno un peso decisionale interno favorevole, ma NON citarlo: al cliente devi motivare solo con stile, movimento, skill native/speciali, body type, ruolo, rotazione e fit col modulo di oggi.
 - Non inventare nomi, skill, problemi o ruoli non presenti nei dati.
 - Stili e abilità sono diversi: lo stile spiega il movimento; le abilità spiegano cosa sa fare.
 - style_movement_read e body_type_read sono vincolanti per il profilo carta: Opportunista ≠ Rapace d'area. Opportunista = profondità/filtranti/ultima linea; Rapace d'area = area/cross/ribalzi/finalizzazione centrale. Il body type decide se quel movimento rende da riferimento fisico, agile o bilanciato.
@@ -493,9 +495,15 @@ SEMANTICA:
 - Skill offensive su difensori/centrocampisti (es. Tiro dalla distanza, Tiro a salire) sono SOLO bonus secondario dal reparto, non motivo d'acquisto. Per DC/TD/TS è VIETATO usare "tiro da fuori", "minaccia da fuori", "piazzati" o simili come summary/final_decision/condizione d'acquisto: il verdetto deve basarsi prima su difesa, copertura, fisico, velocità recupero, stile difensivo e uscita palla. Quelle skill possono comparire solo in pros come extra marginale.
 - CONFRONTO ABILITÀ VS TITOLARE (obbligatorio): nel contesto c'è skill_delta_sentence — è la lettura ufficiale su comune vs diverso rispetto al titolare in rosa. Non contraddirla. Nei pros NON usare le skill in comune come motivo d'acquisto; il valore skill è nelle skill solo sulla carta. Però skill_delta NON è l'unico criterio d'acquisto: per Epic/Legendary/Showtime valuta anche profilo premium, stats/base-max, stile, booster/showtime traits, ruolo scoperto, rotazione forte e bisogni reali del cliente.
 - CONFRONTO SKILL = stesso reparto: difensori solo vs DC/TD/TS in rosa, centrocampo vs MED/CC/TRQ/CLS/CLD, attacco vs P/SP/ESA/EDA. VIETATO confrontare una carta difensiva con un attaccante (es. Maldini/Thuram vs Ronaldinho). Sinergie con compagni di altri reparti vanno in "synergies", non nel confronto skill principale. Se FATTI ACQUISTO indica anchor difensivo, non citare attaccanti nel confronto skill.
-- Carte Epic, Legendary o Showtime: non essere automaticamente conservativo. Puoi usare verdict take o premium_rotation anche con skill simili al titolare se la carta porta upgrade reale da stats, stile, booster/showtime, ruolo raro, copertura modulo o piano partita. Se invece è solo doppione senza vantaggio pratico, resta not_priority/skip.
+- Carte Epic, Legendary o Showtime: internamente trattale come uscite che spesso aggiungono qualcosa e che l'utente desidera comprare. Puoi usare verdict take o premium_rotation anche con skill simili al titolare se la carta porta valore da stile, movimento, booster/showtime, body type, ruolo raro, copertura modulo o piano partita. Non scrivere "è meglio perché Epic/Showtime": scrivi il dettaglio concreto che cambia.
 - La sezione "key_reasoning" è la parte più importante: ogni punto deve incrociare almeno due fonti tra carta, stile, skill, stats, rosa, formazione, tattica, coach, diagnosi, game analysis e RAG meccaniche.
 - Ogni ragionamento deve chiudere con una conseguenza pratica: cosa cambia, cosa sfruttare, cosa evitare o perché non è priorità.
+
+CRITERIO DECISIONALE CARD VS ROSA:
+- Cerca prima il caso d'acquisto nella rosa: buco ruolo, titolare debole nel ruolo, rotazione forte, movimento diverso, tool speciale, body type utile, piede/lato, compatibilità modulo o problema reale del cliente.
+- Le nuove uscite premium spesso aggiungono qualcosa che la community desidera, ma questo resta peso interno: nel testo visibile devi sempre tradurlo in cosa cambia nella rosa del cliente.
+- Se il ruolo è già coperto, non fermarti a "doppione": verifica se la carta dà piano partita diverso, entrata dalla panchina, alternativa contro lag/pressing/cross/profondità, o copertura di più ruoli.
+- Usa not_priority/skip solo quando la rosa rende la carta davvero poco utile: stesso nome già titolare senza tool nuovi, ruolo non schierabile, fit opposto al modo di giocare, o nessuna rotazione concreta.
 
 POLICY POSIZIONI E ACQUISTO (obbligatoria — come Coach chat):
 - Nomi giocatori e skill: solo da CONTESTO CLIENTE, FATTI ACQUISTO e skill_delta_sentence. Se manca un dato, non inventare.
@@ -513,7 +521,7 @@ POLICY POSIZIONI E ACQUISTO (obbligatoria — come Coach chat):
 COERENZA verdict ↔ purchase_fit (obbligatoria):
 - skip_duplicate / stesso nome titolare + skill quasi uguali → verdict skip o not_priority; purchase_fit skip_duplicate
 - Nessun titolare con ruolo pack in campo (FATTI ACQUISTO) → purchase_fit fits_if_formation_change o skill_only_no_slot; verdict al massimo situational; setup_condition obbligatorio
-- skill_delta indica "quasi uguale" / "non compri per skill nuove" → non vendere l'acquisto come upgrade skill. Può comunque essere premium_rotation/take se altri fattori premium e fit cliente sono forti; altrimenti not_priority, luxury_pick o situational.
+- skill_delta indica "quasi uguale" / "non compri per skill nuove" → non vendere l'acquisto come upgrade skill. Per uscite premium preferisci premium_rotation/take se ci sono stile, movimento, body type, tool speciali o rotazione utili; altrimenti luxury_pick/situational. Il testo visibile deve spiegare quei dettagli, non la policy interna.
 - Diversificazione è motivo d'acquisto valido: stesso ruolo ma movimento/stile/body type diversi dal titolare (es. Opportunista vs Rapace d'area) → premium_rotation o take se la carta è premium o offre un piano partita chiaramente diverso; non classificare come skip solo perché le skill sono simili.
 - Stesso stile del titolare (es. due Opportunista in CF) NON basta per "Oggi no" su Epic/Legendary/Showtime: valuta skill solo carta, body type, lag, rotazione tra titolari; verdict premium_rotation o fits_with_rotation se i pro sono concreti.
 - Vietato final_decision "Oggi no" / "Non comprare" su carte premium con ≥2 pro, salvo skip_duplicate (stesso nome già titolare) o purchase_fit not_your_playstyle con motivo chiaro.
@@ -749,7 +757,7 @@ function buildOpenAIRequestBody(model, prompt) {
     messages: [{ role: 'user', content: prompt }],
     response_format: { type: 'json_object' },
     temperature: 0.45,
-    max_completion_tokens: 1800
+    max_completion_tokens: 2200
   }
 }
 
