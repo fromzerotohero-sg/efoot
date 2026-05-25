@@ -1149,9 +1149,11 @@ function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, dupl
   }
   if (duplicate || starterBlocked) {
     return {
-      level: 'avoid',
-      label: lang === 'en' ? 'Low team fit' : 'Fit squadra basso',
-      title: lang === 'en' ? 'Strong card, not central for your roster now' : 'Carta forte, ma non centrale nella tua rosa'
+      level: 'watch',
+      label: lang === 'en' ? 'Rotation option' : 'Opzione rotazione',
+      title: lang === 'en'
+        ? 'Covered role: judge it by rotation and match plan'
+        : 'Ruolo coperto: valutala per rotazione e piano partita'
     }
   }
   if (roleGap || score >= 74) {
@@ -1381,8 +1383,8 @@ function buildRosterRead({ card, sameRole, bestAlternative, roleGap, duplicate, 
         ? `${card.name} overlaps ${alternatives || bestName || 'your current options'} in ${card.position} with a similar profile (${movement}).`
         : `${card.name} si sovrappone a ${alternatives || bestName || 'le opzioni attuali'} in ${card.position} con profilo simile (${movement}).`,
       lang === 'en'
-        ? `${secondLine} Buy mainly if you want that specific profile; otherwise coins are better on an uncovered role.`
-        : `${secondLine} Compra soprattutto se vuoi proprio quel profilo; altrimenti i coins valgono di più su un ruolo scoperto.`
+        ? `${secondLine} Treat the covered role as rotation context: buy if this profile gives you a useful match-plan option.`
+        : `${secondLine} Tratta il ruolo coperto come contesto rotazione: compra se questo profilo ti dà un piano partita utile.`
     ]
   }
 
@@ -1882,8 +1884,8 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   if (roleGap) score += 20
   if (upgradeEdge) score += 14
   if (technical.premiumCard && technical.hasCompleteCardData) score += 12
-  if (duplicate) score -= diversificationValue ? 2 : 6
-  if (starterBlocked) score -= diversificationValue ? 1 : 4
+  if (duplicate && diversificationValue) score += 2
+  if (starterBlocked && diversificationValue) score += 2
   if (diversification.differentMovement) score += 8
   if (diversification.differentBody) score += 3
   if (rotationPoolValue) score += 6
@@ -1907,7 +1909,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   if (profileRead.networkRisk && roleFamily(card.position) === 'att') score -= 3
   if (gameRead.passAccuracy != null && gameRead.passAccuracy < 78 && roleFamily(card.position) === 'mid') score += 5
   if (gameRead.shotsConceded != null && gameRead.shotsConceded >= 7 && roleFamily(card.position) === 'def') score += 6
-  if (rosterCrowded && !upgradeEdge && !roleGap) score -= 4
+  if (rosterCrowded && (diversificationValue || rotationPoolValue)) score += 3
   score = clamp(score, 28, 95)
 
   const decision = purchaseDecision({
@@ -2000,7 +2002,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
           : decision.level === 'watch' && diversificationValue
             ? `${card.name} makes sense as rotation/diversification in ${card.position}: same role, different tactical profile.`
             : decision.level === 'avoid'
-              ? `${card.name} is too similar to what you already have: save coins for an uncovered role or a clearer upgrade.`
+              ? `${card.name} is similar to what you already have: buy only if you want this exact rotation or match-plan profile.`
               : `Keep ${card.name} on your shortlist for rotation or match-plan use in ${card.position}.`
     : !hasRoster
       ? 'Carica la rosa per trasformare questa lettura carta in un verdetto personale compra/evita.'
@@ -2015,7 +2017,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
           : decision.level === 'watch' && diversificationValue
             ? `${card.name} ha senso come rotazione/diversificazione in ${card.position}: stesso ruolo, profilo tattico diverso.`
             : decision.level === 'avoid'
-              ? `${card.name} è troppo simile a ciò che hai già: coins meglio su ruolo scoperto o upgrade più netto.`
+              ? `${card.name} è simile a ciò che hai già: compra solo se vuoi proprio questa rotazione o questo piano partita.`
               : `Tieni ${card.name} in lista se ${card.position} ti serve per rotazione o piano partita.`
 
   const legacyTechnicalRisk = lang === 'en'
@@ -2026,7 +2028,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
       : starterBlocked
         ? diversificationValue
           ? 'Starter lane is covered, but this card changes how you play the role — rotation value.'
-          : 'Starter lane is already occupied at similar level: use this card only with a clear role swap plan.'
+          : 'Starter lane is already occupied by a similar profile: value depends on rotation, match plan and specific card tools.'
         : 'Role usage is clear: keep this card in its native lane to preserve tactical value.'
     : duplicate
       ? diversificationValue
@@ -2035,7 +2037,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
       : starterBlocked
         ? diversificationValue
           ? 'Corsia titolare coperta, ma la carta cambia come giochi il ruolo — valore da rotazione.'
-        : 'Corsia titolare gia occupata da un profilo simile: usa questa carta solo con un piano chiaro di cambio gerarchie.'
+          : 'Corsia titolare gia occupata da un profilo simile: il valore dipende da rotazione, piano partita e tool specifici della carta.'
         : 'Uso ruolo chiaro: mantieni la carta nella corsia naturale per preservare valore tattico.'
 
   const nextCta = !hasRoster
