@@ -509,6 +509,7 @@ TONO PREMIUM:
 - Il cliente paga per un verdetto Pro: non essere tiepido quando la carta ha valore reale. Scrivi come un coach che sa perché una nuova premium fa gola alla community, ma giustifica tutto con effetti in campo.
 - Se il verdetto non è "take", deve comunque sembrare utile e desiderabile quando ci sono tool concreti: "premium_rotation", "piano partita", "arma dalla panchina", "alternativa d'élite".
 - I contro servono a spiegare COME usarla, non a spegnere l'acquisto, salvo casi davvero incompatibili.
+- Portieri premium: non dire "non è necessaria" solo perché c'è già Donnarumma o un altro PT forte. Un nuovo PT premium si valuta per affidabilità, reach/body, parate ravvicinate, controllo rimbalzi, distribuzione, forma e copertura da rotazione. Se non è take, il default è premium_rotation, non not_priority/situational.
 
 POLICY POSIZIONI E ACQUISTO (obbligatoria — come Coach chat):
 - Nomi giocatori e skill: solo da CONTESTO CLIENTE, FATTI ACQUISTO e skill_delta_sentence. Se manca un dato, non inventare.
@@ -594,6 +595,15 @@ Restituisci SOLO JSON valido con questa struttura:
 function calibratePremiumVerdict(analysis, { card, catalogCard, anchorType, lang }) {
   if (!analysis || !isPremiumCatalogCard(card, catalogCard)) return analysis
 
+  const actionableContent = [
+    analysis.card_identity?.movement,
+    analysis.card_identity?.best_use,
+    ...(analysis.card_identity?.key_skills || []),
+    ...(analysis.pros || []),
+    ...(analysis.synergies || []),
+    ...(analysis.how_to_use || []),
+    ...(analysis.key_reasoning || []).map((row) => `${row.label} ${row.text}`)
+  ].filter(Boolean)
   const textBlob = [
     analysis.final_decision,
     analysis.summary,
@@ -602,16 +612,20 @@ function calibratePremiumVerdict(analysis, { card, catalogCard, anchorType, lang
     ...(analysis.cons || [])
   ].join(' ')
 
+  const isGoalkeeper = roleFamily(card?.position) === 'gk'
   const harshVerdict = analysis.verdict === 'skip' || analysis.verdict === 'not_priority'
   const coldVerdict = analysis.verdict === 'situational' || analysis.verdict === 'luxury_pick'
-  const saysNoBuy = /(oggi no|non compr|non ha senso compr|evita l.acquisto|do not buy|not today|skip purchase|non spendere)/i.test(textBlob)
+  const saysNoBuy = /(oggi no|non compr|non ha senso compr|evita l.acquisto|do not buy|not today|skip purchase|non spendere|non e necessari|non è necessari|non necessari|non serve|non ti serve|superfluo|not necessary|unnecessary|not needed|not required|superfluous)/i.test(textBlob)
   const saysFunctionalDup = /(doppione funzionale|functional duplicate|non offre.*rotazione|doesn.t offer.*rotation|non cambia.*variet)/i.test(textBlob)
   const hasPros = (analysis.pros || []).length >= 2
   const hasSynergy = (analysis.synergies || []).length >= 1
+  const hasActionableContent = actionableContent.length >= 1
   const blockedFit = analysis.purchase_fit === 'insufficient_data' ||
-    analysis.purchase_fit === 'not_your_playstyle' ||
-    (anchorType === 'same_name' && analysis.purchase_fit === 'skip_duplicate')
-  const hasConcretePremiumCase = !blockedFit && (hasPros || hasSynergy)
+    analysis.purchase_fit === 'not_your_playstyle'
+  const strictDuplicateBlock = anchorType === 'same_name' &&
+    analysis.purchase_fit === 'skip_duplicate' &&
+    !hasActionableContent
+  const hasConcretePremiumCase = !blockedFit && !strictDuplicateBlock && (hasPros || hasSynergy || hasActionableContent || isGoalkeeper)
 
   if (!harshVerdict && !coldVerdict && !saysNoBuy && !saysFunctionalDup) return analysis
   if (!hasConcretePremiumCase) return analysis
@@ -627,8 +641,12 @@ function calibratePremiumVerdict(analysis, { card, catalogCard, anchorType, lang
   }
   if (saysNoBuy || coldVerdict) {
     patched.final_decision = lang === 'en'
-      ? 'Worth buying for elite rotation and match plans — not to replace your starter every week.'
-      : 'Ha senso comprarla per rotazione d\'élite e piano partita — non per sostituire il titolare ogni settimana.'
+      ? isGoalkeeper
+        ? `${card.name} is worth it as a premium goalkeeper rotation: judge it by reliability, reach, close saves and rebound control.`
+        : 'Worth buying for elite rotation and match plans — not to replace your starter every week.'
+      : isGoalkeeper
+        ? `${card.name} ha senso come rotazione premium in porta: valutalo per affidabilità, reach, parate ravvicinate e controllo rimbalzi.`
+        : 'Ha senso comprarla per rotazione d\'élite e piano partita — non per sostituire il titolare ogni settimana.'
   }
   if (saysFunctionalDup) {
     patched.key_reasoning = (patched.key_reasoning || []).map((item) => {
