@@ -210,6 +210,32 @@ function hasAttackCreationTools(analysis, card) {
   return /(1v1|uno contro uno|dribbl|double touch|doppio tocco|momentum|blitz|curler|tiro a giro|outside|esterno|through|filtrant|pinpoint|cross calibrato|cross|wide|fascia|ampiezza|profond|separaz|cambio ritmo|piede|left|right|sinistro|destro|final third|ultimo terzo)/i.test(text)
 }
 
+function hasStarterLevelAttackEdge(analysis, card) {
+  if (roleFamily(card?.position) !== 'att') return false
+  const text = [
+    analysis?.summary,
+    analysis?.final_decision,
+    analysis?.card_identity?.movement,
+    analysis?.card_identity?.best_use,
+    ...(analysis?.card_identity?.key_skills || []),
+    ...(analysis?.pros || []),
+    ...(analysis?.how_to_use || []),
+    ...(analysis?.key_reasoning || []).map((row) => `${row.label} ${row.text}`)
+  ].join(' ')
+  const signals = [
+    /(1v1|uno contro uno|dribbl|double touch|doppio tocco|momentum dribbling)/i,
+    /(blitz|curler|tiro a giro|outside curler|esterno)/i,
+    /(cambio ritmo|tempo change|separaz|acceler|profond|final third|ultimo terzo)/i,
+    /(piede|left|right|sinistro|destro|lato)/i,
+    /(sostituisce|parte sopra|starter|plan a|piano a|entra al posto)/i
+  ]
+  return signals.filter((pattern) => pattern.test(text)).length >= 2
+}
+
+function stripAnchorRole(label = '') {
+  return String(label || '').replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
 function sanitizeList(items = [], maxItems = 8, maxLen = 60) {
   return (Array.isArray(items) ? items : [])
     .map(item => sanitize(item, maxLen))
@@ -472,14 +498,16 @@ ${coachCore}
 GERARCHIA FONTI (ordine di priorità — non invertire):
 1. FATTI ACQUISTO (modulo, titolare per ruolo pack, anchor confronto, regole naming)
 2. CONTESTO CLIENTE (rosa starters/reserves, tattica, coach, game_analysis, profilo, diagnosi)
-3. CARTA (native_skills, stile, base_stats pack, body type, ruolo)
+3. CARTA + RAG EFOOTBALL (stile, movimento, skill native, meccaniche, body type, ruolo)
 4. skill_delta_sentence (solo nota tecnica su abilità comuni / solo carta / solo rosa)
-5. RAG EFOOTBALL — solo per interpretare stili/meccaniche/movimenti; mai per inventare skill, nomi o ruoli
+5. Vincoli safety: non inventare nomi/skill/ruoli, non usare overall come criterio
 
 FOCUS:
 - La domanda centrale non è "la carta è forte?", ma "questa carta crea valore reale per questa rosa?".
 - Il verdetto è sempre CARTA NUOVA VS ROSA CLIENTE: prima trova chi copre quel ruolo nella rosa, poi decidi se la carta cambia gerarchie, rotazione o piano partita.
 - Il giocatore rosa usato come anchor (es. Pulisic, Donnarumma, titolare di fascia) NON è un blocco: è il riferimento per spiegare cosa la carta nuova aggiunge, quando ruotarla e quale piano partita apre.
+- Prima decidi GERARCHIA ROSA: "sostituisce/parte titolare", "rotazione premium", "solo cambio modulo" o "skip". Solo dopo usa abilità/stats come prove. Non costruire il report come lista abilità.
+- Ragiona come la chat coach: la decisione nasce da modulo + rosa + RAG meccaniche. Le skill sono evidenze, non la struttura del verdetto.
 - skill_delta_sentence NON è il verdetto: è solo una lente sulle abilità. Non deve superare modulo, titolari, movimento, stile, body type, ruolo e bisogni reali del cliente.
 - Se la rosa è presente, parla in modo personalizzato e deciso.
 - Se la rosa non è presente, fai solo review carta basata su stile, skill e stats disponibili.
@@ -502,6 +530,7 @@ REGOLE SULLE STATISTICHE:
 
 SEMANTICA:
 - Usa termini da coach/community: movimento, skill nativa, combo, catena, rotazione premium, piano partita diverso, alternativa d'élite, riferimento in area, attacca spazio, dà ampiezza, tiene posizione. Su Epic/Legendary/Showtime evita "non prioritaria/luxury pick" se esiste un caso concreto di rotazione.
+- Per carte offensive forti usa linguaggio da decisione: "entra al posto di", "alzala titolare", "sostituisce nel piano A", "Pulisic diventa rotazione/alternativa". Non restare su "utile come rotazione" quando la carta ha tool da titolare.
 - Evita: "fit stile 56%", "bonus sistema", "sinergia principale", "stat edge", "overall", "rating", "buildalo", "potenzialo", "allenalo".
 - Se rispondi in italiano, traduci in italiano anche stili, skill e tag tecnici quando possibile: non lasciare frasi con termini inglesi se esiste già l’italiano nel glossario interno (stessi nomi delle liste native_skills / skills della rosa).
 - ATTENZIONE NOMI ABILITÀ: fonti diverse (EFHub/PESDB/browser tradotto/Football Lab) possono usare nomea IT/EN diversa o ambigua. Non costruire il verdetto su una singola label se l'effetto/ruolo non torna: usa ruolo, reparto, meccanica e caution. In caso dubbio, parla di "skill di passaggio/lancio" o "bonus tiro da fuori" solo come dettaglio, non come motivo acquisto.
@@ -512,6 +541,7 @@ SEMANTICA:
 - CONFRONTO SKILL = stesso reparto: difensori solo vs DC/TD/TS in rosa, centrocampo vs MED/CC/TRQ/CLS/CLD, attacco vs P/SP/ESA/EDA. VIETATO confrontare una carta difensiva con un attaccante (es. Maldini/Thuram vs Ronaldinho). Sinergie con compagni di altri reparti vanno in "synergies", non nel confronto skill principale. Se FATTI ACQUISTO indica anchor difensivo, non citare attaccanti nel confronto skill.
 - Carte Epic, Legendary o Showtime: internamente trattale come uscite desiderabili quando hanno valore concreto. Se trovi almeno 2 motivi tra stile, movimento, body type, skill solo carta, booster/showtime, piede/lato, multi-ruolo, rotazione o piano partita, il default è premium_rotation o take, non situational/luxury_pick. Non scrivere "è meglio perché Epic/Showtime": scrivi il dettaglio concreto che cambia.
 - La sezione "key_reasoning" è la parte più importante: ogni punto deve incrociare almeno due fonti tra carta, stile, skill, stats, rosa, formazione, tattica, coach, diagnosi, game analysis e RAG meccaniche.
+- Il primo punto di key_reasoning deve essere sempre sulla gerarchia rosa o sul piano partita: chi entra, chi scala in rotazione, quale slot cambia. Non iniziare con "skill delta" o lista abilità.
 - Ogni ragionamento deve chiudere con una conseguenza pratica: cosa cambia, cosa sfruttare, cosa evitare o perché non è priorità.
 
 CRITERIO DECISIONALE CARD VS ROSA:
@@ -519,6 +549,7 @@ CRITERIO DECISIONALE CARD VS ROSA:
 - Le nuove uscite premium spesso aggiungono qualcosa che la community desidera, ma questo resta peso interno: nel testo visibile devi sempre tradurlo in cosa cambia nella rosa del cliente.
 - Ruolo già coperto NON è penalità: è solo contesto. Parti dal presupposto che una carta nuova può avere valore come rotazione, piano partita diverso, entrata dalla panchina, alternativa contro lag/pressing/cross/profondità, o copertura di più ruoli.
 - Se l'anchor in rosa è forte (es. Pulisic): non chiudere con "non serve". Scrivi se la carta nuova aggiunge 1v1, cambio ritmo, piede/lato, skill speciali, ampiezza, taglio dentro, filtrante, cross o finalizzazione diversa. Il confronto deve produrre un uso pratico, non una bocciatura automatica.
+- Se la carta nuova offensiva dà più creazione/1v1/cambio ritmo dell'anchor largo, il verdetto corretto è take/fits_current_setup: "sostituisce [anchor] nel piano A"; [anchor] diventa rotazione o piano B.
 - Usa not_priority/skip solo quando la carta è davvero inutilizzabile per quella rosa: stesso nome già titolare senza tool nuovi, ruolo non schierabile, fit opposto al modo di giocare, o nessuna rotazione concreta. Vietato bocciare solo perché il ruolo è coperto.
 
 TONO PREMIUM:
@@ -547,7 +578,7 @@ COERENZA verdict ↔ purchase_fit (obbligatoria):
 - Diversificazione è motivo d'acquisto valido: stesso ruolo ma movimento/stile/body type diversi dal titolare (es. Opportunista vs Rapace d'area) → premium_rotation o take se la carta è premium o offre un piano partita chiaramente diverso; non classificare come skip/not_priority solo perché ruolo o skill sono già coperti.
 - Stesso stile del titolare (es. due Opportunista in CF) NON basta per "Oggi no" su Epic/Legendary/Showtime: valuta skill solo carta, body type, lag, rotazione tra titolari; verdict premium_rotation o fits_with_rotation se i pro sono concreti.
 - Vietato final_decision "Oggi no" / "Non comprare" su carte premium/offensive con tool concreti, salvo stesso nome senza tool nuovi o fit davvero opposto. Se lo stile non è quello attuale del cliente, trasformalo in condizione d'uso/rotazione.
-- Carte offensive nuove con tool di creazione (1v1, dribbling, skill speciali, piede/lato, filtranti/cross/finalizzazione) → il confronto con il titolare deve finire in take/premium_rotation/fits_with_rotation quando c'è un uso reale. Non bloccare solo perché il titolare attuale copre la fascia.
+- Carte offensive nuove con tool di creazione (1v1, dribbling, skill speciali, piede/lato, filtranti/cross/finalizzazione) → il confronto con il titolare deve finire in take/fits_current_setup quando la carta è schierabile nello stesso slot o fascia; premium_rotation solo se serve cambio modulo, condizione specifica o non parte titolare.
 - key_reasoning "gerarchie": non chiudere con "doppione funzionale" se la carta porta tool diversi (dribbling, tiro di prima, sassata) — scrivi rotazione d'élite / piano partita.
 - Salto skill chiaro + titolare stesso ruolo o buco ruolo reale → take, premium_rotation o fits_with_rotation
 - Game stats ≠ stile carta (es. pochi cross ma carta da fascia) → fits_with_rotation o fits_if_formation_change con condizione; not_your_playstyle solo se il tool della carta è davvero inutile per quella rosa
@@ -577,6 +608,7 @@ USO RAG (obbligatorio):
 CHECKLIST PRE-OUTPUT (verifica mentalmente prima del JSON):
 - Ho citato solo skill presenti in native_skills o roster.skills?
 - Ho usato il ruolo IN CAMPO per ogni giocatore rosa (non competenza come ruolo attuale)?
+- Ho deciso prima la gerarchia rosa/piano partita, prima di parlare di skill?
 - skill_delta_sentence e FATTI ACQUISTO sono rispettati in summary, pros e final_decision?
 - purchase_fit e verdict sono coerenti con la tabella sopra?
 - pros motivati da skill SOLO sulla carta (non dalle comuni)?
@@ -609,7 +641,7 @@ Restituisci SOLO JSON valido con questa struttura:
 `.trim()
 }
 
-function calibratePremiumVerdict(analysis, { card, catalogCard, anchorType, lang }) {
+function calibratePremiumVerdict(analysis, { card, catalogCard, anchorType, anchorLabel, lang }) {
   if (!analysis) return analysis
 
   const actionableContent = [
@@ -631,6 +663,9 @@ function calibratePremiumVerdict(analysis, { card, catalogCard, anchorType, lang
 
   const premiumCard = isPremiumCatalogCard(card, catalogCard)
   const attackCreationCase = hasAttackCreationTools(analysis, card)
+  const starterLevelAttackEdge = hasStarterLevelAttackEdge(analysis, card)
+  const sameWideStarter = anchorType === 'same_wide_flank' || anchorType === 'same_field_role'
+  const anchorName = stripAnchorRole(anchorLabel)
   const rosterBlockedLanguage = /(ruolo coperto|gia copert|già copert|titolare gia|titolare già|non cambia.*gerarch|does not change.*hierarch|covered role|starter already|already covered)/i.test(textBlob)
   const isGoalkeeper = roleFamily(card?.position) === 'gk'
   const harshVerdict = analysis.verdict === 'skip' || analysis.verdict === 'not_priority'
@@ -649,15 +684,27 @@ function calibratePremiumVerdict(analysis, { card, catalogCard, anchorType, lang
   const hasConcretePremiumCase = !blockedFit &&
     !strictDuplicateBlock &&
     (hasPros || hasSynergy || hasActionableContent || isGoalkeeper || attackCreationCase)
+  const shouldStartOverAnchor = starterLevelAttackEdge &&
+    sameWideStarter &&
+    hasConcretePremiumCase &&
+    !blockedFit &&
+    !strictDuplicateBlock
   const shouldRosterFirstPatch = (premiumCard || attackCreationCase) &&
     hasConcretePremiumCase &&
-    (harshVerdict || coldVerdict || saysNoBuy || saysFunctionalDup || rosterBlockedLanguage || blockedByPlaystyle)
+    (shouldStartOverAnchor || harshVerdict || coldVerdict || saysNoBuy || saysFunctionalDup || rosterBlockedLanguage || blockedByPlaystyle)
 
   if (!shouldRosterFirstPatch) return analysis
   if (!hasConcretePremiumCase) return analysis
 
   const patched = { ...analysis }
-  if (harshVerdict || coldVerdict || saysNoBuy || rosterBlockedLanguage || blockedByPlaystyle) {
+  if (shouldStartOverAnchor) {
+    patched.verdict = 'take'
+    patched.purchase_fit = 'fits_current_setup'
+    patched.setup_condition = ''
+    patched.summary = lang === 'en'
+      ? `${card.name} is a starter-level upgrade for this wide lane: use it as Plan A, with ${anchorName || 'the current starter'} as rotation or Plan B.`
+      : `${card.name} è upgrade da titolare su questa fascia: usalo come piano A, con ${anchorName || 'il titolare attuale'} in rotazione o piano B.`
+  } else if (harshVerdict || coldVerdict || saysNoBuy || rosterBlockedLanguage || blockedByPlaystyle) {
     patched.verdict = 'premium_rotation'
     if (patched.purchase_fit === 'not_your_playstyle') {
       patched.purchase_fit = 'fits_with_rotation'
@@ -672,13 +719,31 @@ function calibratePremiumVerdict(analysis, { card, catalogCard, anchorType, lang
       ? isGoalkeeper
         ? `${card.name} is worth it as a premium goalkeeper rotation: judge it by reliability, reach, close saves and rebound control.`
         : attackCreationCase
-          ? `${card.name} is worth it as a roster weapon: use it for 1v1, tempo change and match-plan rotation, not only to replace the starter.`
+          ? shouldStartOverAnchor
+            ? `Buy it: ${card.name} should start over ${anchorName || 'the current wide option'} when you want more 1v1, tempo change and final-third creation.`
+            : `${card.name} is worth it as a roster weapon: use it for 1v1, tempo change and match-plan rotation, not only to replace the starter.`
         : 'Worth buying for elite rotation and match plans — not to replace your starter every week.'
       : isGoalkeeper
         ? `${card.name} ha senso come rotazione premium in porta: valutalo per affidabilità, reach, parate ravvicinate e controllo rimbalzi.`
         : attackCreationCase
-          ? `${card.name} ha senso come arma di rosa: usalo per 1v1, cambio ritmo e rotazione di piano partita, non solo per sostituire il titolare.`
+          ? shouldStartOverAnchor
+            ? `Comprala: ${card.name} deve partire sopra ${anchorName || 'l’opzione larga attuale'} quando vuoi più 1v1, cambio ritmo e creazione nell’ultimo terzo.`
+            : `${card.name} ha senso come arma di rosa: usalo per 1v1, cambio ritmo e rotazione di piano partita, non solo per sostituire il titolare.`
         : 'Ha senso comprarla per rotazione d\'élite e piano partita — non per sostituire il titolare ogni settimana.'
+  }
+  if (shouldStartOverAnchor) {
+    patched.final_decision = lang === 'en'
+      ? `Buy it: ${card.name} should start over ${anchorName || 'the current wide option'} as Plan A; keep the current starter for rotation or a safer match plan.`
+      : `Comprala: ${card.name} deve partire sopra ${anchorName || 'l’opzione larga attuale'} come piano A; tieni il titolare attuale per rotazione o piano più conservativo.`
+    patched.key_reasoning = [
+      {
+        label: lang === 'en' ? 'Squad hierarchy' : 'Gerarchia rosa',
+        text: lang === 'en'
+          ? `${card.name} is not just rotation: it changes the wide-lane hierarchy and pushes ${anchorName || 'the current starter'} into rotation.`
+          : `${card.name} non è solo rotazione: cambia la gerarchia della fascia e sposta ${anchorName || 'il titolare attuale'} in rotazione.`
+      },
+      ...(patched.key_reasoning || []).filter((item) => !/(skill delta|abilità|skill)/i.test(`${item.label || ''} ${item.text || ''}`))
+    ].slice(0, 4)
   }
   if (saysFunctionalDup) {
     patched.key_reasoning = (patched.key_reasoning || []).map((item) => {
@@ -985,7 +1050,13 @@ export async function POST(req) {
     const analysis = suppressDefenderShootingPurchaseReason(
       calibratePremiumVerdict(
         normalized,
-        { card, catalogCard, anchorType: purchaseFacts.anchor?.type, lang }
+        {
+          card,
+          catalogCard,
+          anchorType: purchaseFacts.anchor?.type,
+          anchorLabel: purchaseFacts.anchor?.displayLabel,
+          lang
+        }
       ),
       { card, lang }
     )
