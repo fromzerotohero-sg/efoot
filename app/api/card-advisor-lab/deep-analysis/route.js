@@ -15,6 +15,7 @@ import {
 import { CARD_ADVISOR_SELECT, searchCardAdvisorCardsByName } from '@/lib/cardAdvisorCardsLookup.js'
 import { fetchEfhubCardDetail } from '@/lib/efhubPlayerDetail.js'
 import { buildSkillDeltaSentence } from '@/lib/cardAdvisorSkillCompare.js'
+import { computeCardAdvisorBuildPreview } from '@/lib/cardAdvisorBuildPreview.js'
 import {
   buildPurchaseFactsBlock,
   effectiveFieldRole,
@@ -415,7 +416,46 @@ function buildCardAdvisorRagQuery(card, catalogCard, tacticalSettings) {
     .join(' ')
 }
 
-function buildPrompt({ lang, card, catalogCard, profile, players, stylesLookup = {}, formation, coach, tacticalSettings, patterns, gameAnalysis, diagnostic, feedback, performance, ragKnowledge, skillDeltaSentence = '', purchaseFactsText = '' }) {
+function topBuildMacroLabels(build) {
+  const sliders = build?.sliders && typeof build.sliders === 'object' ? build.sliders : {}
+  return Object.entries(sliders)
+    .filter(([, value]) => Number(value) > 0)
+    .sort((a, b) => Number(b[1]) - Number(a[1]))
+    .slice(0, 4)
+    .map(([key]) => key)
+}
+
+function summarizeBuildPreviewForPrompt(preview, lang = 'it') {
+  if (!preview?.ok) return ''
+  const metaKeys = topBuildMacroLabels(preview.meta)
+  const rosterKeys = topBuildMacroLabels(preview.roster)
+  const diffKeys = preview.meta?.ok && preview.roster?.ok
+    ? rosterKeys.filter((key) => !metaKeys.includes(key)).slice(0, 3)
+    : []
+  const payload = {
+    silent_internal_context: true,
+    instruction: lang === 'en'
+      ? 'Use this only to compare the built card profile against the roster. Do not cite final stats, PT numbers, OVR, or build tables in the Pro verdict.'
+      : 'Usa questo solo per confrontare il profilo buildato contro la rosa. Non citare stats finali, numeri PT, OVR o tabelle build nel verdetto Pro.',
+    meta_available: Boolean(preview.meta?.ok),
+    roster_available: Boolean(preview.roster?.ok),
+    slot_position: preview.slotPosition || null,
+    meta_macro_focus: metaKeys,
+    roster_macro_focus: rosterKeys,
+    roster_shift_vs_meta: diffKeys,
+    roster_reasoning: (preview.roster?.reasons || preview.roster?.whyLead ? [
+      preview.roster?.whyLead,
+      ...(preview.roster?.reasons || [])
+    ] : []).filter(Boolean).slice(0, 4),
+    warnings: [
+      ...(preview.meta?.warnings || []),
+      ...(preview.roster?.warnings || [])
+    ].filter(Boolean).slice(0, 2)
+  }
+  return JSON.stringify(payload, null, 2)
+}
+
+function buildPrompt({ lang, card, catalogCard, profile, players, stylesLookup = {}, formation, coach, tacticalSettings, patterns, gameAnalysis, diagnostic, feedback, performance, ragKnowledge, skillDeltaSentence = '', purchaseFactsText = '', buildComparisonText = '' }) {
   const isEn = lang === 'en'
   const coachPolicies = getCoachPoliciesText(lang)
   const coachCore = getCoachSharedCoreText(lang)
@@ -496,16 +536,18 @@ ${coachPolicies}
 ${coachCore}
 
 GERARCHIA FONTI (ordine di priorità — non invertire):
-1. FATTI ACQUISTO (modulo, titolare per ruolo pack, anchor confronto, regole naming)
+1. FATTI ACQUISTO (modulo, pool ruolo, candidato sostituibile, anchor tecnico skill, regole naming)
 2. CONTESTO CLIENTE (rosa starters/reserves, tattica, coach, game_analysis, profilo, diagnosi)
 3. CARTA + RAG EFOOTBALL (stile, movimento, skill native, meccaniche, body type, ruolo)
-4. skill_delta_sentence (solo nota tecnica su abilità comuni / solo carta / solo rosa)
-5. Vincoli safety: non inventare nomi/skill/ruoli, non usare overall come criterio
+4. BUILD COMPARISON INTERNA (solo per capire profilo buildato, non da mostrare)
+5. skill_delta_sentence (solo nota tecnica su abilità comuni / solo carta / solo rosa)
+6. Vincoli safety: non inventare nomi/skill/ruoli, non usare overall come criterio
 
 FOCUS:
 - La domanda centrale non è "la carta è forte?", ma "questa carta crea valore reale per questa rosa?".
 - Il verdetto è sempre CARTA NUOVA VS ROSA CLIENTE: prima trova chi copre quel ruolo nella rosa, poi decidi se la carta cambia gerarchie, rotazione o piano partita.
-- Il giocatore rosa usato come anchor (es. Pulisic, Donnarumma, titolare di fascia) NON è un blocco: è il riferimento per spiegare cosa la carta nuova aggiunge, quando ruotarla e quale piano partita apre.
+- Il giocatore rosa usato come anchor tecnico skill (es. Pulisic, Donnarumma, Maldini) NON è automaticamente il giocatore da sostituire: è il riferimento per non inventare skill. Per la decisione acquisto usa prima pool ruolo e candidato più sostituibile nei FATTI ACQUISTO.
+- Se il pool ruolo contiene più titolari, non giudicare la carta solo contro il migliore del reparto. Spiega se entra sopra il punto debole, se diventa quarto profilo premium, o se cambia la rotazione.
 - Prima decidi GERARCHIA ROSA: "sostituisce/parte titolare", "rotazione premium", "solo cambio modulo" o "skip". Solo dopo usa abilità/stats come prove. Non costruire il report come lista abilità.
 - Ragiona come la chat coach: la decisione nasce da modulo + rosa + RAG meccaniche. Le skill sono evidenze, non la struttura del verdetto.
 - skill_delta_sentence NON è il verdetto: è solo una lente sulle abilità. Non deve superare modulo, titolari, movimento, stile, body type, ruolo e bisogni reali del cliente.
@@ -527,6 +569,7 @@ REGOLE SULLE STATISTICHE:
 - Evita frasi tipo "velocità 73 lo espone", "aereo 84 basta", "passaggio 65 non migliora" se stai usando solo base_stats della carta.
 - Usa i numeri base solo come indizi di profilo, sempre insieme a stile, skill native, ruolo, combo e dati della rosa.
 - Se serve parlare di limite statistico, scrivi "dai valori base della carta" o "a build non definita", non come verdetto assoluto.
+- BUILD COMPARISON INTERNA: se presente, indica come la carta potrebbe essere valorizzata dai PT meta/rosa. Serve SOLO per confrontare profilo buildato, ruolo, macro e gerarchia. VIETATO citare nel testo finale stats finali, numeri PT, OVR build, tabelle o "con questa build arriva a X". Traduci il confronto in effetti pratici: più copertura, più uscita palla, più profondità, più duelli, più rotazione.
 
 SEMANTICA:
 - Usa termini da coach/community: movimento, skill nativa, combo, catena, rotazione premium, piano partita diverso, alternativa d'élite, riferimento in area, attacca spazio, dà ampiezza, tiene posizione. Su Epic/Legendary/Showtime evita "non prioritaria/luxury pick" se esiste un caso concreto di rotazione.
@@ -537,7 +580,7 @@ SEMANTICA:
 - REGOLE SULLE SKILL (obbligatorie): i campi native_skills e roster.*.skills nel JSON sono nomi già normalizzati nella lingua della risposta (${isEn ? 'inglese' : 'italiano'}) — citane esattamente quelli, senza sostituirli con sinonimi diversi. Non attribuire a un giocatore una skill assente dalla sua lista. Non confondere skill simili (es. cross preciso vs passaggio filtrante; tiro al volo vs tiro dalla distanza; muro vs intercettazione). Per “combo” tra carta e rosa, verifica che la skill compaia in entrambe le liste o spiega che manca il collegamento.
 - native_skill_mechanics è il dizionario autorevole su cosa fanno le skill native della carta: usa effect/useful_for/caution per interpretarle. Se una caution limita l'impatto, rispettala nel verdetto.
 - Skill offensive su difensori/centrocampisti (es. Tiro dalla distanza, Tiro a salire) sono SOLO bonus secondario dal reparto, non motivo d'acquisto. Per DC/TD/TS è VIETATO usare "tiro da fuori", "minaccia da fuori", "piazzati" o simili come summary/final_decision/condizione d'acquisto: il verdetto deve basarsi prima su difesa, copertura, fisico, velocità recupero, stile difensivo e uscita palla. Quelle skill possono comparire solo in pros come extra marginale.
-- CONFRONTO ABILITÀ VS TITOLARE (obbligatorio): nel contesto c'è skill_delta_sentence — è la lettura ufficiale su comune vs diverso rispetto al titolare in rosa. Non contraddirla. Nei pros NON usare le skill in comune come motivo d'acquisto; il valore skill è nelle skill solo sulla carta. Però skill_delta NON è l'unico criterio d'acquisto: per Epic/Legendary/Showtime valuta anche profilo premium, stats/base-max, stile, booster/showtime traits, ruolo scoperto, rotazione forte e bisogni reali del cliente.
+- CONFRONTO ABILITÀ VS ANCHOR TECNICO (obbligatorio): nel contesto c'è skill_delta_sentence — è la lettura ufficiale su comune vs diverso rispetto all'anchor tecnico in rosa. Non contraddirla sui nomi skill. Però NON usarla come motore principale del verdetto quando FATTI ACQUISTO indicano un candidato più sostituibile nel pool ruolo. Nei pros NON usare le skill in comune come motivo d'acquisto; il valore skill è nelle skill solo sulla carta, nello stile, movimento, body type, rotazione e bisogni reali del cliente.
 - CONFRONTO SKILL = stesso reparto: difensori solo vs DC/TD/TS in rosa, centrocampo vs MED/CC/TRQ/CLS/CLD, attacco vs P/SP/ESA/EDA. VIETATO confrontare una carta difensiva con un attaccante (es. Maldini/Thuram vs Ronaldinho). Sinergie con compagni di altri reparti vanno in "synergies", non nel confronto skill principale. Se FATTI ACQUISTO indica anchor difensivo, non citare attaccanti nel confronto skill.
 - Carte Epic, Legendary o Showtime: internamente trattale come uscite desiderabili quando hanno valore concreto. Se trovi almeno 2 motivi tra stile, movimento, body type, skill solo carta, booster/showtime, piede/lato, multi-ruolo, rotazione o piano partita, il default è premium_rotation o take, non situational/luxury_pick. Non scrivere "è meglio perché Epic/Showtime": scrivi il dettaglio concreto che cambia.
 - La sezione "key_reasoning" è la parte più importante: ogni punto deve incrociare almeno due fonti tra carta, stile, skill, stats, rosa, formazione, tattica, coach, diagnosi, game analysis e RAG meccaniche.
@@ -546,6 +589,7 @@ SEMANTICA:
 
 CRITERIO DECISIONALE CARD VS ROSA:
 - Cerca prima il caso d'acquisto nella rosa: buco ruolo, titolare debole nel ruolo, rotazione forte, movimento diverso, tool speciale, body type utile, piede/lato, compatibilità modulo o problema reale del cliente.
+- Se FATTI ACQUISTO indicano "opzione più sostituibile", il verdetto deve parlare prima di quello slot: "entra sopra X", "spinge X in panchina/rotazione", oppure "non basta per superare X". Non limitarti a dire che non supera il migliore del reparto.
 - Le nuove uscite premium spesso aggiungono qualcosa che la community desidera, ma questo resta peso interno: nel testo visibile devi sempre tradurlo in cosa cambia nella rosa del cliente.
 - Ruolo già coperto NON è penalità: è solo contesto. Parti dal presupposto che una carta nuova può avere valore come rotazione, piano partita diverso, entrata dalla panchina, alternativa contro lag/pressing/cross/profondità, o copertura di più ruoli.
 - Se l'anchor in rosa è forte (es. Pulisic): non chiudere con "non serve". Scrivi se la carta nuova aggiunge 1v1, cambio ritmo, piede/lato, skill speciali, ampiezza, taglio dentro, filtrante, cross o finalizzazione diversa. Il confronto deve produrre un uso pratico, non una bocciatura automatica.
@@ -561,6 +605,7 @@ TONO PREMIUM:
 POLICY POSIZIONI E ACQUISTO (obbligatoria — come Coach chat):
 - Nomi giocatori e skill: solo da CONTESTO CLIENTE, FATTI ACQUISTO e skill_delta_sentence. Se manca un dato, non inventare.
 - "position" in roster = ruolo sul modulo salvato (formation.slot_positions per slot_index). "card_role" se presente = ruolo scheda rosa quando diverso dal modulo. "original_positions" = competenze naturali: NON usarle come ruolo attuale.
+- "Anchor tecnico skill" serve a confrontare abilità, non a decidere da solo l'acquisto. "Pool ruolo" e "opzione più sostituibile" decidono la gerarchia rosa.
 - Vietato: "Maldini CLS" se in rosa è DC. Obbligatorio: "Maldini (DC)" o "Maldini (DC in rosa)".
 - Vietato: confronto skill tra reparti diversi (difensore vs attaccante). Ronaldinho non è anchor per carte DC/TD/TS.
 - Vietato: "non cambia gerarchie su [Nome] [ruolo carta]" se non c'è titolare con quel ruolo in campo (vedi FATTI ACQUISTO).
@@ -595,6 +640,9 @@ ${JSON.stringify(contextPayload, null, 2)}
 CONFRONTO ABILITÀ (una frase, già calcolata — allineati)
 ${skillDeltaSentence || (isEn ? 'No roster skill comparison available.' : 'Confronto abilità rosa non disponibile.')}
 
+BUILD COMPARISON INTERNA (non mostrare numeri al cliente)
+${buildComparisonText || (isEn ? 'No internal build comparison available.' : 'Confronto build interno non disponibile.')}
+
 RAG EFOOTBALL (dizionario meccaniche — non è la rosa del cliente)
 ${ragKnowledge || 'Nessun RAG disponibile.'}
 
@@ -608,7 +656,8 @@ USO RAG (obbligatorio):
 CHECKLIST PRE-OUTPUT (verifica mentalmente prima del JSON):
 - Ho citato solo skill presenti in native_skills o roster.skills?
 - Ho usato il ruolo IN CAMPO per ogni giocatore rosa (non competenza come ruolo attuale)?
-- Ho deciso prima la gerarchia rosa/piano partita, prima di parlare di skill?
+- Ho deciso prima gerarchia rosa/piano partita usando pool ruolo e opzione più sostituibile, prima di parlare di skill?
+- Se ho usato BUILD COMPARISON, l'ho tradotta in effetto pratico senza citare numeri/stat finali/PT/OVR?
 - skill_delta_sentence e FATTI ACQUISTO sono rispettati in summary, pros e final_decision?
 - purchase_fit e verdict sono coerenti con la tabella sopra?
 - pros motivati da skill SOLO sulla carta (non dalle comuni)?
@@ -1015,6 +1064,24 @@ export async function POST(req) {
       lang
     })
     const purchaseFactsText = purchaseFacts.text
+    let buildComparisonText = ''
+    try {
+      const buildPreview = await computeCardAdvisorBuildPreview({
+        card,
+        catalogRow: catalogCard,
+        rosterContext: {
+          players,
+          tacticalSettings: tacticalRes.data || null,
+          activeCoach: coachRes.data || null,
+          layout: formationRes.data || null
+        },
+        lang,
+        admin
+      })
+      buildComparisonText = summarizeBuildPreviewForPrompt(buildPreview, lang)
+    } catch (error) {
+      console.warn('[card-advisor-lab:deep-analysis] build comparison unavailable:', error?.message || error)
+    }
 
     const prompt = buildPrompt({
       lang,
@@ -1033,7 +1100,8 @@ export async function POST(req) {
       performance,
       ragKnowledge,
       skillDeltaSentence: skillDeltaLine,
-      purchaseFactsText
+      purchaseFactsText,
+      buildComparisonText
     })
 
     const requestBody = buildOpenAIRequestBody(MODEL, prompt)
