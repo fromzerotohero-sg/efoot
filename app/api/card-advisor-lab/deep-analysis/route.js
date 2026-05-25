@@ -486,7 +486,7 @@ REGOLE SULLE STATISTICHE:
 - Se serve parlare di limite statistico, scrivi "dai valori base della carta" o "a build non definita", non come verdetto assoluto.
 
 SEMANTICA:
-- Usa termini da coach/community: movimento, skill nativa, combo, catena, rotazione, non prioritaria, luxury pick, riferimento in area, attacca spazio, dà ampiezza, tiene posizione, non cambia gerarchie.
+- Usa termini da coach/community: movimento, skill nativa, combo, catena, rotazione premium, piano partita diverso, alternativa d'élite, riferimento in area, attacca spazio, dà ampiezza, tiene posizione. Su Epic/Legendary/Showtime evita "non prioritaria/luxury pick" se esiste un caso concreto di rotazione.
 - Evita: "fit stile 56%", "bonus sistema", "sinergia principale", "stat edge", "overall", "rating", "buildalo", "potenzialo", "allenalo".
 - Se rispondi in italiano, traduci in italiano anche stili, skill e tag tecnici quando possibile: non lasciare frasi con termini inglesi se esiste già l’italiano nel glossario interno (stessi nomi delle liste native_skills / skills della rosa).
 - ATTENZIONE NOMI ABILITÀ: fonti diverse (EFHub/PESDB/browser tradotto/Football Lab) possono usare nomea IT/EN diversa o ambigua. Non costruire il verdetto su una singola label se l'effetto/ruolo non torna: usa ruolo, reparto, meccanica e caution. In caso dubbio, parla di "skill di passaggio/lancio" o "bonus tiro da fuori" solo come dettaglio, non come motivo acquisto.
@@ -495,7 +495,7 @@ SEMANTICA:
 - Skill offensive su difensori/centrocampisti (es. Tiro dalla distanza, Tiro a salire) sono SOLO bonus secondario dal reparto, non motivo d'acquisto. Per DC/TD/TS è VIETATO usare "tiro da fuori", "minaccia da fuori", "piazzati" o simili come summary/final_decision/condizione d'acquisto: il verdetto deve basarsi prima su difesa, copertura, fisico, velocità recupero, stile difensivo e uscita palla. Quelle skill possono comparire solo in pros come extra marginale.
 - CONFRONTO ABILITÀ VS TITOLARE (obbligatorio): nel contesto c'è skill_delta_sentence — è la lettura ufficiale su comune vs diverso rispetto al titolare in rosa. Non contraddirla. Nei pros NON usare le skill in comune come motivo d'acquisto; il valore skill è nelle skill solo sulla carta. Però skill_delta NON è l'unico criterio d'acquisto: per Epic/Legendary/Showtime valuta anche profilo premium, stats/base-max, stile, booster/showtime traits, ruolo scoperto, rotazione forte e bisogni reali del cliente.
 - CONFRONTO SKILL = stesso reparto: difensori solo vs DC/TD/TS in rosa, centrocampo vs MED/CC/TRQ/CLS/CLD, attacco vs P/SP/ESA/EDA. VIETATO confrontare una carta difensiva con un attaccante (es. Maldini/Thuram vs Ronaldinho). Sinergie con compagni di altri reparti vanno in "synergies", non nel confronto skill principale. Se FATTI ACQUISTO indica anchor difensivo, non citare attaccanti nel confronto skill.
-- Carte Epic, Legendary o Showtime: internamente trattale come uscite che spesso aggiungono qualcosa e che l'utente desidera comprare. Puoi usare verdict take o premium_rotation anche con skill simili al titolare se la carta porta valore da stile, movimento, booster/showtime, body type, ruolo raro, copertura modulo o piano partita. Non scrivere "è meglio perché Epic/Showtime": scrivi il dettaglio concreto che cambia.
+- Carte Epic, Legendary o Showtime: internamente trattale come uscite desiderabili quando hanno valore concreto. Se trovi almeno 2 motivi tra stile, movimento, body type, skill solo carta, booster/showtime, piede/lato, multi-ruolo, rotazione o piano partita, il default è premium_rotation o take, non situational/luxury_pick. Non scrivere "è meglio perché Epic/Showtime": scrivi il dettaglio concreto che cambia.
 - La sezione "key_reasoning" è la parte più importante: ogni punto deve incrociare almeno due fonti tra carta, stile, skill, stats, rosa, formazione, tattica, coach, diagnosi, game analysis e RAG meccaniche.
 - Ogni ragionamento deve chiudere con una conseguenza pratica: cosa cambia, cosa sfruttare, cosa evitare o perché non è priorità.
 
@@ -505,6 +505,11 @@ CRITERIO DECISIONALE CARD VS ROSA:
 - Ruolo già coperto NON è penalità: è solo contesto. Parti dal presupposto che una carta nuova può avere valore come rotazione, piano partita diverso, entrata dalla panchina, alternativa contro lag/pressing/cross/profondità, o copertura di più ruoli.
 - Usa not_priority/skip solo quando la carta è davvero inutilizzabile per quella rosa: stesso nome già titolare senza tool nuovi, ruolo non schierabile, fit opposto al modo di giocare, o nessuna rotazione concreta. Vietato bocciare solo perché il ruolo è coperto.
 
+TONO PREMIUM:
+- Il cliente paga per un verdetto Pro: non essere tiepido quando la carta ha valore reale. Scrivi come un coach che sa perché una nuova premium fa gola alla community, ma giustifica tutto con effetti in campo.
+- Se il verdetto non è "take", deve comunque sembrare utile e desiderabile quando ci sono tool concreti: "premium_rotation", "piano partita", "arma dalla panchina", "alternativa d'élite".
+- I contro servono a spiegare COME usarla, non a spegnere l'acquisto, salvo casi davvero incompatibili.
+
 POLICY POSIZIONI E ACQUISTO (obbligatoria — come Coach chat):
 - Nomi giocatori e skill: solo da CONTESTO CLIENTE, FATTI ACQUISTO e skill_delta_sentence. Se manca un dato, non inventare.
 - "position" in roster = ruolo sul modulo salvato (formation.slot_positions per slot_index). "card_role" se presente = ruolo scheda rosa quando diverso dal modulo. "original_positions" = competenze naturali: NON usarle come ruolo attuale.
@@ -512,16 +517,16 @@ POLICY POSIZIONI E ACQUISTO (obbligatoria — come Coach chat):
 - Vietato: confronto skill tra reparti diversi (difensore vs attaccante). Ronaldinho non è anchor per carte DC/TD/TS.
 - Vietato: "non cambia gerarchie su [Nome] [ruolo carta]" se non c'è titolare con quel ruolo in campo (vedi FATTI ACQUISTO).
 - Domanda centrale acquisto: la carta la compro per COME GIOCO OGGI (modulo, disposizione, game stats, profilo)? Non tier list.
-- Se la carta è utile nel ruolo pack ma NON c'è titolare in quel ruolo in campo: purchase_fit = fits_if_formation_change (o skill_only_no_slot) e in summary/final_decision scrivi esplicitamente "sì, comprala SE cambi modulo / schieri il ruolo" oppure "oggi no, a meno che...".
+- Se la carta premium è utile nel ruolo pack ma NON c'è titolare in quel ruolo in campo: non raffreddarla automaticamente. Usa purchase_fit fits_if_formation_change o fits_with_rotation e verdict premium_rotation quando esiste un piano chiaro per schierarla, cambiare modulo o usarla dalla panchina. Scrivi la condizione pratica, non "oggi no" come default.
 - Se game stats e stile carta non matchano (es. cross specialist ma pochi cross nei dati): purchase_fit = not_your_playstyle o fits_if_formation_change con condizione chiara.
 - purchase_fit deve essere coerente con verdict e con FATTI ACQUISTO. setup_condition obbligatorio se purchase_fit è fits_if_formation_change o skill_only_no_slot.
 - Esempio SBAGLIATO: "Non cambia gerarchie su Maldini CLS". Esempio CORRETTO: "Non sostituisce Maldini (DC); oggi non hai CLS in campo — ha senso solo se cambi modulo per usare la fascia."
-- FATTI ACQUISTO + skill_delta_sentence hanno priorità su intuizioni generiche: non contraddirli. Se indicano doppione, titolare già ok o nessuno slot per il ruolo pack, non usare verdict "take" senza almeno un motivo premium concreto (stats/stile/booster/Showtime/rotazione/ruolo scoperto) e condizione modulo esplicita se serve.
+- FATTI ACQUISTO + skill_delta_sentence hanno priorità sui nomi e sui dati, non sul tono premium. Se indicano doppione, titolare già ok o nessuno slot per il ruolo pack, non usare verdict "take" senza motivo concreto; però per carte premium con almeno 2 pro concreti usa premium_rotation/fits_with_rotation invece di situational/luxury_pick.
 
 COERENZA verdict ↔ purchase_fit (obbligatoria):
-- skip_duplicate / stesso nome titolare + skill quasi uguali → verdict skip o not_priority; purchase_fit skip_duplicate
-- Nessun titolare con ruolo pack in campo (FATTI ACQUISTO) → purchase_fit fits_if_formation_change o skill_only_no_slot; verdict al massimo situational; setup_condition obbligatorio
-- skill_delta indica "quasi uguale" / "non compri per skill nuove" → non vendere l'acquisto come upgrade skill. Per uscite premium preferisci premium_rotation/take se ci sono stile, movimento, body type, tool speciali o rotazione utili; altrimenti luxury_pick/situational. Il testo visibile deve spiegare quei dettagli, non la policy interna.
+- skip_duplicate solo quando è davvero stesso nome/versione senza tool nuovi né valore rotazione. Stesso nome titolare + nuova premium con skill/tool/body type/movimento utili → premium_rotation o take, non skip automatico.
+- Nessun titolare con ruolo pack in campo (FATTI ACQUISTO) → purchase_fit fits_if_formation_change o fits_with_rotation; per premium con piano pratico il verdict può essere premium_rotation. setup_condition obbligatorio se serve cambio modulo/ruolo.
+- skill_delta indica "quasi uguale" / "non compri per skill nuove" → non vendere l'acquisto come upgrade skill. Per uscite premium, se ci sono almeno 2 pro concreti, usa premium_rotation/take e motiva con stile, movimento, body type, tool speciali o rotazione. Usa luxury_pick/situational solo se manca un caso d'uso reale.
 - Diversificazione è motivo d'acquisto valido: stesso ruolo ma movimento/stile/body type diversi dal titolare (es. Opportunista vs Rapace d'area) → premium_rotation o take se la carta è premium o offre un piano partita chiaramente diverso; non classificare come skip/not_priority solo perché ruolo o skill sono già coperti.
 - Stesso stile del titolare (es. due Opportunista in CF) NON basta per "Oggi no" su Epic/Legendary/Showtime: valuta skill solo carta, body type, lag, rotazione tra titolari; verdict premium_rotation o fits_with_rotation se i pro sono concreti.
 - Vietato final_decision "Oggi no" / "Non comprare" su carte premium con ≥2 pro, salvo skip_duplicate (stesso nome già titolare) o purchase_fit not_your_playstyle con motivo chiaro.
@@ -587,7 +592,7 @@ Restituisci SOLO JSON valido con questa struttura:
 }
 
 function calibratePremiumVerdict(analysis, { card, catalogCard, anchorType, lang }) {
-  if (!analysis || !isPremiumCatalogCard(card, catalogCard) || anchorType === 'same_name') return analysis
+  if (!analysis || !isPremiumCatalogCard(card, catalogCard)) return analysis
 
   const textBlob = [
     analysis.final_decision,
@@ -598,22 +603,29 @@ function calibratePremiumVerdict(analysis, { card, catalogCard, anchorType, lang
   ].join(' ')
 
   const harshVerdict = analysis.verdict === 'skip' || analysis.verdict === 'not_priority'
+  const coldVerdict = analysis.verdict === 'situational' || analysis.verdict === 'luxury_pick'
   const saysNoBuy = /(oggi no|non compr|non ha senso compr|evita l.acquisto|do not buy|not today|skip purchase|non spendere)/i.test(textBlob)
   const saysFunctionalDup = /(doppione funzionale|functional duplicate|non offre.*rotazione|doesn.t offer.*rotation|non cambia.*variet)/i.test(textBlob)
   const hasPros = (analysis.pros || []).length >= 2
   const hasSynergy = (analysis.synergies || []).length >= 1
+  const blockedFit = analysis.purchase_fit === 'insufficient_data' ||
+    analysis.purchase_fit === 'not_your_playstyle' ||
+    (anchorType === 'same_name' && analysis.purchase_fit === 'skip_duplicate')
+  const hasConcretePremiumCase = !blockedFit && (hasPros || hasSynergy)
 
-  if (!harshVerdict && !saysNoBuy && !saysFunctionalDup) return analysis
-  if (!hasPros && !hasSynergy) return analysis
+  if (!harshVerdict && !coldVerdict && !saysNoBuy && !saysFunctionalDup) return analysis
+  if (!hasConcretePremiumCase) return analysis
 
   const patched = { ...analysis }
-  if (harshVerdict || saysNoBuy) {
+  if (harshVerdict || coldVerdict || saysNoBuy) {
     patched.verdict = 'premium_rotation'
-    if (patched.purchase_fit === 'skip_duplicate' || !patched.purchase_fit) {
+    if (patched.purchase_fit === 'skill_only_no_slot') {
+      patched.purchase_fit = patched.setup_condition ? 'fits_if_formation_change' : 'fits_with_rotation'
+    } else if (patched.purchase_fit === 'skip_duplicate' || !patched.purchase_fit) {
       patched.purchase_fit = 'fits_with_rotation'
     }
   }
-  if (saysNoBuy) {
+  if (saysNoBuy || coldVerdict) {
     patched.final_decision = lang === 'en'
       ? 'Worth buying for elite rotation and match plans — not to replace your starter every week.'
       : 'Ha senso comprarla per rotazione d\'élite e piano partita — non per sostituire il titolare ogni settimana.'
