@@ -219,7 +219,8 @@ export default function CountermeasuresPreMatchPage() {
             players: extractData.players,
             overall_strength: extractData.overall_strength,
             tactical_style: extractData.tactical_style,
-            coach: extractData.coach || null
+            coach: extractData.coach || null,
+            visual_tactical_profile: extractData.visual_tactical_profile || null
           },
           is_pre_match: true
         })
@@ -232,7 +233,8 @@ export default function CountermeasuresPreMatchPage() {
         players: extractData.players,
         overall_strength: extractData.overall_strength,
         tactical_style: extractData.tactical_style,
-        coach: extractData.coach || null
+        coach: extractData.coach || null,
+        visual_tactical_profile: extractData.visual_tactical_profile || null
       }
       setExtractedFormation(formationForState)
       setExtracting(false)

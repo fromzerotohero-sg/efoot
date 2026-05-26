@@ -158,6 +158,17 @@ IMPORTANTE:
   * Attaccanti (SP, CF, CLD, CLS): slot_index = 9-10 (da sinistra a destra)
 - Estrai anche la formazione (es. "4-2-1-3", "4-3-3", ecc.) se visibile
 - Se vedi il volto/faccia del giocatore nella card, indicane la descrizione visiva
+- Genera anche un profilo tattico VISIVO prudente basato solo sulla disposizione 2D:
+  * width_profile: "wide", "narrow" o "balanced"
+  * central_density: "high", "medium" o "low"
+  * side_bias: "left", "right", "balanced" o "unclear"
+  * isolated_striker: true/false
+  * two_strikers: true/false
+  * attackable_zones: massimo 4 zone (es. "wide_left", "wide_right", "behind_fullbacks", "central_gap")
+  * defensive_gaps: massimo 4 gap visivi
+  * formation_confidence / shape_confidence / slot_confidence: numeri 0-1
+  * uncertain_points: massimo 4 dubbi sulla lettura
+- IMPORTANTE: il profilo tattico visuale deve essere prudente. Se non sei sicuro usa "unclear", array vuoti e confidenza bassa.
 
 ALLENATORE (OPZIONALE - Solo se presente):
 - A volte nella schermata è presente anche l'allenatore/manager
@@ -189,11 +200,25 @@ Formato JSON richiesto:
     "team": "AC Milan",
     "category": "Campionato italiano",
     "pack_type": "Manager Pack (se visibile)"
+  },
+  "visual_tactical_profile": {
+    "width_profile": "narrow",
+    "central_density": "high",
+    "side_bias": "balanced",
+    "isolated_striker": false,
+    "two_strikers": true,
+    "attackable_zones": ["wide_left", "wide_right"],
+    "defensive_gaps": ["behind_fullbacks"],
+    "formation_confidence": 0.9,
+    "shape_confidence": 0.85,
+    "slot_confidence": 0.7,
+    "uncertain_points": []
   }
 }
 
 IMPORTANTE:
 - Il campo "coach" deve essere null se l'allenatore NON è visibile nella schermata
+- Il campo "visual_tactical_profile" deve esistere sempre; se la foto non consente lettura affidabile usa valori prudenti e confidence bassa
 - Assicurati che ci siano ESATTAMENTE 11 giocatori nell'array "players"
 - Se vedi meno di 11 giocatori, indica solo quelli visibili (ma avvisa nel campo "note" se presente)
 
@@ -305,6 +330,51 @@ Restituisci SOLO JSON valido, senza altro testo.`
           console.warn(`[extract-formation] Formation "${formation}" not in valid list, but format is correct`)
         }
       }
+
+      // Normalizza profilo tattico visuale opzionale: utile per contromisure, mai bloccante.
+      const profile = formationData.visual_tactical_profile
+      if (profile && typeof profile === 'object') {
+        const pickEnum = (value, allowed, fallback) => {
+          const normalized = String(value || '').trim().toLowerCase()
+          return allowed.includes(normalized) ? normalized : fallback
+        }
+        const clamp01 = (value, fallback = 0) => {
+          const n = Number(value)
+          if (!Number.isFinite(n)) return fallback
+          return Math.max(0, Math.min(1, n))
+        }
+        const safeList = (value) => Array.isArray(value)
+          ? value.map(item => String(item || '').trim()).filter(Boolean).slice(0, 4)
+          : []
+
+        formationData.visual_tactical_profile = {
+          width_profile: pickEnum(profile.width_profile, ['wide', 'narrow', 'balanced', 'unclear'], 'unclear'),
+          central_density: pickEnum(profile.central_density, ['high', 'medium', 'low', 'unclear'], 'unclear'),
+          side_bias: pickEnum(profile.side_bias, ['left', 'right', 'balanced', 'unclear'], 'unclear'),
+          isolated_striker: profile.isolated_striker === true,
+          two_strikers: profile.two_strikers === true,
+          attackable_zones: safeList(profile.attackable_zones),
+          defensive_gaps: safeList(profile.defensive_gaps),
+          formation_confidence: clamp01(profile.formation_confidence, 0),
+          shape_confidence: clamp01(profile.shape_confidence, 0),
+          slot_confidence: clamp01(profile.slot_confidence, 0),
+          uncertain_points: safeList(profile.uncertain_points)
+        }
+      } else {
+        formationData.visual_tactical_profile = {
+          width_profile: 'unclear',
+          central_density: 'unclear',
+          side_bias: 'unclear',
+          isolated_striker: false,
+          two_strikers: false,
+          attackable_zones: [],
+          defensive_gaps: [],
+          formation_confidence: 0,
+          shape_confidence: 0,
+          slot_confidence: 0,
+          uncertain_points: ['visual profile not available']
+        }
+      }
       
       // Validazione giocatori nella formazione
       if (formationData.players && Array.isArray(formationData.players)) {
@@ -353,7 +423,8 @@ Restituisci SOLO JSON valido, senza altro testo.`
       formation: formationData.formation || null,
       slot_positions: formationData.slot_positions || {},
       players: formationData.players || [], // Opzionale, per preview
-      coach: formationData.coach || null // Allenatore opzionale (null se non presente)
+      coach: formationData.coach || null, // Allenatore opzionale (null se non presente)
+      visual_tactical_profile: formationData.visual_tactical_profile || null
     }, {
       headers: {
         'X-RateLimit-Limit': rateLimitConfig.maxRequests.toString(),
