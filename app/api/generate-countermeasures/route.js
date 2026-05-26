@@ -11,6 +11,107 @@ import { validateStartingXISwap } from '@/lib/formationDefenseRules'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+function normalizeInstructionId(value) {
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[-\s]+/g, '_')
+
+  const aliases = {
+    marcatura_stretta: 'marcatura_stretta',
+    marcatura_a_uomo: 'marcatura_uomo',
+    marcatura_uomo: 'marcatura_uomo',
+    man_marking: 'marcatura_uomo',
+    tight_marking: 'marcatura_stretta',
+    linea_bassa: 'linea_bassa',
+    deep_line: 'linea_bassa',
+    obiettivo_contropiede: 'contropiede',
+    counter_target: 'contropiede',
+    counterattack: 'contropiede',
+    contropiede: 'contropiede',
+    ancoraggio: 'ancoraggio',
+    anchoring: 'ancoraggio',
+    offensivo: 'offensivo',
+    offensive: 'offensivo',
+    difensivo: 'difensivo',
+    defensive: 'difensivo'
+  }
+
+  return aliases[normalized] || normalized
+}
+
+function normalizeInstructionSlot(value) {
+  const normalized = String(value || '').trim().toLowerCase().replace(/[-\s]+/g, '_')
+  const aliases = {
+    attack_1: 'attacco_1',
+    attack1: 'attacco_1',
+    attacco1: 'attacco_1',
+    attack_2: 'attacco_2',
+    attack2: 'attacco_2',
+    attacco2: 'attacco_2',
+    defense_1: 'difesa_1',
+    defence_1: 'difesa_1',
+    defense1: 'difesa_1',
+    defence1: 'difesa_1',
+    difesa1: 'difesa_1',
+    defense_2: 'difesa_2',
+    defence_2: 'difesa_2',
+    defense2: 'difesa_2',
+    defence2: 'difesa_2',
+    difesa2: 'difesa_2'
+  }
+  return aliases[normalized] || normalized
+}
+
+function hasVerifiedRosterData(titolari) {
+  return Array.isArray(titolari) && titolari.length > 0 && titolari.every((p) => (
+    Array.isArray(p.original_positions) &&
+    p.original_positions.length > 0 &&
+    p.photo_slots &&
+    typeof p.photo_slots === 'object' &&
+    p.photo_slots.card === true
+  ))
+}
+
+function sanitizeCountermeasureWarnings(warnings, { removedPlayerSuggestions = 0, removedInstructions = 0, verifiedRoster = false } = {}) {
+  const result = []
+  const seen = new Set()
+  const add = (text) => {
+    const value = String(text || '').trim()
+    if (!value || seen.has(value)) return
+    seen.add(value)
+    result.push(value)
+  }
+
+  for (const warning of Array.isArray(warnings) ? warnings : []) {
+    const text = typeof warning === 'string'
+      ? warning
+      : (warning?.it || warning?.en || '')
+    const lower = String(text).toLowerCase()
+    if (verifiedRoster && (
+      lower.includes('posizioni originali') ||
+      lower.includes('competenze ruolo') ||
+      lower.includes('original positions') ||
+      lower.includes('role competencies')
+    )) {
+      continue
+    }
+    if (lower.includes('filtrat') || lower.includes('non applicabil')) continue
+    add(text)
+  }
+
+  if (removedPlayerSuggestions > 0) {
+    add(`${removedPlayerSuggestions} cambio rosa non mostrato perché non applicabile alla tua formazione attuale.`)
+  }
+  if (removedInstructions > 0) {
+    add(`${removedInstructions} istruzione individuale non mostrata perché non configurabile con quei giocatori o slot.`)
+  }
+
+  return result
+}
+
 export async function POST(req) {
   let creditChargeContext = null
   try {
@@ -590,6 +691,10 @@ if (process.env.NODE_ENV !== 'production') {
       )
     }
 
+    let removedPlayerSuggestions = 0
+    let removedInstructions = 0
+    const verifiedRoster = hasVerifiedRosterData(titolari)
+
     // 12.1 Filtra suggerimenti invalidi (coerenza con rosa)
     if (countermeasures.countermeasures?.player_suggestions && Array.isArray(countermeasures.countermeasures.player_suggestions)) {
       const validSuggestions = []
@@ -700,12 +805,7 @@ if (process.env.NODE_ENV !== 'production') {
       
       // Aggiungi warning se ci sono suggerimenti filtrati
       if (invalidSuggestions.length > 0) {
-        if (!countermeasures.warnings) {
-          countermeasures.warnings = []
-        }
-        countermeasures.warnings.push(
-          `${invalidSuggestions.length} suggerimento/i giocatore filtrato/i perché non applicabili (nessuna riserva disponibile o posizione non valida)`
-        )
+        removedPlayerSuggestions = invalidSuggestions.length
       }
     }
 
@@ -716,9 +816,9 @@ if (process.env.NODE_ENV !== 'production') {
       const validSlots = new Set(['attacco_1', 'attacco_2', 'difesa_1', 'difesa_2'])
 
       for (const instr of countermeasures.countermeasures.individual_instructions) {
-        const slot = typeof instr?.slot === 'string' ? instr.slot.trim() : ''
+        const slot = typeof instr?.slot === 'string' ? normalizeInstructionSlot(instr.slot) : ''
         const playerId = typeof instr?.player_id === 'string' ? instr.player_id.trim() : ''
-        const instruction = typeof instr?.instruction === 'string' ? instr.instruction.trim().toLowerCase() : ''
+        const instruction = typeof instr?.instruction === 'string' ? normalizeInstructionId(instr.instruction) : ''
 
         if (!validSlots.has(slot) || !playerId || !instruction) {
           invalidInstructions.push({ instr, reason: 'slot/player_id/instruction mancanti o invalidi' })
@@ -734,6 +834,8 @@ if (process.env.NODE_ENV !== 'production') {
           const posFromModel = typeof instr.position === 'string' ? instr.position.trim() : ''
           validInstructions.push({
             ...instr,
+            slot,
+            instruction,
             player_name: nameFromModel || nameFromRoster || null,
             position: posFromModel || posFromRoster || null
           })
@@ -743,12 +845,15 @@ if (process.env.NODE_ENV !== 'production') {
       countermeasures.countermeasures.individual_instructions = validInstructions
 
       if (invalidInstructions.length > 0) {
-        if (!countermeasures.warnings) countermeasures.warnings = []
-        countermeasures.warnings.push(
-          `${invalidInstructions.length} istruzione/i individuale/i filtrata/e perché non applicabili alle regole tattiche`
-        )
+        removedInstructions = invalidInstructions.length
       }
     }
+
+    countermeasures.warnings = sanitizeCountermeasureWarnings(countermeasures.warnings, {
+      removedPlayerSuggestions,
+      removedInstructions,
+      verifiedRoster
+    })
 
     // 13. Normalizza output in formato bilingue (it/en) per coerenza con analyze-match e UI
     const toBilingual = (s) => {
