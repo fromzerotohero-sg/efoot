@@ -592,6 +592,7 @@ CRITERIO DECISIONALE CARD VS ROSA:
 - Se FATTI ACQUISTO indicano "opzione più sostituibile", il verdetto deve parlare prima di quello slot: "entra sopra X", "spinge X in panchina/rotazione", oppure "non basta per superare X". Non limitarti a dire che non supera il migliore del reparto.
 - Le nuove uscite premium spesso aggiungono qualcosa che la community desidera, ma questo resta peso interno: nel testo visibile devi sempre tradurlo in cosa cambia nella rosa del cliente.
 - Ruolo già coperto NON è penalità: è solo contesto. Parti dal presupposto che una carta nuova può avere valore come rotazione, piano partita diverso, entrata dalla panchina, alternativa contro lag/pressing/cross/profondità, o copertura di più ruoli.
+- ECCEZIONE SAME_NAME: se FATTI ACQUISTO indica stesso nome giocatore già in rosa/titolare, in eFootball non puoi usare due versioni dello stesso calciatore insieme. Non parlare mai di rotazione tra i due. Il verdetto è solo: nuova versione sostituisce quella attuale, oppure non vale cambiarla/skip_duplicate.
 - Se l'anchor in rosa è forte (es. Pulisic): non chiudere con "non serve". Scrivi se la carta nuova aggiunge 1v1, cambio ritmo, piede/lato, skill speciali, ampiezza, taglio dentro, filtrante, cross o finalizzazione diversa. Il confronto deve produrre un uso pratico, non una bocciatura automatica.
 - Se la carta nuova offensiva dà più creazione/1v1/cambio ritmo dell'anchor largo, il verdetto corretto è take/fits_current_setup: "sostituisce [anchor] nel piano A"; [anchor] diventa rotazione o piano B.
 - Usa not_priority/skip solo quando la carta è davvero inutilizzabile per quella rosa: stesso nome già titolare senza tool nuovi, ruolo non schierabile, fit opposto al modo di giocare, o nessuna rotazione concreta. Vietato bocciare solo perché il ruolo è coperto.
@@ -606,6 +607,7 @@ POLICY POSIZIONI E ACQUISTO (obbligatoria — come Coach chat):
 - Nomi giocatori e skill: solo da CONTESTO CLIENTE, FATTI ACQUISTO e skill_delta_sentence. Se manca un dato, non inventare.
 - "position" in roster = ruolo sul modulo salvato (formation.slot_positions per slot_index). "card_role" se presente = ruolo scheda rosa quando diverso dal modulo. "original_positions" = competenze naturali: NON usarle come ruolo attuale.
 - "Anchor tecnico skill" serve a confrontare abilità, non a decidere da solo l'acquisto. "Pool ruolo" e "opzione più sostituibile" decidono la gerarchia rosa.
+- SAME_NAME è un vincolo di gioco, non una preferenza: due versioni dello stesso giocatore non sono una rotazione utilizzabile nella stessa rosa. Se consigli l'acquisto, devi dire che sostituisce la versione attuale.
 - Vietato: "Maldini CLS" se in rosa è DC. Obbligatorio: "Maldini (DC)" o "Maldini (DC in rosa)".
 - Vietato: confronto skill tra reparti diversi (difensore vs attaccante). Ronaldinho non è anchor per carte DC/TD/TS.
 - Vietato: "non cambia gerarchie su [Nome] [ruolo carta]" se non c'è titolare con quel ruolo in campo (vedi FATTI ACQUISTO).
@@ -617,7 +619,7 @@ POLICY POSIZIONI E ACQUISTO (obbligatoria — come Coach chat):
 - FATTI ACQUISTO + skill_delta_sentence hanno priorità sui nomi e sui dati, non sul tono premium. Se indicano doppione, titolare già ok o nessuno slot per il ruolo pack, non usare verdict "take" senza motivo concreto; però per carte premium con almeno 2 pro concreti usa premium_rotation/fits_with_rotation invece di situational/luxury_pick.
 
 COERENZA verdict ↔ purchase_fit (obbligatoria):
-- skip_duplicate solo quando è davvero stesso nome/versione senza tool nuovi né valore rotazione. Stesso nome titolare + nuova premium con skill/tool/body type/movimento utili → premium_rotation o take, non skip automatico.
+- skip_duplicate solo quando è davvero stesso nome/versione senza tool nuovi o senza upgrade pratico. Stesso nome titolare + nuova premium con skill/tool/body type/movimento utili → take/fits_current_setup come sostituzione della versione attuale, non premium_rotation.
 - Nessun titolare con ruolo pack in campo (FATTI ACQUISTO) → purchase_fit fits_if_formation_change o fits_with_rotation; per premium con piano pratico il verdict può essere premium_rotation. setup_condition obbligatorio se serve cambio modulo/ruolo.
 - skill_delta indica "quasi uguale" / "non compri per skill nuove" → non vendere l'acquisto come upgrade skill. Per uscite premium, se ci sono almeno 2 pro concreti, usa premium_rotation/take e motiva con stile, movimento, body type, tool speciali o rotazione. Usa luxury_pick/situational solo se manca un caso d'uso reale.
 - Diversificazione è motivo d'acquisto valido: stesso ruolo ma movimento/stile/body type diversi dal titolare (es. Opportunista vs Rapace d'area) → premium_rotation o take se la carta è premium o offre un piano partita chiaramente diverso; non classificare come skip/not_priority solo perché ruolo o skill sono già coperti.
@@ -727,6 +729,53 @@ function calibratePremiumVerdict(analysis, { card, catalogCard, anchorType, anch
   const hasActionableContent = actionableContent.length >= 1
   const blockedFit = analysis.purchase_fit === 'insufficient_data' ||
     (analysis.purchase_fit === 'not_your_playstyle' && !attackCreationCase)
+  const sameNameAnchor = anchorType === 'same_name'
+  const sameNameRotationLanguage = /(rotaz|rotation|ruot|tenere entram|keep both|use both|insieme|same squad)/i.test(textBlob)
+  const sameNameUpgradeCase = sameNameAnchor &&
+    !blockedFit &&
+    (
+      analysis.verdict === 'take' ||
+      analysis.purchase_fit === 'fits_current_setup' ||
+      hasPros ||
+      attackCreationCase ||
+      starterLevelAttackEdge
+    )
+  if (sameNameAnchor) {
+    const patched = { ...analysis }
+    if (sameNameUpgradeCase) {
+      patched.verdict = 'take'
+      patched.purchase_fit = 'fits_current_setup'
+      patched.setup_condition = ''
+      patched.summary = lang === 'en'
+        ? `${card.name} is a version upgrade: buy it only to replace ${anchorName || 'your current version'}, not to rotate both in the same squad.`
+        : `${card.name} è upgrade di versione: compralo per sostituire ${anchorName || 'la versione attuale'}, non per ruotarle entrambe nella stessa rosa.`
+      patched.final_decision = lang === 'en'
+        ? `Buy it if you want the new version as your Plan A; you cannot use two ${card.name} versions together, so the current one becomes replaced, not rotation.`
+        : `Comprala se vuoi la nuova versione come piano A; non puoi usare due ${card.name} insieme, quindi quella attuale viene sostituita, non ruotata.`
+      patched.key_reasoning = [
+        {
+          label: lang === 'en' ? 'Version upgrade' : 'Upgrade versione',
+          text: lang === 'en'
+            ? `Same-player rule: this is not a rotation pair. The new ${card.name} must replace ${anchorName || 'your current version'} if the upgrade matters.`
+            : `Regola stesso giocatore: non è una coppia da rotazione. Il nuovo ${card.name} deve sostituire ${anchorName || 'la versione attuale'} se l’upgrade ti serve.`
+        },
+        ...(patched.key_reasoning || []).filter((item) => !/(rotaz|rotation|ruot|keep both|entramb|insieme)/i.test(`${item.label || ''} ${item.text || ''}`))
+      ].slice(0, 4)
+      return patched
+    }
+    if (sameNameRotationLanguage || patched.purchase_fit === 'fits_with_rotation' || patched.verdict === 'premium_rotation') {
+      patched.verdict = 'skip'
+      patched.purchase_fit = 'skip_duplicate'
+      patched.setup_condition = ''
+      patched.summary = lang === 'en'
+        ? `${card.name} is the same-player case: do not buy for rotation, because both versions cannot be used together.`
+        : `${card.name} è caso stesso giocatore: non comprarlo per rotazione, perché le due versioni non possono essere usate insieme.`
+      patched.final_decision = lang === 'en'
+        ? `Skip unless the new version clearly replaces your current ${card.name}; never plan to rotate both in the same squad.`
+        : `Salta salvo upgrade chiaro sulla versione attuale di ${card.name}; mai pianificare rotazione tra entrambe nella stessa rosa.`
+      return patched
+    }
+  }
   const strictDuplicateBlock = anchorType === 'same_name' &&
     analysis.purchase_fit === 'skip_duplicate' &&
     !hasActionableContent

@@ -270,9 +270,15 @@ function cardBeatsAlternative(card, technical, alternative, catalogCard = null) 
 }
 
 function classifyRosterConflict({ card, technical, sameRole, hasFormation, catalogCard = null }) {
+  const cardName = toAscii(card.name)
+  const sameNameAlternative = sameRole.find(player => {
+    const playerName = toAscii(player.name)
+    return cardName && playerName && (playerName === cardName || playerName.includes(cardName) || cardName.includes(playerName))
+  }) || null
   const bestAlternative = sameRole[0] || null
   const hasCoveredRole = sameRole.length > 0
-  const upgradeEdge = hasCoveredRole && cardBeatsAlternative(card, technical, bestAlternative, catalogCard)
+  const comparisonAlternative = sameNameAlternative || bestAlternative
+  const upgradeEdge = hasCoveredRole && cardBeatsAlternative(card, technical, comparisonAlternative, catalogCard)
   const deepBench = sameRole.length >= 3
   const duplicate = hasCoveredRole && deepBench && !upgradeEdge
   const starterBlocked = hasFormation
@@ -284,6 +290,8 @@ function classifyRosterConflict({ card, technical, sameRole, hasFormation, catal
 
   return {
     bestAlternative,
+    sameNameAlternative,
+    sameName: Boolean(sameNameAlternative),
     roleGap: sameRole.length === 0,
     hasCoveredRole,
     duplicate,
@@ -1086,7 +1094,7 @@ function statEdgeLine(position, technical, bestAlternative, lang) {
     : `Dal profilo carta verificato, il tratto più spendibile è ${label}; leggilo come segnale di profilo, non come confronto numerico con la rosa.`
 }
 
-function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, duplicate, starterBlocked, upgradeEdge, rosterCrowded, premiumCard, diversificationValue, lang }) {
+function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, duplicate, starterBlocked, upgradeEdge, rosterCrowded, premiumCard, diversificationValue, sameName, lang }) {
   if (!hasCompleteCardData) {
     return {
       level: 'needs-card-data',
@@ -1099,6 +1107,20 @@ function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, dupl
       level: 'needs-roster',
       label: lang === 'en' ? 'Card value only' : 'Valore carta',
       title: lang === 'en' ? 'Good card read, team fit needs your roster' : 'Buona carta, fit squadra da completare'
+    }
+  }
+  if (sameName && upgradeEdge) {
+    return {
+      level: 'buy',
+      label: lang === 'en' ? 'Version upgrade' : 'Upgrade versione',
+      title: lang === 'en' ? 'Buy only to replace your current version' : 'Compra solo per sostituire la versione attuale'
+    }
+  }
+  if (sameName) {
+    return {
+      level: 'watch',
+      label: lang === 'en' ? 'Same player' : 'Stesso giocatore',
+      title: lang === 'en' ? 'Not a rotation: compare version vs version' : 'Non è rotazione: confronto versione contro versione'
     }
   }
   if (upgradeEdge && (roleGap || score >= 68)) {
@@ -1334,7 +1356,7 @@ function decisionEvidence({ technical, sameRole, roleGap, duplicate, starterBloc
   }
 }
 
-function buildRosterRead({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, upgradeEdge, diversification, technical, tacticalStyle, patterns, profileRead, lang }) {
+function buildRosterRead({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, upgradeEdge, diversification, technical, tacticalStyle, patterns, profileRead, sameName, lang }) {
   const role = positionLabel(card.position, lang)
   const alternatives = topAlternativeDescriptions(sameRole, card.position, lang)
   const bestName = describeAlternative(bestAlternative, card.position, lang)
@@ -1344,6 +1366,21 @@ function buildRosterRead({ card, sameRole, bestAlternative, roleGap, duplicate, 
   const edgeLine = statEdgeLine(card.position, technical, bestAlternative, lang)
   const secondLine = [useLine, fitLine, mapLine, edgeLine].filter(Boolean).slice(0, 2).join(' ')
   const movement = movementProfile(technical, card.position, lang)
+
+  if (sameName) {
+    return [
+      upgradeEdge
+        ? (lang === 'en'
+            ? `${card.name} is a same-player version upgrade over ${bestName || 'your current version'}: buy only if it becomes your Plan A.`
+            : `${card.name} è upgrade di versione sul tuo ${bestName || 'giocatore attuale'}: compralo solo se diventa il tuo piano A.`)
+        : (lang === 'en'
+            ? `${card.name} is the same-player case: do not buy for rotation, because both versions cannot play together in the same squad.`
+            : `${card.name} è caso stesso giocatore: non comprarlo per rotazione, perché le due versioni non possono stare insieme nella stessa rosa.`),
+      lang === 'en'
+        ? `${secondLine} The decision is replace-or-keep, not bench rotation.`
+        : `${secondLine} La decisione è sostituisci-o-tieni, non rotazione dalla panchina.`
+    ]
+  }
 
   if (roleGap) {
     return [
@@ -1848,18 +1885,21 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   const gameRead = gameSignals(gameAnalysis)
   const movementRead = movementArchetype(technical, card.position, lang)
   const conflict = classifyRosterConflict({ card, technical, sameRole, hasFormation, catalogCard })
-  const bestAlternative = conflict.bestAlternative
+  const bestAlternative = conflict.sameNameAlternative || conflict.bestAlternative
   const diversification = rosterDiversificationProfile(technical, bestAlternative, card.position, lang)
   const roleGap = hasRoster && conflict.roleGap
   const duplicate = hasRoster && conflict.duplicate
   const starterBlocked = hasRoster && conflict.starterBlocked
   const upgradeEdge = hasRoster && conflict.upgradeEdge
+  const sameName = hasRoster && conflict.sameName
   const crowdedRotationPool = startersInRoleCount(sameRole) >= 2
   const distinctSkillRotation = cardDistinctSkillsVsAlternative(technical, bestAlternative)
-  const rotationPoolValue = technical.premiumCard && crowdedRotationPool && (distinctSkillRotation || !upgradeEdge)
-  const diversificationValue = diversification.differentMovement
-    || diversification.score >= 8
-    || rotationPoolValue
+  const rotationPoolValue = !sameName && technical.premiumCard && crowdedRotationPool && (distinctSkillRotation || !upgradeEdge)
+  const diversificationValue = !sameName && (
+    diversification.differentMovement ||
+    diversification.score >= 8 ||
+    rotationPoolValue
+  )
   const rosterCrowded = hasRoster && conflict.rosterCrowded
   const combo = hasRoster ? comboRead({ card, technical, players, issues, profileRead, gameRead, lang }) : null
   const evidence = {
@@ -1923,6 +1963,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
     rosterCrowded,
     premiumCard: technical.premiumCard,
     diversificationValue,
+    sameName,
     lang
   })
   const synergyLevel = decision.label
@@ -1950,6 +1991,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
         tacticalStyle,
         patterns,
         profileRead,
+        sameName,
         lang
       })
 
