@@ -6,11 +6,13 @@ import CreditsBar from '@/components/CreditsBar'
 import { InstallAppPromptButton } from '@/components/InstallAppPrompt'
 import LanguageSwitch from '@/components/LanguageSwitch'
 import { useSidebar } from '@/components/SidebarContext'
+import { useTranslation } from '@/lib/i18n'
 
 const HOME_DASHBOARD_URL = 'https://home.fromzerotohero.io/dashboard'
 
 export default function TopBar() {
-  const { isOpen, setIsOpen } = useSidebar()
+  const { t } = useTranslation()
+  const { isOpen, toggleSidebar } = useSidebar()
 
   return (
     <header 
@@ -42,12 +44,12 @@ export default function TopBar() {
       >
         {/* LEFT SECTION - Menu, Home, GuideTour */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-          {/* Hamburger - mobile only */}
+          {/* Menu: mobile drawer + collapse su desktop */}
           <button
             type="button"
-            onClick={() => setIsOpen(!isOpen)}
-            className="lg:hidden"
-            aria-label="Menu"
+            onClick={toggleSidebar}
+            aria-label={t('toggleMenu')}
+            title={t('toggleMenu')}
             style={{
               display: 'flex',
               alignItems: 'center',

@@ -10,9 +10,11 @@ import LiveCoachLauncher from '@/components/LiveCoachLauncher'
 import InstallAppPrompt from '@/components/InstallAppPrompt'
 import PrelaunchGate from '@/components/PrelaunchGate'
 import { isPrelaunchPublicPath } from '@/lib/prelaunchRoutes'
+import { useSidebar } from '@/components/SidebarContext'
 
 export default function AppLayoutShell({ children }) {
   const pathname = usePathname()
+  const { isOpen: sidebarOpen } = useSidebar()
   const isPublicPath = isPrelaunchPublicPath(pathname || '/')
   const hideDefaultAssistantLauncher = (pathname || '').startsWith('/smart')
 
@@ -26,7 +28,7 @@ export default function AppLayoutShell({ children }) {
         <SidebarNew />
 
         <div
-          className="flex-1 flex flex-col lg:ml-64 overflow-hidden"
+          className={`flex-1 flex flex-col overflow-hidden transition-[margin] duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'}`}
           style={{
             paddingBottom: 'var(--bottom-nav-height, 0px)'
           }}

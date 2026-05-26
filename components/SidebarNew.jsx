@@ -16,7 +16,8 @@ import {
   Shield,
   Sparkles,
   LogOut,
-  Upload
+  Upload,
+  X
 } from 'lucide-react'
 import SidebarGuideTour from '@/components/SidebarGuideTour'
 import { useSidebar } from '@/components/SidebarContext'
@@ -193,7 +194,7 @@ export default function SidebarNew() {
           border-r border-[rgba(0,212,255,0.2)]
           flex flex-col z-40 transition-transform duration-300 ease-in-out
           shadow-[0_0_40px_rgba(0,161,166,0.15)]
-          ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
           pb-20 lg:pb-0
         `}
         style={{
@@ -203,6 +204,24 @@ export default function SidebarNew() {
       >
         <div className="p-4 border-b border-[rgba(0,212,255,0.15)] flex justify-center items-center relative overflow-hidden">
           <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-[rgba(0,212,255,0.5)] to-transparent" />
+          <button
+            type="button"
+            className="lg:hidden absolute right-3 top-3 flex items-center justify-center w-9 h-9 rounded-lg border border-[rgba(0,212,255,0.35)] bg-[rgba(0,212,255,0.08)] text-[#00d4ff]"
+            onClick={() => setIsOpen(false)}
+            aria-label={t('toggleMenu')}
+            title={t('toggleMenu')}
+          >
+            <X size={18} />
+          </button>
+          <button
+            type="button"
+            className="hidden lg:flex absolute right-3 top-1/2 -translate-y-1/2 items-center justify-center w-9 h-9 rounded-lg border border-[rgba(0,212,255,0.35)] bg-[rgba(0,212,255,0.08)] text-[#00d4ff] hover:bg-[rgba(0,212,255,0.16)]"
+            onClick={() => setIsOpen(false)}
+            aria-label={t('toggleMenu')}
+            title={t('toggleMenu')}
+          >
+            <X size={18} />
+          </button>
           <Image
             src="/logo.png"
             alt={t('appName')}
