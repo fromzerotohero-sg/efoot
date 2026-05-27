@@ -151,7 +151,16 @@ export async function POST(req) {
       .maybeSingle()
 
     if (existingClaim) {
-      await accreditBonus(admin, userId, Number(existingClaim.reward_amount || 0), referenceId, 'Daily spin reward')
+      const creditResult = await accreditBonus(
+        admin,
+        userId,
+        Number(existingClaim.reward_amount || 0),
+        referenceId,
+        'Daily spin reward'
+      )
+      if (!creditResult.ok) {
+        return NextResponse.json({ error: creditResult.error || 'Unable to accredit reward' }, { status: 500 })
+      }
       return NextResponse.json({
         ok: true,
         already_claimed: true,
@@ -190,7 +199,16 @@ export async function POST(req) {
         .eq('spin_date', today)
         .maybeSingle()
       if (claimAfterError) {
-        await accreditBonus(admin, userId, Number(claimAfterError.reward_amount || 0), referenceId, 'Daily spin reward')
+        const creditResult = await accreditBonus(
+          admin,
+          userId,
+          Number(claimAfterError.reward_amount || 0),
+          referenceId,
+          'Daily spin reward'
+        )
+        if (!creditResult.ok) {
+          return NextResponse.json({ error: creditResult.error || 'Unable to accredit reward' }, { status: 500 })
+        }
         return NextResponse.json({
           ok: true,
           already_claimed: true,
