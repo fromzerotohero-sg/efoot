@@ -59,7 +59,7 @@ export default function RoadmapVisualizer({
       completed: userProfile?.ai_weak_point && userProfile?.platform,
       progress: (userProfile?.ai_weak_point && userProfile?.platform) ? 100 : 
                 (userProfile?.ai_weak_point || userProfile?.platform) ? 50 : 0,
-      href: '/profilo'
+      href: '/impostazioni-profilo'
     },
     {
       id: 'matches',

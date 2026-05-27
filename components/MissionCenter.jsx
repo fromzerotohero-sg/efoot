@@ -129,7 +129,7 @@ export default function MissionCenter({
         title: t('missionProfileTitle') || 'Ultimo Step: Profilo',
         message: t('missionProfileMsg') || 'Aggiungi il tuo punto debole per ricevere consigli mirati.',
         progress: 75,
-        primaryAction: { label: t('missionProfileAction') || 'Completa profilo', href: '/profilo' },
+        primaryAction: { label: t('missionProfileAction') || 'Completa profilo', href: '/impostazioni-profilo' },
         chatMessage: t('missionProfileChat') || 'Non so cosa mettere come punto debole nel profilo. Puoi aiutarmi a capire qual è il mio problema principale?'
       }
     }
