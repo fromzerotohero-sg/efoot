@@ -262,7 +262,7 @@ export default function SpinLabPage() {
               ))}
             </div>
 
-            <div className={`wheel-rotor ${isSpinning ? 'is-spinning' : ''}`} style={{ transform: `rotate(${rotation}deg)` }}>
+            <div className={`wheel-rotor ${isSpinning ? 'is-spinning' : ''}`} style={{ transform: `translate(-50%, -50%) rotate(${rotation}deg)` }}>
               <svg viewBox="0 0 500 500" className="wheel-svg" role="img" aria-label="Ruota premi Hero Points">
                 <defs>
                   {segments.map((segment) => (
@@ -513,16 +513,14 @@ export default function SpinLabPage() {
           justify-items: center;
           gap: 18px;
           position: relative;
-          overflow: hidden;
+          overflow: visible;
         }
 
         .wheel-stage {
-          width: min(100%, 560px);
+          width: min(100%, 560px, calc(100vw - 76px));
           max-width: 100%;
           aspect-ratio: 1 / 1;
           position: relative;
-          display: grid;
-          place-items: center;
           justify-self: center;
           margin-inline: auto;
         }
@@ -530,6 +528,7 @@ export default function SpinLabPage() {
         .jackpot-ribbon {
           position: absolute;
           top: -7px;
+          left: 50%;
           z-index: 10;
           display: inline-flex;
           align-items: center;
@@ -540,7 +539,8 @@ export default function SpinLabPage() {
           font-weight: 900;
           background: linear-gradient(135deg, #fff7ad, #f59e0b 62%, #fb7185);
           box-shadow: 0 0 30px rgba(250, 204, 21, 0.5);
-          transform: translateY(-50%);
+          transform: translate(-50%, -50%);
+          white-space: nowrap;
         }
 
         .pointer-orb {
@@ -609,9 +609,12 @@ export default function SpinLabPage() {
         .wheel-rotor {
           width: 88%;
           height: 88%;
-          position: relative;
+          position: absolute;
+          top: 50%;
+          left: 50%;
           z-index: 4;
           border-radius: 50%;
+          transform-origin: center center;
           transition: transform 5.2s cubic-bezier(0.08, 0.78, 0.08, 1);
           box-shadow:
             0 0 0 8px rgba(255,255,255,0.12),
@@ -643,6 +646,9 @@ export default function SpinLabPage() {
 
         .brand-center {
           position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
           z-index: 8;
           width: 31%;
           aspect-ratio: 1 / 1;
@@ -870,7 +876,7 @@ export default function SpinLabPage() {
 
         @media (max-width: 520px) {
           .wheel-stage {
-            width: min(100%, 430px);
+            width: min(100%, 390px, calc(100vw - 68px));
           }
 
           .reward-text {
