@@ -9,6 +9,7 @@ import AssistantChat from '@/components/AssistantChat'
 import LiveCoachLauncher from '@/components/LiveCoachLauncher'
 import InstallAppPrompt from '@/components/InstallAppPrompt'
 import PrelaunchGate from '@/components/PrelaunchGate'
+import DailySpinWidget from '@/components/DailySpinWidget'
 import { isPrelaunchPublicPath } from '@/lib/prelaunchRoutes'
 import { useSidebar } from '@/components/SidebarContext'
 
@@ -48,6 +49,7 @@ export default function AppLayoutShell({ children }) {
       </div>
 
       <BottomNavigation />
+      <DailySpinWidget />
       <InstallAppPrompt />
       <LiveCoachLauncher showLauncherButton={false} />
       {!hideDefaultAssistantLauncher && <AssistantChat mode="popup" />}

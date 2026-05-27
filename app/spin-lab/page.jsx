@@ -81,6 +81,7 @@ export default function SpinLabPage() {
   const [message, setMessage] = React.useState('')
   const [celebrating, setCelebrating] = React.useState(false)
   const [error, setError] = React.useState('')
+  const wheelRef = React.useRef(null)
 
   const segmentAngle = 360 / REWARDS.length
 
@@ -181,7 +182,21 @@ export default function SpinLabPage() {
           reward_amount: reward,
           gifted_month_total: Number(prev?.gifted_month_total || 0) + reward
         }))
-        window.dispatchEvent(new CustomEvent('credits-accredited', { detail: { amount: reward, source: 'daily-spin' } }))
+        const sourceRect = wheelRef.current?.getBoundingClientRect()
+        window.dispatchEvent(new CustomEvent('credits-accredited', {
+          detail: {
+            amount: reward,
+            source: 'daily-spin',
+            sourceRect: sourceRect
+              ? {
+                  left: sourceRect.left,
+                  top: sourceRect.top,
+                  width: sourceRect.width,
+                  height: sourceRect.height
+                }
+              : null
+          }
+        }))
         window.dispatchEvent(new CustomEvent('credits-consumed'))
         setIsSpinning(false)
         setCelebrating(true)
@@ -223,13 +238,13 @@ export default function SpinLabPage() {
           </div>
           <h1>Gira la ruota e conquista Hero Points</h1>
           <p>
-            Ogni giorno puoi ritirare un bonus HP. Il premio viene accreditato nella tua
-            <strong> banca HP</strong> e lo puoi controllare nei movimenti.
+            Ogni giorno puoi ritirare un bonus HP. Il premio appare nel saldo in alto e puoi usarlo subito
+            per Hero Chat, Card Advisor e analisi avanzate.
           </p>
         </section>
 
         <section className="game-card">
-          <div className="wheel-stage">
+          <div className="wheel-stage" ref={wheelRef}>
             <div className="jackpot-ribbon">
               <Zap size={15} />
               Jackpot 100 HP
@@ -356,8 +371,8 @@ export default function SpinLabPage() {
               </div>
               <h2>Grande colpo!</h2>
               <p>{message}</p>
-              <a href="/gestione-profilo#movimenti-hp" className="bank-link">
-                Apri banca HP e verifica accredito
+              <a href="/gestione-profilo" className="bank-link">
+                Scopri dove usare gli HP
               </a>
             </div>
           )}

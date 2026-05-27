@@ -16,7 +16,6 @@ import MissionCenter from '@/components/MissionCenter'
 import OnboardingFlow from '@/components/OnboardingFlow'
 import CoachSuggestions from '@/components/CoachSuggestions'
 import HeroCoachJourney from '@/components/HeroCoachJourney'
-import dynamic from 'next/dynamic'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import { withAuth } from '@/components/AuthWrapper'
@@ -38,8 +37,6 @@ import {
   Radio,
   Dumbbell
 } from 'lucide-react'
-
-const DailySpinWidget = dynamic(() => import('@/components/DailySpinWidget'), { ssr: false })
 
 /** Legge query URL: openCoach=1 → Palestra Coach; openAssistantChat=1 → chat principale; openGameAnalysis=1 → GameAnalysisModal; openCardAdvisor=1 → Card Advisor Lab. */
 function OpenCoachListener({ onOpenCoach, onOpenAssistantChat, onOpenGameAnalysis, onOpenCardAdvisor }) {
@@ -509,8 +506,6 @@ function HomePage() {
       <div data-tour-id="tour-dashboard-ai" className="mb-6">
         <AIKnowledgeBar />
       </div>
-
-      <DailySpinWidget lang={lang} />
 
       <HeroCoachJourney
         loading={loading}

@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
 import {
   BookOpen,
+  Gift,
   LayoutGrid,
   User,
   Wallet,
@@ -19,6 +20,7 @@ import {
   Upload,
   X
 } from 'lucide-react'
+import { supabase } from '@/lib/supabaseClient'
 import SidebarGuideTour from '@/components/SidebarGuideTour'
 import { useSidebar } from '@/components/SidebarContext'
 import {
@@ -32,6 +34,32 @@ export default function SidebarNew() {
   const router = useRouter()
   const { isOpen, setIsOpen } = useSidebar()
   const { isOpen: gameAnalysisModalOpen } = useGameAnalysisModalNav()
+  const [dailySpinAvailable, setDailySpinAvailable] = React.useState(null)
+
+  React.useEffect(() => {
+    const loadDailySpinStatus = async () => {
+      try {
+        let token = localStorage.getItem('auth_token')
+        if (!token && supabase) {
+          const { data: session } = await supabase.auth.getSession()
+          token = session?.session?.access_token
+        }
+        if (!token) return
+
+        const res = await fetch('/api/daily-spin', {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store'
+        })
+        const data = await res.json().catch(() => ({}))
+        if (res.ok) setDailySpinAvailable(Boolean(data?.available))
+      } catch {}
+    }
+
+    loadDailySpinStatus()
+    const refresh = () => loadDailySpinStatus()
+    window.addEventListener('credits-accredited', refresh)
+    return () => window.removeEventListener('credits-accredited', refresh)
+  }, [])
 
   const handleLogout = () => {
     fetch('/api/prelaunch/logout', { method: 'POST' }).catch(() => {})
@@ -53,7 +81,17 @@ export default function SidebarNew() {
       title: lang === 'en' ? 'START' : 'INIZIA',
       items: [
         { href: '/', icon: LayoutGrid, label: t('dashboard'), isActive: () => pathname === '/' },
-        { href: '/guida', icon: BookOpen, label: t('guide') }
+        { href: '/guida', icon: BookOpen, label: t('guide') },
+        {
+          href: '/spin-lab',
+          icon: Gift,
+          label: lang === 'en' ? 'Daily wheel' : 'Ruota giornaliera',
+          variant: 'gold',
+          badgeText: dailySpinAvailable === false
+            ? (lang === 'en' ? 'TOMORROW' : 'DOMANI')
+            : (lang === 'en' ? 'TODAY' : 'OGGI'),
+          isActive: () => isActive('/spin-lab')
+        }
       ]
     },
     {
@@ -152,6 +190,33 @@ export default function SidebarNew() {
   }
 
   const renderNavBadge = (item) => {
+    if (item.badgeText) {
+      return (
+        <span
+          aria-label={item.badgeText}
+          style={{
+            flexShrink: 0,
+            marginLeft: 'auto',
+            padding: '2px 7px',
+            borderRadius: '999px',
+            fontSize: '9px',
+            fontWeight: 900,
+            letterSpacing: '0.5px',
+            textTransform: 'uppercase',
+            lineHeight: 1.2,
+            color: item.variant === 'gold' ? '#1f1300' : '#FFFFFF',
+            background: item.variant === 'gold'
+              ? 'linear-gradient(135deg, #fef3c7 0%, #facc15 100%)'
+              : 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+            border: '1px solid rgba(255, 203, 5, 0.55)',
+            boxShadow: '0 0 10px rgba(255, 203, 5, 0.30)'
+          }}
+        >
+          {item.badgeText}
+        </span>
+      )
+    }
+
     if (item.badge !== 'new') return null
     return (
       <span

@@ -26,6 +26,7 @@ export default function CreditsBar() {
   const [popoverPosition, setPopoverPosition] = useState(null)
   const [highlight, setHighlight] = useState(false)
   const [lastAccredited, setLastAccredited] = useState(0)
+  const [flyBurst, setFlyBurst] = useState([])
   const containerRef = useRef(null)
   const popoverRef = useRef(null)
 
@@ -82,6 +83,26 @@ export default function CreditsBar() {
       const amount = Number(event?.detail?.amount || 0)
       if (Number.isFinite(amount) && amount > 0) {
         setLastAccredited(amount)
+      }
+      const targetRect = containerRef.current?.getBoundingClientRect()
+      const sourceRect = event?.detail?.sourceRect
+      if (targetRect && sourceRect) {
+        const startX = sourceRect.left + sourceRect.width / 2
+        const startY = sourceRect.top + sourceRect.height / 2
+        const endX = targetRect.left + targetRect.width / 2
+        const endY = targetRect.top + targetRect.height / 2
+        const burst = Array.from({ length: 9 }, (_, index) => ({
+          id: `${Date.now()}-${index}`,
+          startX: startX + (index - 4) * 8,
+          startY: startY + (index % 3 - 1) * 10,
+          midX: (startX + endX) / 2 + (index - 4) * 14,
+          midY: Math.min(startY, endY) - 120 - (index % 3) * 12,
+          endX,
+          endY,
+          delay: index * 0.045
+        }))
+        setFlyBurst(burst)
+        window.setTimeout(() => setFlyBurst([]), 1600)
       }
       setHighlight(true)
       fetchUsage(ac.signal)
@@ -189,6 +210,61 @@ export default function CreditsBar() {
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
+      {flyBurst.length > 0 && typeof document !== 'undefined' && createPortal(
+        <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 10080 }} aria-hidden="true">
+          {flyBurst.map((piece) => (
+            <span
+              key={piece.id}
+              style={{
+                '--start-x': `${piece.startX}px`,
+                '--start-y': `${piece.startY}px`,
+                '--mid-x': `${piece.midX}px`,
+                '--mid-y': `${piece.midY}px`,
+                '--end-x': `${piece.endX}px`,
+                '--end-y': `${piece.endY}px`,
+                '--delay': `${piece.delay}s`,
+                position: 'fixed',
+                left: 0,
+                top: 0,
+                width: '34px',
+                height: '34px',
+                borderRadius: '999px',
+                display: 'grid',
+                placeItems: 'center',
+                color: '#06101f',
+                fontSize: '11px',
+                fontWeight: 950,
+                background: 'linear-gradient(135deg, #fef3c7, #facc15 52%, #22d3ee)',
+                boxShadow: '0 0 18px rgba(250,204,21,0.65), 0 0 30px rgba(0,212,255,0.35)',
+                transform: 'translate(var(--start-x), var(--start-y)) scale(0.8)',
+                animation: 'hpFlyToBalance 1.25s cubic-bezier(.2,.82,.2,1) var(--delay) forwards'
+              }}
+            >
+              HP
+            </span>
+          ))}
+          <style>{`
+            @keyframes hpFlyToBalance {
+              0% {
+                opacity: 0;
+                transform: translate(var(--start-x), var(--start-y)) scale(0.65) rotate(-10deg);
+              }
+              14% {
+                opacity: 1;
+              }
+              58% {
+                transform: translate(var(--mid-x), var(--mid-y)) scale(1.08) rotate(12deg);
+              }
+              100% {
+                opacity: 0;
+                transform: translate(var(--end-x), var(--end-y)) scale(0.35) rotate(28deg);
+              }
+            }
+          `}</style>
+        </div>,
+        document.body
+      )}
+
       <button
         type="button"
         className="neon-button"
