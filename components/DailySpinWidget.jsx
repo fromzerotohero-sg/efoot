@@ -125,7 +125,7 @@ export default function DailySpinWidget({ lang = 'it' }) {
     if (loading || !status?.available) return
     const dayKey = status.spin_date || todayRomeDateKey()
     const dismissed = localStorage.getItem(`${MODAL_DISMISS_PREFIX}${dayKey}`) === '1'
-    if (!dismissed) setOpen(true)
+    if (!dismissed) setOpen(false)
   }, [loading, status])
 
   const claimReward = async () => {
@@ -214,9 +214,9 @@ export default function DailySpinWidget({ lang = 'it' }) {
             )}
           </div>
           {status?.available ? (
-            <button className="btn primary" type="button" onClick={() => setOpen(true)}>
+            <a className="btn primary" href="/spin-lab">
               {isEn ? 'Spin now' : 'Gira ora'}
-            </button>
+            </a>
           ) : (
             <a href={HP_BANK_URL} className="btn secondary">
               {isEn ? 'Open HP bank' : 'Apri banca HP'}
