@@ -7,7 +7,6 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
 import {
   BookOpen,
-  Gift,
   LayoutGrid,
   User,
   Wallet,
@@ -20,7 +19,6 @@ import {
   Upload,
   X
 } from 'lucide-react'
-import { supabase } from '@/lib/supabaseClient'
 import SidebarGuideTour from '@/components/SidebarGuideTour'
 import { useSidebar } from '@/components/SidebarContext'
 import {
@@ -34,32 +32,6 @@ export default function SidebarNew() {
   const router = useRouter()
   const { isOpen, setIsOpen } = useSidebar()
   const { isOpen: gameAnalysisModalOpen } = useGameAnalysisModalNav()
-  const [dailySpinAvailable, setDailySpinAvailable] = React.useState(null)
-
-  React.useEffect(() => {
-    const loadDailySpinStatus = async () => {
-      try {
-        let token = localStorage.getItem('auth_token')
-        if (!token && supabase) {
-          const { data: session } = await supabase.auth.getSession()
-          token = session?.session?.access_token
-        }
-        if (!token) return
-
-        const res = await fetch('/api/daily-spin', {
-          headers: { Authorization: `Bearer ${token}` },
-          cache: 'no-store'
-        })
-        const data = await res.json().catch(() => ({}))
-        if (res.ok) setDailySpinAvailable(Boolean(data?.available))
-      } catch {}
-    }
-
-    loadDailySpinStatus()
-    const refresh = () => loadDailySpinStatus()
-    window.addEventListener('credits-accredited', refresh)
-    return () => window.removeEventListener('credits-accredited', refresh)
-  }, [])
 
   const handleLogout = () => {
     fetch('/api/prelaunch/logout', { method: 'POST' }).catch(() => {})
@@ -81,17 +53,7 @@ export default function SidebarNew() {
       title: lang === 'en' ? 'START' : 'INIZIA',
       items: [
         { href: '/', icon: LayoutGrid, label: t('dashboard'), isActive: () => pathname === '/' },
-        { href: '/guida', icon: BookOpen, label: t('guide') },
-        {
-          href: '/spin-lab',
-          icon: Gift,
-          label: lang === 'en' ? 'Daily wheel' : 'Ruota giornaliera',
-          variant: 'gold',
-          badgeText: dailySpinAvailable === false
-            ? (lang === 'en' ? 'TOMORROW' : 'DOMANI')
-            : (lang === 'en' ? 'TODAY' : 'OGGI'),
-          isActive: () => isActive('/spin-lab')
-        }
+        { href: '/guida', icon: BookOpen, label: t('guide') }
       ]
     },
     {

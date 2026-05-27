@@ -7,6 +7,7 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const REWARDS = [10, 15, 20, 25, 30, 40, 50, 60, 75, 100]
+const DAILY_SPIN_ENABLED = false
 
 function getTodayRomeDate() {
   return new Intl.DateTimeFormat('en-CA', {
@@ -105,6 +106,13 @@ async function authenticate(req) {
 
 export async function GET(req) {
   try {
+    if (!DAILY_SPIN_ENABLED) {
+      return NextResponse.json(
+        { available: false, disabled: true, error: 'Daily spin temporarily disabled' },
+        { status: 503 }
+      )
+    }
+
     const auth = await authenticate(req)
     if (auth.error) return auth.error
 
@@ -136,6 +144,13 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
+    if (!DAILY_SPIN_ENABLED) {
+      return NextResponse.json(
+        { ok: false, disabled: true, error: 'Daily spin temporarily disabled' },
+        { status: 503 }
+      )
+    }
+
     const auth = await authenticate(req)
     if (auth.error) return auth.error
 
