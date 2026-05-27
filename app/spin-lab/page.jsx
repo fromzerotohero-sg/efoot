@@ -513,14 +513,18 @@ export default function SpinLabPage() {
           justify-items: center;
           gap: 18px;
           position: relative;
+          overflow: hidden;
         }
 
         .wheel-stage {
-          width: min(86vw, 560px);
+          width: min(100%, 560px);
+          max-width: 100%;
           aspect-ratio: 1 / 1;
           position: relative;
           display: grid;
           place-items: center;
+          justify-self: center;
+          margin-inline: auto;
         }
 
         .jackpot-ribbon {
@@ -866,7 +870,7 @@ export default function SpinLabPage() {
 
         @media (max-width: 520px) {
           .wheel-stage {
-            width: min(94vw, 430px);
+            width: min(100%, 430px);
           }
 
           .reward-text {
