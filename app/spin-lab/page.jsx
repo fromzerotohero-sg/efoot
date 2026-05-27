@@ -383,7 +383,8 @@ export default function SpinLabPage() {
         .spin-lab-page {
           min-height: 100vh;
           position: relative;
-          overflow: hidden;
+          overflow-x: hidden;
+          overflow-y: auto;
           padding: clamp(16px, 3vw, 34px);
           background:
             radial-gradient(circle at 50% -10%, rgba(0, 212, 255, 0.25), transparent 32%),
@@ -514,10 +515,12 @@ export default function SpinLabPage() {
           gap: 18px;
           position: relative;
           overflow: visible;
+          width: 100%;
+          box-sizing: border-box;
         }
 
         .wheel-stage {
-          width: min(100%, 560px, calc(100vw - 76px));
+          width: min(100%, 560px);
           max-width: 100%;
           aspect-ratio: 1 / 1;
           position: relative;
@@ -687,15 +690,18 @@ export default function SpinLabPage() {
         }
 
         .controls {
+          width: 100%;
           display: grid;
           justify-items: center;
           gap: 9px;
           text-align: center;
+          box-sizing: border-box;
         }
 
         .spin-button {
           border: 0;
-          min-width: min(320px, 88vw);
+          width: min(100%, 360px);
+          min-width: 0;
           padding: 15px 22px;
           border-radius: 999px;
           display: inline-flex;
@@ -875,12 +881,34 @@ export default function SpinLabPage() {
         }
 
         @media (max-width: 520px) {
+          .spin-lab-page {
+            padding-inline: 14px;
+          }
+
+          .game-card {
+            padding-inline: 16px;
+          }
+
           .wheel-stage {
-            width: min(100%, 390px, calc(100vw - 68px));
+            width: min(100%, 340px);
+          }
+
+          .wheel-rotor {
+            width: 86%;
+            height: 86%;
+            box-shadow:
+              0 0 0 6px rgba(255,255,255,0.12),
+              0 0 0 12px rgba(0,212,255,0.12),
+              0 0 52px rgba(0,212,255,0.34);
+          }
+
+          .spin-button {
+            width: min(100%, 340px);
+            padding-inline: 18px;
           }
 
           .reward-text {
-            font-size: 24px;
+            font-size: 23px;
             stroke-width: 5px;
           }
 
