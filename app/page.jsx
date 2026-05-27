@@ -16,6 +16,7 @@ import MissionCenter from '@/components/MissionCenter'
 import OnboardingFlow from '@/components/OnboardingFlow'
 import CoachSuggestions from '@/components/CoachSuggestions'
 import HeroCoachJourney from '@/components/HeroCoachJourney'
+import DailySpinWidget from '@/components/DailySpinWidget'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import { withAuth } from '@/components/AuthWrapper'
@@ -507,6 +508,8 @@ function HomePage() {
         <AIKnowledgeBar />
       </div>
 
+      <DailySpinWidget lang={lang} />
+
       <HeroCoachJourney
         loading={loading}
         stats={stats}
@@ -568,7 +571,9 @@ function HomePage() {
                     {t('navigation')}
                   </h2>
                   <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.5, color: 'rgba(255,255,255,0.62)' }}>
-                    {lang === 'en' ? 'Jump straight into the tools that improve your team.' : 'Vai subito negli strumenti che fanno crescere la squadra.'}
+                    {lang === 'en'
+                      ? 'Use these tools, then ask Hero Chat to turn data into clear next steps.'
+                      : 'Usa questi strumenti, poi chiedi a Hero Chat di trasformare i dati in prossime mosse chiare.'}
                   </p>
                 </div>
               </div>
@@ -584,7 +589,7 @@ function HomePage() {
                   </span>
                   <span className="dashboard-action-copy">
                     <strong>{lang === 'en' ? 'Squad' : 'Rosa'}</strong>
-                    <small>{lang === 'en' ? 'Players, roles and formation' : 'Giocatori, ruoli e formazione'}</small>
+                    <small>{lang === 'en' ? 'Players, roles and formation for better AI advice' : 'Giocatori, ruoli e formazione per consigli AI migliori'}</small>
                   </span>
                   <ArrowRight size={18} className="dashboard-action-arrow" />
                 </button>
@@ -599,7 +604,7 @@ function HomePage() {
                   </span>
                   <span className="dashboard-action-copy">
                     <strong>{lang === 'en' ? 'New card analysis' : 'Analisi carte nuove'}</strong>
-                    <small>{lang === 'en' ? 'Compare packs with your real roster' : 'Confronta i pack con la tua rosa reale'}</small>
+                    <small>{lang === 'en' ? 'Compare packs with your real roster before spending' : 'Confronta i pack con la tua rosa reale prima di spendere'}</small>
                   </span>
                   <ArrowRight size={18} className="dashboard-action-arrow" />
                 </button>
@@ -616,8 +621,8 @@ function HomePage() {
                     <strong>{t('palestraCoachTitle')}</strong>
                     <small>
                       {lang === 'en'
-                        ? 'Tell the coach what happened in game and turn it into tactical feedback.'
-                        : 'Racconta cosa succede in partita e trasformalo in feedback tattico.'}
+                        ? 'Tell the coach what happened and get practical tactical feedback.'
+                        : 'Racconta cosa succede in partita e ricevi feedback tattico pratico.'}
                     </small>
                   </span>
                   <span className="dashboard-action-badge">
@@ -636,7 +641,43 @@ function HomePage() {
                   </span>
                   <span className="dashboard-action-copy">
                     <strong>{t('gameAnalysisTitle')}</strong>
-                    <small>{lang === 'en' ? 'Upload game stats' : 'Carica statistiche di gioco'}</small>
+                    <small>{lang === 'en' ? 'Upload stats, then ask Hero Chat what to improve first' : 'Carica statistiche, poi chiedi a Hero Chat cosa migliorare per primo'}</small>
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      const message = lang === 'en'
+                        ? 'Analyze my current squad and tell me the 3 priorities for the next matches.'
+                        : 'Analizza la mia rosa attuale e dimmi le 3 priorità per le prossime partite.'
+                      window.dispatchEvent(new CustomEvent('open-assistant-chat', { detail: { message } }))
+                    }
+                  }}
+                  className="dashboard-action-card dashboard-action-card--chat dashboard-action-card--wide"
+                >
+                  <span className="dashboard-action-icon">
+                    <BookOpen size={26} />
+                  </span>
+                  <span className="dashboard-action-copy">
+                    <strong>{lang === 'en' ? 'Ask Hero Chat now' : 'Chiedi ora a Hero Chat'}</strong>
+                    <small>{lang === 'en' ? 'Get immediate actions for your real team' : 'Ricevi azioni immediate sulla tua squadra reale'}</small>
+                  </span>
+                  <span className="dashboard-action-badge">
+                    {lang === 'en' ? 'AI priority' : 'Priorità AI'}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => router.push('/gestione-profilo')}
+                  className="dashboard-action-card dashboard-action-card--credits"
+                >
+                  <span className="dashboard-action-icon">
+                    <Zap size={24} />
+                  </span>
+                  <span className="dashboard-action-copy">
+                    <strong>{lang === 'en' ? 'Where to spend HP' : 'Dove spendere HP'}</strong>
+                    <small>{lang === 'en' ? 'See costs and spend credits where they matter most' : 'Vedi i costi e spendi crediti dove contano di più'}</small>
                   </span>
                 </button>
 
@@ -897,6 +938,29 @@ function HomePage() {
         .dashboard-action-card--coach-gym .dashboard-action-icon {
           color: #67e8f9;
           background: rgba(0, 212, 255, 0.14);
+        }
+
+        .dashboard-action-card--chat {
+          border-color: rgba(0, 212, 255, 0.46);
+          background:
+            linear-gradient(135deg, rgba(0, 212, 255, 0.20), rgba(24, 119, 242, 0.12)),
+            rgba(13, 25, 48, 0.94);
+        }
+
+        .dashboard-action-card--chat .dashboard-action-icon {
+          color: #8ff2ff;
+          background: rgba(0, 212, 255, 0.16);
+        }
+
+        .dashboard-action-card--credits {
+          border-color: rgba(255, 203, 5, 0.30);
+          background: linear-gradient(135deg, rgba(255, 203, 5, 0.14), rgba(168, 85, 247, 0.08));
+        }
+
+        .dashboard-action-card--credits .dashboard-action-icon {
+          color: #ffcb05;
+          background: rgba(255, 203, 5, 0.12);
+          box-shadow: 0 0 18px rgba(255, 203, 5, 0.14);
         }
 
         .dashboard-action-card--stats .dashboard-action-icon {

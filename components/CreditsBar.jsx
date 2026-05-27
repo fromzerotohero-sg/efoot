@@ -24,6 +24,8 @@ export default function CreditsBar() {
   const [noSession, setNoSession] = useState(false)
   const [open, setOpen] = useState(false)
   const [popoverPosition, setPopoverPosition] = useState(null)
+  const [highlight, setHighlight] = useState(false)
+  const [lastAccredited, setLastAccredited] = useState(0)
   const containerRef = useRef(null)
   const popoverRef = useRef(null)
 
@@ -76,8 +78,18 @@ export default function CreditsBar() {
     const interval = setInterval(() => fetchUsage(ac.signal), 45 * 1000)
     const onVisibility = () => { if (document.visibilityState === 'visible') fetchUsage(ac.signal) }
     const onCreditsConsumed = () => fetchUsage(ac.signal)
+    const onCreditsAccredited = (event) => {
+      const amount = Number(event?.detail?.amount || 0)
+      if (Number.isFinite(amount) && amount > 0) {
+        setLastAccredited(amount)
+      }
+      setHighlight(true)
+      fetchUsage(ac.signal)
+      window.setTimeout(() => setHighlight(false), 2600)
+    }
     document.addEventListener('visibilitychange', onVisibility)
     window.addEventListener('credits-consumed', onCreditsConsumed)
+    window.addEventListener('credits-accredited', onCreditsAccredited)
     let authUnsub = null
     if (supabase?.auth?.onAuthStateChange) {
       const { data } = supabase.auth.onAuthStateChange((event, session) => {
@@ -93,6 +105,7 @@ export default function CreditsBar() {
       clearInterval(interval)
       document.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('credits-consumed', onCreditsConsumed)
+      window.removeEventListener('credits-accredited', onCreditsAccredited)
       authUnsub?.unsubscribe?.()
     }
   }, [fetchUsage])
@@ -190,7 +203,12 @@ export default function CreditsBar() {
           gap: '8px',
           whiteSpace: 'nowrap',
           padding: '8px 14px',
-          fontSize: '14px'
+          fontSize: '14px',
+          borderColor: highlight ? 'rgba(255, 203, 5, 0.75)' : undefined,
+          boxShadow: highlight
+            ? '0 0 0 2px rgba(255, 203, 5, 0.28), 0 0 30px rgba(255, 203, 5, 0.46)'
+            : undefined,
+          transition: 'box-shadow 0.25s ease, border-color 0.25s ease'
         }}
       >
         {loading ? (
@@ -211,6 +229,18 @@ export default function CreditsBar() {
             transition: 'transform 0.15s ease'
           }}
         />
+        {highlight && lastAccredited > 0 && (
+          <span
+            style={{
+              marginLeft: '2px',
+              fontSize: '11px',
+              fontWeight: 800,
+              color: '#ffcb05'
+            }}
+          >
+            +{lastAccredited}
+          </span>
+        )}
       </button>
 
       {open && popoverPosition && typeof document !== 'undefined' && createPortal(

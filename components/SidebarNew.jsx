@@ -94,7 +94,7 @@ export default function SidebarNew() {
       title: lang === 'en' ? 'SUPPORT' : 'ASSISTENZA',
       items: [
         { type: 'tour' },
-        { href: '/gestione-profilo', icon: Wallet, label: lang === 'en' ? 'Analysis cost' : 'Costo analisi' }
+        { href: '/gestione-profilo', icon: Wallet, label: lang === 'en' ? 'Where to spend HP' : 'Dove spendere HP' }
       ]
     }
   ]

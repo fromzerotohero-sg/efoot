@@ -227,8 +227,8 @@ function buildJourneyState({
       kicker: isEn ? 'First coaching result' : 'Primo risultato Coach',
       title: isEn ? 'Ask your first precise question' : 'Fai la prima domanda precisa',
       body: isEn
-        ? 'Now the Coach has context. Ask something concrete about your squad, stats or the way you concede goals.'
-        : 'Ora il Coach ha contesto. Chiedi qualcosa di concreto su rosa, statistiche o gol subiti.',
+        ? 'Now the Coach has context. Use Hero Chat to get 3 concrete actions from your squad and match stats.'
+        : 'Ora il Coach ha contesto. Usa Hero Chat per ottenere 3 azioni concrete da rosa e statistiche partita.',
       primary: { label: isEn ? 'Ask the Coach' : 'Chiedi al Coach', action: actions.openCoachFeedback },
       secondary: { label: isEn ? 'Analyze cards' : 'Analizza carte', action: actions.openCardAdvisor },
       checkpoints: [
@@ -247,8 +247,8 @@ function buildJourneyState({
     kicker: isEn ? 'Coach online' : 'Coach operativo',
     title: isEn ? 'Your Coach has the right context' : 'Il tuo Coach ha il contesto giusto',
     body: isEn
-      ? 'Keep it sharp: update game stats after sessions and check new cards before spending resources.'
-      : 'Tienilo aggiornato: carica nuove statistiche dopo le sessioni e controlla le carte prima di investire.',
+      ? 'Keep it sharp: update game stats, use Hero Chat often, and check cards before spending HP.'
+      : 'Tienilo aggiornato: carica nuove statistiche, usa spesso Hero Chat e controlla le carte prima di spendere HP.',
     primary: { label: isEn ? 'Check new cards' : 'Controlla nuove carte', action: actions.openCardAdvisor },
     secondary: { label: isEn ? 'Update stats' : 'Aggiorna statistiche', action: actions.openGameAnalysis },
     checkpoints: [
