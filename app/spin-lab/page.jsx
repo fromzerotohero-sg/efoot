@@ -156,6 +156,7 @@ export default function SpinLabPage() {
       }
       if (!token) throw new Error('Sessione scaduta. Accedi di nuovo.')
 
+      console.log('[spin-lab] start spin request', { endpoint: '/api/daily-spin' })
       const res = await fetch('/api/daily-spin', {
         method: 'POST',
         headers: {
@@ -165,6 +166,7 @@ export default function SpinLabPage() {
         body: JSON.stringify({})
       })
       const data = await res.json().catch(() => ({}))
+      console.log('[spin-lab] spin response', { status: res.status, ok: res.ok, data })
       if (!res.ok) throw new Error(data?.error || 'Impossibile accreditare il premio')
 
       const reward = Number(data?.reward_amount || 0)
@@ -202,6 +204,7 @@ export default function SpinLabPage() {
         window.setTimeout(() => setCelebrating(false), 3300)
       }, 5200)
     } catch (err) {
+      console.error('[spin-lab] spin failed', err)
       setError(err?.message || 'Impossibile accreditare il premio')
       setIsSpinning(false)
     }
