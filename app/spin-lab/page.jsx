@@ -24,7 +24,6 @@ const SUGGESTIONS = [
   'Usali nel Card Advisor Pro per capire se una nuova carta migliora davvero la rosa.',
   'Genera contromisure pre-partita e prepara il piano tattico prima di giocare.'
 ]
-const DAILY_SPIN_ENABLED = false
 
 const CONFETTI = Array.from({ length: 34 }, (_, i) => ({
   id: i,
@@ -73,42 +72,7 @@ function getRotationForReward(currentRotation, reward) {
   return currentRotation + (7 + Math.floor(Math.random() * 3)) * 360 + delta
 }
 
-function DailySpinDisabledNotice() {
-  return (
-    <div className="min-h-screen bg-[#050816] text-white flex items-center justify-center px-4">
-      <div className="max-w-xl w-full rounded-3xl border border-yellow-400/25 bg-slate-950/80 p-8 text-center shadow-2xl">
-        <div className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-full bg-yellow-400/15 text-yellow-300">
-          <Gift size={32} />
-        </div>
-        <p className="mb-2 text-xs font-black uppercase tracking-[0.32em] text-yellow-300">
-          Ruota in manutenzione
-        </p>
-        <h1 className="mb-3 text-3xl font-black">La ruota giornaliera torna presto</h1>
-        <p className="mb-6 text-sm leading-relaxed text-slate-300">
-          Stiamo sistemando l'accredito degli Hero Points per renderlo una vera ricarica sul saldo utilizzabile.
-          Domani riattiviamo tutto.
-        </p>
-        <a
-          href="/"
-          className="inline-flex items-center justify-center rounded-full bg-cyan-400 px-5 py-3 text-sm font-black text-slate-950 transition hover:bg-cyan-300"
-        >
-          Torna alla dashboard
-        </a>
-      </div>
-    </div>
-  )
-}
-
 export default function SpinLabPage() {
-  if (!DAILY_SPIN_ENABLED) {
-    return <DailySpinDisabledNotice />
-  }
-
-  return <SpinLabExperience />
-}
-
-function SpinLabExperience() {
-
   const [loadingStatus, setLoadingStatus] = React.useState(true)
   const [status, setStatus] = React.useState(null)
   const [isSpinning, setIsSpinning] = React.useState(false)

@@ -7,7 +7,6 @@ import { useTranslation } from '@/lib/i18n'
 import { supabase } from '@/lib/supabaseClient'
 
 const DISMISS_PREFIX = 'daily_spin_remind_later_'
-const DAILY_SPIN_ENABLED = false
 
 function todayRomeDateKey() {
   return new Intl.DateTimeFormat('en-CA', {
@@ -19,8 +18,6 @@ function todayRomeDateKey() {
 }
 
 export default function DailySpinWidget({ lang: langProp } = {}) {
-  if (!DAILY_SPIN_ENABLED) return null
-
   const { lang: currentLang } = useTranslation()
   const lang = langProp || currentLang || 'it'
   const pathname = usePathname()
