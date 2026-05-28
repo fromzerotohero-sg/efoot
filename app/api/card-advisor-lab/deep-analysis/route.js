@@ -24,6 +24,7 @@ import {
   roleFamily
 } from '@/lib/cardAdvisorPurchaseContext.js'
 import { buildSkillMechanicsContext } from '@/lib/playerSkillSemantics.js'
+import { getPlayerBaselineStats } from '@/lib/playerEffectiveStats.js'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -268,10 +269,10 @@ function compactPlayer(player, stylesLookup = {}, lang = 'it', formation = null)
     starter: Number(player?.slot_index) >= 0 && Number(player?.slot_index) <= 10,
     style: (player?.playing_style_id && stylesLookup[player.playing_style_id]) || player?.role || null,
     skills: canonSkillsForPrompt(skills, lang, 8),
-    saved_stats: summarizeStats(player?.base_stats || {}),
+    saved_stats: summarizeStats(getPlayerBaselineStats(player, null) || {}),
     stats_basis: {
-      source: 'saved_roster_stats',
-      note: 'Stats salvate nel profilo rosa; possono rappresentare una build/edit del cliente se importate cosi.',
+      source: 'roster_baseline_level_1',
+      note: 'Stats di baseline (level-1) del player in rosa, recuperate dal metadata.build_coach.before quando disponibile, altrimenti dalla colonna base_stats se non e stata fatta una build. Confronto coerente con catalogCard.base_stats.',
       current_level: player?.current_level || null,
       level_cap: player?.level_cap || null,
       active_booster_name: player?.active_booster_name || null
@@ -564,11 +565,10 @@ FOCUS:
 - Scrivi corto e denso. Niente tema. Ogni campo deve essere leggibile in pochi secondi.
 
 REGOLE SULLE STATISTICHE:
-- Le statistiche della CARTA PACK sono valori base/non buildati, salvo quando max_stats è presente. Non chiamarle mai valori finali.
-- Le statistiche dei giocatori in ROSA sono dati salvati dal cliente e possono essere già editati/buildati. Non confrontarle numericamente in modo secco con una carta pack base.
-- Evita frasi tipo "velocità 73 lo espone", "aereo 84 basta", "passaggio 65 non migliora" se stai usando solo base_stats della carta.
-- Usa i numeri base solo come indizi di profilo, sempre insieme a stile, skill native, ruolo, combo e dati della rosa.
-- Se serve parlare di limite statistico, scrivi "dai valori base della carta" o "a build non definita", non come verdetto assoluto.
+- Le statistiche della CARTA PACK e dei giocatori in ROSA nel JSON sono entrambe a BASELINE level-1 (pre-PT, pre-Build Coach). Il confronto e coerente.
+- saved_stats del player in rosa proviene da metadata.build_coach.before quando il cliente ha buildato, altrimenti dalla colonna base_stats: in entrambi i casi e il level-1 reale.
+- Puoi confrontare numericamente i due lati su pace/finish/pass/defend/aerial/gk, ma rimani sintetico: max 1-2 dati numerici, sempre insieme a stile, skill native, ruolo e combo. Niente OVR.
+- I numeri non sono valori finali: dopo PT/livelli entrambi crescono. Indicano potenziale natural, non output finale.
 - BUILD COMPARISON INTERNA: se presente, indica come la carta potrebbe essere valorizzata dai PT meta/rosa. Serve SOLO per confrontare profilo buildato, ruolo, macro e gerarchia. VIETATO citare nel testo finale stats finali, numeri PT, OVR build, tabelle o "con questa build arriva a X". Traduci il confronto in effetti pratici: più copertura, più uscita palla, più profondità, più duelli, più rotazione.
 
 SEMANTICA:
@@ -1065,7 +1065,7 @@ export async function POST(req) {
       performanceRes
     ] = await Promise.all([
       admin.from('user_profiles').select('first_name, nickname, team_name, ai_weak_point, ai_learn_goals, ai_notes, input_delay, connection_quality, pass_level').eq('user_id', userId).maybeSingle(),
-      admin.from('players').select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, skills, com_skills, form, base_stats, original_positions, height, weight, current_level, level_cap, active_booster_name').eq('user_id', userId).limit(60),
+      admin.from('players').select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, skills, com_skills, form, base_stats, original_positions, height, weight, current_level, level_cap, active_booster_name, metadata, development_points').eq('user_id', userId).limit(60),
       admin.from('playing_styles').select('id, name'),
       admin.from('formation_layout').select('formation, slot_positions, updated_at').eq('user_id', userId).maybeSingle(),
       admin.from('coaches').select('coach_name, playing_style_competence, connection, stat_boosters, updated_at').eq('user_id', userId).eq('is_active', true).maybeSingle(),

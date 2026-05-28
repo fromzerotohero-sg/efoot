@@ -4,7 +4,7 @@ import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { getSkillDisplayLabel } from '@/lib/playerSkillLabels.js'
 import { CARD_ADVISOR_SELECT, searchCardAdvisorCardsByName } from '@/lib/cardAdvisorCardsLookup.js'
 import { fetchEfhubCardDetail } from '@/lib/efhubPlayerDetail.js'
-import { getPlayerDisplayStats } from '@/lib/playerEffectiveStats.js'
+import { getPlayerDisplayStats, getPlayerBaselineStats } from '@/lib/playerEffectiveStats.js'
 import { summarizeSkillDelta } from '@/lib/cardAdvisorSkillCompare.js'
 
 export const runtime = 'nodejs'
@@ -230,11 +230,17 @@ function isPremiumAdvisorCard(card = {}, catalogCard = null) {
   return /(epic|legendary|big time|show time|showtime)/.test(text)
 }
 
-/** Stat di confronto rosa: base salvata, non profilo già buildato in campo. */
+/**
+ * Stat di confronto rosa: VERA baseline level-1 del player (pre-PT, pre-build coach).
+ * Necessaria perche dopo commit 14011e3 la colonna players.base_stats puo contenere
+ * stat effettive post-Build Coach. getPlayerBaselineStats risale alla baseline reale
+ * leggendo metadata.build_coach.before.base_stats; il fallback display_stats e usato
+ * solo se la baseline non e recuperabile (player con dati incompleti).
+ */
 function rosterComparisonSignals(player) {
-  const base = player?.base_stats
-  if (base && typeof base === 'object' && Object.keys(base).length > 0) {
-    return signalsFromStats(base)
+  const baseline = getPlayerBaselineStats(player, null)
+  if (baseline && typeof baseline === 'object' && Object.keys(baseline).length > 0) {
+    return signalsFromStats(baseline)
   }
   const built = getPlayerDisplayStats(player) || {}
   return signalsFromStats(built)
@@ -249,8 +255,10 @@ function profileStrengthScore(signals, position) {
 }
 
 /**
- * Upgrade reale vs titolare: skill native, profilo ruolo e valore premium. Mai OVR:
- * la carta pack puo essere base, mentre il player in rosa puo essere gia buildato.
+ * Upgrade reale vs titolare. Confronta profili statistici a livello-1 (la carta dal
+ * pacchetto e il player in rosa via getPlayerBaselineStats), piu skill native uniche.
+ * Le regole sono cumulative ma richiedono dominanza concreta: la sola etichetta
+ * "premium" non basta a far passare upgradeEdge.
  */
 function cardBeatsAlternative(card, technical, alternative, catalogCard = null) {
   if (!alternative) return true
@@ -258,13 +266,18 @@ function cardBeatsAlternative(card, technical, alternative, catalogCard = null) 
   const cardProfile = profileStrengthScore(technical, card.position)
   const altProfile = profileStrengthScore(alternative.signals || {}, card.position)
   const skillDelta = summarizeSkillDelta(card, catalogCard, alternative)
-  const { onlyOnCard, almostSame } = skillDelta
+  const { onlyOnCard } = skillDelta
 
-  if (onlyOnCard >= 2) return true
-  if (onlyOnCard >= 1 && cardProfile >= 74) return true
-  if (cardProfile >= altProfile + 6) return true
-  if (technical.premiumCard && !almostSame && cardProfile >= 76) return true
-  if (technical.premiumCard && onlyOnCard >= 1) return true
+  // Dominanza profilo netta (qualsiasi carta, anche non premium).
+  if (cardProfile >= altProfile + 4) return true
+  // Molte skill uniche con profilo non molto sotto.
+  if (onlyOnCard >= 3 && cardProfile >= altProfile - 2) return true
+  // Alcune skill uniche con profilo meglio del titolare.
+  if (onlyOnCard >= 2 && cardProfile >= altProfile + 2) return true
+  // Premium con 2+ skill uniche E profilo almeno pari (era "1 skill = upgrade").
+  if (technical.premiumCard && onlyOnCard >= 2 && cardProfile >= altProfile) return true
+  // Premium con 1 skill unica richiede profilo nettamente meglio (era "1 skill = upgrade").
+  if (technical.premiumCard && onlyOnCard >= 1 && cardProfile >= altProfile + 2) return true
 
   return false
 }
@@ -774,7 +787,7 @@ function skillText(skills = []) {
 function bestAerialTarget(players = []) {
   return (players || [])
     .map(player => {
-      const signals = signalsFromStats(player?.base_stats || {})
+      const signals = rosterComparisonSignals(player)
       const skills = skillText([...(Array.isArray(player?.skills) ? player.skills : []), ...(Array.isArray(player?.com_skills) ? player.com_skills : [])])
       const hasAerialSkill = /(heading|colpo di testa|aerial|dominio|svettante)/.test(skills)
       return {
@@ -792,7 +805,7 @@ function bestAerialTarget(players = []) {
 function bestDepthRunner(players = []) {
   return (players || [])
     .map(player => {
-      const signals = signalsFromStats(player?.base_stats || {})
+      const signals = rosterComparisonSignals(player)
       const skills = skillText([...(Array.isArray(player?.skills) ? player.skills : []), ...(Array.isArray(player?.com_skills) ? player.com_skills : [])])
       const position = String(player?.position || '')
       const attackingRole = ['P', 'SP', 'ESA', 'EDA'].includes(position)
@@ -812,7 +825,7 @@ function bestDepthRunner(players = []) {
 function bestCreator(players = []) {
   return (players || [])
     .map(player => {
-      const signals = signalsFromStats(player?.base_stats || {})
+      const signals = rosterComparisonSignals(player)
       const skills = skillText([...(Array.isArray(player?.skills) ? player.skills : []), ...(Array.isArray(player?.com_skills) ? player.com_skills : [])])
       const hasCreatorSkill = /(through|filtrante|one touch|prima|weighted|calibrato|passaggio)/.test(skills)
       return {
@@ -1094,7 +1107,7 @@ function statEdgeLine(position, technical, bestAlternative, lang) {
     : `Dal profilo carta verificato, il tratto più spendibile è ${label}; leggilo come segnale di profilo, non come confronto numerico con la rosa.`
 }
 
-function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, duplicate, starterBlocked, upgradeEdge, rosterCrowded, premiumCard, diversificationValue, sameName, lang }) {
+function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, duplicate, starterBlocked, upgradeEdge, rosterCrowded, premiumCard, diversificationValue, sameName, sameRoleLength, lang }) {
   if (!hasCompleteCardData) {
     return {
       level: 'needs-card-data',
@@ -1123,7 +1136,7 @@ function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, dupl
       title: lang === 'en' ? 'Not a rotation: compare version vs version' : 'Non è rotazione: confronto versione contro versione'
     }
   }
-  if (upgradeEdge && (roleGap || score >= 68)) {
+  if (upgradeEdge && (roleGap || score >= 70)) {
     return {
       level: 'buy',
       label: lang === 'en' ? 'High team synergy' : 'Sinergia alta',
@@ -1137,7 +1150,12 @@ function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, dupl
       title: lang === 'en' ? 'Worth considering over your current option' : 'Da valutare rispetto all’opzione attuale'
     }
   }
-  if ((duplicate || starterBlocked) && diversificationValue && score >= 72) {
+  // Soglie BUY diversificazione differenziate per affollamento ruolo:
+  // - 3+ in fascia (deep bench): richiede score molto alto, e una 4a opzione raramente vale
+  // - 1-2 in fascia (rotation light): soglia normale
+  const deepBench = Number(sameRoleLength) >= 3
+  const buyDivThreshold = deepBench ? 88 : 80
+  if ((duplicate || starterBlocked) && diversificationValue && score >= buyDivThreshold) {
     return {
       level: 'buy',
       label: lang === 'en' ? 'Diversify your squad' : 'Diversifica la rosa',
@@ -1146,7 +1164,7 @@ function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, dupl
         : 'Compra per avere un profilo tattico diverso nello stesso ruolo'
     }
   }
-  if ((duplicate || starterBlocked) && diversificationValue && score >= 58) {
+  if ((duplicate || starterBlocked) && diversificationValue && score >= 65) {
     return {
       level: 'watch',
       label: lang === 'en' ? 'Tactical variety' : 'Varietà tattica',
@@ -1155,18 +1173,29 @@ function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, dupl
         : 'Stesso ruolo, piano partita diverso — vale se ti piace ruotare'
     }
   }
-  if ((duplicate || starterBlocked) && premiumCard && score >= (diversificationValue ? 72 : 76)) {
+  if ((duplicate || starterBlocked) && premiumCard && score >= (diversificationValue ? 84 : 88)) {
     return {
       level: 'buy',
       label: lang === 'en' ? 'Premium rotation' : 'Rotazione premium',
       title: lang === 'en' ? 'Buy if you want a premium role option' : 'Compra se vuoi un’opzione premium nel ruolo'
     }
   }
-  if ((duplicate || starterBlocked) && premiumCard && score >= (diversificationValue ? 56 : 62)) {
+  if ((duplicate || starterBlocked) && premiumCard && score >= (diversificationValue ? 60 : 65)) {
     return {
       level: 'watch',
       label: lang === 'en' ? 'Premium option' : 'Opzione premium',
       title: lang === 'en' ? 'Strong card, worth considering as rotation' : 'Carta forte, da valutare come rotazione'
+    }
+  }
+  // SKIP esplicito per ruoli realmente affollati senza upgrade ne diversificazione:
+  // niente diplomazia, "ruolo gia coperto, lascia perdere".
+  if (duplicate && rosterCrowded && !upgradeEdge && !diversificationValue && !premiumCard && score < 65) {
+    return {
+      level: 'skip',
+      label: lang === 'en' ? 'Role already covered' : 'Ruolo già coperto',
+      title: lang === 'en'
+        ? 'Role is full and this card does not add a tactical option'
+        : 'Ruolo coperto e la carta non aggiunge un’opzione tattica'
     }
   }
   if (duplicate || starterBlocked) {
@@ -1929,10 +1958,14 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   if (diversification.differentMovement) score += 8
   if (diversification.differentBody) score += 3
   if (rotationPoolValue) score += 6
-  if (evidence.hasNativeEdge) score += 6
-  if (evidence.hasTacticalFit) score += 6
-  if (evidence.teamStyleFit) score += 6
-  if (evidence.profileNeedFit) score += 6
+  // Cap dei bonus tattici cumulativi a +14 (prima potevano arrivare a +24 in stacking).
+  // Le 4 condizioni sono parzialmente ridondanti: senza cap qualsiasi carta decente
+  // raggiungeva score 95 e bypassava qualsiasi soglia di prudenza.
+  const tacticalStack = (evidence.hasNativeEdge ? 6 : 0)
+    + (evidence.hasTacticalFit ? 6 : 0)
+    + (evidence.teamStyleFit ? 6 : 0)
+    + (evidence.profileNeedFit ? 6 : 0)
+  score += Math.min(tacticalStack, 14)
   if (evidence.hasMapFit) score += 4
   if (issues.needDefence && (roleFamily(card.position) === 'def' || roleFamily(card.position) === 'gk')) score += 7
   if (issues.needBuild && roleFamily(card.position) === 'mid') score += 7
@@ -1949,7 +1982,14 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   if (profileRead.networkRisk && roleFamily(card.position) === 'att') score -= 3
   if (gameRead.passAccuracy != null && gameRead.passAccuracy < 78 && roleFamily(card.position) === 'mid') score += 5
   if (gameRead.shotsConceded != null && gameRead.shotsConceded >= 7 && roleFamily(card.position) === 'def') score += 6
-  if (rosterCrowded && (diversificationValue || rotationPoolValue)) score += 3
+  // Penalita per ruolo gia affollato SENZA upgrade reale: una 4a opzione nella stessa
+  // fascia raramente vale i coins. Se invece c'e diversificazione o pool premium, e
+  // valore rotazionale: applichiamo solo il bonus +3 storico.
+  if (rosterCrowded && (duplicate || starterBlocked) && !upgradeEdge && !diversificationValue && !rotationPoolValue) {
+    score -= 6
+  } else if (rosterCrowded && (diversificationValue || rotationPoolValue)) {
+    score += 3
+  }
   score = clamp(score, 28, 95)
 
   const decision = purchaseDecision({
@@ -1964,6 +2004,7 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
     premiumCard: technical.premiumCard,
     diversificationValue,
     sameName,
+    sameRoleLength: Array.isArray(sameRole) ? sameRole.length : 0,
     lang
   })
   const synergyLevel = decision.label
@@ -2242,7 +2283,7 @@ export async function POST(req) {
       ? await Promise.all([
         safeSupabaseQuery(admin.from('user_profiles').select('first_name, nickname, team_name, ai_weak_point, ai_learn_goals, ai_notes, input_delay, connection_quality, pass_level').eq('user_id', userId).maybeSingle(), {}, 'profile'),
         safeSupabaseQuery(admin.from('formation_layout').select('formation, slot_positions').eq('user_id', userId).maybeSingle(), null, 'formation'),
-        safeSupabaseQuery(admin.from('players').select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, skills, com_skills, form, base_stats, original_positions, height, weight, current_level, level_cap, active_booster_name').eq('user_id', userId).limit(60), [], 'players'),
+        safeSupabaseQuery(admin.from('players').select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, skills, com_skills, form, base_stats, original_positions, height, weight, current_level, level_cap, active_booster_name, metadata, development_points').eq('user_id', userId).limit(60), [], 'players'),
         safeSupabaseQuery(admin.from('playing_styles').select('id, name'), [], 'playing styles'),
         safeSupabaseQuery(admin.from('coaches').select('coach_name, playing_style_competence, connection, stat_boosters').eq('user_id', userId).eq('is_active', true).maybeSingle(), null, 'coach'),
         safeSupabaseQuery(admin.from('team_tactical_settings').select('team_playing_style, individual_instructions').eq('user_id', userId).maybeSingle(), null, 'tactical settings'),
