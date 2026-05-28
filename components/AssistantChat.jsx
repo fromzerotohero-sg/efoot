@@ -524,14 +524,14 @@ export default function AssistantChat({
             50% { transform: scale(1.2); opacity: 0.8; }
           }
           @keyframes chat-launcher-pulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 24px rgba(0, 212, 255, 0.5), inset 0 0 12px rgba(0, 212, 255, 0.25); }
-            50% { transform: scale(1.06); box-shadow: 0 0 32px rgba(0, 212, 255, 0.7), inset 0 0 14px rgba(0, 212, 255, 0.35); }
+            0%, 100% { transform: scale(1); box-shadow: 0 0 24px rgba(255, 176, 32, 0.55), inset 0 0 12px rgba(255, 203, 5, 0.28); }
+            50% { transform: scale(1.06); box-shadow: 0 0 36px rgba(255, 176, 32, 0.85), inset 0 0 16px rgba(255, 203, 5, 0.4); }
           }
           .pulse-ring {
             position: absolute;
             inset: -5px;
             border-radius: 50%;
-            border: 2px solid rgba(0, 212, 255, 0.6);
+            border: 2px solid rgba(255, 203, 5, 0.65);
             animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
             pointer-events: none;
           }
@@ -557,9 +557,9 @@ export default function AssistantChat({
             height: isMobileViewport ? '56px' : '72px',
             borderRadius: '50%',
             background: '#050814',
-            border: '2px solid rgba(0, 212, 255, 0.8)',
+            border: '2px solid rgba(255, 203, 5, 0.9)',
             cursor: 'pointer',
-            boxShadow: '0 0 24px rgba(0, 212, 255, 0.5), inset 0 0 12px rgba(0, 212, 255, 0.3)',
+            boxShadow: '0 0 24px rgba(255, 176, 32, 0.6), inset 0 0 12px rgba(255, 203, 5, 0.35)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -574,7 +574,7 @@ export default function AssistantChat({
             e.currentTarget.style.width = '180px'
             e.currentTarget.style.borderRadius = '40px'
             e.currentTarget.style.animation = 'none'
-            e.currentTarget.style.boxShadow = '0 0 40px rgba(0, 212, 255, 0.8), inset 0 0 20px rgba(0, 212, 255, 0.4)'
+            e.currentTarget.style.boxShadow = '0 0 44px rgba(255, 176, 32, 0.9), inset 0 0 20px rgba(255, 203, 5, 0.45)'
             const label = e.currentTarget.querySelector('.chat-label')
             if (label) {
               label.style.opacity = '1'
@@ -586,7 +586,7 @@ export default function AssistantChat({
             e.currentTarget.style.width = '72px'
             e.currentTarget.style.borderRadius = '50%'
             e.currentTarget.style.animation = 'chat-launcher-pulse 2s ease-in-out infinite'
-            e.currentTarget.style.boxShadow = '0 0 24px rgba(0, 212, 255, 0.5), inset 0 0 12px rgba(0, 212, 255, 0.3)'
+            e.currentTarget.style.boxShadow = '0 0 24px rgba(255, 176, 32, 0.6), inset 0 0 12px rgba(255, 203, 5, 0.35)'
             const label = e.currentTarget.querySelector('.chat-label')
             if (label) {
               label.style.opacity = '0'
@@ -619,12 +619,12 @@ export default function AssistantChat({
           }}>
             <img 
               src="/logo.png" 
-              alt="Hero Chat" 
+              alt="Chiedi al Coach" 
               style={{
                 width: '100%',
                 height: '100%',
                 objectFit: 'contain',
-                filter: 'drop-shadow(0 0 12px rgba(0, 212, 255, 0.65))'
+                filter: 'drop-shadow(0 0 12px rgba(255, 203, 5, 0.7))'
               }} 
             />
           </div>
@@ -638,42 +638,44 @@ export default function AssistantChat({
               whiteSpace: 'nowrap',
               color: '#fff',
               fontSize: '14px',
-              fontWeight: 600,
+              fontWeight: 700,
               opacity: 0,
               transform: 'translateX(-10px)',
               transition: 'all 0.3s ease',
               pointerEvents: 'none',
-              textShadow: '0 0 10px rgba(0, 212, 255, 0.8)'
+              textShadow: '0 0 10px rgba(255, 176, 32, 0.9)'
             }}
           >
-            Hero Chat
+            Chiedi al Coach
           </span>
           
-          {/* Badge Hero Chat */}
+          {/* Badge CTA */}
           <div 
             className="hero-chat-badge"
             style={{
               position: 'absolute',
-              right: isMobileViewport ? '-18px' : '-28px',
+              right: isMobileViewport ? '-32px' : '-46px',
               bottom: isMobileViewport ? '-2px' : '2px',
-              minWidth: isMobileViewport ? '58px' : '72px',
+              minWidth: isMobileViewport ? '92px' : '108px',
               height: isMobileViewport ? '22px' : '24px',
-              padding: '0 8px',
+              padding: '0 10px',
               borderRadius: '999px',
-              background: 'linear-gradient(135deg, #00d4ff 0%, #67e8f9 100%)',
+              background: 'linear-gradient(135deg, #ffcb05 0%, #f97316 100%)',
               border: '2px solid #050814',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: isMobileViewport ? '9px' : '10px',
               fontWeight: 900,
-              letterSpacing: '0.02em',
-              color: '#06101f',
-              boxShadow: '0 0 10px rgba(0, 212, 255, 0.8)',
+              letterSpacing: '0.04em',
+              color: '#1a1200',
+              textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 0 12px rgba(255, 176, 32, 0.9)',
               zIndex: 2
             }}
           >
-            Hero Chat
+            Chiedi al Coach
           </div>
         </button>
       </>
