@@ -6,7 +6,9 @@ import { accreditBonus } from '@/lib/creditService'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const REWARDS = [10, 15, 20, 25, 30, 40, 50, 60, 75, 100]
+// Distribuzione pesata:
+// 3x5, 2x0, 2x10, 1x20, 1x30, 1x100
+const REWARDS = [5, 5, 5, 0, 0, 10, 10, 20, 30, 100]
 
 function getTodayRomeDate() {
   return new Intl.DateTimeFormat('en-CA', {
@@ -110,12 +112,23 @@ export async function GET(req) {
 
     const { admin, userId } = auth
     const today = getTodayRomeDate()
+    const { data: claim } = await admin
+      .from('daily_spin_claims')
+      .select('reward_amount, spin_date, created_at')
+      .eq('user_id', userId)
+      .eq('spin_date', today)
+      .maybeSingle()
+
+    const giftedTotals = await getGiftedTotalsForUser(admin, userId, today)
+
     return NextResponse.json({
-      available: true,
-      claimed_today: false,
+      available: !claim,
+      claimed_today: !!claim,
       spin_date: today,
-      reward_amount: null,
-      claimed_at: null
+      reward_amount: claim?.reward_amount ?? null,
+      claimed_at: claim?.created_at ?? null,
+      gifted_month_total: giftedTotals.monthTotal,
+      gifted_lifetime_total: giftedTotals.lifetimeTotal
     })
   } catch (err) {
     console.error('[daily-spin] GET error:', err)
@@ -129,19 +142,105 @@ export async function POST(req) {
     if (auth.error) return auth.error
 
     const { admin, userId } = auth
-    const nowIso = new Date().toISOString()
-    const reward = REWARDS[Math.floor(Math.random() * REWARDS.length)] || pickReward()
-    const referenceId = `daily-spin:${userId}:${nowIso}:${Math.random().toString(36).slice(2, 10)}`
-    const creditResult = await accreditBonus(admin, userId, reward, referenceId, 'Daily spin reward')
-    if (!creditResult.ok) {
-      return NextResponse.json({ error: creditResult.error || 'Unable to accredit reward' }, { status: 500 })
+    const today = getTodayRomeDate()
+    const referenceId = `daily-spin:${userId}:${today}`
+
+    const { data: existingClaim } = await admin
+      .from('daily_spin_claims')
+      .select('reward_amount, created_at')
+      .eq('user_id', userId)
+      .eq('spin_date', today)
+      .maybeSingle()
+
+    if (existingClaim) {
+      const existingReward = Number(existingClaim.reward_amount || 0)
+      if (existingReward > 0) {
+        const creditResult = await accreditBonus(
+          admin,
+          userId,
+          existingReward,
+          referenceId,
+          'Daily spin reward'
+        )
+        if (!creditResult.ok) {
+          return NextResponse.json({ error: creditResult.error || 'Unable to accredit reward' }, { status: 500 })
+        }
+      }
+      return NextResponse.json({
+        ok: true,
+        already_claimed: true,
+        reward_amount: existingClaim.reward_amount,
+        spin_date: today,
+        claimed_at: existingClaim.created_at
+      })
+    }
+
+    const giftedTotals = await getGiftedTotalsForUser(admin, userId, today)
+    const hasWon100ThisMonth = giftedTotals.monthBounds
+      ? (await admin
+          .from('daily_spin_claims')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .eq('reward_amount', 100)
+          .gte('spin_date', giftedTotals.monthBounds.firstDay)
+          .lte('spin_date', giftedTotals.monthBounds.lastDay)).count > 0
+      : false
+
+    const eligibleRewards = hasWon100ThisMonth
+      ? REWARDS.filter((value) => value !== 100)
+      : REWARDS
+    const reward = eligibleRewards[Math.floor(Math.random() * eligibleRewards.length)] ?? pickReward()
+    const { error: claimError } = await admin.from('daily_spin_claims').insert({
+      user_id: userId,
+      spin_date: today,
+      reward_amount: reward
+    })
+
+    if (claimError) {
+      const { data: claimAfterError } = await admin
+        .from('daily_spin_claims')
+        .select('reward_amount, created_at')
+        .eq('user_id', userId)
+        .eq('spin_date', today)
+        .maybeSingle()
+      if (claimAfterError) {
+        const recoveredReward = Number(claimAfterError.reward_amount || 0)
+        if (recoveredReward > 0) {
+          const creditResult = await accreditBonus(
+            admin,
+            userId,
+            recoveredReward,
+            referenceId,
+            'Daily spin reward'
+          )
+          if (!creditResult.ok) {
+            return NextResponse.json({ error: creditResult.error || 'Unable to accredit reward' }, { status: 500 })
+          }
+        }
+        return NextResponse.json({
+          ok: true,
+          already_claimed: true,
+          reward_amount: claimAfterError.reward_amount,
+          spin_date: today,
+          claimed_at: claimAfterError.created_at
+        })
+      }
+      return NextResponse.json({ error: 'Unable to save daily spin claim' }, { status: 500 })
+    }
+
+    if (Number(reward) > 0) {
+      const creditResult = await accreditBonus(admin, userId, reward, referenceId, 'Daily spin reward')
+      if (!creditResult.ok) {
+        return NextResponse.json({ error: creditResult.error || 'Unable to accredit reward' }, { status: 500 })
+      }
     }
 
     return NextResponse.json({
       ok: true,
       already_claimed: false,
       reward_amount: reward,
-      spin_date: getTodayRomeDate()
+      spin_date: today,
+      monthly_100_blocked: hasWon100ThisMonth
     })
   } catch (err) {
     console.error('[daily-spin] POST error:', err)

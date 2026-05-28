@@ -4,7 +4,7 @@ import React from 'react'
 import { Coins, Gift, RotateCw, Sparkles, Trophy, Zap } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 
-const REWARDS = [10, 15, 20, 25, 30, 40, 50, 60, 75, 100]
+const REWARDS = [5, 5, 5, 0, 0, 10, 10, 20, 30, 100]
 const SEGMENT_COLORS = [
   ['#06b6d4', '#0ea5e9'],
   ['#2563eb', '#7c3aed'],
@@ -24,8 +24,6 @@ const SUGGESTIONS = [
   'Usali nel Card Advisor Pro per capire se una nuova carta migliora davvero la rosa.',
   'Genera contromisure pre-partita e prepara il piano tattico prima di giocare.'
 ]
-const ADMIN_SPIN_CODE = 'ADMIN123'
-
 const CONFETTI = Array.from({ length: 34 }, (_, i) => ({
   id: i,
   left: 6 + ((i * 29) % 88),
@@ -77,9 +75,6 @@ export default function SpinLabPage() {
   const [loadingStatus, setLoadingStatus] = React.useState(true)
   const [status, setStatus] = React.useState(null)
   const [isSpinning, setIsSpinning] = React.useState(false)
-  const [codeModalOpen, setCodeModalOpen] = React.useState(false)
-  const [adminCode, setAdminCode] = React.useState('')
-  const [codeError, setCodeError] = React.useState('')
   const [rotation, setRotation] = React.useState(0)
   const [lastReward, setLastReward] = React.useState(null)
   const [message, setMessage] = React.useState('')
@@ -129,6 +124,10 @@ export default function SpinLabPage() {
         const data = await res.json().catch(() => ({}))
         if (!res.ok) throw new Error(data?.error || 'Impossibile caricare la ruota giornaliera')
         setStatus(data)
+        if (data?.claimed_today && data?.reward_amount != null) {
+          setLastReward(Number(data.reward_amount))
+          setMessage('Hai già ritirato il premio di oggi. Torna domani per una nuova ruota.')
+        }
       } catch (err) {
         setError(err?.message || 'Impossibile caricare la ruota giornaliera')
       } finally {
@@ -139,8 +138,9 @@ export default function SpinLabPage() {
     loadStatus()
   }, [])
 
-  const performSpin = async () => {
+  const spinWheel = async () => {
     if (isSpinning) return
+    if (status?.claimed_today) return
 
     setIsSpinning(true)
     setLastReward(null)
@@ -156,7 +156,6 @@ export default function SpinLabPage() {
       }
       if (!token) throw new Error('Sessione scaduta. Accedi di nuovo.')
 
-      console.log('[spin-lab] start spin request', { endpoint: '/api/daily-spin' })
       const res = await fetch('/api/daily-spin', {
         method: 'POST',
         headers: {
@@ -166,7 +165,6 @@ export default function SpinLabPage() {
         body: JSON.stringify({})
       })
       const data = await res.json().catch(() => ({}))
-      console.log('[spin-lab] spin response', { status: res.status, ok: res.ok, data })
       if (!res.ok) throw new Error(data?.error || 'Impossibile accreditare il premio')
 
       const reward = Number(data?.reward_amount || 0)
@@ -178,8 +176,8 @@ export default function SpinLabPage() {
         setMessage(pickRandomSuggestion())
         setStatus((prev) => ({
           ...(prev || {}),
-          available: true,
-          claimed_today: false,
+          available: false,
+          claimed_today: true,
           reward_amount: reward,
           gifted_month_total: Number(prev?.gifted_month_total || 0) + reward
         }))
@@ -204,26 +202,9 @@ export default function SpinLabPage() {
         window.setTimeout(() => setCelebrating(false), 3300)
       }, 5200)
     } catch (err) {
-      console.error('[spin-lab] spin failed', err)
       setError(err?.message || 'Impossibile accreditare il premio')
       setIsSpinning(false)
     }
-  }
-
-  const spinWheel = () => {
-    if (isSpinning || loadingStatus) return
-    setAdminCode('')
-    setCodeError('')
-    setCodeModalOpen(true)
-  }
-
-  const confirmSpinCode = () => {
-    if ((adminCode || '').trim() !== ADMIN_SPIN_CODE) {
-      setCodeError('Codice non valido.')
-      return
-    }
-    setCodeModalOpen(false)
-    void performSpin()
   }
 
   return (
@@ -256,7 +237,7 @@ export default function SpinLabPage() {
           </div>
           <h1>Gira la ruota e conquista Hero Points</h1>
           <p>
-            Inserisci il codice admin, gira la ruota e ottieni subito un bonus HP. Il premio appare nel saldo in alto e puoi usarlo subito
+            Ogni giorno puoi ritirare un bonus HP. Il premio appare nel saldo in alto e puoi usarlo subito
             per Hero Chat, Card Advisor e analisi avanzate.
           </p>
         </section>
@@ -337,7 +318,7 @@ export default function SpinLabPage() {
           </div>
 
           <div className="controls">
-            <button className="spin-button" onClick={spinWheel} disabled={isSpinning || loadingStatus}>
+            <button className="spin-button" onClick={spinWheel} disabled={isSpinning || loadingStatus || status?.claimed_today}>
               {loadingStatus ? (
                 <>
                   <RotateCw size={20} className="rotating-icon" />
@@ -348,15 +329,22 @@ export default function SpinLabPage() {
                   <RotateCw size={20} className="rotating-icon" />
                   Sta girando...
                 </>
+              ) : status?.claimed_today ? (
+                <>
+                  <Trophy size={20} />
+                  Ritorna domani
+                </>
               ) : (
                 <>
                   <Gift size={20} />
-                  Inserisci codice e gira
+                  Gira la ruota
                 </>
               )}
             </button>
             <p>
-              Accesso ruota protetto da codice admin. Premi assegnati in base a dove si ferma la ruota.
+              {status?.claimed_today
+                ? 'Hai già usato la ruota di oggi.'
+                : 'Premi possibili: 0, 5, 10, 20, 30 e 100 HP (100 al massimo una volta al mese).'}
             </p>
             {error && <p style={{ color: '#fb7185' }}>{error}</p>}
           </div>
@@ -370,7 +358,7 @@ export default function SpinLabPage() {
 
           {!lastReward && (
             <p className="empty-result">
-              Premi possibili: 10, 15, 20, 25, 30, 40, 50, 60, 75 e 100 HP.
+              Premi possibili: 0, 5, 10, 20, 30 e 100 HP.
             </p>
           )}
 
@@ -389,87 +377,6 @@ export default function SpinLabPage() {
           )}
         </section>
       </main>
-
-      {codeModalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Codice admin ruota"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 12000,
-            display: 'grid',
-            placeItems: 'center',
-            padding: 16,
-            background: 'rgba(0, 0, 0, 0.72)'
-          }}
-        >
-          <div
-            style={{
-              width: 'min(420px, 92vw)',
-              borderRadius: 18,
-              border: '1px solid rgba(255,255,255,0.2)',
-              background: 'linear-gradient(145deg, rgba(8,16,34,0.98), rgba(2,6,23,0.98))',
-              boxShadow: '0 24px 90px rgba(0,0,0,0.58)',
-              padding: 20
-            }}
-          >
-            <h3 style={{ marginBottom: 12, fontWeight: 900 }}>Codice admin</h3>
-            <p style={{ marginBottom: 12, color: 'rgba(255,255,255,0.8)' }}>
-              Inserisci il codice per avviare la ruota.
-            </p>
-            <input
-              type="password"
-              value={adminCode}
-              onChange={(e) => setAdminCode(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') confirmSpinCode()
-              }}
-              placeholder="Codice"
-              autoFocus
-              style={{
-                width: '100%',
-                borderRadius: 10,
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(0,0,0,0.35)',
-                color: '#fff',
-                padding: '10px 12px',
-                marginBottom: 10
-              }}
-            />
-            {codeError ? <p style={{ color: '#fda4af', marginBottom: 10 }}>{codeError}</p> : null}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 10 }}>
-              <button
-                onClick={() => setCodeModalOpen(false)}
-                style={{
-                  borderRadius: 999,
-                  padding: '10px 14px',
-                  border: '1px solid rgba(255,255,255,0.24)',
-                  background: 'transparent',
-                  color: '#fff',
-                  fontWeight: 700
-                }}
-              >
-                Annulla
-              </button>
-              <button
-                onClick={confirmSpinCode}
-                style={{
-                  borderRadius: 999,
-                  padding: '10px 14px',
-                  border: 'none',
-                  background: 'linear-gradient(135deg, #facc15, #f59e0b)',
-                  color: '#111827',
-                  fontWeight: 800
-                }}
-              >
-                Conferma
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <style jsx>{`
         .spin-lab-page {
