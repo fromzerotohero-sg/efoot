@@ -11,6 +11,7 @@ import { formatBuildCoachSnippet, formatBuildProgressionSection } from '@/lib/pl
 import { getPlayerDisplayStats } from '@/lib/playerEffectiveStats'
 import { buildRosterSkillAdvisorySection, formatPlayerSkillContext } from '@/lib/rosterSkillsContext'
 import { localizeSkillTermsInText } from '@/lib/playerSkillLabels.js'
+import { buildCardAvailabilityBlock } from '@/lib/chatCardAvailability'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -768,7 +769,7 @@ async function buildPersonalContext(userId, lang = 'it') {
  * @param {boolean} hasHistory - Se true, c'è già storia conversazione: non risalutare, continua naturalmente.
  * @param {string} [contextBlockLabel] - Etichetta blocco contesto: 'RIASSUNTO ANALISI' (diagnostic) o 'ROSA E DATI' (fallback).
  */
-function buildPersonalizedPromptV2(userMessage, context, language = 'it', efootballKnowledge = '', personalContextSummary = '', hasHistory = false, contextBlockLabel = 'ROSA E DATI') {
+function buildPersonalizedPromptV2(userMessage, context, language = 'it', efootballKnowledge = '', personalContextSummary = '', hasHistory = false, contextBlockLabel = 'ROSA E DATI', cardAvailabilityBlock = '') {
   const { profile, currentPage, appState } = context || {}
   const firstName = sanitizeForPrompt(profile?.first_name || (language === 'en' ? 'friend' : 'amico'), 40)
   const teamName = sanitizeForPrompt(profile?.team_name || (language === 'en' ? 'your team' : 'il tuo team'), 60)
@@ -837,6 +838,7 @@ ${profileLines.join('\n')}`
   const blocks = [
     header,
     personalContextSummary ? `\n■ ${contextBlockLabel}:\n${personalContextSummary}` : '',
+    cardAvailabilityBlock ? `\n■ ${language === 'en' ? 'CARD ADVISOR STATUS' : 'STATO CARD ADVISOR'}:\n${cardAvailabilityBlock}` : '',
     efootballKnowledge ? `\n■ MECCANICHE eFootball (RAG):\n${efootballKnowledge}` : '',
     `\n${capsule}\n\nFORMATO RISPOSTA:\n[2-4 frasi operative con i TUOI consigli. "In sintesi" / "In summary" solo se utile; altrimenti chiudi con la raccomandazione principale.]\n\n---\nSUGGERIMENTI:\n1. [consiglio breve cliccabile]\n2. [consiglio breve cliccabile]\n3. [consiglio breve cliccabile]\n\n${suggRules}\n\nDOMANDA CLIENTE: "${userMessage}"\nRispondi come ${aiName} in ${language === 'it' ? 'italiano' : 'inglese'}.`
   ].filter(Boolean)
@@ -1155,10 +1157,23 @@ export async function POST(req) {
         ? getMicroReminderText(lang, personalContextSummary)
         : ''
 
+    // Card Advisor availability: se il messaggio sembra chiedere compra/scarta su una carta,
+    // controlla in tempo reale quali nomi citati sono effettivamente in release attive.
+    // Si appoggia ad un admin client temporaneo solo per questa lookup (read-only).
+    let cardAvailabilityBlock = ''
+    try {
+      if (supabaseUrl && serviceKey) {
+        const cardAdmin = createClient(supabaseUrl, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } })
+        cardAvailabilityBlock = await buildCardAvailabilityBlock({ admin: cardAdmin, message, lang })
+      }
+    } catch (caError) {
+      console.warn('[assistant-chat] card availability lookup failed (non-blocking):', caError?.message || caError)
+    }
+
     // Costruisci prompt personalizzato (con eventuali blocchi RAG eFootball e contesto personale)
     let prompt
     try {
-      prompt = buildPersonalizedPromptV2(message, context, lang, efootballKnowledge, personalContextSummary, history.length > 0, contextBlockLabel)
+      prompt = buildPersonalizedPromptV2(message, context, lang, efootballKnowledge, personalContextSummary, history.length > 0, contextBlockLabel, cardAvailabilityBlock)
       if (!prompt || prompt.trim().length === 0) {
         throw new Error('Empty prompt generated')
       }
