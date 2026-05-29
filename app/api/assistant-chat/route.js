@@ -544,7 +544,7 @@ async function buildPersonalContext(userId, lang = 'it') {
       rosterLines.push(...outOfPositionLines.map(line => `  ${line}`))
     }
     for (const p of titolari) {
-      const styleName = getPlayerStyleDisplayName(p, stylesLookup) || '-'
+      const styleName = getPlayerStyleDisplayName(p, stylesLookup) || (p.playing_style_id && stylesLookup[p.playing_style_id]) || (p.role ? String(p.role).trim() : '') || '-'
       const prof = getProfilazione(p.photo_slots)
       const comp = getCompetenze(p.original_positions)
       const statsStr = formatStatsForContext(getPlayerDisplayStats(p))
@@ -562,7 +562,7 @@ async function buildPersonalContext(userId, lang = 'it') {
     const reservesHeader = L.reserves + ':'
     rosterLines.push(reservesHeader)
     for (const p of riserve.slice(0, 15)) {
-      const styleName = getPlayerStyleDisplayName(p, stylesLookup) || '-'
+      const styleName = getPlayerStyleDisplayName(p, stylesLookup) || (p.playing_style_id && stylesLookup[p.playing_style_id]) || (p.role ? String(p.role).trim() : '') || '-'
       const prof = getProfilazione(p.photo_slots)
       const comp = getCompetenze(p.original_positions)
       const statsStr = formatStatsForContext(getPlayerDisplayStats(p))
