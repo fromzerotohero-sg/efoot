@@ -552,6 +552,9 @@ FOCUS:
 - Prima decidi GERARCHIA ROSA: "sostituisce/parte titolare", "rotazione premium", "solo cambio modulo" o "skip". Solo dopo usa abilità/stats come prove. Non costruire il report come lista abilità.
 - Ragiona come la chat coach: la decisione nasce da modulo + rosa + RAG meccaniche. Le skill sono evidenze, non la struttura del verdetto.
 - skill_delta_sentence NON è il verdetto: è solo una lente sulle abilità. Non deve superare modulo, titolari, movimento, stile, body type, ruolo e bisogni reali del cliente.
+- In summary e final_decision: NON ripetere skill_delta_sentence parola per parola e NON aggiungere spiegazioni meccaniche RAG sulle skill (es. "se subisci cross", "in difesa", "su palla alta"). Cita al massimo 1-2 skill solo carta come prova, poi chiudi con gerarchia rosa / piano partita.
+- Carte att/mid offensive: VIETATO framing difensivo (subire cross, palloni pericolosi in area propria, copertura aerea difensiva). Dominio palle alte su attaccante = sponda/duelli offensivi/ribalte in area avversaria, solo se serve e in una frase.
+- Meno spiegazioni = meno errori: preferisci verdetto netto a paragrafi di meccanica.
 - Se la rosa è presente, parla in modo personalizzato e deciso.
 - Se la rosa non è presente, fai solo review carta basata su stile, skill e stats disponibili.
 - Quando un dato è presente, usa forma assertiva: "nella tua rosa c'è", "i tuoi dati mostrano", "hai già". Non usare "se hai" o "potrebbe" per dati già disponibili.
