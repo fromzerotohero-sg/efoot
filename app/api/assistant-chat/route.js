@@ -12,6 +12,7 @@ import { getPlayerDisplayStats } from '@/lib/playerEffectiveStats'
 import { buildRosterSkillAdvisorySection, formatPlayerSkillContext } from '@/lib/rosterSkillsContext'
 import { localizeSkillTermsInText } from '@/lib/playerSkillLabels.js'
 import { buildCardAvailabilityBlock } from '@/lib/chatCardAvailability'
+import { fieldPositionMatchesCardCompetences } from '@/lib/playerSlotRoleMetadata'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -331,8 +332,7 @@ function getOutOfPositionStarterLines(players, lang = 'it') {
     const current = String(p?.position || '').trim().toUpperCase()
     const originals = Array.isArray(p?.original_positions) ? p.original_positions : []
     if (!current || originals.length === 0) continue
-    const compatible = originals.some(op => String(typeof op === 'string' ? op : op?.position || '').trim().toUpperCase() === current)
-    if (compatible) continue
+    if (fieldPositionMatchesCardCompetences(current, originals)) continue
     const comp = formatCompetencePositions(originals) || (lang === 'en' ? 'not set' : 'non impostate')
     const slot = p.slot_index != null ? ` slot ${p.slot_index}` : ''
     lines.push(`- ${p.player_name || '?'}${slot}: in campo ${current}; competenze card ${comp}`)

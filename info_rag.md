@@ -23,7 +23,7 @@ I giocatori in eFootball sono **CARD DIGITALI** con statistiche e caratteristich
 | ELEMENTO | STATO | DESCRIZIONE |
 |----------|-------|-------------|
 | **Statistiche Giocatore** | FISSO | Overall, Velocità, Tiro, Resistenza, ecc. - Immutabili |
-| **Stili di Gioco Giocatore** | ✅ FISSO | Opportunista, Collante, Box-to-Box, ecc. - Immutabili |
+| **Stili di Gioco Giocatore** | ✅ FISSO | Opportunista, Collante, Onnipresente, ecc. - Immutabili (vedi §2 per i 22 stili canonici e alias EN) |
 | **Abilità native** (dalla card) | ✅ FISSO | Tiro al Volo, Contrasto Aggressivo, ecc. - Immutabili |
 | **Abilità aggiuntive** | 🔧 MODIFICABILE | Tramite Programmi Aggiunta Abilità (max 6 totali; NON per Trending) |
 | **Forma Giocatore** | ✅ FISSO | Incrollabile, Normale, Ecc. - Caratteristica card |
@@ -96,42 +96,88 @@ Valori di riferimento per costruzione squadra. Le statistiche restano FISSE sull
 
 **≠ Stile squadra** (Possesso, Contropiede, ecc.): quello è in §4. Qui solo **caratteristiche FISSE della card**.
 
-**IMPORTANTE**: Gli stili giocatore (Opportunista, Collante, Box-to-Box, ecc.) sono **CARATTERISTICHE FISSE** della card. NON si possono modificare.
+**IMPORTANTE**: Gli stili giocatore (Opportunista, Collante, Onnipresente, ecc.) sono **CARATTERISTICHE FISSE** della card. NON si possono modificare.
 
-**Elenco ufficiale (24 stili card, IT)**: Ala prolifica, attacante di rientro, Box-to-Box, Classico n°10, Collante, Frontale extra, Fulcro di gioco, Giocatore chiave, Incontrista, Onnipresente, Opportunista, Orchestratore, Portiere difensivo, Portiere offensivo, Rapace d'area, Regista creativo, Senza palla, Specialista di cross, Sviluppo, Taglio al centro, Terzino difensivo, Terzino mattatore, Terzino offensivo, Tra le linee.
+**Totale ufficiale**: **22 stili giocatore** in eFootball 2026.
 
-**NON sono stili card** (non usarli sulla rosa né dire "non ce l'hai"): *Punta avanzata*, *Adv. Striker*, *Advanced Striker* — termini obsoleti/guide esterne. Per **profondità e inserimenti negli spazi** usa **Giocatore chiave**; per **filtranti e gol in area** usa **Opportunista**; per **cross/ribalzi** usa **Rapace d'area**. *Punta arretrata* in chat = nome vecchio: in gioco è **attacante di rientro** *(Deep-Lying Forward)*.
+**Sigle posizioni — bridge IT ↔ EN ufficiale Konami** (l'AI deve riconoscere entrambe):
+
+| IT (client italiano) | EN (client inglese / catalogo PSD) | Significato |
+|---|---|---|
+| P | CF | Prima punta / Centravanti |
+| SP | SS | Seconda punta |
+| EDA | RWF | Esterno offensivo destro |
+| ESA | LWF | Esterno offensivo sinistro |
+| TRQ | AMF | Trequartista |
+| CC | CMF | Centrocampista centrale |
+| CLD | RMF | Esterno di centrocampo destro |
+| CLS | LMF | Esterno di centrocampo sinistro |
+| MED | DMF | Mediano / centrocampista difensivo |
+| ETD | RB | Terzino destro |
+| ETS | LB | Terzino sinistro |
+| DC | CB | Difensore centrale |
+| PT | GK | Portiere |
+
+**Tabella canonica 22 stili (IT / EN / posizioni / comportamento / 3 stat chiave)**:
+
+| Nome IT (canonico) | Nome EN (canonico) | Alias IT/EN noti | Posizioni attive (IT) | Comportamento (1 frase) | 3 stat chiave |
+|---|---|---|---|---|---|
+| Opportunista | Goal Poacher | — | P (compat. SP) | Attacca costantemente la profondità | Attacco, Accelerazione, Finalizzazione |
+| Senza palla | Dummy Runner | — | P/SP/TRQ | Muove continuamente la difesa liberando spazi | Accelerazione, Attacco, Resistenza |
+| Rapace d'area | Fox in the Box | — | P | Rimane alto aspettando il pallone in area | Finalizzazione, Posizionamento, Colpo di testa |
+| Attaccante di rientro | Deep-Lying Forward | "Punta arretrata" (legacy) | P/SP (compat. TRQ) | Arretra per costruire liberando spazio davanti | Controllo palla, Passaggio rasoterra, Dribbling |
+| Fulcro di gioco | Target Man | "L'uomo bersaglio" (community) | P | Gioca spalle alla porta facendo salire la squadra | Contatto fisico, Salto, Passaggio rasoterra |
+| Specialista di cross | Cross Specialist | — | EDA/ESA/CLD/CLS | Rimane largo per cercare cross continui | Cross, Tiro a giro, Passaggio alto |
+| Classico n°10 | Classic No.10 | — | SP/TRQ (NON CC dal 2024) | Rimane tra le linee privilegiando il gioco sui piedi | Controllo palla, Passaggio rasoterra, Dribbling |
+| Regista creativo | Creative Playmaker | — | SP/TRQ/EDA/ESA (CLD/CLS/CC: AI inattiva) | Si avvicina al portatore per creare connessioni offensive | Passaggio rasoterra, Controllo palla, Dribbling |
+| Ala prolifica | Prolific Winger | — | EDA/ESA (compat. CLD/CLS) | Parte larga e taglia verso la porta | Accelerazione, Dribbling, Finalizzazione |
+| Taglio al centro | Roaming Flank | — | EDA/ESA/CLD/CLS | Si accentra presto cercando gioco interno | Dribbling, Passaggio rasoterra, Accelerazione |
+| Tra le linee | Orchestrator | "Orchestratore" (community/review) | CC/MED (compat. TRQ) | Gestisce il possesso muovendosi per ricevere e distribuire | Passaggio rasoterra, Controllo palla, Visione |
+| Sviluppo | Build Up | — | DC (MED/ETD/ETS: AI inattiva) | Imposta dal basso aprendosi in costruzione | Passaggio rasoterra, Controllo palla, Difesa |
+| Frontale extra | Extra Frontman | — | DC (compat. MED) | Avanza in possesso accompagnando l'azione | Difesa, Passaggio rasoterra, Contatto fisico |
+| Incontrista | The Destroyer | — | CC/MED/DC (compat. ETD/ETS) | Aggredisce il portatore uscendo dalla linea | Contrasto, Aggressività, Contatto fisico |
+| Onnipresente | Box-to-Box | "Box-to-Box" (alias EN) | CC/MED/CLD/CLS (compat. TRQ) | Copre tutto il campo supportando entrambe le fasi | Resistenza, Aggressività, Velocità |
+| Collante | Anchor Man | — | MED (CC/DC: AI inattiva) | Rimane davanti alla difesa proteggendo le transizioni | Difesa, Passaggio rasoterra, Contatto fisico |
+| Giocatore chiave | Hole Player | — | SP/TRQ/CC/CLD/CLS (NON P) | Attacca gli spazi con inserimenti offensivi | Finalizzazione, Accelerazione, Attacco |
+| Terzino offensivo | Attacking Full-back / Offensive Full-back | — | ETD/ETS (compat. CLD/CLS) | Spinge costantemente in ampiezza | Accelerazione, Cross, Resistenza |
+| Terzino difensivo | Defensive Full-back | — | ETD/ETS (compat. DC) | Resta basso proteggendo la linea difensiva | Difesa, Velocità, Resistenza |
+| Terzino mattatore | Full-back Finisher | — | ETD/ETS | Attacca l'interno del campo con inserimenti aggressivi | Accelerazione, Dribbling, Finalizzazione |
+| Portiere offensivo | Offensive Goalkeeper | — | PT | Esce dalla porta e copre la profondità | Riflessi PT, Parata PT, Comportamento PT |
+| Portiere difensivo | Defensive Goalkeeper | — | PT | Resta vicino alla linea di porta e protegge l'area | Riflessi PT, Presa PT, Estensione PT |
+
+**REGOLA AI per uso multilingua**: il client italiano del gioco usa "Tra le linee" e "Onnipresente". Il catalogo inglese (PSD) usa "Orchestrator" e "Box-to-Box". Sono lo **stesso stile**: parlando con utenti italiani usa il nome IT del client (es. "Tra le linee"); parlando con utenti inglesi usa "Orchestrator". Se un giocatore in rosa appare con "Orchestratore" o "Box-to-Box" salvato dal catalogo, NON dire "non esiste questo stile": è lo stesso di "Tra le linee" / "Onnipresente".
+
+**NON sono stili card** (non usarli sulla rosa né dire "non ce l'hai"): *Punta avanzata*, *Adv. Striker*, *Advanced Striker* — termini obsoleti/guide esterne. Per **profondità e inserimenti negli spazi** usa **Giocatore chiave**; per **filtranti e gol in area** usa **Opportunista**; per **cross/ribalzi** usa **Rapace d'area**. *Punta arretrata* in chat = nome vecchio: in gioco è **Attaccante di rientro** *(Deep-Lying Forward)*.
 
 ### 2.1 Stili Senza Palla (Comportamento senza possesso)
 
 #### Attaccanti e Centrocampisti Offensivi
-- **Opportunista** (CF; compatibile SS): Resta **in linea con l'ultimo difensore avversario** (fuorigioco), scatta verso porta sul filtrante/occasione, sovraffolla l'area. **NON** significa "giocare come un difensore". **Quando serve**: passaggi filtranti, palle in profondità, contropiede. *(Goal Poacher)*
-- **Senza palla** (CF/SS/AMF): Attira difensori per creare spazi per inserimenti. **Quando serve**: squadre che cercano imprevedibilità; crea spazi per compagni. *(Dummy Runner)*
-- **Rapace d'area** (CF): Sempre in agguato in area di rigore per finalizzare; ottimo su cross e ribalzi. **Quando serve**: cross, attaccanti con centrocampisti/esterni che forniscono assist. *(Fox in the Box)*
-- **attacante di rientro** (CF/SS; compatibile AMF): Arretra in mezzo al campo per impostare, contribuisce alla costruzione. **Quando serve**: possesso palla, squadre che costruiscono dal basso. **Perché**: idealmente abbinato a esterni veloci che corrono oltre i difensori. *(Deep-Lying Forward — non "Punta arretrata")*
-- **Fulcro di gioco** (CF): Protegge palla con fisico, riferimento offensivo. **Quando serve**: gioco aereo, sponde, attaccanti fisici. **Perché**: presenza fisica, crea spazio per esterni e trequartisti. *(Target Man)*
-- **Specialista di cross** (RWF/LWF/RMF/LMF): Resta sulla fascia per crossare. *(Cross Specialist)*
-- **Classico n° 10** (SS/AMF): Playmaker, avvia attacchi con passaggi intelligenti, minimizza sforzo difensivo. **Quando serve**: gioco lento e ragionato, possesso palla, controllo partita. **Perché**: gestisce il ritmo, meno coinvolto in fase difensiva. NON si attiva su CMF (dal 2024).
-- **Regista creativo** (SS/AMF/RWF/LWF; compatibile RMF/LMF/CMF ma AI inattiva): Si muove liberamente in fase offensiva, cerca spazi per ricevere palla e creare occasioni. **Quando serve**: imprevedibilità offensiva, disorganizzare la difesa avversaria. **Perché**: movimenti intelligenti di smarcamento. *(Creative Playmaker)*
-- **Ala prolifica** (RWF/LWF; compatibile RMF/LMF): Si posiziona sulla fascia e taglia verso il centro per **ricevere** passaggi filtranti; efficace in 1v1. *(Prolific Winger)*
-- **Taglio al centro** (RWF/LWF/RMF/LMF): Tende a tagliare verso interno per ricevere passaggi. **Quando serve**: esterni che convergono per tiri a giro o passaggi filtranti. *(Roaming Flank)*
+- **Opportunista** (CF=P; compatibile SS=SP): Resta **in linea con l'ultimo difensore avversario** (fuorigioco), scatta verso porta sul filtrante/occasione, sovraffolla l'area. **NON** significa "giocare come un difensore". **Quando serve**: passaggi filtranti, palle in profondità, contropiede. *(Goal Poacher)*
+- **Senza palla** (CF/SS/AMF = P/SP/TRQ): Attira difensori per creare spazi per inserimenti. **Quando serve**: squadre che cercano imprevedibilità; crea spazi per compagni. *(Dummy Runner)*
+- **Rapace d'area** (CF=P): Sempre in agguato in area di rigore per finalizzare; ottimo su cross e ribalzi. **Quando serve**: cross, attaccanti con centrocampisti/esterni che forniscono assist. *(Fox in the Box)*
+- **Attaccante di rientro** (CF/SS = P/SP; compatibile AMF=TRQ): Arretra in mezzo al campo per impostare, contribuisce alla costruzione. **Quando serve**: possesso palla, squadre che costruiscono dal basso. **Perché**: idealmente abbinato a esterni veloci che corrono oltre i difensori. *(Deep-Lying Forward — non "Punta arretrata")*
+- **Fulcro di gioco** (CF=P): Protegge palla con fisico, riferimento offensivo. **Quando serve**: gioco aereo, sponde, attaccanti fisici. **Perché**: presenza fisica, crea spazio per esterni e trequartisti. *(Target Man — community usa anche "L'uomo bersaglio")*
+- **Specialista di cross** (RWF/LWF/RMF/LMF = EDA/ESA/CLD/CLS): Resta sulla fascia per crossare. *(Cross Specialist)*
+- **Classico n° 10** (SS/AMF = SP/TRQ): Playmaker, avvia attacchi con passaggi intelligenti, minimizza sforzo difensivo. **Quando serve**: gioco lento e ragionato, possesso palla, controllo partita. **Perché**: gestisce il ritmo, meno coinvolto in fase difensiva. NON si attiva su CMF=CC (dal 2024).
+- **Regista creativo** (SS/AMF/RWF/LWF = SP/TRQ/EDA/ESA; compatibile RMF/LMF/CMF = CLD/CLS/CC ma AI inattiva): Si muove liberamente in fase offensiva, cerca spazi per ricevere palla e creare occasioni. **Quando serve**: imprevedibilità offensiva, disorganizzare la difesa avversaria. **Perché**: movimenti intelligenti di smarcamento. *(Creative Playmaker)*
+- **Ala prolifica** (RWF/LWF = EDA/ESA; compatibile RMF/LMF = CLD/CLS): Si posiziona sulla fascia e taglia verso il centro per **ricevere** passaggi filtranti; efficace in 1v1. *(Prolific Winger)*
+- **Taglio al centro** (RWF/LWF/RMF/LMF = EDA/ESA/CLD/CLS): Tende a tagliare verso interno per ricevere passaggi. **Quando serve**: esterni che convergono per tiri a giro o passaggi filtranti. *(Roaming Flank)*
 
 #### Centrocampisti e Difensori
-- **Tra le linee** (CMF/DMF; compatibile AMF): Si posiziona più basso per dettare il tempo e avviare azioni offensive. *(Orchestrator)*
-- **Sviluppo** (CB; compatibile DMF/RB/LB ma AI inattiva): Difensore che arretra per impostare azione con lanci lunghi. **Quando serve**: costruzione dal basso, possesso palla. **Perché**: raggio di passaggio lungo da dietro. *(Build Up — SOLO CB per attivazione piena)*
-- **Frontale extra** (CB; compatibile DMF): Partecipa a manovra offensiva, si sovrappone. **Quando serve**: moduli che spingono la difesa in avanti; rischio: espone il dietro. *(Extra Frontman)*
-- **Incontrista** (CMF/DMF/CB; compatibile RB/LB): Respinge attacchi con pressing aggressivo. **Quando serve**: contropiede veloce, tattiche aggressive orientate alla riconquista rapida. **Perché**: pressione alta, contrasti decisi. *(The Destroyer)*
-- **Box-to-Box** (CMF/RMF/LMF/DMF; compatibile AMF): Corre da area a area, partecipa in fase difensiva e offensiva. **Quando serve**: moduli che richiedono centrocampisti completi, equilibrio e copertura totale. **Perché**: alta resistenza, versatilità; recupera palla e avvia attacchi, arriva tardi in area; utilizzabile in quasi tutti i moduli.
-- **Onnipresente** (CMF/RMF/LMF/DMF): Corre su tutto il campo, copre ogni zona. Sinonimo italiano di Box-to-Box nel DB; stesse posizioni di attivazione.
-- **Collante** (DMF; compatibile CMF/CB ma AI inattiva): Centrocampista arretrato davanti difesa, utile difesa/attacco. **Quando serve**: scudo difensivo, opzione di passaggio sicura in costruzione. **Perché**: fondamentale per Vie laterali (Out Wide) per solidità difensiva. *(Anchor Man — SOLO DMF per attivazione piena)*
-- **Giocatore chiave** (SS/AMF/RMF/LMF/CMF): Fiuto del gol, sempre proiettato avanti; cerca spazi vuoti quando si passa da difesa ad attacco, corre verso porta prima della punta. **Quando serve**: contropiede veloce. **Perché**: bisogno di buona resistenza per ripetuti scatti; passaggi rasoterra precisi per le punte. NON si attiva su CF. *(Hole Player)*
+- **Tra le linee** (CMF/DMF = CC/MED; compatibile AMF=TRQ): Si posiziona più basso per dettare il tempo e avviare azioni offensive, gestisce il possesso muovendosi per ricevere e distribuire. *(Orchestrator — community/review IT usa anche "Orchestratore"; sono lo stesso stile)*
+- **Sviluppo** (CB=DC; compatibile DMF/RB/LB = MED/ETD/ETS ma AI inattiva): Difensore che arretra per impostare azione con lanci lunghi. **Quando serve**: costruzione dal basso, possesso palla. **Perché**: raggio di passaggio lungo da dietro. *(Build Up — SOLO CB=DC per attivazione piena)*
+- **Frontale extra** (CB=DC; compatibile DMF=MED): Partecipa a manovra offensiva, si sovrappone. **Quando serve**: moduli che spingono la difesa in avanti; rischio: espone il dietro. *(Extra Frontman)*
+- **Incontrista** (CMF/DMF/CB = CC/MED/DC; compatibile RB/LB = ETD/ETS): Respinge attacchi con pressing aggressivo. **Quando serve**: contropiede veloce, tattiche aggressive orientate alla riconquista rapida. **Perché**: pressione alta, contrasti decisi. *(The Destroyer)*
+- **Onnipresente** (CMF/RMF/LMF/DMF = CC/CLD/CLS/MED; compatibile AMF=TRQ): Corre da area a area, partecipa in fase difensiva e offensiva. Copre tutto il campo. **Quando serve**: moduli che richiedono centrocampisti completi, equilibrio e copertura totale. **Perché**: alta resistenza, versatilità; recupera palla e avvia attacchi, arriva tardi in area; utilizzabile in quasi tutti i moduli. *(Box-to-Box — il client italiano del gioco mostra "Onnipresente"; il catalogo PSD inglese mostra "Box-to-Box". Sono lo stesso stile.)*
+- **Collante** (DMF=MED; compatibile CMF/CB = CC/DC ma AI inattiva): Centrocampista arretrato davanti difesa, utile difesa/attacco. **Quando serve**: scudo difensivo, opzione di passaggio sicura in costruzione. **Perché**: fondamentale per Vie laterali (Out Wide) per solidità difensiva. *(Anchor Man — SOLO DMF=MED per attivazione piena)*
+- **Giocatore chiave** (SS/AMF/RMF/LMF/CMF = SP/TRQ/CLD/CLS/CC): Fiuto del gol, sempre proiettato avanti; cerca spazi vuoti quando si passa da difesa ad attacco, corre verso porta prima della punta. **Quando serve**: contropiede veloce. **Perché**: bisogno di buona resistenza per ripetuti scatti; passaggi rasoterra precisi per le punte. NON si attiva su CF=P. *(Hole Player)*
 
 #### Terzini e Portieri
-- **Terzino offensivo** (RB/LB; compatibile RMF/LMF): Si unisce ad attacco, sovrapposizioni continue, spinta sulla fascia. **Quando serve**: ampiezza, cross, dominio territoriale. **Rischio**: lascia spazio dietro. *(Attacking Full-back)*
-- **Terzino difensivo** (RB/LB; compatibile CB): Rimane arretrato per proteggere difesa, copertura prioritaria. **Quando serve**: solidità difensiva, contro ali veloci avversarie. *(Defensive Full-back)*
-- **Terzino mattatore** (RB/LB): Si inserisce in azioni offensive centrali. **Quando serve**: moduli che spingono i terzini in attacco centrale. *(Full-back Finisher)*
-- **Portiere offensivo** (PT): Più avanzato, esce per anticipare; proattivo nelle uscite. **Quando serve**: linea alta, pressing, gioco aggressivo. **Rischio**: palloni scavalcati.
-- **Portiere difensivo** (PT): Rimane vicino alla linea di porta, reattivo. **Quando serve**: gioco conservativo, contro squadre con tiri da lontano.
+- **Terzino offensivo** (RB/LB = ETD/ETS; compatibile RMF/LMF = CLD/CLS): Si unisce ad attacco, sovrapposizioni continue, spinta sulla fascia. **Quando serve**: ampiezza, cross, dominio territoriale. **Rischio**: lascia spazio dietro. *(Attacking Full-back / Offensive Full-back)*
+- **Terzino difensivo** (RB/LB = ETD/ETS; compatibile CB=DC): Rimane arretrato per proteggere difesa, copertura prioritaria. **Quando serve**: solidità difensiva, contro ali veloci avversarie. *(Defensive Full-back)*
+- **Terzino mattatore** (RB/LB = ETD/ETS): Si inserisce in azioni offensive centrali. **Quando serve**: moduli che spingono i terzini in attacco centrale. *(Full-back Finisher)*
+- **Portiere offensivo** (PT=GK): Più avanzato, esce per anticipare; proattivo nelle uscite. **Quando serve**: linea alta, pressing, gioco aggressivo. **Rischio**: palloni scavalcati. *(Offensive Goalkeeper)*
+- **Portiere difensivo** (PT=GK): Rimane vicino alla linea di porta, reattivo. **Quando serve**: gioco conservativo, contro squadre con tiri da lontano. *(Defensive Goalkeeper)*
 
 ### 2.2 Attivazione stile e posizione (logica "passiva spenta se fuori ruolo")
 
@@ -139,7 +185,7 @@ Valori di riferimento per costruzione squadra. Le statistiche restano FISSE sull
 
 **Meccanica**:
 - Gli stili sono **comportamenti passivi** (attivati dall'IA senza input diretti); governano movimenti senza palla (§2.1) e con palla (§2.3).
-- Ogni stile ha **posizioni associate** (es. Opportunista → P; Box-to-Box → CC/MED; Sviluppo → solo DC).
+- Ogni stile ha **posizioni associate** (es. Opportunista → P; Onnipresente → CC/MED; Sviluppo → solo DC).
 - Se il giocatore è **in posizione di competenza** (Alto o Intermedio): lo stile si attiva → movimenti corretti, bonus di posizionamento.
 - Se il giocatore è **fuori ruolo** (competenza Bassa o assente): lo stile **non si attiva** → posizionamento errato, movimenti meno efficaci, calo forza complessiva (§9.4).
 
@@ -422,7 +468,7 @@ Fonti: [Efootball Arena – How to Build a Competitive Dream Team](https://efoot
 **Allocazione per ruolo (quando suggerire chi schierare)**:
 - Creatori (TrQ, registi): controllo palla e passaggio massimizzati; Passaggio filtrante, Passaggio di prima.
 - Attaccanti: finalizzazione e velocità; mix tra velocità/inserimento (Opportunista, Giocatore chiave) e potenza/area (Fulcro di gioco, Rapace d'area).
-- Centrocampisti: bilanciare difesa e creazione; mediani versatili (Collante, Box-to-Box).
+- Centrocampisti: bilanciare difesa e creazione; mediani versatili (Collante, Onnipresente).
 - Difesa: almeno un MED/CDM solido davanti alla linea; mai trascurare i terzini.
 
 **Link-Up Play** (Connection Focal Point + Key Man): migliora sinergia attaccanti; posizionamento 10-15 m durante costruzione. Verificare che Focal Point e Key Man siano presenti in rosa per attivare i bonus.
@@ -512,29 +558,34 @@ Nota affidabilita: "special double touch" e varianti "tess/croqueta interrotta" 
 - **NON modificabili per giocatori TRENDING**
 - **Modificabili per**: In evidenza, In risalto, Epico, Leggendario, Standard
 
+**REGOLA AI nomi abilità (IT/EN)**: i nomi italiani canonici in questa sezione seguono il client ufficiale eFootball (allineati a `playerSkillLabels.js`). In rosa, catalogo PSD o eFootball Lab possono comparire **alias EN** o varianti community: usa la mappatura §8.11 e NON dire "abilità inesistente" se riconosci l'alias.
+
 ### 8.1 Abilità Tiro
-- **Tiro di prima**: Tiri precisi di prima intenzione dopo stop. **Quando serve**: attaccanti, finalizzatori rapidi; letale in area su assist veloci.
-- **Tiro a giro**: Tiri con effetto. **Quando serve**: angoli stretti, fin di palo.
-- **Tiro Potente**: Tiri con maggiore potenza. **Quando serve**: fuori area, portiere in uscita.
-- **Punta di Precisione**: Tiri precisi in area. **Quando serve**: finalizzatori.
-- **Tiro a scendere**: Tiri con traiettoria discendente. **Quando serve**: tiri da distanza.
-- **Tiro a salire**: Tiri con traiettoria ascendente. **Quando serve**: tiri speciali.
-- **A giro da distante**: Tiri a giro da fuori area. **Quando serve**: centrocampisti offensivi.
-- **Esterno a giro**: Tiri a giro con esterno piede. **Quando serve**: angolazioni particolari.
-- **Colpo di testa**: Conclusioni di testa più accurate *in fase d'attacco* (tiro di testa verso porta). **Quando serve**: attaccanti fisici, cross; timing migliore su palloni aerei. **NOTA**: NON è abilità difensiva; per duelli aerei in difesa vedi Dominio palle alte (§8.4). Dare Colpo di testa al difensore che mandi *in avanti* sui corner.
-- **Finalizzazione acrobatica**: Tiri acrobatici (rovesciate, ecc.) anche da posizioni scomode o in equilibrio precario. **Quando serve**: area affollata, conclusioni difficili.
-- **Finalizzazione**: Precisione in conclusione. **Quando serve**: attaccanti, punte.
-- **Tiro dalla distanza**: Tiri precisi da fuori area. **Quando serve**: centrocampisti offensivi, tiri da distanza.
-- **Sassata rasoterra**: Tiro rasoterra veloce quando la barra potenza è inferiore al 50%. **Quando serve**: tiri veloci e precisi da dentro/fuori area.
-- **Incornata**: Colpire la palla di testa schiacciandola verso la porta, anche da situazioni difficili. **Quando serve**: attaccanti su cross, colpi di testa precisi verso il basso.
-- **Istinto del gol**: Aumenta potenza e precisione delle conclusioni tentate con il corpo posizionato in modo atipico. **Quando serve**: attaccanti che tirano in situazioni difficili o in equilibrio precario.
-- **Forza di volontà**: Migliora le abilità di tiro del giocatore ogni volta che effettua un tiro, fino a un massimo di 8 volte. **Quando serve**: attaccanti che tirano spesso, cumulo boost durante la partita.
+- **Tiro di prima** *(First-time Shot)*: Tiri precisi di prima intenzione dopo stop. **Quando serve**: attaccanti, finalizzatori rapidi; letale in area su assist veloci.
+- **Tiro a giro** *(Curler)*: Tiri con effetto. **Quando serve**: angoli stretti, fin di palo.
+- **Tiro potente** *(Power Shot)*: Tiri con maggiore potenza. **Quando serve**: fuori area, portiere in uscita.
+- **Punta di Precisione** *(Pinpoint Shooter)*: Tiri precisi in area. **Quando serve**: finalizzatori.
+- **Tiro a scendere** *(Dipping Shot)*: Tiri con traiettoria discendente che cala improvvisamente. **Quando serve**: tiri da distanza, scavalcare il portiere alto.
+- **Tiro a salire** *(Rising Shot)*: Tiri con traiettoria ascendente. **Quando serve**: tiri speciali, sotto la traversa da fuori area.
+- **Tiro di collo** *(Knuckle Shot)*: Tiri con traiettoria imprevedibile/instabile (effetto knuckle). **Quando serve**: tiri da distanza, conclusioni difficili da decifrare per il portiere.
+- **Pallonetto mirato** *(Chip Shot Control)*: Pallonetti mirati e controllati sopra il portiere. **Quando serve**: 1v1 in area, portiere in uscita.
+- **Tiro a giro spiovente** *(Blitz Curler)*: Tiri a giro con curva più marcata. **Quando serve**: angoli stretti, conclusioni controllate da fuori area.
+- **A giro da distante** *(Long-range Curler)*: Tiri a giro da fuori area. **Quando serve**: centrocampisti offensivi; su ribattuta tira con piede forte sul secondo palo.
+- **Esterno a giro** *(Outside Curler)*: Tiri a giro con esterno piede. **Quando serve**: angolazioni particolari, piede invertito.
+- **Colpo di testa** *(Heading)*: Conclusioni di testa più accurate *in fase d'attacco* (tiro di testa verso porta). **Quando serve**: attaccanti fisici, cross; timing migliore su palloni aerei. **NOTA**: NON è abilità difensiva; per duelli aerei in difesa vedi Dominio palle alte (§8.4). Dare Colpo di testa al difensore che mandi *in avanti* sui corner.
+- **Finalizzazione acrobatica** *(Acrobatic Finishing)*: Tiri acrobatici (rovesciate, ecc.) anche da posizioni scomode o in equilibrio precario. **Quando serve**: area affollata, conclusioni difficili.
+- **Finalizzazione** *(Finishing)*: Precisione in conclusione. **Quando serve**: attaccanti, punte.
+- **Tiro dalla distanza** *(Long-range Shooting)*: Tiri precisi da fuori area. **Quando serve**: centrocampisti offensivi, tiri da distanza.
+- **Sassata rasoterra** *(Low Screamer)*: Tiro rasoterra veloce quando la barra potenza è inferiore al 50%. **Quando serve**: tiri veloci e precisi da dentro/fuori area.
+- **Incornata** *(Bullet Header)*: Colpire la palla di testa schiacciandola verso la porta, anche da situazioni difficili. **Quando serve**: attaccanti su cross, colpi di testa precisi verso il basso.
+- **Istinto del gol** *(Phenomenal Finishing)*: Aumenta potenza e precisione delle conclusioni tentate con il corpo posizionato in modo atipico. **Quando serve**: attaccanti che tirano in situazioni difficili o in equilibrio precario.
+- **Forza di volontà** *(Willpower)*: Migliora le abilità di tiro del giocatore ogni volta che effettua un tiro, fino a un massimo di 8 volte. **Quando serve**: attaccanti che tirano spesso, cumulo boost durante la partita.
 
 ### 8.2 Abilità Passaggio
 
 **Statistiche vs Abilità (Comunità)**: La statistica Passaggio 90+ aumenta la *velocità di esecuzione* del passaggio; le abilità Passaggio di prima e/o Passaggio filtrante ne migliorano *accuratezza* e sbloccano un'*animazione migliore*. Un giocatore con 90+ in passaggio ma senza abilità di passaggio rende meno di uno con abilità corrette.
 
-**Passaggio illuminante / Passaggio visionario** (Showtime): NON sostituiscono Passaggio filtrante, di prima o calibrato. Sono **cumulabili**; chi ha illuminante o visionario dovrebbe aggiungere (se non le ha) Passaggio di prima, Passaggio filtrante e Passaggio calibrato.
+**Passaggi illuminanti / Passaggio calcolato** (Showtime): NON sostituiscono Passaggio filtrante, di prima o calibrato. Sono **cumulabili**; chi ha Passaggi illuminanti o Passaggio calcolato dovrebbe aggiungere (se non le ha) Passaggio di prima, Passaggio filtrante e Passaggio calibrato.
 
 **A chi dare abilità di passaggio (Comunità)**:
 - **Punte**: almeno Passaggio di prima (essenziale per scambi 1-2)
@@ -543,79 +594,84 @@ Nota affidabilita: "special double touch" e varianti "tess/croqueta interrotta" 
 - **CC**: si può fare a meno di Passaggio calibrato (ne usufruiscono meglio i mediani); aggiungere Cross calibrato (onnipresenti si trovano in fascia in attacco)
 - **TrQ e seconde punte**: come mediani, meglio se le hanno tutte (di prima, calibrato, a scavalcare, filtrante)
 
-- **Passaggio di prima**: Passaggi rapidi e diretti di prima intenzione. **Quando serve**: triangolazioni veloci, gioco di prima, contro difese compatte.
-- **Passaggio al volo**: Controllo e passaggio in un solo tocco. **Quando serve**: triangolazioni rapide, prima intenzione.
-- **Passaggio filtrante**: Passaggi in profondità precisi. **Quando serve**: registi, creatori; fondamentale per smarcare attaccanti.
-- **Lancio lungo preciso**: Passaggi lunghi accurati. **Quando serve**: costruzione dal basso, cambi gioco, contropiede.
-- **Cross calibrato**: Cross dalla fascia più precisi. **Quando serve**: esterni, terzini offensivi; cross normali meno efficaci.
-- **Passaggio sensazionale**: Passaggi potenti e incisivi (più rischio se sei chiuso)
-- **Passaggio senza guardare**: Passaggio senza guardare ricevente; spiazza avversari. **Quando serve**: creatori, gioco imprevedibile.
-- **Passaggio calibrato**: Passaggi lunghi/filtranti con backspin per migliore precisione. **Quando serve**: registi, cambi gioco.
-- **Passaggio alto rasoterra**: Passaggio lungo con traiettoria bassa quando appropriato. **Quando serve**: costruzione, contropiede.
-- **Rabona**: Esecuzione in rabona; passaggio o tiro imprevedibile. **Quando serve**: creatori tecnici.
-- **Tocco di tacco**: Passaggio o tiro di tacco anche da posizioni scomode. **Quando serve**: assist improvvisi, finalizzatori.
+- **Passaggio di prima** *(One-touch Pass)*: Passaggi rapidi e diretti di prima intenzione. **Quando serve**: triangolazioni veloci, gioco di prima, contro difese compatte.
+- **Passaggio al volo** *(Volleyed Pass)*: Controllo e passaggio in un solo tocco. **Quando serve**: triangolazioni rapide, prima intenzione.
+- **Passaggio filtrante** *(Through Passing)*: Passaggi in profondità precisi. **Quando serve**: registi, creatori; fondamentale per smarcare attaccanti.
+- **Lancio lungo preciso** *(Long Lofted Pass)*: Passaggi lunghi accurati. **Quando serve**: costruzione dal basso, cambi gioco, contropiede.
+- **Specialista lancio lungo** *(Long Ball Expert)*: Migliora precisione e utilità dei lanci lunghi in situazioni di gioco. **Quando serve**: registi, mediani, cambi fronte. **NOTA**: abilità distinta da Lancio lungo preciso (Long Lofted Pass).
+- **Cross calibrato** *(Pinpoint Crossing)*: Cross dalla fascia più precisi. **Quando serve**: esterni, terzini offensivi; cross normali meno efficaci.
+- **Passaggi illuminanti** *(Phenomenal Passing)*: Passaggi precisi anche da orientamento del corpo scomodo. **Quando serve**: registi creativi, assist difficili. Alias in rosa: Passaggio fenomenale, Passaggio sensazionale.
+- **Passaggio calcolato** *(Visionary Pass)*: Passaggi più sicuri; migliora la prima touch del ricevente. **Quando serve**: registi, costruzione. Alias: Passaggio visionario.
+- **Passaggi cruciali** *(Game-changing Pass)*: Maggiore accuratezza su passaggi bassi/alti in ripresa se pareggio o svantaggio (2° tempo). **Quando serve**: centrocampisti in partite equilibrate.
+- **No-look** *(No Look Pass)*: Passaggio senza guardare il ricevente; spiazza avversari. **Quando serve**: creatori, gioco imprevedibile. Alias: Passaggio senza guardare.
+- **Passaggio calibrato** *(Weighted Pass)*: Passaggi lunghi/filtranti con backspin per migliore precisione. **Quando serve**: registi, cambi gioco.
+- **Passaggio a scavalcare** *(Low Lofted Pass)*: Passaggio rasoterra che scavalca la linea quando appropriato. **Quando serve**: costruzione, filtranti bassi. Alias: Passaggio alto rasoterra.
+- **Cross spiovente** *(Edged Crossing)*: Cross con caduta verticale (dip) dalla fascia. **Quando serve**: esterni, cross per attaccanti in area. Alias: Cross tagliente.
+- **Rabona** *(Rabona)*: Esecuzione in rabona; passaggio o tiro imprevedibile. **Quando serve**: creatori tecnici.
+- **Colpo di tacco** *(Heel Trick)*: Passaggio o tiro di tacco anche da posizioni scomode. **Quando serve**: assist improvvisi, finalizzatori.
 
 ### 8.3 Abilità Dribbling e Controllo
-- **Doppio tocco**: Skill base cambio direzione. **Quando serve**: ali, dribblatori; efficace in 1v1.
-- **Elastico**: Cambio direzione rapido con esterno. **Quando serve**: 1v1, spazi stretti.
-- **Controllo di suola**: Controllo palla con suola. **Quando serve**: spazi stretti, protezione palla.
-- **Doppio tocco speciale**: Combo Doppio tocco + Elastico + Controllo suola. **Quando serve**: dribblatori tecnici.
-- **Dribbling fulminei** (Showtime): Migliora le abilità di dribbling del giocatore vicino all'area di rigore avversaria. **Quando serve**: trequartisti/attaccanti che entrano in area.
-- **Scatto bruciante** (Showtime): Consente al giocatore di eseguire un tocco secco veloce da fermo o mentre si muove lentamente, con animazioni speciali. **Quando serve**: attaccanti che ricevono palla fermi e devono accelerare improvvisamente.
-- **Calamita ai piedi** (Showtime): Quando il giocatore ha la palla, aumenta la sua capacità di mantenerne il possesso in base al numero di avversari nel raggio di 5 metri (max 4 avversari). **Quando serve**: giocatori tecnici sotto pressing.
-- **Piedi magnetici** (= **Calamita ai piedi**, stesso effetto; nome EN catalogo: *Magnetic Feet*): non è un'abilità diversa. Usa la descrizione di Calamita ai piedi sopra. **Quando serve**: MED/CC/TrQ che ricevono palla in pressing o in zone affollate.
-- **Stop acrobatico**: Controllo palla acrobatico. **Quando serve**: passaggi difficili, posizioni scomode.
-- **Finta tiro**: Finta tiro per ingannare difensore. **Quando serve**: 1v1 in area.
-- **Finta passaggio**: Finta passaggio. **Quando serve**: aprire linee di passaggio.
-- **Tocco secco**: Spinta palla rapida in avanti per cambiare ritmo. **Quando serve**: spazio davanti, accelerazione improvvisa.
-- **Protezione**: Proteggere palla con corpo. **Quando serve**: pressione alta, spalle alla porta.
+- **Doppio tocco** *(Double Touch)*: Skill base cambio direzione. **Quando serve**: ali, dribblatori; efficace in 1v1.
+- **Elastico** *(Flip Flap)*: Cambio direzione rapido con esterno. **Quando serve**: 1v1, spazi stretti.
+- **Controllo di suola** *(Sole Control)*: Controllo palla con suola. **Quando serve**: spazi stretti, protezione palla.
+- **Taglia alle spalle e gira** *(Cut Behind & Turn)*: Combo avanzata di cambio direzione (Doppio tocco + Elastico + Controllo suola). **Quando serve**: dribblatori tecnici. Alias: Doppio tocco speciale.
+- **Dribbling fulmineo** *(Momentum Dribbling)* (Showtime): Migliora le abilità di dribbling del giocatore vicino all'area di rigore avversaria. **Quando serve**: trequartisti/attaccanti che entrano in area. Alias: Dribbling fulminei, Dribbling in slancio.
+- **Scatto bruciante** *(Acceleration Burst)* (Showtime): Consente al giocatore di eseguire un tocco secco veloce da fermo o mentre si muove lentamente, con animazioni speciali. **Quando serve**: attaccanti che ricevono palla fermi e devono accelerare improvvisamente.
+- **Calamita ai piedi** *(Magnetic Feet)* (Showtime): Quando il giocatore ha la palla, aumenta la sua capacità di mantenerne il possesso in base al numero di avversari nel raggio di 5 metri (max 4 avversari). **Quando serve**: giocatori tecnici sotto pressing.
+- **Piedi magnetici** *(Magnetic Feet)*: stesso effetto di **Calamita ai piedi** — non è un'abilità diversa. Usa la descrizione di Calamita ai piedi sopra. **Quando serve**: MED/CC/TrQ che ricevono palla in pressing o in zone affollate.
+- **Stop acrobatico** *(Acrobatic Trap)*: Controllo palla acrobatico. **Quando serve**: passaggi difficili, posizioni scomode.
+- **Finta tiro** *(Feint Shot)*: Finta tiro per ingannare difensore. **Quando serve**: 1v1 in area.
+- **Finta passaggio** *(Feint Pass)*: Finta passaggio. **Quando serve**: aprire linee di passaggio.
+- **Tocco secco** *(Burst Touch)*: Spinta palla rapida in avanti per cambiare ritmo. **Quando serve**: spazio davanti, accelerazione improvvisa.
+- **Protezione** *(Shielding)*: Proteggere palla con corpo. **Quando serve**: pressione alta, spalle alla porta.
 
 ### 8.4 Abilità Difensive
-- **Contrasto Aggressivo**: Tackle aggressivi con minori falli
-- **Intercettazione**: Intercettare passaggi più facilmente. **Quando serve**: difensori, mediani; prioritaria per recupero palla.
-- **Marcatore**: Marcare avversario più efficacemente
-- **Entrata aggressiva**: Contrasti più efficaci
-- **Scivolata**: Tackle in scivolata con maggiore precisione e velocità, conquista la palla più facilmente. **Quando serve**: difensori, tackle aggressivi.
-- **Tackle in allungo**: Aumenta la frequenza dei tackle in piedi, anche contro avversari lontani, da fermi o in movimento lento. **Quando serve**: difensori che recuperano palloni a distanza.
-- **Caposaldo**: Migliora le abilità difensive del giocatore a partire dal secondo tempo, a patto che la squadra sia in vantaggio. **Quando serve**: difensori per mantenere il vantaggio.
-- **Difesa svettante**: Migliora le abilità del giocatore nei duelli aerei quando è posizionato all'interno della propria area di rigore. **Quando serve**: difensori centrali, duelli aerei difensivi.
-- **Tornante**: Rientra rapidamente in fase difensiva dopo fase offensiva. **Quando serve**: centrocampisti, Box-to-Box, ali offensive.
-- **Muro**: Maggiore efficacia nel bloccare passaggi e tiri. **Quando serve**: difensori centrali, mediani.
-- **Disimpegno acrobatico**: Stoppate/disimpegni acrobatici con i piedi anche quando il giocatore è in equilibrio precario o in aria. **Quando serve**: difensori, interventi di emergenza in area.
-- **Dominio palle alte**: Maggiore probabilità di vincere duelli aerei. **Quando serve**: difensori centrali, attaccanti fisici, cross. Abilità *difensiva* per duelli aerei; **Colpo di testa** (§8.1) è invece per conclusione di testa in attacco.
-- **Caccia all'ombra** / **Shadow Hunt** (Showtime, difesa): solo DC/TD/TS/MED difensivo. Si attiva automaticamente su passaggio filtrante dietro la linea: boost di velocità per recuperare e inseguire l'attaccante. **Quando serve**: difensori contro punta veloci e inserimenti. Non richiede input manuale.
-- **Contrasto a distanza** (= **Tackle in allungo** / *Long-Reach Tackle*): stesso concetto — tackle in piedi efficaci anche con avversario più lontano, da fermo o in movimento lento. **Quando serve**: DC/TD/TS/MED.
+- **Contrasto Aggressivo** *(Aggressive Defence)*: Tackle aggressivi con minori falli rispetto a un contrasto normale. **Quando serve**: mediani, difensori centrali, recupero palla in pressing alto.
+- **Intercettazione** *(Interception)*: Intercettare passaggi più facilmente. **Quando serve**: difensori, mediani; prioritaria per recupero palla.
+- **Marcatore** *(Man Marking)*: Marcare avversario specifico più efficacemente, ridurre lo spazio del portatore di palla. **Quando serve**: DC e mediani contro trequartisti/seconde punte; abbinare con istruzione individuale "Marcatura uomo" per assegnare il diretto avversario.
+- **Entrata aggressiva** *(Aggressive Pressing)*: Contrasti più efficaci con maggiore intensità nel duello. **Quando serve**: difensori che escono in anticipo, mediani che pressano alto.
+- **Scivolata** *(Slide Tackle)*: Tackle in scivolata con maggiore precisione e velocità, conquista la palla più facilmente. **Quando serve**: difensori, tackle aggressivi.
+- **Tackle in allungo** *(Long-Reach Tackle)*: Aumenta la frequenza dei tackle in piedi, anche contro avversari lontani, da fermi o in movimento lento. **Quando serve**: difensori che recuperano palloni a distanza.
+- **Caposaldo** *(Anchor)*: Abilità difensiva di ancoraggio; stabilizza il reparto. **Quando serve**: mediani difensivi, Collante. **NOTA**: NON confondere con **Fortezza** (Fortress) che è abilità Showtime condizionale (§8.4 sotto).
+- **Fortezza** *(Fortress)*: Migliora le abilità difensive del giocatore a partire dal secondo tempo, a patto che la squadra sia in vantaggio a intervallo. **Quando serve**: difensori per mantenere il vantaggio. **NOTA**: abilità distinta da Caposaldo (Anchor).
+- **Difesa svettante** *(Aerial Fort)*: Migliora le abilità del giocatore nei duelli aerei quando è posizionato all'interno della propria area di rigore. **Quando serve**: difensori centrali, duelli aerei difensivi.
+- **Tornante** *(Track Back)*: Rientra rapidamente in fase difensiva dopo fase offensiva. **Quando serve**: centrocampisti, Onnipresente, ali offensive.
+- **Muro** *(Blocker)*: Maggiore efficacia nel bloccare passaggi e tiri. **Quando serve**: difensori centrali, mediani.
+- **Disimpegno acrobatico** *(Acrobatic Clearance)*: Stoppate/disimpegni acrobatici con i piedi anche quando il giocatore è in equilibrio precario o in aria. **Quando serve**: difensori, interventi di emergenza in area.
+- **Dominio palle alte** *(Aerial Superiority)*: Maggiore probabilità di vincere duelli aerei. **Quando serve**: difensori centrali, attaccanti fisici, cross. Abilità *difensiva* per duelli aerei; **Colpo di testa** (§8.1) è invece per conclusione di testa in attacco.
+- **Pressing alle spalle** *(Shadow Hunt)* (Showtime, difesa): solo DC/ETD/ETS/MED. Si attiva automaticamente su passaggio filtrante dietro la linea: boost di velocità per recuperare e inseguire l'attaccante. **Quando serve**: difensori contro punte veloci e inserimenti. Alias: Caccia all'ombra. Non richiede input manuale.
+- **Contrasto a distanza** *(Long-Reach Tackle)*: alias di **Tackle in allungo** — stesso concetto, tackle in piedi efficaci anche con avversario più lontano, da fermo o in movimento lento. **Quando serve**: DC/ETD/ETS/MED.
 
 ### 8.5 Abilità Portiere
-- **Riflessi Felini**: Parate ravvicinate miracolose. **Quando serve**: portieri, 1v1.
-- **Presa sicura**: Afferrare palla invece di respingere. **Quando serve**: ridurre ribalzi.
-- **Uscita portiere**: Uscite più sicure. **Quando serve**: linea alta, passaggi filtranti.
-- **Parata con piedi**: Parate con piedi su tiri bassi. **Quando serve**: tiri rasoterra.
-- **Piazzamento**: Posizionamento ottimale in porta.
-- **Estensione PT**: Copertura maggiore porta. **Quando serve**: tiri angolati.
-- **Para-rigori**: Consente al giocatore una maggior reattività nel parare i rigori. **Quando serve**: portieri.
-- **Direzioni alla difesa PT**: Abilità da portiere che migliora le capacità difensive dei difensori posizionati a ridosso dell'area di rigore. **Quando serve**: portieri che comandano la difesa.
-- **PT galvanizzatore** (Showtime): Abilità del portiere che migliora le capacità fisiche dei difensori quando la squadra è in vantaggio dopo l'intervallo. **Quando serve**: portieri con squadra in vantaggio al secondo tempo.
+- **Riflessi Felini** *(Reflexes)*: Parate ravvicinate miracolose. **Quando serve**: portieri, 1v1.
+- **Presa sicura** *(Catching)*: Afferrare palla invece di respingere. **Quando serve**: ridurre rimbalzi e seconde palle.
+- **Uscita portiere** *(Goalkeeper Rush)*: Uscite più sicure. **Quando serve**: linea alta, passaggi filtranti.
+- **Parata con piedi** *(GK Foot Save)*: Parate con piedi su tiri bassi. **Quando serve**: tiri rasoterra.
+- **Piazzamento** *(GK Positioning)*: Posizionamento ottimale in porta, lettura del tiro e copertura ottimale dell'angolo. **Quando serve**: portieri titolari, fondamentale per ridurre gol "facili" su tiri da fuori area.
+- **Estensione PT** *(GK Reach)*: Copertura maggiore della porta nei tuffi. **Quando serve**: tiri angolati, conclusioni alle estremità della porta.
+- **Para-rigori** *(Penalty Saver)*: Consente al giocatore una maggior reattività nel parare i rigori. **Quando serve**: portieri.
+- **Direzione alla difesa** *(GK Directing Defence)*: Abilità da portiere che migliora le capacità difensive dei difensori posizionati a ridosso dell'area di rigore. **Quando serve**: portieri che comandano la difesa. Alias: Direzioni alla difesa PT.
+- **Portiere galvanizzatore** *(GK Spirit Roar)* (Showtime): Abilità del portiere che migliora le capacità fisiche dei difensori quando la squadra è in vantaggio dopo l'intervallo. **Quando serve**: portieri con squadra in vantaggio al secondo tempo. Alias: PT galvanizzatore.
 
 ### 8.6 Abilità Fisiche e Atletiche
-- **Scatto**: Accelerazione esplosiva. **Quando serve**: attaccanti, ali, contropiede.
-- **Resistenza superiore**: Maggiore resistenza alla fatica. **Quando serve**: Box-to-Box, terzini, pressing.
-- **Forza fisica**: Maggiore potenza fisica. **Quando serve**: duelli, protezione palla.
-- **Agilità superiore**: Maggiore agilità. **Quando serve**: dribblatori, 1v1.
-- **Salto**: Salto più potente. **Quando serve**: difensori, attaccanti su cross.
-- **Velocità**: Velocità massima superiore. **Quando serve**: ali, attaccanti veloci.
+- **Scatto** *(Acceleration)*: Accelerazione esplosiva nei primi metri. **Quando serve**: attaccanti, ali, contropiede.
+- **Resistenza superiore** *(Stamina)*: Maggiore resistenza alla fatica. **Quando serve**: Onnipresente, terzini, pressing.
+- **Forza fisica** *(Physical Strength)*: Maggiore potenza fisica nei duelli a terra. **Quando serve**: duelli, protezione palla, attaccanti pivote.
+- **Agilità superiore** *(Super Agility)*: Maggiore agilità nei cambi di direzione. **Quando serve**: dribblatori, 1v1.
+- **Salto** *(Jumping)*: Salto più potente nei duelli aerei. **Quando serve**: difensori centrali, attaccanti su cross e palle inattive.
+- **Velocità** *(Speed)*: Velocità massima superiore in corsa lanciata. **Quando serve**: ali, attaccanti veloci, contropiedisti.
 
 ### 8.7 Abilità Speciali e Leadership
-- **Leader**: Ispira compagni, riduce impatto fatica squadra. **Quando serve**: partite lunghe, giocatori chiave.
-- **Specialista cross**: Cross più precisi e pericolosi. **Quando serve**: esterni, Vie laterali.
-- **Specialista di cross** (= *Cross Specialist*, stesso concetto di Specialista cross su carta Showtime).
-- **Specialista punizioni**: Punizioni più precise. **Quando serve**: tiratori punizioni.
-- **Specialista rigori**: Rigori più sicuri. **Quando serve**: tiratori designati.
-- **Tiratore**: Tiri da fuori area più precisi. **Quando serve**: centrocampisti offensivi, tiri da distanza.
-- **Rimessa lunga / Rimessa lunga PT**: Maggiore ampiezza del lancio con le mani (laterali/portieri). **Quando serve**: rinvii rapidi.
-- **Riserva di lusso**: Prestazioni migliorate quando subentra in corso partita. **Quando serve**: panchinari d’impatto, cambi tattici.
-- **Spirito combattivo**: Prestazioni migliori sotto pressione e fatica. **Quando serve**: Box-to-Box, mediani, pressing. **Comunità**: ideale per tutti gli 11; fondamentale per DC, MED e TrQ (smistano palloni in spazi ridotti). I TrQ hanno spesso Resistenza bassa: anche se li sostituisci al 46', Spirito combattivo li aiuta già al primo tempo (intorno al 30' la Resistenza cala e influisce su lucidità e rapidità). Riduce impatto fatica, migliora anche gestione Resistenza.
-- **Astuzia** (Tattica): Maggiore probabilità di ottenere falli quando è in possesso di palla. **EVITARE su difensori**: Konami gestisce male l'abilità, effetto contrario – più falli a sfavore. Dare a centrocampisti/attaccanti se utile.
+- **Leader** *(Captaincy)*: Ispira compagni, riduce impatto fatica squadra. **Quando serve**: partite lunghe, giocatori chiave (capitano).
+- **Specialista cross** *(Cross Specialist)*: Cross più precisi e pericolosi. **Quando serve**: esterni, Vie laterali.
+- **Specialista di cross** *(Cross Specialist)*: alias di **Specialista cross** — stesso concetto, stesso effetto.
+- **Specialista punizioni** *(Set Piece Specialist)*: Punizioni più precise. **Quando serve**: tiratori punizioni designati.
+- **Specialista dei rigori** *(Penalty Specialist)*: Rigori più sicuri. **Quando serve**: tiratori designati. Alias: Specialista rigori.
+- **Rimessa laterale lunga** *(Long Throw)*: Maggiore ampiezza del lancio con le mani (laterali). **Quando serve**: rinvii rapidi e contropiede da rimessa. Alias: Rimessa lunga.
+- **Rilancio del portiere** *(GK Long Throw)*: Maggiore ampiezza del lancio con le mani (portiere). **Quando serve**: rinvii rapidi dal PT. Alias: Rimessa lunga PT.
+- **Riserva di lusso** *(Super Sub)*: Prestazioni migliorate quando subentra in corso partita. **Quando serve**: panchinari d'impatto, cambi tattici.
+- **Spirito combattivo** *(Fighting Spirit)*: Prestazioni migliori sotto pressione e fatica. **Quando serve**: Onnipresente, mediani, pressing. **Comunità**: ideale per tutti gli 11; fondamentale per DC, MED e TrQ (smistano palloni in spazi ridotti). I TrQ hanno spesso Resistenza bassa: anche se li sostituisci al 46', Spirito combattivo li aiuta già al primo tempo (intorno al 30' la Resistenza cala e influisce su lucidità e rapidità). Riduce impatto fatica, migliora anche gestione Resistenza.
+- **Astuzia** (Tattica): Maggiore probabilità di ottenere falli quando è in possesso di palla. **EVITARE su difensori**: Konami gestisce male l'abilità, effetto contrario – più falli a sfavore. Dare a centrocampisti/attaccanti se utile. **NOTA**: NON confondere con "Trickster" (vedi §8.11) che è invece skill move tecnico in 1v1.
 
 ### 8.8 Programmi Aggiunta Abilità
 - **Disponibile per**: In evidenza, In risalto, Epico, Leggendario, Standard
@@ -650,28 +706,43 @@ Carta forte senza abilità corrette non renderà in game come dovrebbe. **Obblig
 | Nome in rosa (esempi) | Sinonimo / sezione | Effetto (sintesi verificata community/Konami) |
 |----------------------|-------------------|---------------------------------------------|
 | Piedi magnetici / Magnetic Feet | Calamita ai piedi §8.3 | Possesso sotto pressing (max 4 avversari entro ~5 m) |
-| Dribbling in slancio / Momentum Dribbling | Dribbling fulminei §8.3 | Più tocchi e controllo stretto in ultimo terzo |
+| Dribbling in slancio / Momentum Dribbling | Dribbling fulmineo §8.3 | Più tocchi e controllo stretto in ultimo terzo |
 | Scatto bruciante / Acceleration Burst | §8.3 | Tocco secco rapido da fermo o movimento lento; cambio direzione |
-| Passaggio fenomenale / Phenomenal Passing | Passaggio illuminante §8.2 | Passaggi precisi anche da orientamento scomodo |
+| Passaggio fenomenale / Phenomenal Passing | Passaggi illuminanti §8.2 | Passaggi precisi anche da orientamento scomodo |
+| Passaggio sensazionale | Passaggi illuminanti §8.2 | Alias community di Phenomenal Passing — stesso effetto |
 | Finalizzazione fenomenale / Phenomenal Finishing | Istinto del gol §8.1 | Tiri più precisi da equilibrio/atipico |
-| Passaggio visionario / Visionary Pass | §8.2 | Passaggi più sicuri; migliora prima touch del ricevente |
+| Passaggio visionario / Visionary Pass | Passaggio calcolato §8.2 | Passaggi più sicuri; migliora prima touch del ricevente |
 | Passaggi cruciali / Game-changing Pass | §8.2 | +accuratezza passaggi bassi/alti in ripresa se pareggio/svantaggio (2° tempo) |
-| Cross tagliente / Edged Crossing | §8.2 | Cross con caduta verticale (dip), utili da fascia |
-| Tiro a giro spiovente / Blitz Curler | A giro / tiro a giro §8.1 | Curva più marcata su tiri controllati |
+| Cross tagliente / Edged Crossing | Cross spiovente §8.2 | Cross con caduta verticale (dip), utili da fascia |
+| Tiro a giro spiovente / Blitz Curler | §8.1 | Curva più marcata su tiri controllati |
+| Tiro di collo / Knuckle Shot | §8.1 | Traiettoria imprevedibile (knuckle) |
 | Incornata / Bullet Header | Incornata §8.1 | Testate verso il basso più potenti/coerenti |
 | Difesa svettante / Aerial Fort | §8.4 | Duelli aerei migliori **in propria area** |
-| Fortezza / Fortress | §8.4 (condizionale) | +5% capacità difensive in 2° tempo se in vantaggio a intervallo |
-| Caccia all'ombra / Shadow Hunt | §8.4 | Recupero automatico su filtrante dietro la difesa |
+| Caposaldo / Anchor | §8.4 | Ancoraggio difensivo (mediano/difensore) |
+| Fortezza / Fortress | §8.4 | +capacità difensive in 2° tempo se in vantaggio a intervallo |
+| Pressing alle spalle / Shadow Hunt | §8.4 | Recupero automatico su filtrante dietro la difesa. Alias: Caccia all'ombra |
 | Contrasto a distanza / Long-Reach Tackle | Tackle in allungo §8.4 | Tackle in piedi a distanza |
 | Rasoterra potente / Low Screamer | Sassata rasoterra §8.1 | Stunning shot rapido e basso con barra potenza <50% |
-| Specialista lancio lungo / Long Ball Expert | Lancio lungo preciso §8.2 | Lanci lunghi più accurati |
+| Specialista lancio lungo / Long Ball Expert | §8.2 | Lanci lunghi più efficaci — **NON** è Lancio lungo preciso |
+| Lancio lungo / Long Lofted Pass | Lancio lungo preciso §8.2 | Passaggi lunghi accurati |
 | Cross anticipato / Early Crosser | Cross calibrato §8.2 | Cross anticipati più efficaci |
+| No Look Pass / Passaggio no look | No-look §8.2 | Passaggio senza guardare il ricevente |
+| Low Lofted Pass | Passaggio a scavalcare §8.2 | Passaggio rasoterra che scavalca |
+| Heel Trick | Colpo di tacco §8.2 | Passaggio/tiro di tacco |
+| Cut Behind & Turn | Taglia alle spalle e gira §8.3 | Combo cambio direzione avanzata |
 | Inserimento incisivo / Incisive Run | — | Taglio da fascia verso porta (trait offensivo) |
 | Corsa ubriacante / Mazing Run | — | Penetrazione con dribbling stretto e svolte |
 | Proiettile veloce / Speeding Bullet | — | Inserimenti e progressioni in velocità |
 | Trickster | §8.3 (tecnico) | Skill move / dribbling flair in 1v1; utile su ali e TrQ tecnici |
 
-**Non in elenco rosa standard**: Attack Trigger, Willpower, GK Directing Defense, GK Spirit Roar — se compaiono su carta portiere/Showtime, citare solo l'effetto indicato in scheda senza inventare numeri.
+**Mappatura aggiuntiva (nomi EN che potrebbero apparire nel catalogo)**:
+- **Willpower** = **Forza di volontà** (§8.1) — boost progressivo abilità di tiro fino a 8 cumuli
+- **GK Directing Defense / GK Directing Defence** = **Direzione alla difesa** (§8.5)
+- **GK Spirit Roar** = **Portiere galvanizzatore** (§8.5)
+- **Attack Trigger** = **Attivatore d'attacco** (trait offensivo); citare solo l'effetto in scheda senza inventare numeri
+- **Gamesmanship** = **Astuzia** (§8.7) — NON confondere con Trickster (§8.3)
+
+**Regola generale per nomi EN non in elenco**: se appare un'abilità solo in inglese sulla carta, riportare l'effetto come scritto sulla scheda Konami/eFootball Lab senza tradurla in modo creativo.
 
 ---
 
