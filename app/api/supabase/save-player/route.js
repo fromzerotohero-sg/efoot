@@ -547,6 +547,11 @@ export async function POST(req) {
       console.error('[save-player] formation sync failed (non-blocking):', formationErr)
     }
 
+    // Invalida diagnostic cache (rosa cambiata → cache stale)
+    admin.from('user_diagnostic_cache').delete().eq('user_id', userId).then(({ error: delErr }) => {
+      if (delErr) console.error('[save-player] Cache invalidation error (non-blocking):', delErr.message)
+    })
+
     // Aggiorna AI Knowledge Score (async, non blocca risposta)
     if (supabaseUrl && serviceKey) {
       import('@/lib/aiKnowledgeHelper').then(({ updateAIKnowledgeScore }) => {

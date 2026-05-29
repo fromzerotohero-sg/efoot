@@ -17,11 +17,11 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 /** Limiti storia conversazione (sicurezza e token) */
-const MAX_HISTORY_MESSAGES = 10
-const MAX_HISTORY_CONTENT_LENGTH = 2000
+const MAX_HISTORY_MESSAGES = 14
+const MAX_HISTORY_CONTENT_LENGTH = 3000
 
-/** Limite riassunto contesto personale (diagnostic da user_diagnostic_cache). 7200: alcuni utenti hanno diagnostic 6500+; blocco ISTRUZIONI aggiunge ~280; margine per rosa/partite ampie. */
-const MAX_PERSONAL_CONTEXT_CHARS = 7200
+/** Limite riassunto contesto personale (diagnostic da user_diagnostic_cache). Alzato a 18000 per evitare troncamento di build, sinergie, leve e skill advisory per utenti con rosa ampia. */
+const MAX_PERSONAL_CONTEXT_CHARS = 18000
 
 /** Limiti validazione input (sicurezza e token) */
 const MAX_MESSAGE_LENGTH = 4000
@@ -134,21 +134,19 @@ function parseSuggestionsFromContent(content) {
 function sanitizeCoachOutput(content, lang = 'it') {
   if (!content || typeof content !== 'string') return content
   const markers = lang === 'en'
-    ? ['because', 'since', 'due to', 'based on', 'as a result', 'i analyzed', 'i have analyzed', 'i cross', 'i have cross']
-    : ['poiché', 'dato che', 'in base a', 'visto che', 'ho analizzato', 'ho incrociato', 'ho valutato'] // Rimosso 'perché' e 'quindi' per non troncare frasi utili
+    ? ['i analyzed', 'i have analyzed', 'i cross-checked', 'i have cross']
+    : ['ho analizzato', 'ho incrociato', 'ho valutato']
 
   const sentences = content.match(/[^.!?]+[.!?]?/g) || [content]
   const cleaned = []
   for (const s of sentences) {
     let out = s
-    const hasQuestion = out.includes('?')
     for (const m of markers) {
       const re = new RegExp(`\\b${m}\\b.*`, 'i')
       if (re.test(out)) out = out.replace(re, '')
     }
     out = out.trim()
     if (!out) continue
-    if (hasQuestion) continue
     cleaned.push(out)
   }
   const merged = cleaned.join(' ').trim()
@@ -725,7 +723,11 @@ async function buildPersonalContext(userId, lang = 'it') {
       }
     }
 
-    const parts = [
+    const reserveIdx = rosterLines.findIndex(l => l === reservesHeader)
+    const starterLines = reserveIdx >= 0 ? rosterLines.slice(0, reserveIdx + 1) : rosterLines
+    const benchLines = reserveIdx >= 0 ? rosterLines.slice(reserveIdx + 1) : []
+
+    const coreParts = [
       '======================================================================',
       L.boxTitle,
       L.boxSubtitle,
@@ -737,21 +739,30 @@ async function buildPersonalContext(userId, lang = 'it') {
       L.statsNote,
       '',
       L.starters,
-      ...rosterLines.slice(0, rosterLines.findIndex(l => l === reservesHeader) + 1),
-      ...rosterLines.slice(rosterLines.findIndex(l => l === reservesHeader) + 1),
-      '',
-      L.reservesNote,
+      ...starterLines,
       '',
       L.lastMatches,
       ...matchLines,
       '',
       tacticsText,
-      coachText,
-      ...(patternText ? ['', patternText] : []),
-      ...(buildProgressionBlock ? ['', buildProgressionBlock] : []),
-      ...(skillAdvisoryBlock ? ['', skillAdvisoryBlock] : [])
+      coachText
     ]
-    let summary = parts.join('\n')
+
+    const optionalSections = [
+      { label: 'bench', lines: benchLines.length > 0 ? ['', L.reservesNote, ...benchLines] : [] },
+      { label: 'pattern', lines: patternText ? ['', patternText] : [] },
+      { label: 'build', lines: buildProgressionBlock ? ['', buildProgressionBlock] : [] },
+      { label: 'skill', lines: skillAdvisoryBlock ? ['', skillAdvisoryBlock] : [] }
+    ]
+
+    let summary = coreParts.join('\n')
+    for (const section of optionalSections) {
+      if (section.lines.length === 0) continue
+      const addition = section.lines.join('\n')
+      if (summary.length + addition.length <= MAX_PERSONAL_CONTEXT_CHARS) {
+        summary += addition
+      }
+    }
     if (summary.length > MAX_PERSONAL_CONTEXT_CHARS) {
       summary = summary.slice(0, MAX_PERSONAL_CONTEXT_CHARS) + '\n... (riassunto troncato).'
     }
@@ -882,7 +893,7 @@ Per consigli pratici in partita o di matchup, preferisci la forma: trigger -> az
 DUE FONTI DATI (non in conflitto): (1) "Dati dalle partite inserite" = zone attacco, voti giocatori, recupero dalle partite salvate nell'app. (2) "Statistiche di gioco (Analisi eFootball, ultime 10 partite)" = aggregate dalla schermata Analisi eFootball (screenshot). Usa entrambe: sono complementari (stesso giocatore da angolazioni o periodi diversi).
 Se nel RIASSUNTO ANALISI è presente la sezione "Statistiche di gioco (Analisi eFootball, ultime 10 partite)" (tipo gol, tiro, passaggio, dribbling, difesa, comandi speciali), usala per consigli mirati: es. diversificare tipi di tiro, aumentare uso pressing/comandi, lavorare su passaggio o difesa in base alle percentuali reali. Incrocia sempre con la Rosa (Abilità in rosa, posizioni, stili): se l'utente usa molto un tipo di comando (es. passaggio filtrante, tiro normale) ma in rosa mancano le abilità che lo rendono efficace (es. Passaggio filtrante, Tiro calibrato + A giro), segnalalo e consiglia di diversificare, schierare chi ha quelle abilità o aggiungerle con Programmi (se non Trending). Usa la mappatura comando→abilità del RAG (§7.9 se presente). Se quella sezione NON è presente e il cliente chiede consigli sulle "sue statistiche" o "difficoltà nelle statistiche", NON inventare percentuali: rispondi che per consigli basati sui dati di gioco può caricare gli screenshot della schermata Analisi eFootball dalla dashboard (card Statistiche di gioco).
 Se nel RIASSUNTO c'è Connessione/Input delay/Ritardo (es. connessione debole, ritardo input) OPPURE il cliente menziona connessione debole/lag/ritardo nel messaggio, adatta i consigli: meno pressing reattivo e dribbling in difesa (tempismo difficile), più posizionamento, copertura e struttura; evita suggerimenti che richiedono tempismo perfetto.
-PRIORITÀ PROFILO: Se nel RIASSUNTO (sezione Informazioni per l'IA) sono presenti "Punto debole" e/o "Cosa vuole imparare" e/o "Note per l'IA", usali come priorità: orienta almeno un consiglio sul punto debole e sugli obiettivi di apprendimento quando rilevanti alla domanda; rispetta le note come focus quando possibile. NON citare mai al cliente l'elenco (es. "hai indicato che hai difficoltà in..."); usa il dato solo per orientare i consigli.
+PRIORITÀ PROFILO: Per "Punto debole", "Cosa vuole imparare" e "Note per l'IA" usa SEMPRE i valori dal blocco PROFILO in testa al messaggio (sono live/aggiornati). Se il RIASSUNTO contiene valori diversi per gli stessi campi, IGNORA quelli del RIASSUNTO (possono essere stale). Orienta almeno un consiglio sul punto debole e sugli obiettivi di apprendimento quando rilevanti alla domanda. NON citare mai al cliente l'elenco (es. "hai indicato che hai difficoltà in..."); usa il dato solo per orientare i consigli.
 
 OUTPUT COACH: 2-4 frasi operative, rispondi alla domanda specifica; varia i consigli; "In sintesi" solo se utile.`
 
@@ -910,7 +921,7 @@ For practical in-match or matchup advice, prefer: trigger -> action -> recommend
 TWO DATA SOURCES (not in conflict): (1) "Data from entered matches" = attack zones, player ratings, recovery from matches saved in the app. (2) "Game stats (eFootball Analisi, last 10 matches)" = aggregates from the eFootball Analysis screen (screenshot). Use both: they are complementary (same player from different angles or time windows).
 If the ANALYSIS SUMMARY includes "Game stats (eFootball Analisi, last 10 matches)" (goal types, shot, passing, dribbling, defense, special commands), use it for targeted advice: e.g. diversify shot types, increase pressing/command usage, work on passing or defense based on actual percentages. Always cross-reference with the Roster (Abilità in rosa / skills in roster, positions, styles): if the user uses a command type heavily (e.g. through ball, normal shot) but the roster lacks the skills that make it effective (e.g. Passaggio filtrante, Tiro calibrato + A giro), point it out and suggest diversifying, using players who have those skills, or adding skills via Programmi (if not Trending). Use the command→skill mapping from RAG (§7.9 when present). If that section is NOT present and the client asks for advice on "their stats" or "difficulties in stats", do NOT invent percentages: reply that for data-driven advice they can upload screenshots of the eFootball Analysis screen from the dashboard (Game stats card).
 If the SUMMARY has Connection/Input delay/Lag (e.g. weak connection, input delay) OR the client mentions weak connection/lag/delay in the message, adapt advice: less reactive pressing and dribbling in defence (timing is harder), more positioning, coverage and structure; avoid suggestions that require perfect timing.
-PROFILE PRIORITY: If the SUMMARY (Informazioni per l'IA / AI info section) includes "Punto debole" (Weak point) and/or "Cosa vuole imparare" (Learn goals) and/or "Note per l'IA" (Notes for AI), use them as priorities: steer at least one piece of advice toward the weak point and learning goals when relevant to the question; respect the notes as focus when possible. Never quote the list back to the client (e.g. "you indicated you have difficulties in..."); use the data only to steer advice.
+PROFILE PRIORITY: For "Weak point", "Learn goals", and "Notes for AI" ALWAYS use the values from the PROFILE block at the top of the message (these are live/current). If the SUMMARY contains different values for the same fields, IGNORE those from the SUMMARY (they may be stale). Steer at least one piece of advice toward the weak point and learning goals when relevant to the question. Never quote the list back to the client (e.g. "you indicated you have difficulties in..."); use the data only to steer advice.
 
 CONSTRAINTS: only roster names; only 5 configurable team styles (Possession, Quick Counter, Long Ball Counter, Long Ball, Out Wide); contrattacco → contropiede_veloce and require coach competence >=70; individual instructions only max 5; formation limits §3.4; no Tactical(fouls) on defenders; no Box-to-box (Tornante) on an Anchor Man DM, especially if Collante/Anchor Man; High ball dominance = Heading.
 
@@ -1136,6 +1147,9 @@ export async function POST(req) {
           } else if (fitLines) {
             personalContextSummary = fitLines + personalContextSummary
           }
+          if (personalContextSummary.length > MAX_PERSONAL_CONTEXT_CHARS) {
+            personalContextSummary = personalContextSummary.slice(0, MAX_PERSONAL_CONTEXT_CHARS) + '\n... (riassunto troncato).'
+          }
         } else if (cacheRow?.content && !cacheIsFresh && process.env.NODE_ENV !== 'production') {
           console.log('[assistant-chat] Diagnostic cache stale: using live context fallback')
         }
@@ -1233,8 +1247,8 @@ export async function POST(req) {
     const requestBody = {
       model: model,
       messages: openAIMessages,
-      temperature: 0.7,
-      max_completion_tokens: 800 // gpt-5.2 richiede max_completion_tokens (max_tokens deprecato)
+      temperature: 0.5,
+      max_completion_tokens: 1200
     }
     
     // Chiama OpenAI con retry (gestisce anche fallback GPT-4o se GPT-5 non disponibile)

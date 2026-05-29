@@ -201,6 +201,11 @@ export async function POST(req) {
     }
 
     // Aggiorna AI Knowledge Score (async, non blocca risposta)
+    // Invalida diagnostic cache (tattica cambiata → cache stale)
+    admin.from('user_diagnostic_cache').delete().eq('user_id', userId).then(({ error: delErr }) => {
+      if (delErr) console.error('[save-tactical-settings] Cache invalidation error (non-blocking):', delErr.message)
+    })
+
     if (supabaseUrl && serviceKey) {
       import('@/lib/aiKnowledgeHelper').then(({ updateAIKnowledgeScore }) => {
         updateAIKnowledgeScore(userId, supabaseUrl, serviceKey).catch(err => {

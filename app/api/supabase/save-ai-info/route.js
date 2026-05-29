@@ -320,6 +320,12 @@ export async function POST(req) {
       )
     }
 
+    // Invalida diagnostic cache (profilo IA cambiato → cache stale)
+    admin.from('user_diagnostic_cache').delete().eq('user_id', userId).then(({ error: delErr }) => {
+      if (delErr) console.error('[save-ai-info] Cache invalidation error (non-blocking):', delErr.message)
+      else if (process.env.NODE_ENV !== 'production') console.log('[save-ai-info] Diagnostic cache invalidated for', userId)
+    })
+
     // Aggiorna AI Knowledge Score (async, non blocca risposta)
     if (supabaseUrl && serviceKey) {
       import('@/lib/aiKnowledgeHelper').then(({ updateAIKnowledgeScore }) => {
