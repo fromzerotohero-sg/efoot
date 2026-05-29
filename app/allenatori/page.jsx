@@ -10,6 +10,19 @@ import { ArrowLeft, Upload, Camera, AlertCircle, CheckCircle2, X, Trash2, Star, 
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 
+const COACH_UPLOAD_EXAMPLES = [
+  {
+    key: 'main',
+    src: '/examples/coach-upload/amorim-carta-allenatore.png',
+    labels: { it: 'Carta allenatore', en: 'Coach card' }
+  },
+  {
+    key: 'connection',
+    src: '/examples/coach-upload/amorim-collegamento.png',
+    labels: { it: 'Collegamento', en: 'Connection' }
+  }
+]
+
 export default function AllenatoriPage() {
   const { t, lang } = useTranslation()
   const router = useRouter()
@@ -651,6 +664,49 @@ export default function AllenatoriPage() {
               paddingRight: '8px',
               marginBottom: '16px'
             }}>
+            <div style={{
+              marginBottom: '20px',
+              padding: '14px',
+              borderRadius: '12px',
+              border: '1px solid rgba(0, 212, 255, 0.25)',
+              background: 'rgba(0, 212, 255, 0.04)'
+            }}>
+              <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '6px' }}>
+                {lang === 'en' ? 'Example screenshots' : 'Esempi di screenshot'}
+              </div>
+              <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '12px', lineHeight: 1.5 }}>
+                {lang === 'en'
+                  ? 'Coach card first (name, style competence, booster), then the tactical connection screen if available.'
+                  : 'Prima la carta allenatore (nome, competenza stili, booster), poi la schermata collegamento tattico se presente.'}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px' }}>
+                {COACH_UPLOAD_EXAMPLES.map((example) => (
+                  <a
+                    key={example.key}
+                    href={example.src}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      display: 'block',
+                      borderRadius: '10px',
+                      overflow: 'hidden',
+                      border: '1px solid rgba(0, 212, 255, 0.2)',
+                      textDecoration: 'none',
+                      color: 'inherit'
+                    }}
+                  >
+                    <img
+                      src={example.src}
+                      alt={example.labels[lang === 'en' ? 'en' : 'it']}
+                      style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '140px', objectFit: 'cover', objectPosition: 'top' }}
+                    />
+                    <span style={{ display: 'block', fontSize: '11px', padding: '8px', textAlign: 'center', opacity: 0.85 }}>
+                      {example.labels[lang === 'en' ? 'en' : 'it']}
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </div>
             {/* Drag & Drop Area */}
             <div
               onDrop={handleDrop}

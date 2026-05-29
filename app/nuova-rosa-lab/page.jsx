@@ -965,13 +965,17 @@ function CoachPhotoUploadModal({
     {
       key: 'main',
       label: lang === 'en' ? 'Coach card' : 'Carta allenatore',
-      description: lang === 'en' ? 'Main screenshot with name and tactical skills.' : 'Schermata principale con nome e abilita tattiche.',
+      description: lang === 'en'
+        ? 'Main screen: name, nationality, team, playing style competence and booster.'
+        : 'Schermata principale: nome, nazionalita, squadra, competenza stili di gioco e booster.',
       required: true
     },
     {
       key: 'connection',
-      label: lang === 'en' ? 'Connection / booster' : 'Collegamento / booster',
-      description: lang === 'en' ? 'Optional second screenshot for connection or booster details.' : 'Seconda schermata opzionale per collegamento o booster.',
+      label: lang === 'en' ? 'Tactical connection' : 'Collegamento',
+      description: lang === 'en'
+        ? 'Connection screen with focal point and key man (optional but recommended).'
+        : 'Schermata collegamento con punto focale e uomo chiave (opzionale ma consigliata).',
       required: false
     }
   ]
@@ -1043,6 +1047,16 @@ function CoachPhotoUploadModal({
             )
           })}
         </div>
+
+        <PhotoUploadExamples
+          lang={lang}
+          examples={COACH_UPLOAD_EXAMPLES}
+          description={
+            lang === 'en'
+              ? 'Use these screens as a guide: coach card first, then the tactical connection if available.'
+              : 'Usa queste schermate come guida: prima la carta allenatore, poi il collegamento tattico se presente.'
+          }
+        />
 
         <div className="nr-photo-upload-grid nr-coach-photo-grid">
           {imageTypes.map(({ key, label, description, required }) => {
@@ -1515,19 +1529,33 @@ const PLAYER_UPLOAD_EXAMPLES = [
   }
 ]
 
-function PhotoUploadExamples({ lang }) {
+const COACH_UPLOAD_EXAMPLES = [
+  {
+    key: 'main',
+    src: '/examples/coach-upload/amorim-carta-allenatore.png',
+    labels: { it: 'Carta allenatore', en: 'Coach card' }
+  },
+  {
+    key: 'connection',
+    src: '/examples/coach-upload/amorim-collegamento.png',
+    labels: { it: 'Collegamento', en: 'Connection' }
+  }
+]
+
+function PhotoUploadExamples({ lang, examples = PLAYER_UPLOAD_EXAMPLES, description = null }) {
+  const defaultDescription =
+    lang === 'en'
+      ? 'Use these screens as a guide: stats, skills and boosters must be readable before extraction.'
+      : 'Usa queste schermate come guida: statistiche, abilita e booster devono essere leggibili prima dell estrazione.'
+
   return (
     <section className="nr-photo-example-panel">
       <div className="nr-photo-example-copy">
         <strong>{lang === 'en' ? 'Example screenshots' : 'Esempi di screenshot'}</strong>
-        <p>
-          {lang === 'en'
-            ? 'Use these screens as a guide: stats, skills and boosters must be readable before extraction.'
-            : 'Usa queste schermate come guida: statistiche, abilita e booster devono essere leggibili prima dell estrazione.'}
-        </p>
+        <p>{description || defaultDescription}</p>
       </div>
       <div className="nr-photo-example-grid">
-        {PLAYER_UPLOAD_EXAMPLES.map((example) => (
+        {examples.map((example) => (
           <a
             key={example.key}
             href={example.src}
