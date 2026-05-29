@@ -105,31 +105,31 @@ Valori di riferimento per costruzione squadra. Le statistiche restano FISSE sull
 ### 2.1 Stili Senza Palla (Comportamento senza possesso)
 
 #### Attaccanti e Centrocampisti Offensivi
-- **Opportunista** (P): Resta **in linea con l'ultimo difensore avversario** (fuorigioco), scatta verso porta sul filtrante/occasione, sovraffolla l'area. **NON** significa "giocare come un difensore". **Quando serve**: passaggi filtranti, palle in profondità, contropiede. *(Goal Poacher)*
-- **Senza palla** (P/SP/TRQ): Attira difensori per creare spazi per inserimenti. **Quando serve**: squadre che cercano imprevedibilità; crea spazi per compagni. *(Dummy Runner)*
-- **Rapace d'area** (P): Sempre in agguato in area di rigore per finalizzare; ottimo su cross e ribalzi. **Quando serve**: cross, attaccanti con centrocampisti/esterni che forniscono assist. *(Fox in the Box)*
-- **attacante di rientro** (P/SP/TRQ): Arretra in mezzo al campo per impostare, contribuisce alla costruzione. **Quando serve**: possesso palla, squadre che costruiscono dal basso. **Perché**: idealmente abbinato a esterni veloci che corrono oltre i difensori. *(Deep-Lying Forward — non "Punta arretrata")*
-- **Fulcro di gioco** (P): Protegge palla con fisico, riferimento offensivo. **Quando serve**: gioco aereo, sponde, attaccanti fisici. **Perché**: presenza fisica, crea spazio per esterni e trequartisti. *(Target Man)*
-- **Specialista di cross** (EDA/ESA/CLD/CLS): Resta sulla fascia per crossare
-- **Classico n° 10** (SP/TRQ): Playmaker, avvia attacchi con passaggi intelligenti, minimizza sforzo difensivo. **Quando serve**: gioco lento e ragionato, possesso palla, controllo partita. **Perché**: gestisce il ritmo, meno coinvolto in fase difensiva.
-- **Regista creativo** (SP/EDA/ESA/TRQ/CLD/CLS): Si muove liberamente in fase offensiva, cerca spazi per ricevere palla e creare occasioni. **Quando serve**: imprevedibilità offensiva, disorganizzare la difesa avversaria. **Perché**: movimenti intelligenti di smarcamento.
-- **Ala prolifica** (EDA/ESA): Si posiziona sulla fascia e taglia verso il centro per **ricevere** passaggi filtranti; efficace in 1v1. *(Prolific Winger)*
-- **Taglio al centro**: Tende a tagliare verso interno per ricevere passaggi. **Quando serve**: esterni che convergono per tiri a giro o passaggi filtranti.
+- **Opportunista** (CF; compatibile SS): Resta **in linea con l'ultimo difensore avversario** (fuorigioco), scatta verso porta sul filtrante/occasione, sovraffolla l'area. **NON** significa "giocare come un difensore". **Quando serve**: passaggi filtranti, palle in profondità, contropiede. *(Goal Poacher)*
+- **Senza palla** (CF/SS/AMF): Attira difensori per creare spazi per inserimenti. **Quando serve**: squadre che cercano imprevedibilità; crea spazi per compagni. *(Dummy Runner)*
+- **Rapace d'area** (CF): Sempre in agguato in area di rigore per finalizzare; ottimo su cross e ribalzi. **Quando serve**: cross, attaccanti con centrocampisti/esterni che forniscono assist. *(Fox in the Box)*
+- **attacante di rientro** (CF/SS; compatibile AMF): Arretra in mezzo al campo per impostare, contribuisce alla costruzione. **Quando serve**: possesso palla, squadre che costruiscono dal basso. **Perché**: idealmente abbinato a esterni veloci che corrono oltre i difensori. *(Deep-Lying Forward — non "Punta arretrata")*
+- **Fulcro di gioco** (CF): Protegge palla con fisico, riferimento offensivo. **Quando serve**: gioco aereo, sponde, attaccanti fisici. **Perché**: presenza fisica, crea spazio per esterni e trequartisti. *(Target Man)*
+- **Specialista di cross** (RWF/LWF/RMF/LMF): Resta sulla fascia per crossare. *(Cross Specialist)*
+- **Classico n° 10** (SS/AMF): Playmaker, avvia attacchi con passaggi intelligenti, minimizza sforzo difensivo. **Quando serve**: gioco lento e ragionato, possesso palla, controllo partita. **Perché**: gestisce il ritmo, meno coinvolto in fase difensiva. NON si attiva su CMF (dal 2024).
+- **Regista creativo** (SS/AMF/RWF/LWF; compatibile RMF/LMF/CMF ma AI inattiva): Si muove liberamente in fase offensiva, cerca spazi per ricevere palla e creare occasioni. **Quando serve**: imprevedibilità offensiva, disorganizzare la difesa avversaria. **Perché**: movimenti intelligenti di smarcamento. *(Creative Playmaker)*
+- **Ala prolifica** (RWF/LWF; compatibile RMF/LMF): Si posiziona sulla fascia e taglia verso il centro per **ricevere** passaggi filtranti; efficace in 1v1. *(Prolific Winger)*
+- **Taglio al centro** (RWF/LWF/RMF/LMF): Tende a tagliare verso interno per ricevere passaggi. **Quando serve**: esterni che convergono per tiri a giro o passaggi filtranti. *(Roaming Flank)*
 
 #### Centrocampisti e Difensori
-- **Tra le linee** (CC/MED): Rimane arretrato, pronto a lanciare azioni offensive
-- **Sviluppo** (DC): Difensore che arretra per impostare azione con lanci lunghi. **Quando serve**: costruzione dal basso, possesso palla. **Perché**: raggio di passaggio lungo da dietro. *(Build Up – solo DC)*
-- **Frontale extra** (DC): Partecipa a manovra offensiva, si sovrappone. **Quando serve**: moduli che spingono la difesa in avanti; rischio: espone il dietro. *(Extra Frontman)*
-- **Incontrista** (CC/MED/DC): Respinge attacchi con pressing aggressivo. **Quando serve**: contropiede veloce, tattiche aggressive orientate alla riconquista rapida. **Perché**: pressione alta, contrasti decisi. *(NON usare "Difensore distruttore" o "Destroyer": termini non ufficiali)*
-- **Box-to-Box** (CC/MED): Corre da area a area, partecipa in fase difensiva e offensiva. **Quando serve**: moduli che richiedono centrocampisti completi, equilibrio e copertura totale. **Perché**: alta resistenza, versatilità; recupera palla e avvia attacchi, arriva tardi in area; utilizzabile in quasi tutti i moduli.
-- **Onnipresente** (CLD/CLS/CC/MED): Corre su tutto il campo, copre ogni zona. *(Distinto da Box-to-Box)*
-- **Collante** (MED): Centrocampista arretrato davanti difesa, utile difesa/attacco. **Quando serve**: scudo difensivo, opzione di passaggio sicura in costruzione. **Perché**: fondamentale per Vie laterali (Out Wide) per solidità difensiva. *(Anchor Man)*
-- **Giocatore chiave** (SP/TRQ/CLD/CLS/CC): Fiuto del gol, sempre proiettato avanti; cerca spazi vuoti quando si passa da difesa ad attacco, corre verso porta prima della punta. **Quando serve**: contropiede veloce. **Perché**: bisogno di buona resistenza per ripetuti scatti; passaggi rasoterra precisi per le punte. *(Hole Player)*
+- **Tra le linee** (CMF/DMF; compatibile AMF): Si posiziona più basso per dettare il tempo e avviare azioni offensive. *(Orchestrator)*
+- **Sviluppo** (CB; compatibile DMF/RB/LB ma AI inattiva): Difensore che arretra per impostare azione con lanci lunghi. **Quando serve**: costruzione dal basso, possesso palla. **Perché**: raggio di passaggio lungo da dietro. *(Build Up — SOLO CB per attivazione piena)*
+- **Frontale extra** (CB; compatibile DMF): Partecipa a manovra offensiva, si sovrappone. **Quando serve**: moduli che spingono la difesa in avanti; rischio: espone il dietro. *(Extra Frontman)*
+- **Incontrista** (CMF/DMF/CB; compatibile RB/LB): Respinge attacchi con pressing aggressivo. **Quando serve**: contropiede veloce, tattiche aggressive orientate alla riconquista rapida. **Perché**: pressione alta, contrasti decisi. *(The Destroyer)*
+- **Box-to-Box** (CMF/RMF/LMF/DMF; compatibile AMF): Corre da area a area, partecipa in fase difensiva e offensiva. **Quando serve**: moduli che richiedono centrocampisti completi, equilibrio e copertura totale. **Perché**: alta resistenza, versatilità; recupera palla e avvia attacchi, arriva tardi in area; utilizzabile in quasi tutti i moduli.
+- **Onnipresente** (CMF/RMF/LMF/DMF): Corre su tutto il campo, copre ogni zona. Sinonimo italiano di Box-to-Box nel DB; stesse posizioni di attivazione.
+- **Collante** (DMF; compatibile CMF/CB ma AI inattiva): Centrocampista arretrato davanti difesa, utile difesa/attacco. **Quando serve**: scudo difensivo, opzione di passaggio sicura in costruzione. **Perché**: fondamentale per Vie laterali (Out Wide) per solidità difensiva. *(Anchor Man — SOLO DMF per attivazione piena)*
+- **Giocatore chiave** (SS/AMF/RMF/LMF/CMF): Fiuto del gol, sempre proiettato avanti; cerca spazi vuoti quando si passa da difesa ad attacco, corre verso porta prima della punta. **Quando serve**: contropiede veloce. **Perché**: bisogno di buona resistenza per ripetuti scatti; passaggi rasoterra precisi per le punte. NON si attiva su CF. *(Hole Player)*
 
 #### Terzini e Portieri
-- **Terzino offensivo** (TD/TS): Si unisce ad attacco, sovrapposizioni continue, spinta sulla fascia. **Quando serve**: ampiezza, cross, dominio territoriale. **Rischio**: lascia spazio dietro.
-- **Terzino difensivo** (TD/TS): Rimane arretrato per proteggere difesa, copertura prioritaria. **Quando serve**: solidità difensiva, contro ali veloci avversarie.
-- **Terzino mattatore** (TD/TS): Si inserisce in azioni offensive centrali. **Quando serve**: moduli che spingono i terzini in attacco centrale.
+- **Terzino offensivo** (RB/LB; compatibile RMF/LMF): Si unisce ad attacco, sovrapposizioni continue, spinta sulla fascia. **Quando serve**: ampiezza, cross, dominio territoriale. **Rischio**: lascia spazio dietro. *(Attacking Full-back)*
+- **Terzino difensivo** (RB/LB; compatibile CB): Rimane arretrato per proteggere difesa, copertura prioritaria. **Quando serve**: solidità difensiva, contro ali veloci avversarie. *(Defensive Full-back)*
+- **Terzino mattatore** (RB/LB): Si inserisce in azioni offensive centrali. **Quando serve**: moduli che spingono i terzini in attacco centrale. *(Full-back Finisher)*
 - **Portiere offensivo** (PT): Più avanzato, esce per anticipare; proattivo nelle uscite. **Quando serve**: linea alta, pressing, gioco aggressivo. **Rischio**: palloni scavalcati.
 - **Portiere difensivo** (PT): Rimane vicino alla linea di porta, reattivo. **Quando serve**: gioco conservativo, contro squadre con tiri da lontano.
 
@@ -723,8 +723,9 @@ Le policy comportamentali per il Coach AI (errori da evitare, terminologia, anti
 
 ---
 
-**Versione**: 8.5.3 ENTERPRISE | **Data**: 17 Maggio 2026
+**Versione**: 8.6.0 ENTERPRISE | **Data**: 29 Maggio 2026
 **Principio**: FISSO vs CONFIGURABILE | **Terminologia**: Ufficiale eFootball
+**Changelog 8.6.0**: §2.1 Posizioni attivazione corrette per TUTTI i 24 stili card (allineate a fonti ufficiali eFootball 2026: FIFPlay, Scribd Guide, Konami Help). Rimossi sigle IT vecchie (P/SP/TRQ/CLD/CLS/CC/MED/DC/TD/TS) sostituite con posizioni ufficiali EN (CF/SS/AMF/CMF/DMF/RWF/LWF/RMF/LMF/CB/RB/LB). Aggiunte note "compatibile ma AI inattiva" dove pertinente. Classic No. 10: confermato SS/AMF only. Collante: confermato DMF only.
 **Changelog 8.5.4**: §8.3 alias Piedi magnetici = Calamita ai piedi; §8.4 Shadow Hunt e Contrasto a distanza; §8.11 tabella Showtime/sinonimi IT-EN (Magnetic Feet, Momentum Dribbling, Trickster, ecc.) per chat/contromisure; rimosso duplicato Dominio palle alte.
 **Changelog 8.5.3**: §7.10 regola build/meta funzionale (movimenti, difficolta, dati cliente; Sintesi rosa ≠ progressione PT).
 **Changelog 8.5.2**: §2 allineato ai 24 stili card reali: rimosso *Punta avanzata* / Adv. Striker (non esistono); *Punta arretrata* → **attacante di rientro**; chiarito Opportunista (linea fuorigioco, non "difensore").
