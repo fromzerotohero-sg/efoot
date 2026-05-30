@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { DEFAULT_SLOT_POSITIONS } from '@/lib/formationDefaultSlots'
+import { resolveKonamiFormationName } from '@/lib/formationRules'
 import { validateFormationLimits } from '@/lib/validateFormationLimits'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 
@@ -102,6 +103,8 @@ export async function POST(req) {
     }
     
     const completeSlots = completeSlotPositions(slot_positions)
+    const detectedFormation = resolveKonamiFormationName(completeSlots)
+    const formationToSave = detectedFormation || String(formation).trim()
     const slotKeys = Object.keys(completeSlots).map(Number).filter(n => n >= 0 && n <= 10)
     
     if (slotKeys.length < 11) {
@@ -171,7 +174,7 @@ export async function POST(req) {
       .from('formation_layout')
       .upsert({
         user_id: userId,
-        formation: String(formation).trim(),
+        formation: formationToSave,
         slot_positions: completeSlots,
         updated_at: new Date().toISOString()
       }, {
