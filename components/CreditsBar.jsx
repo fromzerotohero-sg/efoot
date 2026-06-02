@@ -230,11 +230,12 @@ export default function CreditsBar() {
   const periodLabel = formatPeriod(data?.period_key);
   const barColor = data ? getBarColor(percentIncluded, overage) : "#00d4ff";
 
+  const totalBalance = included + tempBalance;
   const compactLabel = loading
     ? null
     : error
       ? t("creditsError") || "Error"
-      : `${included}`;
+      : `${totalBalance}`;
 
   const triggerAriaLabel = open
     ? t("creditsCloseAria") ||
@@ -487,37 +488,39 @@ export default function CreditsBar() {
                   </div>
                 </div>
 
-                {tempBalance > 0 && (
-                  <div
-                    style={{
-                      marginTop: "10px",
-                      padding: "10px 12px",
-                      background: "rgba(250, 204, 21, 0.08)",
-                      border: "1px solid rgba(250, 204, 21, 0.25)",
-                      borderRadius: "8px",
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: "8px",
-                      fontSize: "13px",
-                      color: "#facc15",
-                    }}
-                  >
-                    <span
-                      style={{ fontSize: "16px", lineHeight: 1, flexShrink: 0 }}
-                    >
-                      ⚡
-                    </span>
-                    <span>
-                      <strong>
-                        +{tempBalance} {t("creditsTempBalance")}
-                      </strong>
-                      {" — "}
-                      <span style={{ opacity: 0.8 }}>
-                        {t("creditsTempExpiry")}
+                <div
+                  style={{
+                    marginTop: "12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px",
+                    fontSize: "15px",
+                    fontWeight: 600,
+                    color: "var(--neon-cyan)",
+                  }}
+                >
+                  <span>
+                    {included} {t("creditsPermanent") || "crediti"}
+                  </span>
+                  {tempBalance > 0 && (
+                    <>
+                      <span style={{ color: "#facc15" }}>
+                        {tempBalance}{" "}
+                        {t("creditsTemporary") || "crediti temporanei"}
                       </span>
-                    </span>
-                  </div>
-                )}
+                      <em
+                        style={{
+                          fontSize: "12px",
+                          fontWeight: 400,
+                          color: "rgba(250, 204, 21, 0.7)",
+                          marginTop: "2px",
+                        }}
+                      >
+                        {t("creditsTempExpiry")}
+                      </em>
+                    </>
+                  )}
+                </div>
 
                 <div
                   style={{
