@@ -249,15 +249,6 @@ export default function SpinLabPage() {
             alto e puoi usarlo subito per Hero Chat, Card Advisor e analisi
             avanzate.
           </p>
-          <div className="bonus-notice">
-            <span>
-              I <strong>Crediti Omaggio</strong> sono a tutti gli effetti
-              crediti normali: funzionano esattamente come quelli del tuo piano
-              e puoi usarli per qualsiasi funzione AI. L'unica differenza è che{" "}
-              <strong>scadono 7 giorni dopo essere stati assegnati</strong>,
-              quindi conviene usarli presto.
-            </span>
-          </div>
         </section>
 
         <section className="game-card">
@@ -404,6 +395,16 @@ export default function SpinLabPage() {
                 : "Premi possibili: 0, 5, 10, 20, 30 e 100 HP (100 al massimo una volta al mese)."}
             </p>
             {error && <p style={{ color: "#fb7185" }}>{error}</p>}
+            <div className="bonus-notice">
+              <span>
+                I <strong>Crediti Omaggio</strong> sono a tutti gli effetti
+                crediti normali: funzionano esattamente come quelli del tuo
+                piano e puoi usarli per qualsiasi funzione AI. L'unica
+                differenza è che{" "}
+                <strong>scadono 7 giorni dopo essere stati assegnati</strong>,
+                quindi conviene usarli presto.
+              </span>
+            </div>
           </div>
         </section>
 
