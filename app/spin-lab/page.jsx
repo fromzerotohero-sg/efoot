@@ -250,14 +250,10 @@ export default function SpinLabPage() {
             avanzate.
           </p>
           <div className="bonus-notice">
-            <span className="bonus-notice-icon" aria-hidden="true">
-              ⏳
-            </span>
             <span>
-              Gli HP guadagnati con la ruota sono{" "}
-              <strong>crediti a tutti gli effetti</strong>: funzionano
-              esattamente come quelli del tuo piano e puoi usarli per qualsiasi
-              funzione AI. L'unica differenza è che{" "}
+              I <strong>Crediti Omaggio</strong> sono a tutti gli effetti
+              crediti normali: funzionano esattamente come quelli del tuo piano
+              e puoi usarli per qualsiasi funzione AI. L'unica differenza è che{" "}
               <strong>scadono 7 giorni dopo essere stati assegnati</strong>,
               quindi conviene usarli presto.
             </span>
@@ -608,12 +604,6 @@ export default function SpinLabPage() {
 
         .bonus-notice strong {
           color: #facc15;
-        }
-
-        .bonus-notice-icon {
-          font-size: 1.1rem;
-          flex-shrink: 0;
-          margin-top: 1px;
         }
 
         .game-card {
