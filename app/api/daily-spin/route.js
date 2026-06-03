@@ -2,13 +2,10 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { accreditBonus } from '@/lib/creditService'
+import { pickWeightedReward } from '@/lib/dailySpinConfig'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-
-// Distribuzione pesata:
-// 3x5, 2x0, 2x10, 1x20, 1x30, 1x100
-const REWARDS = [5, 5, 5, 0, 0, 10, 10, 20, 30, 100]
 
 function getTodayRomeDate() {
   return new Intl.DateTimeFormat('en-CA', {
@@ -17,10 +14,6 @@ function getTodayRomeDate() {
     month: '2-digit',
     day: '2-digit'
   }).format(new Date())
-}
-
-function pickReward() {
-  return REWARDS[Math.floor(Math.random() * REWARDS.length)]
 }
 
 function monthBoundsFromDateString(dateStr) {
@@ -186,10 +179,7 @@ export async function POST(req) {
           .lte('spin_date', giftedTotals.monthBounds.lastDay)).count > 0
       : false
 
-    const eligibleRewards = hasWon100ThisMonth
-      ? REWARDS.filter((value) => value !== 100)
-      : REWARDS
-    const reward = eligibleRewards[Math.floor(Math.random() * eligibleRewards.length)] ?? pickReward()
+    const reward = pickWeightedReward({ exclude100: hasWon100ThisMonth })
     const { error: claimError } = await admin.from('daily_spin_claims').insert({
       user_id: userId,
       spin_date: today,

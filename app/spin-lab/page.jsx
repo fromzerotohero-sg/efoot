@@ -3,18 +3,21 @@
 import React from "react";
 import { Coins, Gift, RotateCw, Sparkles, Trophy, Zap } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
+import {
+  WHEEL_SEGMENTS,
+  pickRandomSegmentIndex,
+} from "@/lib/dailySpinConfig";
 
-const REWARDS = [5, 5, 5, 0, 0, 10, 10, 20, 30, 100];
 const SEGMENT_COLORS = [
   ["#06b6d4", "#0ea5e9"],
+  ["#4f46e5", "#38bdf8"],
   ["#2563eb", "#7c3aed"],
+  ["#be123c", "#fb7185"],
   ["#9333ea", "#db2777"],
   ["#f97316", "#f59e0b"],
+  ["#a16207", "#facc15"],
   ["#16a34a", "#22c55e"],
   ["#0891b2", "#14b8a6"],
-  ["#4f46e5", "#38bdf8"],
-  ["#be123c", "#fb7185"],
-  ["#a16207", "#facc15"],
   ["#f59e0b", "#fde68a"],
 ];
 
@@ -61,10 +64,13 @@ function normalizeDeg(value) {
   return mod < 0 ? mod + 360 : mod;
 }
 
-function getRotationForReward(currentRotation, reward) {
-  const segmentAngle = 360 / REWARDS.length;
-  const rewardIndex = Math.max(0, REWARDS.indexOf(Number(reward)));
-  const pointerAngle = rewardIndex * segmentAngle + segmentAngle / 2;
+function getRotationForSegment(currentRotation, segmentIndex) {
+  const segmentAngle = 360 / WHEEL_SEGMENTS.length;
+  const safeIndex = Math.max(
+    0,
+    Math.min(WHEEL_SEGMENTS.length - 1, Number(segmentIndex) || 0),
+  );
+  const pointerAngle = safeIndex * segmentAngle + segmentAngle / 2;
   const targetModulo = (360 - pointerAngle) % 360;
   const currentModulo = normalizeDeg(currentRotation);
   const delta = (targetModulo - currentModulo + 360) % 360;
@@ -82,10 +88,10 @@ export default function SpinLabPage() {
   const [error, setError] = React.useState("");
   const wheelRef = React.useRef(null);
 
-  const segmentAngle = 360 / REWARDS.length;
+  const segmentAngle = 360 / WHEEL_SEGMENTS.length;
 
   const segments = React.useMemo(() => {
-    return REWARDS.map((reward, index) => {
+    return WHEEL_SEGMENTS.map((reward, index) => {
       const start = index * segmentAngle;
       const end = start + segmentAngle;
       const mid = start + segmentAngle / 2;
@@ -174,7 +180,8 @@ export default function SpinLabPage() {
         throw new Error(data?.error || "Impossibile accreditare il premio");
 
       const reward = Number(data?.reward_amount || 0);
-      const finalRotation = getRotationForReward(rotation, reward);
+      const segmentIndex = pickRandomSegmentIndex(reward);
+      const finalRotation = getRotationForSegment(rotation, segmentIndex);
       setRotation(finalRotation);
 
       window.setTimeout(() => {
@@ -321,7 +328,7 @@ export default function SpinLabPage() {
                   fill="rgba(255,255,255,0.12)"
                 />
                 {segments.map((segment) => (
-                  <g key={segment.reward}>
+                  <g key={segment.index}>
                     <path
                       d={segment.path}
                       fill={`url(#segmentGradient${segment.index})`}
