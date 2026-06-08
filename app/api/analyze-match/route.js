@@ -187,37 +187,37 @@ function getMissingSections(matchData) {
   return missing
 }
 
-/** Ritorna true se il cliente ha vinto (usa result e is_home per interpretare "3-1") */
-function isClientWin(result, isHome) {
+/** Ritorna true se il cliente ha vinto. `result` e salvato come gol utente - gol avversario. */
+function isClientWin(result, _isHome) {
   if (!result || typeof result !== 'string') return false
   const r = result.trim()
   if (r.includes('W') || r.includes('Vittoria') || r.includes('Win')) return true
   if (r.includes('L') || r.includes('Sconfitta') || r.includes('Loss')) return false
   const m = r.match(/^\s*(\d+)\s*-\s*(\d+)\s*$/)
   if (!m) return false
-  const t1 = parseInt(m[1], 10)
-  const t2 = parseInt(m[2], 10)
-  if (Number.isNaN(t1) || Number.isNaN(t2)) return false
-  return isHome ? t1 > t2 : t2 > t1
+  const userGoals = parseInt(m[1], 10)
+  const opponentGoals = parseInt(m[2], 10)
+  if (Number.isNaN(userGoals) || Number.isNaN(opponentGoals)) return false
+  return userGoals > opponentGoals
 }
 
 /** Ritorna true se il cliente ha perso */
-function isClientLoss(result, isHome) {
+function isClientLoss(result, _isHome) {
   if (!result || typeof result !== 'string') return false
   const r = result.trim()
   if (r.includes('W') || r.includes('Vittoria') || r.includes('Win')) return false
   if (r.includes('L') || r.includes('Sconfitta') || r.includes('Loss')) return true
   const m = r.match(/^\s*(\d+)\s*-\s*(\d+)\s*$/)
   if (!m) return false
-  const t1 = parseInt(m[1], 10)
-  const t2 = parseInt(m[2], 10)
-  if (Number.isNaN(t1) || Number.isNaN(t2)) return false
-  return isHome ? t1 < t2 : t2 < t1
+  const userGoals = parseInt(m[1], 10)
+  const opponentGoals = parseInt(m[2], 10)
+  if (Number.isNaN(userGoals) || Number.isNaN(opponentGoals)) return false
+  return userGoals < opponentGoals
 }
 
 /**
  * Analizza storico match per identificare pattern e formazioni che soffre
- * Usa is_home per interpretare correttamente result "3-1" (team1-team2)
+ * `result` e gia normalizzato come gol utente - gol avversario.
  */
 function analyzeMatchHistory(matchHistory, currentOpponentFormationId) {
   const analysis = {
@@ -678,12 +678,12 @@ Puoi dire che con più sezioni complete l'analisi sarebbe più precisa; NON dare
   let clientTeamText = ''
   if (useIsHome) {
     clientTeamText = isHome
-      ? `\nSQUADRA CLIENTE: La PRIMA squadra (team1) nei dati è quella del CLIENTE (hai giocato in CASA). Il risultato è sempre "gol_team1-gol_team2": quindi il PRIMO numero sono i TUOI gol, il secondo quelli avversari.\n`
-      : `\nSQUADRA CLIENTE: La SECONDA squadra (team2) nei dati è quella del CLIENTE (hai giocato FUORI CASA). Il risultato è sempre "gol_team1-gol_team2": quindi il SECONDO numero sono i TUOI gol, il primo quelli avversari.\n`
+      ? `\nSQUADRA CLIENTE: La PRIMA squadra (team1) nei dati laterali è quella del CLIENTE (hai giocato in CASA). Il risultato salvato è già "gol cliente-gol avversario".\n`
+      : `\nSQUADRA CLIENTE: La SECONDA squadra (team2) nei dati laterali è quella del CLIENTE (hai giocato FUORI CASA). Il risultato salvato è già "gol cliente-gol avversario".\n`
   } else {
     clientTeamText = clientTeamName
       ? `\nSQUADRA CLIENTE: ${clientTeamName}\n`
-      : `\nSQUADRA CLIENTE: Identifica quale squadra è quella del cliente confrontando i nomi squadra nei dati match. Il risultato è in formato team1-team2 (primo numero = gol team1, secondo = gol team2).\n`
+      : `\nSQUADRA CLIENTE: Identifica quale squadra è quella del cliente confrontando i nomi squadra nei dati match. Il risultato salvato è già "gol cliente-gol avversario".\n`
   }
   
   const opponentName = matchData.opponent_name && typeof matchData.opponent_name === 'string' ? String(matchData.opponent_name).trim() : null
@@ -704,7 +704,7 @@ Puoi dire che con più sezioni complete l'analisi sarebbe più precisa; NON dare
   }
 
   const resultLine = hasResult
-    ? `RISULTATO: ${matchData.result} (formato sempre: gol_team1 - gol_team2). ${useIsHome ? (isHome ? 'Cliente = team1 = primo numero.' : 'Cliente = team2 = secondo numero.') : 'Identifica cliente da nomi squadra.'}`
+    ? `RISULTATO: ${matchData.result} (formato: gol cliente - gol avversario).`
     : 'RISULTATO: Non disponibile'
   return `Analizza i dati di questa partita di eFootball${greeting} e genera un riassunto motivazionale e decisionale dell'andamento.
 

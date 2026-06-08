@@ -141,14 +141,69 @@ function normalizePlayerRatings(data, isHome = null) {
 /**
  * Normalizza dati estratti per team_stats
  */
-function normalizeTeamStats(data) {
+function toNumber(value) {
+  if (typeof value === 'number') return value
+  if (typeof value === 'string') {
+    const cleaned = value.replace(/[^\d.,-]/g, '').replace(',', '.')
+    const num = parseFloat(cleaned)
+    return !isNaN(num) ? num : null
+  }
+  return null
+}
+
+function pickClientSide(data, isHome) {
+  if (!data || typeof data !== 'object') return null
+  if (isHome === true) return data.team1 || data.left || data.home || null
+  if (isHome === false) return data.team2 || data.right || data.away || null
+  return data.team1 || data.left || data.home || null
+}
+
+function parseScreenResult(raw) {
+  if (!raw || typeof raw !== 'string') return null
+  const normalized = raw.replace(/\s/g, '')
+  if (!/^\d+-\d+$/.test(normalized)) return null
+  const [left, right] = normalized.split('-').map((part) => parseInt(part, 10))
+  return Number.isFinite(left) && Number.isFinite(right) ? { left, right } : null
+}
+
+function resultFromScreenScore(data, isHome) {
+  if (!data || typeof data !== 'object') return null
+
+  const left =
+    toNumber(data.score_left) ??
+    toNumber(data.left_score) ??
+    toNumber(data.home_score) ??
+    toNumber(data.team1_score)
+  const right =
+    toNumber(data.score_right) ??
+    toNumber(data.right_score) ??
+    toNumber(data.away_score) ??
+    toNumber(data.team2_score)
+
+  if (left !== null && right !== null) {
+    return isHome === false ? `${right}-${left}` : `${left}-${right}`
+  }
+
+  const parsed = parseScreenResult(data.result)
+  if (!parsed) return null
+  return isHome === false ? `${parsed.right}-${parsed.left}` : `${parsed.left}-${parsed.right}`
+}
+
+function normalizeTeamStats(data, isHome = null) {
   if (!data || typeof data !== 'object') return {}
   
   const stats = {}
+  const sideData = pickClientSide(data, isHome) || data
   
   // Estrai risultato se presente
-  if (data.result && typeof data.result === 'string') {
-    stats.result = data.result.trim()
+  const normalizedResult = resultFromScreenScore(data, isHome)
+  if (normalizedResult) {
+    stats.result = normalizedResult
+    const [goalsScored, goalsConceded] = normalizedResult.split('-').map((part) => parseInt(part, 10))
+    if (Number.isFinite(goalsScored) && Number.isFinite(goalsConceded)) {
+      stats.goals_scored = goalsScored
+      stats.goals_conceded = goalsConceded
+    }
   }
   
   // Estrai statistiche comuni
@@ -160,15 +215,10 @@ function normalizeTeamStats(data) {
   ]
   
   statFields.forEach(field => {
-    const value = data[field]
-    if (typeof value === 'number') {
+    if (normalizedResult && (field === 'goals_scored' || field === 'goals_conceded')) return
+    const value = toNumber(sideData[field])
+    if (value !== null) {
       stats[field] = value
-    } else if (typeof value === 'string') {
-      // Prova a convertire stringhe numeriche (es. "49%" -> 49)
-      const numValue = parseFloat(value.replace(/[^\d.]/g, ''))
-      if (!isNaN(numValue)) {
-        stats[field] = numValue
-      }
     }
   })
   
@@ -257,13 +307,12 @@ function getPromptForSection(section, userTeamInfo = null, isHome = null) {
   let teamHint = ''
   
   if (isHome !== null && isHome !== undefined) {
-    // Nuova logica: usa is_home
     teamHint = `
 IDENTIFICAZIONE SQUADRA CLIENTE:
-- Il cliente ha giocato ${isHome ? 'IN CASA' : 'FUORI CASA'}
-- ${isHome ? 'La PRIMA squadra (team1) nei dati è quella del CLIENTE' : 'La SECONDA squadra (team2) nei dati è quella del CLIENTE'}
-- ${isHome ? 'La SECONDA squadra (team2) è l\'AVVERSARIO' : 'La PRIMA squadra (team1) è l\'AVVERSARIO'}
-- Per ogni giocatore, identifica se appartiene a team1 o team2 e etichetta come "cliente" o "avversario" di conseguenza
+- eFootball mostra sempre SINISTRA/CASA vs DESTRA/FUORI.
+- team1 = squadra a SINISTRA / CASA; team2 = squadra a DESTRA / FUORI.
+- Il cliente ha giocato ${isHome ? 'IN CASA: cliente = team1/sinistra' : 'FUORI CASA: cliente = team2/destra'}.
+- Estrai SEMPRE il risultato grezzo come appare sullo schermo (sinistra-destra), non ribaltarlo tu.
 `
   } else if (userTeamInfo) {
     // Vecchia logica: usa team_name
@@ -282,11 +331,11 @@ IDENTIFICAZIONE SQUADRA CLIENTE:
 IMPORTANTE:
 - Estrai SOLO ciò che vedi nell'immagine
 - Questa schermata mostra SOLO i VOTI (ratings) dei giocatori, NON ci sono goals, assists o minuti giocati
-- Se vedi il RISULTATO della partita (es. "3-1", "2-2", "4-0", "6-1"), estrailo nel campo "result" (formato: "X-Y" dove X sono i gol della squadra utente e Y i gol dell'avversario)
+- Se vedi il RISULTATO della partita (es. "3-1", "2-2", "4-0", "6-1"), estrailo nel campo "result" ESATTAMENTE come appare sullo schermo: gol squadra sinistra/casa - gol squadra destra/fuori
 - Per ogni giocatore visibile nella lista delle pagelle, estrai:
   * nome (nome completo del giocatore come appare nella lista)
   * rating (voto numerico, es. 8.5, 7.0, 6.5, 5.5 - OBBLIGATORIO, è l'unico dato visibile)
-  * team (identifica se appartiene alla squadra del CLIENTE o all'AVVERSARIO)
+      * team ("team1" se il giocatore è nella lista squadra sinistra/casa, "team2" se è nella lista squadra destra/fuori)
 - I valori numerici devono essere numeri, non stringhe
 - Se vedi una lista di giocatori con voti, estrai TUTTI i giocatori visibili
 - DISTINGUI CHIARAMENTE: identifica quale giocatore appartiene alla squadra del CLIENTE e quale all'AVVERSARIO
@@ -296,13 +345,13 @@ Formato JSON richiesto:
 {
   "result": "6-1",
   "ratings": {
-    "Nome Giocatore Cliente": {
+    "Nome Giocatore Squadra Sinistra": {
       "rating": 8.5,
-      "team": "cliente"
+      "team": "team1"
     },
-    "Nome Giocatore Avversario": {
+    "Nome Giocatore Squadra Destra": {
       "rating": 6.5,
-      "team": "avversario"
+      "team": "team2"
     }
   }
 }
@@ -313,28 +362,29 @@ Restituisci SOLO JSON valido, senza altro testo.`,
 
 IMPORTANTE:
 - Estrai SOLO ciò che vedi nell'immagine (null se non visibile)
-- Estrai: possesso di palla (possession %), tiri totali (shots), tiri in porta (shots_on_target), falli (fouls), fuorigioco (offsides), calci d'angolo (corner_kicks), punizioni (free_kicks), passaggi (passes), passaggi riusciti (successful_passes), cross, passaggi intercettati (interceptions), contrasti (tackles), parate (saves), gol segnati (goals_scored), gol subiti (goals_conceded)
-- Se vedi il RISULTATO della partita (es. "3-1", "2-2", "4-0"), estrailo nel campo "result" (formato: "X-Y" dove X sono i gol della squadra utente e Y i gol dell'avversario)
-- Se ci sono statistiche per entrambe le squadre, estrai entrambe
+- Estrai il RISULTATO nel campo "result" ESATTAMENTE come appare sullo schermo: gol squadra sinistra/casa - gol squadra destra/fuori
+- Estrai le statistiche separate per entrambe le squadre:
+  * team1 = squadra a sinistra/casa
+  * team2 = squadra a destra/fuori
+- Per ogni squadra estrai: possession %, shots, shots_on_target, fouls, offsides, corner_kicks, free_kicks, passes, successful_passes, crosses, interceptions, tackles, saves
 
 Formato JSON richiesto:
 {
-  "result": "6-1",
-  "possession": 49,
-  "shots": 16,
-  "shots_on_target": 10,
-  "fouls": 0,
-  "offsides": 0,
-  "corner_kicks": 2,
-  "free_kicks": 0,
-  "passes": 110,
-  "successful_passes": 81,
-  "crosses": 0,
-  "interceptions": 29,
-  "tackles": 4,
-  "saves": 4,
-  "goals_scored": 6,
-  "goals_conceded": 1
+  "result": "0-4",
+  "team1": {
+    "possession": 45,
+    "shots": 5,
+    "shots_on_target": 1,
+    "passes": 110,
+    "successful_passes": 81
+  },
+  "team2": {
+    "possession": 55,
+    "shots": 16,
+    "shots_on_target": 10,
+    "passes": 152,
+    "successful_passes": 132
+  }
 }
 
 Restituisci SOLO JSON valido, senza altro testo.`,
@@ -343,9 +393,9 @@ Restituisci SOLO JSON valido, senza altro testo.`,
 
 IMPORTANTE:
 - Estrai SOLO ciò che vedi nell'immagine (null se non visibile)
-- Se vedi il RISULTATO della partita (es. "3-1", "2-2", "4-0", "6-1"), estrailo nel campo "result" (formato: "X-Y" dove X sono i gol della squadra utente e Y i gol dell'avversario)
+- Se vedi il RISULTATO della partita (es. "3-1", "2-2", "4-0", "6-1"), estrailo nel campo "result" ESATTAMENTE come appare sullo schermo: gol squadra sinistra/casa - gol squadra destra/fuori
 - Estrai le percentuali per zona: sinistra (left), centro (center), destra (right)
-- Se ci sono dati per entrambe le squadre, identifica team1 (squadra utente) e team2 (avversario)
+- Se ci sono dati per entrambe le squadre, usa team1 per la squadra sinistra/casa e team2 per la squadra destra/fuori
 
 Formato JSON richiesto:
 {
@@ -368,9 +418,9 @@ Restituisci SOLO JSON valido, senza altro testo.`,
 
 IMPORTANTE:
 - Estrai SOLO ciò che vedi nell'immagine (null se non visibile)
-- Se vedi il RISULTATO della partita (es. "3-1", "2-2", "4-0", "6-1"), estrailo nel campo "result" (formato: "X-Y" dove X sono i gol della squadra utente e Y i gol dell'avversario)
+- Se vedi il RISULTATO della partita (es. "3-1", "2-2", "4-0", "6-1"), estrailo nel campo "result" ESATTAMENTE come appare sullo schermo: gol squadra sinistra/casa - gol squadra destra/fuori
 - Per ogni punto verde sul campo, estrai la posizione normalizzata (x: 0-1, y: 0-1 dove 0,0 è in alto a sinistra)
-- Identifica quale squadra ha recuperato (team1 o team2)
+- Identifica quale squadra ha recuperato: team1 = sinistra/casa, team2 = destra/fuori
 
 Formato JSON richiesto:
 {
@@ -387,7 +437,7 @@ Restituisci SOLO JSON valido, senza altro testo.`,
 
 IMPORTANTE:
 - Estrai SOLO ciò che vedi nell'immagine (null se non visibile)
-- Se vedi il RISULTATO della partita (es. "3-1", "2-2", "4-0"), estrailo nel campo "result" (formato: "X-Y" dove X sono i gol della squadra utente e Y i gol dell'avversario)
+- Se vedi il RISULTATO della partita (es. "3-1", "2-2", "4-0"), estrailo nel campo "result" ESATTAMENTE come appare sullo schermo: gol squadra sinistra/casa - gol squadra destra/fuori
 - Estrai: formazione (es. "4-2-1-3", "4-3-3"), stile di gioco (es. "Contrattacco", "Possesso palla"), forza complessiva (team_strength, numero grande tipo 3245)
 
 Formato JSON richiesto:
@@ -612,7 +662,7 @@ export async function POST(req) {
         normalizedData = normalizePlayerRatings(extractedData, isHome)
         break
       case 'team_stats':
-        normalizedData = normalizeTeamStats(extractedData)
+        normalizedData = normalizeTeamStats(extractedData, isHome)
         break
       case 'attack_areas':
         normalizedData = normalizeAttackAreas(extractedData)

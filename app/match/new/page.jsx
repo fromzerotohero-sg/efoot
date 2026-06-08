@@ -49,7 +49,7 @@ export default function NewMatchPage() {
         const loadedStepData = parsed.stepData || {}
         // Retrocompatibilità: se isHome era salvato ma manca stepData.home_away, considera step Casa/Fuori già fatto
         if (parsed.isHome !== undefined && loadedStepData[HOME_AWAY_STEP_ID] === undefined) {
-          loadedStepData[HOME_AWAY_STEP_ID] = true
+          loadedStepData[HOME_AWAY_STEP_ID] = parsed.isHome
         }
         setStepData(loadedStepData)
         // Normalizza player_ratings: da stringa a array (retrocompat)
@@ -66,7 +66,7 @@ export default function NewMatchPage() {
           setIsHome(parsed.isHome)
         }
         // Trova primo step senza dati
-        const firstEmptyStep = STEPS.findIndex(step => !loadedStepData[step.id])
+        const firstEmptyStep = STEPS.findIndex(step => loadedStepData[step.id] === undefined || loadedStepData[step.id] === null)
         if (firstEmptyStep >= 0) {
           setCurrentStep(firstEmptyStep)
         }
@@ -663,7 +663,7 @@ export default function NewMatchPage() {
                   type="button"
                   onClick={() => {
                     setIsHome(false)
-                    setStepData(prev => ({ ...prev, [HOME_AWAY_STEP_ID]: true }))
+                    setStepData(prev => ({ ...prev, [HOME_AWAY_STEP_ID]: false }))
                     if (currentStep < STEPS.length - 1) setCurrentStep(currentStep + 1)
                   }}
                   style={{

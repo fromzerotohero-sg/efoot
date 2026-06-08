@@ -58,33 +58,33 @@ function calculateDataCompleteness(matchData) {
 
 /**
  * Determina se un risultato è una vittoria per l'utente.
- * result: "home_goals-away_goals". Se is_home=true l'utente è in casa (primo numero), se false in trasferta (secondo numero).
+ * result: "gol_utente-gol_avversario".
  */
-function isWin(result, is_home = true) {
+function isWin(result, _is_home = true) {
   if (!result || typeof result !== 'string') return false
   const upper = result.toUpperCase()
   if (upper.includes('W') || upper.includes('VITTORIA') || upper.includes('WIN')) return true
   if (upper.includes('L') || upper.includes('SCONFITTA') || upper.includes('LOSS')) return false
   const m = result.trim().match(/^(\d+)-(\d+)$/)
   if (!m) return false
-  const home = parseInt(m[1], 10)
-  const away = parseInt(m[2], 10)
-  return is_home ? home > away : away > home
+  const userGoals = parseInt(m[1], 10)
+  const opponentGoals = parseInt(m[2], 10)
+  return userGoals > opponentGoals
 }
 
 /**
  * Determina se un risultato è una sconfitta per l'utente (stessa convenzione di isWin).
  */
-function isLoss(result, is_home = true) {
+function isLoss(result, _is_home = true) {
   if (!result || typeof result !== 'string') return false
   const upper = result.toUpperCase()
   if (upper.includes('L') || upper.includes('SCONFITTA') || upper.includes('LOSS')) return true
   if (upper.includes('W') || upper.includes('VITTORIA') || upper.includes('WIN')) return false
   const m = result.trim().match(/^(\d+)-(\d+)$/)
   if (!m) return false
-  const home = parseInt(m[1], 10)
-  const away = parseInt(m[2], 10)
-  return is_home ? home < away : away < home
+  const userGoals = parseInt(m[1], 10)
+  const opponentGoals = parseInt(m[2], 10)
+  return userGoals < opponentGoals
 }
 
 /**
