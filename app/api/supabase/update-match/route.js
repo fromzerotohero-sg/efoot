@@ -509,22 +509,23 @@ export async function POST(req) {
     // 2. Merge dati (per sezioni normali)
     const mergedData = mergeMatchData(existingMatch, data, section)
 
-    // 3. Estrai risultato se presente (può essere nel data o come parametro separato, da qualsiasi sezione)
+    // 3. Estrai risultato solo dalle statistiche squadra. Le altre sezioni possono
+    // contenere numeri simili a punteggi e non devono sovrascrivere il risultato.
     let finalResult = existingMatch.result
-    if (result && typeof result === 'string' && result.trim()) {
-      // Priorità 1: parametro result separato (viene passato dal frontend quando estratto da qualsiasi sezione)
-      finalResult = result.trim()
-    } else if (data && data.result && typeof data.result === 'string' && data.result.trim()) {
-      // Priorità 2: result nei dati normalizzati (per compatibilità)
-      finalResult = data.result.trim()
-    } else if (mergedData.team_stats && mergedData.team_stats.result) {
-      // Priorità 3: result in team_stats merged (per compatibilità retroattiva)
-      finalResult = mergedData.team_stats.result
+    if (section === 'team_stats') {
+      if (result && typeof result === 'string' && result.trim()) {
+        finalResult = result.trim()
+      } else if (data && data.result && typeof data.result === 'string' && data.result.trim()) {
+        finalResult = data.result.trim()
+      } else if (mergedData.team_stats && mergedData.team_stats.result) {
+        finalResult = mergedData.team_stats.result
+      }
+    }
+
+    if (mergedData.team_stats && mergedData.team_stats.result) {
       // Rimuovi result da team_stats (non fa parte delle statistiche)
       delete mergedData.team_stats.result
     }
-    // Nota: il risultato viene estratto da TUTTE le sezioni (player_ratings, team_stats, attack_areas, ball_recovery_zones, formation_style)
-    // e viene passato come parametro separato 'result' dal frontend, quindi la priorità 1 dovrebbe sempre catturarlo
 
     // 4. Calcola metadata aggiornati
     const missingPhotos = calculateMissingPhotos(mergedData)

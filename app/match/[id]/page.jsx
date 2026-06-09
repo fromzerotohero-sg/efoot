@@ -112,14 +112,21 @@ export default function MatchDetailPage() {
       return
     }
 
+    setUploading(true)
+    setUploadSection(section)
+    setError(null)
+
     try {
       const optimized = await optimizeImageFile(file)
       setUploadImage(optimized.dataUrl)
       setUploadSection(section)
-      setError(null)
     } catch (err) {
       console.error('[match/[id]] image optimization error:', err)
+      setUploadImage(null)
+      setUploadSection(null)
       setError(getImageOptimizeUserMessage(err, t))
+    } finally {
+      setUploading(false)
     }
     e.target.value = ''
   }
@@ -200,6 +207,10 @@ export default function MatchDetailPage() {
       }
 
       const updateData = await updateRes.json()
+
+      if (updateData?.match) {
+        setMatch(updateData.match)
+      }
 
       // 3. Ricarica match tramite API
       const refreshRes = await fetch(`/api/matches?id=${match.id}`, {
@@ -424,7 +435,7 @@ export default function MatchDetailPage() {
                           accept="image/*"
                           onChange={handleImageSelect(step.id)}
                           style={{ display: 'none' }}
-                          disabled={extracting}
+                          disabled={extracting || uploading}
                         />
                         <div
                           style={{
@@ -433,12 +444,18 @@ export default function MatchDetailPage() {
                             border: '1px dashed rgba(255, 165, 0, 0.3)',
                             borderRadius: '8px',
                             textAlign: 'center',
-                            cursor: extracting ? 'not-allowed' : 'pointer',
-                            opacity: extracting ? 0.5 : 1
+                            cursor: extracting || uploading ? 'not-allowed' : 'pointer',
+                            opacity: extracting || uploading ? 0.5 : 1
                           }}
                         >
-                          <Camera size={20} style={{ marginBottom: '8px', color: 'var(--neon-orange)' }} />
-                          <div style={{ fontSize: '14px' }}>{t('uploadPhoto')}</div>
+                          {isUploading ? (
+                            <RefreshCw size={20} style={{ marginBottom: '8px', color: 'var(--neon-orange)', animation: 'spin 1s linear infinite' }} />
+                          ) : (
+                            <Camera size={20} style={{ marginBottom: '8px', color: 'var(--neon-orange)' }} />
+                          )}
+                          <div style={{ fontSize: '14px' }}>
+                            {isUploading ? t('loadingShort') : t('uploadPhoto')}
+                          </div>
                         </div>
                       </label>
                     ) : (

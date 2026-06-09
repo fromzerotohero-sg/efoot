@@ -4,7 +4,7 @@ import React from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
-import { ArrowLeft, Upload, AlertCircle, CheckCircle2, RefreshCw, X, SkipForward, Save, Camera, Trophy, Sparkles, Brain, Database, Zap, ShieldCheck, Target, Home, Plane, FileImage } from 'lucide-react'
+import { ArrowLeft, Upload, AlertCircle, CheckCircle2, RefreshCw, X, SkipForward, Save, Camera, Trophy, Sparkles, Brain, Zap, ShieldCheck, Target, Home, Plane, FileImage } from 'lucide-react'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
@@ -609,32 +609,6 @@ export default function NewMatchPage() {
                 ? 'Carica gli screenshot di eFootball: li leggo, salvo la partita e aggiorno il Coach con pattern, memoria AI, dashboard e task settimanali.'
                 : 'Upload your eFootball screenshots: I read them, save the match and update the Coach with patterns, AI memory, dashboard and weekly tasks.'}
             </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '20px' }}>
-              {[
-                { icon: FileImage, text: isItalian ? '3 screenshot minimi' : '3 screenshots minimum' },
-                { icon: Database, text: isItalian ? 'Salvataggio Supabase' : 'Supabase save' },
-                { icon: Zap, text: isItalian ? '2 HP per lettura' : '2 HP per read' }
-              ].map(item => {
-                const Icon = item.icon
-                return (
-                  <div key={item.text} style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '9px 12px',
-                    borderRadius: '12px',
-                    background: 'rgba(255,255,255,0.06)',
-                    border: '1px solid rgba(255,255,255,0.10)',
-                    color: 'rgba(255,255,255,0.82)',
-                    fontSize: '13px',
-                    fontWeight: 700
-                  }}>
-                    <Icon size={15} color="#00d4ff" />
-                    {item.text}
-                  </div>
-                )
-              })}
-            </div>
           </div>
           <div className="quality-card" style={{
             borderRadius: '18px',
@@ -1590,8 +1564,7 @@ export default function NewMatchPage() {
               {[
                 { icon: Brain, text: isItalian ? 'Memoria AI' : 'AI memory' },
                 { icon: Target, text: isItalian ? 'Pattern tattici' : 'Tactical patterns' },
-                { icon: Database, text: 'Supabase' },
-                { icon: Zap, text: isItalian ? 'Task e dashboard' : 'Tasks and dashboard' }
+                { icon: Zap, text: isItalian ? 'Dashboard e task' : 'Dashboard and tasks' }
               ].map(item => {
                 const Icon = item.icon
                 return (

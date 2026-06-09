@@ -680,20 +680,23 @@ export async function POST(req) {
         )
     }
 
-    // Estrai risultato se presente (può essere in qualsiasi sezione: player_ratings, team_stats, attack_areas, ball_recovery_zones, formation_style)
+    // Il risultato viene salvato solo dalle statistiche squadra: le altre schermate
+    // possono contenere numeri simili a punteggi (es. percentuali 9/3) e causare falsi positivi.
     let result = null
-    if (extractedData.result && typeof extractedData.result === 'string') {
-      result = extractedData.result.trim()
-    } else if (normalizedData && normalizedData.result && typeof normalizedData.result === 'string') {
-      result = normalizedData.result.trim()
-    }
+    if (section === 'team_stats') {
+      if (normalizedData && normalizedData.result && typeof normalizedData.result === 'string') {
+        result = normalizedData.result.trim()
+      } else if (extractedData.result && typeof extractedData.result === 'string') {
+        result = extractedData.result.trim()
 
-    // CORREZIONE: eFootball mostra il punteggio sempre in ordine Casa-Fuori (Home-Away).
-    // Se il cliente ha giocato FUORI CASA, sullo schermo è Opponent-Cliente → invertiamo a Cliente-Opponent.
-    if (result && isHome === false && /^\d+-\d+$/.test(result.replace(/\s/g, ''))) {
-      const parts = result.replace(/\s/g, '').split('-')
-      if (parts.length === 2) {
-        result = `${parts[1]}-${parts[0]}`
+        // eFootball mostra il punteggio in ordine Casa-Fuori. Se il cliente ha
+        // giocato fuori casa, normalizziamo a Cliente-Avversario.
+        if (isHome === false && /^\d+-\d+$/.test(result.replace(/\s/g, ''))) {
+          const parts = result.replace(/\s/g, '').split('-')
+          if (parts.length === 2) {
+            result = `${parts[1]}-${parts[0]}`
+          }
+        }
       }
     }
 
