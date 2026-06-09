@@ -78,8 +78,9 @@ export default function MatchDetailPage() {
         }
 
         // Use new API endpoint that supports custom token
-        const res = await fetch(`/api/matches?id=${matchId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
+        const res = await fetch(`/api/matches?id=${matchId}&t=${Date.now()}`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+          cache: 'no-store'
         })
 
         if (!res.ok) {
@@ -213,8 +214,9 @@ export default function MatchDetailPage() {
       }
 
       // 3. Ricarica match tramite API
-      const refreshRes = await fetch(`/api/matches?id=${match.id}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const refreshRes = await fetch(`/api/matches?id=${match.id}&t=${Date.now()}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        cache: 'no-store'
       })
       
       if (refreshRes.ok) {

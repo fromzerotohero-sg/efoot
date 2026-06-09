@@ -4,6 +4,13 @@ import { validateToken, extractBearerToken } from '@/lib/authHelper'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
+const NO_STORE_HEADERS = {
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+  Pragma: 'no-cache',
+  Expires: '0'
+}
 
 export async function GET(request) {
   try {
@@ -75,7 +82,7 @@ export async function GET(request) {
         return NextResponse.json({ error: 'Failed to fetch match' }, { status: 500 })
       }
 
-      return NextResponse.json(data)
+      return NextResponse.json(data, { headers: NO_STORE_HEADERS })
     } else {
       // List matches (optional, for future use)
       const { data, error } = await supabase
@@ -90,7 +97,7 @@ export async function GET(request) {
         return NextResponse.json({ error: 'Failed to fetch matches' }, { status: 500 })
       }
 
-      return NextResponse.json(data || [])
+      return NextResponse.json(data || [], { headers: NO_STORE_HEADERS })
     }
 
   } catch (error) {
