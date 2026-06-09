@@ -4,7 +4,7 @@ import React from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
-import { ArrowLeft, Upload, AlertCircle, CheckCircle2, RefreshCw, X, SkipForward, Save, Camera, Trophy } from 'lucide-react'
+import { ArrowLeft, Upload, AlertCircle, CheckCircle2, RefreshCw, X, SkipForward, Save, Camera, Trophy, Sparkles, Brain, Database, Zap, ShieldCheck, Target, Home, Plane, FileImage } from 'lucide-react'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
@@ -409,110 +409,293 @@ export default function NewMatchPage() {
   const uploadStepHint = lang === 'en'
     ? 'First upload the screenshot for this section, then extract the data.'
     : 'Prima carica lo screenshot di questa sezione, poi estrai i dati.'
+  const compactPreviewFrameStyle = {
+    marginBottom: '16px',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    border: '1px solid rgba(255, 255, 255, 0.16)',
+    background: 'rgba(0, 0, 0, 0.24)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  }
+  const compactPreviewImageStyle = {
+    maxWidth: '100%',
+    maxHeight: '320px',
+    width: 'auto',
+    height: 'auto',
+    objectFit: 'contain',
+    display: 'block'
+  }
+  const isItalian = lang !== 'en'
+  const analysisQuality = photosUploaded >= 5
+    ? {
+        label: isItalian ? 'Analisi completa' : 'Complete analysis',
+        tone: '#22c55e',
+        description: isItalian
+          ? 'Tutti gli screenshot chiave sono stati letti. Il Coach avra il massimo contesto.'
+          : 'All key screenshots have been read. The Coach will have maximum context.'
+      }
+    : photosUploaded >= 3
+    ? {
+        label: isItalian ? 'Analisi buona' : 'Good analysis',
+        tone: '#facc15',
+        description: isItalian
+          ? 'Puoi salvare ora. Aggiungi altri screenshot per rendere i consigli piu precisi.'
+          : 'You can save now. Add more screenshots to make advice more precise.'
+      }
+    : {
+        label: isItalian ? 'In preparazione' : 'Preparing',
+        tone: '#00d4ff',
+        description: isItalian
+          ? 'Servono almeno 3 screenshot letti per salvare una partita utile al Coach.'
+          : 'At least 3 read screenshots are needed to save a useful match for the Coach.'
+      }
+  const sectionPurpose = {
+    player_ratings: isItalian
+      ? 'Capisco chi ha performato meglio e peggio nella tua squadra e nell avversario.'
+      : 'I understand who performed best and worst on your team and the opponent.',
+    team_stats: isItalian
+      ? 'Leggo possesso, tiri, passaggi e risultato per interpretare il dominio della partita.'
+      : 'I read possession, shots, passes and score to interpret match control.',
+    attack_areas: isItalian
+      ? 'Vedo da quali zone hai attaccato e dove sei stato piu prevedibile.'
+      : 'I see which zones you attacked from and where you were more predictable.',
+    ball_recovery_zones: isItalian
+      ? 'Mappo dove recuperi palla per capire pressione, baricentro e transizioni.'
+      : 'I map where you recover the ball to understand pressure, block height and transitions.',
+    formation_style: isItalian
+      ? 'Salvo modulo, stile e forza squadra per aggiornare la memoria tattica.'
+      : 'I save formation, style and team strength to update tactical memory.'
+  }
+  const stepStatusLabel = (step) => {
+    if (step.id === HOME_AWAY_STEP_ID) {
+      return stepData[HOME_AWAY_STEP_ID] !== undefined
+        ? (isItalian ? 'Scelto' : 'Selected')
+        : (isItalian ? 'Da scegliere' : 'Choose')
+    }
+    if (stepData[step.id] && stepData[step.id] !== null) return isItalian ? 'Letto' : 'Read'
+    if (stepData[step.id] === null) return isItalian ? 'Saltato' : 'Skipped'
+    if (step.id === 'player_ratings') {
+      const count = Array.isArray(stepImages.player_ratings) ? stepImages.player_ratings.filter(Boolean).length : (stepImages.player_ratings ? 1 : 0)
+      return count > 0 ? (isItalian ? 'Pronto' : 'Ready') : (isItalian ? 'Da caricare' : 'Upload')
+    }
+    return stepImages[step.id] ? (isItalian ? 'Pronto' : 'Ready') : (isItalian ? 'Da caricare' : 'Upload')
+  }
+  const stepStatusColor = (step) => {
+    if (stepData[step.id] && stepData[step.id] !== null) return '#22c55e'
+    if (stepData[step.id] === null) return '#9ca3af'
+    if (step.id === currentSection) return '#00d4ff'
+    return 'rgba(255,255,255,0.48)'
+  }
+  const readableSections = photosComplete.length
+  const minimumReached = photosUploaded >= 3
+  const shellCardStyle = {
+    background: 'linear-gradient(145deg, rgba(5, 12, 25, 0.92) 0%, rgba(2, 4, 10, 0.96) 100%)',
+    border: '1px solid rgba(0, 212, 255, 0.22)',
+    borderRadius: '22px',
+    boxShadow: '0 18px 50px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255,255,255,0.06)',
+    position: 'relative',
+    overflow: 'hidden'
+  }
+  const primaryCtaStyle = {
+    minHeight: '52px',
+    borderRadius: '14px',
+    border: '1px solid rgba(0, 212, 255, 0.52)',
+    background: 'linear-gradient(135deg, #00d4ff 0%, #00a1a6 100%)',
+    color: '#020510',
+    fontWeight: 900,
+    fontSize: '15px',
+    cursor: extracting || saving || currentData ? 'not-allowed' : 'pointer',
+    opacity: extracting || saving || currentData ? 0.58 : 1,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '10px',
+    boxShadow: '0 10px 30px rgba(0, 212, 255, 0.28), inset 0 1px 0 rgba(255,255,255,0.45)'
+  }
 
   if (!mounted) {
     return null
   }
 
   return (
-    <main data-tour-id="tour-match-intro" style={{
+    <main data-tour-id="tour-match-intro" className="match-upload-page" style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%)',
       color: '#fff',
-      padding: 'clamp(12px, 3vw, 20px)',
-      paddingBottom: '100px'
+      padding: 'clamp(14px, 3vw, 28px)',
+      paddingBottom: '110px',
+      maxWidth: '1180px',
+      margin: '0 auto'
     }}>
-      {/* Header */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '24px',
+        marginBottom: '18px',
         flexWrap: 'wrap',
         gap: '12px'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button
-            onClick={() => router.push('/')}
-            style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '8px',
-              padding: '8px',
-              color: '#fff',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <ArrowLeft size={20} />
-          </button>
-          <h1 style={{ fontSize: 'clamp(20px, 5vw, 24px)', fontWeight: 700, margin: 0 }}>
-            {t('addMatch')}
-          </h1>
-        </div>
-      </div>
-
-      {/* Progress Bar */}
-      <div data-tour-id="tour-match-progress" style={{
-        background: 'rgba(255, 255, 255, 0.1)',
-        borderRadius: '8px',
-        height: '8px',
-        marginBottom: '12px',
-        overflow: 'hidden'
-      }}>
+        <button
+          onClick={() => router.push('/match')}
+          className="match-ghost-button"
+          type="button"
+        >
+          <ArrowLeft size={18} />
+          {isItalian ? 'Torna alle partite' : 'Back to matches'}
+        </button>
         <div style={{
-          background: 'linear-gradient(90deg, #00d4ff 0%, #ff6b00 100%)',
-          height: '100%',
-          width: `${progress}%`,
-          transition: 'width 0.3s ease'
-        }} />
-      </div>
-
-      {/* Progress Counter & Result */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '24px',
-        flexWrap: 'wrap',
-        gap: '12px'
-      }}>
-        <div style={{
-          fontSize: '14px',
-          opacity: 0.8,
-          display: 'flex',
+          display: 'inline-flex',
           alignItems: 'center',
-          gap: '8px'
+          gap: '8px',
+          padding: '8px 12px',
+          borderRadius: '999px',
+          border: '1px solid rgba(255, 203, 5, 0.28)',
+          background: 'rgba(255, 203, 5, 0.08)',
+          color: '#facc15',
+          fontSize: '12px',
+          fontWeight: 800,
+          letterSpacing: '0.4px',
+          textTransform: 'uppercase'
         }}>
-          <span>{photosUploaded}/{photoSteps.length} {t('photosCount')}</span>
+          <Sparkles size={14} />
+          {isItalian ? 'Post partita' : 'Post match'}
         </div>
-        {extractedResult && (
-          <div style={{
-            background: 'rgba(34, 197, 94, 0.2)',
-            border: '1px solid rgba(34, 197, 94, 0.5)',
-            borderRadius: '6px',
-            padding: '6px 12px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontSize: '14px',
-            color: '#86efac'
-          }}>
-            <Trophy size={16} />
-            <span><strong>{t('resultExtracted')}:</strong> {extractedResult}</span>
-          </div>
-        )}
       </div>
 
-      {/* Step Indicator */}
-      <div data-tour-id="tour-match-steps" style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        marginBottom: '32px',
-        gap: '8px',
-        flexWrap: 'wrap'
+      <section className="match-hero" style={{ ...shellCardStyle, padding: 'clamp(22px, 5vw, 36px)', marginBottom: '18px' }}>
+        <div className="hero-orb hero-orb-a" />
+        <div className="hero-orb hero-orb-b" />
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1.5fr) minmax(260px, 0.8fr)',
+          gap: '24px',
+          alignItems: 'center'
+        }} className="match-hero-grid">
+          <div>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '7px 11px',
+              borderRadius: '999px',
+              background: 'rgba(0, 212, 255, 0.10)',
+              border: '1px solid rgba(0, 212, 255, 0.25)',
+              color: '#7dd3fc',
+              fontSize: '12px',
+              fontWeight: 800,
+              marginBottom: '16px'
+            }}>
+              <Brain size={15} />
+              {isItalian ? 'Memoria tattica AI' : 'AI tactical memory'}
+            </div>
+            <h1 style={{
+              margin: 0,
+              fontSize: 'clamp(30px, 6vw, 56px)',
+              lineHeight: 0.95,
+              letterSpacing: '-1.6px',
+              fontWeight: 950
+            }}>
+              {isItalian ? 'Trasforma la partita in vantaggio competitivo.' : 'Turn your match into competitive edge.'}
+            </h1>
+            <p style={{
+              margin: '18px 0 0',
+              maxWidth: '680px',
+              color: 'rgba(255,255,255,0.74)',
+              fontSize: 'clamp(15px, 2vw, 18px)',
+              lineHeight: 1.55
+            }}>
+              {isItalian
+                ? 'Carica gli screenshot di eFootball: li leggo, salvo la partita e aggiorno il Coach con pattern, memoria AI, dashboard e task settimanali.'
+                : 'Upload your eFootball screenshots: I read them, save the match and update the Coach with patterns, AI memory, dashboard and weekly tasks.'}
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '20px' }}>
+              {[
+                { icon: FileImage, text: isItalian ? '3 screenshot minimi' : '3 screenshots minimum' },
+                { icon: Database, text: isItalian ? 'Salvataggio Supabase' : 'Supabase save' },
+                { icon: Zap, text: isItalian ? '2 HP per lettura' : '2 HP per read' }
+              ].map(item => {
+                const Icon = item.icon
+                return (
+                  <div key={item.text} style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '9px 12px',
+                    borderRadius: '12px',
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(255,255,255,0.10)',
+                    color: 'rgba(255,255,255,0.82)',
+                    fontSize: '13px',
+                    fontWeight: 700
+                  }}>
+                    <Icon size={15} color="#00d4ff" />
+                    {item.text}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+          <div className="quality-card" style={{
+            borderRadius: '18px',
+            border: `1px solid ${analysisQuality.tone}66`,
+            background: `linear-gradient(145deg, ${analysisQuality.tone}20, rgba(255,255,255,0.04))`,
+            padding: '18px',
+            boxShadow: `0 0 30px ${analysisQuality.tone}22`
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+              <div>
+                <div style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.8px', opacity: 0.72, fontWeight: 900 }}>
+                  {isItalian ? 'Qualita' : 'Quality'}
+                </div>
+                <div style={{ color: analysisQuality.tone, fontSize: '24px', fontWeight: 950, marginTop: '2px' }}>
+                  {analysisQuality.label}
+                </div>
+              </div>
+              <div style={{
+                width: '58px',
+                height: '58px',
+                borderRadius: '18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(0,0,0,0.24)',
+                border: `1px solid ${analysisQuality.tone}55`
+              }}>
+                <Target size={28} color={analysisQuality.tone} />
+              </div>
+            </div>
+            <div style={{
+              height: '10px',
+              borderRadius: '999px',
+              background: 'rgba(255,255,255,0.10)',
+              overflow: 'hidden',
+              marginTop: '18px'
+            }}>
+              <div style={{
+                height: '100%',
+                width: `${(photosUploaded / photoSteps.length) * 100}%`,
+                borderRadius: '999px',
+                background: `linear-gradient(90deg, #00d4ff, ${analysisQuality.tone})`,
+                transition: 'width 0.45s ease'
+              }} />
+            </div>
+            <p style={{ margin: '12px 0 0', color: 'rgba(255,255,255,0.72)', fontSize: '13px', lineHeight: 1.45 }}>
+              {analysisQuality.description}
+            </p>
+            <div style={{ marginTop: '14px', fontSize: '13px', color: 'rgba(255,255,255,0.84)', fontWeight: 800 }}>
+              {readableSections}/{photoSteps.length} {isItalian ? 'screenshot letti' : 'screenshots read'}
+              {extractedResult ? ` · ${isItalian ? 'Risultato' : 'Score'} ${extractedResult}` : ''}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div data-tour-id="tour-match-steps" className="match-step-grid" style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(6, minmax(120px, 1fr))',
+        gap: '10px',
+        marginBottom: '18px'
       }}>
         {STEPS.map((step, index) => {
           const isActive = index === currentStep
@@ -520,45 +703,45 @@ export default function NewMatchPage() {
           const isSkipped = stepData[step.id] === null
 
           return (
-            <div
+            <button
+              type="button"
               key={step.id}
+              className="match-step-pill"
               style={{
-                flex: 1,
-                minWidth: '60px',
-                textAlign: 'center',
-                padding: '8px',
-                borderRadius: '8px',
+                textAlign: 'left',
+                padding: '12px',
+                borderRadius: '16px',
                 background: isActive
-                  ? 'rgba(0, 212, 255, 0.2)'
+                  ? 'linear-gradient(145deg, rgba(0, 212, 255, 0.18), rgba(0, 161, 166, 0.10))'
                   : isCompleted
-                  ? 'rgba(34, 197, 94, 0.2)'
+                  ? 'rgba(34, 197, 94, 0.10)'
                   : isSkipped
-                  ? 'rgba(156, 163, 175, 0.2)'
-                  : 'rgba(255, 255, 255, 0.05)',
+                  ? 'rgba(156, 163, 175, 0.10)'
+                  : 'rgba(255, 255, 255, 0.045)',
                 border: `1px solid ${
                   isActive
-                    ? 'rgba(0, 212, 255, 0.5)'
+                    ? 'rgba(0, 212, 255, 0.55)'
                     : isCompleted
-                    ? 'rgba(34, 197, 94, 0.5)'
-                    : 'rgba(255, 255, 255, 0.1)'
+                    ? 'rgba(34, 197, 94, 0.35)'
+                    : 'rgba(255, 255, 255, 0.10)'
                 }`,
                 cursor: 'pointer',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.22s ease',
+                color: '#fff',
+                minHeight: '104px',
+                boxShadow: isActive ? '0 0 24px rgba(0, 212, 255, 0.18)' : 'none'
               }}
               onClick={() => setCurrentStep(index)}
             >
-              <div style={{ fontSize: '20px', marginBottom: '4px' }}>{step.icon}</div>
-              <div style={{
-                fontSize: '10px',
-                opacity: 0.8,
-                display: isCompleted ? 'flex' : 'none',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '4px'
-              }}>
-                <CheckCircle2 size={12} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <span style={{ fontSize: '22px' }}>{step.icon}</span>
+                {isCompleted ? <CheckCircle2 size={17} color="#22c55e" /> : <span style={{ color: stepStatusColor(step), fontSize: '11px', fontWeight: 900 }}>{index + 1}</span>}
               </div>
-            </div>
+              <div style={{ fontSize: '12px', fontWeight: 900, lineHeight: 1.15, minHeight: '28px' }}>{step.label}</div>
+              <div style={{ marginTop: '8px', color: stepStatusColor(step), fontSize: '11px', fontWeight: 800 }}>
+                {stepStatusLabel(step)}
+              </div>
+            </button>
           )
         })}
       </div>
@@ -601,40 +784,83 @@ export default function NewMatchPage() {
 
       {/* Current Step Content */}
       {currentStepInfo && (
-        <div data-tour-id="tour-match-content" style={{
-          background: 'rgba(255, 255, 255, 0.05)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          borderRadius: '12px',
-          padding: '24px',
+        <div data-tour-id="tour-match-content" className="match-workspace-card" style={{
+          ...shellCardStyle,
+          padding: 'clamp(18px, 4vw, 28px)',
           marginBottom: '24px'
         }}>
-          <h2 style={{
-            fontSize: '20px',
-            fontWeight: 700,
-            marginBottom: '8px',
+          <div style={{
             display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            gap: '16px',
+            flexWrap: 'wrap',
+            marginBottom: '22px'
           }}>
-            <span>{currentStepInfo.icon}</span>
-            Passaggio {currentStep + 1}: {currentStepInfo.label}
-          </h2>
-          <p style={{ fontSize: '14px', opacity: 0.7, marginBottom: '24px' }}>
-            {currentSection === HOME_AWAY_STEP_ID && t('stepHomeAwayInstruction')}
-            {currentStep === 1 && t('step0Instruction')}
-            {currentStep === 2 && t('step1Instruction')}
-            {currentStep === 3 && t('step2Instruction')}
-            {currentStep === 4 && t('step3Instruction')}
-            {currentStep === 5 && t('step4Instruction')}
-          </p>
+            <div>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '6px 10px',
+                borderRadius: '999px',
+                background: 'rgba(0, 212, 255, 0.08)',
+                border: '1px solid rgba(0, 212, 255, 0.18)',
+                color: '#7dd3fc',
+                fontSize: '12px',
+                fontWeight: 900,
+                marginBottom: '12px'
+              }}>
+                <span>{currentStepInfo.icon}</span>
+                {isItalian ? `Step ${currentStep + 1} di ${STEPS.length}` : `Step ${currentStep + 1} of ${STEPS.length}`}
+              </div>
+              <h2 style={{
+                fontSize: 'clamp(24px, 4vw, 34px)',
+                fontWeight: 950,
+                letterSpacing: '-0.8px',
+                margin: 0
+              }}>
+                {currentSection === HOME_AWAY_STEP_ID
+                  ? (isItalian ? 'Prima cosa: dove hai giocato?' : 'First: where did you play?')
+                  : currentStepInfo.label}
+              </h2>
+              <p style={{ fontSize: '15px', opacity: 0.76, margin: '10px 0 0', maxWidth: '720px', lineHeight: 1.55 }}>
+                {currentSection === HOME_AWAY_STEP_ID
+                  ? (isItalian
+                      ? 'Questa scelta serve solo a leggere correttamente risultato, squadra cliente e avversario.'
+                      : 'This only helps read score, client team and opponent correctly.')
+                  : sectionPurpose[currentSection]}
+              </p>
+            </div>
+            {currentSection !== HOME_AWAY_STEP_ID && (
+              <div style={{
+                minWidth: '180px',
+                borderRadius: '16px',
+                padding: '12px 14px',
+                background: currentData ? 'rgba(34,197,94,0.10)' : hasImageForExtract ? 'rgba(250,204,21,0.10)' : 'rgba(255,255,255,0.05)',
+                border: `1px solid ${currentData ? 'rgba(34,197,94,0.35)' : hasImageForExtract ? 'rgba(250,204,21,0.32)' : 'rgba(255,255,255,0.10)'}`,
+                color: currentData ? '#86efac' : hasImageForExtract ? '#facc15' : 'rgba(255,255,255,0.70)',
+                fontWeight: 900
+              }}>
+                <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.7px', opacity: 0.72 }}>
+                  {isItalian ? 'Stato screenshot' : 'Screenshot status'}
+                </div>
+                <div style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {currentData ? <CheckCircle2 size={16} /> : hasImageForExtract ? <Zap size={16} /> : <FileImage size={16} />}
+                  {currentData ? (isItalian ? 'Letto dal Coach' : 'Read by Coach') : hasImageForExtract ? (isItalian ? 'Pronto da leggere' : 'Ready to read') : (isItalian ? 'Da caricare' : 'Upload needed')}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Step 0: Casa / Fuori Casa (obbligatorio, prima delle foto) */}
           {currentSection === HOME_AWAY_STEP_ID ? (
             <div style={{ marginTop: '8px' }}>
               <div style={{
-                display: 'flex',
-                gap: '12px',
-                marginBottom: '12px'
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                gap: '14px',
+                marginBottom: '14px'
               }}>
                 <button
                   type="button"
@@ -643,21 +869,25 @@ export default function NewMatchPage() {
                     setStepData(prev => ({ ...prev, [HOME_AWAY_STEP_ID]: true }))
                     if (currentStep < STEPS.length - 1) setCurrentStep(currentStep + 1)
                   }}
+                  className="match-choice-card"
                   style={{
-                    flex: 1,
-                    padding: '16px',
-                    background: isHome ? 'rgba(0, 212, 255, 0.25)' : 'rgba(0, 212, 255, 0.08)',
-                    border: `2px solid ${isHome ? 'rgba(0, 212, 255, 0.7)' : 'rgba(0, 212, 255, 0.25)'}`,
-                    borderRadius: '10px',
-                    color: '#00d4ff',
-                    fontSize: '16px',
-                    fontWeight: isHome ? 600 : 400,
+                    padding: '20px',
+                    minHeight: '154px',
+                    background: isHome ? 'linear-gradient(145deg, rgba(0,212,255,0.22), rgba(0,161,166,0.10))' : 'rgba(255,255,255,0.045)',
+                    border: `1px solid ${isHome ? 'rgba(0, 212, 255, 0.65)' : 'rgba(255,255,255,0.10)'}`,
+                    borderRadius: '18px',
+                    color: '#fff',
+                    textAlign: 'left',
                     cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    boxShadow: isHome ? '0 0 14px rgba(0, 212, 255, 0.25)' : 'none'
+                    transition: 'all 0.22s ease',
+                    boxShadow: isHome ? '0 0 28px rgba(0, 212, 255, 0.22)' : 'none'
                   }}
                 >
-                  🏠 {t('home')}
+                  <Home size={28} color={isHome ? '#00d4ff' : 'rgba(255,255,255,0.55)'} />
+                  <div style={{ fontSize: '20px', fontWeight: 950, marginTop: '18px' }}>{isItalian ? 'Ho giocato in casa' : 'I played home'}</div>
+                  <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.66)', lineHeight: 1.4, marginTop: '6px' }}>
+                    {isItalian ? 'La tua squadra e a sinistra/casa negli screenshot.' : 'Your team is left/home in screenshots.'}
+                  </div>
                 </button>
                 <button
                   type="button"
@@ -666,24 +896,39 @@ export default function NewMatchPage() {
                     setStepData(prev => ({ ...prev, [HOME_AWAY_STEP_ID]: false }))
                     if (currentStep < STEPS.length - 1) setCurrentStep(currentStep + 1)
                   }}
+                  className="match-choice-card"
                   style={{
-                    flex: 1,
-                    padding: '16px',
-                    background: !isHome ? 'rgba(0, 212, 255, 0.25)' : 'rgba(0, 212, 255, 0.08)',
-                    border: `2px solid ${!isHome ? 'rgba(0, 212, 255, 0.7)' : 'rgba(0, 212, 255, 0.25)'}`,
-                    borderRadius: '10px',
-                    color: '#00d4ff',
-                    fontSize: '16px',
-                    fontWeight: !isHome ? 600 : 400,
+                    padding: '20px',
+                    minHeight: '154px',
+                    background: !isHome ? 'linear-gradient(145deg, rgba(0,212,255,0.22), rgba(0,161,166,0.10))' : 'rgba(255,255,255,0.045)',
+                    border: `1px solid ${!isHome ? 'rgba(0, 212, 255, 0.65)' : 'rgba(255,255,255,0.10)'}`,
+                    borderRadius: '18px',
+                    color: '#fff',
+                    textAlign: 'left',
                     cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    boxShadow: !isHome ? '0 0 14px rgba(0, 212, 255, 0.25)' : 'none'
+                    transition: 'all 0.22s ease',
+                    boxShadow: !isHome ? '0 0 28px rgba(0, 212, 255, 0.22)' : 'none'
                   }}
                 >
-                  ✈️ {t('away')}
+                  <Plane size={28} color={!isHome ? '#00d4ff' : 'rgba(255,255,255,0.55)'} />
+                  <div style={{ fontSize: '20px', fontWeight: 950, marginTop: '18px' }}>{isItalian ? 'Ho giocato fuori casa' : 'I played away'}</div>
+                  <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.66)', lineHeight: 1.4, marginTop: '6px' }}>
+                    {isItalian ? 'La tua squadra e a destra/fuori negli screenshot.' : 'Your team is right/away in screenshots.'}
+                  </div>
                 </button>
               </div>
-              <div style={{ fontSize: '12px', opacity: 0.75, color: 'var(--neon-blue)' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '13px',
+                color: 'rgba(125, 211, 252, 0.92)',
+                background: 'rgba(0, 212, 255, 0.08)',
+                border: '1px solid rgba(0, 212, 255, 0.16)',
+                borderRadius: '12px',
+                padding: '10px 12px'
+              }}>
+                <ShieldCheck size={16} />
                 {t('homeAwayHint')}
               </div>
             </div>
@@ -712,25 +957,33 @@ export default function NewMatchPage() {
           )}
           <div style={{
             marginBottom: '16px',
-            padding: '14px',
-            background: 'rgba(0, 212, 255, 0.08)',
-            border: '1px solid rgba(0, 212, 255, 0.22)',
-            borderRadius: '10px'
+            padding: '16px',
+            background: 'linear-gradient(145deg, rgba(0, 212, 255, 0.10), rgba(255,255,255,0.035))',
+            border: '1px solid rgba(0, 212, 255, 0.20)',
+            borderRadius: '16px'
           }}>
             <div style={{
-              fontSize: '15px',
-              fontWeight: 700,
+              fontSize: '16px',
+              fontWeight: 900,
               color: '#7dd3fc',
-              marginBottom: '4px'
+              marginBottom: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
             }}>
-              {uploadStepTitle}
+              <FileImage size={17} />
+              {hasImageForExtract
+                ? (isItalian ? 'Screenshot caricato' : 'Screenshot uploaded')
+                : (isItalian ? 'Carica lo screenshot giusto' : 'Upload the right screenshot')}
             </div>
             <div style={{
               fontSize: '13px',
               lineHeight: 1.45,
               opacity: 0.82
             }}>
-              {uploadStepHint}
+              {hasImageForExtract
+                ? (isItalian ? 'Ora fai leggere lo screenshot al Coach. Ogni lettura consuma 2 HP e aggiorna questa sezione.' : 'Now let the Coach read it. Each read uses 2 HP and updates this section.')
+                : (isItalian ? 'Scegli dalla galleria o usa la fotocamera. Dopo il caricamento potrai farlo leggere al Coach.' : 'Choose from gallery or use the camera. After upload, the Coach can read it.')}
             </div>
           </div>
           {/* Image Preview(s) */}
@@ -742,8 +995,8 @@ export default function NewMatchPage() {
                     {slot === 0 ? t('stepPlayerRatingsPhoto1') : t('stepPlayerRatingsPhoto2')}
                   </div>
                   {playerRatingsImages[slot] ? (
-                    <div style={{ borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
-                      <img src={playerRatingsImages[slot]} alt="" style={{ width: '100%', height: 'auto', display: 'block' }} />
+                    <div style={compactPreviewFrameStyle}>
+                      <img src={playerRatingsImages[slot]} alt="" style={compactPreviewImageStyle} />
                     </div>
                   ) : null}
                   <input
@@ -786,7 +1039,7 @@ export default function NewMatchPage() {
                     }}
                     >
                       <Upload size={16} />
-                      {t('upload')}
+                      {isItalian ? 'Carica file' : 'Upload file'}
                     </button>
                     <button
                       type="button"
@@ -810,15 +1063,15 @@ export default function NewMatchPage() {
                     }}
                     >
                       <Camera size={16} />
-                      {t('cameraCaptureTitle')}
+                      {isItalian ? 'Usa fotocamera' : 'Use camera'}
                     </button>
                   </div>
                 </div>
               ))}
             </div>
           ) : currentImage ? (
-            <div style={{ marginBottom: '16px', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
-              <img src={currentImage} alt="Preview" style={{ width: '100%', height: 'auto', display: 'block' }} />
+            <div style={compactPreviewFrameStyle}>
+              <img src={currentImage} alt="Preview" style={compactPreviewImageStyle} />
             </div>
           ) : null}
 
@@ -865,7 +1118,7 @@ export default function NewMatchPage() {
               }}
               >
                 <Upload size={16} />
-                {t('upload')}
+                {isItalian ? 'Carica file' : 'Upload file'}
               </button>
               <button
                 type="button"
@@ -889,7 +1142,7 @@ export default function NewMatchPage() {
               }}
               >
                 <Camera size={16} />
-                {t('cameraCaptureTitle')}
+                {isItalian ? 'Usa fotocamera' : 'Use camera'}
               </button>
               </div>
             </>
@@ -904,35 +1157,36 @@ export default function NewMatchPage() {
                 style={{
                   flex: 1,
                   background: currentData
-                    ? 'rgba(34, 197, 94, 0.2)'
-                    : 'rgba(0, 212, 255, 0.2)',
-                  border: `1px solid ${currentData ? 'rgba(34, 197, 94, 0.5)' : 'rgba(0, 212, 255, 0.5)'}`,
-                  borderRadius: '8px',
-                  padding: '12px',
-                  color: currentData ? '#86efac' : '#00d4ff',
+                    ? 'rgba(34, 197, 94, 0.16)'
+                    : 'linear-gradient(135deg, #00d4ff 0%, #00a1a6 100%)',
+                  border: `1px solid ${currentData ? 'rgba(34, 197, 94, 0.45)' : 'rgba(0, 212, 255, 0.55)'}`,
+                  borderRadius: '14px',
+                  padding: '14px',
+                  color: currentData ? '#86efac' : '#020510',
                   cursor: extracting || saving || currentData ? 'not-allowed' : 'pointer',
                   opacity: extracting || saving || currentData ? 0.5 : 1,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  fontWeight: 600
+                  fontWeight: 900,
+                  boxShadow: currentData ? 'none' : '0 10px 30px rgba(0, 212, 255, 0.24)'
                 }}
               >
                 {extracting ? (
                   <>
                     <RefreshCw size={18} style={{ animation: 'spin 1s linear infinite' }} />
-                    {t('extracting')}
+                    {isItalian ? 'Il Coach sta leggendo...' : 'Coach is reading...'}
                   </>
                 ) : currentData ? (
                   <>
                     <CheckCircle2 size={18} />
-                    {t('extractData')}
+                    {isItalian ? 'Screenshot letto' : 'Screenshot read'}
                   </>
                 ) : (
                   <>
                     <Upload size={18} />
-                    {t('extractData')}
+                    {isItalian ? 'Leggi screenshot' : 'Read screenshot'}
                   </>
                 )}
               </button>
@@ -943,22 +1197,22 @@ export default function NewMatchPage() {
               disabled={extracting || saving}
               style={{
                 flex: hasImageForExtract ? 0.5 : 1,
-                background: 'rgba(156, 163, 175, 0.2)',
-                border: '1px solid rgba(156, 163, 175, 0.5)',
-                borderRadius: '8px',
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: '14px',
                 padding: '12px',
-                color: '#d1d5db',
+                color: 'rgba(255,255,255,0.72)',
                 cursor: extracting || saving ? 'not-allowed' : 'pointer',
                 opacity: extracting || saving ? 0.5 : 1,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                fontWeight: 600
+                fontWeight: 800
               }}
             >
               <SkipForward size={18} />
-              {t('skip')}
+              {isItalian ? 'Lo aggiungo dopo' : 'Add later'}
             </button>
           </div>
 
@@ -967,13 +1221,13 @@ export default function NewMatchPage() {
             <div style={{
               marginTop: '16px',
               padding: '12px',
-              background: 'rgba(34, 197, 94, 0.1)',
-              border: '1px solid rgba(34, 197, 94, 0.3)',
-              borderRadius: '8px',
-              fontSize: '12px',
-              opacity: 0.8
+              background: 'linear-gradient(145deg, rgba(34, 197, 94, 0.14), rgba(255,255,255,0.04))',
+              border: '1px solid rgba(34, 197, 94, 0.32)',
+              borderRadius: '14px',
+              fontSize: '13px',
+              color: '#86efac'
             }}>
-              <strong>{t('dataExtractedSuccess')}</strong>
+              <strong>{isItalian ? 'Perfetto: questa sezione ora aiuta il Coach a capire meglio la partita.' : 'Perfect: this section now helps the Coach understand the match better.'}</strong>
             </div>
           )}
             </>
@@ -983,41 +1237,65 @@ export default function NewMatchPage() {
 
       {/* Save Button (solo all'ultimo step o se tutti gli step sono completati/saltati) */}
       {(currentStep === STEPS.length - 1 || Object.keys(stepData).length === STEPS.length) && (
-        <button
-          data-tour-id="tour-match-save"
-          onClick={handleShowSummary}
-          disabled={saving || photosUploaded < 3 || typeof isHome !== 'boolean'}
-          style={{
-            width: '100%',
-            background: saving
-              ? 'rgba(156, 163, 175, 0.2)'
-              : 'rgba(34, 197, 94, 0.2)',
-            border: `1px solid ${saving ? 'rgba(156, 163, 175, 0.5)' : 'rgba(34, 197, 94, 0.5)'}`,
-            borderRadius: '8px',
-            padding: '16px',
-            color: saving ? '#d1d5db' : '#86efac',
-            cursor: saving || photosUploaded < 3 || typeof isHome !== 'boolean' ? 'not-allowed' : 'pointer',
-            opacity: saving || photosUploaded < 3 || typeof isHome !== 'boolean' ? 0.5 : 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            fontWeight: 700,
-            fontSize: '16px'
-          }}
-        >
-          {saving ? (
-            <>
-              <RefreshCw size={20} style={{ animation: 'spin 1s linear infinite' }} />
-              {t('saving')}
-            </>
-          ) : (
-            <>
-              <Save size={20} />
-              {t('saveMatch')}
-            </>
-          )}
-        </button>
+        <div data-tour-id="tour-match-save" style={{
+          ...shellCardStyle,
+          padding: '18px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '16px',
+          flexWrap: 'wrap',
+          marginBottom: '24px'
+        }}>
+          <div style={{ minWidth: '220px', flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: analysisQuality.tone, fontWeight: 950, fontSize: '17px' }}>
+              <ShieldCheck size={19} />
+              {minimumReached ? analysisQuality.label : (isItalian ? 'Non ancora salvabile' : 'Not save-ready yet')}
+            </div>
+            <p style={{ margin: '6px 0 0', color: 'rgba(255,255,255,0.68)', fontSize: '13px' }}>
+              {minimumReached
+                ? (isItalian ? 'Puoi salvare la partita e aggiornare dashboard, memoria AI e task.' : 'You can save the match and update dashboard, AI memory and tasks.')
+                : (isItalian ? 'Leggi almeno 3 screenshot per creare una partita utile.' : 'Read at least 3 screenshots to create a useful match.')}
+            </p>
+          </div>
+          <button
+            onClick={handleShowSummary}
+            disabled={saving || photosUploaded < 3 || typeof isHome !== 'boolean'}
+            className="match-save-cta"
+            style={{
+              minWidth: '260px',
+              minHeight: '58px',
+              background: saving || photosUploaded < 3
+                ? 'rgba(156, 163, 175, 0.18)'
+                : 'linear-gradient(135deg, #22c55e 0%, #86efac 100%)',
+              border: `1px solid ${saving || photosUploaded < 3 ? 'rgba(156, 163, 175, 0.35)' : 'rgba(134, 239, 172, 0.55)'}`,
+              borderRadius: '16px',
+              padding: '16px 22px',
+              color: saving || photosUploaded < 3 ? '#d1d5db' : '#021006',
+              cursor: saving || photosUploaded < 3 || typeof isHome !== 'boolean' ? 'not-allowed' : 'pointer',
+              opacity: saving || photosUploaded < 3 || typeof isHome !== 'boolean' ? 0.55 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              fontWeight: 950,
+              fontSize: '15px',
+              boxShadow: saving || photosUploaded < 3 ? 'none' : '0 12px 32px rgba(34, 197, 94, 0.28)'
+            }}
+          >
+            {saving ? (
+              <>
+                <RefreshCw size={20} style={{ animation: 'spin 1s linear infinite' }} />
+                {t('saving')}
+              </>
+            ) : (
+              <>
+                <Save size={20} />
+                {isItalian ? 'Salva e aggiorna il Coach' : 'Save and update Coach'}
+              </>
+            )}
+          </button>
+        </div>
       )}
 
       {/* Summary Modal */}
@@ -1028,7 +1306,8 @@ export default function NewMatchPage() {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0, 0, 0, 0.8)',
+          background: 'rgba(0, 0, 0, 0.82)',
+          backdropFilter: 'blur(14px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -1043,16 +1322,17 @@ export default function NewMatchPage() {
         }}
         >
           <div style={{
-            background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            borderRadius: '12px',
+            background: 'linear-gradient(145deg, rgba(5, 12, 25, 0.98) 0%, rgba(2, 4, 10, 0.99) 100%)',
+            border: '1px solid rgba(0, 212, 255, 0.26)',
+            borderRadius: '24px',
             padding: 'clamp(16px, 4vw, 24px)',
             paddingBottom: 'calc(24px + 64px + env(safe-area-inset-bottom, 0px))',
-            maxWidth: '600px',
+            maxWidth: '680px',
             width: '100%',
             maxHeight: 'calc(100vh - 100px)',
             overflowY: 'auto',
-            position: 'relative'
+            position: 'relative',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.65), 0 0 50px rgba(0,212,255,0.18)'
           }}
           onClick={(e) => e.stopPropagation()}
           >
@@ -1077,35 +1357,74 @@ export default function NewMatchPage() {
               <X size={20} />
             </button>
 
-            <h2 style={{
-              fontSize: '24px',
-              fontWeight: 700,
-              marginBottom: '24px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              <Trophy size={24} color="var(--neon-orange)" />
-              {t('matchSummary')}
-            </h2>
-
-            {/* Risultato Estratto */}
-            {extractedResult && (
+            <div style={{ textAlign: 'center', marginBottom: '22px', padding: '8px 24px 0' }}>
               <div style={{
-                background: 'rgba(34, 197, 94, 0.2)',
-                border: '1px solid rgba(34, 197, 94, 0.5)',
-                borderRadius: '8px',
-                padding: '12px',
-                marginBottom: '16px',
+                width: '68px',
+                height: '68px',
+                borderRadius: '22px',
+                margin: '0 auto 14px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
+                justifyContent: 'center',
+                background: 'linear-gradient(135deg, rgba(255,203,5,0.22), rgba(0,212,255,0.14))',
+                border: '1px solid rgba(255,203,5,0.35)',
+                boxShadow: '0 0 30px rgba(255,203,5,0.16)'
+              }}>
+                <Trophy size={32} color="var(--neon-orange)" />
+              </div>
+              <h2 style={{
+                fontSize: 'clamp(24px, 5vw, 34px)',
+                fontWeight: 950,
+                margin: 0,
+                letterSpacing: '-0.8px'
+              }}>
+                {isItalian ? 'Pronto a salvare la partita' : 'Ready to save the match'}
+              </h2>
+              <p style={{ margin: '8px 0 0', color: 'rgba(255,255,255,0.68)', fontSize: '14px', lineHeight: 1.45 }}>
+                {isItalian
+                  ? 'Controlla gli ultimi dettagli. Dopo il salvataggio aggiorno il Coach, la dashboard e la memoria tattica.'
+                  : 'Check the final details. After saving I update Coach, dashboard and tactical memory.'}
+              </p>
+            </div>
+
+            {/* Risultato Estratto */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+              gap: '10px',
+              marginBottom: '18px'
+            }}>
+              <div style={{
+                background: 'rgba(34, 197, 94, 0.10)',
+                border: '1px solid rgba(34, 197, 94, 0.28)',
+                borderRadius: '14px',
+                padding: '12px',
                 color: '#86efac'
               }}>
-                <Trophy size={18} />
-                <span><strong>{t('resultExtracted')}:</strong> {extractedResult}</span>
+                <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.7px', opacity: 0.75, fontWeight: 900 }}>{isItalian ? 'Risultato' : 'Score'}</div>
+                <div style={{ fontSize: '20px', fontWeight: 950, marginTop: '4px' }}>{extractedResult || 'N/A'}</div>
               </div>
-            )}
+              <div style={{
+                background: 'rgba(0, 212, 255, 0.08)',
+                border: '1px solid rgba(0, 212, 255, 0.20)',
+                borderRadius: '14px',
+                padding: '12px',
+                color: '#7dd3fc'
+              }}>
+                <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.7px', opacity: 0.75, fontWeight: 900 }}>{isItalian ? 'Lettura' : 'Read quality'}</div>
+                <div style={{ fontSize: '20px', fontWeight: 950, marginTop: '4px' }}>{photosUploaded}/5</div>
+              </div>
+              <div style={{
+                background: `${analysisQuality.tone}14`,
+                border: `1px solid ${analysisQuality.tone}40`,
+                borderRadius: '14px',
+                padding: '12px',
+                color: analysisQuality.tone
+              }}>
+                <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.7px', opacity: 0.75, fontWeight: 900 }}>{isItalian ? 'Qualita' : 'Quality'}</div>
+                <div style={{ fontSize: '18px', fontWeight: 950, marginTop: '4px' }}>{analysisQuality.label}</div>
+              </div>
+            </div>
 
             {/* Campo Casa/Fuori Casa - Obbligatorio */}
             <div style={{ marginBottom: '16px' }}>
@@ -1262,6 +1581,39 @@ export default function NewMatchPage() {
               )}
             </div>
 
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+              gap: '10px',
+              marginBottom: '20px'
+            }}>
+              {[
+                { icon: Brain, text: isItalian ? 'Memoria AI' : 'AI memory' },
+                { icon: Target, text: isItalian ? 'Pattern tattici' : 'Tactical patterns' },
+                { icon: Database, text: 'Supabase' },
+                { icon: Zap, text: isItalian ? 'Task e dashboard' : 'Tasks and dashboard' }
+              ].map(item => {
+                const Icon = item.icon
+                return (
+                  <div key={item.text} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '9px',
+                    padding: '10px 12px',
+                    borderRadius: '12px',
+                    background: 'rgba(255,255,255,0.045)',
+                    border: '1px solid rgba(255,255,255,0.09)',
+                    color: 'rgba(255,255,255,0.78)',
+                    fontSize: '13px',
+                    fontWeight: 800
+                  }}>
+                    <Icon size={16} color="#00d4ff" />
+                    {item.text}
+                  </div>
+                )
+              })}
+            </div>
+
             {/* Action Buttons */}
             <div style={{
               display: 'flex',
@@ -1277,18 +1629,18 @@ export default function NewMatchPage() {
                   minWidth: '120px',
                   background: saving
                     ? 'rgba(156, 163, 175, 0.2)'
-                    : 'rgba(34, 197, 94, 0.2)',
-                  border: `1px solid ${saving ? 'rgba(156, 163, 175, 0.5)' : 'rgba(34, 197, 94, 0.5)'}`,
-                  borderRadius: '8px',
-                  padding: '12px',
-                  color: saving ? '#d1d5db' : '#86efac',
+                    : 'linear-gradient(135deg, #22c55e 0%, #86efac 100%)',
+                  border: `1px solid ${saving ? 'rgba(156, 163, 175, 0.5)' : 'rgba(134, 239, 172, 0.55)'}`,
+                  borderRadius: '14px',
+                  padding: '14px',
+                  color: saving ? '#d1d5db' : '#021006',
                   cursor: saving ? 'not-allowed' : 'pointer',
                   opacity: saving ? 0.5 : 1,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  fontWeight: 600
+                  fontWeight: 950
                 }}
               >
                 {saving ? (
@@ -1299,7 +1651,7 @@ export default function NewMatchPage() {
                 ) : (
                   <>
                     <Save size={18} />
-                    {t('confirmSave')}
+                    {isItalian ? 'Salva e aggiorna il Coach' : 'Save and update Coach'}
                   </>
                 )}
               </button>
@@ -1309,9 +1661,9 @@ export default function NewMatchPage() {
                 style={{
                   flex: 1,
                   minWidth: '120px',
-                  background: 'rgba(156, 163, 175, 0.2)',
-                  border: '1px solid rgba(156, 163, 175, 0.5)',
-                  borderRadius: '8px',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: '14px',
                   padding: '12px',
                   color: '#d1d5db',
                   cursor: saving ? 'not-allowed' : 'pointer',
@@ -1333,6 +1685,107 @@ export default function NewMatchPage() {
       <style jsx>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+        .match-upload-page {
+          animation: match-page-in 420ms ease both;
+        }
+        .match-hero,
+        .match-workspace-card {
+          animation: match-card-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        .hero-orb {
+          position: absolute;
+          pointer-events: none;
+          border-radius: 999px;
+          filter: blur(4px);
+          opacity: 0.55;
+        }
+        .hero-orb-a {
+          width: 240px;
+          height: 240px;
+          right: -80px;
+          top: -90px;
+          background: radial-gradient(circle, rgba(0,212,255,0.28), transparent 68%);
+          animation: float-orb 7s ease-in-out infinite;
+        }
+        .hero-orb-b {
+          width: 180px;
+          height: 180px;
+          left: 42%;
+          bottom: -90px;
+          background: radial-gradient(circle, rgba(255,203,5,0.16), transparent 68%);
+          animation: float-orb 8s ease-in-out infinite reverse;
+        }
+        .match-ghost-button {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 13px;
+          border-radius: 12px;
+          border: 1px solid rgba(255,255,255,0.12);
+          background: rgba(255,255,255,0.045);
+          color: rgba(255,255,255,0.78);
+          font-weight: 800;
+          cursor: pointer;
+          transition: all 180ms ease;
+        }
+        .match-ghost-button:hover,
+        .match-step-pill:hover,
+        .match-choice-card:hover {
+          transform: translateY(-2px);
+          border-color: rgba(0, 212, 255, 0.45) !important;
+          box-shadow: 0 12px 32px rgba(0, 212, 255, 0.12);
+        }
+        .match-save-cta {
+          position: relative;
+          overflow: hidden;
+        }
+        .match-save-cta::after {
+          content: '';
+          position: absolute;
+          inset: -80% auto auto -30%;
+          width: 80px;
+          height: 260%;
+          background: rgba(255,255,255,0.35);
+          transform: rotate(25deg) translateX(-160px);
+          transition: transform 700ms ease;
+        }
+        .match-save-cta:not(:disabled):hover::after {
+          transform: rotate(25deg) translateX(520px);
+        }
+        .match-save-cta:not(:disabled):hover {
+          transform: translateY(-2px);
+        }
+        @keyframes match-page-in {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes match-card-in {
+          from { opacity: 0; transform: translateY(14px) scale(0.99); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes float-orb {
+          0%, 100% { transform: translate3d(0, 0, 0); }
+          50% { transform: translate3d(14px, 12px, 0); }
+        }
+        @media (max-width: 980px) {
+          .match-hero-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .match-step-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+          }
+        }
+        @media (max-width: 640px) {
+          .match-step-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+          .match-step-pill {
+            min-height: 94px !important;
+          }
+          .quality-card {
+            padding: 14px !important;
+          }
         }
       `}</style>
     </main>

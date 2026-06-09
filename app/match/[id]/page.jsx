@@ -33,6 +33,25 @@ export default function MatchDetailPage() {
   const [uploadImage, setUploadImage] = React.useState(null)
   const [extracting, setExtracting] = React.useState(false)
 
+  const compactPreviewFrameStyle = {
+    marginBottom: '12px',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    border: '1px solid rgba(255, 255, 255, 0.16)',
+    background: 'rgba(0, 0, 0, 0.24)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  }
+  const compactPreviewImageStyle = {
+    maxWidth: '100%',
+    maxHeight: '260px',
+    width: 'auto',
+    height: 'auto',
+    objectFit: 'contain',
+    display: 'block'
+  }
+
   // Carica match
   React.useEffect(() => {
     if (!matchId) {
@@ -133,7 +152,8 @@ export default function MatchDetailPage() {
         },
         body: JSON.stringify({
           imageDataUrl: uploadImage,
-          section: uploadSection
+          section: uploadSection,
+          is_home: match.is_home
         })
       })
 
@@ -423,11 +443,11 @@ export default function MatchDetailPage() {
                       </label>
                     ) : (
                       <div>
-                        <div style={{ marginBottom: '12px', textAlign: 'center' }}>
+                        <div style={compactPreviewFrameStyle}>
                           <img 
                             src={uploadImage} 
                             alt="Preview" 
-                            style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px' }}
+                            style={compactPreviewImageStyle}
                           />
                         </div>
                         {error && uploadSection === step.id && (
