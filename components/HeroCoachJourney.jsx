@@ -344,7 +344,13 @@ export default function HeroCoachJourney({
   }), [stats, hasActiveCoach, gameAnalysisLastCapture, transactionFlags, lang, actions])
 
   const isEn = lang === 'en'
-  const balance = credits ? getNumber(credits.balance_remaining, Math.max(0, getNumber(credits.credits_included) - getNumber(credits.credits_used))) : null
+  const balance = credits
+    ? getNumber(
+        credits.balance_remaining,
+        Math.max(0, getNumber(credits.credits_included) - getNumber(credits.credits_used)) +
+          Math.max(0, getNumber(credits.temp_balance)),
+      )
+    : null
   const giftLabel = balance != null && balance > 0
     ? (isEn ? `${balance} HP ready` : `${balance} HP pronti`)
     : (isEn ? 'HP gift ready' : 'HP omaggio pronti')

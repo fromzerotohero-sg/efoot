@@ -34,8 +34,11 @@ function getHpBalanceRemaining(usage) {
   if (Number.isFinite(balance)) return balance
   const included = Number(usage.credits_included)
   const used = Number(usage.credits_used)
+  const temp = Number(usage.temp_balance)
   if (!Number.isFinite(included) || !Number.isFinite(used)) return null
-  return Math.max(0, included - used)
+  const permanent = Math.max(0, included - used)
+  const bonus = Number.isFinite(temp) && temp > 0 ? temp : 0
+  return permanent + bonus
 }
 
 /** Metalgate `auth_token` oppure JWT Supabase aggiornato (come CreditsBar / grafici-comparazione). */

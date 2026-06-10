@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { validateToken, extractBearerToken } from "@/lib/authHelper";
-import { getCurrentUsage, CREDITS_INCLUDED_DEFAULT } from "@/lib/creditService";
+import {
+  getCurrentUsage,
+  getSpendableBalance,
+  CREDITS_INCLUDED_DEFAULT,
+} from "@/lib/creditService";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -54,9 +58,27 @@ async function handleCreditsUsage(req) {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  // Extract MetalGate ID from metadata if present
-  const metalgateUserId =
+  if (userData.user.user_metadata?.is_metalgate_user) {
+    const { data: existingProfile } = await admin
+      .from("user_profiles")
+      .select("user_id")
+      .eq("metalgate_user_id", userId)
+      .maybeSingle();
+    if (existingProfile?.user_id) {
+      userId = existingProfile.user_id;
+    }
+  }
+
+  let metalgateUserId =
     userData.user.user_metadata?.metalgate_user_id || null;
+  if (!metalgateUserId) {
+    const { data: profile } = await admin
+      .from("user_profiles")
+      .select("metalgate_user_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    metalgateUserId = profile?.metalgate_user_id || null;
+  }
 
   const usage = await getCurrentUsage(admin, userId, {
     currentPeriodOnly: true,
@@ -70,10 +92,14 @@ async function handleCreditsUsage(req) {
     : CREDITS_INCLUDED_DEFAULT;
   const percentUsed = included > 0 ? Math.round((used / included) * 100) : 0;
 
-  const balanceRemaining = Math.max(0, included - used);
   const tempBalance = Number.isFinite(Number(usage.temp_balance))
     ? Number(usage.temp_balance)
     : 0;
+  const balanceRemaining = getSpendableBalance({
+    credits_included: included,
+    credits_used: used,
+    temp_balance: tempBalance,
+  });
 
   return NextResponse.json(
     {
