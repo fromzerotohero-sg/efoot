@@ -387,6 +387,18 @@ export default function NewMatchPage() {
     handleSave();
   };
 
+  // Lock body scroll when summary modal is open
+  React.useEffect(() => {
+    if (showSummary) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [showSummary]);
+
   const handleSave = async () => {
     setSaving(true);
     setError(null);
@@ -1782,460 +1794,465 @@ export default function NewMatchPage() {
 
       {/* Summary Modal */}
       {showSummary && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0, 0, 0, 0.82)",
-            backdropFilter: "blur(14px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-            padding: "20px",
-            overflow: "hidden",
-          }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setShowSummary(false);
-            }
-          }}
-        >
+        <>
           <div
             style={{
-              background:
-                "linear-gradient(145deg, rgba(5, 12, 25, 0.98) 0%, rgba(2, 4, 10, 0.99) 100%)",
-              border: "1px solid rgba(0, 212, 255, 0.26)",
-              borderRadius: "24px",
-              padding: "clamp(16px, 4vw, 24px)",
-              paddingBottom:
-                "calc(24px + 100px + env(safe-area-inset-bottom, 0px))",
-              maxWidth: "680px",
-              width: "100%",
-              maxHeight: "calc(100vh - 160px)",
-              overflowY: "auto",
-              position: "relative",
-              boxShadow:
-                "0 24px 80px rgba(0,0,0,0.65), 0 0 50px rgba(0,212,255,0.18)",
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: "rgba(0, 0, 0, 0.82)",
+              backdropFilter: "blur(14px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 1000,
+              padding: "20px",
+              overflow: "hidden",
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowSummary(false);
+              }
+            }}
           >
-            {/* Close Button */}
-            <button
-              onClick={() => setShowSummary(false)}
-              style={{
-                position: "absolute",
-                top: "16px",
-                right: "16px",
-                background: "rgba(255, 255, 255, 0.1)",
-                border: "1px solid rgba(255, 255, 255, 0.2)",
-                borderRadius: "8px",
-                padding: "8px",
-                color: "#fff",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <X size={20} />
-            </button>
-
             <div
               style={{
-                textAlign: "center",
-                marginBottom: "22px",
-                padding: "8px 24px 0",
+                background:
+                  "linear-gradient(145deg, rgba(5, 12, 25, 0.98) 0%, rgba(2, 4, 10, 0.99) 100%)",
+                border: "1px solid rgba(0, 212, 255, 0.26)",
+                borderRadius: "24px",
+                padding: "clamp(16px, 4vw, 24px)",
+                paddingBottom:
+                  "calc(24px + 100px + env(safe-area-inset-bottom, 0px))",
+                maxWidth: "680px",
+                width: "100%",
+                maxHeight: "calc(100vh - 160px)",
+                overflowY: "auto",
+                position: "relative",
+                boxShadow:
+                  "0 24px 80px rgba(0,0,0,0.65), 0 0 50px rgba(0,212,255,0.18)",
               }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <div
+              {/* Close Button */}
+              <button
+                onClick={() => setShowSummary(false)}
                 style={{
-                  width: "68px",
-                  height: "68px",
-                  borderRadius: "22px",
-                  margin: "0 auto 14px",
+                  position: "absolute",
+                  top: "16px",
+                  right: "16px",
+                  background: "rgba(255, 255, 255, 0.1)",
+                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  borderRadius: "8px",
+                  padding: "8px",
+                  color: "#fff",
+                  cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  background:
-                    "linear-gradient(135deg, rgba(255,203,5,0.22), rgba(0,212,255,0.14))",
-                  border: "1px solid rgba(255,203,5,0.35)",
-                  boxShadow: "0 0 30px rgba(255,203,5,0.16)",
                 }}
               >
-                <Trophy size={32} color="var(--neon-orange)" />
-              </div>
-              <h2
-                style={{
-                  fontSize: "clamp(24px, 5vw, 34px)",
-                  fontWeight: 950,
-                  margin: 0,
-                  letterSpacing: "-0.8px",
-                }}
-              >
-                {isItalian
-                  ? "Pronto a salvare la partita"
-                  : "Ready to save the match"}
-              </h2>
-              <p
-                style={{
-                  margin: "8px 0 0",
-                  color: "rgba(255,255,255,0.68)",
-                  fontSize: "14px",
-                  lineHeight: 1.45,
-                }}
-              >
-                {isItalian
-                  ? "Controlla gli ultimi dettagli. Dopo il salvataggio aggiorno il Coach, la dashboard e la memoria tattica."
-                  : "Check the final details. After saving I update Coach, dashboard and tactical memory."}
-              </p>
-            </div>
+                <X size={20} />
+              </button>
 
-            {/* Risultato Estratto */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-                gap: "10px",
-                marginBottom: "18px",
-              }}
-            >
               <div
                 style={{
-                  background: "rgba(34, 197, 94, 0.10)",
-                  border: "1px solid rgba(34, 197, 94, 0.28)",
-                  borderRadius: "14px",
-                  padding: "12px",
-                  color: "#86efac",
+                  textAlign: "center",
+                  marginBottom: "22px",
+                  padding: "8px 24px 0",
                 }}
               >
                 <div
                   style={{
-                    fontSize: "11px",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.7px",
-                    opacity: 0.75,
-                    fontWeight: 900,
+                    width: "68px",
+                    height: "68px",
+                    borderRadius: "22px",
+                    margin: "0 auto 14px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background:
+                      "linear-gradient(135deg, rgba(255,203,5,0.22), rgba(0,212,255,0.14))",
+                    border: "1px solid rgba(255,203,5,0.35)",
+                    boxShadow: "0 0 30px rgba(255,203,5,0.16)",
                   }}
                 >
-                  {isItalian ? "Risultato" : "Score"}
+                  <Trophy size={32} color="var(--neon-orange)" />
                 </div>
-                <div
+                <h2
                   style={{
-                    fontSize: "20px",
+                    fontSize: "clamp(24px, 5vw, 34px)",
                     fontWeight: 950,
-                    marginTop: "4px",
+                    margin: 0,
+                    letterSpacing: "-0.8px",
                   }}
                 >
-                  {extractedResult || "N/A"}
-                </div>
+                  {isItalian
+                    ? "Pronto a salvare la partita"
+                    : "Ready to save the match"}
+                </h2>
+                <p
+                  style={{
+                    margin: "8px 0 0",
+                    color: "rgba(255,255,255,0.68)",
+                    fontSize: "14px",
+                    lineHeight: 1.45,
+                  }}
+                >
+                  {isItalian
+                    ? "Controlla gli ultimi dettagli. Dopo il salvataggio aggiorno il Coach, la dashboard e la memoria tattica."
+                    : "Check the final details. After saving I update Coach, dashboard and tactical memory."}
+                </p>
               </div>
-              <div
-                style={{
-                  background: "rgba(0, 212, 255, 0.08)",
-                  border: "1px solid rgba(0, 212, 255, 0.20)",
-                  borderRadius: "14px",
-                  padding: "12px",
-                  color: "#7dd3fc",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "11px",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.7px",
-                    opacity: 0.75,
-                    fontWeight: 900,
-                  }}
-                >
-                  {isItalian ? "Lettura" : "Read quality"}
-                </div>
-                <div
-                  style={{
-                    fontSize: "20px",
-                    fontWeight: 950,
-                    marginTop: "4px",
-                  }}
-                >
-                  {photosUploaded}/5
-                </div>
-              </div>
-              <div
-                style={{
-                  background: `${analysisQuality.tone}14`,
-                  border: `1px solid ${analysisQuality.tone}40`,
-                  borderRadius: "14px",
-                  padding: "12px",
-                  color: analysisQuality.tone,
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "11px",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.7px",
-                    opacity: 0.75,
-                    fontWeight: 900,
-                  }}
-                >
-                  {isItalian ? "Qualita" : "Quality"}
-                </div>
-                <div
-                  style={{
-                    fontSize: "18px",
-                    fontWeight: 950,
-                    marginTop: "4px",
-                  }}
-                >
-                  {analysisQuality.label}
-                </div>
-              </div>
-            </div>
 
-            {/* Campo Casa/Fuori Casa - Obbligatorio */}
-            <div style={{ marginBottom: "16px" }}>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  color: "var(--neon-blue)",
-                  marginBottom: "8px",
-                }}
-              >
-                {t("homeAwayLabel")}{" "}
-                <span style={{ opacity: 0.6, fontWeight: 400 }}>
-                  ({t("required")})
-                </span>
-              </label>
+              {/* Risultato Estratto */}
               <div
                 style={{
-                  display: "flex",
-                  gap: "12px",
-                  marginBottom: "8px",
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+                  gap: "10px",
+                  marginBottom: "18px",
                 }}
               >
-                <button
-                  type="button"
-                  onClick={() => setIsHome(true)}
+                <div
                   style={{
-                    flex: 1,
+                    background: "rgba(34, 197, 94, 0.10)",
+                    border: "1px solid rgba(34, 197, 94, 0.28)",
+                    borderRadius: "14px",
                     padding: "12px",
-                    background: isHome
-                      ? "rgba(0, 212, 255, 0.3)"
-                      : "rgba(0, 212, 255, 0.1)",
-                    border: `1px solid ${isHome ? "rgba(0, 212, 255, 0.6)" : "rgba(0, 212, 255, 0.3)"}`,
+                    color: "#86efac",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.7px",
+                      opacity: 0.75,
+                      fontWeight: 900,
+                    }}
+                  >
+                    {isItalian ? "Risultato" : "Score"}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "20px",
+                      fontWeight: 950,
+                      marginTop: "4px",
+                    }}
+                  >
+                    {extractedResult || "N/A"}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    background: "rgba(0, 212, 255, 0.08)",
+                    border: "1px solid rgba(0, 212, 255, 0.20)",
+                    borderRadius: "14px",
+                    padding: "12px",
+                    color: "#7dd3fc",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.7px",
+                      opacity: 0.75,
+                      fontWeight: 900,
+                    }}
+                  >
+                    {isItalian ? "Lettura" : "Read quality"}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "20px",
+                      fontWeight: 950,
+                      marginTop: "4px",
+                    }}
+                  >
+                    {photosUploaded}/5
+                  </div>
+                </div>
+                <div
+                  style={{
+                    background: `${analysisQuality.tone}14`,
+                    border: `1px solid ${analysisQuality.tone}40`,
+                    borderRadius: "14px",
+                    padding: "12px",
+                    color: analysisQuality.tone,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.7px",
+                      opacity: 0.75,
+                      fontWeight: 900,
+                    }}
+                  >
+                    {isItalian ? "Qualita" : "Quality"}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "18px",
+                      fontWeight: 950,
+                      marginTop: "4px",
+                    }}
+                  >
+                    {analysisQuality.label}
+                  </div>
+                </div>
+              </div>
+
+              {/* Campo Casa/Fuori Casa - Obbligatorio */}
+              <div style={{ marginBottom: "16px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    color: "var(--neon-blue)",
+                    marginBottom: "8px",
+                  }}
+                >
+                  {t("homeAwayLabel")}{" "}
+                  <span style={{ opacity: 0.6, fontWeight: 400 }}>
+                    ({t("required")})
+                  </span>
+                </label>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "12px",
+                    marginBottom: "8px",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setIsHome(true)}
+                    style={{
+                      flex: 1,
+                      padding: "12px",
+                      background: isHome
+                        ? "rgba(0, 212, 255, 0.3)"
+                        : "rgba(0, 212, 255, 0.1)",
+                      border: `1px solid ${isHome ? "rgba(0, 212, 255, 0.6)" : "rgba(0, 212, 255, 0.3)"}`,
+                      borderRadius: "8px",
+                      color: "#00d4ff",
+                      fontSize: "14px",
+                      fontWeight: isHome ? 600 : 400,
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      boxShadow: isHome
+                        ? "0 0 10px rgba(0, 212, 255, 0.3)"
+                        : "none",
+                    }}
+                  >
+                    🏠 {t("home")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsHome(false)}
+                    style={{
+                      flex: 1,
+                      padding: "12px",
+                      background: !isHome
+                        ? "rgba(0, 212, 255, 0.3)"
+                        : "rgba(0, 212, 255, 0.1)",
+                      border: `1px solid ${!isHome ? "rgba(0, 212, 255, 0.6)" : "rgba(0, 212, 255, 0.3)"}`,
+                      borderRadius: "8px",
+                      color: "#00d4ff",
+                      fontSize: "14px",
+                      fontWeight: !isHome ? 600 : 400,
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      boxShadow: !isHome
+                        ? "0 0 10px rgba(0, 212, 255, 0.3)"
+                        : "none",
+                    }}
+                  >
+                    ✈️ {t("away")}
+                  </button>
+                </div>
+                <div
+                  style={{
+                    fontSize: "12px",
+                    opacity: 0.7,
+                    marginTop: "4px",
+                    color: "#00d4ff",
+                  }}
+                >
+                  {t("homeAwayHint")}
+                </div>
+              </div>
+
+              {/* Campo Nome Avversario - Opzionale */}
+              <div style={{ marginBottom: "16px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    color: "var(--neon-blue)",
+                    marginBottom: "8px",
+                  }}
+                >
+                  {t("opponentNameLabel")}{" "}
+                  <span style={{ opacity: 0.6, fontWeight: 400 }}>
+                    ({t("optional")})
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  value={opponentName}
+                  onChange={(e) => setOpponentName(e.target.value)}
+                  placeholder={t("opponentNamePlaceholder")}
+                  maxLength={255}
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    background: "rgba(0, 212, 255, 0.1)",
+                    border: "1px solid rgba(0, 212, 255, 0.3)",
                     borderRadius: "8px",
                     color: "#00d4ff",
                     fontSize: "14px",
-                    fontWeight: isHome ? 600 : 400,
-                    cursor: "pointer",
+                    outline: "none",
                     transition: "all 0.2s ease",
-                    boxShadow: isHome
-                      ? "0 0 10px rgba(0, 212, 255, 0.3)"
-                      : "none",
                   }}
-                >
-                  🏠 {t("home")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsHome(false)}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "rgba(0, 212, 255, 0.6)";
+                    e.target.style.boxShadow =
+                      "0 0 10px rgba(0, 212, 255, 0.3)";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "rgba(0, 212, 255, 0.3)";
+                    e.target.style.boxShadow = "none";
+                  }}
+                />
+                <div
                   style={{
-                    flex: 1,
-                    padding: "12px",
-                    background: !isHome
-                      ? "rgba(0, 212, 255, 0.3)"
-                      : "rgba(0, 212, 255, 0.1)",
-                    border: `1px solid ${!isHome ? "rgba(0, 212, 255, 0.6)" : "rgba(0, 212, 255, 0.3)"}`,
-                    borderRadius: "8px",
+                    fontSize: "12px",
+                    opacity: 0.7,
+                    marginTop: "4px",
                     color: "#00d4ff",
-                    fontSize: "14px",
-                    fontWeight: !isHome ? 600 : 400,
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                    boxShadow: !isHome
-                      ? "0 0 10px rgba(0, 212, 255, 0.3)"
-                      : "none",
                   }}
                 >
-                  ✈️ {t("away")}
-                </button>
+                  {t("opponentNameHint")}
+                </div>
               </div>
+
+              {/* Sezioni Complete/Mancanti */}
               <div
                 style={{
-                  fontSize: "12px",
-                  opacity: 0.7,
-                  marginTop: "4px",
-                  color: "#00d4ff",
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+                  gap: "16px",
+                  marginBottom: "24px",
                 }}
               >
-                {t("homeAwayHint")}
+                {photosComplete.length > 0 && (
+                  <div
+                    style={{
+                      background: "rgba(34, 197, 94, 0.1)",
+                      border: "1px solid rgba(34, 197, 94, 0.3)",
+                      borderRadius: "8px",
+                      padding: "12px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "12px",
+                        opacity: 0.8,
+                        marginBottom: "8px",
+                      }}
+                    >
+                      {t("sectionsComplete")} ({photosComplete.length})
+                    </div>
+                    <div style={{ fontSize: "14px", color: "#86efac" }}>
+                      {photosComplete.join(", ")}
+                    </div>
+                  </div>
+                )}
+                {photosMissing.length > 0 && (
+                  <div
+                    style={{
+                      background: "rgba(255, 165, 0, 0.1)",
+                      border: "1px solid rgba(255, 165, 0, 0.3)",
+                      borderRadius: "8px",
+                      padding: "12px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "12px",
+                        opacity: 0.8,
+                        marginBottom: "8px",
+                      }}
+                    >
+                      {t("sectionsMissing")} ({photosMissing.length})
+                    </div>
+                    <div style={{ fontSize: "14px", color: "#ffa500" }}>
+                      {photosMissing.join(", ")}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
 
-            {/* Campo Nome Avversario - Opzionale */}
-            <div style={{ marginBottom: "16px" }}>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  color: "var(--neon-blue)",
-                  marginBottom: "8px",
-                }}
-              >
-                {t("opponentNameLabel")}{" "}
-                <span style={{ opacity: 0.6, fontWeight: 400 }}>
-                  ({t("optional")})
-                </span>
-              </label>
-              <input
-                type="text"
-                value={opponentName}
-                onChange={(e) => setOpponentName(e.target.value)}
-                placeholder={t("opponentNamePlaceholder")}
-                maxLength={255}
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  background: "rgba(0, 212, 255, 0.1)",
-                  border: "1px solid rgba(0, 212, 255, 0.3)",
-                  borderRadius: "8px",
-                  color: "#00d4ff",
-                  fontSize: "14px",
-                  outline: "none",
-                  transition: "all 0.2s ease",
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "rgba(0, 212, 255, 0.6)";
-                  e.target.style.boxShadow = "0 0 10px rgba(0, 212, 255, 0.3)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "rgba(0, 212, 255, 0.3)";
-                  e.target.style.boxShadow = "none";
-                }}
-              />
               <div
                 style={{
-                  fontSize: "12px",
-                  opacity: 0.7,
-                  marginTop: "4px",
-                  color: "#00d4ff",
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+                  gap: "10px",
+                  marginBottom: "20px",
                 }}
               >
-                {t("opponentNameHint")}
+                {[
+                  { icon: Brain, text: isItalian ? "Memoria AI" : "AI memory" },
+                  {
+                    icon: Target,
+                    text: isItalian ? "Pattern tattici" : "Tactical patterns",
+                  },
+                  {
+                    icon: Zap,
+                    text: isItalian
+                      ? "Dashboard e task"
+                      : "Dashboard and tasks",
+                  },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div
+                      key={item.text}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "9px",
+                        padding: "10px 12px",
+                        borderRadius: "12px",
+                        background: "rgba(255,255,255,0.045)",
+                        border: "1px solid rgba(255,255,255,0.09)",
+                        color: "rgba(255,255,255,0.78)",
+                        fontSize: "13px",
+                        fontWeight: 800,
+                      }}
+                    >
+                      <Icon size={16} color="#00d4ff" />
+                      {item.text}
+                    </div>
+                  );
+                })}
               </div>
-            </div>
-
-            {/* Sezioni Complete/Mancanti */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-                gap: "16px",
-                marginBottom: "24px",
-              }}
-            >
-              {photosComplete.length > 0 && (
-                <div
-                  style={{
-                    background: "rgba(34, 197, 94, 0.1)",
-                    border: "1px solid rgba(34, 197, 94, 0.3)",
-                    borderRadius: "8px",
-                    padding: "12px",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "12px",
-                      opacity: 0.8,
-                      marginBottom: "8px",
-                    }}
-                  >
-                    {t("sectionsComplete")} ({photosComplete.length})
-                  </div>
-                  <div style={{ fontSize: "14px", color: "#86efac" }}>
-                    {photosComplete.join(", ")}
-                  </div>
-                </div>
-              )}
-              {photosMissing.length > 0 && (
-                <div
-                  style={{
-                    background: "rgba(255, 165, 0, 0.1)",
-                    border: "1px solid rgba(255, 165, 0, 0.3)",
-                    borderRadius: "8px",
-                    padding: "12px",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "12px",
-                      opacity: 0.8,
-                      marginBottom: "8px",
-                    }}
-                  >
-                    {t("sectionsMissing")} ({photosMissing.length})
-                  </div>
-                  <div style={{ fontSize: "14px", color: "#ffa500" }}>
-                    {photosMissing.join(", ")}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
-                gap: "10px",
-                marginBottom: "20px",
-              }}
-            >
-              {[
-                { icon: Brain, text: isItalian ? "Memoria AI" : "AI memory" },
-                {
-                  icon: Target,
-                  text: isItalian ? "Pattern tattici" : "Tactical patterns",
-                },
-                {
-                  icon: Zap,
-                  text: isItalian ? "Dashboard e task" : "Dashboard and tasks",
-                },
-              ].map((item) => {
-                const Icon = item.icon;
-                return (
-                  <div
-                    key={item.text}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "9px",
-                      padding: "10px 12px",
-                      borderRadius: "12px",
-                      background: "rgba(255,255,255,0.045)",
-                      border: "1px solid rgba(255,255,255,0.09)",
-                      color: "rgba(255,255,255,0.78)",
-                      fontSize: "13px",
-                      fontWeight: 800,
-                    }}
-                  >
-                    <Icon size={16} color="#00d4ff" />
-                    {item.text}
-                  </div>
-                );
-              })}
             </div>
           </div>
 
-          {/* Sticky Bottom Action Bar */}
+          {/* Sticky Bottom Action Bar - separate from overlay, fixed to viewport */}
           <div
             style={{
-              position: "absolute",
+              position: "fixed",
               bottom: 0,
               left: 0,
               right: 0,
@@ -2248,7 +2265,7 @@ export default function NewMatchPage() {
                 "linear-gradient(180deg, rgba(2, 4, 10, 0.72) 0%, rgba(2, 4, 10, 0.98) 30%)",
               backdropFilter: "blur(12px)",
               borderTop: "1px solid rgba(0, 212, 255, 0.12)",
-              zIndex: 10,
+              zIndex: 1001,
             }}
           >
             <button
@@ -2313,7 +2330,7 @@ export default function NewMatchPage() {
               {t("cancel")}
             </button>
           </div>
-        </div>
+        </>
       )}
 
       <style jsx>{`
