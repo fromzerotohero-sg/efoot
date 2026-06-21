@@ -1796,6 +1796,7 @@ export default function NewMatchPage() {
             justifyContent: "center",
             zIndex: 1000,
             padding: "20px",
+            overflow: "hidden",
           }}
           onClick={(e) => {
             if (e.target === e.currentTarget) {
@@ -1814,7 +1815,7 @@ export default function NewMatchPage() {
                 "calc(24px + 100px + env(safe-area-inset-bottom, 0px))",
               maxWidth: "680px",
               width: "100%",
-              maxHeight: "calc(100vh - 100px)",
+              maxHeight: "calc(100vh - 160px)",
               overflowY: "auto",
               position: "relative",
               boxShadow:
