@@ -1796,7 +1796,6 @@ export default function NewMatchPage() {
             justifyContent: "center",
             zIndex: 1000,
             padding: "20px",
-            overflowY: "auto",
           }}
           onClick={(e) => {
             if (e.target === e.currentTarget) {
