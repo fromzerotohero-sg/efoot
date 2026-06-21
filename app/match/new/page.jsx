@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useTranslation } from "@/lib/i18n";
@@ -61,6 +62,7 @@ export default function NewMatchPage() {
   const [error, setError] = React.useState(null);
   const [success, setSuccess] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
+  const [portalTarget, setPortalTarget] = React.useState(null);
   const [showSummary, setShowSummary] = React.useState(false);
   const [opponentName, setOpponentName] = React.useState("");
   const [isHome, setIsHome] = React.useState(true); // Default: Casa
@@ -68,6 +70,7 @@ export default function NewMatchPage() {
   // Carica progresso salvato al mount
   React.useEffect(() => {
     setMounted(true);
+    setPortalTarget(document.body);
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
@@ -2252,89 +2255,92 @@ export default function NewMatchPage() {
         </div>
       )}
 
-      {/* Sticky Bottom Action Bar - separate from overlay, fixed to viewport */}
-      {showSummary && (
-        <div
-          style={{
-            position: "fixed",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            display: "flex",
-            gap: "12px",
-            padding: "clamp(12px, 3vw, 16px) clamp(16px, 4vw, 24px)",
-            paddingBottom:
-              "calc(clamp(12px, 3vw, 16px) + env(safe-area-inset-bottom, 0px))",
-            background:
-              "linear-gradient(180deg, rgba(2, 4, 10, 0.72) 0%, rgba(2, 4, 10, 0.98) 30%)",
-            backdropFilter: "blur(12px)",
-            borderTop: "1px solid rgba(0, 212, 255, 0.12)",
-            zIndex: 1001,
-          }}
-        >
-          <button
-            onClick={handleConfirmSave}
-            disabled={saving}
+      {/* Sticky Bottom Action Bar - portaled to body, so nothing can scroll it */}
+      {showSummary &&
+        portalTarget &&
+        createPortal(
+          <div
             style={{
-              flex: 1,
-              minWidth: "120px",
-              background: saving
-                ? "rgba(156, 163, 175, 0.2)"
-                : "linear-gradient(135deg, #22c55e 0%, #86efac 100%)",
-              border: `1px solid ${saving ? "rgba(156, 163, 175, 0.5)" : "rgba(134, 239, 172, 0.55)"}`,
-              borderRadius: "14px",
-              padding: "14px",
-              color: saving ? "#d1d5db" : "#021006",
-              cursor: saving ? "not-allowed" : "pointer",
-              opacity: saving ? 0.5 : 1,
+              position: "fixed",
+              bottom: 0,
+              left: 0,
+              right: 0,
               display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "8px",
-              fontWeight: 950,
+              gap: "12px",
+              padding: "clamp(12px, 3vw, 16px) clamp(16px, 4vw, 24px)",
+              paddingBottom:
+                "calc(clamp(12px, 3vw, 16px) + env(safe-area-inset-bottom, 0px))",
+              background:
+                "linear-gradient(180deg, rgba(2, 4, 10, 0.72) 0%, rgba(2, 4, 10, 0.98) 30%)",
+              backdropFilter: "blur(12px)",
+              borderTop: "1px solid rgba(0, 212, 255, 0.12)",
+              zIndex: 1001,
             }}
           >
-            {saving ? (
-              <>
-                <RefreshCw
-                  size={18}
-                  style={{ animation: "spin 1s linear infinite" }}
-                />
-                {t("saving")}
-              </>
-            ) : (
-              <>
-                <Save size={18} />
-                {isItalian
-                  ? "Salva e aggiorna il Coach"
-                  : "Save and update Coach"}
-              </>
-            )}
-          </button>
-          <button
-            onClick={() => setShowSummary(false)}
-            disabled={saving}
-            style={{
-              flex: 1,
-              minWidth: "120px",
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.12)",
-              borderRadius: "14px",
-              padding: "12px",
-              color: "#d1d5db",
-              cursor: saving ? "not-allowed" : "pointer",
-              opacity: saving ? 0.5 : 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "8px",
-              fontWeight: 600,
-            }}
-          >
-            {t("cancel")}
-          </button>
-        </div>
-      )}
+            <button
+              onClick={handleConfirmSave}
+              disabled={saving}
+              style={{
+                flex: 1,
+                minWidth: "120px",
+                background: saving
+                  ? "rgba(156, 163, 175, 0.2)"
+                  : "linear-gradient(135deg, #22c55e 0%, #86efac 100%)",
+                border: `1px solid ${saving ? "rgba(156, 163, 175, 0.5)" : "rgba(134, 239, 172, 0.55)"}`,
+                borderRadius: "14px",
+                padding: "14px",
+                color: saving ? "#d1d5db" : "#021006",
+                cursor: saving ? "not-allowed" : "pointer",
+                opacity: saving ? 0.5 : 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                fontWeight: 950,
+              }}
+            >
+              {saving ? (
+                <>
+                  <RefreshCw
+                    size={18}
+                    style={{ animation: "spin 1s linear infinite" }}
+                  />
+                  {t("saving")}
+                </>
+              ) : (
+                <>
+                  <Save size={18} />
+                  {isItalian
+                    ? "Salva e aggiorna il Coach"
+                    : "Save and update Coach"}
+                </>
+              )}
+            </button>
+            <button
+              onClick={() => setShowSummary(false)}
+              disabled={saving}
+              style={{
+                flex: 1,
+                minWidth: "120px",
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: "14px",
+                padding: "12px",
+                color: "#d1d5db",
+                cursor: saving ? "not-allowed" : "pointer",
+                opacity: saving ? 0.5 : 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                fontWeight: 600,
+              }}
+            >
+              {t("cancel")}
+            </button>
+          </div>,
+          portalTarget,
+        )}
 
       <style jsx>{`
         @keyframes spin {
