@@ -85,6 +85,7 @@ export default function SpinLabPage() {
   const [lastReward, setLastReward] = React.useState(null);
   const [message, setMessage] = React.useState("");
   const [celebrating, setCelebrating] = React.useState(false);
+  const [showServiceCTA, setShowServiceCTA] = React.useState(false);
   const [error, setError] = React.useState("");
   const wheelRef = React.useRef(null);
 
@@ -157,6 +158,7 @@ export default function SpinLabPage() {
     setLastReward(null);
     setMessage("");
     setCelebrating(false);
+    setShowServiceCTA(false);
     setError("");
 
     try {
@@ -214,7 +216,10 @@ export default function SpinLabPage() {
         window.dispatchEvent(new CustomEvent("credits-consumed"));
         setIsSpinning(false);
         setCelebrating(true);
-        window.setTimeout(() => setCelebrating(false), 3300);
+        window.setTimeout(() => {
+          setCelebrating(false);
+          window.setTimeout(() => setShowServiceCTA(true), 600);
+        }, 3300);
       }, 5200);
     } catch (err) {
       setError(err?.message || "Impossibile accreditare il premio");
@@ -414,6 +419,28 @@ export default function SpinLabPage() {
             </div>
           </div>
         </section>
+
+        {showServiceCTA && (
+          <a
+            href="https://tornei.fromzerotohero.io/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="tournament-cta"
+          >
+            <div className="tournament-cta-icon" aria-hidden="true">
+              <Trophy size={28} />
+            </div>
+            <div className="tournament-cta-text">
+              <span className="tournament-cta-title">
+                Metti alla prova ciò che hai imparato
+              </span>
+              <span className="tournament-cta-sub">
+                Partecipa ai tornei gratuiti FZTH e scala la classifica fino a diventare un Hero ufficiale.
+              </span>
+            </div>
+            <span className="tournament-cta-arrow">&#8594;</span>
+          </a>
+        )}
 
         <section className={`result-card ${lastReward ? "has-result" : ""}`}>
           <div className="result-heading">
@@ -876,6 +903,73 @@ export default function SpinLabPage() {
           font-size: 0.88rem;
         }
 
+        .tournament-cta {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          padding: clamp(16px, 3vw, 22px);
+          border: 1px solid rgba(167, 139, 250, 0.35);
+          border-radius: 20px;
+          background:
+            linear-gradient(135deg, rgba(109, 40, 217, 0.18), rgba(59, 130, 246, 0.12)),
+            rgba(8, 16, 34, 0.82);
+          box-shadow: 0 0 30px rgba(124, 58, 237, 0.15);
+          text-decoration: none;
+          color: inherit;
+          animation: tournament-cta-in 0.6s cubic-bezier(0.18, 0.78, 0.28, 1) both;
+          transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+        }
+
+        .tournament-cta:hover {
+          transform: translateY(-2px);
+          border-color: rgba(167, 139, 250, 0.6);
+          box-shadow: 0 0 44px rgba(124, 58, 237, 0.28);
+        }
+
+        .tournament-cta-icon {
+          flex-shrink: 0;
+          width: 56px;
+          height: 56px;
+          display: grid;
+          place-items: center;
+          border-radius: 999px;
+          color: #fef3c7;
+          background: linear-gradient(135deg, #7c3aed, #4f46e5 42%, #3b82f6);
+          box-shadow: 0 0 18px rgba(124, 58, 237, 0.4);
+        }
+
+        .tournament-cta-text {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+        }
+
+        .tournament-cta-title {
+          font-weight: 900;
+          font-size: clamp(0.96rem, 2vw, 1.05rem);
+          color: #ede9fe;
+        }
+
+        .tournament-cta-sub {
+          font-size: 0.88rem;
+          color: rgba(203, 213, 225, 0.78);
+          line-height: 1.42;
+        }
+
+        .tournament-cta-arrow {
+          flex-shrink: 0;
+          font-size: 1.5rem;
+          color: rgba(167, 139, 250, 0.7);
+          transition: transform 0.22s ease, color 0.22s ease;
+        }
+
+        .tournament-cta:hover .tournament-cta-arrow {
+          transform: translateX(4px);
+          color: #c4b5fd;
+        }
+
         .result-card {
           padding: clamp(18px, 3vw, 26px);
           min-height: 142px;
@@ -1012,6 +1106,10 @@ export default function SpinLabPage() {
             grid-column: 1 / -1;
           }
 
+          .tournament-cta {
+            grid-column: 1 / -1;
+          }
+
           .result-card {
             align-self: stretch;
             display: flex;
@@ -1059,6 +1157,36 @@ export default function SpinLabPage() {
 
           .jackpot-ribbon {
             font-size: 0.82rem;
+          }
+
+          .tournament-cta {
+            margin-inline: 0;
+            padding: 16px;
+            gap: 12px;
+          }
+
+          .tournament-cta-icon {
+            width: 48px;
+            height: 48px;
+          }
+
+          .tournament-cta-title {
+            font-size: 0.92rem;
+          }
+
+          .tournament-cta-sub {
+            font-size: 0.8rem;
+          }
+        }
+
+        @keyframes tournament-cta-in {
+          0% {
+            opacity: 0;
+            transform: translateY(14px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
           }
         }
 
