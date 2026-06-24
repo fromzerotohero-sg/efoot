@@ -34,32 +34,7 @@ export default function SidebarNew() {
   const router = useRouter()
   const { isOpen, setIsOpen } = useSidebar()
   const { isOpen: gameAnalysisModalOpen } = useGameAnalysisModalNav()
-  const [dailySpinAvailable, setDailySpinAvailable] = React.useState(null)
-
-  React.useEffect(() => {
-    const loadDailySpinStatus = async () => {
-      try {
-        let token = localStorage.getItem('auth_token')
-        if (!token && supabase) {
-          const { data: session } = await supabase.auth.getSession()
-          token = session?.session?.access_token
-        }
-        if (!token) return
-
-        const res = await fetch('/api/daily-spin', {
-          headers: { Authorization: `Bearer ${token}` },
-          cache: 'no-store'
-        })
-        const data = await res.json().catch(() => ({}))
-        if (res.ok) setDailySpinAvailable(Boolean(data?.available))
-      } catch {}
-    }
-
-    loadDailySpinStatus()
-    const refresh = () => loadDailySpinStatus()
-    window.addEventListener('credits-accredited', refresh)
-    return () => window.removeEventListener('credits-accredited', refresh)
-  }, [])
+  const [redirectModal, setRedirectModal] = React.useState({ open: false, url: '' })
 
   const handleLogout = () => {
     fetch('/api/prelaunch/logout', { method: 'POST' }).catch(() => {})
@@ -83,14 +58,13 @@ export default function SidebarNew() {
         { href: '/', icon: LayoutGrid, label: t('dashboard'), isActive: () => pathname === '/' },
         { href: '/guida', icon: BookOpen, label: t('guide') },
         {
-          href: '/spin-lab',
+          href: 'https://tornei.fromzerotohero.io/',
           icon: Gift,
           label: 'WOW',
           variant: 'wow',
-          badgeText: dailySpinAvailable === false
-            ? (lang === 'en' ? 'READY' : 'PRONTO')
-            : (lang === 'en' ? 'FREE' : 'GRATIS'),
-          isActive: () => isActive('/spin-lab')
+          shortcut: 'tornei',
+          badgeText: lang === 'en' ? 'FREE' : 'GRATIS',
+          isActive: () => false
         }
       ]
     },
@@ -399,6 +373,28 @@ export default function SidebarNew() {
                       )
                     }
 
+                    if (item.shortcut === 'tornei') {
+                      return (
+                        <button
+                          key={navKey}
+                          type="button"
+                          onClick={() => {
+                            setIsOpen(false)
+                            setRedirectModal({ open: true, url: item.href })
+                          }}
+                          style={{
+                            ...getNavItemStyle(item, active),
+                            width: '100%',
+                            font: 'inherit'
+                          }}
+                          onMouseEnter={(e) => handleNavMouseEnter(e, item, active)}
+                          onMouseLeave={(e) => handleNavMouseLeave(e, item, active)}
+                        >
+                          {navContent}
+                        </button>
+                      )
+                    }
+
                     return (
                       <Link
                         key={navKey}
@@ -470,7 +466,162 @@ export default function SidebarNew() {
         </nav>
       </aside>
 
+      {redirectModal.open && (
+        <div className="redirect-overlay" role="dialog" aria-modal="true" aria-label={lang === 'en' ? 'External link' : 'Link esterno'} onClick={() => setRedirectModal({ open: false, url: '' })}>
+          <div className="redirect-card" onClick={(e) => e.stopPropagation()}>
+            <div className="redirect-glow" aria-hidden="true">
+              <Gift size={34} />
+            </div>
+            <h3>{lang === 'en' ? 'You are leaving the app' : 'Stai per uscire dall\'app'}</h3>
+            <p>
+              {lang === 'en'
+                ? 'You will be redirected to FZTH Tornei, the free tournament platform.'
+                : 'Verrai indirizzato a FZTH Tornei, la piattaforma gratuita per tornei.'}
+            </p>
+            <p className="redirect-sub">
+              {lang === 'en'
+                ? 'Test what you have learned and become an official Hero.'
+                : 'Metti alla prova ciò che hai imparato e diventa un Hero ufficiale.'}
+            </p>
+            <div className="redirect-actions">
+              <a
+                className="redirect-primary"
+                href={redirectModal.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {lang === 'en' ? 'Go to FZTH Tornei' : 'Vai a FZTH Tornei'}
+              </a>
+              <button
+                className="redirect-secondary"
+                type="button"
+                onClick={() => setRedirectModal({ open: false, url: '' })}
+              >
+                {lang === 'en' ? 'Stay here' : 'Resta qui'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style jsx>{`
+        .redirect-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 10070;
+          display: grid;
+          place-items: center;
+          padding: 18px;
+          background: rgba(0, 0, 0, 0.72);
+          backdrop-filter: blur(6px);
+          overflow-y: auto;
+          animation: redirect-fade-in 0.2s ease both;
+        }
+
+        .redirect-card {
+          position: relative;
+          width: min(400px, 94vw);
+          padding: clamp(24px, 5vw, 34px);
+          border: 1px solid rgba(34, 211, 238, 0.35);
+          border-radius: 24px;
+          background:
+            radial-gradient(circle at 50% 0%, rgba(34, 211, 238, 0.12), transparent 42%),
+            linear-gradient(145deg, rgba(8, 16, 34, 0.98), rgba(2, 6, 23, 0.98));
+          box-shadow: 0 24px 90px rgba(0,0,0,0.58), 0 0 54px rgba(34, 211, 238, 0.15);
+          color: #fff;
+          text-align: center;
+          overflow: hidden;
+          animation: redirect-slide-in 0.3s cubic-bezier(0.18, 0.78, 0.28, 1) both;
+        }
+
+        .redirect-glow {
+          width: 76px;
+          height: 76px;
+          margin: 0 auto 16px;
+          border-radius: 999px;
+          display: grid;
+          place-items: center;
+          color: #03101d;
+          background: linear-gradient(135deg, #22d3ee, #a78bfa 48%, #7c3aed);
+          box-shadow: 0 0 30px rgba(34, 211, 238, 0.35), 0 0 50px rgba(168, 85, 247, 0.2);
+          animation: redirect-pulse 2s ease-in-out infinite;
+        }
+
+        .redirect-card h3 {
+          margin: 0 0 10px;
+          font-size: clamp(1.3rem, 5vw, 1.7rem);
+          letter-spacing: -0.04em;
+          color: #fff;
+        }
+
+        .redirect-card p {
+          margin: 0 0 6px;
+          color: rgba(226, 232, 240, 0.82);
+          line-height: 1.48;
+          font-size: 0.94rem;
+        }
+
+        .redirect-sub {
+          color: rgba(34, 211, 238, 0.7);
+          font-size: 0.85rem;
+        }
+
+        .redirect-actions {
+          display: grid;
+          gap: 10px;
+          margin-top: 22px;
+        }
+
+        .redirect-primary, .redirect-secondary {
+          min-height: 48px;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0 20px;
+          font-weight: 950;
+          text-decoration: none;
+          cursor: pointer;
+          transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+        }
+
+        .redirect-primary {
+          color: #03101d;
+          background: linear-gradient(135deg, #22d3ee, #a78bfa 52%, #7c3aed);
+          box-shadow: 0 0 22px rgba(34, 211, 238, 0.32), 0 0 40px rgba(168, 85, 247, 0.18);
+        }
+
+        .redirect-primary:hover {
+          transform: translateY(-2px) scale(1.02);
+          filter: brightness(1.08);
+          box-shadow: 0 0 30px rgba(34, 211, 238, 0.45), 0 0 55px rgba(168, 85, 247, 0.25);
+        }
+
+        .redirect-secondary {
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          background: rgba(255, 255, 255, 0.06);
+          color: rgba(255, 255, 255, 0.78);
+        }
+
+        .redirect-secondary:hover {
+          background: rgba(255, 255, 255, 0.12);
+        }
+
+        @keyframes redirect-fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes redirect-slide-in {
+          from { opacity: 0; transform: translateY(18px) scale(0.96); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes redirect-pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.06); }
+        }
+
         @keyframes wow-pulse {
           0%, 100% {
             box-shadow: 0 0 12px rgba(34, 211, 238, 0.15), 0 0 24px rgba(168, 85, 247, 0.08);
