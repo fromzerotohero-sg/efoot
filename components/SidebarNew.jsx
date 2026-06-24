@@ -60,7 +60,7 @@ export default function SidebarNew() {
         {
           href: 'https://tornei.fromzerotohero.io/',
           icon: Gift,
-          label: 'WOW',
+          label: 'Tornei',
           variant: 'wow',
           shortcut: 'tornei',
           badgeText: lang === 'en' ? 'FREE' : 'GRATIS',
