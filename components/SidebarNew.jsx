@@ -85,11 +85,11 @@ export default function SidebarNew() {
         {
           href: '/spin-lab',
           icon: Gift,
-          label: lang === 'en' ? 'Daily wheel' : 'Ruota giornaliera',
-          variant: 'gold',
+          label: 'WOW',
+          variant: 'wow',
           badgeText: dailySpinAvailable === false
-            ? (lang === 'en' ? 'TOMORROW' : 'DOMANI')
-            : (lang === 'en' ? 'TODAY' : 'OGGI'),
+            ? (lang === 'en' ? 'READY' : 'PRONTO')
+            : (lang === 'en' ? 'FREE' : 'GRATIS'),
           isActive: () => isActive('/spin-lab')
         }
       ]
@@ -145,12 +145,19 @@ export default function SidebarNew() {
 
   const getNavItemStyle = (item, active) => {
     const isGold = item.variant === 'gold'
-    const activeColor = isGold ? '#ffcb05' : '#00d4ff'
-    const borderColor = isGold ? 'rgba(255, 203, 5, 0.48)' : 'rgba(0, 212, 255, 0.4)'
-    const idleBorder = isGold ? 'rgba(255, 203, 5, 0.18)' : 'transparent'
-    const activeBg = isGold
-      ? 'linear-gradient(145deg, rgba(255, 203, 5, 0.18) 0%, rgba(168, 85, 247, 0.10) 100%)'
-      : 'linear-gradient(145deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 161, 166, 0.1) 100%)'
+    const isWow = item.variant === 'wow'
+    const activeColor = isWow ? '#22d3ee' : (isGold ? '#ffcb05' : '#00d4ff')
+    const borderColor = isWow
+      ? 'rgba(34, 211, 238, 0.55)'
+      : (isGold ? 'rgba(255, 203, 5, 0.48)' : 'rgba(0, 212, 255, 0.4)')
+    const idleBorder = isWow
+      ? 'rgba(34, 211, 238, 0.22)'
+      : (isGold ? 'rgba(255, 203, 5, 0.18)' : 'transparent')
+    const activeBg = isWow
+      ? 'linear-gradient(145deg, rgba(34, 211, 238, 0.18) 0%, rgba(168, 85, 247, 0.12) 100%)'
+      : (isGold
+        ? 'linear-gradient(145deg, rgba(255, 203, 5, 0.18) 0%, rgba(168, 85, 247, 0.10) 100%)'
+        : 'linear-gradient(145deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 161, 166, 0.1) 100%)')
 
     return {
       display: 'flex',
@@ -159,38 +166,54 @@ export default function SidebarNew() {
       padding: '10px 14px',
       borderRadius: '12px',
       fontSize: '14px',
-      fontWeight: isGold ? 700 : 600,
-      background: active ? activeBg : (isGold ? 'rgba(255, 203, 5, 0.06)' : 'transparent'),
-      color: active ? activeColor : (isGold ? 'rgba(255, 255, 255, 0.72)' : 'rgba(255, 255, 255, 0.62)'),
+      fontWeight: isGold || isWow ? 700 : 600,
+      background: active ? activeBg : (isWow ? 'rgba(34, 211, 238, 0.05)' : (isGold ? 'rgba(255, 203, 5, 0.06)' : 'transparent')),
+      color: active ? activeColor : (isWow ? 'rgba(34, 211, 238, 0.8)' : (isGold ? 'rgba(255, 255, 255, 0.72)' : 'rgba(255, 255, 255, 0.62)')),
       border: `1px solid ${active ? borderColor : idleBorder}`,
       boxShadow: active
-        ? (isGold ? '0 0 20px rgba(255, 203, 5, 0.16)' : '0 0 20px rgba(0, 212, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)')
-        : 'none',
+        ? (isWow
+          ? '0 0 20px rgba(34, 211, 238, 0.2), 0 0 32px rgba(168, 85, 247, 0.12)'
+          : (isGold ? '0 0 20px rgba(255, 203, 5, 0.16)' : '0 0 20px rgba(0, 212, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'))
+        : (isWow && !active ? '0 0 12px rgba(34, 211, 238, 0.15), 0 0 24px rgba(168, 85, 247, 0.08)' : 'none'),
       transition: 'all 0.3s ease',
       cursor: 'pointer',
       textDecoration: 'none',
-      textShadow: active ? `0 0 10px ${isGold ? 'rgba(255, 203, 5, 0.45)' : 'rgba(0, 212, 255, 0.5)'}` : 'none'
+      textShadow: active ? `0 0 10px ${isWow ? 'rgba(34, 211, 238, 0.5)' : (isGold ? 'rgba(255, 203, 5, 0.45)' : 'rgba(0, 212, 255, 0.5)')}` : 'none',
+      animation: isWow && !active ? 'wow-pulse 2.2s ease-in-out infinite' : undefined
     }
   }
 
   const handleNavMouseEnter = (e, item, active) => {
     if (active) return
     const isGold = item.variant === 'gold'
-    e.currentTarget.style.background = isGold ? 'rgba(255, 203, 5, 0.10)' : 'rgba(0, 212, 255, 0.08)'
-    e.currentTarget.style.color = isGold ? '#ffcb05' : '#00d4ff'
-    e.currentTarget.style.borderColor = isGold ? 'rgba(255, 203, 5, 0.34)' : 'rgba(0, 212, 255, 0.25)'
+    const isWow = item.variant === 'wow'
+    e.currentTarget.style.background = isWow
+      ? 'rgba(34, 211, 238, 0.10)'
+      : (isGold ? 'rgba(255, 203, 5, 0.10)' : 'rgba(0, 212, 255, 0.08)')
+    e.currentTarget.style.color = isWow ? '#22d3ee' : (isGold ? '#ffcb05' : '#00d4ff')
+    e.currentTarget.style.borderColor = isWow
+      ? 'rgba(34, 211, 238, 0.38)'
+      : (isGold ? 'rgba(255, 203, 5, 0.34)' : 'rgba(0, 212, 255, 0.25)')
   }
 
   const handleNavMouseLeave = (e, item, active) => {
     if (active) return
     const isGold = item.variant === 'gold'
-    e.currentTarget.style.background = isGold ? 'rgba(255, 203, 5, 0.06)' : 'transparent'
-    e.currentTarget.style.color = isGold ? 'rgba(255, 255, 255, 0.72)' : 'rgba(255, 255, 255, 0.62)'
-    e.currentTarget.style.borderColor = isGold ? 'rgba(255, 203, 5, 0.18)' : 'transparent'
+    const isWow = item.variant === 'wow'
+    e.currentTarget.style.background = isWow
+      ? 'rgba(34, 211, 238, 0.05)'
+      : (isGold ? 'rgba(255, 203, 5, 0.06)' : 'transparent')
+    e.currentTarget.style.color = isWow
+      ? 'rgba(34, 211, 238, 0.8)'
+      : (isGold ? 'rgba(255, 255, 255, 0.72)' : 'rgba(255, 255, 255, 0.62)')
+    e.currentTarget.style.borderColor = isWow
+      ? 'rgba(34, 211, 238, 0.22)'
+      : (isGold ? 'rgba(255, 203, 5, 0.18)' : 'transparent')
   }
 
   const renderNavBadge = (item) => {
     if (item.badgeText) {
+      const isWow = item.variant === 'wow'
       return (
         <span
           aria-label={item.badgeText}
@@ -204,12 +227,18 @@ export default function SidebarNew() {
             letterSpacing: '0.5px',
             textTransform: 'uppercase',
             lineHeight: 1.2,
-            color: item.variant === 'gold' ? '#1f1300' : '#FFFFFF',
-            background: item.variant === 'gold'
-              ? 'linear-gradient(135deg, #fef3c7 0%, #facc15 100%)'
-              : 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-            border: '1px solid rgba(255, 203, 5, 0.55)',
-            boxShadow: '0 0 10px rgba(255, 203, 5, 0.30)'
+            color: isWow ? '#03101d' : (item.variant === 'gold' ? '#1f1300' : '#FFFFFF'),
+            background: isWow
+              ? 'linear-gradient(135deg, #22d3ee 0%, #a78bfa 100%)'
+              : (item.variant === 'gold'
+                ? 'linear-gradient(135deg, #fef3c7 0%, #facc15 100%)'
+                : 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'),
+            border: isWow
+              ? '1px solid rgba(34, 211, 238, 0.55)'
+              : '1px solid rgba(255, 203, 5, 0.55)',
+            boxShadow: isWow
+              ? '0 0 10px rgba(34, 211, 238, 0.35), 0 0 18px rgba(168, 85, 247, 0.18)'
+              : '0 0 10px rgba(255, 203, 5, 0.30)'
           }}
         >
           {item.badgeText}
@@ -336,8 +365,8 @@ export default function SidebarNew() {
                         <Icon
                           size={18}
                           style={{
-                            filter: active || item.variant === 'gold'
-                              ? `drop-shadow(0 0 5px ${item.variant === 'gold' ? 'rgba(255, 203, 5, 0.75)' : 'rgba(0, 212, 255, 0.8)'})`
+                            filter: active || item.variant === 'gold' || item.variant === 'wow'
+                              ? `drop-shadow(0 0 5px ${item.variant === 'gold' ? 'rgba(255, 203, 5, 0.75)' : item.variant === 'wow' ? 'rgba(34, 211, 238, 0.75)' : 'rgba(0, 212, 255, 0.8)'})`
                               : 'none'
                           }}
                         />
@@ -440,6 +469,19 @@ export default function SidebarNew() {
           </div>
         </nav>
       </aside>
+
+      <style jsx>{`
+        @keyframes wow-pulse {
+          0%, 100% {
+            box-shadow: 0 0 12px rgba(34, 211, 238, 0.15), 0 0 24px rgba(168, 85, 247, 0.08);
+            border-color: rgba(34, 211, 238, 0.22);
+          }
+          50% {
+            box-shadow: 0 0 22px rgba(34, 211, 238, 0.35), 0 0 44px rgba(168, 85, 247, 0.18);
+            border-color: rgba(34, 211, 238, 0.42);
+          }
+        }
+      `}</style>
     </>
   )
 }
