@@ -407,16 +407,6 @@ export default function SpinLabPage() {
                 : "Premi possibili: 0, 5, 10, 20, 30 e 100 HP (100 al massimo una volta al mese)."}
             </p>
             {error && <p style={{ color: "#fb7185" }}>{error}</p>}
-            <div className="bonus-notice">
-              <span>
-                I <strong>Crediti Omaggio</strong> sono a tutti gli effetti
-                crediti normali: funzionano esattamente come quelli del tuo
-                piano e puoi usarli per qualsiasi funzione AI. L'unica
-                differenza è che{" "}
-                <strong>scadono 7 giorni dopo essere stati assegnati</strong>,
-                quindi conviene usarli presto.
-              </span>
-            </div>
           </div>
         </section>
 
@@ -467,6 +457,19 @@ export default function SpinLabPage() {
               </a>
             </div>
           )}
+        </section>
+
+        <section className="bonus-card">
+          <div className="bonus-notice">
+            <span>
+              I <strong>Crediti Omaggio</strong> sono a tutti gli effetti
+              crediti normali: funzionano esattamente come quelli del tuo
+              piano e puoi usarli per qualsiasi funzione AI. L'unica
+              differenza &egrave; che{" "}
+              <strong>scadono 7 giorni dopo essere stati assegnati</strong>,
+              quindi conviene usarli presto.
+            </span>
+          </div>
         </section>
       </main>
 
@@ -622,11 +625,31 @@ export default function SpinLabPage() {
           color: #facc15;
         }
 
+        .bonus-card {
+          border: 1px solid rgba(148, 163, 184, 0.22);
+          background:
+            linear-gradient(
+              145deg,
+              rgba(8, 16, 34, 0.82),
+              rgba(2, 6, 23, 0.92)
+            ),
+            radial-gradient(
+              circle at 20% 0%,
+              rgba(0, 212, 255, 0.16),
+              transparent 36%
+            );
+          box-shadow:
+            0 20px 80px rgba(0, 0, 0, 0.35),
+            inset 0 1px 0 rgba(255, 255, 255, 0.08);
+          backdrop-filter: blur(16px);
+          border-radius: 28px;
+          padding: clamp(18px, 3vw, 26px);
+        }
+
         .bonus-notice {
           display: flex;
           align-items: flex-start;
           gap: 10px;
-          margin-top: 14px;
           padding: 12px 16px;
           border-radius: 12px;
           background: rgba(250, 204, 21, 0.07);
@@ -634,7 +657,6 @@ export default function SpinLabPage() {
           color: rgba(226, 232, 240, 0.82);
           font-size: clamp(0.88rem, 1.8vw, 0.97rem);
           line-height: 1.55;
-          max-width: 760px;
         }
 
         .bonus-notice strong {
@@ -1107,6 +1129,10 @@ export default function SpinLabPage() {
           }
 
           .tournament-cta {
+            grid-column: 1 / -1;
+          }
+
+          .bonus-card {
             grid-column: 1 / -1;
           }
 

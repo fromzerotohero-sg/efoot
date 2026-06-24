@@ -11,7 +11,8 @@ import {
   Plus,
   Users,
   Calendar,
-  Sparkles
+  Sparkles,
+  Gift
 } from 'lucide-react'
 
 const CARDS_ACCENT = {
@@ -23,6 +24,17 @@ const CARDS_ACCENT = {
   activeBorder: 'rgba(255, 215, 0, 0.5)',
   idleGlow: '0 0 12px rgba(255, 203, 5, 0.2)',
   activeGlow: '0 0 20px rgba(255, 203, 5, 0.35), 0 0 32px rgba(255, 180, 0, 0.2)'
+}
+
+const WOW_ACCENT = {
+  idleColor: '#22d3ee',
+  activeColor: '#67e8f9',
+  idleBg: 'linear-gradient(135deg, rgba(34, 211, 238, 0.14), rgba(168, 85, 247, 0.08))',
+  activeBg: 'linear-gradient(135deg, rgba(34, 211, 238, 0.28), rgba(168, 85, 247, 0.16))',
+  idleBorder: 'rgba(34, 211, 238, 0.35)',
+  activeBorder: 'rgba(34, 211, 238, 0.55)',
+  idleGlow: '0 0 14px rgba(34, 211, 238, 0.25), 0 0 28px rgba(168, 85, 247, 0.12)',
+  activeGlow: '0 0 22px rgba(34, 211, 238, 0.4), 0 0 40px rgba(168, 85, 247, 0.2)'
 }
 
 export default function BottomNavigation() {
@@ -48,6 +60,12 @@ export default function BottomNavigation() {
       href: '/',
       icon: LayoutGrid,
       label: 'Dashboard'
+    },
+    {
+      href: '/spin-lab',
+      icon: Gift,
+      label: 'WOW',
+      accent: 'wow'
     },
     {
       href: '/match',
@@ -122,6 +140,8 @@ export default function BottomNavigation() {
               : isActive(item.href)
 
           const isCardsAccent = item.accent === 'cards'
+          const isWowAccent = item.accent === 'wow'
+          const accent = isWowAccent ? WOW_ACCENT : (isCardsAccent ? CARDS_ACCENT : null)
           const inner = (
             <div style={{
               display: 'flex',
@@ -132,24 +152,31 @@ export default function BottomNavigation() {
               padding: '8px 12px',
               borderRadius: '12px',
               transition: 'all 0.2s',
-              background: isCardsAccent
-                ? (active ? CARDS_ACCENT.activeBg : CARDS_ACCENT.idleBg)
+              background: accent
+                ? (active ? accent.activeBg : accent.idleBg)
                 : (active ? 'rgba(0, 212, 255, 0.15)' : 'transparent'),
-              color: isCardsAccent
-                ? (active ? CARDS_ACCENT.activeColor : CARDS_ACCENT.idleColor)
+              color: accent
+                ? (active ? accent.activeColor : accent.idleColor)
                 : (active ? 'var(--neon-cyan)' : 'rgba(255,255,255,0.5)'),
-              border: isCardsAccent
-                ? `1px solid ${active ? CARDS_ACCENT.activeBorder : CARDS_ACCENT.idleBorder}`
+              border: accent
+                ? `1px solid ${active ? accent.activeBorder : accent.idleBorder}`
                 : '1px solid transparent',
-              boxShadow: isCardsAccent
-                ? (active ? CARDS_ACCENT.activeGlow : CARDS_ACCENT.idleGlow)
+              boxShadow: accent
+                ? (active ? accent.activeGlow : accent.idleGlow)
                 : 'none',
-              minWidth: '60px'
+              minWidth: '60px',
+              animation: isWowAccent && !active ? 'wow-pulse 2.2s ease-in-out infinite' : undefined
             }}>
               <Icon
                 size={22}
-                strokeWidth={active || isCardsAccent ? 2.5 : 2}
-                style={isCardsAccent ? { filter: 'drop-shadow(0 0 8px rgba(255, 203, 5, 0.55))' } : undefined}
+                strokeWidth={active || accent ? 2.5 : 2}
+                style={
+                  isCardsAccent
+                    ? { filter: 'drop-shadow(0 0 8px rgba(255, 203, 5, 0.55))' }
+                    : isWowAccent
+                      ? { filter: 'drop-shadow(0 0 10px rgba(34, 211, 238, 0.7))' }
+                      : undefined
+                }
               />
               <span style={{
                 fontSize: '11px',
@@ -230,6 +257,17 @@ export default function BottomNavigation() {
         @media (min-width: 1025px) {
           .bottom-nav {
             display: none !important;
+          }
+        }
+
+        @keyframes wow-pulse {
+          0%, 100% {
+            box-shadow: 0 0 14px rgba(34, 211, 238, 0.25), 0 0 28px rgba(168, 85, 247, 0.12);
+            border-color: rgba(34, 211, 238, 0.35);
+          }
+          50% {
+            box-shadow: 0 0 24px rgba(34, 211, 238, 0.45), 0 0 50px rgba(168, 85, 247, 0.25);
+            border-color: rgba(34, 211, 238, 0.6);
           }
         }
       `}</style>
