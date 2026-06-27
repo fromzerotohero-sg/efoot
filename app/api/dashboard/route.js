@@ -144,6 +144,7 @@ export async function GET(request) {
           id, user_id, metalgate_user_id, first_name, last_name,
           current_division, favorite_team, team_name, ai_name,
           how_to_remember, hours_per_week, common_problems,
+          ai_weak_point, platform,
           ai_knowledge_score,
           profile_completion_score, profile_completion_level,
           created_at, updated_at
