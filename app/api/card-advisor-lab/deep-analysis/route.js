@@ -23,6 +23,7 @@ import {
   normalizePurchaseFit,
   roleFamily
 } from '@/lib/cardAdvisorPurchaseContext.js'
+import { isStarterPlayer } from '@/lib/rosterSlotUtils.js'
 import { buildSkillMechanicsContext } from '@/lib/playerSkillSemantics.js'
 import { getPlayerBaselineStats } from '@/lib/playerEffectiveStats.js'
 
@@ -266,7 +267,7 @@ function compactPlayer(player, stylesLookup = {}, lang = 'it', formation = null)
     name: sanitize(player?.player_name, 60),
     position: fieldPos,
     ...(cardRole && fieldPos && cardRole !== fieldPos ? { card_role: cardRole } : {}),
-    starter: Number(player?.slot_index) >= 0 && Number(player?.slot_index) <= 10,
+    starter: isStarterPlayer(player),
     style: (player?.playing_style_id && stylesLookup[player.playing_style_id]) || player?.role || null,
     skills: canonSkillsForPrompt(skills, lang, 8),
     saved_stats: summarizeStats(getPlayerBaselineStats(player, null) || {}),
