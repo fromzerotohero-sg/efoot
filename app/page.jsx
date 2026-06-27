@@ -18,6 +18,7 @@ import CoachSuggestions from '@/components/CoachSuggestions'
 import HeroCoachJourney from '@/components/HeroCoachJourney'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
+import { fetchCoachProfileFromApi } from '@/lib/profileUxHelpers'
 import { withAuth } from '@/components/AuthWrapper'
 import { 
   Users, 
@@ -206,7 +207,8 @@ function HomePage() {
         setRecentMatches(data.matches || [])
         setTacticalPatterns(data.patterns || null)
         setHasActiveCoach(data.hasActiveCoach)
-        setUserProfile(data.profile)
+        const coachProfile = await fetchCoachProfileFromApi(token)
+        setUserProfile(coachProfile ? { ...(data.profile || {}), ...coachProfile } : data.profile)
       } catch (err) {
         console.error('Dashboard fetch error:', err)
         setError(t('coachDataLoadError'))
@@ -289,6 +291,22 @@ function HomePage() {
   React.useEffect(() => {
     if (!loading && supabase) fetchGameAnalysisCapture()
   }, [loading, supabase, fetchGameAnalysisCapture])
+
+  React.useEffect(() => {
+    const onCoachProfileUpdated = (event) => {
+      const detail = event?.detail
+      if (!detail || typeof detail !== 'object') return
+      setUserProfile((prev) => ({ ...(prev || {}), ...detail }))
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('coach-profile-updated', onCoachProfileUpdated)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('coach-profile-updated', onCoachProfileUpdated)
+      }
+    }
+  }, [])
 
   const handleDeleteMatch = async (matchId, e) => {
     e.stopPropagation() // Previeni click sul card
@@ -743,6 +761,8 @@ function HomePage() {
               onOpenChat={(message) => {
                 if (message === '__OPEN_GAME_ANALYSIS__') {
                   setShowGameAnalysisModal(true)
+                } else if (message === '__OPEN_COACH_FEEDBACK__') {
+                  setShowCoachFeedback(true)
                 } else {
                   if (typeof window !== 'undefined') {
                     window.dispatchEvent(new CustomEvent('open-assistant-chat', { detail: { message } }))

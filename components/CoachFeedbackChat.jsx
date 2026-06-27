@@ -18,6 +18,7 @@ import {
   Zap
 } from 'lucide-react'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
+import { fetchCoachProfileFromApi, resolveAuthToken, buildAuthHeaders } from '@/lib/profileUxHelpers'
 
 /**
  * CoachFeedbackChat — Chat dedicata Palestra Coach.
@@ -100,56 +101,34 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
   const weakPointFieldId = `${dialogId}-weak-point`
   const divisionFieldId = `${dialogId}-division`
   const notesFieldId = `${dialogId}-notes`
+  const hoursFieldId = `${dialogId}-hours-per-week`
   const chatInputId = `${dialogId}-chat-input`
 
-  // LOGICA INVARIATA: Carica profilo
+  // LOGICA INVARIATA: Carica profilo (Palestra Coach → save-ai-info)
   useEffect(() => {
     if (!show) return
     const load = async () => {
       try {
-        let token = localStorage.getItem('auth_token')
-        let userId = null
-        
-        if (token) {
-           const userData = localStorage.getItem('metalgate_user')
-           if (userData) {
-             userId = JSON.parse(userData).id
-           }
-        } else {
-           const { data: session } = await supabase.auth.getSession()
-           if (session?.session) {
-             token = session.session.access_token
-             userId = session.session.user.id
-           }
-        }
-
-        if (!token || !userId) {
+        const token = await resolveAuthToken()
+        if (!token) {
           if (externalProfile) setLoadedProfile(externalProfile)
           return
         }
-        
-        try {
-          const res = await fetch('/api/user/profile', {
-            headers: { 'Authorization': `Bearer ${token}` },
-            cache: 'no-store'
-          })
-          if (res.ok) {
-            const data = await res.json()
-            setLoadedProfile(data)
-          } else if (externalProfile) {
-            setLoadedProfile(externalProfile)
-          }
-        } catch (e) {
-          console.error('[CoachFeedbackChat] Error fetching profile:', e)
-          if (externalProfile) setLoadedProfile(externalProfile)
+
+        const coachProfile = await fetchCoachProfileFromApi(token)
+        if (coachProfile) {
+          setLoadedProfile((prev) => ({ ...(externalProfile || prev || {}), ...coachProfile }))
+          return
         }
+
+        if (externalProfile) setLoadedProfile(externalProfile)
       } catch (e) { 
         console.error('[CoachFeedbackChat] Profile load error:', e)
         if (externalProfile) setLoadedProfile(externalProfile)
       }
     }
     load()
-  }, [show])
+  }, [show, externalProfile])
 
   const userProfile = loadedProfile || externalProfile
 
@@ -254,7 +233,10 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
       if (res.ok) {
         setLoadedProfile(prev => ({ ...prev, ...body }))
         setFormSaved(true)
-        if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('knowledge-should-refresh'))
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('knowledge-should-refresh'))
+          window.dispatchEvent(new CustomEvent('coach-profile-updated', { detail: body }))
+        }
         return true
       }
 
@@ -974,6 +956,23 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                     placeholder={lang === 'en' ? 'e.g. Division 3' : 'es. Divisione 3'}
                     value={formData.current_division || ''} 
                     onChange={e => setFormData(p => ({ ...p, current_division: e.target.value }))}
+                  />
+                </div>
+
+                {/* Hours per week */}
+                <div style={{ marginBottom: '16px' }}>
+                  <label htmlFor={hoursFieldId} style={styles.formLabel}>
+                    {lang === 'en' ? 'Hours per week' : 'Ore a settimana'}
+                  </label>
+                  <input
+                    id={hoursFieldId}
+                    type="number"
+                    min="0"
+                    max="168"
+                    style={styles.formField}
+                    placeholder={lang === 'en' ? 'e.g. 5' : 'es. 5'}
+                    value={formData.hours_per_week ?? ''}
+                    onChange={e => setFormData(p => ({ ...p, hours_per_week: e.target.value }))}
                   />
                 </div>
 

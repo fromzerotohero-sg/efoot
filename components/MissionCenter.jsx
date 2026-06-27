@@ -121,15 +121,15 @@ export default function MissionCenter({
       }
     }
 
-    // 4. Profilo incompleto
-    if (!userProfile?.ai_weak_point) {
+    // 4. Profilo Palestra Coach incompleto
+    if (!userProfile?.ai_weak_point || !userProfile?.platform) {
       return {
         type: 'setup_profile',
         icon: UserCircle,
         title: t('missionProfileTitle') || 'Ultimo Step: Profilo',
         message: t('missionProfileMsg') || 'Aggiungi il tuo punto debole per ricevere consigli mirati.',
         progress: 75,
-        primaryAction: { label: t('missionProfileAction') || 'Completa profilo', href: '/impostazioni-profilo' },
+        primaryAction: { label: t('openCoachGym') || 'Apri Palestra Coach', onClick: 'openCoachFeedback' },
         chatMessage: t('missionProfileChat') || 'Non so cosa mettere come punto debole nel profilo. Puoi aiutarmi a capire qual è il mio problema principale?'
       }
     }
@@ -172,6 +172,8 @@ export default function MissionCenter({
     if (mission.primaryAction.onClick === 'openGameAnalysis') {
       // Questo deve essere gestito dal parent per aprire il modal
       if (onOpenChat) onOpenChat('__OPEN_GAME_ANALYSIS__')
+    } else if (mission.primaryAction.onClick === 'openCoachFeedback') {
+      if (onOpenChat) onOpenChat('__OPEN_COACH_FEEDBACK__')
     } else if (mission.primaryAction.href) {
       router.push(mission.primaryAction.href)
     }
