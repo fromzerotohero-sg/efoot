@@ -10,6 +10,7 @@ import {
   BarChart3,
   Calendar,
   CheckCircle2,
+  ChevronDown,
   Clock,
   Pencil,
   Plus,
@@ -45,6 +46,8 @@ function getResultTone(result) {
   return { label: 'draw', color: '#facc15', bg: 'rgba(250,204,21,0.14)', border: 'rgba(250,204,21,0.34)' }
 }
 
+const MATCH_LIST_PAGE_SIZE = 10
+
 export default function MatchHistoryPage() {
   const { t, lang } = useTranslation()
   const router = useRouter()
@@ -78,11 +81,20 @@ export default function MatchHistoryPage() {
     saveOpponentError: isItalian ? 'Non riesco a salvare il nome avversario.' : 'Could not save opponent name.',
     deleteTitle: t('confirm') || (isItalian ? 'Conferma' : 'Confirm'),
     deleteMessage: t('confirmDeleteMatch') || (isItalian ? 'Vuoi eliminare questa partita?' : 'Delete this match?'),
-    deleteMatch: t('deleteMatch') || (isItalian ? 'Elimina partita' : 'Delete match')
+    deleteMatch: t('deleteMatch') || (isItalian ? 'Elimina partita' : 'Delete match'),
+    showMoreMatches: (count) => (
+      t('showMoreMatches', { count }) || (isItalian ? `Mostra altre ${count} partite...` : `Show ${count} more matches...`)
+    ),
+    showingMatches: (shown, total) => (
+      isItalian ? `${shown} di ${total} partite visibili` : `${shown} of ${total} matches shown`
+    )
   }
 
   const [matches, setMatches] = useState([])
+  const [matchSummary, setMatchSummary] = useState(null)
+  const [hasMoreMatches, setHasMoreMatches] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState(null)
   const [editingOpponentId, setEditingOpponentId] = useState(null)
   const [editingOpponentName, setEditingOpponentName] = useState('')
@@ -91,51 +103,81 @@ export default function MatchHistoryPage() {
   const [deletingMatchId, setDeletingMatchId] = useState(null)
 
   const summary = useMemo(() => {
+    if (matchSummary) return matchSummary
+
     const complete = matches.filter((match) => match.data_completeness === 'complete').length
     return {
       total: matches.length,
       complete,
       partial: Math.max(matches.length - complete, 0)
     }
-  }, [matches])
+  }, [matches, matchSummary])
 
-  useEffect(() => {
-    const fetchMatches = async () => {
+  const remainingMatches = Math.max((summary.total || 0) - matches.length, 0)
+  const nextBatchSize = Math.min(MATCH_LIST_PAGE_SIZE, remainingMatches)
+
+  const fetchMatchPage = async ({ offset = 0, append = false } = {}) => {
+    if (append) {
+      setLoadingMore(true)
+    } else {
       setLoading(true)
-      setError(null)
+    }
+    setError(null)
 
-      try {
-        let token = localStorage.getItem('auth_token')
+    try {
+      let token = localStorage.getItem('auth_token')
 
-        if (!token && supabase) {
-          const { data: session } = await supabase.auth.getSession()
-          token = session?.session?.access_token
-        }
+      if (!token && supabase) {
+        const { data: session } = await supabase.auth.getSession()
+        token = session?.session?.access_token
+      }
 
-        if (!token) {
-          router.push('/login')
-          return
-        }
+      if (!token) {
+        router.push('/login')
+        return
+      }
 
-        const res = await fetch(`/api/dashboard?t=${Date.now()}`, {
+      const res = await fetch(
+        `/api/matches?limit=${MATCH_LIST_PAGE_SIZE}&offset=${offset}&t=${Date.now()}`,
+        {
           headers: { Authorization: `Bearer ${token}` },
           cache: 'no-store'
-        })
+        }
+      )
 
-        if (!res.ok) throw new Error('Failed to fetch match history')
+      if (!res.ok) throw new Error('Failed to fetch match history')
 
-        const data = await res.json()
-        setMatches(data.matches || [])
-      } catch (err) {
-        console.error('Error fetching matches:', err)
-        setError(copy.loadError)
-      } finally {
+      const data = await res.json()
+      const nextMatches = Array.isArray(data) ? data : (data.matches || [])
+
+      setMatches((prev) => (append ? [...prev, ...nextMatches] : nextMatches))
+      setMatchSummary(Array.isArray(data) ? null : (data.summary ?? null))
+      setHasMoreMatches(Array.isArray(data) ? false : Boolean(data.pagination?.hasMore))
+    } catch (err) {
+      console.error('Error fetching matches:', err)
+      setError(copy.loadError)
+    } finally {
+      if (append) {
+        setLoadingMore(false)
+      } else {
         setLoading(false)
       }
     }
+  }
 
-    fetchMatches()
+  useEffect(() => {
+    fetchMatchPage({ offset: 0, append: false })
   }, [router, copy.loadError])
+
+  const handleLoadMoreMatches = () => {
+    if (loadingMore || !hasMoreMatches) return
+    fetchMatchPage({ offset: matches.length, append: true })
+  }
+
+  useEffect(() => {
+    if (!matchSummary) return
+    setHasMoreMatches(matches.length < matchSummary.total)
+  }, [matches.length, matchSummary])
 
   const startEditingOpponent = (match, e) => {
     e?.stopPropagation()
@@ -218,7 +260,23 @@ export default function MatchHistoryPage() {
 
           if (!res.ok) throw new Error('Failed to delete')
 
-          setMatches((prev) => prev.filter((match) => match.id !== matchId))
+          setMatches((prev) => {
+            const deletedMatch = prev.find((match) => match.id === matchId)
+            const nextMatches = prev.filter((match) => match.id !== matchId)
+
+            setMatchSummary((currentSummary) => {
+              if (!currentSummary) return currentSummary
+
+              const wasComplete = deletedMatch?.data_completeness === 'complete'
+              return {
+                total: Math.max(currentSummary.total - 1, 0),
+                complete: Math.max(currentSummary.complete - (wasComplete ? 1 : 0), 0),
+                partial: Math.max(currentSummary.partial - (wasComplete ? 0 : 1), 0)
+              }
+            })
+
+            return nextMatches
+          })
         } catch (err) {
           console.error('Delete match error:', err)
         } finally {
@@ -428,6 +486,35 @@ export default function MatchHistoryPage() {
         </section>
       )}
 
+      {!loading && matches.length > 0 && summary.total > 0 && (
+        <div className="match-list-footer">
+          <p className="match-list-meta">
+            {copy.showingMatches(matches.length, summary.total)}
+          </p>
+
+          {hasMoreMatches && (
+            <button
+              type="button"
+              className="load-more-button"
+              onClick={handleLoadMoreMatches}
+              disabled={loadingMore}
+            >
+              {loadingMore ? (
+                <>
+                  <RefreshCw size={18} className="spin" />
+                  {t('loading') || (isItalian ? 'Caricamento...' : 'Loading...')}
+                </>
+              ) : (
+                <>
+                  <ChevronDown size={18} />
+                  {copy.showMoreMatches(nextBatchSize)}
+                </>
+              )}
+            </button>
+          )}
+        </div>
+      )}
+
       {confirmModal && (
         <ConfirmModal
           show={confirmModal.show}
@@ -583,6 +670,51 @@ export default function MatchHistoryPage() {
         .primary-cta.compact {
           width: auto;
           padding: 0 22px;
+        }
+
+        .match-list-footer {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
+          margin-top: 18px;
+          padding: 8px 0 12px;
+        }
+
+        .match-list-meta {
+          margin: 0;
+          color: rgba(255,255,255,0.58);
+          font-size: 13px;
+          font-weight: 800;
+          letter-spacing: 0.2px;
+        }
+
+        .load-more-button {
+          min-height: 50px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          padding: 0 22px;
+          border-radius: 14px;
+          border: 1px solid rgba(0, 212, 255, 0.34);
+          background: rgba(0, 212, 255, 0.08);
+          color: #7dd3fc;
+          font-size: 14px;
+          font-weight: 900;
+          cursor: pointer;
+          transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+        }
+
+        .load-more-button:hover:not(:disabled) {
+          transform: translateY(-1px);
+          background: rgba(0, 212, 255, 0.14);
+          border-color: rgba(0, 212, 255, 0.48);
+        }
+
+        .load-more-button:disabled {
+          opacity: 0.72;
+          cursor: wait;
         }
 
         .history-error {

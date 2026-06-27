@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
+import { normalizeMatchSummary } from '@/lib/matchSummary.js'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -10,6 +11,21 @@ const NO_STORE_HEADERS = {
   'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
   Pragma: 'no-cache',
   Expires: '0'
+}
+
+const DEFAULT_LIST_LIMIT = 10
+const MAX_LIST_LIMIT = 50
+
+function parseListLimit(value) {
+  const parsed = parseInt(value || String(DEFAULT_LIST_LIMIT), 10)
+  if (!Number.isFinite(parsed)) return DEFAULT_LIST_LIMIT
+  return Math.min(Math.max(parsed, 1), MAX_LIST_LIMIT)
+}
+
+function parseListOffset(value) {
+  const parsed = parseInt(value || '0', 10)
+  if (!Number.isFinite(parsed)) return 0
+  return Math.max(parsed, 0)
 }
 
 export async function GET(request) {
@@ -84,20 +100,63 @@ export async function GET(request) {
 
       return NextResponse.json(data, { headers: NO_STORE_HEADERS })
     } else {
-      // List matches (optional, for future use)
-      const { data, error } = await supabase
-        .from('matches')
-        .select(columns)
-        .eq('user_id', userId)
-        .order('match_date', { ascending: false })
-        .limit(50)
+      const summaryColumns = `
+        id, match_date, opponent_name, result,
+        photos_uploaded, missing_photos, data_completeness,
+        player_ratings, team_stats, attack_areas, ball_recovery_zones,
+        formation_played, playing_style_played, team_strength
+      `
 
-      if (error) {
-        console.error('Error fetching matches:', error)
+      const limit = parseListLimit(searchParams.get('limit'))
+      const offset = parseListOffset(searchParams.get('offset'))
+
+      const [
+        { data, error },
+        { count: totalCount, error: totalCountError },
+        { count: completeCount, error: completeCountError }
+      ] = await Promise.all([
+        supabase
+          .from('matches')
+          .select(summaryColumns)
+          .eq('user_id', userId)
+          .order('match_date', { ascending: false })
+          .range(offset, offset + limit - 1),
+        supabase
+          .from('matches')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId),
+        supabase
+          .from('matches')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .eq('data_completeness', 'complete')
+      ])
+
+      if (error || totalCountError || completeCountError) {
+        console.error('Error fetching matches:', error || totalCountError || completeCountError)
         return NextResponse.json({ error: 'Failed to fetch matches' }, { status: 500 })
       }
 
-      return NextResponse.json(data || [], { headers: NO_STORE_HEADERS })
+      const total = totalCount ?? 0
+      const complete = completeCount ?? 0
+      const matches = (data || []).map(normalizeMatchSummary)
+      const loadedCount = offset + matches.length
+
+      return NextResponse.json({
+        matches,
+        summary: {
+          total,
+          complete,
+          partial: Math.max(total - complete, 0)
+        },
+        pagination: {
+          limit,
+          offset,
+          total,
+          loadedCount,
+          hasMore: loadedCount < total
+        }
+      }, { headers: NO_STORE_HEADERS })
     }
 
   } catch (error) {
