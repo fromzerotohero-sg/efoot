@@ -61,8 +61,84 @@ export default function CountermeasuresPreMatchPage() {
   const router = useRouter()
 
   const individualSlotLabel = (slot) => {
+    if (slot === 'attacco_1') return lang === 'en' ? 'Attack instruction 1 (not a role change)' : 'Istruzione attacco 1 (non cambio ruolo)'
+    if (slot === 'attacco_2') return lang === 'en' ? 'Attack instruction 2 (not a role change)' : 'Istruzione attacco 2 (non cambio ruolo)'
+    if (slot === 'difesa_1') return lang === 'en' ? 'Defence instruction 1' : 'Istruzione difesa 1'
+    if (slot === 'difesa_2') return lang === 'en' ? 'Defence instruction 2' : 'Istruzione difesa 2'
     const nameKey = INDIVIDUAL_INSTRUCTIONS_CONFIG[slot]?.nameKey
     return nameKey ? t(nameKey) : slot
+  }
+
+  const individualInstructionLabel = (instruction) => {
+    const id = String(pickLang(instruction, lang) || '').trim()
+    for (const config of Object.values(INDIVIDUAL_INSTRUCTIONS_CONFIG)) {
+      const item = config.availableInstructions?.find((entry) => entry.id === id)
+      if (item?.nameKey) return t(item.nameKey)
+    }
+    return id
+  }
+
+  const officialTeamStyleFromText = (text) => {
+    const value = String(text || '').toLowerCase()
+    if (/possesso palla|possession/.test(value)) return lang === 'en' ? 'Possession Game' : 'Possesso palla'
+    if (/contropiede veloce|quick counter/.test(value)) return lang === 'en' ? 'Quick Counter' : 'Contropiede veloce'
+    if (/contrattacco|long ball counter/.test(value)) return lang === 'en' ? 'Long Ball Counter' : 'Contrattacco'
+    if (/passaggio lungo|long ball(?! counter)/.test(value)) return lang === 'en' ? 'Long Ball' : 'Passaggio lungo'
+    if (/vie laterali|out wide/.test(value)) return lang === 'en' ? 'Out Wide' : 'Vie laterali'
+    return ''
+  }
+
+  const normalizeTacticalDisplay = (adj) => {
+    const rawSuggestion = pickLang(adj?.suggestion, lang)
+      .replace(/\bTeam Playing Style\b/gi, lang === 'en' ? 'Team Playstyle' : 'Stile squadra')
+      .replace(/\bTeam Playstyle\b/gi, lang === 'en' ? 'Team Playstyle' : 'Stile squadra')
+      .trim()
+    const officialStyle = officialTeamStyleFromText(rawSuggestion)
+    const type = adj?.type
+
+    if ((type === 'team_playing_style' || type === 'playing_style_change') && officialStyle) {
+      return {
+        type: 'team_playing_style',
+        suggestion: lang === 'en' ? `Team Playstyle: ${officialStyle}` : `Stile squadra: ${officialStyle}`,
+        hint: pickLang(adj?.application_hint, lang)
+      }
+    }
+
+    if (type === 'team_playing_style' || type === 'playing_style_change') {
+      const isWidth = /ampiezza|fasce|laterali|wide/i.test(rawSuggestion)
+      return {
+        type: 'match_plan',
+        suggestion: isWidth
+          ? (lang === 'en'
+              ? 'In match: attack with more width through the wide lanes when the centre is closed'
+              : 'In partita: attacca con più ampiezza sulle corsie laterali quando il centro è chiuso')
+          : (rawSuggestion.toLowerCase().startsWith('in partita:') || rawSuggestion.toLowerCase().startsWith('in match:')
+              ? rawSuggestion
+              : `${lang === 'en' ? 'In match' : 'In partita'}: ${rawSuggestion}`),
+        hint: lang === 'en'
+          ? 'This is not one of the 5 official team playstyles: treat it as a match plan, not a setting.'
+          : 'Non è uno dei 5 stili squadra ufficiali: trattalo come piano in partita, non come impostazione.'
+      }
+    }
+
+    return {
+      type,
+      suggestion: rawSuggestion,
+      hint: pickLang(adj?.application_hint, lang)
+    }
+  }
+
+  const tacticalAdjustmentLabel = (type) => {
+    const labels = {
+      team_playing_style: t('changePlayingStyle'),
+      playing_style_change: t('changePlayingStyle'),
+      game_plan_adjustment: lang === 'en' ? 'Configurable Game Plan Action' : 'Azione configurabile nel Game Plan',
+      match_plan: lang === 'en' ? 'In-Match Practical Plan' : 'Piano pratico in partita',
+      defensive_line: lang === 'en' ? 'Defensive Line Clarification' : 'Chiarimento linea difensiva',
+      pressing: lang === 'en' ? 'Pressing Plan' : 'Piano pressing',
+      possession_strategy: lang === 'en' ? 'Possession Plan' : 'Piano possesso'
+    }
+    return labels[type] || (lang === 'en' ? 'Tactical Adjustment' : 'Adeguamento tattico')
   }
   
   const [uploadImage, setUploadImage] = React.useState(null)
@@ -820,7 +896,9 @@ export default function CountermeasuresPreMatchPage() {
                       </div>
                     ))}
 
-                  {countermeasures.countermeasures.tactical_adjustments?.map((adj, idx) => (
+                  {countermeasures.countermeasures.tactical_adjustments?.map((adj, idx) => {
+                    const displayAdj = normalizeTacticalDisplay(adj)
+                    return (
                       <div 
                         key={idx}
                         style={{
@@ -840,23 +918,26 @@ export default function CountermeasuresPreMatchPage() {
                           </span>
                         </div>
                         <div style={{ fontWeight: 600, marginBottom: '8px', fontSize: 'clamp(14px, 3vw, 16px)' }}>
-                          {adj.type === 'defensive_line' ? t('adjustDefensiveLine') :
-                           adj.type === 'pressing' ? t('adjustPressing') :
-                           adj.type === 'possession_strategy' ? t('adjustPossession') :
-                           t('changePlayingStyle')}: {pickLang(adj.suggestion, lang)}
+                          {tacticalAdjustmentLabel(displayAdj.type)}: {displayAdj.suggestion}
                         </div>
+                        {displayAdj.hint ? (
+                          <div style={{ fontSize: 'clamp(12px, 2.8vw, 13px)', lineHeight: '1.5', color: 'var(--neon-blue)', marginBottom: '8px' }}>
+                            {displayAdj.hint}
+                          </div>
+                        ) : null}
                         <div style={{ fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: '1.6', opacity: 0.9 }}>
                           {pickLang(adj.reason, lang)}
                         </div>
                       </div>
-                    ))}
+                    )
+                  })}
                 </div>
               )}
             </div>
           )}
 
           {/* Suggerimenti Giocatori */}
-          {countermeasures.countermeasures.player_suggestions?.length > 0 && (
+          {countermeasures.countermeasures.player_suggestions?.filter(s => s?.action !== 'remove_from_starting_xi')?.length > 0 && (
             <div className="neon-card" style={{ padding: 'clamp(16px, 4vw, 24px)', marginBottom: '24px' }}>
               <div 
                 style={{ 
@@ -877,7 +958,9 @@ export default function CountermeasuresPreMatchPage() {
 
               {expandedSections.players && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {countermeasures.countermeasures.player_suggestions.map((suggestion, idx) => (
+                  {countermeasures.countermeasures.player_suggestions
+                    .filter(s => s?.action !== 'remove_from_starting_xi')
+                    .map((suggestion, idx) => (
                       <div 
                         key={idx}
                         style={{
@@ -973,7 +1056,7 @@ export default function CountermeasuresPreMatchPage() {
                               (instruction.position ? ` (${pickLang(instruction.position, lang)})` : '')}
                           </span>
                           <span style={{ fontSize: 'clamp(13px, 3vw, 14px)', fontWeight: 600 }}>
-                            {individualSlotLabel(instruction.slot)} · {pickLang(instruction.instruction, lang)}
+                            {individualSlotLabel(instruction.slot)} · {individualInstructionLabel(instruction.instruction)}
                           </span>
                         </div>
                         <div style={{ fontSize: 'clamp(12px, 2.5vw, 13px)', opacity: 0.8, marginLeft: '4px' }}>

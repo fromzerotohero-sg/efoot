@@ -60,15 +60,17 @@ function buildFallbackCountermeasure(lang, smartContext, variant = 'default') {
       formation_adjustments: [],
       tactical_adjustments: [
         {
-          type: 'pressing',
-          suggestion: lang === 'en' ? 'Protect the center first' : 'Proteggi prima il centro',
-          reason: lang === 'en' ? 'Keep your shape compact before chasing the ball wide.' : 'Mantieni la struttura compatta prima di inseguire la palla sulle fasce.',
+          type: 'match_plan',
+          suggestion: lang === 'en' ? 'In match: protect the center before chasing wide' : 'In partita: proteggi prima il centro, poi esci sulle fasce',
+          application_hint: lang === 'en' ? 'This is not a menu setting: use it as your defensive behavior during the match.' : 'Non è una voce menu: è il comportamento difensivo da usare durante la partita.',
+          reason: lang === 'en' ? 'It keeps the opponent from receiving between your midfield and defence.' : 'Riduce le ricezioni tra centrocampo e difesa.',
           priority: 'high'
         },
         {
-          type: 'possession_strategy',
-          suggestion: lang === 'en' ? 'Attack the natural lane of your shape' : 'Attacca la corsia naturale del tuo assetto',
-          reason: lang === 'en' ? 'Use the route your current structure opens most clearly.' : 'Sfrutta la via che la tua struttura apre in modo più chiaro.',
+          type: 'match_plan',
+          suggestion: lang === 'en' ? 'In match: attack the lane your shape opens most clearly' : 'In partita: attacca la corsia che il tuo assetto apre meglio',
+          application_hint: lang === 'en' ? 'This is a play plan, not a separate eFootball setting.' : 'È un piano di gioco, non una voce separata di eFootball.',
+          reason: lang === 'en' ? 'It gives you one clear route without forcing a formation change.' : 'Ti dà una via chiara senza forzare un cambio modulo.',
           priority: 'medium'
         }
       ],
@@ -131,40 +133,46 @@ function ensureRichSmartCountermeasure(countermeasure, lang) {
   const defaults = lang === 'en'
     ? [
         {
-          type: 'pressing',
-          suggestion: 'Use selective pressing in central lanes',
+          type: 'match_plan',
+          suggestion: 'In match: press in short bursts in central lanes',
+          application_hint: 'This is not a menu setting: use it as defensive behavior during the match.',
           reason: 'Reduce the influence of the opponent playmaker before the final pass.',
           priority: 'high'
         },
         {
-          type: 'defensive_line',
-          suggestion: 'Keep a slightly lower defensive line',
+          type: 'game_plan_adjustment',
+          suggestion: 'Official instruction: consider Deep Line on a valid DMF/CMF starter',
+          application_hint: 'Game Plan → Individual Instructions → Defence 1/2 → Deep Line. Do not assign it to CB/RB/LB.',
           reason: 'Protect depth first if the opponent can attack quickly between lines.',
           priority: 'high'
         },
         {
-          type: 'possession_strategy',
-          suggestion: 'Open the ball toward the freer side before forcing vertical play',
+          type: 'match_plan',
+          suggestion: 'In match: switch to the freer side before forcing vertical play',
+          application_hint: 'This is a play plan, not a separate eFootball setting.',
           reason: 'Attack the weaker lane instead of entering the densest zone too early.',
           priority: 'medium'
         }
       ]
     : [
         {
-          type: 'pressing',
-          suggestion: 'Usa pressing selettivo nelle corsie centrali',
+          type: 'match_plan',
+          suggestion: 'In partita: pressa a scatti nelle corsie centrali',
+          application_hint: 'Non è una voce menu: è il comportamento difensivo da usare durante la partita.',
           reason: 'Riduci l’influenza del regista avversario prima dell’ultimo passaggio.',
           priority: 'high'
         },
         {
-          type: 'defensive_line',
-          suggestion: 'Mantieni una linea difensiva leggermente più bassa',
+          type: 'game_plan_adjustment',
+          suggestion: 'Istruzione ufficiale: valuta Linea Bassa su un MED/CC titolare valido',
+          application_hint: 'Game Plan → Istruzioni individuali → Difesa 1/2 → Linea Bassa. Non assegnarla a TD, TS o DC.',
           reason: 'Proteggi prima la profondità se l’avversario può attaccare rapidamente tra le linee.',
           priority: 'high'
         },
         {
-          type: 'possession_strategy',
-          suggestion: 'Apri il gioco sul lato più libero prima di forzare la verticalità',
+          type: 'match_plan',
+          suggestion: 'In partita: cambia lato prima di forzare la verticalità',
+          application_hint: 'È un piano di gioco, non una voce separata di eFootball.',
           reason: 'Attacca la corsia più debole invece di entrare subito nella zona più densa.',
           priority: 'medium'
         }

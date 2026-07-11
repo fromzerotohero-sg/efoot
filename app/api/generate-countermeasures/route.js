@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { callOpenAIWithRetry } from '@/lib/openaiHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
-import { generateCountermeasuresPrompt, validateCountermeasuresOutput } from '@/lib/countermeasuresHelper'
+import { focusCountermeasuresOutput, generateCountermeasuresPrompt, validateCountermeasuresOutput } from '@/lib/countermeasuresHelper'
 import { deductCredits, AI_COST, handleCreditOperationError } from '@/lib/creditService'
 import { validateIndividualInstruction } from '@/lib/tacticalInstructions'
 import { validateStartingXISwap } from '@/lib/formationDefenseRules'
@@ -531,7 +531,7 @@ if (process.env.NODE_ENV !== 'production') {
             }
           ],
           response_format: { type: 'json_object' },
-          temperature: 0.7,
+          temperature: 0.25,
           max_completion_tokens: 3000
         }
 
@@ -711,7 +711,7 @@ if (process.env.NODE_ENV !== 'production') {
       })
       
       // Posizioni portiere
-      const gkPositions = ['GK', 'Goalkeeper', 'Portiere']
+      const gkPositions = ['PT', 'GK', 'Goalkeeper', 'Portiere']
       const hasGKReserve = riserve.some(p => gkPositions.includes(p.position))
       
       countermeasures.countermeasures.player_suggestions.forEach((suggestion, idx) => {
@@ -757,7 +757,9 @@ if (process.env.NODE_ENV !== 'production') {
               const swapCheck = validateStartingXISwap(titolari, reserve || { position: suggestion.position }, replaceId)
               if (!swapCheck.valid) {
                 isValid = false
-                reason = `Sostituzione invalida per limiti difesa (${swapCheck.errors.join(', ')}): max 3 DC; il quarto difensore deve essere TD/TS`
+                reason = swapCheck.errors.includes('incompatible_slot_role')
+                  ? `Sostituzione invalida: ${suggestion.player_name || 'la riserva'} non ha competenza per lo slot ${swapCheck.slotRole || slotRole}`
+                  : `Sostituzione invalida per limiti difesa (${swapCheck.errors.join(', ')}): max 3 DC; il quarto difensore deve essere TD/TS`
               }
             }
           }
@@ -775,16 +777,8 @@ if (process.env.NODE_ENV !== 'production') {
         
         // Validazione: remove_from_starting_xi
         else if (action === 'remove_from_starting_xi') {
-          // Deve essere un titolare
-          if (!titolariMap.has(playerId)) {
-            isValid = false
-            reason = `Giocatore ${suggestion.player_name || playerId} non è un titolare`
-          }
-          // Se è portiere e non ci sono riserve portiere, non può rimuovere
-          else if (isGK && !hasGKReserve) {
-            isValid = false
-            reason = `Non puoi rimuovere il portiere titolare: nessuna riserva portiere disponibile`
-          }
+          isValid = false
+          reason = `Rimozione isolata non consentita: proponi una sostituzione completa con add_to_starting_xi e replace_player_id`
         }
         
         if (isValid) {
@@ -849,6 +843,8 @@ if (process.env.NODE_ENV !== 'production') {
       }
     }
 
+    focusCountermeasuresOutput(countermeasures)
+
     countermeasures.warnings = sanitizeCountermeasureWarnings(countermeasures.warnings, {
       removedPlayerSuggestions,
       removedInstructions,
@@ -881,6 +877,7 @@ if (process.env.NODE_ENV !== 'production') {
     })
     ;(countermeasures.countermeasures?.tactical_adjustments || []).forEach((adj) => {
       if (typeof adj.suggestion === 'string') adj.suggestion = toBilingual(adj.suggestion)
+      if (typeof adj.application_hint === 'string') adj.application_hint = toBilingual(adj.application_hint)
       if (typeof adj.reason === 'string') adj.reason = toBilingual(adj.reason)
     })
     ;(countermeasures.countermeasures?.player_suggestions || []).forEach((p) => {

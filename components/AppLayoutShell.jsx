@@ -17,7 +17,6 @@ export default function AppLayoutShell({ children }) {
   const pathname = usePathname()
   const { isOpen: sidebarOpen } = useSidebar()
   const isPublicPath = isPrelaunchPublicPath(pathname || '/')
-  const hideDefaultAssistantLauncher = (pathname || '').startsWith('/smart')
 
   if (isPublicPath) {
     return <PrelaunchGate>{children}</PrelaunchGate>
@@ -52,7 +51,7 @@ export default function AppLayoutShell({ children }) {
       <DailySpinWidget />
       <InstallAppPrompt />
       <LiveCoachLauncher showLauncherButton={false} />
-      {!hideDefaultAssistantLauncher && <AssistantChat mode="popup" />}
+      <AssistantChat mode="popup" />
     </>
   )
 }
