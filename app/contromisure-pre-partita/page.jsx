@@ -151,7 +151,8 @@ export default function CountermeasuresPreMatchPage() {
     analysis: true,
     tactical: false,
     players: false,
-    instructions: false
+    instructions: false,
+    playSummary: true
   })
   const [showPalestraCoach, setShowPalestraCoach] = React.useState(false)
   const [palestraUserProfile, setPalestraUserProfile] = React.useState(null)
@@ -1064,6 +1065,60 @@ export default function CountermeasuresPreMatchPage() {
                         </div>
                       </div>
                     ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Come giocarla */}
+          {countermeasures.play_summary && (
+            <div className="neon-card" style={{ padding: 'clamp(16px, 4vw, 24px)', marginBottom: '24px' }}>
+              <div 
+                style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  marginBottom: '16px',
+                  cursor: 'pointer'
+                }}
+                onClick={() => setExpandedSections(prev => ({ ...prev, playSummary: !prev.playSummary }))}
+              >
+                <h2 style={{ fontSize: 'clamp(18px, 4vw, 20px)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                  <Brain size={24} color="var(--neon-blue)" />
+                  {t('howToPlayIt')}
+                </h2>
+                {expandedSections.playSummary ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              </div>
+
+              {expandedSections.playSummary && (
+                <div style={{ display: 'grid', gap: '12px' }}>
+                  {[
+                    ['base_plan', t('playSummaryBasePlan')],
+                    ['attacking', t('playSummaryAttacking')],
+                    ['defending', t('playSummaryDefending')],
+                    ['avoid', t('playSummaryAvoid')]
+                  ].map(([key, label]) => {
+                    const text = pickLang(countermeasures.play_summary?.[key], lang)
+                    if (!text) return null
+                    return (
+                      <div
+                        key={key}
+                        style={{
+                          padding: '12px 14px',
+                          borderRadius: '10px',
+                          background: 'rgba(0, 212, 255, 0.08)',
+                          border: '1px solid rgba(0, 212, 255, 0.18)'
+                        }}
+                      >
+                        <div style={{ fontWeight: 700, color: 'var(--neon-blue)', marginBottom: '6px', fontSize: 'clamp(13px, 3vw, 14px)' }}>
+                          {label}
+                        </div>
+                        <div style={{ fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: 1.6, color: 'rgba(255,255,255,0.9)' }}>
+                          {text}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>

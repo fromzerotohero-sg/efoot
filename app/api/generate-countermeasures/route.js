@@ -901,6 +901,13 @@ if (process.env.NODE_ENV !== 'production') {
         countermeasures.analysis.why_weaknesses = toBilingual(countermeasures.analysis.why_weaknesses)
       }
     }
+    if (countermeasures.play_summary && typeof countermeasures.play_summary === 'object') {
+      ;['base_plan', 'attacking', 'defending', 'avoid'].forEach((key) => {
+        if (typeof countermeasures.play_summary[key] === 'string') {
+          countermeasures.play_summary[key] = toBilingual(countermeasures.play_summary[key])
+        }
+      })
+    }
     ;(countermeasures.countermeasures?.formation_adjustments || []).forEach((adj) => {
       if (typeof adj.suggestion === 'string') adj.suggestion = toBilingual(adj.suggestion)
       if (typeof adj.reason === 'string') adj.reason = toBilingual(adj.reason)
