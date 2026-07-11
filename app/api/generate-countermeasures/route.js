@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { callOpenAIWithRetry } from '@/lib/openaiHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
-import { focusCountermeasuresOutput, generateCountermeasuresPrompt, validateCountermeasuresOutput } from '@/lib/countermeasuresHelper'
+import { enforcePlanCoherence, focusCountermeasuresOutput, generateCountermeasuresPrompt, validateCountermeasuresOutput } from '@/lib/countermeasuresHelper'
 import { deductCredits, AI_COST, handleCreditOperationError } from '@/lib/creditService'
 import { validateIndividualInstruction } from '@/lib/tacticalInstructions'
 import { validateStartingXISwap } from '@/lib/formationDefenseRules'
@@ -873,6 +873,7 @@ if (process.env.NODE_ENV !== 'production') {
       }
     }
 
+    enforcePlanCoherence(countermeasures)
     focusCountermeasuresOutput(countermeasures)
 
     countermeasures.warnings = sanitizeCountermeasureWarnings(countermeasures.warnings, {
