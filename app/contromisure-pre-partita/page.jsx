@@ -88,10 +88,29 @@ export default function CountermeasuresPreMatchPage() {
     return ''
   }
 
+  const cleanCustomerTacticalText = (text) => String(text || '')
+    .replace(/(^|\s)non è una voce menu:?\s*/gi, '$1')
+    .replace(/(^|\s)this is not (a )?menu setting:?\s*/gi, '$1')
+    .replace(/(^|\s)non è una voce configurabile abbastanza chiara:?\s*/gi, '$1')
+    .replace(/(^|\s)trattalo come piano pratico in partita,?\s*/gi, '$1')
+    .replace(/(^|\s)treat it as a match plan, not a setting\.?\s*/gi, '$1')
+    .replace(/(^|\s)è un piano pratico (di|da)\s*/gi, '$1')
+    .replace(/(^|\s)is a behavior plan( to)?\s*/gi, '$1')
+    .replace(/^(in (partita|match)\s*:\s*){2,}/i, (match) => match.toLowerCase().includes('match') ? 'In match: ' : 'In partita: ')
+    .replace(/\b(inserisci|usa)\s+(.+?)\s+come\s+(.+?)\s+per\s+cambiare\s+gioco\b/gi, 'usa $2 per cambiare gioco')
+    .replace(/\bsviluppo azione usando\b/gi, 'usa')
+    .replace(/\s*\((CLD|CLS|TD|TS|DC|MED|CC|TRQ|SP|P|EDA|ESA)\)\s*/gi, ' ')
+    .replace(/\s+come riferimento esterno\b/gi, ' per allargare il gioco')
+    .replace(/\s+/g, ' ')
+    .trim()
+
   const normalizeTacticalDisplay = (adj) => {
-    const rawSuggestion = pickLang(adj?.suggestion, lang)
+    const rawSuggestion = cleanCustomerTacticalText(pickLang(adj?.suggestion, lang))
       .replace(/\bTeam Playing Style\b/gi, lang === 'en' ? 'Team Playstyle' : 'Stile squadra')
       .replace(/\bTeam Playstyle\b/gi, lang === 'en' ? 'Team Playstyle' : 'Stile squadra')
+      .replace(/^(in (partita|match)\s*:\s*){2,}/i, (match) => match.toLowerCase().includes('match') ? 'In match: ' : 'In partita: ')
+      .replace(/\b(inserisci|usa)\s+(.+?)\s+come\s+(.+?)\s+per\s+cambiare\s+gioco\b/gi, 'usa $2 per cambiare gioco')
+      .replace(/\bsviluppo azione usando\b/gi, 'sviluppo azione con')
       .trim()
     const officialStyle = officialTeamStyleFromText(rawSuggestion)
     const type = adj?.type
@@ -892,7 +911,7 @@ export default function CountermeasuresPreMatchPage() {
                           {adj.type === 'formation_change' ? t('changeFormation') : t('changePlayingStyle')}: {pickLang(adj.suggestion, lang)}
                         </div>
                         <div style={{ fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: '1.6', opacity: 0.9 }}>
-                          {pickLang(adj.reason, lang)}
+                          {cleanCustomerTacticalText(pickLang(adj.reason, lang))}
                         </div>
                       </div>
                     ))}
@@ -921,13 +940,8 @@ export default function CountermeasuresPreMatchPage() {
                         <div style={{ fontWeight: 600, marginBottom: '8px', fontSize: 'clamp(14px, 3vw, 16px)' }}>
                           {tacticalAdjustmentLabel(displayAdj.type)}: {displayAdj.suggestion}
                         </div>
-                        {displayAdj.hint ? (
-                          <div style={{ fontSize: 'clamp(12px, 2.8vw, 13px)', lineHeight: '1.5', color: 'var(--neon-blue)', marginBottom: '8px' }}>
-                            {displayAdj.hint}
-                          </div>
-                        ) : null}
                         <div style={{ fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: '1.6', opacity: 0.9 }}>
-                          {pickLang(adj.reason, lang)}
+                          {cleanCustomerTacticalText(pickLang(adj.reason, lang))}
                         </div>
                       </div>
                     )
@@ -1093,6 +1107,7 @@ export default function CountermeasuresPreMatchPage() {
               {expandedSections.playSummary && (
                 <div style={{ display: 'grid', gap: '12px' }}>
                   {[
+                    ['match_key', t('playSummaryMatchKey')],
                     ['base_plan', t('playSummaryBasePlan')],
                     ['attacking', t('playSummaryAttacking')],
                     ['defending', t('playSummaryDefending')],
@@ -1106,11 +1121,11 @@ export default function CountermeasuresPreMatchPage() {
                         style={{
                           padding: '12px 14px',
                           borderRadius: '10px',
-                          background: 'rgba(0, 212, 255, 0.08)',
-                          border: '1px solid rgba(0, 212, 255, 0.18)'
+                          background: key === 'match_key' ? 'rgba(251, 191, 36, 0.10)' : 'rgba(0, 212, 255, 0.08)',
+                          border: key === 'match_key' ? '1px solid rgba(251, 191, 36, 0.28)' : '1px solid rgba(0, 212, 255, 0.18)'
                         }}
                       >
-                        <div style={{ fontWeight: 700, color: 'var(--neon-blue)', marginBottom: '6px', fontSize: 'clamp(13px, 3vw, 14px)' }}>
+                        <div style={{ fontWeight: 700, color: key === 'match_key' ? 'var(--neon-orange)' : 'var(--neon-blue)', marginBottom: '6px', fontSize: 'clamp(13px, 3vw, 14px)' }}>
                           {label}
                         </div>
                         <div style={{ fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: 1.6, color: 'rgba(255,255,255,0.9)' }}>

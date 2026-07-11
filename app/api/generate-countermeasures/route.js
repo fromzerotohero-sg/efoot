@@ -902,7 +902,7 @@ if (process.env.NODE_ENV !== 'production') {
       }
     }
     if (countermeasures.play_summary && typeof countermeasures.play_summary === 'object') {
-      ;['base_plan', 'attacking', 'defending', 'avoid'].forEach((key) => {
+      ;['match_key', 'base_plan', 'attacking', 'defending', 'avoid'].forEach((key) => {
         if (typeof countermeasures.play_summary[key] === 'string') {
           countermeasures.play_summary[key] = toBilingual(countermeasures.play_summary[key])
         }
