@@ -28,28 +28,28 @@ function fillTemplate(template, vars) {
   )
 }
 
-/** Titolo sostituzione: ruolo slot (titolare uscente) vs ruolo card riserva. */
+/** Titolo sostituzione: slot del titolare uscente vs ruolo salvato della riserva. */
 function formatPlayerSubstitutionTitle(suggestion, t) {
   const reserveName = suggestion.player_name || '?'
   const slotRole = suggestion.slot_role || suggestion.replace_position || '?'
-  const cardRole = suggestion.reserve_card_position || suggestion.position || '?'
+  const reserveRole = suggestion.reserve_card_position || suggestion.position || '?'
   const outName = suggestion.replace_player_name || '?'
   const outRole = slotRole
   const title = fillTemplate(t('replaceInStartingXI'), {
     playerName: reserveName,
-    playerRole: cardRole,
+    playerRole: reserveRole,
     replacePlayerName: outName,
     replacePlayerRole: outRole
   })
   const hint = fillTemplate(t('replaceInStartingXIHint'), { replacePlayerName: outName })
   const rolesDiffer =
     outRole &&
-    cardRole &&
-    String(outRole).trim().toUpperCase() !== String(cardRole).trim().toUpperCase()
+    reserveRole &&
+    String(outRole).trim().toUpperCase() !== String(reserveRole).trim().toUpperCase()
   const roleNote = rolesDiffer
     ? fillTemplate(t('replaceInStartingXIRoleNote'), {
         playerName: reserveName,
-        playerRole: cardRole,
+        playerRole: reserveRole,
         replacePlayerRole: outRole
       })
     : ''

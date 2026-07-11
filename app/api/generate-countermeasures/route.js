@@ -75,6 +75,33 @@ function hasVerifiedRosterData(titolari) {
   ))
 }
 
+function asPlainText(value) {
+  if (typeof value === 'string') return value
+  if (value && typeof value === 'object') return value.it || value.en || ''
+  return ''
+}
+
+function hasFlankJustification(value) {
+  const text = asPlainText(value)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+
+  return [
+    /\bfascia\b/,
+    /\bfasce\b/,
+    /\bcorsia\b/,
+    /\bcorsie\b/,
+    /\blaterale\b/,
+    /\blaterali\b/,
+    /\bterzino\b/,
+    /\bterzini\b/,
+    /\bfull-?back\b/,
+    /\bwide\b/,
+    /\bflank\b/
+  ].some((pattern) => pattern.test(text))
+}
+
 function sanitizeCountermeasureWarnings(warnings, { removedPlayerSuggestions = 0, removedInstructions = 0, verifiedRoster = false } = {}) {
   const result = []
   const seen = new Set()
@@ -760,6 +787,9 @@ if (process.env.NODE_ENV !== 'production') {
                 reason = swapCheck.errors.includes('incompatible_slot_role')
                   ? `Sostituzione invalida: ${suggestion.player_name || 'la riserva'} non ha competenza per lo slot ${swapCheck.slotRole || slotRole}`
                   : `Sostituzione invalida per limiti difesa (${swapCheck.errors.join(', ')}): max 3 DC; il quarto difensore deve essere TD/TS`
+              } else if (String(swapCheck.slotRole || slotRole).trim().toUpperCase() === 'DC' && hasFlankJustification(suggestion.reason)) {
+                isValid = false
+                reason = `Sostituzione incoerente: un cambio nello slot DC non può essere motivato con copertura fascia/terzino`
               }
             }
           }
