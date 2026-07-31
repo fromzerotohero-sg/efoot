@@ -369,6 +369,8 @@ Comportamento quando IA controlla giocatore in possesso:
 
 **Doppio Tocco**: Skill base per superare avversari.
 
+**Tap Trick**: Finta rapida manuale in prossimità del difensore: crea una breve esitazione per uscire sul lato libero o cambiare direzione. Usarla solo in 1v1 con spazio dopo la finta; non è un boost automatico e non va ripetuta senza leggere la reazione del difensore.
+
 **Elastico / Elastico inverso**: Cambio direzione rapido.
 
 **Veronica**: Skill avanzata.
@@ -442,7 +444,7 @@ Quando nel RIASSUNTO ANALISI è presente la sezione **"Statistiche di gioco (Ana
 | **Tiro** | Pallonetto / Tiro sensazionale (basso %) | Pallonetto mirato; Tiro a scendere/Tiro a salire; portiere in uscita → pallonetto | "Pallonetto e tiro sensazionale poco usati; utili su portiere in uscita o da distanza con giocatori che hanno le abilità." |
 | **Tipo di gol** | Passaggio filtrante rasoterra (es. 47% gol) | Come sopra: Passaggio filtrante, smarcamenti (stili Opportunista, Ala prolifica, Taglio al centro) | Coerente con uso passaggio; verifica che chi riceve abbia stili/abilità per gli inserimenti (Scatto, Finalizzazione). |
 | **Dribbling** | Scatta (es. 62%) | Stat **Velocità**, **Accelerazione**, **Controllo palla**, **Dribbling**; abilità Scatto | Se Velocità/Accelerazione basse in rosa, lo Scatta può portare a molte perdite palla; privilegia conduzione "Normale" o posizionamento. |
-| **Dribbling** | Dribbling di precisione (basso %) | **Controllo di suola**, **Doppio tocco**, Dribbling di precisione (§7.2); spazi stretti | Se hai giocatori tecnici (Controllo di suola, Doppio tocco) puoi usare di più il dribbling di precisione in 1v1. |
+| **Dribbling** | Dribbling di precisione (basso %) | **Controllo di suola**, **Doppio tocco**, **Tap Trick**, Dribbling di precisione (§7.2); spazi stretti | Se hai giocatori tecnici con Controllo di suola, Doppio tocco o Tap Trick, puoi usare di più il dribbling di precisione in 1v1; Tap Trick va usato quando il difensore è già a distanza di contrasto e c'è un lato libero. |
 | **Difesa** | Pressa / Movimento / Testa a testa | **Comportamento difensivo**, **Contrasto**, **Aggressività**; abilità Intercettazione, Contrasto Aggressivo, Marcatore | Uso bilanciato; se Pressa alta ma pochi in rosa con Aggressività/Intercettazione, il pressing può essere inefficace → consiglia più Movimento/posizionamento. |
 | **Comandi speciali** | Chiama pressing (basso, es. 1) | Centrocampisti/attaccanti con Coinvolgimento difensivo, Aggressività | "Usi poco Chiama pressing; se i tuoi centrocampisti hanno buona Aggressività/Coinvolgimento difensivo, puoi aumentare il pressing coordinato." |
 | **Comandi speciali** | Cambio cursore (molto alto, es. 219) | — | Può indicare difesa molto manuale; verifica che non sia compensazione per posizionamento o linea difensiva (compattezza, istruzioni). |
@@ -612,6 +614,7 @@ Nota affidabilita: "special double touch" e varianti "tess/croqueta interrotta" 
 
 ### 8.3 Abilità Dribbling e Controllo
 - **Doppio tocco** *(Double Touch)*: Skill base cambio direzione. **Quando serve**: ali, dribblatori; efficace in 1v1.
+- **Tap Trick** *(Tap Trick)*: Finta rapida manuale che fa esitare il difensore e apre un lato di uscita. **Quando serve**: 1v1 vicino al difensore, fascia, ingresso in area o spazi stretti con un'uscita libera. **Come ragionare**: dopo la finta cambia direzione o accelera nello spazio; se il difensore non abbocca, proteggi e scarica. **Limiti**: non è un boost automatico, non usarla con difensore lontano, senza spazio dopo la finta o con input delay marcato. Non confonderla con **Doppio tocco** o **Trickster**.
 - **Elastico** *(Flip Flap)*: Cambio direzione rapido con esterno. **Quando serve**: 1v1, spazi stretti.
 - **Controllo di suola** *(Sole Control)*: Controllo palla con suola. **Quando serve**: spazi stretti, protezione palla.
 - **Taglia alle spalle e gira** *(Cut Behind & Turn)*: Combo avanzata di cambio direzione (Doppio tocco + Elastico + Controllo suola). **Quando serve**: dribblatori tecnici. Alias: Doppio tocco speciale.
@@ -707,6 +710,7 @@ Carta forte senza abilità corrette non renderà in game come dovrebbe. **Obblig
 |----------------------|-------------------|---------------------------------------------|
 | Piedi magnetici / Magnetic Feet | Calamita ai piedi §8.3 | Possesso sotto pressing (max 4 avversari entro ~5 m) |
 | Dribbling in slancio / Momentum Dribbling | Dribbling fulmineo §8.3 | Più tocchi e controllo stretto in ultimo terzo |
+| Tap Trick / Tap Trik | Tap Trick §8.3 | Finta manuale ravvicinata: fa esitare il difensore e apre il lato di uscita nel duello |
 | Scatto bruciante / Acceleration Burst | §8.3 | Tocco secco rapido da fermo o movimento lento; cambio direzione |
 | Passaggio fenomenale / Phenomenal Passing | Passaggi illuminanti §8.2 | Passaggi precisi anche da orientamento scomodo |
 | Passaggio sensazionale | Passaggi illuminanti §8.2 | Alias community di Phenomenal Passing — stesso effetto |
