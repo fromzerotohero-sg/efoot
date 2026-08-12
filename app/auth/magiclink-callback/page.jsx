@@ -4,6 +4,7 @@ import React from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
+import { getPostLoginDestination } from '@/lib/postLoginRedirect'
 import { CheckCircle, AlertCircle } from 'lucide-react'
 
 function MagiclinkCallbackContent() {
@@ -60,10 +61,10 @@ function MagiclinkCallbackContent() {
       }
 
       setLoading(false)
-      
-      // Redirect to dashboard after success
-      setTimeout(() => {
-        router.push('/')
+
+      setTimeout(async () => {
+        const destination = await getPostLoginDestination()
+        router.push(destination)
         router.refresh()
       }, 1000)
 

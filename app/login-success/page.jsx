@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
 import BrandLoadingOverlay from '@/components/BrandLoadingOverlay'
+import { getPostLoginDestination } from '@/lib/postLoginRedirect'
 
 export default function LoginSuccessPage() {
   const router = useRouter()
@@ -31,8 +32,9 @@ export default function LoginSuccessPage() {
         if (process.env.NODE_ENV !== 'production') console.log('User logged in successfully:', user.email)
         setPhase('success')
 
-        setTimeout(() => {
-          router.push('/')
+        setTimeout(async () => {
+          const destination = await getPostLoginDestination()
+          router.push(destination)
         }, 2200)
       } catch (err) {
         console.error('Login check error:', err)
