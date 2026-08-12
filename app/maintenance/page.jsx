@@ -20,24 +20,13 @@ export default function MaintenancePage() {
   const [message, setMessage] = React.useState(null)
   const [showKeyForm, setShowKeyForm] = React.useState(false)
   const [stepIndex, setStepIndex] = React.useState(0)
-  const [progress, setProgress] = React.useState(12)
 
   React.useEffect(() => {
     const stepTimer = setInterval(() => {
       setStepIndex((current) => (current + 1) % LEARNING_STEPS.length)
     }, 3200)
 
-    const progressTimer = setInterval(() => {
-      setProgress((current) => {
-        if (current >= 94) return 12
-        return current + Math.random() * 4 + 1
-      })
-    }, 1800)
-
-    return () => {
-      clearInterval(stepTimer)
-      clearInterval(progressTimer)
-    }
+    return () => clearInterval(stepTimer)
   }, [])
 
   const handleUnlock = async (event) => {
@@ -149,18 +138,17 @@ export default function MaintenancePage() {
 
           <div className="maintenance-learning-card">
             <div className="maintenance-learning-top">
-              <span>Pipeline di apprendimento</span>
-              <strong>{Math.min(Math.round(progress), 94)}%</strong>
+              <span>Sessione di apprendimento attiva</span>
+              <strong className="maintenance-status-chip">In corso</strong>
             </div>
-            <div className="maintenance-progress-track">
-              <div
-                className="maintenance-progress-fill"
-                style={{ width: `${Math.min(progress, 94)}%` }}
-              />
-              <div className="maintenance-progress-glow" />
+            <div className="maintenance-progress-track" aria-hidden="true">
+              <div className="maintenance-progress-indeterminate" />
             </div>
             <p className="maintenance-learning-step" key={stepIndex}>
               {LEARNING_STEPS[stepIndex]}
+            </p>
+            <p className="maintenance-learning-note">
+              L&apos;addestramento continua in background: non è legato al tempo che resti su questa pagina.
             </p>
           </div>
 
@@ -478,6 +466,18 @@ export default function MaintenancePage() {
           font-size: 14px;
         }
 
+        .maintenance-status-chip {
+          display: inline-flex;
+          align-items: center;
+          padding: 4px 10px;
+          border-radius: 999px;
+          background: rgba(0, 212, 255, 0.12);
+          border: 1px solid rgba(0, 212, 255, 0.28);
+          color: #7eeaff !important;
+          font-size: 11px !important;
+          letter-spacing: 0.08em;
+        }
+
         .maintenance-progress-track {
           position: relative;
           height: 10px;
@@ -487,28 +487,29 @@ export default function MaintenancePage() {
           margin-bottom: 12px;
         }
 
-        .maintenance-progress-fill {
-          position: relative;
-          height: 100%;
-          border-radius: inherit;
-          background: linear-gradient(90deg, #00a1a6 0%, #00d4ff 55%, #ffd76a 100%);
-          transition: width 1.2s ease;
-          box-shadow: 0 0 18px rgba(0, 212, 255, 0.45);
-        }
-
-        .maintenance-progress-glow {
+        .maintenance-progress-indeterminate {
           position: absolute;
           inset: 0;
-          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
-          animation: maintenanceProgressGlow 2.4s ease-in-out infinite;
+          width: 38%;
+          border-radius: inherit;
+          background: linear-gradient(90deg, transparent, #00a1a6 20%, #00d4ff 55%, #ffd76a 100%);
+          animation: maintenanceIndeterminate 2.2s ease-in-out infinite;
+          box-shadow: 0 0 18px rgba(0, 212, 255, 0.35);
         }
 
         .maintenance-learning-step {
-          margin: 0;
+          margin: 0 0 10px;
           min-height: 1.4em;
           font-size: 14px;
           color: rgba(255, 255, 255, 0.86);
           animation: maintenanceStepIn 0.45s ease both;
+        }
+
+        .maintenance-learning-note {
+          margin: 0;
+          font-size: 12px;
+          line-height: 1.5;
+          color: rgba(255, 255, 255, 0.48);
         }
 
         .maintenance-closer {
@@ -682,9 +683,9 @@ export default function MaintenancePage() {
           }
         }
 
-        @keyframes maintenanceProgressGlow {
-          0%, 100% { transform: translateX(-120%); }
-          50% { transform: translateX(120%); }
+        @keyframes maintenanceIndeterminate {
+          0% { transform: translateX(-120%); }
+          100% { transform: translateX(320%); }
         }
       `}</style>
     </main>
