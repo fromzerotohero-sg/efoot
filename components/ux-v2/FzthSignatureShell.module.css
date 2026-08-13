@@ -1,0 +1,105 @@
+.signatureApp {
+  --fzth-bg: #060b10;
+  --fzth-panel: #0b131a;
+  --fzth-text: #f5f7f8;
+  --fzth-muted: #8d99a4;
+  --fzth-cyan: #2bd9ff;
+  --fzth-green: #5ee8ad;
+  --fzth-gold: #f1bd55;
+  min-height: 100vh;
+  position: relative;
+  isolation: isolate;
+  background: var(--fzth-bg);
+  color: var(--fzth-text);
+}
+
+.signatureApp::before,
+.signatureApp::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -2;
+}
+
+.signatureApp::before {
+  background:
+    radial-gradient(circle at 16% 6%, rgba(43,217,255,.10), transparent 26%),
+    radial-gradient(circle at 86% 14%, rgba(241,189,85,.065), transparent 24%),
+    linear-gradient(180deg, #081119 0%, #060b10 48%, #05090d 100%);
+}
+
+.signatureApp::after {
+  z-index: -1;
+  opacity: .27;
+  background-image:
+    linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px),
+    radial-gradient(circle at center, transparent 0 46%, rgba(43,217,255,.022) 47% 47.4%, transparent 47.5%);
+  background-size: 72px 72px, 72px 72px, 900px 900px;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,.72), transparent 76%);
+}
+
+.signatureApp :global(.flex.h-screen.overflow-hidden),
+.signatureApp :global(.shell-content),
+.signatureApp :global(main.flex-1.overflow-y-auto) {
+  background: transparent !important;
+}
+
+.signatureApp :global(header) {
+  background: rgba(6,11,16,.82) !important;
+  border-bottom: 1px solid rgba(255,255,255,.075) !important;
+  box-shadow: 0 14px 36px rgba(0,0,0,.16);
+  backdrop-filter: blur(22px) saturate(1.15) !important;
+}
+
+.signatureApp :global(header button),
+.signatureApp :global(header a[title='Account']) {
+  background: rgba(255,255,255,.045) !important;
+  border-color: rgba(255,255,255,.08) !important;
+  color: #eaf0f3 !important;
+}
+
+.signatureApp :global(aside) {
+  background: rgba(7,13,18,.94) !important;
+  border-right: 1px solid rgba(255,255,255,.075) !important;
+  box-shadow: 24px 0 70px rgba(0,0,0,.20);
+  backdrop-filter: blur(26px) saturate(1.12) !important;
+}
+
+.signatureApp :global(aside nav a),
+.signatureApp :global(aside nav button) {
+  color: #99a5ae !important;
+}
+
+.signatureApp :global(aside nav a:hover),
+.signatureApp :global(aside nav button:hover) {
+  color: #f5f7f8 !important;
+  background: rgba(255,255,255,.045) !important;
+}
+
+.signatureApp :global(aside nav a:has(> span[aria-hidden='true'])) {
+  color: #f7fbfc !important;
+  background: linear-gradient(90deg, rgba(43,217,255,.11), rgba(43,217,255,.035)) !important;
+  border-color: rgba(43,217,255,.16) !important;
+}
+
+.signatureApp :global(.bottom-nav) {
+  background: rgba(7,13,18,.94) !important;
+  border-top: 1px solid rgba(255,255,255,.08) !important;
+  box-shadow: 0 -16px 46px rgba(0,0,0,.28);
+  backdrop-filter: blur(24px) saturate(1.12) !important;
+}
+
+.signatureApp :global(.bottom-nav svg) {
+  width: 24px;
+  height: 24px;
+  filter: drop-shadow(0 0 8px currentColor);
+}
+
+@media (max-width: 767px) {
+  .signatureApp::after {
+    opacity: .19;
+    background-size: 52px 52px, 52px 52px, 620px 620px;
+  }
+}
