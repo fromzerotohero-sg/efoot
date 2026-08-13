@@ -31,36 +31,52 @@ export const metadata = {
 }
 
 export default function RootLayout({ children }) {
+  // UX V2 staging safety: analytics e install prompt disattivati su staging/preview.
+  // Fail-safe: senza NEXT_PUBLIC_APP_ENV il comportamento production resta invariato.
+  const isStaging = process.env.NEXT_PUBLIC_APP_ENV === 'staging'
+  const isVercelPreview = process.env.VERCEL_ENV === 'preview'
+  const disableAnalytics = isStaging || isVercelPreview
+  const showInstallPrompt = !isStaging && !isVercelPreview
+
   return (
     <html lang="it">
       <head>
-        <Script id="microsoft-clarity" strategy="afterInteractive">
-          {`
-            (function(c,l,a,r,i,t,y){
-                c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-                t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-                y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-            })(window, document, "clarity", "script", "wylmfczjap");
-          `}
-        </Script>
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-X69T3QE3GG"
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-X69T3QE3GG');
-          `}
-        </Script>
+        {!disableAnalytics && (
+          <>
+            <Script id="microsoft-clarity" strategy="afterInteractive">
+              {`
+                (function(c,l,a,r,i,t,y){
+                    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+                })(window, document, "clarity", "script", "wylmfczjap");
+              `}
+            </Script>
+            <Script
+              src="https://www.googletagmanager.com/gtag/js?id=G-X69T3QE3GG"
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'G-X69T3QE3GG');
+              `}
+            </Script>
+          </>
+        )}
       </head>
       <body className="text-[#FFFFFF]">
         <LanguageProviderWrapper>
           <GameAnalysisModalNavProvider>
             <SidebarProvider>
-              <AppLayoutShell>{children}</AppLayoutShell>
+              <AppLayoutShell
+                showInstallPrompt={showInstallPrompt}
+                showStagingBadge={isStaging}
+              >
+                {children}
+              </AppLayoutShell>
             </SidebarProvider>
           </GameAnalysisModalNavProvider>
         </LanguageProviderWrapper>

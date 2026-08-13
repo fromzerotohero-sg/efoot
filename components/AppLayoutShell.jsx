@@ -15,7 +15,7 @@ import { isPrelaunchPublicPath } from '@/lib/prelaunchRoutes'
 import { isMaintenancePublicPath } from '@/lib/maintenanceRoutes'
 import { useSidebar } from '@/components/SidebarContext'
 
-export default function AppLayoutShell({ children }) {
+export default function AppLayoutShell({ children, showInstallPrompt = true, showStagingBadge = false }) {
   const pathname = usePathname()
   const { isOpen: sidebarOpen } = useSidebar()
   const isPublicPath =
@@ -57,9 +57,32 @@ export default function AppLayoutShell({ children }) {
 
       <BottomNavigation />
       <DailySpinWidget />
-      <InstallAppPrompt />
+      {showInstallPrompt && <InstallAppPrompt />}
       <LiveCoachLauncher showLauncherButton={false} />
       <AssistantChat mode="popup" />
+      {showStagingBadge && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'fixed',
+            left: 12,
+            bottom: 'calc(var(--bottom-nav-height, 0px) + env(safe-area-inset-bottom, 0px) + 10px)',
+            zIndex: 90,
+            padding: '4px 10px',
+            borderRadius: 999,
+            fontSize: 10,
+            fontWeight: 600,
+            letterSpacing: '0.08em',
+            color: 'rgba(0, 212, 255, 0.75)',
+            background: 'rgba(3, 5, 12, 0.65)',
+            border: '1px solid rgba(0, 212, 255, 0.25)',
+            pointerEvents: 'none',
+            userSelect: 'none',
+          }}
+        >
+          STAGING · UX V2
+        </div>
+      )}
     </>
     </MaintenanceGate>
   )
