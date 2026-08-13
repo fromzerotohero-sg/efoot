@@ -126,6 +126,13 @@ function HomePage() {
     }
   }, [])
 
+  // Pill contestuali della Home: stesso contratto esistente, con messaggio precompilato.
+  const handleAskHeroMessage = React.useCallback((message) => {
+    if (typeof window !== 'undefined' && message) {
+      window.dispatchEvent(new CustomEvent('open-assistant-chat', { detail: { message } }))
+    }
+  }, [])
+
   // Live Coach resta modalita speciale: solo evento esistente, nessuna modifica a session/billing.
   const handleOpenLiveCoach = React.useCallback(() => {
     if (typeof window !== 'undefined') {
@@ -521,8 +528,10 @@ function HomePage() {
         hasActiveCoach={hasActiveCoach}
         recentMatches={recentMatches}
         gameAnalysisLastCapture={gameAnalysisLastCapture}
+        tacticalPatterns={tacticalPatterns}
         hpBalance={hpBalance}
         onAskHero={handleAskHero}
+        onAskHeroMessage={handleAskHeroMessage}
         onOpenFeedback={() => setShowCoachFeedback(true)}
         onOpenGameAnalysis={() => setShowGameAnalysisModal(true)}
         onOpenCardAdvisor={openCardAdvisor}

@@ -6,32 +6,55 @@ import {
   Users,
   UserCheck,
   BarChart3,
-  Sparkles,
   Radio,
   Trophy,
-  Zap,
   TrendingUp,
   Calendar,
   ArrowRight,
-  AlertCircle
+  AlertCircle,
+  SendHorizonal
 } from 'lucide-react'
 import AIKnowledgeBar from '@/components/AIKnowledgeBar'
 
 /**
  * UX V2 — Coach Home (facade presentazionale).
+ * Reference visiva vincolante: tavola UX V2 "DESKTOP - HOME COACH".
  * Nessun dato proprio: tutto arriva via props da app/page.jsx, che possiede
  * fetch dashboard, stats, match, modali, deep link ed eventi.
- * Un solo concetto visibile: PROSSIMA AZIONE. Niente Journey/Mission/Task/Suggestions concorrenti.
+ *
+ * S2: l'area conversazione e una ENTRY composer-like verso il motore reale
+ * (open-assistant-chat / CoachFeedbackChat). La chat unificata e S3;
+ * la card "Vuoi che lo ricordi?" e S5. Niente dati fake dalla tavola:
+ * forma uguale, contenuti solo da dati/route/azioni reali.
  */
 
 const STR = {
   it: {
-    overline: 'HERO COACH',
-    tagline: 'Conosce la tua rosa e usa lo strumento giusto quando serve.',
+    greeting: 'Ciao Hero! 👋',
+    greetingSub: 'Sono qui per aiutarti a diventare imbattibile.',
+    heroBadge: 'AI',
+    composerPlaceholder: 'Scrivi un messaggio a Hero…',
+    composerAria: 'Chiedi a Hero',
+    pills: [
+      {
+        label: 'Analizza la mia ultima partita',
+        message: 'Analizza la mia ultima partita: cosa è andato bene, cosa no, e la priorità per la prossima.'
+      },
+      {
+        label: 'Come sto giocando?',
+        message: 'Come sto giocando? Dammi un quadro onesto del mio livello attuale.'
+      },
+      {
+        label: 'Cosa posso migliorare?',
+        message: 'Cosa posso migliorare? Dammi le priorità concrete per le prossime partite.'
+      }
+    ],
     nextAction: 'Prossima azione',
-    askHero: 'Chiedi a Hero',
-    askHeroSub: 'Apri la chat con il tuo coach',
-    quickActions: 'Azioni rapide',
+    nextActionPlan: 'Piano Coach',
+    knowledge: 'Quanto Hero ti conosce',
+    knowledgeSub: 'Rispondi e gioca per migliorare la conoscenza di Hero su di te.',
+    insight: 'Ultimo insight',
+    insightDetails: 'Vedi dettagli',
     context: 'Il tuo contesto',
     contextRoster: 'Rosa',
     contextCoach: 'Allenatore',
@@ -42,62 +65,82 @@ const STR = {
     coachMissing: 'Da configurare',
     statsReady: 'Disponibili',
     statsMissing: 'Da aggiungere',
-    knowledge: 'Quanto Hero ti conosce',
-    knowledgeSub: 'Dati disponibili per personalizzare i consigli',
     tools: 'Progressi e strumenti',
     toolsProgress: 'Progressi',
     toolsMatches: 'Partite',
+    toolsPrepare: 'Prepara partita',
+    toolsLive: 'Live Coach',
     lowHp: 'Saldo HP insufficiente per le azioni AI (costo standard: 2 HP).',
     lowHpCta: 'Ottieni HP',
     states: {
       NEW: {
         title: 'Crea la tua rosa',
         desc: 'Hero ha bisogno dei tuoi giocatori reali per darti consigli utili.',
-        cta: 'Crea la tua rosa'
+        cta: 'Crea la tua rosa',
+        bubble: 'Benvenuto! Crea la tua rosa con i giocatori reali: da lì posso aiutarti davvero.'
       },
       ROSTER_INCOMPLETE: {
         title: 'Completa la rosa',
         desc: 'Ti mancano titolari per una formazione completa.',
-        cta: 'Completa rosa'
+        cta: 'Completa rosa',
+        bubble: 'La tua rosa non è ancora completa: sistema i titolari e poi parliamo di tattica.'
       },
       NO_COACH: {
         title: 'Scegli il tuo allenatore',
         desc: 'L’allenatore attivo cambia modulo, tattica e consigli di Hero.',
-        cta: 'Configura allenatore'
+        cta: 'Configura allenatore',
+        bubble: 'Scegli il tuo allenatore: modulo e consigli cambiano davvero.'
       },
       POST_MATCH: {
         title: 'Raccontami com’è andata',
         desc: 'Partita appena finita: due minuti di feedback rendono i prossimi consigli più tuoi.',
-        cta: 'Raccontami com’è andata'
+        cta: 'Raccontami com’è andata',
+        bubble: 'Raccontami com’è andata la tua ultima partita. Cosa è andato bene? Cosa possiamo migliorare?'
       },
       READY_NO_STATS: {
         title: 'Chiedi a Hero',
         desc: 'Hero è pronto. Le statistiche rendono i consigli più precisi, ma non servono per iniziare.',
-        cta: 'Chiedi a Hero'
+        cta: 'Chiedi a Hero',
+        bubble: 'Sono pronto: chiedimi analisi, formazioni o priorità. Se vuoi consigli più precisi, aggiungi le statistiche di gioco.'
       },
       OPERATIONAL: {
         title: 'Chiedi a Hero',
         desc: 'Hero usa rosa, allenatore e statistiche reali della tua squadra.',
-        cta: 'Chiedi a Hero'
+        cta: 'Chiedi a Hero',
+        bubble: 'Sono qui per aiutarti: analisi, formazioni, carte o preparazione della prossima partita.'
       }
     },
     secondary: {
       addStats: 'Aggiungi statistiche',
       seeMatches: 'Vedi partite'
-    },
-    suggestions: {
-      prepare: 'Prepara la prossima partita',
-      checkCard: 'Controlla una carta',
-      live: 'Live Coach'
     }
   },
   en: {
-    overline: 'HERO COACH',
-    tagline: 'Knows your squad and picks the right tool when needed.',
+    greeting: 'Hello Hero! 👋',
+    greetingSub: 'I’m here to help you become unbeatable.',
+    heroBadge: 'AI',
+    composerPlaceholder: 'Write a message to Hero…',
+    composerAria: 'Ask Hero',
+    pills: [
+      {
+        label: 'Analyze my last match',
+        message: 'Analyze my last match: what went well, what didn’t, and the priority for the next one.'
+      },
+      {
+        label: 'How am I playing?',
+        message: 'How am I playing? Give me an honest picture of my current level.'
+      },
+      {
+        label: 'What can I improve?',
+        message: 'What can I improve? Give me concrete priorities for the next matches.'
+      }
+    ],
     nextAction: 'Next action',
-    askHero: 'Ask Hero',
-    askHeroSub: 'Open the chat with your coach',
-    quickActions: 'Quick actions',
+    nextActionPlan: 'Coach Plan',
+    knowledge: 'How well Hero knows you',
+    knowledgeSub: 'Answer and play to improve what Hero knows about you.',
+    insight: 'Latest insight',
+    insightDetails: 'See details',
     context: 'Your context',
     contextRoster: 'Squad',
     contextCoach: 'Coach',
@@ -108,53 +151,54 @@ const STR = {
     coachMissing: 'To set up',
     statsReady: 'Available',
     statsMissing: 'To add',
-    knowledge: 'How well Hero knows you',
-    knowledgeSub: 'Data available to personalize advice',
     tools: 'Progress & tools',
     toolsProgress: 'Progress',
     toolsMatches: 'Matches',
+    toolsPrepare: 'Prepare match',
+    toolsLive: 'Live Coach',
     lowHp: 'Not enough HP for AI actions (standard cost: 2 HP).',
     lowHpCta: 'Get HP',
     states: {
       NEW: {
         title: 'Create your squad',
         desc: 'Hero needs your real players to give you useful advice.',
-        cta: 'Create your squad'
+        cta: 'Create your squad',
+        bubble: 'Welcome! Create your squad with your real players: that’s where I can really help.'
       },
       ROSTER_INCOMPLETE: {
         title: 'Complete your squad',
         desc: 'You are missing starters for a complete formation.',
-        cta: 'Complete squad'
+        cta: 'Complete squad',
+        bubble: 'Your squad is not complete yet: fix the starters and then let’s talk tactics.'
       },
       NO_COACH: {
         title: 'Choose your coach',
         desc: 'The active coach changes formation, tactics and Hero’s advice.',
-        cta: 'Set up coach'
+        cta: 'Set up coach',
+        bubble: 'Choose your coach: formation and advice really change.'
       },
       POST_MATCH: {
         title: 'Tell me how it went',
         desc: 'Match just finished: two minutes of feedback make the next advice more yours.',
-        cta: 'Tell me how it went'
+        cta: 'Tell me how it went',
+        bubble: 'Tell me how your last match went. What went well? What can we improve?'
       },
       READY_NO_STATS: {
         title: 'Ask Hero',
         desc: 'Hero is ready. Game stats make advice sharper, but you don’t need them to start.',
-        cta: 'Ask Hero'
+        cta: 'Ask Hero',
+        bubble: 'I’m ready: ask me analysis, formations or priorities. Add game stats for sharper advice.'
       },
       OPERATIONAL: {
         title: 'Ask Hero',
         desc: 'Hero uses your squad’s real roster, coach and stats.',
-        cta: 'Ask Hero'
+        cta: 'Ask Hero',
+        bubble: 'I’m here to help: analysis, formations, cards or next match preparation.'
       }
     },
     secondary: {
       addStats: 'Add game stats',
       seeMatches: 'See matches'
-    },
-    suggestions: {
-      prepare: 'Prepare the next match',
-      checkCard: 'Check a card',
-      live: 'Live Coach'
     }
   }
 }
@@ -190,8 +234,10 @@ export default function CoachHomeV2({
   hasActiveCoach,
   recentMatches,
   gameAnalysisLastCapture,
+  tacticalPatterns,
   hpBalance,
   onAskHero,
+  onAskHeroMessage,
   onOpenFeedback,
   onOpenGameAnalysis,
   onOpenCardAdvisor,
@@ -221,8 +267,6 @@ export default function CoachHomeV2({
   // Mai presumere LOW HP se il dato manca; mai bloccare la CTA.
   const lowHp = typeof hpBalance === 'number' && Number.isFinite(hpBalance) && hpBalance < 2
 
-  const isHeroPrimary = homeState === 'READY_NO_STATS' || homeState === 'OPERATIONAL'
-
   const primaryAction = (() => {
     switch (homeState) {
       case 'NEW':
@@ -243,15 +287,18 @@ export default function CoachHomeV2({
     return null
   })()
 
-  // Suggerimenti contestuali: solo nello stato OPERATIONAL, massimo 3, solo funzioni reali.
-  const suggestions =
-    homeState === 'OPERATIONAL'
-      ? [
-          { key: 'prepare', icon: Trophy, label: s.suggestions.prepare, onClick: onOpenCountermeasures, accent: 'cyan' },
-          { key: 'card', icon: Sparkles, label: s.suggestions.checkCard, onClick: onOpenCardAdvisor, accent: 'gold' },
-          { key: 'live', icon: Radio, label: s.suggestions.live, onClick: onOpenLiveCoach, accent: 'amber', tourId: 'tour-dashboard-live-coach' }
-        ]
-      : []
+  // Progresso reale disponibile solo per la rosa (X/11 titolari): niente barre inventate.
+  const rosterProgress =
+    stats && stats.totalPlayers > 0 ? Math.min(100, Math.round((stats.titolari / 11) * 100)) : null
+
+  // Ultimo insight: solo da recurring_issues reali (team_tactical_patterns via /api/dashboard).
+  // Se non ci sono issue reali la card non viene mostrata (niente insight inventati).
+  const recurringIssues = Array.isArray(tacticalPatterns?.recurring_issues)
+    ? tacticalPatterns.recurring_issues
+    : []
+  const latestInsight = recurringIssues.length > 0
+    ? String(recurringIssues[0]?.issue || recurringIssues[0] || '').trim()
+    : ''
 
   const contextRows = [
     {
@@ -281,120 +328,143 @@ export default function CoachHomeV2({
 
   return (
     <div className="coach-home-v2">
-      {/* Header: stato / breve contesto */}
+      {/* Saluto iniziale (reference: "Ciao Hero! 👋") */}
       <header className="chv2-header">
-        <p className="chv2-overline">{s.overline}</p>
-        <p className="chv2-tagline">{s.tagline}</p>
+        <h1 className="chv2-greeting">{s.greeting}</h1>
+        <p className="chv2-greeting-sub">{s.greetingSub}</p>
       </header>
 
-      {/* PROSSIMA AZIONE: una sola CTA dominante */}
-      <div data-tour-id="tour-dashboard-mission-center">
-        <section className="chv2-card chv2-next-action" data-tour-id="tour-dashboard-task" aria-label={s.nextAction}>
-          <p className="chv2-overline">{s.nextAction}</p>
-          <h1 className="chv2-title">{stateCopy.title}</h1>
-          {homeState === 'ROSTER_INCOMPLETE' && stats && (
-            <p className="chv2-progress-real">
-              {s.contextRoster}: {stats.titolari}/11
-            </p>
-          )}
-          <p className="chv2-desc">{stateCopy.desc}</p>
-
-          {lowHp && (
-            <div className="chv2-lowhp" role="status">
-              <AlertCircle size={16} aria-hidden="true" />
-              <span>{s.lowHp}</span>
-              <button type="button" className="chv2-lowhp-cta" onClick={onGetHp}>
-                {s.lowHpCta}
+      <div className="chv2-grid">
+        {/* Colonna centrale: area Hero Coach (pill + conversazione entry + composer) */}
+        <div className="chv2-main">
+          {/* CTA/pill contestuali: aprono il motore assistant reale con messaggio precompilato */}
+          <div className="chv2-pills" role="group" aria-label={s.composerAria}>
+            {s.pills.map((pill) => (
+              <button
+                key={pill.label}
+                type="button"
+                className="chv2-pill"
+                onClick={() => onAskHeroMessage?.(pill.message)}
+              >
+                {pill.label}
               </button>
-            </div>
-          )}
+            ))}
+          </div>
 
-          <button type="button" className="chv2-primary-cta" onClick={primaryAction}>
-            {stateCopy.cta}
-            <ArrowRight size={18} aria-hidden="true" />
-          </button>
-
-          {secondaryAction && (
-            <button type="button" className="chv2-secondary-cta" onClick={secondaryAction.onClick}>
-              {secondaryAction.label}
-            </button>
-          )}
-        </section>
-
-        {/* Ingresso Hero evidente (secondario quando la Prossima azione non e Hero) */}
-        {!isHeroPrimary && (
-          <button type="button" className="chv2-hero-entry" onClick={onAskHero}>
-            <MessageCircle size={20} aria-hidden="true" />
-            <span className="chv2-hero-entry-copy">
-              <strong>{s.askHero}</strong>
-              <small>{s.askHeroSub}</small>
+          {/* Area conversazione: bolla Hero reale (testo guidato dallo stato), click = azione primaria */}
+          <button type="button" className="chv2-hero-bubble" onClick={primaryAction}>
+            <span className="chv2-hero-identity">
+              <img src="/coach.jpg" alt="" className="chv2-hero-avatar" />
+              <span className="chv2-hero-name">Hero Coach</span>
+              <span className="chv2-hero-badge">{s.heroBadge}</span>
             </span>
-            <ArrowRight size={18} aria-hidden="true" />
+            <span className="chv2-hero-text">{stateCopy.bubble}</span>
           </button>
-        )}
+
+          {/* Composer: entry composer-like verso la chat reale (la chat unificata e S3) */}
+          <button
+            type="button"
+            className="chv2-composer"
+            onClick={onAskHero}
+            aria-label={s.composerAria}
+          >
+            <MessageCircle size={18} aria-hidden="true" className="chv2-composer-icon" />
+            <span className="chv2-composer-placeholder">{s.composerPlaceholder}</span>
+            <span className="chv2-composer-send" aria-hidden="true">
+              <SendHorizonal size={16} />
+            </span>
+          </button>
+        </div>
+
+        {/* Colonna destra: card secondarie (reference: Prossima azione / Quanto Hero ti conosce / insight) */}
+        <div className="chv2-side" data-tour-id="tour-dashboard-mission-center">
+          <section className="chv2-card chv2-next-action" data-tour-id="tour-dashboard-task" aria-label={s.nextAction}>
+            <p className="chv2-overline">{s.nextAction}</p>
+            <p className="chv2-plan-label">{s.nextActionPlan}</p>
+            <h2 className="chv2-next-title">{stateCopy.title}</h2>
+            <p className="chv2-next-desc">{stateCopy.desc}</p>
+
+            {homeState === 'ROSTER_INCOMPLETE' && rosterProgress !== null && (
+              <div className="chv2-progress" role="progressbar" aria-valuenow={rosterProgress} aria-valuemin={0} aria-valuemax={100}>
+                <div className="chv2-progress-bar" style={{ width: `${rosterProgress}%` }} />
+              </div>
+            )}
+            {homeState === 'ROSTER_INCOMPLETE' && stats && (
+              <p className="chv2-progress-label">{s.contextRoster}: {stats.titolari}/11</p>
+            )}
+
+            {lowHp && (
+              <div className="chv2-lowhp" role="status">
+                <AlertCircle size={16} aria-hidden="true" />
+                <span>{s.lowHp}</span>
+                <button type="button" className="chv2-lowhp-cta" onClick={onGetHp}>
+                  {s.lowHpCta}
+                </button>
+              </div>
+            )}
+
+            <button type="button" className="chv2-primary-cta" onClick={primaryAction}>
+              {stateCopy.cta}
+            </button>
+
+            {secondaryAction && (
+              <button type="button" className="chv2-secondary-cta" onClick={secondaryAction.onClick}>
+                {secondaryAction.label}
+              </button>
+            )}
+          </section>
+
+          {/* Quanto Hero ti conosce: componente esistente, calcolo invariato, nessun claim sulla memoria */}
+          <section className="chv2-card" data-tour-id="tour-dashboard-ai" aria-label={s.knowledge}>
+            <p className="chv2-overline">{s.knowledge}</p>
+            <AIKnowledgeBar />
+            <p className="chv2-knowledge-sub">{s.knowledgeSub}</p>
+          </section>
+
+          {/* Ultimo insight: solo se recurring_issues reali; altrimenti card assente */}
+          {latestInsight && (
+            <section className="chv2-card" aria-label={s.insight}>
+              <p className="chv2-overline">{s.insight}</p>
+              <p className="chv2-insight-text">{latestInsight}</p>
+              <button type="button" className="chv2-text-link" onClick={onOpenProgress}>
+                {s.insightDetails}
+                <ArrowRight size={14} aria-hidden="true" />
+              </button>
+            </section>
+          )}
+
+          {/* Contesto compatto: dati reali, niente KPI inventati */}
+          <section className="chv2-card" data-tour-id="tour-dashboard-squad" aria-label={s.context}>
+            <p className="chv2-overline">{s.context}</p>
+            <div className="chv2-context-rows">
+              {contextRows.map((row) => {
+                const Icon = row.icon
+                return (
+                  <div
+                    key={row.key}
+                    className="chv2-context-row"
+                    {...(row.tourId ? { 'data-tour-id': row.tourId } : {})}
+                  >
+                    <Icon size={16} aria-hidden="true" />
+                    <span className="chv2-context-label">{row.label}</span>
+                    <span className="chv2-context-value">{row.value}</span>
+                  </div>
+                )
+              })}
+              {lastMatchLabel && (
+                <div className="chv2-context-row">
+                  <Calendar size={16} aria-hidden="true" />
+                  <span className="chv2-context-label">{s.contextLastMatch}</span>
+                  <span className="chv2-context-value">{lastMatchLabel}</span>
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
       </div>
 
-      {/* Suggerimenti contestuali: max 3, solo stato OPERATIONAL */}
-      {suggestions.length > 0 && (
-        <section className="chv2-section" aria-label={s.quickActions}>
-          <p className="chv2-overline">{s.quickActions}</p>
-          <div className="chv2-suggestions">
-            {suggestions.map((item) => {
-              const Icon = item.icon
-              return (
-                <button
-                  key={item.key}
-                  type="button"
-                  className={`chv2-suggestion chv2-suggestion--${item.accent}`}
-                  onClick={item.onClick}
-                  {...(item.tourId ? { 'data-tour-id': item.tourId } : {})}
-                >
-                  <Icon size={18} aria-hidden="true" />
-                  <span>{item.label}</span>
-                </button>
-              )
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* Contesto compatto: dati reali, niente KPI inventati */}
-      <section className="chv2-card chv2-context" data-tour-id="tour-dashboard-squad" aria-label={s.context}>
-        <p className="chv2-overline">{s.context}</p>
-        <div className="chv2-context-rows">
-          {contextRows.map((row) => {
-            const Icon = row.icon
-            return (
-              <div
-                key={row.key}
-                className="chv2-context-row"
-                {...(row.tourId ? { 'data-tour-id': row.tourId } : {})}
-              >
-                <Icon size={16} aria-hidden="true" />
-                <span className="chv2-context-label">{row.label}</span>
-                <span className="chv2-context-value">{row.value}</span>
-              </div>
-            )
-          })}
-          {lastMatchLabel && (
-            <div className="chv2-context-row">
-              <Calendar size={16} aria-hidden="true" />
-              <span className="chv2-context-label">{s.contextLastMatch}</span>
-              <span className="chv2-context-value">{lastMatchLabel}</span>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Quanto Hero ti conosce: componente esistente, nessun claim sulla memoria */}
-      <section className="chv2-section" data-tour-id="tour-dashboard-ai" aria-label={s.knowledge}>
-        <p className="chv2-overline">{s.knowledge}</p>
-        <p className="chv2-knowledge-sub">{s.knowledgeSub}</p>
-        <AIKnowledgeBar />
-      </section>
-
-      {/* Progressi / strumenti secondari */}
-      <section className="chv2-section" data-tour-id="tour-dashboard-nav" aria-label={s.tools}>
+      {/* Progressi / strumenti secondari: accesso discreto */}
+      <section className="chv2-tools-section" data-tour-id="tour-dashboard-nav" aria-label={s.tools}>
         <p className="chv2-overline">{s.tools}</p>
         <div className="chv2-tools">
           <button type="button" className="chv2-tool" onClick={onOpenProgress}>
@@ -405,6 +475,19 @@ export default function CoachHomeV2({
             <Calendar size={16} aria-hidden="true" />
             {s.toolsMatches}
           </button>
+          <button type="button" className="chv2-tool" onClick={onOpenCountermeasures}>
+            <Trophy size={16} aria-hidden="true" />
+            {s.toolsPrepare}
+          </button>
+          <button
+            type="button"
+            className="chv2-tool"
+            onClick={onOpenLiveCoach}
+            data-tour-id="tour-dashboard-live-coach"
+          >
+            <Radio size={16} aria-hidden="true" />
+            {s.toolsLive}
+          </button>
           {toolsExtra}
         </div>
       </section>
@@ -413,8 +496,8 @@ export default function CoachHomeV2({
         .coach-home-v2 {
           display: flex;
           flex-direction: column;
-          gap: 28px;
-          max-width: 720px;
+          gap: 24px;
+          max-width: 1080px;
           margin: 0 auto;
           width: 100%;
         }
@@ -422,7 +505,189 @@ export default function CoachHomeV2({
         .chv2-header {
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 4px;
+        }
+
+        .chv2-greeting {
+          margin: 0;
+          font-size: clamp(26px, 5vw, 34px);
+          font-weight: 800;
+          letter-spacing: -0.01em;
+          color: #ffffff;
+          line-height: 1.15;
+        }
+
+        .chv2-greeting-sub {
+          margin: 0;
+          font-size: 14px;
+          line-height: 1.5;
+          color: rgba(255, 255, 255, 0.6);
+        }
+
+        .chv2-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 24px;
+          align-items: start;
+        }
+
+        @media (min-width: 1024px) {
+          .chv2-grid {
+            grid-template-columns: minmax(0, 1fr) 320px;
+          }
+        }
+
+        .chv2-main {
+          display: flex;
+          flex-direction: column;
+          gap: 18px;
+          min-width: 0;
+        }
+
+        .chv2-pills {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+
+        .chv2-pill {
+          min-height: 40px;
+          padding: 9px 16px;
+          border-radius: 999px;
+          border: 1px solid rgba(0, 212, 255, 0.22);
+          background: rgba(0, 212, 255, 0.05);
+          color: rgba(0, 212, 255, 0.9);
+          font-size: 13px;
+          font-weight: 600;
+          font-family: inherit;
+          cursor: pointer;
+          transition: border-color 0.15s ease, background 0.15s ease;
+        }
+
+        .chv2-pill:hover {
+          border-color: rgba(0, 212, 255, 0.5);
+          background: rgba(0, 212, 255, 0.1);
+        }
+
+        .chv2-hero-bubble {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          width: 100%;
+          padding: 18px 20px;
+          border-radius: 18px;
+          border: 1px solid rgba(0, 212, 255, 0.16);
+          background: linear-gradient(160deg, rgba(10, 18, 38, 0.72), rgba(5, 10, 24, 0.78));
+          text-align: left;
+          font-family: inherit;
+          cursor: pointer;
+          transition: border-color 0.15s ease;
+        }
+
+        .chv2-hero-bubble:hover {
+          border-color: rgba(0, 212, 255, 0.4);
+        }
+
+        .chv2-hero-identity {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .chv2-hero-avatar {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          object-fit: cover;
+          border: 1px solid rgba(0, 212, 255, 0.3);
+          flex-shrink: 0;
+        }
+
+        .chv2-hero-name {
+          font-size: 14px;
+          font-weight: 700;
+          color: #ffffff;
+        }
+
+        .chv2-hero-badge {
+          padding: 2px 8px;
+          border-radius: 999px;
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          color: #03101d;
+          background: linear-gradient(135deg, #00d4ff, #34d399);
+        }
+
+        .chv2-hero-text {
+          font-size: 15px;
+          line-height: 1.55;
+          color: rgba(255, 255, 255, 0.85);
+        }
+
+        .chv2-composer {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          width: 100%;
+          min-height: 56px;
+          padding: 12px 14px 12px 18px;
+          border-radius: 999px;
+          border: 1px solid rgba(0, 212, 255, 0.25);
+          background: rgba(5, 10, 24, 0.85);
+          font-family: inherit;
+          text-align: left;
+          cursor: pointer;
+          transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .chv2-composer:hover {
+          border-color: rgba(0, 212, 255, 0.55);
+          box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.08);
+        }
+
+        .chv2-composer-icon {
+          color: rgba(0, 212, 255, 0.6);
+          flex-shrink: 0;
+        }
+
+        .chv2-composer-placeholder {
+          flex: 1;
+          min-width: 0;
+          font-size: 14px;
+          color: rgba(255, 255, 255, 0.45);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .chv2-composer-send {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #00d4ff, #0080ff);
+          color: #03101d;
+          flex-shrink: 0;
+        }
+
+        .chv2-side {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          min-width: 0;
+        }
+
+        .chv2-card {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          background: linear-gradient(160deg, rgba(10, 18, 38, 0.72), rgba(5, 10, 24, 0.78));
+          border: 1px solid rgba(0, 212, 255, 0.12);
+          border-radius: 18px;
+          padding: clamp(18px, 3vw, 22px);
         }
 
         .chv2-overline {
@@ -434,47 +699,48 @@ export default function CoachHomeV2({
           color: rgba(0, 212, 255, 0.55);
         }
 
-        .chv2-tagline {
+        .chv2-plan-label {
           margin: 0;
-          font-size: 14px;
-          line-height: 1.5;
+          font-size: 12px;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.45);
+        }
+
+        .chv2-next-title {
+          margin: 0;
+          font-size: 20px;
+          font-weight: 800;
+          line-height: 1.2;
+          color: #ffffff;
+        }
+
+        .chv2-next-desc {
+          margin: 0;
+          font-size: 13px;
+          line-height: 1.55;
           color: rgba(255, 255, 255, 0.62);
         }
 
-        .chv2-card {
-          background: linear-gradient(160deg, rgba(10, 18, 38, 0.72), rgba(5, 10, 24, 0.78));
-          border: 1px solid rgba(0, 212, 255, 0.14);
-          border-radius: 18px;
-          padding: clamp(20px, 4vw, 28px);
+        .chv2-progress {
+          width: 100%;
+          height: 8px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.08);
+          overflow: hidden;
         }
 
-        .chv2-next-action {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
+        .chv2-progress-bar {
+          height: 100%;
+          border-radius: 999px;
+          background: linear-gradient(90deg, #00d4ff, #34d399);
+          transition: width 0.3s ease;
         }
 
-        .chv2-title {
+        .chv2-progress-label {
           margin: 0;
-          font-size: clamp(24px, 5.5vw, 32px);
-          font-weight: 800;
-          line-height: 1.15;
-          color: #ffffff;
-          letter-spacing: -0.01em;
-        }
-
-        .chv2-progress-real {
-          margin: 0;
-          font-size: 15px;
+          font-size: 12px;
           font-weight: 700;
-          color: var(--neon-cyan);
-        }
-
-        .chv2-desc {
-          margin: 0;
-          font-size: 14px;
-          line-height: 1.55;
-          color: rgba(255, 255, 255, 0.66);
+          color: rgba(0, 212, 255, 0.8);
         }
 
         .chv2-lowhp {
@@ -509,16 +775,15 @@ export default function CoachHomeV2({
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          gap: 10px;
           width: 100%;
-          min-height: 54px;
-          margin-top: 6px;
-          padding: 14px 22px;
+          min-height: 50px;
+          margin-top: 4px;
+          padding: 13px 20px;
           border: none;
-          border-radius: 14px;
-          background: linear-gradient(135deg, #00d4ff, #0080ff);
+          border-radius: 12px;
+          background: linear-gradient(135deg, #34d399, #22c55e);
           color: #03101d;
-          font-size: 16px;
+          font-size: 15px;
           font-weight: 800;
           font-family: inherit;
           cursor: pointer;
@@ -527,27 +792,17 @@ export default function CoachHomeV2({
 
         .chv2-primary-cta:hover {
           transform: translateY(-1px);
-          box-shadow: 0 8px 28px rgba(0, 212, 255, 0.25);
-        }
-
-        .chv2-primary-cta:focus-visible,
-        .chv2-secondary-cta:focus-visible,
-        .chv2-hero-entry:focus-visible,
-        .chv2-suggestion:focus-visible,
-        .chv2-tool:focus-visible,
-        .chv2-lowhp-cta:focus-visible {
-          outline: 2px solid rgba(0, 212, 255, 0.85);
-          outline-offset: 2px;
+          box-shadow: 0 8px 24px rgba(52, 211, 153, 0.25);
         }
 
         .chv2-secondary-cta {
           align-self: center;
           min-height: 44px;
-          padding: 10px 18px;
+          padding: 8px 16px;
           border: none;
           background: transparent;
           color: rgba(0, 212, 255, 0.85);
-          font-size: 14px;
+          font-size: 13px;
           font-weight: 600;
           font-family: inherit;
           cursor: pointer;
@@ -555,117 +810,50 @@ export default function CoachHomeV2({
           text-underline-offset: 3px;
         }
 
-        .chv2-hero-entry {
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          width: 100%;
-          min-height: 60px;
-          margin-top: 12px;
-          padding: 14px 18px;
-          border-radius: 14px;
-          border: 1px solid rgba(0, 212, 255, 0.3);
-          background: rgba(0, 212, 255, 0.07);
-          color: #ffffff;
-          font-family: inherit;
-          text-align: left;
-          cursor: pointer;
-          transition: border-color 0.15s ease, background 0.15s ease;
-        }
-
-        .chv2-hero-entry:hover {
-          border-color: rgba(0, 212, 255, 0.55);
-          background: rgba(0, 212, 255, 0.12);
-        }
-
-        .chv2-hero-entry-copy {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-          flex: 1;
-          min-width: 0;
-        }
-
-        .chv2-hero-entry-copy strong {
-          font-size: 15px;
-          font-weight: 700;
-        }
-
-        .chv2-hero-entry-copy small {
+        .chv2-knowledge-sub {
+          margin: 0;
           font-size: 12px;
-          color: rgba(255, 255, 255, 0.55);
+          line-height: 1.5;
+          color: rgba(255, 255, 255, 0.5);
         }
 
-        .chv2-section {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .chv2-suggestions {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-
-        .chv2-suggestion {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          width: 100%;
-          min-height: 48px;
-          padding: 12px 16px;
-          border-radius: 12px;
+        .chv2-insight-text {
+          margin: 0;
           font-size: 14px;
+          line-height: 1.55;
+          color: rgba(255, 255, 255, 0.82);
+        }
+
+        .chv2-text-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          align-self: flex-start;
+          min-height: 36px;
+          padding: 4px 0;
+          border: none;
+          background: transparent;
+          color: rgba(0, 212, 255, 0.85);
+          font-size: 13px;
           font-weight: 600;
           font-family: inherit;
-          text-align: left;
           cursor: pointer;
-          transition: border-color 0.15s ease, background 0.15s ease;
-        }
-
-        .chv2-suggestion--cyan {
-          border: 1px solid rgba(0, 212, 255, 0.22);
-          background: rgba(0, 212, 255, 0.05);
-          color: rgba(0, 212, 255, 0.9);
-        }
-
-        .chv2-suggestion--gold {
-          border: 1px solid rgba(255, 203, 5, 0.3);
-          background: rgba(255, 203, 5, 0.06);
-          color: #ffcb05;
-        }
-
-        .chv2-suggestion--amber {
-          border: 1px solid rgba(255, 215, 100, 0.28);
-          background: rgba(255, 215, 100, 0.06);
-          color: #ffd76a;
-        }
-
-        .chv2-suggestion:hover {
-          filter: brightness(1.15);
-        }
-
-        .chv2-context {
-          display: flex;
-          flex-direction: column;
-          gap: 14px;
         }
 
         .chv2-context-rows {
           display: flex;
           flex-direction: column;
-          gap: 4px;
+          gap: 2px;
         }
 
         .chv2-context-row {
           display: flex;
           align-items: center;
           gap: 10px;
-          min-height: 36px;
-          padding: 6px 2px;
-          color: rgba(255, 255, 255, 0.6);
-          font-size: 14px;
+          min-height: 34px;
+          padding: 4px 0;
+          color: rgba(255, 255, 255, 0.55);
+          font-size: 13px;
         }
 
         .chv2-context-label {
@@ -679,10 +867,10 @@ export default function CoachHomeV2({
           text-align: right;
         }
 
-        .chv2-knowledge-sub {
-          margin: 0;
-          font-size: 13px;
-          color: rgba(255, 255, 255, 0.55);
+        .chv2-tools-section {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
         }
 
         .chv2-tools {
@@ -699,9 +887,9 @@ export default function CoachHomeV2({
           min-height: 44px;
           padding: 10px 16px;
           border-radius: 10px;
-          border: 1px solid rgba(255, 255, 255, 0.14);
-          background: rgba(255, 255, 255, 0.04);
-          color: rgba(255, 255, 255, 0.7);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          background: rgba(255, 255, 255, 0.03);
+          color: rgba(255, 255, 255, 0.65);
           font-size: 13px;
           font-weight: 600;
           font-family: inherit;
@@ -712,6 +900,18 @@ export default function CoachHomeV2({
         .chv2-tool:hover {
           border-color: rgba(0, 212, 255, 0.4);
           color: rgba(0, 212, 255, 0.9);
+        }
+
+        .chv2-pill:focus-visible,
+        .chv2-hero-bubble:focus-visible,
+        .chv2-composer:focus-visible,
+        .chv2-primary-cta:focus-visible,
+        .chv2-secondary-cta:focus-visible,
+        .chv2-lowhp-cta:focus-visible,
+        .chv2-text-link:focus-visible,
+        .chv2-tool:focus-visible {
+          outline: 2px solid rgba(0, 212, 255, 0.85);
+          outline-offset: 2px;
         }
       `}</style>
     </div>
