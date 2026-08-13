@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { ArrowRight, Calendar, Users, UserCheck, BarChart3 } from 'lucide-react'
+import { ArrowRight, Calendar, Users, UserCheck, BarChart3, ChevronDown } from 'lucide-react'
 import AIKnowledgeBar from '@/components/AIKnowledgeBar'
 import styles from './CoachWorkspace.module.css'
 
@@ -16,7 +16,7 @@ export default function CoachContextRail({
   return (
     <aside className={styles.rail} aria-label={copy.context}>
       {lastMatchLabel ? (
-        <section className={styles.contextCard}>
+        <section className={`${styles.contextCard} ${styles.matchCard}`}>
           <p className={styles.cardOverline}>{copy.lastMatch}</p>
           <p className={styles.cardTitle}>{lastMatchLabel}</p>
           <button type="button" className={styles.textLink} onClick={onOpenMatches}>
@@ -50,7 +50,7 @@ export default function CoachContextRail({
           return (
             <div key={row.key} className={styles.contextRow} {...(row.tourId ? { 'data-tour-id': row.tourId } : {})}>
               <Icon size={15} aria-hidden="true" />
-              <span>{row.label}</span>
+              <span className={styles.contextLabel}>{row.label}</span>
               <span className={styles.contextValue}>{row.value}</span>
             </div>
           )
@@ -70,12 +70,22 @@ export function CoachMobileContext({
 }) {
   return (
     <details className={`${styles.tools} ${styles.mobileContext}`}>
-      <summary className={styles.toolsSummary}>{copy.context}</summary>
-      <div className={styles.toolsBody} style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+      <summary className={styles.toolsSummary}>
+        <span className={styles.toolsLead}>
+          <span className={styles.toolsIcon} aria-hidden="true">
+            <Users size={16} />
+          </span>
+          <span className={styles.toolsCopy}>
+            <span className={styles.toolsTitle}>{copy.context}</span>
+          </span>
+        </span>
+        <ChevronDown className={styles.toolsChevron} size={16} aria-hidden="true" />
+      </summary>
+      <div className={styles.toolsPanel}>
         {lastMatchLabel ? (
           <div className={styles.contextRow}>
             <Calendar size={15} aria-hidden="true" />
-            <span>{copy.lastMatch}</span>
+            <span className={styles.contextLabel}>{copy.lastMatch}</span>
             <span className={styles.contextValue}>{lastMatchLabel}</span>
           </div>
         ) : null}
@@ -84,7 +94,7 @@ export function CoachMobileContext({
           return (
             <div key={row.key} className={styles.contextRow}>
               <Icon size={15} aria-hidden="true" />
-              <span>{row.label}</span>
+              <span className={styles.contextLabel}>{row.label}</span>
               <span className={styles.contextValue}>{row.value}</span>
             </div>
           )

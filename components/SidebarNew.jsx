@@ -65,9 +65,27 @@ export default function SidebarNew() {
   // statistiche, upload) restano vive nelle route esistenti e saranno ricollocate sotto Coach.
   // Toni campionati dalla tavola: Coach green, Rosa blue, Carte purple. Gold solo HP.
   const PILLAR_TONES = {
-    coach: { color: '#26d9ff', activeBg: 'rgba(38, 217, 255, 0.12)', activeBorder: '#26d9ff', idleIcon: 'rgba(38, 217, 255, 0.72)' },
-    rosa: { color: '#4ea1ff', activeBg: 'rgba(78, 161, 255, 0.12)', activeBorder: '#4ea1ff', idleIcon: 'rgba(78, 161, 255, 0.7)' },
-    carte: { color: '#a987ff', activeBg: 'rgba(169, 135, 255, 0.12)', activeBorder: '#a987ff', idleIcon: 'rgba(169, 135, 255, 0.7)' }
+    coach: {
+      color: '#28D7FF',
+      activeBg: 'linear-gradient(90deg, rgba(40,215,255,.15), rgba(40,215,255,.06))',
+      activeBorder: 'rgba(40,215,255,.32)',
+      accent: '#28D7FF',
+      idleIcon: 'rgba(40, 215, 255, 0.72)'
+    },
+    rosa: {
+      color: '#4FA2FF',
+      activeBg: 'linear-gradient(90deg, rgba(79,162,255,.15), rgba(79,162,255,.06))',
+      activeBorder: 'rgba(79,162,255,.32)',
+      accent: '#4FA2FF',
+      idleIcon: 'rgba(79, 162, 255, 0.7)'
+    },
+    carte: {
+      color: '#A78BFA',
+      activeBg: 'linear-gradient(90deg, rgba(167,139,250,.15), rgba(167,139,250,.06))',
+      activeBorder: 'rgba(167,139,250,.32)',
+      accent: '#A78BFA',
+      idleIcon: 'rgba(167, 139, 250, 0.7)'
+    }
   }
 
   const pillarItems = [
@@ -138,15 +156,18 @@ export default function SidebarNew() {
       display: 'flex',
       alignItems: 'center',
       gap: '12px',
-      padding: '10px 12px',
+      height: '48px',
+      padding: '0 12px',
       borderRadius: '10px',
       fontSize: '14px',
-      fontWeight: 600,
+      fontWeight: active ? 700 : 650,
       background: active ? tone.activeBg : 'transparent',
-      color: active ? tone.color : 'rgba(244, 246, 247, 0.72)',
-      border: '1px solid transparent',
-      borderLeft: `2px solid ${active ? tone.activeBorder : 'transparent'}`,
-      transition: 'background 0.2s ease, color 0.2s ease, border-color 0.2s ease',
+      color: active ? tone.color : '#B2C2CE',
+      border: `1px solid ${active ? tone.activeBorder : 'transparent'}`,
+      boxShadow: active ? 'inset 0 1px rgba(255,255,255,.03)' : 'none',
+      position: 'relative',
+      overflow: 'hidden',
+      transition: 'background 160ms ease, color 160ms ease, border-color 160ms ease',
       cursor: 'pointer',
       textDecoration: 'none'
     }
@@ -157,14 +178,14 @@ export default function SidebarNew() {
     const tone = PILLAR_TONES[item.tone] || PILLAR_TONES.coach
     e.currentTarget.style.background = tone.activeBg
     e.currentTarget.style.color = tone.color
-    e.currentTarget.style.borderLeftColor = tone.activeBorder
+    e.currentTarget.style.borderColor = tone.activeBorder
   }
 
   const handleNavMouseLeave = (e, item, active) => {
     if (active) return
     e.currentTarget.style.background = 'transparent'
-    e.currentTarget.style.color = 'rgba(244, 246, 247, 0.72)'
-    e.currentTarget.style.borderLeftColor = 'transparent'
+    e.currentTarget.style.color = '#B2C2CE'
+    e.currentTarget.style.borderColor = 'transparent'
   }
 
   const renderNavBadge = (item) => {
@@ -242,8 +263,8 @@ export default function SidebarNew() {
         `}
         style={{
           width: 196,
-          background: '#091521',
-          borderRight: '1px solid rgba(132, 181, 212, 0.16)',
+          background: '#07131E',
+          borderRight: '1px solid rgba(104,174,207,.14)',
         }}
       >
         <div className="p-3 border-b border-[rgba(255,255,255,0.06)] flex justify-center items-center relative" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.055)' }}>
@@ -292,13 +313,24 @@ export default function SidebarNew() {
                   key={item.href}
                   href={item.href}
                   onClick={() => setIsOpen(false)}
-                  style={{
-                    ...getNavItemStyle(item, active),
-                    minHeight: '48px'
-                  }}
+                  style={getNavItemStyle(item, active)}
                   onMouseEnter={(e) => handleNavMouseEnter(e, item, active)}
                   onMouseLeave={(e) => handleNavMouseLeave(e, item, active)}
                 >
+                  {active ? (
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        position: 'absolute',
+                        left: 0,
+                        top: 8,
+                        bottom: 8,
+                        width: 2,
+                        borderRadius: 1,
+                        background: tone.accent
+                      }}
+                    />
+                  ) : null}
                   <Icon
                     size={20}
                     style={{ color: active ? tone.color : tone.idleIcon, flexShrink: 0 }}
@@ -312,7 +344,7 @@ export default function SidebarNew() {
 
           {/* Account: HP + Profilo, visibili come nella reference. Altro: utility secondarie. */}
           <div style={{ marginTop: 'auto', paddingTop: '12px' }}>
-            <div style={{ height: '1px', background: 'rgba(255,255,255,0.07)', margin: '0 8px 10px' }} />
+            <div style={{ height: '1px', background: 'rgba(104,174,207,0.14)', margin: '0 4px 10px' }} />
             <button
               type="button"
               onClick={() => setAccountOpen((open) => !open)}
@@ -323,32 +355,36 @@ export default function SidebarNew() {
                 alignItems: 'center',
                 gap: 10,
                 width: '100%',
-                minHeight: 48,
+                minHeight: 52,
                 padding: '8px 10px',
-                border: 'none',
+                border: '1px solid rgba(104,174,207,0.16)',
                 borderRadius: 12,
-                background: accountOpen ? 'rgba(38, 217, 255, 0.08)' : 'transparent',
-                color: '#f7fafc',
+                background: accountOpen
+                  ? 'linear-gradient(180deg, #162C3A, #112331)'
+                  : 'linear-gradient(180deg, #112331, #0D1B27)',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,.05)',
+                color: '#F7FAFC',
                 cursor: 'pointer',
                 fontFamily: 'inherit'
               }}
             >
               <span style={{
-                width: 28,
-                height: 28,
+                width: 32,
+                height: 32,
                 borderRadius: '50%',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'rgba(38, 217, 255, 0.14)',
-                color: '#26d9ff',
+                background: 'rgba(40, 215, 255, 0.14)',
+                border: '1px solid rgba(40, 215, 255, 0.2)',
+                color: '#28D7FF',
                 flexShrink: 0
               }}>
                 <User size={14} />
               </span>
               <span style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
                 <span style={{ display: 'block', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{accountLabel}</span>
-                <span style={{ display: 'block', fontSize: 10, color: '#71879a' }}>Hero Coach</span>
+                <span style={{ display: 'block', fontSize: 10, color: '#718695' }}>Hero Coach</span>
               </span>
               {accountOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
@@ -567,8 +603,8 @@ export default function SidebarNew() {
             width: 64px;
             z-index: 35;
             padding: 12px 10px 16px;
-            background: #091521;
-            border-right: 1px solid rgba(132, 181, 212, 0.16);
+            background: #07131E;
+            border-right: 1px solid rgba(104, 174, 207, 0.14);
           }
         }
 

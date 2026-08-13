@@ -26,7 +26,7 @@ export default function CoachSuggestionCard({
       <span className={styles.suggestionIcon} aria-hidden="true">
         <Icon size={22} />
       </span>
-      <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <span className={styles.suggestionBody}>
         <h3 className={styles.suggestionTitle}>{title}</h3>
         <p className={styles.suggestionCopy}>{copy}</p>
       </span>

@@ -15,15 +15,15 @@ import {
 const TAB_TONES = {
   coach: {
     idleColor: 'rgba(247, 250, 252, 0.42)',
-    activeColor: '#26d9ff'
+    activeColor: '#28D7FF'
   },
   rosa: {
     idleColor: 'rgba(247, 250, 252, 0.42)',
-    activeColor: '#4ea1ff'
+    activeColor: '#4FA2FF'
   },
   carte: {
     idleColor: 'rgba(247, 250, 252, 0.42)',
-    activeColor: '#a987ff'
+    activeColor: '#A78BFA'
   }
 }
 
@@ -66,8 +66,8 @@ export default function BottomNavigation() {
         left: 0,
         right: 0,
         zIndex: 100,
-        background: '#07111b',
-        borderTop: '1px solid rgba(132, 181, 212, 0.16)',
+        background: 'rgba(5,13,23,.96)',
+        borderTop: '1px solid rgba(104,174,207,.12)',
         backdropFilter: 'blur(20px)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         display: 'none'
@@ -77,7 +77,7 @@ export default function BottomNavigation() {
         display: 'flex',
         justifyContent: 'space-around',
         alignItems: 'center',
-        height: '60px',
+        height: '64px',
         maxWidth: '500px',
         margin: '0 auto'
       }}>

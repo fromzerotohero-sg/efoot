@@ -11,7 +11,9 @@ import {
   Calendar,
   AlertCircle,
   Search,
-  ClipboardList
+  ClipboardList,
+  Wrench,
+  ChevronDown
 } from 'lucide-react'
 import CoachComposer from './CoachComposer'
 import CoachSuggestionCard from './CoachSuggestionCard'
@@ -52,6 +54,7 @@ const COPY = {
     seeMatches: 'Vedi partite',
     addStats: 'Aggiungi statistiche',
     tools: 'Strumenti Coach',
+    toolsMicro: 'Progressi, partite e Live Coach',
     toolsProgress: 'Progressi',
     toolsMatches: 'Partite',
     toolsLive: 'Live Coach',
@@ -112,6 +115,7 @@ const COPY = {
     seeMatches: 'See matches',
     addStats: 'Add game stats',
     tools: 'Coach tools',
+    toolsMicro: 'Progress, matches and Live Coach',
     toolsProgress: 'Progress',
     toolsMatches: 'Matches',
     toolsLive: 'Live Coach',
@@ -347,14 +351,25 @@ export default function CoachWorkspace({
           />
 
           <details className={styles.tools} data-tour-id="tour-dashboard-nav">
-            <summary className={styles.toolsSummary}>{copy.tools}</summary>
-            <div className={styles.toolsBody}>
+            <summary className={styles.toolsSummary}>
+              <span className={styles.toolsLead}>
+                <span className={styles.toolsIcon} aria-hidden="true">
+                  <Wrench size={16} />
+                </span>
+                <span className={styles.toolsCopy}>
+                  <span className={styles.toolsTitle}>{copy.tools}</span>
+                  <span className={styles.toolsMicro}>{copy.toolsMicro}</span>
+                </span>
+              </span>
+              <ChevronDown className={styles.toolsChevron} size={16} aria-hidden="true" />
+            </summary>
+            <div className={styles.toolsPanel}>
               <button type="button" className={styles.tool} onClick={onOpenProgress}>
-                <TrendingUp size={15} aria-hidden="true" />
+                <TrendingUp size={16} aria-hidden="true" />
                 {copy.toolsProgress}
               </button>
               <button type="button" className={styles.tool} onClick={onOpenMatches}>
-                <Calendar size={15} aria-hidden="true" />
+                <Calendar size={16} aria-hidden="true" />
                 {copy.toolsMatches}
               </button>
               <button
@@ -363,7 +378,7 @@ export default function CoachWorkspace({
                 onClick={onOpenLiveCoach}
                 data-tour-id="tour-dashboard-live-coach"
               >
-                <Radio size={15} aria-hidden="true" />
+                <Radio size={16} aria-hidden="true" />
                 {copy.toolsLive}
               </button>
               {toolsExtra}

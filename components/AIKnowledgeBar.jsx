@@ -324,8 +324,8 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
           >
             <defs>
               <linearGradient id="ai-knowledge-gauge-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#26d9ff" />
-                <stop offset="100%" stopColor="#35e38a" />
+                <stop offset="0%" stopColor="#28D7FF" />
+                <stop offset="100%" stopColor="#35DF8C" />
               </linearGradient>
             </defs>
             <circle
@@ -333,7 +333,7 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
               cy={center}
               r={gaugeRadius}
               fill="none"
-              stroke="rgba(255, 255, 255, 0.08)"
+              stroke="rgba(255, 255, 255, 0.07)"
               strokeWidth={compact ? 7 : 10}
             />
             <circle
@@ -361,7 +361,7 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
               gap: '2px'
             }}
           >
-            <span style={{ fontSize: compact ? '16px' : '26px', fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>
+            <span style={{ fontSize: compact ? '18px' : '26px', fontWeight: 800, color: '#F7FAFC', lineHeight: 1 }}>
               {gaugeProgress}%
             </span>
             {!compact ? (
