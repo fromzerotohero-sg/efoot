@@ -46,7 +46,7 @@ export default function AppLayoutShell({ children, showInstallPrompt = true, sho
           <main
             className="flex-1 overflow-y-auto"
             style={{
-              paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))'
+              paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))'
             }}
           >
             <PrelaunchGate>{children}</PrelaunchGate>

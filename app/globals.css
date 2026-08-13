@@ -72,10 +72,8 @@ body {
     Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* UX V2 reference: dark premium charcoal/navy, quasi piatto, niente viola invasivo */
-  background:
-    radial-gradient(circle at 15% 6%, rgba(0, 212, 255, 0.05), transparent 30%),
-    linear-gradient(160deg, #0b0f18 0%, #080b12 100%);
+  /* UX V2 shared shell: charcoal scuro, profondità minima, niente cyan dominante */
+  background: #0a1117;
   min-height: 100vh;
   color: var(--text-primary);
   position: relative;
@@ -89,7 +87,7 @@ body::before {
   content: '';
   position: fixed;
   inset: 0;
-  opacity: 0.1;
+  opacity: 0.045;
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
@@ -100,14 +98,12 @@ body::before {
   z-index: 0;
 }
 
-/* UX V2 reference: ambient minimo cyan/green, niente viola, niente streak diagonali */
+/* UX V2 shared shell: ambient quasi invisibile, nessun radial percepibile a colpo d'occhio */
 body::after {
   content: '';
   position: fixed;
   inset: 0;
-  background:
-    radial-gradient(circle at 12% 8%, rgba(0, 212, 255, 0.05), transparent 32%),
-    radial-gradient(circle at 88% 92%, rgba(52, 211, 153, 0.04), transparent 34%);
+  background: radial-gradient(circle at 80% 100%, rgba(48, 176, 96, 0.018), transparent 42%);
   pointer-events: none;
   z-index: 0;
 }

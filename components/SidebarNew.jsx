@@ -47,11 +47,11 @@ export default function SidebarNew() {
 
   // UX V2: navigazione primaria a 3 pilastri. Le vecchie sezioni (contromisure, match,
   // statistiche, upload) restano vive nelle route esistenti e saranno ricollocate sotto Coach.
-  // Toni reference: Coach cyan/green, Rosa blue, Carte purple. Gold riservato a HP/premium.
+  // Toni campionati dalla tavola: Coach green, Rosa blue, Carte purple. Gold solo HP.
   const PILLAR_TONES = {
-    coach: { color: '#34d399', activeBg: 'rgba(52, 211, 153, 0.12)', activeBorder: 'rgba(52, 211, 153, 0.35)', idleIcon: 'rgba(52, 211, 153, 0.7)' },
-    rosa: { color: '#60a5fa', activeBg: 'rgba(96, 165, 250, 0.12)', activeBorder: 'rgba(96, 165, 250, 0.35)', idleIcon: 'rgba(96, 165, 250, 0.7)' },
-    carte: { color: '#c084fc', activeBg: 'rgba(192, 132, 252, 0.12)', activeBorder: 'rgba(192, 132, 252, 0.35)', idleIcon: 'rgba(192, 132, 252, 0.7)' }
+    coach: { color: '#30b060', activeBg: 'rgba(48, 176, 96, 0.08)', activeBorder: 'transparent', idleIcon: 'rgba(48, 176, 96, 0.72)' },
+    rosa: { color: '#3b82f6', activeBg: 'rgba(59, 130, 246, 0.08)', activeBorder: 'transparent', idleIcon: 'rgba(59, 130, 246, 0.7)' },
+    carte: { color: '#8b5cf6', activeBg: 'rgba(139, 92, 246, 0.08)', activeBorder: 'transparent', idleIcon: 'rgba(139, 92, 246, 0.7)' }
   }
 
   const pillarItems = [
@@ -68,10 +68,13 @@ export default function SidebarNew() {
   // - Lingua → LanguageSwitch (componente reale)
   // - Guida → /guida
   // - Tornei → link esterno con redirect modal esistente
-  const utilityItems = [
-    { href: '/impostazioni-profilo', icon: User, label: 'Account' },
+  const accountItems = [
+    { href: '/gestione-profilo', icon: Wallet, label: 'HP', iconColor: '#c9a227' },
+    { href: '/impostazioni-profilo', icon: User, label: lang === 'en' ? 'Profile' : 'Profilo' }
+  ]
+
+  const otherItems = [
     { href: '/impostazioni-profilo', icon: Brain, label: lang === 'en' ? 'Hero Memory' : 'Memoria Hero' },
-    { href: '/gestione-profilo', icon: Wallet, label: 'HP', iconColor: '#fbbf24' },
     { href: '/guida', icon: BookOpen, label: t('guide') },
     {
       href: 'https://tornei.fromzerotohero.io/',
@@ -87,29 +90,29 @@ export default function SidebarNew() {
   const getUtilityStyle = (active) => ({
     display: 'flex',
     alignItems: 'center',
-    gap: '12px',
-    padding: '8px 14px',
+    gap: '10px',
+    padding: '7px 12px',
     borderRadius: '10px',
     fontSize: '13px',
     fontWeight: 500,
     fontFamily: 'inherit',
-    background: active ? 'rgba(0, 212, 255, 0.08)' : 'transparent',
-    color: active ? 'rgba(0, 212, 255, 0.85)' : 'rgba(255, 255, 255, 0.55)',
+    background: active ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
+    color: active ? 'rgba(244, 246, 247, 0.88)' : 'rgba(244, 246, 247, 0.5)',
     border: '1px solid transparent',
-    transition: 'all 0.2s ease',
+    transition: 'background 0.15s ease, color 0.15s ease',
     cursor: 'pointer',
     textDecoration: 'none',
     width: '100%'
   })
 
   const handleUtilityMouseEnter = (e) => {
-    e.currentTarget.style.background = 'rgba(0, 212, 255, 0.07)'
-    e.currentTarget.style.color = 'rgba(0, 212, 255, 0.9)'
+    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
+    e.currentTarget.style.color = 'rgba(244, 246, 247, 0.88)'
   }
 
   const handleUtilityMouseLeave = (e, active) => {
-    e.currentTarget.style.background = active ? 'rgba(0, 212, 255, 0.08)' : 'transparent'
-    e.currentTarget.style.color = active ? 'rgba(0, 212, 255, 0.85)' : 'rgba(255, 255, 255, 0.55)'
+    e.currentTarget.style.background = active ? 'rgba(255, 255, 255, 0.05)' : 'transparent'
+    e.currentTarget.style.color = active ? 'rgba(244, 246, 247, 0.88)' : 'rgba(244, 246, 247, 0.5)'
   }
 
   // Pilastri: stile minimale per tono (reference: bordi sottili, niente glow, niente text-shadow)
@@ -119,12 +122,12 @@ export default function SidebarNew() {
       display: 'flex',
       alignItems: 'center',
       gap: '12px',
-      padding: '12px 14px',
-      borderRadius: '12px',
-      fontSize: '15px',
-      fontWeight: 700,
+      padding: '10px 12px',
+      borderRadius: '10px',
+      fontSize: '14px',
+      fontWeight: 600,
       background: active ? tone.activeBg : 'transparent',
-      color: active ? tone.color : 'rgba(255, 255, 255, 0.68)',
+      color: active ? tone.color : 'rgba(244, 246, 247, 0.72)',
       border: `1px solid ${active ? tone.activeBorder : 'transparent'}`,
       transition: 'background 0.2s ease, color 0.2s ease, border-color 0.2s ease',
       cursor: 'pointer',
@@ -143,7 +146,7 @@ export default function SidebarNew() {
   const handleNavMouseLeave = (e, item, active) => {
     if (active) return
     e.currentTarget.style.background = 'transparent'
-    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.68)'
+    e.currentTarget.style.color = 'rgba(244, 246, 247, 0.72)'
     e.currentTarget.style.borderColor = 'transparent'
   }
 
@@ -163,18 +166,14 @@ export default function SidebarNew() {
             letterSpacing: '0.5px',
             textTransform: 'uppercase',
             lineHeight: 1.2,
-            color: isWow ? '#03101d' : (item.variant === 'gold' ? '#1f1300' : '#FFFFFF'),
+            color: isWow ? '#03101d' : (item.variant === 'gold' ? '#1f1300' : 'rgba(244,246,247,0.85)'),
             background: isWow
-              ? 'linear-gradient(135deg, #22d3ee 0%, #a78bfa 100%)'
+              ? 'rgba(48, 176, 96, 0.18)'
               : (item.variant === 'gold'
-                ? 'linear-gradient(135deg, #fef3c7 0%, #facc15 100%)'
-                : 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'),
-            border: isWow
-              ? '1px solid rgba(34, 211, 238, 0.55)'
-              : '1px solid rgba(255, 203, 5, 0.55)',
-            boxShadow: isWow
-              ? '0 0 10px rgba(34, 211, 238, 0.35), 0 0 18px rgba(168, 85, 247, 0.18)'
-              : '0 0 10px rgba(255, 203, 5, 0.30)'
+                ? 'rgba(201, 162, 39, 0.22)'
+                : 'rgba(48, 176, 96, 0.18)'),
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: 'none'
           }}
         >
           {item.badgeText}
@@ -196,10 +195,10 @@ export default function SidebarNew() {
           letterSpacing: '0.6px',
           textTransform: 'uppercase',
           lineHeight: 1.2,
-          color: '#FFFFFF',
-          background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-          border: '1px solid rgba(134, 239, 172, 0.55)',
-          boxShadow: '0 0 10px rgba(34, 197, 94, 0.35)'
+          color: 'rgba(244, 246, 247, 0.72)',
+          background: 'rgba(48, 176, 96, 0.16)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          boxShadow: 'none'
         }}
       >
         {lang === 'en' ? 'NEW' : 'NOVITÀ'}
@@ -220,50 +219,47 @@ export default function SidebarNew() {
       <aside
         className={`
           fixed top-0 left-0 h-screen w-64
-          bg-gradient-to-b from-[rgba(13,20,40,0.95)] to-[rgba(5,12,25,0.98)]
-          border-r border-[rgba(0,212,255,0.2)]
+          bg-gradient-to-b from-[rgba(9,16,22,0.98)] to-[rgba(7,12,18,0.98)]
+          border-r border-[rgba(255,255,255,0.06)]
           flex flex-col z-40 transition-transform duration-300 ease-in-out
-          shadow-[0_0_40px_rgba(0,161,166,0.15)]
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
           pb-20 lg:pb-0
         `}
         style={{
-          background: 'linear-gradient(180deg, #0c111d 0%, #090d16 100%)',
-          borderRight: '1px solid rgba(255, 255, 255, 0.06)',
+          background: '#0a1016',
+          borderRight: '1px solid rgba(255, 255, 255, 0.055)',
           backdropFilter: 'blur(20px)'
         }}
       >
-        <div className="p-4 border-b border-[rgba(0,212,255,0.15)] flex justify-center items-center relative overflow-hidden" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
-          <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-[rgba(0,212,255,0.5)] to-transparent" />
+        <div className="p-3 border-b border-[rgba(255,255,255,0.06)] flex justify-center items-center relative" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.055)' }}>
           <button
             type="button"
-            className="lg:hidden absolute right-3 top-3 flex items-center justify-center w-9 h-9 rounded-lg border border-[rgba(0,212,255,0.35)] bg-[rgba(0,212,255,0.08)] text-[#00d4ff]"
+            className="lg:hidden absolute right-3 top-3 flex items-center justify-center w-8 h-8 rounded-lg border border-[rgba(255,255,255,0.08)] bg-transparent text-[rgba(244,246,247,0.65)]"
             onClick={() => setIsOpen(false)}
             aria-label={t('toggleMenu')}
             title={t('toggleMenu')}
           >
-            <X size={18} />
+            <X size={16} />
           </button>
           <button
             type="button"
-            className="hidden lg:flex absolute right-3 top-1/2 -translate-y-1/2 items-center justify-center w-9 h-9 rounded-lg border border-[rgba(0,212,255,0.35)] bg-[rgba(0,212,255,0.08)] text-[#00d4ff] hover:bg-[rgba(0,212,255,0.16)]"
+            className="hidden lg:flex absolute right-3 top-1/2 -translate-y-1/2 items-center justify-center w-8 h-8 rounded-lg border border-[rgba(255,255,255,0.08)] bg-transparent text-[rgba(244,246,247,0.65)] hover:bg-[rgba(255,255,255,0.05)]"
             onClick={() => setIsOpen(false)}
             aria-label={t('toggleMenu')}
             title={t('toggleMenu')}
           >
-            <X size={18} />
+            <X size={16} />
           </button>
           <Image
             src="/logo.png"
             alt={t('appName')}
-            width={240}
-            height={80}
+            width={148}
+            height={48}
             style={{
-              width: '100%',
-              height: 'auto',
-              maxWidth: '220px',
-              objectFit: 'contain',
-              filter: 'drop-shadow(0 0 10px rgba(0, 212, 255, 0.3))'
+              width: 'auto',
+              height: '40px',
+              maxWidth: '148px',
+              objectFit: 'contain'
             }}
             priority
           />
@@ -299,37 +295,58 @@ export default function SidebarNew() {
             })}
           </div>
 
-          {/* Utility / account area: separata e visivamente secondaria */}
-          <div style={{ marginTop: 'auto', paddingTop: '20px' }}>
+          {/* Account: HP + Profilo, visibili come nella reference. Altro: utility secondarie. */}
+          <div style={{ marginTop: 'auto', paddingTop: '16px' }}>
             <div
               style={{
                 height: '1px',
-                background: 'linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.3), transparent)',
-                margin: '0 0 14px'
+                background: 'rgba(255, 255, 255, 0.06)',
+                margin: '0 8px 12px'
               }}
             />
+
+            <div className="space-y-0.5" style={{ marginBottom: '10px' }}>
+              {accountItems.map((item) => {
+                const Icon = item.icon
+                const active = isActive(item.href)
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    onClick={() => setIsOpen(false)}
+                    style={{ ...getUtilityStyle(active), fontWeight: 600, color: active ? 'rgba(244, 246, 247, 0.92)' : 'rgba(244, 246, 247, 0.7)' }}
+                    onMouseEnter={handleUtilityMouseEnter}
+                    onMouseLeave={(e) => handleUtilityMouseLeave(e, active)}
+                  >
+                    <Icon size={16} style={{ flexShrink: 0, ...(item.iconColor ? { color: item.iconColor } : {}) }} />
+                    <span style={{ flex: 1, minWidth: 0 }}>{item.label}</span>
+                  </Link>
+                )
+              })}
+            </div>
+
             <div
               style={{
-                padding: '0 12px 7px',
+                padding: '4px 12px 6px',
                 fontSize: '10px',
-                fontWeight: 900,
-                letterSpacing: '1.5px',
-                color: 'rgba(255, 255, 255, 0.35)',
+                fontWeight: 700,
+                letterSpacing: '0.14em',
+                color: 'rgba(244, 246, 247, 0.32)',
                 textTransform: 'uppercase'
               }}
             >
-              Utility
+              {lang === 'en' ? 'More' : 'Altro'}
             </div>
 
-            <div className="space-y-1">
-              {utilityItems.map((item) => {
+            <div className="space-y-0.5">
+              {otherItems.map((item) => {
                 if (item.type === 'tour') {
                   return <SidebarGuideTour key="tour" onClick={() => setIsOpen(false)} />
                 }
 
                 if (item.type === 'language') {
                   return (
-                    <div key="language" style={{ padding: '6px 14px' }}>
+                    <div key="language" style={{ padding: '6px 12px' }}>
                       <LanguageSwitch />
                     </div>
                   )
@@ -339,7 +356,7 @@ export default function SidebarNew() {
                 const active = item.shortcut !== 'tornei' && isActive(item.href)
                 const utilityContent = (
                   <>
-                    <Icon size={16} style={{ flexShrink: 0, opacity: 0.85, ...(item.iconColor ? { color: item.iconColor } : {}) }} />
+                    <Icon size={15} style={{ flexShrink: 0, opacity: 0.8, ...(item.iconColor ? { color: item.iconColor } : {}) }} />
                     <span style={{ flex: 1, minWidth: 0 }}>{item.label}</span>
                     {renderNavBadge(item)}
                   </>
@@ -386,32 +403,30 @@ export default function SidebarNew() {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px',
-                padding: '10px 14px',
+                gap: '10px',
+                padding: '8px 12px',
                 borderRadius: '10px',
                 fontSize: '13px',
                 fontWeight: 500,
-                background: 'rgba(255, 80, 80, 0.1)',
-                color: 'rgba(255, 107, 107, 0.85)',
-                border: '1px solid rgba(255, 80, 80, 0.25)',
+                background: 'transparent',
+                color: 'rgba(255, 130, 130, 0.75)',
+                border: '1px solid transparent',
                 transition: 'all 0.2s ease',
                 cursor: 'pointer',
                 textDecoration: 'none',
                 width: '100%',
-                marginTop: '10px'
+                marginTop: '6px'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 80, 80, 0.2)'
-                e.currentTarget.style.borderColor = 'rgba(255, 80, 80, 0.5)'
+                e.currentTarget.style.background = 'rgba(255, 80, 80, 0.08)'
                 e.currentTarget.style.color = '#ff8585'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 80, 80, 0.1)'
-                e.currentTarget.style.borderColor = 'rgba(255, 80, 80, 0.25)'
-                e.currentTarget.style.color = 'rgba(255, 107, 107, 0.85)'
+                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.color = 'rgba(255, 130, 130, 0.75)'
               }}
             >
-              <LogOut size={16} />
+              <LogOut size={15} />
               <span>{t('logout')}</span>
             </button>
 
@@ -465,9 +480,9 @@ export default function SidebarNew() {
             height: '44px',
             borderRadius: '12px',
             flexShrink: 0,
-            background: 'rgba(0, 212, 255, 0.06)',
-            border: '1px solid rgba(0, 212, 255, 0.25)',
-            color: 'rgba(0, 212, 255, 0.8)',
+            background: 'rgba(255, 255, 255, 0.04)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            color: 'rgba(244, 246, 247, 0.7)',
             cursor: 'pointer'
           }}
         >
@@ -531,8 +546,8 @@ export default function SidebarNew() {
             width: 64px;
             z-index: 35;
             padding: 12px 10px 16px;
-            background: linear-gradient(180deg, #0c111d, #090d16);
-            border-right: 1px solid rgba(255, 255, 255, 0.06);
+            background: '#0a1016';
+            border-right: 1px solid rgba(255, 255, 255, 0.055);
           }
         }
 

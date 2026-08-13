@@ -14,22 +14,16 @@ import {
 // UX V2 reference: Coach cyan/green, Rosa blue, Carte purple. Gold riservato a HP/premium.
 const TAB_TONES = {
   coach: {
-    idleColor: 'rgba(52, 211, 153, 0.6)',
-    activeColor: '#34d399',
-    activeBg: 'rgba(52, 211, 153, 0.12)',
-    activeBorder: 'rgba(52, 211, 153, 0.3)'
+    idleColor: 'rgba(244, 246, 247, 0.42)',
+    activeColor: '#30b060'
   },
   rosa: {
-    idleColor: 'rgba(96, 165, 250, 0.6)',
-    activeColor: '#60a5fa',
-    activeBg: 'rgba(96, 165, 250, 0.12)',
-    activeBorder: 'rgba(96, 165, 250, 0.3)'
+    idleColor: 'rgba(244, 246, 247, 0.42)',
+    activeColor: '#3b82f6'
   },
   carte: {
-    idleColor: 'rgba(192, 132, 252, 0.6)',
-    activeColor: '#c084fc',
-    activeBg: 'rgba(192, 132, 252, 0.12)',
-    activeBorder: 'rgba(192, 132, 252, 0.3)'
+    idleColor: 'rgba(244, 246, 247, 0.42)',
+    activeColor: '#8b5cf6'
   }
 }
 
@@ -72,8 +66,8 @@ export default function BottomNavigation() {
         left: 0,
         right: 0,
         zIndex: 100,
-        background: '#0b0f18',
-        borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+        background: '#091016',
+        borderTop: '1px solid rgba(255, 255, 255, 0.055)',
         backdropFilter: 'blur(20px)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         display: 'none'
@@ -83,7 +77,7 @@ export default function BottomNavigation() {
         display: 'flex',
         justifyContent: 'space-around',
         alignItems: 'center',
-        height: '64px',
+        height: '56px',
         maxWidth: '500px',
         margin: '0 auto'
       }}>
@@ -102,22 +96,22 @@ export default function BottomNavigation() {
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '4px',
-              padding: '8px 14px',
-              borderRadius: '12px',
-              transition: 'all 0.2s',
-              background: active ? tone.activeBg : 'transparent',
+              gap: '3px',
+              padding: '6px 10px',
+              borderRadius: '0',
+              transition: 'color 0.15s',
+              background: 'transparent',
               color: active ? tone.activeColor : tone.idleColor,
-              border: `1px solid ${active ? tone.activeBorder : 'transparent'}`,
-              minWidth: '60px'
+              border: 'none',
+              minWidth: '56px'
             }}>
               <Icon
-                size={22}
-                strokeWidth={active ? 2.5 : 2}
+                size={20}
+                strokeWidth={active ? 2.35 : 1.8}
               />
               <span style={{
-                fontSize: '11px',
-                fontWeight: active ? 600 : 500,
+                fontSize: '10px',
+                fontWeight: active ? 700 : 500,
                 whiteSpace: 'nowrap'
               }}>
                 {item.label}

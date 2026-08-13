@@ -470,8 +470,8 @@ function HomePage() {
     return (
       <div className="container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
-          <RefreshCw size={40} color="var(--primary-cyan)" style={{ animation: 'spin 1s linear infinite', marginBottom: '16px' }} />
-          <p style={{ fontSize: '16px', color: 'rgba(0, 212, 255, 0.7)' }}>{t('loading')}</p>
+          <RefreshCw size={40} color="#30b060" style={{ animation: 'spin 1s linear infinite', marginBottom: '16px' }} />
+          <p style={{ fontSize: '16px', color: 'rgba(244, 246, 247, 0.55)' }}>{t('loading')}</p>
         </div>
       </div>
     )
@@ -483,7 +483,7 @@ function HomePage() {
         <div className="neon-card" style={{ maxWidth: '480px', textAlign: 'center', padding: '32px' }}>
           <AlertCircle size={40} color="var(--primary-orange)" style={{ marginBottom: '16px' }} />
           <h2 style={{ marginBottom: '12px', fontSize: '20px', fontWeight: 600, color: '#FFFFFF' }}>{t('error')}</h2>
-          <p style={{ marginBottom: '24px', color: 'rgba(0, 212, 255, 0.7)' }}>{error}</p>
+          <p style={{ marginBottom: '24px', color: 'rgba(244, 246, 247, 0.6)' }}>{error}</p>
           <button onClick={() => setRetryTrigger(t => t + 1)} className="btn primary">
             {t('retry')}
           </button>
@@ -493,7 +493,7 @@ function HomePage() {
   }
 
   return (
-    <main data-tour-id="tour-dashboard-intro" className="p-6 max-w-7xl mx-auto">
+    <main data-tour-id="tour-dashboard-intro" className="coach-home-page p-6 max-w-7xl mx-auto">
       <Suspense fallback={null}>
         <OpenCoachListener
           onOpenCoach={() => setShowCoachFeedback(true)}

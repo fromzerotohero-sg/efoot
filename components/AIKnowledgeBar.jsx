@@ -322,8 +322,8 @@ export default function AIKnowledgeBar({ variant = 'card' } = {}) {
           >
             <defs>
               <linearGradient id="ai-knowledge-gauge-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#34d399" />
-                <stop offset="100%" stopColor="#00d4ff" />
+                <stop offset="0%" stopColor="#30b060" />
+                <stop offset="100%" stopColor="#2fbf6a" />
               </linearGradient>
             </defs>
             <circle

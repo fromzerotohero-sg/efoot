@@ -510,6 +510,8 @@ export default function AssistantChat({
     // In modalità page, non mostrare il bottone fluttuante
     if (mode === 'page') return null
     if (isBlockedByCoachFeedback) return null
+    // Home Coach: Hero e il composer sono già il prodotto. Il floating non deve coprirli.
+    if (pathname === '/') return null
     
     return (
       <>
