@@ -6,23 +6,18 @@ import CoachSuggestionArt from './CoachSuggestionArt'
 import styles from './CoachWorkspace.module.css'
 
 const INTENT_CLASS = {
-  rosa: styles.intentRosa,
+  stats: styles.intentStats,
   match: styles.intentMatch,
   tactics: styles.intentTactics
 }
 
-export default function CoachSuggestionCard({
-  title,
-  copy,
-  micro,
-  intent = 'rosa',
-  onClick
-}) {
+export default function CoachSuggestionCard({ title, copy, micro, intent = 'stats', onClick }) {
   return (
     <button
       type="button"
-      className={`${styles.suggestion} ${INTENT_CLASS[intent] || styles.intentRosa}`}
+      className={`${styles.suggestion} ${INTENT_CLASS[intent] || styles.intentStats}`}
       onClick={onClick}
+      data-intent={intent}
     >
       <span className={styles.suggestionArt} aria-hidden="true">
         <CoachSuggestionArt intent={intent} />
