@@ -8,9 +8,9 @@ import { useGameAnalysisModalNav, CLOSE_GAME_ANALYSIS_MODAL_EVENT } from '@/comp
 import { MessageSquare, Users, Sparkles } from 'lucide-react'
 
 const TONES = {
-  coach: { active: '#039FBD', idle: '#70757A', bg: 'rgba(3,159,189,.09)' },
-  rosa: { active: '#2F7BE5', idle: '#70757A', bg: 'rgba(47,123,229,.08)' },
-  carte: { active: '#8A63CF', idle: '#70757A', bg: 'rgba(138,99,207,.08)' }
+  coach: { active: '#007C96', idle: '#6B7075', bg: 'rgba(0,124,150,.09)' },
+  rosa: { active: '#2764BA', idle: '#6B7075', bg: 'rgba(39,100,186,.08)' },
+  carte: { active: '#7E55C7', idle: '#6B7075', bg: 'rgba(126,85,199,.08)' }
 }
 
 export default function BottomNavigation() {
