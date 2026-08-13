@@ -30,7 +30,7 @@ Analytics (GA `G-X69T3QE3GG`, Clarity `wylmfczjap`) si caricano in production; s
 
 | Path | Ruolo |
 |------|--------|
-| `/` | Home/dashboard attuale (diventerà Coach Home in S2) |
+| `/` | Coach Home (S2): `components/coach-v2/CoachWorkspace.jsx` |
 | `/gestione-formazione` | Rosa: re-export di `nuova-rosa-lab` |
 | `/card-advisor-lab` | Carte |
 | `/assistant` | Chat a pagina intera (popup globale resta) |

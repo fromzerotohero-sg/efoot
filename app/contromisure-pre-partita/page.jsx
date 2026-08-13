@@ -431,11 +431,10 @@ export default function CountermeasuresPreMatchPage() {
   }
 
   return (
-    <main className="counter-page" data-tour-id="tour-counter-intro" style={{ 
-      minHeight: '100vh', 
+    <main className="counter-page ux-v2-light-tool" data-tour-id="tour-counter-intro" style={{ 
+      minHeight: '100%', 
       padding: 'clamp(16px, 4vw, 24px)',
-      paddingTop: '80px',
-      color: '#fff'
+      color: '#1d1d1f'
     }}>
       {/* Header pagina: non fixed, così non collide con la top nav mobile. */}
       <div
@@ -448,11 +447,10 @@ export default function CountermeasuresPreMatchPage() {
           gap: '12px',
           marginBottom: '18px',
           padding: '10px 12px',
-          background: 'linear-gradient(135deg, rgba(5, 10, 24, 0.92), rgba(8, 18, 34, 0.86))',
-          backdropFilter: 'saturate(180%) blur(12px)',
-          border: '1px solid rgba(0, 212, 255, 0.18)',
+          background: '#ffffff',
+          border: '1px solid rgba(0, 0, 0, 0.08)',
           borderRadius: '18px',
-          boxShadow: '0 14px 36px rgba(0, 0, 0, 0.22)',
+          boxShadow: '0 14px 36px rgba(29, 29, 31, 0.07)',
           boxSizing: 'border-box'
         }}
       >
@@ -464,7 +462,7 @@ export default function CountermeasuresPreMatchPage() {
             <ArrowLeft size={18} />
             <span>{t('back')}</span>
           </button>
-          <h1 className="neon-text" style={{ fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 700, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <h1 style={{ fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 800, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: '#1d1d1f' }}>
             {t('countermeasuresLive')}
           </h1>
         </div>
@@ -726,15 +724,15 @@ export default function CountermeasuresPreMatchPage() {
               <Sparkles size={14} />
               {t('liveCoachPremiumBadge')}
             </div>
-            <h2 style={{ margin: 0, fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: 800, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <h2 style={{ margin: 0, fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: 800, color: '#1d1d1f', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
               <Radio size={20} color="#FFD76A" />
               {t('liveCoachDashboardTitle')}
             </h2>
-            <p style={{ margin: '10px 0 0', maxWidth: '780px', color: 'rgba(255,255,255,0.76)', lineHeight: 1.65, fontSize: 'clamp(13px, 3vw, 14px)' }}>
+            <p style={{ margin: '10px 0 0', maxWidth: '780px', color: '#6b6b6b', lineHeight: 1.65, fontSize: 'clamp(13px, 3vw, 14px)' }}>
               {t('liveCoachDashboardSubtitle')}
             </p>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '14px' }}>
-              <span style={{ padding: '8px 12px', borderRadius: '999px', background: 'rgba(255,255,255,0.05)', color: '#FFFFFF', fontSize: '12px', fontWeight: 700 }}>
+              <span style={{ padding: '8px 12px', borderRadius: '999px', background: '#efece6', color: '#1d1d1f', fontSize: '12px', fontWeight: 700 }}>
                 {t('liveCoachHpHint')}
               </span>
               <span style={{ padding: '8px 12px', borderRadius: '999px', background: 'rgba(0,212,255,0.08)', color: 'var(--neon-cyan)', fontSize: '12px', fontWeight: 700 }}>
@@ -758,7 +756,7 @@ export default function CountermeasuresPreMatchPage() {
               borderRadius: '18px',
               border: '1px solid rgba(255,215,100,0.30)',
               background: 'linear-gradient(135deg, rgba(255,215,100,0.16), rgba(0,212,255,0.12))',
-              color: '#FFFFFF',
+              color: '#1d1d1f',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -776,7 +774,7 @@ export default function CountermeasuresPreMatchPage() {
       {/* Contromisure Generate */}
       {countermeasures && (
         <>
-          <p style={{ fontSize: 'clamp(13px, 2.5vw, 14px)', color: 'rgba(255,255,255,0.7)', marginBottom: '20px', marginTop: 0 }}>
+          <p style={{ fontSize: 'clamp(13px, 2.5vw, 14px)', color: '#6b6b6b', marginBottom: '20px', marginTop: 0 }}>
             {t('countermeasuresPreMatchContext')}
           </p>
           <div
@@ -1128,7 +1126,7 @@ export default function CountermeasuresPreMatchPage() {
                         <div style={{ fontWeight: 700, color: key === 'match_key' ? 'var(--neon-orange)' : 'var(--neon-blue)', marginBottom: '6px', fontSize: 'clamp(13px, 3vw, 14px)' }}>
                           {label}
                         </div>
-                        <div style={{ fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: 1.6, color: 'rgba(255,255,255,0.9)' }}>
+                        <div style={{ fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: 1.6, color: '#1d1d1f' }}>
                           {text}
                         </div>
                       </div>
@@ -1201,7 +1199,7 @@ export default function CountermeasuresPreMatchPage() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
-                color: '#fff'
+                color: '#1d1d1f'
               }}
             >
               <Trophy size={22} style={{ color: 'var(--neon-orange)', flexShrink: 0 }} aria-hidden />
@@ -1217,7 +1215,7 @@ export default function CountermeasuresPreMatchPage() {
                 border: '1px solid rgba(0, 212, 255, 0.15)'
               }}
             >
-              <p style={{ margin: '0 0 12px 0', fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: 1.65, color: 'rgba(255,255,255,0.88)' }}>
+              <p style={{ margin: '0 0 12px 0', fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: 1.65, color: '#1d1d1f' }}>
                 {t('countermeasuresPostMatchPhotosIntro')}
               </p>
               <Link
@@ -1246,7 +1244,7 @@ export default function CountermeasuresPreMatchPage() {
                 border: '1px solid rgba(251, 191, 36, 0.2)'
               }}
             >
-              <p style={{ margin: '0 0 12px 0', fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: 1.65, color: 'rgba(255,255,255,0.88)' }}>
+              <p style={{ margin: '0 0 12px 0', fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: 1.65, color: '#1d1d1f' }}>
                 {t('countermeasuresPostMatchPalestraIntro')}
               </p>
               <button
@@ -1296,11 +1294,7 @@ export default function CountermeasuresPreMatchPage() {
 
       <style jsx>{`
         :global(body:has(.counter-page)) {
-          background:
-            radial-gradient(circle at 16% 8%, rgba(0, 212, 255, 0.22), transparent 28%),
-            radial-gradient(circle at 86% 14%, rgba(124, 58, 237, 0.22), transparent 30%),
-            radial-gradient(circle at 48% 96%, rgba(251, 191, 36, 0.13), transparent 32%),
-            linear-gradient(135deg, #020510 0%, #061226 40%, #030712 100%) !important;
+          background: #F9F6F1 !important;
         }
 
         :global(body:has(.counter-page)::before),
@@ -1313,19 +1307,11 @@ export default function CountermeasuresPreMatchPage() {
           margin: 0 auto;
           position: relative;
           isolation: isolate;
+          color: #1d1d1f;
         }
 
         .counter-page::before {
-          content: '';
-          position: fixed;
-          inset: 0;
-          pointer-events: none;
-          z-index: -1;
-          background:
-            linear-gradient(115deg, transparent 0 16%, rgba(0, 212, 255, 0.08) 16.3% 16.7%, transparent 17% 42%, rgba(124, 58, 237, 0.08) 42.2% 42.6%, transparent 43%),
-            radial-gradient(circle at 12% 8%, rgba(0, 212, 255, 0.20), transparent 30%),
-            radial-gradient(circle at 86% 18%, rgba(168, 85, 247, 0.20), transparent 28%),
-            radial-gradient(circle at 50% 100%, rgba(52, 211, 153, 0.11), transparent 34%);
+          display: none;
         }
 
         .counter-page::after {
@@ -1396,17 +1382,17 @@ export default function CountermeasuresPreMatchPage() {
           flex-shrink: 0;
           border: 1px solid rgba(0, 212, 255, 0.28);
           border-radius: 14px;
-          color: #fff;
-          background: rgba(0, 212, 255, 0.08);
-          box-shadow: 0 0 18px rgba(0, 212, 255, 0.12);
+          color: #1d1d1f;
+          background: #efece6;
+          box-shadow: none;
           font-size: 13px;
-          font-weight: 900;
+          font-weight: 800;
           cursor: pointer;
         }
 
         .counter-back-button:hover {
-          border-color: rgba(0, 212, 255, 0.48);
-          background: rgba(0, 212, 255, 0.14);
+          border-color: rgba(0, 168, 200, 0.35);
+          background: #ffffff;
         }
 
         @media (max-width: 640px) {
@@ -1497,16 +1483,16 @@ export default function CountermeasuresPreMatchPage() {
 
         .counter-upload-head h2 {
           margin: 0;
-          color: #fff;
+          color: #1d1d1f;
           font-size: clamp(24px, 5.5vw, 34px);
           line-height: 1.03;
-          font-weight: 950;
+          font-weight: 800;
         }
 
         .counter-upload-head p {
           max-width: 68ch;
           margin: 10px 0 0;
-          color: rgba(255, 255, 255, 0.72);
+          color: #6b6b6b;
           font-size: 14px;
           line-height: 1.6;
         }
@@ -1582,9 +1568,9 @@ export default function CountermeasuresPreMatchPage() {
         }
 
         .counter-secondary-cta {
-          border: 1px solid rgba(255, 255, 255, 0.14);
-          color: #fff;
-          background: rgba(255, 255, 255, 0.07);
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          color: #1d1d1f;
+          background: #efece6;
         }
 
         .counter-primary-cta:hover,
@@ -1660,14 +1646,14 @@ export default function CountermeasuresPreMatchPage() {
 
         .counter-processing-copy strong {
           display: block;
-          color: #fff;
+          color: #1d1d1f;
           font-size: clamp(18px, 4vw, 24px);
           line-height: 1.12;
         }
 
         .counter-processing-copy p {
           margin: 8px 0 0;
-          color: rgba(255, 255, 255, 0.72);
+          color: #6b6b6b;
           line-height: 1.55;
           font-size: 14px;
         }

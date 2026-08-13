@@ -31,7 +31,7 @@ Coach (Home) · Rosa · Carte
 Utility: Account, Memoria Hero, HP/Wallet, Daily reward, lingua, guida, tornei
 ```
 
-Oggi la nav reale è ancora più densa (dashboard, contromisure, partite, stat, rosa, carte). UX V2 sposta gli strumenti contestuali sotto Coach senza spezzare API/route.
+Oggi la nav primaria è Coach · Rosa · Carte. Gli strumenti (partite, progressi, contromisure, Live Coach) restano sotto Coach.
 
 ## Contratti da non rompere
 

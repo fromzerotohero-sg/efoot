@@ -1497,3 +1497,50 @@ body > * {
 @keyframes brandOrbit {
   to { transform: rotate(360deg); }
 }
+
+/* UX V2 — Coach tool pages on MetalGate light shell */
+.ux-v2-light-tool {
+  color: #1d1d1f;
+}
+
+.ux-v2-light-tool .neon-card,
+.ux-v2-light-tool .neon-panel {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 14px 36px rgba(29, 29, 31, 0.07), inset 0 1px rgba(255, 255, 255, 0.9);
+  color: #1d1d1f;
+}
+
+.ux-v2-light-tool .neon-card::before {
+  display: none;
+}
+
+.ux-v2-light-tool .neon-card:hover {
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 18px 44px rgba(29, 29, 31, 0.1);
+  transform: translateY(-2px);
+}
+
+.ux-v2-light-tool .neon-button {
+  background: #efece6;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: #1d1d1f;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.ux-v2-light-tool .neon-button:hover {
+  background: #ffffff;
+  border-color: rgba(0, 168, 200, 0.35);
+  box-shadow: none;
+  transform: translateY(-1px);
+  text-shadow: none;
+}
+
+.ux-v2-light-tool .neon-text,
+.ux-v2-light-tool .neon-text-gold,
+.ux-v2-light-tool .text-glow {
+  color: #1d1d1f;
+  text-shadow: none;
+}
+

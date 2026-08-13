@@ -10,7 +10,7 @@ Prodotto: coach tattico per eFootball. Non è un manager di calciatori reali: le
 2. Login con MetalGate (il bottone su `/login` ti porta lì)
 3. Se vedi `/access`, serve il codice di pre-lancio
 
-Lingua: IT/EN nello switch in app.
+Lingua: selettore **IT | EN | ES** in TopBar (e drawer). Le pagine interne senza copy ES cadono sull’inglese.
 
 ## Cosa fare per prima
 

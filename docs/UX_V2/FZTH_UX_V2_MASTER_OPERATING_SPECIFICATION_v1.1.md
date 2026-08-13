@@ -942,33 +942,35 @@ Esito: PASS | PASS CON WARNINGS | FIX REQUIRED | BLOCKED
 
 # 26. Roadmap implementativa raccomandata
 
-| Slice | Obiettivo | Cosa può toccare | Cosa NON deve toccare |
+Stato live 13 ago 2026 sera (`ux-redesign` `2e5e77a`): S0–S2 fatti. Prossima slice presentation: **S10 Coach tools** (partite / progressi / contromisure), poi S7 Rosa, poi S8 Carte. S3–S5 restano fuori finché owner non le apre.
 
-| --- | --- | --- | --- |
+| Slice | Obiettivo | Cosa può toccare | Cosa NON deve toccare | Stato |
 
-| S0 — Safety/Staging | Branch preview, analytics/install staging off, rollback guard | layout env gating, staging badge, branch config | DB, auth, wallet, RAG |
+| --- | --- | --- | --- | --- |
 
-| S1 — Shell | Nav 3 pilastri + account utilities | AppLayoutShell, Sidebar/BottomNav/TopBar adapters | core pages/API |
+| S0 — Safety/Staging | Branch preview, analytics/install staging off, rollback guard | layout env gating, staging badge, branch config | DB, auth, wallet, RAG | fatto |
 
-| S2 — Coach Home | Home semplice + Next Action façade | app/page, wrapper components, existing state APIs | task backend semantics, AI prompt |
+| S1 — Shell | Nav 3 pilastri + account utilities | AppLayoutShell, Sidebar/BottomNav/TopBar adapters | core pages/API | fatto |
 
-| S3 — Conversation façade | Hero unica visualmente, routing Palestra/Chat | new wrapper/orchestrator, existing Assistant/Palestra components | merge backend endpoints |
+| S2 — Coach Home | Home semplice + Next Action façade | app/page, wrapper components, existing state APIs | task backend semantics, AI prompt | fatto |
 
-| S4 — Memory Context | Hero ricorda feedback oltre cache 6h | assistant context builder/diagnostic refresh con test | RAG knowledge corpus, schema memoria |
+| S3 — Conversation façade | Hero unica visualmente, routing Palestra/Chat | new wrapper/orchestrator, existing Assistant/Palestra components | merge backend endpoints | non aperto |
 
-| S5 — Memory Consent | Card “Vuoi che lo ricordi?” | structured UI + existing save contracts | economia HP senza decisione owner |
+| S4 — Memory Context | Hero ricorda feedback oltre cache 6h | assistant context builder/diagnostic refresh con test | RAG knowledge corpus, schema memoria | non aperto |
 
-| S6 — Onboarding | Setup reale rosa+coach | onboarding facade + existing picker flows | deep roster refactor |
+| S5 — Memory Consent | Card “Vuoi che lo ricordi?” | structured UI + existing save contracts | economia HP senza decisione owner | non aperto |
 
-| S7 — Rosa UX | Progressive disclosure | nuova-rosa-lab presentation/component extraction controllata | slot semantics/catalog APIs |
+| S6 — Onboarding | Setup reale rosa+coach | onboarding facade + existing picker flows | deep roster refactor | parziale (Home) |
 
-| S8 — Carte UX | Semplifica Card Advisor | Card Advisor page presentation | evaluation/deep backend |
+| S7 — Rosa UX | Progressive disclosure | nuova-rosa-lab presentation/component extraction controllata | slot semantics/catalog APIs | dopo S10 |
 
-| S9 — Utilities | Account/Memory/HP/Daily reward | profile/wallet UI adapters | MetalGate wallet logic |
+| S8 — Carte UX | Semplifica Card Advisor | Card Advisor page presentation | evaluation/deep backend | dopo S7 |
 
-| S10 — Coach tools | Stats, matches, counters, live, progress as contextual tools | navigation/orchestrator | engine rewrite |
+| S9 — Utilities | Account/Memory/HP/Daily reward | profile/wallet UI adapters | MetalGate wallet logic | dopo |
 
-| S11 — Regression/Rollout | E2E, mobile, PWA, rollout | bugfix scope only | feature creep |
+| S10 — Coach tools | Stats, matches, counters, live, progress as contextual tools | navigation/orchestrator + presentation pages | engine rewrite | in corso |
+
+| S11 — Regression/Rollout | E2E, mobile, PWA, rollout | bugfix scope only | feature creep | dopo |
 
 > **P0 SICUREZZA** Le issue MetalGate/eFootball SECURITY DEFINER/RLS/Edge Functions NON devono essere infilate in S0–S11. Preparare una workstream SECURITY separata con prompt dedicati, test e rollback. L’unica eccezione è se bloccano direttamente staging/rollout.
 

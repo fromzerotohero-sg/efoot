@@ -31,8 +31,8 @@ function getResultTone(result) {
   if (numeric) {
     const scored = parseInt(numeric[1], 10)
     const conceded = parseInt(numeric[2], 10)
-    if (scored > conceded) return { label: 'win', color: '#86efac', bg: 'rgba(34,197,94,0.16)', border: 'rgba(34,197,94,0.36)' }
-    if (scored < conceded) return { label: 'loss', color: '#fca5a5', bg: 'rgba(239,68,68,0.16)', border: 'rgba(239,68,68,0.36)' }
+    if (scored > conceded) return { label: 'win', color: '#15803d', bg: 'rgba(39,167,106,0.12)', border: 'rgba(39,167,106,0.28)' }
+    if (scored < conceded) return { label: 'loss', color: '#b91c1c', bg: 'rgba(217,83,95,0.12)', border: 'rgba(217,83,95,0.28)' }
   }
 
   const upper = value.toUpperCase()
@@ -288,7 +288,7 @@ export default function MatchHistoryPage() {
   }
 
   return (
-    <main className="match-history-page">
+    <main className="match-history-page ux-v2-light-tool">
       <section className="history-hero">
         <div className="hero-copy">
           <div className="hero-kicker">
@@ -541,12 +541,9 @@ export default function MatchHistoryPage() {
         .empty-state,
         .history-error,
         .history-loading {
-          border: 1px solid rgba(0, 212, 255, 0.22);
-          background:
-            radial-gradient(circle at top left, rgba(0, 212, 255, 0.14), transparent 36%),
-            linear-gradient(145deg, rgba(5, 12, 25, 0.92), rgba(2, 4, 10, 0.96));
-          box-shadow: 0 18px 50px rgba(0, 0, 0, 0.36), inset 0 1px 0 rgba(255,255,255,0.06);
-          backdrop-filter: blur(16px);
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          background: #ffffff;
+          box-shadow: 0 14px 36px rgba(29, 29, 31, 0.07), inset 0 1px rgba(255, 255, 255, 0.9);
         }
 
         .history-hero {
@@ -583,9 +580,9 @@ export default function MatchHistoryPage() {
           gap: 9px;
           padding: 8px 12px;
           border-radius: 999px;
-          background: rgba(255, 203, 5, 0.1);
-          border: 1px solid rgba(255, 203, 5, 0.26);
-          color: #fde68a;
+          background: rgba(0, 168, 200, 0.1);
+          border: 1px solid rgba(0, 168, 200, 0.22);
+          color: #087f96;
           font-size: 13px;
           font-weight: 900;
           margin-bottom: 16px;
@@ -593,8 +590,8 @@ export default function MatchHistoryPage() {
 
         h1 {
           margin: 0;
-          color: #fff;
-          font-size: clamp(30px, 5vw, 48px);
+          color: #1d1d1f;
+          font-size: clamp(28px, 4vw, 36px);
           line-height: 0.98;
           letter-spacing: -1.2px;
           font-weight: 950;
@@ -603,7 +600,7 @@ export default function MatchHistoryPage() {
         .hero-copy p {
           max-width: 680px;
           margin: 14px 0 0;
-          color: rgba(255,255,255,0.72);
+          color: #6b6b6b;
           font-size: clamp(15px, 2vw, 17px);
           line-height: 1.55;
         }
@@ -624,13 +621,13 @@ export default function MatchHistoryPage() {
           min-height: 86px;
           border-radius: 16px;
           padding: 14px;
-          background: rgba(255,255,255,0.055);
-          border: 1px solid rgba(255,255,255,0.1);
+          background: #efece6;
+          border: 1px solid rgba(0, 0, 0, 0.08);
         }
 
         .hero-stats span {
           display: block;
-          color: #fff;
+          color: #1d1d1f;
           font-size: 26px;
           font-weight: 950;
         }
@@ -638,7 +635,7 @@ export default function MatchHistoryPage() {
         .hero-stats small {
           display: block;
           margin-top: 4px;
-          color: rgba(255,255,255,0.62);
+          color: #6b6b6b;
           font-size: 12px;
           line-height: 1.25;
           font-weight: 800;
@@ -683,7 +680,7 @@ export default function MatchHistoryPage() {
 
         .match-list-meta {
           margin: 0;
-          color: rgba(255,255,255,0.58);
+          color: #6b6b6b;
           font-size: 13px;
           font-weight: 800;
           letter-spacing: 0.2px;
@@ -738,7 +735,7 @@ export default function MatchHistoryPage() {
           justify-content: center;
           gap: 14px;
           text-align: center;
-          color: rgba(255,255,255,0.78);
+          color: #6b6b6b;
         }
 
         .empty-state {
@@ -757,7 +754,7 @@ export default function MatchHistoryPage() {
         }
 
         .empty-state h2 {
-          color: #fff;
+          color: #1d1d1f;
           font-size: 24px;
           margin: 4px 0 0;
         }
@@ -765,7 +762,7 @@ export default function MatchHistoryPage() {
         .empty-state p {
           max-width: 520px;
           margin: 0;
-          color: rgba(255,255,255,0.66);
+          color: #6b6b6b;
           line-height: 1.55;
         }
 
@@ -859,9 +856,9 @@ export default function MatchHistoryPage() {
         }
 
         .date-pill {
-          color: rgba(255,255,255,0.72);
-          background: rgba(255,255,255,0.055);
-          border: 1px solid rgba(255,255,255,0.1);
+          color: #6b6b6b;
+          background: #efece6;
+          border: 1px solid rgba(0, 0, 0, 0.08);
         }
 
         .completion-pill.complete {
@@ -896,7 +893,7 @@ export default function MatchHistoryPage() {
         }
 
         .field-label {
-          color: rgba(255,255,255,0.46);
+          color: #9b9b9b;
           text-transform: uppercase;
           letter-spacing: 0.7px;
           font-size: 11px;
@@ -910,7 +907,7 @@ export default function MatchHistoryPage() {
           border: 0;
           padding: 0;
           background: transparent;
-          color: #fff;
+          color: #1d1d1f;
           font-size: clamp(17px, 2vw, 21px);
           font-weight: 950;
           cursor: text;
@@ -941,7 +938,7 @@ export default function MatchHistoryPage() {
           border-radius: 12px;
           border: 1px solid rgba(0, 212, 255, 0.38);
           background: rgba(0, 212, 255, 0.09);
-          color: #fff;
+          color: #1d1d1f;
           padding: 0 12px;
           outline: none;
           font-size: 14px;
@@ -964,8 +961,8 @@ export default function MatchHistoryPage() {
         }
 
         .icon-action {
-          border: 1px solid rgba(255,255,255,0.12);
-          background: rgba(255,255,255,0.06);
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          background: #efece6;
           color: #d1d5db;
         }
 
@@ -996,7 +993,7 @@ export default function MatchHistoryPage() {
           min-width: 110px;
           overflow: hidden;
           border-radius: 999px;
-          background: rgba(255,255,255,0.1);
+          background: #efece6;
         }
 
         .progress-track span {
@@ -1008,7 +1005,7 @@ export default function MatchHistoryPage() {
         }
 
         .progress-row strong {
-          color: #fff;
+          color: #1d1d1f;
           font-size: 13px;
           min-width: 28px;
         }

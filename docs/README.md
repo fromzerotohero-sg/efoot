@@ -9,6 +9,7 @@ Aggiornato: 13 agosto 2026. Audit storico, pitch, confronti prima/dopo e vecchie
 | Documento | Ruolo |
 |-----------|--------|
 | [UX_V2/FZTH_UX_V2_MASTER_OPERATING_SPECIFICATION_v1.1.md](./UX_V2/FZTH_UX_V2_MASTER_OPERATING_SPECIFICATION_v1.1.md) | Contratto operativo UX V2. Ogni slice Cursor deve ereditarlo. |
+| [../FZTH_NEW_UX_VISUAL_HANDOFF_CURSOR.md](../FZTH_NEW_UX_VISUAL_HANDOFF_CURSOR.md) | Handoff visivo. Live: MetalGate light. S2 fatto; S10 tools in corso. |
 
 ## Contratti tecnici
 

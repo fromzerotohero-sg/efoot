@@ -76,8 +76,9 @@ function SummaryLineChart({ summary, categoryLabels, t }) {
   return (
     <div className="neon-card" style={{
       padding: 'clamp(12px, 3vw, 20px)',
-      background: 'rgba(255,255,255,0.03)',
-      border: '1px solid rgba(255,255,255,0.1)',
+      borderRadius: '18px',
+      marginBottom: 16
+    }}>
       borderRadius: '12px',
       minWidth: 0,
       maxWidth: '100%'
@@ -144,14 +145,12 @@ function LineChartCard({ title, series, isPercent, t }) {
   return (
     <div className="neon-card" style={{
       padding: 'clamp(12px, 3vw, 20px)',
-      background: 'rgba(255,255,255,0.03)',
-      border: '1px solid rgba(255,255,255,0.08)',
-      borderRadius: '12px',
+      borderRadius: '18px',
       minWidth: 0,
       maxWidth: '100%'
     }}>
-      <h3 style={{ margin: '0 0 12px', fontSize: 'clamp(14px, 3vw, 15px)', fontWeight: 600, color: 'rgba(255,255,255,0.95)' }}>{title}</h3>
-      <div style={{ display: 'flex', gap: '16px', marginBottom: '8px', fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>
+      <h3 style={{ margin: '0 0 12px', fontSize: 'clamp(14px, 3vw, 15px)', fontWeight: 700, color: '#1d1d1f' }}>{title}</h3>
+      <div style={{ display: 'flex', gap: '16px', marginBottom: '8px', fontSize: '11px', color: '#6b6b6b' }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           <span style={{ width: 10, height: 2, background: 'var(--neon-blue)' }} /> Tu
         </span>
@@ -161,10 +160,10 @@ function LineChartCard({ title, series, isPercent, t }) {
       </div>
       <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} style={{ overflow: 'visible' }} preserveAspectRatio="xMidYMid meet">
         {[0.25, 0.5, 0.75].map((p) => (
-          <line key={p} x1={PADDING.left} x2={width - PADDING.right} y1={PADDING.top + innerH * (1 - p)} y2={PADDING.top + innerH * (1 - p)} stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+          <line key={p} x1={PADDING.left} x2={width - PADDING.right} y1={PADDING.top + innerH * (1 - p)} y2={PADDING.top + innerH * (1 - p)} stroke="rgba(0,0,0,0.08)" strokeWidth="1" />
         ))}
         {[0, Math.round(scaleMax * 0.25), Math.round(scaleMax * 0.5), Math.round(scaleMax * 0.75), scaleMax].map((tick) => (
-          <text key={tick} x={PADDING.left - 6} y={PADDING.top + innerH - (tick / scaleMax) * innerH + 4} textAnchor="end" fill="rgba(255,255,255,0.5)" fontSize="10">{isPercent ? `${tick}%` : tick}</text>
+          <text key={tick} x={PADDING.left - 6} y={PADDING.top + innerH - (tick / scaleMax) * innerH + 4} textAnchor="end" fill="#9b9b9b" fontSize="10">{isPercent ? `${tick}%` : tick}</text>
         ))}
         <line x1={PADDING.left} y1={PADDING.top} x2={PADDING.left} y2={height - PADDING.bottom} stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
         <line x1={PADDING.left} y1={height - PADDING.bottom} x2={width - PADDING.right} y2={height - PADDING.bottom} stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
@@ -243,13 +242,13 @@ export default function GraficiComparazionePage() {
   const isPercentCategories = { shot_usage: true, passing: true, dribbling: true, defense: true, special_commands: false }
 
   return (
-    <div style={{ minHeight: '100vh', className: 'min-h-screen', color: '#fff', overflowX: 'hidden' }}>
+    <div className="ux-v2-light-tool" style={{ minHeight: '100%', overflowX: 'hidden', color: '#1d1d1f' }}>
       <header style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '16px 20px',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        borderBottom: '1px solid rgba(0,0,0,0.08)',
         flexWrap: 'wrap',
         gap: '12px'
       }}>
@@ -258,33 +257,31 @@ export default function GraficiComparazionePage() {
             type="button"
             onClick={() => router.push('/')}
             className="neon-button"
-            style={{ padding: '8px', background: 'transparent', borderColor: 'rgba(255,255,255,0.2)' }}
+            style={{ padding: '8px', minWidth: 40, minHeight: 40 }}
             aria-label={t('back')}
           >
             <ArrowLeft size={20} />
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <BarChart3 size={22} style={{ color: 'var(--neon-blue)' }} />
-            <h1 style={{ margin: 0, fontSize: 'clamp(16px, 4vw, 18px)', fontWeight: 600, wordBreak: 'break-word' }}>{t('chartsAndComparisonTitle')}</h1>
+            <BarChart3 size={22} style={{ color: '#00A8C8' }} />
+            <h1 style={{ margin: 0, fontSize: 'clamp(18px, 4vw, 22px)', fontWeight: 800, wordBreak: 'break-word', color: '#1d1d1f' }}>{t('chartsAndComparisonTitle')}</h1>
           </div>
         </div>
       </header>
 
       <main style={{ maxWidth: '900px', width: '100%', minWidth: 0, margin: '0 auto', padding: 'clamp(16px, 4vw, 24px) clamp(16px, 4vw, 20px)', boxSizing: 'border-box' }}>
         {loading ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px', color: 'rgba(255,255,255,0.5)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px', color: '#6b6b6b' }}>
             <RefreshCw size={24} className="grafici-comparazione-spinner" />
           </div>
         ) : !hasCharts ? (
           <div className="neon-card" style={{
             padding: '32px 24px',
             textAlign: 'center',
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: '12px'
+            borderRadius: '18px'
           }}>
-            <BarChart3 size={48} style={{ color: 'rgba(255,255,255,0.3)', marginBottom: '16px' }} />
-            <p style={{ margin: '0 0 20px', color: 'rgba(255,255,255,0.8)', fontSize: '15px', lineHeight: 1.5 }}>
+            <BarChart3 size={48} style={{ color: '#00A8C8', marginBottom: '16px' }} />
+            <p style={{ margin: '0 0 20px', color: '#6b6b6b', fontSize: '15px', lineHeight: 1.5 }}>
               {t('chartsAndComparisonEmpty')}
             </p>
             <button
@@ -305,7 +302,7 @@ export default function GraficiComparazionePage() {
           </div>
         ) : (
           <>
-            <p style={{ margin: '0 0 24px', color: 'rgba(255,255,255,0.6)', fontSize: '14px' }}>
+            <p style={{ margin: '0 0 24px', color: '#6b6b6b', fontSize: '14px' }}>
               {t('chartsAndComparisonSubtitle')}
               {capturedAt && (
                 <span style={{ marginLeft: '8px', opacity: 0.8 }}> · {t('gameAnalysisLastCapture')}: {capturedAt}</span>
@@ -320,7 +317,7 @@ export default function GraficiComparazionePage() {
               ) : null
             })()}
             {/* Dettaglio per categoria: grafici a linee */}
-            <h3 style={{ margin: '24px 0 12px', fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <h3 style={{ margin: '24px 0 12px', fontSize: '13px', fontWeight: 700, color: '#9b9b9b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               {t('chartsAndComparisonDetail') || 'Dettaglio per categoria'}
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -346,10 +343,7 @@ export default function GraficiComparazionePage() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '8px',
-                  padding: '12px 24px',
-                  background: 'rgba(255, 165, 0, 0.15)',
-                  borderColor: 'rgba(255, 165, 0, 0.4)',
-                  color: 'var(--neon-orange)'
+                  padding: '12px 24px'
                 }}
               >
                 <MessageCircle size={18} />
