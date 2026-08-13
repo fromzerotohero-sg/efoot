@@ -77,48 +77,42 @@ function SummaryLineChart({ summary, categoryLabels, t }) {
     <div className="neon-card" style={{
       padding: 'clamp(12px, 3vw, 20px)',
       borderRadius: '18px',
-      marginBottom: 16
-    }}>
-      borderRadius: '12px',
+      marginBottom: 16,
       minWidth: 0,
       maxWidth: '100%'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-        <TrendingUp size={20} style={{ color: 'var(--neon-blue)' }} />
-        <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'rgba(255,255,255,0.95)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+        <TrendingUp size={20} style={{ color: '#00A8C8' }} />
+        <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#1d1d1f', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
           {t('chartsAndComparisonOverview') || 'Panoramica'}
         </h2>
       </div>
-      <div style={{ display: 'flex', gap: '20px', marginBottom: '12px', fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>
+      <div style={{ display: 'flex', gap: '20px', marginBottom: '12px', fontSize: '12px', color: '#6b6b6b' }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ width: 14, height: 2, background: 'var(--neon-blue, #00d4ff)', borderRadius: 1 }} />
+          <span style={{ width: 14, height: 2, background: '#00A8C8', borderRadius: 1 }} />
           Tu
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ width: 14, height: 2, background: 'rgba(34, 197, 94, 0.9)', borderRadius: 1 }} />
+          <span style={{ width: 14, height: 2, background: 'rgba(39, 167, 106, 0.9)', borderRadius: 1 }} />
           Top
         </span>
       </div>
       <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} style={{ overflow: 'visible' }} preserveAspectRatio="xMidYMid meet">
-        {/* Griglia */}
         {[25, 50, 75].map((p) => (
-          <line key={p} x1={PADDING.left} x2={width - PADDING.right} y1={scaleY(p)} y2={scaleY(p)} stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+          <line key={p} x1={PADDING.left} x2={width - PADDING.right} y1={scaleY(p)} y2={scaleY(p)} stroke="rgba(0,0,0,0.08)" strokeWidth="1" />
         ))}
-        {/* Asse Y */}
         {[0, 25, 50, 75, 100].map((tick) => (
-          <text key={tick} x={PADDING.left - 6} y={scaleY(tick) + 4} textAnchor="end" fill="rgba(255,255,255,0.5)" fontSize="10">{tick}</text>
+          <text key={tick} x={PADDING.left - 6} y={scaleY(tick) + 4} textAnchor="end" fill="#9b9b9b" fontSize="10">{tick}</text>
         ))}
-        <line x1={PADDING.left} y1={PADDING.top} x2={PADDING.left} y2={height - PADDING.bottom} stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
-        <line x1={PADDING.left} y1={height - PADDING.bottom} x2={width - PADDING.right} y2={height - PADDING.bottom} stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
-        {/* Linee */}
-        <polyline points={tuPoints} fill="none" stroke="var(--neon-blue, #00d4ff)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <polyline points={topPoints} fill="none" stroke="rgba(34, 197, 94, 0.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        {/* Punti e etichette X */}
+        <line x1={PADDING.left} y1={PADDING.top} x2={PADDING.left} y2={height - PADDING.bottom} stroke="rgba(0,0,0,0.12)" strokeWidth="1" />
+        <line x1={PADDING.left} y1={height - PADDING.bottom} x2={width - PADDING.right} y2={height - PADDING.bottom} stroke="rgba(0,0,0,0.12)" strokeWidth="1" />
+        <polyline points={tuPoints} fill="none" stroke="#00A8C8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <polyline points={topPoints} fill="none" stroke="rgba(39, 167, 106, 0.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         {summary.map((s, i) => (
           <g key={s.categoryKey}>
-            <circle cx={scaleX(i)} cy={scaleY(s.tuIndex)} r="4" fill="var(--neon-blue, #00d4ff)" />
-            <circle cx={scaleX(i)} cy={scaleY(s.topIndex)} r="4" fill="rgba(34, 197, 94, 0.9)" />
-            <text x={scaleX(i)} y={height - 8} textAnchor="middle" fill="rgba(255,255,255,0.6)" fontSize="9">{String(categoryLabels[s.categoryKey] ?? s.categoryKey).slice(0, 10)}</text>
+            <circle cx={scaleX(i)} cy={scaleY(s.tuIndex)} r="4" fill="#00A8C8" />
+            <circle cx={scaleX(i)} cy={scaleY(s.topIndex)} r="4" fill="rgba(39, 167, 106, 0.9)" />
+            <text x={scaleX(i)} y={height - 8} textAnchor="middle" fill="#6b6b6b" fontSize="9">{String(categoryLabels[s.categoryKey] ?? s.categoryKey).slice(0, 10)}</text>
           </g>
         ))}
       </svg>
@@ -176,10 +170,10 @@ function LineChartCard({ title, series, isPercent, t }) {
           </g>
         ))}
       </svg>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', marginTop: '8px', fontSize: 'clamp(10px, 2.5vw, 11px)', color: 'rgba(255,255,255,0.5)' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', marginTop: '8px', fontSize: 'clamp(10px, 2.5vw, 11px)', color: '#6b6b6b' }}>
         {series.map(({ label, tu, div1 }) => (
           <span key={String(label)} style={{ display: 'inline-flex', gap: '6px' }}>
-            <strong style={{ color: 'rgba(255,255,255,0.7)' }}>{t ? (t(String(label)) || String(label)) : String(label)}:</strong> Tu {formatVal(tu)} · Top {formatVal(div1)}
+            <strong style={{ color: '#1d1d1f' }}>{t ? (t(String(label)) || String(label)) : String(label)}:</strong> Tu {formatVal(tu)} · Top {formatVal(div1)}
           </span>
         ))}
       </div>
