@@ -1,42 +1,23 @@
-﻿'use client'
+'use client'
 
 import React, { Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase, getValidAccessToken } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
 import ConfirmModal from '@/components/ConfirmModal'
-import Link from 'next/link'
-import AIKnowledgeBar from '@/components/AIKnowledgeBar'
 import CoachFeedbackChat from '@/components/CoachFeedbackChat'
-import AssistantChat from '@/components/AssistantChat'
 import GameAnalysisModal from '@/components/GameAnalysisModal'
 import { useGameAnalysisModalNav, OPEN_GAME_ANALYSIS_MODAL_EVENT, CLOSE_GAME_ANALYSIS_MODAL_EVENT } from '@/components/GameAnalysisModalNavContext'
 import TaskWidget from '@/components/TaskWidget'
-import MissionCenter from '@/components/MissionCenter'
 import OnboardingFlow from '@/components/OnboardingFlow'
-import CoachSuggestions from '@/components/CoachSuggestions'
-import HeroCoachJourney from '@/components/HeroCoachJourney'
+import CoachHomeV2 from '@/components/CoachHomeV2'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
-import { fetchCoachProfileFromApi } from '@/lib/profileUxHelpers'
+import { fetchCoachProfileFromApi, resolveAuthToken, buildAuthHeaders } from '@/lib/profileUxHelpers'
 import { withAuth } from '@/components/AuthWrapper'
-import { 
-  Users, 
-  RefreshCw, 
-  AlertCircle,
-  CheckCircle2,
-  ArrowRight,
-  Settings,
-  BarChart3,
-  ChevronDown,
-  ChevronUp,
-  Trash2,
-  BookOpen,
-  Zap,
-  User,
-  Calendar,
-  Radio,
-  Dumbbell
+import {
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react'
 
 /** Legge query URL: openCoach=1 → Palestra Coach; openAssistantChat=1 → chat principale; openGameAnalysis=1 → GameAnalysisModal; openCardAdvisor=1 → Card Advisor Lab. */
@@ -136,6 +117,21 @@ function HomePage() {
   const openCardAdvisor = React.useCallback(() => {
     router.push('/card-advisor-lab')
   }, [router])
+
+  // UX V2: "Chiedi a Hero" apre sempre il motore assistant reale (mai la Palestra).
+  // Una domanda normale → open-assistant-chat. Il feedback post-match resta su CoachFeedbackChat.
+  const handleAskHero = React.useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('open-assistant-chat'))
+    }
+  }, [])
+
+  // Live Coach resta modalita speciale: solo evento esistente, nessuna modifica a session/billing.
+  const handleOpenLiveCoach = React.useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('open-live-coach'))
+    }
+  }, [])
 
   React.useEffect(() => {
     const onOpen = () => {
@@ -308,6 +304,45 @@ function HomePage() {
     }
   }, [])
 
+  // UX V2 — LOW HP: lettura saldo reale tramite contratto esistente (/api/credits/usage,
+  // stesso endpoint usato da CreditsBar). Se il saldo non e disponibile NON si presume LOW HP.
+  // Nessuna modifica a creditService, costi, wallet o MetalGate.
+  const [hpBalance, setHpBalance] = React.useState(null)
+
+  React.useEffect(() => {
+    if (loading) return undefined
+    let cancelled = false
+
+    const fetchHpBalance = async () => {
+      try {
+        const token = await resolveAuthToken()
+        if (!token || cancelled) return
+        const res = await fetch('/api/credits/usage', {
+          method: 'POST',
+          headers: buildAuthHeaders(token, { json: true }),
+          body: JSON.stringify({}),
+          cache: 'no-store'
+        })
+        if (!res.ok || cancelled) return
+        const data = await res.json().catch(() => null)
+        if (!data || cancelled) return
+        const balance = Number(data.balance_remaining)
+        setHpBalance(Number.isFinite(balance) ? balance : null)
+      } catch {
+        /* saldo non disponibile: niente stato LOW HP */
+      }
+    }
+
+    fetchHpBalance()
+    window.addEventListener('credits-consumed', fetchHpBalance)
+    window.addEventListener('credits-accredited', fetchHpBalance)
+    return () => {
+      cancelled = true
+      window.removeEventListener('credits-consumed', fetchHpBalance)
+      window.removeEventListener('credits-accredited', fetchHpBalance)
+    }
+  }, [loading])
+
   const handleDeleteMatch = async (matchId, e) => {
     e.stopPropagation() // Previeni click sul card
     
@@ -466,50 +501,7 @@ function HomePage() {
         />
       </Suspense>
       
-      {/* Page Header */}
-      <div className="mb-8">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
-          <div>
-            <h1 className="text-2xl font-bold neon-text mb-2">
-              {t('dashboard')}
-            </h1>
-            <p className="text-sm text-[rgba(0, 212, 255, 0.7)]">
-              {t('fromZeroToHero')}
-            </p>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <button
-              type="button"
-              data-tour-id="tour-dashboard-live-coach"
-              onClick={() => {
-                if (typeof window !== 'undefined') {
-                  window.dispatchEvent(new CustomEvent('open-live-coach'))
-                }
-              }}
-              aria-label={t('liveCoachOpen')}
-              title={t('liveCoachTitle')}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '40px',
-                height: '40px',
-                borderRadius: '12px',
-                border: '1px solid rgba(255,215,100,0.28)',
-                background: 'rgba(255,215,100,0.10)',
-                color: '#FFD76A',
-                boxShadow: '0 0 16px rgba(255,196,0,0.10)',
-                flexShrink: 0
-              }}
-            >
-              <Radio size={18} />
-            </button>
-            <OnboardingFlow />
-          </div>
-        </div>
-      </div>
-
-      {/* Error */}
+      {/* Errori azioni secondarie (delete/update match ecc.): stato parziale, non blocca la Home */}
       {error && (
         <div className="error" style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <AlertCircle size={18} />
@@ -520,22 +512,28 @@ function HomePage() {
         </div>
       )}
 
-      {/* AI Knowledge Bar + Informazioni IA */}
-      <div data-tour-id="tour-dashboard-ai" className="mb-6">
-        <AIKnowledgeBar />
-      </div>
-
-      <HeroCoachJourney
-        loading={loading}
+      {/* UX V2 — Hero Coach Home: facade presentazionale sopra dati/handler reali esistenti.
+          BYPASS UX: HeroCoachJourney, MissionCenter e CoachSuggestions non sono piu renderizzati
+          (i file restano intatti); un solo concetto visibile: Prossima azione. */}
+      <CoachHomeV2
+        lang={lang}
         stats={stats}
         hasActiveCoach={hasActiveCoach}
+        recentMatches={recentMatches}
         gameAnalysisLastCapture={gameAnalysisLastCapture}
-        lang={lang}
-        onOpenRoster={() => router.push('/gestione-formazione')}
-        onOpenCoachSetup={() => router.push('/nuova-rosa-lab')}
+        hpBalance={hpBalance}
+        onAskHero={handleAskHero}
+        onOpenFeedback={() => setShowCoachFeedback(true)}
         onOpenGameAnalysis={() => setShowGameAnalysisModal(true)}
         onOpenCardAdvisor={openCardAdvisor}
-        onOpenCoachFeedback={() => setShowCoachFeedback(true)}
+        onOpenLiveCoach={handleOpenLiveCoach}
+        onOpenRoster={() => router.push('/gestione-formazione')}
+        onOpenCoachSetup={() => router.push('/nuova-rosa-lab')}
+        onOpenCountermeasures={() => router.push('/contromisure-pre-partita')}
+        onOpenProgress={() => router.push('/grafici-comparazione')}
+        onOpenMatches={() => router.push('/match')}
+        onGetHp={() => router.push('/gestione-profilo')}
+        toolsExtra={<OnboardingFlow />}
       />
 
       <CoachFeedbackChat 
@@ -573,437 +571,18 @@ function HomePage() {
         lastCaptureDate={gameAnalysisLastCapture} 
       />
 
-        {/* Dashboard Main Grid - Layout aggiornato: 2 colonne */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Colonna Sinistra */}
-          <div className="space-y-6">
-            {/* Quick Links / Azioni Rapide */}
-            <div data-tour-id="tour-dashboard-nav" className="neon-card" style={{ padding: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '20px' }}>
-                <div>
-                  <h2 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px', color: '#FFFFFF' }}>
-                    <Settings size={20} color="var(--neon-cyan)" />
-                    {t('navigation')}
-                  </h2>
-                  <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.5, color: 'rgba(255,255,255,0.62)' }}>
-                    {lang === 'en'
-                      ? 'Use these tools, then ask Hero Chat to turn data into clear next steps.'
-                      : 'Usa questi strumenti, poi chiedi a Hero Chat di trasformare i dati in prossime mosse chiare.'}
-                  </p>
-                </div>
-              </div>
-
-              <div className="dashboard-action-grid">
-                {/* Rosa */}
-                <button
-                  onClick={() => router.push('/gestione-formazione')}
-                  className="dashboard-action-card dashboard-action-card--roster"
-                >
-                  <span className="dashboard-action-icon">
-                    <Users size={26} />
-                  </span>
-                  <span className="dashboard-action-copy">
-                    <strong>{lang === 'en' ? 'Squad' : 'Rosa'}</strong>
-                    <small>{lang === 'en' ? 'Players, roles and formation for better AI advice' : 'Giocatori, ruoli e formazione per consigli AI migliori'}</small>
-                  </span>
-                  <ArrowRight size={18} className="dashboard-action-arrow" />
-                </button>
-
-                {/* Analisi Carte Nuove */}
-                <button
-                  onClick={openCardAdvisor}
-                  className="dashboard-action-card dashboard-action-card--cards"
-                >
-                  <span className="dashboard-action-icon">
-                    <Zap size={26} />
-                  </span>
-                  <span className="dashboard-action-copy">
-                    <strong>{lang === 'en' ? 'New card analysis' : 'Analisi carte nuove'}</strong>
-                    <small>{lang === 'en' ? 'Compare packs with your real roster before spending' : 'Confronta i pack con la tua rosa reale prima di spendere'}</small>
-                  </span>
-                  <ArrowRight size={18} className="dashboard-action-arrow" />
-                </button>
-
-                {/* Palestra Coach */}
-                <button
-                  onClick={() => setShowCoachFeedback(true)}
-                  className="dashboard-action-card dashboard-action-card--coach-gym dashboard-action-card--wide"
-                >
-                  <span className="dashboard-action-icon">
-                    <Dumbbell size={28} />
-                  </span>
-                  <span className="dashboard-action-copy">
-                    <strong>{t('palestraCoachTitle')}</strong>
-                    <small>
-                      {lang === 'en'
-                        ? 'Tell the coach what happened and get practical tactical feedback.'
-                        : 'Racconta cosa succede in partita e ricevi feedback tattico pratico.'}
-                    </small>
-                  </span>
-                  <span className="dashboard-action-badge">
-                    {lang === 'en' ? 'Coach check-in' : 'Check-in coach'}
-                  </span>
-                </button>
-
-                {/* Analisi Partita Rapida */}
-                <button
-                  data-tour-id="tour-dashboard-game-analysis"
-                  onClick={() => setShowGameAnalysisModal(true)}
-                  className="dashboard-action-card dashboard-action-card--stats"
-                >
-                  <span className="dashboard-action-icon">
-                    <BarChart3 size={24} />
-                  </span>
-                  <span className="dashboard-action-copy">
-                    <strong>{t('gameAnalysisTitle')}</strong>
-                    <small>{lang === 'en' ? 'Upload stats, then ask Hero Chat what to improve first' : 'Carica statistiche, poi chiedi a Hero Chat cosa migliorare per primo'}</small>
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    if (typeof window !== 'undefined') {
-                      const message = lang === 'en'
-                        ? 'Analyze my current squad and tell me the 3 priorities for the next matches.'
-                        : 'Analizza la mia rosa attuale e dimmi le 3 priorità per le prossime partite.'
-                      window.dispatchEvent(new CustomEvent('open-assistant-chat', { detail: { message } }))
-                    }
-                  }}
-                  className="dashboard-action-card dashboard-action-card--chat dashboard-action-card--wide"
-                >
-                  <span className="dashboard-action-icon">
-                    <BookOpen size={26} />
-                  </span>
-                  <span className="dashboard-action-copy">
-                    <strong>{lang === 'en' ? 'Ask Hero Chat now' : 'Chiedi ora a Hero Chat'}</strong>
-                    <small>{lang === 'en' ? 'Get immediate actions for your real team' : 'Ricevi azioni immediate sulla tua squadra reale'}</small>
-                  </span>
-                  <span className="dashboard-action-badge">
-                    {lang === 'en' ? 'AI priority' : 'Priorità AI'}
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => router.push('/gestione-profilo')}
-                  className="dashboard-action-card dashboard-action-card--credits"
-                >
-                  <span className="dashboard-action-icon">
-                    <Zap size={24} />
-                  </span>
-                  <span className="dashboard-action-copy">
-                    <strong>{lang === 'en' ? 'Where to spend HP' : 'Dove spendere HP'}</strong>
-                    <small>{lang === 'en' ? 'See costs and spend credits where they matter most' : 'Vedi i costi e spendi crediti dove contano di più'}</small>
-                  </span>
-                </button>
-
-              </div>
-            </div>
-
-            <div data-tour-id="tour-dashboard-task">
-              <TaskWidget />
-            </div>
-
-            {/* Panoramica Squadra */}
-            <div data-tour-id="tour-dashboard-squad" className="neon-card" style={{ padding: '24px' }}>
-              <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: '#FFFFFF' }}>
-                <Users size={20} color="var(--neon-cyan)" />
-                {t('squadOverview')}
-              </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: 'rgba(0, 212, 255, 0.7)' }}>{t('titolari')}</span>
-                  <span style={{ fontSize: '22px', fontWeight: 700, color: 'var(--neon-cyan)' }}>
-                    {stats.titolari}/11
-                  </span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: 'rgba(0, 212, 255, 0.7)' }}>{t('riserve')}</span>
-                  <span style={{ fontSize: '22px', fontWeight: 700, color: 'var(--neon-cyan)' }}>
-                    {stats.riserve}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: 'rgba(0, 212, 255, 0.7)' }}>{t('total')}</span>
-                  <span style={{ fontSize: '22px', fontWeight: 700, color: '#FFFFFF' }}>
-                    {stats.totalPlayers}
-                  </span>
-                </div>
-                {stats.formation && (
-                  <div style={{ 
-                    marginTop: '12px', 
-                    padding: '12px', 
-                    background: 'rgba(0, 161, 166, 0.08)', 
-                    border: '1px solid rgba(0, 212, 255, 0.5)',
-                    borderRadius: '8px',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{ fontSize: '13px', color: 'rgba(0, 212, 255, 0.5)', marginBottom: '4px' }}>{t('formation')}</div>
-                    <div style={{ fontSize: '18px', fontWeight: 600, color: 'var(--neon-cyan)' }}>
-                      {stats.formation}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Colonna Destra */}
-          <div className="space-y-6">
-            <div data-tour-id="tour-dashboard-mission-center">
-            <MissionCenter
-              recentMatches={recentMatches}
-              stats={stats}
-              hasActiveCoach={hasActiveCoach}
-              gameAnalysisLastCapture={gameAnalysisLastCapture}
-              userProfile={userProfile}
-              lang={lang}
-              t={t}
-              onOpenChat={(message) => {
-                if (message === '__OPEN_GAME_ANALYSIS__') {
-                  setShowGameAnalysisModal(true)
-                } else if (message === '__OPEN_COACH_FEEDBACK__') {
-                  setShowCoachFeedback(true)
-                } else {
-                  if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new CustomEvent('open-assistant-chat', { detail: { message } }))
-                  }
-                }
-              }}
-            />
-            </div>
-
-            {/* Link a Grafici (al posto di Roadmap/AI Insights) */}
-            <div className="neon-card" style={{ padding: '24px' }}>
-               <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: '#FFFFFF' }}>
-                <BarChart3 size={20} className="neon-text" />
-                <span className="text-gradient">{t('chartsAndComparisonTitle')}</span>
-              </h2>
-              <p style={{ fontSize: '14px', color: 'rgba(0, 212, 255, 0.7)', marginBottom: '24px', lineHeight: '1.6' }}>
-                {t('chartsAndComparisonDesc')}
-              </p>
-              
-              <button
-                onClick={() => router.push('/grafici-comparazione')}
-                className="btn primary"
-                style={{ 
-                  width: '100%', 
-                  display: 'flex', 
-                  justifyContent: 'center', 
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '14px',
-                  fontSize: '15px'
-                }}
-              >
-                {t('chartsAndComparisonCtaButton')}
-                <ArrowRight size={18} />
-              </button>
-            </div>
-          </div>
-        </div>
-
-      {/* Coach Suggestions - AI Proactive Alerts */}
-      <CoachSuggestions 
-        userProfile={userProfile}
-        hasActiveCoach={hasActiveCoach}
-        matches={recentMatches}
-        gameAnalysisLastCapture={gameAnalysisLastCapture}
-        onOpenGameAnalysis={() => setShowGameAnalysisModal(true)}
-        onOpenCoachFeedback={() => setShowCoachFeedback(true)}
-        onOpenCoaches={() => router.push('/nuova-rosa-lab')}
-      />
+      {/* UX V2 transitional side-effect bridge.
+          Do not remove until /api/tasks/list generation/progress side effects
+          are moved intentionally to the new Coach orchestration.
+          TaskWidget resta montato (fetch /api/tasks/list + listener match-saved /
+          diagnostic-updated) ma non e piu una card concorrente visibile. */}
+      <div style={{ display: 'none' }} aria-hidden="true">
+        <TaskWidget />
+      </div>
 
       <style jsx>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
-        }
-
-        .dashboard-action-grid {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 12px;
-        }
-
-        .dashboard-action-card {
-          position: relative;
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          min-height: 106px;
-          padding: 18px;
-          overflow: hidden;
-          border: 1px solid rgba(0, 212, 255, 0.16);
-          border-radius: 18px;
-          background: linear-gradient(135deg, rgba(10, 18, 38, 0.96), rgba(13, 25, 48, 0.86));
-          color: #FFFFFF;
-          text-align: left;
-          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02), 0 10px 28px rgba(0,0,0,0.22);
-          transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
-        }
-
-        .dashboard-action-card::before {
-          content: '';
-          position: absolute;
-          inset: -40% -20% auto auto;
-          width: 160px;
-          height: 160px;
-          border-radius: 999px;
-          background: radial-gradient(circle, rgba(0, 212, 255, 0.16), transparent 68%);
-          pointer-events: none;
-          transition: opacity 180ms ease, transform 180ms ease;
-        }
-
-        .dashboard-action-card:hover {
-          transform: translateY(-3px);
-          border-color: rgba(0, 212, 255, 0.52);
-          box-shadow: 0 0 24px rgba(0, 212, 255, 0.12), 0 16px 34px rgba(0,0,0,0.32);
-        }
-
-        .dashboard-action-card:hover::before {
-          transform: scale(1.08);
-        }
-
-        .dashboard-action-card--wide {
-          grid-column: 1 / -1;
-          min-height: 118px;
-        }
-
-        .dashboard-action-icon {
-          position: relative;
-          z-index: 1;
-          width: 48px;
-          height: 48px;
-          flex: 0 0 48px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 16px;
-          background: rgba(0, 212, 255, 0.10);
-          color: var(--neon-cyan);
-          box-shadow: 0 0 18px rgba(0, 212, 255, 0.16);
-        }
-
-        .dashboard-action-copy {
-          position: relative;
-          z-index: 1;
-          display: flex;
-          flex-direction: column;
-          gap: 5px;
-          min-width: 0;
-        }
-
-        .dashboard-action-copy strong {
-          font-size: 16px;
-          font-weight: 800;
-          line-height: 1.2;
-        }
-
-        .dashboard-action-copy small {
-          font-size: 12px;
-          line-height: 1.35;
-          color: rgba(255,255,255,0.64);
-        }
-
-        .dashboard-action-arrow {
-          position: relative;
-          z-index: 1;
-          margin-left: auto;
-          color: rgba(255,255,255,0.66);
-        }
-
-        .dashboard-action-badge {
-          position: relative;
-          z-index: 1;
-          margin-left: auto;
-          padding: 7px 10px;
-          border: 1px solid rgba(0, 212, 255, 0.30);
-          border-radius: 999px;
-          color: #8ff2ff;
-          background: rgba(0, 212, 255, 0.08);
-          font-size: 12px;
-          font-weight: 800;
-          white-space: nowrap;
-        }
-
-        .dashboard-action-card--roster {
-          border-color: rgba(0, 212, 255, 0.28);
-          background: linear-gradient(135deg, rgba(0, 161, 166, 0.20), rgba(13, 25, 48, 0.92));
-        }
-
-        .dashboard-action-card--cards {
-          border-color: rgba(255, 203, 5, 0.34);
-          background: linear-gradient(135deg, rgba(255, 203, 5, 0.16), rgba(13, 25, 48, 0.92));
-        }
-
-        .dashboard-action-card--cards::before {
-          background: radial-gradient(circle, rgba(255, 203, 5, 0.22), transparent 68%);
-        }
-
-        .dashboard-action-card--cards .dashboard-action-icon {
-          color: #ffcb05;
-          background: rgba(255, 203, 5, 0.12);
-          box-shadow: 0 0 20px rgba(255, 203, 5, 0.18);
-        }
-
-        .dashboard-action-card--coach-gym {
-          border-color: rgba(0, 212, 255, 0.38);
-          background:
-            linear-gradient(135deg, rgba(0, 212, 255, 0.16), rgba(79, 70, 229, 0.12)),
-            rgba(13, 25, 48, 0.94);
-        }
-
-        .dashboard-action-card--coach-gym .dashboard-action-icon {
-          color: #67e8f9;
-          background: rgba(0, 212, 255, 0.14);
-        }
-
-        .dashboard-action-card--chat {
-          border-color: rgba(0, 212, 255, 0.46);
-          background:
-            linear-gradient(135deg, rgba(0, 212, 255, 0.20), rgba(24, 119, 242, 0.12)),
-            rgba(13, 25, 48, 0.94);
-        }
-
-        .dashboard-action-card--chat .dashboard-action-icon {
-          color: #8ff2ff;
-          background: rgba(0, 212, 255, 0.16);
-        }
-
-        .dashboard-action-card--credits {
-          border-color: rgba(255, 203, 5, 0.30);
-          background: linear-gradient(135deg, rgba(255, 203, 5, 0.14), rgba(168, 85, 247, 0.08));
-        }
-
-        .dashboard-action-card--credits .dashboard-action-icon {
-          color: #ffcb05;
-          background: rgba(255, 203, 5, 0.12);
-          box-shadow: 0 0 18px rgba(255, 203, 5, 0.14);
-        }
-
-        .dashboard-action-card--stats .dashboard-action-icon {
-          color: #a855f7;
-          background: rgba(168, 85, 247, 0.12);
-          box-shadow: 0 0 18px rgba(168, 85, 247, 0.18);
-        }
-
-        @media (max-width: 640px) {
-          .dashboard-action-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .dashboard-action-card {
-            min-height: 96px;
-            padding: 16px;
-          }
-
-          .dashboard-action-card--wide {
-            min-height: 112px;
-          }
-
-          .dashboard-action-badge {
-            display: none;
-          }
-
         }
       `}</style>
     </main>
