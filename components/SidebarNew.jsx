@@ -66,25 +66,25 @@ export default function SidebarNew() {
   // Toni campionati dalla tavola: Coach green, Rosa blue, Carte purple. Gold solo HP.
   const PILLAR_TONES = {
     coach: {
-      color: '#28D7FF',
-      activeBg: 'linear-gradient(90deg, rgba(40,215,255,.15), rgba(40,215,255,.06))',
-      activeBorder: 'rgba(40,215,255,.32)',
-      accent: '#28D7FF',
-      idleIcon: 'rgba(40, 215, 255, 0.72)'
+      color: '#00A8C8',
+      activeBg: '#EFECE6',
+      activeBorder: 'rgba(0,0,0,.06)',
+      accent: '#00A8C8',
+      idleIcon: '#00A8C8'
     },
     rosa: {
-      color: '#4FA2FF',
-      activeBg: 'linear-gradient(90deg, rgba(79,162,255,.15), rgba(79,162,255,.06))',
-      activeBorder: 'rgba(79,162,255,.32)',
-      accent: '#4FA2FF',
-      idleIcon: 'rgba(79, 162, 255, 0.7)'
+      color: '#2878E0',
+      activeBg: '#EFECE6',
+      activeBorder: 'rgba(0,0,0,.06)',
+      accent: '#2878E0',
+      idleIcon: '#2878E0'
     },
     carte: {
-      color: '#A78BFA',
-      activeBg: 'linear-gradient(90deg, rgba(167,139,250,.15), rgba(167,139,250,.06))',
-      activeBorder: 'rgba(167,139,250,.32)',
-      accent: '#A78BFA',
-      idleIcon: 'rgba(167, 139, 250, 0.7)'
+      color: '#9A72E8',
+      activeBg: '#EFECE6',
+      activeBorder: 'rgba(0,0,0,.06)',
+      accent: '#9A72E8',
+      idleIcon: '#9A72E8'
     }
   }
 
@@ -130,8 +130,8 @@ export default function SidebarNew() {
     fontSize: '13px',
     fontWeight: 500,
     fontFamily: 'inherit',
-    background: active ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
-    color: active ? 'rgba(244, 246, 247, 0.88)' : 'rgba(244, 246, 247, 0.5)',
+    background: active ? '#EFECE6' : 'transparent',
+    color: active ? '#1D1D1F' : '#6B6B6B',
     border: '1px solid transparent',
     transition: 'background 0.15s ease, color 0.15s ease',
     cursor: 'pointer',
@@ -140,13 +140,13 @@ export default function SidebarNew() {
   })
 
   const handleUtilityMouseEnter = (e) => {
-    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
-    e.currentTarget.style.color = 'rgba(244, 246, 247, 0.88)'
+    e.currentTarget.style.background = '#EFECE6'
+    e.currentTarget.style.color = '#1D1D1F'
   }
 
   const handleUtilityMouseLeave = (e, active) => {
-    e.currentTarget.style.background = active ? 'rgba(255, 255, 255, 0.05)' : 'transparent'
-    e.currentTarget.style.color = active ? 'rgba(244, 246, 247, 0.88)' : 'rgba(244, 246, 247, 0.5)'
+    e.currentTarget.style.background = active ? '#EFECE6' : 'transparent'
+    e.currentTarget.style.color = active ? '#1D1D1F' : '#6B6B6B'
   }
 
   // Pilastri: stile minimale per tono (reference: bordi sottili, niente glow, niente text-shadow)
@@ -162,9 +162,9 @@ export default function SidebarNew() {
       fontSize: '14px',
       fontWeight: active ? 700 : 650,
       background: active ? tone.activeBg : 'transparent',
-      color: active ? tone.color : '#B2C2CE',
+      color: active ? '#1D1D1F' : '#6B6B6B',
       border: `1px solid ${active ? tone.activeBorder : 'transparent'}`,
-      boxShadow: active ? 'inset 0 1px rgba(255,255,255,.03)' : 'none',
+      boxShadow: active ? 'inset 0 1px rgba(255,255,255,.9), 0 1px 3px rgba(29,29,31,.04)' : 'none',
       position: 'relative',
       overflow: 'hidden',
       transition: 'background 160ms ease, color 160ms ease, border-color 160ms ease',
@@ -176,15 +176,15 @@ export default function SidebarNew() {
   const handleNavMouseEnter = (e, item, active) => {
     if (active) return
     const tone = PILLAR_TONES[item.tone] || PILLAR_TONES.coach
-    e.currentTarget.style.background = tone.activeBg
-    e.currentTarget.style.color = tone.color
+    e.currentTarget.style.background = '#EFECE6'
+    e.currentTarget.style.color = '#1D1D1F'
     e.currentTarget.style.borderColor = tone.activeBorder
   }
 
   const handleNavMouseLeave = (e, item, active) => {
     if (active) return
     e.currentTarget.style.background = 'transparent'
-    e.currentTarget.style.color = '#B2C2CE'
+    e.currentTarget.style.color = '#6B6B6B'
     e.currentTarget.style.borderColor = 'transparent'
   }
 
@@ -204,7 +204,7 @@ export default function SidebarNew() {
             letterSpacing: '0.5px',
             textTransform: 'uppercase',
             lineHeight: 1.2,
-            color: isWow ? '#03101d' : (item.variant === 'gold' ? '#1f1300' : 'rgba(244,246,247,0.85)'),
+            color: isWow ? '#03101d' : (item.variant === 'gold' ? '#1f1300' : '#1D1D1F'),
             background: isWow
               ? 'rgba(48, 176, 96, 0.18)'
               : (item.variant === 'gold'
@@ -233,9 +233,9 @@ export default function SidebarNew() {
           letterSpacing: '0.6px',
           textTransform: 'uppercase',
           lineHeight: 1.2,
-          color: 'rgba(244, 246, 247, 0.72)',
-          background: 'rgba(48, 176, 96, 0.16)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          color: '#1D1D1F',
+          background: 'rgba(39, 167, 106, 0.14)',
+          border: '1px solid rgba(0, 0, 0, 0.08)',
           boxShadow: 'none'
         }}
       >
@@ -263,14 +263,15 @@ export default function SidebarNew() {
         `}
         style={{
           width: 196,
-          background: '#07131E',
-          borderRight: '1px solid rgba(104,174,207,.14)',
+          background: 'rgba(255,255,255,.82)',
+          backdropFilter: 'blur(24px)',
+          borderRight: '1px solid rgba(0,0,0,.07)',
         }}
       >
-        <div className="p-3 border-b border-[rgba(255,255,255,0.06)] flex justify-center items-center relative" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.055)' }}>
+        <div className="p-3 flex justify-center items-center relative" style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.07)' }}>
           <button
             type="button"
-            className="lg:hidden absolute right-3 top-3 flex items-center justify-center w-8 h-8 rounded-lg border border-[rgba(255,255,255,0.08)] bg-transparent text-[rgba(244,246,247,0.65)]"
+            className="lg:hidden absolute right-3 top-3 flex items-center justify-center w-8 h-8 rounded-lg border border-[rgba(0,0,0,0.08)] bg-transparent text-[#6B6B6B]"
             onClick={() => setIsOpen(false)}
             aria-label={t('toggleMenu')}
             title={t('toggleMenu')}
@@ -279,7 +280,7 @@ export default function SidebarNew() {
           </button>
           <button
             type="button"
-            className="hidden lg:flex absolute right-3 top-1/2 -translate-y-1/2 items-center justify-center w-8 h-8 rounded-lg border border-[rgba(255,255,255,0.08)] bg-transparent text-[rgba(244,246,247,0.65)] hover:bg-[rgba(255,255,255,0.05)]"
+            className="hidden lg:flex absolute right-3 top-1/2 -translate-y-1/2 items-center justify-center w-8 h-8 rounded-lg border border-[rgba(0,0,0,0.08)] bg-transparent text-[#6B6B6B] hover:bg-[#EFECE6]"
             onClick={() => setIsOpen(false)}
             aria-label={t('toggleMenu')}
             title={t('toggleMenu')}
@@ -344,7 +345,7 @@ export default function SidebarNew() {
 
           {/* Account: HP + Profilo, visibili come nella reference. Altro: utility secondarie. */}
           <div style={{ marginTop: 'auto', paddingTop: '12px' }}>
-            <div style={{ height: '1px', background: 'rgba(104,174,207,0.14)', margin: '0 4px 10px' }} />
+            <div style={{ height: '1px', background: 'rgba(0,0,0,0.08)', margin: '0 4px 10px' }} />
             <button
               type="button"
               onClick={() => setAccountOpen((open) => !open)}
@@ -357,13 +358,11 @@ export default function SidebarNew() {
                 width: '100%',
                 minHeight: 52,
                 padding: '8px 10px',
-                border: '1px solid rgba(104,174,207,0.16)',
-                borderRadius: 12,
-                background: accountOpen
-                  ? 'linear-gradient(180deg, #162C3A, #112331)'
-                  : 'linear-gradient(180deg, #112331, #0D1B27)',
-                boxShadow: 'inset 0 1px 0 rgba(255,255,255,.05)',
-                color: '#F7FAFC',
+                border: '1px solid rgba(0,0,0,0.08)',
+                borderRadius: 14,
+                background: accountOpen ? '#EFECE6' : 'rgba(255,255,255,.9)',
+                boxShadow: 'inset 0 1px rgba(255,255,255,.9), 0 1px 3px rgba(29,29,31,.04)',
+                color: '#1D1D1F',
                 cursor: 'pointer',
                 fontFamily: 'inherit'
               }}
@@ -375,16 +374,16 @@ export default function SidebarNew() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'rgba(40, 215, 255, 0.14)',
-                border: '1px solid rgba(40, 215, 255, 0.2)',
-                color: '#28D7FF',
+                background: 'rgba(0, 168, 200, 0.12)',
+                border: '1px solid rgba(0, 168, 200, 0.16)',
+                color: '#00A8C8',
                 flexShrink: 0
               }}>
                 <User size={14} />
               </span>
               <span style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
                 <span style={{ display: 'block', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{accountLabel}</span>
-                <span style={{ display: 'block', fontSize: 10, color: '#718695' }}>Hero Coach</span>
+                <span style={{ display: 'block', fontSize: 10, color: '#6B6B6B' }}>Hero Coach</span>
               </span>
               {accountOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
@@ -537,9 +536,9 @@ export default function SidebarNew() {
             height: '44px',
             borderRadius: '12px',
             flexShrink: 0,
-            background: 'rgba(255, 255, 255, 0.04)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            color: 'rgba(244, 246, 247, 0.7)',
+            background: '#EFECE6',
+            border: '1px solid rgba(0, 0, 0, 0.08)',
+            color: '#6B6B6B',
             cursor: 'pointer'
           }}
         >
@@ -603,8 +602,8 @@ export default function SidebarNew() {
             width: 64px;
             z-index: 35;
             padding: 12px 10px 16px;
-            background: #07131E;
-            border-right: 1px solid rgba(104, 174, 207, 0.14);
+            background: #fff;
+            border-right: 1px solid rgba(0, 0, 0, 0.07);
           }
         }
 

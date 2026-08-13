@@ -6,18 +6,16 @@ import {
   UserCheck,
   BarChart3,
   Radio,
-  Trophy,
   TrendingUp,
   Calendar,
   AlertCircle,
-  Search,
-  ClipboardList,
   Wrench,
   ChevronDown
 } from 'lucide-react'
 import CoachComposer from './CoachComposer'
 import CoachSuggestionCard from './CoachSuggestionCard'
 import CoachContextRail, { CoachMobileContext } from './CoachContextRail'
+import AIKnowledgeBar from '@/components/AIKnowledgeBar'
 import { resolveHomeState, formatMatchDate, resolveGreetingName } from './homeState'
 import styles from './CoachWorkspace.module.css'
 
@@ -31,11 +29,14 @@ const COPY = {
     composerHint: 'Esempi: tattiche, formazione, giocatori, carte, prossima partita...',
     suggestionsTitle: 'Suggerimenti per te',
     analyzeTitle: 'Analizza la mia rosa',
-    analyzeCopy: 'Valuta giocatori, ruoli e chimica della tua formazione reale.',
-    playedTitle: 'Ho appena giocato una partita',
-    playedCopy: 'Analizziamo la partita e vediamo cosa possiamo migliorare.',
-    prepareTitle: 'Preparami per la prossima partita',
-    prepareCopy: 'Tattiche, avversario, chiave del match e consigli.',
+    analyzeCopy: 'Valuta giocatori, ruoli, chimica e priorità della tua formazione.',
+    analyzeMicro: 'Analisi',
+    playedTitle: 'Ho appena giocato',
+    playedCopy: 'Racconta a Hero com’è andata e trasformala in esperienza utile.',
+    playedMicro: 'Feedback',
+    prepareTitle: 'Prepara la prossima partita',
+    prepareCopy: 'Studia avversario, tattiche e piano gara.',
+    prepareMicro: 'Tattiche',
     nextAction: 'Prossima azione',
     context: 'Il tuo contesto',
     lastMatch: 'Ultimo match',
@@ -92,11 +93,14 @@ const COPY = {
     composerHint: 'Examples: tactics, formation, players, cards, next match...',
     suggestionsTitle: 'Suggestions for you',
     analyzeTitle: 'Analyze my squad',
-    analyzeCopy: 'Evaluate players, roles and chemistry of your real formation.',
-    playedTitle: 'I just played a match',
-    playedCopy: 'Let’s review the match and see what we can improve.',
-    prepareTitle: 'Prepare me for the next match',
-    prepareCopy: 'Tactics, opponent, match key and advice.',
+    analyzeCopy: 'Evaluate players, roles, chemistry and your formation priorities.',
+    analyzeMicro: 'Analysis',
+    playedTitle: 'I just played',
+    playedCopy: 'Tell Hero how it went and turn it into useful experience.',
+    playedMicro: 'Feedback',
+    prepareTitle: 'Prepare for the next match',
+    prepareCopy: 'Study the opponent, tactics and match plan.',
+    prepareMicro: 'Tactics',
     nextAction: 'Next action',
     context: 'Your context',
     lastMatch: 'Last match',
@@ -319,33 +323,38 @@ export default function CoachWorkspace({
                 <CoachSuggestionCard
                   title={copy.analyzeTitle}
                   copy={copy.analyzeCopy}
-                  icon={Search}
-                  tone="cyan"
+                  micro={copy.analyzeMicro}
+                  intent="rosa"
                   onClick={analyzeRoster}
                 />
                 <CoachSuggestionCard
                   title={copy.playedTitle}
                   copy={copy.playedCopy}
-                  icon={Trophy}
-                  tone="green"
+                  micro={copy.playedMicro}
+                  intent="match"
                   onClick={onOpenFeedback}
                 />
                 <CoachSuggestionCard
                   title={copy.prepareTitle}
                   copy={copy.prepareCopy}
-                  icon={ClipboardList}
-                  tone="gold"
+                  micro={copy.prepareMicro}
+                  intent="tactics"
                   onClick={onOpenCountermeasures}
                 />
               </div>
             </section>
           ) : null}
 
+          <div className={`${styles.tools} ${styles.mobileKnowledge}`}>
+            <AIKnowledgeBar variant="row" />
+          </div>
+
           <CoachMobileContext
             copy={copy}
             lastMatchLabel={lastMatchLabel}
             latestInsight={latestInsight}
             contextRows={contextRows}
+            contextMicro={`${copy.contextRoster} ${contextRows[0]?.value || ''} · ${contextRows[1]?.value || ''}`}
             onOpenProgress={onOpenProgress}
             onOpenMatches={onOpenMatches}
           />

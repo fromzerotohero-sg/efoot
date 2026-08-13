@@ -65,6 +65,7 @@ export function CoachMobileContext({
   lastMatchLabel,
   latestInsight,
   contextRows,
+  contextMicro,
   onOpenProgress,
   onOpenMatches
 }) {
@@ -77,6 +78,7 @@ export function CoachMobileContext({
           </span>
           <span className={styles.toolsCopy}>
             <span className={styles.toolsTitle}>{copy.context}</span>
+            {contextMicro ? <span className={styles.toolsMicro}>{contextMicro}</span> : null}
           </span>
         </span>
         <ChevronDown className={styles.toolsChevron} size={16} aria-hidden="true" />

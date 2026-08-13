@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
 import { supabase } from '@/lib/supabaseClient'
 import { safeJsonResponse } from '@/lib/fetchHelper'
-import { RefreshCw, AlertCircle, Trophy, Target, Zap, Crown } from 'lucide-react'
+import { RefreshCw, AlertCircle, Trophy, Target, Zap, Crown, Brain, ChevronDown } from 'lucide-react'
 
 /**
  * Hook per rilevare mobile
@@ -39,6 +39,7 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [animatedScore, setAnimatedScore] = useState(0)
+  const [rowOpen, setRowOpen] = useState(false)
 
   const scoreRef = React.useRef(score)
   const previousScoreRef = React.useRef(score)
@@ -270,6 +271,118 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
   const currentLevel = getLevelConfig(level)
   const LevelIcon = currentLevel.icon
 
+  // UX V2 — gauge/row: stessa formula, fetch e score della card. Solo presentazione.
+  if (variant === 'gauge' || variant === 'row') {
+    const gaugeSize = compact || variant === 'row' ? 72 : 132
+    const gaugeRadius = compact || variant === 'row' ? 28 : 52
+    const gaugeCircumference = 2 * Math.PI * gaugeRadius
+    const gaugeProgress = Math.max(0, Math.min(100, Math.round(animatedScore)))
+    const gaugeOffset = gaugeCircumference * (1 - gaugeProgress / 100)
+    const center = gaugeSize / 2
+    const light = compact || variant === 'row'
+    const scoreLabel = loading ? '—' : `${gaugeProgress}%`
+
+    const gaugeVisual = (
+      <div style={{ position: 'relative', width: gaugeSize, height: gaugeSize, margin: '0 auto' }}>
+        <svg width={gaugeSize} height={gaugeSize} viewBox={`0 0 ${gaugeSize} ${gaugeSize}`} role="img" aria-label={scoreLabel}>
+          <defs>
+            <linearGradient id={`ai-knowledge-gauge-${variant}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#00A8C8" />
+              <stop offset="100%" stopColor="#27A76A" />
+            </linearGradient>
+          </defs>
+          <circle cx={center} cy={center} r={gaugeRadius} fill="none" stroke={light ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.07)'} strokeWidth={compact || variant === 'row' ? 7 : 10} />
+          <circle
+            cx={center}
+            cy={center}
+            r={gaugeRadius}
+            fill="none"
+            stroke={`url(#ai-knowledge-gauge-${variant})`}
+            strokeWidth={compact || variant === 'row' ? 7 : 10}
+            strokeLinecap="round"
+            strokeDasharray={gaugeCircumference}
+            strokeDashoffset={loading ? gaugeCircumference : gaugeOffset}
+            transform={`rotate(-90 ${center} ${center})`}
+            style={{ transition: 'stroke-dashoffset 0.6s ease' }}
+          />
+        </svg>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ fontSize: light ? '18px' : '26px', fontWeight: 800, color: light ? '#1D1D1F' : '#F7FAFC', lineHeight: 1 }}>
+            {scoreLabel}
+          </span>
+        </div>
+      </div>
+    )
+
+    if (variant === 'row') {
+      const title = lang === 'en' ? 'How well Hero knows you' : 'Quanto Hero ti conosce'
+      const sub = lang === 'en'
+        ? 'Hero knows your squad better when you update roster, matches and feedback.'
+        : 'Hero conosce meglio la tua squadra quando aggiorni rosa, partite e feedback.'
+      return (
+        <>
+          <button
+            type="button"
+            onClick={() => setRowOpen((open) => !open)}
+            aria-expanded={rowOpen}
+            aria-label={title}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              width: '100%',
+              minHeight: 56,
+              padding: '8px 14px',
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              textAlign: 'left'
+            }}
+          >
+            <span style={{
+              width: 36,
+              height: 36,
+              borderRadius: 11,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'rgba(0,168,200,0.1)',
+              color: '#00A8C8',
+              flexShrink: 0
+            }}>
+              <Brain size={16} aria-hidden="true" />
+            </span>
+            <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, color: '#1D1D1F' }}>{title}</span>
+            <span style={{ fontSize: 15, fontWeight: 800, color: '#1D1D1F', fontVariantNumeric: 'tabular-nums' }}>{scoreLabel}</span>
+            <ChevronDown
+              size={16}
+              aria-hidden="true"
+              style={{ color: '#9B9B9B', transform: rowOpen ? 'rotate(180deg)' : 'none', transition: 'transform 160ms ease' }}
+            />
+          </button>
+          {rowOpen ? (
+            <div style={{ padding: '4px 16px 16px', textAlign: 'center' }}>
+              {gaugeVisual}
+              <p style={{ margin: '10px 0 0', fontSize: 12, lineHeight: 1.45, color: '#6B6B6B' }}>{sub}</p>
+            </div>
+          ) : null}
+        </>
+      )
+    }
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: compact ? '6px' : '10px', padding: '4px 0' }}>
+        {gaugeVisual}
+        {!compact ? (
+          <span style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.55)' }}>
+            {lang === 'en' ? 'Knowledge level' : 'Livello conoscenza'}
+          </span>
+        ) : null}
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div style={{...styles.card, padding: isMobile ? '16px' : '24px'}}>
@@ -297,93 +410,6 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
           <AlertCircle size={24} />
           <span style={{ fontSize: '15px' }}>{error}</span>
         </div>
-      </div>
-    )
-  }
-
-  // UX V2 — variante "gauge": STESSI fetch, score, livello e animazione della card.
-  // Cambia solo la presentazione (indicatore circolare, reference visiva Home Coach).
-  // Formula, pesi, endpoint e Knowledge calculation restano invariati.
-  if (variant === 'gauge') {
-    const gaugeSize = compact ? 72 : 132
-    const gaugeRadius = compact ? 28 : 52
-    const gaugeCircumference = 2 * Math.PI * gaugeRadius
-    const gaugeProgress = Math.max(0, Math.min(100, Math.round(animatedScore)))
-    const gaugeOffset = gaugeCircumference * (1 - gaugeProgress / 100)
-    const center = gaugeSize / 2
-
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: compact ? '6px' : '10px', padding: '4px 0' }}>
-        <div style={{ position: 'relative', width: gaugeSize, height: gaugeSize }}>
-          <svg
-            width={gaugeSize}
-            height={gaugeSize}
-            viewBox={`0 0 ${gaugeSize} ${gaugeSize}`}
-            role="img"
-            aria-label={`${gaugeProgress}%`}
-          >
-            <defs>
-              <linearGradient id="ai-knowledge-gauge-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#28D7FF" />
-                <stop offset="100%" stopColor="#35DF8C" />
-              </linearGradient>
-            </defs>
-            <circle
-              cx={center}
-              cy={center}
-              r={gaugeRadius}
-              fill="none"
-              stroke="rgba(255, 255, 255, 0.07)"
-              strokeWidth={compact ? 7 : 10}
-            />
-            <circle
-              cx={center}
-              cy={center}
-              r={gaugeRadius}
-              fill="none"
-              stroke="url(#ai-knowledge-gauge-gradient)"
-              strokeWidth={compact ? 7 : 10}
-              strokeLinecap="round"
-              strokeDasharray={gaugeCircumference}
-              strokeDashoffset={gaugeOffset}
-              transform={`rotate(-90 ${center} ${center})`}
-              style={{ transition: 'stroke-dashoffset 0.6s ease' }}
-            />
-          </svg>
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '2px'
-            }}
-          >
-            <span style={{ fontSize: compact ? '18px' : '26px', fontWeight: 800, color: '#F7FAFC', lineHeight: 1 }}>
-              {gaugeProgress}%
-            </span>
-            {!compact ? (
-            <span
-              style={{
-                fontSize: '10px',
-                fontWeight: 700,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: currentLevel.color
-              }}
-            >
-              {currentLevel.label}
-            </span>
-            ) : null}
-          </div>
-        </div>
-        {!compact ? (
-        <span style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.55)' }}>
-          {lang === 'en' ? 'Knowledge level' : 'Livello conoscenza'}
-        </span>
-        ) : null}
       </div>
     )
   }

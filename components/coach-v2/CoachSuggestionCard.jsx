@@ -2,31 +2,33 @@
 
 import React from 'react'
 import { ArrowUpRight } from 'lucide-react'
+import CoachSuggestionArt from './CoachSuggestionArt'
 import styles from './CoachWorkspace.module.css'
 
-const TONE_CLASS = {
-  cyan: styles.toneCyan,
-  green: styles.toneGreen,
-  gold: styles.toneGold
+const INTENT_CLASS = {
+  rosa: styles.intentRosa,
+  match: styles.intentMatch,
+  tactics: styles.intentTactics
 }
 
 export default function CoachSuggestionCard({
   title,
   copy,
-  icon: Icon,
-  tone = 'cyan',
+  micro,
+  intent = 'rosa',
   onClick
 }) {
   return (
     <button
       type="button"
-      className={`${styles.suggestion} ${TONE_CLASS[tone] || styles.toneCyan}`}
+      className={`${styles.suggestion} ${INTENT_CLASS[intent] || styles.intentRosa}`}
       onClick={onClick}
     >
-      <span className={styles.suggestionIcon} aria-hidden="true">
-        <Icon size={22} />
+      <span className={styles.suggestionArt} aria-hidden="true">
+        <CoachSuggestionArt intent={intent} />
       </span>
       <span className={styles.suggestionBody}>
+        {micro ? <span className={styles.suggestionMicro}>{micro}</span> : null}
         <h3 className={styles.suggestionTitle}>{title}</h3>
         <p className={styles.suggestionCopy}>{copy}</p>
       </span>
