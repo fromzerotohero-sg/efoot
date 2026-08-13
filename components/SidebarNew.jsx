@@ -4,7 +4,7 @@ import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation, pickLang } from '@/lib/i18n'
 import {
   BookOpen,
   Brain,
@@ -90,8 +90,8 @@ export default function SidebarNew() {
 
   const pillarItems = [
     { href: '/', icon: LayoutGrid, label: 'Coach', exact: true, tone: 'coach' },
-    { href: '/gestione-formazione', icon: UsersIcon, label: lang === 'en' ? 'Squad' : 'Rosa', tone: 'rosa' },
-    { href: '/card-advisor-lab', icon: Sparkles, label: lang === 'en' ? 'Cards' : 'Carte', tone: 'carte', badge: 'new' }
+    { href: '/gestione-formazione', icon: UsersIcon, label: pickLang(lang, { it: 'Rosa', en: 'Squad', es: 'Plantilla' }), tone: 'rosa' },
+    { href: '/card-advisor-lab', icon: Sparkles, label: pickLang(lang, { it: 'Carte', en: 'Cards', es: 'Cartas' }), tone: 'carte', badge: 'new' }
   ]
 
   // Utility (gerarchia visuale ridotta). Mapping verificato su route/componenti reali:
@@ -104,18 +104,18 @@ export default function SidebarNew() {
   // - Tornei → link esterno con redirect modal esistente
   const accountItems = [
     { href: '/gestione-profilo', icon: Wallet, label: 'HP', iconColor: '#c9a227' },
-    { href: '/impostazioni-profilo', icon: User, label: lang === 'en' ? 'Profile' : 'Profilo' }
+    { href: '/impostazioni-profilo', icon: User, label: pickLang(lang, { it: 'Profilo', en: 'Profile', es: 'Perfil' }) }
   ]
 
   const otherItems = [
-    { href: '/impostazioni-profilo', icon: Brain, label: lang === 'en' ? 'Hero Memory' : 'Memoria Hero' },
+    { href: '/impostazioni-profilo', icon: Brain, label: pickLang(lang, { it: 'Memoria Hero', en: 'Hero Memory', es: 'Memoria Hero' }) },
     { href: '/guida', icon: BookOpen, label: t('guide') },
     {
       href: 'https://tornei.fromzerotohero.io/',
       icon: Gift,
       label: 'Tornei',
       shortcut: 'tornei',
-      badgeText: lang === 'en' ? 'FREE' : 'GRATIS'
+      badgeText: pickLang(lang, { it: 'GRATIS', en: 'FREE', es: 'GRATIS' })
     },
     { type: 'tour' },
     { type: 'language' }
@@ -222,7 +222,7 @@ export default function SidebarNew() {
     if (item.badge !== 'new') return null
     return (
       <span
-        aria-label={lang === 'en' ? 'New' : 'Novità'}
+        aria-label={pickLang(lang, { it: 'Novità', en: 'New', es: 'Nuevo' })}
         style={{
           flexShrink: 0,
           marginLeft: 'auto',
@@ -239,7 +239,7 @@ export default function SidebarNew() {
           boxShadow: 'none'
         }}
       >
-        {lang === 'en' ? 'NEW' : 'NOVITÀ'}
+        {pickLang(lang, { it: 'NOVITÀ', en: 'NEW', es: 'NUEVO' })}
       </span>
     )
   }
@@ -350,7 +350,7 @@ export default function SidebarNew() {
               type="button"
               onClick={() => setAccountOpen((open) => !open)}
               aria-expanded={accountOpen}
-              aria-label={lang === 'en' ? 'Account menu' : 'Menu account'}
+              aria-label={pickLang(lang, { it: 'Menu account', en: 'Account menu', es: 'Menú de cuenta' })}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -493,7 +493,7 @@ export default function SidebarNew() {
 
       {/* Rail compatta tablet (768-1023px): 3 pilastri icona + accesso al drawer utility.
           Tra mobile e desktop niente sidebar larga permanente: il contenuto Rosa mantiene spazio utile. */}
-      <nav className="tablet-rail" aria-label={lang === 'en' ? 'Main navigation' : 'Navigazione principale'}>
+      <nav className="tablet-rail" aria-label={pickLang(lang, { it: 'Navigazione principale', en: 'Main navigation', es: 'Navegación principal' })}>
         {pillarItems.map((item) => {
           const Icon = item.icon
           const active = item.exact ? pathname === '/' : isActive(item.href)
@@ -547,21 +547,25 @@ export default function SidebarNew() {
       </nav>
 
       {redirectModal.open && (
-        <div className="redirect-overlay" role="dialog" aria-modal="true" aria-label={lang === 'en' ? 'External link' : 'Link esterno'} onClick={() => setRedirectModal({ open: false, url: '' })}>
+        <div className="redirect-overlay" role="dialog" aria-modal="true" aria-label={pickLang(lang, { it: 'Link esterno', en: 'External link', es: 'Enlace externo' })} onClick={() => setRedirectModal({ open: false, url: '' })}>
           <div className="redirect-card" onClick={(e) => e.stopPropagation()}>
             <div className="redirect-glow" aria-hidden="true">
               <Gift size={34} />
             </div>
-            <h3>{lang === 'en' ? 'You are leaving the app' : 'Stai per uscire dall\'app'}</h3>
+            <h3>{pickLang(lang, { it: 'Stai per uscire dall\'app', en: 'You are leaving the app', es: 'Vas a salir de la app' })}</h3>
             <p>
-              {lang === 'en'
-                ? 'You will be redirected to FZTH Tornei, the free tournament platform.'
-                : 'Verrai indirizzato a FZTH Tornei, la piattaforma gratuita per tornei.'}
+              {pickLang(lang, {
+                it: 'Verrai indirizzato a FZTH Tornei, la piattaforma gratuita per tornei.',
+                en: 'You will be redirected to FZTH Tornei, the free tournament platform.',
+                es: 'Serás redirigido a FZTH Tornei, la plataforma gratuita de torneos.'
+              })}
             </p>
             <p className="redirect-sub">
-              {lang === 'en'
-                ? 'Test what you have learned and become an official Hero.'
-                : 'Metti alla prova ciò che hai imparato e diventa un Hero ufficiale.'}
+              {pickLang(lang, {
+                it: 'Metti alla prova ciò che hai imparato e diventa un Hero ufficiale.',
+                en: 'Test what you have learned and become an official Hero.',
+                es: 'Pon a prueba lo que has aprendido y conviértete en un Hero oficial.'
+              })}
             </p>
             <div className="redirect-actions">
               <a
@@ -570,14 +574,14 @@ export default function SidebarNew() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                {lang === 'en' ? 'Go to FZTH Tornei' : 'Vai a FZTH Tornei'}
+                {pickLang(lang, { it: 'Vai a FZTH Tornei', en: 'Go to FZTH Tornei', es: 'Ir a FZTH Tornei' })}
               </a>
               <button
                 className="redirect-secondary"
                 type="button"
                 onClick={() => setRedirectModal({ open: false, url: '' })}
               >
-                {lang === 'en' ? 'Stay here' : 'Resta qui'}
+                {pickLang(lang, { it: 'Resta qui', en: 'Stay here', es: 'Quédate aquí' })}
               </button>
             </div>
           </div>

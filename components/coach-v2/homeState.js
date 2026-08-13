@@ -16,7 +16,7 @@ export function formatMatchDate(rawDate, lang) {
   if (!rawDate) return null
   const d = new Date(rawDate)
   if (isNaN(d.getTime())) return null
-  return d.toLocaleDateString(lang === 'en' ? 'en-GB' : 'it-IT', {
+  return d.toLocaleDateString(lang === 'en' ? 'en-GB' : lang === 'es' ? 'es-ES' : 'it-IT', {
     day: 'numeric',
     month: 'short',
     year: 'numeric'

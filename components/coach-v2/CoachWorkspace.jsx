@@ -19,10 +19,7 @@ const COPY = {
     composerAria: 'Apri la conversazione con Hero',
     composerHint: 'Hero usa rosa, partite e feedback reali.',
     suggestionsTitle: 'Suggerimenti per te',
-    analyzeTitle: 'Analizza la mia rosa',
-    analyzeCopy: 'Valuta giocatori, ruoli, chimica e la prima priorità concreta.',
-    analyzeMicro: 'Analisi',
-    statsUploadTitle: 'Carica statistiche',
+    statsUploadTitle: 'Carica le nuove statistiche',
     statsUploadCopy: 'Importa le schermate Analisi di eFootball e Hero le collega alla tua rosa.',
     statsMicro: 'Data Lab',
     playedTitle: 'Ho appena giocato',
@@ -32,6 +29,8 @@ const COPY = {
     prepareCopy: 'Studia avversario e piano gara sul tuo modo reale di giocare.',
     prepareMicro: 'Game Plan',
     nextAction: 'Prossima azione',
+    postMatchTitle: 'Raccontami com’è andata',
+    postMatchBody: 'La partita è fresca: due minuti di feedback rendono subito più utile il prossimo consiglio.',
     context: 'Il tuo contesto',
     lastMatch: 'Ultimo match',
     insight: 'Ultimo insight',
@@ -53,7 +52,22 @@ const COPY = {
     toolsMatches: 'Partite',
     toolsLive: 'Live Coach',
     lowHp: 'Saldo HP insufficiente per questa azione AI (costo standard: 2 HP).',
-    lowHpCta: 'Ottieni HP'
+    lowHpCta: 'Ottieni HP',
+    setupAria: 'Configurazione iniziale',
+    setupEyebrow: 'Il tuo percorso',
+    setupTitleRoster: 'Costruiamo la tua squadra reale',
+    setupTitleCoach: 'Ora scegli chi guida la squadra',
+    setupBodyRoster: 'Aggiungi i tuoi titolari reali. Hero userà giocatori, ruoli e modulo come base di ogni consiglio.',
+    setupBodyCoach: 'L’allenatore completa il contesto tattico e rende i consigli più precisi.',
+    setupStepRoster: 'Rosa reale',
+    setupStepCoach: 'Allenatore',
+    setupReady: 'Pronto',
+    setupChoose: 'Da scegliere',
+    setupAfter: 'Pronto dopo il setup',
+    setupCtaRoster: 'Crea la tua rosa',
+    setupCtaCoach: 'Scegli allenatore',
+    setupStatusTactical: 'CONTESTO TATTICO',
+    setupStarters: 'TITOLARI'
   },
   en: {
     overline: 'Hero Coach',
@@ -63,10 +77,7 @@ const COPY = {
     composerAria: 'Open the conversation with Hero',
     composerHint: 'Hero uses your real squad, matches and feedback.',
     suggestionsTitle: 'Suggested for you',
-    analyzeTitle: 'Analyse my squad',
-    analyzeCopy: 'Evaluate players, roles, chemistry and the first concrete priority.',
-    analyzeMicro: 'Analysis',
-    statsUploadTitle: 'Upload stats',
+    statsUploadTitle: 'Upload the new stats',
     statsUploadCopy: 'Import eFootball Analysis screens and Hero will connect them to your squad.',
     statsMicro: 'Data Lab',
     playedTitle: 'I just played',
@@ -76,6 +87,8 @@ const COPY = {
     prepareCopy: 'Study the opponent and build a game plan around how you actually play.',
     prepareMicro: 'Game Plan',
     nextAction: 'Next action',
+    postMatchTitle: 'Tell me how it went',
+    postMatchBody: 'The match is fresh: two minutes of feedback make the next recommendation more useful.',
     context: 'Your context',
     lastMatch: 'Last match',
     insight: 'Latest insight',
@@ -97,53 +110,121 @@ const COPY = {
     toolsMatches: 'Matches',
     toolsLive: 'Live Coach',
     lowHp: 'Not enough HP for this AI action (standard cost: 2 HP).',
-    lowHpCta: 'Get HP'
+    lowHpCta: 'Get HP',
+    setupAria: 'Initial setup',
+    setupEyebrow: 'Your journey',
+    setupTitleRoster: 'Build your real squad',
+    setupTitleCoach: 'Choose who leads the squad',
+    setupBodyRoster: 'Add your real starters. Hero will use players, roles and formation as the basis of every recommendation.',
+    setupBodyCoach: 'Your coach completes the tactical context and makes recommendations sharper.',
+    setupStepRoster: 'Real squad',
+    setupStepCoach: 'Coach',
+    setupReady: 'Ready',
+    setupChoose: 'Choose',
+    setupAfter: 'Ready after setup',
+    setupCtaRoster: 'Build your squad',
+    setupCtaCoach: 'Choose coach',
+    setupStatusTactical: 'TACTICAL CONTEXT',
+    setupStarters: 'STARTERS'
+  },
+  es: {
+    overline: 'Hero Coach',
+    greeting: (name) => `Hola ${name}`,
+    subtitle: 'Habla, analiza y prepara el próximo partido.',
+    composerPlaceholder: 'Pregunta lo que quieras sobre tu plantilla…',
+    composerAria: 'Abrir la conversación con Hero',
+    composerHint: 'Hero usa plantilla, partidos y feedback reales.',
+    suggestionsTitle: 'Sugerencias para ti',
+    statsUploadTitle: 'Carga las nuevas estadísticas',
+    statsUploadCopy: 'Importa las pantallas Análisis de eFootball y Hero las conecta a tu plantilla.',
+    statsMicro: 'Data Lab',
+    playedTitle: 'Acabo de jugar',
+    playedCopy: 'Cuéntale cómo fue. El partido se convierte en aprendizaje para la próxima vez.',
+    playedMicro: 'Match Review',
+    prepareTitle: 'Prepara el próximo partido',
+    prepareCopy: 'Estudia al rival y el plan de partido según tu forma real de jugar.',
+    prepareMicro: 'Game Plan',
+    nextAction: 'Próxima acción',
+    postMatchTitle: 'Cuéntame cómo fue',
+    postMatchBody: 'El partido está fresco: dos minutos de feedback hacen más útil el próximo consejo.',
+    context: 'Tu contexto',
+    lastMatch: 'Último partido',
+    insight: 'Último insight',
+    insightDetails: 'Ver detalles',
+    knowledge: 'Cuánto te conoce Hero',
+    knowledgeSub: 'Hero se vuelve más preciso cuando actualizas plantilla, partidos y feedback.',
+    contextRoster: 'Plantilla',
+    contextCoach: 'Entrenador',
+    contextStats: 'Estadísticas',
+    rosterEmpty: 'Por crear',
+    coachActive: 'Activo',
+    coachMissing: 'Por configurar',
+    statsReady: 'Disponibles',
+    statsMissing: 'Por añadir',
+    seeMatches: 'Ver partidos',
+    tools: 'Herramientas Coach',
+    toolsMicro: 'Progreso, partidos y Live Coach',
+    toolsProgress: 'Progreso',
+    toolsMatches: 'Partidos',
+    toolsLive: 'Live Coach',
+    lowHp: 'Saldo de HP insuficiente para esta acción de IA (coste estándar: 2 HP).',
+    lowHpCta: 'Obtener HP',
+    setupAria: 'Configuración inicial',
+    setupEyebrow: 'Tu recorrido',
+    setupTitleRoster: 'Construyamos tu plantilla real',
+    setupTitleCoach: 'Ahora elige quién dirige el equipo',
+    setupBodyRoster: 'Añade tus titulares reales. Hero usará jugadores, roles y módulo como base de cada consejo.',
+    setupBodyCoach: 'El entrenador completa el contexto táctico y hace los consejos más precisos.',
+    setupStepRoster: 'Plantilla real',
+    setupStepCoach: 'Entrenador',
+    setupReady: 'Listo',
+    setupChoose: 'Elegir',
+    setupAfter: 'Listo tras el setup',
+    setupCtaRoster: 'Crea tu plantilla',
+    setupCtaCoach: 'Elige entrenador',
+    setupStatusTactical: 'CONTEXTO TÁCTICO',
+    setupStarters: 'TITULARES'
   }
 }
 
-function SetupJourney({ lang, stats, hasActiveCoach, onOpenRoster, onOpenCoachSetup }) {
-  const it = lang !== 'en'
+function SetupJourney({ copy, stats, hasActiveCoach, onOpenRoster, onOpenCoachSetup }) {
   const starters = Math.min(11, Number(stats?.titolari || 0))
   const rosterDone = starters >= 11
   const step = !rosterDone ? 1 : !hasActiveCoach ? 2 : 3
-  const title = step === 1
-    ? (it ? 'Costruiamo la tua squadra reale' : 'Build your real squad')
-    : (it ? 'Ora scegli chi guida la squadra' : 'Choose who leads the squad')
-  const body = step === 1
-    ? (it ? 'Aggiungi i tuoi titolari reali. Hero userà giocatori, ruoli e modulo come base di ogni consiglio.' : 'Add your real starters. Hero will use players, roles and formation as the basis of every recommendation.')
-    : (it ? 'L’allenatore completa il contesto tattico e rende i consigli più precisi.' : 'Your coach completes the tactical context and makes recommendations sharper.')
+  const title = step === 1 ? copy.setupTitleRoster : copy.setupTitleCoach
+  const body = step === 1 ? copy.setupBodyRoster : copy.setupBodyCoach
 
   return (
-    <section className={styles.onboardingJourney} aria-label={it ? 'Configurazione iniziale' : 'Initial setup'}>
+    <section className={styles.onboardingJourney} aria-label={copy.setupAria}>
       <div className={styles.onboardingCopy}>
-        <span className={styles.onboardingEyebrow}>{it ? 'Il tuo percorso' : 'Your journey'}</span>
+        <span className={styles.onboardingEyebrow}>{copy.setupEyebrow}</span>
         <h2>{title}</h2>
         <p>{body}</p>
         <div className={styles.onboardingSteps}>
           <div className={`${styles.onboardingStep} ${step === 1 ? styles.onboardingStepCurrent : ''} ${rosterDone ? styles.onboardingStepDone : ''}`}>
             <span>01</span>
             <div>
-              <strong>{it ? 'Rosa reale' : 'Real squad'}</strong>
+              <strong>{copy.setupStepRoster}</strong>
               <small>{starters}/11</small>
             </div>
           </div>
           <div className={`${styles.onboardingStep} ${step === 2 ? styles.onboardingStepCurrent : ''} ${hasActiveCoach ? styles.onboardingStepDone : ''}`}>
             <span>02</span>
             <div>
-              <strong>{it ? 'Allenatore' : 'Coach'}</strong>
-              <small>{hasActiveCoach ? (it ? 'Pronto' : 'Ready') : (it ? 'Da scegliere' : 'Choose')}</small>
+              <strong>{copy.setupStepCoach}</strong>
+              <small>{hasActiveCoach ? copy.setupReady : copy.setupChoose}</small>
             </div>
           </div>
           <div className={styles.onboardingStep}>
             <span>03</span>
             <div>
               <strong>Hero</strong>
-              <small>{it ? 'Pronto dopo il setup' : 'Ready after setup'}</small>
+              <small>{copy.setupAfter}</small>
             </div>
           </div>
         </div>
         <button type="button" className={styles.onboardingCta} onClick={step === 1 ? onOpenRoster : onOpenCoachSetup}>
-          {step === 1 ? (it ? 'Crea la tua rosa' : 'Build your squad') : (it ? 'Scegli allenatore' : 'Choose coach')}
+          {step === 1 ? copy.setupCtaRoster : copy.setupCtaCoach}
           <span aria-hidden="true">→</span>
         </button>
       </div>
@@ -157,7 +238,7 @@ function SetupJourney({ lang, stats, hasActiveCoach, onOpenRoster, onOpenCoachSe
         </div>
         <div className={styles.onboardingStatus}>
           <span className={styles.onboardingStatusDot} />
-          {step === 1 ? `${starters}/11 TITOLARI` : (it ? 'CONTESTO TATTICO' : 'TACTICAL CONTEXT')}
+          {step === 1 ? `${starters}/11 ${copy.setupStarters}` : copy.setupStatusTactical}
         </div>
       </div>
     </section>
@@ -186,7 +267,7 @@ export default function CoachWorkspace({
   onGetHp,
   toolsExtra = null
 }) {
-  const copy = COPY[lang === 'en' ? 'en' : 'it']
+  const copy = COPY[lang] || COPY.it
   const greetingName = resolveGreetingName(userProfile)
   const lastMatch = Array.isArray(recentMatches) && recentMatches.length > 0 ? recentMatches[0] : null
   const lastMatchRaw = lastMatch?.created_at || lastMatch?.match_date || null
@@ -215,34 +296,6 @@ export default function CoachWorkspace({
     ? `${lastMatch.opponent_name || '—'}${formatMatchDate(lastMatchRaw, lang) ? ` · ${formatMatchDate(lastMatchRaw, lang)}` : ''}`
     : null
 
-  const analyzeRoster = () => {
-    if (typeof onAskHeroMessage === 'function') {
-      onAskHeroMessage(
-        lang === 'en'
-          ? 'Analyze my current squad: roles, chemistry and the first concrete priority.'
-          : 'Analizza la mia rosa attuale: ruoli, chimica e la prima priorità concreta.'
-      )
-      return
-    }
-    onAskHero?.()
-  }
-
-  const firstCard = readyNoStats
-    ? {
-        title: copy.statsUploadTitle,
-        copy: copy.statsUploadCopy,
-        micro: copy.statsMicro,
-        intent: 'stats',
-        onClick: onOpenGameAnalysis
-      }
-    : {
-        title: copy.analyzeTitle,
-        copy: copy.analyzeCopy,
-        micro: copy.analyzeMicro,
-        intent: 'analyze',
-        onClick: analyzeRoster
-      }
-
   return (
     <div className={styles.root} data-home-state={homeState}>
       <header className={styles.header}>
@@ -255,7 +308,7 @@ export default function CoachWorkspace({
         <div className={styles.main}>
           {onboardingState ? (
             <SetupJourney
-              lang={lang}
+              copy={copy}
               stats={stats}
               hasActiveCoach={hasActiveCoach}
               onOpenRoster={onOpenRoster}
@@ -266,12 +319,8 @@ export default function CoachWorkspace({
           {postMatchState ? (
             <section className={styles.setupCard} data-tour-id="tour-dashboard-task">
               <p className={styles.cardOverline}>{copy.nextAction}</p>
-              <h2>{lang === 'en' ? 'Tell me how it went' : 'Raccontami com’è andata'}</h2>
-              <p>
-                {lang === 'en'
-                  ? 'The match is fresh: two minutes of feedback make the next recommendation more useful.'
-                  : 'La partita è fresca: due minuti di feedback rendono subito più utile il prossimo consiglio.'}
-              </p>
+              <h2>{copy.postMatchTitle}</h2>
+              <p>{copy.postMatchBody}</p>
               {lowHp ? (
                 <div className={styles.lowHp}>
                   <AlertCircle size={16} />
@@ -281,7 +330,7 @@ export default function CoachWorkspace({
               ) : null}
               <div className={styles.setupActions}>
                 <button type="button" className={styles.primaryCta} onClick={onOpenFeedback}>
-                  {lang === 'en' ? 'Tell me how it went' : 'Raccontami com’è andata'}
+                  {copy.postMatchTitle}
                 </button>
                 <button type="button" className={styles.secondaryCta} onClick={onOpenMatches}>{copy.seeMatches}</button>
               </div>
@@ -309,13 +358,13 @@ export default function CoachWorkspace({
           {showActions ? (
             <section className={styles.actionSection} aria-label={copy.suggestionsTitle}>
               <p className={styles.suggestionsTitle}>{copy.suggestionsTitle}</p>
-              <div className={styles.suggestions} data-dominant={readyNoStats ? 'stats' : 'analyze'}>
+              <div className={styles.suggestions} data-dominant="stats">
                 <CoachSuggestionCard
-                  title={firstCard.title}
-                  copy={firstCard.copy}
-                  micro={firstCard.micro}
-                  intent={firstCard.intent}
-                  onClick={firstCard.onClick}
+                  title={copy.statsUploadTitle}
+                  copy={copy.statsUploadCopy}
+                  micro={copy.statsMicro}
+                  intent="stats"
+                  onClick={onOpenGameAnalysis}
                 />
                 <CoachSuggestionCard
                   title={copy.playedTitle}

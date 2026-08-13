@@ -238,10 +238,8 @@ export default function CreditsBar() {
       : `${totalBalance}`;
 
   const triggerAriaLabel = open
-    ? t("creditsCloseAria") ||
-      (lang === "en" ? "Close credits" : "Chiudi crediti")
-    : t("creditsViewAria") ||
-      (lang === "en" ? "View AI credits" : "Vedi crediti AI");
+    ? t("creditsCloseAria")
+    : t("creditsViewAria");
 
   return (
     <div ref={containerRef} style={{ position: "relative" }}>
@@ -316,7 +314,6 @@ export default function CreditsBar() {
 
       <button
         type="button"
-        className="neon-button"
         data-tour-id="tour-dashboard-credits"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
@@ -325,36 +322,44 @@ export default function CreditsBar() {
         style={{
           display: "inline-flex",
           alignItems: "center",
-          gap: "8px",
+          gap: "6px",
+          height: "36px",
           whiteSpace: "nowrap",
-          padding: "8px 14px",
-          fontSize: "14px",
-          borderColor: highlight ? "rgba(255, 203, 5, 0.75)" : undefined,
+          padding: "0 10px",
+          fontSize: "13px",
+          fontWeight: 700,
+          color: "#1D1D1F",
+          background: "#EFECE6",
+          border: highlight
+            ? "1px solid rgba(201, 150, 48, 0.7)"
+            : "1px solid rgba(0, 0, 0, 0.08)",
+          borderRadius: "10px",
+          cursor: "pointer",
           boxShadow: highlight
-            ? "0 0 0 2px rgba(255, 203, 5, 0.28), 0 0 30px rgba(255, 203, 5, 0.46)"
-            : undefined,
+            ? "0 0 0 2px rgba(201, 150, 48, 0.22)"
+            : "none",
           transition: "box-shadow 0.25s ease, border-color 0.25s ease",
         }}
       >
         {loading ? (
           <RefreshCw
             size={16}
-            color="var(--primary-cyan)"
+            color="#00A8C8"
             style={{ animation: "spin 1s linear infinite" }}
           />
         ) : error ? (
-          <AlertCircle size={16} color="var(--primary-orange)" />
+          <AlertCircle size={16} color="#D99B27" />
         ) : (
-          <Zap size={16} color={barColor} />
+          <Zap size={16} color="#C99630" fill="#C99630" />
         )}
         {compactLabel != null && (
-          <span style={{ fontWeight: 500, whiteSpace: "nowrap" }}>
+          <span style={{ fontWeight: 700, whiteSpace: "nowrap", color: "#1D1D1F" }}>
             {compactLabel}
           </span>
         )}
         <ChevronDown
           size={14}
-          color="rgba(0, 212, 255, 0.5)"
+          color="#6B6B6B"
           style={{
             transform: open ? "rotate(180deg)" : "rotate(0deg)",
             transition: "transform 0.15s ease",

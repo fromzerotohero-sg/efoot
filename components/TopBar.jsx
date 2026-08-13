@@ -7,7 +7,7 @@ import CreditsBar from '@/components/CreditsBar'
 import { InstallAppPromptButton } from '@/components/InstallAppPrompt'
 import LanguageSwitch from '@/components/LanguageSwitch'
 import { useSidebar } from '@/components/SidebarContext'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation, pickLang } from '@/lib/i18n'
 
 const HOME_DASHBOARD_URL = 'https://home.fromzerotohero.io/dashboard'
 
@@ -28,8 +28,11 @@ const avatarStyle = {
 }
 
 export default function TopBar({ showInstallPrompt = true }) {
-  const { t } = useTranslation()
+  const { t, lang } = useTranslation()
   const { isOpen, toggleSidebar } = useSidebar()
+  const homeLabel = pickLang(lang, { it: 'Vai alla dashboard From Zero to Hero', en: 'Go to the From Zero to Hero dashboard', es: 'Ir al panel de From Zero to Hero' })
+  const cartLabel = pickLang(lang, { it: 'Acquista Hero Points', en: 'Buy Hero Points', es: 'Comprar Hero Points' })
+  const accountLabel = pickLang(lang, { it: 'Account', en: 'Account', es: 'Cuenta' })
 
   return (
     <header
@@ -105,8 +108,8 @@ export default function TopBar({ showInstallPrompt = true }) {
             onClick={() => {
               window.location.assign(HOME_DASHBOARD_URL)
             }}
-            aria-label="Vai alla dashboard From Zero to Hero"
-            title="Command Center"
+            aria-label={homeLabel}
+            title={homeLabel}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -162,19 +165,19 @@ export default function TopBar({ showInstallPrompt = true }) {
               transition: 'all 0.2s',
               flexShrink: 0
             }}
-            title="Acquista Hero Points"
+            aria-label={cartLabel}
+            title={cartLabel}
           >
             <ShoppingCart size={18} />
           </button>
 
-          {/* Language Switch - solo tablet/desktop (su mobile resta nel drawer utility) */}
-          <div className="topbar-desktop-utility" style={{ flexShrink: 0 }}>
+          <div style={{ flexShrink: 0 }}>
             <LanguageSwitch />
           </div>
 
           {/* Avatar/account trigger: desktop → pagina Account; mobile → drawer utility */}
           <div className="topbar-avatar-desktop">
-            <Link href="/impostazioni-profilo" aria-label="Account" title="Account" style={avatarStyle}>
+            <Link href="/impostazioni-profilo" aria-label={accountLabel} title={accountLabel} style={avatarStyle}>
               <User size={18} />
             </Link>
           </div>
@@ -182,8 +185,8 @@ export default function TopBar({ showInstallPrompt = true }) {
             type="button"
             className="topbar-avatar-mobile"
             onClick={toggleSidebar}
-            aria-label="Account"
-            title="Account"
+            aria-label={accountLabel}
+            title={accountLabel}
             style={avatarStyle}
           >
             <User size={18} />
@@ -210,6 +213,11 @@ export default function TopBar({ showInstallPrompt = true }) {
           }
           .topbar-avatar-mobile {
             display: flex !important;
+          }
+          .topbar-inner {
+            gap: 6px !important;
+            padding-left: 10px !important;
+            padding-right: 10px !important;
           }
         }
 

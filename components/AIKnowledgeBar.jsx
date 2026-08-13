@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation, pickLang } from '@/lib/i18n'
 import { supabase } from '@/lib/supabaseClient'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import { RefreshCw, AlertCircle, Trophy, Target, Zap, Crown, Brain, ChevronDown } from 'lucide-react'
@@ -315,10 +315,12 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
     )
 
     if (variant === 'row') {
-      const title = lang === 'en' ? 'How well Hero knows you' : 'Quanto Hero ti conosce'
-      const sub = lang === 'en'
-        ? 'Hero knows your squad better when you update roster, matches and feedback.'
-        : 'Hero conosce meglio la tua squadra quando aggiorni rosa, partite e feedback.'
+      const title = pickLang(lang, { it: 'Quanto Hero ti conosce', en: 'How well Hero knows you', es: 'Cuánto te conoce Hero' })
+      const sub = pickLang(lang, {
+        it: 'Hero conosce meglio la tua squadra quando aggiorni rosa, partite e feedback.',
+        en: 'Hero knows your squad better when you update roster, matches and feedback.',
+        es: 'Hero conoce mejor tu plantilla cuando actualizas plantilla, partidos y feedback.'
+      })
       return (
         <>
           <button
@@ -376,7 +378,7 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
         {gaugeVisual}
         {!compact ? (
           <span style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.55)' }}>
-            {lang === 'en' ? 'Knowledge level' : 'Livello conoscenza'}
+            {pickLang(lang, { it: 'Livello conoscenza', en: 'Knowledge level', es: 'Nivel de conocimiento' })}
           </span>
         ) : null}
       </div>
@@ -431,10 +433,16 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
             <h2 style={{...styles.title, fontSize: isMobile ? '18px' : '20px'}}>{t('aiKnowledge')}</h2>
             <p style={styles.subtitle}>
               {isMobile
-                ? (lang === 'en' ? 'More data means sharper coaching.' : 'Più dati carichi, più il coach diventa preciso.')
-                : (lang === 'en'
-                    ? 'Measures how well Hero knows your profile, roster and matches for sharper advice.'
-                    : 'Misura quanto Hero conosce profilo, rosa e partite per darti consigli più precisi.')}
+                ? pickLang(lang, {
+                    it: 'Più dati carichi, più il coach diventa preciso.',
+                    en: 'More data means sharper coaching.',
+                    es: 'Cuantos más datos cargas, más preciso es el coach.'
+                  })
+                : pickLang(lang, {
+                    it: 'Misura quanto Hero conosce profilo, rosa e partite per darti consigli più precisi.',
+                    en: 'Measures how well Hero knows your profile, roster and matches for sharper advice.',
+                    es: 'Mide cuánto conoce Hero tu perfil, plantilla y partidos para darte consejos más precisos.'
+                  })}
             </p>
           </div>
           
@@ -460,10 +468,10 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
           </div>
           <span style={{ ...styles.scoreLabel, borderColor: `${currentLevel.color}42`, color: currentLevel.color }}>
             {score < 65
-              ? (lang === 'en' ? 'Growing' : 'In crescita')
+              ? pickLang(lang, { it: 'In crescita', en: 'Growing', es: 'En crecimiento' })
               : score < 85
-                ? (lang === 'en' ? 'Almost complete' : 'Quasi completo')
-                : (lang === 'en' ? 'Match ready' : 'Pronto partita')}
+                ? pickLang(lang, { it: 'Quasi completo', en: 'Almost complete', es: 'Casi completo' })
+                : pickLang(lang, { it: 'Pronto partita', en: 'Match ready', es: 'Listo para el partido' })}
           </span>
         </div>
 

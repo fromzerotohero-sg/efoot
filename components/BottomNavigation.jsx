@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation, pickLang } from '@/lib/i18n'
 import { useGameAnalysisModalNav, CLOSE_GAME_ANALYSIS_MODAL_EVENT } from '@/components/GameAnalysisModalNavContext'
 import { MessageSquare, Users, Sparkles } from 'lucide-react'
 
@@ -20,8 +20,8 @@ export default function BottomNavigation() {
 
   const items = [
     { href: '/', label: 'Coach', icon: MessageSquare, key: 'coach' },
-    { href: '/gestione-formazione', label: lang === 'en' ? 'Squad' : 'Rosa', icon: Users, key: 'rosa' },
-    { href: '/card-advisor-lab', label: lang === 'en' ? 'Cards' : 'Carte', icon: Sparkles, key: 'carte' }
+    { href: '/gestione-formazione', label: pickLang(lang, { it: 'Rosa', en: 'Squad', es: 'Plantilla' }), icon: Users, key: 'rosa' },
+    { href: '/card-advisor-lab', label: pickLang(lang, { it: 'Carte', en: 'Cards', es: 'Cartas' }), icon: Sparkles, key: 'carte' }
   ]
 
   const isItemActive = (item) => {
@@ -40,7 +40,7 @@ export default function BottomNavigation() {
   }
 
   return (
-    <nav className="bottom-nav" aria-label={lang === 'en' ? 'Primary navigation' : 'Navigazione principale'}>
+    <nav className="bottom-nav" aria-label={pickLang(lang, { it: 'Navigazione principale', en: 'Primary navigation', es: 'Navegación principal' })}>
       <div className="inner">
         {items.map((item) => {
           const Icon = item.icon
