@@ -29,7 +29,7 @@ function useIsMobile() {
  * Design: Glassmorphism card with animated gradient borders,
  * level badges with icons, shimmer progress bar
  */
-export default function AIKnowledgeBar({ variant = 'card' } = {}) {
+export default function AIKnowledgeBar({ variant = 'card', compact = false } = {}) {
   const { t, lang } = useTranslation()
   const router = useRouter()
   const isMobile = useIsMobile()
@@ -305,46 +305,48 @@ export default function AIKnowledgeBar({ variant = 'card' } = {}) {
   // Cambia solo la presentazione (indicatore circolare, reference visiva Home Coach).
   // Formula, pesi, endpoint e Knowledge calculation restano invariati.
   if (variant === 'gauge') {
-    const gaugeRadius = 52
+    const gaugeSize = compact ? 72 : 132
+    const gaugeRadius = compact ? 28 : 52
     const gaugeCircumference = 2 * Math.PI * gaugeRadius
     const gaugeProgress = Math.max(0, Math.min(100, Math.round(animatedScore)))
     const gaugeOffset = gaugeCircumference * (1 - gaugeProgress / 100)
+    const center = gaugeSize / 2
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', padding: '4px 0' }}>
-        <div style={{ position: 'relative', width: '132px', height: '132px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: compact ? '6px' : '10px', padding: '4px 0' }}>
+        <div style={{ position: 'relative', width: gaugeSize, height: gaugeSize }}>
           <svg
-            width="132"
-            height="132"
-            viewBox="0 0 132 132"
+            width={gaugeSize}
+            height={gaugeSize}
+            viewBox={`0 0 ${gaugeSize} ${gaugeSize}`}
             role="img"
             aria-label={`${gaugeProgress}%`}
           >
             <defs>
               <linearGradient id="ai-knowledge-gauge-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#30b060" />
-                <stop offset="100%" stopColor="#2fbf6a" />
+                <stop offset="0%" stopColor="#26d9ff" />
+                <stop offset="100%" stopColor="#35e38a" />
               </linearGradient>
             </defs>
             <circle
-              cx="66"
-              cy="66"
+              cx={center}
+              cy={center}
               r={gaugeRadius}
               fill="none"
               stroke="rgba(255, 255, 255, 0.08)"
-              strokeWidth="10"
+              strokeWidth={compact ? 7 : 10}
             />
             <circle
-              cx="66"
-              cy="66"
+              cx={center}
+              cy={center}
               r={gaugeRadius}
               fill="none"
               stroke="url(#ai-knowledge-gauge-gradient)"
-              strokeWidth="10"
+              strokeWidth={compact ? 7 : 10}
               strokeLinecap="round"
               strokeDasharray={gaugeCircumference}
               strokeDashoffset={gaugeOffset}
-              transform="rotate(-90 66 66)"
+              transform={`rotate(-90 ${center} ${center})`}
               style={{ transition: 'stroke-dashoffset 0.6s ease' }}
             />
           </svg>
@@ -359,9 +361,10 @@ export default function AIKnowledgeBar({ variant = 'card' } = {}) {
               gap: '2px'
             }}
           >
-            <span style={{ fontSize: '26px', fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>
+            <span style={{ fontSize: compact ? '16px' : '26px', fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>
               {gaugeProgress}%
             </span>
+            {!compact ? (
             <span
               style={{
                 fontSize: '10px',
@@ -373,11 +376,14 @@ export default function AIKnowledgeBar({ variant = 'card' } = {}) {
             >
               {currentLevel.label}
             </span>
+            ) : null}
           </div>
         </div>
+        {!compact ? (
         <span style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.55)' }}>
           {lang === 'en' ? 'Knowledge level' : 'Livello conoscenza'}
         </span>
+        ) : null}
       </div>
     )
   }

@@ -14,16 +14,16 @@ import {
 // UX V2 reference: Coach cyan/green, Rosa blue, Carte purple. Gold riservato a HP/premium.
 const TAB_TONES = {
   coach: {
-    idleColor: 'rgba(244, 246, 247, 0.42)',
-    activeColor: '#30b060'
+    idleColor: 'rgba(247, 250, 252, 0.42)',
+    activeColor: '#26d9ff'
   },
   rosa: {
-    idleColor: 'rgba(244, 246, 247, 0.42)',
-    activeColor: '#3b82f6'
+    idleColor: 'rgba(247, 250, 252, 0.42)',
+    activeColor: '#4ea1ff'
   },
   carte: {
-    idleColor: 'rgba(244, 246, 247, 0.42)',
-    activeColor: '#8b5cf6'
+    idleColor: 'rgba(247, 250, 252, 0.42)',
+    activeColor: '#a987ff'
   }
 }
 
@@ -66,8 +66,8 @@ export default function BottomNavigation() {
         left: 0,
         right: 0,
         zIndex: 100,
-        background: '#091016',
-        borderTop: '1px solid rgba(255, 255, 255, 0.055)',
+        background: '#07111b',
+        borderTop: '1px solid rgba(132, 181, 212, 0.16)',
         backdropFilter: 'blur(20px)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         display: 'none'
@@ -77,7 +77,7 @@ export default function BottomNavigation() {
         display: 'flex',
         justifyContent: 'space-around',
         alignItems: 'center',
-        height: '56px',
+        height: '60px',
         maxWidth: '500px',
         margin: '0 auto'
       }}>

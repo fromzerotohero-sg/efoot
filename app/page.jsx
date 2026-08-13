@@ -10,7 +10,7 @@ import GameAnalysisModal from '@/components/GameAnalysisModal'
 import { useGameAnalysisModalNav, OPEN_GAME_ANALYSIS_MODAL_EVENT, CLOSE_GAME_ANALYSIS_MODAL_EVENT } from '@/components/GameAnalysisModalNavContext'
 import TaskWidget from '@/components/TaskWidget'
 import OnboardingFlow from '@/components/OnboardingFlow'
-import CoachHomeV2 from '@/components/CoachHomeV2'
+import CoachWorkspace from '@/components/coach-v2/CoachWorkspace'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import { fetchCoachProfileFromApi, resolveAuthToken, buildAuthHeaders } from '@/lib/profileUxHelpers'
@@ -493,7 +493,7 @@ function HomePage() {
   }
 
   return (
-    <main data-tour-id="tour-dashboard-intro" className="coach-home-page p-6 max-w-7xl mx-auto">
+    <main data-tour-id="tour-dashboard-intro" className="max-w-7xl mx-auto" style={{ padding: '16px 18px 24px' }}>
       <Suspense fallback={null}>
         <OpenCoachListener
           onOpenCoach={() => setShowCoachFeedback(true)}
@@ -519,10 +519,8 @@ function HomePage() {
         </div>
       )}
 
-      {/* UX V2 — Hero Coach Home: facade presentazionale sopra dati/handler reali esistenti.
-          BYPASS UX: HeroCoachJourney, MissionCenter e CoachSuggestions non sono piu renderizzati
-          (i file restano intatti); un solo concetto visibile: Prossima azione. */}
-      <CoachHomeV2
+      {/* UX V2 — Coach workspace presentation. Motori/dati restano in questa page. */}
+      <CoachWorkspace
         lang={lang}
         stats={stats}
         hasActiveCoach={hasActiveCoach}
@@ -530,11 +528,11 @@ function HomePage() {
         gameAnalysisLastCapture={gameAnalysisLastCapture}
         tacticalPatterns={tacticalPatterns}
         hpBalance={hpBalance}
+        userProfile={userProfile}
         onAskHero={handleAskHero}
         onAskHeroMessage={handleAskHeroMessage}
         onOpenFeedback={() => setShowCoachFeedback(true)}
         onOpenGameAnalysis={() => setShowGameAnalysisModal(true)}
-        onOpenCardAdvisor={openCardAdvisor}
         onOpenLiveCoach={handleOpenLiveCoach}
         onOpenRoster={() => router.push('/gestione-formazione')}
         onOpenCoachSetup={() => router.push('/nuova-rosa-lab')}

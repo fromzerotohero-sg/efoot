@@ -16,7 +16,9 @@ import {
   Users as UsersIcon,
   Sparkles,
   LogOut,
-  X
+  X,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import SidebarGuideTour from '@/components/SidebarGuideTour'
@@ -29,6 +31,20 @@ export default function SidebarNew() {
   const router = useRouter()
   const { isOpen, setIsOpen } = useSidebar()
   const [redirectModal, setRedirectModal] = React.useState({ open: false, url: '' })
+  const [accountOpen, setAccountOpen] = React.useState(false)
+  const [accountLabel, setAccountLabel] = React.useState('Hero')
+
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem('metalgate_user')
+      if (!raw) return
+      const parsed = JSON.parse(raw)
+      const name = String(parsed?.username || parsed?.email || '').trim()
+      if (name) setAccountLabel(name.split('@')[0])
+    } catch {
+      /* ignore */
+    }
+  }, [])
 
   const handleLogout = () => {
     fetch('/api/prelaunch/logout', { method: 'POST' }).catch(() => {})
@@ -49,9 +65,9 @@ export default function SidebarNew() {
   // statistiche, upload) restano vive nelle route esistenti e saranno ricollocate sotto Coach.
   // Toni campionati dalla tavola: Coach green, Rosa blue, Carte purple. Gold solo HP.
   const PILLAR_TONES = {
-    coach: { color: '#30b060', activeBg: 'rgba(48, 176, 96, 0.08)', activeBorder: 'transparent', idleIcon: 'rgba(48, 176, 96, 0.72)' },
-    rosa: { color: '#3b82f6', activeBg: 'rgba(59, 130, 246, 0.08)', activeBorder: 'transparent', idleIcon: 'rgba(59, 130, 246, 0.7)' },
-    carte: { color: '#8b5cf6', activeBg: 'rgba(139, 92, 246, 0.08)', activeBorder: 'transparent', idleIcon: 'rgba(139, 92, 246, 0.7)' }
+    coach: { color: '#26d9ff', activeBg: 'rgba(38, 217, 255, 0.12)', activeBorder: '#26d9ff', idleIcon: 'rgba(38, 217, 255, 0.72)' },
+    rosa: { color: '#4ea1ff', activeBg: 'rgba(78, 161, 255, 0.12)', activeBorder: '#4ea1ff', idleIcon: 'rgba(78, 161, 255, 0.7)' },
+    carte: { color: '#a987ff', activeBg: 'rgba(169, 135, 255, 0.12)', activeBorder: '#a987ff', idleIcon: 'rgba(169, 135, 255, 0.7)' }
   }
 
   const pillarItems = [
@@ -128,7 +144,8 @@ export default function SidebarNew() {
       fontWeight: 600,
       background: active ? tone.activeBg : 'transparent',
       color: active ? tone.color : 'rgba(244, 246, 247, 0.72)',
-      border: `1px solid ${active ? tone.activeBorder : 'transparent'}`,
+      border: '1px solid transparent',
+      borderLeft: `2px solid ${active ? tone.activeBorder : 'transparent'}`,
       transition: 'background 0.2s ease, color 0.2s ease, border-color 0.2s ease',
       cursor: 'pointer',
       textDecoration: 'none'
@@ -140,14 +157,14 @@ export default function SidebarNew() {
     const tone = PILLAR_TONES[item.tone] || PILLAR_TONES.coach
     e.currentTarget.style.background = tone.activeBg
     e.currentTarget.style.color = tone.color
-    e.currentTarget.style.borderColor = tone.activeBorder
+    e.currentTarget.style.borderLeftColor = tone.activeBorder
   }
 
   const handleNavMouseLeave = (e, item, active) => {
     if (active) return
     e.currentTarget.style.background = 'transparent'
     e.currentTarget.style.color = 'rgba(244, 246, 247, 0.72)'
-    e.currentTarget.style.borderColor = 'transparent'
+    e.currentTarget.style.borderLeftColor = 'transparent'
   }
 
   const renderNavBadge = (item) => {
@@ -218,17 +235,15 @@ export default function SidebarNew() {
 
       <aside
         className={`
-          fixed top-0 left-0 h-screen w-64
-          bg-gradient-to-b from-[rgba(9,16,22,0.98)] to-[rgba(7,12,18,0.98)]
-          border-r border-[rgba(255,255,255,0.06)]
+          fixed top-0 left-0 h-screen
           flex flex-col z-40 transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
           pb-20 lg:pb-0
         `}
         style={{
-          background: '#0a1016',
-          borderRight: '1px solid rgba(255, 255, 255, 0.055)',
-          backdropFilter: 'blur(20px)'
+          width: 196,
+          background: '#091521',
+          borderRight: '1px solid rgba(132, 181, 212, 0.16)',
         }}
       >
         <div className="p-3 border-b border-[rgba(255,255,255,0.06)] flex justify-center items-center relative" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.055)' }}>
@@ -257,8 +272,8 @@ export default function SidebarNew() {
             height={48}
             style={{
               width: 'auto',
-              height: '40px',
-              maxWidth: '148px',
+              height: '36px',
+              maxWidth: '132px',
               objectFit: 'contain'
             }}
             priority
@@ -296,139 +311,145 @@ export default function SidebarNew() {
           </div>
 
           {/* Account: HP + Profilo, visibili come nella reference. Altro: utility secondarie. */}
-          <div style={{ marginTop: 'auto', paddingTop: '16px' }}>
-            <div
-              style={{
-                height: '1px',
-                background: 'rgba(255, 255, 255, 0.06)',
-                margin: '0 8px 12px'
-              }}
-            />
-
-            <div className="space-y-0.5" style={{ marginBottom: '10px' }}>
-              {accountItems.map((item) => {
-                const Icon = item.icon
-                const active = isActive(item.href)
-                return (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    onClick={() => setIsOpen(false)}
-                    style={{ ...getUtilityStyle(active), fontWeight: 600, color: active ? 'rgba(244, 246, 247, 0.92)' : 'rgba(244, 246, 247, 0.7)' }}
-                    onMouseEnter={handleUtilityMouseEnter}
-                    onMouseLeave={(e) => handleUtilityMouseLeave(e, active)}
-                  >
-                    <Icon size={16} style={{ flexShrink: 0, ...(item.iconColor ? { color: item.iconColor } : {}) }} />
-                    <span style={{ flex: 1, minWidth: 0 }}>{item.label}</span>
-                  </Link>
-                )
-              })}
-            </div>
-
-            <div
-              style={{
-                padding: '4px 12px 6px',
-                fontSize: '10px',
-                fontWeight: 700,
-                letterSpacing: '0.14em',
-                color: 'rgba(244, 246, 247, 0.32)',
-                textTransform: 'uppercase'
-              }}
-            >
-              {lang === 'en' ? 'More' : 'Altro'}
-            </div>
-
-            <div className="space-y-0.5">
-              {otherItems.map((item) => {
-                if (item.type === 'tour') {
-                  return <SidebarGuideTour key="tour" onClick={() => setIsOpen(false)} />
-                }
-
-                if (item.type === 'language') {
-                  return (
-                    <div key="language" style={{ padding: '6px 12px' }}>
-                      <LanguageSwitch />
-                    </div>
-                  )
-                }
-
-                const Icon = item.icon
-                const active = item.shortcut !== 'tornei' && isActive(item.href)
-                const utilityContent = (
-                  <>
-                    <Icon size={15} style={{ flexShrink: 0, opacity: 0.8, ...(item.iconColor ? { color: item.iconColor } : {}) }} />
-                    <span style={{ flex: 1, minWidth: 0 }}>{item.label}</span>
-                    {renderNavBadge(item)}
-                  </>
-                )
-
-                if (item.shortcut === 'tornei') {
-                  return (
-                    <button
-                      key="tornei"
-                      type="button"
-                      onClick={() => {
-                        setIsOpen(false)
-                        setRedirectModal({ open: true, url: item.href })
-                      }}
-                      style={getUtilityStyle(false)}
-                      onMouseEnter={handleUtilityMouseEnter}
-                      onMouseLeave={(e) => handleUtilityMouseLeave(e, false)}
-                    >
-                      {utilityContent}
-                    </button>
-                  )
-                }
-
-                return (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    onClick={() => setIsOpen(false)}
-                    style={getUtilityStyle(active)}
-                    onMouseEnter={handleUtilityMouseEnter}
-                    onMouseLeave={(e) => handleUtilityMouseLeave(e, active)}
-                  >
-                    {utilityContent}
-                  </Link>
-                )
-              })}
-            </div>
-
+          <div style={{ marginTop: 'auto', paddingTop: '12px' }}>
+            <div style={{ height: '1px', background: 'rgba(255,255,255,0.07)', margin: '0 8px 10px' }} />
             <button
-              onClick={() => {
-                setIsOpen(false)
-                handleLogout()
-              }}
+              type="button"
+              onClick={() => setAccountOpen((open) => !open)}
+              aria-expanded={accountOpen}
+              aria-label={lang === 'en' ? 'Account menu' : 'Menu account'}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
-                padding: '8px 12px',
-                borderRadius: '10px',
-                fontSize: '13px',
-                fontWeight: 500,
-                background: 'transparent',
-                color: 'rgba(255, 130, 130, 0.75)',
-                border: '1px solid transparent',
-                transition: 'all 0.2s ease',
-                cursor: 'pointer',
-                textDecoration: 'none',
+                gap: 10,
                 width: '100%',
-                marginTop: '6px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 80, 80, 0.08)'
-                e.currentTarget.style.color = '#ff8585'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent'
-                e.currentTarget.style.color = 'rgba(255, 130, 130, 0.75)'
+                minHeight: 48,
+                padding: '8px 10px',
+                border: 'none',
+                borderRadius: 12,
+                background: accountOpen ? 'rgba(38, 217, 255, 0.08)' : 'transparent',
+                color: '#f7fafc',
+                cursor: 'pointer',
+                fontFamily: 'inherit'
               }}
             >
-              <LogOut size={15} />
-              <span>{t('logout')}</span>
+              <span style={{
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(38, 217, 255, 0.14)',
+                color: '#26d9ff',
+                flexShrink: 0
+              }}>
+                <User size={14} />
+              </span>
+              <span style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                <span style={{ display: 'block', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{accountLabel}</span>
+                <span style={{ display: 'block', fontSize: 10, color: '#71879a' }}>Hero Coach</span>
+              </span>
+              {accountOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
+
+            {accountOpen ? (
+              <div style={{ paddingTop: 8 }}>
+                <div className="space-y-0.5" style={{ marginBottom: 8 }}>
+                  {accountItems.map((item) => {
+                    const Icon = item.icon
+                    const active = isActive(item.href)
+                    return (
+                      <Link
+                        key={item.label}
+                        href={item.href}
+                        onClick={() => setIsOpen(false)}
+                        style={{ ...getUtilityStyle(active), fontWeight: 600 }}
+                        onMouseEnter={handleUtilityMouseEnter}
+                        onMouseLeave={(e) => handleUtilityMouseLeave(e, active)}
+                      >
+                        <Icon size={16} style={{ flexShrink: 0, ...(item.iconColor ? { color: item.iconColor } : {}) }} />
+                        <span style={{ flex: 1, minWidth: 0 }}>{item.label}</span>
+                      </Link>
+                    )
+                  })}
+                </div>
+                {otherItems.map((item) => {
+                  if (item.type === 'tour') {
+                    return <SidebarGuideTour key="tour" onClick={() => setIsOpen(false)} />
+                  }
+                  if (item.type === 'language') {
+                    return (
+                      <div key="language" style={{ padding: '6px 12px' }}>
+                        <LanguageSwitch />
+                      </div>
+                    )
+                  }
+                  const Icon = item.icon
+                  const active = item.shortcut !== 'tornei' && isActive(item.href)
+                  const utilityContent = (
+                    <>
+                      <Icon size={15} style={{ flexShrink: 0, opacity: 0.8 }} />
+                      <span style={{ flex: 1, minWidth: 0 }}>{item.label}</span>
+                      {renderNavBadge(item)}
+                    </>
+                  )
+                  if (item.shortcut === 'tornei') {
+                    return (
+                      <button
+                        key="tornei"
+                        type="button"
+                        onClick={() => {
+                          setIsOpen(false)
+                          setRedirectModal({ open: true, url: item.href })
+                        }}
+                        style={getUtilityStyle(false)}
+                        onMouseEnter={handleUtilityMouseEnter}
+                        onMouseLeave={(e) => handleUtilityMouseLeave(e, false)}
+                      >
+                        {utilityContent}
+                      </button>
+                    )
+                  }
+                  return (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      onClick={() => setIsOpen(false)}
+                      style={getUtilityStyle(active)}
+                      onMouseEnter={handleUtilityMouseEnter}
+                      onMouseLeave={(e) => handleUtilityMouseLeave(e, active)}
+                    >
+                      {utilityContent}
+                    </Link>
+                  )
+                })}
+                <button
+                  onClick={() => {
+                    setIsOpen(false)
+                    handleLogout()
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '8px 12px',
+                    borderRadius: '10px',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    background: 'transparent',
+                    color: 'rgba(255, 130, 130, 0.75)',
+                    border: '1px solid transparent',
+                    cursor: 'pointer',
+                    width: '100%',
+                    marginTop: '6px'
+                  }}
+                >
+                  <LogOut size={15} />
+                  <span>{t('logout')}</span>
+                </button>
+              </div>
+            ) : null}
 
             <div className="lg:hidden" style={{ height: '100px' }} />
           </div>
@@ -546,8 +567,8 @@ export default function SidebarNew() {
             width: 64px;
             z-index: 35;
             padding: 12px 10px 16px;
-            background: '#0a1016';
-            border-right: 1px solid rgba(255, 255, 255, 0.055);
+            background: #091521;
+            border-right: 1px solid rgba(132, 181, 212, 0.16);
           }
         }
 

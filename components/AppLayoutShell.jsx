@@ -36,7 +36,7 @@ export default function AppLayoutShell({ children, showInstallPrompt = true, sho
         <SidebarNew />
 
         <div
-          className={`shell-content flex-1 flex flex-col overflow-hidden transition-[margin] duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'}`}
+          className={`shell-content flex-1 flex flex-col overflow-hidden transition-[margin] duration-300 ease-in-out ${sidebarOpen ? 'sidebar-open' : ''}`}
           style={{
             paddingBottom: 'var(--bottom-nav-height, 0px)'
           }}
@@ -85,6 +85,12 @@ export default function AppLayoutShell({ children, showInstallPrompt = true, sho
       )}
 
       <style jsx>{`
+        @media (min-width: 1024px) {
+          .shell-content.sidebar-open {
+            margin-left: 196px;
+          }
+        }
+
         /* Rail tablet (768-1023px): spazio per la rail compatta, niente sidebar larga permanente */
         @media (min-width: 768px) and (max-width: 1023px) {
           .shell-content {
