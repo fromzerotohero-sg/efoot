@@ -1,26 +1,40 @@
-# components/ – Componenti React
+# components/
 
-## Globali (layout)
+## Shell globale (`AppLayoutShell.jsx`)
 
-| Componente | File | Scopo |
-|------------|------|-------|
-| AssistantChat | `AssistantChat.jsx` | Widget chat AI (bottom-right) |
-| CreditsBar | `CreditsBar.jsx` | Barra crediti mensili |
-| GuideTour | `GuideTour.jsx` | Tour guida interattiva |
-| LanguageProviderWrapper | `LanguageProviderWrapper.jsx` | Context i18n |
-| LanguageSwitch | `LanguageSwitch.jsx` | Toggle IT/EN |
+Montata da `app/layout.jsx`. Contiene:
 
-## Per pagina
+- `SidebarNew`, `TopBar`, `BottomNavigation`
+- `DailySpinWidget`
+- `InstallAppPrompt` (condizionale)
+- `LiveCoachLauncher`
+- `AssistantChat` popup
+- `PrelaunchGate`, `MaintenanceGate`
 
-| Componente | File | Usato in |
-|------------|------|----------|
-| AIKnowledgeBar | `AIKnowledgeBar.jsx` | Dashboard |
-| TaskWidget | `TaskWidget.jsx` | Dashboard |
-| ConfirmModal | `ConfirmModal.jsx` | gestione-formazione, match, ecc. |
-| MissingDataModal | `MissingDataModal.jsx` | gestione-formazione |
-| PositionSelectionModal | `PositionSelectionModal.jsx` | gestione-formazione |
-| TacticalSettingsPanel | `TacticalSettingsPanel.jsx` | gestione-formazione |
+Non smontare questi pezzi “per semplificare” senza BYPASS UX esplicito.
 
-**Note**: Audit 3 feb 2026 – PositionSelectionModal (lang), AssistantChat (usePathname), AIKnowledgeBar (i18n breakdown), TaskWidget (shadowing fix).
+## Navigazione attuale
 
-**Doc**: `docs/GUIDA_VALIDAZIONE_PROGRAMMATORE.md`, `DOCUMENTAZIONE_RIFERIMENTO.md` §4
+Sidebar: dashboard, guida, tornei (esterno), profilo, rosa, stats modal, contromisure, carte, partite, grafici, HP.  
+Bottom nav: contromisure, dashboard, partite, carte, rosa, stats.
+
+UX V2 riduce gli ingressi primari a Coach · Rosa · Carte; i componenti possono restare dietro nuova IA.
+
+## Coach / memoria
+
+| Componente | Ruolo |
+|------------|--------|
+| `AssistantChat` | Hero Chat |
+| `CoachFeedbackChat` | Motore Palestra |
+| `HeroCoachJourney` | Journey (bypass UX previsto) |
+| `AIKnowledgeBar` | “Quanto Hero ti conosce” |
+| `TaskWidget`, `MissionCenter`, `CoachSuggestions` | Confluiscono in Next Action |
+| `GameAnalysisModal` | Stats di gioco |
+
+## Rosa / form
+
+`TacticalSettingsPanel`, `PositionSelectionModal`, `MissingDataModal`, `ManualPlayerModal`, `OnboardingFormation`, `CameraCaptureModal`, …
+
+## Economia / account
+
+`CreditsBar`, `DailySpinWidget`, `LanguageProviderWrapper`, `LanguageSwitch`, `AuthWrapper`

@@ -1,87 +1,31 @@
-# Documentazione Legale
+# Indice legale
 
-**Documenti obbligatori per GDPR e Codice del Consumo**
+**Stato:** fatti prodotto allineati al codice (13 agosto 2026). Titolare, P.IVA, sede e testi contrattuali **non sono verificati da un legale**. Non usare questi file come policy pubblicata senza revisione.
 
----
+| Documento | Contenuto |
+|-----------|-----------|
+| [TERMINI.md](./TERMINI.md) | Condizioni d’uso, HP, MetalGate |
+| [PRIVACY.md](./PRIVACY.md) | Trattamento dati (bozza tecnica) |
+| [COOKIE.md](./COOKIE.md) | Cookie **effettivamente** usati |
 
-## 📄 Documenti Disponibili
+## Fatti prodotto da usare (e da non usare)
 
-| Documento | Scopo | Link |
-|-----------|-------|------|
-| **[TERMINI.md](./TERMINI.md)** | Condizioni d'uso, pagamenti, rimborsi | [Apri](./TERMINI.md) |
-| **[PRIVACY.md](./PRIVACY.md)** | Trattamento dati personali (GDPR) | [Apri](./PRIVACY.md) |
-| **[COOKIE.md](./COOKIE.md)** | Uso cookie e consenso | [Apri](./COOKIE.md) |
+Usare:
 
----
+- Login MetalGate; dati di gioco su Supabase eFootball
+- AI OpenAI (modello chat default gpt-5.2, vision/extract gpt-4o)
+- Pagamenti/wallet HP via MetalGate, non Stripe/PayPal in questa app
+- Nessuna classifica competitiva in-app nel codice corrente
+- Analytics: Google Analytics e Microsoft Clarity in production, senza banner nel codice
 
-## ⚖️ Informativa Sintetica
+Non usare più nei testi pubblici:
 
-### Per gli Utenti
+- “Supabase Auth come unico login”
+- Stripe/PayPal come checkout in-app
+- Classifica mensile / consenso classifica
+- GPT-4o come unico modello
+- 1 HP a messaggio
+- Email `@efootballaicoach.com` (non risultano nel prodotto corrente)
 
-**Cosa facciamo con i tuoi dati:**
-- Memorizziami email, profilo di gioco, rosa, partite
-- Usiamo OpenAI GPT-4o per generare consigli (dati anonimizzati)
-- Pubblichiamo nickname e punteggio in classifica (solo se dai consenso)
-
-**I tuoi diritti:**
-- Accedi, modifica, cancella i tuoi dati in qualsiasi momento
-- Richiedi portabilità dati (formato JSON)
-- Opponiti al marketing
-- Cancella account definitivamente
-
-**Contatti privacy:** privacy@efootballaicoach.com
-
----
-
-### Per gli Sviluppatori (Compliance)
-
-**Requisiti GDPR implementati:**
-- ✅ Informativa art. 13 (Privacy Policy)
-- ✅ Consenso cookie (banner)
-- ✅ DPO nominato (email in Privacy)
-- ✅ Registro trattamenti (tabella in Privacy)
-- ✅ Misure sicurezza (crittografia, RLS)
-- ✅ Privacy by design (dati minimi raccolti)
-
-**Cookie:**
-- Tecnici: necessari (senza consenso)
-- Analitici: solo con consenso esplicito
-
----
-
-## 🔗 Link nel Footer Sito
-
-Devi inserire questi link nel footer del sito:
-
-```html
-<footer>
-  <a href="/termini">Termini e Condizioni</a>
-  <a href="/privacy">Privacy Policy</a>
-  <a href="/cookie">Cookie Policy</a>
-</footer>
-```
-
----
-
-## 📝 Note Implementazione
-
-### Termini e Condizioni
-- Mostrare al momento registrazione (checkbox obbligatoria)
-- Link nel footer sempre visibile
-- Versione e data aggiornamento in testa
-
-### Privacy Policy
-- Link nel footer
-- Informativa pre-contrattuale (prima di acquisto)
-- Modulo contatto DPO funzionante
-
-### Cookie Banner
-- Primo accesso: banner obbligatorio
-- Opzioni: Accetta / Rifiuta / Personalizza
-- Link "Maggiori info" → Cookie Policy
-
----
-
-**Ultimo aggiornamento:** 14/02/2026
-
-**DPO:** dpo@efootballaicoach.com
+Contatto supporto usato in app/docs correnti: `support@fromzerotohero.io`.  
+Titolare/DPO: da compilare in sede legale.

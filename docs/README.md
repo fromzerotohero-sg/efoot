@@ -1,143 +1,70 @@
-# From Zero to Hero — Documentazione
+# Documentazione attiva — From Zero To Hero
 
-**Prodotto:** From Zero to Hero (eFootball AI Coach). Piattaforma di coaching tattico personale per eFootball.
+Aggiornato: 13 agosto 2026. Audit storico, pitch, confronti prima/dopo e vecchie specifiche non restano nel ramo: Git è lo storico.
 
----
+**Ordine delle fonti:** codice corrente → Supabase live (read-only) → decisioni owner → Master UX V2 → reference grafiche.
 
-## 📚 Documentazione per Servizio
+## Fonte principale
 
-Ogni documento descrive un servizio completo: API, componenti, database, sicurezza.
+| Documento | Ruolo |
+|-----------|--------|
+| [UX_V2/FZTH_UX_V2_MASTER_OPERATING_SPECIFICATION_v1.1.md](./UX_V2/FZTH_UX_V2_MASTER_OPERATING_SPECIFICATION_v1.1.md) | Contratto operativo UX V2. Ogni slice Cursor deve ereditarlo. |
 
-| # | Servizio | Documento | Descrizione |
-|---|----------|-----------|-------------|
-| 1 | **Auth** | [servizi/01-AUTH.md](./servizi/01-AUTH.md) | Login, JWT, sessioni, RLS |
-| 2 | **Rosa** | [servizi/02-ROSA.md](./servizi/02-ROSA.md) | Giocatori, formazione, upload |
-| 3 | **Partite** | [servizi/03-PARTITE.md](./servizi/03-PARTITE.md) | Match, analisi, pattern |
-| 4 | **Chat AI** | [servizi/04-CHAT.md](./servizi/04-CHAT.md) | Assistant, RAG, prompt |
-| 5 | **Palestra Coach** | [servizi/05-PALESTRA-COACH.md](./servizi/05-PALESTRA-COACH.md) | Feedback, training AI |
-| 6 | **Classifica** | [servizi/06-CLASSIFICA.md](./servizi/06-CLASSIFICA.md) | Leaderboard, premi |
-| 7 | **Crediti** | [servizi/07-CREDITI.md](./servizi/07-CREDITI.md) | HP, Stripe, pagamenti |
-| 8 | **Task** | [servizi/08-TASK.md](./servizi/08-TASK.md) | Obiettivi settimanali, use_ai_recommendations |
+## Contratti tecnici
 
----
+| Documento | Ruolo |
+|-----------|--------|
+| [ARCHITETTURA.md](./ARCHITETTURA.md) | Stack, shell, pilastri, cosa non riscrivere |
+| [FLUSSI.md](./FLUSSI.md) | Flussi auth, chat, rosa, partite, HP, task |
+| [FLUSSI_LOGICA_SUPABASE.md](./FLUSSI_LOGICA_SUPABASE.md) | Tabelle, side effect, intrecci |
+| [COSTI_HP_USO_PIATTAFORMA.md](./COSTI_HP_USO_PIATTAFORMA.md) | Unica fonte costi HP |
+| [SICUREZZA.md](./SICUREZZA.md) | Stato reale + rischi aperti |
+| [DEPLOY.md](./DEPLOY.md) | Vercel + MetalGate + Supabase |
+| [ripristino-lancio.md](./ripristino-lancio.md) | Gate prelaunch: spegnere senza rompere la shell |
 
-## 📖 Altri Documenti
+## Servizi (contratti corti)
 
-| Ruolo | Documento |
-|-------|-----------|
-| 👤 **Utenti** | [GUIDA_UTENTE.md](./GUIDA_UTENTE.md) |
-| ⚖️ **Legale** | [LEGALE.md](./LEGALE.md) + [TERMINI.md](./TERMINI.md) + [PRIVACY.md](./PRIVACY.md) |
-| 👨‍💻 **Architettura** | [ARCHITETTURA.md](./ARCHITETTURA.md) |
-| 🔒 **Sicurezza** | [SICUREZZA.md](./SICUREZZA.md) |
-| 🚀 **Deploy** | [DEPLOY.md](./DEPLOY.md) |
+| Servizio | Documento |
+|----------|-----------|
+| Auth | [servizi/01-AUTH.md](./servizi/01-AUTH.md) |
+| Rosa | [servizi/02-ROSA.md](./servizi/02-ROSA.md) |
+| Partite | [servizi/03-PARTITE.md](./servizi/03-PARTITE.md) |
+| Chat Hero | [servizi/04-CHAT.md](./servizi/04-CHAT.md) |
+| Palestra (motore interno) | [servizi/05-PALESTRA-COACH.md](./servizi/05-PALESTRA-COACH.md) |
+| Crediti / MetalGate | [servizi/07-CREDITI.md](./servizi/07-CREDITI.md) |
+| Task | [servizi/08-TASK.md](./servizi/08-TASK.md) |
 
-### Audit e riferimenti tecnici
+Non esiste un servizio Classifica nel codice corrente (`/classifica`, `/api/leaderboard` assenti).
 
-| Documento | Contenuto |
-|-----------|-----------|
-| [FLUSSI.md](./FLUSSI.md) | Flussi principali (auth, partite, classifica, profilo) |
-| [FLUSSI_LOGICA_SUPABASE.md](./FLUSSI_LOGICA_SUPABASE.md) | Flussi per sezione e intersezioni con tabelle Supabase |
-| [REVISIONE_LOGICA_PIATTAFORMA.md](./REVISIONE_LOGICA_PIATTAFORMA.md) | Revisione logica e checklist |
-| [ONBOARDING_FORMAZIONE_TEST.md](./ONBOARDING_FORMAZIONE_TEST.md) | Decisione prodotto e UX per import formazione di test |
-| [AUDIT_FLUSSO_RIDONDANZE_ALLINEAMENTO.md](./AUDIT_FLUSSO_RIDONDANZE_ALLINEAMENTO.md) | Audit ridondanze e allineamento |
-| [AUDIT_COERENZA_ENTERPRISE.md](./AUDIT_COERENZA_ENTERPRISE.md) | Coerenza dashboard enterprise |
-| [SICUREZZA_DOPPIA_LINGUA.md](./SICUREZZA_DOPPIA_LINGUA.md) | Messaggi errore/sessione IT/EN |
-| [COSTI_HP_USO_PIATTAFORMA.md](./COSTI_HP_USO_PIATTAFORMA.md) | Costi HP per uso piattaforma |
-| [VERIFICA_COERENZA_HP_DEFALCATI.md](./VERIFICA_COERENZA_HP_DEFALCATI.md) | Verifica coerenza HP defalcati e whitelist task |
+## Operativo
 
----
+| Documento | Ruolo |
+|-----------|--------|
+| [02-FUNZIONALITA/OPENAI_MODEL_GPT5.md](./02-FUNZIONALITA/OPENAI_MODEL_GPT5.md) | Mappa modelli realmente usati |
+| [PLAYER_CATALOG_IMPORT.md](./PLAYER_CATALOG_IMPORT.md) | Catalogo rosa: regole + tool presenti |
+| [CARD_ADVISOR_MANUAL_SUPABASE_IMPORT.md](./CARD_ADVISOR_MANUAL_SUPABASE_IMPORT.md) | Import Card Advisor con script esistenti |
+| [GUIDA_UTENTE.md](./GUIDA_UTENTE.md) | Guida prodotto (stato attuale + direzione V2) |
+| [CHATBOT_KNOWLEDGE_BASE.md](./CHATBOT_KNOWLEDGE_BASE.md) | Unica base supporto |
 
-## 🏗️ Stack (TL;DR)
+## Legale (da verificare con legale)
 
-```
-Next.js 14 + React 18 + Supabase (PostgreSQL) + OpenAI GPT-4o + Stripe + Vercel
-```
+| Documento | Nota |
+|-----------|------|
+| [LEGALE.md](./LEGALE.md) | Indice. Fatti prodotto aggiornati; titolare/P.IVA placeholder. |
+| [TERMINI.md](./TERMINI.md) | MetalGate, no Stripe/classifica. Verifica legale obbligatoria. |
+| [PRIVACY.md](./PRIVACY.md) | Stesso. |
+| [COOKIE.md](./COOKIE.md) | Stato implementato, non la policy desiderata. |
 
----
+## Runtime, non documentazione
 
-## 📂 Struttura Progetto
+- `info_rag.md` (root) — corpus RAG letto da `lib/ragHelper.js`. Non modificare in uno sprint docs/UX.
+- `public/backgrounds/README.md` — asset sfondo.
+- `version.txt` — metadato build.
 
-```
-app/                    # Next.js App Router
-├── api/               # API Routes (backend)
-│   ├── assistant-chat/
-│   ├── coach-feedback-chat/
-│   ├── save-coach-feedback/
-│   ├── supabase/      # CRUD operations
-│   └── ...
-├── classifica/
-├── gestione-formazione/
-└── ...
+## README di cartella
 
-components/            # React Components
-├── CoachFeedbackChat.jsx
-├── AssistantChat.jsx
-└── ...
-
-lib/                   # Business Logic
-├── aiKnowledgeHelper.js
-├── diagnosticBuilder.js
-├── ragHelper.js
-├── creditService.js
-└── ...
-
-migrations/            # SQL Supabase
-docs/                  # Questa cartella
-  ├── servizi/         # <-- Documentazione per servizio
-  ├── ARCHITETTURA.md
-  ├── SICUREZZA.md
-  └── ...
-```
-
----
-
-## 🚀 Quick Start
-
-```bash
-# Installa
-npm install
-
-# Configura
-cp .env.example .env.local
-# Modifica .env.local con le tue chiavi
-
-# Avvia
-npm run dev
-```
-
-Vedi [DEPLOY.md](./DEPLOY.md) per produzione.
-
----
-
-## 🔐 Sicurezza (Priorità #1)
-
-Vedi [SICUREZZA.md](./SICUREZZA.md):
-- Pattern autenticazione
-- RLS su tutte le tabelle
-- Rate limiting
-- Gestione segreti
-
-**TODO critico:**
-- [ ] Rimuovere 12 Edge Functions obsolete
-- [ ] Implementare audit log
-- [ ] Redis per rate limiting
-
----
-
-## ⚖️ Compliance Legale
-
-Vedi [LEGALE.md](./LEGALE.md):
-- [TERMINI.md](./TERMINI.md) — Condizioni d'uso
-- [PRIVACY.md](./PRIVACY.md) — GDPR
-- [COOKIE.md](./COOKIE.md) — Cookie Policy
-
----
-
-## 📞 Supporto
-
-- Email: support@efootballaicoach.com
-- Docs: Questa cartella
-
----
-
-*Documentazione aggiornata: 14/02/2026*
+- [../README.md](../README.md)
+- [../app/README.md](../app/README.md)
+- [../app/api/README.md](../app/api/README.md)
+- [../components/README.md](../components/README.md)
+- [../lib/README.md](../lib/README.md)

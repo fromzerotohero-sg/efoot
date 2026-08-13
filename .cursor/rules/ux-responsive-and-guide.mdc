@@ -1,12 +1,16 @@
 ---
-description: UX e responsività obbligatorie; il prodotto è una guida per l'utente (primi al mondo).
+description: UX V2 e responsività obbligatorie. Fonte: Master Operating Specification.
 globs: ["**/*.jsx", "**/*.tsx", "**/app/**/*.jsx", "**/components/**/*.jsx"]
 ---
 
-# UX e responsività (obbligatorie)
+# UX V2 e responsività (obbligatorie)
 
-- **Siamo una guida.** Ogni schermata deve guidare l'utente: contesto chiaro (titolo/intro), "cosa faccio qui", prossimo passo e CTA evidenti. Nessuna pagina "muta".
-- **Responsività obbligatoria.** Ogni layout e componente deve funzionare da ~320px a 1400px: usare `clamp()` per font e spacing, `minWidth: 0` su flex/grid children, `flexWrap` dove serve. Su mobile (&lt; 480px): barra/contenuto principale full width, bottoni secondari sotto; touch target ≥ 44px.
-- **Riferimento:** seguire `docs/UX_RESPONSIVE_LINEE_GUIDA.md` (breakpoint, modali, tabelle, checklist) e i principi in `docs/PIANO_UX_ENTERPRISE_GUIDA_CLIENTE.md` (§0).
-- **Verifica:** niente overflow orizzontale; gerarchia visiva corretta su mobile; testi guida e i18n coerenti.
-- **Mostra altro / Guida:** sezioni espandibili (Ultime partite, Obiettivi, Guide per pagina) con stesso pattern: `role="button"`, `aria-expanded`, `aria-label` (expandSection*/collapseSection* o expandGuideCard/collapseGuideCard), tastiera Enter/Space, touch target ≥ 44px. Link "Guida" sempre con `guideLink` verso `/guida`. Vedi §2.7 e §2.8 in `docs/UX_RESPONSIVE_LINEE_GUIDA.md`.
+Fonte primaria: `docs/UX_V2/FZTH_UX_V2_MASTER_OPERATING_SPECIFICATION_v1.1.md`. Le immagini sono direzione visuale, non contratti dati.
+
+- **North star:** Hero è il Coach eFootball. Non una piattaforma con 15 strumenti. Navigazione primaria target: Coach · Rosa · Carte.
+- **Semplificare = meno decisioni di navigazione**, non meno capacità del motore. Backend, DB, RAG, auth, wallet e contratti restano invariati salvo prompt dedicato.
+- **Una CTA dominante per stato.** Niente dati fake per riempire il design. Stato vuoto reale > contenuto inventato.
+- **Responsività obbligatoria** da ~320px a 1400px+: `clamp()` per font/spacing, `minWidth: 0` su flex/grid children, touch target ≥ 44px. Verificare overflow orizzontale su mobile.
+- **Design system:** dark premium charcoal/navy; cyan = Coach/interaction; gold = Carte/HP/premium. Glow solo su stato/CTA. Non introdurre Tailwind/shadcn nello sprint UX salvo decisione esplicita.
+- **Mostra altro / Guida:** sezioni espandibili con `role="button"`, `aria-expanded`, tastiera Enter/Space, touch target ≥ 44px.
+- Prima di una slice UX: rispettare PRE-FLIGHT, SCOPE, TENERE/PRESERVARE, BYPASS UX, NON TOCCARE del Master. Non cancellare route/API solo perché escono dalla nav primaria.

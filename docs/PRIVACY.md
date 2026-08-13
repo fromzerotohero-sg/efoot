@@ -1,112 +1,55 @@
-# Privacy Policy
+# Privacy Policy (bozza tecnica)
 
-**Informativa ai sensi art. 13 GDPR** — 14/02/2026
+**Informativa art. 13 GDPR — bozza 13 agosto 2026.**  
+Titolare, DPO, sede e basi giuridiche **da verificare con un legale**. Non pubblicare così com’è.
 
----
+## Titolare
 
-## Titolare del Trattamento
+[Nome società / sede / P.IVA]  
+Supporto: support@fromzerotohero.io  
+Privacy/DPO: [da inserire — non usare più privacy@efootballaicoach.com senza conferma]
 
-[Nome Società]  
-Sede: [Indirizzo]  
-P.IVA: [Numero]  
-Email: privacy@efootballaicoach.com  
-DPO: dpo@efootballaicoach.com
+## Dati trattati (dal prodotto reale)
 
----
+| Categoria | Esempi | Dove |
+|-----------|--------|------|
+| Identità account | email, id MetalGate | MetalGate + `user_profiles.metalgate_user_id` |
+| Profilo di gioco | divisione, piattaforma, tattiche dichiarate | `user_profiles` |
+| Rosa e coach | carte, slot, istruzioni | `players`, `coaches`, layout |
+| Partite / stats | match, analisi, pattern | `matches`, `user_game_analysis`, `team_tactical_patterns` |
+| Memoria coach | feedback Palestra | `user_tactical_feedback` |
+| Conversazioni AI | messaggi verso OpenAI | API OpenAI (provider extra-UE: valutare Transfer) |
+| Crediti | saldo e movimenti HP | MetalGate + `credit_transactions` |
+| Tecnici | token in localStorage, cookie gate/maintenance | browser / Vercel |
 
-## Dati Raccolti
+Non conserviamo dati carta di credito in questa app. I pagamenti HP passano da MetalGate, non da Stripe in-app.
 
-### Dati Obbligatori
-- Email (login, comunicazioni)
-- Password (criptata, non leggibile)
+Non pubblichiamo una classifica nickname/punteggio in questa codebase.
 
-### Dati Facoltativi (Profilo)
-- Nome, nickname, paese
-- Dati di gioco: piattaforma, divisione, ore settimanali
-- Preferenze tattiche
+## Finalità (bozza)
 
-### Dati di Utilizzo
-- Rosa giocatori, partite giocate, statistiche
-- Conversazioni chat, feedback Palestra Coach
-- Log accessi (IP, timestamp)
+- Erogare il coach (contratto)
+- Autenticazione MetalGate (contratto)
+- Migliorare i consigli AI sul contesto dell’utente (da qualificare: contratto / legittimo interesse)
+- Analytics di prodotto (GA, Clarity) — **oggi caricati in production senza banner di consenso nel codice**; base giuridica da allineare all’implementazione reale
+- Manutenzione e prevenzione abusi
 
-### Dati Pagamento
-- Transazioni (gestite da Stripe, non conserviamo dati carta)
+## Diritti
 
----
+Accesso, rettifica, cancellazione, limitazione, opposizione, portabilità: richiesta a [email privacy da inserire].  
+Cancellazione account: processo da confermare (supporto).
 
-## Finalità e Base Giuridica
+## Conservazione / fornitori
 
-| Finalità | Base Giuridica | Dati |
-|----------|----------------|------|
-| Erogazione servizio | Contratto | Tutti |
-| Autenticazione | Contratto | Email, password |
-| Pagamenti | Contratto | Transazioni |
-| Classifiche | Interesse legittimo + T&C | Nickname, punteggio |
-| Miglioramento AI | Interesse legittimo (anonimizzato) | Pattern gioco |
-| Marketing | Consenso | Email |
+- Hosting: Vercel
+- Database: Supabase
+- Auth/wallet: MetalGate
+- AI: OpenAI
+- Analytics: Google, Microsoft (Clarity), solo se gli script sono attivi (spenti su staging/preview)
 
----
+## Note implementative (non sono compliance)
 
-## Terze Parti
-
-| Fornitore | Dati | Finalità | Luogo |
-|-----------|------|----------|-------|
-| OpenAI | Messaggi chat (anonimizzati) | Generazione consigli | USA (SCC) |
-| Supabase | Tutti i dati | Database hosting | UE |
-| Stripe | Dati pagamento | Elaborazione pagamenti | UE/USA |
-| Vercel | Traffico web | Hosting | UE |
-
----
-
-## Conservazione
-
-| Dato | Durata |
-|------|--------|
-| Account attivo | Durata account + 2 anni |
-| Dati partite | 5 anni |
-| Log sicurezza | 2 anni |
-| Dati pagamento | 10 anni (obbligo fiscale) |
-| Account cancellato | 30 giorni (poi eliminazione) |
-
----
-
-## Diritti dell'Interessato (GDPR)
-
-Puoi esercitare i diritti contattando privacy@efootballaicoach.com:
-
-1. **Accesso**: Ricevi copia dei tuoi dati (30 giorni)
-2. **Rettifica**: Correggi dati inaccurati
-3. **Cancellazione** ("diritto all'oblio"): Elimina account e dati
-4. **Portabilità**: Ricevi dati in formato JSON
-5. **Opposizione**: Rifiuta marketing
-6. **Limitazione**: Sospendi trattamento
-
----
-
-## Sicurezza
-
-- Crittografia TLS 1.3 (transito) e AES-256 (database)
-- Password hash con bcrypt
-- Row Level Security (RLS) su database
-- Accesso limitato a personale autorizzato
-
----
-
-## Cookie
-
-**Tecnici (necessari)**: autenticazione, lingua, preferenze
-
-**Analitici**: Google Analytics 4 (anonimizzato, solo con consenso)
-
-Vedi [Cookie Policy](./COOKIE.md)
-
----
-
-## Modifiche
-
-Modifiche sostanziali: notifica via email 30 giorni prima.
-
----
-
-Registrandoti, accetti questo trattamento dei dati.
+- Nessun cookie banner nel frontend
+- Token sessione in `localStorage` (debito)
+- Service role solo server-side
+- RLS **non** è uniforme su tutti gli store (vedi SICUREZZA.md)

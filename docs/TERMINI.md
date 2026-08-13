@@ -1,137 +1,47 @@
-# Termini e Condizioni di Servizio
+# Termini e Condizioni (bozza allineata al prodotto)
 
-**eFootball AI Coach** — Versione 1.0 — 14/02/2026
-
----
+**From Zero To Hero — eFootball AI Coach**  
+Bozza tecnica 13 agosto 2026. **Non è un contratto revisionato.** Compilare titolare, P.IVA, sede, rimborsi e foro dopo verifica legale.
 
 ## 1. Definizioni
 
-- **Piattaforma**: Sito eFootball AI Coach
-- **Utente**: Persona registrata
-- **Hero Points (HP)**: Crediti virtuali prepagati
-- **Fornitore**: [Nome società], P.IVA [numero], [sede legale]
+- **Piattaforma**: app web From Zero To Hero
+- **Utente**: persona autenticata via MetalGate
+- **Hero Points (HP)**: crediti prepagati sul wallet MetalGate
+- **Fornitore**: [TITOLARE / P.IVA / SEDE — da inserire]
 
----
+## 2. Servizio
 
-## 2. Servizio Offerto
+Coaching tattico per eFootball: rosa, chat AI, analisi screenshot, Card Advisor, Live Coach, obiettivi settimanali.
 
-Coaching tattico personalizzato per eFootball tramite AI, composto da:
-- Analisi partite e rosa
-- Chat con AI specializzata
-- Gestione formazione
-- Classifiche competitive
+Non include una classifica competitiva in-app.
 
----
+## 3. Account
 
-## 3. Registrazione
+- Accesso tramite MetalGate SSO
+- Età minima e regole account: da confermare legalmente (bozza precedente: 18 anni)
+- Un mapping locale su `user_profiles` collegato all’identità MetalGate
 
-- Età minima: 18 anni
-- Dati veritieri richiesti
-- Una registrazione per persona (vietati account multipli)
+## 4. Hero Points
 
----
+- Acquisto e saldo gestiti da MetalGate (es. dashboard `home.fromzerotohero.io`)
+- Consumo in-app secondo [COSTI_HP_USO_PIATTAFORMA.md](./COSTI_HP_USO_PIATTAFORMA.md): azioni AI standard 2 HP; Live Coach 2 HP + 5 HP/min; Card Advisor deep 2 HP
+- HP a 0: le funzioni a pagamento si bloccano; i dati già salvati restano accessibili
+- Pacchetti prezzo/IVA/rimborso: **non copiati qui** perché i listini vecchi Stripe non corrispondono al codice. Devono uscire da MetalGate + legale.
 
-## 4. Sistema Hero Points
+## 5. AI
 
-### 4.1 Acquisto
-| Pacchetto | Prezzo | HP | Validità |
-|-----------|--------|-----|----------|
-| Starter | €10 | 100 | 12 mesi |
-| Standard | €20 | 200 | 12 mesi |
-| Pro | €50 | 550 | 12 mesi |
+I consigli sono supporto al gioco, non garanzia di risultati. L’utente resta responsabile dell’uso in eFootball.
 
-- Pagamento via Stripe/PayPal
-- IVA inclusa (22%)
+## 6. Proprietà dei dati di gioco
 
-### 4.2 Utilizzo
-- Gli HP sono consumati all'uso del servizio
-- Costi: messaggio chat (1 HP), upload giocatore (2 HP), analisi partita (2-4 HP)
-- HP esauriti = servizi a pagamento bloccati (dati restano accessibili)
+Rosa, partite e feedback restano associati all’account. Screenshot caricati servono solo a erogare il servizio.
 
-### 4.3 Proprietà
-- Gli HP sono crediti virtuali, non moneta elettronica
-- Non rimborsabili (salvo §5)
-- Non trasferibili
+## 7. Limitazioni
 
----
+Disponibilità best-effort. Rate limit e manutenzione possono interrompere l’uso.
 
-## 5. Rimborsi
+## 8. Contatti
 
-### Diritto di Recesso (14 giorni)
-Puoi recedere entro 14 giorni dall'acquisto.
-
-**ECCEZIONE**: Se hai consumato anche solo 1 HP, il recesso decade.
-
-### Casi di Rimborso
-Rimborsi previsti per:
-- Malfunzionamento tecnico >24h
-- Servizi non erogati nonostante addebito
-- Errore sistema nell'addebito
-
-Richiesta: support@efootballaicoach.com
-
----
-
-## 6. Classifiche e Premi
-
-### Partecipazione
-- Automatica per utenti con nickname impostato
-- Pubblicazione: nickname e punteggio (nessun dato personale)
-
-### Premi
-| Posizione | Premio |
-|-----------|--------|
-| 1° | Badge + Premio (valore ~€50) |
-| 2° | Badge + Premio (valore ~€30) |
-| 3° | Badge + Premio (valore ~€20) |
-
-- Premi possono variare ogni mese
-- Spedizione premi fisici a carico Fornitore
-
-### Comportamenti Vietati
-- Partite finte o manipolate
-- Account multipli
-- Bot o automazioni
-
-**Sanzione**: Squalifica, perdita punti, ban account.
-
----
-
-## 7. Proprietà Intellettuale
-
-- Contenuti Piattaforma: proprietà Fornitore
-- Dati caricati dall'utente: proprietà utente (licenza d'uso al Fornitore per elaborazione)
-
----
-
-## 8. Limitazione Responsabilità
-
-- Servizio fornito "così com'è"
-- Consigli AI sono indicativi, non garantiscono risultati
-- Responsabilità massima: importo pagato negli ultimi 12 mesi
-
----
-
-## 9. Privacy
-
-Vedi [Privacy Policy](./PRIVACY.md)
-
----
-
-## 10. Legge e Foro
-
-- Legge italiana applicabile
-- Foro competente: [Tribunale città]
-- Mediazione obbligatoria per controversie <€50.000
-
----
-
-## 11. Contatti
-
-- Supporto: support@efootballaicoach.com
-- Privacy: privacy@efootballaicoach.com
-- PEC: [indirizzo PEC]
-
----
-
-Accettando questi Termini durante la registrazione, l'utente dichiara di averli letti e compresi.
+Supporto: support@fromzerotohero.io  
+Privacy: da definire in [PRIVACY.md](./PRIVACY.md)

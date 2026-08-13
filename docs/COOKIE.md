@@ -1,65 +1,32 @@
-# Cookie Policy
+# Cookie — stato implementato
 
-**Informativa sui Cookie** — 14/02/2026
+Questo file descrive i cookie/script **presenti nel codice**, non una policy di marketing.  
+Non c’è banner, `cookie_consent`, né pagina Impostazioni → Cookie.
 
----
+## Tecnici (app)
 
-## Cosa sono i Cookie
+| Nome / meccanismo | Scopo |
+|-------------------|--------|
+| Token MetalGate in `localStorage` (`metalgate_user`, `auth_token`) | Sessione. Non è un cookie HttpOnly. |
+| Cookie prelaunch (HttpOnly) | Gate `/access` se `PRELAUNCH_ACCESS_CODE` è set |
+| Cookie maintenance bypass | Solo team, se manutenzione attiva |
+| Preferenza lingua | i18n client |
 
-Piccoli file di testo salvati sul tuo dispositivo per memorizzare preferenze e migliorare l'esperienza.
+Eventuali cookie `sb-*` di Supabase possono comparire sui flussi legacy magic-link/password, non sul login MetalGate primario.
 
----
+## Analitici / terze parti (production)
 
-## Cookie che Utilizziamo
+Caricati da `app/layout.jsx` **senza consenso UI**, tranne quando `NEXT_PUBLIC_APP_ENV=staging` o `VERCEL_ENV=preview`:
 
-### Tecnici (Necessari — Non disattivabili)
+| Fornitore | ID nel codice | Scopo |
+|-----------|---------------|--------|
+| Google Analytics 4 | `G-X69T3QE3GG` | Misurazione uso |
+| Microsoft Clarity | `wylmfczjap` | Session replay / heatmap |
 
-| Cookie | Durata | Scopo |
-|--------|--------|-------|
-| `sb-access-token` | Sessione | Login (Supabase) |
-| `sb-refresh-token` | 7 giorni | Rinnovo sessione |
-| `app_language` | 1 anno | Lingua preferita |
-| `cookie_consent` | 1 anno | Preferenze cookie |
+L’utente può bloccarli dal browser. Non esiste “Accetta tutti / Rifiuta” in app.
 
-### Analitici (Solo con consenso)
+## Cosa non dire
 
-| Cookie | Fornitore | Scopo |
-|--------|-----------|-------|
-| `_ga` | Google Analytics | Statistiche anonime |
-
-Google Analytics 4: IP anonimizzati, dati aggregati.
-
----
-
-## Gestione Cookie
-
-### Al Primo Accesso
-Banner con opzioni:
-- ✅ **Accetta tutti** — Tecnici + Analitici
-- ⚙️ **Personalizza** — Scegli quali attivare
-- ❌ **Rifiuta** — Solo tecnici
-
-### Successivamente
-Modifica in **Impostazioni → Privacy → Cookie**
-
-### Via Browser
-Puoi bloccare cookie dalle impostazioni del browser (Chrome, Firefox, Safari, ecc.)
-
----
-
-## Conseguenze Rifiuto
-
-| Rifiuto | Effetto |
-|---------|---------|
-| Tecnici | **Sito non funzionante** (impossibile fare login) |
-| Analitici | Funziona tutto, ma non miglioriamo basandoci sui dati |
-
----
-
-## Contatti
-
-privacy@efootballaicoach.com
-
----
-
-Vedi anche: [Privacy Policy](./PRIVACY.md)
+- Non scrivere che gli analitici partono solo con consenso: oggi non è vero.
+- Non elencare Stripe.
+- Contatto: support@fromzerotohero.io (privacy legale da definire).
