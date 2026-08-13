@@ -35,10 +35,9 @@ export default function TopBar({ showInstallPrompt = true }) {
     <header
       className="sticky top-0 z-30 h-16 flex items-center"
       style={{
-        background: 'linear-gradient(180deg, rgba(5,8,20,0.9) 0%, rgba(5,8,20,0.7) 100%)',
-        borderBottom: '1px solid rgba(0, 212, 255, 0.2)',
+        background: 'linear-gradient(180deg, rgba(11, 15, 24, 0.92) 0%, rgba(11, 15, 24, 0.75) 100%)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
         backdropFilter: 'blur(20px)',
-        boxShadow: '0 0 20px rgba(0, 212, 255, 0.5)',
         position: 'relative'
       }}
     >
@@ -49,7 +48,7 @@ export default function TopBar({ showInstallPrompt = true }) {
           left: '0',
           right: '0',
           height: '1px',
-          background: 'linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.5), transparent)'
+          background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent)'
         }}
       />
       <div

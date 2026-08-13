@@ -72,12 +72,10 @@ body {
     Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Premium platform background: same visual direction as Nuova Rosa */
+  /* UX V2 reference: dark premium charcoal/navy, quasi piatto, niente viola invasivo */
   background:
-    radial-gradient(circle at 18% 8%, rgba(0, 212, 255, 0.22), transparent 28%),
-    radial-gradient(circle at 86% 12%, rgba(124, 58, 237, 0.22), transparent 30%),
-    radial-gradient(circle at 50% 95%, rgba(251, 191, 36, 0.12), transparent 32%),
-    linear-gradient(135deg, #020510 0%, #061226 40%, #030712 100%);
+    radial-gradient(circle at 15% 6%, rgba(0, 212, 255, 0.05), transparent 30%),
+    linear-gradient(160deg, #0b0f18 0%, #080b12 100%);
   min-height: 100vh;
   color: var(--text-primary);
   position: relative;
@@ -86,40 +84,32 @@ body {
   line-height: 1.5;
 }
 
-/* Premium arena grid/glow layer */
+/* UX V2 reference: texture ridotta quasi a zero, monocroma, niente stelle colorate */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
-  opacity: 0.42;
+  opacity: 0.1;
   background-image:
-    linear-gradient(rgba(0, 212, 255, 0.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 212, 255, 0.045) 1px, transparent 1px),
-    radial-gradient(1px 1px at 16% 24%, rgba(255,255,255,0.85), transparent),
-    radial-gradient(1px 1px at 74% 18%, rgba(0,212,255,0.9), transparent),
-    radial-gradient(1.5px 1.5px at 82% 68%, rgba(251,191,36,0.75), transparent),
-    radial-gradient(1px 1px at 32% 82%, rgba(255,255,255,0.75), transparent);
-  background-size: 58px 58px, 58px 58px, 420px 420px, 520px 520px, 640px 640px, 480px 480px;
+    linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+  background-size: 58px 58px, 58px 58px;
   -webkit-mask-image: linear-gradient(180deg, black, rgba(0,0,0,0.85), transparent 94%);
   mask-image: linear-gradient(180deg, black, rgba(0,0,0,0.85), transparent 94%);
-  animation: arena-drift 18s linear infinite;
   pointer-events: none;
   z-index: 0;
 }
 
-/* Ambient premium glow */
+/* UX V2 reference: ambient minimo cyan/green, niente viola, niente streak diagonali */
 body::after {
   content: '';
   position: fixed;
   inset: 0;
   background:
-    linear-gradient(115deg, transparent 0 17%, rgba(0, 212, 255, 0.08) 17.3% 17.7%, transparent 18% 42%, rgba(124, 58, 237, 0.08) 42.2% 42.6%, transparent 43%),
-    radial-gradient(circle at 12% 8%, rgba(0, 212, 255, 0.20), transparent 30%),
-    radial-gradient(circle at 86% 18%, rgba(168, 85, 247, 0.20), transparent 28%),
-    radial-gradient(circle at 50% 100%, rgba(52, 211, 153, 0.11), transparent 34%);
+    radial-gradient(circle at 12% 8%, rgba(0, 212, 255, 0.05), transparent 32%),
+    radial-gradient(circle at 88% 92%, rgba(52, 211, 153, 0.04), transparent 34%);
   pointer-events: none;
   z-index: 0;
-  mix-blend-mode: screen;
 }
 
 @keyframes arena-drift {

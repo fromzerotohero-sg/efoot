@@ -354,7 +354,7 @@ export default function CoachHomeV2({
                 className="chv2-pill"
                 onClick={() => onAskHeroMessage?.(pill.message)}
               >
-                <Play size={11} aria-hidden="true" style={{ fill: 'currentColor', flexShrink: 0 }} />
+                <Play size={11} aria-hidden="true" style={{ fill: '#34d399', color: '#34d399', flexShrink: 0 }} />
                 {pill.label}
               </button>
             ))}
@@ -565,9 +565,9 @@ export default function CoachHomeV2({
           min-height: 40px;
           padding: 9px 16px;
           border-radius: 999px;
-          border: 1px solid rgba(0, 212, 255, 0.22);
-          background: rgba(0, 212, 255, 0.05);
-          color: rgba(0, 212, 255, 0.9);
+          border: 1px solid rgba(255, 255, 255, 0.09);
+          background: rgba(255, 255, 255, 0.03);
+          color: rgba(255, 255, 255, 0.75);
           font-size: 13px;
           font-weight: 600;
           font-family: inherit;
@@ -576,8 +576,8 @@ export default function CoachHomeV2({
         }
 
         .chv2-pill:hover {
-          border-color: rgba(0, 212, 255, 0.5);
-          background: rgba(0, 212, 255, 0.1);
+          border-color: rgba(52, 211, 153, 0.45);
+          background: rgba(52, 211, 153, 0.07);
         }
 
         .chv2-hero-bubble {
@@ -587,8 +587,8 @@ export default function CoachHomeV2({
           width: 100%;
           padding: 18px 20px;
           border-radius: 18px;
-          border: 1px solid rgba(0, 212, 255, 0.16);
-          background: linear-gradient(160deg, rgba(10, 18, 38, 0.72), rgba(5, 10, 24, 0.78));
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          background: linear-gradient(160deg, #141b2c, #0f1524);
           text-align: left;
           font-family: inherit;
           cursor: pointer;
@@ -596,7 +596,7 @@ export default function CoachHomeV2({
         }
 
         .chv2-hero-bubble:hover {
-          border-color: rgba(0, 212, 255, 0.4);
+          border-color: rgba(52, 211, 153, 0.35);
         }
 
         .chv2-hero-identity {
@@ -610,7 +610,7 @@ export default function CoachHomeV2({
           height: 36px;
           border-radius: 50%;
           object-fit: cover;
-          border: 1px solid rgba(0, 212, 255, 0.3);
+          border: 1px solid rgba(255, 255, 255, 0.12);
           flex-shrink: 0;
         }
 
@@ -644,8 +644,8 @@ export default function CoachHomeV2({
           min-height: 56px;
           padding: 12px 14px 12px 18px;
           border-radius: 999px;
-          border: 1px solid rgba(0, 212, 255, 0.25);
-          background: rgba(5, 10, 24, 0.85);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: #0e1420;
           font-family: inherit;
           text-align: left;
           cursor: pointer;
@@ -653,8 +653,8 @@ export default function CoachHomeV2({
         }
 
         .chv2-composer:hover {
-          border-color: rgba(0, 212, 255, 0.55);
-          box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.08);
+          border-color: rgba(52, 211, 153, 0.45);
+          box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.08);
         }
 
         .chv2-composer-placeholder {
@@ -690,8 +690,8 @@ export default function CoachHomeV2({
           display: flex;
           flex-direction: column;
           gap: 10px;
-          background: linear-gradient(160deg, rgba(10, 18, 38, 0.72), rgba(5, 10, 24, 0.78));
-          border: 1px solid rgba(0, 212, 255, 0.12);
+          background: linear-gradient(180deg, #121826, #0e1320);
+          border: 1px solid rgba(255, 255, 255, 0.06);
           border-radius: 18px;
           padding: clamp(18px, 3vw, 22px);
         }
@@ -702,7 +702,7 @@ export default function CoachHomeV2({
           font-weight: 800;
           letter-spacing: 0.14em;
           text-transform: uppercase;
-          color: rgba(0, 212, 255, 0.55);
+          color: rgba(255, 255, 255, 0.45);
         }
 
         .chv2-plan-label {
@@ -918,6 +918,39 @@ export default function CoachHomeV2({
         .chv2-tool:focus-visible {
           outline: 2px solid rgba(0, 212, 255, 0.85);
           outline-offset: 2px;
+        }
+
+        /* Mobile: ritmo piu compatto, area Hero prima di tutto (reference mobile Coach) */
+        @media (max-width: 767px) {
+          .coach-home-v2 {
+            gap: 20px;
+          }
+
+          .chv2-greeting {
+            font-size: 24px;
+          }
+
+          .chv2-grid {
+            gap: 20px;
+          }
+
+          .chv2-main {
+            gap: 14px;
+          }
+
+          .chv2-side {
+            gap: 14px;
+          }
+
+          .chv2-pills {
+            gap: 8px;
+          }
+
+          .chv2-pill {
+            min-height: 38px;
+            padding: 8px 14px;
+            font-size: 12px;
+          }
         }
       `}</style>
     </div>

@@ -11,15 +11,26 @@ import {
   Sparkles
 } from 'lucide-react'
 
-const CARDS_ACCENT = {
-  idleColor: '#d4b84a',
-  activeColor: '#ffe566',
-  idleBg: 'linear-gradient(135deg, rgba(255, 203, 5, 0.14), rgba(255, 180, 0, 0.08))',
-  activeBg: 'linear-gradient(135deg, rgba(255, 203, 5, 0.28), rgba(255, 180, 0, 0.16))',
-  idleBorder: 'rgba(255, 203, 5, 0.28)',
-  activeBorder: 'rgba(255, 215, 0, 0.5)',
-  idleGlow: '0 0 12px rgba(255, 203, 5, 0.2)',
-  activeGlow: '0 0 20px rgba(255, 203, 5, 0.35), 0 0 32px rgba(255, 180, 0, 0.2)'
+// UX V2 reference: Coach cyan/green, Rosa blue, Carte purple. Gold riservato a HP/premium.
+const TAB_TONES = {
+  coach: {
+    idleColor: 'rgba(52, 211, 153, 0.6)',
+    activeColor: '#34d399',
+    activeBg: 'rgba(52, 211, 153, 0.12)',
+    activeBorder: 'rgba(52, 211, 153, 0.3)'
+  },
+  rosa: {
+    idleColor: 'rgba(96, 165, 250, 0.6)',
+    activeColor: '#60a5fa',
+    activeBg: 'rgba(96, 165, 250, 0.12)',
+    activeBorder: 'rgba(96, 165, 250, 0.3)'
+  },
+  carte: {
+    idleColor: 'rgba(192, 132, 252, 0.6)',
+    activeColor: '#c084fc',
+    activeBg: 'rgba(192, 132, 252, 0.12)',
+    activeBorder: 'rgba(192, 132, 252, 0.3)'
+  }
 }
 
 export default function BottomNavigation() {
@@ -35,18 +46,20 @@ export default function BottomNavigation() {
       href: '/',
       icon: LayoutGrid,
       label: 'Coach',
-      pillar: 'coach'
+      pillar: 'coach',
+      tone: 'coach'
     },
     {
       href: '/gestione-formazione',
       icon: Users,
-      label: lang === 'en' ? 'Squad' : 'Rosa'
+      label: lang === 'en' ? 'Squad' : 'Rosa',
+      tone: 'rosa'
     },
     {
       href: '/card-advisor-lab',
       icon: Sparkles,
       label: lang === 'en' ? 'Cards' : 'Carte',
-      accent: 'cards'
+      tone: 'carte'
     }
   ]
 
@@ -59,22 +72,13 @@ export default function BottomNavigation() {
         left: 0,
         right: 0,
         zIndex: 100,
-        background: 'linear-gradient(180deg, rgba(5,8,20,0.98) 0%, rgba(3,5,12,1) 100%)',
-        borderTop: '1px solid rgba(0, 212, 255, 0.2)',
+        background: '#0b0f18',
+        borderTop: '1px solid rgba(255, 255, 255, 0.06)',
         backdropFilter: 'blur(20px)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         display: 'none'
       }}
     >
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: '1px',
-        background: 'linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.5), transparent)'
-      }} />
-
       <div style={{
         display: 'flex',
         justifyContent: 'space-around',
@@ -91,7 +95,7 @@ export default function BottomNavigation() {
             ? pathname === '/' && !gameAnalysisModalOpen
             : pathname?.startsWith(item.href)
 
-          const isCardsAccent = item.accent === 'cards'
+          const tone = TAB_TONES[item.tone] || TAB_TONES.coach
           const inner = (
             <div style={{
               display: 'flex',
@@ -99,27 +103,17 @@ export default function BottomNavigation() {
               alignItems: 'center',
               justifyContent: 'center',
               gap: '4px',
-              padding: '8px 12px',
+              padding: '8px 14px',
               borderRadius: '12px',
               transition: 'all 0.2s',
-              background: isCardsAccent
-                ? (active ? CARDS_ACCENT.activeBg : CARDS_ACCENT.idleBg)
-                : (active ? 'rgba(0, 212, 255, 0.15)' : 'transparent'),
-              color: isCardsAccent
-                ? (active ? CARDS_ACCENT.activeColor : CARDS_ACCENT.idleColor)
-                : (active ? 'var(--neon-cyan)' : 'rgba(255,255,255,0.5)'),
-              border: isCardsAccent
-                ? `1px solid ${active ? CARDS_ACCENT.activeBorder : CARDS_ACCENT.idleBorder}`
-                : '1px solid transparent',
-              boxShadow: isCardsAccent
-                ? (active ? CARDS_ACCENT.activeGlow : CARDS_ACCENT.idleGlow)
-                : 'none',
+              background: active ? tone.activeBg : 'transparent',
+              color: active ? tone.activeColor : tone.idleColor,
+              border: `1px solid ${active ? tone.activeBorder : 'transparent'}`,
               minWidth: '60px'
             }}>
               <Icon
                 size={22}
-                strokeWidth={active || isCardsAccent ? 2.5 : 2}
-                style={isCardsAccent ? { filter: 'drop-shadow(0 0 8px rgba(255, 203, 5, 0.55))' } : undefined}
+                strokeWidth={active ? 2.5 : 2}
               />
               <span style={{
                 fontSize: '11px',

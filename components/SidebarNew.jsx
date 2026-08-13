@@ -47,10 +47,17 @@ export default function SidebarNew() {
 
   // UX V2: navigazione primaria a 3 pilastri. Le vecchie sezioni (contromisure, match,
   // statistiche, upload) restano vive nelle route esistenti e saranno ricollocate sotto Coach.
+  // Toni reference: Coach cyan/green, Rosa blue, Carte purple. Gold riservato a HP/premium.
+  const PILLAR_TONES = {
+    coach: { color: '#34d399', activeBg: 'rgba(52, 211, 153, 0.12)', activeBorder: 'rgba(52, 211, 153, 0.35)', idleIcon: 'rgba(52, 211, 153, 0.7)' },
+    rosa: { color: '#60a5fa', activeBg: 'rgba(96, 165, 250, 0.12)', activeBorder: 'rgba(96, 165, 250, 0.35)', idleIcon: 'rgba(96, 165, 250, 0.7)' },
+    carte: { color: '#c084fc', activeBg: 'rgba(192, 132, 252, 0.12)', activeBorder: 'rgba(192, 132, 252, 0.35)', idleIcon: 'rgba(192, 132, 252, 0.7)' }
+  }
+
   const pillarItems = [
-    { href: '/', icon: LayoutGrid, label: 'Coach', exact: true },
-    { href: '/gestione-formazione', icon: UsersIcon, label: lang === 'en' ? 'Squad' : 'Rosa' },
-    { href: '/card-advisor-lab', icon: Sparkles, label: lang === 'en' ? 'Cards' : 'Carte', variant: 'gold', badge: 'new' }
+    { href: '/', icon: LayoutGrid, label: 'Coach', exact: true, tone: 'coach' },
+    { href: '/gestione-formazione', icon: UsersIcon, label: lang === 'en' ? 'Squad' : 'Rosa', tone: 'rosa' },
+    { href: '/card-advisor-lab', icon: Sparkles, label: lang === 'en' ? 'Cards' : 'Carte', tone: 'carte', badge: 'new' }
   ]
 
   // Utility (gerarchia visuale ridotta). Mapping verificato su route/componenti reali:
@@ -64,7 +71,7 @@ export default function SidebarNew() {
   const utilityItems = [
     { href: '/impostazioni-profilo', icon: User, label: 'Account' },
     { href: '/impostazioni-profilo', icon: Brain, label: lang === 'en' ? 'Hero Memory' : 'Memoria Hero' },
-    { href: '/gestione-profilo', icon: Wallet, label: 'HP' },
+    { href: '/gestione-profilo', icon: Wallet, label: 'HP', iconColor: '#fbbf24' },
     { href: '/guida', icon: BookOpen, label: t('guide') },
     {
       href: 'https://tornei.fromzerotohero.io/',
@@ -105,72 +112,39 @@ export default function SidebarNew() {
     e.currentTarget.style.color = active ? 'rgba(0, 212, 255, 0.85)' : 'rgba(255, 255, 255, 0.55)'
   }
 
+  // Pilastri: stile minimale per tono (reference: bordi sottili, niente glow, niente text-shadow)
   const getNavItemStyle = (item, active) => {
-    const isGold = item.variant === 'gold'
-    const isWow = item.variant === 'wow'
-    const activeColor = isWow ? '#22d3ee' : (isGold ? '#ffcb05' : '#00d4ff')
-    const borderColor = isWow
-      ? 'rgba(34, 211, 238, 0.55)'
-      : (isGold ? 'rgba(255, 203, 5, 0.48)' : 'rgba(0, 212, 255, 0.4)')
-    const idleBorder = isWow
-      ? 'rgba(34, 211, 238, 0.22)'
-      : (isGold ? 'rgba(255, 203, 5, 0.18)' : 'transparent')
-    const activeBg = isWow
-      ? 'linear-gradient(145deg, rgba(34, 211, 238, 0.18) 0%, rgba(168, 85, 247, 0.12) 100%)'
-      : (isGold
-        ? 'linear-gradient(145deg, rgba(255, 203, 5, 0.18) 0%, rgba(168, 85, 247, 0.10) 100%)'
-        : 'linear-gradient(145deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 161, 166, 0.1) 100%)')
-
+    const tone = PILLAR_TONES[item.tone] || PILLAR_TONES.coach
     return {
       display: 'flex',
       alignItems: 'center',
       gap: '12px',
-      padding: '10px 14px',
+      padding: '12px 14px',
       borderRadius: '12px',
-      fontSize: '14px',
-      fontWeight: isGold || isWow ? 700 : 600,
-      background: active ? activeBg : (isWow ? 'rgba(34, 211, 238, 0.05)' : (isGold ? 'rgba(255, 203, 5, 0.06)' : 'transparent')),
-      color: active ? activeColor : (isWow ? 'rgba(34, 211, 238, 0.8)' : (isGold ? 'rgba(255, 255, 255, 0.72)' : 'rgba(255, 255, 255, 0.62)')),
-      border: `1px solid ${active ? borderColor : idleBorder}`,
-      boxShadow: active
-        ? (isWow
-          ? '0 0 20px rgba(34, 211, 238, 0.2), 0 0 32px rgba(168, 85, 247, 0.12)'
-          : (isGold ? '0 0 20px rgba(255, 203, 5, 0.16)' : '0 0 20px rgba(0, 212, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'))
-        : (isWow && !active ? '0 0 12px rgba(34, 211, 238, 0.15), 0 0 24px rgba(168, 85, 247, 0.08)' : 'none'),
-      transition: 'all 0.3s ease',
+      fontSize: '15px',
+      fontWeight: 700,
+      background: active ? tone.activeBg : 'transparent',
+      color: active ? tone.color : 'rgba(255, 255, 255, 0.68)',
+      border: `1px solid ${active ? tone.activeBorder : 'transparent'}`,
+      transition: 'background 0.2s ease, color 0.2s ease, border-color 0.2s ease',
       cursor: 'pointer',
-      textDecoration: 'none',
-      textShadow: active ? `0 0 10px ${isWow ? 'rgba(34, 211, 238, 0.5)' : (isGold ? 'rgba(255, 203, 5, 0.45)' : 'rgba(0, 212, 255, 0.5)')}` : 'none',
-      animation: isWow && !active ? 'wow-pulse 2.2s ease-in-out infinite' : undefined
+      textDecoration: 'none'
     }
   }
 
   const handleNavMouseEnter = (e, item, active) => {
     if (active) return
-    const isGold = item.variant === 'gold'
-    const isWow = item.variant === 'wow'
-    e.currentTarget.style.background = isWow
-      ? 'rgba(34, 211, 238, 0.10)'
-      : (isGold ? 'rgba(255, 203, 5, 0.10)' : 'rgba(0, 212, 255, 0.08)')
-    e.currentTarget.style.color = isWow ? '#22d3ee' : (isGold ? '#ffcb05' : '#00d4ff')
-    e.currentTarget.style.borderColor = isWow
-      ? 'rgba(34, 211, 238, 0.38)'
-      : (isGold ? 'rgba(255, 203, 5, 0.34)' : 'rgba(0, 212, 255, 0.25)')
+    const tone = PILLAR_TONES[item.tone] || PILLAR_TONES.coach
+    e.currentTarget.style.background = tone.activeBg
+    e.currentTarget.style.color = tone.color
+    e.currentTarget.style.borderColor = tone.activeBorder
   }
 
   const handleNavMouseLeave = (e, item, active) => {
     if (active) return
-    const isGold = item.variant === 'gold'
-    const isWow = item.variant === 'wow'
-    e.currentTarget.style.background = isWow
-      ? 'rgba(34, 211, 238, 0.05)'
-      : (isGold ? 'rgba(255, 203, 5, 0.06)' : 'transparent')
-    e.currentTarget.style.color = isWow
-      ? 'rgba(34, 211, 238, 0.8)'
-      : (isGold ? 'rgba(255, 255, 255, 0.72)' : 'rgba(255, 255, 255, 0.62)')
-    e.currentTarget.style.borderColor = isWow
-      ? 'rgba(34, 211, 238, 0.22)'
-      : (isGold ? 'rgba(255, 203, 5, 0.18)' : 'transparent')
+    e.currentTarget.style.background = 'transparent'
+    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.68)'
+    e.currentTarget.style.borderColor = 'transparent'
   }
 
   const renderNavBadge = (item) => {
@@ -254,11 +228,12 @@ export default function SidebarNew() {
           pb-20 lg:pb-0
         `}
         style={{
-          backdropFilter: 'blur(20px)',
-          boxShadow: '0 0 20px rgba(0, 212, 255, 0.5)'
+          background: 'linear-gradient(180deg, #0c111d 0%, #090d16 100%)',
+          borderRight: '1px solid rgba(255, 255, 255, 0.06)',
+          backdropFilter: 'blur(20px)'
         }}
       >
-        <div className="p-4 border-b border-[rgba(0,212,255,0.15)] flex justify-center items-center relative overflow-hidden">
+        <div className="p-4 border-b border-[rgba(0,212,255,0.15)] flex justify-center items-center relative overflow-hidden" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
           <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-[rgba(0,212,255,0.5)] to-transparent" />
           <button
             type="button"
@@ -300,6 +275,7 @@ export default function SidebarNew() {
             {pillarItems.map((item) => {
               const Icon = item.icon
               const active = item.exact ? pathname === '/' : isActive(item.href)
+              const tone = PILLAR_TONES[item.tone] || PILLAR_TONES.coach
               return (
                 <Link
                   key={item.href}
@@ -307,9 +283,6 @@ export default function SidebarNew() {
                   onClick={() => setIsOpen(false)}
                   style={{
                     ...getNavItemStyle(item, active),
-                    padding: '12px 14px',
-                    fontSize: '15px',
-                    fontWeight: 700,
                     minHeight: '48px'
                   }}
                   onMouseEnter={(e) => handleNavMouseEnter(e, item, active)}
@@ -317,11 +290,7 @@ export default function SidebarNew() {
                 >
                   <Icon
                     size={20}
-                    style={{
-                      filter: active || item.variant === 'gold'
-                        ? `drop-shadow(0 0 5px ${item.variant === 'gold' ? 'rgba(255, 203, 5, 0.75)' : 'rgba(0, 212, 255, 0.8)'})`
-                        : 'none'
-                    }}
+                    style={{ color: active ? tone.color : tone.idleIcon, flexShrink: 0 }}
                   />
                   <span style={{ flex: 1, minWidth: 0 }}>{item.label}</span>
                   {renderNavBadge(item)}
@@ -370,7 +339,7 @@ export default function SidebarNew() {
                 const active = item.shortcut !== 'tornei' && isActive(item.href)
                 const utilityContent = (
                   <>
-                    <Icon size={16} style={{ flexShrink: 0, opacity: 0.85 }} />
+                    <Icon size={16} style={{ flexShrink: 0, opacity: 0.85, ...(item.iconColor ? { color: item.iconColor } : {}) }} />
                     <span style={{ flex: 1, minWidth: 0 }}>{item.label}</span>
                     {renderNavBadge(item)}
                   </>
@@ -457,7 +426,7 @@ export default function SidebarNew() {
         {pillarItems.map((item) => {
           const Icon = item.icon
           const active = item.exact ? pathname === '/' : isActive(item.href)
-          const isGold = item.variant === 'gold'
+          const tone = PILLAR_TONES[item.tone] || PILLAR_TONES.coach
           return (
             <Link
               key={item.href}
@@ -472,13 +441,9 @@ export default function SidebarNew() {
                 height: '44px',
                 borderRadius: '12px',
                 flexShrink: 0,
-                color: active
-                  ? (isGold ? '#ffcb05' : '#00d4ff')
-                  : (isGold ? 'rgba(255, 203, 5, 0.65)' : 'rgba(255, 255, 255, 0.55)'),
-                background: active
-                  ? (isGold ? 'rgba(255, 203, 5, 0.14)' : 'rgba(0, 212, 255, 0.12)')
-                  : 'transparent',
-                border: `1px solid ${active ? (isGold ? 'rgba(255, 203, 5, 0.4)' : 'rgba(0, 212, 255, 0.35)') : 'transparent'}`,
+                color: active ? tone.color : tone.idleIcon,
+                background: active ? tone.activeBg : 'transparent',
+                border: `1px solid ${active ? tone.activeBorder : 'transparent'}`,
                 transition: 'all 0.2s ease'
               }}
             >
@@ -566,8 +531,8 @@ export default function SidebarNew() {
             width: 64px;
             z-index: 35;
             padding: 12px 10px 16px;
-            background: linear-gradient(180deg, rgba(13, 20, 40, 0.95), rgba(5, 12, 25, 0.98));
-            border-right: 1px solid rgba(0, 212, 255, 0.2);
+            background: linear-gradient(180deg, #0c111d, #090d16);
+            border-right: 1px solid rgba(255, 255, 255, 0.06);
           }
         }
 
