@@ -1,7 +1,8 @@
 'use client'
 
 import React from 'react'
-import { Menu, X, ShoppingCart, Home } from 'lucide-react'
+import Link from 'next/link'
+import { Menu, X, ShoppingCart, Home, User } from 'lucide-react'
 import CreditsBar from '@/components/CreditsBar'
 import { InstallAppPromptButton } from '@/components/InstallAppPrompt'
 import LanguageSwitch from '@/components/LanguageSwitch'
@@ -10,12 +11,28 @@ import { useTranslation } from '@/lib/i18n'
 
 const HOME_DASHBOARD_URL = 'https://home.fromzerotohero.io/dashboard'
 
-export default function TopBar() {
+const avatarStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '36px',
+  height: '36px',
+  borderRadius: '50%',
+  background: 'rgba(0, 212, 255, 0.1)',
+  border: '1px solid rgba(0, 212, 255, 0.35)',
+  color: 'var(--neon-cyan)',
+  cursor: 'pointer',
+  transition: 'all 0.2s',
+  flexShrink: 0,
+  textDecoration: 'none'
+}
+
+export default function TopBar({ showInstallPrompt = true }) {
   const { t } = useTranslation()
   const { isOpen, toggleSidebar } = useSidebar()
 
   return (
-    <header 
+    <header
       className="sticky top-0 z-30 h-16 flex items-center"
       style={{
         background: 'linear-gradient(180deg, rgba(5,8,20,0.9) 0%, rgba(5,8,20,0.7) 100%)',
@@ -25,7 +42,7 @@ export default function TopBar() {
         position: 'relative'
       }}
     >
-      <div 
+      <div
         style={{
           position: 'absolute',
           bottom: '-1px',
@@ -35,18 +52,19 @@ export default function TopBar() {
           background: 'linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.5), transparent)'
         }}
       />
-      <div 
+      <div
         className="topbar-inner h-full px-3 lg:px-6 flex items-center w-full relative z-10"
         style={{
           justifyContent: 'space-between',
           gap: '8px'
         }}
       >
-        {/* LEFT SECTION - Menu, Home, GuideTour */}
+        {/* LEFT SECTION - Menu (tablet/desktop) + Logo (mobile) + Home */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-          {/* Menu: mobile drawer + collapse su desktop */}
+          {/* Menu: drawer utility. Nascosto su mobile: li il drawer si apre dall'avatar. */}
           <button
             type="button"
+            className="topbar-menu-toggle"
             onClick={toggleSidebar}
             aria-label={t('toggleMenu')}
             title={t('toggleMenu')}
@@ -67,9 +85,24 @@ export default function TopBar() {
             {isOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
 
-          {/* Home → Command Center (stessa scheda, ecosistema FZTH) */}
+          {/* Logo mobile: target UX V2 = Logo | Hero Points | Avatar */}
+          <Link
+            href="/"
+            className="topbar-logo-mobile"
+            aria-label="Coach"
+            style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}
+          >
+            <img
+              src="/logo.png"
+              alt={t('appName')}
+              style={{ height: '30px', width: 'auto', display: 'block' }}
+            />
+          </Link>
+
+          {/* Home → Command Center (stessa scheda, ecosistema FZTH) - solo tablet/desktop */}
           <button
             type="button"
+            className="topbar-desktop-utility"
             onClick={() => {
               window.location.assign(HOME_DASHBOARD_URL)
             }}
@@ -92,29 +125,29 @@ export default function TopBar() {
           >
             <Home size={18} />
           </button>
-
         </div>
 
-        {/* CENTER SECTION - vuoto su mobile */}
+        {/* CENTER SECTION - vuoto */}
         <div style={{ flex: 1 }} />
 
-        {/* RIGHT SECTION - GuideTour desktop, Credits, Carrello, LanguageSwitch */}
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '8px', 
+        {/* RIGHT SECTION - utility: HP sempre visibili, il resto solo tablet/desktop */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
           flexShrink: 0,
           justifyContent: 'flex-end'
         }}>
-          <InstallAppPromptButton />
+          {/* Guard S0: nascosto su staging/preview, dove InstallAppPrompt non e montato */}
+          {showInstallPrompt && <InstallAppPromptButton />}
 
-          {/* CreditsBar - desktop only */}
-          <div className="hidden lg:block">
-            <CreditsBar />
-          </div>
-          
-          {/* Icona Carrello */}
+          {/* Hero Points: utility compatta sempre raggiungibile */}
+          <CreditsBar />
+
+          {/* Icona Carrello - solo tablet/desktop */}
           <button
+            type="button"
+            className="topbar-desktop-utility"
             onClick={() => window.open('https://home.fromzerotohero.io/dashboard?usage', '_blank')}
             style={{
               display: 'flex',
@@ -134,18 +167,56 @@ export default function TopBar() {
           >
             <ShoppingCart size={18} />
           </button>
-          
-          {/* Language Switch */}
-          <div style={{ flexShrink: 0 }}>
+
+          {/* Language Switch - solo tablet/desktop (su mobile resta nel drawer utility) */}
+          <div className="topbar-desktop-utility" style={{ flexShrink: 0 }}>
             <LanguageSwitch />
           </div>
+
+          {/* Avatar/account trigger: desktop → pagina Account; mobile → drawer utility */}
+          <div className="topbar-avatar-desktop">
+            <Link href="/impostazioni-profilo" aria-label="Account" title="Account" style={avatarStyle}>
+              <User size={18} />
+            </Link>
+          </div>
+          <button
+            type="button"
+            className="topbar-avatar-mobile"
+            onClick={toggleSidebar}
+            aria-label="Account"
+            title="Account"
+            style={avatarStyle}
+          >
+            <User size={18} />
+          </button>
         </div>
       </div>
-      
+
       <style jsx>{`
         @media (max-width: 1023px) {
           header {
             height: 56px !important;
+          }
+        }
+
+        .topbar-avatar-mobile {
+          display: none !important;
+        }
+
+        @media (max-width: 767px) {
+          .topbar-menu-toggle,
+          .topbar-desktop-utility,
+          .topbar-avatar-desktop {
+            display: none !important;
+          }
+          .topbar-avatar-mobile {
+            display: flex !important;
+          }
+        }
+
+        @media (min-width: 768px) {
+          .topbar-logo-mobile {
+            display: none !important;
           }
         }
       `}</style>

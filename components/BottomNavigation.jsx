@@ -2,15 +2,12 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
-import { useGameAnalysisModalNav, OPEN_GAME_ANALYSIS_MODAL_EVENT, CLOSE_GAME_ANALYSIS_MODAL_EVENT } from '@/components/GameAnalysisModalNavContext'
-import { 
-  Shield,
+import { useGameAnalysisModalNav, CLOSE_GAME_ANALYSIS_MODAL_EVENT } from '@/components/GameAnalysisModalNavContext'
+import {
   LayoutGrid,
-  Plus,
   Users,
-  Calendar,
   Sparkles
 } from 'lucide-react'
 
@@ -26,56 +23,35 @@ const CARDS_ACCENT = {
 }
 
 export default function BottomNavigation() {
-  const { t, lang } = useTranslation()
+  const { lang } = useTranslation()
   const pathname = usePathname()
-  const router = useRouter()
   const { isOpen: gameAnalysisModalOpen } = useGameAnalysisModalNav()
 
-  const isActive = (href) => {
-    // Rimuovi query params per il check
-    const hrefWithoutQuery = href.split('?')[0]
-    if (hrefWithoutQuery === '/') return pathname === '/'
-    return pathname?.startsWith(hrefWithoutQuery)
-  }
-
+  // UX V2: massimo 3 ingressi (Coach / Rosa / Carte).
+  // Contromisure, Partite e Statistiche NON sono cancellate: restano vive nelle route
+  // e nei componenti attuali, e saranno ricollocate sotto Coach nelle slice successive.
   const navItems = [
-    {
-      href: '/contromisure-pre-partita',
-      icon: Shield,
-      label: lang === 'en' ? 'Counters' : 'Contromisure'
-    },
     {
       href: '/',
       icon: LayoutGrid,
-      label: 'Dashboard'
-    },
-    {
-      href: '/match',
-      icon: Calendar,
-      label: lang === 'en' ? 'Matches' : 'Partite'
-    },
-    {
-      href: '/card-advisor-lab',
-      icon: Sparkles,
-      label: lang === 'en' ? 'Cards' : 'Carte',
-      accent: 'cards'
+      label: 'Coach',
+      pillar: 'coach'
     },
     {
       href: '/gestione-formazione',
       icon: Users,
       label: lang === 'en' ? 'Squad' : 'Rosa'
     },
-    // Shortcut: apre il modal "Statistiche di gioco" sulla dashboard (OpenCoachListener in app/page.jsx).
-    // Evidenza tab: GameAnalysisModalNavContext (sync con showGameAnalysisModal su /).
     {
-      href: '/?openGameAnalysis=1',
-      icon: Plus,
-      label: lang === 'en' ? 'Stats' : 'Stat'
+      href: '/card-advisor-lab',
+      icon: Sparkles,
+      label: lang === 'en' ? 'Cards' : 'Carte',
+      accent: 'cards'
     }
   ]
 
   return (
-    <nav 
+    <nav
       className="bottom-nav"
       style={{
         position: 'fixed',
@@ -98,7 +74,7 @@ export default function BottomNavigation() {
         height: '1px',
         background: 'linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.5), transparent)'
       }} />
-      
+
       <div style={{
         display: 'flex',
         justifyContent: 'space-around',
@@ -109,17 +85,11 @@ export default function BottomNavigation() {
       }}>
         {navItems.map((item) => {
           const Icon = item.icon
-          const isStatShortcut = typeof item.href === 'string' && item.href.includes('openGameAnalysis=1')
-          const isCardAdvisorShortcut = item.href === '/card-advisor-lab'
-          const isDashboard = item.href === '/'
-          // Dashboard e Stat condividono la route `/`: il modal analisi è evidenziato su Stat, non su Dashboard
-          const active = isStatShortcut
-            ? gameAnalysisModalOpen
-            : isCardAdvisorShortcut
-              ? pathname?.startsWith('/card-advisor-lab')
-              : isDashboard
-                ? pathname === '/' && !gameAnalysisModalOpen
-              : isActive(item.href)
+          const isCoach = item.pillar === 'coach'
+          // Coach e il modal analisi condividono la route `/`: modal aperto = Coach non attivo
+          const active = isCoach
+            ? pathname === '/' && !gameAnalysisModalOpen
+            : pathname?.startsWith(item.href)
 
           const isCardsAccent = item.accent === 'cards'
           const inner = (
@@ -161,8 +131,8 @@ export default function BottomNavigation() {
             </div>
           )
 
-          // Già su /: niente navigazione verso ?openGameAnalysis (evita flash + doppio replace)
-          if ((isStatShortcut || isCardAdvisorShortcut) && pathname === '/') {
+          // Tap su Coach con modal analisi aperto su `/`: chiude il modal (comportamento preesistente)
+          if (isCoach && pathname === '/' && gameAnalysisModalOpen) {
             return (
               <button
                 key={item.label}
@@ -170,11 +140,7 @@ export default function BottomNavigation() {
                 aria-label={item.label}
                 onClick={() => {
                   if (typeof window !== 'undefined') {
-                    if (isStatShortcut) {
-                      window.dispatchEvent(new CustomEvent(OPEN_GAME_ANALYSIS_MODAL_EVENT))
-                    } else {
-                      router.push('/card-advisor-lab')
-                    }
+                    window.dispatchEvent(new CustomEvent(CLOSE_GAME_ANALYSIS_MODAL_EVENT))
                   }
                 }}
                 style={{
@@ -197,18 +163,6 @@ export default function BottomNavigation() {
             <Link
               key={item.label}
               href={item.href}
-              prefetch={isStatShortcut ? false : undefined}
-              scroll={isStatShortcut ? false : undefined}
-              onClick={
-                isDashboard && pathname === '/' && gameAnalysisModalOpen
-                  ? (e) => {
-                      e.preventDefault()
-                      if (typeof window !== 'undefined') {
-                        window.dispatchEvent(new CustomEvent(CLOSE_GAME_ANALYSIS_MODAL_EVENT))
-                      }
-                    }
-                  : undefined
-              }
               style={{
                 textDecoration: 'none',
                 color: 'inherit'
@@ -219,15 +173,15 @@ export default function BottomNavigation() {
           )
         })}
       </div>
-      
+
       <style jsx>{`
-        @media (max-width: 1024px) {
+        @media (max-width: 767px) {
           .bottom-nav {
             display: block !important;
           }
         }
-        
-        @media (min-width: 1025px) {
+
+        @media (min-width: 768px) {
           .bottom-nav {
             display: none !important;
           }

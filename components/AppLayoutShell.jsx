@@ -36,12 +36,12 @@ export default function AppLayoutShell({ children, showInstallPrompt = true, sho
         <SidebarNew />
 
         <div
-          className={`flex-1 flex flex-col overflow-hidden transition-[margin] duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'}`}
+          className={`shell-content flex-1 flex flex-col overflow-hidden transition-[margin] duration-300 ease-in-out ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'}`}
           style={{
             paddingBottom: 'var(--bottom-nav-height, 0px)'
           }}
         >
-          <TopBar />
+          <TopBar showInstallPrompt={showInstallPrompt} />
 
           <main
             className="flex-1 overflow-y-auto"
@@ -63,10 +63,10 @@ export default function AppLayoutShell({ children, showInstallPrompt = true, sho
       {showStagingBadge && (
         <div
           aria-hidden="true"
+          className="staging-badge"
           style={{
             position: 'fixed',
             left: 12,
-            bottom: 'calc(var(--bottom-nav-height, 0px) + env(safe-area-inset-bottom, 0px) + 10px)',
             zIndex: 90,
             padding: '4px 10px',
             borderRadius: 999,
@@ -83,6 +83,25 @@ export default function AppLayoutShell({ children, showInstallPrompt = true, sho
           STAGING · UX V2
         </div>
       )}
+
+      <style jsx>{`
+        /* Rail tablet (768-1023px): spazio per la rail compatta, niente sidebar larga permanente */
+        @media (min-width: 768px) and (max-width: 1023px) {
+          .shell-content {
+            margin-left: 64px;
+          }
+        }
+
+        /* Badge staging: sopra la bottom nav su mobile, senza coprirla */
+        .staging-badge {
+          bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+        }
+        @media (max-width: 767px) {
+          .staging-badge {
+            bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 10px);
+          }
+        }
+      `}</style>
     </>
     </MaintenanceGate>
   )

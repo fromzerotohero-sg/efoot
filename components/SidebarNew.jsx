@@ -7,33 +7,27 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
 import {
   BookOpen,
+  Brain,
   Gift,
   LayoutGrid,
+  Menu,
   User,
   Wallet,
   Users as UsersIcon,
-  Calendar,
-  BarChart3,
-  Shield,
   Sparkles,
   LogOut,
-  Upload,
   X
 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import SidebarGuideTour from '@/components/SidebarGuideTour'
+import LanguageSwitch from '@/components/LanguageSwitch'
 import { useSidebar } from '@/components/SidebarContext'
-import {
-  useGameAnalysisModalNav,
-  OPEN_GAME_ANALYSIS_MODAL_EVENT
-} from '@/components/GameAnalysisModalNavContext'
 
 export default function SidebarNew() {
   const { t, lang } = useTranslation()
   const pathname = usePathname()
   const router = useRouter()
   const { isOpen, setIsOpen } = useSidebar()
-  const { isOpen: gameAnalysisModalOpen } = useGameAnalysisModalNav()
   const [redirectModal, setRedirectModal] = React.useState({ open: false, url: '' })
 
   const handleLogout = () => {
@@ -51,70 +45,64 @@ export default function SidebarNew() {
     return pathname?.startsWith(href)
   }
 
-  const navSections = [
-    {
-      title: lang === 'en' ? 'START' : 'INIZIA',
-      items: [
-        { href: '/', icon: LayoutGrid, label: t('dashboard'), isActive: () => pathname === '/' },
-        { href: '/guida', icon: BookOpen, label: t('guide') },
-        {
-          href: 'https://tornei.fromzerotohero.io/',
-          icon: Gift,
-          label: 'Tornei',
-          variant: 'wow',
-          shortcut: 'tornei',
-          badgeText: lang === 'en' ? 'FREE' : 'GRATIS',
-          isActive: () => false
-        }
-      ]
-    },
-    {
-      title: lang === 'en' ? 'YOUR CLUB' : 'IL TUO CLUB',
-      items: [
-        { href: '/impostazioni-profilo', icon: User, label: t('profile') },
-        { href: '/gestione-formazione', icon: UsersIcon, label: t('yourSquad') },
-        {
-          href: '/?openGameAnalysis=1',
-          icon: Upload,
-          label: lang === 'en' ? 'Upload game stats' : 'Carica statistiche',
-          shortcut: 'gameAnalysis'
-        }
-      ]
-    },
-    {
-      title: lang === 'en' ? 'BEFORE THE MATCH' : 'PRIMA DEL MATCH',
-      items: [
-        { href: '/contromisure-pre-partita', icon: Shield, label: t('countermeasures') },
-        {
-          href: '/card-advisor-lab',
-          icon: Sparkles,
-          label: lang === 'en' ? 'Card analysis' : 'Analisi carte',
-          variant: 'gold',
-          badge: 'new',
-          isActive: () => isActive('/card-advisor-lab')
-        }
-      ]
-    },
-    {
-      title: lang === 'en' ? 'AFTER THE MATCH' : 'DOPO IL MATCH',
-      items: [
-        { href: '/match', icon: Calendar, label: t('matchHistory') },
-        { href: '/grafici-comparazione', icon: BarChart3, label: t('charts') }
-      ]
-    },
-    {
-      title: lang === 'en' ? 'SUPPORT' : 'ASSISTENZA',
-      items: [
-        { type: 'tour' },
-        { href: '/gestione-profilo', icon: Wallet, label: lang === 'en' ? 'Where to spend HP' : 'Dove spendere HP' }
-      ]
-    }
+  // UX V2: navigazione primaria a 3 pilastri. Le vecchie sezioni (contromisure, match,
+  // statistiche, upload) restano vive nelle route esistenti e saranno ricollocate sotto Coach.
+  const pillarItems = [
+    { href: '/', icon: LayoutGrid, label: 'Coach', exact: true },
+    { href: '/gestione-formazione', icon: UsersIcon, label: lang === 'en' ? 'Squad' : 'Rosa' },
+    { href: '/card-advisor-lab', icon: Sparkles, label: lang === 'en' ? 'Cards' : 'Carte', variant: 'gold', badge: 'new' }
   ]
 
-  const getItemActive = (item) => {
-    if (item.shortcut === 'gameAnalysis') return gameAnalysisModalOpen
-    if (item.isActive) return item.isActive()
-    return isActive(item.href)
+  // Utility (gerarchia visuale ridotta). Mapping verificato su route/componenti reali:
+  // - Account → /impostazioni-profilo
+  // - Memoria Hero → adapter verso /impostazioni-profilo (la "Nota memoria per il coach" vive li;
+  //   non esiste ancora una pagina Memoria Hero dedicata: niente destinazioni fake)
+  // - HP → /gestione-profilo ("Dove spendere HP")
+  // - Lingua → LanguageSwitch (componente reale)
+  // - Guida → /guida
+  // - Tornei → link esterno con redirect modal esistente
+  const utilityItems = [
+    { href: '/impostazioni-profilo', icon: User, label: 'Account' },
+    { href: '/impostazioni-profilo', icon: Brain, label: lang === 'en' ? 'Hero Memory' : 'Memoria Hero' },
+    { href: '/gestione-profilo', icon: Wallet, label: 'HP' },
+    { href: '/guida', icon: BookOpen, label: t('guide') },
+    {
+      href: 'https://tornei.fromzerotohero.io/',
+      icon: Gift,
+      label: 'Tornei',
+      shortcut: 'tornei',
+      badgeText: lang === 'en' ? 'FREE' : 'GRATIS'
+    },
+    { type: 'tour' },
+    { type: 'language' }
+  ]
+
+  const getUtilityStyle = (active) => ({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '8px 14px',
+    borderRadius: '10px',
+    fontSize: '13px',
+    fontWeight: 500,
+    fontFamily: 'inherit',
+    background: active ? 'rgba(0, 212, 255, 0.08)' : 'transparent',
+    color: active ? 'rgba(0, 212, 255, 0.85)' : 'rgba(255, 255, 255, 0.55)',
+    border: '1px solid transparent',
+    transition: 'all 0.2s ease',
+    cursor: 'pointer',
+    textDecoration: 'none',
+    width: '100%'
+  })
+
+  const handleUtilityMouseEnter = (e) => {
+    e.currentTarget.style.background = 'rgba(0, 212, 255, 0.07)'
+    e.currentTarget.style.color = 'rgba(0, 212, 255, 0.9)'
+  }
+
+  const handleUtilityMouseLeave = (e, active) => {
+    e.currentTarget.style.background = active ? 'rgba(0, 212, 255, 0.08)' : 'transparent'
+    e.currentTarget.style.color = active ? 'rgba(0, 212, 255, 0.85)' : 'rgba(255, 255, 255, 0.55)'
   }
 
   const getNavItemStyle = (item, active) => {
@@ -306,120 +294,120 @@ export default function SidebarNew() {
           />
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-4 px-3">
-          <div className="space-y-5">
-            {navSections.map((section) => (
-              <div key={section.title}>
-                <div
+        <nav className="flex-1 overflow-y-auto py-4 px-3" style={{ display: 'flex', flexDirection: 'column' }}>
+          {/* 3 pilastri: gerarchia visuale primaria */}
+          <div className="space-y-1">
+            {pillarItems.map((item) => {
+              const Icon = item.icon
+              const active = item.exact ? pathname === '/' : isActive(item.href)
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setIsOpen(false)}
                   style={{
-                    padding: '0 12px 7px',
-                    fontSize: '10px',
-                    fontWeight: 900,
-                    letterSpacing: '1.5px',
-                    color: 'rgba(0, 212, 255, 0.58)',
-                    textTransform: 'uppercase'
+                    ...getNavItemStyle(item, active),
+                    padding: '12px 14px',
+                    fontSize: '15px',
+                    fontWeight: 700,
+                    minHeight: '48px'
                   }}
+                  onMouseEnter={(e) => handleNavMouseEnter(e, item, active)}
+                  onMouseLeave={(e) => handleNavMouseLeave(e, item, active)}
                 >
-                  {section.title}
-                </div>
+                  <Icon
+                    size={20}
+                    style={{
+                      filter: active || item.variant === 'gold'
+                        ? `drop-shadow(0 0 5px ${item.variant === 'gold' ? 'rgba(255, 203, 5, 0.75)' : 'rgba(0, 212, 255, 0.8)'})`
+                        : 'none'
+                    }}
+                  />
+                  <span style={{ flex: 1, minWidth: 0 }}>{item.label}</span>
+                  {renderNavBadge(item)}
+                </Link>
+              )
+            })}
+          </div>
 
-                <div className="space-y-1">
-                  {section.items.map((item) => {
-                    if (item.type === 'tour') {
-                      return <SidebarGuideTour key="tour" onClick={() => setIsOpen(false)} />
-                    }
-
-                    const Icon = item.icon
-                    const active = getItemActive(item)
-                    const isGameAnalysisShortcut = item.shortcut === 'gameAnalysis'
-                    const navKey = item.shortcut || item.href
-
-                    const navContent = (
-                      <>
-                        <Icon
-                          size={18}
-                          style={{
-                            filter: active || item.variant === 'gold' || item.variant === 'wow'
-                              ? `drop-shadow(0 0 5px ${item.variant === 'gold' ? 'rgba(255, 203, 5, 0.75)' : item.variant === 'wow' ? 'rgba(34, 211, 238, 0.75)' : 'rgba(0, 212, 255, 0.8)'})`
-                              : 'none'
-                          }}
-                        />
-                        <span style={{ flex: 1, minWidth: 0 }}>{item.label}</span>
-                        {renderNavBadge(item)}
-                      </>
-                    )
-
-                    if (isGameAnalysisShortcut && pathname === '/') {
-                      return (
-                        <button
-                          key={navKey}
-                          type="button"
-                          onClick={() => {
-                            setIsOpen(false)
-                            if (typeof window !== 'undefined') {
-                              window.dispatchEvent(new CustomEvent(OPEN_GAME_ANALYSIS_MODAL_EVENT))
-                            }
-                          }}
-                          style={{
-                            ...getNavItemStyle(item, active),
-                            width: '100%',
-                            font: 'inherit'
-                          }}
-                          onMouseEnter={(e) => handleNavMouseEnter(e, item, active)}
-                          onMouseLeave={(e) => handleNavMouseLeave(e, item, active)}
-                        >
-                          {navContent}
-                        </button>
-                      )
-                    }
-
-                    if (item.shortcut === 'tornei') {
-                      return (
-                        <button
-                          key={navKey}
-                          type="button"
-                          onClick={() => {
-                            setIsOpen(false)
-                            setRedirectModal({ open: true, url: item.href })
-                          }}
-                          style={{
-                            ...getNavItemStyle(item, active),
-                            width: '100%',
-                            font: 'inherit'
-                          }}
-                          onMouseEnter={(e) => handleNavMouseEnter(e, item, active)}
-                          onMouseLeave={(e) => handleNavMouseLeave(e, item, active)}
-                        >
-                          {navContent}
-                        </button>
-                      )
-                    }
-
-                    return (
-                      <Link
-                        key={navKey}
-                        href={item.href}
-                        prefetch={isGameAnalysisShortcut ? false : undefined}
-                        onClick={() => setIsOpen(false)}
-                        style={getNavItemStyle(item, active)}
-                        onMouseEnter={(e) => handleNavMouseEnter(e, item, active)}
-                        onMouseLeave={(e) => handleNavMouseLeave(e, item, active)}
-                      >
-                        {navContent}
-                      </Link>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
-
+          {/* Utility / account area: separata e visivamente secondaria */}
+          <div style={{ marginTop: 'auto', paddingTop: '20px' }}>
             <div
               style={{
                 height: '1px',
                 background: 'linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.3), transparent)',
-                margin: '16px 0'
+                margin: '0 0 14px'
               }}
             />
+            <div
+              style={{
+                padding: '0 12px 7px',
+                fontSize: '10px',
+                fontWeight: 900,
+                letterSpacing: '1.5px',
+                color: 'rgba(255, 255, 255, 0.35)',
+                textTransform: 'uppercase'
+              }}
+            >
+              Utility
+            </div>
+
+            <div className="space-y-1">
+              {utilityItems.map((item) => {
+                if (item.type === 'tour') {
+                  return <SidebarGuideTour key="tour" onClick={() => setIsOpen(false)} />
+                }
+
+                if (item.type === 'language') {
+                  return (
+                    <div key="language" style={{ padding: '6px 14px' }}>
+                      <LanguageSwitch />
+                    </div>
+                  )
+                }
+
+                const Icon = item.icon
+                const active = item.shortcut !== 'tornei' && isActive(item.href)
+                const utilityContent = (
+                  <>
+                    <Icon size={16} style={{ flexShrink: 0, opacity: 0.85 }} />
+                    <span style={{ flex: 1, minWidth: 0 }}>{item.label}</span>
+                    {renderNavBadge(item)}
+                  </>
+                )
+
+                if (item.shortcut === 'tornei') {
+                  return (
+                    <button
+                      key="tornei"
+                      type="button"
+                      onClick={() => {
+                        setIsOpen(false)
+                        setRedirectModal({ open: true, url: item.href })
+                      }}
+                      style={getUtilityStyle(false)}
+                      onMouseEnter={handleUtilityMouseEnter}
+                      onMouseLeave={(e) => handleUtilityMouseLeave(e, false)}
+                    >
+                      {utilityContent}
+                    </button>
+                  )
+                }
+
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    onClick={() => setIsOpen(false)}
+                    style={getUtilityStyle(active)}
+                    onMouseEnter={handleUtilityMouseEnter}
+                    onMouseLeave={(e) => handleUtilityMouseLeave(e, active)}
+                  >
+                    {utilityContent}
+                  </Link>
+                )
+              })}
+            </div>
 
             <button
               onClick={() => {
@@ -430,41 +418,97 @@ export default function SidebarNew() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                fontSize: '14px',
-                fontWeight: 600,
-                background: 'rgba(255, 80, 80, 0.15)',
-                color: '#ff6b6b',
-                border: '1px solid rgba(255, 80, 80, 0.4)',
-                boxShadow: '0 0 10px rgba(255, 80, 80, 0.1)',
-                transition: 'all 0.3s ease',
+                padding: '10px 14px',
+                borderRadius: '10px',
+                fontSize: '13px',
+                fontWeight: 500,
+                background: 'rgba(255, 80, 80, 0.1)',
+                color: 'rgba(255, 107, 107, 0.85)',
+                border: '1px solid rgba(255, 80, 80, 0.25)',
+                transition: 'all 0.2s ease',
                 cursor: 'pointer',
                 textDecoration: 'none',
                 width: '100%',
-                marginTop: '8px'
+                marginTop: '10px'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 80, 80, 0.25)'
-                e.currentTarget.style.borderColor = 'rgba(255, 80, 80, 0.6)'
+                e.currentTarget.style.background = 'rgba(255, 80, 80, 0.2)'
+                e.currentTarget.style.borderColor = 'rgba(255, 80, 80, 0.5)'
                 e.currentTarget.style.color = '#ff8585'
-                e.currentTarget.style.boxShadow = '0 0 15px rgba(255, 80, 80, 0.2)'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 80, 80, 0.15)'
-                e.currentTarget.style.borderColor = 'rgba(255, 80, 80, 0.4)'
-                e.currentTarget.style.color = '#ff6b6b'
-                e.currentTarget.style.boxShadow = '0 0 10px rgba(255, 80, 80, 0.1)'
+                e.currentTarget.style.background = 'rgba(255, 80, 80, 0.1)'
+                e.currentTarget.style.borderColor = 'rgba(255, 80, 80, 0.25)'
+                e.currentTarget.style.color = 'rgba(255, 107, 107, 0.85)'
               }}
             >
-              <LogOut size={18} style={{ filter: 'drop-shadow(0 0 3px rgba(255, 80, 80, 0.5))' }} />
-              <span style={{ textShadow: '0 0 5px rgba(255, 80, 80, 0.3)' }}>{t('logout')}</span>
+              <LogOut size={16} />
+              <span>{t('logout')}</span>
             </button>
 
             <div className="lg:hidden" style={{ height: '100px' }} />
           </div>
         </nav>
       </aside>
+
+      {/* Rail compatta tablet (768-1023px): 3 pilastri icona + accesso al drawer utility.
+          Tra mobile e desktop niente sidebar larga permanente: il contenuto Rosa mantiene spazio utile. */}
+      <nav className="tablet-rail" aria-label={lang === 'en' ? 'Main navigation' : 'Navigazione principale'}>
+        {pillarItems.map((item) => {
+          const Icon = item.icon
+          const active = item.exact ? pathname === '/' : isActive(item.href)
+          const isGold = item.variant === 'gold'
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-label={item.label}
+              title={item.label}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '44px',
+                height: '44px',
+                borderRadius: '12px',
+                flexShrink: 0,
+                color: active
+                  ? (isGold ? '#ffcb05' : '#00d4ff')
+                  : (isGold ? 'rgba(255, 203, 5, 0.65)' : 'rgba(255, 255, 255, 0.55)'),
+                background: active
+                  ? (isGold ? 'rgba(255, 203, 5, 0.14)' : 'rgba(0, 212, 255, 0.12)')
+                  : 'transparent',
+                border: `1px solid ${active ? (isGold ? 'rgba(255, 203, 5, 0.4)' : 'rgba(0, 212, 255, 0.35)') : 'transparent'}`,
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <Icon size={20} />
+            </Link>
+          )
+        })}
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          aria-label={t('toggleMenu')}
+          title={t('toggleMenu')}
+          style={{
+            marginTop: 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '44px',
+            height: '44px',
+            borderRadius: '12px',
+            flexShrink: 0,
+            background: 'rgba(0, 212, 255, 0.06)',
+            border: '1px solid rgba(0, 212, 255, 0.25)',
+            color: 'rgba(0, 212, 255, 0.8)',
+            cursor: 'pointer'
+          }}
+        >
+          <Menu size={20} />
+        </button>
+      </nav>
 
       {redirectModal.open && (
         <div className="redirect-overlay" role="dialog" aria-modal="true" aria-label={lang === 'en' ? 'External link' : 'Link esterno'} onClick={() => setRedirectModal({ open: false, url: '' })}>
@@ -505,6 +549,28 @@ export default function SidebarNew() {
       )}
 
       <style jsx>{`
+        .tablet-rail {
+          display: none;
+        }
+
+        @media (min-width: 768px) and (max-width: 1023px) {
+          .tablet-rail {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            position: fixed;
+            top: 56px;
+            left: 0;
+            bottom: 0;
+            width: 64px;
+            z-index: 35;
+            padding: 12px 10px 16px;
+            background: linear-gradient(180deg, rgba(13, 20, 40, 0.95), rgba(5, 12, 25, 0.98));
+            border-right: 1px solid rgba(0, 212, 255, 0.2);
+          }
+        }
+
         .redirect-overlay {
           position: fixed;
           inset: 0;
