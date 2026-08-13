@@ -37,21 +37,15 @@ export default function AppLayoutShell({ children, showInstallPrompt = true, sho
 
         <div
           className={`shell-content flex-1 flex flex-col overflow-hidden transition-[margin] duration-300 ease-in-out ${sidebarOpen ? 'sidebar-open' : ''}`}
-          style={{
-            paddingBottom: 'var(--bottom-nav-height, 0px)'
-          }}
+          style={{ paddingBottom: '0px' }}
         >
           <TopBar showInstallPrompt={showInstallPrompt} />
 
           <main
-            className="flex-1 overflow-y-auto"
-            style={{
-              paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
-              background: '#F9F6F1'
-            }}
+            className="flex-1 overflow-y-auto shell-main"
+            style={{ background: '#F9F6F1' }}
           >
             <PrelaunchGate>{children}</PrelaunchGate>
-            <div className="lg:hidden" style={{ height: '20px' }} />
           </main>
         </div>
       </div>
@@ -86,26 +80,34 @@ export default function AppLayoutShell({ children, showInstallPrompt = true, sho
       )}
 
       <style jsx>{`
+        .shell-main {
+          padding-bottom: 28px;
+          overscroll-behavior-y: contain;
+        }
+
         @media (min-width: 1024px) {
           .shell-content.sidebar-open {
             margin-left: 196px;
           }
         }
 
-        /* Rail tablet (768-1023px): spazio per la rail compatta, niente sidebar larga permanente */
         @media (min-width: 768px) and (max-width: 1023px) {
           .shell-content {
             margin-left: 64px;
           }
         }
 
-        /* Badge staging: sopra la bottom nav su mobile, senza coprirla */
         .staging-badge {
           bottom: calc(10px + env(safe-area-inset-bottom, 0px));
         }
+
         @media (max-width: 767px) {
+          .shell-main {
+            padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+            scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+          }
           .staging-badge {
-            bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 10px);
+            bottom: calc(82px + env(safe-area-inset-bottom, 0px));
           }
         }
       `}</style>
