@@ -2,7 +2,6 @@
 
 import React from 'react'
 import {
-  MessageCircle,
   Users,
   UserCheck,
   BarChart3,
@@ -12,7 +11,8 @@ import {
   Calendar,
   ArrowRight,
   AlertCircle,
-  SendHorizonal
+  SendHorizonal,
+  Play
 } from 'lucide-react'
 import AIKnowledgeBar from '@/components/AIKnowledgeBar'
 
@@ -47,6 +47,10 @@ const STR = {
       {
         label: 'Cosa posso migliorare?',
         message: 'Cosa posso migliorare? Dammi le priorità concrete per le prossime partite.'
+      },
+      {
+        label: 'Che formazione mi consigli?',
+        message: 'Che formazione mi consigli per la mia rosa attuale? Spiegami perché.'
       }
     ],
     nextAction: 'Prossima azione',
@@ -133,6 +137,10 @@ const STR = {
       {
         label: 'What can I improve?',
         message: 'What can I improve? Give me concrete priorities for the next matches.'
+      },
+      {
+        label: 'What formation do you suggest?',
+        message: 'What formation do you suggest for my current squad? Explain why.'
       }
     ],
     nextAction: 'Next action',
@@ -346,6 +354,7 @@ export default function CoachHomeV2({
                 className="chv2-pill"
                 onClick={() => onAskHeroMessage?.(pill.message)}
               >
+                <Play size={11} aria-hidden="true" style={{ fill: 'currentColor', flexShrink: 0 }} />
                 {pill.label}
               </button>
             ))}
@@ -368,7 +377,6 @@ export default function CoachHomeV2({
             onClick={onAskHero}
             aria-label={s.composerAria}
           >
-            <MessageCircle size={18} aria-hidden="true" className="chv2-composer-icon" />
             <span className="chv2-composer-placeholder">{s.composerPlaceholder}</span>
             <span className="chv2-composer-send" aria-hidden="true">
               <SendHorizonal size={16} />
@@ -417,7 +425,7 @@ export default function CoachHomeV2({
           {/* Quanto Hero ti conosce: componente esistente, calcolo invariato, nessun claim sulla memoria */}
           <section className="chv2-card" data-tour-id="tour-dashboard-ai" aria-label={s.knowledge}>
             <p className="chv2-overline">{s.knowledge}</p>
-            <AIKnowledgeBar />
+            <AIKnowledgeBar variant="gauge" />
             <p className="chv2-knowledge-sub">{s.knowledgeSub}</p>
           </section>
 
@@ -551,6 +559,9 @@ export default function CoachHomeV2({
         }
 
         .chv2-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
           min-height: 40px;
           padding: 9px 16px;
           border-radius: 999px;
@@ -615,8 +626,8 @@ export default function CoachHomeV2({
           font-size: 10px;
           font-weight: 800;
           letter-spacing: 0.08em;
-          color: #03101d;
-          background: linear-gradient(135deg, #00d4ff, #34d399);
+          color: #ffffff;
+          background: linear-gradient(135deg, #9d4edd, #c77dff);
         }
 
         .chv2-hero-text {
@@ -646,11 +657,6 @@ export default function CoachHomeV2({
           box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.08);
         }
 
-        .chv2-composer-icon {
-          color: rgba(0, 212, 255, 0.6);
-          flex-shrink: 0;
-        }
-
         .chv2-composer-placeholder {
           flex: 1;
           min-width: 0;
@@ -668,7 +674,7 @@ export default function CoachHomeV2({
           width: 36px;
           height: 36px;
           border-radius: 50%;
-          background: linear-gradient(135deg, #00d4ff, #0080ff);
+          background: linear-gradient(135deg, #34d399, #22c55e);
           color: #03101d;
           flex-shrink: 0;
         }

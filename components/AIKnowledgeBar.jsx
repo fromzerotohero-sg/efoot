@@ -29,7 +29,7 @@ function useIsMobile() {
  * Design: Glassmorphism card with animated gradient borders,
  * level badges with icons, shimmer progress bar
  */
-export default function AIKnowledgeBar() {
+export default function AIKnowledgeBar({ variant = 'card' } = {}) {
   const { t, lang } = useTranslation()
   const router = useRouter()
   const isMobile = useIsMobile()
@@ -297,6 +297,87 @@ export default function AIKnowledgeBar() {
           <AlertCircle size={24} />
           <span style={{ fontSize: '15px' }}>{error}</span>
         </div>
+      </div>
+    )
+  }
+
+  // UX V2 — variante "gauge": STESSI fetch, score, livello e animazione della card.
+  // Cambia solo la presentazione (indicatore circolare, reference visiva Home Coach).
+  // Formula, pesi, endpoint e Knowledge calculation restano invariati.
+  if (variant === 'gauge') {
+    const gaugeRadius = 52
+    const gaugeCircumference = 2 * Math.PI * gaugeRadius
+    const gaugeProgress = Math.max(0, Math.min(100, Math.round(animatedScore)))
+    const gaugeOffset = gaugeCircumference * (1 - gaugeProgress / 100)
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', padding: '4px 0' }}>
+        <div style={{ position: 'relative', width: '132px', height: '132px' }}>
+          <svg
+            width="132"
+            height="132"
+            viewBox="0 0 132 132"
+            role="img"
+            aria-label={`${gaugeProgress}%`}
+          >
+            <defs>
+              <linearGradient id="ai-knowledge-gauge-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#34d399" />
+                <stop offset="100%" stopColor="#00d4ff" />
+              </linearGradient>
+            </defs>
+            <circle
+              cx="66"
+              cy="66"
+              r={gaugeRadius}
+              fill="none"
+              stroke="rgba(255, 255, 255, 0.08)"
+              strokeWidth="10"
+            />
+            <circle
+              cx="66"
+              cy="66"
+              r={gaugeRadius}
+              fill="none"
+              stroke="url(#ai-knowledge-gauge-gradient)"
+              strokeWidth="10"
+              strokeLinecap="round"
+              strokeDasharray={gaugeCircumference}
+              strokeDashoffset={gaugeOffset}
+              transform="rotate(-90 66 66)"
+              style={{ transition: 'stroke-dashoffset 0.6s ease' }}
+            />
+          </svg>
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '2px'
+            }}
+          >
+            <span style={{ fontSize: '26px', fontWeight: 800, color: '#FFFFFF', lineHeight: 1 }}>
+              {gaugeProgress}%
+            </span>
+            <span
+              style={{
+                fontSize: '10px',
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: currentLevel.color
+              }}
+            >
+              {currentLevel.label}
+            </span>
+          </div>
+        </div>
+        <span style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.55)' }}>
+          {lang === 'en' ? 'Knowledge level' : 'Livello conoscenza'}
+        </span>
       </div>
     )
   }
