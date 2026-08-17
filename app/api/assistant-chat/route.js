@@ -14,7 +14,7 @@ import { localizeSkillTermsInText } from '@/lib/playerSkillLabels.js'
 import { buildCardAvailabilityBlock } from '@/lib/chatCardAvailability'
 import { fieldPositionMatchesCardCompetences } from '@/lib/playerSlotRoleMetadata'
 import { buildLegacyTacticalAiNotice } from '@/lib/efootballV6Rules'
-import { buildFluidFormationState, buildHeroFluidPromptBlock } from '@/lib/efootballV6TacticalModel'
+import { buildFluidFormationState, buildHeroFluidPromptBlock, formatHeroFluidContext, prependLiveFluidOverride } from '@/lib/efootballV6TacticalModel'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -1230,11 +1230,20 @@ export async function POST(req) {
           personalContextSummary = raw.length > MAX_PERSONAL_CONTEXT_CHARS ? raw.slice(0, MAX_PERSONAL_CONTEXT_CHARS) + '\n... (riassunto troncato).' : raw
           contextBlockLabel = 'RIASSUNTO ANALISI'
           if (personalContextSummary) console.log('[assistant-chat] Diagnostic from cache used')
-          // Tattica live: la cache può essere vecchia; l'IA deve vedere sempre stile/istruzioni salvati in Supabase
-          const { data: tacticalRow } = await admin.from('team_tactical_settings').select('team_playing_style, individual_instructions').eq('user_id', userId).maybeSingle()
+          // Tattica live: la cache può essere vecchia; l'IA deve vedere sempre stile/istruzioni/fluida salvati in Supabase
+          const [{ data: tacticalRow }, { data: liveLayout }, { data: liveVariants }] = await Promise.all([
+            admin.from('team_tactical_settings').select('team_playing_style, individual_instructions').eq('user_id', userId).maybeSingle(),
+            admin.from('formation_layout').select('formation, slot_positions').eq('user_id', userId).maybeSingle(),
+            admin.from('formation_variants').select('id, phase, formation, slot_positions, is_active').eq('user_id', userId).in('phase', ['attack', 'defense']).eq('is_active', true)
+          ])
           const liveStyle = tacticalRow?.team_playing_style?.trim()
           const liveInstr = tacticalRow?.individual_instructions
           const numLive = (liveInstr && typeof liveInstr === 'object') ? Object.keys(liveInstr).length : 0
+          const liveFluidText = formatHeroFluidContext({
+            fluid: buildFluidFormationState(liveLayout, liveVariants || []),
+            starters: [],
+            lang
+          })
           // Risolvi nomi giocatori per istruzioni e segnala fit live: la cache può non evidenziare fuori ruolo recenti.
           let instrLines = ''
           let fitLines = ''
@@ -1278,6 +1287,7 @@ export async function POST(req) {
           } else if (fitLines) {
             personalContextSummary = fitLines + personalContextSummary
           }
+          personalContextSummary = prependLiveFluidOverride(personalContextSummary, liveFluidText, lang)
           if (personalContextSummary.length > MAX_PERSONAL_CONTEXT_CHARS) {
             personalContextSummary = personalContextSummary.slice(0, MAX_PERSONAL_CONTEXT_CHARS) + '\n... (riassunto troncato).'
           }

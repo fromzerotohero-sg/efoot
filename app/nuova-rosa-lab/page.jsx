@@ -3949,10 +3949,13 @@ export default withAuth(function NuovaRosaLabPage() {
       }
 
       if (token) {
-        await fetch('/api/refresh-diagnostic', {
+        const response = await fetch('/api/refresh-diagnostic', {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` }
         })
+        if (!response.ok) {
+          console.warn('[nuova-rosa-lab] refresh-diagnostic failed', response.status)
+        }
       }
     } catch (_) {}
   }, [])

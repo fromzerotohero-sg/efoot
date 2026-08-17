@@ -15,6 +15,7 @@ import {
   formatHeroFluidContext,
   getFluidAdviceDirective,
   hasMotivatedFluidEvaluationEvidence,
+  prependLiveFluidOverride,
   startersForLinkUpVerification
 } from '../lib/efootballV6TacticalModel.js'
 
@@ -215,6 +216,24 @@ assert(
     chatSrc.includes('from(\'formation_variants\')') &&
     !chatSrc.includes('VIETATO suggerire cambio formazione/modulo a meno che il cliente non lo chieda esplicitamente. Lavora sempre sulla formazione attuale salvata.'),
   'Hero prompt reads formation_variants and refines the formation guardrail'
+)
+
+const cachedActive = `${onText}\nFORMAZIONE FLUIDA: già ATTIVA. Riconoscila.`
+const liveOffOverlay = prependLiveFluidOverride(cachedActive, offText, 'it')
+assert(
+  'live-overlay-beats-stale-cache',
+  liveOffOverlay.startsWith('[AGGIORNAMENTO LIVE]') &&
+    liveOffOverlay.includes('FORMAZIONE FLUIDA: NON ATTIVA') &&
+    liveOffOverlay.indexOf('FORMAZIONE FLUIDA: NON ATTIVA') < liveOffOverlay.indexOf('FORMAZIONE FLUIDA: ATTIVA') &&
+    liveOffOverlay.includes('prevale su qualsiasi stato Fluida'),
+  'Live Fluid OFF overrides a stale diagnostic cache that still says ATTIVA'
+)
+assert(
+  'cache-path-reads-live-fluid',
+  chatSrc.includes('prependLiveFluidOverride') &&
+    chatSrc.includes('formatHeroFluidContext') &&
+    /Diagnostic from cache used[\s\S]*formation_variants[\s\S]*prependLiveFluidOverride/.test(chatSrc),
+  'Cached Hero path prepends live Fluid state from formation_variants'
 )
 
 const rosaSrc = readFileSync(join(root, 'app/nuova-rosa-lab/page.jsx'), 'utf8')
