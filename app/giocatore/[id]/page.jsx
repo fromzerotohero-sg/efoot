@@ -14,6 +14,7 @@ import { getSkillDisplayLabel } from '@/lib/playerSkillLabels'
 import ManualPlayerModal from '@/components/ManualPlayerModal'
 import ManualBoostersModal from '@/components/ManualBoostersModal'
 import { getPlayerDisplayStats, getPlayerDisplayOverall } from '@/lib/playerEffectiveStats'
+import { getPlayerPhaseStyleDisplay } from '@/lib/playingStyleResolve'
 
 export default function PlayerDetailPage() {
   const { t, lang } = useTranslation()
@@ -668,12 +669,27 @@ export default function PlayerDetailPage() {
               <div style={{ fontSize: '16px', fontWeight: 600 }}>{player.nationality}</div>
             </div>
           )}
-          {(playingStyleName || player.role) && (
-            <div>
-              <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '4px' }}>{t('playingStyle')}</div>
-              <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--neon-orange)' }}>{playingStyleName || player.role}</div>
-            </div>
-          )}
+          {(() => {
+            // v6 dual Playing Style (ATT/DEF): solo con contratto duale reale;
+            // le card legacy a stile singolo mantengono la riga precedente.
+            const dualStyle = getPlayerPhaseStyleDisplay(player)
+            if (!dualStyle) {
+              return (playingStyleName || player.role) ? (
+                <div>
+                  <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '4px' }}>{t('playingStyle')}</div>
+                  <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--neon-orange)' }}>{playingStyleName || player.role}</div>
+                </div>
+              ) : null
+            }
+            return (
+              <div>
+                <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '4px' }}>{t('playingStyle')}</div>
+                <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--neon-orange)' }}>
+                  {t('dualStyleAttack')} {dualStyle.attack || '-'} · {t('dualStyleDefense')} {dualStyle.defense || t('noSpecialDefenseStyle')}
+                </div>
+              </div>
+            )
+          })()}
         </div>
       </div>
 

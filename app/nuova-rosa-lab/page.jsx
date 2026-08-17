@@ -4,7 +4,7 @@ import React from 'react'
 import { createPortal } from 'react-dom'
 import { withAuth } from '@/components/AuthWrapper'
 import { supabase } from '@/lib/supabaseClient'
-import { getPositionRoleTranslationKey, useTranslation } from '@/lib/i18n'
+import { getPositionRoleTranslationKey, getTranslation, useTranslation } from '@/lib/i18n'
 import ConfirmModal from '@/components/ConfirmModal'
 import TacticalSettingsPanel from '@/components/TacticalSettingsPanel'
 import PositionSelectionModal from '@/components/PositionSelectionModal'
@@ -32,7 +32,7 @@ import {
 import { MAX_TACCE_PER_MACRO } from '@/lib/efootballProgressionCost'
 import { PLAYER_SKILL_PRESETS, getSkillDisplayLabel, normalizePlayerSkillsArray, normalizeSkillKey } from '@/lib/playerSkillLabels'
 import { resolvePlayerCardImageUrl } from '@/lib/playerCardImage'
-import { resolvePlayingStyleDbName } from '@/lib/playingStyleResolve'
+import { resolvePlayingStyleDbName, getPlayerPhaseStyleDisplay } from '@/lib/playingStyleResolve'
 import {
   buildCatalogPlayerSavePayload,
   buildPhotoPlayerSavePayload,
@@ -1996,6 +1996,12 @@ function QuickPlayerPanel({
   const profileCompletion = getPhotoProfileCompletion(player, lang)
   const actionableMissing = profileCompletion.missing.filter((section) => section.key !== 'boosters')
   const missingLabels = actionableMissing.map((section) => section.label).join(', ')
+  // v6 dual Playing Style (ATT/DIF): solo se la carta ha il contratto duale;
+  // le card legacy a stile singolo mantengono la visualizzazione precedente.
+  const dualStyle = getPlayerPhaseStyleDisplay(player)
+  const dualStyleLine = dualStyle
+    ? `${getTranslation('dualStyleAttack', lang)} ${dualStyle.attack || '-'} · ${getTranslation('dualStyleDefense', lang)} ${dualStyle.defense || getTranslation('noSpecialDefenseStyle', lang)}`
+    : null
 
   return (
     <div className="nr-modal-backdrop" onClick={onClose}>
@@ -2004,7 +2010,7 @@ function QuickPlayerPanel({
           <div>
             <span className="nr-mini-kicker">{lang === 'en' ? 'Player details' : lang === 'es' ? 'Detalles del jugador' : 'Dettaglio giocatore'}</span>
             <h2>{player.player_name}</h2>
-            <p>{player.position || '-'} · {player.role || player.playing_style_name || player.card_type || '-'}</p>
+            <p>{player.position || '-'} · {dualStyleLine || player.role || player.playing_style_name || player.card_type || '-'}</p>
           </div>
           <button type="button" className="nr-icon-button" onClick={onClose}>
             <X size={18} />
@@ -2023,7 +2029,7 @@ function QuickPlayerPanel({
                 {player?.metadata?.catalog_card_type || (lang === 'en' ? 'Roster player' : lang === 'es' ? 'Jugador de la plantilla' : 'Giocatore rosa')}
               </span>
               <h3>{player.player_name}</h3>
-              <p>{player.position || '-'} · {player.role || player.playing_style_name || '-'}</p>
+              <p>{player.position || '-'} · {dualStyleLine || player.role || player.playing_style_name || '-'}</p>
             </div>
           </div>
 
@@ -6126,7 +6132,7 @@ export default withAuth(function NuovaRosaLabPage() {
               </div>
               <div className="nr-build-coach-secondary-grid">
                 <button type="button" className="nr-formation-inline-tile" onClick={showFormationHelp}>
-                  <span>{lang === 'en' ? 'Formation' : lang === 'es' ? 'Formación' : 'Modulo'}</span>
+                  <span>{fluidEnabled ? t('fluidBaseFormation') : (lang === 'en' ? 'Formation' : lang === 'es' ? 'Formación' : 'Modulo')}</span>
                   <strong>{layout?.formation || '4-3-3'}</strong>
                   <em className="nr-formation-inline-style">{activeTeamPlaystyleLabel}</em>
                 </button>
@@ -6141,19 +6147,19 @@ export default withAuth(function NuovaRosaLabPage() {
                   <small>{t('fluidFormationHelp')}</small>
                 </div>
                 <div className="nr-fluid-inline-switch" role="group" aria-label={t('fluidFormation')}>
-                  <button type="button" className={!fluidEnabled ? 'is-active' : ''} onClick={() => handleFluidToggle(false)}>
+                  <button type="button" aria-pressed={!fluidEnabled} className={!fluidEnabled ? 'is-active' : ''} onClick={() => handleFluidToggle(false)}>
                     OFF
                   </button>
-                  <button type="button" className={fluidEnabled ? 'is-active' : ''} onClick={() => handleFluidToggle(true)}>
+                  <button type="button" aria-pressed={fluidEnabled} className={fluidEnabled ? 'is-active' : ''} onClick={() => handleFluidToggle(true)}>
                     ON
                   </button>
                 </div>
                 {fluidEnabled && (
-                  <div className="nr-fluid-inline-phases" role="group">
-                    <button type="button" className={fluidPhase === 'attack' ? 'is-active' : ''} onClick={() => handleFluidPhaseChange('attack')}>
+                  <div className="nr-fluid-inline-phases" role="group" aria-label={t('fluidPhasesGroupLabel')}>
+                    <button type="button" aria-pressed={fluidPhase === 'attack'} className={fluidPhase === 'attack' ? 'is-active' : ''} onClick={() => handleFluidPhaseChange('attack')}>
                       {t('fluidAttack')}
                     </button>
-                    <button type="button" className={fluidPhase === 'defense' ? 'is-active' : ''} onClick={() => handleFluidPhaseChange('defense')}>
+                    <button type="button" aria-pressed={fluidPhase === 'defense'} className={fluidPhase === 'defense' ? 'is-active' : ''} onClick={() => handleFluidPhaseChange('defense')}>
                       {t('fluidDefense')}
                     </button>
                   </div>
@@ -6174,8 +6180,8 @@ export default withAuth(function NuovaRosaLabPage() {
             )}
             <div className="nr-field-shell">
               {fluidEnabled && (
-                <div className="nr-fluid-field-badge">
-                  {fluidPhase === 'attack' ? t('fluidAttack') : t('fluidDefense')}
+                <div className="nr-fluid-field-badge" aria-live="polite">
+                  {t('fluidEditingPhase', { phase: fluidPhase === 'attack' ? t('fluidAttack') : t('fluidDefense') })}
                 </div>
               )}
               <div className={`nr-field ${fieldEditMode ? 'is-editing' : ''}`} data-field-container>
@@ -6825,6 +6831,27 @@ export default withAuth(function NuovaRosaLabPage() {
           transform: none;
         }
 
+        .nr-primary-button {
+          background: linear-gradient(145deg, rgba(0, 212, 255, 1) 0%, rgba(0, 161, 166, 1) 100%);
+          border-color: rgba(0, 212, 255, 0.75);
+          color: #04121f;
+          font-weight: 800;
+        }
+
+        .nr-primary-button:hover {
+          border-color: rgba(0, 212, 255, 0.9);
+        }
+
+        .nr-primary-button:focus-visible,
+        .nr-secondary-button:focus-visible,
+        .nr-danger-button:focus-visible,
+        .nr-icon-button:focus-visible,
+        .nr-fluid-inline-switch button:focus-visible,
+        .nr-fluid-inline-phases button:focus-visible {
+          outline: 2px solid rgba(0, 212, 255, 0.85);
+          outline-offset: 2px;
+        }
+
         .nr-danger-button {
           border-color: rgba(255, 59, 48, 0.35);
           background: rgba(255, 59, 48, 0.12);
@@ -6967,13 +6994,13 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-fluid-inline-switch button,
         .nr-fluid-inline-phases button {
-          min-height: 34px;
-          padding: 0 12px;
+          min-height: 38px;
+          padding: 0 14px;
           border-radius: 999px;
           border: 1px solid rgba(255, 255, 255, 0.14);
           background: rgba(15, 23, 42, 0.86);
           color: rgba(255, 255, 255, 0.78);
-          font-size: 11px;
+          font-size: 12px;
           font-weight: 800;
           letter-spacing: 0.04em;
           text-transform: uppercase;
