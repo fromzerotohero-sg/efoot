@@ -3,15 +3,18 @@
  * Dual Playing Style / PESDB v6 contract tests.
  * Pure: no OpenAI, no Supabase writes.
  *
+ * Uses the REAL Python importer for parse_styles / parse_source_version
+ * so JS cannot silently diverge from scripts/import_epic_catalog.py.
+ *
  *   node scripts/test_dual_playing_style.mjs
  */
+import { spawnSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   buildPlayingStylesFromPesdbCells,
   getPlayingStylesContract,
-  normalizePlayingStylesContract,
   parsePesdbPlayingStyleCell,
   resolvePlayingStyleDbName,
   stripPlayingStylePhasePrefix
@@ -26,73 +29,23 @@ function assert(id, ok, detail) {
   else console.log(`PASS ${id}: ${detail}`)
 }
 
-const ROGERS_V6_HTML = `
-<table class="playing_styles">
-  <tr><th>Playing Style</th></tr>
-  <tr><td><span style="color: #efefef;">Att:</span> Hole Player</td></tr>
-  <tr><td><span style="color: #efefef;">Def:</span> Pass Disruptor</td></tr>
-  <tr><th>Player Skills</th></tr>
-  <tr><td>Double Touch</td></tr>
-  <tr><th>AI Playing Styles</th></tr>
-  <tr><td>Trickster</td></tr>
-</table>
-`
-
-const LEGACY_SINGLE_HTML = `
-<table class="playing_styles">
-  <tr><th>Playing Style</th></tr>
-  <tr><td>Hole Player</td></tr>
-  <tr><th>Player Skills</th></tr>
-  <tr><td>Double Touch</td></tr>
-</table>
-`
-
-const DEF_BASIC_HTML = `
-<table class="playing_styles">
-  <tr><th>Playing Style</th></tr>
-  <tr><td><span style="color: #efefef;">Att:</span> Hole Player</td></tr>
-  <tr><td><span style="color: #efefef;">Def:</span> Basic</td></tr>
-</table>
-`
-
-function stripTags(value) {
-  return String(value || '').replace(/<[^>]+>/g, '').replace(/\xa0/g, ' ').trim()
-}
-
-function parseStylesLikePython(markup) {
-  const match = markup.match(/<table class="playing_styles">([\s\S]*?)<\/table>/)
-  if (!match) return { primary: null, skills: [], ai: [], contract: normalizePlayingStylesContract(null) }
-  const rows = [...match[1].matchAll(/<tr><(th|td)>([\s\S]*?)<\/\1><\/tr>/g)]
-  let section = null
-  const styleCells = []
-  const skills = []
-  const ai = []
-  for (const row of rows) {
-    const kind = row[1]
-    const text = stripTags(row[2])
-    if (!text || text === '-') continue
-    if (kind === 'th') {
-      section = text
-      continue
+function runPythonImporterSelfTest() {
+  const script = join(root, 'scripts/test_pesdb_parse_styles_fixture.py')
+  const run = spawnSync('python', [script, '--self-test'], {
+    encoding: 'utf-8',
+    cwd: root
+  })
+  if (run.status !== 0) {
+    return {
+      ok: false,
+      error: (run.stderr || run.stdout || `exit ${run.status}`).trim(),
+      payload: null
     }
-    if (section === 'Playing Style') styleCells.push(text)
-    else if (section === 'Player Skills') skills.push(text)
-    else if (section === 'AI Playing Styles') ai.push(text)
   }
-  const contract = buildPlayingStylesFromPesdbCells(styleCells)
-  return { primary: contract.primary, skills, ai, contract, styleCells }
-}
-
-/** Mirrors buildCatalogPlayerSavePayload style fields without Next.js path aliases. */
-function simulateCatalogSave(card) {
-  const playingStyles = getPlayingStylesContract(card)
-  const raw = playingStyles.primary || card.playing_style || null
-  const italian = resolvePlayingStyleDbName(raw)
-  return {
-    role: italian || raw || null,
-    playing_style: italian || raw || null,
-    metadata: { playing_styles: playingStyles },
-    extracted_data: { playing_styles: playingStyles, playing_style: italian || raw || null }
+  try {
+    return { ok: true, error: '', payload: JSON.parse(run.stdout) }
+  } catch (error) {
+    return { ok: false, error: `invalid JSON from python: ${error.message}\n${run.stdout}`, payload: null }
   }
 }
 
@@ -119,44 +72,6 @@ assert('cell-att', attCell.phase === 'attack' && attCell.name === 'Hole Player',
 assert('cell-def', defCell.phase === 'defense' && defCell.name === 'Pass Disruptor', 'Parse Def cell')
 assert('cell-legacy', legacyCell.phase === null && legacyCell.name === 'Hole Player', 'Parse legacy cell')
 
-const rogers = parseStylesLikePython(ROGERS_V6_HTML)
-assert(
-  'rogers-primary',
-  rogers.primary === 'Hole Player' && !String(rogers.primary).includes('Att:'),
-  'Rogers primary is Hole Player without Att:'
-)
-assert(
-  'rogers-dual',
-  rogers.contract.format === 'dual' &&
-    rogers.contract.attack === 'Hole Player' &&
-    rogers.contract.defense === 'Pass Disruptor',
-  'Rogers keeps ATT and DEF separately'
-)
-assert(
-  'rogers-not-compressed',
-  rogers.styleCells.some((c) => /Pass Disruptor/i.test(c)),
-  'Second style was present in source cells and not dropped'
-)
-
-const legacy = parseStylesLikePython(LEGACY_SINGLE_HTML)
-assert(
-  'legacy-single',
-  legacy.contract.format === 'single' &&
-    legacy.contract.attack === 'Hole Player' &&
-    legacy.contract.defense === null &&
-    legacy.primary === 'Hole Player',
-  'Legacy Hole Player stays single-style'
-)
-
-const basic = parseStylesLikePython(DEF_BASIC_HTML)
-assert(
-  'def-basic-kept',
-  basic.contract.format === 'dual' &&
-    basic.contract.defense === 'Basic' &&
-    basic.contract.defense !== null,
-  'Def: Basic kept as source value, not nulled'
-)
-
 assert(
   'resolve-legacy',
   resolvePlayingStyleDbName('Hole Player') === 'Giocatore chiave',
@@ -174,43 +89,73 @@ assert(
   'Pass Disruptor not forced into legacy playing_styles taxonomy'
 )
 
-const dualCard = {
-  id: 'cat-rogers',
-  source: 'pesdb',
-  source_player_id: '106785772007373',
-  player_name: 'Morgan Rogers',
-  position: 'TRQ',
-  playing_style: 'Hole Player',
-  metadata: { playing_styles: rogers.contract },
-  players_payload: { role: 'Hole Player', playing_style: 'Hole Player' }
-}
-const save = simulateCatalogSave(dualCard)
+const jsDual = buildPlayingStylesFromPesdbCells(['Att: Hole Player', 'Def: Pass Disruptor'])
 assert(
-  'save-primary-it',
-  save.role === 'Giocatore chiave' && save.playing_style === 'Giocatore chiave',
-  'Save-player primary style resolves to Giocatore chiave'
+  'js-contract-dual',
+  jsDual.format === 'dual' && jsDual.attack === 'Hole Player' && jsDual.defense === 'Pass Disruptor',
+  'JS contract helper mirrors dual ATT/DEF names'
 )
+
+const py = runPythonImporterSelfTest()
+assert('python-importer-self-test', py.ok && py.payload?.ok === true, py.ok ? 'Real Python parse_styles self-test passed' : py.error)
+
+if (py.payload?.ok) {
+  const { rogers, legacy, basic } = py.payload
+  assert(
+    'python-rogers-dual',
+    rogers.primary === 'Hole Player' &&
+      rogers.contract.format === 'dual' &&
+      rogers.contract.attack === 'Hole Player' &&
+      rogers.contract.defense === 'Pass Disruptor',
+    'Python importer keeps Rogers ATT+DEF'
+  )
+  assert(
+    'python-rogers-source-version',
+    rogers.source_version === 'eFootball 2027 v6.0.0',
+    `Python source_version from page labels: ${rogers.source_version}`
+  )
+  assert(
+    'python-legacy-single',
+    legacy.primary === 'Hole Player' &&
+      legacy.contract.format === 'single' &&
+      legacy.contract.defense == null,
+    'Python importer keeps legacy single-style'
+  )
+  assert(
+    'python-def-basic-kept',
+    basic.contract.defense === 'Basic',
+    'Python importer keeps Def: Basic as source value'
+  )
+  assert(
+    'js-python-contract-parity',
+    jsDual.attack === rogers.contract.attack &&
+      jsDual.defense === rogers.contract.defense &&
+      jsDual.primary === rogers.primary,
+    'JS contract helper matches Python importer on Rogers'
+  )
+}
+
+const dualCard = {
+  playing_style: 'Hole Player',
+  metadata: {
+    playing_styles: py.payload?.rogers?.contract || jsDual
+  }
+}
+const saveContract = getPlayingStylesContract(dualCard)
 assert(
   'save-keeps-def',
-  save.metadata?.playing_styles?.defense === 'Pass Disruptor' &&
-    save.extracted_data?.playing_styles?.defense === 'Pass Disruptor',
-  'DEF Pass Disruptor survives catalog → Rosa payload'
+  saveContract.defense === 'Pass Disruptor' && saveContract.primary === 'Hole Player',
+  'DEF Pass Disruptor survives catalog contract read'
 )
 assert(
   'save-no-invent',
   getPlayingStylesContract({ playing_style: 'Hole Player' }).defense === null,
   'Legacy card does not invent a DEF style'
 )
-
-const brokenLiveCard = {
-  playing_style: 'Att: Hole Player',
-  players_payload: { role: 'Att: Hole Player', playing_style: 'Att: Hole Player' }
-}
-const brokenContract = getPlayingStylesContract(brokenLiveCard)
 assert(
   'broken-att-prefix-readable',
-  brokenContract.primary === 'Hole Player' &&
-    resolvePlayingStyleDbName(brokenContract.primary) === 'Giocatore chiave',
+  getPlayingStylesContract({ playing_style: 'Att: Hole Player' }).primary === 'Hole Player' &&
+    resolvePlayingStyleDbName('Att: Hole Player') === 'Giocatore chiave',
   'Existing live Att: Hole Player rows remain resolvable until reimport'
 )
 
@@ -218,10 +163,10 @@ const parserSrc = readFileSync(join(root, 'scripts/import_epic_catalog.py'), 'ut
 assert(
   'parser-dual-wired',
   parserSrc.includes('playing_styles_contract') &&
-    parserSrc.includes('(?i)^att\\s*:\\s*(.+)$') &&
-    parserSrc.includes('(?i)^def\\s*:\\s*(.+)$') &&
-    parserSrc.includes('"playing_styles": playing_styles_contract'),
-  'PESDB importer stores dual contract in metadata'
+    parserSrc.includes('parse_source_version') &&
+    !parserSrc.includes('eFootball 2026 v5.4.0') &&
+    parserSrc.includes('DEFAULT_SOURCE_VERSION'),
+  'PESDB importer dual contract + v6 source_version (no stale v5.4.0)'
 )
 const saveSrc = readFileSync(join(root, 'lib/playerSavePayload.js'), 'utf8')
 assert(

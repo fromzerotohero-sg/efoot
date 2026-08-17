@@ -15,6 +15,8 @@ USER_AGENT = "Mozilla/5.0 (compatible; eFootballAICoachCatalogImporter/1.0)"
 CACHE_DIR = Path("scripts/.cache/pesdb")
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 USE_CACHE = True
+# Fallback only when the page does not expose Version / eFootball year.
+DEFAULT_SOURCE_VERSION = "eFootball 2027 v6.0.0"
 
 EPIC_LIST_URLS = [
     "https://pesdb.net/efootball/?all=1&featured=epic-breakthrough-pass-b-feb-26-26",
@@ -174,6 +176,31 @@ def parse_stats(markup):
         if match:
             result[label] = stat_value(clean(match.group(1)))
     return result
+
+
+def parse_source_version(markup):
+    """
+    Read PESDB page version labels when present.
+    Example live source: "Version v6.0.0" + "eFootball 2027".
+    """
+    text = markup or ""
+    version_match = re.search(r"Version\s+(v?\d+\.\d+(?:\.\d+)?)", text, re.I)
+    version = None
+    if version_match:
+        version = version_match.group(1).strip()
+        if not version.lower().startswith("v"):
+            version = f"v{version}"
+
+    year_match = re.search(r"eFootball\s+(20\d{2})", text, re.I)
+    year = year_match.group(1) if year_match else None
+
+    if year and version:
+        return f"eFootball {year} {version}"
+    if version:
+        return f"eFootball {version}"
+    if year:
+        return f"eFootball {year}"
+    return DEFAULT_SOURCE_VERSION
 
 
 def parse_styles(markup):
@@ -356,6 +383,7 @@ def parse_player(source_player_id, list_url):
     playing_style, player_skills, ai_playstyles, playing_styles_contract = parse_styles(base_markup)
     position_compatibility = parse_position_compatibility(base_markup)
     overall = int_or_none(base_stats.get("Overall Rating"))
+    source_version = parse_source_version(base_markup)
 
     record = {
         "source": "pesdb",
@@ -386,7 +414,7 @@ def parse_player(source_player_id, list_url):
         "weak_foot_usage": base_stats.get("Weak Foot Usage"),
         "weak_foot_accuracy": base_stats.get("Weak Foot Accuracy"),
         "injury_resistance": base_stats.get("Injury Resistance"),
-        "source_version": "eFootball 2026 v5.4.0",
+        "source_version": source_version,
         "position_compatibility": position_compatibility,
         "avatar_style": make_avatar_style(card_type, position, overall),
         "source_collection_url": list_url,
