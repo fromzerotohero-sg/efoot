@@ -27,6 +27,8 @@ jobs:
             | base64 -d | gzip -d > /tmp/efootball_v6_compatibility.patch
           git apply --check /tmp/efootball_v6_compatibility.patch
           git apply /tmp/efootball_v6_compatibility.patch
+          git apply --check .v6_fix_assistant.patch
+          git apply .v6_fix_assistant.patch
 
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
@@ -37,7 +39,7 @@ jobs:
       - name: Commit validated hotfix
         shell: bash
         run: |
-          rm -rf .v6_patch_chunks .github/workflows/apply-prod-v6-compatibility.yml
+          rm -rf .v6_patch_chunks .v6_fix_assistant.patch .github/workflows/apply-prod-v6-compatibility.yml
           git add -A
           git config user.name "eFootball v6 Compatibility Bot"
           git config user.email "actions@users.noreply.github.com"

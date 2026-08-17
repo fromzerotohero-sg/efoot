@@ -1,0 +1,12 @@
+--- a/app/api/assistant-chat/route.js
++++ b/app/api/assistant-chat/route.js
+@@ -1185,8 +1185,7 @@
+ 
+ ${personalContextSummary || ''}`.trim()
+           if (personalContextSummary.length > MAX_PERSONAL_CONTEXT_CHARS) {
+-            personalContextSummary = personalContextSummary.slice(0, MAX_PERSONAL_CONTEXT_CHARS) + '
+-... (riassunto troncato).'
++            personalContextSummary = personalContextSummary.slice(0, MAX_PERSONAL_CONTEXT_CHARS) + '\n... (riassunto troncato).'
+           }
+         }
+       }
