@@ -21,11 +21,17 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 /** Limiti storia conversazione (sicurezza e token) */
-const MAX_HISTORY_MESSAGES = 14
-const MAX_HISTORY_CONTENT_LENGTH = 3000
+const MAX_HISTORY_MESSAGES = 10
+const MAX_HISTORY_CONTENT_LENGTH = 2000
 
-/** Limite riassunto contesto personale (diagnostic da user_diagnostic_cache). Alzato a 18000 per evitare troncamento di build, sinergie, leve e skill advisory per utenti con rosa ampia. */
-const MAX_PERSONAL_CONTEXT_CHARS = 18000
+/** Budget RAG chat: allineato a smart/chat (10k) per evitare saturazione TPM OpenAI. */
+const CHAT_RAG_MAX_CHARS = 10000
+
+/** Modello chat: gpt-4o ha TPM più alto e costo inferiore vs gpt-5.x su prompt lunghi. */
+const CHAT_DEFAULT_MODEL = 'gpt-4o'
+
+/** Limite riassunto contesto personale (diagnostic + blocchi live v6). */
+const MAX_PERSONAL_CONTEXT_CHARS = 12000
 
 /** Limiti validazione input (sicurezza e token) */
 const MAX_MESSAGE_LENGTH = 4000
@@ -424,6 +430,20 @@ function normalizeHistory(raw) {
     out.push({ role, content })
   }
   return out
+}
+
+/**
+ * Chiamata OpenAI per chat: su rate limit da gpt-5.x ritenta con gpt-4o (bucket TPM separato).
+ */
+async function callChatOpenAI(apiKey, requestBody, operationType = 'assistant-chat') {
+  try {
+    return await callOpenAIWithRetry(apiKey, requestBody, operationType)
+  } catch (err) {
+    if (err?.type !== 'rate_limit' || requestBody.model === CHAT_DEFAULT_MODEL) throw err
+    console.warn(`[${operationType}] OpenAI rate limit on ${requestBody.model}, retrying with ${CHAT_DEFAULT_MODEL}`)
+    requestBody.model = CHAT_DEFAULT_MODEL
+    return await callOpenAIWithRetry(apiKey, requestBody, operationType)
+  }
 }
 
 function formatCompetencePositions(originalPositions) {
@@ -1303,7 +1323,7 @@ export async function POST(req) {
     let efootballKnowledge = ''
     if (classifyQuestion(message) === 'efootball') {
       try {
-        efootballKnowledge = getRelevantSections(message, 18000)
+        efootballKnowledge = getRelevantSections(message, CHAT_RAG_MAX_CHARS)
         if (efootballKnowledge && process.env.NODE_ENV !== 'production') console.log('[assistant-chat] RAG eFootball: loaded sections')
       } catch (ragError) {
         console.error('[assistant-chat] RAG error (non-blocking):', ragError.message)
@@ -1518,11 +1538,12 @@ ${personalContextSummary || ''}`.trim()
       creditChargeContext = { admin, userId, cost: AI_COST, operationType: 'assistant-chat', functionName: 'assistant-chat:POST' }
     }
     
-    // Modello: OPENAI_MODEL in env (es. gpt-5.2, gpt-5.1) oppure default gpt-5.2 (alias gpt-5 deprecato da OpenAI).
-    // Se OpenAI rifiuta (model not found / non disponibile per l'account), fallback automatico a gpt-4o.
-    const rawModel = (process.env.OPENAI_MODEL || 'gpt-5.2').trim()
-    const model = rawModel || 'gpt-5.2'
-    if (process.env.NODE_ENV !== 'production') console.log('[assistant-chat] Request model:', model, '(OPENAI_MODEL=' + (process.env.OPENAI_MODEL ? 'set' : 'unset') + ')')
+    // Chat usa gpt-4o di default (TPM stabile). OPENAI_CHAT_MODEL override; OPENAI_MODEL resta per extract/analyze.
+    const rawModel = (process.env.OPENAI_CHAT_MODEL || CHAT_DEFAULT_MODEL).trim()
+    const model = rawModel || CHAT_DEFAULT_MODEL
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[assistant-chat] Request model:', model, '(OPENAI_CHAT_MODEL=' + (process.env.OPENAI_CHAT_MODEL ? 'set' : 'unset') + ')')
+    }
     
     const systemContent = buildSystemContentV2(lang)
 
@@ -1542,7 +1563,7 @@ ${personalContextSummary || ''}`.trim()
     // Chiama OpenAI con retry (gestisce anche fallback GPT-4o se GPT-5 non disponibile)
     let response
     try {
-      response = await callOpenAIWithRetry(apiKey, requestBody, 'assistant-chat')
+      response = await callChatOpenAI(apiKey, requestBody, 'assistant-chat')
       
       // callOpenAIWithRetry può lanciare errore invece di restituire Response
       if (!response || typeof response.ok === 'undefined') {
