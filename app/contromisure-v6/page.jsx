@@ -6,6 +6,21 @@ import { ArrowLeft, Upload, Camera, X, Shield, Swords, Brain, Sparkles, CheckCir
 import { withAuth } from '@/components/AuthWrapper'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 
+const QUALITY_LABELS = { high: 'Alta', medium: 'Media', low: 'Bassa' }
+const SLOT_LABELS = {
+  attacco_1: 'Attacco 1',
+  attacco_2: 'Attacco 2',
+  difesa_1: 'Difesa 1',
+  difesa_2: 'Difesa 2'
+}
+const INSTRUCTION_LABELS = {
+  difensivo: 'Difensivo',
+  ancoraggio: 'Ancoraggio',
+  marcatura_stretta: 'Marcatura stretta',
+  marcatura_uomo: 'Marcatura uomo',
+  contropiede: 'Contropiede'
+}
+
 function token() {
   return typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
 }
@@ -187,7 +202,7 @@ function CountermeasuresV6Page() {
         <button onClick={() => router.push('/contromisure-pre-partita')}><ArrowLeft size={17} /> Indietro</button>
         <div>
           <span>eFootball v6</span>
-          <h1>Contromisure phase-aware</h1>
+          <h1>Contromisure v6</h1>
           <p>Hero confronta il tuo Attacco con la Difesa avversaria e l'Attacco avversario con la tua Difesa.</p>
         </div>
         <div className="v6-head-badge"><Shield size={18} /> Piano partita</div>
@@ -221,7 +236,7 @@ function CountermeasuresV6Page() {
           {phaseData.defense && (
             <div className="v6-fluid-detect">
               <Target size={17} />
-              {phaseData.fluid_detected === true ? 'Le due schermate mostrano una variazione di struttura.' : phaseData.fluid_detected === false ? 'Le due strutture risultano molto simili: Hero non forzerà una narrativa di Formazione fluida.' : 'Variazione tra le due fasi non determinabile con certezza.'}
+              {phaseData.fluid_detected === true ? 'Le due schermate mostrano una variazione di struttura.' : phaseData.fluid_detected === false ? 'Le due strutture risultano molto simili: Hero non le considererà una variazione di Formazione fluida.' : 'Non è possibile stabilire con certezza se la disposizione cambia tra le due fasi.'}
             </div>
           )}
           <div className="v6-review-actions">
@@ -260,12 +275,12 @@ function CountermeasuresV6Page() {
           )}
 
           {result.individual_instructions?.length > 0 && (
-            <article className="v6-result-card"><h3>Istruzioni individuali</h3><div className="v6-instructions">{result.individual_instructions.map((item, i) => <div key={i}><strong>{item.player_name}</strong><span>{item.slot.replace('_',' ')} · {item.instruction.replaceAll('_',' ')}</span><p>{item.reason}</p></div>)}</div></article>
+            <article className="v6-result-card"><h3>Istruzioni individuali</h3><div className="v6-instructions">{result.individual_instructions.map((item, i) => <div key={i}><strong>{item.player_name}</strong><span>{SLOT_LABELS[item.slot] || item.slot} · {INSTRUCTION_LABELS[item.instruction] || item.instruction}</span><p>{item.reason}</p></div>)}</div></article>
           )}
 
           <article className="v6-result-card key"><h3>Come giocarla</h3><p><strong>Chiave:</strong> {result.play_summary?.match_key}</p><p><strong>Attacco:</strong> {result.play_summary?.attacking}</p><p><strong>Difesa:</strong> {result.play_summary?.defending}</p><p><strong>Evita:</strong> {result.play_summary?.avoid}</p></article>
 
-          <div className="v6-confidence"><span>Qualità dati: <strong>{result.data_quality}</strong></span><span>Confidenza: <strong>{result.confidence}%</strong></span></div>
+          <div className="v6-confidence"><span>Qualità dati: <strong>{QUALITY_LABELS[result.data_quality] || 'Media'}</strong></span><span>Confidenza: <strong>{result.confidence}%</strong></span></div>
           <button className="v6-secondary full" onClick={reset}>Prepara un altro avversario</button>
         </section>
       )}
