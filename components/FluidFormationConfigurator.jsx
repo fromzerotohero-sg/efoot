@@ -215,7 +215,7 @@ export default function FluidFormationConfigurator({ open, onClose }) {
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error || 'Salvataggio non riuscito.')
       setEnabled(Boolean(data?.fluid_formation?.enabled))
-      setSuccess(enabled ? 'Formazione fluida salvata. Hero ora conosce Attacco e Difesa.' : 'Formazione fluida disattivata. La configurazione resta conservata.')
+      setSuccess(enabled ? 'Formazione fluida salvata. Le Contromisure v6 useranno Attacco e Difesa.' : 'Formazione fluida disattivata. La configurazione resta conservata.')
       if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('knowledge-should-refresh'))
     } catch (e) {
       setError(e.message || 'Salvataggio non riuscito.')
@@ -285,7 +285,7 @@ export default function FluidFormationConfigurator({ open, onClose }) {
             </div>
 
             <footer>
-              <span>{enabled ? 'Attacco e Difesa verranno usati da Hero, Contromisure, Card Advisor e Live Coach quando il relativo motore li legge.' : 'Disattivando non cancelliamo la configurazione: puoi riattivarla in seguito.'}</span>
+              <span>{enabled ? 'Le due fasi vengono usate nelle Contromisure v6. La formazione principale resta il riferimento per il resto dell’app.' : 'Disattivando non cancelliamo la configurazione: puoi riattivarla in seguito.'}</span>
               <button className="ff-save" onClick={save} disabled={saving || (enabled && (!draft.attack || !draft.defense))}><Save size={17} />{saving ? 'Salvataggio…' : 'Salva'}</button>
             </footer>
           </>
