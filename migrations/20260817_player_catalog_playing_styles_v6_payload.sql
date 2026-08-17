@@ -1,3 +1,7 @@
+-- APPLIED TO PRODUCTION (owner-approved): 2026-08-17
+-- Migration name on Supabase: player_catalog_playing_styles_v6_payload
+-- Also ran: SELECT public.refresh_player_catalog_payloads(); → 5993 rows updated.
+--
 -- PREPARED ONLY — DO NOT APPLY TO PRODUCTION WITHOUT OWNER APPROVAL.
 --
 -- Purpose:
