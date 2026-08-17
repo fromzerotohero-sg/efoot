@@ -15,6 +15,7 @@ import { buildCardAvailabilityBlock } from '@/lib/chatCardAvailability'
 import { fieldPositionMatchesCardCompetences } from '@/lib/playerSlotRoleMetadata'
 import { buildLegacyTacticalAiNotice } from '@/lib/efootballV6Rules'
 import { buildFluidFormationState, buildHeroFluidPromptBlock, formatCoachLinkUpsForHeroPrompt, formatHeroFluidContext, prependLiveFluidOverride, prependLiveLinkUpOverride, startersForLinkUpVerification } from '@/lib/efootballV6TacticalModel'
+import { buildCoachStyleDecisionContext } from '@/lib/coachStyleDecisionContext'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -297,12 +298,12 @@ function buildLinkUpGroundedReply(lang = 'it', facts = null) {
 
   if (facts?.none) {
     if (lang === 'en') {
-      return 'Your coach has no Link-up saved. Playing-style competence numbers (e.g. Quick Counter 90) are not a Link-up. Save the Link-up on the coach screen to evaluate Focal Point and Key Man.'
+      return 'The saved coach data do not include a verified Link-up. Playing-style competence numbers (e.g. Quick Counter 90) are not a Link-up. I cannot evaluate Focal Point and Key Man until verified Link-up data are available in the manager catalog.'
     }
     if (lang === 'es') {
-      return 'Tu entrenador no tiene Link-up guardado. Los números de competencia de estilo (ej. Contraataque rápido 90) no son un Link-up. Guarda el Link-up en la pantalla del entrenador para evaluar Punto focal y Hombre clave.'
+      return 'Los datos guardados del entrenador no incluyen un Link-up verificado. Los números de competencia de estilo (ej. Contraataque rápido 90) no son un Link-up. No puedo evaluar Punto focal y Hombre clave hasta que el catálogo incluya datos de Link-up verificados.'
     }
-    return 'Il tuo allenatore non ha un Collegamento salvato. I numeri di competenza stile (es. Contropiede veloce 90) non sono un Link-up. Salva il Collegamento dalla scheda allenatore per valutare Punto focale e Uomo chiave.'
+    return 'I dati salvati dell’allenatore non includono un Collegamento verificato. I numeri di competenza stile (es. Contropiede veloce 90) non sono un Link-up. Non posso valutare Punto focale e Uomo chiave finché il catalogo non contiene dati Link-up verificati.'
   }
 
   const plays = Array.isArray(facts?.plays) ? facts.plays.filter((play) => play?.name) : []
@@ -502,7 +503,7 @@ const CONTEXT_LABELS = {
     skillsTitolari: 'SKILLS TITOLARI (per consigli abilità):',
     activeCoach: 'Allenatore attivo',
     coachNotSet: 'Nessun allenatore attivo impostato.',
-    competenceHint: 'Competenze stili TATTICI (chiavi distinte: contrattacco → contropiede_veloce; solo >= 70 consigliabili):',
+    competenceHint: 'Competenze stili TATTICI (contrattacco e contropiede_veloce sono stili distinti; solo >= 70 consigliabili):',
     boxTitle: 'CONTESTO PERSONALE CLIENTE - DATI REALI DELLA ROSA',
     boxSubtitle: 'USA QUESTI DATI - PERSONALIZZA - CITA NOMI REALI - NON GENERICO',
     positionNote: 'POSIZIONE: per ogni giocatore vedi "position" (ruolo assegnato in formazione) e "competenze" (posizioni ideali dalla card, es. CC Alta, MED Intermedia). Se position è diverso dalle competenze (es. competenze=CC Alta ma position=DC), CORREGGI: "X è centrocampista (CC) dalla card, non DC. Meglio schierarlo come CC o cambiare ruolo in Gestione Formazione." Siamo noi i coach: non assecondare l\'errore del cliente.',
@@ -529,7 +530,7 @@ const CONTEXT_LABELS = {
     skillsTitolari: 'STARTER SKILLS (for ability advice):',
     activeCoach: 'Active coach',
     coachNotSet: 'No active coach set.',
-    competenceHint: 'Style competences (contrattacco → contropiede_veloce; only >= 70 advisable):',
+    competenceHint: 'Style competences (Long Ball Counter and Quick Counter are distinct styles; only >= 70 advisable):',
     boxTitle: 'PERSONAL CLIENT CONTEXT - REAL ROSA DATA',
     boxSubtitle: 'USE THIS DATA - PERSONALIZE - CITE REAL NAMES - NOT GENERIC',
     positionNote: 'POSITION: for each player see "position" (assigned role) and "competenze" (ideal positions from card, e.g. CM High, DM Intermediate). If position differs from competenze (e.g. competenze=CM High but position=CB), CORRECT: "X is midfielder (CM) from card, not CB. Better field him as CM or change role in Formation Manager." We are the coaches: do not indulge client errors.',
@@ -556,7 +557,7 @@ const CONTEXT_LABELS = {
     skillsTitolari: 'HABILIDADES TITULARES (para consejos de habilidades):',
     activeCoach: 'Entrenador activo',
     coachNotSet: 'Sin entrenador activo.',
-    competenceHint: 'Competencias de estilos TÁCTICOS (contrattacco → contropiede_veloce; solo >= 70 recomendables):',
+    competenceHint: 'Competencias de estilos TÁCTICOS (Contraataque con balón largo y Contraataque rápido son estilos distintos; solo >= 70 recomendables):',
     boxTitle: 'CONTEXTO PERSONAL DEL CLIENTE - DATOS REALES DE LA PLANTILLA',
     boxSubtitle: 'USA ESTOS DATOS - PERSONALIZA - CITA NOMBRES REALES - NADA GENÉRICO',
     positionNote: 'POSICIÓN: para cada jugador consulta "position" (rol asignado en formación) y "competenze" (posiciones ideales de la carta, ej. CC Alta, MED Intermedia). Si position difiere de competenze (ej. competenze=CC Alta pero position=DC), CORRIGE: "X es centrocampista (CC) por carta, no DC. Mejor alinearlo como CC o cambiar rol en Gestión Formación." Somos los entrenadores: no consientas el error del cliente.',
@@ -852,6 +853,8 @@ async function buildPersonalContext(userId, lang = 'it') {
       lang
     })
     if (linkUpBlock) coachText += `\n${linkUpBlock}`
+    const coachStyleDecision = buildCoachStyleDecisionContext(coachRow, teamStyle, lang)
+    if (coachStyleDecision) coachText += `\n${coachStyleDecision}`
 
     // Pattern tattici (formation_usage, recurring_issues) - per intreccio consigli formazione/problemi
     let patternText = ''
@@ -1070,6 +1073,7 @@ SCOPE: solo consulenza tattica eFootball basata su ROSA, PARTITE, ALLENATORE, TA
 FONTI: Nomi/rosa/partite/allenatore/tattica = solo dal blocco contesto sotto (ROSA E DATI o RIASSUNTO ANALISI). Regole eFootball = solo dal blocco RAG. Se manca un dato, non inventare.
 GIOCATORE NON IN ROSA: se il cliente chiede di un giocatore che NON appare nel contesto sottostante, DEVI dire "Non ho [nome] nella tua rosa salvata" e NON inventare competenze, stile o attivazione. Puoi solo citare info generiche dal RAG (se presenti) dichiarando "in generale".
 MAPPATURA TERMINI OBBLIGATORIA: "Link-up / Link up / linkup / Collegamento" = Collegamento allenatore (Punto focale + Uomo chiave, max 2). NON è playing_style_competence e NON è la qualità connessione internet. Distingui "dati non disponibili" da "carta senza Link-up": nel primo caso non concludere che non ne possieda. Se elenca 1-2 Link-up, cita quelli e indica se i requisiti sono soddisfatti dai soli titolari; l'attivazione definitiva va verificata dall'indicatore nel Game Plan. Non inventare Punto focale o Uomo chiave.
+SCELTA ALLENATORE/STILE: distingui "stile più forte dell'allenatore" da "stile migliore per questa squadra". Il primo è il massimo numerico della competenza coach. Il secondo richiede incrocio con rosa, modulo e partite, ma valuta come candidati solo competenze coach >=70. Non chiamare mai "migliore per questo allenatore" uno stile sotto 70. Se i dati squadra favoriscono lo stile attuale ma il coach è sotto 70, segnala il mismatch e proponi entrambe le alternative: cambiare allenatore mantenendo lo stile oppure cambiare stile mantenendo l'allenatore.
 OVERALL/RATING FINALE: per qualunque domanda su overall, rating, valutazione totale o valore finale, se nel contesto del giocatore è presente una build PT/progressione, NON elencare l'overall/rating salvato come risposta principale e NON dire "rating 40/68/87" come valore finale. Rispondi così: "Per gli attaccanti vedo build e statistiche salvate, ma il numero overall finale va verificato direttamente in eFootball dopo aver applicato i punti." Poi cita build PT, ruolo e statistiche chiave aggiornate presenti nel contesto (es. "Ronaldo ha build da P con Tiro +11, Destrezza +8 e Forza arti inferiori +8").
 ABILITÀ GIOCATORI: cita sempre i nomi italiani ufficiali come nel blocco rosa (es. Passaggio filtrante, Tiro di prima, Tiro a salire, Tiro dalla distanza). Vietato l'inglese (Through Passing, One-touch Pass, Rising Shot, First-time Shot, Long-Range Shooting, ecc.).
 MECCANICHE CANCEL/SKILL AVANZATE: segui RAG §7.12. Usa prima i termini ufficiali (Super Cancel, Kick Cancel, Kick Feint, Double Touch) e tratta "tess/croqueta interrotta" solo come alias community tra parentesi.
@@ -1100,6 +1104,7 @@ SCOPE: only eFootball tactical advice based on ROSTER, MATCHES, COACH, TACTICS a
 SOURCES: Names/roster/matches/coach/tactics only from the context block below (ROSTER & DATA or ANALYSIS SUMMARY). eFootball rules only from the RAG block. If data is missing, do not invent.
 PLAYER NOT IN ROSTER: if the client asks about a player NOT listed in the context below, you MUST say "I don't have [name] in your saved roster" and NEVER invent competences, style, or activation. You may only cite generic info from RAG (if present) prefixed with "in general".
 MANDATORY TERM MAPPING: "Link-up / Link up / linkup / Collegamento" = coach Link-up (Focal Point + Key Man, max 2). It is NOT playing_style_competence and NOT internet connection quality. Distinguish "data unavailable" from "card has no Link-up": unavailable data never prove absence. If context lists 1-2 Link-ups, cite them and state whether requirements are met by starters only; final activation must be checked via the in-game Game Plan indicator. Do not invent Focal Point or Key Man.
+COACH/STYLE CHOICE: distinguish "coach strongest style" from "best style for this team". The first is the coach maximum numeric competence. The second cross-checks roster, formation and matches, but only coach competences >=70 are eligible candidates. Never call a below-70 style "best for this coach". If team evidence favors the current style while coach competence is below 70, flag the mismatch and offer both alternatives: change coach while keeping the style, or change style while keeping the coach.
 FINAL OVERALL/RATING: for any question about overall, rating, total value or final value, if the player's context includes a PT build/progression, do NOT list the saved overall/rating as the main answer and do NOT say "rating 40/68/87" as the final value. Answer like this: "For these forwards I can see saved builds and stats, but the final overall number should be checked directly in eFootball after applying the points." Then cite the PT build, role and key updated stats present in context (e.g. "Ronaldo has a CF build with Shooting +11, Dexterity +8 and Lower body +8").
 CANCEL/SKILL ADVANCED MECHANICS: follow RAG §7.12. Use official names first (Super Cancel, Kick Cancel, Kick Feint, Double Touch) and treat "tess/croqueta interrupted" only as community aliases in parentheses.
 ANTI-EXPLOIT: never coach macro/script/bug abuse, and do not recommend continuous spam of one skill. Always provide a safer fallback option if timing is unstable.
@@ -1131,6 +1136,7 @@ ALCANCE: solo asesoramiento táctico de eFootball basado en PLANTILLA, PARTIDOS,
 FUENTES: Nombres/plantilla/partidos/entrenador/táctica = solo del bloque de contexto abajo (PLANTILLA Y DATOS o RESUMEN ANÁLISIS). Reglas eFootball = solo del bloque RAG. Si falta un dato, no inventes.
 JUGADOR NO EN PLANTILLA: si el cliente pregunta por un jugador que NO aparece en el contexto abajo, DEBES decir "No tengo a [nombre] en tu plantilla guardada" y NUNCA inventes competencias, estilo o activación. Solo puedes citar info genérica del RAG (si está presente) declarando "en general".
 MAPEO OBLIGATORIO DE TÉRMINOS: "Link-up / Link up / linkup / Collegamento" = Link-up del entrenador (Punto focal + Hombre clave, máx. 2). NO es playing_style_competence y NO es la calidad de conexión a internet. Distingue "datos no disponibles" de "carta sin Link-up": la ausencia de datos no demuestra que no exista. Si lista 1-2 Link-up, cítalos e indica si los requisitos los cumplen solo los titulares; la activación definitiva se verifica con el indicador del Game Plan. No inventes Punto focal ni Hombre clave.
+ELECCIÓN ENTRENADOR/ESTILO: distingue "estilo más fuerte del entrenador" de "mejor estilo para este equipo". El primero es la competencia numérica máxima del entrenador. El segundo cruza plantilla, formación y partidos, pero solo admite como candidatos competencias del entrenador >=70. Nunca declares "mejor para este entrenador" un estilo inferior a 70. Si los datos del equipo favorecen el estilo actual pero la competencia del entrenador es inferior a 70, señala la incompatibilidad y ofrece ambas alternativas: cambiar entrenador manteniendo el estilo o cambiar estilo manteniendo el entrenador.
 OVERALL/RATING FINAL: para cualquier pregunta sobre overall, rating, valoración total o valor final, si en el contexto del jugador hay una build PT/progresión, NO enumeres el overall/rating guardado como respuesta principal y NO digas "rating 40/68/87" como valor final. Responde así: "Para estos delanteros veo builds y estadísticas guardadas, pero el número overall final debe verificarse directamente en eFootball tras aplicar los puntos." Luego cita build PT, rol y estadísticas clave actualizadas presentes en el contexto (ej. "Ronaldo tiene build de DC con Tiro +11, Destreza +8 y Fuerza miembros inferiores +8").
 HABILIDADES DE JUGADORES: cita siempre los nombres italianos oficiales como en el bloque plantilla (ej. Passaggio filtrante, Tiro di prima, Tiro a salire, Tiro dalla distanza). Prohibido el inglés (Through Passing, One-touch Pass, Rising Shot, First-time Shot, Long-Range Shooting, etc.).
 MECÁNICAS CANCEL/SKILL AVANZADAS: sigue RAG §7.12. Usa primero los términos oficiales (Super Cancel, Kick Cancel, Kick Feint, Double Touch) y trata "tess/croqueta interrotta" solo como alias community entre paréntesis.
@@ -1398,6 +1404,10 @@ export async function POST(req) {
             lang
           })
           personalContextSummary = prependLiveLinkUpOverride(personalContextSummary, liveLinkUpText, lang)
+          const liveCoachStyleDecision = buildCoachStyleDecisionContext(liveCoach, liveStyle, lang)
+          if (liveCoachStyleDecision) {
+            personalContextSummary = `${liveCoachStyleDecision}\n${personalContextSummary}`
+          }
           if (personalContextSummary.length > MAX_PERSONAL_CONTEXT_CHARS) {
             personalContextSummary = personalContextSummary.slice(0, MAX_PERSONAL_CONTEXT_CHARS) + '\n... (riassunto troncato).'
           }
