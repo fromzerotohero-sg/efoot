@@ -1,5 +1,6 @@
-**Versione**: 8.4.0 ENTERPRISE | **Data**: 10 Febbraio 2026 | **Lingua**: Italiano
-**Fonti**: Manuale eFootball, Best Practices Community, Documentazione Tecnica Ufficiale
+**Versione**: 9.0.0 ENTERPRISE | **Data**: 17 Agosto 2026 | **Ruleset**: eFootball v6.0.0 | **Lingua**: Italiano
+**Fonti**: Konami eFootball™ ufficiale v6.0.0 + conoscenza prodotto verificata; eventuali best practice community sono dichiarate come euristiche e NON come regole ufficiali.
+**SOURCE LOCK**: per regole cambiate dalla v6 prevale sempre la documentazione Konami corrente. Non inventare nomi, valori numerici, compatibilità o competenze allenatore non presenti nelle fonti/dati.
 
 # DATABASE MECCANICHE eFootball ENTERPRISE - RAG System
 
@@ -23,14 +24,14 @@ I giocatori in eFootball sono **CARD DIGITALI** con statistiche e caratteristich
 | ELEMENTO | STATO | DESCRIZIONE |
 |----------|-------|-------------|
 | **Statistiche Giocatore** | FISSO | Overall, Velocità, Tiro, Resistenza, ecc. - Immutabili |
-| **Stili di Gioco Giocatore** | ✅ FISSO | Opportunista, Collante, Onnipresente, ecc. - Immutabili (vedi §2 per i 22 stili canonici e alias EN) |
+| **Stili di Gioco Giocatore** | ✅ FISSO SULLA CARD | In v6 possono essere distinti in Stile di gioco in attacco e Stile di gioco in difesa; una card può avere uno, l’altro o entrambi (§2) |
 | **Abilità native** (dalla card) | ✅ FISSO | Tiro al Volo, Contrasto Aggressivo, ecc. - Immutabili |
 | **Abilità aggiuntive** | 🔧 MODIFICABILE | Tramite Programmi Aggiunta Abilità (max 6 totali; NON per Trending) |
 | **Forma Giocatore** | ✅ FISSO | Incrollabile, Normale, Ecc. - Caratteristica card |
 | **Posizioni Originali** | ✅ FISSO | Dove il giocatore ha competenza Alta/Intermedia |
 | **Formazione** | MODIFICABILE | 4-3-3, 4-2-3-1, 5-2-3, ecc. - Scelta utente |
 | **Stile Squadra** | 🔧 MODIFICABILE | Possesso palla, Contropiede, ecc. - Scelta utente |
-| **Istruzioni Individuali** | 🔧 MODIFICABILE | Offensivo, Difensivo, Marcatura, ecc. - Configurabili |
+| **Istruzioni Individuali** | 🔧 MODIFICABILE | In v6 usare solo le opzioni correnti (§5). Offensivo e Linea bassa possono comparire come dati legacy ma non vanno consigliati |
 | **Titolari vs Riserve** | 🔧 MODIFICABILE | Chi schierare in campo - Decisione utente |
 | **Competenza Posizione** | 🔧 PARZIALE | Alto/Intermedio fisso, ma si può aggiungere posizione (max 2) |
 
@@ -98,7 +99,11 @@ Valori di riferimento per costruzione squadra. Le statistiche restano FISSE sull
 
 **IMPORTANTE**: Gli stili giocatore (Opportunista, Collante, Onnipresente, ecc.) sono **CARATTERISTICHE FISSE** della card. NON si possono modificare.
 
-**Totale ufficiale**: **22 stili giocatore** in eFootball 2026.
+**MODELLO v6.0.0 (OBBLIGATORIO)**: Konami ha separato gli stili giocatore in **Stile di gioco in attacco** e **Stile di gioco in difesa**. Un giocatore può avere uno stile offensivo, uno difensivo oppure entrambi. La v6 introduce inoltre nuovi stili: NON usare più un conteggio totale fisso come regola di verità e NON inventare uno stile di fase mancante dai dati della card.
+
+**Esempio ufficiale v6**: una card può avere uno stile offensivo come **Opportunista** e uno stile difensivo come **Pressione in attacco**. Questo è un esempio di struttura duale, non una regola universale per tutti i giocatori.
+
+La tabella seguente resta il **catalogo di compatibilità degli stili storicamente gestiti dalla piattaforma** e serve per interpretare le card già salvate; non è un elenco esaustivo dei nuovi stili v6.
 
 **Sigle posizioni — bridge IT ↔ EN ufficiale Konami** (l'AI deve riconoscere entrambe):
 
@@ -118,7 +123,7 @@ Valori di riferimento per costruzione squadra. Le statistiche restano FISSE sull
 | DC | CB | Difensore centrale |
 | PT | GK | Portiere |
 
-**Tabella canonica 22 stili (IT / EN / posizioni / comportamento / 3 stat chiave)**:
+**Catalogo compatibilità stili già gestiti (IT / EN / posizioni / comportamento / 3 stat chiave)**:
 
 | Nome IT (canonico) | Nome EN (canonico) | Alias IT/EN noti | Posizioni attive (IT) | Comportamento (1 frase) | 3 stat chiave |
 |---|---|---|---|---|---|
@@ -158,7 +163,7 @@ Valori di riferimento per costruzione squadra. Le statistiche restano FISSE sull
 - **Attaccante di rientro** (CF/SS = P/SP; compatibile AMF=TRQ): Arretra in mezzo al campo per impostare, contribuisce alla costruzione. **Quando serve**: possesso palla, squadre che costruiscono dal basso. **Perché**: idealmente abbinato a esterni veloci che corrono oltre i difensori. *(Deep-Lying Forward — non "Punta arretrata")*
 - **Fulcro di gioco** (CF=P): Protegge palla con fisico, riferimento offensivo. **Quando serve**: gioco aereo, sponde, attaccanti fisici. **Perché**: presenza fisica, crea spazio per esterni e trequartisti. *(Target Man — community usa anche "L'uomo bersaglio")*
 - **Specialista di cross** (RWF/LWF/RMF/LMF = EDA/ESA/CLD/CLS): Resta sulla fascia per crossare. *(Cross Specialist)*
-- **Classico n° 10** (SS/AMF = SP/TRQ): Playmaker, avvia attacchi con passaggi intelligenti, minimizza sforzo difensivo. **Quando serve**: gioco lento e ragionato, possesso palla, controllo partita. **Perché**: gestisce il ritmo, meno coinvolto in fase difensiva. NON si attiva su CMF=CC (dal 2024).
+- **Classico n° 10** (SS/AMF = SP/TRQ): Playmaker tra le linee, utile per gestione del ritmo, ricezione e rifinitura. **v6.0.0**: è stato rimosso l’effetto che ne riduceva il coinvolgimento difensivo; NON dire più che lo stile “minimizza lo sforzo difensivo” o che difende meno per definizione. NON si attiva su CMF=CC (dal 2024).
 - **Regista creativo** (SS/AMF/RWF/LWF = SP/TRQ/EDA/ESA; compatibile RMF/LMF/CMF = CLD/CLS/CC ma AI inattiva): Si muove liberamente in fase offensiva, cerca spazi per ricevere palla e creare occasioni. **Quando serve**: imprevedibilità offensiva, disorganizzare la difesa avversaria. **Perché**: movimenti intelligenti di smarcamento. *(Creative Playmaker)*
 - **Ala prolifica** (RWF/LWF = EDA/ESA; compatibile RMF/LMF = CLD/CLS): Si posiziona sulla fascia e taglia verso il centro per **ricevere** passaggi filtranti; efficace in 1v1. *(Prolific Winger)*
 - **Taglio al centro** (RWF/LWF/RMF/LMF = EDA/ESA/CLD/CLS): Tende a tagliare verso interno per ricevere passaggi. **Quando serve**: esterni che convergono per tiri a giro o passaggi filtranti. *(Roaming Flank)*
@@ -231,7 +236,13 @@ Comportamento quando IA controlla giocatore in possesso:
 - **Difesa (D)**: 2-5 giocatori (fino a **3 DC**, max 1 TD, max 1 TS). **3 DC sono consentiti**. Se vuoi schierare un **4° difensore** quando hai già 3 DC, deve essere un **terzino** (TD o TS): vietato 4° DC. Con 3 DC già in campo, non aggiungere riserve DC se non esce un DC titolare; per aumentare la linea difensiva proponi TD/TS. Eccezione: una card principale DC può essere usata da terzino solo se nei dati ha posizione/competenza TD o TS, e va comunicata come TD/TS.
 - **Portiere (PT)**: posizione non modificabile
 
-### 3.5 Ruoli e comportamenti tattici
+### 3.5 Formazione fluida (v6.0.0)
+- **Formaz. fluida / Fluid Formation**: eFootball v6 consente una disposizione per la fase offensiva e una diversa per la fase difensiva.
+- Esempio ufficiale: in possesso un terzino può essere portato più avanti; senza possesso un esterno può essere abbassato per aumentare il numero di difensori.
+- **Regola AI**: se la piattaforma non fornisce due layout salvati, spiega la meccanica in generale ma NON inventare quali siano le formazioni attacco/difesa del cliente.
+- La formazione base già salvata resta valida; non trattare l’assenza di varianti come errore.
+
+### 3.6 Ruoli e comportamenti tattici
 **Mediano (MED)**: Davanti alla difesa, zona ristretta; interdizione e recupero palla. **Quando serve**: scudo difensivo, proteggere difesa contro trequartisti.
 **Mezzala**: Movimento verticale, inserimenti in area. **Quando serve**: goal da centrocampo, superiorità numerica in area.
 **Regista Basso**: Arretrato per costruzione, primo passaggio. **Quando serve**: gioco elaborato dal portiere, costruzione dal basso.
@@ -246,14 +257,15 @@ Comportamento quando IA controlla giocatore in possesso:
 
 **Definisce direzione tattica squadra. L'attitudine allenatore influenza competenza stile.**
 
-**CONFIGURABILI IN APP (team_playing_style)**: solo questi 5 → Possesso palla, Contropiede veloce, Contrattacco, Passaggio lungo, Vie laterali. Gli altri stili sotto (Pressing Alto, Gegenpressing, Tiki-Taka, ecc.) sono concetti/gameplay, **non** selezionabili come team_playing_style.
+**CONFIGURABILI IN APP (team_playing_style) v6.0.0**: questi 6 → Possesso palla, Contropiede veloce, Contrattacco, Passaggio lungo, Vie laterali, **Pressing totale (Overload)**. Gli altri concetti sotto (Pressing Alto, Gegenpressing, Tiki-Taka, ecc.) restano concetti/gameplay e NON vanno presentati come team_playing_style selezionabili.
 
-### 4.1 Stili Base (5 Tipologie)
+### 4.1 Stili squadra correnti (6 Tipologie)
 - **Possesso palla**: Gioco costruito con passaggi corti e pazienti. **Quando serve**: centrocampisti tecnici, trequartisti creativi. **Perché**: controllo partita, pazienza, circolazione palla.
 - **Contropiede veloce**: Ripartenze veloci sfruttando spazi lasciati. **Quando serve**: attaccanti veloci, difensori con recupero rapido. **Perché**: velocità, passaggi verticali diretti.
 - **Contrattacco**: Attacco diretto con passaggi verticali rapidi; difesa compatta, ripartenze organizzate.
 - **Passaggio lungo**: Strategia basata su lanci lunghi. **Quando serve**: opportunisti, attaccanti fisici. **Perché**: verticalità, gioco aereo.
 - **Vie laterali**: Attacco principalmente attraverso fasce; esterni restano larghi per allargare la difesa avversaria. **Quando serve**: esterni con cross, attaccanti completi (piedi + testa). **Perché**: equilibrio tra fasce e centro; non solo cross – costruzione anche centrale. Difesa si concentra al centro; utile contro attacchi centrali avversari.
+- **Pressing totale (Overload)**: concentra i giocatori sullo stesso lato della palla per creare superiorità numerica. **In attacco** facilita passaggi a corta distanza e mantenimento del possesso anche in zone affollate. **In difesa** mantiene una struttura compatta e chiude rapidamente sul portatore. **Regola AI**: se nei dati coach non esiste una competenza Pressing totale/Overload, dichiarala sconosciuta e NON inventare un valore. **Euristica Hero, non fatto Konami**: contro un sovraccarico lato palla può avere senso cercare il lato debole/cambio gioco se i dati e la situazione lo consentono.
 
 ### 4.2 Stili Offensivi
 - **Attacco Diretto**: Passaggi verticali rapidi. **Quando serve**: velocità in attacco.
@@ -285,16 +297,22 @@ Comportamento quando IA controlla giocatore in possesso:
 
 **4 slot totali: 2 offensive (possesso palla), 2 difensive (senza possesso)**
 
-### Slot Offensive (in possesso palla)
-- **Difensivo**: Giocatore non si spinge troppo in avanti
-- **Offensivo**: Giocatore si spinge in avanti, partecipa ad attacco (**non assegnabile a ESA/EDA/SP/P**)
-- **Ancoraggio (Anchoring)**: Resta ancorato in zona (es. mediano davanti difesa)
+**REGOLA v6.0.0**: **Offensivo** e **Linea bassa (Deep Line)** sono state rimosse dalle Istruzioni Individuali correnti. Possono ancora comparire nel contesto della piattaforma perché alcuni utenti le avevano salvate prima dell’aggiornamento: in quel caso sono **LEGACY**, non vanno cancellate automaticamente e soprattutto NON vanno consigliate o descritte come selezionabili oggi.
 
-### Slot Difensive (senza possesso palla)
-- **Marcatura stretta**: Marca avversario da vicino, riduce spazio
-- **Marcatura uomo**: Marca avversario specifico (man marking)
-- **Contropiede**: Giocatore è riferimento per contropiede
-- **Linea bassa (Deep line)**: Resta più arretrato (non assegnabile a difensori)
+### Slot Offensive correnti (in possesso palla)
+- **Difensivo**: limita la spinta in avanti del giocatore
+- **Ancoraggio (Anchoring)**: mantiene il giocatore più ancorato alla propria zona
+
+### Slot Difensive correnti (senza possesso palla)
+- **Marcatura stretta**: limita lo spazio del bersaglio con marcatura ravvicinata
+- **Marcatura uomo**: assegna una marcatura specifica
+- **Contropiede / Obiettivo Contropiede (Counter Target)**: mantiene il giocatore come riferimento per la transizione offensiva secondo le regole correnti del gioco
+
+### Gestione dati legacy nella piattaforma
+- Se nel profilo compare **Offensivo** o **Linea bassa**, trattalo come configurazione storica salvata con un ruleset precedente.
+- Non dire “è ancora attiva/selezionabile” e non proporla come soluzione.
+- Non sostituirla automaticamente con un’altra istruzione: invita l’utente ad aggiornare la tattica quando pertinente.
+- Se l’utente chiede direttamente “posso usare Linea bassa/Offensivo?”, rispondi che nella v6 non sono più opzioni correnti delle Istruzioni Individuali.
 
 ### Impostazioni Squadra
 - **Linea alta/bassa**: Alzare/abbassare linea difensiva con frecce
@@ -549,6 +567,23 @@ Nota affidabilita: "special double touch" e varianti "tess/croqueta interrotta" 
 - "Kick Cancel in rifinitura solo quando il centrale esce aggressivo; se restano compatti, niente forzatura e resetta il possesso."
 - "Super Cancel in difesa per chiudere linea passaggio, non per inseguire a vuoto in pressione lunga."
 
+
+### 7.13 Aggiornamenti gameplay eFootball v6.0.0 — fatti ufficiali rilevanti per il Coach
+- **Dribbling/movimento**: dribbling lento più rapido; maggiore tendenza a usare il piede dominante; cambi di direzione più stabili; velocità massima in sprint con palla leggermente ridotta. Non tradurre questi cambi in bonus numerici inventati.
+- **Controllo/ricezione/passaggio**: aggiornati controllo palla, ricezioni e movimenti collegati ai passaggi; migliorata la precisione di alcune conclusioni al volo di prima.
+- **Duelli aerei**: modificati colpi di testa e duelli aerei; quando dai consigli considera maggiormente profilo fisico, salto, colpo di testa e qualità del cross, senza inventare percentuali.
+- **Tiro**: nuove/aggiornate animazioni di tiro e lieve miglioramento della precisione col piede debole a corta distanza in determinate situazioni; aggiornati anche i piazzati.
+- **Difesa/intercetti**: il movimento sulle linee di intercetto dipende maggiormente da **Coinvolgimento difensivo** e dall’abilità **Intercettazione**; i difensori controllati dall’IA si muovono meno spesso automaticamente per intercettare. Per il coaching significa valorizzare posizionamento, lettura e qualità difensive reali della card, non promettere auto-intercetti.
+- **Marcature**: i difensori seguono meno “perfettamente” la marcatura; possono comparire più spazi tra difesa e centrocampo e i passaggi di responsabilità sono più naturali. Evita quindi consigli che presuppongono una marcatura automatica infallibile.
+- **Reazioni difensive/attaccanti**: nella propria trequarti le reazioni IA sono state ribilanciate e dipendono maggiormente dal Comportamento difensivo; gli attaccanti possono contribuire di più al ripiegamento quando l’avversario attacca profondo. Sono stati rivisti anche tackle, blocchi, transizioni, corse diagonali e movimenti sulla linea del fuorigioco.
+- **Supporto offensivo/terzini/AMF**: migliorati posizionamenti di supporto; il TRQ tende meno a scendere innaturalmente quando sono presenti CC/MED; riviste le decisioni di sovrapposizione dei terzini e alcune situazioni 1v1/animazioni del portiere.
+- **Classico n°10**: rimosso l’effetto che riduceva il coinvolgimento difensivo. Non usare più la vecchia regola “difende meno per stile”.
+- **Contrattacco / stamina**: ribilanciato il consumo di Resistenza dello stile squadra Contrattacco; non assumere più che consumi meno stamina degli altri stili come regola fissa. Leggermente aumentato il recupero di Resistenza dei DC all’intervallo.
+- **IA e Smart Assist**: aumentata la difficoltà IA Campione/Champion; Smart Assist può gestire il nuovo tiro al volo dinamico; caratteristiche individuali di corsa e dribbling risultano più evidenti.
+- **Volée dinamica / Dynamic Volley**: con palla in aria la v6 permette nuove conclusioni al volo tramite il comando di tiro sensazionale. Il Coach può consigliarne l’uso situazionale, ma non deve inventare skill o requisiti non presenti nei dati.
+
+**Regola di affidabilità**: le voci sopra sono fatti di release; qualunque consiglio META derivato da esse (es. “cambia lato contro Pressing totale”) deve essere presentato come scelta tattica/euristica legata alla situazione e ai dati dell’utente, non come legge ufficiale Konami.
+
 ---
 
 ## 8. ABILITÀ GIOCATORI (MISTE: NATIVE FISSE + AGGIUNGIBILI)
@@ -777,7 +812,7 @@ L'influenza sulle prestazioni è significativa; considerare le frecce quando si 
 - Programmi Aggiunta Posizione per acquisire nuove posizioni
 - Portieri e campo non interscambiabili
 
-**Impatto su stile (§2.2)**: Con competenza Bassa o assente, lo stile giocatore **non si attiva** (passiva spenta se fuori ruolo). La forza complessiva scende; il giocatore si posiziona peggio rispetto a quando è in ruolo. Priorità: preferire sempre giocatori in posizione di competenza; se inevitabile fuori ruolo, usare Istruzioni individuali per compensare (es. Deep Line, Anchoring).
+**Impatto su stile (§2.2)**: Con competenza Bassa o assente, lo stile giocatore **non si attiva** (passiva spenta se fuori ruolo). La forza complessiva scende; il giocatore si posiziona peggio rispetto a quando è in ruolo. Priorità: preferire sempre giocatori in posizione di competenza; se inevitabile fuori ruolo, usare solo leve tattiche e Istruzioni Individuali correnti compatibili (es. Ancoraggio quando realmente applicabile). Non suggerire Deep Line: è legacy v6.
 
 ### 9.3 Valore Giocatore (VG)
 Valutazione massima 5 stelle (5★). Trending valutati su statistiche iniziali. Altri tipi su statistiche + potenziale.
@@ -798,8 +833,9 @@ Le policy comportamentali per il Coach AI (errori da evitare, terminologia, anti
 
 ---
 
-**Versione**: 8.6.0 ENTERPRISE | **Data**: 29 Maggio 2026
-**Principio**: FISSO vs CONFIGURABILE | **Terminologia**: Ufficiale eFootball
+**Versione**: 9.0.0 ENTERPRISE | **Data**: 17 Agosto 2026 | **Ruleset**: eFootball v6.0.0
+**Principio**: FISSO vs CONFIGURABILE | **Terminologia**: Ufficiale eFootball | **Compatibilità**: read legacy / no new legacy
+**Changelog 9.0.0**: allineamento v6.0.0: Pressing totale/Overload; Formazione fluida; modello stili giocatore attacco/difesa senza conteggio fisso; Classico n°10 aggiornato; Offensivo e Linea bassa marcati legacy e non più consigliabili; gameplay v6 §7.13; regola anti-inferenza per competenza coach Pressing totale.
 **Changelog 8.6.0**: §2.1 Posizioni attivazione corrette per TUTTI i 24 stili card (allineate a fonti ufficiali eFootball 2026: FIFPlay, Scribd Guide, Konami Help). Rimossi sigle IT vecchie (P/SP/TRQ/CLD/CLS/CC/MED/DC/TD/TS) sostituite con posizioni ufficiali EN (CF/SS/AMF/CMF/DMF/RWF/LWF/RMF/LMF/CB/RB/LB). Aggiunte note "compatibile ma AI inattiva" dove pertinente. Classic No. 10: confermato SS/AMF only. Collante: confermato DMF only.
 **Changelog 8.5.4**: §8.3 alias Piedi magnetici = Calamita ai piedi; §8.4 Shadow Hunt e Contrasto a distanza; §8.11 tabella Showtime/sinonimi IT-EN (Magnetic Feet, Momentum Dribbling, Trickster, ecc.) per chat/contromisure; rimosso duplicato Dominio palle alte.
 **Changelog 8.5.3**: §7.10 regola build/meta funzionale (movimenti, difficolta, dati cliente; Sintesi rosa ≠ progressione PT).

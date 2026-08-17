@@ -849,7 +849,7 @@ if (process.env.NODE_ENV !== 'production') {
           continue
         }
 
-        const check = validateIndividualInstruction(slot, playerId, instruction, titolari, clientFormation || null)
+        const check = validateIndividualInstruction(slot, playerId, instruction, titolari)
         if (check.valid) {
           const rosterPlayer = titolari.find((p) => p.id === playerId)
           const nameFromRoster = rosterPlayer?.player_name ? String(rosterPlayer.player_name).trim() : ''

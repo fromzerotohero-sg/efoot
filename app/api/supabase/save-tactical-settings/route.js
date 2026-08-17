@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { validateIndividualInstruction } from '@/lib/tacticalInstructions'
+import { TEAM_PLAYSTYLE_IDS, isLegacyIndividualInstruction, isPreservedLegacyAssignment } from '@/lib/efootballV6Rules'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 
 export const runtime = 'nodejs'
@@ -77,8 +78,20 @@ export async function POST(req) {
 
     const { team_playing_style, individual_instructions } = await req.json()
 
+    // Stato esistente: necessario per distinguere round-trip legacy da nuove assegnazioni.
+    const { data: existingSettings, error: existingSettingsError } = await admin
+      .from('team_tactical_settings')
+      .select('team_playing_style, individual_instructions')
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    if (existingSettingsError) {
+      console.error('[save-tactical-settings] Error fetching existing settings:', existingSettingsError)
+      return NextResponse.json({ error: 'Failed to load current tactical settings' }, { status: 500 })
+    }
+
     // Validazione team_playing_style
-    const validStyles = ['possesso_palla', 'contropiede_veloce', 'contrattacco', 'vie_laterali', 'passaggio_lungo']
+    const validStyles = TEAM_PLAYSTYLE_IDS
     if (team_playing_style !== null && team_playing_style !== undefined && team_playing_style !== '') {
       if (typeof team_playing_style !== 'string' || !validStyles.includes(team_playing_style.trim())) {
         return NextResponse.json(
@@ -89,7 +102,10 @@ export async function POST(req) {
     }
 
     // Validazione individual_instructions (opzionale, ma se presente deve essere oggetto)
-    if (individual_instructions !== undefined && typeof individual_instructions !== 'object') {
+    if (
+      individual_instructions !== undefined &&
+      (individual_instructions === null || typeof individual_instructions !== 'object' || Array.isArray(individual_instructions))
+    ) {
       return NextResponse.json(
         { error: 'individual_instructions must be an object' },
         { status: 400 }
@@ -110,18 +126,6 @@ export async function POST(req) {
 
     const titolari = players || []
 
-    // ✅ Recupera formazione layout per validazione "linea_bassa" (conta difensori)
-    const { data: formationLayout, error: formationError } = await admin
-      .from('formation_layout')
-      .select('slot_positions')
-      .eq('user_id', userId)
-      .maybeSingle()
-
-    if (formationError) {
-      console.warn('[save-tactical-settings] Error fetching formation layout for validation:', formationError)
-      // Non bloccare, ma la validazione "linea_bassa" con 5 difensori non funzionerà
-    }
-
     let droppedInstructions = []
     if (individual_instructions && typeof individual_instructions === 'object') {
       for (const categoryKey in individual_instructions) {
@@ -140,6 +144,29 @@ export async function POST(req) {
         }
         if (!playerId || !instructionData.instruction) continue
 
+        const normalizedInstruction = instructionData.instruction.trim()
+        if (isLegacyIndividualInstruction(normalizedInstruction)) {
+          const existingValue = existingSettings?.individual_instructions?.[categoryKey]
+          if (!isPreservedLegacyAssignment(existingValue, {
+            ...instructionData,
+            instruction: normalizedInstruction,
+            player_id: playerId
+          })) {
+            return NextResponse.json(
+              {
+                error: 'Questa istruzione appartiene a una versione precedente di eFootball e non può essere assegnata nuovamente.',
+                code: 'LEGACY_INSTRUCTION_NOT_CREATABLE',
+                slot: categoryKey,
+                instruction: normalizedInstruction
+              },
+              { status: 409 }
+            )
+          }
+          // Round-trip consentito anche se il giocatore non è più titolare:
+          // è memoria storica v<6 e non deve sparire per un salvataggio non correlato.
+          continue
+        }
+
         const inTitolari = titolari.some(p => p.id === playerId)
         if (!inTitolari) {
           droppedInstructions.push(categoryKey)
@@ -149,9 +176,8 @@ export async function POST(req) {
         const validationResult = validateIndividualInstruction(
           categoryKey,
           playerId,
-          instructionData.instruction.trim(),
-          titolari,
-          formationLayout || null
+          normalizedInstruction,
+          titolari
         )
         if (!validationResult.valid) {
           return NextResponse.json(
@@ -162,29 +188,65 @@ export async function POST(req) {
       }
     }
 
-    // Sanitizzazione: solo istruzioni complete e con player ancora titolare
+    // Sanitizzazione backward-compatible:
+    // - slot omessi dal payload restano invariati (evita wipe da client/flow parziali)
+    // - slot presenti ma vuoti vengono rimossi volontariamente
+    // - legacy identico al DB resta leggibile e persistibile, ma non può essere ricreato/spostato
     const sanitizedInstructions = {}
+    const existingInstructions = existingSettings?.individual_instructions && typeof existingSettings.individual_instructions === 'object'
+      ? existingSettings.individual_instructions
+      : {}
     if (individual_instructions && typeof individual_instructions === 'object') {
+      for (const [existingKey, existingValue] of Object.entries(existingInstructions)) {
+        if (!Object.prototype.hasOwnProperty.call(individual_instructions, existingKey)) {
+          sanitizedInstructions[existingKey] = existingValue
+        }
+      }
+
       for (const categoryKey in individual_instructions) {
         const instructionData = individual_instructions[categoryKey]
         if (!instructionData?.player_id?.trim() || !instructionData?.instruction?.trim()) continue
         const pid = instructionData.player_id.trim()
+        const normalizedInstruction = instructionData.instruction.trim()
+
+        if (isLegacyIndividualInstruction(normalizedInstruction)) {
+          const existingValue = existingInstructions?.[categoryKey]
+          if (!isPreservedLegacyAssignment(existingValue, {
+            ...instructionData,
+            instruction: normalizedInstruction,
+            player_id: pid
+          })) continue
+          sanitizedInstructions[categoryKey] = {
+            player_id: pid,
+            instruction: normalizedInstruction,
+            enabled: instructionData.enabled !== false
+          }
+          continue
+        }
+
         if (!titolari.some(p => p.id === pid)) continue
         sanitizedInstructions[categoryKey] = {
           player_id: pid,
-          instruction: instructionData.instruction.trim(),
+          instruction: normalizedInstruction,
           enabled: instructionData.enabled !== false
         }
       }
     }
+
+    const finalTeamPlayingStyle = team_playing_style === undefined
+      ? (existingSettings?.team_playing_style ?? null)
+      : (team_playing_style && team_playing_style.trim() !== '' ? team_playing_style.trim() : null)
+    const finalIndividualInstructions = individual_instructions === undefined
+      ? (existingSettings?.individual_instructions || {})
+      : sanitizedInstructions
 
     // Salva/aggiorna impostazioni (UPSERT - stesso pattern di save-formation-layout)
     const { data: settings, error: settingsError } = await admin
       .from('team_tactical_settings')
       .upsert({
         user_id: userId,
-        team_playing_style: team_playing_style && team_playing_style.trim() !== '' ? team_playing_style.trim() : null,
-        individual_instructions: sanitizedInstructions,
+        team_playing_style: finalTeamPlayingStyle,
+        individual_instructions: finalIndividualInstructions,
         updated_at: new Date().toISOString()
       }, {
         onConflict: 'user_id'
