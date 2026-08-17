@@ -71,7 +71,20 @@ export async function POST(req) {
       return NextResponse.json({ error: validation.error }, { status: 400 })
     }
 
-    const coach = await getActiveCoach(ctx.admin, ctx.userId)
+    const requestedCoachId = String(body.coach_id || '').trim()
+    let coach = null
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestedCoachId)) {
+      const { data, error } = await ctx.admin
+        .from('coaches')
+        .select('id, coach_name, connection, extracted_data, is_active, updated_at')
+        .eq('id', requestedCoachId)
+        .eq('user_id', ctx.userId)
+        .maybeSingle()
+      if (error) throw error
+      coach = data || null
+    } else {
+      coach = await getActiveCoach(ctx.admin, ctx.userId)
+    }
     if (!coach) return NextResponse.json({ error: 'No active coach found' }, { status: 404 })
 
     const currentExtracted = coach.extracted_data && typeof coach.extracted_data === 'object'
@@ -99,11 +112,17 @@ export async function POST(req) {
       .eq('user_id', ctx.userId)
     if (updateError) throw updateError
 
-    const refreshed = await getActiveCoach(ctx.admin, ctx.userId)
+    const { data: refreshed, error: refreshError } = await ctx.admin
+      .from('coaches')
+      .select('id, coach_name, connection, extracted_data, is_active, updated_at')
+      .eq('id', coach.id)
+      .eq('user_id', ctx.userId)
+      .maybeSingle()
+    if (refreshError) throw refreshError
     return NextResponse.json({
       success: true,
-      active_coach: { id: refreshed.id, coach_name: refreshed.coach_name },
-      link_up_plays: normalizeLinkUpPlays(refreshed)
+      active_coach: refreshed ? { id: refreshed.id, coach_name: refreshed.coach_name } : null,
+      link_up_plays: refreshed ? normalizeLinkUpPlays(refreshed) : []
     })
   } catch (error) {
     console.error('[coach-link-ups] POST:', error)

@@ -11,7 +11,7 @@ import CoachFeedbackChat from '@/components/CoachFeedbackChat'
 import { INDIVIDUAL_INSTRUCTIONS_CONFIG } from '@/lib/tacticalInstructions'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
-import { ArrowLeft, Upload, AlertCircle, CheckCircle2, RefreshCw, X, Camera, Shield, Target, Users, Settings, ChevronDown, ChevronUp, Brain, MessageCircle, Trophy, Radio, Sparkles, Mic } from 'lucide-react'
+import { ArrowLeft, Upload, AlertCircle, CheckCircle2, RefreshCw, X, Camera, Shield, Target, Users, Settings, ChevronDown, ChevronUp, Brain, MessageCircle, Trophy, Radio, Sparkles, Mic, Swords, Link2, Layers3 } from 'lucide-react'
 
 /** Estrae testo in lingua da valore stringa o oggetto bilingue { it, en } (coerente con analyze-match) */
 function pickLang(val, lang) {
@@ -161,6 +161,8 @@ export default function CountermeasuresPreMatchPage() {
   }
   
   const [uploadImage, setUploadImage] = React.useState(null)
+  const [defenseImage, setDefenseImage] = React.useState(null)
+  const [opponentUsesFluid, setOpponentUsesFluid] = React.useState(false)
   const [extracting, setExtracting] = React.useState(false)
   const [extractedFormation, setExtractedFormation] = React.useState(null)
   const [generating, setGenerating] = React.useState(false)
@@ -242,7 +244,6 @@ export default function CountermeasuresPreMatchPage() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validazione tipo
     if (!file.type.startsWith('image/')) {
       setError(t('errorInvalidImage'))
       return
@@ -255,7 +256,11 @@ export default function CountermeasuresPreMatchPage() {
       setError(null)
       setExtractedFormation(null)
       setCountermeasures(null)
-      await runFullPipeline(imageDataUrl)
+      if (!opponentUsesFluid) {
+        await runFullPipeline(imageDataUrl, null, { fluid: false })
+      } else if (defenseImage) {
+        await runFullPipeline(imageDataUrl, defenseImage, { fluid: true })
+      }
     } catch (err) {
       console.error('[contromisure-pre-partita] image optimization error:', err)
       setError(getImageOptimizeUserMessage(err, t))
@@ -263,9 +268,28 @@ export default function CountermeasuresPreMatchPage() {
     e.target.value = ''
   }
 
+  const handleDefenseImageSelect = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      const optimized = await optimizeImageFile(file)
+      setDefenseImage(optimized.dataUrl)
+      setError(null)
+      setExtractedFormation(null)
+      setCountermeasures(null)
+      if (opponentUsesFluid && uploadImage) {
+        await runFullPipeline(uploadImage, optimized.dataUrl, { fluid: true })
+      }
+    } catch (err) {
+      setError(getImageOptimizeUserMessage(err, t))
+    }
+    e.target.value = ''
+  }
+
   /** Pipeline completo: estrazione + generazione contromisure (avvio automatico al caricamento) */
-  const runFullPipeline = async (imageDataUrl) => {
+  const runFullPipeline = async (imageDataUrl, defenseDataUrl = null, { fluid = opponentUsesFluid } = {}) => {
     if (!imageDataUrl) return
+    if (fluid && !defenseDataUrl) return
     setExtracting(true)
     setError(null)
 
@@ -281,25 +305,50 @@ export default function CountermeasuresPreMatchPage() {
         throw new Error(t('tokenNotAvailable'))
       }
 
-      // 1. Estrazione
-      const extractRes = await fetch('/api/extract-formation', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'Accept-Language': lang === 'en' ? 'en' : 'it'
-        },
-        body: JSON.stringify({ imageDataUrl })
-      })
-      if (!extractRes.ok) {
-        const errorData = await extractRes.json()
-        const { message } = mapErrorToUserMessage(errorData?.error || '', t('errorExtractingFormation'), lang)
-        throw new Error(message)
-      }
-      const extractData = await extractRes.json()
-      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('credits-consumed'))
+      const usePhases = Boolean(fluid && defenseDataUrl)
+      let extractData
+      let phases = null
 
-      // 2. Salva formazione avversaria
+      if (usePhases) {
+        const extractRes = await fetch('/api/tactical/extract-opponent-phases', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'Accept-Language': lang === 'en' ? 'en' : lang === 'es' ? 'es' : 'it'
+          },
+          body: JSON.stringify({
+            attackImageDataUrl: imageDataUrl,
+            defenseImageDataUrl: defenseDataUrl
+          })
+        })
+        const extracted = await extractRes.json().catch(() => ({}))
+        if (!extractRes.ok) {
+          const { message } = mapErrorToUserMessage(extracted?.error || '', t('errorExtractingFormation'), lang)
+          throw new Error(message)
+        }
+        if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('credits-consumed'))
+        phases = extracted.phases
+        extractData = phases?.attack || {}
+      } else {
+        const extractRes = await fetch('/api/extract-formation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'Accept-Language': lang === 'en' ? 'en' : lang === 'es' ? 'es' : 'it'
+          },
+          body: JSON.stringify({ imageDataUrl })
+        })
+        if (!extractRes.ok) {
+          const errorData = await extractRes.json()
+          const { message } = mapErrorToUserMessage(errorData?.error || '', t('errorExtractingFormation'), lang)
+          throw new Error(message)
+        }
+        extractData = await extractRes.json()
+        if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('credits-consumed'))
+      }
+
       const saveRes = await fetch('/api/supabase/save-opponent-formation', {
         method: 'POST',
         headers: {
@@ -316,7 +365,16 @@ export default function CountermeasuresPreMatchPage() {
             overall_strength: extractData.overall_strength,
             tactical_style: extractData.tactical_style,
             coach: extractData.coach || null,
-            visual_tactical_profile: extractData.visual_tactical_profile || null
+            visual_tactical_profile: extractData.visual_tactical_profile || null,
+            ...(phases ? {
+              fluid_formation: {
+                attack: phases.attack,
+                defense: phases.defense,
+                fluid_detected: phases.fluid_detected,
+                movement_summary: phases.movement_summary || []
+              },
+              source_version: 'v6.0.0'
+            } : {})
           },
           is_pre_match: true
         })
@@ -335,13 +393,13 @@ export default function CountermeasuresPreMatchPage() {
       setExtractedFormation(formationForState)
       setExtracting(false)
 
-      // 3. Generazione contromisure (automatica)
       setGenerating(true)
       const generateRes = await fetch('/api/generate-countermeasures', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Accept-Language': lang === 'en' ? 'en' : lang === 'es' ? 'es' : 'it'
         },
         body: JSON.stringify({
           opponent_formation_id: formationForState.id,
@@ -390,7 +448,8 @@ export default function CountermeasuresPreMatchPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Accept-Language': lang === 'en' ? 'en' : lang === 'es' ? 'es' : 'it'
         },
         body: JSON.stringify({
           opponent_formation_id: extractedFormation.id,
@@ -399,7 +458,6 @@ export default function CountermeasuresPreMatchPage() {
       })
 
       const generateData = await safeJsonResponse(generateRes, t('errorGeneratingCountermeasures'))
-      // La risposta API ha struttura: { success: true, countermeasures: {...}, model_used: '...' }
       if (generateData.success && generateData.countermeasures) {
         setCountermeasures(generateData.countermeasures)
         if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('credits-consumed'))
@@ -514,34 +572,155 @@ export default function CountermeasuresPreMatchPage() {
               <p>
                 {lang === 'en'
                   ? 'Clear squad screen → structure read, tactical tips generated.'
-                  : 'Screenshot nitido del modulo avversario → lettura modulo e suggerimenti tattici.'}
+                  : lang === 'es'
+                    ? 'Captura nítida del módulo rival → lectura y sugerencias tácticas.'
+                    : 'Screenshot nitido del modulo avversario → lettura modulo e suggerimenti tattici.'}
               </p>
+              <div style={{ marginTop: '14px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', opacity: 0.8, marginBottom: '8px' }}>
+                  {t('opponentFluidToggle')}
+                </div>
+                <div style={{ display: 'inline-flex', gap: '6px', marginBottom: '6px' }}>
+                  <button
+                    type="button"
+                    className="counter-secondary-cta"
+                    onClick={() => {
+                      const wasFluid = opponentUsesFluid
+                      setOpponentUsesFluid(false)
+                      setDefenseImage(null)
+                      if (wasFluid && uploadImage && !extractedFormation && !isProcessing) {
+                        runFullPipeline(uploadImage, null, { fluid: false })
+                      }
+                    }}
+                    style={{
+                      minHeight: '36px',
+                      borderColor: !opponentUsesFluid ? 'rgba(34, 211, 238, 0.55)' : undefined,
+                      background: !opponentUsesFluid ? 'rgba(0, 212, 255, 0.16)' : undefined
+                    }}
+                  >
+                    NO
+                  </button>
+                  <button
+                    type="button"
+                    className="counter-secondary-cta"
+                    onClick={() => {
+                      setOpponentUsesFluid(true)
+                      setExtractedFormation(null)
+                      setCountermeasures(null)
+                    }}
+                    style={{
+                      minHeight: '36px',
+                      borderColor: opponentUsesFluid ? 'rgba(34, 211, 238, 0.55)' : undefined,
+                      background: opponentUsesFluid ? 'rgba(0, 212, 255, 0.16)' : undefined
+                    }}
+                  >
+                    {lang === 'en' ? 'YES' : lang === 'es' ? 'SÍ' : 'SÌ'}
+                  </button>
+                </div>
+                <em style={{ display: 'block', opacity: 0.7, fontStyle: 'normal', fontSize: '12px' }}>
+                  {opponentUsesFluid ? t('opponentFluidNeedBoth') : t('opponentFluidToggleHint')}
+                </em>
+              </div>
             </div>
             <div className="counter-upload-logo" aria-hidden="true">
               <span />
               <img src="/logo.png" alt="" />
             </div>
           </div>
-          
-          {!uploadImage ? (
+
+          <input
+            id="counter-upload-input"
+            type="file"
+            accept="image/*"
+            onChange={handleImageSelect}
+            style={{ display: 'none' }}
+            disabled={extracting}
+          />
+          <input
+            id="counter-camera-input"
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleImageSelect}
+            style={{ display: 'none' }}
+            disabled={extracting}
+          />
+          <input
+            id="counter-defense-upload-input"
+            type="file"
+            accept="image/*"
+            onChange={handleDefenseImageSelect}
+            style={{ display: 'none' }}
+            disabled={extracting}
+          />
+          <input
+            id="counter-defense-camera-input"
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleDefenseImageSelect}
+            style={{ display: 'none' }}
+            disabled={extracting}
+          />
+
+          {opponentUsesFluid ? (
             <div>
-              <input
-                id="counter-upload-input"
-                type="file"
-                accept="image/*"
-                onChange={handleImageSelect}
-                style={{ display: 'none' }}
-                disabled={extracting}
-              />
-              <input
-                id="counter-camera-input"
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={handleImageSelect}
-                style={{ display: 'none' }}
-                disabled={extracting}
-              />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', marginBottom: '12px' }}>
+                <div style={{ padding: '14px', borderRadius: '12px', border: '1px solid rgba(251, 191, 36, 0.35)', background: 'rgba(251, 191, 36, 0.06)' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '8px' }}>{t('fluidAttack')}</div>
+                  {uploadImage ? (
+                    <>
+                      <img src={uploadImage} alt="" style={{ width: '100%', maxHeight: '220px', objectFit: 'contain', borderRadius: '8px' }} />
+                      <button type="button" className="counter-secondary-cta" onClick={() => { setUploadImage(null); setExtractedFormation(null); setCountermeasures(null) }} style={{ marginTop: '8px', width: '100%' }}>
+                        <X size={14} /> {t('remove')}
+                      </button>
+                    </>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <button type="button" className="counter-primary-cta" onClick={() => document.getElementById('counter-upload-input')?.click()} disabled={extracting} style={{ flex: 1 }}>
+                        <Upload size={14} /> {t('upload')}
+                      </button>
+                      <button type="button" className="counter-secondary-cta" onClick={() => document.getElementById('counter-camera-input')?.click()} disabled={extracting}>
+                        <Camera size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div style={{ padding: '14px', borderRadius: '12px', border: '1px solid rgba(251, 191, 36, 0.35)', background: 'rgba(251, 191, 36, 0.06)' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '8px' }}>{t('fluidDefense')}</div>
+                  {defenseImage ? (
+                    <>
+                      <img src={defenseImage} alt="" style={{ width: '100%', maxHeight: '220px', objectFit: 'contain', borderRadius: '8px' }} />
+                      <button type="button" className="counter-secondary-cta" onClick={() => { setDefenseImage(null); setExtractedFormation(null); setCountermeasures(null) }} style={{ marginTop: '8px', width: '100%' }}>
+                        <X size={14} /> {t('remove')}
+                      </button>
+                    </>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <button type="button" className="counter-primary-cta" onClick={() => document.getElementById('counter-defense-upload-input')?.click()} disabled={extracting} style={{ flex: 1 }}>
+                        <Upload size={14} /> {t('upload')}
+                      </button>
+                      <button type="button" className="counter-secondary-cta" onClick={() => document.getElementById('counter-defense-camera-input')?.click()} disabled={extracting}>
+                        <Camera size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {(!uploadImage || !defenseImage) && (
+                <p style={{ fontSize: '13px', opacity: 0.78, margin: '0 0 8px' }}>
+                  {t('opponentFluidMissingSecond')}
+                </p>
+              )}
+              {isProcessing && (
+                <div className="counter-inline-processing">
+                  <RefreshCw size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                  <span>{extracting ? t('extracting') : (lang === 'en' ? 'Building the plan...' : lang === 'es' ? 'Preparando el plan...' : 'Preparazione del piano...')}</span>
+                </div>
+              )}
+            </div>
+          ) : !uploadImage ? (
+            <div>
               <div
                 className="upload-area"
                 style={{
@@ -565,7 +744,9 @@ export default function CountermeasuresPreMatchPage() {
                 <div style={{ fontSize: 'clamp(12px, 2.5vw, 13px)', opacity: 0.78, lineHeight: 1.35 }}>
                   {lang === 'en'
                     ? 'PNG/JPG • extraction and counters run automatically'
-                    : 'PNG/JPG nitido • estrazione e contromisure in automatico'}
+                    : lang === 'es'
+                      ? 'PNG/JPG nítido • extracción y contramedidas en automático'
+                      : 'PNG/JPG nitido • estrazione e contromisure in automatico'}
                 </div>
               </div>
               <div className="counter-cta-row">
@@ -592,9 +773,9 @@ export default function CountermeasuresPreMatchPage() {
           ) : (
             <div>
               <div style={{ marginBottom: '16px', textAlign: 'center' }}>
-                <img 
-                  src={uploadImage} 
-                  alt="Preview" 
+                <img
+                  src={uploadImage}
+                  alt="Preview"
                   style={{ maxWidth: '100%', maxHeight: '400px', borderRadius: '8px' }}
                 />
               </div>
@@ -606,7 +787,7 @@ export default function CountermeasuresPreMatchPage() {
                   </div>
                 ) : (
                   <button
-                    onClick={() => runFullPipeline(uploadImage)}
+                    onClick={() => runFullPipeline(uploadImage, null, { fluid: false })}
                     className="counter-primary-cta"
                     style={{ flex: 1, minWidth: '200px' }}
                   >
@@ -617,6 +798,7 @@ export default function CountermeasuresPreMatchPage() {
                 <button
                   onClick={() => {
                     setUploadImage(null)
+                    setDefenseImage(null)
                     setExtractedFormation(null)
                     setCountermeasures(null)
                     setError(null)
@@ -793,7 +975,59 @@ export default function CountermeasuresPreMatchPage() {
           >
             Valuta sempre la forma attuale dei giocatori (frecce). Se hai dubbi, usa Contromisure Live.
           </div>
+          {countermeasures.fluid_formation_recommendation?.decision && (
+            <div className="neon-card" style={{ padding: 'clamp(16px, 4vw, 24px)', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: 'clamp(18px, 4vw, 20px)', fontWeight: 700, margin: '0 0 10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Layers3 size={22} color="var(--neon-blue)" />
+                {t('v6FluidDecision')}
+              </h2>
+              <strong style={{ color: 'var(--neon-blue)', fontSize: '12px', letterSpacing: '0.06em' }}>
+                {pickLang(countermeasures.fluid_formation_recommendation.title, lang)}
+              </strong>
+              <p style={{ margin: '8px 0 14px', lineHeight: 1.6, opacity: 0.85 }}>
+                {pickLang(countermeasures.fluid_formation_recommendation.reason, lang)}
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div style={{ padding: '12px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)' }}>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center', color: 'var(--neon-blue)', marginBottom: '6px' }}><Swords size={16} /><strong>{t('fluidAttack')}</strong></div>
+                  <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.5 }}>{pickLang(countermeasures.fluid_formation_recommendation.attack_action, lang)}</p>
+                </div>
+                <div style={{ padding: '12px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)' }}>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center', color: 'var(--neon-blue)', marginBottom: '6px' }}><Shield size={16} /><strong>{t('fluidDefense')}</strong></div>
+                  <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.5 }}>{pickLang(countermeasures.fluid_formation_recommendation.defense_action, lang)}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          {countermeasures.link_up_recommendations?.length > 0 && (
+            <div className="neon-card" style={{ padding: 'clamp(16px, 4vw, 24px)', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: 'clamp(18px, 4vw, 20px)', fontWeight: 700, margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Link2 size={22} color="var(--neon-blue)" />
+                {t('v6LinkUpPlan')}
+              </h2>
+              <div style={{ display: 'grid', gap: '10px' }}>
+                {countermeasures.link_up_recommendations.map((item, index) => (
+                  <div key={`${pickLang(item.name, lang)}-${index}`} style={{ padding: '12px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                      <strong>{pickLang(item.name, lang)}</strong>
+                      <span style={{ color: 'var(--neon-blue)', fontSize: '11px', fontWeight: 800 }}>
+                        {item.decision === 'use' ? t('v6Use') : item.decision === 'do_not_use' ? t('v6DoNotUse') : t('v6NotActivatable')}
+                      </span>
+                    </div>
+                    <p style={{ margin: '6px 0 0', fontSize: '12px', opacity: 0.75 }}>
+                      {[
+                        pickLang(item.focal_player, lang) && `${t('focalPoint')}: ${pickLang(item.focal_player, lang)}`,
+                        pickLang(item.key_man_player, lang) && `${t('keyMan')}: ${pickLang(item.key_man_player, lang)}`
+                      ].filter(Boolean).join(' · ')}
+                    </p>
+                    {pickLang(item.reason, lang) && <p style={{ margin: '6px 0 0', fontSize: '12px', opacity: 0.7 }}>{pickLang(item.reason, lang)}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           {/* Analisi Formazione Avversaria */}
+          {countermeasures.analysis && (
           <div data-tour-id="tour-counter-result" className="neon-card" style={{ padding: 'clamp(16px, 4vw, 24px)', marginBottom: '24px' }}>
             <div 
               style={{ 
@@ -864,10 +1098,11 @@ export default function CountermeasuresPreMatchPage() {
               </div>
             )}
           </div>
+          )}
 
           {/* Contromisure Tattiche */}
-          {(countermeasures.countermeasures.formation_adjustments?.length > 0 || 
-            countermeasures.countermeasures.tactical_adjustments?.length > 0) && (
+          {(countermeasures.countermeasures?.formation_adjustments?.length > 0 ||
+            countermeasures.countermeasures?.tactical_adjustments?.length > 0) && (
             <div className="neon-card" style={{ padding: 'clamp(16px, 4vw, 24px)', marginBottom: '24px' }}>
               <div 
                 style={{ 
@@ -952,7 +1187,7 @@ export default function CountermeasuresPreMatchPage() {
           )}
 
           {/* Suggerimenti Giocatori */}
-          {countermeasures.countermeasures.player_suggestions?.filter(s => s?.action !== 'remove_from_starting_xi')?.length > 0 && (
+          {countermeasures.countermeasures?.player_suggestions?.filter(s => s?.action !== 'remove_from_starting_xi')?.length > 0 && (
             <div className="neon-card" style={{ padding: 'clamp(16px, 4vw, 24px)', marginBottom: '24px' }}>
               <div 
                 style={{ 
@@ -1034,7 +1269,7 @@ export default function CountermeasuresPreMatchPage() {
           )}
 
           {/* Istruzioni Individuali */}
-          {countermeasures.countermeasures.individual_instructions?.length > 0 && (
+          {countermeasures.countermeasures?.individual_instructions?.length > 0 && (
             <div className="neon-card" style={{ padding: 'clamp(16px, 4vw, 24px)', marginBottom: '24px' }}>
               <div 
                 style={{ 

@@ -7,6 +7,13 @@ import { enforcePlanCoherence, focusCountermeasuresOutput, generateCountermeasur
 import { deductCredits, AI_COST, handleCreditOperationError } from '@/lib/creditService'
 import { validateIndividualInstruction } from '@/lib/tacticalInstructions'
 import { validateStartingXISwap } from '@/lib/formationDefenseRules'
+import {
+  buildFluidFormationState,
+  buildPhaseMatchupContext,
+  evaluateLinkUpPlay,
+  normalizeLinkUpPlays,
+  opponentFluidFromRow
+} from '@/lib/efootballV6TacticalModel'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -79,6 +86,53 @@ function asPlainText(value) {
   if (typeof value === 'string') return value
   if (value && typeof value === 'object') return value.it || value.en || ''
   return ''
+}
+
+function clipText(value, max = 700) {
+  const text = asPlainText(value).replace(/[\r\n]+/g, ' ').trim()
+  return text ? text.slice(0, max) : ''
+}
+
+function attachOptionalV6Fields(countermeasures, { linkUps, clientFluid, opponentFluid, matchup }) {
+  if (!countermeasures || typeof countermeasures !== 'object') return countermeasures
+
+  const rawFluid = countermeasures.fluid_formation_recommendation
+  if (rawFluid && typeof rawFluid === 'object') {
+    const allowed = new Set(['keep_current', 'use', 'modify_attack', 'modify_defense', 'disable', 'not_needed', 'insufficient_data'])
+    countermeasures.fluid_formation_recommendation = {
+      decision: allowed.has(rawFluid.decision) ? rawFluid.decision : 'insufficient_data',
+      title: clipText(rawFluid.title, 220),
+      reason: clipText(rawFluid.reason, 900),
+      attack_action: clipText(rawFluid.attack_action, 700),
+      defense_action: clipText(rawFluid.defense_action, 700)
+    }
+  }
+
+  const allowedLinkNames = new Set((linkUps || []).map((item) => String(item.name || '').toLowerCase()))
+  if (Array.isArray(countermeasures.link_up_recommendations)) {
+    countermeasures.link_up_recommendations = countermeasures.link_up_recommendations
+      .filter((item) => allowedLinkNames.has(String(item?.name || '').toLowerCase()))
+      .slice(0, 2)
+      .map((item) => ({
+        name: clipText(item.name, 180),
+        decision: ['use', 'do_not_use', 'not_activatable'].includes(item.decision) ? item.decision : 'not_activatable',
+        focal_player: clipText(item.focal_player, 100),
+        key_man_player: clipText(item.key_man_player, 100),
+        reason: clipText(item.reason, 600)
+      }))
+  }
+
+  countermeasures.phase_data = {
+    client_fluid_enabled: Boolean(clientFluid?.enabled),
+    opponent_defense_available: Boolean(opponentFluid?.defense),
+    opponent_fluid_detected: opponentFluid?.fluid_detected ?? null,
+    client_attack_formation: matchup?.pairings?.when_client_attacks?.client?.formation || null,
+    client_defense_formation: matchup?.pairings?.when_client_defends?.client?.formation || null,
+    opponent_attack_formation: matchup?.pairings?.when_client_defends?.opponent?.formation || null,
+    opponent_defense_formation: matchup?.pairings?.when_client_attacks?.opponent?.formation || null
+  }
+  countermeasures.verified_link_ups = linkUps || []
+  return countermeasures
 }
 
 function hasFlankJustification(value) {
@@ -277,6 +331,15 @@ export async function POST(req) {
       .eq('user_id', userId)
       .maybeSingle()
 
+    const { data: variantRows } = await admin
+      .from('formation_variants')
+      .select('id, phase, formation, slot_positions, is_active, source_version, updated_at')
+      .eq('user_id', userId)
+
+    const clientFluid = buildFluidFormationState(clientFormation, variantRows || [])
+    const opponentFluid = opponentFluidFromRow(opponentFormation)
+    const matchup = buildPhaseMatchupContext({ clientFluid, opponentFluid })
+
     // 4. Recupera impostazioni tattiche
     const { data: tacticalSettings, error: tacticalError } = await admin
       .from('team_tactical_settings')
@@ -287,7 +350,7 @@ export async function POST(req) {
     // 5. Recupera allenatore attivo
     const { data: activeCoach, error: coachError } = await admin
       .from('coaches')
-      .select('coach_name, playing_style_competence, stat_boosters, connection')
+      .select('coach_name, playing_style_competence, stat_boosters, connection, extracted_data')
       .eq('user_id', userId)
       .eq('is_active', true)
       .maybeSingle()
@@ -483,6 +546,10 @@ if (process.env.NODE_ENV !== 'production') {
 }
     
     // 9.2 Genera prompt contestuale con analisi approfondita
+    const linkUps = normalizeLinkUpPlays(activeCoach || {})
+      .map((play) => evaluateLinkUpPlay(play, titolari, stylesLookup))
+      .filter(Boolean)
+
     let prompt
     try {
       prompt = await generateCountermeasuresPrompt(
@@ -503,7 +570,8 @@ if (process.env.NODE_ENV !== 'production') {
           team_playing_style: tacticalSettings?.team_playing_style || null,
           coachFeedback: coachFeedback || [],
           userProfile: userProfile || null,
-          gameAnalysis: gameAnalysis?.stats || null
+          gameAnalysis: gameAnalysis?.stats || null,
+          v6Context: { clientFluid, opponentFluid, matchup, linkUps }
         },
         lang
       )
@@ -929,6 +997,21 @@ if (process.env.NODE_ENV !== 'production') {
     if (Array.isArray(countermeasures.warnings)) {
       countermeasures.warnings = countermeasures.warnings.map(toBilingual)
     }
+
+    attachOptionalV6Fields(countermeasures, { linkUps, clientFluid, opponentFluid, matchup })
+    if (countermeasures.fluid_formation_recommendation) {
+      ;['title', 'reason', 'attack_action', 'defense_action'].forEach((key) => {
+        if (typeof countermeasures.fluid_formation_recommendation[key] === 'string') {
+          countermeasures.fluid_formation_recommendation[key] = toBilingual(countermeasures.fluid_formation_recommendation[key])
+        }
+      })
+    }
+    ;(countermeasures.link_up_recommendations || []).forEach((item) => {
+      if (typeof item.name === 'string') item.name = toBilingual(item.name)
+      if (typeof item.reason === 'string') item.reason = toBilingual(item.reason)
+      if (typeof item.focal_player === 'string') item.focal_player = toBilingual(item.focal_player)
+      if (typeof item.key_man_player === 'string') item.key_man_player = toBilingual(item.key_man_player)
+    })
 
     // 14. Restituisci contromisure (formato bilingue)
     return NextResponse.json({

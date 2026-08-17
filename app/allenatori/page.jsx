@@ -9,6 +9,8 @@ import ConfirmModal from '@/components/ConfirmModal'
 import { ArrowLeft, Upload, Camera, AlertCircle, CheckCircle2, X, Trash2, Star, Info, Plus, Zap } from 'lucide-react'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
+import { normalizeLinkUpPlays } from '@/lib/efootballV6TacticalModel'
+import { confirmCoachLinkUpsFromPhotos } from '@/lib/confirmCoachLinkUpsFromPhotos'
 
 const COACH_UPLOAD_EXAMPLES = [
   {
@@ -31,61 +33,57 @@ export default function AllenatoriPage() {
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState(null)
   const [showUploadModal, setShowUploadModal] = React.useState(false)
-  const [uploadImages, setUploadImages] = React.useState([]) // Array per 2 foto
+  const [uploadImages, setUploadImages] = React.useState([])
   const [uploading, setUploading] = React.useState(false)
   const [selectedCoach, setSelectedCoach] = React.useState(null)
   const [showDetailsModal, setShowDetailsModal] = React.useState(false)
   const [deleteConfirmModal, setDeleteConfirmModal] = React.useState(null) // { show, coachId, coachName }
 
-  // Carica allenatori
-  React.useEffect(() => {
-    const fetchCoaches = async () => {
-      setLoading(true)
-      setError(null)
+  const loadCoaches = React.useCallback(async () => {
+    setLoading(true)
+    setError(null)
 
-      try {
-        let token = localStorage.getItem('auth_token')
-        
-        if (!token && supabase) {
-          const { data: session } = await supabase.auth.getSession()
-          token = session?.session?.access_token
-        }
-        
-        if (!token) {
-          // AuthWrapper gestirà redirect
-          setLoading(false)
+    try {
+      let token = localStorage.getItem('auth_token')
+
+      if (!token && supabase) {
+        const { data: session } = await supabase.auth.getSession()
+        token = session?.session?.access_token
+      }
+
+      if (!token) {
+        setLoading(false)
+        return
+      }
+
+      const res = await fetch('/api/coaches', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          localStorage.removeItem('auth_token')
+          router.push('/login')
           return
         }
-
-        // Use new API endpoint that supports custom token
-        const res = await fetch('/api/coaches', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-        
-        if (!res.ok) {
-          if (res.status === 401) {
-             localStorage.removeItem('auth_token')
-             router.push('/login')
-             return
-          }
-          throw new Error(t('coachLoadError'))
-        }
-        
-        const coachesData = await res.json()
-
-        setCoaches(coachesData || [])
-        const active = (coachesData || []).find(c => c.is_active)
-        setActiveCoach(active || null)
-      } catch (err) {
-        console.error('[Allenatori] Fetch error:', err)
-        setError(err.message || t('coachDataLoadError'))
-      } finally {
-        setLoading(false)
+        throw new Error(t('coachLoadError'))
       }
-    }
 
-    fetchCoaches()
-  }, [router])
+      const coachesData = await res.json()
+      setCoaches(coachesData || [])
+      const active = (coachesData || []).find(c => c.is_active)
+      setActiveCoach(active || null)
+    } catch (err) {
+      console.error('[Allenatori] Fetch error:', err)
+      setError(err.message || t('coachLoadError'))
+    } finally {
+      setLoading(false)
+    }
+  }, [router, t])
+
+  React.useEffect(() => {
+    loadCoaches()
+  }, [loadCoaches])
 
   const handleImageSelect = async (files) => {
     const fileArray = Array.from(files || [])
@@ -97,23 +95,24 @@ export default function AllenatoriPage() {
       return
     }
 
-    // Max 2 foto
-    if (uploadImages.length + validFiles.length > 2) {
-      setError(t('maxTwoPhotos'))
+    if (uploadImages.length + validFiles.length > 3) {
+      setError(t('maxThreeCoachPhotos'))
       return
     }
 
     setError(null)
     const preparedImages = []
+    const typeOrder = ['main', 'connection', 'connection2']
 
     for (const file of validFiles) {
       try {
         const optimized = await optimizeImageFile(file)
+        const nextType = typeOrder[uploadImages.length + preparedImages.length] || 'connection2'
         preparedImages.push({
           id: Date.now() + preparedImages.length,
           file,
           dataUrl: optimized.dataUrl,
-          type: (uploadImages.length + preparedImages.length) === 0 ? 'main' : 'connection'
+          type: nextType
         })
       } catch (err) {
         console.error('[Allenatori] image optimization error:', err)
@@ -123,7 +122,7 @@ export default function AllenatoriPage() {
     }
 
     if (preparedImages.length > 0) {
-      setUploadImages(prev => [...prev, ...preparedImages].slice(0, 2))
+      setUploadImages(prev => [...prev, ...preparedImages].slice(0, 3))
     }
   }
 
@@ -169,13 +168,15 @@ export default function AllenatoriPage() {
         throw new Error(t('sessionExpired'))
       }
 
-      // Estrai dati da tutte le immagini (max 2)
+      // Estrai la carta allenatore (prima foto / tipo main)
       let coachData = null
       let allExtractedData = {}
       const photoSlots = {}
       const errors = []
+      const cardImages = uploadImages.filter((img) => img.type === 'main')
+      const toExtract = cardImages.length ? cardImages : uploadImages.slice(0, 1)
 
-      for (const img of uploadImages) {
+      for (const img of toExtract) {
         const extractRes = await fetch('/api/extract-coach', {
           method: 'POST',
           headers: { 
@@ -269,6 +270,16 @@ export default function AllenatoriPage() {
       const saveData = await saveRes.json()
       if (!saveRes.ok) {
         throw new Error(saveData.error || t('coachSaveError'))
+      }
+
+      try {
+        await confirmCoachLinkUpsFromPhotos({
+          token,
+          images: uploadImages,
+          coachId: saveData.coach_id
+        })
+      } catch (linkErr) {
+        console.warn('[Allenatori] coach link-up extract error:', linkErr)
       }
 
       // Aggiorna riassunto analisi (diagnostic) per la chat prima del reload
@@ -676,8 +687,8 @@ export default function AllenatoriPage() {
               </div>
               <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '12px', lineHeight: 1.5 }}>
                 {lang === 'en'
-                  ? 'Coach card first (name, style competence, booster), then the tactical connection screen if available.'
-                  : 'Prima la carta allenatore (nome, competenza stili, booster), poi la schermata collegamento tattico se presente.'}
+                  ? 'Coach card first (name, style competence, booster), then up to two optional Link-up screenshots.'
+                  : 'Prima la carta allenatore (nome, competenza stili, booster), poi fino a due Collegamenti opzionali.'}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px' }}>
                 {COACH_UPLOAD_EXAMPLES.map((example) => (
@@ -730,7 +741,7 @@ export default function AllenatoriPage() {
                     {t('dragDropPhotos')}
                   </div>
                   <div style={{ fontSize: '12px', opacity: 0.6 }}>
-                    {t('maxTwoPhotosFormat')}
+                    {t('maxThreeCoachPhotosFormat')}
                   </div>
                   <div style={{ fontSize: '12px', opacity: 0.75, marginTop: '12px', color: 'rgba(255,255,255,0.85)' }}>
                     {lang === 'en' ? 'Tap here to upload screenshots from gallery or files.' : lang === 'es' ? 'Toca aquí para subir capturas desde la galería o archivos.' : 'Tocca qui per caricare screenshot da galleria o file.'}
@@ -775,11 +786,11 @@ export default function AllenatoriPage() {
                         <X size={16} />
                       </button>
                       <div style={{ fontSize: '11px', opacity: 0.7, marginTop: '4px', textAlign: 'center' }}>
-                        {img.type === 'main' ? t('mainPhoto') : t('connectionPhoto')}
+                        {img.type === 'main' ? t('mainPhoto') : img.type === 'connection2' ? t('coachLinkUpsSlot2') : t('coachLinkUpsSlot1')}
                       </div>
                     </div>
                   ))}
-                  {uploadImages.length < 2 && (
+                  {uploadImages.length < 3 && (
                     <div
                       style={{
                         border: '2px dashed rgba(0, 212, 255, 0.3)',
@@ -811,7 +822,7 @@ export default function AllenatoriPage() {
                 multiple
                 onChange={handleFileInputChange}
                 style={{ display: 'none' }}
-                disabled={uploading || uploadImages.length >= 2}
+                disabled={uploading || uploadImages.length >= 3}
               />
               <input
                 id="coach-camera-input"
@@ -820,7 +831,7 @@ export default function AllenatoriPage() {
                 capture="environment"
                 onChange={handleCameraInputChange}
                 style={{ display: 'none' }}
-                disabled={uploading || uploadImages.length >= 2}
+                disabled={uploading || uploadImages.length >= 3}
               />
             </div>
             </div>
@@ -838,7 +849,7 @@ export default function AllenatoriPage() {
               <button
                 onClick={() => document.getElementById('coach-file-input')?.click()}
                 className="neon-button"
-                disabled={uploading || uploadImages.length >= 2}
+                disabled={uploading || uploadImages.length >= 3}
                 style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flex: '1 1 150px', minHeight: '52px' }}
               >
                 <Upload size={16} />
@@ -847,7 +858,7 @@ export default function AllenatoriPage() {
               <button
                 onClick={() => document.getElementById('coach-camera-input')?.click()}
                 className="neon-button"
-                disabled={uploading || uploadImages.length >= 2}
+                disabled={uploading || uploadImages.length >= 3}
                 style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flex: '1 1 150px', minHeight: '52px' }}
               >
                 <Camera size={16} />
@@ -988,30 +999,30 @@ export default function AllenatoriPage() {
               </div>
             )}
 
-            {/* Collegamento */}
-            {selectedCoach.connection && typeof selectedCoach.connection === 'object' && (
+            {/* Collegamenti (fino a due in v6) */}
+            {normalizeLinkUpPlays(selectedCoach).length > 0 && (
               <div style={{ marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '18px', marginBottom: '12px' }}>{t('connection')}</h3>
-                <div style={{ fontSize: '14px', opacity: 0.9 }}>
-                  <div style={{ marginBottom: '8px' }}>
-                    <strong>{selectedCoach.connection.name}</strong>
-                  </div>
-                  {selectedCoach.connection.description && (
-                    <div style={{ marginBottom: '12px', opacity: 0.8 }}>
-                      {selectedCoach.connection.description}
-                    </div>
-                  )}
-                  {selectedCoach.connection.focal_point && (
+                <h3 style={{ fontSize: '18px', marginBottom: '12px' }}>{t('coachLinkUps')}</h3>
+                {normalizeLinkUpPlays(selectedCoach).map((play, idx) => (
+                  <div key={`${play.name}-${idx}`} style={{ fontSize: '14px', opacity: 0.9, marginBottom: '12px' }}>
                     <div style={{ marginBottom: '8px' }}>
-                      <strong>{t('focalPoint')}:</strong> {selectedCoach.connection.focal_point.playing_style} ({selectedCoach.connection.focal_point.position})
+                      <strong>{play.name}</strong>
                     </div>
-                  )}
-                  {selectedCoach.connection.key_man && (
-                    <div>
-                      <strong>{t('keyMan')}:</strong> {selectedCoach.connection.key_man.playing_style} ({selectedCoach.connection.key_man.position})
-                    </div>
-                  )}
-                </div>
+                    {play.description && (
+                      <div style={{ marginBottom: '8px', opacity: 0.8 }}>{play.description}</div>
+                    )}
+                    {play.focal_point && (
+                      <div style={{ marginBottom: '8px' }}>
+                        <strong>{t('focalPoint')}:</strong> {play.focal_point.playing_style} ({play.focal_point.position})
+                      </div>
+                    )}
+                    {play.key_man && (
+                      <div>
+                        <strong>{t('keyMan')}:</strong> {play.key_man.playing_style} ({play.key_man.position})
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
             </div>
