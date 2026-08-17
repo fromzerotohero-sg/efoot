@@ -250,7 +250,10 @@ function extractLinkUpFacts(summary = '') {
   const text = String(summary || '')
   if (!text) return null
 
-  const noneSaved = /COLLEGAMENTI ALLENATORE:\s*nessuno salvato|COACH LINK-UP PLAYS:\s*none saved|LINK-UP DEL ENTRENADOR:\s*ninguno guardado/i.test(text)
+  const unavailable = /DATI COLLEGAMENTI ALLENATORE:\s*non disponibili|COACH LINK-UP DATA:\s*unavailable|DATOS LINK-UP DEL ENTRENADOR:\s*no disponibles/i.test(text)
+  if (unavailable) return { unavailable: true, none: false, plays: [] }
+
+  const noneSaved = /COLLEGAMENTI ALLENATORE:\s*(?:nessuno salvato|confermato che)|COACH LINK-UP PLAYS:\s*(?:none saved|confirmed none)|LINK-UP DEL ENTRENADOR:\s*(?:ninguno guardado|confirmado que)/i.test(text)
   if (noneSaved) return { none: true, plays: [] }
 
   const headerMatch = text.search(/COLLEGAMENTI ALLENATORE|COACH LINK-UP PLAYS|LINK-UP DEL ENTRENADOR/i)
@@ -282,6 +285,16 @@ function extractLinkUpFacts(summary = '') {
 }
 
 function buildLinkUpGroundedReply(lang = 'it', facts = null) {
+  if (facts?.unavailable) {
+    if (lang === 'en') {
+      return 'The imported manager data do not include the Link-up requirements, so I cannot determine which Link-ups the card has or whether their requirements are met. Missing imported data do not mean the manager has no Link-up.'
+    }
+    if (lang === 'es') {
+      return 'Los datos importados del entrenador no incluyen los requisitos de Link-up, así que no puedo determinar qué Link-up tiene la carta ni si cumple sus condiciones. La ausencia del dato importado no significa que el entrenador no tenga Link-up.'
+    }
+    return 'I dati importati dell’allenatore non includono i requisiti dei Link-up, quindi non posso stabilire quali possieda la carta né se le condizioni siano soddisfatte. Dato mancante non significa che l’allenatore non abbia Link-up.'
+  }
+
   if (facts?.none) {
     if (lang === 'en') {
       return 'Your coach has no Link-up saved. Playing-style competence numbers (e.g. Quick Counter 90) are not a Link-up. Save the Link-up on the coach screen to evaluate Focal Point and Key Man.'
@@ -348,6 +361,10 @@ function enforceLinkUpGrounding({ message = '', summary = '', content = '', lang
   const facts = extractLinkUpFacts(summary)
   const out = String(content || '').trim()
   if (!facts) return out
+
+  if (facts.unavailable) {
+    return buildLinkUpGroundedReply(lang, facts)
+  }
 
   if (facts.none) {
     return replySaysLinkUpMissing(out) ? out : buildLinkUpGroundedReply(lang, facts)
@@ -1052,7 +1069,7 @@ SCOPE: solo consulenza tattica eFootball basata su ROSA, PARTITE, ALLENATORE, TA
 
 FONTI: Nomi/rosa/partite/allenatore/tattica = solo dal blocco contesto sotto (ROSA E DATI o RIASSUNTO ANALISI). Regole eFootball = solo dal blocco RAG. Se manca un dato, non inventare.
 GIOCATORE NON IN ROSA: se il cliente chiede di un giocatore che NON appare nel contesto sottostante, DEVI dire "Non ho [nome] nella tua rosa salvata" e NON inventare competenze, stile o attivazione. Puoi solo citare info generiche dal RAG (se presenti) dichiarando "in generale".
-MAPPATURA TERMINI OBBLIGATORIA: "Link-up / Link up / linkup / Collegamento" = Collegamento allenatore (Punto focale + Uomo chiave, max 2). NON è playing_style_competence e NON è la qualità connessione internet. Se il contesto dice che non è salvato, dillo. Se elenca 1-2 Link-up, cita quelli e se sono attivabili con i titolari. Non inventare Punto focale o Uomo chiave.
+MAPPATURA TERMINI OBBLIGATORIA: "Link-up / Link up / linkup / Collegamento" = Collegamento allenatore (Punto focale + Uomo chiave, max 2). NON è playing_style_competence e NON è la qualità connessione internet. Distingui "dati non disponibili" da "carta senza Link-up": nel primo caso non concludere che non ne possieda. Se elenca 1-2 Link-up, cita quelli e indica se i requisiti sono soddisfatti dai soli titolari; l'attivazione definitiva va verificata dall'indicatore nel Game Plan. Non inventare Punto focale o Uomo chiave.
 OVERALL/RATING FINALE: per qualunque domanda su overall, rating, valutazione totale o valore finale, se nel contesto del giocatore è presente una build PT/progressione, NON elencare l'overall/rating salvato come risposta principale e NON dire "rating 40/68/87" come valore finale. Rispondi così: "Per gli attaccanti vedo build e statistiche salvate, ma il numero overall finale va verificato direttamente in eFootball dopo aver applicato i punti." Poi cita build PT, ruolo e statistiche chiave aggiornate presenti nel contesto (es. "Ronaldo ha build da P con Tiro +11, Destrezza +8 e Forza arti inferiori +8").
 ABILITÀ GIOCATORI: cita sempre i nomi italiani ufficiali come nel blocco rosa (es. Passaggio filtrante, Tiro di prima, Tiro a salire, Tiro dalla distanza). Vietato l'inglese (Through Passing, One-touch Pass, Rising Shot, First-time Shot, Long-Range Shooting, ecc.).
 MECCANICHE CANCEL/SKILL AVANZATE: segui RAG §7.12. Usa prima i termini ufficiali (Super Cancel, Kick Cancel, Kick Feint, Double Touch) e tratta "tess/croqueta interrotta" solo come alias community tra parentesi.
@@ -1082,7 +1099,7 @@ SCOPE: only eFootball tactical advice based on ROSTER, MATCHES, COACH, TACTICS a
 
 SOURCES: Names/roster/matches/coach/tactics only from the context block below (ROSTER & DATA or ANALYSIS SUMMARY). eFootball rules only from the RAG block. If data is missing, do not invent.
 PLAYER NOT IN ROSTER: if the client asks about a player NOT listed in the context below, you MUST say "I don't have [name] in your saved roster" and NEVER invent competences, style, or activation. You may only cite generic info from RAG (if present) prefixed with "in general".
-MANDATORY TERM MAPPING: "Link-up / Link up / linkup / Collegamento" = coach Link-up (Focal Point + Key Man, max 2). It is NOT playing_style_competence and NOT internet connection quality. If context says none is saved, say that. If it lists 1-2 Link-ups, cite those and whether they are activatable with the starters. Do not invent Focal Point or Key Man.
+MANDATORY TERM MAPPING: "Link-up / Link up / linkup / Collegamento" = coach Link-up (Focal Point + Key Man, max 2). It is NOT playing_style_competence and NOT internet connection quality. Distinguish "data unavailable" from "card has no Link-up": unavailable data never prove absence. If context lists 1-2 Link-ups, cite them and state whether requirements are met by starters only; final activation must be checked via the in-game Game Plan indicator. Do not invent Focal Point or Key Man.
 FINAL OVERALL/RATING: for any question about overall, rating, total value or final value, if the player's context includes a PT build/progression, do NOT list the saved overall/rating as the main answer and do NOT say "rating 40/68/87" as the final value. Answer like this: "For these forwards I can see saved builds and stats, but the final overall number should be checked directly in eFootball after applying the points." Then cite the PT build, role and key updated stats present in context (e.g. "Ronaldo has a CF build with Shooting +11, Dexterity +8 and Lower body +8").
 CANCEL/SKILL ADVANCED MECHANICS: follow RAG §7.12. Use official names first (Super Cancel, Kick Cancel, Kick Feint, Double Touch) and treat "tess/croqueta interrupted" only as community aliases in parentheses.
 ANTI-EXPLOIT: never coach macro/script/bug abuse, and do not recommend continuous spam of one skill. Always provide a safer fallback option if timing is unstable.
@@ -1113,7 +1130,7 @@ ALCANCE: solo asesoramiento táctico de eFootball basado en PLANTILLA, PARTIDOS,
 
 FUENTES: Nombres/plantilla/partidos/entrenador/táctica = solo del bloque de contexto abajo (PLANTILLA Y DATOS o RESUMEN ANÁLISIS). Reglas eFootball = solo del bloque RAG. Si falta un dato, no inventes.
 JUGADOR NO EN PLANTILLA: si el cliente pregunta por un jugador que NO aparece en el contexto abajo, DEBES decir "No tengo a [nombre] en tu plantilla guardada" y NUNCA inventes competencias, estilo o activación. Solo puedes citar info genérica del RAG (si está presente) declarando "en general".
-MAPEO OBLIGATORIO DE TÉRMINOS: "Link-up / Link up / linkup / Collegamento" = Link-up del entrenador (Punto focal + Hombre clave, máx. 2). NO es playing_style_competence y NO es la calidad de conexión a internet. Si el contexto dice que no está guardado, dilo. Si lista 1-2 Link-up, cítalos y si son activables con los titulares. No inventes Punto focal ni Hombre clave.
+MAPEO OBLIGATORIO DE TÉRMINOS: "Link-up / Link up / linkup / Collegamento" = Link-up del entrenador (Punto focal + Hombre clave, máx. 2). NO es playing_style_competence y NO es la calidad de conexión a internet. Distingue "datos no disponibles" de "carta sin Link-up": la ausencia de datos no demuestra que no exista. Si lista 1-2 Link-up, cítalos e indica si los requisitos los cumplen solo los titulares; la activación definitiva se verifica con el indicador del Game Plan. No inventes Punto focal ni Hombre clave.
 OVERALL/RATING FINAL: para cualquier pregunta sobre overall, rating, valoración total o valor final, si en el contexto del jugador hay una build PT/progresión, NO enumeres el overall/rating guardado como respuesta principal y NO digas "rating 40/68/87" como valor final. Responde así: "Para estos delanteros veo builds y estadísticas guardadas, pero el número overall final debe verificarse directamente en eFootball tras aplicar los puntos." Luego cita build PT, rol y estadísticas clave actualizadas presentes en el contexto (ej. "Ronaldo tiene build de DC con Tiro +11, Destreza +8 y Fuerza miembros inferiores +8").
 HABILIDADES DE JUGADORES: cita siempre los nombres italianos oficiales como en el bloque plantilla (ej. Passaggio filtrante, Tiro di prima, Tiro a salire, Tiro dalla distanza). Prohibido el inglés (Through Passing, One-touch Pass, Rising Shot, First-time Shot, Long-Range Shooting, etc.).
 MECÁNICAS CANCEL/SKILL AVANZADAS: sigue RAG §7.12. Usa primero los términos oficiales (Super Cancel, Kick Cancel, Kick Feint, Double Touch) y trata "tess/croqueta interrotta" solo como alias community entre paréntesis.
@@ -1373,7 +1390,10 @@ export async function POST(req) {
           const liveFluid = buildFluidFormationState(liveLayout, liveVariants || [])
           const liveLinkUpText = formatCoachLinkUpsForHeroPrompt({
             coach: liveCoach,
-            starters: startersForLinkUpVerification(livePlayers, liveFluid),
+            starters: startersForLinkUpVerification(
+              livePlayers.filter((player) => player?.slot_index != null && Number(player.slot_index) >= 0 && Number(player.slot_index) <= 10),
+              liveFluid
+            ),
             stylesLookup: liveStylesLookup,
             lang
           })

@@ -121,6 +121,7 @@ function buildCoachPayloadFromCatalog(coach) {
   const payload = coach?.coach_payload && typeof coach.coach_payload === 'object'
     ? coach.coach_payload
     : {}
+  const linkUpPlays = normalizeLinkUpPlays({ ...coach, ...payload })
 
   const category = getCoachDisplayCategory(payload.category || coach?.category) || 'Allenatore catalogo'
 
@@ -135,7 +136,8 @@ function buildCoachPayloadFromCatalog(coach) {
       : Array.isArray(coach?.stat_boosters)
         ? coach.stat_boosters
         : [],
-    connection: payload.connection || coach?.connection || null,
+    link_up_plays: linkUpPlays,
+    connection: linkUpPlays[0] || payload.connection || coach?.connection || null,
     photo_slots: payload.photo_slots || {
       catalog_card: coach?.source_card_image_url || null
     },

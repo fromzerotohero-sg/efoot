@@ -14,6 +14,7 @@ import {
   evaluateLinkUpPlay,
   formatCoachLinkUpsForHeroPrompt,
   formatHeroFluidContext,
+  getCoachLinkUpDataState,
   getFluidAdviceDirective,
   hasMotivatedFluidEvaluationEvidence,
   prependLiveFluidOverride,
@@ -245,12 +246,26 @@ const emptyCoachBlock = formatCoachLinkUpsForHeroPrompt({
   lang: 'it'
 })
 assert(
-  'link-up-none-not-competence',
-  emptyCoachBlock.includes('nessuno salvato') &&
-    emptyCoachBlock.includes('NON trattare i numeri di competenza stile') &&
+  'link-up-unavailable-not-none',
+  getCoachLinkUpDataState({ coach_name: 'Antonio Conte', connection: null }) === 'unavailable' &&
+    emptyCoachBlock.includes('non disponibili') &&
+    emptyCoachBlock.includes('NON significa che l\'allenatore non possieda Link-up') &&
     !emptyCoachBlock.includes('Quick_Counter') &&
     !/^- \d+\./m.test(emptyCoachBlock),
-  'Empty Link-up is explicit and is not confused with style competence numbers'
+  'Missing catalog fields are unavailable data, not proof that a coach has no Link-up'
+)
+
+const confirmedNoneBlock = formatCoachLinkUpsForHeroPrompt({
+  coach: { coach_name: 'Coach without Link-up', extracted_data: { link_up_plays: [] } },
+  starters,
+  stylesLookup: {},
+  lang: 'it'
+})
+assert(
+  'link-up-confirmed-none',
+  getCoachLinkUpDataState({ extracted_data: { link_up_plays: [] } }) === 'confirmed_none' &&
+    confirmedNoneBlock.includes('confermato che questa carta non ne possiede'),
+  'Only an explicit empty Link-up list is treated as confirmed none'
 )
 
 const dualCoach = {
@@ -278,7 +293,7 @@ const dualBlock = formatCoachLinkUpsForHeroPrompt({
 assert(
   'link-up-dual-independent',
   dualBlock.includes('Wide classic') &&
-    dualBlock.includes('attivabile con questi titolari') &&
+    dualBlock.includes('requisiti soddisfatti dai titolari') &&
     dualBlock.includes('Box target') &&
     dualBlock.includes('non attivabile con questi titolari') &&
     dualBlock.includes('Pirlo') &&
@@ -289,11 +304,11 @@ assert(
 const staleConnectionCache = 'Allenatore: Conte. Connection: Quick Counter 90. Focal Point: nessuno.'
 const liveNoneOverlay = prependLiveLinkUpOverride(staleConnectionCache, emptyCoachBlock, 'it')
 assert(
-  'live-linkup-beats-stale-cache',
+  'live-linkup-unavailable-beats-stale-cache',
   liveNoneOverlay.startsWith('[AGGIORNAMENTO LIVE]') &&
-    liveNoneOverlay.includes('nessuno salvato') &&
-    liveNoneOverlay.indexOf('nessuno salvato') < liveNoneOverlay.indexOf('Connection: Quick Counter 90'),
-  'Live Link-up none-saved overrides a stale diagnostic that still says Connection'
+    liveNoneOverlay.includes('non disponibili') &&
+    liveNoneOverlay.indexOf('non disponibili') < liveNoneOverlay.indexOf('Connection: Quick Counter 90'),
+  'Live unavailable state overrides stale Connection wording without claiming absence'
 )
 
 assert(
@@ -301,8 +316,9 @@ assert(
   chatSrc.includes('prependLiveLinkUpOverride') &&
     chatSrc.includes('formatCoachLinkUpsForHeroPrompt') &&
     chatSrc.includes('extracted_data') &&
+    chatSrc.includes('livePlayers.filter((player) => player?.slot_index != null') &&
     /Diagnostic from cache used[\s\S]*extracted_data[\s\S]*prependLiveLinkUpOverride/.test(chatSrc),
-  'Cached Hero path live-fetches coach extracted_data and prepends Link-up'
+  'Cached Hero path evaluates Link-ups against starters only'
 )
 
 assert(
@@ -317,12 +333,28 @@ assert(
 assert(
   'diagnostic-includes-linkup-block',
   diagnosticSrc.includes('formatCoachLinkUpsForHeroPrompt') &&
+    diagnosticSrc.includes('startersForLinkUpVerification(titolari, fluid)') &&
     refreshSrc.includes('extracted_data') &&
     !/if \(connection\?\.name\) \{\s*t \+= `Connection:/.test(diagnosticSrc),
   'Diagnostic cache now carries the dedicated Link-up block and extracted_data'
 )
 
+const conteMigration = readFileSync(join(root, 'migrations/20260817_backfill_conte_double_linkups.sql'), 'utf8')
+assert(
+  'conte-double-linkup-catalog',
+  conteMigration.includes('Over-the-Top Pass C') &&
+    conteMigration.includes('1-2 Cut-in B') &&
+    conteMigration.includes('17609097478250') &&
+    conteMigration.includes('link_up_plays'),
+  'Conte catalog and imported copies receive both verified Link-up requirements'
+)
+
 const rosaSrc = readFileSync(join(root, 'app/nuova-rosa-lab/page.jsx'), 'utf8')
+assert(
+  'catalog-import-keeps-double-linkup',
+  /function buildCoachPayloadFromCatalog[\s\S]*normalizeLinkUpPlays\(\{ \.\.\.coach, \.\.\.payload \}\)[\s\S]*link_up_plays: linkUpPlays[\s\S]*connection: linkUpPlays\[0\]/.test(rosaSrc),
+  'Catalog import preserves both Link-ups and mirrors the first for legacy consumers'
+)
 const toggleMatch = rosaSrc.match(/const handleFluidToggle = React\.useCallback\(async \(enabled\) => \{[\s\S]*?\}, \[([^\]]+)\]\)/)
 const persistMatch = rosaSrc.match(/const persistFluidState = React\.useCallback\(async \(enabled, draft = fluidDraft\) => \{[\s\S]*?\}, \[([^\]]+)\]\)/)
 const toggleBody = toggleMatch?.[0] || ''
