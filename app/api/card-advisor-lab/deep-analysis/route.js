@@ -1187,7 +1187,7 @@ export async function POST(req) {
     // verificato deterministicamente): blocco dati breve, il prompt resta quello.
     const fluid = buildFluidFormationState(formationRes.data || null, variantsRes?.data || [])
     const cardContract = getCardPlayingStylesContract(catalogCard, card.style)
-    const fluidContext = buildCardFluidContext({ fluid, cardPosition: card.position })
+    const fluidContext = buildCardFluidContext({ fluid, cardPosition: card.position, card, players })
     const linkUpContext = verifyCardLinkUpPurchase({
       coach: coachRes.data || null,
       players,

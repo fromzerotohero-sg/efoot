@@ -26,6 +26,7 @@ import {
   isCounterTeamStyle,
   overloadFitApplies,
   overloadFitLine,
+  resolveCandidatePlacements,
   teamStyleCategory,
   verifyCardLinkUpPurchase
 } from '../lib/cardAdvisorV6Context.js'
@@ -120,9 +121,14 @@ const basicContract = getCardPlayingStylesContract(
 const basicDefense = getPhasePlayingStyle(basicContract, 'defense')
 assert(
   'dual-basic-neutral',
-  basicDefense.defenseNeutral === true && basicDefense.source === 'attack_fallback' &&
-    basicDefense.style === 'Hole Player' && buildDualStyleNote({ contract: basicContract, lang: 'it' }) === '',
-  "'Basic' = neutro: fallback attack, nessuna meccanica inventata"
+  basicDefense.defenseNeutral === true && basicDefense.source === 'defense_neutral' &&
+    basicDefense.style === null && buildDualStyleNote({ contract: basicContract, lang: 'it' }) === '',
+  "'Basic' su contratto dual = neutro esplicito: style null, la difesa NON eredita lo stile di attacco"
+)
+assert(
+  'dual-basic-no-attack-inheritance',
+  getPhasePlayingStyle(basicContract, 'defense').style !== getPhasePlayingStyle(basicContract, 'attack').style,
+  'Dual + Def:Basic → nessuna eredità dello style di attacco in fase difensiva'
 )
 assert(
   'dual-note-real-defense',
@@ -303,6 +309,256 @@ assert(
   'Il contesto v6 non produce campi score (solo testo/dati)'
 )
 
+// --- 8. Placement candidato concreto (core fix P1) ----------------------------
+// Scenario: slot 4 base TD, fluid ATTACK slot 4 = CLD, DEFENSE slot 4 = TD.
+const placedBase = { formation: '4-3-3', slot_positions: makeSlots({ 4: 'TD', 9: 'P' }) }
+const placedRows = [
+  { phase: 'attack', formation: '4-3-3', slot_positions: makeSlots({ 4: 'CLD', 9: 'P' }), is_active: true },
+  { phase: 'defense', formation: '4-4-2', slot_positions: makeSlots({ 4: 'TD', 9: 'P' }), is_active: true }
+]
+const placedFluid = buildFluidFormationState(placedBase, placedRows)
+const placedRoster = [
+  { id: 'p9', player_name: 'Bomber Nove', position: 'P', role: 'Opportunista', slot_index: 9 },
+  { id: 'p4', player_name: 'Terzino Quattro', position: 'TD', role: 'Terzino difensivo', slot_index: 4 }
+]
+const cardTD = { name: 'Terzino Pack', position: 'TD', playing_style: 'Cross Specialist' }
+
+const placements = resolveCandidatePlacements({ card: cardTD, players: placedRoster, fluid: placedFluid })
+assert(
+  'placement-resolved-roles',
+  placements.status === 'resolved' && placements.placements.length === 1 &&
+    placements.placements[0].slot_index === 4 &&
+    placements.placements[0].base_role === 'TD' &&
+    placements.placements[0].attack_role === 'CLD' &&
+    placements.placements[0].defense_role === 'TD' &&
+    placements.placements[0].replaced_player_name === 'Terzino Quattro',
+  'Placement concreto: slot 4 → base TD, attacco CLD, difesa TD, titolare sostituito noto'
+)
+const placedCtx = buildCardFluidContext({ fluid: placedFluid, cardPosition: cardTD.position, card: cardTD, players: placedRoster })
+assert(
+  'fluid-context-real-roles',
+  placedCtx.card_base_role === 'TD' && placedCtx.card_attack_role === 'CLD' &&
+    placedCtx.card_defense_role === 'TD' && placedCtx.placements.length === 1,
+  'Contesto fluido: ruoli reali per fase (TD base → CLD attacco → TD difesa), non solo booleani'
+)
+assert(
+  'placement-none-when-incompatible',
+  resolveCandidatePlacements({ card: { position: 'EDA' }, players: placedRoster, fluid: placedFluid }).placements.length === 0 &&
+    resolveCandidatePlacements({ card: cardTD, players: placedRoster, fluid: null }).status === 'unknown',
+  'Nessuno slot compatibile o nessuna formazione → placement vuoto (contesto onesto)'
+)
+
+// Falso negativo storico: carta TD che in ATTACCO gioca CLD DEVE abilitare un
+// Link-up CLD+style se il coach lo richiede e il partner esiste davvero.
+const coachCLD = {
+  coach_name: 'Coach Test',
+  extracted_data: {
+    link_up_plays: [
+      {
+        name: 'Fascia dinamica',
+        focal_point: { playing_style: 'Specialista di cross', position: 'CLD' },
+        key_man: { playing_style: 'Opportunista', position: 'P' }
+      }
+    ]
+  }
+}
+const falseNegative = verifyCardLinkUpPurchase({
+  coach: coachCLD,
+  players: placedRoster,
+  card: cardTD,
+  fluid: placedFluid,
+  stylesLookup: {}
+})
+assert(
+  'linkup-fluid-false-negative-fixed',
+  falseNegative.status === 'verified' &&
+    falseNegative.linkUps[0].enabled_by_card === true &&
+    falseNegative.linkUps[0].candidate_slot_index === 4 &&
+    falseNegative.linkUps[0].candidate_attack_role === 'CLD' &&
+    falseNegative.linkUps[0].partner_name === 'Bomber Nove',
+  'TD base → CLD attacco: la carta abilita il Link-up CLD+style (slot e ruolo fase riportati)'
+)
+
+// Falso positivo storico: carta TRQ il cui slot concreto in ATTACCO diventa CC
+// NON deve abilitare un Link-up che richiede TRQ (niente card.position statico).
+const trqBase = { formation: '4-3-3', slot_positions: makeSlots({ 7: 'TRQ', 9: 'P' }) }
+const trqRows = [
+  { phase: 'attack', formation: '4-3-3', slot_positions: makeSlots({ 7: 'CC', 9: 'P' }), is_active: true },
+  { phase: 'defense', formation: '4-3-3', slot_positions: makeSlots({ 7: 'TRQ', 9: 'P' }), is_active: true }
+]
+const trqFluid = buildFluidFormationState(trqBase, trqRows)
+const trqRoster = [
+  { id: 'p9', player_name: 'Bomber Nove', position: 'P', role: 'Opportunista', slot_index: 9 },
+  { id: 'p7', player_name: 'Regista Sette', position: 'TRQ', role: 'Collante', slot_index: 7 }
+]
+const coachTRQ = {
+  coach_name: 'Coach Test',
+  extracted_data: {
+    link_up_plays: [
+      {
+        name: 'Rifinitura',
+        focal_point: { playing_style: 'Giocatore chiave', position: 'TRQ' },
+        key_man: { playing_style: 'Opportunista', position: 'P' }
+      }
+    ]
+  }
+}
+const falsePositive = verifyCardLinkUpPurchase({
+  coach: coachTRQ,
+  players: trqRoster,
+  card: { name: 'Trequartista Pack', position: 'TRQ', playing_style: 'Hole Player' },
+  fluid: trqFluid,
+  stylesLookup: {}
+})
+assert(
+  'linkup-fluid-false-positive-fixed',
+  falsePositive.linkUps[0].enabled_by_card === false &&
+    falsePositive.linkUps[0].verification_status === 'not_verified',
+  'TRQ base → CC attacco: la carta NON abilita un Link-up che richiede TRQ'
+)
+
+// Placement multipli: solo UNO soddisfa il Link-up → verificato, slot esatto.
+const multiBase = { formation: '4-3-3', slot_positions: makeSlots({ 5: 'CC', 6: 'CC', 9: 'P' }) }
+const multiRows = [
+  { phase: 'attack', formation: '4-3-3', slot_positions: makeSlots({ 5: 'CC', 6: 'TRQ', 9: 'P' }), is_active: true },
+  { phase: 'defense', formation: '4-3-3', slot_positions: makeSlots({ 5: 'CC', 6: 'CC', 9: 'P' }), is_active: true }
+]
+const multiFluid = buildFluidFormationState(multiBase, multiRows)
+const multiRoster = [
+  { id: 'p9', player_name: 'Bomber Nove', position: 'P', role: 'Opportunista', slot_index: 9 },
+  { id: 'p5', player_name: 'Mediano Cinque', position: 'CC', role: 'Collante', slot_index: 5 },
+  { id: 'p6', player_name: 'Mezzala Sei', position: 'CC', role: 'Onnipresente', slot_index: 6 }
+]
+const multiPlacements = resolveCandidatePlacements({ card: { position: 'CC' }, players: multiRoster, fluid: multiFluid })
+const multiCheck = verifyCardLinkUpPurchase({
+  coach: coachTRQ,
+  players: multiRoster,
+  card: { name: 'Centrocampista Pack', position: 'CC', playing_style: 'Hole Player' },
+  fluid: multiFluid,
+  stylesLookup: {}
+})
+assert(
+  'linkup-multiple-placements',
+  multiPlacements.placements.length >= 2 &&
+    multiPlacements.placements.some((p) => p.slot_index === 5 && p.attack_role === 'CC') &&
+    multiPlacements.placements.some((p) => p.slot_index === 6 && p.attack_role === 'TRQ') &&
+    multiCheck.linkUps[0].enabled_by_card === true &&
+    multiCheck.linkUps[0].candidate_slot_index === 6 &&
+    multiCheck.linkUps[0].candidate_attack_role === 'TRQ' &&
+    multiCheck.linkUps[0].partner_name === 'Bomber Nove',
+  'Placement multipli indipendenti: solo lo slot 6 (CC→TRQ) abilita, ed è quello riportato'
+)
+
+// Nessun placement concreto → nessuna verifica, anche se la posizione statica
+// della carta matcherebbe il requisito.
+const noPlacement = verifyCardLinkUpPurchase({
+  coach: {
+    coach_name: 'Coach Test',
+    extracted_data: {
+      link_up_plays: [
+        {
+          name: 'Catena destra',
+          focal_point: { playing_style: 'Ala prolifica', position: 'EDA' },
+          key_man: { playing_style: 'Opportunista', position: 'P' }
+        }
+      ]
+    }
+  },
+  players: placedRoster,
+  card: { name: 'Ala Pack', position: 'EDA', playing_style: 'Prolific Winger' },
+  fluid: placedFluid,
+  stylesLookup: {}
+})
+assert(
+  'linkup-no-placement-no-verify',
+  noPlacement.linkUps[0].enabled_by_card === false &&
+    noPlacement.linkUps[0].verification_status === 'not_verified',
+  'Fluid ON senza slot compatibile → mai verificato (niente scorciatoia statica)'
+)
+
+// Con Fluid ON la carta non può coprire entrambi i membri del Link-up.
+const soloCoach = {
+  coach_name: 'Coach Test',
+  extracted_data: {
+    link_up_plays: [
+      {
+        name: 'Monologo',
+        focal_point: { playing_style: 'Specialista di cross', position: 'CLD' },
+        key_man: { playing_style: 'Specialista di cross', position: 'CLD' }
+      }
+    ]
+  }
+}
+const soloFluid = verifyCardLinkUpPurchase({
+  coach: soloCoach,
+  players: placedRoster.filter((player) => player.slot_index === 4),
+  card: cardTD,
+  fluid: placedFluid,
+  stylesLookup: {}
+})
+assert(
+  'linkup-fluid-distinct-players',
+  soloFluid.linkUps[0].enabled_by_card === false,
+  'Fluid ON: la stessa carta non soddisfa entrambi i lati del Link-up'
+)
+
+// Partner mancante con placement valido → non verificato.
+const noPartnerFluid = verifyCardLinkUpPurchase({
+  coach: coachCLD,
+  players: placedRoster.filter((player) => player.slot_index === 4),
+  card: cardTD,
+  fluid: placedFluid,
+  stylesLookup: {}
+})
+assert(
+  'linkup-fluid-missing-partner',
+  noPartnerFluid.linkUps[0].enabled_by_card === false,
+  'Placement valido ma partner reale assente → non verificato'
+)
+
+// --- 9. Rumore prompt: legacy single-style + Fluid OFF + no Link-up -----------
+const realSingleContract = getCardPlayingStylesContract({ playing_style: 'Goal Poacher' }, '')
+const realSingleFromStyle = getCardPlayingStylesContract(null, 'Goal Poacher')
+assert(
+  'prompt-no-legacy-single-noise',
+  buildCardV6PromptBlock({ fluidContext: noFluidCtx, cardContract: realSingleContract, linkUpContext: { status: 'none', linkUps: [] }, lang: 'it' }) === '' &&
+    buildCardV6PromptBlock({ fluidContext: noFluidCtx, cardContract: realSingleFromStyle, linkUpContext: null, lang: 'it' }) === '',
+  'Vero contratto legacy single-style (da getCardPlayingStylesContract) + Fluid OFF + no Link-up → nessun blocco v6'
+)
+assert(
+  'prompt-dual-basic-still-emitted',
+  buildCardV6PromptBlock({ fluidContext: noFluidCtx, cardContract: basicContract, linkUpContext: { status: 'none', linkUps: [] }, lang: 'it' }).includes('PLAYING STYLE DUAL'),
+  'Contratto dual esplicito (anche Def:Basic) → blocco emesso'
+)
+
+// --- 10. Blocco prompt v6 localizzato in spagnolo -----------------------------
+const esPrompt = buildCardV6PromptBlock({ fluidContext: placedCtx, cardContract: dualContract, linkUpContext: falseNegative, lang: 'es' })
+assert(
+  'prompt-block-es',
+  esPrompt.includes('CONTEXTO V6') && esPrompt.includes('FORMACIÓN FLUIDA ACTIVA') &&
+    esPrompt.includes('ESTILO DE JUEGO DUAL') && esPrompt.includes('LINK-UP VERIFICADO') &&
+    esPrompt.includes('SLOT CANDIDATO 4') && esPrompt.includes('rol ataque CLD') &&
+    esPrompt.includes('FIN CONTEXTO V6') && !esPrompt.includes('FORMAZIONE FLUIDA ATTIVA'),
+  'Blocco prompt ES: fluid attiva, dual style, placement e Link-up verificato in spagnolo'
+)
+const esGuardrails = buildCardV6PromptBlock({ fluidContext: noFluidCtx, cardContract: basicContract, linkUpContext: notVerified, lang: 'es' })
+assert(
+  'prompt-block-es-guardrails',
+  esGuardrails.includes('Formación fluida: NO activa') &&
+    esGuardrails.includes('ningún estilo defensivo especial documentado') &&
+    esGuardrails.includes('LINK-UP NO VERIFICADO'),
+  'Blocco prompt ES: guardrail Fluid off, Basic neutro, Link-up non verificato'
+)
+
+// --- 11. Regressione Overload: nessun auto-BUY da team style fit --------------
+const overloadSrc = readFileSync(join(root, 'app/api/card-advisor-lab/evaluate/route.js'), 'utf8')
+assert(
+  'overload-no-auto-buy',
+  !/score\s*\+=.*(overload|pressing_totale)/i.test(overloadSrc) &&
+    !/level:\s*'buy'.*(overload|teamStyleFit)/i.test(overloadSrc),
+  'Overload/teamStyleFit non aggiunge punti né forza BUY: solo contesto (vedi report: nessun harness comportamentale sicuro per evaluate())'
+)
+
 // --- Wiring sorgente (stile repo) ----------------------------------------------
 const evaluateSrc = readFileSync(join(root, 'app/api/card-advisor-lab/evaluate/route.js'), 'utf8')
 assert(
@@ -316,8 +572,15 @@ assert(
 )
 assert(
   'evaluate-no-v6-score',
-  !/score\s*\+=.*(linkUp|v6|playingStyles)/i.test(evaluateSrc),
-  'Nessun bonus di punteggio legato a Link-up/dual/v6 nello scoring'
+  !/score\s*\+=.*(linkUp|v6|playingStyles|overload|dual|fluid)/i.test(evaluateSrc),
+  'Nessun bonus di punteggio legato a Link-up/dual/fluid/Overload/v6 nello scoring'
+)
+assert(
+  'evaluate-placement-wired',
+  evaluateSrc.includes('candidate_placements') &&
+    evaluateSrc.includes('startersForLinkUpVerification') &&
+    evaluateSrc.includes('card_position_present_in_attack'),
+  'Route evaluate: placement concreti + fit phase-aware + semantica API ruoli reali'
 )
 const deepSrc = readFileSync(join(root, 'app/api/card-advisor-lab/deep-analysis/route.js'), 'utf8')
 assert(

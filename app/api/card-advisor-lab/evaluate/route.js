@@ -7,7 +7,7 @@ import { fetchEfhubCardDetail } from '@/lib/efhubPlayerDetail.js'
 import { getPlayerDisplayStats, getPlayerBaselineStats } from '@/lib/playerEffectiveStats.js'
 import { summarizeSkillDelta } from '@/lib/cardAdvisorSkillCompare.js'
 import { resolveTeamStyleId } from '@/lib/efootballV6Rules.js'
-import { buildFluidFormationState } from '@/lib/efootballV6TacticalModel.js'
+import { buildFluidFormationState, startersForLinkUpVerification } from '@/lib/efootballV6TacticalModel.js'
 import {
   buildCardFluidContext,
   buildDualStyleNote,
@@ -428,9 +428,15 @@ function cardTechnicalSignals(card, catalogCard) {
   }
 }
 
-function sameRolePlayers(card, players, stylesLookup) {
+function sameRolePlayers(card, players, stylesLookup, targetPositions = null) {
+  // Ruoli target del confronto: con formazione fluida attiva sono i ruoli di
+  // fase dei placement concreti; altrimenti la sola posizione statica della carta.
+  const targets = (Array.isArray(targetPositions) ? targetPositions : [])
+    .map((value) => String(value || '').trim().toUpperCase())
+    .filter(Boolean)
+  const matchTargets = targets.length ? targets : [card.position]
   return (players || [])
-    .filter(player => player?.position === card.position || playerSupportsPosition(player, card.position))
+    .filter(player => matchTargets.some((target) => player?.position === target || playerSupportsPosition(player, target)))
     .map(player => {
       const skills = [...(Array.isArray(player.skills) ? player.skills : []), ...(Array.isArray(player.com_skills) ? player.com_skills : [])].slice(0, 8)
       return {
@@ -2075,7 +2081,6 @@ function teamSynergyDetails({ card, sameRole, bestAlternative, roleGap, duplicat
 }
 
 function evaluate({ card, catalogCard, players, formation, coach, tacticalSettings, profile, patterns, gameAnalysis, stylesLookup, lang, fluid = null }) {
-  const sameRole = sameRolePlayers(card, players, stylesLookup)
   const hasRoster = players.length > 0
   const startersOnPitch = players.filter(
     (player) => player.slot_index != null && player.slot_index >= 0 && player.slot_index <= 10
@@ -2084,6 +2089,30 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   const hasCoach = Boolean(coach?.coach_name)
   const tacticalStyle = tacticalSettings?.team_playing_style || ''
   const technical = cardTechnicalSignals(card, catalogCard)
+
+  // Contesto v6 (deterministico, niente scoring): formazione fluida, dual playing
+  // style e Link-up del coach verificati matematicamente sulla rosa attuale.
+  // Va calcolato PRIMA del roster fit: con Fluid attiva il ruolo reale della
+  // carta è quello di fase dei placement concreti, non card.position statico.
+  const cardContract = technical.playingStyles
+  const fluidContext = buildCardFluidContext({ fluid, cardPosition: card.position, card, players })
+  const linkUpContext = verifyCardLinkUpPurchase({ coach, players, card, cardContract, fluid, stylesLookup })
+  const v6ReasonLines = [
+    buildLinkUpPurchaseReason({ linkUpContext, card, lang }),
+    buildFluidCardReasonLine({ fluidContext, cardPosition: card.position, lang }),
+    buildDualStyleNote({ contract: cardContract, lang })
+  ].filter(Boolean)
+
+  // Roster fit phase-aware: con Fluid ON e placement concreti la competizione
+  // stesso-ruolo si valuta sui ruoli di fase ATTACCO dei placement (es. carta TD
+  // che in attacco occupa lo slot come CLD compete coi CLD, non coi TD) e i
+  // titolari sono letti nella STESSA fase (stesso helper della verifica Link-up).
+  // Formula e soglie dello scoring invariate: cambia solo l'INPUT (i ruoli target).
+  const fluidAttackRoles = fluidContext.fluid_enabled && fluidContext.placements.length
+    ? [...new Set(fluidContext.placements.map((placement) => placement.attack_role).filter(Boolean))]
+    : null
+  const sameRoleInputPlayers = fluidAttackRoles ? startersForLinkUpVerification(players, fluid) : players
+  const sameRole = sameRolePlayers(card, sameRoleInputPlayers, stylesLookup, fluidAttackRoles)
   const issues = issuesRead(patterns)
   const profileRead = profileSignals(profile, lang)
   const gameRead = gameSignals(gameAnalysis)
@@ -2106,17 +2135,6 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   )
   const rosterCrowded = hasRoster && conflict.rosterCrowded
   const combo = hasRoster ? comboRead({ card, technical, players, issues, profileRead, gameRead, lang }) : null
-
-  // Contesto v6 (deterministico, niente scoring): formazione fluida, dual playing
-  // style e Link-up del coach verificati matematicamente sulla rosa attuale.
-  const cardContract = technical.playingStyles
-  const fluidContext = buildCardFluidContext({ fluid, cardPosition: card.position })
-  const linkUpContext = verifyCardLinkUpPurchase({ coach, players, card, cardContract, fluid, stylesLookup })
-  const v6ReasonLines = [
-    buildLinkUpPurchaseReason({ linkUpContext, card, lang }),
-    buildFluidCardReasonLine({ fluidContext, cardPosition: card.position, lang }),
-    buildDualStyleNote({ contract: cardContract, lang })
-  ].filter(Boolean)
 
   const evidence = {
     ...decisionEvidence({
@@ -2437,8 +2455,15 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
         formation_base: fluidContext.formation_base,
         formation_attack: fluidContext.formation_attack,
         formation_defense: fluidContext.formation_defense,
-        card_role_in_attack: fluidContext.attack?.position_present ?? null,
-        card_role_in_defense: fluidContext.defense?.position_present ?? null
+        // Ruoli REALI della carta nello slot candidato (non booleani): con Fluid
+        // ON vengono dal placement concreto (es. base TD → attacco CLD → difesa
+        // TD); null se Fluid OFF o nessuno slot compatibile. I booleani legacy
+        // "il ruolo pack esiste in questa fase?" restano come *_position_present_*.
+        card_role_in_attack: fluidContext.fluid_enabled ? fluidContext.card_attack_role : null,
+        card_role_in_defense: fluidContext.fluid_enabled ? fluidContext.card_defense_role : null,
+        card_position_present_in_attack: fluidContext.attack?.position_present ?? null,
+        card_position_present_in_defense: fluidContext.defense?.position_present ?? null,
+        candidate_placements: fluidContext.placements
       },
       cardPlayingStyles: {
         format: cardContract.format,
