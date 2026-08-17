@@ -126,9 +126,50 @@ export async function POST(req) {
       photo_slots: coach.photo_slots && typeof coach.photo_slots === 'object' 
         ? coach.photo_slots 
         : {},
-      extracted_data: coach,
-      // is_active: default false (primo allenatore può essere settato come attivo dopo)
-      is_active: false
+      extracted_data: coach
+    }
+
+    const catalogId = toText(coach?.source_catalog?.catalog_id)
+    if (catalogId) {
+      const { data: existingCoach, error: existingError } = await admin
+        .from('coaches')
+        .select('id, user_id, coach_name, is_active')
+        .eq('user_id', userId)
+        .contains('extracted_data', { source_catalog: { catalog_id: catalogId } })
+        .order('is_active', { ascending: false })
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (existingError) {
+        console.error('[save-coach] Existing catalog coach lookup error:', existingError.message)
+        return NextResponse.json(
+          { error: `Failed to check existing coach: ${existingError.message}` },
+          { status: 500 }
+        )
+      }
+
+      if (existingCoach?.id) {
+        const { error: updateError } = await admin
+          .from('coaches')
+          .update(coachData)
+          .eq('id', existingCoach.id)
+          .eq('user_id', userId)
+
+        if (updateError) {
+          console.error('[save-coach] Catalog coach update error:', updateError.message)
+          return NextResponse.json(
+            { error: `Failed to update coach: ${updateError.message}` },
+            { status: 500 }
+          )
+        }
+
+        return NextResponse.json({
+          success: true,
+          coach_id: existingCoach.id,
+          is_new: false
+        })
+      }
     }
 
     // Inserisci nuovo allenatore (log senza PII in produzione)
@@ -137,7 +178,7 @@ export async function POST(req) {
     }
     const { data: inserted, error: insertErr } = await admin
       .from('coaches')
-      .insert(coachData)
+      .insert({ ...coachData, is_active: false })
       .select('id, user_id, coach_name')
       .single()
 

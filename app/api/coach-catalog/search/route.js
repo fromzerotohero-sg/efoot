@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
+import { normalizeCoachCatalogResult } from '@/lib/coachCatalogNormalization'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -20,30 +21,6 @@ function toText(value) {
 
 function safeLike(value) {
   return String(value || '').replace(/[%_]/g, '').trim()
-}
-
-function normalizeResult(row) {
-  const payload = row?.coach_payload && typeof row.coach_payload === 'object'
-    ? row.coach_payload
-    : {}
-
-  return {
-    id: row.id,
-    source: row.source,
-    source_coach_id: row.source_coach_id,
-    source_card_image_url: row.source_card_image_url || null,
-    coach_name: row.coach_name,
-    coach_name_ja: row.coach_name_ja || null,
-    category: row.category || null,
-    pack_type: row.pack_type || null,
-    playing_style_competence: row.playing_style_competence || {},
-    stat_boosters: Array.isArray(row.stat_boosters) ? row.stat_boosters : [],
-    boost_ids: Array.isArray(row.boost_ids) ? row.boost_ids : [],
-    catalog_ready: !!row.catalog_ready,
-    needs_review: !!row.needs_review,
-    metadata: row.metadata || {},
-    coach_payload: payload
-  }
 }
 
 export async function GET(req) {
@@ -95,6 +72,7 @@ export async function GET(req) {
         playing_style_competence,
         stat_boosters,
         boost_ids,
+        connection,
         catalog_ready,
         needs_review,
         metadata,
@@ -122,7 +100,7 @@ export async function GET(req) {
       return NextResponse.json({ error: 'Failed to load coach catalog' }, { status: 500 })
     }
 
-    let results = (data || []).map(normalizeResult)
+    let results = (data || []).map(normalizeCoachCatalogResult)
 
     if (PLAYSTYLE_KEYS.has(playstyle) && min > 0) {
       results = results.filter((coach) => {
