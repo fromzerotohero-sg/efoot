@@ -5978,11 +5978,12 @@ export default withAuth(function NuovaRosaLabPage() {
       } else {
         await persistFluidState(false)
       }
+      await refreshDiagnosticAfterSave()
     } catch (err) {
       const { message } = mapErrorToUserMessage(err, t('errorSavingFormation'), lang)
       showToast(message, 'error')
     }
-  }, [fluidDraft, lang, layout, persistFluidState, showToast, t])
+  }, [fluidDraft, lang, layout, persistFluidState, refreshDiagnosticAfterSave, showToast, t])
 
   const handleFluidPhaseChange = React.useCallback((nextPhase) => {
     if (nextPhase === fluidPhase) return

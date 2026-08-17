@@ -217,6 +217,70 @@ assert(
   'Hero prompt reads formation_variants and refines the formation guardrail'
 )
 
+const rosaSrc = readFileSync(join(root, 'app/nuova-rosa-lab/page.jsx'), 'utf8')
+const toggleMatch = rosaSrc.match(/const handleFluidToggle = React\.useCallback\(async \(enabled\) => \{[\s\S]*?\}, \[([^\]]+)\]\)/)
+const persistMatch = rosaSrc.match(/const persistFluidState = React\.useCallback\(async \(enabled, draft = fluidDraft\) => \{[\s\S]*?\}, \[([^\]]+)\]\)/)
+const toggleBody = toggleMatch?.[0] || ''
+const persistBody = persistMatch?.[0] || ''
+const persistThenRefresh = /await persistFluidState\((?:true, nextDraft|false)\)\s*\n(?:\s*\} else \{\s*\n\s*await persistFluidState\(false\)\s*\n\s*\})?\s*\n\s*await refreshDiagnosticAfterSave\(\)/.test(toggleBody)
+  || (
+    toggleBody.includes('await persistFluidState(true, nextDraft)') &&
+    toggleBody.includes('await persistFluidState(false)') &&
+    toggleBody.includes('await refreshDiagnosticAfterSave()') &&
+    toggleBody.indexOf('await persistFluidState(true, nextDraft)') < toggleBody.indexOf('await refreshDiagnosticAfterSave()') &&
+    toggleBody.indexOf('await persistFluidState(false)') < toggleBody.indexOf('await refreshDiagnosticAfterSave()')
+  )
+
+assert(
+  'toggle-refresh-on-off',
+  Boolean(toggleMatch) && persistThenRefresh && String(toggleMatch[1]).includes('refreshDiagnosticAfterSave'),
+  'Fluid toggle refreshes diagnostic after successful persist ON and OFF'
+)
+assert(
+  'toggle-no-refresh-on-failed-persist',
+  persistBody.includes('return saved') && !persistBody.includes('refreshDiagnosticAfterSave') && toggleBody.includes('} catch (err)'),
+  'Failed persistFluidState does not regenerate diagnostic'
+)
+
+const fluidSaveMatch = rosaSrc.match(/if \(fluidEnabled\) \{[\s\S]*?await refreshDiagnosticAfterSave\(\)\s+showToast\(t\('positionsSavedSuccessfully'\), 'success'\)\s+return/)
+const fluidSaveRefreshCount = (fluidSaveMatch?.[0].match(/await refreshDiagnosticAfterSave\(\)/g) || []).length
+assert(
+  'fluid-position-save-single-refresh',
+  Boolean(fluidSaveMatch) &&
+    fluidSaveMatch[0].includes('/api/tactical/formation-variants') &&
+    fluidSaveRefreshCount === 1 &&
+    !persistBody.includes('refreshDiagnosticAfterSave'),
+  'Saving Fluid positions still does a single coherent diagnostic refresh'
+)
+
+async function runToggleRefresh({ persist, refresh }) {
+  await persist()
+  await refresh()
+}
+
+const calls = []
+await runToggleRefresh({
+  persist: async () => { calls.push('persist-on') },
+  refresh: async () => { calls.push('refresh-on') }
+})
+assert('cache-off-to-on', calls.join(',') === 'persist-on,refresh-on', 'OFF → ON refreshes diagnostic after persist')
+
+calls.length = 0
+await runToggleRefresh({
+  persist: async () => { calls.push('persist-off') },
+  refresh: async () => { calls.push('refresh-off') }
+})
+assert('cache-on-to-off', calls.join(',') === 'persist-off,refresh-off', 'ON → OFF refreshes diagnostic after persist')
+
+calls.length = 0
+try {
+  await runToggleRefresh({
+    persist: async () => { throw new Error('persist failed') },
+    refresh: async () => { calls.push('refresh-should-not-run') }
+  })
+} catch (_) {}
+assert('no-stale-refresh-on-failure', calls.length === 0, 'Persist failure does not refresh diagnostic with unsaved state')
+
 const failed = results.filter((row) => !row.ok)
 console.log(`\n${results.length - failed.length}/${results.length} passed`)
 if (failed.length) process.exit(1)
