@@ -12,7 +12,6 @@ import PrelaunchGate from '@/components/PrelaunchGate'
 import MaintenanceGate from '@/components/MaintenanceGate'
 import DailySpinWidget from '@/components/DailySpinWidget'
 import EfootballVersionCompatibilityGate from '@/components/EfootballVersionCompatibilityGate'
-import V6TacticalEntryPoints from '@/components/V6TacticalEntryPoints'
 import { isPrelaunchPublicPath } from '@/lib/prelaunchRoutes'
 import { isMaintenancePublicPath } from '@/lib/maintenanceRoutes'
 import { useSidebar } from '@/components/SidebarContext'
@@ -51,7 +50,6 @@ export default function AppLayoutShell({ children }) {
               paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))'
             }}
           >
-            <V6TacticalEntryPoints />
             <PrelaunchGate>{children}</PrelaunchGate>
             <div className="lg:hidden" style={{ height: '20px' }} />
           </main>
