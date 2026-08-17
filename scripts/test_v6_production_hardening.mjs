@@ -11,9 +11,13 @@ import { fileURLToPath } from 'node:url'
 import {
   evaluateLinkUpPlay,
   formatPhaseMatchupForPrompt,
+  getFluidCardRoleLabel,
+  getPhasePositionFit,
+  getPhaseSlotPosition,
   opponentFluidFromRow,
   shouldOmitFluidFormationRecommendation
 } from '../lib/efootballV6TacticalModel.js'
+import { playingStylesMatch } from '../lib/playingStyleResolve.js'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const results = []
@@ -201,6 +205,166 @@ assert(
   'G',
   samePlayerEval.activatable === false && samePlayerEval.verification_status === 'not_activatable',
   'Same starter for Focal Point and Key Man is never activatable'
+)
+
+const stylesLookup = {
+  id1: 'Orchestratore',
+  id2: 'Opportunista',
+  id3: 'Sviluppo',
+  id4: 'Ala prolifica',
+  id5: 'Box-to-Box',
+  id6: 'Onnipresente'
+}
+assert(
+  'P1',
+  playingStylesMatch('Orchestrator', 'Orchestratore')
+    && playingStylesMatch('Goal Poacher', 'Opportunista')
+    && playingStylesMatch('Build Up', 'Sviluppo')
+    && playingStylesMatch('Prolific Winger', 'Ala prolifica')
+    && playingStylesMatch('Box To Box', 'Box-to-Box')
+    && playingStylesMatch('Box To Box', 'Onnipresente')
+    && !playingStylesMatch('Orchestrator', 'Opportunista')
+    && !playingStylesMatch('Goal Poacher', 'Orchestratore'),
+  'Resolver maps EFHub EN names to production DB names without fuzzy matching'
+)
+
+const productionStarters = [
+  { id: 's1', player_name: 'Rodri', position: 'DMF', playing_style_id: 'id1' },
+  { id: 's2', player_name: 'Haaland', position: 'CF', playing_style_id: 'id2' },
+  { id: 's3', player_name: 'Rice', position: 'DMF', playing_style_id: 'id3' },
+  { id: 's4', player_name: 'Saka', position: 'RWF', playing_style_id: 'id4' },
+  { id: 's5', player_name: 'Valverde', position: 'CMF', playing_style_id: 'id5' },
+  { id: 's6', player_name: 'Bellingham', position: 'CMF', playing_style_id: 'id6' }
+]
+const productionOrchestratorPoacher = evaluateLinkUpPlay({
+  name: 'EFHub EN vs rosa IT',
+  focal_point: { playing_style: 'Orchestrator', position: 'DMF' },
+  key_man: { playing_style: 'Goal Poacher', position: 'CF' }
+}, [productionStarters[0], productionStarters[1]], stylesLookup)
+const productionBuildUpWinger = evaluateLinkUpPlay({
+  name: 'Build Up + Prolific Winger',
+  focal_point: { playing_style: 'Build Up', position: 'DMF' },
+  key_man: { playing_style: 'Prolific Winger', position: 'RWF' }
+}, [productionStarters[2], productionStarters[3]], stylesLookup)
+const productionBoxToBoxDb = evaluateLinkUpPlay({
+  name: 'Box To Box vs Box-to-Box',
+  focal_point: { playing_style: 'Box To Box', position: 'CMF' },
+  key_man: { playing_style: 'Goal Poacher', position: 'CF' }
+}, [productionStarters[4], productionStarters[1]], stylesLookup)
+const productionBoxToBoxAlias = evaluateLinkUpPlay({
+  name: 'Box To Box vs Onnipresente',
+  focal_point: { playing_style: 'Box To Box', position: 'CMF' },
+  key_man: { playing_style: 'Goal Poacher', position: 'CF' }
+}, [productionStarters[5], productionStarters[1]], stylesLookup)
+const productionFalsePositive = evaluateLinkUpPlay({
+  name: 'No fuzzy cross-style',
+  focal_point: { playing_style: 'Orchestrator', position: 'DMF' },
+  key_man: { playing_style: 'Goal Poacher', position: 'CF' }
+}, [
+  { id: 'x1', player_name: 'WrongStyle', position: 'DMF', playing_style_id: 'id2' },
+  productionStarters[1]
+], stylesLookup)
+assert(
+  'P2',
+  productionOrchestratorPoacher.activatable === true
+    && productionBuildUpWinger.activatable === true
+    && productionBoxToBoxDb.activatable === true
+    && productionBoxToBoxAlias.activatable === true
+    && productionFalsePositive.activatable === false
+    && productionFalsePositive.verification_status === 'not_activatable',
+  'Link-up matching uses playing_style_id + stylesLookup against EFHub EN requirements'
+)
+
+const fluidPlayer = {
+  id: 'starter-7',
+  player_name: 'Same Card',
+  position: 'CC',
+  original_positions: [{ position: 'TRQ', competence: 'Alta' }]
+}
+const layoutBefore = {
+  formation: '4-3-3',
+  slot_positions: {
+    ...fourThreeThreeAttack,
+    7: { position: 'CC', x: 50, y: 48 }
+  }
+}
+const persistedVariants = {
+  attack: {
+    formation: '4-3-3',
+    slot_positions: { ...fourThreeThreeAttack, 7: { position: 'CLS', x: 18, y: 62 } }
+  },
+  defense: {
+    formation: '4-3-3',
+    slot_positions: { ...fourThreeThreeDefense, 7: { position: 'TRQ', x: 50, y: 44 } }
+  }
+}
+const reloadedPlayer = { ...fluidPlayer }
+const reloadedLayout = JSON.parse(JSON.stringify(layoutBefore))
+const reloadedVariants = JSON.parse(JSON.stringify(persistedVariants))
+const attackRoleAfterReload = getFluidCardRoleLabel({
+  fluidEnabled: true,
+  isEditMode: false,
+  slotPosition: getPhaseSlotPosition(reloadedVariants.attack.slot_positions, 7),
+  playerPosition: reloadedPlayer.position
+})
+const defenseRoleAfterReload = getFluidCardRoleLabel({
+  fluidEnabled: true,
+  isEditMode: false,
+  slotPosition: getPhaseSlotPosition(reloadedVariants.defense.slot_positions, 7),
+  playerPosition: reloadedPlayer.position
+})
+assert(
+  'F1',
+  attackRoleAfterReload === 'CLS' && defenseRoleAfterReload === 'TRQ',
+  'Same card shows CLS in attack and TRQ in defense after reload'
+)
+assert(
+  'F2',
+  getPhasePositionFit('CLS', reloadedPlayer.original_positions).fit === 'fuori_ruolo',
+  'CLS absent from original_positions is out of role in attack'
+)
+assert(
+  'F3',
+  getPhasePositionFit('TRQ', reloadedPlayer.original_positions).fit === 'alta',
+  'TRQ present in original_positions is compatible in defense'
+)
+assert(
+  'F4',
+  reloadedPlayer.position === 'CC' && fluidPlayer.position === 'CC',
+  'players.position stays unchanged after Fluid save/reload'
+)
+assert(
+  'F5',
+  reloadedLayout.slot_positions[7].position === 'CC'
+    && JSON.stringify(reloadedLayout.slot_positions) === JSON.stringify(layoutBefore.slot_positions),
+  'formation_layout stays unchanged when Fluid is active'
+)
+assert(
+  'F6',
+  getPhaseSlotPosition(reloadedVariants.attack.slot_positions, 7) === 'CLS'
+    && getPhaseSlotPosition(reloadedVariants.defense.slot_positions, 7) === 'TRQ',
+  'attack/defense slot_positions persist after reload'
+)
+assert(
+  'F7',
+  getFluidCardRoleLabel({
+    fluidEnabled: false,
+    isEditMode: false,
+    slotPosition: 'CLS',
+    playerPosition: 'CC'
+  }) === 'CC',
+  'Fluid OFF keeps the previous Rosa card role (player.position)'
+)
+
+const rosaPage = readFileSync(join(root, 'app/nuova-rosa-lab/page.jsx'), 'utf8')
+const variantsRoute = readFileSync(join(root, 'app/api/tactical/formation-variants/route.js'), 'utf8')
+assert(
+  'F8',
+  rosaPage.includes('fluidEnabled={fluidEnabled}')
+    && rosaPage.includes('skipOutOfRoleWarning && !fluidEnabled')
+    && !variantsRoute.includes(".from('players')")
+    && variantsRoute.includes('NEVER modify'),
+  'Fluid save does not write players.position or add Fluid roles to original_positions'
 )
 
 const page = readFileSync(join(root, 'app/contromisure-pre-partita/page.jsx'), 'utf8')

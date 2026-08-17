@@ -14,7 +14,7 @@ import { PHOTO_TYPE_KEYS, getPhotoTypeConfig } from '@/lib/playerPhotoTypes'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 import { DEFAULT_FORMATION_NAME, DEFAULT_SLOT_POSITIONS } from '@/lib/formationDefaultSlots'
-import { normalizeLinkUpPlays } from '@/lib/efootballV6TacticalModel'
+import { normalizeLinkUpPlays, getFluidCardRoleLabel, getPhasePositionFit, getPhasePositionFitLabel } from '@/lib/efootballV6TacticalModel'
 import { confirmCoachLinkUpsFromPhotos } from '@/lib/confirmCoachLinkUpsFromPhotos'
 import { getFormationNameFromSlotPositions } from '@/lib/validateFormationLimits'
 import {
@@ -490,7 +490,8 @@ function SlotPlayerCard({
   onRemove,
   lang,
   isEditMode = false,
-  onPositionChange
+  onPositionChange,
+  fluidEnabled = false
 }) {
   const [dragging, setDragging] = React.useState(false)
   const [dragOffset, setDragOffset] = React.useState({ x: 0, y: 0 })
@@ -498,8 +499,14 @@ function SlotPlayerCard({
   /** After opening from pointer release (edit mode), skip one synthetic click to avoid double-open on desktop */
   const skipNextSyntheticCardClickRef = React.useRef(false)
   const slotThumb = React.useMemo(() => resolvePlayerCardImageUrl(player), [player])
-  const roleLabel = isEditMode ? (slot.position || player.position || '-') : (player.position || slot.position || '-')
-  const rosterPosition = String(player?.position || roleLabel || '').trim().toUpperCase()
+  const roleLabel = getFluidCardRoleLabel({
+    fluidEnabled,
+    isEditMode,
+    slotPosition: slot.position,
+    playerPosition: player.position
+  })
+  const phaseFit = fluidEnabled ? getPhasePositionFit(slot.position, player.original_positions) : null
+  const phaseFitLabel = phaseFit ? getPhasePositionFitLabel(phaseFit.fit, lang) : ''
   const initialsLabel = getPlayerInitials(player.player_name)
 
   React.useEffect(() => {
@@ -609,8 +616,8 @@ function SlotPlayerCard({
       onMouseDown={isEditMode ? handlePointerStart : undefined}
       onTouchStart={isEditMode ? handlePointerStart : undefined}
     >
-      <div className="nr-slot-top-badge">
-        <span>{roleLabel}</span>
+      <div className={`nr-slot-top-badge ${phaseFit?.fit === 'fuori_ruolo' ? 'is-out-of-role' : ''}`}>
+        <span>{phaseFitLabel ? `${roleLabel} · ${phaseFitLabel}` : roleLabel}</span>
       </div>
       <div className={`nr-slot-filled-main ${slotThumb ? 'has-photo' : 'has-initials'}`}>
         <div className="nr-slot-avatar-mini">
@@ -758,7 +765,8 @@ function SlotCard({
   onRemove,
   lang,
   isEditMode = false,
-  onPositionChange
+  onPositionChange,
+  fluidEnabled = false
 }) {
   return (
     <div className="nr-slot-card" style={{ left: `${slot.x}%`, top: `${slot.y}%` }}>
@@ -771,6 +779,7 @@ function SlotCard({
           lang={lang}
           isEditMode={isEditMode}
           onPositionChange={onPositionChange}
+          fluidEnabled={fluidEnabled}
         />
       ) : (
         <SlotEmptyCard slot={slot} onEmptyClick={onEmptyClick} isEditMode={isEditMode} onPositionChange={onPositionChange} />
@@ -5141,7 +5150,7 @@ export default withAuth(function NuovaRosaLabPage() {
     const positions = Array.isArray(player.original_positions) && player.original_positions.length > 0
       ? player.original_positions
       : (player.position ? [{ position: player.position, competence: 'Alta' }] : [])
-    const isOriginal = positions.some((entry) => String(entry?.position || '').toUpperCase() === String(targetSlot.position || '').toUpperCase())
+    const isOriginal = getPhasePositionFit(targetSlot.position, positions).fit !== 'fuori_ruolo'
 
     const continueAssign = async () => {
       setAssigning(true)
@@ -5789,8 +5798,8 @@ export default withAuth(function NuovaRosaLabPage() {
           const originalPositions = Array.isArray(player.original_positions) && player.original_positions.length > 0
             ? player.original_positions
             : (player.position ? [{ position: player.position, competence: 'Alta' }] : [])
-          const isOriginal = originalPositions.some((entry) => String(entry?.position || '').toUpperCase() === String(pos.position).toUpperCase())
-          if (isOriginal || originalPositions.length === 0) return null
+          const fit = getPhasePositionFit(pos.position, originalPositions)
+          if (fit.fit !== 'fuori_ruolo' || originalPositions.length === 0) return null
           return {
             player,
             newRole: pos.position,
@@ -6194,6 +6203,7 @@ export default withAuth(function NuovaRosaLabPage() {
                     lang={lang}
                     isEditMode={fieldEditMode}
                     onPositionChange={handleFieldPositionChange}
+                    fluidEnabled={fluidEnabled}
                   />
                 ))}
               </div>
@@ -7445,6 +7455,10 @@ export default withAuth(function NuovaRosaLabPage() {
           font-weight: 900;
           letter-spacing: 0.04em;
           color: #e0f2fe;
+        }
+
+        .nr-slot-top-badge.is-out-of-role span {
+          color: #fecaca;
         }
 
         .nr-picker-detail-hero img,
