@@ -66,6 +66,7 @@ PLAYSTYLE_KEY_MAP = {
     "LongBallCounter": "contrattacco",
     "OutWide": "vie_laterali",
     "LongBall": "passaggio_lungo",
+    "OverLoad": "pressing_totale",
 }
 
 MANAGER_ABILITY_STAT_MAP = {

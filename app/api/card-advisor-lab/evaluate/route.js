@@ -6,6 +6,19 @@ import { CARD_ADVISOR_SELECT, searchCardAdvisorCardsByName } from '@/lib/cardAdv
 import { fetchEfhubCardDetail } from '@/lib/efhubPlayerDetail.js'
 import { getPlayerDisplayStats, getPlayerBaselineStats } from '@/lib/playerEffectiveStats.js'
 import { summarizeSkillDelta } from '@/lib/cardAdvisorSkillCompare.js'
+import { resolveTeamStyleId } from '@/lib/efootballV6Rules.js'
+import { buildFluidFormationState } from '@/lib/efootballV6TacticalModel.js'
+import {
+  buildCardFluidContext,
+  buildDualStyleNote,
+  buildFluidCardReasonLine,
+  buildLinkUpPurchaseReason,
+  getCardPlayingStylesContract,
+  isCounterTeamStyle,
+  overloadFitApplies,
+  overloadFitLine,
+  verifyCardLinkUpPurchase
+} from '@/lib/cardAdvisorV6Context.js'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -34,7 +47,9 @@ const TEAM_STYLE_LABELS = {
   passaggio_lungo: { it: 'Passaggio lungo', en: 'Long Ball' },
   long_ball: { it: 'Passaggio lungo', en: 'Long Ball' },
   vie_laterali: { it: 'Vie laterali', en: 'Out Wide' },
-  out_wide: { it: 'Vie laterali', en: 'Out Wide' }
+  out_wide: { it: 'Vie laterali', en: 'Out Wide' },
+  pressing_totale: { it: 'Overload', en: 'Overload' },
+  overload: { it: 'Overload', en: 'Overload' }
 }
 
 function toAscii(value = '') {
@@ -389,6 +404,9 @@ function cardTechnicalSignals(card, catalogCard) {
     .filter((item, index, arr) => arr.indexOf(item) === index)
 
   const style = String(card.style || catalogCard?.playing_style || '').trim()
+  // Contratto dual/single v6: attack = stile legacy, defense solo se documentato
+  // (source_payload.playing_styles dal sync EFHub o playing_styles se presente).
+  const playingStyles = getCardPlayingStylesContract(catalogCard, card.style)
   const maxStats = catalogCard?.max_stats
   const statSource = maxStats && typeof maxStats === 'object' && Object.keys(maxStats).length > 0
     ? maxStats
@@ -399,6 +417,7 @@ function cardTechnicalSignals(card, catalogCard) {
 
   return {
     style,
+    playingStyles,
     mergedSkills,
     ...statSignals,
     height,
@@ -1064,22 +1083,28 @@ function movementProfile(technical, position, lang) {
 }
 
 function tacticalStyleFit(technical, position, tacticalStyle, profileRead, lang) {
-  const style = toAscii(tacticalStyle)
+  // Riconoscimento tramite ID canonici v6 (resolveTeamStyleId), non substring:
+  // l'ID 'contrattacco' (Long Ball Counter) non matcha 'contropiede'/'counter'.
+  const styleId = resolveTeamStyleId(tacticalStyle)
+  const isOutWide = styleId === 'vie_laterali'
+  const isCounter = isCounterTeamStyle(tacticalStyle)
+  const isPossession = styleId === 'possesso_palla'
+  const isOverload = styleId === 'pressing_totale'
   const groups = skillGroups(technical)
   const family = roleFamily(position)
   const teamStyle = teamStyleLabel(tacticalStyle, lang)
   const movement = movementArchetype(technical, position, lang)
-  if ((style.includes('vie laterali') || style.includes('out wide')) && ['TD', 'TS', 'CLD', 'CLS', 'EDA', 'ESA'].includes(position) && groups.crossing) {
+  if (isOutWide && ['TD', 'TS', 'CLD', 'CLS', 'EDA', 'ESA'].includes(position) && groups.crossing) {
     return lang === 'en'
       ? `Fits ${teamStyle}: wide movement plus crossing can turn the lane into a real chance source.`
       : `Si lega a ${teamStyle}: movimento largo e cross possono trasformare quella corsia in una fonte reale di occasioni.`
   }
-  if ((style.includes('vie laterali') || style.includes('out wide')) && movement.key === 'fox_in_box') {
+  if (isOutWide && movement.key === 'fox_in_box') {
     return lang === 'en'
       ? `Fits ${teamStyle}: Fox in the Box movement gives wide service a central target.`
       : `Si lega a ${teamStyle}: il movimento da Rapace d'area dà ai cross un riferimento centrale.`
   }
-  if ((style.includes('contropiede') || style.includes('counter')) && (technical.pace >= 78 || family === 'att')) {
+  if (isCounter && (technical.pace >= 78 || family === 'att')) {
     if (movement.key === 'goal_poacher') {
       return lang === 'en'
         ? `Fits ${teamStyle}: Goal Poacher movement attacks the last line early.`
@@ -1089,7 +1114,13 @@ function tacticalStyleFit(technical, position, tacticalStyle, profileRead, lang)
       ? `Fits ${teamStyle}: the value is early vertical attack, not slow possession.`
       : `Si lega a ${teamStyle}: il valore è attaccare verticale presto, non il possesso lento.`
   }
-  if ((style.includes('possesso') || style.includes('possession')) && technical.pass >= 76) {
+  if (isOverload) {
+    // Overload (pressing_totale): solo lettura/reasoning testuale — nessun bonus
+    // numerico dedicato oltre il cap tattico esistente.
+    const overloadLine = overloadFitLine({ family, groups }, lang)
+    if (overloadLine) return overloadLine
+  }
+  if (isPossession && technical.pass >= 76) {
     return lang === 'en'
       ? `Fits ${teamStyle}: cleaner passing makes the card useful in controlled build-up.`
       : `Si lega a ${teamStyle}: passaggio più pulito rende la carta utile nella costruzione controllata.`
@@ -1325,7 +1356,6 @@ function cardValueBullets(card, technical, lang) {
 
 function tacticalUseLine(card, technical, tacticalStyle, lang) {
   const family = roleFamily(card.position)
-  const style = toAscii(tacticalStyle)
   const groups = skillGroups(technical)
   const cardStyle = toAscii(technical.style)
   const hasDefensiveSkill = groups.defensive || technical.defend >= 72
@@ -1364,7 +1394,7 @@ function tacticalUseLine(card, technical, tacticalStyle, lang) {
       ? `It makes sense only if your current goalkeeper is costing you rebounds or close-range saves.`
       : `Ha senso solo se il tuo portiere attuale ti costa rimbalzi o parate ravvicinate.`
   }
-  if (style.includes('contropiede') || style.includes('counter')) {
+  if (isCounterTeamStyle(tacticalStyle)) {
     return lang === 'en'
       ? `It makes sense if you use him to attack depth early, not as another static forward.`
       : `Ha senso se lo usi per attaccare profondità subito, non come un altro attaccante statico.`
@@ -1410,7 +1440,8 @@ function tacticalMapLine(patterns, cardPosition, lang) {
 function decisionEvidence({ technical, sameRole, roleGap, duplicate, starterBlocked, tacticalStyle, profileRead, patterns, position }) {
   const groups = skillGroups(technical)
   const family = roleFamily(position)
-  const style = toAscii(tacticalStyle)
+  // ID canonici v6, non substring: 'contrattacco' entra nella logica counter.
+  const styleId = resolveTeamStyleId(tacticalStyle)
   const hasMapFit = Boolean(tacticalMapLine(patterns, position, 'it'))
   const hasTacticalFit = Boolean(tacticalStyleFit(technical, position, tacticalStyle, profileRead, 'it'))
   const hasNativeEdge = (
@@ -1432,9 +1463,10 @@ function decisionEvidence({ technical, sameRole, roleGap, duplicate, starterBloc
     (profileRead.needFinishing && (family === 'att' || groups.finishing))
   )
   const teamStyleFit = (
-    ((style.includes('vie laterali') || style.includes('out wide')) && groups.crossing) ||
-    ((style.includes('contropiede') || style.includes('counter')) && (technical.pace >= 78 || family === 'att')) ||
-    ((style.includes('possesso') || style.includes('possession')) && technical.pass >= 76)
+    (styleId === 'vie_laterali' && groups.crossing) ||
+    (isCounterTeamStyle(tacticalStyle) && (technical.pace >= 78 || family === 'att')) ||
+    (styleId === 'possesso_palla' && technical.pass >= 76) ||
+    (styleId === 'pressing_totale' && overloadFitApplies({ family, groups }))
   )
 
   return {
@@ -1618,7 +1650,7 @@ function teamSynergySummary({ card, score, hasRoster, technical, roleGap, duplic
     : `${intro}${card.name} può aiutarti in scenari specifici, soprattutto quando ti serve ${trait || 'una soluzione tecnica diversa'}.`
 }
 
-function teamSynergyReasons({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, technical, tacticalStyle, patterns, profileRead, evidence, combo, diversification, lang }) {
+function teamSynergyReasons({ card, sameRole, bestAlternative, roleGap, duplicate, starterBlocked, technical, tacticalStyle, patterns, profileRead, evidence, combo, diversification, lang, v6ReasonLines = [] }) {
   const lines = []
   const trait = strongestTrait(technical, card.position, lang)
   const movementRead = movementArchetype(technical, card.position, lang)
@@ -1668,7 +1700,11 @@ function teamSynergyReasons({ card, sameRole, bestAlternative, roleGap, duplicat
       : `Risponde a una priorità emersa dal profilo o dalle letture partita.`)
   }
   if (mapLine) addUniqueLine(lines, mapLine)
-  return lines.slice(0, 3)
+  // Contesto v6 (Link-up verificato, formazione fluida, dual style): motivi
+  // deterministici con priorità sulle linee generiche, senza bonus di punteggio.
+  const merged = []
+  ;[...v6ReasonLines, ...lines].forEach((line) => addUniqueLine(merged, line))
+  return merged.slice(0, 3)
 }
 
 function synergyUseLine({ card, sameRole, bestAlternative, duplicate, starterBlocked, upgradeEdge, technical, tacticalStyle, profileRead, lang }) {
@@ -2038,7 +2074,7 @@ function teamSynergyDetails({ card, sameRole, bestAlternative, roleGap, duplicat
   return details
 }
 
-function evaluate({ card, catalogCard, players, formation, coach, tacticalSettings, profile, patterns, gameAnalysis, stylesLookup, lang }) {
+function evaluate({ card, catalogCard, players, formation, coach, tacticalSettings, profile, patterns, gameAnalysis, stylesLookup, lang, fluid = null }) {
   const sameRole = sameRolePlayers(card, players, stylesLookup)
   const hasRoster = players.length > 0
   const startersOnPitch = players.filter(
@@ -2070,6 +2106,18 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   )
   const rosterCrowded = hasRoster && conflict.rosterCrowded
   const combo = hasRoster ? comboRead({ card, technical, players, issues, profileRead, gameRead, lang }) : null
+
+  // Contesto v6 (deterministico, niente scoring): formazione fluida, dual playing
+  // style e Link-up del coach verificati matematicamente sulla rosa attuale.
+  const cardContract = technical.playingStyles
+  const fluidContext = buildCardFluidContext({ fluid, cardPosition: card.position })
+  const linkUpContext = verifyCardLinkUpPurchase({ coach, players, card, cardContract, fluid, stylesLookup })
+  const v6ReasonLines = [
+    buildLinkUpPurchaseReason({ linkUpContext, card, lang }),
+    buildFluidCardReasonLine({ fluidContext, cardPosition: card.position, lang }),
+    buildDualStyleNote({ contract: cardContract, lang })
+  ].filter(Boolean)
+
   const evidence = {
     ...decisionEvidence({
       technical,
@@ -2110,7 +2158,9 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
   if (issues.needBuild && roleFamily(card.position) === 'mid') score += 7
   if (issues.needDepth && roleFamily(card.position) === 'att') score += 7
   if (issues.needAerial && technical.aerial >= 76) score += 5
-  if (movementRead.key === 'goal_poacher' && (issues.needDepth || /contropiede|counter/i.test(String(tacticalStyle || '')))) score += 7
+  // Stesso riconoscimento canonico del fit: 'contrattacco' (Long Ball Counter)
+  // entra nella logica di rimessa esistente, prima esclusa dal substring match.
+  if (movementRead.key === 'goal_poacher' && (issues.needDepth || isCounterTeamStyle(tacticalStyle))) score += 7
   if (movementRead.key === 'fox_in_box' && (issues.needAerial || technical.aerial >= 74 || /vie laterali|out wide/i.test(String(tacticalStyle || '')))) score += 7
   if (movementRead.key === 'target_man' && (technical.physical >= 76 || technical.aerial >= 76)) score += 6
   if (movementRead.key && movementRead.key !== 'goal_poacher' && movementRead.key !== 'fox_in_box' && movementRead.score >= 7) score += 4
@@ -2314,7 +2364,8 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
       evidence,
       combo,
       diversification,
-      lang
+      lang,
+      v6ReasonLines
     }),
     useLine: hasRoster && technical.hasCompleteCardData
       ? synergyUseLine({
@@ -2380,7 +2431,24 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
       evidence,
       catalogSource: catalogCard?.source || null,
       activeCoachName: hasCoach ? coach.coach_name : null,
-      coachConnectionName: connectionName(coach?.connection) || null
+      coachConnectionName: connectionName(coach?.connection) || null,
+      fluidFormation: {
+        enabled: fluidContext.fluid_enabled,
+        formation_base: fluidContext.formation_base,
+        formation_attack: fluidContext.formation_attack,
+        formation_defense: fluidContext.formation_defense,
+        card_role_in_attack: fluidContext.attack?.position_present ?? null,
+        card_role_in_defense: fluidContext.defense?.position_present ?? null
+      },
+      cardPlayingStyles: {
+        format: cardContract.format,
+        attack: cardContract.attack || null,
+        defense: cardContract.defense || null
+      },
+      linkUpVerification: {
+        status: linkUpContext.status,
+        linkUps: linkUpContext.linkUps
+      }
     }
   }
 }
@@ -2412,6 +2480,7 @@ export async function POST(req) {
     const [
       profile,
       formation,
+      formationVariants,
       players,
       styles,
       coach,
@@ -2422,9 +2491,11 @@ export async function POST(req) {
       ? await Promise.all([
         safeSupabaseQuery(admin.from('user_profiles').select('first_name, nickname, team_name, ai_weak_point, ai_learn_goals, ai_notes, input_delay, connection_quality, pass_level').eq('user_id', userId).maybeSingle(), {}, 'profile'),
         safeSupabaseQuery(admin.from('formation_layout').select('formation, slot_positions').eq('user_id', userId).maybeSingle(), null, 'formation'),
+        // Formazione fluida v6: degrada in silenzio a [] se la tabella non risponde.
+        safeSupabaseQuery(admin.from('formation_variants').select('id, phase, formation, slot_positions, is_active').eq('user_id', userId).in('phase', ['attack', 'defense']).eq('is_active', true), [], 'formation variants'),
         safeSupabaseQuery(admin.from('players').select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, skills, com_skills, form, base_stats, original_positions, height, weight, current_level, level_cap, active_booster_name, metadata, development_points').eq('user_id', userId).limit(60), [], 'players'),
         safeSupabaseQuery(admin.from('playing_styles').select('id, name'), [], 'playing styles'),
-        safeSupabaseQuery(admin.from('coaches').select('coach_name, playing_style_competence, connection, stat_boosters').eq('user_id', userId).eq('is_active', true).maybeSingle(), null, 'coach'),
+        safeSupabaseQuery(admin.from('coaches').select('coach_name, playing_style_competence, connection, stat_boosters, extracted_data').eq('user_id', userId).eq('is_active', true).maybeSingle(), null, 'coach'),
         safeSupabaseQuery(admin.from('team_tactical_settings').select('team_playing_style, individual_instructions').eq('user_id', userId).maybeSingle(), null, 'tactical settings'),
         safeSupabaseQuery(admin.from('team_tactical_patterns').select('formation_usage, playing_style_usage, recurring_issues, attack_areas_avg, recovery_zones_avg').eq('user_id', userId).maybeSingle(), {}, 'tactical patterns'),
         safeSupabaseQuery(admin.from('user_game_analysis').select('stats, captured_at').eq('user_id', userId).maybeSingle(), null, 'game analysis')
@@ -2432,6 +2503,7 @@ export async function POST(req) {
       : await Promise.all([
         Promise.resolve({}),
         Promise.resolve(null),
+        Promise.resolve([]),
         Promise.resolve([]),
         safeSupabaseQuery(admin.from('playing_styles').select('id, name'), [], 'playing styles'),
         Promise.resolve(null),
@@ -2442,6 +2514,7 @@ export async function POST(req) {
 
     const stylesLookup = {}
     ;(styles || []).forEach(style => { stylesLookup[style.id] = style.name })
+    const fluid = buildFluidFormationState(formation || null, formationVariants || [])
     const evaluation = evaluate({
       card,
       catalogCard,
@@ -2453,7 +2526,8 @@ export async function POST(req) {
       patterns: patterns || {},
       gameAnalysis: gameAnalysis || null,
       stylesLookup,
-      lang
+      lang,
+      fluid
     })
     return NextResponse.json({ evaluation })
   } catch (error) {

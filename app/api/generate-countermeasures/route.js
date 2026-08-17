@@ -13,7 +13,8 @@ import {
   evaluateLinkUpPlay,
   normalizeLinkUpPlays,
   opponentFluidFromRow,
-  shouldOmitFluidFormationRecommendation
+  shouldOmitFluidFormationRecommendation,
+  startersForLinkUpVerification
 } from '@/lib/efootballV6TacticalModel'
 
 export const runtime = 'nodejs'
@@ -313,7 +314,8 @@ export async function POST(req) {
     // 2. Recupera rosa partita: 11 titolari (slot 0-10) + massimo 12 riserve (slot null)
     const { data: clientRoster, error: rosterError } = await admin
       .from('players')
-      .select('id, player_name, position, overall_rating, base_stats, skills, com_skills, playing_style_id, slot_index, original_positions, photo_slots')
+      // metadata espone il contratto duale v6 (metadata.playing_styles {attack, defense})
+      .select('id, player_name, position, overall_rating, base_stats, skills, com_skills, playing_style_id, metadata, slot_index, original_positions, photo_slots')
       .eq('user_id', userId)
       .order('overall_rating', { ascending: false })
 
@@ -559,8 +561,11 @@ if (process.env.NODE_ENV !== 'production') {
 }
     
     // 9.2 Genera prompt contestuale con analisi approfondita
+    // Link-up = sinergia di costruzione: con Fluid attivo la verifica usa le posizioni
+    // della fase ATTACCO (copia dei titolari, player.position resta invariato).
+    const linkUpStarters = startersForLinkUpVerification(titolari, clientFluid)
     const linkUps = normalizeLinkUpPlays(activeCoach || {})
-      .map((play) => evaluateLinkUpPlay(play, titolari, stylesLookup))
+      .map((play) => evaluateLinkUpPlay(play, linkUpStarters, stylesLookup))
       .filter(Boolean)
 
     let prompt

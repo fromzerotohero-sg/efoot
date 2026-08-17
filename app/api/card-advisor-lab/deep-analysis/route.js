@@ -26,6 +26,13 @@ import {
 import { isStarterPlayer } from '@/lib/rosterSlotUtils.js'
 import { buildSkillMechanicsContext } from '@/lib/playerSkillSemantics.js'
 import { getPlayerBaselineStats } from '@/lib/playerEffectiveStats.js'
+import { buildFluidFormationState } from '@/lib/efootballV6TacticalModel.js'
+import {
+  buildCardFluidContext,
+  buildCardV6PromptBlock,
+  getCardPlayingStylesContract,
+  verifyCardLinkUpPurchase
+} from '@/lib/cardAdvisorV6Context.js'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -388,6 +395,7 @@ async function resolveCatalogCardForDeepAnalysis(admin, card) {
     base_stats: live.base_stats,
     max_stats: live.max_stats ?? row?.max_stats ?? null,
     playing_style: live.playing_style || row?.playing_style || card.style || '',
+    playing_styles: live.playing_styles || row?.playing_styles || row?.source_payload?.playing_styles || null,
     player_skills:
       Array.isArray(live.player_skills) && live.player_skills.length
         ? live.player_skills
@@ -475,7 +483,7 @@ function summarizeBuildPreviewForPrompt(preview, lang = 'it') {
   return JSON.stringify(payload, null, 2)
 }
 
-function buildPrompt({ lang, card, catalogCard, profile, players, stylesLookup = {}, formation, coach, tacticalSettings, patterns, gameAnalysis, diagnostic, feedback, performance, ragKnowledge, skillDeltaSentence = '', purchaseFactsText = '', buildComparisonText = '' }) {
+function buildPrompt({ lang, card, catalogCard, profile, players, stylesLookup = {}, formation, coach, tacticalSettings, patterns, gameAnalysis, diagnostic, feedback, performance, ragKnowledge, skillDeltaSentence = '', purchaseFactsText = '', buildComparisonText = '', v6ContextText = '' }) {
   const isEn = lang === 'en'
   const coachPolicies = getCoachPoliciesText(lang)
   const coachCore = getCoachSharedCoreText(lang)
@@ -654,7 +662,7 @@ COERENZA verdict ↔ purchase_fit (obbligatoria):
 - Rosa assente → purchase_fit insufficient_data; verdict situational; solo review carta
 
 ${purchaseFactsText}
-
+${v6ContextText ? `\n${v6ContextText}\n` : ''}
 CARTA
 ${JSON.stringify(cardPayload, null, 2)}
 
@@ -1114,6 +1122,7 @@ export async function POST(req) {
       playersRes,
       stylesRes,
       formationRes,
+      variantsRes,
       coachRes,
       tacticalRes,
       patternsRes,
@@ -1126,7 +1135,9 @@ export async function POST(req) {
       admin.from('players').select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, skills, com_skills, form, base_stats, original_positions, height, weight, current_level, level_cap, active_booster_name, metadata, development_points').eq('user_id', userId).limit(60),
       admin.from('playing_styles').select('id, name'),
       admin.from('formation_layout').select('formation, slot_positions, updated_at').eq('user_id', userId).maybeSingle(),
-      admin.from('coaches').select('coach_name, playing_style_competence, connection, stat_boosters, updated_at').eq('user_id', userId).eq('is_active', true).maybeSingle(),
+      // Formazione fluida v6: se la tabella non risponde, variantsRes.data resta undefined → [].
+      admin.from('formation_variants').select('id, phase, formation, slot_positions, is_active').eq('user_id', userId).in('phase', ['attack', 'defense']).eq('is_active', true),
+      admin.from('coaches').select('coach_name, playing_style_competence, connection, stat_boosters, extracted_data, updated_at').eq('user_id', userId).eq('is_active', true).maybeSingle(),
       admin.from('team_tactical_settings').select('team_playing_style, individual_instructions, updated_at').eq('user_id', userId).maybeSingle(),
       admin.from('team_tactical_patterns').select('formation_usage, playing_style_usage, recurring_issues, attack_areas_avg, recovery_zones_avg, last_50_matches_count').eq('user_id', userId).maybeSingle(),
       admin.from('user_game_analysis').select('stats, captured_at').eq('user_id', userId).maybeSingle(),
@@ -1171,6 +1182,22 @@ export async function POST(req) {
       lang
     })
     const purchaseFactsText = purchaseFacts.text
+
+    // Contesto v6 additivo (formazione fluida, dual playing style, Link-up
+    // verificato deterministicamente): blocco dati breve, il prompt resta quello.
+    const fluid = buildFluidFormationState(formationRes.data || null, variantsRes?.data || [])
+    const cardContract = getCardPlayingStylesContract(catalogCard, card.style)
+    const fluidContext = buildCardFluidContext({ fluid, cardPosition: card.position })
+    const linkUpContext = verifyCardLinkUpPurchase({
+      coach: coachRes.data || null,
+      players,
+      card,
+      cardContract,
+      fluid,
+      stylesLookup
+    })
+    const v6ContextText = buildCardV6PromptBlock({ fluidContext, cardContract, linkUpContext, lang })
+
     let buildComparisonText = ''
     try {
       const buildPreview = await computeCardAdvisorBuildPreview({
@@ -1208,7 +1235,8 @@ export async function POST(req) {
       ragKnowledge,
       skillDeltaSentence: skillDeltaLine,
       purchaseFactsText,
-      buildComparisonText
+      buildComparisonText,
+      v6ContextText
     })
 
     const requestBody = buildOpenAIRequestBody(MODEL, prompt)

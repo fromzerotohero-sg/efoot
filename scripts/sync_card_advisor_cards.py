@@ -342,6 +342,59 @@ def parse_foot(markup):
     return None
 
 
+def parse_phase_prefixed_style(value):
+    """
+    Parse one style token, PESDB/EFHub v6 style: "Att: Hole Player",
+    "Def: Pass Disruptor" or plain "Hole Player".
+    Next flight refs ("$undefined", "$f:...") count as missing values.
+    Returns (phase|None, name|None).
+    """
+    text = (value or "").strip()
+    if not text or text == "-" or text.startswith("$"):
+        return None, None
+    att = re.match(r"(?i)^att\s*:\s*(.+)$", text)
+    if att:
+        return "attack", (att.group(1).strip() or None)
+    dfn = re.match(r"(?i)^def\s*:\s*(.+)$", text)
+    if dfn:
+        return "defense", (dfn.group(1).strip() or None)
+    return None, text
+
+
+def build_playing_styles_contract(attack_raw, defense_raw=None):
+    """
+    Additive v6 dual playing-style contract for card_advisor_cards.
+
+    EFHub flight data exposes "playingStyle" (attack/sole style) and, on v6 dual
+    cards, "playingStyleDefensive". Mirrors scripts/import_epic_catalog.py
+    parse_styles semantics: legacy `playing_style` stays the attack style without
+    phase prefix; defense is never invented. Returns (attack, defense, contract).
+    """
+    attack = None
+    defense = None
+    raw_lines = []
+    for value, default_phase in ((attack_raw, "attack"), (defense_raw, "defense")):
+        phase, name = parse_phase_prefixed_style(value)
+        if name is None:
+            continue
+        raw_lines.append(value.strip())
+        phase = phase or default_phase
+        if phase == "attack" and attack is None:
+            attack = name
+        elif phase == "defense" and defense is None:
+            defense = name
+        elif attack is None:
+            attack = name
+    contract = {
+        "format": "dual" if defense else "single",
+        "attack": attack,
+        "defense": defense if defense else None,
+        "primary": attack,
+        "source_raw": raw_lines,
+    }
+    return attack, defense, contract
+
+
 def parse_detail(card):
     detail_url = card.get("source_url") or f"https://efhub.com/players/{card['source_player_id']}"
     markup = decode_flight_markup(fetch(detail_url))
@@ -353,7 +406,11 @@ def parse_detail(card):
     position = POSITION_MAP.get(raw_position, raw_position) or card.get("position")
     player_skills = [humanize_key(item) for item in (extract_json_array(data_markup, "skills") or [])]
     ai_playstyles = [humanize_key(item) for item in (extract_json_array(data_markup, "comSkills") or [])]
-    playing_style = extract_string_value(data_markup, "playingStyle")
+    raw_playing_style = extract_string_value(data_markup, "playingStyle")
+    raw_playing_style_defensive = extract_string_value(data_markup, "playingStyleDefensive")
+    playing_style, _, playing_styles_contract = build_playing_styles_contract(
+        raw_playing_style, raw_playing_style_defensive
+    )
     record = {
         "source_url": card.get("source_url"),
         "card_type": card.get("category") or "Card Advisor",
@@ -380,6 +437,7 @@ def parse_detail(card):
             "overall_rating": extract_int_value(data_markup, "overallRating"),
             "weak_foot_accuracy": extract_int_value(data_markup, "weakFootAccuracy"),
             "weak_foot_usage": extract_int_value(data_markup, "weakFootUsage"),
+            "playing_styles": playing_styles_contract,
         },
     }
     checks = [
