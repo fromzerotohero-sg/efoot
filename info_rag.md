@@ -734,7 +734,7 @@ Nota affidabilita: "special double touch" e varianti "tess/croqueta interrotta" 
 - **Disponibile per**: In evidenza, In risalto, Epico, Leggendario, Standard
 - **NON disponibile per**: Trending (già max livello)
 - **Come funziona**: Usa programmi per far apprendere abilità al giocatore
-- **Max slot**: 6 abilità totali (native + aggiunte)
+- **Max slot**: Skill Training consente di aggiungere fino a 5 Additional Skills. Le abilità native/fisse della carta non vanno conteggiate automaticamente come Additional Skills.
 
 ### 8.9 Priorità abilità per ruolo (per consigli)
 Quando si consigliano abilità da aggiungere (tramite Programmi, se non Trending): **Attaccanti** → Tiro di prima, Colpo di testa (se fisico), Finalizzazione acrobatica, Pallonetto mirato; **Registi** → Passaggio filtrante, Passaggio di prima, Passaggio calibrato; **Mediani** → Intercettazione, Contrasto Aggressivo, Tornante, Spirito combattivo; **Difensori** → Intercettazione, Marcatore, Colpo di testa, Dominio palle alte, Muro; **Ali** → Doppio tocco, Cross calibrato, Tornante; **Terzini** → Intercettazione, Cross calibrato (se offensivi); **Riserve d'impatto** → **Riserva di lusso**. Evitare abilità difensive su attaccanti puri; evitare abilità offensive su difensori centrali; max 2-3 abilità dribbling per giocatore.

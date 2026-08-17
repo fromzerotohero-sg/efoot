@@ -1,5 +1,6 @@
 import argparse
 from datetime import datetime, timezone
+from decimal import Decimal, InvalidOperation
 import json
 import os
 from pathlib import Path
@@ -233,12 +234,28 @@ def chunks(items, size):
         yield items[index:index + size]
 
 
-def normalize_playstyles(skills):
-    return {
-        target_key: int(skills[source_key])
-        for source_key, target_key in PLAYSTYLE_KEY_MAP.items()
-        if source_key in skills and skills[source_key] is not None
-    }
+def normalize_playstyle_value(raw_value):
+    if raw_value is None or isinstance(raw_value, bool):
+        return None
+    try:
+        value = Decimal(str(raw_value).strip())
+    except (InvalidOperation, ValueError):
+        return None
+    if not value.is_finite():
+        return None
+    return int(value) if value == value.to_integral_value() else float(value)
+
+
+def normalize_playstyles(skills, existing=None):
+    normalized = dict(existing) if isinstance(existing, dict) else {}
+    source = skills if isinstance(skills, dict) else {}
+    for source_key, target_key in PLAYSTYLE_KEY_MAP.items():
+        if normalized.get(target_key) is not None:
+            continue
+        value = normalize_playstyle_value(source.get(source_key))
+        if value is not None:
+            normalized[target_key] = value
+    return normalized
 
 
 def normalize_boosters(boost_ids):
