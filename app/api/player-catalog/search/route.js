@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
+import { getPlayingStylesContract } from '@/lib/playingStyleResolve'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -145,6 +146,7 @@ async function queryPlayerCatalog(supabase, { q, cardType, limit, offset, sort }
         completeness_score,
         position_compatibility,
         players_payload,
+        metadata,
         player_identity_id,
         player_identity_key,
         card_instance_key
@@ -214,8 +216,20 @@ function slotCompatibility(slotPosition = '', cardPosition = '') {
 
 function normalizeResult(row, slotPosition) {
   const payload = row?.players_payload && typeof row.players_payload === 'object'
-    ? row.players_payload
+    ? { ...row.players_payload }
     : {}
+  const metadata = row?.metadata && typeof row.metadata === 'object' ? row.metadata : {}
+  const playingStyles = getPlayingStylesContract({
+    playing_style: row.playing_style,
+    players_payload: payload,
+    metadata
+  })
+  // Additive dual-style contract for Rosa/save-player even before refresh_payloads migration.
+  if (playingStyles?.primary || playingStyles?.defense) {
+    payload.playing_styles = playingStyles
+    if (!payload.metadata || typeof payload.metadata !== 'object') payload.metadata = {}
+    payload.metadata = { ...payload.metadata, playing_styles: playingStyles }
+  }
 
   return {
     id: row.id,
@@ -229,7 +243,8 @@ function normalizeResult(row, slotPosition) {
     card_type: row.card_type,
     overall_level_1: row.overall_level_1,
     overall_max_level: row.overall_max_level,
-    playing_style: row.playing_style,
+    playing_style: playingStyles.primary || row.playing_style,
+    playing_styles: playingStyles,
     pack_name: row.pack_name,
     source_card_front_url: row.source_card_front_url || null,
     source_card_back_url: row.source_card_back_url || null,
@@ -239,6 +254,7 @@ function normalizeResult(row, slotPosition) {
     completeness_score: row.completeness_score ?? null,
     position_compatibility: row.position_compatibility || {},
     compatibility: slotCompatibility(slotPosition, row.position),
+    metadata,
     players_payload: payload,
     player_skills: Array.isArray(row.player_skills) ? row.player_skills : payload.player_skills || [],
     ai_playstyles: Array.isArray(row.ai_playstyles) ? row.ai_playstyles : payload.ai_playstyles || payload.com_skills || []
