@@ -179,6 +179,21 @@ const longPassSemantic = getPlayerSkillSemantic('Lancio lungo')
 assertEqual(longPassSemantic?.category, 'passing', 'Lancio lungo semantic category')
 assertEqual(longPassSemantic?.display, 'Lancio lungo preciso', 'Lancio lungo semantic display')
 
+if (!isKnownPlayerSkill('Attacking Surge')) {
+  console.error('FAIL known skill: "Attacking Surge" is not recognized')
+  process.exit(1)
+}
+assertEqual(getSkillDisplayLabel('Attacking Surge', 'it'), 'Attacking Surge', 'Attacking Surge IT')
+assertEqual(getPlayerSkillSemantic('Attacking Surge')?.category, 'special', 'Attacking Surge semantic category')
+if (!hasSkillSemantic('Attacking Surge')) {
+  console.error('FAIL Attacking Surge has no semantic definition')
+  process.exit(1)
+}
+if (!isFixedInnateCardSkill('Attacking Surge')) {
+  console.error('FAIL Attacking Surge must be a fixed innate special skill')
+  process.exit(1)
+}
+
 assertEqual(
   localizeSkillTermsInText('Long-Range Shooting and Long Range Shooting', 'it'),
   'Tiro dalla distanza and Tiro dalla distanza',
