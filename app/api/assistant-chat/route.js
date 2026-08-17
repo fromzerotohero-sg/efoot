@@ -14,6 +14,7 @@ import { localizeSkillTermsInText } from '@/lib/playerSkillLabels.js'
 import { buildCardAvailabilityBlock } from '@/lib/chatCardAvailability'
 import { fieldPositionMatchesCardCompetences } from '@/lib/playerSlotRoleMetadata'
 import { buildLegacyTacticalAiNotice } from '@/lib/efootballV6Rules'
+import { buildFluidFormationState, buildHeroFluidPromptBlock } from '@/lib/efootballV6TacticalModel'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -502,12 +503,19 @@ async function buildPersonalContext(userId, lang = 'it') {
       auth: { autoRefreshToken: false, persistSession: false }
     })
 
-    // Formation layout
+    // Formation layout (base). Fluid phases live in formation_variants; do not mutate this row.
     const { data: formationRow } = await admin
       .from('formation_layout')
       .select('formation, slot_positions')
       .eq('user_id', userId)
       .maybeSingle()
+    const { data: variantRows } = await admin
+      .from('formation_variants')
+      .select('id, phase, formation, slot_positions, is_active')
+      .eq('user_id', userId)
+      .in('phase', ['attack', 'defense'])
+      .eq('is_active', true)
+    const clientFluid = buildFluidFormationState(formationRow, variantRows || [])
     // Players (titolari + riserve) - include skills, forma, altezza/peso per ragionamento enterprise
     const { data: playersData, error: playersError } = await admin
       .from('players')
@@ -782,12 +790,23 @@ async function buildPersonalContext(userId, lang = 'it') {
     const reserveIdx = rosterLines.findIndex(l => l === reservesHeader)
     const starterLines = reserveIdx >= 0 ? rosterLines.slice(0, reserveIdx + 1) : rosterLines
     const benchLines = reserveIdx >= 0 ? rosterLines.slice(reserveIdx + 1) : []
+    const fluidBlock = buildHeroFluidPromptBlock({
+      fluid: clientFluid,
+      starters: titolari,
+      lang,
+      evidence: {
+        recurringIssues: patternsRow?.recurring_issues,
+        gameAnalysis: gameAnalysisRow?.stats,
+        attackAreas: (matches || []).map((m) => m.attack_areas).filter(Boolean).join(' ')
+      }
+    })
 
     const coreParts = [
       '======================================================================',
       L.boxTitle,
       L.boxSubtitle,
       '======================================================================',
+      fluidBlock,
       dispositionLine,
       '',
       L.positionNote,
@@ -864,7 +883,8 @@ function buildPersonalizedPromptV2(userMessage, context, language = 'it', efootb
 - INPUT: ROSA (stile card, stats vel/acc/res/fin/pas/tac, abilità, forma ↑/↓, h/w, competenze), MATCH/PATTERN (result, formation/stile, opponent formation, attack_areas, voti cliente, recurring_issues), COACH (competenze stile), TATTICA (stile squadra + istruzioni), RAG (limiti + movimenti/situazioni + community).
 - MICRO-SCORE: FIT (position = competenze), COACH_OK(style>=70; contrattacco→contropiede_veloce), SPD (vel+acc+Scatto), PASS (pas+filtrante/di prima/calibrato), WIN (tac+Intercettazione/Marcatore/Contrasto/Muro), AIR_DEF (h/w+Dominio palle alte), AIR_ATK (h/w+Colpo di testa), SUB (Riserva di lusso).
 - DECISIONE: scegli 1 leva principale + max 2 secondarie: (1) Fix FIT, (2) Fix mismatch coach/stile squadra, (3) Aggancia top recurring_issue, (4) 1-2 cambi titolari/riserve (vedi SOSTITUZIONI sotto), (5) 1 istruzione max 5, (6) gameplay solo "cosa fare" da §7.
-- VIETATO suggerire cambio formazione/modulo a meno che il cliente non lo chieda esplicitamente. Lavora sempre sulla formazione attuale salvata.
+- VIETATO proporre un nuovo modulo BASE o cambiare formation_layout se il cliente non lo chiede. NON inventare una formazione diversa senza dati.
+- FORMAZIONE FLUIDA: se nel contesto è ATTIVA, riconoscila ("La Formazione fluida è già attiva") e valuta ATTACCO vs DIFESA separatamente usando i ruoli di fase (non player.position). NON dire "attiva la formazione fluida". Se è NON ATTIVA, puoi suggerire di VALUTARLA solo quando i dati reali (recurring_issues, analisi, pattern, feedback) mostrano un bisogno diverso tra attacco e difesa; motiva. Vietato "Attiva Fluid, è migliore." Se non c'è evidenza, NON suggerirla.
 - SOSTITUZIONI (leva 4, incrocio enterprise): (1) Sintomo da Statistiche di gioco, recurring_issues, voti partite o domanda. (2) Ruolo da rafforzare: tiro=fin+abilita tiro; passaggio=pas+abilita passaggio; difesa=tac+WIN. (3) Titolari: chi è in quel ruolo, forma, voti, stile giocatore. (4) Riserve: chi ha fin/pas/tac, abilita che compensano e stile giocatore adatto (RAG §2: es. Opportunista/Rapace d'area per finalizzazione, Giocatore chiave per inserimenti, Regista/Classico 10 per passaggio, Collante per difesa); posizione compatibile; incrocia con stile squadra e competenza allenatore (riassunto Tattica e Allenatore). (5) Un solo cambio concreto: Far uscire [titolare], far entrare [riserva]: [motivo da dati]. Usa sempre riassunto (Rosa stile+fin/pas/tac+abilita, Statistiche di gioco, Andamento/voti, Tattica, Allenatore, Sintesi rosa, Sinergie, Leve) e RAG §2/§7/§8 quando rilevante.
 - BUILD/META: consigli funzionali a movimenti e difficolta. Se chiede "build giuste/vanno bene": usa sezione Build progressione PT + Motivi app; non contraddire build generate dall app senza dati.
 - INVERSE: sintomo?cause?leva: fasce (attack_areas wide)?esterni senza WIN/Tornante?copertura/istruzioni; attacco sterile?PASS basso o stile incoerente?regista/cambio stile/modulo; palle alte?AIR_DEF basso?DC/MED più forti+piazzati.
@@ -876,7 +896,8 @@ OUTPUT: 2-4 frasi operative, rispondi alla domanda specifica (es. tiro/passaggio
 - INPUT: ROSTER (card style, stats spd/acc/sta/fin/pas/tac, skills, form ↑/↓, h/w, competences), MATCH/PATTERN (result, formation/style, opponent formation, attack_areas, client ratings, recurring_issues), COACH (style competence), TACTICS (team style + instructions), RAG (limits + movements/situations + community).
 - MICRO-SCORES: FIT (position = competences), COACH_OK(style>=70; contrattacco→contropiede_veloce), SPD (spd+acc+Sprint), PASS (pas+Through ball/One-touch/Weighted), WIN (tac+Interception/Man marking/Aggressive tackle/Block), AIR_DEF (h/w+High ball dominance+Aerial superiority), AIR_ATK (h/w+Heading), SUB (Luxury sub=Super sub).
 - DECISION: pick 1 main lever + max 2 secondary: (1) Fix FIT, (2) Fix coach/team-style mismatch, (3) Anchor top recurring_issue, (4) 1-2 lineup changes (see SUBSTITUTIONS below), (5) 1 instruction max 5, (6) gameplay "what to do" only from §7.
-- FORBIDDEN to suggest formation/module changes unless explicitly asked. Always work with the current saved formation.
+- FORBIDDEN to propose a new BASE module or change formation_layout unless the client asks. Do not invent a different formation without data.
+- FLUID FORMATION: if the context says it is ACTIVE, recognise it ("Fluid Formation is already active") and evaluate ATTACK vs DEFENCE separately using phase roles (not player.position). Do NOT say "turn Fluid on". If it is OFF, you MAY suggest evaluating it only when real data (recurring_issues, analysis, patterns, feedback) show a different attack vs defence need; motivate it. Forbidden: "Turn Fluid on, it is better." If there is no evidence, do not suggest it.
 - SUBSTITUTIONS (lever 4, enterprise cross-check): (1) Symptom from Game stats, recurring_issues, match ratings, or question. (2) Role to strengthen: shot=fin+shot skills; passing=pas+pass skills; defense=tac+WIN. (3) Starters: who is in that role, form, ratings, player style. (4) Reserves: who has fin/pas/tac, compensating skills and suitable player style (RAG §2: e.g. Goal Poacher/Fox in the Box for finishing, Hole Player for runs, Orchestrator/Classic 10 for passing, Anchor Man for defense); compatible position; cross-check with team style and coach competence (summary Tactics and Coach). (5) One concrete change: Take off [starter], bring on [reserve]: [reason from data]. Always use summary (Roster style+fin/pas/tac+skills, Game stats, Form/ratings, Tactics, Coach, Roster summary, Synergies, Levers) and RAG §2/§7/§8 when relevant.
 - BUILD/META: functional advice for movements and difficulties. If they ask builds ok/correct: use Progression builds section + app Why lines; do not contradict app-generated builds without data.
 - INVERSE: symptom?cause?lever: wide threat (attack_areas wide)?wide players lack WIN/track back?coverage/instructions; stale attack?low PASS or mismatch style?add creator/change style/formation; aerial goals?low AIR_DEF?stronger CB/DM + set pieces.
@@ -888,7 +909,8 @@ OUTPUT: 2-4 imperative sentences; answer the specific question (e.g. shot/pass/d
 - INPUT: PLANTILLA (estilo carta, stats vel/acc/res/fin/pas/tac, habilidades, forma ↑/↓, h/w, competencias), PARTIDOS/PATRONES (resultado, formación/estilo, formación rival, attack_areas, votos cliente, recurring_issues), ENTRENADOR (competencias estilo), TÁCTICA (estilo equipo + instrucciones), RAG (límites + movimientos/situaciones + community).
 - MICRO-SCORE: FIT (position = competencias), COACH_OK(style>=70; contrattacco→contropiede_veloce), SPD (vel+acc+Sprint), PASS (pas+filtrante/de primera/calibrado), WIN (tac+Intercepción/Marcador/Entrada agresiva/Bloqueo), AIR_DEF (h/w+Dominio balones altos+Superioridad aérea), AIR_ATK (h/w+Remate de cabeza), SUB (Suplente de lujo).
 - DECISIÓN: elige 1 palanca principal + max 2 secundarias: (1) Corregir FIT, (2) Corregir desajuste entrenador/estilo equipo, (3) Vincular recurring_issue principal, (4) 1-2 cambios titulares/suplentes (ver SUSTITUCIONES abajo), (5) 1 instrucción max 5, (6) gameplay solo "qué hacer" de §7.
-- PROHIBIDO sugerir cambio de formación/módulo a menos que el cliente lo pida explícitamente. Trabaja siempre con la formación actual guardada.
+- PROHIBIDO proponer un módulo BASE nuevo o cambiar formation_layout si el cliente no lo pide. No inventes una formación distinta sin datos.
+- FORMACIÓN FLUIDA: si el contexto dice que está ACTIVA, reconócela ("La Formación fluida ya está activa") y evalúa ATAQUE vs DEFENSA por separado con los roles de fase (no player.position). NO digas "activa Fluid". Si está NO ACTIVA, puedes sugerir EVALUARLA solo cuando los datos reales (recurring_issues, análisis, patrones, feedback) muestren una necesidad distinta entre ataque y defensa; motívalo. Prohibido: "Activa Fluid, es mejor." Si no hay evidencia, no la sugieras.
 - SUSTITUCIONES (palanca 4, cruce enterprise): (1) Síntoma de Estadísticas de juego, recurring_issues, votos partidos o pregunta. (2) Rol a reforzar: tiro=fin+habilidades tiro; pase=pas+habilidades pase; defensa=tac+WIN. (3) Titulares: quién está en ese rol, forma, votos, estilo jugador. (4) Suplentes: quién tiene fin/pas/tac, habilidades que compensan y estilo jugador adecuado (RAG §2: ej. Oportunista/Rapaz de área para definición, Jugador de área para desmarques, Organizador/Clásico 10 para pase, Ancla para defensa); posición compatible; cruzar con estilo equipo y competencia entrenador (resumen Táctica y Entrenador). (5) Un solo cambio concreto: Sacar a [titular], poner a [suplente]: [motivo con datos]. Usa siempre resumen (Plantilla estilo+fin/pas/tac+habilidades, Estadísticas de juego, Forma/votos, Táctica, Entrenador, Resumen plantilla, Sinergias, Palancas) y RAG §2/§7/§8 cuando sea relevante.
 - BUILD/META: consejos funcionales para movimientos y dificultades. Si pregunta "builds correctas/están bien": usa sección Build progresión PT + Motivos app; no contradigas builds generadas por la app sin datos.
 - INVERSE: síntoma?causas?palanca: bandas (attack_areas wide)?externos sin WIN/Carrilero?cobertura/instrucciones; ataque estéril?PASS bajo o estilo incoherente?organizador/cambio estilo/módulo; balones altos?AIR_DEF bajo?DC/MED más fuertes+jugadas a balón parado.
@@ -950,6 +972,7 @@ SCOPE: solo consulenza tattica eFootball basata su ROSA, PARTITE, ALLENATORE, TA
 - Gameplay consentito SOLO come "cosa fare" (azioni). VIETATO citare tasti/pulsanti/controller.
 - Uso app (wizard, click, menu, upload): NON spiegare. Se chiesto, rispondi solo: "Sono qui solo per consigli tattici: formazione, rosa, modulo, sostituzioni, stile. Esplora il menu per le altre funzioni."
 - MICRO-REMINDER consentito: se mancano dati critici (formazione/coach/statistiche), puoi aggiungere UNA frase breve di promemoria dopo il consiglio tattico. Non spiegare passaggi UI, non fare tutorial.
+- FORMAZIONE FLUIDA: se ATTIVA nel contesto, dillo e valuta ATTACCO/DIFESA con i ruoli di fase. Se NON ATTIVA, suggeriscila solo se i dati mostrano un bisogno diverso tra le due fasi, e motiva. Mai cambiare formation_layout o player.position.
 
 FONTI: Nomi/rosa/partite/allenatore/tattica = solo dal blocco contesto sotto (ROSA E DATI o RIASSUNTO ANALISI). Regole eFootball = solo dal blocco RAG. Se manca un dato, non inventare.
 GIOCATORE NON IN ROSA: se il cliente chiede di un giocatore che NON appare nel contesto sottostante, DEVI dire "Non ho [nome] nella tua rosa salvata" e NON inventare competenze, stile o attivazione. Puoi solo citare info generiche dal RAG (se presenti) dichiarando "in generale".
@@ -979,6 +1002,7 @@ SCOPE: only eFootball tactical advice based on ROSTER, MATCHES, COACH, TACTICS a
 - Gameplay allowed only as "what to do" (actions). Never mention buttons/inputs/controller.
 - App usage (wizard, clicks, menus, upload): do not explain. If asked, reply only: "I'm here only for tactical advice: formation, roster, module, substitutions, style. Explore the menu for other features."
 - MICRO-REMINDER allowed: if critical data is missing (formation/coach/stats), you may add ONE short reminder sentence after tactical advice. Do not explain UI steps and do not provide tutorials.
+- FLUID FORMATION: if ACTIVE in context, say so and evaluate ATTACK/DEFENCE with phase roles. If OFF, suggest evaluating it only when data show a different need between the two phases, and motivate it. Never change formation_layout or player.position.
 
 SOURCES: Names/roster/matches/coach/tactics only from the context block below (ROSTER & DATA or ANALYSIS SUMMARY). eFootball rules only from the RAG block. If data is missing, do not invent.
 PLAYER NOT IN ROSTER: if the client asks about a player NOT listed in the context below, you MUST say "I don't have [name] in your saved roster" and NEVER invent competences, style, or activation. You may only cite generic info from RAG (if present) prefixed with "in general".
@@ -1009,6 +1033,7 @@ ALCANCE: solo asesoramiento táctico de eFootball basado en PLANTILLA, PARTIDOS,
 - Gameplay permitido SOLO como "qué hacer" (acciones). PROHIBIDO mencionar botones/controles/controller.
 - Uso de la app (wizard, clics, menús, upload): NO expliques. Si te preguntan, responde solo: "Solo estoy aquí para consejos tácticos: formación, plantilla, módulo, sustituciones, estilo. Explora el menú para otras funciones."
 - MICRO-REMINDER permitido: si faltan datos críticos (formación/entrenador/estadísticas), puedes añadir UNA frase breve de recordatorio después del consejo táctico. No expliques pasos de UI, no hagas tutoriales.
+- FORMACIÓN FLUIDA: si está ACTIVA en el contexto, dilo y evalúa ATAQUE/DEFENSA con los roles de fase. Si NO está activa, sugiere evaluarla solo cuando los datos muestren una necesidad distinta entre las dos fases, y motívalo. Nunca cambies formation_layout ni player.position.
 
 FUENTES: Nombres/plantilla/partidos/entrenador/táctica = solo del bloque de contexto abajo (PLANTILLA Y DATOS o RESUMEN ANÁLISIS). Reglas eFootball = solo del bloque RAG. Si falta un dato, no inventes.
 JUGADOR NO EN PLANTILLA: si el cliente pregunta por un jugador que NO aparece en el contexto abajo, DEBES decir "No tengo a [nombre] en tu plantilla guardada" y NUNCA inventes competencias, estilo o activación. Solo puedes citar info genérica del RAG (si está presente) declarando "en general".
