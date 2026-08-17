@@ -1,0 +1,22 @@
+# Sincronizza pack eFHUB -> card_advisor_* (Supabase). Catalogo rosa: script PESDB separati.
+# Lun e gio ~08:15 UTC; modifica il cron se preferisci altro orario.
+name: Card Advisor pack sync
+
+on:
+  schedule:
+    - cron: "15 8 * * 1,4"
+  workflow_dispatch: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: sync_card_advisor_cards (--replace-active)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: bash scripts/run_card_advisor_pack_refresh.sh

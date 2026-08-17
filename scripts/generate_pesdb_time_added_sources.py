@@ -2,7 +2,7 @@
 Genera un JSON di sorgenti PESDB per import_epic_catalog.py (--url-json).
 
 Uso tipico: andare a ritroso giorno per giorno (UTC midnight) con time_added,
-come da docs/PLAYER_CATALOG_IMPORT.md.
+come da docs/AGGIORNAMENTO_DATABASE.md.
 
 Esempio:
   python scripts/generate_pesdb_time_added_sources.py --end-date 2026-05-13 --days 5 --max-pages 8 \\

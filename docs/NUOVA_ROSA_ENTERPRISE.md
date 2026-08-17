@@ -1130,7 +1130,7 @@ La priorita enterprise e:
 - `app/api/starter-pack/import/route.js`
 - `app/card-advisor-lab/page.jsx`
 - `app/api/card-advisor-lab/evaluate/route.js`
-- `docs/PLAYER_CATALOG_IMPORT.md`
+- `docs/AGGIORNAMENTO_DATABASE.md`
 - `scripts/efootballhub_bigtime_batch1.json`
 - `scripts/import_efootballhub_catalog.py`
 - `scripts/parse_efootballhub_player.py`

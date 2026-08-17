@@ -37,6 +37,7 @@ Ogni documento descrive un servizio completo: API, componenti, database, sicurez
 |-----------|-----------|
 | [FLUSSI.md](./FLUSSI.md) | Flussi principali (auth, partite, classifica, profilo) |
 | [FLUSSI_LOGICA_SUPABASE.md](./FLUSSI_LOGICA_SUPABASE.md) | Flussi per sezione e intersezioni con tabelle Supabase |
+| [AGGIORNAMENTO_DATABASE.md](./AGGIORNAMENTO_DATABASE.md) | **Import PESDB (catalogo) + eFHUB (Card Advisor) in Supabase** |
 | [REVISIONE_LOGICA_PIATTAFORMA.md](./REVISIONE_LOGICA_PIATTAFORMA.md) | Revisione logica e checklist |
 | [ONBOARDING_FORMAZIONE_TEST.md](./ONBOARDING_FORMAZIONE_TEST.md) | Decisione prodotto e UX per import formazione di test |
 | [AUDIT_FLUSSO_RIDONDANZE_ALLINEAMENTO.md](./AUDIT_FLUSSO_RIDONDANZE_ALLINEAMENTO.md) | Audit ridondanze e allineamento |

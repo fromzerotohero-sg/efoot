@@ -52,11 +52,11 @@ async function resolveClientAuthBearer() {
 }
 
 function buildPreviewCacheKey(cardId, lang) {
-  return `v3:${cardId}:${lang === 'en' ? 'en' : 'it'}`
+  return `v3:${cardId}:${lang === 'en' ? 'en' : lang === 'es' ? 'es' : 'it'}`
 }
 
 function deepAnalysisCacheKey(cardId, lang) {
-  return `${cardId}:${lang === 'en' ? 'en' : 'it'}`
+  return `${cardId}:${lang === 'en' ? 'en' : lang === 'es' ? 'es' : 'it'}`
 }
 
 const copy = {
@@ -393,6 +393,173 @@ const copy = {
     buildCopyPt: 'Copy PT',
     buildCopied: 'Copied',
     buildSlotsFree: 'free slots',
+  },
+  es: {
+    eyebrow: 'Consejo de cartas',
+    title: 'Card Advisor',
+    subtitle: '¿Vale los coins para tu plantilla? Rol, estilo, formación, entrenador — decide con contexto real.',
+    dataBadge: 'Análisis de carta + encaje en plantilla',
+    notPublic: 'Sobre tu plantilla, no genérico.',
+    releaseTitle: 'Catálogo de cartas',
+    sourceNote: 'Sobre o búsqueda: perfiles listos para comparar al instante.',
+    cardScore: 'Sinergia',
+    cardIdentity: 'Identidad',
+    role: 'Rol',
+    style: 'Estilo',
+    build: 'Qué aporta',
+    verdict: 'Lectura',
+    strengths: 'Por qué importa',
+    risks: 'Precaución de uso',
+    nativeSkills: 'Perfil técnico',
+    teamFit: 'Sinergia con tu equipo',
+    teamSynergyScore: 'Sinergia de equipo',
+    coachAdvice: 'Consejo',
+    chartInsightTitleMissing: '¿Quieres un consejo aún más personalizado?',
+    chartInsightTextMissing: 'Sube tus Estadísticas de juego: el veredicto entenderá mejor cómo juegas realmente y leerá esta carta sobre tu plantilla real.',
+    chartInsightTitleReady: 'Estadísticas vinculadas',
+    chartInsightTextReady: 'Opcional: mejora el contexto del veredicto Pro.',
+    chartInsightCta: 'Subir estadísticas',
+    chartInsightRefreshCta: 'Actualizar',
+    proUnlockTitle: 'Veredicto Pro',
+    proUnlockText: 'Fichar, saltar o rotación — sobre tu plantilla real.',
+    proUnlockBullets: ['Decisión clara: fichar, saltar o rotación', 'Encaje con titulares, banquillo, estilo y entrenador', 'Dónde brilla y cuándo evitarla'],
+    proUnlockButton: 'Desbloquear veredicto Pro',
+    proUnlockButtonCost: '2 HP',
+    proUnlockedBadge: 'Desbloqueado',
+    proUnlockedTitle: 'Análisis listo',
+    proFeaturedHookTop: 'Perfil fuerte: descubre si vale la pena ficharlo para tu plantilla.',
+    proFeaturedHookGood: 'Carta interesante: analiza encaje, habilidades y rotación en tu plantilla.',
+    proFeaturedHookSituational: 'A evaluar en contexto: comparación con tus titulares.',
+    proFeaturedHookSkip: 'Antes de gastar: análisis Pro sobre encaje y prioridad en plantilla.',
+    proUnlockedTeaser: 'Informe personalizado aquí abajo — comparación de habilidades, pros/contras y decisión.',
+    buildSectionHintAfterPro: 'Referencia PT y habilidades — compara con el veredicto superior.',
+    insufficientHpTitle: 'HP insuficientes',
+    insufficientHpText: 'Veredicto Pro = 2 HP. Recarga y vuelve a intentarlo.',
+    rechargeHpCta: 'Recargar HP',
+    baseDetailsShow: 'Ver detalles base',
+    baseDetailsHide: 'Ocultar detalles base',
+    deepAnalysisCta: 'Desbloquear veredicto Pro',
+    deepAnalysisCost: '2 HP',
+    deepAnalysisLoading: 'Preparando veredicto…',
+    deepAnalysisLoadingKicker: 'Análisis coach',
+    deepAnalysisLoadingStatus: 'Cruzando carta, plantilla y tus datos…',
+    deepAnalysisLoadingTipLabel: 'Mientras esperas',
+    deepAnalysisLoadingTips: [
+      'Sube las Estadísticas de juego desde el panel: el veredicto cruza pase, remate y defensa con cómo juegas realmente.',
+      'Vincula plantilla y formación guardada: sin titulares y módulo el consejo se basa solo en la carta, no en tu equipo.',
+      'Chat Coach (2 HP): pregunta cosas concretas — ej. «¿Uso demasiado el pase filtrado?» o «¿Con esta plantilla fallo los remates?» — no «¿cómo mejoro en general?».',
+      'Evita preguntas vagas o tier lists: cada mensaje parte de un dato tuyo (estadísticas, partido, nombre de jugador, formación).',
+      'Card Advisor = evaluar si fichar la carta; el chat = cómo usarla en partido con la plantilla que ya tienes.',
+      'Después del partido: guarda resultado y valoraciones, luego pregunta qué cambiar en banquillo, estilo de equipo o instrucciones.',
+      'Las funciones con captura (partido, formación, estadísticas) cuestan HP: úsalas cuando necesites un dato real, no al azar.',
+      'Cuanto más completa esté la plantilla (habilidades, estilo, entrenador activo), más específico es el veredicto Pro.'
+    ],
+    deepAnalysisError: 'Veredicto no disponible. Reintenta.',
+    deepAnalysisTitle: 'Veredicto Pro',
+    premiumSectionLabel: 'Pro',
+    premiumSectionHint: 'Decisión completa',
+    deepKeyReasoning: 'Razonamientos clave',
+    deepPros: 'Pros',
+    deepCons: 'Contras',
+    deepSynergies: 'Sinergias',
+    deepHowToUse: 'Cómo usarla',
+    deepWhenAvoid: 'Cuándo evitarla',
+    deepFinalDecision: 'Decisión final',
+    deepShowFull: 'Ver informe completo',
+    deepHideFull: 'Ocultar informe',
+    howToUse: 'Lectura de sinergias',
+    viewDetails: 'Ver detalles',
+    hideDetails: 'Ocultar detalles',
+    synergyDetails: 'Detalle de sinergia',
+    noRosterTitle: 'Evaluación de carta disponible',
+    noRosterText: 'Sin plantilla: carta y estilo. Con plantilla: sinergias y prioridades concretas.',
+    selectedHint: 'Toca una carta para abrir la ficha.',
+    topPick: 'Sinergia alta',
+    goodPick: 'Sinergia buena',
+    situationalPick: 'Sinergia parcial',
+    skipPick: 'A contextualizar',
+    compareCta: 'Completa la plantilla para el encaje',
+    currentRelease: 'Pack actual',
+    allCards: 'Todas las cartas',
+    activePacks: 'Buscar en el catálogo',
+    packScrollHint: 'Desliza packs',
+    packTypeAll: 'Catálogo completo',
+    searchPlaceholder: 'Buscar jugador, rol o pack...',
+    cardsAvailable: 'cartas disponibles',
+    noCardsFound: 'Ninguna carta encontrada con estos filtros.',
+    needsSourceReview: 'En actualización',
+    similarPlayers: 'Perfiles considerados',
+    priorityVerdict: 'Lectura para ti',
+    synergyHigh: 'Sinergia alta',
+    synergyMedium: 'Sinergia media',
+    synergyLow: 'Sinergia baja',
+    cardProfileOnly: 'Perfil de carta',
+    rosterSynergy: 'Sinergia plantilla',
+    moduleFit: 'Encaje formación',
+    systemSynergy: 'Lectura de sinergias',
+    noFormationTitle: 'Completa los titulares',
+    noFormationText: 'Se necesitan 11 jugadores en campo (slots titulares) para la comparación con tu plantilla.',
+    noCoachText: 'Entrenador activo = estilo y competencias en el veredicto.',
+    saveFormationCta: 'Completar titulares en Plantilla',
+    addCoachCta: 'Añadir entrenador',
+    openCard: 'Abrir ficha',
+    checkingRoster: 'Verificando plantilla...',
+    rosterReadyTitle: 'Plantilla vinculada',
+    rosterReadyText: 'Comparación con titulares, banquillo, formación y prioridades.',
+    rosterLinkedChip: 'Plantilla vinculada',
+    rosterMissingTitle: 'Falta la plantilla',
+    rosterMissingText: 'Lectura general ahora. Con plantilla: consejo a medida.',
+    rosterUnavailableTitle: 'Lectura general',
+    rosterUnavailableText: 'Evalúa ahora. Encaje personalizado cuando la plantilla esté lista.',
+    rosterPlayers: 'Jugadores',
+    rosterStarters: 'Titulares',
+    rosterFormation: 'Formación',
+    personalFitPreview: 'Encaje equipo',
+    replacementLogic: 'cadena de juego',
+    duplicateLogic: 'movimientos compatibles',
+    priorityLogic: 'escenario útil',
+    loadRoster: 'Abrir gestión de plantilla',
+    closeDetails: 'Cerrar detalles',
+    mainLever: 'Palanca principal',
+    coachContext: 'Contexto entrenador',
+    recommendedUse: 'Uso recomendado',
+    coinRisk: '',
+    purchaseAdvice: 'Consejo final',
+    cardValue: 'Qué ofrece la carta',
+    loadingDecision: 'Analizando…',
+    noNativeSkills: 'Perfil técnico no disponible.',
+    buildSectionTitle: 'Build y habilidades',
+    buildSectionHint: 'Dos propuestas de puntos: comparación y build recomendada para tu plantilla.',
+    buildOvrCard: 'OVR niv. 1',
+    buildOvrBuilt: 'OVR build',
+    buildWhyToggle: 'Por qué esta build',
+    buildWhyToggleMeta: 'Qué muestra la comparación',
+    buildWhyHide: 'Ocultar',
+    buildWhyTitle: 'Detalle',
+    buildWhyIntroRoster: 'Detalle opcional: diferencias respecto a la comparación y vínculo con tus habilidades.',
+    buildWhyIntroMeta: '',
+    buildMetaBadge: 'Comparación',
+    buildRosterBadge: 'Recomendada',
+    buildPtDiff: 'Diferencia vs meta',
+    buildMetaTitle: 'Build meta del pack',
+    buildMetaHint: 'Distribución típica para este rol — para comparar, no para copiar tal cual.',
+    buildRosterTitle: 'Build para tu plantilla',
+    buildRosterHint: 'Pensada para formación, entrenador y cómo juegas tú.',
+    buildRosterMissing: 'Vincula la plantilla para la build personalizada.',
+    buildSkillsTitle: 'Habilidades',
+    buildSkillNextTitle: 'A evaluar en programa',
+    buildSkillNextHint: 'Útil solo si aún puedes añadir una habilidad con los puntos de progresión.',
+    buildNativeSkills: 'En la carta',
+    buildPtUsed: 'PT',
+    buildPlayOvr: 'OVR juego',
+    buildLoading: 'Calculando build…',
+    buildUnavailable: 'Build no disponible para esta carta.',
+    buildCatalogMissing: 'Datos de carta incompletos: build no calculable.',
+    buildNoProgression: 'Solo POTW, Trending y OTW no usan PT en esta carta.',
+    buildMaxLevelOne: 'Datos de nivel máximo faltantes: build no calculable.',
+    buildCopyPt: 'Copiar PT',
+    buildCopied: 'Copiado',
+    buildSlotsFree: 'slots libres',
   }
 }
 
@@ -1552,7 +1719,7 @@ function CardDetailsModal({
 export default withAuth(function CardAdvisorLabPage() {
   const router = useRouter()
   const { lang } = useTranslation()
-  const labels = copy[lang === 'en' ? 'en' : 'it']
+  const labels = copy[lang === 'en' ? 'en' : lang === 'es' ? 'es' : 'it']
   const [liveReleases, setLiveReleases] = React.useState(null)
   const activeReleases = React.useMemo(() => (
     Array.isArray(liveReleases) && liveReleases.length > 0 ? liveReleases : releases
@@ -1637,7 +1804,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
     async function loadReleases() {
       try {
-        const response = await fetch('/api/card-advisor-lab/releases', { cache: 'no-store' })
+        const response = await fetch(`/api/card-advisor-lab/releases?v=${Date.now()}`, { cache: 'no-store' })
         if (!response.ok) throw new Error('Unable to load card releases')
         const data = await response.json()
         const normalized = Array.isArray(data?.releases)
@@ -1687,7 +1854,7 @@ export default withAuth(function CardAdvisorLabPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ card: detailsCard, lang: lang === 'en' ? 'en' : 'it' })
+        body: JSON.stringify({ card: detailsCard, lang: lang === 'en' ? 'en' : lang === 'es' ? 'es' : 'it' })
       })
       const data = await response.json().catch(() => ({}))
       if (!response.ok || !data?.analysis) {
@@ -1788,7 +1955,7 @@ export default withAuth(function CardAdvisorLabPage() {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`
           },
-          body: JSON.stringify({ card: detailsCard, lang: lang === 'en' ? 'en' : 'it' })
+          body: JSON.stringify({ card: detailsCard, lang: lang === 'en' ? 'en' : lang === 'es' ? 'es' : 'it' })
         })
         if (!response.ok) throw new Error('Build preview failed')
         const data = await response.json()
@@ -1913,7 +2080,7 @@ export default withAuth(function CardAdvisorLabPage() {
       <CardDetailsModal
         card={detailsCard}
         labels={labels}
-        lang={lang === 'en' ? 'en' : 'it'}
+        lang={lang === 'en' ? 'en' : lang === 'es' ? 'es' : 'it'}
         rosterSummary={rosterSummary}
         buildPreview={detailsBuildPreview}
         buildPreviewLoading={detailsCard?.id === buildPreviewLoadingId}

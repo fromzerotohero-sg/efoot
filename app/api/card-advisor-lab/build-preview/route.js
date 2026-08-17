@@ -31,7 +31,7 @@ export async function POST(req) {
 
     const body = await req.json().catch(() => ({}))
     const card = normalizeAdvisorCard(body.card)
-    const lang = body.lang === 'en' ? 'en' : 'it'
+    const lang = body.lang === 'en' ? 'en' : body.lang === 'es' ? 'es' : 'it'
     if (!card.name || !card.position) {
       return NextResponse.json({ error: 'Invalid card' }, { status: 400 })
     }

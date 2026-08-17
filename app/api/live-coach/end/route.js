@@ -44,7 +44,7 @@ export async function POST(req) {
     const { admin, userId } = auth
     const body = await req.json().catch(() => ({}))
     const sessionId = typeof body?.sessionId === 'string' ? body.sessionId : ''
-    const lang = body?.lang === 'en' ? 'en' : 'it'
+    const lang = body?.lang === 'en' ? 'en' : body?.lang === 'es' ? 'es' : 'it'
     const opponentContext = body?.opponentContext && typeof body.opponentContext === 'object'
       ? body.opponentContext
       : null
@@ -53,7 +53,7 @@ export async function POST(req) {
       : {}
 
     if (!sessionId) {
-      return NextResponse.json({ error: lang === 'en' ? 'Missing session id.' : 'Sessione mancante.' }, { status: 400 })
+      return NextResponse.json({ error: lang === 'en' ? 'Missing session id.' : lang === 'es' ? 'Falta el id de sesión.' : 'Sessione mancante.' }, { status: 400 })
     }
 
     const { data: sessionRow, error: sessionError } = await admin
@@ -64,7 +64,7 @@ export async function POST(req) {
       .maybeSingle()
 
     if (sessionError || !sessionRow?.id) {
-      return NextResponse.json({ error: lang === 'en' ? 'Live session not found.' : 'Sessione live non trovata.' }, { status: 404 })
+      return NextResponse.json({ error: lang === 'en' ? 'Live session not found.' : lang === 'es' ? 'Sesión live no encontrada.' : 'Sessione live non trovata.' }, { status: 404 })
     }
 
     const now = new Date()

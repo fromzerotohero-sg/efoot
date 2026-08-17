@@ -42,9 +42,11 @@ async function loadSharedContext(admin, userId) {
 }
 
 function buildFallbackCountermeasure(lang, smartContext, variant = 'default') {
-  const formation = smartContext?.formation || (lang === 'en' ? 'your current shape' : 'il tuo assetto attuale')
+  const formation = smartContext?.formation || (lang === 'en' ? 'your current shape' : lang === 'es' ? 'tu formación actual' : 'il tuo assetto attuale')
   const analysis = lang === 'en'
     ? `The opponent shape should be read against ${formation}. Use Smart mode as a structural pre-match read, then open the full version if you need deeper player-level precision.`
+    : lang === 'es'
+    ? `La estructura rival debe leerse contra ${formation}. Usa el modo Smart como lectura estructural previa al partido, luego abre la versión completa si necesitas una precisión más profunda sobre jugadores.`
     : `La struttura avversaria va letta contro ${formation}. Usa la Smart come lettura strutturale pre-partita, poi apri la versione completa se ti serve una precisione più profonda sui singoli.`
 
   return {
@@ -54,23 +56,23 @@ function buildFallbackCountermeasure(lang, smartContext, variant = 'default') {
       opponent_formation_analysis: analysis,
       strengths: [],
       weaknesses: [],
-      why_weaknesses: lang === 'en' ? 'Structural read generated with limited Smart data.' : 'Lettura strutturale generata con dati Smart limitati.'
+      why_weaknesses: lang === 'en' ? 'Structural read generated with limited Smart data.' : lang === 'es' ? 'Lectura estructural generada con datos Smart limitados.' : 'Lettura strutturale generata con dati Smart limitati.'
     },
     countermeasures: {
       formation_adjustments: [],
       tactical_adjustments: [
         {
           type: 'match_plan',
-          suggestion: lang === 'en' ? 'In match: protect the center before chasing wide' : 'In partita: proteggi prima il centro, poi esci sulle fasce',
-          application_hint: lang === 'en' ? 'This is not a menu setting: use it as your defensive behavior during the match.' : 'Non è una voce menu: è il comportamento difensivo da usare durante la partita.',
-          reason: lang === 'en' ? 'It keeps the opponent from receiving between your midfield and defence.' : 'Riduce le ricezioni tra centrocampo e difesa.',
+          suggestion: lang === 'en' ? 'In match: protect the center before chasing wide' : lang === 'es' ? 'En partido: protege primero el centro, luego sal a bandas' : 'In partita: proteggi prima il centro, poi esci sulle fasce',
+          application_hint: lang === 'en' ? 'This is not a menu setting: use it as your defensive behavior during the match.' : lang === 'es' ? 'No es una opción del menú: es el comportamiento defensivo durante el partido.' : 'Non è una voce menu: è il comportamento difensivo da usare durante la partita.',
+          reason: lang === 'en' ? 'It keeps the opponent from receiving between your midfield and defence.' : lang === 'es' ? 'Reduce las recepciones entre mediocampo y defensa.' : 'Riduce le ricezioni tra centrocampo e difesa.',
           priority: 'high'
         },
         {
           type: 'match_plan',
-          suggestion: lang === 'en' ? 'In match: attack the lane your shape opens most clearly' : 'In partita: attacca la corsia che il tuo assetto apre meglio',
-          application_hint: lang === 'en' ? 'This is a play plan, not a separate eFootball setting.' : 'È un piano di gioco, non una voce separata di eFootball.',
-          reason: lang === 'en' ? 'It gives you one clear route without forcing a formation change.' : 'Ti dà una via chiara senza forzare un cambio modulo.',
+          suggestion: lang === 'en' ? 'In match: attack the lane your shape opens most clearly' : lang === 'es' ? 'En partido: ataca el carril que tu formación abre más claramente' : 'In partita: attacca la corsia che il tuo assetto apre meglio',
+          application_hint: lang === 'en' ? 'This is a play plan, not a separate eFootball setting.' : lang === 'es' ? 'Es un plan de juego, no una opción separada de eFootball.' : 'È un piano di gioco, non una voce separata di eFootball.',
+          reason: lang === 'en' ? 'It gives you one clear route without forcing a formation change.' : lang === 'es' ? 'Te da una ruta clara sin forzar un cambio de formación.' : 'Ti dà una via chiara senza forzare un cambio modulo.',
           priority: 'medium'
         }
       ],
@@ -82,6 +84,8 @@ function buildFallbackCountermeasure(lang, smartContext, variant = 'default') {
     warnings: [
       lang === 'en'
         ? 'Smart countermeasures are based on lightweight pre-match context.'
+        : lang === 'es'
+        ? 'Las contramedidas Smart se basan en un contexto previo al partido ligero.'
         : 'Le contromisure Smart sono basate su un contesto pre-partita leggero.'
     ]
   }
@@ -98,14 +102,20 @@ function ensureRichSmartCountermeasure(countermeasure, lang) {
   if (!countermeasure.analysis.why_weaknesses) {
     countermeasure.analysis.why_weaknesses = lang === 'en'
       ? 'Read the opponent shape through central access, width, and support distances.'
+      : lang === 'es'
+      ? 'Lee la estructura rival a través del acceso central, amplitud y distancias de apoyo.'
       : 'Leggi la struttura avversaria attraverso accesso centrale, ampiezza e distanze di supporto.'
   }
 
   const defaultStrengths = lang === 'en'
     ? ['Compact central structure', 'Clear support around the attacking hub']
+    : lang === 'es'
+    ? ['Estructura central compacta', 'Apoyo claro alrededor del eje ofensivo']
     : ['Compattezza centrale', 'Supporto chiaro attorno al fulcro offensivo']
   const defaultWeaknesses = lang === 'en'
     ? ['Width can become fragile', 'Cross defence can open if shape stretches']
+    : lang === 'es'
+    ? ['La amplitud puede volverse frágil', 'La defensa de centros puede abrirse si la estructura se estira']
     : ['L\'ampiezza può diventare fragile', 'La difesa ai cross può aprirsi se la struttura si allunga']
 
   while (countermeasure.analysis.strengths.length < 2) {
@@ -154,12 +164,36 @@ function ensureRichSmartCountermeasure(countermeasure, lang) {
           priority: 'medium'
         }
       ]
+    : lang === 'es'
+    ? [
+        {
+          type: 'match_plan',
+          suggestion: 'En partido: presiona en ráfagas cortas en carriles centrales',
+          application_hint: 'No es una opción del menú: es el comportamiento defensivo durante el partido.',
+          reason: 'Reduce la influencia del creador de juego rival antes del pase final.',
+          priority: 'high'
+        },
+        {
+          type: 'match_plan',
+          suggestion: 'En partido: protege primero la profundidad con cobertura central y presión en ráfagas cortas',
+          application_hint: 'Línea Baja es legacy en eFootball v6: usa un comportamiento defensivo práctico o una Instrucción Individual actual solo cuando encaje de verdad.',
+          reason: 'Protege primero la profundidad si el rival puede atacar rápidamente entre líneas.',
+          priority: 'high'
+        },
+        {
+          type: 'match_plan',
+          suggestion: 'En partido: cambia de lado antes de forzar el juego vertical',
+          application_hint: 'Es un plan de juego, no una opción separada de eFootball.',
+          reason: 'Ataca el carril más débil en vez de entrar directamente en la zona más densa.',
+          priority: 'medium'
+        }
+      ]
     : [
         {
           type: 'match_plan',
           suggestion: 'In partita: pressa a scatti nelle corsie centrali',
           application_hint: 'Non è una voce menu: è il comportamento difensivo da usare durante la partita.',
-          reason: 'Riduci l’influenza del regista avversario prima dell’ultimo passaggio.',
+          reason: "Riduci l'influenza del regista avversario prima dell'ultimo passaggio.",
           priority: 'high'
         },
         {
@@ -205,12 +239,12 @@ export async function POST(req) {
   )
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: lang === 'en' ? 'Too many requests' : 'Troppe richieste' }, { status: 429 })
+    return NextResponse.json({ error: lang === 'en' ? 'Too many requests' : lang === 'es' ? 'Demasiadas solicitudes' : 'Troppe richieste' }, { status: 429 })
   }
 
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) {
-    return NextResponse.json({ error: 'Smart countermeasures unavailable' }, { status: 500 })
+    return NextResponse.json({ error: lang === 'es' ? 'Contramedidas Smart no disponibles' : 'Smart countermeasures unavailable' }, { status: 500 })
   }
 
   const body = await req.json().catch(() => ({}))
@@ -220,16 +254,16 @@ export async function POST(req) {
     const { smartContext, profile, matches, patterns, gameAnalysis } = await loadSharedContext(admin, userId)
 
     if (!smartContext) {
-      return NextResponse.json({ error: 'Smart context not found' }, { status: 400 })
+      return NextResponse.json({ error: lang === 'es' ? 'Contexto Smart no encontrado' : 'Smart context not found' }, { status: 400 })
     }
     if (!smartContext.opponent_players || !Array.isArray(smartContext.opponent_players) || smartContext.opponent_players.length === 0) {
-      return NextResponse.json({ error: 'Opponent formation is required for countermeasures' }, { status: 400 })
+      return NextResponse.json({ error: lang === 'es' ? 'Se requiere la formación del oponente para las contramedidas' : 'Opponent formation is required for countermeasures' }, { status: 400 })
     }
 
     const deduction = await deductCredits(admin, userId, token, cost, operationType)
     if (!deduction.success) {
       return NextResponse.json(
-        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : 'Insufficient credits. Please recharge to continue.' },
+        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : lang === 'es' ? 'Créditos insuficientes. Recarga para continuar.' : 'Insufficient credits. Please recharge to continue.' },
         { status: 402 }
       )
     }
@@ -298,7 +332,7 @@ export async function POST(req) {
       if (charged) {
         await refundCredits(admin, userId, cost, operationType)
       }
-      return NextResponse.json({ error: 'Failed to persist Smart countermeasure' }, { status: 500 })
+      return NextResponse.json({ error: lang === 'es' ? 'Error al guardar la contramedida Smart' : 'Failed to persist Smart countermeasure' }, { status: 500 })
     }
 
     return NextResponse.json({
@@ -310,6 +344,6 @@ export async function POST(req) {
     if (charged) {
       await refundCredits(admin, userId, cost, operationType)
     }
-    return NextResponse.json({ error: 'Unable to generate Smart countermeasure' }, { status: 500 })
+    return NextResponse.json({ error: lang === 'es' ? 'No se pudo generar la contramedida Smart' : 'Unable to generate Smart countermeasure' }, { status: 500 })
   }
 }

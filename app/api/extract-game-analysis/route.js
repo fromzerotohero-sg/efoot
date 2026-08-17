@@ -13,7 +13,9 @@ const MAX_SIZE_BYTES = 10 * 1024 * 1024 // 10MB per image
 
 function getPreferredLanguage(req) {
   const accept = req?.headers?.get?.('accept-language') || ''
-  return accept.toLowerCase().startsWith('it') || accept.includes('it') ? 'it' : 'en'
+  if (accept.toLowerCase().startsWith('es') || accept.includes('es')) return 'es'
+  if (accept.toLowerCase().startsWith('it') || accept.includes('it')) return 'it'
+  return 'en'
 }
 
 const ERRORS = {
@@ -209,7 +211,7 @@ export async function POST(req) {
     const rateLimit = await checkRateLimit(userId, '/api/extract-game-analysis', rateLimitConfig.maxRequests, rateLimitConfig.windowMs)
     if (!rateLimit.allowed) {
       return NextResponse.json(
-        { error: lang === 'it' ? 'Troppe richieste. Riprova tra un minuto.' : 'Too many requests. Try again in a minute.' },
+        { error: lang === 'it' ? 'Troppe richieste. Riprova tra un minuto.' : lang === 'es' ? 'Demasiadas solicitudes. Inténtalo de nuevo en un minuto.' : 'Too many requests. Try again in a minute.' },
         { status: 429, headers: { 'Content-Language': lang } }
       )
     }
@@ -246,7 +248,7 @@ export async function POST(req) {
     const deduction = await deductCredits(admin, userId, token, totalCost, 'extract-game-analysis')
     if (!deduction.success) {
       return NextResponse.json(
-        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : 'Insufficient credits. Please recharge to continue.' },
+        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : lang === 'es' ? 'Créditos insuficientes. Recarga para continuar.' : 'Insufficient credits. Please recharge to continue.' },
         { status: 402, headers: { 'Content-Language': lang } }
       )
     }

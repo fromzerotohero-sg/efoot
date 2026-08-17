@@ -18,6 +18,8 @@ function normalizeSuggestions(lang, suggestions) {
 
   return lang === 'en'
     ? ['Open the full version for deeper player detail', 'Ask for a pre-match priority', 'Review the structural weak point']
+    : lang === 'es'
+    ? ['Abre la versión completa para más detalles de jugadores', 'Pide una prioridad previa al partido', 'Revisa el punto débil estructural']
     : ['Apri la versione completa per piu dettagli sui singoli', 'Chiedi una priorita pre-partita', 'Rivedi il punto debole strutturale']
 }
 
@@ -35,6 +37,16 @@ function buildFallbackSmartChatAnswer(lang, smartContext, profile, message) {
       return `With ${formation}, your first attacking priority should be one clear route instead of forcing every lane. Attack the space your shape naturally opens and avoid rushing vertical actions if the center is crowded. If you want deeper individual advice, open the full version.`
     }
     return `From this Smart view I can already guide you on structure, priorities, and matchup logic with ${formation}. Your best next step is to protect your main weak zone first and play from a clear team plan instead of individual improvisation. If you need deeper player-level guidance, open the full version.`
+  }
+
+  if (lang === 'es') {
+    if (lowerMessage.includes('defensa') || lowerMessage.includes('presión') || lowerMessage.includes('debilidad')) {
+      return `Con ${formation} y ${playerCount} titulares detectados, mantén tu primer foco en estructura y distancias entre líneas. Protege primero el centro, luego reacciona a las bandas solo cuando el pase ya esté viajando. Si quieres precisión jugador por jugador, abre la versión completa.`
+    }
+    if (lowerMessage.includes('ataque') || lowerMessage.includes('gol') || lowerMessage.includes('ofensivo')) {
+      return `Con ${formation}, tu primera prioridad ofensiva debe ser una ruta clara en vez de forzar todos los carriles. Ataca el espacio que tu formación abre de forma natural y evita acciones verticales apresuradas si el centro está congestionado. Si quieres un consejo más profundo sobre jugadores, abre la versión completa.`
+    }
+    return `Desde esta vista Smart ya puedo guiarte sobre estructura, prioridades y lógica del matchup con ${formation}. Tu mejor paso ahora es proteger primero tu zona más débil y jugar con un plan de equipo claro, no con improvisación individual. Si necesitas profundidad sobre jugadores, abre la versión completa.`
   }
 
   if (lowerMessage.includes('dif') || lowerMessage.includes('pression') || lowerMessage.includes('debole')) {
@@ -94,32 +106,32 @@ export async function POST(req) {
   )
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: lang === 'en' ? 'Too many requests' : 'Troppe richieste' }, { status: 429 })
+    return NextResponse.json({ error: lang === 'en' ? 'Too many requests' : lang === 'es' ? 'Demasiadas solicitudes' : 'Troppe richieste' }, { status: 429 })
   }
 
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) {
-    return NextResponse.json({ error: 'Smart chat unavailable' }, { status: 500 })
+    return NextResponse.json({ error: lang === 'es' ? 'Chat Smart no disponible' : 'Smart chat unavailable' }, { status: 500 })
   }
 
   const body = await req.json().catch(() => ({}))
   const message = typeof body.message === 'string' ? body.message.trim() : ''
 
   if (!message) {
-    return NextResponse.json({ error: 'Message is required' }, { status: 400 })
+    return NextResponse.json({ error: lang === 'es' ? 'El mensaje es obligatorio' : 'Message is required' }, { status: 400 })
   }
 
   try {
     const { smartContext, profile, matches, patterns, gameAnalysis } = await loadSharedContext(admin, userId)
 
     if (!smartContext) {
-      return NextResponse.json({ error: 'Smart context not found' }, { status: 400 })
+      return NextResponse.json({ error: lang === 'es' ? 'Contexto Smart no encontrado' : 'Smart context not found' }, { status: 400 })
     }
 
     const deduction = await deductCredits(admin, userId, token, cost, operationType)
     if (!deduction.success) {
       return NextResponse.json(
-        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : 'Insufficient credits. Please recharge to continue.' },
+        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : lang === 'es' ? 'Créditos insuficientes. Recarga para continuar.' : 'Insufficient credits. Please recharge to continue.' },
         { status: 402 }
       )
     }
@@ -164,7 +176,7 @@ export async function POST(req) {
 
     const answer = typeof payload.answer === 'string' && payload.answer.trim().length > 0
       ? payload.answer.trim()
-      : (lang === 'en' ? 'Use the full version if you need deeper player-level advice.' : 'Usa la versione completa se ti serve un consiglio più profondo sui singoli.')
+      : (lang === 'en' ? 'Use the full version if you need deeper player-level advice.' : lang === 'es' ? 'Usa la versión completa si necesitas consejos más profundos sobre jugadores.' : 'Usa la versione completa se ti serve un consiglio più profondo sui singoli.')
     const suggestions = normalizeSuggestions(lang, payload.suggestions)
 
     const { error: updateError } = await admin
@@ -183,7 +195,7 @@ export async function POST(req) {
       if (charged) {
         await refundCredits(admin, userId, cost, operationType)
       }
-      return NextResponse.json({ error: 'Failed to persist Smart chat result' }, { status: 500 })
+      return NextResponse.json({ error: lang === 'es' ? 'Error al guardar el resultado del chat Smart' : 'Failed to persist Smart chat result' }, { status: 500 })
     }
 
     return NextResponse.json({
@@ -196,6 +208,6 @@ export async function POST(req) {
     if (charged) {
       await refundCredits(admin, userId, cost, operationType)
     }
-    return NextResponse.json({ error: 'Unable to generate Smart coach answer' }, { status: 500 })
+    return NextResponse.json({ error: lang === 'es' ? 'No se pudo generar la respuesta del coach Smart' : 'Unable to generate Smart coach answer' }, { status: 500 })
   }
 }

@@ -10,7 +10,9 @@ export const dynamic = 'force-dynamic'
 
 function getLang(req) {
   const accept = req?.headers?.get?.('accept-language') || ''
-  return accept.toLowerCase().startsWith('it') || accept.includes('it') ? 'it' : 'en'
+  if (accept.toLowerCase().startsWith('es') || accept.includes('es')) return 'es'
+  if (accept.toLowerCase().startsWith('it') || accept.includes('it')) return 'it'
+  return 'en'
 }
 
 const ERRORS = {
@@ -39,6 +41,19 @@ const ERRORS = {
     timeout: 'Request took too long. Try a smaller image.',
     server: 'Service temporarily unavailable. Try again later.',
     network: 'Connection error. Check your network and try again.'
+  },
+  es: {
+    config: 'Error de configuración del servidor.',
+    auth: 'Autenticación requerida.',
+    invalid: 'Token no válido o expirado.',
+    rateLimit: 'Demasiadas solicitudes. Inténtalo de nuevo en un minuto.',
+    imageRequired: 'Imagen requerida.',
+    imageTooLarge: 'Imagen demasiado grande (máx. 10MB).',
+    extraction: 'No se pudo leer la formación de la imagen. Prueba con una captura más nítida.',
+    quota: 'Servicio temporalmente sobrecargado. Inténtalo de nuevo en unos minutos.',
+    timeout: 'La solicitud tardó demasiado. Prueba con una imagen más pequeña.',
+    server: 'Servicio temporalmente no disponible. Inténtalo de nuevo más tarde.',
+    network: 'Error de conexión. Verifica tu red e inténtalo de nuevo.'
   }
 }
 
@@ -139,7 +154,7 @@ export async function POST(req) {
     const deduction = await deductCredits(admin, userId, token, AI_COST, 'extract-formation')
     if (!deduction.success) {
       return NextResponse.json(
-        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : 'Insufficient credits. Please recharge to continue.' },
+        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : lang === 'es' ? 'Créditos insuficientes. Recarga para continuar.' : 'Insufficient credits. Please recharge to continue.' },
         { status: 402, headers: { 'Content-Language': lang } }
       )
     }

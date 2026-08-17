@@ -210,18 +210,6 @@ async function fetchLiveReleases() {
   return parseReleases(markup)
 }
 
-function releaseIds(releases = []) {
-  return releases.map(release => String(release.id || '').trim()).filter(Boolean)
-}
-
-function dbMatchesLive(dbReleases = [], liveReleases = []) {
-  const liveIds = releaseIds(liveReleases)
-  if (liveIds.length === 0) return true
-
-  const dbIds = new Set(releaseIds(dbReleases))
-  return liveIds.every(id => dbIds.has(id))
-}
-
 export async function GET() {
   try {
     const dbReleases = await fetchDbReleases()
@@ -235,7 +223,7 @@ export async function GET() {
     }
     const liveTotalCards = liveReleases.reduce((sum, release) => sum + release.cards.length, 0)
 
-    if (dbReleases.length > 0 && dbTotalCards > 0 && dbMatchesLive(dbReleases, liveReleases)) {
+    if (dbReleases.length > 0 && dbTotalCards > 0) {
       return NextResponse.json(
         {
           source: 'card_advisor_cards',
@@ -245,28 +233,15 @@ export async function GET() {
         },
         {
           headers: {
-            'Cache-Control': 'public, max-age=300, s-maxage=900'
+            'Cache-Control': 'private, no-store, max-age=0, must-revalidate',
+            'CDN-Cache-Control': 'no-store',
+            'Vercel-CDN-Cache-Control': 'no-store'
           }
         }
       )
     }
 
     if (liveReleases.length === 0 || liveTotalCards === 0) {
-      if (dbReleases.length > 0 && dbTotalCards > 0) {
-        return NextResponse.json(
-          {
-            source: 'card_advisor_cards',
-            sourceUrl: EFHUB_HOME_URL,
-            fetchedAt: new Date().toISOString(),
-            releases: dbReleases
-          },
-          {
-            headers: {
-              'Cache-Control': 'public, max-age=300, s-maxage=900'
-            }
-          }
-        )
-      }
       return NextResponse.json({ error: 'No card releases found' }, { status: 502 })
     }
 
@@ -279,7 +254,9 @@ export async function GET() {
       },
       {
         headers: {
-          'Cache-Control': 'public, max-age=300, s-maxage=900'
+          'Cache-Control': 'private, no-store, max-age=0, must-revalidate',
+          'CDN-Cache-Control': 'no-store',
+          'Vercel-CDN-Cache-Control': 'no-store'
         }
       }
     )

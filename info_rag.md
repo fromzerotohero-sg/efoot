@@ -1,571 +1,589 @@
-**Versione**: 9.0.0 ENTERPRISE | **Data**: 17 Agosto 2026 | **Ruleset**: eFootball v6.0.0 | **Lingua**: Italiano
-**Fonti**: Konami eFootball™ ufficiale v6.0.0 + conoscenza prodotto verificata; eventuali best practice community sono dichiarate come euristiche e NON come regole ufficiali.
-**SOURCE LOCK**: per regole cambiate dalla v6 prevale sempre la documentazione Konami corrente. Non inventare nomi, valori numerici, compatibilità o competenze allenatore non presenti nelle fonti/dati.
+**Versión**: 9.0.0 ENTERPRISE | **Fecha**: 17 Agosto 2026 | **Ruleset**: eFootball v6.0.0 | **Idioma**: Español
+**Fuentes**: Konami eFootball™ oficial v6.0.0 + conocimiento de producto verificado; las best practice community se declaran como heurísticas y NO como reglas oficiales.
+**SOURCE LOCK**: para reglas cambiadas por la v6 prevalece siempre la documentación Konami corriente. No inventar nombres, valores numéricos, compatibilidad o competencias de entrenador no presentes en las fuentes/datos.
 
-# DATABASE MECCANICHE eFootball ENTERPRISE - RAG System
+# BASE DE DATOS MECÁNICAS eFootball ENTERPRISE - Sistema RAG
 
-## OBIETTIVO
-Database RAG enterprise per consigli tattici basati su meccaniche ufficiali eFootball. 
-**Principio fondamentale**: Distinguiere sempre tra CARATTERISTICHE FISSE (card) e ELEMENTI CONFIGURABILI (utente).
-
----
-
-## CONTESTO VIDEOGIOCO (FONDAMENTALE)
-
-### Cosa sono i Giocatori in eFootball
-I giocatori in eFootball sono **CARD DIGITALI** con statistiche e caratteristiche **FISSE**:
-- **Non sono persone reali** → NON hanno "esperienza", "carriera", "maturità"
-- **Non crescono nel tempo** → Statistiche Overall, Velocità, Tiro sono FISSE sulla card
-- **Non si allenano** → Non puoi "migliorare" un giocatore
-- **Puoi solo scegliere** → Quale schierare, come posizionarlo, che istruzioni dare
-
-### Differenza FISSO vs MODIFICABILE
-
-| ELEMENTO | STATO | DESCRIZIONE |
-|----------|-------|-------------|
-| **Statistiche Giocatore** | FISSO | Overall, Velocità, Tiro, Resistenza, ecc. - Immutabili |
-| **Stili di Gioco Giocatore** | ✅ FISSO SULLA CARD | In v6 possono essere distinti in Stile di gioco in attacco e Stile di gioco in difesa; una card può avere uno, l’altro o entrambi (§2) |
-| **Abilità native** (dalla card) | ✅ FISSO | Tiro al Volo, Contrasto Aggressivo, ecc. - Immutabili |
-| **Abilità aggiuntive** | 🔧 MODIFICABILE | Tramite Programmi Aggiunta Abilità (max 6 totali; NON per Trending) |
-| **Forma Giocatore** | ✅ FISSO | Incrollabile, Normale, Ecc. - Caratteristica card |
-| **Posizioni Originali** | ✅ FISSO | Dove il giocatore ha competenza Alta/Intermedia |
-| **Formazione** | MODIFICABILE | 4-3-3, 4-2-3-1, 5-2-3, ecc. - Scelta utente |
-| **Stile Squadra** | 🔧 MODIFICABILE | Possesso palla, Contropiede, ecc. - Scelta utente |
-| **Istruzioni Individuali** | 🔧 MODIFICABILE | In v6 usare solo le opzioni correnti (§5). Offensivo e Linea bassa possono comparire come dati legacy ma non vanno consigliati |
-| **Titolari vs Riserve** | 🔧 MODIFICABILE | Chi schierare in campo - Decisione utente |
-| **Competenza Posizione** | 🔧 PARZIALE | Alto/Intermedio fisso, ma si può aggiungere posizione (max 2) |
-
-**REGOLA ORO per l'AI**: MAI suggerire di "potenziare", "migliorare", "far crescere" un giocatore. 
-Puoi solo suggerire: chi usare, dove posizionarlo, che istruzioni dargli.
+## OBJETIVO
+Base de datos RAG enterprise para consejos tácticos basados en mecánicas oficiales eFootball.
+**Principio fundamental**: Distinguir siempre entre CARACTERÍSTICAS FIJAS (carta) y ELEMENTOS CONFIGURABLES (usuario).
 
 ---
 
-## 1. STATISTICHE GIOCATORI (UFFICIALI eFootball)
+## CONTEXTO VIDEOJUEGO (FUNDAMENTAL)
 
-### 1.1 Statistiche Tecniche e Offensive
-- **Colpo di testa**: Precisione nei colpi di testa
-- **Calci da fermo**: Precisione in calci piazzati, rigori, punizioni
-- **Tiro a giro**: Capacità di imprimere effetto al pallone
-- **Velocità**: Velocità massima del giocatore
-- **Accelerazione**: Rapidità nel raggiungere velocità massima
-- **Potenza di tiro**: Forza del tiro
-- **Finalizzazione**: Precisione nel tiro
-- **Possesso stretto**: Abilità nel cambiare direzione durante dribbling a bassa velocità
-- **Passaggio rasoterra**: Precisione nei passaggi rasoterra
-- **Passaggio alto**: Precisione nei passaggi aerei
-- **Dribbling**: Controllo di palla durante dribbling in velocità
-- **Controllo palla**: Controllo generale, influenza stop e finte
-- **Comportamento Offensivo**: Rapidità di risposta sul pallone in attacco
+### Qué son los Jugadores en eFootball
+Los jugadores en eFootball son **CARTAS DIGITALES** con estadísticas y características **FIJAS**:
+- **No son personas reales** → NO tienen "experiencia", "carrera", "madurez"
+- **No crecen con el tiempo** → Estadísticas General, Velocidad, Tiro son FIJAS en la carta
+- **No entrenan** → No puedes "mejorar" un jugador
+- **Solo puedes elegir** → A quién alinear, cómo posicionarlo, qué instrucciones dar
 
-### 1.2 Statistiche Difensive
-- **Comportamento difensivo**: Rapidità di risposta in fase difensiva
-- **Contrasto**: Abilità nel vincere scontri con avversari
-- **Aggressività**: Intensità nel cercare di recuperare il possesso
-- **Coinvolgimento difensivo**: Inclinazione ad aiutare in fase difensiva
+### Diferencia FIJO vs MODIFICABLE
 
-### 1.3 Statistiche Fisiche
-- **Resistenza** (NON "Stamina"): Forma fisica e durata prestazione
-- **Contatto fisico**: Capacità di contenere avversario e mantenere equilibrio
-- **Controllo corpo**: Abilità nel resistere ai contrasti
-- **Salto**: Altezza del salto
-- **Equilibrio**: Stabilità del giocatore
+| ELEMENTO | ESTADO | DESCRIPCIÓN |
+|----------|--------|-------------|
+| **Estadísticas Jugador** | FIJO | General, Velocidad, Tiro, Resistencia, etc. - Inmutables |
+| **Estilos de Juego Jugador** | ✅ FIJO EN LA CARTA | En v6 pueden distinguirse en Estilo de juego en ataque y Estilo de juego en defensa; una carta puede tener uno, el otro o ambos (§2) |
+| **Habilidades nativas** (de la carta) | ✅ FIJO | Remate de primera, Entrada agresiva, etc. - Inmutables |
+| **Habilidades adicionales** | 🔧 MODIFICABLE | Mediante Programas Añadir Habilidad (máx 6 totales; NO para Trending) |
+| **Forma Jugador** | ✅ FIJO | Inquebrantable, Normal, etc. - Característica de la carta |
+| **Posiciones Originales** | ✅ FIJO | Donde el jugador tiene competencia Alta/Intermedia |
+| **Formación** | MODIFICABLE | 4-3-3, 4-2-3-1, 5-2-3, etc. - Elección del usuario |
+| **Estilo Equipo** | 🔧 MODIFICABLE | Posesión, Contraataque, Presión total, etc. - Elección del usuario |
+| **Instrucciones Individuales** | 🔧 MODIFICABLE | En v6 usar solo las opciones corrientes (§5). Ofensivo y Línea baja pueden aparecer como datos legacy pero no deben aconsejarse |
+| **Titulares vs Suplentes** | 🔧 MODIFICABLE | A quién alinear en el campo - Decisión del usuario |
+| **Competencia Posición** | 🔧 PARCIAL | Alta/Intermedia fija, pero se puede añadir posición (máx 2) |
 
-### 1.4 Statistiche Portieri
-- **Riflessi PT**: Capacità di bloccare tiri ravvicinati
-- **Estensione PT**: Copertura area di porta
-- **Comportamento PT**: Rapidità di risposta sul pallone
-- **Presa PT**: Capacità di afferrare il pallone
-- **Parata PT**: Abilità nel respingere pallone in zone sicure
-
-### 1.5 Caratteristiche Speciali
-- **Frequenza piede debole**: Frequenza utilizzo piede debole
-- **Precisione piede debole**: Precisione tiri/passaggi con piede debole
-- **Forma**: Variazione condizione fisica ("Incrollabile" = condizione stabile)
-- **Resistenza infortuni**: Probabilità di subire infortuni (valore alto = minor probabilità)
-
-### 1.6 Soglie indicative (parametri META)
-Valori di riferimento per costruzione squadra. Le statistiche restano FISSE sulla card; questi numeri aiutano a scegliere quale card schierare.
-- **Difensori centrali**: Velocità e Accelerazione min. 85 (contropiede dominante)
-- **Terzini**: Velocità 90+ per recuperare su ali veloci
-- **Ali e attaccanti**: Velocità 90+ per dominare 1v1
-- **Centrocampisti**: 80+ per essere competitivi
-- **Resistenza**: con valore basso, l'Accelerazione cala durante la partita; chi corre/pressa troppo nel primo tempo inizia stanco nel secondo.
+**REGLA DE ORO para la IA**: NUNCA sugerir "potenciar", "mejorar", "hacer crecer" un jugador.
+Solo puedes sugerir: a quién usar, dónde posicionarlo, qué instrucciones darle.
 
 ---
 
-## 2. STILI GIOCATORE - Caratteristica card (FISSI)
+## 1. ESTADÍSTICAS JUGADORES (OFICIAL eFootball)
 
-**≠ Stile squadra** (Possesso, Contropiede, ecc.): quello è in §4. Qui solo **caratteristiche FISSE della card**.
+### 1.1 Estadísticas Técnicas y Ofensivas
+- **Remate de cabeza**: Precisión en los remates de cabeza
+- **Tiros libres**: Precisión en jugadas a balón parado, penaltis, faltas
+- **Efecto**: Capacidad de imprimir efecto al balón
+- **Velocidad**: Velocidad máxima del jugador
+- **Aceleración**: Rapidez para alcanzar la velocidad máxima
+- **Potencia de tiro**: Fuerza del disparo
+- **Finalización**: Precisión en el tiro
+- **Regate en corto**: Habilidad para cambiar de dirección durante el regate a baja velocidad
+- **Pase raso**: Precisión en los pases rasos
+- **Pase alto**: Precisión en los pases aéreos
+- **Regate**: Control de balón durante el regate en velocidad
+- **Control del balón**: Control general, influye en paradas y fintas
+- **Ofensivo**: Rapidez de respuesta al balón en ataque
 
-**IMPORTANTE**: Gli stili giocatore (Opportunista, Collante, Onnipresente, ecc.) sono **CARATTERISTICHE FISSE** della card. NON si possono modificare.
+### 1.2 Estadísticas Defensivas
+- **Conciencia defensiva**: Rapidez de respuesta en fase defensiva
+- **Entradas**: Habilidad para ganar duelos con adversarios
+- **Agresividad**: Intensidad para intentar recuperar la posesión
+- **Implicación defensiva**: Inclinación a ayudar en fase defensiva
 
-**MODELLO v6.0.0 (OBBLIGATORIO)**: Konami ha separato gli stili giocatore in **Stile di gioco in attacco** e **Stile di gioco in difesa**. Un giocatore può avere uno stile offensivo, uno difensivo oppure entrambi. La v6 introduce inoltre nuovi stili: NON usare più un conteggio totale fisso come regola di verità e NON inventare uno stile di fase mancante dai dati della card.
+### 1.3 Estadísticas Físicas
+- **Resistencia** (NO "Stamina"): Forma física y duración del rendimiento
+- **Contacto físico**: Capacidad de contener al adversario y mantener el equilibrio
+- **Control corporal**: Habilidad para resistir las entradas
+- **Salto**: Altura del salto
+- **Equilibrio**: Estabilidad del jugador
 
-**Esempio ufficiale v6**: una card può avere uno stile offensivo come **Opportunista** e uno stile difensivo come **Pressione in attacco**. Questo è un esempio di struttura duale, non una regola universale per tutti i giocatori.
+### 1.4 Estadísticas Portero
+- **Reflejos**: Capacidad de bloquear tiros cercanos
+- **Alcance**: Cobertura del área de portería
+- **Conciencia**: Rapidez de respuesta al balón
+- **Atrapada**: Capacidad de atrapar el balón
+- **Despeje**: Habilidad para desviar el balón a zonas seguras
 
-La tabella seguente resta il **catalogo di compatibilità degli stili storicamente gestiti dalla piattaforma** e serve per interpretare le card già salvate; non è un elenco esaustivo dei nuovi stili v6.
+### 1.5 Características Especiales
+- **Frec. pierna mala**: Frecuencia de uso de la pierna mala
+- **Prec. pierna mala**: Precisión tiros/pases con pierna mala
+- **Forma**: Variación condición física ("Inquebrantable" = condición estable)
+- **Resist. lesiones**: Probabilidad de sufrir lesiones (valor alto = menor probabilidad)
 
-**Sigle posizioni — bridge IT ↔ EN ufficiale Konami** (l'AI deve riconoscere entrambe):
+### 1.6 Umbrales indicativos (parámetros META)
+Valores de referencia para construcción de equipo. Las estadísticas permanecen FIJAS en la carta; estos números ayudan a elegir qué carta alinear.
+- **Defensores centrales (DFC)**: Velocidad y Aceleración mín. 85 (contraataque dominante)
+- **Laterales (LTI/LTD)**: Velocidad 90+ para recuperar ante extremos rápidos
+- **Extremos y delanteros**: Velocidad 90+ para dominar 1v1
+- **Centrocampistas (MC)**: 80+ para ser competitivos
+- **Resistencia**: con valor bajo, la Aceleración baja durante el partido; quien corre/presiona demasiado en el primer tiempo empieza cansado en el segundo.
 
-| IT (client italiano) | EN (client inglese / catalogo PSD) | Significato |
+---
+
+## 2. ESTILOS JUGADOR - Característica carta (FIJOS)
+
+**≠ Estilo equipo** (Posesión, Contraataque, etc.): eso está en §4. Aquí solo **características FIJAS de la carta**.
+
+**IMPORTANTE**: Los estilos jugador (Oportunista, Ancla, Box-to-Box★, etc.) son **CARACTERÍSTICAS FIJAS** de la carta. NO se pueden modificar.
+
+**MODELO v6.0.0 (OBLIGATORIO)**: Konami ha separado los estilos jugador en **Estilo de juego en ataque** y **Estilo de juego en defensa**. Un jugador puede tener un estilo ofensivo, uno defensivo o ambos. La v6 introduce además estilos nuevos: NO uses ya un recuento total fijo como regla de verdad y NO inventes un estilo de fase ausente en los datos de la carta.
+
+**Ejemplo oficial v6**: una carta puede tener un estilo ofensivo como **Oportunista** y un estilo defensivo como **Presión en ataque**. Es un ejemplo de estructura dual, no una regla universal para todos los jugadores.
+
+La tabla siguiente sigue siendo el **catálogo de compatibilidad de los estilos ya gestionados por la plataforma** y sirve para interpretar cartas ya guardadas; no es una lista exhaustiva de los nuevos estilos v6.
+
+**Siglas posiciones — puente IT ↔ EN oficial Konami** (la IA debe reconocer ambas):
+
+| IT (cliente italiano) | EN (cliente inglés / catálogo PSD) | Significado |
 |---|---|---|
-| P | CF | Prima punta / Centravanti |
-| SP | SS | Seconda punta |
-| EDA | RWF | Esterno offensivo destro |
-| ESA | LWF | Esterno offensivo sinistro |
-| TRQ | AMF | Trequartista |
-| CC | CMF | Centrocampista centrale |
-| CLD | RMF | Esterno di centrocampo destro |
-| CLS | LMF | Esterno di centrocampo sinistro |
-| MED | DMF | Mediano / centrocampista difensivo |
-| ETD | RB | Terzino destro |
-| ETS | LB | Terzino sinistro |
-| DC | CB | Difensore centrale |
-| PT | GK | Portiere |
+| P | CF | Delantero centro / Punta |
+| SP | SS | Segundo delantero |
+| EDA | RWF | Extremo ofensivo derecho |
+| ESA | LWF | Extremo ofensivo izquierdo |
+| TRQ | AMF | Mediapunta |
+| CC | CMF | Centrocampista central |
+| CLD | RMF | Exterior de centrocampo derecho |
+| CLS | LMF | Exterior de centrocampo izquierdo |
+| MED | DMF | Mediocentro / centrocampista defensivo |
+| ETD | RB | Lateral derecho |
+| ETS | LB | Lateral izquierdo |
+| DC | CB | Defensa central |
+| PT | GK | Portero |
 
-**Catalogo compatibilità stili già gestiti (IT / EN / posizioni / comportamento / 3 stat chiave)**:
+**Catálogo de compatibilidad de estilos ya gestionados (IT / EN / posiciones / comportamiento / 3 stats clave)**:
 
-| Nome IT (canonico) | Nome EN (canonico) | Alias IT/EN noti | Posizioni attive (IT) | Comportamento (1 frase) | 3 stat chiave |
+**Siglas ES oficiales**:
+
+| ES (cliente español) | EN | Significado |
+|---|---|---|
+| DC | CF | Delantero centro |
+| SD | SS | Segundo delantero |
+| ED | RWF | Extremo derecho |
+| EI | LWF | Extremo izquierdo |
+| MCO | AMF | Mediapunta |
+| MC | CMF | Centrocampista central |
+| MD | RMF | Mediocampista derecho |
+| MI | LMF | Mediocampista izquierdo |
+| MCD | DMF | Mediocentro defensivo |
+| LTD | RB | Lateral derecho |
+| LTI | LB | Lateral izquierdo |
+| DFC | CB | Defensa central |
+| POR | GK | Portero |
+
+**Tabla canónica 22 estilos (IT / ES / EN / posiciones / comportamiento / 3 stats clave)**:
+
+| Nombre IT (canónico) | Nombre ES | Nombre EN (canónico) | Posiciones activas (ES) | Comportamiento (1 frase) | 3 stats clave |
 |---|---|---|---|---|---|
-| Opportunista | Goal Poacher | — | P (compat. SP) | Attacca costantemente la profondità | Attacco, Accelerazione, Finalizzazione |
-| Senza palla | Dummy Runner | — | P/SP/TRQ | Muove continuamente la difesa liberando spazi | Accelerazione, Attacco, Resistenza |
-| Rapace d'area | Fox in the Box | — | P | Rimane alto aspettando il pallone in area | Finalizzazione, Posizionamento, Colpo di testa |
-| Attaccante di rientro | Deep-Lying Forward | "Punta arretrata" (legacy) | P/SP (compat. TRQ) | Arretra per costruire liberando spazio davanti | Controllo palla, Passaggio rasoterra, Dribbling |
-| Fulcro di gioco | Target Man | "L'uomo bersaglio" (community) | P | Gioca spalle alla porta facendo salire la squadra | Contatto fisico, Salto, Passaggio rasoterra |
-| Specialista di cross | Cross Specialist | — | EDA/ESA/CLD/CLS | Rimane largo per cercare cross continui | Cross, Tiro a giro, Passaggio alto |
-| Classico n°10 | Classic No.10 | — | SP/TRQ (NON CC dal 2024) | Rimane tra le linee privilegiando il gioco sui piedi | Controllo palla, Passaggio rasoterra, Dribbling |
-| Regista creativo | Creative Playmaker | — | SP/TRQ/EDA/ESA (CLD/CLS/CC: AI inattiva) | Si avvicina al portatore per creare connessioni offensive | Passaggio rasoterra, Controllo palla, Dribbling |
-| Ala prolifica | Prolific Winger | — | EDA/ESA (compat. CLD/CLS) | Parte larga e taglia verso la porta | Accelerazione, Dribbling, Finalizzazione |
-| Taglio al centro | Roaming Flank | — | EDA/ESA/CLD/CLS | Si accentra presto cercando gioco interno | Dribbling, Passaggio rasoterra, Accelerazione |
-| Tra le linee | Orchestrator | "Orchestratore" (community/review) | CC/MED (compat. TRQ) | Gestisce il possesso muovendosi per ricevere e distribuire | Passaggio rasoterra, Controllo palla, Visione |
-| Sviluppo | Build Up | — | DC (MED/ETD/ETS: AI inattiva) | Imposta dal basso aprendosi in costruzione | Passaggio rasoterra, Controllo palla, Difesa |
-| Frontale extra | Extra Frontman | — | DC (compat. MED) | Avanza in possesso accompagnando l'azione | Difesa, Passaggio rasoterra, Contatto fisico |
-| Incontrista | The Destroyer | — | CC/MED/DC (compat. ETD/ETS) | Aggredisce il portatore uscendo dalla linea | Contrasto, Aggressività, Contatto fisico |
-| Onnipresente | Box-to-Box | "Box-to-Box" (alias EN) | CC/MED/CLD/CLS (compat. TRQ) | Copre tutto il campo supportando entrambe le fasi | Resistenza, Aggressività, Velocità |
-| Collante | Anchor Man | — | MED (CC/DC: AI inattiva) | Rimane davanti alla difesa proteggendo le transizioni | Difesa, Passaggio rasoterra, Contatto fisico |
-| Giocatore chiave | Hole Player | — | SP/TRQ/CC/CLD/CLS (NON P) | Attacca gli spazi con inserimenti offensivi | Finalizzazione, Accelerazione, Attacco |
-| Terzino offensivo | Attacking Full-back / Offensive Full-back | — | ETD/ETS (compat. CLD/CLS) | Spinge costantemente in ampiezza | Accelerazione, Cross, Resistenza |
-| Terzino difensivo | Defensive Full-back | — | ETD/ETS (compat. DC) | Resta basso proteggendo la linea difensiva | Difesa, Velocità, Resistenza |
-| Terzino mattatore | Full-back Finisher | — | ETD/ETS | Attacca l'interno del campo con inserimenti aggressivi | Accelerazione, Dribbling, Finalizzazione |
-| Portiere offensivo | Offensive Goalkeeper | — | PT | Esce dalla porta e copre la profondità | Riflessi PT, Parata PT, Comportamento PT |
-| Portiere difensivo | Defensive Goalkeeper | — | PT | Resta vicino alla linea di porta e protegge l'area | Riflessi PT, Presa PT, Estensione PT |
+| Opportunista | Oportunista | Goal Poacher | DC (compat. SD) | Ataca constantemente la profundidad | Ataque, Aceleración, Finalización |
+| Senza palla | Finta carrera | Dummy Runner | DC/SD/MCO | Mueve continuamente la defensa liberando espacios | Aceleración, Ataque, Resistencia |
+| Rapace d'area | Cazagoles | Fox in the Box | DC | Permanece arriba esperando el balón en el área | Finalización, Posicionamiento, Remate de cabeza |
+| Attaccante di rientro | Delantero de apoyo | Deep-Lying Forward | DC/SD (compat. MCO) | Retrocede para construir liberando espacio delante | Control del balón, Pase raso, Regate |
+| Fulcro di gioco | Hombre objetivo | Target Man | DC | Juega de espaldas haciendo subir al equipo | Contacto físico, Salto, Pase raso |
+| Specialista di cross | Especialista en centros | Cross Specialist | ED/EI/MD/MI | Permanece abierto para buscar centros continuos | Centro, Efecto, Pase alto |
+| Classico n°10 | Clásico Nº10 | Classic No.10 | SD/MCO (NO MC desde 2024) | Permanece entre líneas priorizando el juego al pie | Control del balón, Pase raso, Regate |
+| Regista creativo | Mediapunta creativo | Creative Playmaker | SD/MCO/ED/EI (MD/MI/MC: IA inactiva) | Se acerca al poseedor para crear conexiones ofensivas | Pase raso, Control del balón, Regate |
+| Ala prolifica | Extremo prolífico | Prolific Winger | ED/EI (compat. MD/MI) | Parte abierto y recorta hacia la portería | Aceleración, Regate, Finalización |
+| Taglio al centro | Extremo interior | Roaming Flank | ED/EI/MD/MI | Se centra pronto buscando juego interior | Regate, Pase raso, Aceleración |
+| Tra le linee | Orquestador | Orchestrator | MC/MCD (compat. MCO) | Gestiona la posesión moviéndose para recibir y distribuir | Pase raso, Control del balón, Visión |
+| Sviluppo | Construcción | Build Up | DFC (MCD/LTD/LTI: IA inactiva) | Inicia desde atrás abriéndose en construcción | Pase raso, Control del balón, Defensa |
+| Frontale extra | Defensa ofensivo | Extra Frontman | DFC (compat. MCD) | Avanza en posesión acompañando la acción | Defensa, Pase raso, Contacto físico |
+| Incontrista | Destructor | The Destroyer | MC/MCD/DFC (compat. LTD/LTI) | Agrede al poseedor saliendo de la línea | Entradas, Agresividad, Contacto físico |
+| Onnipresente | Box-to-Box★ | Box-to-Box | MC/MCD/MD/MI (compat. MCO) | Cubre todo el campo apoyando ambas fases | Resistencia, Agresividad, Velocidad |
+| Collante | Ancla | Anchor Man | MCD (MC/DFC: IA inactiva) | Permanece delante de la defensa protegiendo las transiciones | Defensa, Pase raso, Contacto físico |
+| Giocatore chiave | Jugador clave | Hole Player | SD/MCO/MC/MD/MI (NO DC) | Ataca los espacios con desmarques ofensivos | Finalización, Aceleración, Ataque |
+| Terzino offensivo | Lateral ofensivo | Attacking Full-back / Offensive Full-back | LTD/LTI (compat. MD/MI) | Avanza constantemente en amplitud | Aceleración, Centro, Resistencia |
+| Terzino difensivo | Lateral defensivo | Defensive Full-back | LTD/LTI (compat. DFC) | Se queda atrás protegiendo la línea defensiva | Defensa, Velocidad, Resistencia |
+| Terzino mattatore | Lateral finalizador | Full-back Finisher | LTD/LTI | Ataca el interior del campo con desmarques agresivos | Aceleración, Regate, Finalización |
+| Portiere offensivo | Portero ofensivo | Offensive Goalkeeper | POR | Sale de la portería y cubre la profundidad | Reflejos, Despeje, Conciencia |
+| Portiere difensivo | Portero defensivo | Defensive Goalkeeper | POR | Permanece cerca de la línea de portería y protege el área | Reflejos, Atrapada, Alcance |
 
-**REGOLA AI per uso multilingua**: il client italiano del gioco usa "Tra le linee" e "Onnipresente". Il catalogo inglese (PSD) usa "Orchestrator" e "Box-to-Box". Sono lo **stesso stile**: parlando con utenti italiani usa il nome IT del client (es. "Tra le linee"); parlando con utenti inglesi usa "Orchestrator". Se un giocatore in rosa appare con "Orchestratore" o "Box-to-Box" salvato dal catalogo, NON dire "non esiste questo stile": è lo stesso di "Tra le linee" / "Onnipresente".
+**REGLA IA para uso multilingüe**: el cliente italiano del juego usa "Tra le linee" y "Onnipresente". El catálogo español usa "Orquestador" y "Box-to-Box★". Son el **mismo estilo**: al hablar con usuarios italianos usa el nombre IT del cliente; al hablar con usuarios españoles usa el nombre ES. Si un jugador en plantilla aparece con "Orchestrator" u "Orquestador" guardado del catálogo, NO digas "no existe este estilo": es el mismo que "Tra le linee" / "Orquestador".
 
-**NON sono stili card** (non usarli sulla rosa né dire "non ce l'hai"): *Punta avanzata*, *Adv. Striker*, *Advanced Striker* — termini obsoleti/guide esterne. Per **profondità e inserimenti negli spazi** usa **Giocatore chiave**; per **filtranti e gol in area** usa **Opportunista**; per **cross/ribalzi** usa **Rapace d'area**. *Punta arretrata* in chat = nome vecchio: in gioco è **Attaccante di rientro** *(Deep-Lying Forward)*.
+**NO son estilos carta** (no los uses en la plantilla ni digas "no lo tienes"): *Punta avanzata*, *Adv. Striker*, *Advanced Striker* — términos obsoletos/guias externas. Para **profundidad y desmarques en espacios** usa **Jugador clave**; para **pases filtrados y goles en área** usa **Oportunista**; para **centros/rebotes** usa **Cazagoles**. *Punta arretrata* en chat = nombre viejo: en juego es **Delantero de apoyo** *(Deep-Lying Forward)*.
 
-### 2.1 Stili Senza Palla (Comportamento senza possesso)
+### 2.1 Estilos Sin Balón (Comportamiento sin posesión)
 
-#### Attaccanti e Centrocampisti Offensivi
-- **Opportunista** (CF=P; compatibile SS=SP): Resta **in linea con l'ultimo difensore avversario** (fuorigioco), scatta verso porta sul filtrante/occasione, sovraffolla l'area. **NON** significa "giocare come un difensore". **Quando serve**: passaggi filtranti, palle in profondità, contropiede. *(Goal Poacher)*
-- **Senza palla** (CF/SS/AMF = P/SP/TRQ): Attira difensori per creare spazi per inserimenti. **Quando serve**: squadre che cercano imprevedibilità; crea spazi per compagni. *(Dummy Runner)*
-- **Rapace d'area** (CF=P): Sempre in agguato in area di rigore per finalizzare; ottimo su cross e ribalzi. **Quando serve**: cross, attaccanti con centrocampisti/esterni che forniscono assist. *(Fox in the Box)*
-- **Attaccante di rientro** (CF/SS = P/SP; compatibile AMF=TRQ): Arretra in mezzo al campo per impostare, contribuisce alla costruzione. **Quando serve**: possesso palla, squadre che costruiscono dal basso. **Perché**: idealmente abbinato a esterni veloci che corrono oltre i difensori. *(Deep-Lying Forward — non "Punta arretrata")*
-- **Fulcro di gioco** (CF=P): Protegge palla con fisico, riferimento offensivo. **Quando serve**: gioco aereo, sponde, attaccanti fisici. **Perché**: presenza fisica, crea spazio per esterni e trequartisti. *(Target Man — community usa anche "L'uomo bersaglio")*
-- **Specialista di cross** (RWF/LWF/RMF/LMF = EDA/ESA/CLD/CLS): Resta sulla fascia per crossare. *(Cross Specialist)*
-- **Classico n° 10** (SS/AMF = SP/TRQ): Playmaker tra le linee, utile per gestione del ritmo, ricezione e rifinitura. **v6.0.0**: è stato rimosso l’effetto che ne riduceva il coinvolgimento difensivo; NON dire più che lo stile “minimizza lo sforzo difensivo” o che difende meno per definizione. NON si attiva su CMF=CC (dal 2024).
-- **Regista creativo** (SS/AMF/RWF/LWF = SP/TRQ/EDA/ESA; compatibile RMF/LMF/CMF = CLD/CLS/CC ma AI inattiva): Si muove liberamente in fase offensiva, cerca spazi per ricevere palla e creare occasioni. **Quando serve**: imprevedibilità offensiva, disorganizzare la difesa avversaria. **Perché**: movimenti intelligenti di smarcamento. *(Creative Playmaker)*
-- **Ala prolifica** (RWF/LWF = EDA/ESA; compatibile RMF/LMF = CLD/CLS): Si posiziona sulla fascia e taglia verso il centro per **ricevere** passaggi filtranti; efficace in 1v1. *(Prolific Winger)*
-- **Taglio al centro** (RWF/LWF/RMF/LMF = EDA/ESA/CLD/CLS): Tende a tagliare verso interno per ricevere passaggi. **Quando serve**: esterni che convergono per tiri a giro o passaggi filtranti. *(Roaming Flank)*
+#### Delanteros y Centrocampistas Ofensivos
+- **Oportunista** (CF=DC; compatible SS=SD): Permanece **en línea con el último defensa adversario** (fuera de juego), arranca hacia portería en pase filtrado/ocasión, sobrecarga el área. **NO** significa "jugar como un defensa". **Cuándo usar**: pases filtrados, balones en profundidad, contraataque. *(Goal Poacher)*
+- **Finta carrera** (CF/SS/AMF = DC/SD/MCO): Atrae defensores para crear espacios para desmarques. **Cuándo usar**: equipos que buscan imprevisibilidad; crea espacios para compañeros. *(Dummy Runner)*
+- **Cazagoles** (CF=DC): Siempre al acecho en el área para finalizar; óptimo en centros y rebotes. **Cuándo usar**: centros, delanteros con centrocampistas/exteriores que dan asistencias. *(Fox in the Box)*
+- **Delantero de apoyo** (CF/SS = DC/SD; compatible AMF=MCO): Retrocede al centro del campo para organizar, contribuye a la construcción. **Cuándo usar**: posesión, equipos que construyen desde atrás. **Por qué**: idealmente combinado con extremos rápidos que corren más allá de los defensores. *(Deep-Lying Forward — no "Punta arretrata")*
+- **Hombre objetivo** (CF=DC): Protege balón con físico, referencia ofensiva. **Cuándo usar**: juego aéreo, apoyos, delanteros físicos. **Por qué**: presencia física, crea espacio para extremos y mediapuntas. *(Target Man)*
+- **Especialista en centros** (RWF/LWF/RMF/LMF = ED/EI/MD/MI): Permanece en la banda para centrar. *(Cross Specialist)*
+- **Clásico Nº 10** (SS/AMF = SD/MCO): Playmaker entre líneas, útil para gestionar el ritmo, recibir y finalizar. **v6.0.0**: se ha eliminado el efecto que reducía su implicación defensiva; NO digas ya que el estilo “minimiza el esfuerzo defensivo” o que defiende menos por definición. NO se activa en CMF=MC (desde 2024).
+- **Mediapunta creativo** (SS/AMF/RWF/LWF = SD/MCO/ED/EI; compatible RMF/LMF/CMF = MD/MI/MC pero IA inactiva): Se mueve libremente en fase ofensiva, busca espacios para recibir balón y crear ocasiones. **Cuándo usar**: imprevisibilidad ofensiva, desorganizar la defensa adversaria. **Por qué**: movimientos inteligentes de desmarque. *(Creative Playmaker)*
+- **Extremo prolífico** (RWF/LWF = ED/EI; compatible RMF/LMF = MD/MI): Se posiciona en la banda y recorta hacia el centro para **recibir** pases filtrados; eficaz en 1v1. *(Prolific Winger)*
+- **Extremo interior** (RWF/LWF/RMF/LMF = ED/EI/MD/MI): Tiende a recortar hacia el interior para recibir pases. **Cuándo usar**: extremos que convergen para tiros con efecto o pases filtrados. *(Roaming Flank)*
 
-#### Centrocampisti e Difensori
-- **Tra le linee** (CMF/DMF = CC/MED; compatibile AMF=TRQ): Si posiziona più basso per dettare il tempo e avviare azioni offensive, gestisce il possesso muovendosi per ricevere e distribuire. *(Orchestrator — community/review IT usa anche "Orchestratore"; sono lo stesso stile)*
-- **Sviluppo** (CB=DC; compatibile DMF/RB/LB = MED/ETD/ETS ma AI inattiva): Difensore che arretra per impostare azione con lanci lunghi. **Quando serve**: costruzione dal basso, possesso palla. **Perché**: raggio di passaggio lungo da dietro. *(Build Up — SOLO CB=DC per attivazione piena)*
-- **Frontale extra** (CB=DC; compatibile DMF=MED): Partecipa a manovra offensiva, si sovrappone. **Quando serve**: moduli che spingono la difesa in avanti; rischio: espone il dietro. *(Extra Frontman)*
-- **Incontrista** (CMF/DMF/CB = CC/MED/DC; compatibile RB/LB = ETD/ETS): Respinge attacchi con pressing aggressivo. **Quando serve**: contropiede veloce, tattiche aggressive orientate alla riconquista rapida. **Perché**: pressione alta, contrasti decisi. *(The Destroyer)*
-- **Onnipresente** (CMF/RMF/LMF/DMF = CC/CLD/CLS/MED; compatibile AMF=TRQ): Corre da area a area, partecipa in fase difensiva e offensiva. Copre tutto il campo. **Quando serve**: moduli che richiedono centrocampisti completi, equilibrio e copertura totale. **Perché**: alta resistenza, versatilità; recupera palla e avvia attacchi, arriva tardi in area; utilizzabile in quasi tutti i moduli. *(Box-to-Box — il client italiano del gioco mostra "Onnipresente"; il catalogo PSD inglese mostra "Box-to-Box". Sono lo stesso stile.)*
-- **Collante** (DMF=MED; compatibile CMF/CB = CC/DC ma AI inattiva): Centrocampista arretrato davanti difesa, utile difesa/attacco. **Quando serve**: scudo difensivo, opzione di passaggio sicura in costruzione. **Perché**: fondamentale per Vie laterali (Out Wide) per solidità difensiva. *(Anchor Man — SOLO DMF=MED per attivazione piena)*
-- **Giocatore chiave** (SS/AMF/RMF/LMF/CMF = SP/TRQ/CLD/CLS/CC): Fiuto del gol, sempre proiettato avanti; cerca spazi vuoti quando si passa da difesa ad attacco, corre verso porta prima della punta. **Quando serve**: contropiede veloce. **Perché**: bisogno di buona resistenza per ripetuti scatti; passaggi rasoterra precisi per le punte. NON si attiva su CF=P. *(Hole Player)*
+#### Centrocampistas y Defensores
+- **Orquestador** (CMF/DMF = MC/MCD; compatible AMF=MCO): Se posiciona más atrás para dictar el ritmo e iniciar acciones ofensivas, gestiona la posesión moviéndose para recibir y distribuir. *(Orchestrator)*
+- **Construcción** (CB=DFC; compatible DMF/RB/LB = MCD/LTD/LTI pero IA inactiva): Defensa que retrocede para organizar la acción con pases largos. **Cuándo usar**: construcción desde atrás, posesión. **Por qué**: radio de pase largo desde atrás. *(Build Up — SOLO CB=DFC para activación plena)*
+- **Defensa ofensivo** (CB=DFC; compatible DMF=MCD): Participa en maniobra ofensiva, se superpone. **Cuándo usar**: módulos que empujan la defensa hacia adelante; riesgo: expone la retaguardia. *(Extra Frontman)*
+- **Destructor** (CMF/DMF/CB = MC/MCD/DFC; compatible RB/LB = LTD/LTI): Rechaza ataques con presión agresiva. **Cuándo usar**: contraataque rápido, tácticas agresivas orientadas a la recuperación rápida. **Por qué**: presión alta, entradas decididas. *(The Destroyer)*
+- **Box-to-Box★** (CMF/RMF/LMF/DMF = MC/MD/MI/MCD; compatible AMF=MCO): Corre de área a área, participa en fase defensiva y ofensiva. Cubre todo el campo. **Cuándo usar**: módulos que requieren centrocampistas completos, equilibrio y cobertura total. **Por qué**: alta resistencia, versatilidad; recupera balón e inicia ataques, llega tarde al área; utilizable en casi todos los módulos. *(Box-to-Box — el cliente italiano del juego muestra "Onnipresente"; el catálogo español muestra "Box-to-Box★". Son el mismo estilo.)*
+- **Ancla** (DMF=MCD; compatible CMF/CB = MC/DFC pero IA inactiva): Centrocampista retrasado delante de la defensa, útil defensa/ataque. **Cuándo usar**: escudo defensivo, opción de pase segura en construcción. **Por qué**: fundamental para Bandas (Out Wide) por solidez defensiva. *(Anchor Man — SOLO DMF=MCD para activación plena)*
+- **Jugador clave** (SS/AMF/RMF/LMF/CMF = SD/MCO/MD/MI/MC): Olfato de gol, siempre proyectado hacia adelante; busca espacios vacíos al pasar de defensa a ataque, corre hacia portería antes que el delantero. **Cuándo usar**: contraataque rápido. **Por qué**: necesita buena resistencia para repetidas arrancadas; pases rasos precisos para los delanteros. NO se activa en CF=DC. *(Hole Player)*
 
-#### Terzini e Portieri
-- **Terzino offensivo** (RB/LB = ETD/ETS; compatibile RMF/LMF = CLD/CLS): Si unisce ad attacco, sovrapposizioni continue, spinta sulla fascia. **Quando serve**: ampiezza, cross, dominio territoriale. **Rischio**: lascia spazio dietro. *(Attacking Full-back / Offensive Full-back)*
-- **Terzino difensivo** (RB/LB = ETD/ETS; compatibile CB=DC): Rimane arretrato per proteggere difesa, copertura prioritaria. **Quando serve**: solidità difensiva, contro ali veloci avversarie. *(Defensive Full-back)*
-- **Terzino mattatore** (RB/LB = ETD/ETS): Si inserisce in azioni offensive centrali. **Quando serve**: moduli che spingono i terzini in attacco centrale. *(Full-back Finisher)*
-- **Portiere offensivo** (PT=GK): Più avanzato, esce per anticipare; proattivo nelle uscite. **Quando serve**: linea alta, pressing, gioco aggressivo. **Rischio**: palloni scavalcati. *(Offensive Goalkeeper)*
-- **Portiere difensivo** (PT=GK): Rimane vicino alla linea di porta, reattivo. **Quando serve**: gioco conservativo, contro squadre con tiri da lontano. *(Defensive Goalkeeper)*
+#### Laterales y Porteros
+- **Lateral ofensivo** (RB/LB = LTD/LTI; compatible RMF/LMF = MD/MI): Se une al ataque, superposiciones continuas, avance por banda. **Cuándo usar**: amplitud, centros, dominio territorial. **Riesgo**: deja espacio detrás. *(Attacking Full-back / Offensive Full-back)*
+- **Lateral defensivo** (RB/LB = LTD/LTI; compatible CB=DFC): Permanece retrasado para proteger defensa, cobertura prioritaria. **Cuándo usar**: solidez defensiva, contra extremos rápidos adversarios. *(Defensive Full-back)*
+- **Lateral finalizador** (RB/LB = LTD/LTI): Se incorpora en acciones ofensivas centrales. **Cuándo usar**: módulos que empujan los laterales al ataque central. *(Full-back Finisher)*
+- **Portero ofensivo** (POR): Más adelantado, sale para anticipar; proactivo en las salidas. **Cuándo usar**: línea alta, presión, juego agresivo. **Riesgo**: balones por encima. *(Offensive Goalkeeper)*
+- **Portero defensivo** (POR): Permanece cerca de la línea de portería, reactivo. **Cuándo usar**: juego conservador, contra equipos con tiros desde lejos. *(Defensive Goalkeeper)*
 
-### 2.2 Attivazione stile e posizione (logica "passiva spenta se fuori ruolo")
+### 2.2 Activación estilo y posición (lógica "pasiva apagada si fuera de rol")
 
-**Terminologia community**: "Passiva spenta se fuori ruolo" = lo stile giocatore (comportamento automatico IA) **non si attiva** quando il giocatore è schierato **fuori dalla sua posizione di competenza**.
+**Terminología community**: "Pasiva apagada si fuera de rol" = el estilo jugador (comportamiento automático IA) **no se activa** cuando el jugador está alineado **fuera de su posición de competencia**.
 
-**Meccanica**:
-- Gli stili sono **comportamenti passivi** (attivati dall'IA senza input diretti); governano movimenti senza palla (§2.1) e con palla (§2.3).
-- Ogni stile ha **posizioni associate** (es. Opportunista → P; Onnipresente → CC/MED; Sviluppo → solo DC).
-- Se il giocatore è **in posizione di competenza** (Alto o Intermedio): lo stile si attiva → movimenti corretti, bonus di posizionamento.
-- Se il giocatore è **fuori ruolo** (competenza Bassa o assente): lo stile **non si attiva** → posizionamento errato, movimenti meno efficaci, calo forza complessiva (§9.4).
+**Mecánica**:
+- Los estilos son **comportamientos pasivos** (activados por la IA sin inputs directos); gobiernan movimientos sin balón (§2.1) y con balón (§2.3).
+- Cada estilo tiene **posiciones asociadas** (ej. Oportunista → DC; Box-to-Box★ → MC/MCD; Construcción → solo DFC).
+- Si el jugador está **en posición de competencia** (Alta o Intermedia): el estilo se activa → movimientos correctos, bonus de posicionamiento.
+- Si el jugador está **fuera de rol** (competencia Baja o ausente): el estilo **no se activa** → posicionamiento erróneo, movimientos menos eficaces, caída de fuerza total (§9.4).
 
-**Quando citare**: Se l'utente chiede perché un giocatore "non rende" o "è lento", o se la rosa ha giocatori fuori ruolo, verificare se lo stile è compatibile con la posizione effettiva. Se fuori ruolo: "Schierando [X] fuori posizione, lo stile [Y] non si attiva; il giocatore perde il bonus di posizionamento e la forza complessiva scende. Prova a usarlo in [posizione corretta] o schiera un altro." Non usare "passiva spenta" nella risposta all'utente; usare "stile non si attiva" o "fuori ruolo penalizza".
+**Cuándo citarlo**: Si el usuario pregunta por qué un jugador "no rinde" o "es lento", o si la plantilla tiene jugadores fuera de rol, verificar si el estilo es compatible con la posición efectiva. Si fuera de rol: "Alineando [X] fuera de posición, el estilo [Y] no se activa; el jugador pierde el bonus de posicionamiento y la fuerza total baja. Prueba a usarlo en [posición correcta] o alinea a otro." No uses "pasiva apagada" en la respuesta al usuario; usa "estilo no se activa" o "fuera de rol penaliza".
 
-### 2.3 Stili di Gioco IA (Con Palla)
-Comportamento quando IA controlla giocatore in possesso:
-- **Funambolo**: Esperto dribbling con doppio passo; controllo palla stretto sotto pressione
-- **Serpentina**: Sfrutta dribbling e cambi direzione; spiazza difensori
-- **Treno in corsa**: Veloce, attacca spazi, accelerazioni in profondità; ideale per contropiede
-- **Inserimento**: Usa dribbling per accentrarsi e creare occasioni; taglio verso l'interno
-- **Esperto palle lunghe**: Effettua spesso passaggi lunghi; costruzione da dietro
-- **Crossatore**: Sfrutta spazi per crossare; ideale su fasce
-- **Tiratore**: Specialista tiri da fuori area; tiene la difesa onesta
-
----
-
-## 3. MODULI TATTICI (CONFIGURABILI)
-
-### 3.1 Moduli con 4 Difensori
-- **4-3-3**: Tre CC e tre attaccanti, possesso palla e ampiezza
-- **4-2-3-1**: Due mediani copertura, tre trequartisti dietro punta
-- **4-4-2**: Due linee da quattro, equilibrio difesa/attacco
-- **4-1-2-3**: Un mediano, due mezzali, tre attaccanti
-- **4-5-1**: Densità centrocampo, unica punta riferimento
-- **4-4-1-1**: Variante 4-4-2 con trequartista dietro punta
-- **4-2-2-2**: Due mediani, due trequartisti larghi, due punte
-
-### 3.2 Moduli con 3 Difensori
-- **3-5-2**: Due punte, CC folto, esterni supportano difesa
-- **3-4-3**: Tre attaccanti, quattro CC, gioco offensivo
-- **3-1-4-2**: Un mediano, quattro CC per dominare possesso
-- **3-4-1-2**: Trequartista dietro due punte, creazione gioco
-
-### 3.3 Moduli con 5 Difensori
-- **5-3-2**: Difesa solida, tre CC, due attaccanti, contropiede
-- **5-4-1**: Massima copertura difensiva, unica punta
-- **5-2-3**: Variante offensiva, tre attaccanti, due mediani
-
-### 3.4 Limiti di schieramento per ruolo (regole di gioco)
-- **Attacco (A)**: 1-5 giocatori (max 2 P, max 1 EDA/ESA)
-- **Centrocampo (C)**: 1-6 giocatori (max 1 CLD/CLS)
-- **Difesa (D)**: 2-5 giocatori (fino a **3 DC**, max 1 TD, max 1 TS). **3 DC sono consentiti**. Se vuoi schierare un **4° difensore** quando hai già 3 DC, deve essere un **terzino** (TD o TS): vietato 4° DC. Con 3 DC già in campo, non aggiungere riserve DC se non esce un DC titolare; per aumentare la linea difensiva proponi TD/TS. Eccezione: una card principale DC può essere usata da terzino solo se nei dati ha posizione/competenza TD o TS, e va comunicata come TD/TS.
-- **Portiere (PT)**: posizione non modificabile
-
-### 3.5 Formazione fluida (v6.0.0)
-- **Formaz. fluida / Fluid Formation**: eFootball v6 consente una disposizione per la fase offensiva e una diversa per la fase difensiva.
-- Esempio ufficiale: in possesso un terzino può essere portato più avanti; senza possesso un esterno può essere abbassato per aumentare il numero di difensori.
-- **Regola AI**: se la piattaforma non fornisce due layout salvati, spiega la meccanica in generale ma NON inventare quali siano le formazioni attacco/difesa del cliente.
-- La formazione base già salvata resta valida; non trattare l’assenza di varianti come errore.
-
-### 3.6 Ruoli e comportamenti tattici
-**Mediano (MED)**: Davanti alla difesa, zona ristretta; interdizione e recupero palla. **Quando serve**: scudo difensivo, proteggere difesa contro trequartisti.
-**Mezzala**: Movimento verticale, inserimenti in area. **Quando serve**: goal da centrocampo, superiorità numerica in area.
-**Regista Basso**: Arretrato per costruzione, primo passaggio. **Quando serve**: gioco elaborato dal portiere, costruzione dal basso.
-**Ala tagliente**: Rientra sul piede forte per tirare; taglio interno verso area. **Quando serve**: tiri a giro, piede invertito (destro a sinistra).
-**Ala pura**: Rimane largo per cross; punta linea fondo. **Quando serve**: servire attaccanti centrali, attaccanti forti di testa.
+### 2.3 Estilos de Juego IA (Con Balón)
+Comportamiento cuando la IA controla al jugador en posesión:
+- **Funambulista**: Experto regate con bicicleta; control de balón ajustado bajo presión
+- **Serpenteo**: Aprovecha regate y cambios de dirección; descoloca defensores
+- **Tren en carrera**: Rápido, ataca espacios, aceleraciones en profundidad; ideal para contraataque
+- **Desmarque**: Usa regate para centrarse y crear ocasiones; recorte hacia el interior
+- **Experto balones largos**: Efectúa a menudo pases largos; construcción desde atrás
+- **Centrador**: Aprovecha espacios para centrar; ideal en bandas
+- **Tirador**: Especialista tiros desde fuera del área; mantiene la defensa honesta
 
 ---
 
-## 4. STILI SQUADRA - Tattica (configurabili)
+## 3. MÓDULOS TÁCTICOS (CONFIGURABLES)
 
-**≠ Stile giocatore** (Opportunista, Collante, ecc.): quello è in §2. Qui solo **stile tattico di squadra** (Possesso, Contropiede, ecc.).
+### 3.1 Módulos con 4 Defensores
+- **4-3-3**: Tres MC y tres delanteros, posesión y amplitud
+- **4-2-3-1**: Dos mediocentros cobertura, tres mediapuntas detrás del delantero
+- **4-4-2**: Dos líneas de cuatro, equilibrio defensa/ataque
+- **4-1-2-3**: Un MCD, dos interiores, tres delanteros
+- **4-5-1**: Densidad centrocampo, único delantero referencia
+- **4-4-1-1**: Variante 4-4-2 con mediapunta detrás del delantero
+- **4-2-2-2**: Dos mediocentros, dos mediapuntas abiertos, dos delanteros
 
-**Definisce direzione tattica squadra. L'attitudine allenatore influenza competenza stile.**
+### 3.2 Módulos con 3 Defensores
+- **3-5-2**: Dos delanteros, MC numeroso, exteriores apoyan defensa
+- **3-4-3**: Tres delanteros, cuatro MC, juego ofensivo
+- **3-1-4-2**: Un MCD, cuatro MC para dominar posesión
+- **3-4-1-2**: Mediapunta detrás de dos delanteros, creación juego
 
-**CONFIGURABILI IN APP (team_playing_style) v6.0.0**: questi 6 → Possesso palla, Contropiede veloce, Contrattacco, Passaggio lungo, Vie laterali, **Pressing totale (Overload)**. Gli altri concetti sotto (Pressing Alto, Gegenpressing, Tiki-Taka, ecc.) restano concetti/gameplay e NON vanno presentati come team_playing_style selezionabili.
+### 3.3 Módulos con 5 Defensores
+- **5-3-2**: Defensa sólida, tres MC, dos delanteros, contraataque
+- **5-4-1**: Máxima cobertura defensiva, único delantero
+- **5-2-3**: Variante ofensiva, tres delanteros, dos mediocentros
 
-### 4.1 Stili squadra correnti (6 Tipologie)
-- **Possesso palla**: Gioco costruito con passaggi corti e pazienti. **Quando serve**: centrocampisti tecnici, trequartisti creativi. **Perché**: controllo partita, pazienza, circolazione palla.
-- **Contropiede veloce**: Ripartenze veloci sfruttando spazi lasciati. **Quando serve**: attaccanti veloci, difensori con recupero rapido. **Perché**: velocità, passaggi verticali diretti.
-- **Contrattacco**: Attacco diretto con passaggi verticali rapidi; difesa compatta, ripartenze organizzate.
-- **Passaggio lungo**: Strategia basata su lanci lunghi. **Quando serve**: opportunisti, attaccanti fisici. **Perché**: verticalità, gioco aereo.
-- **Vie laterali**: Attacco principalmente attraverso fasce; esterni restano larghi per allargare la difesa avversaria. **Quando serve**: esterni con cross, attaccanti completi (piedi + testa). **Perché**: equilibrio tra fasce e centro; non solo cross – costruzione anche centrale. Difesa si concentra al centro; utile contro attacchi centrali avversari.
-- **Pressing totale (Overload)**: concentra i giocatori sullo stesso lato della palla per creare superiorità numerica. **In attacco** facilita passaggi a corta distanza e mantenimento del possesso anche in zone affollate. **In difesa** mantiene una struttura compatta e chiude rapidamente sul portatore. **Regola AI**: se nei dati coach non esiste una competenza Pressing totale/Overload, dichiarala sconosciuta e NON inventare un valore. **Euristica Hero, non fatto Konami**: contro un sovraccarico lato palla può avere senso cercare il lato debole/cambio gioco se i dati e la situazione lo consentono.
+### 3.4 Límites de alineación por rol (reglas de juego)
+- **Ataque (A)**: 1-5 jugadores (máx 2 DC, máx 1 ED/EI)
+- **Centrocampo (C)**: 1-6 jugadores (máx 1 MD/MI)
+- **Defensa (D)**: 2-5 jugadores (hasta **3 DFC**, máx 1 LTD, máx 1 LTI). **3 DFC son permitidos**. Si quieres alinear un **4° defensa** cuando ya tienes 3 DFC, debe ser un **lateral** (LTD o LTI): prohibido 4° DFC. Con 3 DFC ya en campo, no añadas suplentes DFC si no sale un DFC titular; para aumentar la línea defensiva propón LTD/LTI. Excepción: una carta principal DFC puede usarse de lateral solo si en los datos tiene posición/competencia LTD o LTI, y debe comunicarse como LTD/LTI.
+- **Portero (POR)**: posición no modificable
 
-### 4.2 Stili Offensivi
-- **Attacco Diretto**: Passaggi verticali rapidi. **Quando serve**: velocità in attacco.
-- **Cross e Finalizzazione**: Strategia basata su cross per attaccanti forti di testa. **Quando serve**: attaccanti con Colpo di testa, esterni con Cross calibrato.
-- **Attacco Centrale**: Costruzione con combinazioni corte centrali. **Quando serve**: trequartisti tecnici, possesso.
+### 3.5 Formación fluida (v6.0.0)
+- **Formación fluida / Fluid Formation**: eFootball v6 permite una disposición para la fase ofensiva y otra distinta para la fase defensiva.
+- Ejemplo oficial: en posesión un lateral puede adelantarse; sin posesión un exterior puede retrasarse para aumentar el número de defensores.
+- **Regla IA**: si la plataforma no entrega dos layouts guardados, explica la mecánica en general pero NO inventes cuáles son las formaciones ataque/defensa del cliente.
+- La formación base ya guardada sigue siendo válida; no trates la ausencia de variantes como un error.
 
-### 4.3 Stili Difensivi
-- **Pressing Alto**: Difesa aggressiva per recuperare palla in zona avanzata. **Quando serve**: squadra con Resistenza alta; rischio: spazi dietro.
-- **Difesa Bassa**: Linea difensiva arretrata per ridurre spazi. **Quando serve**: contro attaccanti veloci, in vantaggio.
-- **Pressing Selettivo**: Intercettazione linee di passaggio. **Quando serve**: centrocampisti con Intercettazione.
-- **Contenimento Difensivo**: Lasciare possesso e ripartire con contropiedi. **Quando serve**: contro possesso avversario.
-
-### 4.4 Costruzione dal Basso
-- **Costruzione Posizionale**: Manovra ragionata con passaggi corti. **Quando serve**: possesso palla, portiere con lancio corto.
-- **Lancio Lungo**: Passaggi lunghi per scavalcare pressing. **Quando serve**: contro pressing alto, punta fisica per sponde.
-- **Costruzione a Triangoli**: Passaggi tra CC per superare pressing. **Quando serve**: centrocampo tecnico.
-
-### 4.5 Tattiche Speciali
-- **Gegenpressing**: Recupero palla immediato dopo averla persa. **Quando serve**: squadra con Resistenza alta.
-- **Tiki-Taka**: Passaggi corti continui per disorganizzare difesa. **Quando serve**: possesso, tecnica alta.
-- **Catenaccio**: Difesa stretta e ripartenze rapide.
-- **Pressing Costante**: Squadra sempre aggressiva. **Quando serve**: Resistenza 85+ per tutti.
-- **Attacco con Esterni Alti**: Esterni rimangono larghi. **Quando serve**: ampiezza, cross.
-- **Tagli Interni**: Esterni convergono verso centro. **Quando serve**: tiri a giro, spazio centrale.
-
----
-
-## 5. ISTRUZIONI INDIVIDUALI (CONFIGURABILI)
-
-**4 slot totali: 2 offensive (possesso palla), 2 difensive (senza possesso)**
-
-**REGOLA v6.0.0**: **Offensivo** e **Linea bassa (Deep Line)** sono state rimosse dalle Istruzioni Individuali correnti. Possono ancora comparire nel contesto della piattaforma perché alcuni utenti le avevano salvate prima dell’aggiornamento: in quel caso sono **LEGACY**, non vanno cancellate automaticamente e soprattutto NON vanno consigliate o descritte come selezionabili oggi.
-
-### Slot Offensive correnti (in possesso palla)
-- **Difensivo**: limita la spinta in avanti del giocatore
-- **Ancoraggio (Anchoring)**: mantiene il giocatore più ancorato alla propria zona
-
-### Slot Difensive correnti (senza possesso palla)
-- **Marcatura stretta**: limita lo spazio del bersaglio con marcatura ravvicinata
-- **Marcatura uomo**: assegna una marcatura specifica
-- **Contropiede / Obiettivo Contropiede (Counter Target)**: mantiene il giocatore come riferimento per la transizione offensiva secondo le regole correnti del gioco
-
-### Gestione dati legacy nella piattaforma
-- Se nel profilo compare **Offensivo** o **Linea bassa**, trattalo come configurazione storica salvata con un ruleset precedente.
-- Non dire “è ancora attiva/selezionabile” e non proporla come soluzione.
-- Non sostituirla automaticamente con un’altra istruzione: invita l’utente ad aggiornare la tattica quando pertinente.
-- Se l’utente chiede direttamente “posso usare Linea bassa/Offensivo?”, rispondi che nella v6 non sono più opzioni correnti delle Istruzioni Individuali.
-
-### Impostazioni Squadra
-- **Linea alta/bassa**: Alzare/abbassare linea difensiva con frecce
-- **Calci piazzati**: Primo/Secondo/Terzo attaccante per cross
+### 3.6 Roles y comportamientos tácticos
+**Mediocentro defensivo (MCD)**: Delante de la defensa, zona restringida; intercepción y recuperación balón. **Cuándo usar**: escudo defensivo, proteger defensa contra mediapuntas.
+**Interior**: Movimiento vertical, desmarques al área. **Cuándo usar**: goles desde centrocampo, superioridad numérica en área.
+**Organizador bajo**: Retrasado para construcción, primer pase. **Cuándo usar**: juego elaborado desde el portero, construcción desde atrás.
+**Extremo corte**: Recorta hacia el pie fuerte para tirar; corte interior hacia área. **Cuándo usar**: tiros con efecto, pie invertido (diestro a izquierda).
+**Extremo puro**: Permanece abierto para centrar; apunta línea de fondo. **Cuándo usar**: servir delanteros centrales, delanteros fuertes de cabeza.
 
 ---
 
-## 6. CALCI PIAZZATI (CONFIGURABILI)
+## 4. ESTILOS EQUIPO - Táctica (configurables)
 
-### Meccanica posizioni attaccanti (cross/corner)
-- **Primo attaccante**: va sul primo palo
-- **Secondo attaccante**: va al centro dell'area
-- **Terzo attaccante**: va sul secondo palo
+**≠ Estilo jugador** (Oportunista, Ancla, etc.): eso está en §2. Aquí solo **estilo táctico de equipo** (Posesión, Contraataque, etc.).
 
-### 6.1 Punizioni Attacco
-- **Scatta**: Giocatori schierati fianco a fianco prima corsa verso porta
-- **Sponda al centro**: Corsa arcuata verso palo lontano
-- **Scatta e mantieni**: Alcuni avanzano, altri in copertura
-- **Palla all'ariete**: Strategia gioco aereo
-- **Equilibrato**: Giocatori si adattano a situazione
+**Define la dirección táctica del equipo. La actitud del entrenador influye en la competencia del estilo.**
 
-### 6.2 Corner Attacco
-- **Scatta**: Corsa dal palo lontano
-- **Area piccola**: Schierati stretti vicino area rigore
-- **Treno**: Disposti in verticale prima di attaccare
-- **Da centrocampo**: Uno arretra leggermente dietro area
-- **Due ricevitori**: Due vicino bandierina per passaggio
-- **In diagonale**: Uno solo si avvicina lateralmente
-- **Corner corto**: Tattiche per giocare corner corto
-- **Linea laterale**: Compagno vicino bandierina per passaggio
+**CONFIGURABLES EN APP (team_playing_style) v6.0.0**: estos 6 → Posesión, Contraataque rápido, Contraataque, Balón largo, Bandas, **Presión total (Overload)**. Los otros conceptos abajo (Presión Alta, Gegenpressing, Tiki-Taka, etc.) siguen siendo conceptos/gameplay y NO deben presentarse como team_playing_style seleccionables.
 
-### 6.3 Calci Piazzati Difesa
-- **Marcatura a uomo**: 1 contro 1 in area
-- **Marcatura a zona**: Difesa su aree designate
-- **Equilibrato**: Mix tra uomo e zona
-- **Palo lontano**: Forti di testa sul palo lontano
+### 4.1 Estilos de equipo actuales (6 tipos)
+- **Posesión**: Juego construido con pases cortos y pacientes. **Cuándo usar**: centrocampistas técnicos, mediapuntas creativos. **Por qué**: control partido, paciencia, circulación balón.
+- **Contraataque rápido**: Contraataques veloces aprovechando espacios dejados. **Cuándo usar**: delanteros rápidos, defensores con recuperación rápida. **Por qué**: velocidad, pases verticales directos.
+- **Contraataque**: Ataque directo con pases verticales rápidos; defensa compacta, contraataques organizados.
+- **Balón largo**: Estrategia basada en lanzamientos largos. **Cuándo usar**: oportunistas, delanteros físicos. **Por qué**: verticalidad, juego aéreo.
+- **Bandas**: Ataque principalmente por bandas; exteriores permanecen abiertos para estirar la defensa adversaria. **Cuándo usar**: exteriores con centro, delanteros completos (pies + cabeza). **Por qué**: equilibrio entre bandas y centro; no solo centros – construcción también central. Defensa se concentra al centro; útil contra ataques centrales adversarios.
+- **Presión total (Overload)**: concentra a los jugadores en el mismo lado del balón para crear superioridad numérica. **En ataque** facilita pases cortos y mantener la posesión incluso en zonas abarrotadas. **En defensa** mantiene una estructura compacta y cierra rápido sobre el portador. **Regla IA**: si en los datos del coach no existe una competencia Presión total/Overload, declárala desconocida y NO inventes un valor. **Heurística Hero, no hecho Konami**: contra un sobrecarga lado balón puede tener sentido buscar el lado débil/cambio de juego si los datos y la situación lo permiten.
+
+### 4.2 Estilos Ofensivos
+- **Ataque Directo**: Pases verticales rápidos. **Cuándo usar**: velocidad en ataque.
+- **Centro y Finalización**: Estrategia basada en centros para delanteros fuertes de cabeza. **Cuándo usar**: delanteros con Remate de cabeza, exteriores con Centro medido.
+- **Ataque Central**: Construcción con combinaciones cortas centrales. **Cuándo usar**: mediapuntas técnicos, posesión.
+
+### 4.3 Estilos Defensivos
+- **Presión Alta**: Defensa agresiva para recuperar balón en zona avanzada. **Cuándo usar**: equipo con Resistencia alta; riesgo: espacios detrás.
+- **Defensa Baja**: Línea defensiva retrasada para reducir espacios. **Cuándo usar**: contra delanteros rápidos, en ventaja.
+- **Presión Selectiva**: Interceptación líneas de pase. **Cuándo usar**: centrocampistas con Interceptación.
+- **Contención Defensiva**: Dejar posesión y contraatacar. **Cuándo usar**: contra posesión adversaria.
+
+### 4.4 Construcción desde Atrás
+- **Construcción Posicional**: Maniobra razonada con pases cortos. **Cuándo usar**: posesión, portero con saque corto.
+- **Lanzamiento Largo**: Pases largos para superar presión. **Cuándo usar**: contra presión alta, delantero físico para apoyos.
+- **Construcción en Triángulos**: Pases entre MC para superar presión. **Cuándo usar**: centrocampo técnico.
+
+### 4.5 Tácticas Especiales
+- **Gegenpressing**: Recuperación balón inmediata tras perderlo. **Cuándo usar**: equipo con Resistencia alta.
+- **Tiki-Taka**: Pases cortos continuos para desorganizar defensa. **Cuándo usar**: posesión, técnica alta.
+- **Catenaccio**: Defensa estrecha y contraataques rápidos.
+- **Presión Constante**: Equipo siempre agresivo. **Cuándo usar**: Resistencia 85+ para todos.
+- **Ataque con Exteriores Altos**: Exteriores permanecen abiertos. **Cuándo usar**: amplitud, centros.
+- **Cortes Interiores**: Exteriores convergen hacia centro. **Cuándo usar**: tiros con efecto, espacio central.
 
 ---
 
-## 7. MECCANICHE DI GIOCO AVANZATE
+## 5. INSTRUCCIONES INDIVIDUALES (CONFIGURABLES)
 
-### 7.1 Difesa Manuale (azioni: SOLO cosa fare)
-**Nota**: qui descriviamo SOLO **azioni** e principi. **Mai** tasti/pulsanti/controller.
+**4 slots totales: 2 ofensivos (en posesión), 2 defensivos (sin posesión)**
 
-**Testa a Testa**: Segui l’avversario a passetti (senza buttarti), resta in traiettoria tra lui e la porta e chiudi linee di tiro/passaggio. Usalo nei 1v1 e quando difendi in area per non farti saltare.
+**REGLA v6.0.0**: **Ofensivo** y **Línea baja (Deep Line)** se han eliminado de las Instrucciones Individuales corrientes. Pueden seguir apareciendo en el contexto de la plataforma porque algunos usuarios las habían guardado antes de la actualización: en ese caso son **LEGACY**, no deben borrarse automáticamente y sobre todo NO deben aconsejarse ni describirse como seleccionables hoy.
 
-**Contrasto di Spalla**: Ingaggia spalla a spalla quando sei affiancato e in corsa: è l’opzione più “pulita” per rubare palla senza scivolate o contrasti rischiosi.
+### Slots ofensivos actuales (en posesión)
+- **Defensivo**: limita el empuje hacia adelante del jugador
+- **Anclaje (Anchoring)**: mantiene al jugador más anclado a su zona
 
-**Pressing coordinato**: Chiama un compagno a pressare per pochi secondi **solo** quando sei vicino al portatore e hai copertura dietro. Se lo fai da lontano o senza copertura, apri spazi.
+### Slots defensivos actuales (sin posesión)
+- **Marcaje estrecho**: limita el espacio del objetivo con marcaje cercano
+- **Marcaje al hombre**: asigna un marcaje específico
+- **Contraataque / Objetivo contraataque (Counter Target)**: mantiene al jugador como referencia para la transición ofensiva según las reglas actuales del juego
 
-**Protezione**: Se ti pressano da dietro o di lato, usa il corpo per schermare palla e ruota per uscire dalla pressione. La riuscita aumenta se **Contatto fisico** è alto.
+### Gestión de datos legacy en la plataforma
+- Si en el perfil aparece **Ofensivo** o **Línea baja**, trátalo como configuración histórica guardada con un ruleset anterior.
+- No digas “sigue activa/seleccionable” y no la propongas como solución.
+- No la sustituyas automáticamente por otra instrucción: invita al usuario a actualizar la táctica cuando corresponda.
+- Si el usuario pregunta directamente “¿puedo usar Línea baja/Ofensivo?”, responde que en la v6 ya no son opciones corrientes de las Instrucciones Individuales.
 
-**Marcature**: Su piazzati difensivi scegli marcatura a uomo o a zona in base ai tuoi difensori (AerialDef, Marcatura, Intercettazione).
+### Configuraciones Equipo
+- **Línea alta/baja**: Subir/bajar línea defensiva con flechas
+- **Jugadas a balón parado**: Primer/Segundo/Tercer atacante para centros
 
-### 7.2 Comandi Offensivi Avanzati
+---
 
-**Uno-due in Avanti**: Dopo un passaggio, manda l’autore a scattare in profondità e restituisci subito palla nello spazio. È una base per superare linee compatte.
+## 6. JUGADAS A BALÓN PARADO (CONFIGURABLES)
 
-**Passaggio Sensazionale**: Passaggio più rapido e incisivo (rischio maggiore se sei chiuso). Usalo quando sei **smarcato** e hai una linea di passaggio chiara.
+### Mecánica posiciones atacantes (centro/córner)
+- **Primer atacante**: va al primer palo
+- **Segundo atacante**: va al centro del área
+- **Tercer atacante**: va al segundo palo
 
-**Tiro Sensazionale**: Tiro più potente. Rende di più con abilità tiro speciali (es. **Tiro a scendere** / **Tiro a salire**) e quando hai tempo per orientare il corpo.
+### 6.1 Faltas Ataque
+- **Arranca**: Jugadores alineados lado a lado, primera carrera hacia portería
+- **Apoyo al centro**: Carrera arqueada hacia palo lejano
+- **Arranca y mantén**: Algunos avanzan, otros en cobertura
+- **Balón al ariete**: Estrategia juego aéreo
+- **Equilibrado**: Jugadores se adaptan a la situación
 
-**Tiro Calibrato**: Tiro più “piazzato” e delicato. Rende di più con abilità come **A giro da distante** o **Esterno a giro**, e quando vuoi privilegiare precisione rispetto alla potenza.
+### 6.2 Córner Ataque
+- **Arranca**: Carrera desde el palo lejano
+- **Área pequeña**: Alineados apretados cerca del área
+- **Tren**: Dispuestos en vertical antes de atacar
+- **Desde medio campo**: Uno retrocede ligeramente detrás del área
+- **Dos receptores**: Dos cerca del banderín para pase
+- **En diagonal**: Uno solo se acerca lateralmente
+- **Córner corto**: Tácticas para jugar córner corto
+- **Línea lateral**: Compañero cerca del banderín para pase
 
-**Controllo Tocco di Palla**: Alterna tocchi corti (controllo) e tocchi lunghi (cambio ritmo) per superare la pressione. Tocchi più lunghi espongono la palla: falli solo con spazio.
+### 6.3 Jugadas a Balón Parado Defensa
+- **Marcaje al hombre**: 1 contra 1 en área
+- **Marcaje en zona**: Defensa sobre áreas designadas
+- **Equilibrado**: Mix entre hombre y zona
+- **Palo lejano**: Fuertes de cabeza en el palo lejano
 
-**Dribbling di Precisione**: Conduzione a tocchi stretti mantenendo il corpo orientato verso l’attacco. È più efficace in spazi stretti o 1v1 controllati.
+---
 
-### 7.3 Finte e Skill Moves
+## 7. MECÁNICAS DE JUEGO AVANZADAS
 
-**Finte di Corpo**: Usa cambi di direzione e finte di corpo per sbilanciare il difensore prima dello scatto o del passaggio.
+### 7.1 Defensa Manual (acciones: SOLO qué hacer)
+**Nota**: aquí describimos SOLO **acciones** y principios. **Nunca** botones/controles/controller.
 
-**Doppio Tocco**: Skill base per superare avversari.
+**Cabeza a Cabeza**: Sigue al adversario con pasos cortos (sin lanzarte), permanece en trayectoria entre él y la portería y cierra líneas de tiro/pase. Úsalo en 1v1 y cuando defiendes en área para que no te superen.
 
-**Tap Trick**: Finta rapida manuale in prossimità del difensore: crea una breve esitazione per uscire sul lato libero o cambiare direzione. Usarla solo in 1v1 con spazio dopo la finta; non è un boost automatico e non va ripetuta senza leggere la reazione del difensore.
+**Choque de Hombro**: Enfréntate hombro con hombro cuando estás emparejado y en carrera: es la opción más "limpia" para robar balón sin deslizamientos o entradas arriesgadas.
 
-**Elastico / Elastico inverso**: Cambio direzione rapido.
+**Presión coordinada**: Llama a un compañero a presionar por pocos segundos **solo** cuando estás cerca del poseedor y tienes cobertura detrás. Si lo haces desde lejos o sin cobertura, abres espacios.
 
-**Veronica**: Skill avanzata.
+**Protección**: Si te presionan por detrás o de lado, usa el cuerpo para escudar balón y gira para salir de la presión. El éxito aumenta si **Contacto físico** es alto.
 
-**Sombrero / Sombrero e tacco**: Passaggio alto a sé stessi.
+**Marcajes**: En jugadas a balón parado defensivas elige marcaje al hombre o en zona según tus defensores (AerialDef, Marcaje, Interceptación).
 
-**Svolta secca**: Cambio direzione immediato.
+### 7.2 Comandos Ofensivos Avanzados
 
-**Alzata di tacco**: Controllo palla avanzato.
+**Pared hacia Adelante**: Después de un pase, manda al autor a arrancar en profundidad y devuelve enseguida balón al espacio. Es una base para superar líneas compactas.
 
-### 7.4 Stop e Ricezione
+**Pase Sensacional**: Pase más rápido e incisivo (riesgo mayor si estás cerrado). Úsalo cuando estás **desmarcado** y tienes una línea de pase clara.
 
-**Voltati verso porta**: Stop orientato ad attaccare.
+**Tiro Sensacional**: Tiro más potente. Rinde más con habilidades tiro especiales (ej. **Tiro con caída** / **Tiro ascendente**) y cuando tienes tiempo para orientar el cuerpo.
 
-**Finta di stop**: Inganna difensore.
+**Tiro Colocado**: Tiro más "ajustado" y delicado. Rinde más con habilidades como **Con efecto lejano** o **Remate con exterior**, y cuando quieres privilegiar precisión respecto a la potencia.
 
-**Stop e alzata**: Controllo aereo.
+**Control Toque de Balón**: Alterna toques cortos (control) y toques largos (cambio ritmo) para superar la presión. Toques más largos exponen el balón: hazlos solo con espacio.
 
-**Finta con stop**: Cambio direzione dopo stop.
+**Regate de Precisión**: Conducción a toques ajustados manteniendo el cuerpo orientado hacia el ataque. Es más eficaz en espacios reducidos o 1v1 controlados.
 
-### 7.5 Movimenti collettivi
-- **Triangolazione**: Tre giocatori formano triangolo per possesso; movimento continuo per opzioni passaggio. **Quando serve**: zona fitta, mantenere possesso sotto pressing. **Rosa**: Regista creativo, Classico n° 10, Collante; Passaggio di prima, Passaggio filtrante. **Moduli**: 4-3-3, 4-2-3-1.
-- **Sovrapposizione**: Giocatore supera compagno con palla; corsa oltre per ricevere o attirare marcatore. **Quando serve**: superiorità numerica su fascia, 1v1 su fascia. **Rosa**: Terzino offensivo, Onnipresente, Specialista cross; Scatto, Cross calibrato. **Moduli**: 4-3-3, 3-5-2.
-- **Taglio**: Movimento diagonale verso porta, corsa senza palla in spazio. **Quando serve**: ricevere passaggio filtrante, difesa schierata, spazio tra linee. **Rosa**: Ala prolifica + Regista creativo (chi taglia + chi passa); Passaggio filtrante, Scatto; vel 85+. **Moduli**: 4-3-3, 4-2-3-1.
-- **Ampiezza**: Giocatori si allargano per occupare campo; stirare difesa avversaria. **Quando serve**: creare spazi centrali, difesa compatta da aprire. **Rosa**: Specialista cross, Ala prolifica; moduli larghi (4-3-3, Vie laterali). **Moduli**: 4-3-3, 3-5-2.
-- **Compattezza**: Squadra si stringe in zona ristretta; linee ravvicinate. **Quando serve**: fase difensiva, proteggere risultato. **Rosa**: Incontrista, Collante, Tornante; res alta, tac alto. **Moduli**: tutti (gestione vantaggio).
+### 7.3 Fintas y Skill Moves
 
-### 7.6 Situazioni di gioco
-- **Transizione positiva** (riconquista → attacco): accelerazione immediata, passaggio verticale rapido; primi 5 secondi critici. **Rosa**: vel 90+, acc alto, Scatto, Passaggio filtrante; Opportunista, Giocatore chiave, Ala prolifica.
-- **Transizione negativa** (perdita palla → difesa): ripiegamento immediato, pressione su portatore; primi 3 secondi per pressing, poi ripiegare. **Rosa**: tac alto, Tornante, Intercettazione, Incontrista; res alto.
-- **Finalizzazione**: 1v1 portiere (spiazzamento o potenza); area affollata (tiro al volo o deviazione); fuori area (tiro potente piazzato). **Rosa**: Tiro di prima, fin alta; Tiro potente, Distanza per fuori area.
-- **Gestione vantaggio**: abbassare ritmo, possesso sicuro, passaggi corti; ultimi 10-15 minuti. **Rosa**: res alta, Tornante, Marcatore; Collante, Passaggio di prima; Compattezza.
-- **Recupero svantaggio**: aumentare ritmo, pressing alto, terzini alti; ultimi 10-20 minuti. **Rosa**: Giocatore chiave, Tiro potente, **Riserva di lusso**; far entrare game changer; Sovrapposizione, Ampiezza.
-- **Superiorità numerica**: mantenere possesso, circolare palla, attendere varco.
-- **Inferiorità numerica**: compattezza estrema, difesa zona, contropiede.
+**Fintas de Cuerpo**: Usa cambios de dirección y fintas de cuerpo para desequilibrar al defensa antes de la arrancada o del pase.
 
-### 7.7 Matrice situazione × dati × movimenti (enterprise)
-Per ogni situazione: quali dati usare dalla rosa, quali movimenti, output consiglio.
+**Doble Toque**: Skill base para superar adversarios.
 
-| Situazione | Dati rosa | Movimenti | Output |
-|------------|-----------|-----------|--------|
-| Transizione positiva | vel 90+, acc, Scatto, Passaggio filtrante, Opportunista/Giocatore chiave | Taglio, Passaggio filtrante | Chi mettere, chi dare palla |
-| Transizione negativa | tac, Intercettazione, Tornante, Incontrista, res | Compattezza, Ripiegamento | Chi pressare, chi coprire |
-| Corner attacco | Colpo di testa, Salto, Dominio palle alte, h alto | Area piccola, Scatta, Primo/Secondo palo | Chi sui pali, chi tira (Cross calibrato) |
-| Punizione attacco | Calci da fermo, Specialista punizioni, Colpo di testa | Scatta, Sponda, Palla all'ariete | Chi tira, chi in area |
-| Gestione vantaggio | res, Tornante, Marcatore, Collante | Compattezza, Possesso sicuro | Chi tenere, istruzioni |
-| Recupero svantaggio | Giocatore chiave, Tiro potente, Riserva di lusso | Sovrapposizione, Ampiezza | Chi far entrare |
-| Pressing alto | res 85+, Incontrista, Intercettazione | Pressing coordinato | Chi pressare, quando |
-| Difesa bassa | Regista creativo, Passaggio filtrante, Taglio | Triangolazione, Taglio | Chi crea, chi taglia |
+**Tap Trick**: Finta rápida manual cerca del defensa: crea una breve vacilación para salir por el lado libre o cambiar dirección. Usarla solo en 1v1 con espacio después de la finta; no es un boost automático y no debe repetirse sin leer la reacción del defensa.
 
-### 7.8 Principi tattici e best practices
-- **Occupazione spazio**: coprire larghezza e profondità campo; mai più di 4-5 giocatori in fase offensiva.
-- **Supporto palla**: sempre 2-3 opzioni passaggio vicine.
-- **Compattezza difensiva**: linee massimo 30-35 metri distanza.
-- **Difesa**: marcatura passiva > pressing cieco; attacco: cambio ritmo > velocità costante.
-- **Costruzione squadra**: bilanciamento offensivi/difensivi; complementarietà stili; Resistenza 85+ per 2-3 giocatori se pressing.
-- **Sostituzioni**: 60-70 minuti ideale; prima che giocatori siano esausti.
-- **Errori da evitare**: pressing sempre (scegliere momenti); sprint costante (esaurisce Resistenza); prevedibilità; zone scoperte.
+**Elástica / Elástica inversa**: Cambio dirección rápido.
 
-### 7.9 Incrocio Statistiche Analisi (uso comandi ultime 10 partite) con Rosa (abilità, posizioni, stili)
+**Sombrero**: Skill avanzada.
 
-Quando nel RIASSUNTO ANALISI è presente la sezione **"Statistiche di gioco (Analisi eFootball, ultime 10 partite)"**, incrocia l’**uso comandi** (percentuali/conteggi) con la **Rosa** (Abilità in rosa, posizioni, stili) per dedurre se alcune statistiche sono **sottoutilizzate o sovrautilizzate rispetto al profilo squadra**.
+**Sombrero y tacón**: Pase alto a uno mismo.
 
-**Mappatura comando (schermata Analisi) → cosa guardare in rosa**
+**Giro seco**: Cambio dirección inmediato.
 
-| Categoria Analisi | Voce alta % / uso | Abilità / statistiche rilevanti in rosa | Se in rosa mancano → consiglio |
-|------------------|-------------------|-----------------------------------------|--------------------------------|
-| **Passaggio** | Passaggio filtrante rasoterra / alto (es. 37%+ passaggio filtrante rasoterra) | **Passaggio filtrante**, Passaggio di prima, Passaggio calibrato; stat Passaggio rasoterra/alto | "Usi molto il passaggio filtrante; se in rosa pochi hanno Passaggio filtrante/Passaggio di prima, i passaggi in profondità possono essere imprecisi. Diversifica con passaggio rasoterra corto o schiera chi ha quelle abilità; oppure aggiungile con Programmi (se non Trending)." |
-| **Passaggio** | Cross / Cross basso (basso %) | **Cross calibrato**, Specialista cross; stat Passaggio alto; ali/terzini con abilità cross | "Usi poco i cross; se hai ali/terzini con Cross calibrato o Colpo di testa in area, puoi sfruttarli di più con cross dalla fascia." |
-| **Tiro** | Normale (es. 83%+) e Tiro calibrato basso | **Tiro calibrato** rende con **A giro da distante**, **Esterno a giro** (§7.2); Finalizzazione; punte con abilità tiro | "Usi soprattutto tiro normale; se hai punte con Tiro a giro / A giro da distante, prova più spesso il Tiro calibrato per piazzare meglio." |
-| **Tiro** | Pallonetto / Tiro sensazionale (basso %) | Pallonetto mirato; Tiro a scendere/Tiro a salire; portiere in uscita → pallonetto | "Pallonetto e tiro sensazionale poco usati; utili su portiere in uscita o da distanza con giocatori che hanno le abilità." |
-| **Tipo di gol** | Passaggio filtrante rasoterra (es. 47% gol) | Come sopra: Passaggio filtrante, smarcamenti (stili Opportunista, Ala prolifica, Taglio al centro) | Coerente con uso passaggio; verifica che chi riceve abbia stili/abilità per gli inserimenti (Scatto, Finalizzazione). |
-| **Dribbling** | Scatta (es. 62%) | Stat **Velocità**, **Accelerazione**, **Controllo palla**, **Dribbling**; abilità Scatto | Se Velocità/Accelerazione basse in rosa, lo Scatta può portare a molte perdite palla; privilegia conduzione "Normale" o posizionamento. |
-| **Dribbling** | Dribbling di precisione (basso %) | **Controllo di suola**, **Doppio tocco**, **Tap Trick**, Dribbling di precisione (§7.2); spazi stretti | Se hai giocatori tecnici con Controllo di suola, Doppio tocco o Tap Trick, puoi usare di più il dribbling di precisione in 1v1; Tap Trick va usato quando il difensore è già a distanza di contrasto e c'è un lato libero. |
-| **Difesa** | Pressa / Movimento / Testa a testa | **Comportamento difensivo**, **Contrasto**, **Aggressività**; abilità Intercettazione, Contrasto Aggressivo, Marcatore | Uso bilanciato; se Pressa alta ma pochi in rosa con Aggressività/Intercettazione, il pressing può essere inefficace → consiglia più Movimento/posizionamento. |
-| **Comandi speciali** | Chiama pressing (basso, es. 1) | Centrocampisti/attaccanti con Coinvolgimento difensivo, Aggressività | "Usi poco Chiama pressing; se i tuoi centrocampisti hanno buona Aggressività/Coinvolgimento difensivo, puoi aumentare il pressing coordinato." |
-| **Comandi speciali** | Cambio cursore (molto alto, es. 219) | — | Può indicare difesa molto manuale; verifica che non sia compensazione per posizionamento o linea difensiva (compattezza, istruzioni). |
+**Elevación de tacón**: Control balón avanzado.
 
-**Regola per l’AI**: Non inventare percentuali; usa solo quelle presenti in "Statistiche di gioco". Se la sezione non c’è (utente non ha caricato screenshot), non dedurre dati dalla schermata Analisi. Quando incroci, cita **Abilità in rosa** (lista nel RIASSUNTO) e, se rilevante, posizioni/stili (es. "i tuoi registi/TrQ hanno Passaggio filtrante?"). Suggerisci sempre in modo costruttivo: diversificare uso comandi, schierare chi ha le abilità adatte, o aggiungere abilità con Programmi (se non Trending).
+### 7.4 Parada y Recepción
 
-### 7.10 Consigli community Dream Team (Efootball Arena, creator)
+**Gírate hacia portería**: Parada orientada a atacar.
 
-Fonti: [Efootball Arena – How to Build a Competitive Dream Team](https://efootballarena.blog/how-to-build-a-competitive-efootball-dream-team/), creator (tipo Mattiotti: Analisi, Build, Voti). Adattati per **rosa esistente** e consiglio tattico.
+**Finta de parada**: Engaña al defensa.
 
-**Regola per l'AI (build / meta)**: Non copiare formazioni o build "meta" generiche. Ogni consiglio deve essere **funzionale** per il cliente: incrocia rosa (stili card, stats vel/fin/pas/tac, abilità), stile squadra e coach (competenza ≥70), Connection, **movimenti** (§7.5–7.7), difficoltà dichiarate o ricorrenti e Statistiche di gioco se presenti. Il blocco "Sintesi rosa" nel RIASSUNTO non è la progressione PT (slider Shooting/Defending): quella si configura in gioco/Gestione rosa; qui si consiglia solo in base a dati tattici disponibili.
+**Parada y elevación**: Control aéreo.
 
-**Spina dorsale (priorità costruzione)**: PT → DC → CC → A → Terzini. Una squadra competitiva si fonda su: portiere solido, difensori centrali, centrocampisti, attaccante di riferimento; i terzini completano.
+**Finta con parada**: Cambio dirección tras parada.
 
-**Formazioni meta e quando suggerirle**:
-- **4-2-2-2**: Equilibrio perfetto per principianti; grande per bilanciamento attacco-difesa.
-- **4-2-3-1**: Stabilità difensiva, focalizzato su contropiedi; compatto.
-- **4-3-3 / 4-3-3 Narrow**: Dominio centrocampo, preferito dai professionisti; richiede terzini di qualità.
-- **3-5-2**: Sovrapposizione centrocampo, rischioso ma potente; esterni supportano difesa.
+### 7.5 Movimientos colectivos
+- **Triangulación**: Tres jugadores forman triángulo para posesión; movimiento continuo para opciones pase. **Cuándo usar**: zona densa, mantener posesión bajo presión. **Plantilla**: Mediapunta creativo, Clásico Nº 10, Ancla; Pase de primera, Pase filtrado. **Módulos**: 4-3-3, 4-2-3-1.
+- **Superposición**: Jugador supera al compañero con balón; carrera más allá para recibir o atraer marcador. **Cuándo usar**: superioridad numérica en banda, 1v1 en banda. **Plantilla**: Lateral ofensivo, Box-to-Box★, Especialista en centros; Arrancada, Centro medido. **Módulos**: 4-3-3, 3-5-2.
+- **Corte**: Movimiento diagonal hacia portería, carrera sin balón en espacio. **Cuándo usar**: recibir pase filtrado, defensa organizada, espacio entre líneas. **Plantilla**: Extremo prolífico + Mediapunta creativo (quien corta + quien pasa); Pase filtrado, Arrancada; vel 85+. **Módulos**: 4-3-3, 4-2-3-1.
+- **Amplitud**: Jugadores se abren para ocupar campo; estirar defensa adversaria. **Cuándo usar**: crear espacios centrales, defensa compacta a abrir. **Plantilla**: Especialista en centros, Extremo prolífico; módulos anchos (4-3-3, Bandas). **Módulos**: 4-3-3, 3-5-2.
+- **Compacidad**: Equipo se cierra en zona restringida; líneas cercanas. **Cuándo usar**: fase defensiva, proteger resultado. **Plantilla**: Destructor, Ancla, Recuperación; res alta, ent alt. **Módulos**: todos (gestión ventaja).
 
+### 7.6 Situaciones de juego
+- **Transición positiva** (recuperación → ataque): aceleración inmediata, pase vertical rápido; primeros 5 segundos críticos. **Plantilla**: vel 90+, acel alta, Arrancada, Pase filtrado; Oportunista, Jugador clave, Extremo prolífico.
+- **Transición negativa** (pérdida balón → defensa): repliegue inmediato, presión sobre poseedor; primeros 3 segundos para presión, luego replegar. **Plantilla**: ent altas, Recuperación, Interceptación, Destructor; res alta.
+- **Finalización**: 1v1 portero (regate o potencia); área congestionada (tiro al vuelo o desviación); fuera del área (tiro potente colocado). **Plantilla**: Remate de primera, fin alta; Tiro potente, Distancia para fuera del área.
+- **Gestión ventaja**: bajar ritmo, posesión segura, pases cortos; últimos 10-15 minutos. **Plantilla**: res alta, Recuperación, Marcador; Ancla, Pase de primera; Compacidad.
+- **Recuperación desventaja**: aumentar ritmo, presión alta, laterales altos; últimos 10-20 minutos. **Plantilla**: Jugador clave, Tiro potente, **Super reserva**; hacer entrar game changer; Superposición, Amplitud.
+- **Superioridad numérica**: mantener posesión, circular balón, esperar hueco.
+- **Inferioridad numérica**: compacidad extrema, defensa zona, contraataque.
 
+### 7.7 Matriz situación × datos × movimientos (enterprise)
+Para cada situación: qué datos usar de la plantilla, qué movimientos, output consejo.
 
-**Allocazione per ruolo (quando suggerire chi schierare)**:
-- Creatori (TrQ, registi): controllo palla e passaggio massimizzati; Passaggio filtrante, Passaggio di prima.
-- Attaccanti: finalizzazione e velocità; mix tra velocità/inserimento (Opportunista, Giocatore chiave) e potenza/area (Fulcro di gioco, Rapace d'area).
-- Centrocampisti: bilanciare difesa e creazione; mediani versatili (Collante, Onnipresente).
-- Difesa: almeno un MED/CDM solido davanti alla linea; mai trascurare i terzini.
+| Situación | Datos plantilla | Movimientos | Output |
+|------------|-----------------|-------------|--------|
+| Transición positiva | vel 90+, acel, Arrancada, Pase filtrado, Oportunista/Jugador clave | Corte, Pase filtrado | A quién poner, a quién dar balón |
+| Transición negativa | ent, Interceptación, Recuperación, Destructor, res | Compacidad, Repliegue | Quién presiona, quién cubre |
+| Córner ataque | Remate de cabeza, Salto, Dominio balones altos, alt alto | Área pequeña, Arranca, Primer/Segundo palo | Quién en los palos, quién tira (Centro medido) |
+| Falta ataque | Tiros libres, Especialista faltas, Remate de cabeza | Arranca, Apoyo, Balón al ariete | Quién tira, quién en área |
+| Gestión ventaja | res, Recuperación, Marcador, Ancla | Compacidad, Posesión segura | A quién mantener, instrucciones |
+| Recuperación desventaja | Jugador clave, Tiro potente, Super reserva | Superposición, Amplitud | A quién hacer entrar |
+| Presión alta | res 85+, Destructor, Interceptación | Presión coordinada | Quién presiona, cuándo |
+| Defensa baja | Mediapunta creativo, Pase filtrado, Corte | Triangulación, Corte | Quién crea, quién corta |
 
-**Link-Up Play** (Connection Focal Point + Key Man): migliora sinergia attaccanti; posizionamento 10-15 m durante costruzione. Verificare che Focal Point e Key Man siano presenti in rosa per attivare i bonus.
+### 7.8 Principios tácticos y best practices
+- **Ocupación espacio**: cubrir anchura y profundidad campo; nunca más de 4-5 jugadores en fase ofensiva.
+- **Apoyo balón**: siempre 2-3 opciones pase cercanas.
+- **Compacidad defensiva**: líneas máximo 30-35 metros distancia.
+- **Defensa**: marcaje pasivo > presión ciega; ataque: cambio ritmo > velocidad constante.
+- **Construcción equipo**: equilibrio ofensivos/defensivos; complementariedad estilos; Resistencia 85+ para 2-3 jugadores si presión.
+- **Sustituciones**: 60-70 minutos ideal; antes de que los jugadores estén exhaustos.
+- **Errores a evitar**: presión siempre (elegir momentos); sprint constante (agota Resistencia); previsibilidad; zonas descubiertas.
 
-**Errori comuni da evitare** (community):
-1. Trascurare la gestione della Resistenza (sostituzioni 60-70', non tenere chi ha res bassa negli ultimi 15').
-2. Cambiare formazione troppo spesso.
-3. Ignorare la difesa (sempre almeno un mediano solido).
-4. Schierare stellari fuori posizione (competenza posizione influenza forza complessiva).
-5. Squadra solo offensiva: serve equilibrio attacco-difesa.
+### 7.9 Cruce Estadísticas Análisis (uso comandos últimas 10 partidas) con Plantilla (habilidades, posiciones, estilos)
 
-**Adattamento al meta** (solo dopo incrocio dati): Se meta difensiva e il cliente perde su transizioni/ali → valutare 4-2-3-1 se la rosa ha mediani e ali adatti; se meta contropiedi e ha punte Opportunista/Giocatore chiave veloci → 4-2-2-2 può avere senso; se possesso e registi forti → 4-3-3 Narrow. Mai imporre un modulo senza motivo legato ai suoi dati.
+Cuando en el RESUMEN ANÁLISIS está presente la sección **"Estadísticas de juego (Análisis eFootball, últimas 10 partidas)"**, cruza el **uso comandos** (porcentajes/conteos) con la **Plantilla** (Habilidades en plantilla, posiciones, estilos) para deducir si algunas estadísticas están **subutilizadas o sobreutilizadas respecto al perfil equipo**.
 
-### 7.11 Squadra bloccata – Checklist e Smart Assist (frustrazioni community)
+**Mapeo comando (pantalla Análisis) → qué mirar en plantilla**
 
-**Squadra bloccata (attacco sterile, sconfitte ripetute)**:
-1. Stile squadra ↔ rosa: verificare fit (es. Opportunista + Contropiede; Fulcro + Passaggio lungo).
-2. Formazione: dalla cronologia, quale formazione avversaria più comune? Applicare contromisure specifiche e coerenti con §3-§7.
-3. Connection: Focal Point e Key Man in campo?
-4. Sostituzioni: Riserva di lusso in panchina? Chi far entrare al 60' per recupero svantaggio?
-5. Abilità vs uso comandi: incrocio §7.9; suggerire schierare chi ha abilità adatte o diversificare comandi.
-6. Difesa bassa avversaria: possesso paziente, Regista creativo, ampiezza; 4-3-3 o 4-2-3-1.
-7. Gestione vantaggio: compattezza, Collante, res alta; non tenere chi ha res bassa negli ultimi 15'.
+| Categoría Análisis | Voz alta % / uso | Habilidades / estadísticas relevantes en plantilla | Si en plantilla faltan → consejo |
+|-------------------|-------------------|----------------------------------------------------|----------------------------------|
+| **Pase** | Pase filtrado raso / alto (ej. 37%+ pase filtrado raso) | **Pase filtrado**, Pase de primera, Pase medido; stat Pase raso/alto | "Usas mucho el pase filtrado; si en plantilla pocos tienen Pase filtrado/Pase de primera, los pases en profundidad pueden ser imprecisos. Diversifica con pase raso corto o alinea a quien tiene esas habilidades; o añádelas con Programas (si no Trending)." |
+| **Pase** | Centro / Centro bajo (bajo %) | **Centro medido**, Especialista en centros; stat Pase alto; extremos/laterales con habilidad centro | "Usas poco los centros; si tienes extremos/laterales con Centro medido o Remate de cabeza en área, puedes aprovecharlos más con centros desde la banda." |
+| **Tiro** | Normal (ej. 83%+) y Tiro colocado bajo | **Tiro colocado** rinde con **Con efecto lejano**, **Remate con exterior** (§7.2); Finalización; delanteros con habilidad tiro | "Usas sobre todo tiro normal; si tienes delanteros con Efecto / Con efecto lejano, prueba más a menudo el Tiro colocado para ajustar mejor." |
+| **Tiro** | Vaselina / Tiro sensacional (bajo %) | Vaselina precisa; Tiro con caída/Tiro ascendente; portero en salida → vaselina | "Vaselina y tiro sensacional poco usados; útiles con portero en salida o desde distancia con jugadores que tienen las habilidades." |
+| **Tipo de gol** | Pase filtrado raso (ej. 47% goles) | Como arriba: Pase filtrado, desmarques (estilos Oportunista, Extremo prolífico, Extremo interior) | Coherente con uso pase; verifica que quien recibe tenga estilos/habilidades para los desmarques (Arrancada, Finalización). |
+| **Regate** | Arranca (ej. 62%) | Stat **Velocidad**, **Aceleración**, **Control del balón**, **Regate**; habilidad Arrancada | Si Velocidad/Aceleración bajas en plantilla, la Arrancada puede llevar a muchas pérdidas de balón; privilegia conducción "Normal" o posicionamiento. |
+| **Regate** | Regate de precisión (bajo %) | **Control con suela**, **Doble toque**, **Tap Trick**, Regate de precisión (§7.2); espacios reducidos | Si tienes jugadores técnicos con Control con suela, Doble toque o Tap Trick, puedes usar más el regate de precisión en 1v1; Tap Trick debe usarse cuando el defensa ya está a distancia de entrada y hay un lado libre. |
+| **Defensa** | Presiona / Movimiento / Cabeza a cabeza | **Conciencia defensiva**, **Entradas**, **Agresividad**; habilidades Interceptación, Entrada agresiva, Marcador | Uso equilibrado; si Presiona alto pero pocos en plantilla con Agresividad/Interceptación, la presión puede ser ineficaz → aconseja más Movimiento/posicionamiento. |
+| **Comandos especiales** | Llama presión (bajo, ej. 1) | Centrocampistas/delanteros con Implicación defensiva, Agresividad | "Usas poco Llama presión; si tus centrocampistas tienen buena Agresividad/Implicación defensiva, puedes aumentar la presión coordinada." |
+| **Comandos especiales** | Cambio cursor (muy alto, ej. 219) | — | Puede indicar defensa muy manual; verifica que no sea compensación por posicionamiento o línea defensiva (compacidad, instrucciones). |
 
-**Smart Assist** (molti giocatori sentono che penalizza chi non lo usa; Konami bandito dal competitivo 2025):
-- Se l'utente lo lamenta: VALIDARE ("Capisco, molti nella community lo segnalano"), NON negare.
-- Se smart_assist=no nel profilo: adattare i consigli (passaggi precisi, posizionamento, abilità Passaggio di prima/filtrante, formazione che riduce pressione sui passaggi difficili).
-- NON discutere se "è giusto o sbagliato"; offrire sempre un passo concreto.
+**Regla para la IA**: No inventar porcentajes; usa solo los presentes en "Estadísticas de juego". Si la sección no está (usuario no ha cargado captura), no deduzcas datos de la pantalla Análisis. Al cruzar, cita **Habilidades en plantilla** (lista en el RESUMEN) y, si relevante, posiciones/estilos (ej. "¿tus mediapuntas/MCO tienen Pase filtrado?"). Sugiere siempre de forma constructiva: diversificar uso comandos, alinear a quien tiene las habilidades adecuadas, o añadir habilidades con Programas (si no Trending).
 
-**Tone**: Empatia + azioni concrete. NON commentare scripting o meccaniche di engine.
+### 7.10 Consejos community Dream Team (Efootball Arena, creadores)
 
-### 7.12 Meccaniche avanzate "cancel" e skill trick (Enterprise)
+Fuentes: [Efootball Arena – How to Build a Competitive Dream Team](https://efootballarena.blog/how-to-build-a-competitive-efootball-dream-team/), creadores (tipo Mattiotti: Análisis, Build, Votos). Adaptados para **plantilla existente** y consejo táctico.
 
-Obiettivo: usare tecniche avanzate in modo professionale, ripetibile e coerente con il contesto partita, senza coaching "exploit-only".
+**Regla para la IA (build / meta)**: No copiar formaciones o build "meta" genéricas. Cada consejo debe ser **funcional** para el cliente: cruza plantilla (estilos carta, stats vel/fin/pas/ent, habilidades), estilo equipo y entrenador (competencia ≥70), Connection, **movimientos** (§7.5–7.7), dificultades declaradas o recurrentes y Estadísticas de juego si están presentes. El bloque "Síntesis plantilla" en el RESUMEN no es la progresión POR (sliders Disparo/Defensa): esa se configura en juego/Gestión plantilla; aquí se aconseja solo en base a datos tácticos disponibles.
 
-**Tassonomia affidabilita termini**:
-- **Ufficiali (priorita alta)**: Super Cancel, Kick Cancel, Kick Feint, Double Touch.
-- **Community (priorita media)**: "Tess cancel", "croqueta interrotta", "double-touch cancel".
-- **Regola naming**: in risposta usare prima il termine ufficiale, poi eventualmente alias community tra parentesi.
+**Columna vertebral (prioridad construcción)**: POR → DFC → MC → A → Laterales. Un equipo competitivo se basa en: portero sólido, defensas centrales, centrocampistas, delantero de referencia; los laterales completan.
 
-**Mappatura enterprise (termine -> interpretazione coach)**:
-- **Super Cancel**: override manuale della traiettoria/animazione. Uso: anticipo su palla vagante, correzione postura difensiva, cambio traiettoria in transizione.
-- **Kick Cancel**: annullo comando calcio prima dell'impatto. Uso: evitare forzature, creare micro-finta se il difensore anticipa.
-- **Kick Feint**: finta offensiva per far sbilanciare il marcatore. Uso: rifinitura in area e mezzo spazio.
-- **Double Touch**: skill 1v1 per cambio direzione corto.
-- **Double Touch + cancel** (alias community): variazione ad alto rischio/alto rendimento; da suggerire solo se il cliente ha giocatori tecnici e timing stabile.
+**Formaciones meta y cuándo sugerirlas**:
+- **4-2-2-2**: Equilibrio perfecto para principiantes; genial para equilibrio ataque-defensa.
+- **4-2-3-1**: Estabilidad defensiva, focalizado en contraataques; compacto.
+- **4-3-3 / 4-3-3 Narrow**: Dominio centrocampo, preferido por profesionales; requiere laterales de calidad.
+- **3-5-2**: Superposición centrocampo, arriesgado pero potente; exteriores apoyan defensa.
 
-**Micro-tabella operativa (croqueta interrotta / double touch cancel)**:
+**Asignación por rol (cuándo sugerir a quién alinear)**:
+- Creadores (MCO, organizadores): control del balón y pase maximizados; Pase filtrado, Pase de primera.
+- Delanteros: finalización y velocidad; mix entre velocidad/desmarque (Oportunista, Jugador clave) y potencia/área (Hombre objetivo, Cazagoles).
+- Centrocampistas: equilibrar defensa y creación; mediocentros versátiles (Ancla, Box-to-Box★).
+- Defensa: al menos un MCD/CDM sólido delante de la línea; nunca descuidar los laterales.
 
-| Variante | Nome da usare in risposta | Requisiti abilita (community) | Note coach enterprise |
+**Link-Up Play** (Connection Focal Point + Key Man): mejora sinergia delanteros; posicionamiento 10-15 m durante construcción. Verificar que Focal Point y Key Man estén presentes en plantilla para activar los bonus.
+
+**Errores comunes a evitar** (community):
+1. Descuidar la gestión de la Resistencia (sustituciones 60-70', no mantener a quien tiene res baja en los últimos 15').
+2. Cambiar formación demasiado a menudo.
+3. Ignorar la defensa (siempre al menos un mediocentro sólido).
+4. Alinear estrellas fuera de posición (competencia posición influye en fuerza total).
+5. Equipo solo ofensivo: sirve equilibrio ataque-defensa.
+
+**Adaptación al meta** (solo tras cruce datos): Si meta defensiva y el cliente pierde en transiciones/extremos → evaluar 4-2-3-1 si la plantilla tiene mediocentros y extremos adecuados; si meta contraataques y tiene delanteros Oportunista/Jugador clave rápidos → 4-2-2-2 puede tener sentido; si posesión y organizadores fuertes → 4-3-3 Narrow. Nunca imponer un módulo sin motivo vinculado a sus datos.
+
+### 7.11 Equipo bloqueado – Checklist y Smart Assist (frustraciones community)
+
+**Equipo bloqueado (ataque estéril, derrotas repetidas)**:
+1. Estilo equipo ↔ plantilla: verificar fit (ej. Oportunista + Contraataque; Hombre objetivo + Balón largo).
+2. Formación: del historial, ¿qué formación adversaria más común? Aplicar contramedidas específicas y coherentes con §3-§7.
+3. Connection: ¿Focal Point y Key Man en campo?
+4. Sustituciones: ¿Super reserva en banquillo? ¿A quién hacer entrar al 60' para recuperación desventaja?
+5. Habilidades vs uso comandos: cruce §7.9; sugerir alinear a quien tiene habilidades adecuadas o diversificar comandos.
+6. Defensa baja adversaria: posesión paciente, Mediapunta creativo, amplitud; 4-3-3 o 4-2-3-1.
+7. Gestión ventaja: compacidad, Ancla, res alta; no mantener a quien tiene res baja en los últimos 15'.
+
+**Smart Assist** (muchos jugadores sienten que penaliza a quien no lo usa; Konami prohibido en competitivo 2025):
+- Si el usuario lo lamenta: VALIDAR ("Entiendo, muchos en la community lo reportan"), NO negar.
+- Si smart_assist=no en el perfil: adaptar los consejos (pases precisos, posicionamiento, habilidades Pase de primera/filtrado, formación que reduce presión en los pases difíciles).
+- NO discutir si "es correcto o incorrecto"; ofrecer siempre un paso concreto.
+
+**Tono**: Empatía + acciones concretas. NO comentar scripting o mecánicas de engine.
+
+### 7.12 Mecánicas avanzadas "cancel" y skill trick (Enterprise)
+
+Objetivo: usar técnicas avanzadas de forma profesional, repetible y coherente con el contexto partido, sin coaching "exploit-only".
+
+**Taxonomía fiabilidad términos**:
+- **Oficiales (prioridad alta)**: Super Cancel, Kick Cancel, Kick Feint, Double Touch.
+- **Community (prioridad media)**: "Tess cancel", "croqueta interrumpida", "double-touch cancel".
+- **Regla naming**: en respuesta usar primero el término oficial, luego eventualmente alias community entre paréntesis.
+
+**Mapeo enterprise (término -> interpretación coach)**:
+- **Super Cancel**: override manual de la trayectoria/animación. Uso: anticipo en balón suelto, corrección postura defensiva, cambio trayectoria en transición.
+- **Kick Cancel**: anulación comando disparo antes del impacto. Uso: evitar forzamientos, crear micro-finta si el defensa anticipa.
+- **Kick Feint**: finta ofensiva para hacer desequilibrar al marcador. Uso: definición en área y medio espacio.
+- **Double Touch**: skill 1v1 para cambio dirección corto.
+- **Double Touch + cancel** (alias community): variación de alto riesgo/alto rendimiento; sugerir solo si el cliente tiene jugadores técnicos y timing estable.
+
+**Micro-tabla operativa (croqueta interrumpida / double touch cancel)**:
+
+| Variante | Nombre a usar en respuesta | Requisitos habilidades (community) | Notas coach enterprise |
 |---|---|---|---|
-| Base / Controlled | **Double Touch** (croqueta interrotta) | **Double Touch + Sole Control** | Più stabile; usare in 1v1 laterale o uscita pressione corta. |
-| Special / Fast | **Double Touch speciale** (croqueta interrotta avanzata) | **Double Touch + Sole Control + Flip Flap (Elastico)** | Più esplosiva ma più rischiosa; evitare spam e usarla solo con timing/connessione buoni. |
+| Base / Controlled | **Double Touch** (croqueta interrumpida) | **Double Touch + Sole Control** | Más estable; usar en 1v1 lateral o salida presión corta. |
+| Special / Fast | **Double Touch especial** (croqueta interrumpida avanzada) | **Double Touch + Sole Control + Flip Flap (Elástica)** | Más explosiva pero más arriesgada; evitar spam y usarla solo con timing/conexión buenos. |
 
-Nota affidabilita: "special double touch" e varianti "tess/croqueta interrotta" sono naming community; Konami documenta i comandi ufficiali, non sempre queste etichette.
+Nota fiabilidad: "special double touch" y variantes "tess/croqueta interrumpida" son naming community; Konami documenta los comandos oficiales, no siempre estas etiquetas.
 
-**Policy anti-exploit (obbligatorie)**:
-1. Non suggerire spam continuo della stessa skill ("fai sempre croqueta/tess").
-2. Non suggerire macro, script, automazioni input, o abuso di bug.
-3. Non presentare tecnica community come "migliore sempre": va condizionata a contesto, livello utente e tipo giocatore.
-4. Se una tecnica e controversa nel meta, dichiarare trade-off (rischio perdita palla, prevedibilita, transizione negativa scoperta).
+**Política anti-exploit (obligatorias)**:
+1. No sugerir spam continuo de la misma skill ("haz siempre croqueta/tess").
+2. No sugerir macros, scripts, automatizaciones input, o abuso de bugs.
+3. No presentar técnica community como "mejor siempre": debe condicionarse a contexto, nivel usuario y tipo jugador.
+4. Si una técnica es controvertida en el meta, declarar trade-off (riesgo pérdida balón, previsibilidad, transición negativa descubierta).
 
-**Gating decisionale prima di suggerire cancel trick**:
-- Verificare fit giocatore: controllo palla, dribbling, equilibrio, accelerazione, abilita coerenti.
-- Verificare scenario: 1v1 laterale, rifinitura stretta, uscita pressing, non in zona a rischio palla persa centrale.
-- Verificare stato partita: se in vantaggio e minuto alto, preferire sicurezza (protezione, passaggio semplice) rispetto a trick ad alto rischio.
-- Verificare connessione/input delay: con lag alto ridurre consigli su timing stretto.
+**Gating decisional antes de sugerir cancel trick**:
+- Verificar fit jugador: control del balón, regate, equilibrio, aceleración, habilidades coherentes.
+- Verificar escenario: 1v1 lateral, definición ajustada, salida presión, no en zona a riesgo balón perdido central.
+- Verificar estado partido: si en ventaja y minuto alto, preferir seguridad (protección, pase simple) respecto a trick de alto riesgo.
+- Verificar conexión/input delay: con lag alto reducir consejos sobre timing ajustado.
 
-**Template risposta coach su meccaniche avanzate**:
-- 1) **Adesso**: una singola azione concreta (esecuzione breve, no teoria lunga).
-- 2) **Se fallisce**: piano B sicuro (passaggio/uscita pressione).
-- 3) **Prossima pausa**: micro-aggiustamento coerente (stile, ruolo, cambio uomo tecnico).
+**Plantilla respuesta coach sobre mecánicas avanzadas**:
+- 1) **Ahora**: una única acción concreta (ejecución breve, no teoría larga).
+- 2) **Si falla**: plan B seguro (pase/salida presión).
+- 3) **Próxima pausa**: micro-ajuste coherente (estilo, rol, cambio hombre técnico).
 
-**Esempi enterprise (brevi)**:
-- "Usa Double Touch solo in 1v1 laterale; se il difensore non abbocca, proteggi e scarica corto."
-- "Kick Cancel in rifinitura solo quando il centrale esce aggressivo; se restano compatti, niente forzatura e resetta il possesso."
-- "Super Cancel in difesa per chiudere linea passaggio, non per inseguire a vuoto in pressione lunga."
+**Ejemplos enterprise (breves)**:
+- "Usa Double Touch solo en 1v1 lateral; si el defensa no pica, protege y descarga corto."
+- "Kick Cancel en definición solo cuando el central sale agresivo; si permanecen compactos, nada de forzamiento y resetea la posesión."
+- "Super Cancel en defensa para cerrar línea pase, no para perseguir al vacío en presión larga."
 
 
 ### 7.13 Aggiornamenti gameplay eFootball v6.0.0 — fatti ufficiali rilevanti per il Coach
@@ -586,263 +604,264 @@ Nota affidabilita: "special double touch" e varianti "tess/croqueta interrotta" 
 
 ---
 
-## 8. ABILITÀ GIOCATORI (MISTE: NATIVE FISSE + AGGIUNGIBILI)
+## 8. HABILIDADES JUGADORES (MIXTAS: NATIVAS FIJAS + AÑADIBLES)
 
-**REGOLA FONDAMENTALE**:
-- **Abilità native**: FISSE (con cui nasce la card)
-- **Abilità aggiuntive**: MODIFICABILI tramite "Programmi Aggiunta Abilità"
-- **Max 6 slot abilità totali** per giocatore
-- **NON modificabili per giocatori TRENDING**
-- **Modificabili per**: In evidenza, In risalto, Epico, Leggendario, Standard
+**REGLA FUNDAMENTAL**:
+- **Habilidades nativas**: FIJAS (con las que nace la carta)
+- **Habilidades adicionales**: MODIFICABLES mediante "Programas Añadir Habilidad"
+- **Máx 6 slots habilidades totales** por jugador
+- **NO modificables para jugadores TRENDING**
+- **Modificables para**: Destacado, En realce, Épico, Legendario, Estándar
 
-**REGOLA AI nomi abilità (IT/EN)**: i nomi italiani canonici in questa sezione seguono il client ufficiale eFootball (allineati a `playerSkillLabels.js`). In rosa, catalogo PSD o eFootball Lab possono comparire **alias EN** o varianti community: usa la mappatura §8.11 e NON dire "abilità inesistente" se riconosci l'alias.
+**REGLA IA nombres habilidades (IT/ES/EN)**: los nombres canónicos en esta sección siguen el cliente oficial eFootball (alineados a `playerSkillLabels.js`). En plantilla, catálogo PSD o eFootball Lab pueden aparecer **alias EN/ES** o variantes community: usa el mapeo §8.11 y NO digas "habilidad inexistente" si reconoces el alias.
 
-### 8.1 Abilità Tiro
-- **Tiro di prima** *(First-time Shot)*: Tiri precisi di prima intenzione dopo stop. **Quando serve**: attaccanti, finalizzatori rapidi; letale in area su assist veloci.
-- **Tiro a giro** *(Curler)*: Tiri con effetto. **Quando serve**: angoli stretti, fin di palo.
-- **Tiro potente** *(Power Shot)*: Tiri con maggiore potenza. **Quando serve**: fuori area, portiere in uscita.
-- **Punta di Precisione** *(Pinpoint Shooter)*: Tiri precisi in area. **Quando serve**: finalizzatori.
-- **Tiro a scendere** *(Dipping Shot)*: Tiri con traiettoria discendente che cala improvvisamente. **Quando serve**: tiri da distanza, scavalcare il portiere alto.
-- **Tiro a salire** *(Rising Shot)*: Tiri con traiettoria ascendente. **Quando serve**: tiri speciali, sotto la traversa da fuori area.
-- **Tiro di collo** *(Knuckle Shot)*: Tiri con traiettoria imprevedibile/instabile (effetto knuckle). **Quando serve**: tiri da distanza, conclusioni difficili da decifrare per il portiere.
-- **Pallonetto mirato** *(Chip Shot Control)*: Pallonetti mirati e controllati sopra il portiere. **Quando serve**: 1v1 in area, portiere in uscita.
-- **Tiro a giro spiovente** *(Blitz Curler)*: Tiri a giro con curva più marcata. **Quando serve**: angoli stretti, conclusioni controllate da fuori area.
-- **A giro da distante** *(Long-range Curler)*: Tiri a giro da fuori area. **Quando serve**: centrocampisti offensivi; su ribattuta tira con piede forte sul secondo palo.
-- **Esterno a giro** *(Outside Curler)*: Tiri a giro con esterno piede. **Quando serve**: angolazioni particolari, piede invertito.
-- **Colpo di testa** *(Heading)*: Conclusioni di testa più accurate *in fase d'attacco* (tiro di testa verso porta). **Quando serve**: attaccanti fisici, cross; timing migliore su palloni aerei. **NOTA**: NON è abilità difensiva; per duelli aerei in difesa vedi Dominio palle alte (§8.4). Dare Colpo di testa al difensore che mandi *in avanti* sui corner.
-- **Finalizzazione acrobatica** *(Acrobatic Finishing)*: Tiri acrobatici (rovesciate, ecc.) anche da posizioni scomode o in equilibrio precario. **Quando serve**: area affollata, conclusioni difficili.
-- **Finalizzazione** *(Finishing)*: Precisione in conclusione. **Quando serve**: attaccanti, punte.
-- **Tiro dalla distanza** *(Long-range Shooting)*: Tiri precisi da fuori area. **Quando serve**: centrocampisti offensivi, tiri da distanza.
-- **Sassata rasoterra** *(Low Screamer)*: Tiro rasoterra veloce quando la barra potenza è inferiore al 50%. **Quando serve**: tiri veloci e precisi da dentro/fuori area.
-- **Incornata** *(Bullet Header)*: Colpire la palla di testa schiacciandola verso la porta, anche da situazioni difficili. **Quando serve**: attaccanti su cross, colpi di testa precisi verso il basso.
-- **Istinto del gol** *(Phenomenal Finishing)*: Aumenta potenza e precisione delle conclusioni tentate con il corpo posizionato in modo atipico. **Quando serve**: attaccanti che tirano in situazioni difficili o in equilibrio precario.
-- **Forza di volontà** *(Willpower)*: Migliora le abilità di tiro del giocatore ogni volta che effettua un tiro, fino a un massimo di 8 volte. **Quando serve**: attaccanti che tirano spesso, cumulo boost durante la partita.
+### 8.1 Habilidades Tiro
+- **Remate de primera** *(First-time Shot)*: Tiros precisos de primera intención tras parada. **Cuándo usar**: delanteros, finalizadores rápidos; letal en área con asistencias rápidas.
+- **Efecto** *(Curler)*: Tiros con efecto. **Cuándo usar**: ángulos ajustados, palo.
+- **Tiro potente** *(Power Shot)*: Tiros con mayor potencia. **Cuándo usar**: fuera del área, portero en salida.
+- **Punta de Precisión** *(Pinpoint Shooter)*: Tiros precisos en área. **Cuándo usar**: finalizadores.
+- **Tiro con caída** *(Dipping Shot)*: Tiros con trayectoria descendente que baja repentinamente. **Cuándo usar**: tiros de distancia, superar al portero alto.
+- **Tiro ascendente** *(Rising Shot)*: Tiros con trayectoria ascendente. **Cuándo usar**: tiros especiales, bajo el travesaño desde fuera del área.
+- **Tiro nudillo** *(Knuckle Shot)*: Tiros con trayectoria imprevisible/inestable (efecto knuckle). **Cuándo usar**: tiros de distancia, conclusiones difíciles de descifrar para el portero.
+- **Vaselina precisa** *(Chip Shot Control)*: Vaselinas precisas y controladas sobre el portero. **Cuándo usar**: 1v1 en área, portero en salida.
+- **Tiro con efecto picado** *(Blitz Curler)*: Tiros con efecto de curva más marcada. **Cuándo usar**: ángulos ajustados, conclusiones controladas desde fuera del área.
+- **Con efecto lejano** *(Long-range Curler)*: Tiros con efecto desde fuera del área. **Cuándo usar**: centrocampistas ofensivos; en rebote tira con pie fuerte al segundo palo.
+- **Remate con exterior** *(Outside Curler)*: Tiros con efecto con exterior del pie. **Cuándo usar**: ángulos particulares, pie invertido.
+- **Cabezazo** *(Heading)*: Remates de cabeza más precisos *en fase de ataque* (tiro de cabeza a portería). **Cuándo usar**: delanteros físicos, centros; mejor timing en balones aéreos. **NOTA**: NO es habilidad defensiva; para duelos aéreos en defensa ver Dominio balones altos (§8.4). Dar Cabezazo al defensa que mandes *hacia adelante* en córners.
+- **Finalización acrobática** *(Acrobatic Finishing)*: Tiros acrobáticos (chilenas, etc.) también desde posiciones incómodas o en equilibrio precario. **Cuándo usar**: área congestionada, conclusiones difíciles.
+- **Finalización** *(Finishing)*: Precisión en conclusión. **Cuándo usar**: delanteros, puntas.
+- **Tiro lejano** *(Long-range Shooting)*: Tiros precisos desde fuera del área. **Cuándo usar**: centrocampistas ofensivos, tiros de distancia.
+- **Cañonazo raso** *(Low Screamer)*: Tiro raso rápido cuando la barra potencia es inferior al 50%. **Cuándo usar**: tiros rápidos y precisos desde dentro/fuera del área.
+- **Remate aéreo potente** *(Bullet Header)*: Golpear el balón de cabeza aplastándolo hacia la portería, también desde situaciones difíciles. **Cuándo usar**: delanteros en centros, remates de cabeza precisos hacia abajo.
+- **Instinto de gol** *(Phenomenal Finishing)*: Aumenta potencia y precisión de las conclusiones intentadas con el cuerpo posicionado de forma atípica. **Cuándo usar**: delanteros que tiran en situaciones difíciles o en equilibrio precario.
+- **Fuerza de voluntad** *(Willpower)*: Mejora las habilidades de tiro del jugador cada vez que efectúa un tiro, hasta un máximo de 8 veces. **Cuándo usar**: delanteros que tiran a menudo, acumulación boost durante el partido.
 
-### 8.2 Abilità Passaggio
+### 8.2 Habilidades Pase
 
-**Statistiche vs Abilità (Comunità)**: La statistica Passaggio 90+ aumenta la *velocità di esecuzione* del passaggio; le abilità Passaggio di prima e/o Passaggio filtrante ne migliorano *accuratezza* e sbloccano un'*animazione migliore*. Un giocatore con 90+ in passaggio ma senza abilità di passaggio rende meno di uno con abilità corrette.
+**Estadísticas vs Habilidades (Comunidad)**: La estadística Pase 90+ aumenta la *velocidad de ejecución* del pase; las habilidades Pase de primera y/o Pase filtrado mejoran la *precisión* y desbloquean una *mejor animación*. Un jugador con 90+ en pase pero sin habilidades de pase rinde menos que uno con habilidades correctas.
 
-**Passaggi illuminanti / Passaggio calcolato** (Showtime): NON sostituiscono Passaggio filtrante, di prima o calibrato. Sono **cumulabili**; chi ha Passaggi illuminanti o Passaggio calcolato dovrebbe aggiungere (se non le ha) Passaggio di prima, Passaggio filtrante e Passaggio calibrato.
+**Pases iluminados / Pase calculado** (Showtime): NO sustituyen Pase filtrado, de primera o medido. Son **acumulables**; quien tiene Pases iluminados o Pase calculado debería añadir (si no las tiene) Pase de primera, Pase filtrado y Pase medido.
 
-**A chi dare abilità di passaggio (Comunità)**:
-- **Punte**: almeno Passaggio di prima (essenziale per scambi 1-2)
-- **DC**: almeno Passaggio di prima (animazione giusta per smistare subito dopo intercetto; Passaggio a scavalcare migliora anche disimpegno)
-- **MED e terzini**: obbligatorie tutte le abilità di passaggio; terzini offensivi aggiungere Cross calibrato
-- **CC**: si può fare a meno di Passaggio calibrato (ne usufruiscono meglio i mediani); aggiungere Cross calibrato (onnipresenti si trovano in fascia in attacco)
-- **TrQ e seconde punte**: come mediani, meglio se le hanno tutte (di prima, calibrato, a scavalcare, filtrante)
+**A quién dar habilidades de pase (Comunidad)**:
+- **Delanteros (DC)**: al menos Pase de primera (esencial para intercambios 1-2)
+- **DFC**: al menos Pase de primera (animación correcta para distribuir rápido tras interceptar; Pase elevado mejora también el despeje)
+- **MCD y laterales**: obligatorias todas las habilidades de pase; laterales ofensivos añadir Centro medido
+- **MC**: se puede prescindir de Pase medido (lo aprovechan mejor los mediocentros); añadir Centro medido (box-to-box se encuentran en banda en ataque)
+- **MCO y segundos delanteros**: como mediocentros, mejor si las tienen todas (de primera, medido, elevado, filtrado)
 
-- **Passaggio di prima** *(One-touch Pass)*: Passaggi rapidi e diretti di prima intenzione. **Quando serve**: triangolazioni veloci, gioco di prima, contro difese compatte.
-- **Passaggio al volo** *(Volleyed Pass)*: Controllo e passaggio in un solo tocco. **Quando serve**: triangolazioni rapide, prima intenzione.
-- **Passaggio filtrante** *(Through Passing)*: Passaggi in profondità precisi. **Quando serve**: registi, creatori; fondamentale per smarcare attaccanti.
-- **Lancio lungo preciso** *(Long Lofted Pass)*: Passaggi lunghi accurati. **Quando serve**: costruzione dal basso, cambi gioco, contropiede.
-- **Specialista lancio lungo** *(Long Ball Expert)*: Migliora precisione e utilità dei lanci lunghi in situazioni di gioco. **Quando serve**: registi, mediani, cambi fronte. **NOTA**: abilità distinta da Lancio lungo preciso (Long Lofted Pass).
-- **Cross calibrato** *(Pinpoint Crossing)*: Cross dalla fascia più precisi. **Quando serve**: esterni, terzini offensivi; cross normali meno efficaci.
-- **Passaggi illuminanti** *(Phenomenal Passing)*: Passaggi precisi anche da orientamento del corpo scomodo. **Quando serve**: registi creativi, assist difficili. Alias in rosa: Passaggio fenomenale, Passaggio sensazionale.
-- **Passaggio calcolato** *(Visionary Pass)*: Passaggi più sicuri; migliora la prima touch del ricevente. **Quando serve**: registi, costruzione. Alias: Passaggio visionario.
-- **Passaggi cruciali** *(Game-changing Pass)*: Maggiore accuratezza su passaggi bassi/alti in ripresa se pareggio o svantaggio (2° tempo). **Quando serve**: centrocampisti in partite equilibrate.
-- **No-look** *(No Look Pass)*: Passaggio senza guardare il ricevente; spiazza avversari. **Quando serve**: creatori, gioco imprevedibile. Alias: Passaggio senza guardare.
-- **Passaggio calibrato** *(Weighted Pass)*: Passaggi lunghi/filtranti con backspin per migliore precisione. **Quando serve**: registi, cambi gioco.
-- **Passaggio a scavalcare** *(Low Lofted Pass)*: Passaggio rasoterra che scavalca la linea quando appropriato. **Quando serve**: costruzione, filtranti bassi. Alias: Passaggio alto rasoterra.
-- **Cross spiovente** *(Edged Crossing)*: Cross con caduta verticale (dip) dalla fascia. **Quando serve**: esterni, cross per attaccanti in area. Alias: Cross tagliente.
-- **Rabona** *(Rabona)*: Esecuzione in rabona; passaggio o tiro imprevedibile. **Quando serve**: creatori tecnici.
-- **Colpo di tacco** *(Heel Trick)*: Passaggio o tiro di tacco anche da posizioni scomode. **Quando serve**: assist improvvisi, finalizzatori.
+- **Pase de primera** *(One-touch Pass)*: Pases rápidos y directos de primera intención. **Cuándo usar**: triangulaciones rápidas, juego de primera, contra defensas compactas.
+- **Pase al vuelo** *(Volleyed Pass)*: Control y pase en un solo toque. **Cuándo usar**: triangulaciones rápidas, primera intención.
+- **Pase filtrado** *(Through Passing)*: Pases en profundidad precisos. **Cuándo usar**: organizadores, creadores; fundamental para desmarcar delanteros.
+- **Pase largo preciso** *(Long Lofted Pass)*: Pases largos precisos. **Cuándo usar**: construcción desde atrás, cambios juego, contraataque.
+- **Especialista pase largo** *(Long Ball Expert)*: Mejora precisión y utilidad de los pases largos en situaciones de juego. **Cuándo usar**: organizadores, mediocentros, cambios frente. **NOTA**: habilidad distinta de Pase largo preciso (Long Lofted Pass).
+- **Centro medido** *(Pinpoint Crossing)*: Centros desde la banda más precisos. **Cuándo usar**: exteriores, laterales ofensivos; centros normales menos eficaces.
+- **Pases iluminados** *(Phenomenal Passing)*: Pases precisos también desde orientación del cuerpo incómoda. **Cuándo usar**: mediapuntas creativos, asistencias difíciles. Alias en plantilla: Pase fenomenal, Pase sensacional.
+- **Pase calculado** *(Visionary Pass)*: Pases más seguros; mejora el primer toque del receptor. **Cuándo usar**: organizadores, construcción. Alias: Pase visionario.
+- **Pases cruciales** *(Game-changing Pass)*: Mayor precisión en pases bajos/altos en reanudación si empate o desventaja (2° tiempo). **Cuándo usar**: centrocampistas en partidos equilibrados.
+- **No-look** *(No Look Pass)*: Pase sin mirar al receptor; descoloca adversarios. **Cuándo usar**: creadores, juego imprevisible. Alias: Pase sin mirar.
+- **Pase medido** *(Weighted Pass)*: Pases largos/filtrados con backspin para mejor precisión. **Cuándo usar**: organizadores, cambios juego.
+- **Pase elevado** *(Low Lofted Pass)*: Pase raso que supera la línea cuando apropiado. **Cuándo usar**: construcción, filtrados bajos.
+- **Centro bombeado** *(Edged Crossing)*: Centro con caída vertical (dip) desde la banda. **Cuándo usar**: exteriores, centros para delanteros en área. Alias: Centro cortante.
+- **Rabona** *(Rabona)*: Ejecución en rabona; pase o tiro imprevisible. **Cuándo usar**: creadores técnicos.
+- **Golpe de tacón** *(Heel Trick)*: Pase o tiro de tacón también desde posiciones incómodas. **Cuándo usar**: asistencias improvisadas, finalizadores.
 
-### 8.3 Abilità Dribbling e Controllo
-- **Doppio tocco** *(Double Touch)*: Skill base cambio direzione. **Quando serve**: ali, dribblatori; efficace in 1v1.
-- **Tap Trick** *(Tap Trick)*: Finta rapida manuale che fa esitare il difensore e apre un lato di uscita. **Quando serve**: 1v1 vicino al difensore, fascia, ingresso in area o spazi stretti con un'uscita libera. **Come ragionare**: dopo la finta cambia direzione o accelera nello spazio; se il difensore non abbocca, proteggi e scarica. **Limiti**: non è un boost automatico, non usarla con difensore lontano, senza spazio dopo la finta o con input delay marcato. Non confonderla con **Doppio tocco** o **Trickster**.
-- **Elastico** *(Flip Flap)*: Cambio direzione rapido con esterno. **Quando serve**: 1v1, spazi stretti.
-- **Controllo di suola** *(Sole Control)*: Controllo palla con suola. **Quando serve**: spazi stretti, protezione palla.
-- **Taglia alle spalle e gira** *(Cut Behind & Turn)*: Combo avanzata di cambio direzione (Doppio tocco + Elastico + Controllo suola). **Quando serve**: dribblatori tecnici. Alias: Doppio tocco speciale.
-- **Dribbling fulmineo** *(Momentum Dribbling)* (Showtime): Migliora le abilità di dribbling del giocatore vicino all'area di rigore avversaria. **Quando serve**: trequartisti/attaccanti che entrano in area. Alias: Dribbling fulminei, Dribbling in slancio.
-- **Scatto bruciante** *(Acceleration Burst)* (Showtime): Consente al giocatore di eseguire un tocco secco veloce da fermo o mentre si muove lentamente, con animazioni speciali. **Quando serve**: attaccanti che ricevono palla fermi e devono accelerare improvvisamente.
-- **Calamita ai piedi** *(Magnetic Feet)* (Showtime): Quando il giocatore ha la palla, aumenta la sua capacità di mantenerne il possesso in base al numero di avversari nel raggio di 5 metri (max 4 avversari). **Quando serve**: giocatori tecnici sotto pressing.
-- **Piedi magnetici** *(Magnetic Feet)*: stesso effetto di **Calamita ai piedi** — non è un'abilità diversa. Usa la descrizione di Calamita ai piedi sopra. **Quando serve**: MED/CC/TrQ che ricevono palla in pressing o in zone affollate.
-- **Stop acrobatico** *(Acrobatic Trap)*: Controllo palla acrobatico. **Quando serve**: passaggi difficili, posizioni scomode.
-- **Finta tiro** *(Feint Shot)*: Finta tiro per ingannare difensore. **Quando serve**: 1v1 in area.
-- **Finta passaggio** *(Feint Pass)*: Finta passaggio. **Quando serve**: aprire linee di passaggio.
-- **Tocco secco** *(Burst Touch)*: Spinta palla rapida in avanti per cambiare ritmo. **Quando serve**: spazio davanti, accelerazione improvvisa.
-- **Protezione** *(Shielding)*: Proteggere palla con corpo. **Quando serve**: pressione alta, spalle alla porta.
+### 8.3 Habilidades Regate y Control
+- **Doble toque** *(Double Touch)*: Skill base cambio dirección. **Cuándo usar**: extremos, regateadores; eficaz en 1v1.
+- **Tap Trick** *(Tap Trick)*: Finta rápida manual que hace vacilar al defensa y abre un lado de salida. **Cuándo usar**: 1v1 cerca del defensa, banda, entrada al área o espacios reducidos con una salida libre. **Cómo razonar**: tras la finta cambia dirección o acelera en el espacio; si el defensa no pica, protege y descarga. **Límites**: no es un boost automático, no usarla con defensa lejano, sin espacio tras la finta o con input delay marcado. No confundirla con **Doble toque** o **Trickster**.
+- **Elástica** *(Flip Flap)*: Cambio dirección rápido con exterior. **Cuándo usar**: 1v1, espacios reducidos.
+- **Control con suela** *(Sole Control)*: Control balón con suela. **Cuándo usar**: espacios reducidos, protección balón.
+- **Corte atrás y giro** *(Cut Behind & Turn)*: Combo avanzada de cambio dirección (Doble toque + Elástica + Control suela). **Cuándo usar**: regateadores técnicos. Alias: Doble toque especial.
+- **Regate fulminante** *(Momentum Dribbling)* (Showtime): Mejora las habilidades de regate del jugador cerca del área adversaria. **Cuándo usar**: mediapuntas/delanteros que entran en área. Alias: Regate en impulso.
+- **Arrancada explosiva** *(Acceleration Burst)* (Showtime): Permite al jugador ejecutar un toque seco rápido desde parado o en movimiento lento, con animaciones especiales. **Cuándo usar**: delanteros que reciben balón parados y deben acelerar repentinamente.
+- **Pies magnéticos** *(Magnetic Feet)* (Showtime): Cuando el jugador tiene el balón, aumenta su capacidad de mantener la posesión en base al número de adversarios en un radio de 5 metros (máx 4 adversarios). **Cuándo usar**: jugadores técnicos bajo presión.
+- **Calama en los pies** *(Magnetic Feet)*: mismo efecto de **Pies magnéticos** — no es una habilidad diferente. Usa la descripción de Pies magnéticos arriba. **Cuándo usar**: MCD/MC/MCO que reciben balón en presión o en zonas congestionadas.
+- **Parada acrobática** *(Acrobatic Trap)*: Control balón acrobático. **Cuándo usar**: pases difíciles, posiciones incómodas.
+- **Finta tiro** *(Feint Shot)*: Finta tiro para engañar al defensa. **Cuándo usar**: 1v1 en área.
+- **Finta pase** *(Feint Pass)*: Finta pase. **Cuándo usar**: abrir líneas de pase.
+- **Toque seco** *(Burst Touch)*: Empuje balón rápido hacia adelante para cambiar ritmo. **Cuándo usar**: espacio delante, aceleración repentina.
+- **Protección** *(Shielding)*: Proteger balón con cuerpo. **Cuándo usar**: presión alta, espaldas a portería.
 
-### 8.4 Abilità Difensive
-- **Contrasto Aggressivo** *(Aggressive Defence)*: Tackle aggressivi con minori falli rispetto a un contrasto normale. **Quando serve**: mediani, difensori centrali, recupero palla in pressing alto.
-- **Intercettazione** *(Interception)*: Intercettare passaggi più facilmente. **Quando serve**: difensori, mediani; prioritaria per recupero palla.
-- **Marcatore** *(Man Marking)*: Marcare avversario specifico più efficacemente, ridurre lo spazio del portatore di palla. **Quando serve**: DC e mediani contro trequartisti/seconde punte; abbinare con istruzione individuale "Marcatura uomo" per assegnare il diretto avversario.
-- **Entrata aggressiva** *(Aggressive Pressing)*: Contrasti più efficaci con maggiore intensità nel duello. **Quando serve**: difensori che escono in anticipo, mediani che pressano alto.
-- **Scivolata** *(Slide Tackle)*: Tackle in scivolata con maggiore precisione e velocità, conquista la palla più facilmente. **Quando serve**: difensori, tackle aggressivi.
-- **Tackle in allungo** *(Long-Reach Tackle)*: Aumenta la frequenza dei tackle in piedi, anche contro avversari lontani, da fermi o in movimento lento. **Quando serve**: difensori che recuperano palloni a distanza.
-- **Caposaldo** *(Anchor)*: Abilità difensiva di ancoraggio; stabilizza il reparto. **Quando serve**: mediani difensivi, Collante. **NOTA**: NON confondere con **Fortezza** (Fortress) che è abilità Showtime condizionale (§8.4 sotto).
-- **Fortezza** *(Fortress)*: Migliora le abilità difensive del giocatore a partire dal secondo tempo, a patto che la squadra sia in vantaggio a intervallo. **Quando serve**: difensori per mantenere il vantaggio. **NOTA**: abilità distinta da Caposaldo (Anchor).
-- **Difesa svettante** *(Aerial Fort)*: Migliora le abilità del giocatore nei duelli aerei quando è posizionato all'interno della propria area di rigore. **Quando serve**: difensori centrali, duelli aerei difensivi.
-- **Tornante** *(Track Back)*: Rientra rapidamente in fase difensiva dopo fase offensiva. **Quando serve**: centrocampisti, Onnipresente, ali offensive.
-- **Muro** *(Blocker)*: Maggiore efficacia nel bloccare passaggi e tiri. **Quando serve**: difensori centrali, mediani.
-- **Disimpegno acrobatico** *(Acrobatic Clearance)*: Stoppate/disimpegni acrobatici con i piedi anche quando il giocatore è in equilibrio precario o in aria. **Quando serve**: difensori, interventi di emergenza in area.
-- **Dominio palle alte** *(Aerial Superiority)*: Maggiore probabilità di vincere duelli aerei. **Quando serve**: difensori centrali, attaccanti fisici, cross. Abilità *difensiva* per duelli aerei; **Colpo di testa** (§8.1) è invece per conclusione di testa in attacco.
-- **Pressing alle spalle** *(Shadow Hunt)* (Showtime, difesa): solo DC/ETD/ETS/MED. Si attiva automaticamente su passaggio filtrante dietro la linea: boost di velocità per recuperare e inseguire l'attaccante. **Quando serve**: difensori contro punte veloci e inserimenti. Alias: Caccia all'ombra. Non richiede input manuale.
-- **Contrasto a distanza** *(Long-Reach Tackle)*: alias di **Tackle in allungo** — stesso concetto, tackle in piedi efficaci anche con avversario più lontano, da fermo o in movimento lento. **Quando serve**: DC/ETD/ETS/MED.
+### 8.4 Habilidades Defensivas
+- **Entrada agresiva** *(Aggressive Defence)*: Tackle agresivos con menos faltas respecto a una entrada normal. **Cuándo usar**: mediocentros, defensas centrales, recuperación balón en presión alta.
+- **Interceptación** *(Interception)*: Interceptar pases más fácilmente. **Cuándo usar**: defensores, mediocentros; prioritaria para recuperación balón.
+- **Marcador** *(Man Marking)*: Marcar adversario específico más eficazmente, reducir el espacio del poseedor de balón. **Cuándo usar**: DFC y mediocentros contra mediapuntas/segundos delanteros; combinar con instrucción individual "Marcaje al hombre" para asignar el directo adversario.
+- **Entrada en anticipación** *(Aggressive Pressing)*: Entradas más eficaces con mayor intensidad en el duelo. **Cuándo usar**: defensores que salen en anticipación, mediocentros que presionan alto.
+- **Entrada deslizante** *(Slide Tackle)*: Tackle en deslizamiento con mayor precisión y velocidad, conquista el balón más fácilmente. **Cuándo usar**: defensores, tackle agresivos.
+- **Tackle en estirada** *(Long-Reach Tackle)*: Aumenta la frecuencia de los tackle de pie, también contra adversarios lejanos, desde parado o en movimiento lento. **Cuándo usar**: defensores que recuperan balones a distancia.
+- **Bastión** *(Anchor)*: Habilidad defensiva de anclaje; estabiliza el sector. **Cuándo usar**: mediocentros defensivos, Ancla. **NOTA**: NO confundir con **Fortaleza** (Fortress) que es habilidad Showtime condicional (§8.4 abajo).
+- **Fortaleza** *(Fortress)*: Mejora las habilidades defensivas del jugador a partir del segundo tiempo, siempre que el equipo esté en ventaja en el descanso. **Cuándo usar**: defensores para mantener la ventaja. **NOTA**: habilidad distinta de Bastión (Anchor).
+- **Defensa elevada** *(Aerial Fort)*: Mejora las habilidades del jugador en los duelos aéreos cuando está posicionado dentro de su propia área. **Cuándo usar**: defensas centrales, duelos aéreos defensivos.
+- **Recuperación** *(Track Back)*: Repliega rápidamente en fase defensiva tras fase ofensiva. **Cuándo usar**: centrocampistas, Box-to-Box★, extremos ofensivos.
+- **Tapón** *(Blocker)*: Mayor eficacia en bloquear pases y tiros. **Cuándo usar**: defensas centrales, mediocentros.
+- **Despeje acrobático** *(Acrobatic Clearance)*: Despejes acrobáticos con los pies también cuando el jugador está en equilibrio precario o en el aire. **Cuándo usar**: defensores, intervenciones de emergencia en área.
+- **Dominio balones altos** *(Aerial Superiority)*: Mayor probabilidad de ganar duelos aéreos. **Cuándo usar**: defensas centrales, delanteros físicos, centros. Habilidad *defensiva* para duelos aéreos; **Cabezazo** (§8.1) es en cambio para remate de cabeza en ataque.
+- **Presión por detrás** *(Shadow Hunt)* (Showtime, defensa): solo DFC/LTD/LTI/MCD. Se activa automáticamente en pase filtrado detrás de la línea: boost de velocidad para recuperar y perseguir al delantero. **Cuándo usar**: defensores contra delanteros rápidos y desmarques. Alias: Caza a la sombra. No requiere input manual.
+- **Entrada a distancia** *(Long-Reach Tackle)*: alias de **Tackle en estirada** — mismo concepto, tackle de pie eficaces también con adversario más lejano, desde parado o en movimiento lento. **Cuándo usar**: DFC/LTD/LTI/MCD.
 
-### 8.5 Abilità Portiere
-- **Riflessi Felini** *(Reflexes)*: Parate ravvicinate miracolose. **Quando serve**: portieri, 1v1.
-- **Presa sicura** *(Catching)*: Afferrare palla invece di respingere. **Quando serve**: ridurre rimbalzi e seconde palle.
-- **Uscita portiere** *(Goalkeeper Rush)*: Uscite più sicure. **Quando serve**: linea alta, passaggi filtranti.
-- **Parata con piedi** *(GK Foot Save)*: Parate con piedi su tiri bassi. **Quando serve**: tiri rasoterra.
-- **Piazzamento** *(GK Positioning)*: Posizionamento ottimale in porta, lettura del tiro e copertura ottimale dell'angolo. **Quando serve**: portieri titolari, fondamentale per ridurre gol "facili" su tiri da fuori area.
-- **Estensione PT** *(GK Reach)*: Copertura maggiore della porta nei tuffi. **Quando serve**: tiri angolati, conclusioni alle estremità della porta.
-- **Para-rigori** *(Penalty Saver)*: Consente al giocatore una maggior reattività nel parare i rigori. **Quando serve**: portieri.
-- **Direzione alla difesa** *(GK Directing Defence)*: Abilità da portiere che migliora le capacità difensive dei difensori posizionati a ridosso dell'area di rigore. **Quando serve**: portieri che comandano la difesa. Alias: Direzioni alla difesa PT.
-- **Portiere galvanizzatore** *(GK Spirit Roar)* (Showtime): Abilità del portiere che migliora le capacità fisiche dei difensori quando la squadra è in vantaggio dopo l'intervallo. **Quando serve**: portieri con squadra in vantaggio al secondo tempo. Alias: PT galvanizzatore.
+### 8.5 Habilidades Portero
+- **Reflejos felinos** *(Reflexes)*: Paradas cercanas milagrosas. **Cuándo usar**: porteros, 1v1.
+- **Atrapada segura** *(Catching)*: Atrapar balón en lugar de rechazar. **Cuándo usar**: reducir rebotes y segundas jugadas.
+- **Salida portero** *(Goalkeeper Rush)*: Salidas más seguras. **Cuándo usar**: línea alta, pases filtrados.
+- **Parada con pies** *(GK Foot Save)*: Paradas con pies en tiros bajos. **Cuándo usar**: tiros rasos.
+- **Colocación** *(GK Positioning)*: Posicionamiento óptimo en portería, lectura del tiro y cobertura óptima del ángulo. **Cuándo usar**: porteros titulares, fundamental para reducir goles "fáciles" en tiros desde fuera del área.
+- **Alcance POR** *(GK Reach)*: Cobertura mayor de la portería en las estiradas. **Cuándo usar**: tiros angulados, conclusiones a los extremos de la portería.
+- **Parada-penaltis** *(Penalty Saver)*: Permite al jugador una mayor reactividad en parar los penaltis. **Cuándo usar**: porteros.
+- **Dirección a la defensa** *(GK Directing Defence)*: Habilidad de portero que mejora las capacidades defensivas de los defensores posicionados cerca del área. **Cuándo usar**: porteros que dirigen la defensa. Alias: Direcciones a la defensa POR.
+- **Portero galvanizador** *(GK Spirit Roar)* (Showtime): Habilidad del portero que mejora las capacidades físicas de los defensores cuando el equipo está en ventaja tras el descanso. **Cuándo usar**: porteros con equipo en ventaja en el segundo tiempo. Alias: POR galvanizador.
 
-### 8.6 Abilità Fisiche e Atletiche
-- **Scatto** *(Acceleration)*: Accelerazione esplosiva nei primi metri. **Quando serve**: attaccanti, ali, contropiede.
-- **Resistenza superiore** *(Stamina)*: Maggiore resistenza alla fatica. **Quando serve**: Onnipresente, terzini, pressing.
-- **Forza fisica** *(Physical Strength)*: Maggiore potenza fisica nei duelli a terra. **Quando serve**: duelli, protezione palla, attaccanti pivote.
-- **Agilità superiore** *(Super Agility)*: Maggiore agilità nei cambi di direzione. **Quando serve**: dribblatori, 1v1.
-- **Salto** *(Jumping)*: Salto più potente nei duelli aerei. **Quando serve**: difensori centrali, attaccanti su cross e palle inattive.
-- **Velocità** *(Speed)*: Velocità massima superiore in corsa lanciata. **Quando serve**: ali, attaccanti veloci, contropiedisti.
+### 8.6 Habilidades Físicas y Atléticas
+- **Arrancada** *(Acceleration)*: Aceleración explosiva en los primeros metros. **Cuándo usar**: delanteros, extremos, contraataque.
+- **Resistencia superior** *(Stamina)*: Mayor resistencia a la fatiga. **Cuándo usar**: Box-to-Box★, laterales, presión.
+- **Fuerza física** *(Physical Strength)*: Mayor potencia física en los duelos en tierra. **Cuándo usar**: duelos, protección balón, delanteros pivote.
+- **Agilidad superior** *(Super Agility)*: Mayor agilidad en los cambios de dirección. **Cuándo usar**: regateadores, 1v1.
+- **Salto** *(Jumping)*: Salto más potente en los duelos aéreos. **Cuándo usar**: defensas centrales, delanteros en centros y balones parados.
+- **Velocidad** *(Speed)*: Velocidad máxima superior en carrera lanzada. **Cuándo usar**: extremos, delanteros rápidos, contraatacantes.
 
-### 8.7 Abilità Speciali e Leadership
-- **Leader** *(Captaincy)*: Ispira compagni, riduce impatto fatica squadra. **Quando serve**: partite lunghe, giocatori chiave (capitano).
-- **Specialista cross** *(Cross Specialist)*: Cross più precisi e pericolosi. **Quando serve**: esterni, Vie laterali.
-- **Specialista di cross** *(Cross Specialist)*: alias di **Specialista cross** — stesso concetto, stesso effetto.
-- **Specialista punizioni** *(Set Piece Specialist)*: Punizioni più precise. **Quando serve**: tiratori punizioni designati.
-- **Specialista dei rigori** *(Penalty Specialist)*: Rigori più sicuri. **Quando serve**: tiratori designati. Alias: Specialista rigori.
-- **Rimessa laterale lunga** *(Long Throw)*: Maggiore ampiezza del lancio con le mani (laterali). **Quando serve**: rinvii rapidi e contropiede da rimessa. Alias: Rimessa lunga.
-- **Rilancio del portiere** *(GK Long Throw)*: Maggiore ampiezza del lancio con le mani (portiere). **Quando serve**: rinvii rapidi dal PT. Alias: Rimessa lunga PT.
-- **Riserva di lusso** *(Super Sub)*: Prestazioni migliorate quando subentra in corso partita. **Quando serve**: panchinari d'impatto, cambi tattici.
-- **Spirito combattivo** *(Fighting Spirit)*: Prestazioni migliori sotto pressione e fatica. **Quando serve**: Onnipresente, mediani, pressing. **Comunità**: ideale per tutti gli 11; fondamentale per DC, MED e TrQ (smistano palloni in spazi ridotti). I TrQ hanno spesso Resistenza bassa: anche se li sostituisci al 46', Spirito combattivo li aiuta già al primo tempo (intorno al 30' la Resistenza cala e influisce su lucidità e rapidità). Riduce impatto fatica, migliora anche gestione Resistenza.
-- **Astuzia** (Tattica): Maggiore probabilità di ottenere falli quando è in possesso di palla. **EVITARE su difensori**: Konami gestisce male l'abilità, effetto contrario – più falli a sfavore. Dare a centrocampisti/attaccanti se utile. **NOTA**: NON confondere con "Trickster" (vedi §8.11) che è invece skill move tecnico in 1v1.
+### 8.7 Habilidades Especiales y Liderazgo
+- **Líder** *(Captaincy)*: Inspira compañeros, reduce impacto fatiga equipo. **Cuándo usar**: partidos largos, jugadores clave (capitán).
+- **Especialista centros** *(Cross Specialist)*: Centros más precisos y peligrosos. **Cuándo usar**: exteriores, Bandas.
+- **Especialista de centros** *(Cross Specialist)*: alias de **Especialista centros** — mismo concepto, mismo efecto.
+- **Especialista faltas** *(Set Piece Specialist)*: Faltas más precisas. **Cuándo usar**: lanzadores faltas designados.
+- **Especialista penaltis** *(Penalty Specialist)*: Penaltis más seguros. **Cuándo usar**: lanzadores designados. Alias: Especialista penaltis.
+- **Saque de banda largo** *(Long Throw)*: Mayor amplitud del lanzamiento con las manos (bandas). **Cuándo usar**: saques rápidos y contraataque desde banda. Alias: Saque largo.
+- **Saque del portero** *(GK Long Throw)*: Mayor amplitud del lanzamiento con las manos (portero). **Cuándo usar**: saques rápidos desde el POR. Alias: Saque largo POR.
+- **Super reserva** *(Super Sub)*: Prestaciones mejoradas cuando entra en curso de partido. **Cuándo usar**: suplentes de impacto, cambios tácticos.
+- **Espíritu combativo** *(Fighting Spirit)*: Prestaciones mejores bajo presión y fatiga. **Cuándo usar**: Box-to-Box★, mediocentros, presión. **Comunidad**: ideal para los 11; fundamental para DFC, MCD y MCO (distribuyen balones en espacios reducidos). Los MCO tienen a menudo Resistencia baja: aunque los sustituyas al 46', Espíritu combativo les ayuda ya en el primer tiempo (alrededor del 30' la Resistencia baja e influye en lucidez y rapidez). Reduce impacto fatiga, mejora también gestión Resistencia.
+- **Astucia** (Gamesmanship): Mayor probabilidad de obtener faltas cuando está en posesión de balón. **EVITAR en defensores**: Konami gestiona mal la habilidad, efecto contrario – más faltas en contra. Dar a centrocampistas/delanteros si útil. **NOTA**: NO confundir con "Trickster" (ver §8.11) que es en cambio skill move técnico en 1v1.
 
-### 8.8 Programmi Aggiunta Abilità
-- **Disponibile per**: In evidenza, In risalto, Epico, Leggendario, Standard
-- **NON disponibile per**: Trending (già max livello)
-- **Come funziona**: Usa programmi per far apprendere abilità al giocatore
-- **Max slot**: 6 abilità totali (native + aggiunte)
+### 8.8 Programas Añadir Habilidad
+- **Disponible para**: Destacado, En realce, Épico, Legendario, Estándar
+- **NO disponible para**: Trending (ya nivel máx)
+- **Cómo funciona**: Usa programas para hacer aprender habilidades al jugador
+- **Máx slots**: 6 habilidades totales (nativas + añadidas)
 
-### 8.9 Priorità abilità per ruolo (per consigli)
-Quando si consigliano abilità da aggiungere (tramite Programmi, se non Trending): **Attaccanti** → Tiro di prima, Colpo di testa (se fisico), Finalizzazione acrobatica, Pallonetto mirato; **Registi** → Passaggio filtrante, Passaggio di prima, Passaggio calibrato; **Mediani** → Intercettazione, Contrasto Aggressivo, Tornante, Spirito combattivo; **Difensori** → Intercettazione, Marcatore, Colpo di testa, Dominio palle alte, Muro; **Ali** → Doppio tocco, Cross calibrato, Tornante; **Terzini** → Intercettazione, Cross calibrato (se offensivi); **Riserve d'impatto** → **Riserva di lusso**. Evitare abilità difensive su attaccanti puri; evitare abilità offensive su difensori centrali; max 2-3 abilità dribbling per giocatore.
+### 8.9 Prioridad habilidades por rol (para consejos)
+Cuando se aconsejan habilidades a añadir (mediante Programas, si no Trending): **Delanteros** → Remate de primera, Cabezazo (si físico), Finalización acrobática, Vaselina precisa; **Organizadores** → Pase filtrado, Pase de primera, Pase medido; **Mediocentros** → Interceptación, Entrada agresiva, Recuperación, Espíritu combativo; **Defensores** → Interceptación, Marcador, Cabezazo, Dominio balones altos, Tapón; **Extremos** → Doble toque, Centro medido, Recuperación; **Laterales** → Interceptación, Centro medido (si ofensivos); **Suplentes de impacto** → **Super reserva**. Evitar habilidades defensivas en delanteros puros; evitar habilidades ofensivas en defensas centrales; máx 2-3 habilidades regate por jugador.
 
-### 8.10 Abilità obbligatorie per ruolo (Comunità)
-Carta forte senza abilità corrette non renderà in game come dovrebbe. **Obbligatorie** per ruolo (il resto è di contorno):
+### 8.10 Habilidades obligatorias por rol (Comunidad)
+Carta fuerte sin habilidades correctas no rendirá en juego como debería. **Obligatorias** por rol (el resto es complementario):
 
-**LINEA DIFENSIVA**: muro, marcatore, intercettazione, dominio palle alte, scivolata, spirito combattivo. Almeno uno in squadra con Leader. **EVITARE Tattica** (astuzia) sui difensori: Konami gestisce male, falli a sfavore.
+**LÍNEA DEFENSIVA**: tapón, marcador, interceptación, dominio balones altos, entrada deslizante, espíritu combativo. Al menos uno en equipo con Líder. **EVITAR Astucia** (gamesmanship) en defensores: Konami gestiona mal, faltas en contra.
 
-**MEDIANA**: stesso blocco difesa + **Passaggio a scavalcare**. **EVITARE Tornante** su mediano centrale, soprattutto se Collante: lo trasforma in simil onnipresente, va a zonzo in zone non competenti.
+**MEDIOCENTRO DEFENSIVO (MCD)**: mismo bloque defensa + **Pase elevado**. **EVITAR Recuperación** en mediocentro central, sobre todo si Ancla: lo transforma en similar box-to-box, va deambulando en zonas no competentes.
 
-**CENTROCAMPO**: tornante, dominio palle alte, intercettazione, muro, passaggio di prima, passaggio filtrante. Se CC difensivo (quasi mediano): aggiungere marcatore. Opzionale: cross calibrato (onnipresenti in fascia), colpo di testa, tiro; Controllo di suola migliora animazioni anche senza skill input.
+**CENTROCAMPO (MC)**: recuperación, dominio balones altos, interceptación, tapón, pase de primera, pase filtrado. Si MC defensivo (casi MCD): añadir marcador. Opcional: centro medido (box-to-box en banda), cabezazo, tiro; Control con suela mejora animaciones también sin skill input.
 
-**TREQUARTISTI e seconde punte**: passaggio di prima, passaggio filtrante, passaggio calibrato, tiro di prima, tiro dalla distanza, spirito combattivo. Opzionale: esterno a giro, A giro da distante (migliora uso piede forte), skill.
+**MEDIAPUNTAS (MCO) y segundos delanteros**: pase de primera, pase filtrado, pase medido, remate de primera, tiro lejano, espíritu combativo. Opcional: remate con exterior, Con efecto lejano (mejora uso pie fuerte), skill.
 
-**ATTACCANTI**: passaggio di prima (essenziale 1-2), tiro di prima, tiro dalla distanza, colpo di testa, A giro da distante, dominio palle alte (per sponda su lanci lunghi da portiere/difensori). Opzionale: passaggio filtrante. **A giro da distante**: su ribattuta tira con piede forte sul secondo palo invece che debole al primo palo.
+**DELANTEROS (DC)**: pase de primera (esencial 1-2), remate de primera, tiro lejano, cabezazo, Con efecto lejano, dominio balones altos (para apoyo en lanzamientos largos de portero/defensores). Opcional: pase filtrado. **Con efecto lejano**: en rebote tira con pie fuerte al segundo palo en lugar del débil al primer palo.
 
-**SPIRITO COMBATTIVO**: ideale per tutti gli 11; fondamentale per DC, MED, TrQ (spazi ridotti; TrQ con Resistenza bassa calano già al 30' – Spirito combattivo aiuta anche se sostituiti al 46').
+**ESPÍRITU COMBATIVO**: ideal para los 11; fundamental para DFC, MCD, MCO (espacios reducidos; MCO con Resistencia baja bajan ya al 30' – Espíritu combativo ayuda también si sustituidos al 46').
 
-**RISERVA DI LUSSO**: agisce già dal primo minuto del secondo tempo (non solo dal 60'). Massima efficacia su game changer: farli subentrare al secondo tempo è molto più impattante che schierarli titolari.
+**SUPER RESERVA**: actúa ya desde el primer minuto del segundo tiempo (no solo desde el 60'). Máxima eficacia en game changer: hacerlos entrar en el segundo tiempo es mucho más impactante que alinearlos titulares.
 
-### 8.11 Showtime e abilità recenti (sinonimi IT/EN)
+### 8.11 Showtime y habilidades recientes (sinónimos IT/ES/EN)
 
-**Regola per l'AI**: se in rosa compare un nome EN (catalogo/EFHub), usa l'effetto della riga IT corrispondente. Molte voci sono **sinonimi** di §8.1–8.4, non abilità extra da sommare due volte.
+**Regla para la IA**: si en plantilla aparece un nombre EN (catálogo/EFHub), usa el efecto de la fila IT/ES correspondiente. Muchas voces son **sinónimos** de §8.1–8.4, no habilidades extra a sumar dos veces.
 
-| Nome in rosa (esempi) | Sinonimo / sezione | Effetto (sintesi verificata community/Konami) |
-|----------------------|-------------------|---------------------------------------------|
-| Piedi magnetici / Magnetic Feet | Calamita ai piedi §8.3 | Possesso sotto pressing (max 4 avversari entro ~5 m) |
-| Dribbling in slancio / Momentum Dribbling | Dribbling fulmineo §8.3 | Più tocchi e controllo stretto in ultimo terzo |
-| Tap Trick / Tap Trik | Tap Trick §8.3 | Finta manuale ravvicinata: fa esitare il difensore e apre il lato di uscita nel duello |
-| Scatto bruciante / Acceleration Burst | §8.3 | Tocco secco rapido da fermo o movimento lento; cambio direzione |
-| Passaggio fenomenale / Phenomenal Passing | Passaggi illuminanti §8.2 | Passaggi precisi anche da orientamento scomodo |
-| Passaggio sensazionale | Passaggi illuminanti §8.2 | Alias community di Phenomenal Passing — stesso effetto |
-| Finalizzazione fenomenale / Phenomenal Finishing | Istinto del gol §8.1 | Tiri più precisi da equilibrio/atipico |
-| Passaggio visionario / Visionary Pass | Passaggio calcolato §8.2 | Passaggi più sicuri; migliora prima touch del ricevente |
-| Passaggi cruciali / Game-changing Pass | §8.2 | +accuratezza passaggi bassi/alti in ripresa se pareggio/svantaggio (2° tempo) |
-| Cross tagliente / Edged Crossing | Cross spiovente §8.2 | Cross con caduta verticale (dip), utili da fascia |
-| Tiro a giro spiovente / Blitz Curler | §8.1 | Curva più marcata su tiri controllati |
-| Tiro di collo / Knuckle Shot | §8.1 | Traiettoria imprevedibile (knuckle) |
-| Incornata / Bullet Header | Incornata §8.1 | Testate verso il basso più potenti/coerenti |
-| Difesa svettante / Aerial Fort | §8.4 | Duelli aerei migliori **in propria area** |
-| Caposaldo / Anchor | §8.4 | Ancoraggio difensivo (mediano/difensore) |
-| Fortezza / Fortress | §8.4 | +capacità difensive in 2° tempo se in vantaggio a intervallo |
-| Pressing alle spalle / Shadow Hunt | §8.4 | Recupero automatico su filtrante dietro la difesa. Alias: Caccia all'ombra |
-| Contrasto a distanza / Long-Reach Tackle | Tackle in allungo §8.4 | Tackle in piedi a distanza |
-| Rasoterra potente / Low Screamer | Sassata rasoterra §8.1 | Stunning shot rapido e basso con barra potenza <50% |
-| Specialista lancio lungo / Long Ball Expert | §8.2 | Lanci lunghi più efficaci — **NON** è Lancio lungo preciso |
-| Lancio lungo / Long Lofted Pass | Lancio lungo preciso §8.2 | Passaggi lunghi accurati |
-| Cross anticipato / Early Crosser | Cross calibrato §8.2 | Cross anticipati più efficaci |
-| No Look Pass / Passaggio no look | No-look §8.2 | Passaggio senza guardare il ricevente |
-| Low Lofted Pass | Passaggio a scavalcare §8.2 | Passaggio rasoterra che scavalca |
-| Heel Trick | Colpo di tacco §8.2 | Passaggio/tiro di tacco |
-| Cut Behind & Turn | Taglia alle spalle e gira §8.3 | Combo cambio direzione avanzata |
-| Inserimento incisivo / Incisive Run | — | Taglio da fascia verso porta (trait offensivo) |
-| Corsa ubriacante / Mazing Run | — | Penetrazione con dribbling stretto e svolte |
-| Proiettile veloce / Speeding Bullet | — | Inserimenti e progressioni in velocità |
-| Trickster | §8.3 (tecnico) | Skill move / dribbling flair in 1v1; utile su ali e TrQ tecnici |
+| Nombre en plantilla (ejemplos) | Sinónimo / sección | Efecto (síntesis verificada community/Konami) |
+|-------------------------------|-------------------|-----------------------------------------------|
+| Pies magnéticos / Magnetic Feet | Pies magnéticos §8.3 | Posesión bajo presión (máx 4 adversarios dentro de ~5 m) |
+| Regate en impulso / Momentum Dribbling | Regate fulminante §8.3 | Más toques y control ajustado en último tercio |
+| Tap Trick / Tap Trik | Tap Trick §8.3 | Finta manual cercana: hace vacilar al defensa y abre el lado de salida en el duelo |
+| Arrancada explosiva / Acceleration Burst | §8.3 | Toque seco rápido desde parado o movimiento lento; cambio dirección |
+| Pase fenomenal / Phenomenal Passing | Pases iluminados §8.2 | Pases precisos también desde orientación incómoda |
+| Pase sensacional | Pases iluminados §8.2 | Alias community de Phenomenal Passing — mismo efecto |
+| Finalización fenomenal / Phenomenal Finishing | Instinto de gol §8.1 | Tiros más precisos desde equilibrio/atípico |
+| Pase visionario / Visionary Pass | Pase calculado §8.2 | Pases más seguros; mejora primer toque del receptor |
+| Pases cruciales / Game-changing Pass | §8.2 | +precisión pases bajos/altos en reanudación si empate/desventaja (2° tiempo) |
+| Centro cortante / Edged Crossing | Centro bombeado §8.2 | Centro con caída vertical (dip), útiles desde banda |
+| Tiro con efecto picado / Blitz Curler | §8.1 | Curva más marcada en tiros controlados |
+| Tiro nudillo / Knuckle Shot | §8.1 | Trayectoria imprevisible (knuckle) |
+| Remate aéreo potente / Bullet Header | §8.1 | Cabezazos hacia abajo más potentes/coherentes |
+| Defensa elevada / Aerial Fort | §8.4 | Duelos aéreos mejores **en propia área** |
+| Bastión / Anchor | §8.4 | Anclaje defensivo (mediocentro/defensa) |
+| Fortaleza / Fortress | §8.4 | +capacidades defensivas en 2° tiempo si en ventaja al descanso |
+| Presión por detrás / Shadow Hunt | §8.4 | Recuperación automática en filtrado detrás de la defensa. Alias: Caza a la sombra |
+| Entrada a distancia / Long-Reach Tackle | Tackle en estirada §8.4 | Tackle de pie a distancia |
+| Cañonazo raso / Low Screamer | §8.1 | Tiro sensacional rápido y bajo con barra potencia <50% |
+| Especialista pase largo / Long Ball Expert | §8.2 | Pases largos más eficaces — **NO** es Pase largo preciso |
+| Pase largo / Long Lofted Pass | Pase largo preciso §8.2 | Pases largos precisos |
+| Centro anticipado / Early Crosser | Centro medido §8.2 | Centros anticipados más eficaces |
+| No Look Pass / Pase no look | No-look §8.2 | Pase sin mirar al receptor |
+| Low Lofted Pass | Pase elevado §8.2 | Pase raso que supera |
+| Heel Trick | Golpe de tacón §8.2 | Pase/tiro de tacón |
+| Cut Behind & Turn | Corte atrás y giro §8.3 | Combo cambio dirección avanzada |
+| Desmarque incisivo / Incisive Run | — | Corte desde banda hacia portería (trait ofensivo) |
+| Carrera embriagadora / Mazing Run | — | Penetración con regate ajustado y giros |
+| Proyectil veloz / Speeding Bullet | — | Desmarques y progresiones en velocidad |
+| Trickster | §8.3 (técnico) | Skill move / regate flair en 1v1; útil en extremos y MCO técnicos |
 
-**Mappatura aggiuntiva (nomi EN che potrebbero apparire nel catalogo)**:
-- **Willpower** = **Forza di volontà** (§8.1) — boost progressivo abilità di tiro fino a 8 cumuli
-- **GK Directing Defense / GK Directing Defence** = **Direzione alla difesa** (§8.5)
-- **GK Spirit Roar** = **Portiere galvanizzatore** (§8.5)
-- **Attack Trigger** = **Attivatore d'attacco** (trait offensivo); citare solo l'effetto in scheda senza inventare numeri
-- **Gamesmanship** = **Astuzia** (§8.7) — NON confondere con Trickster (§8.3)
+**Mapeo adicional (nombres EN que podrían aparecer en el catálogo)**:
+- **Willpower** = **Fuerza de voluntad** (§8.1) — boost progresivo habilidades de tiro hasta 8 acumulaciones
+- **GK Directing Defense / GK Directing Defence** = **Dirección a la defensa** (§8.5)
+- **GK Spirit Roar** = **Portero galvanizador** (§8.5)
+- **Attack Trigger** = **Activador de ataque** (trait ofensivo); citar solo el efecto en ficha sin inventar números
+- **Gamesmanship** = **Astucia** (§8.7) — NO confundir con Trickster (§8.3)
 
-**Regola generale per nomi EN non in elenco**: se appare un'abilità solo in inglese sulla carta, riportare l'effetto come scritto sulla scheda Konami/eFootball Lab senza tradurla in modo creativo.
+**Regla general para nombres EN no en lista**: si aparece una habilidad solo en inglés en la carta, reportar el efecto como escrito en la ficha Konami/eFootball Lab sin traducirla de forma creativa.
 
 ---
 
-## 9. COMPETENZE E SVILUPPO
+## 9. COMPETENCIAS Y DESARROLLO
 
-### Frecce forma
-- **Freccia Su**: forma ottimale, prestazioni migliorate
-- **Freccia Giù**: forma scarsa, prestazioni ridotte
-- **Neutro**: forma normale
-L'influenza sulle prestazioni è significativa; considerare le frecce quando si scelgono titolari.
+### Flechas forma
+- **Flecha Arriba**: forma óptima, prestaciones mejoradas
+- **Flecha Abajo**: forma escasa, prestaciones reducidas
+- **Neutro**: forma normal
+La influencia en las prestaciones es significativa; considerar las flechas al elegir titulares.
 
-### 9.1 Tipologie Giocatori (Squadra dei Sogni)
-- **Trending**: Max livello, immediatamente schierabili
-- **In evidenza**: Personalizzabili
-- **In risalto**: Personalizzabili e potenziabili
-- **Epico**: Alte potenzialità crescita
-- **Leggendario**: Prestazioni elevate e costanti
-- **Standard**: Giocatori base, personalizzabili
+### 9.1 Tipos Jugadores (Equipo de los Sueños)
+- **Trending**: Nivel máximo, inmediatamente alineables
+- **Destacado**: Personalizables
+- **En realce**: Personalizables y potenciables
+- **Épico**: Altas potencialidades crecimiento
+- **Legendario**: Prestaciones elevadas y constantes
+- **Estándar**: Jugadores base, personalizables
 
-### 9.2 Competenza Posizione
-**Livelli**:
-- **Basso**: Nessun colore
-- **Intermedio**: Verde sfumato
+### 9.2 Competencia Posición
+**Niveles**:
+- **Bajo**: Ningún color
+- **Intermedio**: Verde difuminado
 - **Alto**: Verde brillante
 
-**Apprendimento**:
-- Massimo 2 slot competenze posizione
-- Programmi Aggiunta Posizione per acquisire nuove posizioni
-- Portieri e campo non interscambiabili
+**Aprendizaje**:
+- Máximo 2 slots competencias posición
+- Programas Añadir Posición para adquirir nuevas posiciones
+- Porteros y campo no intercambiables
 
-**Impatto su stile (§2.2)**: Con competenza Bassa o assente, lo stile giocatore **non si attiva** (passiva spenta se fuori ruolo). La forza complessiva scende; il giocatore si posiziona peggio rispetto a quando è in ruolo. Priorità: preferire sempre giocatori in posizione di competenza; se inevitabile fuori ruolo, usare solo leve tattiche e Istruzioni Individuali correnti compatibili (es. Ancoraggio quando realmente applicabile). Non suggerire Deep Line: è legacy v6.
+**Impacto en estilo (§2.2)**: Con competencia Baja o ausente, el estilo jugador **no se activa** (pasiva apagada si fuera de rol). La fuerza total baja; el jugador se posiciona peor respecto a cuando está en rol. Prioridad: preferir siempre jugadores en posición de competencia; si es inevitable fuera de rol, usar solo palancas tácticas e Instrucciones Individuales corrientes compatibles (p. ej. Anclaje cuando realmente aplique). No sugerir Deep Line: es legacy v6.
 
-### 9.3 Valore Giocatore (VG)
-Valutazione massima 5 stelle (5★). Trending valutati su statistiche iniziali. Altri tipi su statistiche + potenziale.
+### 9.3 Valor Jugador (VJ)
+Valoración máxima 5 estrellas (5★). Trending valorados en estadísticas iniciales. Otros tipos en estadísticas + potencial.
 
-### 9.4 Forza base e Forza complessiva
-- **Forza base**: valutazione pura delle statistiche del giocatore (Overall, Velocità, Tiro, ecc.).
-- **Forza complessiva**: tiene conto di forza base, alchimia di squadra, competenza nella posizione, compatibilità stile con allenatore. È il parametro più rappresentativo della prestazione effettiva in campo. Quando si consiglia formazione o sostituzioni, considerare la forza complessiva, non solo la base.
-
----
-
-## 10. POLICY COACH AI (riferimento)
-
-Le policy comportamentali per il Coach AI (errori da evitare, terminologia, anti-inferenza, esempi risposta) sono definite **nel system prompt** del route `app/api/assistant-chat/route.js` (costanti `COACH_AI_POLICIES_IT` / `COACH_AI_POLICIES_EN`).
-
-**Motivo**: sono vincoli sempre attivi, non "conoscenza contestuale" da recuperare via RAG. Il RAG potrebbe escluderle per limite caratteri o ordine sezioni; nel system prompt sono garantite ad ogni richiesta chat.
-
-**Contromisure** (`countermeasuresHelper.js`) e **analyze-match** hanno regole specifiche nei rispettivi prompt.
+### 9.4 Fuerza base y Fuerza total
+- **Fuerza base**: valoración pura de las estadísticas del jugador (General, Velocidad, Tiro, etc.).
+- **Fuerza total**: tiene en cuenta fuerza base, alquimia de equipo, competencia en la posición, compatibilidad estilo con entrenador. Es el parámetro más representativo de la prestación efectiva en campo. Al aconsejar formación o sustituciones, considerar la fuerza total, no solo la base.
 
 ---
 
-**Versione**: 9.0.0 ENTERPRISE | **Data**: 17 Agosto 2026 | **Ruleset**: eFootball v6.0.0
-**Principio**: FISSO vs CONFIGURABILE | **Terminologia**: Ufficiale eFootball | **Compatibilità**: read legacy / no new legacy
-**Changelog 9.0.0**: allineamento v6.0.0: Pressing totale/Overload; Formazione fluida; modello stili giocatore attacco/difesa senza conteggio fisso; Classico n°10 aggiornato; Offensivo e Linea bassa marcati legacy e non più consigliabili; gameplay v6 §7.13; regola anti-inferenza per competenza coach Pressing totale.
-**Changelog 8.6.0**: §2.1 Posizioni attivazione corrette per TUTTI i 24 stili card (allineate a fonti ufficiali eFootball 2026: FIFPlay, Scribd Guide, Konami Help). Rimossi sigle IT vecchie (P/SP/TRQ/CLD/CLS/CC/MED/DC/TD/TS) sostituite con posizioni ufficiali EN (CF/SS/AMF/CMF/DMF/RWF/LWF/RMF/LMF/CB/RB/LB). Aggiunte note "compatibile ma AI inattiva" dove pertinente. Classic No. 10: confermato SS/AMF only. Collante: confermato DMF only.
-**Changelog 8.5.4**: §8.3 alias Piedi magnetici = Calamita ai piedi; §8.4 Shadow Hunt e Contrasto a distanza; §8.11 tabella Showtime/sinonimi IT-EN (Magnetic Feet, Momentum Dribbling, Trickster, ecc.) per chat/contromisure; rimosso duplicato Dominio palle alte.
-**Changelog 8.5.3**: §7.10 regola build/meta funzionale (movimenti, difficolta, dati cliente; Sintesi rosa ≠ progressione PT).
-**Changelog 8.5.2**: §2 allineato ai 24 stili card reali: rimosso *Punta avanzata* / Adv. Striker (non esistono); *Punta arretrata* → **attacante di rientro**; chiarito Opportunista (linea fuorigioco, non "difensore").
-**Changelog 8.5**: §10 (NOTE CRITICHE) spostato da RAG a system prompt assistant-chat. Policy Coach AI ora in COACH_AI_POLICIES_* (sempre attive). RAG contiene solo meccaniche eFootball (§1-9).
-**Changelog 8.4**: §2.2 Attivazione stile e posizione ("passiva spenta se fuori ruolo"): stile non si attiva fuori competenza; §9.2 cross-ref; regola 5 FUORI RUOLO in NOTE CRITICHE; esempi risposta su giocatore che non rende.
-**Changelog 8.3**: §7.10 Consigli community Dream Team; §7.11 Squadra bloccata + Smart Assist.
-**Changelog 8.2**: §7.5 Movimenti collegati a rosa (stili, abilità, moduli); §7.6 Situazioni collegati a rosa; §7.7 Matrice situazione×dati×movimenti enterprise; contesto buildPersonalContext: forma, h/w, avversario per partita, voti partita; output coach: solo soluzione, no ragionamento esposto.
-**Changelog 8.1**: Integrazione consigli community: §8.2 Passaggi (statistiche vs abilità, cumulabilità illuminante/visionario, a chi dare per ruolo); §8.1 Colpo di testa vs §8.4 Dominio palle alte; §8.7 Spirito combattivo, Riserva di lusso, Tattica (astuzia – evitare su difensori); §8.10 Abilità obbligatorie per ruolo (linea difensiva, mediana, centrocampo, trq, attaccanti), avvertimenti Tornante NO mediano/collante.
-**Changelog 8.0**: Descrizioni ricche §2 §4 §8; §1.6 Soglie/build; §9.4 Forza base/complessiva; §7.5-7.7 Movimenti, Situazioni; §8.9 Priorità abilità.
+## 10. POLÍTICA COACH IA (referencia)
+
+Las políticas de comportamiento para el Coach IA (errores a evitar, terminología, anti-inferencia, ejemplos respuesta) están definidas **en el system prompt** de la ruta `app/api/assistant-chat/route.js` (constantes `COACH_AI_POLICIES_IT` / `COACH_AI_POLICIES_EN`).
+
+**Motivo**: son restricciones siempre activas, no "conocimiento contextual" a recuperar vía RAG. El RAG podría excluirlas por límite caracteres u orden secciones; en el system prompt están garantizadas en cada solicitud chat.
+
+**Contramedidas** (`countermeasuresHelper.js`) y **analyze-match** tienen reglas específicas en los respectivos prompts.
+
+---
+
+**Versión**: 9.0.0 ENTERPRISE | **Fecha**: 17 Agosto 2026 | **Ruleset**: eFootball v6.0.0
+**Principio**: FIJO vs CONFIGURABLE | **Terminología**: Oficial eFootball (ES/IT/EN) | **Compatibilidad**: read legacy / no new legacy
+**Changelog 9.0.0**: alineación v6.0.0: Presión total/Overload; Formación fluida; modelo estilos jugador ataque/defensa sin recuento fijo; Clásico nº10 actualizado; Ofensivo y Línea baja marcados legacy y ya no recomendables; gameplay v6 §7.13; regla anti-inferencia para competencia coach Presión total.
+**Changelog 8.7.0**: Traducción completa al español con terminología oficial eFootball. Añadidas siglas ES (POR/DFC/LTI/LTD/MCD/MC/MI/MD/MCO/EI/ED/DC/SD).
+**Changelog 8.6.0**: §2.1 Posiciones activación correctas para TODOS los 24 estilos carta (alineadas a fuentes oficiales eFootball 2026: FIFPlay, Scribd Guide, Konami Help). Eliminadas siglas IT viejas sustituidas por posiciones oficiales EN. Añadidas notas "compatible pero IA inactiva" donde pertinente. Classic No. 10: confirmado SS/AMF only. Ancla: confirmado DMF only.
+**Changelog 8.5.4**: §8.3 alias Pies magnéticos = Calamita ai piedi; §8.4 Shadow Hunt y Entrada a distancia; §8.11 tabla Showtime/sinónimos IT-EN para chat/contramedidas; eliminado duplicado Dominio balones altos.
+**Changelog 8.5.3**: §7.10 regla build/meta funcional (movimientos, dificultades, datos cliente; Síntesis plantilla ≠ progresión POR).
+**Changelog 8.5.2**: §2 alineado a los 24 estilos carta reales: eliminado *Punta avanzata* / Adv. Striker (no existen); *Punta arretrata* → **Delantero de apoyo**; aclarado Oportunista (línea fuera juego, no "defensa").
+**Changelog 8.5**: §10 (NOTAS CRÍTICAS) movido de RAG a system prompt assistant-chat. Política Coach IA ahora en COACH_AI_POLICIES_* (siempre activas). RAG contiene solo mecánicas eFootball (§1-9).
+**Changelog 8.4**: §2.2 Activación estilo y posición ("pasiva apagada si fuera de rol"): estilo no se activa fuera competencia; §9.2 cross-ref; regla 5 FUERA DE ROL en NOTAS CRÍTICAS; ejemplos respuesta sobre jugador que no rinde.
+**Changelog 8.3**: §7.10 Consejos community Dream Team; §7.11 Equipo bloqueado + Smart Assist.
+**Changelog 8.2**: §7.5 Movimientos vinculados a plantilla (estilos, habilidades, módulos); §7.6 Situaciones vinculadas a plantilla; §7.7 Matriz situación×datos×movimientos enterprise; contexto buildPersonalContext: forma, alt/peso, adversario para partido, votos partido; output coach: solo solución, sin razonamiento expuesto.
+**Changelog 8.1**: Integración consejos community: §8.2 Pases (estadísticas vs habilidades, acumulabilidad iluminado/visionario, a quién dar por rol); §8.1 Cabezazo vs §8.4 Dominio balones altos; §8.7 Espíritu combativo, Super reserva, Astucia (gamesmanship – evitar en defensores); §8.10 Habilidades obligatorias por rol (línea defensiva, mediocentro, centrocampo, mco, delanteros), advertencias Recuperación NO mediocentro/ancla.
+**Changelog 8.0**: Descripciones enriquecidas §2 §4 §8; §1.6 Umbrales/build; §9.4 Fuerza base/total; §7.5-7.7 Movimientos, Situaciones; §8.9 Prioridad habilidades.

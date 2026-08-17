@@ -14,12 +14,12 @@ const COACH_UPLOAD_EXAMPLES = [
   {
     key: 'main',
     src: '/examples/coach-upload/amorim-carta-allenatore.png',
-    labels: { it: 'Carta allenatore', en: 'Coach card' }
+    labels: { it: 'Carta allenatore', en: 'Coach card', es: 'Tarjeta de entrenador' }
   },
   {
     key: 'connection',
     src: '/examples/coach-upload/amorim-collegamento.png',
-    labels: { it: 'Collegamento', en: 'Connection' }
+    labels: { it: 'Collegamento', en: 'Connection', es: 'Conexión' }
   }
 ]
 
@@ -181,7 +181,7 @@ export default function AllenatoriPage() {
           headers: { 
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
-            'Accept-Language': lang === 'en' ? 'en' : 'it'
+            'Accept-Language': lang === 'en' ? 'en' : lang === 'es' ? 'es' : 'it'
           },
           body: JSON.stringify({ imageDataUrl: img.dataUrl })
         })
@@ -261,7 +261,7 @@ export default function AllenatoriPage() {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
-          'Accept-Language': lang === 'en' ? 'en' : 'it'
+          'Accept-Language': lang === 'en' ? 'en' : lang === 'es' ? 'es' : 'it'
         },
         body: JSON.stringify({ coach: finalCoachData })
       })
@@ -310,7 +310,7 @@ export default function AllenatoriPage() {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
-          'Accept-Language': lang === 'en' ? 'en' : 'it'
+          'Accept-Language': lang === 'en' ? 'en' : lang === 'es' ? 'es' : 'it'
         },
         body: JSON.stringify({ coach_id: coachId })
       })
@@ -672,7 +672,7 @@ export default function AllenatoriPage() {
               background: 'rgba(0, 212, 255, 0.04)'
             }}>
               <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '6px' }}>
-                {lang === 'en' ? 'Example screenshots' : 'Esempi di screenshot'}
+                {lang === 'en' ? 'Example screenshots' : lang === 'es' ? 'Ejemplos de capturas' : 'Esempi di screenshot'}
               </div>
               <div style={{ fontSize: '12px', opacity: 0.8, marginBottom: '12px', lineHeight: 1.5 }}>
                 {lang === 'en'
@@ -697,11 +697,11 @@ export default function AllenatoriPage() {
                   >
                     <img
                       src={example.src}
-                      alt={example.labels[lang === 'en' ? 'en' : 'it']}
+                      alt={example.labels[lang === 'en' ? 'en' : lang === 'es' ? 'es' : 'it']}
                       style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '140px', objectFit: 'cover', objectPosition: 'top' }}
                     />
                     <span style={{ display: 'block', fontSize: '11px', padding: '8px', textAlign: 'center', opacity: 0.85 }}>
-                      {example.labels[lang === 'en' ? 'en' : 'it']}
+                      {example.labels[lang === 'en' ? 'en' : lang === 'es' ? 'es' : 'it']}
                     </span>
                   </a>
                 ))}
@@ -733,7 +733,7 @@ export default function AllenatoriPage() {
                     {t('maxTwoPhotosFormat')}
                   </div>
                   <div style={{ fontSize: '12px', opacity: 0.75, marginTop: '12px', color: 'rgba(255,255,255,0.85)' }}>
-                    {lang === 'en' ? 'Tap here to upload screenshots from gallery or files.' : 'Tocca qui per caricare screenshot da galleria o file.'}
+                    {lang === 'en' ? 'Tap here to upload screenshots from gallery or files.' : lang === 'es' ? 'Toca aquí para subir capturas desde la galería o archivos.' : 'Tocca qui per caricare screenshot da galleria o file.'}
                   </div>
                 </>
               ) : (

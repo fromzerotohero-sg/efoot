@@ -20,6 +20,12 @@ const ERRORS = {
     imageTooLarge: 'Image too large (max 10MB).',
     extraction: 'Could not read the Smart formation clearly. Try a sharper screenshot.',
     server: 'Smart service temporarily unavailable.'
+  },
+  es: {
+    imageRequired: 'Imagen requerida.',
+    imageTooLarge: 'Imagen demasiado grande (máx. 10MB).',
+    extraction: 'No se pudo leer bien la formación Smart. Prueba con una captura más nítida.',
+    server: 'Servicio Smart temporalmente no disponible.'
   }
 }
 
@@ -43,7 +49,7 @@ export async function POST(req) {
     )
 
     if (!rateLimit.allowed) {
-      return NextResponse.json({ error: lang === 'en' ? 'Too many requests' : 'Troppe richieste' }, { status: 429 })
+      return NextResponse.json({ error: lang === 'en' ? 'Too many requests' : lang === 'es' ? 'Demasiadas solicitudes' : 'Troppe richieste' }, { status: 429 })
     }
 
     const apiKey = process.env.OPENAI_API_KEY
@@ -69,7 +75,7 @@ export async function POST(req) {
     const deduction = await deductCredits(admin, userId, token, cost, operationType)
     if (!deduction.success) {
       return NextResponse.json(
-        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : 'Insufficient credits. Please recharge to continue.' },
+        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : lang === 'es' ? 'Créditos insuficientes. Recarga para continuar.' : 'Insufficient credits. Please recharge to continue.' },
         { status: 402 }
       )
     }

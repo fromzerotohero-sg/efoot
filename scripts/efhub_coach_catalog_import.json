@@ -2,6 +2,129 @@
   "records": [
     {
       "source": "efhub",
+      "source_coach_id": "17609097478250",
+      "source_url": "https://efhub.com/data/managers.json",
+      "source_card_image_url": "https://efimg.com/efootballhub22/images/coach_cards/17609097478250.png",
+      "source_version": "efhub-managers-2026",
+      "coach_name": "Antonio Conte",
+      "coach_name_ja": "アントニオ コンテ",
+      "category": "EFHub Manager",
+      "pack_type": "Special",
+      "playing_style_competence": {
+        "possesso_palla": 68,
+        "contropiede_veloce": 90,
+        "contrattacco": 73,
+        "vie_laterali": 89,
+        "passaggio_lungo": 68
+      },
+      "stat_boosters": [
+        {
+          "source_boost_id": 10,
+          "slot_index": 1,
+          "stat_name": "Defensive Awareness",
+          "bonus": 1,
+          "stats": {
+            "defensiveAwareness": 1
+          },
+          "source": "efhub-manager-ability",
+          "metadata": {
+            "ability_id": 10
+          }
+        },
+        {
+          "source_boost_id": 14,
+          "slot_index": 2,
+          "stat_name": "Kicking Power",
+          "bonus": 1,
+          "stats": {
+            "kickingPower": 1
+          },
+          "source": "efhub-manager-ability",
+          "metadata": {
+            "ability_id": 14
+          }
+        }
+      ],
+      "boost_ids": [
+        10,
+        14
+      ],
+      "connection": null,
+      "photo_slots": {
+        "catalog_card": "https://efimg.com/efootballhub22/images/coach_cards/17609097478250.png"
+      },
+      "coach_payload": {
+        "coach_name": "Antonio Conte",
+        "category": "EFHub Manager",
+        "pack_type": "Special",
+        "playing_style_competence": {
+          "possesso_palla": 68,
+          "contropiede_veloce": 90,
+          "contrattacco": 73,
+          "vie_laterali": 89,
+          "passaggio_lungo": 68
+        },
+        "training_affinity_description": null,
+        "stat_boosters": [
+          {
+            "source_boost_id": 10,
+            "slot_index": 1,
+            "stat_name": "Defensive Awareness",
+            "bonus": 1,
+            "stats": {
+              "defensiveAwareness": 1
+            },
+            "source": "efhub-manager-ability",
+            "metadata": {
+              "ability_id": 10
+            }
+          },
+          {
+            "source_boost_id": 14,
+            "slot_index": 2,
+            "stat_name": "Kicking Power",
+            "bonus": 1,
+            "stats": {
+              "kickingPower": 1
+            },
+            "source": "efhub-manager-ability",
+            "metadata": {
+              "ability_id": 14
+            }
+          }
+        ],
+        "connection": null,
+        "photo_slots": {
+          "catalog_card": "https://efimg.com/efootballhub22/images/coach_cards/17609097478250.png"
+        },
+        "source_catalog": {
+          "catalog": "coach_catalog",
+          "source": "efhub",
+          "source_coach_id": "17609097478250",
+          "source_card_image_url": "https://efimg.com/efootballhub22/images/coach_cards/17609097478250.png"
+        }
+      },
+      "metadata": {
+        "raw_skills": {
+          "PossessionGame": 68,
+          "QuickCounter": 90,
+          "LongBallCounter": 73,
+          "OutWide": 89,
+          "LongBall": 68,
+          "OverLoad": 69
+        },
+        "raw_boost_ids": [
+          10,
+          14
+        ],
+        "source_note": "EFHub manager data is exposed by the player builder manager selector."
+      },
+      "catalog_ready": true,
+      "needs_review": false,
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
+    },
+    {
+      "source": "efhub",
       "source_coach_id": "17603997307931",
       "source_url": "https://efhub.com/data/managers.json",
       "source_card_image_url": "https://efimg.com/efootballhub22/images/coach_cards/17603997307931.png",
@@ -21,37 +144,27 @@
         {
           "source_boost_id": 5,
           "slot_index": 1,
-          "stat_name": "Defending +2",
-          "bonus": null,
+          "stat_name": "Lofted Pass",
+          "bonus": 1,
           "stats": {
-            "defensiveAwareness": 2,
-            "ballWinning": 2,
-            "acceleration": 2,
-            "jump": 2
+            "loftedPass": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "ディフェンス +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 5
           }
         },
         {
           "source_boost_id": 11,
           "slot_index": 2,
-          "stat_name": "King of Football +4",
-          "bonus": null,
+          "stat_name": "Defensive Engagement",
+          "bonus": 1,
           "stats": {
-            "dribbling": 4,
-            "tightPossession": 4,
-            "balance": 4,
-            "physicalContact": 4
+            "ballWinning": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "KING +4",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 11
           }
         }
       ],
@@ -79,37 +192,27 @@
           {
             "source_boost_id": 5,
             "slot_index": 1,
-            "stat_name": "Defending +2",
-            "bonus": null,
+            "stat_name": "Lofted Pass",
+            "bonus": 1,
             "stats": {
-              "defensiveAwareness": 2,
-              "ballWinning": 2,
-              "acceleration": 2,
-              "jump": 2
+              "loftedPass": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "ディフェンス +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 5
             }
           },
           {
             "source_boost_id": 11,
             "slot_index": 2,
-            "stat_name": "King of Football +4",
-            "bonus": null,
+            "stat_name": "Defensive Engagement",
+            "bonus": 1,
             "stats": {
-              "dribbling": 4,
-              "tightPossession": 4,
-              "balance": 4,
-              "physicalContact": 4
+              "ballWinning": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "KING +4",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 11
             }
           }
         ],
@@ -130,7 +233,8 @@
           "QuickCounter": 65,
           "LongBallCounter": 56,
           "OutWide": 68,
-          "LongBall": 57
+          "LongBall": 57,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           5,
@@ -140,7 +244,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -163,59 +267,27 @@
         {
           "source_boost_id": 15,
           "slot_index": 1,
-          "stat_name": "Total Package +3",
-          "bonus": null,
+          "stat_name": "Speed",
+          "bonus": 1,
           "stats": {
-            "offensiveAwareness": 3,
-            "ballControl": 3,
-            "dribbling": 3,
-            "tightPossession": 3,
-            "lowPass": 3,
-            "loftedPass": 3,
-            "finishing": 3,
-            "setPieceTaking": 3,
-            "curl": 3,
-            "heading": 3,
-            "defensiveAwareness": 3,
-            "trackingBack": 3,
-            "ballWinning": 3,
-            "aggression": 3,
-            "kickingPower": 3,
-            "speed": 3,
-            "acceleration": 3,
-            "balance": 3,
-            "physicalContact": 3,
-            "jump": 3,
-            "gkAwareness": 3,
-            "gkCatching": 3,
-            "gkClearing": 3,
-            "gkReflexes": 3,
-            "gkReach": 3,
-            "stamina": 3
+            "speed": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "トータルパッケージ +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 15
           }
         },
         {
           "source_boost_id": 25,
           "slot_index": 2,
-          "stat_name": "Shutdown +2",
-          "bonus": null,
+          "stat_name": "Stamina",
+          "bonus": 1,
           "stats": {
-            "defensiveAwareness": 2,
-            "trackingBack": 2,
-            "ballWinning": 2,
-            "speed": 2
+            "stamina": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "シャットダウン +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 25
           }
         }
       ],
@@ -243,59 +315,27 @@
           {
             "source_boost_id": 15,
             "slot_index": 1,
-            "stat_name": "Total Package +3",
-            "bonus": null,
+            "stat_name": "Speed",
+            "bonus": 1,
             "stats": {
-              "offensiveAwareness": 3,
-              "ballControl": 3,
-              "dribbling": 3,
-              "tightPossession": 3,
-              "lowPass": 3,
-              "loftedPass": 3,
-              "finishing": 3,
-              "setPieceTaking": 3,
-              "curl": 3,
-              "heading": 3,
-              "defensiveAwareness": 3,
-              "trackingBack": 3,
-              "ballWinning": 3,
-              "aggression": 3,
-              "kickingPower": 3,
-              "speed": 3,
-              "acceleration": 3,
-              "balance": 3,
-              "physicalContact": 3,
-              "jump": 3,
-              "gkAwareness": 3,
-              "gkCatching": 3,
-              "gkClearing": 3,
-              "gkReflexes": 3,
-              "gkReach": 3,
-              "stamina": 3
+              "speed": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "トータルパッケージ +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 15
             }
           },
           {
             "source_boost_id": 25,
             "slot_index": 2,
-            "stat_name": "Shutdown +2",
-            "bonus": null,
+            "stat_name": "Stamina",
+            "bonus": 1,
             "stats": {
-              "defensiveAwareness": 2,
-              "trackingBack": 2,
-              "ballWinning": 2,
-              "speed": 2
+              "stamina": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "シャットダウン +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 25
             }
           }
         ],
@@ -316,7 +356,8 @@
           "QuickCounter": 89,
           "LongBallCounter": 62,
           "OutWide": 89,
-          "LongBall": 55
+          "LongBall": 55,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           15,
@@ -326,7 +367,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -349,41 +390,14 @@
         {
           "source_boost_id": 15,
           "slot_index": 1,
-          "stat_name": "Total Package +3",
-          "bonus": null,
+          "stat_name": "Speed",
+          "bonus": 1,
           "stats": {
-            "offensiveAwareness": 3,
-            "ballControl": 3,
-            "dribbling": 3,
-            "tightPossession": 3,
-            "lowPass": 3,
-            "loftedPass": 3,
-            "finishing": 3,
-            "setPieceTaking": 3,
-            "curl": 3,
-            "heading": 3,
-            "defensiveAwareness": 3,
-            "trackingBack": 3,
-            "ballWinning": 3,
-            "aggression": 3,
-            "kickingPower": 3,
-            "speed": 3,
-            "acceleration": 3,
-            "balance": 3,
-            "physicalContact": 3,
-            "jump": 3,
-            "gkAwareness": 3,
-            "gkCatching": 3,
-            "gkClearing": 3,
-            "gkReflexes": 3,
-            "gkReach": 3,
-            "stamina": 3
+            "speed": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "トータルパッケージ +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 15
           }
         }
       ],
@@ -411,41 +425,14 @@
           {
             "source_boost_id": 15,
             "slot_index": 1,
-            "stat_name": "Total Package +3",
-            "bonus": null,
+            "stat_name": "Speed",
+            "bonus": 1,
             "stats": {
-              "offensiveAwareness": 3,
-              "ballControl": 3,
-              "dribbling": 3,
-              "tightPossession": 3,
-              "lowPass": 3,
-              "loftedPass": 3,
-              "finishing": 3,
-              "setPieceTaking": 3,
-              "curl": 3,
-              "heading": 3,
-              "defensiveAwareness": 3,
-              "trackingBack": 3,
-              "ballWinning": 3,
-              "aggression": 3,
-              "kickingPower": 3,
-              "speed": 3,
-              "acceleration": 3,
-              "balance": 3,
-              "physicalContact": 3,
-              "jump": 3,
-              "gkAwareness": 3,
-              "gkCatching": 3,
-              "gkClearing": 3,
-              "gkReflexes": 3,
-              "gkReach": 3,
-              "stamina": 3
+              "speed": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "トータルパッケージ +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 15
             }
           }
         ],
@@ -466,7 +453,8 @@
           "QuickCounter": 62,
           "LongBallCounter": 88,
           "OutWide": 75,
-          "LongBall": 67
+          "LongBall": 67,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           15,
@@ -476,7 +464,130 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
+    },
+    {
+      "source": "efhub",
+      "source_coach_id": "17606681559180",
+      "source_url": "https://efhub.com/data/managers.json",
+      "source_card_image_url": "https://efimg.com/efootballhub22/images/coach_cards/17606681559180.png",
+      "source_version": "efhub-managers-2026",
+      "coach_name": "D. Deschamps",
+      "coach_name_ja": "ディディエ デシャン",
+      "category": "EFHub Manager",
+      "pack_type": "Special",
+      "playing_style_competence": {
+        "possesso_palla": 89,
+        "contropiede_veloce": 68,
+        "contrattacco": 89,
+        "vie_laterali": 59,
+        "passaggio_lungo": 63
+      },
+      "stat_boosters": [
+        {
+          "source_boost_id": 15,
+          "slot_index": 1,
+          "stat_name": "Speed",
+          "bonus": 1,
+          "stats": {
+            "speed": 1
+          },
+          "source": "efhub-manager-ability",
+          "metadata": {
+            "ability_id": 15
+          }
+        },
+        {
+          "source_boost_id": 1,
+          "slot_index": 2,
+          "stat_name": "Ball Control",
+          "bonus": 1,
+          "stats": {
+            "ballControl": 1
+          },
+          "source": "efhub-manager-ability",
+          "metadata": {
+            "ability_id": 1
+          }
+        }
+      ],
+      "boost_ids": [
+        15,
+        1
+      ],
+      "connection": null,
+      "photo_slots": {
+        "catalog_card": "https://efimg.com/efootballhub22/images/coach_cards/17606681559180.png"
+      },
+      "coach_payload": {
+        "coach_name": "D. Deschamps",
+        "category": "EFHub Manager",
+        "pack_type": "Special",
+        "playing_style_competence": {
+          "possesso_palla": 89,
+          "contropiede_veloce": 68,
+          "contrattacco": 89,
+          "vie_laterali": 59,
+          "passaggio_lungo": 63
+        },
+        "training_affinity_description": null,
+        "stat_boosters": [
+          {
+            "source_boost_id": 15,
+            "slot_index": 1,
+            "stat_name": "Speed",
+            "bonus": 1,
+            "stats": {
+              "speed": 1
+            },
+            "source": "efhub-manager-ability",
+            "metadata": {
+              "ability_id": 15
+            }
+          },
+          {
+            "source_boost_id": 1,
+            "slot_index": 2,
+            "stat_name": "Ball Control",
+            "bonus": 1,
+            "stats": {
+              "ballControl": 1
+            },
+            "source": "efhub-manager-ability",
+            "metadata": {
+              "ability_id": 1
+            }
+          }
+        ],
+        "connection": null,
+        "photo_slots": {
+          "catalog_card": "https://efimg.com/efootballhub22/images/coach_cards/17606681559180.png"
+        },
+        "source_catalog": {
+          "catalog": "coach_catalog",
+          "source": "efhub",
+          "source_coach_id": "17606681559180",
+          "source_card_image_url": "https://efimg.com/efootballhub22/images/coach_cards/17606681559180.png"
+        }
+      },
+      "metadata": {
+        "raw_skills": {
+          "PossessionGame": 89,
+          "QuickCounter": 68,
+          "LongBallCounter": 89,
+          "OutWide": 59,
+          "LongBall": 63,
+          "OverLoad": 0
+        },
+        "raw_boost_ids": [
+          15,
+          1
+        ],
+        "source_note": "EFHub manager data is exposed by the player builder manager selector."
+      },
+      "catalog_ready": true,
+      "needs_review": false,
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -499,19 +610,14 @@
         {
           "source_boost_id": 14,
           "slot_index": 1,
-          "stat_name": "Physicality +2",
-          "bonus": null,
+          "stat_name": "Kicking Power",
+          "bonus": 1,
           "stats": {
-            "balance": 2,
-            "physicalContact": 2,
-            "jump": 2,
-            "stamina": 2
+            "kickingPower": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "フィジカル +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 14
           }
         }
       ],
@@ -539,19 +645,14 @@
           {
             "source_boost_id": 14,
             "slot_index": 1,
-            "stat_name": "Physicality +2",
-            "bonus": null,
+            "stat_name": "Kicking Power",
+            "bonus": 1,
             "stats": {
-              "balance": 2,
-              "physicalContact": 2,
-              "jump": 2,
-              "stamina": 2
+              "kickingPower": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "フィジカル +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 14
             }
           }
         ],
@@ -572,7 +673,8 @@
           "QuickCounter": 88,
           "LongBallCounter": 58,
           "OutWide": 88,
-          "LongBall": 53
+          "LongBall": 53,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           14,
@@ -582,7 +684,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -605,41 +707,14 @@
         {
           "source_boost_id": 15,
           "slot_index": 1,
-          "stat_name": "Total Package +3",
-          "bonus": null,
+          "stat_name": "Speed",
+          "bonus": 1,
           "stats": {
-            "offensiveAwareness": 3,
-            "ballControl": 3,
-            "dribbling": 3,
-            "tightPossession": 3,
-            "lowPass": 3,
-            "loftedPass": 3,
-            "finishing": 3,
-            "setPieceTaking": 3,
-            "curl": 3,
-            "heading": 3,
-            "defensiveAwareness": 3,
-            "trackingBack": 3,
-            "ballWinning": 3,
-            "aggression": 3,
-            "kickingPower": 3,
-            "speed": 3,
-            "acceleration": 3,
-            "balance": 3,
-            "physicalContact": 3,
-            "jump": 3,
-            "gkAwareness": 3,
-            "gkCatching": 3,
-            "gkClearing": 3,
-            "gkReflexes": 3,
-            "gkReach": 3,
-            "stamina": 3
+            "speed": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "トータルパッケージ +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 15
           }
         }
       ],
@@ -667,41 +742,14 @@
           {
             "source_boost_id": 15,
             "slot_index": 1,
-            "stat_name": "Total Package +3",
-            "bonus": null,
+            "stat_name": "Speed",
+            "bonus": 1,
             "stats": {
-              "offensiveAwareness": 3,
-              "ballControl": 3,
-              "dribbling": 3,
-              "tightPossession": 3,
-              "lowPass": 3,
-              "loftedPass": 3,
-              "finishing": 3,
-              "setPieceTaking": 3,
-              "curl": 3,
-              "heading": 3,
-              "defensiveAwareness": 3,
-              "trackingBack": 3,
-              "ballWinning": 3,
-              "aggression": 3,
-              "kickingPower": 3,
-              "speed": 3,
-              "acceleration": 3,
-              "balance": 3,
-              "physicalContact": 3,
-              "jump": 3,
-              "gkAwareness": 3,
-              "gkCatching": 3,
-              "gkClearing": 3,
-              "gkReflexes": 3,
-              "gkReach": 3,
-              "stamina": 3
+              "speed": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "トータルパッケージ +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 15
             }
           }
         ],
@@ -722,7 +770,8 @@
           "QuickCounter": 66,
           "LongBallCounter": 85,
           "OutWide": 70,
-          "LongBall": 40
+          "LongBall": 40,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           15,
@@ -732,7 +781,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -755,37 +804,27 @@
         {
           "source_boost_id": 6,
           "slot_index": 1,
-          "stat_name": "Agility +2",
-          "bonus": null,
+          "stat_name": "Finishing",
+          "bonus": 1,
           "stats": {
-            "speed": 2,
-            "acceleration": 2,
-            "balance": 2,
-            "stamina": 2
+            "finishing": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "アジリティ +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 6
           }
         },
         {
           "source_boost_id": 14,
           "slot_index": 2,
-          "stat_name": "Physicality +2",
-          "bonus": null,
+          "stat_name": "Kicking Power",
+          "bonus": 1,
           "stats": {
-            "balance": 2,
-            "physicalContact": 2,
-            "jump": 2,
-            "stamina": 2
+            "kickingPower": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "フィジカル +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 14
           }
         }
       ],
@@ -813,37 +852,27 @@
           {
             "source_boost_id": 6,
             "slot_index": 1,
-            "stat_name": "Agility +2",
-            "bonus": null,
+            "stat_name": "Finishing",
+            "bonus": 1,
             "stats": {
-              "speed": 2,
-              "acceleration": 2,
-              "balance": 2,
-              "stamina": 2
+              "finishing": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "アジリティ +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 6
             }
           },
           {
             "source_boost_id": 14,
             "slot_index": 2,
-            "stat_name": "Physicality +2",
-            "bonus": null,
+            "stat_name": "Kicking Power",
+            "bonus": 1,
             "stats": {
-              "balance": 2,
-              "physicalContact": 2,
-              "jump": 2,
-              "stamina": 2
+              "kickingPower": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "フィジカル +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 14
             }
           }
         ],
@@ -864,7 +893,8 @@
           "QuickCounter": 67,
           "LongBallCounter": 80,
           "OutWide": 54,
-          "LongBall": 89
+          "LongBall": 89,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           6,
@@ -874,7 +904,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -897,37 +927,27 @@
         {
           "source_boost_id": 3,
           "slot_index": 1,
-          "stat_name": "Passing +2",
-          "bonus": null,
+          "stat_name": "Dribbling",
+          "bonus": 1,
           "stats": {
-            "lowPass": 2,
-            "loftedPass": 2,
-            "curl": 2,
-            "kickingPower": 2
+            "dribbling": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "パス +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 3
           }
         },
         {
           "source_boost_id": 10,
           "slot_index": 2,
-          "stat_name": "Ball-carrying +2",
-          "bonus": null,
+          "stat_name": "Defensive Awareness",
+          "bonus": 1,
           "stats": {
-            "dribbling": 2,
-            "tightPossession": 2,
-            "speed": 2,
-            "balance": 2
+            "defensiveAwareness": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "ボールキャリー +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 10
           }
         }
       ],
@@ -955,37 +975,27 @@
           {
             "source_boost_id": 3,
             "slot_index": 1,
-            "stat_name": "Passing +2",
-            "bonus": null,
+            "stat_name": "Dribbling",
+            "bonus": 1,
             "stats": {
-              "lowPass": 2,
-              "loftedPass": 2,
-              "curl": 2,
-              "kickingPower": 2
+              "dribbling": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "パス +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 3
             }
           },
           {
             "source_boost_id": 10,
             "slot_index": 2,
-            "stat_name": "Ball-carrying +2",
-            "bonus": null,
+            "stat_name": "Defensive Awareness",
+            "bonus": 1,
             "stats": {
-              "dribbling": 2,
-              "tightPossession": 2,
-              "speed": 2,
-              "balance": 2
+              "defensiveAwareness": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "ボールキャリー +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 10
             }
           }
         ],
@@ -1006,7 +1016,8 @@
           "QuickCounter": 57,
           "LongBallCounter": 89,
           "OutWide": 60,
-          "LongBall": 89
+          "LongBall": 89,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           3,
@@ -1016,7 +1027,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -1039,37 +1050,27 @@
         {
           "source_boost_id": 6,
           "slot_index": 1,
-          "stat_name": "Agility +2",
-          "bonus": null,
+          "stat_name": "Finishing",
+          "bonus": 1,
           "stats": {
-            "speed": 2,
-            "acceleration": 2,
-            "balance": 2,
-            "stamina": 2
+            "finishing": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "アジリティ +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 6
           }
         },
         {
           "source_boost_id": 10,
           "slot_index": 2,
-          "stat_name": "Ball-carrying +2",
-          "bonus": null,
+          "stat_name": "Defensive Awareness",
+          "bonus": 1,
           "stats": {
-            "dribbling": 2,
-            "tightPossession": 2,
-            "speed": 2,
-            "balance": 2
+            "defensiveAwareness": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "ボールキャリー +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 10
           }
         }
       ],
@@ -1097,37 +1098,27 @@
           {
             "source_boost_id": 6,
             "slot_index": 1,
-            "stat_name": "Agility +2",
-            "bonus": null,
+            "stat_name": "Finishing",
+            "bonus": 1,
             "stats": {
-              "speed": 2,
-              "acceleration": 2,
-              "balance": 2,
-              "stamina": 2
+              "finishing": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "アジリティ +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 6
             }
           },
           {
             "source_boost_id": 10,
             "slot_index": 2,
-            "stat_name": "Ball-carrying +2",
-            "bonus": null,
+            "stat_name": "Defensive Awareness",
+            "bonus": 1,
             "stats": {
-              "dribbling": 2,
-              "tightPossession": 2,
-              "speed": 2,
-              "balance": 2
+              "defensiveAwareness": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "ボールキャリー +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 10
             }
           }
         ],
@@ -1148,7 +1139,8 @@
           "QuickCounter": 57,
           "LongBallCounter": 89,
           "OutWide": 64,
-          "LongBall": 89
+          "LongBall": 89,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           6,
@@ -1158,7 +1150,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -1181,19 +1173,14 @@
         {
           "source_boost_id": 17,
           "slot_index": 1,
-          "stat_name": "Shooting +3",
-          "bonus": null,
+          "stat_name": "Balance",
+          "bonus": 1,
           "stats": {
-            "ballControl": 3,
-            "finishing": 3,
-            "kickingPower": 3,
-            "physicalContact": 3
+            "balance": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "シュート +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 17
           }
         }
       ],
@@ -1221,19 +1208,14 @@
           {
             "source_boost_id": 17,
             "slot_index": 1,
-            "stat_name": "Shooting +3",
-            "bonus": null,
+            "stat_name": "Balance",
+            "bonus": 1,
             "stats": {
-              "ballControl": 3,
-              "finishing": 3,
-              "kickingPower": 3,
-              "physicalContact": 3
+              "balance": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "シュート +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 17
             }
           }
         ],
@@ -1254,7 +1236,8 @@
           "QuickCounter": 88,
           "LongBallCounter": 54,
           "OutWide": 88,
-          "LongBall": 45
+          "LongBall": 45,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           17,
@@ -1264,7 +1247,130 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
+    },
+    {
+      "source": "efhub",
+      "source_coach_id": "17608292273375",
+      "source_url": "https://efhub.com/data/managers.json",
+      "source_card_image_url": "https://efimg.com/efootballhub22/images/coach_cards/17608292273375.png",
+      "source_version": "efhub-managers-2026",
+      "coach_name": "Frank Lampard",
+      "coach_name_ja": "フランク ランパード",
+      "category": "EFHub Manager",
+      "pack_type": "Special",
+      "playing_style_competence": {
+        "possesso_palla": 75,
+        "contropiede_veloce": 60,
+        "contrattacco": 58,
+        "vie_laterali": 69,
+        "passaggio_lungo": 89
+      },
+      "stat_boosters": [
+        {
+          "source_boost_id": 4,
+          "slot_index": 1,
+          "stat_name": "Low Pass",
+          "bonus": 1,
+          "stats": {
+            "lowPass": 1
+          },
+          "source": "efhub-manager-ability",
+          "metadata": {
+            "ability_id": 4
+          }
+        },
+        {
+          "source_boost_id": 11,
+          "slot_index": 2,
+          "stat_name": "Defensive Engagement",
+          "bonus": 1,
+          "stats": {
+            "ballWinning": 1
+          },
+          "source": "efhub-manager-ability",
+          "metadata": {
+            "ability_id": 11
+          }
+        }
+      ],
+      "boost_ids": [
+        4,
+        11
+      ],
+      "connection": null,
+      "photo_slots": {
+        "catalog_card": "https://efimg.com/efootballhub22/images/coach_cards/17608292273375.png"
+      },
+      "coach_payload": {
+        "coach_name": "Frank Lampard",
+        "category": "EFHub Manager",
+        "pack_type": "Special",
+        "playing_style_competence": {
+          "possesso_palla": 75,
+          "contropiede_veloce": 60,
+          "contrattacco": 58,
+          "vie_laterali": 69,
+          "passaggio_lungo": 89
+        },
+        "training_affinity_description": null,
+        "stat_boosters": [
+          {
+            "source_boost_id": 4,
+            "slot_index": 1,
+            "stat_name": "Low Pass",
+            "bonus": 1,
+            "stats": {
+              "lowPass": 1
+            },
+            "source": "efhub-manager-ability",
+            "metadata": {
+              "ability_id": 4
+            }
+          },
+          {
+            "source_boost_id": 11,
+            "slot_index": 2,
+            "stat_name": "Defensive Engagement",
+            "bonus": 1,
+            "stats": {
+              "ballWinning": 1
+            },
+            "source": "efhub-manager-ability",
+            "metadata": {
+              "ability_id": 11
+            }
+          }
+        ],
+        "connection": null,
+        "photo_slots": {
+          "catalog_card": "https://efimg.com/efootballhub22/images/coach_cards/17608292273375.png"
+        },
+        "source_catalog": {
+          "catalog": "coach_catalog",
+          "source": "efhub",
+          "source_coach_id": "17608292273375",
+          "source_card_image_url": "https://efimg.com/efootballhub22/images/coach_cards/17608292273375.png"
+        }
+      },
+      "metadata": {
+        "raw_skills": {
+          "PossessionGame": 75,
+          "QuickCounter": 60,
+          "LongBallCounter": 58,
+          "OutWide": 69,
+          "LongBall": 89,
+          "OverLoad": 89
+        },
+        "raw_boost_ids": [
+          4,
+          11
+        ],
+        "source_note": "EFHub manager data is exposed by the player builder manager selector."
+      },
+      "catalog_ready": true,
+      "needs_review": false,
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -1287,19 +1393,14 @@
         {
           "source_boost_id": 4,
           "slot_index": 1,
-          "stat_name": "Technique +2",
-          "bonus": null,
+          "stat_name": "Low Pass",
+          "bonus": 1,
           "stats": {
-            "ballControl": 2,
-            "dribbling": 2,
-            "tightPossession": 2,
-            "lowPass": 2
+            "lowPass": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "テクニック +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 4
           }
         }
       ],
@@ -1327,19 +1428,14 @@
           {
             "source_boost_id": 4,
             "slot_index": 1,
-            "stat_name": "Technique +2",
-            "bonus": null,
+            "stat_name": "Low Pass",
+            "bonus": 1,
             "stats": {
-              "ballControl": 2,
-              "dribbling": 2,
-              "tightPossession": 2,
-              "lowPass": 2
+              "lowPass": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "テクニック +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 4
             }
           }
         ],
@@ -1360,7 +1456,8 @@
           "QuickCounter": 57,
           "LongBallCounter": 88,
           "OutWide": 68,
-          "LongBall": 35
+          "LongBall": 35,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           4,
@@ -1370,7 +1467,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -1393,37 +1490,27 @@
         {
           "source_boost_id": 2,
           "slot_index": 1,
-          "stat_name": "Free-kick Taking +2",
-          "bonus": null,
+          "stat_name": "Tight Possession",
+          "bonus": 1,
           "stats": {
-            "finishing": 2,
-            "setPieceTaking": 2,
-            "curl": 2,
-            "kickingPower": 2
+            "tightPossession": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "フリーキック +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 2
           }
         },
         {
           "source_boost_id": 17,
           "slot_index": 2,
-          "stat_name": "Shooting +3",
-          "bonus": null,
+          "stat_name": "Balance",
+          "bonus": 1,
           "stats": {
-            "ballControl": 3,
-            "finishing": 3,
-            "kickingPower": 3,
-            "physicalContact": 3
+            "balance": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "シュート +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 17
           }
         }
       ],
@@ -1451,37 +1538,27 @@
           {
             "source_boost_id": 2,
             "slot_index": 1,
-            "stat_name": "Free-kick Taking +2",
-            "bonus": null,
+            "stat_name": "Tight Possession",
+            "bonus": 1,
             "stats": {
-              "finishing": 2,
-              "setPieceTaking": 2,
-              "curl": 2,
-              "kickingPower": 2
+              "tightPossession": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "フリーキック +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 2
             }
           },
           {
             "source_boost_id": 17,
             "slot_index": 2,
-            "stat_name": "Shooting +3",
-            "bonus": null,
+            "stat_name": "Balance",
+            "bonus": 1,
             "stats": {
-              "ballControl": 3,
-              "finishing": 3,
-              "kickingPower": 3,
-              "physicalContact": 3
+              "balance": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "シュート +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 17
             }
           }
         ],
@@ -1502,7 +1579,8 @@
           "QuickCounter": 89,
           "LongBallCounter": 48,
           "OutWide": 89,
-          "LongBall": 46
+          "LongBall": 46,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           2,
@@ -1512,7 +1590,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -1535,19 +1613,14 @@
         {
           "source_boost_id": 18,
           "slot_index": 1,
-          "stat_name": "Technique +3",
-          "bonus": null,
+          "stat_name": "Physical Contact",
+          "bonus": 1,
           "stats": {
-            "ballControl": 3,
-            "dribbling": 3,
-            "tightPossession": 3,
-            "lowPass": 3
+            "physicalContact": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "テクニック +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 18
           }
         }
       ],
@@ -1575,19 +1648,14 @@
           {
             "source_boost_id": 18,
             "slot_index": 1,
-            "stat_name": "Technique +3",
-            "bonus": null,
+            "stat_name": "Physical Contact",
+            "bonus": 1,
             "stats": {
-              "ballControl": 3,
-              "dribbling": 3,
-              "tightPossession": 3,
-              "lowPass": 3
+              "physicalContact": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "テクニック +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 18
             }
           }
         ],
@@ -1608,7 +1676,8 @@
           "QuickCounter": 88,
           "LongBallCounter": 88,
           "OutWide": 52,
-          "LongBall": 41
+          "LongBall": 41,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           18,
@@ -1618,7 +1687,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -1641,19 +1710,14 @@
         {
           "source_boost_id": 16,
           "slot_index": 1,
-          "stat_name": "Passing +3",
-          "bonus": null,
+          "stat_name": "Acceleration",
+          "bonus": 1,
           "stats": {
-            "lowPass": 3,
-            "loftedPass": 3,
-            "curl": 3,
-            "kickingPower": 3
+            "acceleration": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "パス +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 16
           }
         }
       ],
@@ -1681,19 +1745,14 @@
           {
             "source_boost_id": 16,
             "slot_index": 1,
-            "stat_name": "Passing +3",
-            "bonus": null,
+            "stat_name": "Acceleration",
+            "bonus": 1,
             "stats": {
-              "lowPass": 3,
-              "loftedPass": 3,
-              "curl": 3,
-              "kickingPower": 3
+              "acceleration": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "パス +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 16
             }
           }
         ],
@@ -1714,7 +1773,8 @@
           "QuickCounter": 86,
           "LongBallCounter": 87,
           "OutWide": 69,
-          "LongBall": 32
+          "LongBall": 32,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           16,
@@ -1724,7 +1784,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -1747,37 +1807,27 @@
         {
           "source_boost_id": 12,
           "slot_index": 1,
-          "stat_name": "Son of God +4",
-          "bonus": null,
+          "stat_name": "Tackling",
+          "bonus": 1,
           "stats": {
-            "dribbling": 4,
-            "lowPass": 4,
-            "finishing": 4,
-            "kickingPower": 4
+            "trackingBack": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "神の子 +4",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 12
           }
         },
         {
           "source_boost_id": 5,
           "slot_index": 2,
-          "stat_name": "Defending +2",
-          "bonus": null,
+          "stat_name": "Lofted Pass",
+          "bonus": 1,
           "stats": {
-            "defensiveAwareness": 2,
-            "ballWinning": 2,
-            "acceleration": 2,
-            "jump": 2
+            "loftedPass": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "ディフェンス +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 5
           }
         }
       ],
@@ -1805,37 +1855,27 @@
           {
             "source_boost_id": 12,
             "slot_index": 1,
-            "stat_name": "Son of God +4",
-            "bonus": null,
+            "stat_name": "Tackling",
+            "bonus": 1,
             "stats": {
-              "dribbling": 4,
-              "lowPass": 4,
-              "finishing": 4,
-              "kickingPower": 4
+              "trackingBack": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "神の子 +4",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 12
             }
           },
           {
             "source_boost_id": 5,
             "slot_index": 2,
-            "stat_name": "Defending +2",
-            "bonus": null,
+            "stat_name": "Lofted Pass",
+            "bonus": 1,
             "stats": {
-              "defensiveAwareness": 2,
-              "ballWinning": 2,
-              "acceleration": 2,
-              "jump": 2
+              "loftedPass": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "ディフェンス +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 5
             }
           }
         ],
@@ -1856,7 +1896,8 @@
           "QuickCounter": 65,
           "LongBallCounter": 57,
           "OutWide": 89,
-          "LongBall": 71
+          "LongBall": 71,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           12,
@@ -1866,7 +1907,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -1889,19 +1930,14 @@
         {
           "source_boost_id": 2,
           "slot_index": 1,
-          "stat_name": "Free-kick Taking +2",
-          "bonus": null,
+          "stat_name": "Tight Possession",
+          "bonus": 1,
           "stats": {
-            "finishing": 2,
-            "setPieceTaking": 2,
-            "curl": 2,
-            "kickingPower": 2
+            "tightPossession": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "フリーキック +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 2
           }
         }
       ],
@@ -1929,19 +1965,14 @@
           {
             "source_boost_id": 2,
             "slot_index": 1,
-            "stat_name": "Free-kick Taking +2",
-            "bonus": null,
+            "stat_name": "Tight Possession",
+            "bonus": 1,
             "stats": {
-              "finishing": 2,
-              "setPieceTaking": 2,
-              "curl": 2,
-              "kickingPower": 2
+              "tightPossession": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "フリーキック +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 2
             }
           }
         ],
@@ -1962,7 +1993,8 @@
           "QuickCounter": 74,
           "LongBallCounter": 37,
           "OutWide": 68,
-          "LongBall": 32
+          "LongBall": 32,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           2,
@@ -1972,7 +2004,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -1995,37 +2027,27 @@
         {
           "source_boost_id": 14,
           "slot_index": 1,
-          "stat_name": "Physicality +2",
-          "bonus": null,
+          "stat_name": "Kicking Power",
+          "bonus": 1,
           "stats": {
-            "balance": 2,
-            "physicalContact": 2,
-            "jump": 2,
-            "stamina": 2
+            "kickingPower": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "フィジカル +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 14
           }
         },
         {
           "source_boost_id": 13,
           "slot_index": 2,
-          "stat_name": "Bearer of Fate +4",
-          "bonus": null,
+          "stat_name": "Aggression",
+          "bonus": 1,
           "stats": {
-            "finishing": 4,
-            "heading": 4,
-            "speed": 4,
-            "acceleration": 4
+            "aggression": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "運命の担い手 +4",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 13
           }
         }
       ],
@@ -2053,37 +2075,27 @@
           {
             "source_boost_id": 14,
             "slot_index": 1,
-            "stat_name": "Physicality +2",
-            "bonus": null,
+            "stat_name": "Kicking Power",
+            "bonus": 1,
             "stats": {
-              "balance": 2,
-              "physicalContact": 2,
-              "jump": 2,
-              "stamina": 2
+              "kickingPower": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "フィジカル +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 14
             }
           },
           {
             "source_boost_id": 13,
             "slot_index": 2,
-            "stat_name": "Bearer of Fate +4",
-            "bonus": null,
+            "stat_name": "Aggression",
+            "bonus": 1,
             "stats": {
-              "finishing": 4,
-              "heading": 4,
-              "speed": 4,
-              "acceleration": 4
+              "aggression": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "運命の担い手 +4",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 13
             }
           }
         ],
@@ -2104,7 +2116,8 @@
           "QuickCounter": 63,
           "LongBallCounter": 54,
           "OutWide": 89,
-          "LongBall": 51
+          "LongBall": 51,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           14,
@@ -2114,7 +2127,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -2137,59 +2150,27 @@
         {
           "source_boost_id": 4,
           "slot_index": 1,
-          "stat_name": "Technique +2",
-          "bonus": null,
+          "stat_name": "Low Pass",
+          "bonus": 1,
           "stats": {
-            "ballControl": 2,
-            "dribbling": 2,
-            "tightPossession": 2,
-            "lowPass": 2
+            "lowPass": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "テクニック +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 4
           }
         },
         {
           "source_boost_id": 15,
           "slot_index": 2,
-          "stat_name": "Total Package +3",
-          "bonus": null,
+          "stat_name": "Speed",
+          "bonus": 1,
           "stats": {
-            "offensiveAwareness": 3,
-            "ballControl": 3,
-            "dribbling": 3,
-            "tightPossession": 3,
-            "lowPass": 3,
-            "loftedPass": 3,
-            "finishing": 3,
-            "setPieceTaking": 3,
-            "curl": 3,
-            "heading": 3,
-            "defensiveAwareness": 3,
-            "trackingBack": 3,
-            "ballWinning": 3,
-            "aggression": 3,
-            "kickingPower": 3,
-            "speed": 3,
-            "acceleration": 3,
-            "balance": 3,
-            "physicalContact": 3,
-            "jump": 3,
-            "gkAwareness": 3,
-            "gkCatching": 3,
-            "gkClearing": 3,
-            "gkReflexes": 3,
-            "gkReach": 3,
-            "stamina": 3
+            "speed": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "トータルパッケージ +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 15
           }
         }
       ],
@@ -2217,59 +2198,27 @@
           {
             "source_boost_id": 4,
             "slot_index": 1,
-            "stat_name": "Technique +2",
-            "bonus": null,
+            "stat_name": "Low Pass",
+            "bonus": 1,
             "stats": {
-              "ballControl": 2,
-              "dribbling": 2,
-              "tightPossession": 2,
-              "lowPass": 2
+              "lowPass": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "テクニック +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 4
             }
           },
           {
             "source_boost_id": 15,
             "slot_index": 2,
-            "stat_name": "Total Package +3",
-            "bonus": null,
+            "stat_name": "Speed",
+            "bonus": 1,
             "stats": {
-              "offensiveAwareness": 3,
-              "ballControl": 3,
-              "dribbling": 3,
-              "tightPossession": 3,
-              "lowPass": 3,
-              "loftedPass": 3,
-              "finishing": 3,
-              "setPieceTaking": 3,
-              "curl": 3,
-              "heading": 3,
-              "defensiveAwareness": 3,
-              "trackingBack": 3,
-              "ballWinning": 3,
-              "aggression": 3,
-              "kickingPower": 3,
-              "speed": 3,
-              "acceleration": 3,
-              "balance": 3,
-              "physicalContact": 3,
-              "jump": 3,
-              "gkAwareness": 3,
-              "gkCatching": 3,
-              "gkClearing": 3,
-              "gkReflexes": 3,
-              "gkReach": 3,
-              "stamina": 3
+              "speed": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "トータルパッケージ +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 15
             }
           }
         ],
@@ -2290,7 +2239,8 @@
           "QuickCounter": 75,
           "LongBallCounter": 45,
           "OutWide": 64,
-          "LongBall": 31
+          "LongBall": 31,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           4,
@@ -2300,7 +2250,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -2323,37 +2273,27 @@
         {
           "source_boost_id": 4,
           "slot_index": 1,
-          "stat_name": "Technique +2",
-          "bonus": null,
+          "stat_name": "Low Pass",
+          "bonus": 1,
           "stats": {
-            "ballControl": 2,
-            "dribbling": 2,
-            "tightPossession": 2,
-            "lowPass": 2
+            "lowPass": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "テクニック +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 4
           }
         },
         {
           "source_boost_id": 3,
           "slot_index": 2,
-          "stat_name": "Passing +2",
-          "bonus": null,
+          "stat_name": "Dribbling",
+          "bonus": 1,
           "stats": {
-            "lowPass": 2,
-            "loftedPass": 2,
-            "curl": 2,
-            "kickingPower": 2
+            "dribbling": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "パス +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 3
           }
         }
       ],
@@ -2381,37 +2321,27 @@
           {
             "source_boost_id": 4,
             "slot_index": 1,
-            "stat_name": "Technique +2",
-            "bonus": null,
+            "stat_name": "Low Pass",
+            "bonus": 1,
             "stats": {
-              "ballControl": 2,
-              "dribbling": 2,
-              "tightPossession": 2,
-              "lowPass": 2
+              "lowPass": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "テクニック +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 4
             }
           },
           {
             "source_boost_id": 3,
             "slot_index": 2,
-            "stat_name": "Passing +2",
-            "bonus": null,
+            "stat_name": "Dribbling",
+            "bonus": 1,
             "stats": {
-              "lowPass": 2,
-              "loftedPass": 2,
-              "curl": 2,
-              "kickingPower": 2
+              "dribbling": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "パス +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 3
             }
           }
         ],
@@ -2432,7 +2362,8 @@
           "QuickCounter": 88,
           "LongBallCounter": 69,
           "OutWide": 57,
-          "LongBall": 45
+          "LongBall": 45,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           4,
@@ -2442,7 +2373,130 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
+    },
+    {
+      "source": "efhub",
+      "source_coach_id": "17606950096730",
+      "source_url": "https://efhub.com/data/managers.json",
+      "source_card_image_url": "https://efimg.com/efootballhub22/images/coach_cards/17606950096730.png",
+      "source_version": "efhub-managers-2026",
+      "coach_name": "J. Nagelsmann",
+      "coach_name_ja": "ユリアン ナゲルスマン",
+      "category": "EFHub Manager",
+      "pack_type": "Special",
+      "playing_style_competence": {
+        "possesso_palla": 62,
+        "contropiede_veloce": 68,
+        "contrattacco": 89,
+        "vie_laterali": 59,
+        "passaggio_lungo": 89
+      },
+      "stat_boosters": [
+        {
+          "source_boost_id": 3,
+          "slot_index": 1,
+          "stat_name": "Dribbling",
+          "bonus": 1,
+          "stats": {
+            "dribbling": 1
+          },
+          "source": "efhub-manager-ability",
+          "metadata": {
+            "ability_id": 3
+          }
+        },
+        {
+          "source_boost_id": 18,
+          "slot_index": 2,
+          "stat_name": "Physical Contact",
+          "bonus": 1,
+          "stats": {
+            "physicalContact": 1
+          },
+          "source": "efhub-manager-ability",
+          "metadata": {
+            "ability_id": 18
+          }
+        }
+      ],
+      "boost_ids": [
+        3,
+        18
+      ],
+      "connection": null,
+      "photo_slots": {
+        "catalog_card": "https://efimg.com/efootballhub22/images/coach_cards/17606950096730.png"
+      },
+      "coach_payload": {
+        "coach_name": "J. Nagelsmann",
+        "category": "EFHub Manager",
+        "pack_type": "Special",
+        "playing_style_competence": {
+          "possesso_palla": 62,
+          "contropiede_veloce": 68,
+          "contrattacco": 89,
+          "vie_laterali": 59,
+          "passaggio_lungo": 89
+        },
+        "training_affinity_description": null,
+        "stat_boosters": [
+          {
+            "source_boost_id": 3,
+            "slot_index": 1,
+            "stat_name": "Dribbling",
+            "bonus": 1,
+            "stats": {
+              "dribbling": 1
+            },
+            "source": "efhub-manager-ability",
+            "metadata": {
+              "ability_id": 3
+            }
+          },
+          {
+            "source_boost_id": 18,
+            "slot_index": 2,
+            "stat_name": "Physical Contact",
+            "bonus": 1,
+            "stats": {
+              "physicalContact": 1
+            },
+            "source": "efhub-manager-ability",
+            "metadata": {
+              "ability_id": 18
+            }
+          }
+        ],
+        "connection": null,
+        "photo_slots": {
+          "catalog_card": "https://efimg.com/efootballhub22/images/coach_cards/17606950096730.png"
+        },
+        "source_catalog": {
+          "catalog": "coach_catalog",
+          "source": "efhub",
+          "source_coach_id": "17606950096730",
+          "source_card_image_url": "https://efimg.com/efootballhub22/images/coach_cards/17606950096730.png"
+        }
+      },
+      "metadata": {
+        "raw_skills": {
+          "PossessionGame": 62,
+          "QuickCounter": 68,
+          "LongBallCounter": 89,
+          "OutWide": 59,
+          "LongBall": 89,
+          "OverLoad": 0
+        },
+        "raw_boost_ids": [
+          3,
+          18
+        ],
+        "source_note": "EFHub manager data is exposed by the player builder manager selector."
+      },
+      "catalog_ready": true,
+      "needs_review": false,
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -2465,37 +2519,27 @@
         {
           "source_boost_id": 2,
           "slot_index": 1,
-          "stat_name": "Free-kick Taking +2",
-          "bonus": null,
+          "stat_name": "Tight Possession",
+          "bonus": 1,
           "stats": {
-            "finishing": 2,
-            "setPieceTaking": 2,
-            "curl": 2,
-            "kickingPower": 2
+            "tightPossession": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "フリーキック +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 2
           }
         },
         {
           "source_boost_id": 19,
           "slot_index": 2,
-          "stat_name": "Aerial +3",
-          "bonus": null,
+          "stat_name": "Jump",
+          "bonus": 1,
           "stats": {
-            "finishing": 3,
-            "heading": 3,
-            "physicalContact": 3,
-            "jump": 3
+            "jump": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "エアリアル +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 19
           }
         }
       ],
@@ -2523,37 +2567,27 @@
           {
             "source_boost_id": 2,
             "slot_index": 1,
-            "stat_name": "Free-kick Taking +2",
-            "bonus": null,
+            "stat_name": "Tight Possession",
+            "bonus": 1,
             "stats": {
-              "finishing": 2,
-              "setPieceTaking": 2,
-              "curl": 2,
-              "kickingPower": 2
+              "tightPossession": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "フリーキック +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 2
             }
           },
           {
             "source_boost_id": 19,
             "slot_index": 2,
-            "stat_name": "Aerial +3",
-            "bonus": null,
+            "stat_name": "Jump",
+            "bonus": 1,
             "stats": {
-              "finishing": 3,
-              "heading": 3,
-              "physicalContact": 3,
-              "jump": 3
+              "jump": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "エアリアル +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 19
             }
           }
         ],
@@ -2574,7 +2608,8 @@
           "QuickCounter": 67,
           "LongBallCounter": 54,
           "OutWide": 81,
-          "LongBall": 43
+          "LongBall": 43,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           2,
@@ -2584,7 +2619,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -2607,37 +2642,27 @@
         {
           "source_boost_id": 16,
           "slot_index": 1,
-          "stat_name": "Passing +3",
-          "bonus": null,
+          "stat_name": "Acceleration",
+          "bonus": 1,
           "stats": {
-            "lowPass": 3,
-            "loftedPass": 3,
-            "curl": 3,
-            "kickingPower": 3
+            "acceleration": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "パス +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 16
           }
         },
         {
           "source_boost_id": 17,
           "slot_index": 2,
-          "stat_name": "Shooting +3",
-          "bonus": null,
+          "stat_name": "Balance",
+          "bonus": 1,
           "stats": {
-            "ballControl": 3,
-            "finishing": 3,
-            "kickingPower": 3,
-            "physicalContact": 3
+            "balance": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "シュート +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 17
           }
         }
       ],
@@ -2665,37 +2690,27 @@
           {
             "source_boost_id": 16,
             "slot_index": 1,
-            "stat_name": "Passing +3",
-            "bonus": null,
+            "stat_name": "Acceleration",
+            "bonus": 1,
             "stats": {
-              "lowPass": 3,
-              "loftedPass": 3,
-              "curl": 3,
-              "kickingPower": 3
+              "acceleration": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "パス +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 16
             }
           },
           {
             "source_boost_id": 17,
             "slot_index": 2,
-            "stat_name": "Shooting +3",
-            "bonus": null,
+            "stat_name": "Balance",
+            "bonus": 1,
             "stats": {
-              "ballControl": 3,
-              "finishing": 3,
-              "kickingPower": 3,
-              "physicalContact": 3
+              "balance": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "シュート +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 17
             }
           }
         ],
@@ -2716,7 +2731,8 @@
           "QuickCounter": 65,
           "LongBallCounter": 54,
           "OutWide": 89,
-          "LongBall": 54
+          "LongBall": 54,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           16,
@@ -2726,7 +2742,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -2749,19 +2765,14 @@
         {
           "source_boost_id": 12,
           "slot_index": 1,
-          "stat_name": "Son of God +4",
-          "bonus": null,
+          "stat_name": "Tackling",
+          "bonus": 1,
           "stats": {
-            "dribbling": 4,
-            "lowPass": 4,
-            "finishing": 4,
-            "kickingPower": 4
+            "trackingBack": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "神の子 +4",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 12
           }
         }
       ],
@@ -2789,19 +2800,14 @@
           {
             "source_boost_id": 12,
             "slot_index": 1,
-            "stat_name": "Son of God +4",
-            "bonus": null,
+            "stat_name": "Tackling",
+            "bonus": 1,
             "stats": {
-              "dribbling": 4,
-              "lowPass": 4,
-              "finishing": 4,
-              "kickingPower": 4
+              "trackingBack": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "神の子 +4",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 12
             }
           }
         ],
@@ -2822,7 +2828,8 @@
           "QuickCounter": 45,
           "LongBallCounter": 88,
           "OutWide": 88,
-          "LongBall": 66
+          "LongBall": 66,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           12,
@@ -2832,7 +2839,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -2855,37 +2862,27 @@
         {
           "source_boost_id": 18,
           "slot_index": 1,
-          "stat_name": "Technique +3",
-          "bonus": null,
+          "stat_name": "Physical Contact",
+          "bonus": 1,
           "stats": {
-            "ballControl": 3,
-            "dribbling": 3,
-            "tightPossession": 3,
-            "lowPass": 3
+            "physicalContact": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "テクニック +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 18
           }
         },
         {
           "source_boost_id": 25,
           "slot_index": 2,
-          "stat_name": "Shutdown +2",
-          "bonus": null,
+          "stat_name": "Stamina",
+          "bonus": 1,
           "stats": {
-            "defensiveAwareness": 2,
-            "trackingBack": 2,
-            "ballWinning": 2,
-            "speed": 2
+            "stamina": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "シャットダウン +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 25
           }
         }
       ],
@@ -2913,37 +2910,27 @@
           {
             "source_boost_id": 18,
             "slot_index": 1,
-            "stat_name": "Technique +3",
-            "bonus": null,
+            "stat_name": "Physical Contact",
+            "bonus": 1,
             "stats": {
-              "ballControl": 3,
-              "dribbling": 3,
-              "tightPossession": 3,
-              "lowPass": 3
+              "physicalContact": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "テクニック +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 18
             }
           },
           {
             "source_boost_id": 25,
             "slot_index": 2,
-            "stat_name": "Shutdown +2",
-            "bonus": null,
+            "stat_name": "Stamina",
+            "bonus": 1,
             "stats": {
-              "defensiveAwareness": 2,
-              "trackingBack": 2,
-              "ballWinning": 2,
-              "speed": 2
+              "stamina": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "シャットダウン +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 25
             }
           }
         ],
@@ -2964,7 +2951,8 @@
           "QuickCounter": 89,
           "LongBallCounter": 62,
           "OutWide": 68,
-          "LongBall": 80
+          "LongBall": 80,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           18,
@@ -2974,7 +2962,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -2997,59 +2985,27 @@
         {
           "source_boost_id": 15,
           "slot_index": 1,
-          "stat_name": "Total Package +3",
-          "bonus": null,
+          "stat_name": "Speed",
+          "bonus": 1,
           "stats": {
-            "offensiveAwareness": 3,
-            "ballControl": 3,
-            "dribbling": 3,
-            "tightPossession": 3,
-            "lowPass": 3,
-            "loftedPass": 3,
-            "finishing": 3,
-            "setPieceTaking": 3,
-            "curl": 3,
-            "heading": 3,
-            "defensiveAwareness": 3,
-            "trackingBack": 3,
-            "ballWinning": 3,
-            "aggression": 3,
-            "kickingPower": 3,
-            "speed": 3,
-            "acceleration": 3,
-            "balance": 3,
-            "physicalContact": 3,
-            "jump": 3,
-            "gkAwareness": 3,
-            "gkCatching": 3,
-            "gkClearing": 3,
-            "gkReflexes": 3,
-            "gkReach": 3,
-            "stamina": 3
+            "speed": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "トータルパッケージ +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 15
           }
         },
         {
           "source_boost_id": 13,
           "slot_index": 2,
-          "stat_name": "Bearer of Fate +4",
-          "bonus": null,
+          "stat_name": "Aggression",
+          "bonus": 1,
           "stats": {
-            "finishing": 4,
-            "heading": 4,
-            "speed": 4,
-            "acceleration": 4
+            "aggression": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "運命の担い手 +4",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 13
           }
         }
       ],
@@ -3077,59 +3033,27 @@
           {
             "source_boost_id": 15,
             "slot_index": 1,
-            "stat_name": "Total Package +3",
-            "bonus": null,
+            "stat_name": "Speed",
+            "bonus": 1,
             "stats": {
-              "offensiveAwareness": 3,
-              "ballControl": 3,
-              "dribbling": 3,
-              "tightPossession": 3,
-              "lowPass": 3,
-              "loftedPass": 3,
-              "finishing": 3,
-              "setPieceTaking": 3,
-              "curl": 3,
-              "heading": 3,
-              "defensiveAwareness": 3,
-              "trackingBack": 3,
-              "ballWinning": 3,
-              "aggression": 3,
-              "kickingPower": 3,
-              "speed": 3,
-              "acceleration": 3,
-              "balance": 3,
-              "physicalContact": 3,
-              "jump": 3,
-              "gkAwareness": 3,
-              "gkCatching": 3,
-              "gkClearing": 3,
-              "gkReflexes": 3,
-              "gkReach": 3,
-              "stamina": 3
+              "speed": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "トータルパッケージ +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 15
             }
           },
           {
             "source_boost_id": 13,
             "slot_index": 2,
-            "stat_name": "Bearer of Fate +4",
-            "bonus": null,
+            "stat_name": "Aggression",
+            "bonus": 1,
             "stats": {
-              "finishing": 4,
-              "heading": 4,
-              "speed": 4,
-              "acceleration": 4
+              "aggression": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "運命の担い手 +4",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 13
             }
           }
         ],
@@ -3150,7 +3074,8 @@
           "QuickCounter": 89,
           "LongBallCounter": 59,
           "OutWide": 70,
-          "LongBall": 57
+          "LongBall": 57,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           15,
@@ -3160,7 +3085,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -3183,19 +3108,14 @@
         {
           "source_boost_id": 4,
           "slot_index": 1,
-          "stat_name": "Technique +2",
-          "bonus": null,
+          "stat_name": "Low Pass",
+          "bonus": 1,
           "stats": {
-            "ballControl": 2,
-            "dribbling": 2,
-            "tightPossession": 2,
-            "lowPass": 2
+            "lowPass": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "テクニック +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 4
           }
         }
       ],
@@ -3223,19 +3143,14 @@
           {
             "source_boost_id": 4,
             "slot_index": 1,
-            "stat_name": "Technique +2",
-            "bonus": null,
+            "stat_name": "Low Pass",
+            "bonus": 1,
             "stats": {
-              "ballControl": 2,
-              "dribbling": 2,
-              "tightPossession": 2,
-              "lowPass": 2
+              "lowPass": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "テクニック +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 4
             }
           }
         ],
@@ -3256,7 +3171,8 @@
           "QuickCounter": 86,
           "LongBallCounter": 55,
           "OutWide": 38,
-          "LongBall": 37
+          "LongBall": 37,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           4,
@@ -3266,7 +3182,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -3289,37 +3205,27 @@
         {
           "source_boost_id": 10,
           "slot_index": 1,
-          "stat_name": "Ball-carrying +2",
-          "bonus": null,
+          "stat_name": "Defensive Awareness",
+          "bonus": 1,
           "stats": {
-            "dribbling": 2,
-            "tightPossession": 2,
-            "speed": 2,
-            "balance": 2
+            "defensiveAwareness": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "ボールキャリー +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 10
           }
         },
         {
           "source_boost_id": 25,
           "slot_index": 2,
-          "stat_name": "Shutdown +2",
-          "bonus": null,
+          "stat_name": "Stamina",
+          "bonus": 1,
           "stats": {
-            "defensiveAwareness": 2,
-            "trackingBack": 2,
-            "ballWinning": 2,
-            "speed": 2
+            "stamina": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "シャットダウン +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 25
           }
         }
       ],
@@ -3347,37 +3253,27 @@
           {
             "source_boost_id": 10,
             "slot_index": 1,
-            "stat_name": "Ball-carrying +2",
-            "bonus": null,
+            "stat_name": "Defensive Awareness",
+            "bonus": 1,
             "stats": {
-              "dribbling": 2,
-              "tightPossession": 2,
-              "speed": 2,
-              "balance": 2
+              "defensiveAwareness": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "ボールキャリー +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 10
             }
           },
           {
             "source_boost_id": 25,
             "slot_index": 2,
-            "stat_name": "Shutdown +2",
-            "bonus": null,
+            "stat_name": "Stamina",
+            "bonus": 1,
             "stats": {
-              "defensiveAwareness": 2,
-              "trackingBack": 2,
-              "ballWinning": 2,
-              "speed": 2
+              "stamina": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "シャットダウン +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 25
             }
           }
         ],
@@ -3398,7 +3294,8 @@
           "QuickCounter": 56,
           "LongBallCounter": 89,
           "OutWide": 61,
-          "LongBall": 46
+          "LongBall": 46,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           10,
@@ -3408,7 +3305,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -3431,19 +3328,14 @@
         {
           "source_boost_id": 16,
           "slot_index": 1,
-          "stat_name": "Passing +3",
-          "bonus": null,
+          "stat_name": "Acceleration",
+          "bonus": 1,
           "stats": {
-            "lowPass": 3,
-            "loftedPass": 3,
-            "curl": 3,
-            "kickingPower": 3
+            "acceleration": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "パス +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 16
           }
         }
       ],
@@ -3471,19 +3363,14 @@
           {
             "source_boost_id": 16,
             "slot_index": 1,
-            "stat_name": "Passing +3",
-            "bonus": null,
+            "stat_name": "Acceleration",
+            "bonus": 1,
             "stats": {
-              "lowPass": 3,
-              "loftedPass": 3,
-              "curl": 3,
-              "kickingPower": 3
+              "acceleration": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "パス +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 16
             }
           }
         ],
@@ -3504,7 +3391,8 @@
           "QuickCounter": 61,
           "LongBallCounter": 27,
           "OutWide": 88,
-          "LongBall": 22
+          "LongBall": 22,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           16,
@@ -3514,7 +3402,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -3535,21 +3423,29 @@
       },
       "stat_boosters": [
         {
+          "source_boost_id": 0,
+          "slot_index": 1,
+          "stat_name": "Offensive Awareness",
+          "bonus": 1,
+          "stats": {
+            "offensiveAwareness": 1
+          },
+          "source": "efhub-manager-ability",
+          "metadata": {
+            "ability_id": 0
+          }
+        },
+        {
           "source_boost_id": 1,
           "slot_index": 2,
-          "stat_name": "Goalkeeping +2",
-          "bonus": null,
+          "stat_name": "Ball Control",
+          "bonus": 1,
           "stats": {
-            "gkAwareness": 2,
-            "gkCatching": 2,
-            "gkClearing": 2,
-            "gkReflexes": 2
+            "ballControl": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "ゴールキーピング +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 1
           }
         }
       ],
@@ -3575,21 +3471,29 @@
         "training_affinity_description": null,
         "stat_boosters": [
           {
+            "source_boost_id": 0,
+            "slot_index": 1,
+            "stat_name": "Offensive Awareness",
+            "bonus": 1,
+            "stats": {
+              "offensiveAwareness": 1
+            },
+            "source": "efhub-manager-ability",
+            "metadata": {
+              "ability_id": 0
+            }
+          },
+          {
             "source_boost_id": 1,
             "slot_index": 2,
-            "stat_name": "Goalkeeping +2",
-            "bonus": null,
+            "stat_name": "Ball Control",
+            "bonus": 1,
             "stats": {
-              "gkAwareness": 2,
-              "gkCatching": 2,
-              "gkClearing": 2,
-              "gkReflexes": 2
+              "ballControl": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "ゴールキーピング +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 1
             }
           }
         ],
@@ -3610,7 +3514,8 @@
           "QuickCounter": 67,
           "LongBallCounter": 89,
           "OutWide": 63,
-          "LongBall": 89
+          "LongBall": 89,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           0,
@@ -3620,7 +3525,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -3643,19 +3548,14 @@
         {
           "source_boost_id": 4,
           "slot_index": 1,
-          "stat_name": "Technique +2",
-          "bonus": null,
+          "stat_name": "Low Pass",
+          "bonus": 1,
           "stats": {
-            "ballControl": 2,
-            "dribbling": 2,
-            "tightPossession": 2,
-            "lowPass": 2
+            "lowPass": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "テクニック +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 4
           }
         }
       ],
@@ -3683,19 +3583,14 @@
           {
             "source_boost_id": 4,
             "slot_index": 1,
-            "stat_name": "Technique +2",
-            "bonus": null,
+            "stat_name": "Low Pass",
+            "bonus": 1,
             "stats": {
-              "ballControl": 2,
-              "dribbling": 2,
-              "tightPossession": 2,
-              "lowPass": 2
+              "lowPass": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "テクニック +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 4
             }
           }
         ],
@@ -3716,7 +3611,8 @@
           "QuickCounter": 71,
           "LongBallCounter": 68,
           "OutWide": 73,
-          "LongBall": 20
+          "LongBall": 20,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           4,
@@ -3726,7 +3622,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -3749,37 +3645,27 @@
         {
           "source_boost_id": 16,
           "slot_index": 1,
-          "stat_name": "Passing +3",
-          "bonus": null,
+          "stat_name": "Acceleration",
+          "bonus": 1,
           "stats": {
-            "lowPass": 3,
-            "loftedPass": 3,
-            "curl": 3,
-            "kickingPower": 3
+            "acceleration": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "パス +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 16
           }
         },
         {
           "source_boost_id": 2,
           "slot_index": 2,
-          "stat_name": "Free-kick Taking +2",
-          "bonus": null,
+          "stat_name": "Tight Possession",
+          "bonus": 1,
           "stats": {
-            "finishing": 2,
-            "setPieceTaking": 2,
-            "curl": 2,
-            "kickingPower": 2
+            "tightPossession": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "フリーキック +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 2
           }
         }
       ],
@@ -3807,37 +3693,27 @@
           {
             "source_boost_id": 16,
             "slot_index": 1,
-            "stat_name": "Passing +3",
-            "bonus": null,
+            "stat_name": "Acceleration",
+            "bonus": 1,
             "stats": {
-              "lowPass": 3,
-              "loftedPass": 3,
-              "curl": 3,
-              "kickingPower": 3
+              "acceleration": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "パス +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 16
             }
           },
           {
             "source_boost_id": 2,
             "slot_index": 2,
-            "stat_name": "Free-kick Taking +2",
-            "bonus": null,
+            "stat_name": "Tight Possession",
+            "bonus": 1,
             "stats": {
-              "finishing": 2,
-              "setPieceTaking": 2,
-              "curl": 2,
-              "kickingPower": 2
+              "tightPossession": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "フリーキック +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 2
             }
           }
         ],
@@ -3858,7 +3734,8 @@
           "QuickCounter": 68,
           "LongBallCounter": 88,
           "OutWide": 67,
-          "LongBall": 30
+          "LongBall": 30,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           16,
@@ -3868,7 +3745,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -3891,37 +3768,27 @@
         {
           "source_boost_id": 16,
           "slot_index": 1,
-          "stat_name": "Passing +3",
-          "bonus": null,
+          "stat_name": "Acceleration",
+          "bonus": 1,
           "stats": {
-            "lowPass": 3,
-            "loftedPass": 3,
-            "curl": 3,
-            "kickingPower": 3
+            "acceleration": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "パス +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 16
           }
         },
         {
           "source_boost_id": 7,
           "slot_index": 2,
-          "stat_name": "Shooting +2",
-          "bonus": null,
+          "stat_name": "Place Kicking",
+          "bonus": 1,
           "stats": {
-            "ballControl": 2,
-            "finishing": 2,
-            "kickingPower": 2,
-            "physicalContact": 2
+            "setPieceTaking": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "シュート +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 7
           }
         }
       ],
@@ -3949,37 +3816,27 @@
           {
             "source_boost_id": 16,
             "slot_index": 1,
-            "stat_name": "Passing +3",
-            "bonus": null,
+            "stat_name": "Acceleration",
+            "bonus": 1,
             "stats": {
-              "lowPass": 3,
-              "loftedPass": 3,
-              "curl": 3,
-              "kickingPower": 3
+              "acceleration": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "パス +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 16
             }
           },
           {
             "source_boost_id": 7,
             "slot_index": 2,
-            "stat_name": "Shooting +2",
-            "bonus": null,
+            "stat_name": "Place Kicking",
+            "bonus": 1,
             "stats": {
-              "ballControl": 2,
-              "finishing": 2,
-              "kickingPower": 2,
-              "physicalContact": 2
+              "setPieceTaking": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "シュート +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 7
             }
           }
         ],
@@ -4000,7 +3857,8 @@
           "QuickCounter": 64,
           "LongBallCounter": 88,
           "OutWide": 57,
-          "LongBall": 54
+          "LongBall": 54,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           16,
@@ -4010,7 +3868,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -4033,37 +3891,27 @@
         {
           "source_boost_id": 14,
           "slot_index": 1,
-          "stat_name": "Physicality +2",
-          "bonus": null,
+          "stat_name": "Kicking Power",
+          "bonus": 1,
           "stats": {
-            "balance": 2,
-            "physicalContact": 2,
-            "jump": 2,
-            "stamina": 2
+            "kickingPower": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "フィジカル +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 14
           }
         },
         {
           "source_boost_id": 2,
           "slot_index": 2,
-          "stat_name": "Free-kick Taking +2",
-          "bonus": null,
+          "stat_name": "Tight Possession",
+          "bonus": 1,
           "stats": {
-            "finishing": 2,
-            "setPieceTaking": 2,
-            "curl": 2,
-            "kickingPower": 2
+            "tightPossession": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "フリーキック +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 2
           }
         }
       ],
@@ -4091,37 +3939,27 @@
           {
             "source_boost_id": 14,
             "slot_index": 1,
-            "stat_name": "Physicality +2",
-            "bonus": null,
+            "stat_name": "Kicking Power",
+            "bonus": 1,
             "stats": {
-              "balance": 2,
-              "physicalContact": 2,
-              "jump": 2,
-              "stamina": 2
+              "kickingPower": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "フィジカル +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 14
             }
           },
           {
             "source_boost_id": 2,
             "slot_index": 2,
-            "stat_name": "Free-kick Taking +2",
-            "bonus": null,
+            "stat_name": "Tight Possession",
+            "bonus": 1,
             "stats": {
-              "finishing": 2,
-              "setPieceTaking": 2,
-              "curl": 2,
-              "kickingPower": 2
+              "tightPossession": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "フリーキック +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 2
             }
           }
         ],
@@ -4142,7 +3980,8 @@
           "QuickCounter": 63,
           "LongBallCounter": 89,
           "OutWide": 89,
-          "LongBall": 56
+          "LongBall": 56,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           14,
@@ -4152,7 +3991,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -4175,19 +4014,14 @@
         {
           "source_boost_id": 14,
           "slot_index": 1,
-          "stat_name": "Physicality +2",
-          "bonus": null,
+          "stat_name": "Kicking Power",
+          "bonus": 1,
           "stats": {
-            "balance": 2,
-            "physicalContact": 2,
-            "jump": 2,
-            "stamina": 2
+            "kickingPower": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "フィジカル +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 14
           }
         }
       ],
@@ -4215,19 +4049,14 @@
           {
             "source_boost_id": 14,
             "slot_index": 1,
-            "stat_name": "Physicality +2",
-            "bonus": null,
+            "stat_name": "Kicking Power",
+            "bonus": 1,
             "stats": {
-              "balance": 2,
-              "physicalContact": 2,
-              "jump": 2,
-              "stamina": 2
+              "kickingPower": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "フィジカル +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 14
             }
           }
         ],
@@ -4248,7 +4077,8 @@
           "QuickCounter": 87,
           "LongBallCounter": 52,
           "OutWide": 45,
-          "LongBall": 86
+          "LongBall": 86,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           14,
@@ -4258,7 +4088,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -4281,37 +4111,27 @@
         {
           "source_boost_id": 17,
           "slot_index": 1,
-          "stat_name": "Shooting +3",
-          "bonus": null,
+          "stat_name": "Balance",
+          "bonus": 1,
           "stats": {
-            "ballControl": 3,
-            "finishing": 3,
-            "kickingPower": 3,
-            "physicalContact": 3
+            "balance": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "シュート +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 17
           }
         },
         {
           "source_boost_id": 5,
           "slot_index": 2,
-          "stat_name": "Defending +2",
-          "bonus": null,
+          "stat_name": "Lofted Pass",
+          "bonus": 1,
           "stats": {
-            "defensiveAwareness": 2,
-            "ballWinning": 2,
-            "acceleration": 2,
-            "jump": 2
+            "loftedPass": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "ディフェンス +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 5
           }
         }
       ],
@@ -4339,37 +4159,27 @@
           {
             "source_boost_id": 17,
             "slot_index": 1,
-            "stat_name": "Shooting +3",
-            "bonus": null,
+            "stat_name": "Balance",
+            "bonus": 1,
             "stats": {
-              "ballControl": 3,
-              "finishing": 3,
-              "kickingPower": 3,
-              "physicalContact": 3
+              "balance": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "シュート +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 17
             }
           },
           {
             "source_boost_id": 5,
             "slot_index": 2,
-            "stat_name": "Defending +2",
-            "bonus": null,
+            "stat_name": "Lofted Pass",
+            "bonus": 1,
             "stats": {
-              "defensiveAwareness": 2,
-              "ballWinning": 2,
-              "acceleration": 2,
-              "jump": 2
+              "loftedPass": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "ディフェンス +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 5
             }
           }
         ],
@@ -4390,7 +4200,8 @@
           "QuickCounter": 80,
           "LongBallCounter": 43,
           "OutWide": 89,
-          "LongBall": 63
+          "LongBall": 63,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           17,
@@ -4400,7 +4211,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -4423,37 +4234,27 @@
         {
           "source_boost_id": 4,
           "slot_index": 1,
-          "stat_name": "Technique +2",
-          "bonus": null,
+          "stat_name": "Low Pass",
+          "bonus": 1,
           "stats": {
-            "ballControl": 2,
-            "dribbling": 2,
-            "tightPossession": 2,
-            "lowPass": 2
+            "lowPass": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "テクニック +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 4
           }
         },
         {
           "source_boost_id": 11,
           "slot_index": 2,
-          "stat_name": "King of Football +4",
-          "bonus": null,
+          "stat_name": "Defensive Engagement",
+          "bonus": 1,
           "stats": {
-            "dribbling": 4,
-            "tightPossession": 4,
-            "balance": 4,
-            "physicalContact": 4
+            "ballWinning": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "KING +4",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 11
           }
         }
       ],
@@ -4481,37 +4282,27 @@
           {
             "source_boost_id": 4,
             "slot_index": 1,
-            "stat_name": "Technique +2",
-            "bonus": null,
+            "stat_name": "Low Pass",
+            "bonus": 1,
             "stats": {
-              "ballControl": 2,
-              "dribbling": 2,
-              "tightPossession": 2,
-              "lowPass": 2
+              "lowPass": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "テクニック +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 4
             }
           },
           {
             "source_boost_id": 11,
             "slot_index": 2,
-            "stat_name": "King of Football +4",
-            "bonus": null,
+            "stat_name": "Defensive Engagement",
+            "bonus": 1,
             "stats": {
-              "dribbling": 4,
-              "tightPossession": 4,
-              "balance": 4,
-              "physicalContact": 4
+              "ballWinning": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "KING +4",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 11
             }
           }
         ],
@@ -4532,7 +4323,8 @@
           "QuickCounter": 80,
           "LongBallCounter": 64,
           "OutWide": 51,
-          "LongBall": 48
+          "LongBall": 48,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           4,
@@ -4542,7 +4334,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -4565,19 +4357,14 @@
         {
           "source_boost_id": 12,
           "slot_index": 1,
-          "stat_name": "Son of God +4",
-          "bonus": null,
+          "stat_name": "Tackling",
+          "bonus": 1,
           "stats": {
-            "dribbling": 4,
-            "lowPass": 4,
-            "finishing": 4,
-            "kickingPower": 4
+            "trackingBack": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "神の子 +4",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 12
           }
         }
       ],
@@ -4605,19 +4392,14 @@
           {
             "source_boost_id": 12,
             "slot_index": 1,
-            "stat_name": "Son of God +4",
-            "bonus": null,
+            "stat_name": "Tackling",
+            "bonus": 1,
             "stats": {
-              "dribbling": 4,
-              "lowPass": 4,
-              "finishing": 4,
-              "kickingPower": 4
+              "trackingBack": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "神の子 +4",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 12
             }
           }
         ],
@@ -4638,7 +4420,8 @@
           "QuickCounter": 67,
           "LongBallCounter": 35,
           "OutWide": 88,
-          "LongBall": 88
+          "LongBall": 88,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           12,
@@ -4648,7 +4431,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -4671,37 +4454,27 @@
         {
           "source_boost_id": 18,
           "slot_index": 1,
-          "stat_name": "Technique +3",
-          "bonus": null,
+          "stat_name": "Physical Contact",
+          "bonus": 1,
           "stats": {
-            "ballControl": 3,
-            "dribbling": 3,
-            "tightPossession": 3,
-            "lowPass": 3
+            "physicalContact": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "テクニック +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 18
           }
         },
         {
           "source_boost_id": 14,
           "slot_index": 2,
-          "stat_name": "Physicality +2",
-          "bonus": null,
+          "stat_name": "Kicking Power",
+          "bonus": 1,
           "stats": {
-            "balance": 2,
-            "physicalContact": 2,
-            "jump": 2,
-            "stamina": 2
+            "kickingPower": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "フィジカル +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 14
           }
         }
       ],
@@ -4729,37 +4502,27 @@
           {
             "source_boost_id": 18,
             "slot_index": 1,
-            "stat_name": "Technique +3",
-            "bonus": null,
+            "stat_name": "Physical Contact",
+            "bonus": 1,
             "stats": {
-              "ballControl": 3,
-              "dribbling": 3,
-              "tightPossession": 3,
-              "lowPass": 3
+              "physicalContact": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "テクニック +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 18
             }
           },
           {
             "source_boost_id": 14,
             "slot_index": 2,
-            "stat_name": "Physicality +2",
-            "bonus": null,
+            "stat_name": "Kicking Power",
+            "bonus": 1,
             "stats": {
-              "balance": 2,
-              "physicalContact": 2,
-              "jump": 2,
-              "stamina": 2
+              "kickingPower": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "フィジカル +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 14
             }
           }
         ],
@@ -4780,7 +4543,8 @@
           "QuickCounter": 88,
           "LongBallCounter": 73,
           "OutWide": 50,
-          "LongBall": 63
+          "LongBall": 63,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           18,
@@ -4790,7 +4554,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -4813,19 +4577,14 @@
         {
           "source_boost_id": 18,
           "slot_index": 1,
-          "stat_name": "Technique +3",
-          "bonus": null,
+          "stat_name": "Physical Contact",
+          "bonus": 1,
           "stats": {
-            "ballControl": 3,
-            "dribbling": 3,
-            "tightPossession": 3,
-            "lowPass": 3
+            "physicalContact": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "テクニック +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 18
           }
         }
       ],
@@ -4853,19 +4612,14 @@
           {
             "source_boost_id": 18,
             "slot_index": 1,
-            "stat_name": "Technique +3",
-            "bonus": null,
+            "stat_name": "Physical Contact",
+            "bonus": 1,
             "stats": {
-              "ballControl": 3,
-              "dribbling": 3,
-              "tightPossession": 3,
-              "lowPass": 3
+              "physicalContact": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "テクニック +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 18
             }
           }
         ],
@@ -4886,7 +4640,8 @@
           "QuickCounter": 68,
           "LongBallCounter": 52,
           "OutWide": 69,
-          "LongBall": 88
+          "LongBall": 88,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           18,
@@ -4896,7 +4651,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -4919,37 +4674,27 @@
         {
           "source_boost_id": 1,
           "slot_index": 1,
-          "stat_name": "Goalkeeping +2",
-          "bonus": null,
+          "stat_name": "Ball Control",
+          "bonus": 1,
           "stats": {
-            "gkAwareness": 2,
-            "gkCatching": 2,
-            "gkClearing": 2,
-            "gkReflexes": 2
+            "ballControl": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "ゴールキーピング +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 1
           }
         },
         {
           "source_boost_id": 13,
           "slot_index": 2,
-          "stat_name": "Bearer of Fate +4",
-          "bonus": null,
+          "stat_name": "Aggression",
+          "bonus": 1,
           "stats": {
-            "finishing": 4,
-            "heading": 4,
-            "speed": 4,
-            "acceleration": 4
+            "aggression": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "運命の担い手 +4",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 13
           }
         }
       ],
@@ -4977,37 +4722,27 @@
           {
             "source_boost_id": 1,
             "slot_index": 1,
-            "stat_name": "Goalkeeping +2",
-            "bonus": null,
+            "stat_name": "Ball Control",
+            "bonus": 1,
             "stats": {
-              "gkAwareness": 2,
-              "gkCatching": 2,
-              "gkClearing": 2,
-              "gkReflexes": 2
+              "ballControl": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "ゴールキーピング +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 1
             }
           },
           {
             "source_boost_id": 13,
             "slot_index": 2,
-            "stat_name": "Bearer of Fate +4",
-            "bonus": null,
+            "stat_name": "Aggression",
+            "bonus": 1,
             "stats": {
-              "finishing": 4,
-              "heading": 4,
-              "speed": 4,
-              "acceleration": 4
+              "aggression": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "運命の担い手 +4",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 13
             }
           }
         ],
@@ -5028,7 +4763,8 @@
           "QuickCounter": 46,
           "LongBallCounter": 89,
           "OutWide": 80,
-          "LongBall": 53
+          "LongBall": 53,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           1,
@@ -5038,7 +4774,130 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
+    },
+    {
+      "source": "efhub",
+      "source_coach_id": "17606144688129",
+      "source_url": "https://efhub.com/data/managers.json",
+      "source_card_image_url": "https://efimg.com/efootballhub22/images/coach_cards/17606144688129.png",
+      "source_version": "efhub-managers-2026",
+      "coach_name": "R. Martinez",
+      "coach_name_ja": "ロベルト マルティネス",
+      "category": "EFHub Manager",
+      "pack_type": "Special",
+      "playing_style_competence": {
+        "possesso_palla": 58,
+        "contropiede_veloce": 90,
+        "contrattacco": 70,
+        "vie_laterali": 64,
+        "passaggio_lungo": 89
+      },
+      "stat_boosters": [
+        {
+          "source_boost_id": 6,
+          "slot_index": 1,
+          "stat_name": "Finishing",
+          "bonus": 1,
+          "stats": {
+            "finishing": 1
+          },
+          "source": "efhub-manager-ability",
+          "metadata": {
+            "ability_id": 6
+          }
+        },
+        {
+          "source_boost_id": 0,
+          "slot_index": 2,
+          "stat_name": "Offensive Awareness",
+          "bonus": 1,
+          "stats": {
+            "offensiveAwareness": 1
+          },
+          "source": "efhub-manager-ability",
+          "metadata": {
+            "ability_id": 0
+          }
+        }
+      ],
+      "boost_ids": [
+        6,
+        0
+      ],
+      "connection": null,
+      "photo_slots": {
+        "catalog_card": "https://efimg.com/efootballhub22/images/coach_cards/17606144688129.png"
+      },
+      "coach_payload": {
+        "coach_name": "R. Martinez",
+        "category": "EFHub Manager",
+        "pack_type": "Special",
+        "playing_style_competence": {
+          "possesso_palla": 58,
+          "contropiede_veloce": 90,
+          "contrattacco": 70,
+          "vie_laterali": 64,
+          "passaggio_lungo": 89
+        },
+        "training_affinity_description": null,
+        "stat_boosters": [
+          {
+            "source_boost_id": 6,
+            "slot_index": 1,
+            "stat_name": "Finishing",
+            "bonus": 1,
+            "stats": {
+              "finishing": 1
+            },
+            "source": "efhub-manager-ability",
+            "metadata": {
+              "ability_id": 6
+            }
+          },
+          {
+            "source_boost_id": 0,
+            "slot_index": 2,
+            "stat_name": "Offensive Awareness",
+            "bonus": 1,
+            "stats": {
+              "offensiveAwareness": 1
+            },
+            "source": "efhub-manager-ability",
+            "metadata": {
+              "ability_id": 0
+            }
+          }
+        ],
+        "connection": null,
+        "photo_slots": {
+          "catalog_card": "https://efimg.com/efootballhub22/images/coach_cards/17606144688129.png"
+        },
+        "source_catalog": {
+          "catalog": "coach_catalog",
+          "source": "efhub",
+          "source_coach_id": "17606144688129",
+          "source_card_image_url": "https://efimg.com/efootballhub22/images/coach_cards/17606144688129.png"
+        }
+      },
+      "metadata": {
+        "raw_skills": {
+          "PossessionGame": 58,
+          "QuickCounter": 90,
+          "LongBallCounter": 70,
+          "OutWide": 64,
+          "LongBall": 89,
+          "OverLoad": 0
+        },
+        "raw_boost_ids": [
+          6,
+          0
+        ],
+        "source_note": "EFHub manager data is exposed by the player builder manager selector."
+      },
+      "catalog_ready": true,
+      "needs_review": false,
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -5061,37 +4920,27 @@
         {
           "source_boost_id": 1,
           "slot_index": 1,
-          "stat_name": "Goalkeeping +2",
-          "bonus": null,
+          "stat_name": "Ball Control",
+          "bonus": 1,
           "stats": {
-            "gkAwareness": 2,
-            "gkCatching": 2,
-            "gkClearing": 2,
-            "gkReflexes": 2
+            "ballControl": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "ゴールキーピング +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 1
           }
         },
         {
           "source_boost_id": 25,
           "slot_index": 2,
-          "stat_name": "Shutdown +2",
-          "bonus": null,
+          "stat_name": "Stamina",
+          "bonus": 1,
           "stats": {
-            "defensiveAwareness": 2,
-            "trackingBack": 2,
-            "ballWinning": 2,
-            "speed": 2
+            "stamina": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "シャットダウン +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 25
           }
         }
       ],
@@ -5119,37 +4968,27 @@
           {
             "source_boost_id": 1,
             "slot_index": 1,
-            "stat_name": "Goalkeeping +2",
-            "bonus": null,
+            "stat_name": "Ball Control",
+            "bonus": 1,
             "stats": {
-              "gkAwareness": 2,
-              "gkCatching": 2,
-              "gkClearing": 2,
-              "gkReflexes": 2
+              "ballControl": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "ゴールキーピング +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 1
             }
           },
           {
             "source_boost_id": 25,
             "slot_index": 2,
-            "stat_name": "Shutdown +2",
-            "bonus": null,
+            "stat_name": "Stamina",
+            "bonus": 1,
             "stats": {
-              "defensiveAwareness": 2,
-              "trackingBack": 2,
-              "ballWinning": 2,
-              "speed": 2
+              "stamina": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "シャットダウン +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 25
             }
           }
         ],
@@ -5170,7 +5009,8 @@
           "QuickCounter": 56,
           "LongBallCounter": 88,
           "OutWide": 72,
-          "LongBall": 45
+          "LongBall": 45,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           1,
@@ -5180,7 +5020,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -5203,37 +5043,27 @@
         {
           "source_boost_id": 4,
           "slot_index": 1,
-          "stat_name": "Technique +2",
-          "bonus": null,
+          "stat_name": "Low Pass",
+          "bonus": 1,
           "stats": {
-            "ballControl": 2,
-            "dribbling": 2,
-            "tightPossession": 2,
-            "lowPass": 2
+            "lowPass": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "テクニック +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 4
           }
         },
         {
           "source_boost_id": 9,
           "slot_index": 2,
-          "stat_name": "Aerial +2",
-          "bonus": null,
+          "stat_name": "Header",
+          "bonus": 1,
           "stats": {
-            "finishing": 2,
-            "heading": 2,
-            "physicalContact": 2,
-            "jump": 2
+            "heading": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "エアリアル +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 9
           }
         }
       ],
@@ -5261,37 +5091,27 @@
           {
             "source_boost_id": 4,
             "slot_index": 1,
-            "stat_name": "Technique +2",
-            "bonus": null,
+            "stat_name": "Low Pass",
+            "bonus": 1,
             "stats": {
-              "ballControl": 2,
-              "dribbling": 2,
-              "tightPossession": 2,
-              "lowPass": 2
+              "lowPass": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "テクニック +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 4
             }
           },
           {
             "source_boost_id": 9,
             "slot_index": 2,
-            "stat_name": "Aerial +2",
-            "bonus": null,
+            "stat_name": "Header",
+            "bonus": 1,
             "stats": {
-              "finishing": 2,
-              "heading": 2,
-              "physicalContact": 2,
-              "jump": 2
+              "heading": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "エアリアル +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 9
             }
           }
         ],
@@ -5312,7 +5132,8 @@
           "QuickCounter": 88,
           "LongBallCounter": 55,
           "OutWide": 68,
-          "LongBall": 61
+          "LongBall": 61,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           4,
@@ -5322,7 +5143,130 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
+    },
+    {
+      "source": "efhub",
+      "source_coach_id": "17607218430302",
+      "source_url": "https://efhub.com/data/managers.json",
+      "source_card_image_url": "https://efimg.com/efootballhub22/images/coach_cards/17607218430302.png",
+      "source_version": "efhub-managers-2026",
+      "coach_name": "Ronald Koeman",
+      "coach_name_ja": "ロナルド クーマン",
+      "category": "EFHub Manager",
+      "pack_type": "Special",
+      "playing_style_competence": {
+        "possesso_palla": 60,
+        "contropiede_veloce": 65,
+        "contrattacco": 89,
+        "vie_laterali": 89,
+        "passaggio_lungo": 69
+      },
+      "stat_boosters": [
+        {
+          "source_boost_id": 14,
+          "slot_index": 1,
+          "stat_name": "Kicking Power",
+          "bonus": 1,
+          "stats": {
+            "kickingPower": 1
+          },
+          "source": "efhub-manager-ability",
+          "metadata": {
+            "ability_id": 14
+          }
+        },
+        {
+          "source_boost_id": 19,
+          "slot_index": 2,
+          "stat_name": "Jump",
+          "bonus": 1,
+          "stats": {
+            "jump": 1
+          },
+          "source": "efhub-manager-ability",
+          "metadata": {
+            "ability_id": 19
+          }
+        }
+      ],
+      "boost_ids": [
+        14,
+        19
+      ],
+      "connection": null,
+      "photo_slots": {
+        "catalog_card": "https://efimg.com/efootballhub22/images/coach_cards/17607218430302.png"
+      },
+      "coach_payload": {
+        "coach_name": "Ronald Koeman",
+        "category": "EFHub Manager",
+        "pack_type": "Special",
+        "playing_style_competence": {
+          "possesso_palla": 60,
+          "contropiede_veloce": 65,
+          "contrattacco": 89,
+          "vie_laterali": 89,
+          "passaggio_lungo": 69
+        },
+        "training_affinity_description": null,
+        "stat_boosters": [
+          {
+            "source_boost_id": 14,
+            "slot_index": 1,
+            "stat_name": "Kicking Power",
+            "bonus": 1,
+            "stats": {
+              "kickingPower": 1
+            },
+            "source": "efhub-manager-ability",
+            "metadata": {
+              "ability_id": 14
+            }
+          },
+          {
+            "source_boost_id": 19,
+            "slot_index": 2,
+            "stat_name": "Jump",
+            "bonus": 1,
+            "stats": {
+              "jump": 1
+            },
+            "source": "efhub-manager-ability",
+            "metadata": {
+              "ability_id": 19
+            }
+          }
+        ],
+        "connection": null,
+        "photo_slots": {
+          "catalog_card": "https://efimg.com/efootballhub22/images/coach_cards/17607218430302.png"
+        },
+        "source_catalog": {
+          "catalog": "coach_catalog",
+          "source": "efhub",
+          "source_coach_id": "17607218430302",
+          "source_card_image_url": "https://efimg.com/efootballhub22/images/coach_cards/17607218430302.png"
+        }
+      },
+      "metadata": {
+        "raw_skills": {
+          "PossessionGame": 60,
+          "QuickCounter": 65,
+          "LongBallCounter": 89,
+          "OutWide": 89,
+          "LongBall": 69,
+          "OverLoad": 0
+        },
+        "raw_boost_ids": [
+          14,
+          19
+        ],
+        "source_note": "EFHub manager data is exposed by the player builder manager selector."
+      },
+      "catalog_ready": true,
+      "needs_review": false,
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -5345,41 +5289,27 @@
         {
           "source_boost_id": 15,
           "slot_index": 1,
-          "stat_name": "Total Package +3",
-          "bonus": null,
+          "stat_name": "Speed",
+          "bonus": 1,
           "stats": {
-            "offensiveAwareness": 3,
-            "ballControl": 3,
-            "dribbling": 3,
-            "tightPossession": 3,
-            "lowPass": 3,
-            "loftedPass": 3,
-            "finishing": 3,
-            "setPieceTaking": 3,
-            "curl": 3,
-            "heading": 3,
-            "defensiveAwareness": 3,
-            "trackingBack": 3,
-            "ballWinning": 3,
-            "aggression": 3,
-            "kickingPower": 3,
-            "speed": 3,
-            "acceleration": 3,
-            "balance": 3,
-            "physicalContact": 3,
-            "jump": 3,
-            "gkAwareness": 3,
-            "gkCatching": 3,
-            "gkClearing": 3,
-            "gkReflexes": 3,
-            "gkReach": 3,
-            "stamina": 3
+            "speed": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "トータルパッケージ +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 15
+          }
+        },
+        {
+          "source_boost_id": 0,
+          "slot_index": 2,
+          "stat_name": "Offensive Awareness",
+          "bonus": 1,
+          "stats": {
+            "offensiveAwareness": 1
+          },
+          "source": "efhub-manager-ability",
+          "metadata": {
+            "ability_id": 0
           }
         }
       ],
@@ -5407,41 +5337,27 @@
           {
             "source_boost_id": 15,
             "slot_index": 1,
-            "stat_name": "Total Package +3",
-            "bonus": null,
+            "stat_name": "Speed",
+            "bonus": 1,
             "stats": {
-              "offensiveAwareness": 3,
-              "ballControl": 3,
-              "dribbling": 3,
-              "tightPossession": 3,
-              "lowPass": 3,
-              "loftedPass": 3,
-              "finishing": 3,
-              "setPieceTaking": 3,
-              "curl": 3,
-              "heading": 3,
-              "defensiveAwareness": 3,
-              "trackingBack": 3,
-              "ballWinning": 3,
-              "aggression": 3,
-              "kickingPower": 3,
-              "speed": 3,
-              "acceleration": 3,
-              "balance": 3,
-              "physicalContact": 3,
-              "jump": 3,
-              "gkAwareness": 3,
-              "gkCatching": 3,
-              "gkClearing": 3,
-              "gkReflexes": 3,
-              "gkReach": 3,
-              "stamina": 3
+              "speed": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "トータルパッケージ +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 15
+            }
+          },
+          {
+            "source_boost_id": 0,
+            "slot_index": 2,
+            "stat_name": "Offensive Awareness",
+            "bonus": 1,
+            "stats": {
+              "offensiveAwareness": 1
+            },
+            "source": "efhub-manager-ability",
+            "metadata": {
+              "ability_id": 0
             }
           }
         ],
@@ -5462,7 +5378,8 @@
           "QuickCounter": 88,
           "LongBallCounter": 54,
           "OutWide": 43,
-          "LongBall": 38
+          "LongBall": 38,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           15,
@@ -5472,7 +5389,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -5495,37 +5412,27 @@
         {
           "source_boost_id": 18,
           "slot_index": 1,
-          "stat_name": "Technique +3",
-          "bonus": null,
+          "stat_name": "Physical Contact",
+          "bonus": 1,
           "stats": {
-            "ballControl": 3,
-            "dribbling": 3,
-            "tightPossession": 3,
-            "lowPass": 3
+            "physicalContact": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "テクニック +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 18
           }
         },
         {
           "source_boost_id": 5,
           "slot_index": 2,
-          "stat_name": "Defending +2",
-          "bonus": null,
+          "stat_name": "Lofted Pass",
+          "bonus": 1,
           "stats": {
-            "defensiveAwareness": 2,
-            "ballWinning": 2,
-            "acceleration": 2,
-            "jump": 2
+            "loftedPass": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "ディフェンス +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 5
           }
         }
       ],
@@ -5553,37 +5460,27 @@
           {
             "source_boost_id": 18,
             "slot_index": 1,
-            "stat_name": "Technique +3",
-            "bonus": null,
+            "stat_name": "Physical Contact",
+            "bonus": 1,
             "stats": {
-              "ballControl": 3,
-              "dribbling": 3,
-              "tightPossession": 3,
-              "lowPass": 3
+              "physicalContact": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "テクニック +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 18
             }
           },
           {
             "source_boost_id": 5,
             "slot_index": 2,
-            "stat_name": "Defending +2",
-            "bonus": null,
+            "stat_name": "Lofted Pass",
+            "bonus": 1,
             "stats": {
-              "defensiveAwareness": 2,
-              "ballWinning": 2,
-              "acceleration": 2,
-              "jump": 2
+              "loftedPass": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "ディフェンス +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 5
             }
           }
         ],
@@ -5604,7 +5501,8 @@
           "QuickCounter": 81,
           "LongBallCounter": 54,
           "OutWide": 89,
-          "LongBall": 46
+          "LongBall": 46,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           18,
@@ -5614,7 +5512,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -5637,19 +5535,27 @@
         {
           "source_boost_id": 1,
           "slot_index": 1,
-          "stat_name": "Goalkeeping +2",
-          "bonus": null,
+          "stat_name": "Ball Control",
+          "bonus": 1,
           "stats": {
-            "gkAwareness": 2,
-            "gkCatching": 2,
-            "gkClearing": 2,
-            "gkReflexes": 2
+            "ballControl": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "ゴールキーピング +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 1
+          }
+        },
+        {
+          "source_boost_id": 0,
+          "slot_index": 2,
+          "stat_name": "Offensive Awareness",
+          "bonus": 1,
+          "stats": {
+            "offensiveAwareness": 1
+          },
+          "source": "efhub-manager-ability",
+          "metadata": {
+            "ability_id": 0
           }
         }
       ],
@@ -5677,19 +5583,27 @@
           {
             "source_boost_id": 1,
             "slot_index": 1,
-            "stat_name": "Goalkeeping +2",
-            "bonus": null,
+            "stat_name": "Ball Control",
+            "bonus": 1,
             "stats": {
-              "gkAwareness": 2,
-              "gkCatching": 2,
-              "gkClearing": 2,
-              "gkReflexes": 2
+              "ballControl": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "ゴールキーピング +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 1
+            }
+          },
+          {
+            "source_boost_id": 0,
+            "slot_index": 2,
+            "stat_name": "Offensive Awareness",
+            "bonus": 1,
+            "stats": {
+              "offensiveAwareness": 1
+            },
+            "source": "efhub-manager-ability",
+            "metadata": {
+              "ability_id": 0
             }
           }
         ],
@@ -5710,7 +5624,8 @@
           "QuickCounter": 89,
           "LongBallCounter": 58,
           "OutWide": 80,
-          "LongBall": 69
+          "LongBall": 69,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           1,
@@ -5720,7 +5635,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -5743,19 +5658,14 @@
         {
           "source_boost_id": 25,
           "slot_index": 1,
-          "stat_name": "Shutdown +2",
-          "bonus": null,
+          "stat_name": "Stamina",
+          "bonus": 1,
           "stats": {
-            "defensiveAwareness": 2,
-            "trackingBack": 2,
-            "ballWinning": 2,
-            "speed": 2
+            "stamina": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "シャットダウン +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 25
           }
         }
       ],
@@ -5783,19 +5693,14 @@
           {
             "source_boost_id": 25,
             "slot_index": 1,
-            "stat_name": "Shutdown +2",
-            "bonus": null,
+            "stat_name": "Stamina",
+            "bonus": 1,
             "stats": {
-              "defensiveAwareness": 2,
-              "trackingBack": 2,
-              "ballWinning": 2,
-              "speed": 2
+              "stamina": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "シャットダウン +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 25
             }
           }
         ],
@@ -5816,7 +5721,8 @@
           "QuickCounter": 85,
           "LongBallCounter": 70,
           "OutWide": 64,
-          "LongBall": 29
+          "LongBall": 29,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           25,
@@ -5826,7 +5732,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -5849,59 +5755,27 @@
         {
           "source_boost_id": 15,
           "slot_index": 1,
-          "stat_name": "Total Package +3",
-          "bonus": null,
+          "stat_name": "Speed",
+          "bonus": 1,
           "stats": {
-            "offensiveAwareness": 3,
-            "ballControl": 3,
-            "dribbling": 3,
-            "tightPossession": 3,
-            "lowPass": 3,
-            "loftedPass": 3,
-            "finishing": 3,
-            "setPieceTaking": 3,
-            "curl": 3,
-            "heading": 3,
-            "defensiveAwareness": 3,
-            "trackingBack": 3,
-            "ballWinning": 3,
-            "aggression": 3,
-            "kickingPower": 3,
-            "speed": 3,
-            "acceleration": 3,
-            "balance": 3,
-            "physicalContact": 3,
-            "jump": 3,
-            "gkAwareness": 3,
-            "gkCatching": 3,
-            "gkClearing": 3,
-            "gkReflexes": 3,
-            "gkReach": 3,
-            "stamina": 3
+            "speed": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "トータルパッケージ +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 15
           }
         },
         {
           "source_boost_id": 6,
           "slot_index": 2,
-          "stat_name": "Agility +2",
-          "bonus": null,
+          "stat_name": "Finishing",
+          "bonus": 1,
           "stats": {
-            "speed": 2,
-            "acceleration": 2,
-            "balance": 2,
-            "stamina": 2
+            "finishing": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "アジリティ +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 6
           }
         }
       ],
@@ -5929,59 +5803,27 @@
           {
             "source_boost_id": 15,
             "slot_index": 1,
-            "stat_name": "Total Package +3",
-            "bonus": null,
+            "stat_name": "Speed",
+            "bonus": 1,
             "stats": {
-              "offensiveAwareness": 3,
-              "ballControl": 3,
-              "dribbling": 3,
-              "tightPossession": 3,
-              "lowPass": 3,
-              "loftedPass": 3,
-              "finishing": 3,
-              "setPieceTaking": 3,
-              "curl": 3,
-              "heading": 3,
-              "defensiveAwareness": 3,
-              "trackingBack": 3,
-              "ballWinning": 3,
-              "aggression": 3,
-              "kickingPower": 3,
-              "speed": 3,
-              "acceleration": 3,
-              "balance": 3,
-              "physicalContact": 3,
-              "jump": 3,
-              "gkAwareness": 3,
-              "gkCatching": 3,
-              "gkClearing": 3,
-              "gkReflexes": 3,
-              "gkReach": 3,
-              "stamina": 3
+              "speed": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "トータルパッケージ +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 15
             }
           },
           {
             "source_boost_id": 6,
             "slot_index": 2,
-            "stat_name": "Agility +2",
-            "bonus": null,
+            "stat_name": "Finishing",
+            "bonus": 1,
             "stats": {
-              "speed": 2,
-              "acceleration": 2,
-              "balance": 2,
-              "stamina": 2
+              "finishing": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "アジリティ +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 6
             }
           }
         ],
@@ -6002,7 +5844,8 @@
           "QuickCounter": 78,
           "LongBallCounter": 88,
           "OutWide": 51,
-          "LongBall": 43
+          "LongBall": 43,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           15,
@@ -6012,7 +5855,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -6035,37 +5878,27 @@
         {
           "source_boost_id": 9,
           "slot_index": 1,
-          "stat_name": "Aerial +2",
-          "bonus": null,
+          "stat_name": "Header",
+          "bonus": 1,
           "stats": {
-            "finishing": 2,
-            "heading": 2,
-            "physicalContact": 2,
-            "jump": 2
+            "heading": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "エアリアル +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 9
           }
         },
         {
           "source_boost_id": 18,
           "slot_index": 2,
-          "stat_name": "Technique +3",
-          "bonus": null,
+          "stat_name": "Physical Contact",
+          "bonus": 1,
           "stats": {
-            "ballControl": 3,
-            "dribbling": 3,
-            "tightPossession": 3,
-            "lowPass": 3
+            "physicalContact": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "テクニック +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 18
           }
         }
       ],
@@ -6093,37 +5926,27 @@
           {
             "source_boost_id": 9,
             "slot_index": 1,
-            "stat_name": "Aerial +2",
-            "bonus": null,
+            "stat_name": "Header",
+            "bonus": 1,
             "stats": {
-              "finishing": 2,
-              "heading": 2,
-              "physicalContact": 2,
-              "jump": 2
+              "heading": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "エアリアル +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 9
             }
           },
           {
             "source_boost_id": 18,
             "slot_index": 2,
-            "stat_name": "Technique +3",
-            "bonus": null,
+            "stat_name": "Physical Contact",
+            "bonus": 1,
             "stats": {
-              "ballControl": 3,
-              "dribbling": 3,
-              "tightPossession": 3,
-              "lowPass": 3
+              "physicalContact": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "テクニック +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 18
             }
           }
         ],
@@ -6144,7 +5967,8 @@
           "QuickCounter": 56,
           "LongBallCounter": 64,
           "OutWide": 89,
-          "LongBall": 80
+          "LongBall": 80,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           9,
@@ -6154,7 +5978,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -6177,19 +6001,14 @@
         {
           "source_boost_id": 12,
           "slot_index": 1,
-          "stat_name": "Son of God +4",
-          "bonus": null,
+          "stat_name": "Tackling",
+          "bonus": 1,
           "stats": {
-            "dribbling": 4,
-            "lowPass": 4,
-            "finishing": 4,
-            "kickingPower": 4
+            "trackingBack": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "神の子 +4",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 12
           }
         }
       ],
@@ -6217,19 +6036,14 @@
           {
             "source_boost_id": 12,
             "slot_index": 1,
-            "stat_name": "Son of God +4",
-            "bonus": null,
+            "stat_name": "Tackling",
+            "bonus": 1,
             "stats": {
-              "dribbling": 4,
-              "lowPass": 4,
-              "finishing": 4,
-              "kickingPower": 4
+              "trackingBack": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "神の子 +4",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 12
             }
           }
         ],
@@ -6250,7 +6064,8 @@
           "QuickCounter": 85,
           "LongBallCounter": 59,
           "OutWide": 75,
-          "LongBall": 45
+          "LongBall": 45,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           12,
@@ -6260,7 +6075,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -6269,7 +6084,7 @@
       "source_card_image_url": "https://efimg.com/efootballhub22/images/coach_cards/17595138936066.png",
       "source_version": "efhub-managers-2026",
       "coach_name": "Steven Gerrard",
-      "coach_name_ja": "\u0001スティーヴン ジェラード",
+      "coach_name_ja": "AeOCueODhuOCo+ODvOODtOODsyDjgrjjgqfjg6njg7zjg4k=",
       "category": "EFHub Manager",
       "pack_type": "Special",
       "playing_style_competence": {
@@ -6283,19 +6098,14 @@
         {
           "source_boost_id": 3,
           "slot_index": 1,
-          "stat_name": "Passing +2",
-          "bonus": null,
+          "stat_name": "Dribbling",
+          "bonus": 1,
           "stats": {
-            "lowPass": 2,
-            "loftedPass": 2,
-            "curl": 2,
-            "kickingPower": 2
+            "dribbling": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "パス +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 3
           }
         }
       ],
@@ -6323,19 +6133,14 @@
           {
             "source_boost_id": 3,
             "slot_index": 1,
-            "stat_name": "Passing +2",
-            "bonus": null,
+            "stat_name": "Dribbling",
+            "bonus": 1,
             "stats": {
-              "lowPass": 2,
-              "loftedPass": 2,
-              "curl": 2,
-              "kickingPower": 2
+              "dribbling": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "パス +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 3
             }
           }
         ],
@@ -6356,7 +6161,8 @@
           "QuickCounter": 35,
           "LongBallCounter": 55,
           "OutWide": 68,
-          "LongBall": 88
+          "LongBall": 88,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           3,
@@ -6366,7 +6172,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -6389,19 +6195,14 @@
         {
           "source_boost_id": 18,
           "slot_index": 1,
-          "stat_name": "Technique +3",
-          "bonus": null,
+          "stat_name": "Physical Contact",
+          "bonus": 1,
           "stats": {
-            "ballControl": 3,
-            "dribbling": 3,
-            "tightPossession": 3,
-            "lowPass": 3
+            "physicalContact": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "テクニック +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 18
           }
         }
       ],
@@ -6429,19 +6230,14 @@
           {
             "source_boost_id": 18,
             "slot_index": 1,
-            "stat_name": "Technique +3",
-            "bonus": null,
+            "stat_name": "Physical Contact",
+            "bonus": 1,
             "stats": {
-              "ballControl": 3,
-              "dribbling": 3,
-              "tightPossession": 3,
-              "lowPass": 3
+              "physicalContact": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "テクニック +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 18
             }
           }
         ],
@@ -6462,7 +6258,8 @@
           "QuickCounter": 45,
           "LongBallCounter": 70,
           "OutWide": 85,
-          "LongBall": 24
+          "LongBall": 24,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           18,
@@ -6472,7 +6269,130 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
+    },
+    {
+      "source": "efhub",
+      "source_coach_id": "17606413224402",
+      "source_url": "https://efhub.com/data/managers.json",
+      "source_card_image_url": "https://efimg.com/efootballhub22/images/coach_cards/17606413224402.png",
+      "source_version": "efhub-managers-2026",
+      "coach_name": "Thomas Tuchel",
+      "coach_name_ja": "トーマス トゥヘル",
+      "category": "EFHub Manager",
+      "pack_type": "Special",
+      "playing_style_competence": {
+        "possesso_palla": 90,
+        "contropiede_veloce": 89,
+        "contrattacco": 59,
+        "vie_laterali": 70,
+        "passaggio_lungo": 58
+      },
+      "stat_boosters": [
+        {
+          "source_boost_id": 4,
+          "slot_index": 1,
+          "stat_name": "Low Pass",
+          "bonus": 1,
+          "stats": {
+            "lowPass": 1
+          },
+          "source": "efhub-manager-ability",
+          "metadata": {
+            "ability_id": 4
+          }
+        },
+        {
+          "source_boost_id": 25,
+          "slot_index": 2,
+          "stat_name": "Stamina",
+          "bonus": 1,
+          "stats": {
+            "stamina": 1
+          },
+          "source": "efhub-manager-ability",
+          "metadata": {
+            "ability_id": 25
+          }
+        }
+      ],
+      "boost_ids": [
+        4,
+        25
+      ],
+      "connection": null,
+      "photo_slots": {
+        "catalog_card": "https://efimg.com/efootballhub22/images/coach_cards/17606413224402.png"
+      },
+      "coach_payload": {
+        "coach_name": "Thomas Tuchel",
+        "category": "EFHub Manager",
+        "pack_type": "Special",
+        "playing_style_competence": {
+          "possesso_palla": 90,
+          "contropiede_veloce": 89,
+          "contrattacco": 59,
+          "vie_laterali": 70,
+          "passaggio_lungo": 58
+        },
+        "training_affinity_description": null,
+        "stat_boosters": [
+          {
+            "source_boost_id": 4,
+            "slot_index": 1,
+            "stat_name": "Low Pass",
+            "bonus": 1,
+            "stats": {
+              "lowPass": 1
+            },
+            "source": "efhub-manager-ability",
+            "metadata": {
+              "ability_id": 4
+            }
+          },
+          {
+            "source_boost_id": 25,
+            "slot_index": 2,
+            "stat_name": "Stamina",
+            "bonus": 1,
+            "stats": {
+              "stamina": 1
+            },
+            "source": "efhub-manager-ability",
+            "metadata": {
+              "ability_id": 25
+            }
+          }
+        ],
+        "connection": null,
+        "photo_slots": {
+          "catalog_card": "https://efimg.com/efootballhub22/images/coach_cards/17606413224402.png"
+        },
+        "source_catalog": {
+          "catalog": "coach_catalog",
+          "source": "efhub",
+          "source_coach_id": "17606413224402",
+          "source_card_image_url": "https://efimg.com/efootballhub22/images/coach_cards/17606413224402.png"
+        }
+      },
+      "metadata": {
+        "raw_skills": {
+          "PossessionGame": 90,
+          "QuickCounter": 89,
+          "LongBallCounter": 59,
+          "OutWide": 70,
+          "LongBall": 58,
+          "OverLoad": 0
+        },
+        "raw_boost_ids": [
+          4,
+          25
+        ],
+        "source_note": "EFHub manager data is exposed by the player builder manager selector."
+      },
+      "catalog_ready": true,
+      "needs_review": false,
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -6495,19 +6415,14 @@
         {
           "source_boost_id": 25,
           "slot_index": 1,
-          "stat_name": "Shutdown +2",
-          "bonus": null,
+          "stat_name": "Stamina",
+          "bonus": 1,
           "stats": {
-            "defensiveAwareness": 2,
-            "trackingBack": 2,
-            "ballWinning": 2,
-            "speed": 2
+            "stamina": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "シャットダウン +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 25
           }
         }
       ],
@@ -6535,19 +6450,14 @@
           {
             "source_boost_id": 25,
             "slot_index": 1,
-            "stat_name": "Shutdown +2",
-            "bonus": null,
+            "stat_name": "Stamina",
+            "bonus": 1,
             "stats": {
-              "defensiveAwareness": 2,
-              "trackingBack": 2,
-              "ballWinning": 2,
-              "speed": 2
+              "stamina": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "シャットダウン +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 25
             }
           }
         ],
@@ -6568,7 +6478,8 @@
           "QuickCounter": 45,
           "LongBallCounter": 74,
           "OutWide": 88,
-          "LongBall": 57
+          "LongBall": 57,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           25,
@@ -6578,7 +6489,130 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
+    },
+    {
+      "source": "efhub",
+      "source_coach_id": "17607755300893",
+      "source_url": "https://efhub.com/data/managers.json",
+      "source_card_image_url": "https://efimg.com/efootballhub22/images/coach_cards/17607755300893.png",
+      "source_version": "efhub-managers-2026",
+      "coach_name": "V. Montella",
+      "coach_name_ja": "ヴィンチェンツォ モンテッラ",
+      "category": "EFHub Manager",
+      "pack_type": "Special",
+      "playing_style_competence": {
+        "possesso_palla": 61,
+        "contropiede_veloce": 89,
+        "contrattacco": 58,
+        "vie_laterali": 89,
+        "passaggio_lungo": 68
+      },
+      "stat_boosters": [
+        {
+          "source_boost_id": 16,
+          "slot_index": 1,
+          "stat_name": "Acceleration",
+          "bonus": 1,
+          "stats": {
+            "acceleration": 1
+          },
+          "source": "efhub-manager-ability",
+          "metadata": {
+            "ability_id": 16
+          }
+        },
+        {
+          "source_boost_id": 2,
+          "slot_index": 2,
+          "stat_name": "Tight Possession",
+          "bonus": 1,
+          "stats": {
+            "tightPossession": 1
+          },
+          "source": "efhub-manager-ability",
+          "metadata": {
+            "ability_id": 2
+          }
+        }
+      ],
+      "boost_ids": [
+        16,
+        2
+      ],
+      "connection": null,
+      "photo_slots": {
+        "catalog_card": "https://efimg.com/efootballhub22/images/coach_cards/17607755300893.png"
+      },
+      "coach_payload": {
+        "coach_name": "V. Montella",
+        "category": "EFHub Manager",
+        "pack_type": "Special",
+        "playing_style_competence": {
+          "possesso_palla": 61,
+          "contropiede_veloce": 89,
+          "contrattacco": 58,
+          "vie_laterali": 89,
+          "passaggio_lungo": 68
+        },
+        "training_affinity_description": null,
+        "stat_boosters": [
+          {
+            "source_boost_id": 16,
+            "slot_index": 1,
+            "stat_name": "Acceleration",
+            "bonus": 1,
+            "stats": {
+              "acceleration": 1
+            },
+            "source": "efhub-manager-ability",
+            "metadata": {
+              "ability_id": 16
+            }
+          },
+          {
+            "source_boost_id": 2,
+            "slot_index": 2,
+            "stat_name": "Tight Possession",
+            "bonus": 1,
+            "stats": {
+              "tightPossession": 1
+            },
+            "source": "efhub-manager-ability",
+            "metadata": {
+              "ability_id": 2
+            }
+          }
+        ],
+        "connection": null,
+        "photo_slots": {
+          "catalog_card": "https://efimg.com/efootballhub22/images/coach_cards/17607755300893.png"
+        },
+        "source_catalog": {
+          "catalog": "coach_catalog",
+          "source": "efhub",
+          "source_coach_id": "17607755300893",
+          "source_card_image_url": "https://efimg.com/efootballhub22/images/coach_cards/17607755300893.png"
+        }
+      },
+      "metadata": {
+        "raw_skills": {
+          "PossessionGame": 61,
+          "QuickCounter": 89,
+          "LongBallCounter": 58,
+          "OutWide": 89,
+          "LongBall": 68,
+          "OverLoad": 0
+        },
+        "raw_boost_ids": [
+          16,
+          2
+        ],
+        "source_note": "EFHub manager data is exposed by the player builder manager selector."
+      },
+      "catalog_ready": true,
+      "needs_review": false,
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -6601,37 +6635,27 @@
         {
           "source_boost_id": 16,
           "slot_index": 1,
-          "stat_name": "Passing +3",
-          "bonus": null,
+          "stat_name": "Acceleration",
+          "bonus": 1,
           "stats": {
-            "lowPass": 3,
-            "loftedPass": 3,
-            "curl": 3,
-            "kickingPower": 3
+            "acceleration": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "パス +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 16
           }
         },
         {
           "source_boost_id": 14,
           "slot_index": 2,
-          "stat_name": "Physicality +2",
-          "bonus": null,
+          "stat_name": "Kicking Power",
+          "bonus": 1,
           "stats": {
-            "balance": 2,
-            "physicalContact": 2,
-            "jump": 2,
-            "stamina": 2
+            "kickingPower": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "フィジカル +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 14
           }
         }
       ],
@@ -6659,37 +6683,27 @@
           {
             "source_boost_id": 16,
             "slot_index": 1,
-            "stat_name": "Passing +3",
-            "bonus": null,
+            "stat_name": "Acceleration",
+            "bonus": 1,
             "stats": {
-              "lowPass": 3,
-              "loftedPass": 3,
-              "curl": 3,
-              "kickingPower": 3
+              "acceleration": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "パス +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 16
             }
           },
           {
             "source_boost_id": 14,
             "slot_index": 2,
-            "stat_name": "Physicality +2",
-            "bonus": null,
+            "stat_name": "Kicking Power",
+            "bonus": 1,
             "stats": {
-              "balance": 2,
-              "physicalContact": 2,
-              "jump": 2,
-              "stamina": 2
+              "kickingPower": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "フィジカル +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 14
             }
           }
         ],
@@ -6710,7 +6724,8 @@
           "QuickCounter": 56,
           "LongBallCounter": 58,
           "OutWide": 76,
-          "LongBall": 54
+          "LongBall": 54,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           16,
@@ -6720,7 +6735,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -6743,19 +6758,14 @@
         {
           "source_boost_id": 16,
           "slot_index": 1,
-          "stat_name": "Passing +3",
-          "bonus": null,
+          "stat_name": "Acceleration",
+          "bonus": 1,
           "stats": {
-            "lowPass": 3,
-            "loftedPass": 3,
-            "curl": 3,
-            "kickingPower": 3
+            "acceleration": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "パス +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 16
           }
         }
       ],
@@ -6783,19 +6793,14 @@
           {
             "source_boost_id": 16,
             "slot_index": 1,
-            "stat_name": "Passing +3",
-            "bonus": null,
+            "stat_name": "Acceleration",
+            "bonus": 1,
             "stats": {
-              "lowPass": 3,
-              "loftedPass": 3,
-              "curl": 3,
-              "kickingPower": 3
+              "acceleration": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "パス +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 16
             }
           }
         ],
@@ -6816,7 +6821,8 @@
           "QuickCounter": 88,
           "LongBallCounter": 35,
           "OutWide": 51,
-          "LongBall": 28
+          "LongBall": 28,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           16,
@@ -6826,7 +6832,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -6849,19 +6855,14 @@
         {
           "source_boost_id": 16,
           "slot_index": 1,
-          "stat_name": "Passing +3",
-          "bonus": null,
+          "stat_name": "Acceleration",
+          "bonus": 1,
           "stats": {
-            "lowPass": 3,
-            "loftedPass": 3,
-            "curl": 3,
-            "kickingPower": 3
+            "acceleration": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "パス +3",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 16
           }
         }
       ],
@@ -6889,19 +6890,14 @@
           {
             "source_boost_id": 16,
             "slot_index": 1,
-            "stat_name": "Passing +3",
-            "bonus": null,
+            "stat_name": "Acceleration",
+            "bonus": 1,
             "stats": {
-              "lowPass": 3,
-              "loftedPass": 3,
-              "curl": 3,
-              "kickingPower": 3
+              "acceleration": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "パス +3",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 16
             }
           }
         ],
@@ -6922,7 +6918,8 @@
           "QuickCounter": 88,
           "LongBallCounter": 46,
           "OutWide": 59,
-          "LongBall": 42
+          "LongBall": 42,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           16,
@@ -6932,7 +6929,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -6955,37 +6952,27 @@
         {
           "source_boost_id": 1,
           "slot_index": 1,
-          "stat_name": "Goalkeeping +2",
-          "bonus": null,
+          "stat_name": "Ball Control",
+          "bonus": 1,
           "stats": {
-            "gkAwareness": 2,
-            "gkCatching": 2,
-            "gkClearing": 2,
-            "gkReflexes": 2
+            "ballControl": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "ゴールキーピング +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 1
           }
         },
         {
           "source_boost_id": 6,
           "slot_index": 2,
-          "stat_name": "Agility +2",
-          "bonus": null,
+          "stat_name": "Finishing",
+          "bonus": 1,
           "stats": {
-            "speed": 2,
-            "acceleration": 2,
-            "balance": 2,
-            "stamina": 2
+            "finishing": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "アジリティ +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 6
           }
         }
       ],
@@ -7013,37 +7000,27 @@
           {
             "source_boost_id": 1,
             "slot_index": 1,
-            "stat_name": "Goalkeeping +2",
-            "bonus": null,
+            "stat_name": "Ball Control",
+            "bonus": 1,
             "stats": {
-              "gkAwareness": 2,
-              "gkCatching": 2,
-              "gkClearing": 2,
-              "gkReflexes": 2
+              "ballControl": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "ゴールキーピング +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 1
             }
           },
           {
             "source_boost_id": 6,
             "slot_index": 2,
-            "stat_name": "Agility +2",
-            "bonus": null,
+            "stat_name": "Finishing",
+            "bonus": 1,
             "stats": {
-              "speed": 2,
-              "acceleration": 2,
-              "balance": 2,
-              "stamina": 2
+              "finishing": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "アジリティ +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 6
             }
           }
         ],
@@ -7064,7 +7041,8 @@
           "QuickCounter": 89,
           "LongBallCounter": 54,
           "OutWide": 89,
-          "LongBall": 56
+          "LongBall": 56,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           1,
@@ -7074,7 +7052,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -7097,19 +7075,14 @@
         {
           "source_boost_id": 1,
           "slot_index": 1,
-          "stat_name": "Goalkeeping +2",
-          "bonus": null,
+          "stat_name": "Ball Control",
+          "bonus": 1,
           "stats": {
-            "gkAwareness": 2,
-            "gkCatching": 2,
-            "gkClearing": 2,
-            "gkReflexes": 2
+            "ballControl": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "ゴールキーピング +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 1
           }
         }
       ],
@@ -7137,19 +7110,14 @@
           {
             "source_boost_id": 1,
             "slot_index": 1,
-            "stat_name": "Goalkeeping +2",
-            "bonus": null,
+            "stat_name": "Ball Control",
+            "bonus": 1,
             "stats": {
-              "gkAwareness": 2,
-              "gkCatching": 2,
-              "gkClearing": 2,
-              "gkReflexes": 2
+              "ballControl": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "ゴールキーピング +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 1
             }
           }
         ],
@@ -7170,7 +7138,8 @@
           "QuickCounter": 70,
           "LongBallCounter": 18,
           "OutWide": 42,
-          "LongBall": 25
+          "LongBall": 25,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           1,
@@ -7180,7 +7149,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     },
     {
       "source": "efhub",
@@ -7203,19 +7172,14 @@
         {
           "source_boost_id": 3,
           "slot_index": 1,
-          "stat_name": "Passing +2",
-          "bonus": null,
+          "stat_name": "Dribbling",
+          "bonus": 1,
           "stats": {
-            "lowPass": 2,
-            "loftedPass": 2,
-            "curl": 2,
-            "kickingPower": 2
+            "dribbling": 1
           },
-          "source": "efhub",
+          "source": "efhub-manager-ability",
           "metadata": {
-            "japName": "パス +2",
-            "version": 1,
-            "slot": "left"
+            "ability_id": 3
           }
         }
       ],
@@ -7243,19 +7207,14 @@
           {
             "source_boost_id": 3,
             "slot_index": 1,
-            "stat_name": "Passing +2",
-            "bonus": null,
+            "stat_name": "Dribbling",
+            "bonus": 1,
             "stats": {
-              "lowPass": 2,
-              "loftedPass": 2,
-              "curl": 2,
-              "kickingPower": 2
+              "dribbling": 1
             },
-            "source": "efhub",
+            "source": "efhub-manager-ability",
             "metadata": {
-              "japName": "パス +2",
-              "version": 1,
-              "slot": "left"
+              "ability_id": 3
             }
           }
         ],
@@ -7276,7 +7235,8 @@
           "QuickCounter": 60,
           "LongBallCounter": 34,
           "OutWide": 75,
-          "LongBall": 20
+          "LongBall": 20,
+          "OverLoad": 0
         },
         "raw_boost_ids": [
           3,
@@ -7286,7 +7246,7 @@
       },
       "catalog_ready": true,
       "needs_review": false,
-      "last_source_sync_at": "2026-05-11T17:09:01.737230+00:00"
+      "last_source_sync_at": "2026-08-17T09:49:34.507935+00:00"
     }
   ]
 }

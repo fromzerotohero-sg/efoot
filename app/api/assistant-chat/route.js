@@ -30,35 +30,36 @@ const MAX_MESSAGE_LENGTH = 4000
 const MAX_CURRENT_PAGE_LENGTH = 500
 const DIAGNOSTIC_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000
 
-/** Messaggi errore API in doppia lingua (IT/EN) */
+/** Messaggi errore API in tripla lingua (IT/EN/ES) */
 const API_ERRORS = {
-  AUTH_REQUIRED: { it: 'Autenticazione richiesta.', en: 'Authentication required' },
-  AUTH_INVALID: { it: 'Autenticazione non valida o scaduta.', en: 'Invalid or expired authentication' },
-  BODY_INVALID: { it: 'Corpo della richiesta non valido.', en: 'Invalid request body.' },
-  MESSAGE_REQUIRED: { it: 'Il messaggio è obbligatorio.', en: 'Message is required.' },
-  MESSAGE_TOO_LONG: { it: 'Messaggio troppo lungo. Riduci il testo.', en: 'Message too long. Please shorten it.' },
-  RATE_LIMIT: { it: 'Troppe richieste. Riprova tra poco.', en: 'Rate limit exceeded. Please try again later.' },
-  CONFIG_MISSING: { it: 'Configurazione mancante.', en: 'Supabase configuration missing.' },
-  OPENAI_KEY_MISSING: { it: 'Chiave API OpenAI non configurata.', en: 'OpenAI API key not configured.' },
-  OPENAI_ERROR: { it: 'Errore nel servizio di risposta. Riprova.', en: 'Error calling AI service. Please try again.' },
-  GENERIC_ERROR: { it: 'Errore durante la generazione della risposta.', en: 'Error generating response.' }
+  AUTH_REQUIRED: { it: 'Autenticazione richiesta.', en: 'Authentication required', es: 'Autenticación requerida.' },
+  AUTH_INVALID: { it: 'Autenticazione non valida o scaduta.', en: 'Invalid or expired authentication', es: 'Token no válido o expirado.' },
+  BODY_INVALID: { it: 'Corpo della richiesta non valido.', en: 'Invalid request body.', es: 'Cuerpo de la solicitud no válido.' },
+  MESSAGE_REQUIRED: { it: 'Il messaggio è obbligatorio.', en: 'Message is required.', es: 'Mensaje requerido.' },
+  MESSAGE_TOO_LONG: { it: 'Messaggio troppo lungo. Riduci il testo.', en: 'Message too long. Please shorten it.', es: 'Mensaje demasiado largo. Acorta el texto.' },
+  RATE_LIMIT: { it: 'Troppe richieste. Riprova tra poco.', en: 'Rate limit exceeded. Please try again later.', es: 'Demasiadas solicitudes. Inténtalo de nuevo más tarde.' },
+  CONFIG_MISSING: { it: 'Configurazione mancante.', en: 'Supabase configuration missing.', es: 'Configuración faltante.' },
+  OPENAI_KEY_MISSING: { it: 'Chiave API OpenAI non configurata.', en: 'OpenAI API key not configured.', es: 'Clave API de OpenAI no configurada.' },
+  OPENAI_ERROR: { it: 'Errore nel servizio di risposta. Riprova.', en: 'Error calling AI service. Please try again.', es: 'Error en el servicio de respuesta. Inténtalo de nuevo.' },
+  GENERIC_ERROR: { it: 'Errore durante la generazione della risposta.', en: 'Error generating response.', es: 'Error al generar la respuesta.' }
 }
 
 /**
  * Lingua preferita da richiesta (header Accept-Language). Usato quando il body non è ancora parsato (401, 429).
  * @param {Request} req
- * @returns {'it'|'en'}
+ * @returns {'it'|'en'|'es'}
  */
 function getPreferredLanguageFromRequest(req) {
   const accept = req?.headers?.get?.('accept-language') || ''
+  if (accept.toLowerCase().startsWith('es') || accept.includes('es')) return 'es'
   if (accept.toLowerCase().startsWith('it') || accept.includes('it')) return 'it'
   return 'en'
 }
 
 /**
- * Messaggio errore API in lingua (IT o EN).
+ * Messaggio errore API in lingua (IT, EN o ES).
  * @param {string} key - Chiave in API_ERRORS (es. 'AUTH_REQUIRED', 'MESSAGE_REQUIRED')
- * @param {'it'|'en'} lang
+ * @param {'it'|'en'|'es'} lang
  * @returns {string}
  */
 function getApiError(key, lang) {
@@ -92,11 +93,19 @@ function getDefaultSuggestions(lang, currentPage = '') {
     { page: 'allenatori', q: ['What style fits my coach with my roster?', 'Do my game stats suit the players I have?', 'What priorities with this coach?'] },
     { page: '', q: ['Do my analysis stats match the roster I have?', 'Am I using commands (passing, shot, defence) in line with my roster\'s skills?', 'Based on matches and data, what should I work on first?'] }
   ]
-  const list = lang === 'en' ? en : it
+  const es = [
+    { page: 'gestione-formazione', q: ['¿Mis estadísticas de análisis se adaptan a mi plantilla?', '¿Uso pase y tiro de forma coherente con las habilidades de mis jugadores?', 'Según plantilla y partidos, ¿en qué debo trabajar primero?'] },
+    { page: 'match/new', q: ['¿Qué preparar para el próximo partido con mi plantilla?', '¿Qué prioridades en defensa y ataque con los jugadores que alineo?', '¿Cómo aprovechar al máximo las habilidades de la plantilla en el partido?'] },
+    { page: 'match/', q: ['¿Qué corregir tras este partido según cómo he jugado?', '¿Mis estadísticas (pase, tiro, defensa) van bien con la plantilla?', '¿Qué prioridades para los próximos partidos?'] },
+    { page: 'contromisure', q: ['¿Cómo contrarrestar formaciones agresivas con mi plantilla?', '¿Qué prioridades en defensa y ataque?', '¿Qué preparar en las jugadas a balón parado con mis jugadores?'] },
+    { page: 'allenatori', q: ['¿Qué estilo combinar con mi entrenador según la plantilla?', '¿Mis estadísticas de juego se adaptan a los jugadores que tengo?', '¿Qué prioridades con este entrenador?'] },
+    { page: '', q: ['¿Mis estadísticas de análisis se adaptan a mi plantilla?', '¿Uso los comandos (pase, tiro, defensa) de forma coherente con las habilidades de la plantilla?', 'Según partidos y datos, ¿en qué me conviene trabajar primero?'] }
+  ]
+  const list = lang === 'en' ? en : lang === 'es' ? es : it
   for (const { page: p, q } of list) {
     if (p && page.includes(p)) return q
   }
-  return (lang === 'en' ? en : it).find(x => x.page === '').q
+  return (lang === 'en' ? en : lang === 'es' ? es : it).find(x => x.page === '').q
 }
 
 /**
@@ -137,7 +146,9 @@ function sanitizeCoachOutput(content, lang = 'it') {
   if (!content || typeof content !== 'string') return content
   const markers = lang === 'en'
     ? ['i analyzed', 'i have analyzed', 'i cross-checked', 'i have cross']
-    : ['ho analizzato', 'ho incrociato', 'ho valutato']
+    : lang === 'es'
+      ? ['he analizado', 'he cruzado', 'he evaluado']
+      : ['ho analizzato', 'ho incrociato', 'ho valutato']
 
   const sentences = content.match(/[^.!?]+[.!?]?/g) || [content]
   const cleaned = []
@@ -158,9 +169,9 @@ function sanitizeCoachOutput(content, lang = 'it') {
 function detectContextGaps(summary = '') {
   const s = String(summary || '').toLowerCase()
   return {
-    missingFormation: s.includes('modulo salvato: mancante') || s.includes('saved formation: missing') || s.includes('formation: not set'),
-    missingCoach: s.includes('allenatore attivo: mancante') || s.includes('active coach: missing'),
-    missingStats: s.includes('statistiche analisi efootball: mancanti') || s.includes('latest game-analysis stats: missing') || s.includes('game-analysis stats: missing')
+    missingFormation: s.includes('modulo salvato: mancante') || s.includes('saved formation: missing') || s.includes('formation: not set') || s.includes('formación guardada: ausente'),
+    missingCoach: s.includes('allenatore attivo: mancante') || s.includes('active coach: missing') || s.includes('entrenador activo: ausente'),
+    missingStats: s.includes('statistiche analisi efootball: mancanti') || s.includes('latest game-analysis stats: missing') || s.includes('game-analysis stats: missing') || s.includes('estadísticas de análisis efootball: faltantes')
   }
 }
 
@@ -169,24 +180,30 @@ function getMicroReminderText(lang = 'it', summary = '') {
   if (gaps.missingFormation) {
     return lang === 'en'
       ? 'Quick reminder: complete your formation setup to get more precise coaching.'
-      : 'Promemoria rapido: completa la formazione per avere consigli molto più precisi.'
+      : lang === 'es'
+        ? 'Recordatorio rápido: completa tu formación para recibir consejos mucho más precisos.'
+        : 'Promemoria rapido: completa la formazione per avere consigli molto più precisi.'
   }
   if (gaps.missingCoach) {
     return lang === 'en'
       ? 'Quick reminder: set your active coach to align advice with your team style.'
-      : 'Promemoria rapido: imposta un coach attivo per allineare meglio i consigli al tuo stile squadra.'
+      : lang === 'es'
+        ? 'Recordatorio rápido: establece un entrenador activo para alinear mejor los consejos con tu estilo de equipo.'
+        : 'Promemoria rapido: imposta un coach attivo per allineare meglio i consigli al tuo stile squadra.'
   }
   if (gaps.missingStats) {
     return lang === 'en'
       ? 'Quick reminder: updating game stats makes tactical corrections much more accurate.'
-      : 'Promemoria rapido: aggiornare le statistiche rende le correzioni tattiche molto più accurate.'
+      : lang === 'es'
+        ? 'Recordatorio rápido: actualizar las estadísticas hace que las correcciones tácticas sean mucho más precisas.'
+        : 'Promemoria rapido: aggiornare le statistiche rende le correzioni tattiche molto più accurate.'
   }
   return ''
 }
 
 function shouldAttachMicroReminder({ history = [], summary = '', message = '' }) {
   if (!summary) return false
-  if (!getMicroReminderText('it', summary) && !getMicroReminderText('en', summary)) return false
+  if (!getMicroReminderText('it', summary) && !getMicroReminderText('en', summary) && !getMicroReminderText('es', summary)) return false
 
   const userTurns = Array.isArray(history) ? history.filter(h => h?.role === 'user').length + 1 : 1
   const frequencyGate = userTurns > 1 && userTurns % 8 === 0
@@ -243,6 +260,15 @@ function buildLinkUpGroundedReply(lang = 'it', facts = null) {
     const keyLine = facts.keyMan ? `Key Man: ${facts.keyMan}.` : ''
     return [
       `Your active Link-up is ${facts.name}.`,
+      focalLine,
+      keyLine
+    ].filter(Boolean).join(' ')
+  }
+  if (lang === 'es') {
+    const focalLine = facts.focal ? `Focal Point: ${facts.focal}.` : ''
+    const keyLine = facts.keyMan ? `Key Man: ${facts.keyMan}.` : ''
+    return [
+      `Tu Link-up activo es ${facts.name}.`,
       focalLine,
       keyLine
     ].filter(Boolean).join(' ')
@@ -334,7 +360,7 @@ function getOutOfPositionStarterLines(players, lang = 'it') {
     const originals = Array.isArray(p?.original_positions) ? p.original_positions : []
     if (!current || originals.length === 0) continue
     if (fieldPositionMatchesCardCompetences(current, originals)) continue
-    const comp = formatCompetencePositions(originals) || (lang === 'en' ? 'not set' : 'non impostate')
+    const comp = formatCompetencePositions(originals) || (lang === 'en' ? 'not set' : lang === 'es' ? 'no establecidas' : 'non impostate')
     const slot = p.slot_index != null ? ` slot ${p.slot_index}` : ''
     lines.push(`- ${p.player_name || '?'}${slot}: in campo ${current}; competenze card ${comp}`)
   }
@@ -428,6 +454,33 @@ const CONTEXT_LABELS = {
     notAdvisableStyles: 'Not advisable (<70)',
     noneLabel: 'none',
     dispositionInField: 'Lineup on pitch',
+  },
+  es: {
+    formationNotSet: 'no establecida',
+    reserves: 'Suplentes',
+    noMatches: 'Ningún partido cargado.',
+    starters: 'TITULARES EN CAMPO (slot 0-10):',
+    reservesNote: 'LOS SUPLENTES están en el banquillo: úsalos para sustituciones. Recomienda solo jugadores de esta lista y solo para roles compatibles con su position.',
+    lastMatches: 'ÚLTIMOS PARTIDOS JUGADOS:',
+    patternMatches: 'Patrones de partidos',
+    partite: 'partidos',
+    vittorie: 'victorias',
+    recurringIssues: 'Problemas recurrentes',
+    skillsTitolari: 'HABILIDADES TITULARES (para consejos de habilidades):',
+    activeCoach: 'Entrenador activo',
+    coachNotSet: 'Sin entrenador activo.',
+    competenceHint: 'Competencias de estilos TÁCTICOS (contrattacco → contropiede_veloce; solo >= 70 recomendables):',
+    boxTitle: 'CONTEXTO PERSONAL DEL CLIENTE - DATOS REALES DE LA PLANTILLA',
+    boxSubtitle: 'USA ESTOS DATOS - PERSONALIZA - CITA NOMBRES REALES - NADA GENÉRICO',
+    positionNote: 'POSICIÓN: para cada jugador consulta "position" (rol asignado en formación) y "competenze" (posiciones ideales de la carta, ej. CC Alta, MED Intermedia). Si position difiere de competenze (ej. competenze=CC Alta pero position=DC), CORRIGE: "X es centrocampista (CC) por carta, no DC. Mejor alinearlo como CC o cambiar rol en Gestión Formación." Somos los entrenadores: no consientas el error del cliente.',
+    statsNote: 'STATS: vel, acc, res, fin, pas, tac (RAG §1). forma:↑=óptima, forma:↓=baja. h/w=altura/peso (duelos aéreos). HABILIDADES: listadas. Usa estilos+stats+habilidades+forma+h/w para razonamiento. Cada dato tiene utilidad.',
+    teamStyle: 'Estilo de equipo',
+    individualInstructions: 'Instrucciones individuales',
+    instructionsActive: 'activas',
+    advisableStyles: 'Recomendables (>=70)',
+    notAdvisableStyles: 'No recomendables (<70)',
+    noneLabel: 'ninguno',
+    dispositionInField: 'Disposición en campo',
   }
 }
 
@@ -439,7 +492,7 @@ const CONTEXT_LABELS = {
  * @returns {Promise<string>} Testo compatto (max MAX_PERSONAL_CONTEXT_CHARS) o ''
  */
 async function buildPersonalContext(userId, lang = 'it') {
-  const L = CONTEXT_LABELS[lang === 'en' ? 'en' : 'it']
+  const L = CONTEXT_LABELS[lang === 'en' ? 'en' : lang === 'es' ? 'es' : 'it']
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!serviceKey || !supabaseUrl) return ''
@@ -541,7 +594,9 @@ async function buildPersonalContext(userId, lang = 'it') {
     if (outOfPositionLines.length > 0) {
       rosterLines.push(lang === 'en'
         ? 'OUT OF POSITION STARTERS (fix FIT before other changes):'
-        : 'TITOLARI FUORI POSIZIONE (correggi FIT prima di altri cambi):')
+        : lang === 'es'
+          ? 'TITULARES FUERA DE POSICIÓN (corrige FIT antes de otros cambios):'
+          : 'TITOLARI FUORI POSIZIONE (correggi FIT prima di altri cambi):')
       rosterLines.push(...outOfPositionLines.map(line => `  ${line}`))
     }
     for (const p of titolari) {
@@ -603,10 +658,10 @@ async function buildPersonalContext(userId, lang = 'it') {
       else if (FWD.includes(pos)) counts.fwd += 1
     })
     const summaryParts = []
-    if (counts.pt) summaryParts.push(lang === 'en' ? '1 GK' : '1 PT')
-    if (counts.def) summaryParts.push(lang === 'en' ? `${counts.def} defenders` : `${counts.def} difensori`)
-    if (counts.mid) summaryParts.push(lang === 'en' ? `${counts.mid} midfield` : `${counts.mid} centrocampo`)
-    if (counts.fwd) summaryParts.push(lang === 'en' ? `${counts.fwd} forwards` : `${counts.fwd} attaccanti`)
+    if (counts.pt) summaryParts.push(lang === 'en' ? '1 GK' : lang === 'es' ? '1 PT' : '1 PT')
+    if (counts.def) summaryParts.push(lang === 'en' ? `${counts.def} defenders` : lang === 'es' ? `${counts.def} defensas` : `${counts.def} difensori`)
+    if (counts.mid) summaryParts.push(lang === 'en' ? `${counts.mid} midfield` : lang === 'es' ? `${counts.mid} centrocampo` : `${counts.mid} centrocampo`)
+    if (counts.fwd) summaryParts.push(lang === 'en' ? `${counts.fwd} forwards` : lang === 'es' ? `${counts.fwd} delanteros` : `${counts.fwd} attaccanti`)
     const dispositionSummary = summaryParts.length ? ` (${summaryParts.join(', ')})` : ''
     const dispositionLine = `${L.dispositionInField}: ${positionsOrdered || L.formationNotSet}.${dispositionSummary}`
 
@@ -783,8 +838,8 @@ async function buildPersonalContext(userId, lang = 'it') {
  */
 function buildPersonalizedPromptV2(userMessage, context, language = 'it', efootballKnowledge = '', personalContextSummary = '', hasHistory = false, contextBlockLabel = 'ROSA E DATI', cardAvailabilityBlock = '') {
   const { profile, currentPage, appState } = context || {}
-  const firstName = sanitizeForPrompt(profile?.first_name || (language === 'en' ? 'friend' : 'amico'), 40)
-  const teamName = sanitizeForPrompt(profile?.team_name || (language === 'en' ? 'your team' : 'il tuo team'), 60)
+  const firstName = sanitizeForPrompt(profile?.first_name || (language === 'en' ? 'friend' : language === 'es' ? 'amigo' : 'amico'), 40)
+  const teamName = sanitizeForPrompt(profile?.team_name || (language === 'en' ? 'your team' : language === 'es' ? 'tu equipo' : 'il tuo team'), 60)
   const aiName = sanitizeForPrompt(profile?.ai_name || 'Coach AI', 40)
   const howToRemember = sanitizeForPrompt(profile?.how_to_remember || '', 240)
   const aiWeakPoint = sanitizeForPrompt(profile?.ai_weak_point || '', 60)
@@ -792,14 +847,16 @@ function buildPersonalizedPromptV2(userMessage, context, language = 'it', efootb
   const aiNotes = sanitizeForPrompt(profile?.ai_notes || '', 280)
   const WEAK_POINT_LABELS = language === 'en'
     ? { defence: 'Defence', attack: 'Attack', set_pieces: 'Set pieces', transitions: 'Transitions', final_minutes: 'Final minutes' }
-    : { defence: 'Difesa', attack: 'Attacco', set_pieces: 'Piazzati', transitions: 'Transizioni', final_minutes: 'Finale partita' }
+    : language === 'es'
+      ? { defence: 'Defensa', attack: 'Ataque', set_pieces: 'Jugadas a balón parado', transitions: 'Transiciones', final_minutes: 'Final del partido' }
+      : { defence: 'Difesa', attack: 'Attacco', set_pieces: 'Piazzati', transitions: 'Transizioni', final_minutes: 'Finale partita' }
   const weakPointLabel = aiWeakPoint && WEAK_POINT_LABELS[aiWeakPoint] ? WEAK_POINT_LABELS[aiWeakPoint] : (aiWeakPoint || '')
 
   const domandaBreve = userMessage.length > 80 ? userMessage.slice(0, 80).trim() + '?' : userMessage
   const pagina = currentPage ? String(currentPage) : ''
   const contestoAttuale = [
     pagina || (language === 'en' ? 'Dashboard' : 'Dashboard'),
-    `${language === 'en' ? 'Question' : 'Domanda'}: "${domandaBreve}"`
+    `${language === 'en' ? 'Question' : language === 'es' ? 'Pregunta' : 'Domanda'}: "${domandaBreve}"`
   ].join(' | ')
 
   // Capsule ultra-compatta: incroci + inverse reasoning, senza tasti/pulsanti, senza uso app.
@@ -827,20 +884,33 @@ OUTPUT: 2-4 frasi operative, rispondi alla domanda specifica (es. tiro/passaggio
 - OPPONENT DATA: use opponent player names only if they are present in real context data. Otherwise speak by role or zone: DM, AMF, winger, fullback, flank, central lane.
 OUTPUT: 2-4 imperative sentences; answer the specific question (e.g. shot/pass/defence with real data); do not repeat same compactness/marking/counter every time; "In summary" only if more than 2 points. No visible reasoning.`
 
-  const capsule = language === 'en' ? capsuleEn : capsuleIt
+  const capsuleEs = `ENGINE (OBLIGATORIO, token-budget):
+- INPUT: PLANTILLA (estilo carta, stats vel/acc/res/fin/pas/tac, habilidades, forma ↑/↓, h/w, competencias), PARTIDOS/PATRONES (resultado, formación/estilo, formación rival, attack_areas, votos cliente, recurring_issues), ENTRENADOR (competencias estilo), TÁCTICA (estilo equipo + instrucciones), RAG (límites + movimientos/situaciones + community).
+- MICRO-SCORE: FIT (position = competencias), COACH_OK(style>=70; contrattacco→contropiede_veloce), SPD (vel+acc+Sprint), PASS (pas+filtrante/de primera/calibrado), WIN (tac+Intercepción/Marcador/Entrada agresiva/Bloqueo), AIR_DEF (h/w+Dominio balones altos+Superioridad aérea), AIR_ATK (h/w+Remate de cabeza), SUB (Suplente de lujo).
+- DECISIÓN: elige 1 palanca principal + max 2 secundarias: (1) Corregir FIT, (2) Corregir desajuste entrenador/estilo equipo, (3) Vincular recurring_issue principal, (4) 1-2 cambios titulares/suplentes (ver SUSTITUCIONES abajo), (5) 1 instrucción max 5, (6) gameplay solo "qué hacer" de §7.
+- PROHIBIDO sugerir cambio de formación/módulo a menos que el cliente lo pida explícitamente. Trabaja siempre con la formación actual guardada.
+- SUSTITUCIONES (palanca 4, cruce enterprise): (1) Síntoma de Estadísticas de juego, recurring_issues, votos partidos o pregunta. (2) Rol a reforzar: tiro=fin+habilidades tiro; pase=pas+habilidades pase; defensa=tac+WIN. (3) Titulares: quién está en ese rol, forma, votos, estilo jugador. (4) Suplentes: quién tiene fin/pas/tac, habilidades que compensan y estilo jugador adecuado (RAG §2: ej. Oportunista/Rapaz de área para definición, Jugador de área para desmarques, Organizador/Clásico 10 para pase, Ancla para defensa); posición compatible; cruzar con estilo equipo y competencia entrenador (resumen Táctica y Entrenador). (5) Un solo cambio concreto: Sacar a [titular], poner a [suplente]: [motivo con datos]. Usa siempre resumen (Plantilla estilo+fin/pas/tac+habilidades, Estadísticas de juego, Forma/votos, Táctica, Entrenador, Resumen plantilla, Sinergias, Palancas) y RAG §2/§7/§8 cuando sea relevante.
+- BUILD/META: consejos funcionales para movimientos y dificultades. Si pregunta "builds correctas/están bien": usa sección Build progresión PT + Motivos app; no contradigas builds generadas por la app sin datos.
+- INVERSE: síntoma?causas?palanca: bandas (attack_areas wide)?externos sin WIN/Carrilero?cobertura/instrucciones; ataque estéril?PASS bajo o estilo incoherente?organizador/cambio estilo/módulo; balones altos?AIR_DEF bajo?DC/MED más fuertes+jugadas a balón parado.
+- RESPUESTAS PRÁCTICAS: cuando la pregunta sea sobre partido, matchup o correcciones concretas, prefiere frases condicionales observables: "si/cuando pasa X, haz Y". Añade si es útil una acción recomendada, un pase/jugada recomendada, algo que evitar y un chequeo rápido.
+- RIVAL: usa nombres de jugadores rivales solo si están presentes en los datos reales del contexto. Si no están, habla por rol o zona: mediocentro, mediapunta, extremo, lateral, banda, pasillo central.
+OUTPUT: 2-4 frases operativas, responde a la pregunta específica (ej. tiro/pase/defensa con datos reales); no repetir siempre compactibilidad/marcaje/contraataque; "En resumen" solo si más de 2 puntos; si no, cierra con la recomendación principal. Sin razonamiento visible.`
+
+  const capsule = language === 'en' ? capsuleEn : language === 'es' ? capsuleEs : capsuleIt
 
   // La coach dà CONSIGLI; i 3 punti sono SUGGERIMENTI OPERATIVI della coach (cliccabili), non domande che il cliente deve fare.
   const suggRulesIt = `SUGGERIMENTI (3, obbligatori): sono CONSIGLI della coach su cosa approfondire o fare dopo (testi brevi cliccabili). (1) Un suggerimento operativo su quanto hai appena detto (es. approfondisci marcatura per i centrali, sfrutta Ibra e Nedvěd per i tiri). (2) Uno su gameplay/rosa/partite legato alla risposta. (3) Un prossimo passo concreto. Scrivi come inviti della coach: es. "Approfondisci la marcatura per Maldini e Nesta", "Variare i tiri con i tuoi finisher", "Prossimo passo: copertura". NON sono domande che il cliente deve porre: sei tu che consigli. VIETATO: "Quale modulo/formazione", "meta generico/tier list", "perché ho perso", "migliorare un giocatore". Consentito: suggerimenti legati a movimenti/difficolta sue (es. "Allinea pressing ai tuoi CC", "Sfrutta filtranti con Opportunisti"). Niente uso app, niente tasti.`
   const suggRulesEn = `SUGGESTIONS (3, required): these are the COACH'S recommendations on what to explore or do next (short clickable texts). (1) One operational suggestion on what you just said (e.g. deepen marking for your centre-backs, use your finishers for shot variety). (2) One on gameplay/roster/matches tied to your answer. (3) One concrete next step. Phrase as the coach's prompts: e.g. "Explore marking for Maldini and Nesta", "Vary shots with your finishers", "Next step: coverage". These are NOT questions the client should ask: you are giving advice. FORBIDDEN: "Which formation/module", "generic meta/tier list", "why did I lose", "improve a player". Allowed: suggestions tied to their movements/difficulties. No app usage, no buttons.`
-  const suggRules = language === 'en' ? suggRulesEn : suggRulesIt
+  const suggRulesEs = `SUGERENCIAS (3, obligatorias): son CONSEJOS del entrenador sobre qué profundizar o hacer después (textos breves clicables). (1) Una sugerencia operativa sobre lo que acabas de decir (ej. profundiza marcaje para tus centrales, aprovecha Ibra y Nedvěd para los tiros). (2) Una sobre gameplay/plantilla/partidos ligada a la respuesta. (3) Un próximo paso concreto. Escribe como invitaciones del entrenador: ej. "Profundiza el marcaje para Maldini y Nesta", "Varía los tiros con tus finalizadores", "Próximo paso: cobertura". NO son preguntas que el cliente deba hacer: eres tú quien aconseja. PROHIBIDO: "Qué módulo/formación", "meta genérico/tier list", "por qué perdí", "mejorar un jugador". Permitido: sugerencias ligadas a sus movimientos/dificultades (ej. "Alinea la presión con tus MC", "Aprovecha pases filtrados con Oportunistas"). Sin uso de app, sin botones.`
+  const suggRules = language === 'en' ? suggRulesEn : language === 'es' ? suggRulesEs : suggRulesIt
 
   // Solo dati da Informazioni IA: niente lista "Problemi" da citare; se togli la spunta, l'IA non vede più quel problema
   const profileLines = [
     `Profilo: ${firstName} | ${teamName}`,
     howToRemember ? `Memo: ${howToRemember}` : '',
-    weakPointLabel ? (language === 'en' ? `Weak point (what makes you lose): ${weakPointLabel}` : `Punto debole (cosa ti fa perdere): ${weakPointLabel}`) : '',
-    aiLearnGoals ? (language === 'en' ? `Learn goals: ${aiLearnGoals}` : `Cosa vuole imparare: ${aiLearnGoals}`) : '',
-    aiNotes ? (language === 'en' ? `Notes for AI: ${aiNotes}` : `Note per l'IA: ${aiNotes}`) : ''
+    weakPointLabel ? (language === 'en' ? `Weak point (what makes you lose): ${weakPointLabel}` : language === 'es' ? `Punto débil (lo que te hace perder): ${weakPointLabel}` : `Punto debole (cosa ti fa perdere): ${weakPointLabel}`) : '',
+    aiLearnGoals ? (language === 'en' ? `Learn goals: ${aiLearnGoals}` : language === 'es' ? `Qué quiere aprender: ${aiLearnGoals}` : `Cosa vuole imparare: ${aiLearnGoals}`) : '',
+    aiNotes ? (language === 'en' ? `Notes for AI: ${aiNotes}` : language === 'es' ? `Notas para la IA: ${aiNotes}` : `Note per l'IA: ${aiNotes}`) : ''
   ].filter(Boolean)
   const header = `CONTESTO: ${contestoAttuale}
 ${hasHistory ? `NOTA: Continua la conversazione già iniziata. NON salutare.` : ''}
@@ -850,9 +920,9 @@ ${profileLines.join('\n')}`
   const blocks = [
     header,
     personalContextSummary ? `\n■ ${contextBlockLabel}:\n${personalContextSummary}` : '',
-    cardAvailabilityBlock ? `\n■ ${language === 'en' ? 'CARD ADVISOR STATUS' : 'STATO CARD ADVISOR'}:\n${cardAvailabilityBlock}` : '',
+    cardAvailabilityBlock ? `\n■ ${language === 'en' ? 'CARD ADVISOR STATUS' : language === 'es' ? 'ESTADO CARD ADVISOR' : 'STATO CARD ADVISOR'}:\n${cardAvailabilityBlock}` : '',
     efootballKnowledge ? `\n■ MECCANICHE eFootball (RAG):\n${efootballKnowledge}` : '',
-    `\n${capsule}\n\nFORMATO RISPOSTA:\n[2-4 frasi operative con i TUOI consigli. "In sintesi" / "In summary" solo se utile; altrimenti chiudi con la raccomandazione principale.]\n\n---\nSUGGERIMENTI:\n1. [consiglio breve cliccabile]\n2. [consiglio breve cliccabile]\n3. [consiglio breve cliccabile]\n\n${suggRules}\n\nDOMANDA CLIENTE: "${userMessage}"\nRispondi come ${aiName} in ${language === 'it' ? 'italiano' : 'inglese'}.`
+    `\n${capsule}\n\nFORMATO RISPOSTA:\n[2-4 frasi operative con i TUOI consigli. "In sintesi" / "In summary" solo se utile; altrimenti chiudi con la raccomandazione principale.]\n\n---\nSUGGERIMENTI:\n1. [consiglio breve cliccabile]\n2. [consiglio breve cliccabile]\n3. [consiglio breve cliccabile]\n\n${suggRules}\n\nDOMANDA CLIENTE: "${userMessage}"\nRispondi come ${aiName} in ${language === 'en' ? 'inglese' : language === 'es' ? 'español' : 'italiano'}.`
   ].filter(Boolean)
 
   return blocks.join('\n')
@@ -928,7 +998,38 @@ CONSTRAINTS: only roster names; current v6 team styles are Possession, Quick Cou
 
 COACH OUTPUT: 2-4 imperative sentences; answer the specific question; vary advice; "In summary" only when useful.`
 
-  return lang === 'en' ? en : it
+  const es = `Eres Coach AI para eFootball.
+LENGUA DE RESPUESTA: DEBES RESPONDER OBLIGATORIAMENTE EN ${lang === 'en' ? 'INGLÉS' : 'ESPAÑOL'} (idioma UI/parámetro "language" de la app).
+
+${policies}
+
+${sharedCore}
+
+ALCANCE: solo asesoramiento táctico de eFootball basado en PLANTILLA, PARTIDOS, ENTRENADOR, TÁCTICA y RAG.
+- Gameplay permitido SOLO como "qué hacer" (acciones). PROHIBIDO mencionar botones/controles/controller.
+- Uso de la app (wizard, clics, menús, upload): NO expliques. Si te preguntan, responde solo: "Solo estoy aquí para consejos tácticos: formación, plantilla, módulo, sustituciones, estilo. Explora el menú para otras funciones."
+- MICRO-REMINDER permitido: si faltan datos críticos (formación/entrenador/estadísticas), puedes añadir UNA frase breve de recordatorio después del consejo táctico. No expliques pasos de UI, no hagas tutoriales.
+
+FUENTES: Nombres/plantilla/partidos/entrenador/táctica = solo del bloque de contexto abajo (PLANTILLA Y DATOS o RESUMEN ANÁLISIS). Reglas eFootball = solo del bloque RAG. Si falta un dato, no inventes.
+JUGADOR NO EN PLANTILLA: si el cliente pregunta por un jugador que NO aparece en el contexto abajo, DEBES decir "No tengo a [nombre] en tu plantilla guardada" y NUNCA inventes competencias, estilo o activación. Solo puedes citar info genérica del RAG (si está presente) declarando "en general".
+MAPEO OBLIGATORIO DE TÉRMINOS: "Link-up / Link up / linkup / Collegamento" = campo "Connection" del entrenador. Si en el RESUMEN está presente "Connection:", NUNCA digas que falta: cita el nombre de connection y, si están presentes, Focal Point y Key Man.
+OVERALL/RATING FINAL: para cualquier pregunta sobre overall, rating, valoración total o valor final, si en el contexto del jugador hay una build PT/progresión, NO enumeres el overall/rating guardado como respuesta principal y NO digas "rating 40/68/87" como valor final. Responde así: "Para estos delanteros veo builds y estadísticas guardadas, pero el número overall final debe verificarse directamente en eFootball tras aplicar los puntos." Luego cita build PT, rol y estadísticas clave actualizadas presentes en el contexto (ej. "Ronaldo tiene build de DC con Tiro +11, Destreza +8 y Fuerza miembros inferiores +8").
+HABILIDADES DE JUGADORES: cita siempre los nombres italianos oficiales como en el bloque plantilla (ej. Passaggio filtrante, Tiro di prima, Tiro a salire, Tiro dalla distanza). Prohibido el inglés (Through Passing, One-touch Pass, Rising Shot, First-time Shot, Long-Range Shooting, etc.).
+MECÁNICAS CANCEL/SKILL AVANZADAS: sigue RAG §7.12. Usa primero los términos oficiales (Super Cancel, Kick Cancel, Kick Feint, Double Touch) y trata "tess/croqueta interrotta" solo como alias community entre paréntesis.
+ANTI-EXPLOIT: prohibido coaching basado en macro/script/bug abuse; no sugieras spam continuo de la misma skill. Da siempre una variante segura si el timing no funciona.
+CRUCES: Usa todo el resumen (Plantilla, Estadísticas de juego, Forma/votos, Táctica, Entrenador, Resumen plantilla, Sinergias, Palancas) y RAG §2/§4/§7/§8. Build/meta: solo consejos funcionales a movimientos y dificultades del cliente (datos reales), nunca tier list sin cruce. Progresión PT (sliders): no inventes; si ausente, consejo táctico sobre estilos/stats carta. Estilo jugador crucial para fit y sustituciones.
+Respuesta CONCRETA: responde a la pregunta específica (ej. "¿fallo al tirar?" → consejos sobre tiro y porcentajes reales; "¿pases?" → pase y habilidades en plantilla). No repitas siempre las mismas 3-4 recomendaciones (compacidad, marcaje, contraataque): elige 1-2 palancas pertinentes y usa los datos que tienes.
+Para consejos prácticos en partido o de matchup, prefiere la forma: trigger -> acción -> pase/jugada recomendada -> evita. Usa nombres de jugadores rivales solo si aparecen en el contexto real; si no, usa rol o zona.
+DOS FUENTES DE DATOS (no en conflicto): (1) "Datos de partidos insertados" = zonas ataque, votos jugadores, recuperación de partidos guardados en la app. (2) "Estadísticas de juego (Análisis eFootball, últimos 10 partidos)" = agregados de la pantalla Análisis eFootball (screenshot). Usa ambas: son complementarias (mismo jugador desde ángulos o períodos diferentes).
+Si en el RESUMEN ANÁLISIS está presente la sección "Estadísticas de juego (Análisis eFootball, últimos 10 partidos)" (tipos gol, tiro, pase, dribbling, defensa, comandos especiales), úsala para consejos específicos: ej. diversificar tipos de tiro, aumentar uso pressing/comandos, trabajar pase o defensa según porcentajes reales. Cruza siempre con la Plantilla (Habilidades en plantilla, posiciones, estilos): si el usuario usa mucho un tipo de comando (ej. pase filtrado, tiro normal) pero en plantilla faltan las habilidades que lo hacen eficaz (ej. Passaggio filtrante, Tiro calibrato + A giro), señálalo y aconseja diversificar, alinear a quien tenga esas habilidades o añadirlas con Programmi (si no Trending). Usa el mapeo comando→habilidad del RAG (§7.9 si presente). Si esa sección NO está presente y el cliente pide consejos sobre "sus estadísticas" o "dificultades en estadísticas", NO inventes porcentajes: responde que para consejos basados en datos puede subir screenshots de la pantalla Análisis eFootball desde el dashboard (tarjeta Estadísticas de juego).
+Si en el RESUMEN hay Conexión/Input delay/Retraso (ej. conexión débil, retraso input) O el cliente menciona conexión débil/lag/retraso en el mensaje, adapta los consejos: menos pressing reactivo y dribbling en defensa (timing difícil), más posicionamiento, cobertura y estructura; evita sugerencias que requieran timing perfecto.
+PRIORIDAD PERFIL: Para "Punto débil", "Qué quiere aprender" y "Notas para la IA" usa SIEMPRE los valores del bloque PERFIL al inicio del mensaje (son live/actualizados). Si el RESUMEN contiene valores diferentes para los mismos campos, IGNORA los del RESUMEN (pueden estar desactualizados). Orienta al menos un consejo hacia el punto débil y los objetivos de aprendizaje cuando sean relevantes para la pregunta. NUNCA cites la lista al cliente (ej. "has indicado que tienes dificultades en..."); usa el dato solo para orientar los consejos.
+
+RESTRICCIONES: solo nombres de plantilla; solo 5 estilos de equipo configurables (Possession, Quick Counter, Long Ball Counter, Long Ball, Out Wide); contrattacco → contropiede_veloce y requiere competencia entrenador >=70; instrucciones individuales solo max 5; límites de formación §3.4; no Táctico(faltas) en defensas; no Box-to-box (Tornante) en un Ancla MED, especialmente si Collante/Anchor Man; High ball dominance = Heading.
+
+SALIDA COACH: 2-4 frases operativas, responde a la pregunta específica; varía los consejos; "En resumen" solo si es útil.`
+
+  return lang === 'en' ? en : lang === 'es' ? es : it
 }
 
 export async function POST(req) {
@@ -1022,7 +1123,7 @@ export async function POST(req) {
     }
     
     const { message: rawMessage, currentPage, appState, language = 'it', history: rawHistory } = body
-    const lang = (language === 'en' || language === 'it') ? language : 'it'
+    const lang = (language === 'en' || language === 'it' || language === 'es') ? language : 'it'
 
     if (!rawMessage || typeof rawMessage !== 'string') {
       return NextResponse.json(
@@ -1122,7 +1223,9 @@ export async function POST(req) {
             if (outOfPosition.length > 0) {
               fitLines = lang === 'en'
                 ? `\n[LIVE] Out-of-position starters (fix FIT first):\n${outOfPosition.join('\n')}\n`
-                : `\n[AGGIORNAMENTO LIVE] Titolari fuori posizione (correggi FIT prima):\n${outOfPosition.join('\n')}\n`
+                : lang === 'es'
+                  ? `\n[ACTUALIZACIÓN LIVE] Titulares fuera de posición (corrige FIT primero):\n${outOfPosition.join('\n')}\n`
+                  : `\n[AGGIORNAMENTO LIVE] Titolari fuori posizione (correggi FIT prima):\n${outOfPosition.join('\n')}\n`
             }
             if (liveInstr && typeof liveInstr === 'object') {
               const map = {}
@@ -1136,14 +1239,16 @@ export async function POST(req) {
                   const pName = pid && map[pid] ? map[pid] : (pid ? `player:${pid.slice(0, 8)}` : '?')
                   return `  - ${slot}: ${String(v.instruction).trim()} → ${pName}`
                 })
-                instrLines = `\n${lang === 'en' ? 'Individual instructions' : 'Istruzioni individuali'}:\n${lines.join('\n')}\n`
+                instrLines = `\n${lang === 'en' ? 'Individual instructions' : lang === 'es' ? 'Instrucciones individuales' : 'Istruzioni individuali'}:\n${lines.join('\n')}\n`
               }
             }
           } catch (_) {}
           if (liveStyle || numLive > 0) {
             const liveLine = lang === 'en'
               ? `[LIVE] Team style: ${liveStyle || 'not set'}. Individual instructions: ${numLive} active.${instrLines}\n`
-              : `[AGGIORNAMENTO LIVE] Stile squadra: ${liveStyle || 'non impostato'}. Istruzioni individuali: ${numLive} attive.${instrLines}\n`
+              : lang === 'es'
+                ? `[ACTUALIZACIÓN LIVE] Estilo de equipo: ${liveStyle || 'no establecido'}. Instrucciones individuales: ${numLive} activas.${instrLines}\n`
+                : `[AGGIORNAMENTO LIVE] Stile squadra: ${liveStyle || 'non impostato'}. Istruzioni individuali: ${numLive} attive.${instrLines}\n`
             personalContextSummary = liveLine + fitLines + personalContextSummary
           } else if (fitLines) {
             personalContextSummary = fitLines + personalContextSummary
@@ -1245,7 +1350,9 @@ ${personalContextSummary || ''}`.trim()
             error:
               lang === 'en'
                 ? 'Hero Points balance empty. Top up to keep chatting with your Coach.'
-                : 'Hero Points esauriti. Ricarica per continuare a chattare con il Coach.',
+                : lang === 'es'
+                  ? 'Hero Points agotados. Recarga para seguir chateando con el Coach.'
+                  : 'Hero Points esauriti. Ricarica per continuare a chattare con il Coach.',
             code: 'insufficient_credits',
             details: deduction.error
           },
@@ -1294,7 +1401,7 @@ ${personalContextSummary || ''}`.trim()
           const fallbackResponse = await callOpenAIWithRetry(apiKey, requestBody, 'assistant-chat')
           if (fallbackResponse?.ok) {
             const fallbackData = await fallbackResponse.json().catch(() => ({}))
-            const fallbackMsg = lang === 'en' ? "Sorry, I didn't get that. Can you repeat?" : 'Mi dispiace, non ho capito. Puoi ripetere?'
+            const fallbackMsg = lang === 'en' ? "Sorry, I didn't get that. Can you repeat?" : lang === 'es' ? 'Lo siento, no lo he entendido. ¿Puedes repetir?' : 'Mi dispiace, non ho capito. Puoi ripetere?'
             const raw = fallbackData.choices?.[0]?.message?.content || fallbackMsg
             const { cleanContent: fc, suggestions: fs } = parseSuggestionsFromContent(raw)
             const sanitizedFallback = sanitizeCoachOutput(fc, lang)
@@ -1338,7 +1445,7 @@ ${personalContextSummary || ''}`.trim()
               const fallbackResponse = await callOpenAIWithRetry(apiKey, requestBody, 'assistant-chat')
               if (fallbackResponse && fallbackResponse.ok) {
                 const fallbackData = await fallbackResponse.json().catch(() => ({}))
-                const fallbackMsg = lang === 'en' ? "Sorry, I didn't get that. Can you repeat?" : 'Mi dispiace, non ho capito. Puoi ripetere?'
+                const fallbackMsg = lang === 'en' ? "Sorry, I didn't get that. Can you repeat?" : lang === 'es' ? 'Lo siento, no lo he entendido. ¿Puedes repetir?' : 'Mi dispiace, non ho capito. Puoi ripetere?'
                 const raw = fallbackData.choices?.[0]?.message?.content || fallbackMsg
                 const { cleanContent: fc, suggestions: fs } = parseSuggestionsFromContent(raw)
                 const sanitizedFallback = sanitizeCoachOutput(fc, lang)
@@ -1381,8 +1488,8 @@ ${personalContextSummary || ''}`.trim()
       throw new Error('Invalid response from OpenAI API')
     }
     
-    // Estrai contenuto con fallback sicuro (doppia lingua)
-    const fallbackReply = lang === 'en' ? "Sorry, I didn't get that. Can you repeat?" : 'Mi dispiace, non ho capito. Puoi ripetere?'
+    // Estrai contenuto con fallback sicuro (tripla lingua)
+    const fallbackReply = lang === 'en' ? "Sorry, I didn't get that. Can you repeat?" : lang === 'es' ? 'Lo siento, no lo he entendido. ¿Puedes repetir?' : 'Mi dispiace, non ho capito. Puoi ripetere?'
     const rawContent = data?.choices?.[0]?.message?.content ||
                        data?.choices?.[0]?.content ||
                        fallbackReply

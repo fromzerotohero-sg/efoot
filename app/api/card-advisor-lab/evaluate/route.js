@@ -105,21 +105,21 @@ function styleName(player, stylesLookup) {
 
 function positionLabel(position = '', lang = 'it') {
   const labels = {
-    PT: { it: 'portiere', en: 'goalkeeper' },
-    DC: { it: 'difensore centrale', en: 'centre-back' },
-    TD: { it: 'terzino destro', en: 'right-back' },
-    TS: { it: 'terzino sinistro', en: 'left-back' },
-    MED: { it: 'mediano', en: 'defensive midfielder' },
-    CC: { it: 'centrocampista', en: 'central midfielder' },
-    TRQ: { it: 'trequartista', en: 'attacking midfielder' },
-    CLS: { it: 'esterno sinistro', en: 'left midfielder' },
-    CLD: { it: 'esterno destro', en: 'right midfielder' },
-    P: { it: 'punta', en: 'striker' },
-    SP: { it: 'seconda punta', en: 'second striker' },
-    ESA: { it: 'ala sinistra', en: 'left winger' },
-    EDA: { it: 'ala destra', en: 'right winger' }
+    PT: { it: 'portiere', en: 'goalkeeper', es: 'portero' },
+    DC: { it: 'difensore centrale', en: 'centre-back', es: 'defensa central' },
+    TD: { it: 'terzino destro', en: 'right-back', es: 'lateral derecho' },
+    TS: { it: 'terzino sinistro', en: 'left-back', es: 'lateral izquierdo' },
+    MED: { it: 'mediano', en: 'defensive midfielder', es: 'mediocentro defensivo' },
+    CC: { it: 'centrocampista', en: 'central midfielder', es: 'centrocampista' },
+    TRQ: { it: 'trequartista', en: 'attacking midfielder', es: 'mediocampista ofensivo' },
+    CLS: { it: 'esterno sinistro', en: 'left midfielder', es: 'extremo izquierdo' },
+    CLD: { it: 'esterno destro', en: 'right midfielder', es: 'extremo derecho' },
+    P: { it: 'punta', en: 'striker', es: 'delantero' },
+    SP: { it: 'seconda punta', en: 'second striker', es: 'segundo delantero' },
+    ESA: { it: 'ala sinistra', en: 'left winger', es: 'extremo izquierdo' },
+    EDA: { it: 'ala destra', en: 'right winger', es: 'extremo derecho' }
   }
-  return labels[position]?.[lang === 'en' ? 'en' : 'it'] || position
+  return labels[position]?.[lang === 'en' ? 'en' : lang === 'es' ? 'es' : 'it'] || position
 }
 
 function sanitizeIlike(value = '') {
@@ -479,28 +479,28 @@ function technicalProfile(card, signals, lang) {
   const tags = []
   const body = bodyTypeProfile(signals, card.position, lang)
   if (family === 'gk') {
-    if (signals.gk >= 80) tags.push(lang === 'en' ? 'Top shot-stopping' : 'Parate alto livello')
-    if (signals.pass >= 76) tags.push(lang === 'en' ? 'Build-up from the back' : 'Uscita palla pulita')
-    if (signals.physical >= 76) tags.push(lang === 'en' ? 'Box presence' : 'Presenza in area')
+    if (signals.gk >= 80) tags.push(lang === 'en' ? 'Top shot-stopping' : lang === 'es' ? 'Paradas de alto nivel' : 'Parate alto livello')
+    if (signals.pass >= 76) tags.push(lang === 'en' ? 'Build-up from the back' : lang === 'es' ? 'Salida limpia de balón' : 'Uscita palla pulita')
+    if (signals.physical >= 76) tags.push(lang === 'en' ? 'Box presence' : lang === 'es' ? 'Presencia en el área' : 'Presenza in area')
   } else if (family === 'def') {
-    if (signals.defend >= 80) tags.push(lang === 'en' ? 'Strong defensive timing' : 'Tempo difensivo alto')
-    if (signals.physical >= 78) tags.push(lang === 'en' ? 'Physical duels' : 'Duelli fisici')
-    if (signals.pass >= 75) tags.push(lang === 'en' ? 'Safe first pass' : 'Primo passaggio pulito')
-    if (signals.aerial >= 78) tags.push(lang === 'en' ? 'Aerial impact' : 'Impatto aereo')
+    if (signals.defend >= 80) tags.push(lang === 'en' ? 'Strong defensive timing' : lang === 'es' ? 'Timing defensivo sólido' : 'Tempo difensivo alto')
+    if (signals.physical >= 78) tags.push(lang === 'en' ? 'Physical duels' : lang === 'es' ? 'Duelos físicos' : 'Duelli fisici')
+    if (signals.pass >= 75) tags.push(lang === 'en' ? 'Safe first pass' : lang === 'es' ? 'Primer pase limpio' : 'Primo passaggio pulito')
+    if (signals.aerial >= 78) tags.push(lang === 'en' ? 'Aerial impact' : lang === 'es' ? 'Impacto aéreo' : 'Impatto aereo')
   } else if (family === 'mid') {
-    if (signals.pass >= 80) tags.push(lang === 'en' ? 'Playmaking lane control' : 'Controllo linee di passaggio')
-    if (signals.pace >= 78) tags.push(lang === 'en' ? 'Tempo in transition' : 'Ritmo nelle transizioni')
-    if (signals.defend >= 74) tags.push(lang === 'en' ? 'Defensive contribution' : 'Contributo difensivo')
-    if (signals.physical >= 76) tags.push(lang === 'en' ? 'Midfield duels' : 'Duelli in mezzo')
+    if (signals.pass >= 80) tags.push(lang === 'en' ? 'Playmaking lane control' : lang === 'es' ? 'Control de líneas de pase' : 'Controllo linee di passaggio')
+    if (signals.pace >= 78) tags.push(lang === 'en' ? 'Tempo in transition' : lang === 'es' ? 'Ritmo en transiciones' : 'Ritmo nelle transizioni')
+    if (signals.defend >= 74) tags.push(lang === 'en' ? 'Defensive contribution' : lang === 'es' ? 'Contribución defensiva' : 'Contributo difensivo')
+    if (signals.physical >= 76) tags.push(lang === 'en' ? 'Midfield duels' : lang === 'es' ? 'Duelos en mediocampo' : 'Duelli in mezzo')
   } else {
-    if (signals.finish >= 82) tags.push(lang === 'en' ? 'Clinical finishing' : 'Finalizzazione alta')
-    if (signals.pace >= 80) tags.push(lang === 'en' ? 'Depth attack' : 'Attacco profondita')
-    if (signals.pass >= 75) tags.push(lang === 'en' ? 'Final pass quality' : 'Qualita ultimo passaggio')
-    if (signals.aerial >= 78) tags.push(lang === 'en' ? 'Aerial threat' : 'Minaccia aerea')
+    if (signals.finish >= 82) tags.push(lang === 'en' ? 'Clinical finishing' : lang === 'es' ? 'Finalización alta' : 'Finalizzazione alta')
+    if (signals.pace >= 80) tags.push(lang === 'en' ? 'Depth attack' : lang === 'es' ? 'Ataque en profundidad' : 'Attacco profondita')
+    if (signals.pass >= 75) tags.push(lang === 'en' ? 'Final pass quality' : lang === 'es' ? 'Calidad de último pase' : 'Qualita ultimo passaggio')
+    if (signals.aerial >= 78) tags.push(lang === 'en' ? 'Aerial threat' : lang === 'es' ? 'Amenaza aérea' : 'Minaccia aerea')
   }
   const styleLabel = labelFromMap(EFHUB_STYLE_LABELS, signals.style, lang)
   const styleTag = styleLabel
-    ? (lang === 'en' ? `Style: ${styleLabel}` : `Stile: ${styleLabel}`)
+    ? (lang === 'en' ? `Style: ${styleLabel}` : lang === 'es' ? `Estilo: ${styleLabel}` : `Stile: ${styleLabel}`)
     : null
   if (styleTag) tags.unshift(styleTag)
   if (body.label) tags.push(body.label)
@@ -518,6 +518,7 @@ function bodyTypeProfile(technical = {}, position = '', lang = 'it') {
   if (!height && !weight) return { label: '', use: '', score: 0 }
 
   const isEn = lang === 'en'
+  const isEs = lang === 'es'
   const big = height >= 188 || weight >= 85
   const compact = height > 0 && height <= 175
   const balanced = !big && !compact
@@ -525,15 +526,15 @@ function bodyTypeProfile(technical = {}, position = '', lang = 'it') {
   if (family === 'att') {
     if (big) {
       return {
-        label: isEn ? 'Big body type' : 'Body type fisico',
-        use: isEn ? 'box reference, aerial duels and shielding' : 'riferimento in area, duelli aerei e protezione',
+        label: isEn ? 'Big body type' : isEs ? 'Tipo de cuerpo físico' : 'Body type fisico',
+        use: isEn ? 'box reference, aerial duels and shielding' : isEs ? 'referencia en área, duelos aéreos y protección' : 'riferimento in area, duelli aerei e protezione',
         score: 7
       }
     }
     if (compact) {
       return {
-        label: isEn ? 'Compact body type' : 'Body type compatto',
-        use: isEn ? 'quick turns, tight control and separation' : 'girate rapide, stretto e separazione',
+        label: isEn ? 'Compact body type' : isEs ? 'Tipo de cuerpo compacto' : 'Body type compatto',
+        use: isEn ? 'quick turns, tight control and separation' : isEs ? 'giros rápidos, control cercano y separación' : 'girate rapide, stretto e separazione',
         score: 5
       }
     }
@@ -541,15 +542,15 @@ function bodyTypeProfile(technical = {}, position = '', lang = 'it') {
 
   if (family === 'def' && big) {
     return {
-      label: isEn ? 'Defensive physical frame' : 'Struttura fisica difensiva',
-      use: isEn ? 'box duels, contact and set-piece coverage' : 'duelli in area, contatto e palle ferme',
+      label: isEn ? 'Defensive physical frame' : isEs ? 'Estructura física defensiva' : 'Struttura fisica difensiva',
+      use: isEn ? 'box duels, contact and set-piece coverage' : isEs ? 'duelos en área, contacto y cobertura a balón parado' : 'duelli in area, contatto e palle ferme',
       score: 6
     }
   }
 
   return {
-    label: balanced ? (isEn ? 'Balanced body type' : 'Body type equilibrato') : '',
-    use: balanced ? (isEn ? 'balanced movement and contact profile' : 'profilo bilanciato tra movimento e contatto') : '',
+    label: balanced ? (isEn ? 'Balanced body type' : isEs ? 'Tipo de cuerpo equilibrado' : 'Body type equilibrato') : '',
+    use: balanced ? (isEn ? 'balanced movement and contact profile' : isEs ? 'perfil equilibrado entre movimiento y contacto' : 'profilo bilanciato tra movimento e contatto') : '',
     score: balanced ? 3 : 0
   }
 }
@@ -558,20 +559,27 @@ function movementArchetype(technical = {}, position = '', lang = 'it') {
   const style = toAscii(technical.style)
   const body = bodyTypeProfile(technical, position, lang)
   const isEn = lang === 'en'
+  const isEs = lang === 'es'
 
   if (style.includes('goal poacher') || style.includes('opportunista')) {
     return {
       key: 'goal_poacher',
-      label: isEn ? 'Goal Poacher movement' : 'Movimento Opportunista',
+      label: isEn ? 'Goal Poacher movement' : isEs ? 'Movimiento Oportunista' : 'Movimento Opportunista',
       movement: isEn
         ? 'plays on the last line and attacks depth on through balls'
-        : 'gioca sull’ultima linea e attacca la profondità sui filtranti',
+        : isEs
+          ? 'juega en la última línea y ataca la profundidad en pases filtrados'
+          : "gioca sull'ultima linea e attacca la profondità sui filtranti",
       buyWhen: isEn
         ? 'you need runs behind the defence, counters or faster vertical attacks'
-        : 'ti servono corse alle spalle, contropiede o verticalità più rapida',
+        : isEs
+          ? 'necesitas desmarques a la espalda, contragolpes o ataques verticales más rápidos'
+          : 'ti servono corse alle spalle, contropiede o verticalità più rapida',
       caution: isEn
         ? 'less valuable if your attack is mostly crosses into a static box'
-        : 'meno centrale se attacchi soprattutto con cross su area statica',
+        : isEs
+          ? 'menos valioso si tu ataque se basa en centros a un área estática'
+          : 'meno centrale se attacchi soprattutto con cross su area statica',
       score: 8 + Math.max(0, body.score - 3)
     }
   }
@@ -579,16 +587,22 @@ function movementArchetype(technical = {}, position = '', lang = 'it') {
   if (style.includes('fox in the box') || style.includes('rapace')) {
     return {
       key: 'fox_in_box',
-      label: isEn ? 'Fox in the Box movement' : 'Movimento Rapace d’area',
+      label: isEn ? 'Fox in the Box movement' : isEs ? 'Movimiento Rapaz de área' : "Movimento Rapace d'area",
       movement: isEn
         ? 'stays central in the box for rebounds, crosses and quick finishes'
-        : 'resta centrale in area per ribalzi, cross e finalizzazioni rapide',
+        : isEs
+          ? 'se mantiene central en el área para rebotes, centros y finalizaciones rápidas'
+          : 'resta centrale in area per ribalzi, cross e finalizzazioni rapide',
       buyWhen: isEn
         ? 'you create wide service, loose balls or need a fixed box finisher'
-        : 'crei cross, seconde palle o ti serve un finalizzatore fisso in area',
+        : isEs
+          ? 'creas servicio desde banda, segundas jugadas o necesitas un finalizador fijo en área'
+          : 'crei cross, seconde palle o ti serve un finalizzatore fisso in area',
       caution: isEn
         ? 'not the same as a depth runner: do not judge it only by pace'
-        : 'non è come un attaccante di profondità: non valutarlo solo sulla velocità',
+        : isEs
+          ? 'no es lo mismo que un atacante de profundidad: no lo evalúes solo por velocidad'
+          : 'non è come un attaccante di profondità: non valutarlo solo sulla velocità',
       score: 8 + (body.score >= 7 ? 3 : 0)
     }
   }
@@ -596,10 +610,10 @@ function movementArchetype(technical = {}, position = '', lang = 'it') {
   if (style.includes('target man') || style.includes('fulcro')) {
     return {
       key: 'target_man',
-      label: isEn ? 'Target Man movement' : 'Movimento Fulcro di gioco',
-      movement: isEn ? 'shows as a physical reference and link player' : 'si offre da riferimento fisico e sponda',
-      buyWhen: isEn ? 'you need hold-up play, long balls or a body in the box' : 'ti servono sponde, lanci lunghi o corpo in area',
-      caution: isEn ? 'not ideal if you want constant runs behind' : 'non ideale se vuoi attacchi continui alle spalle',
+      label: isEn ? 'Target Man movement' : isEs ? 'Movimiento Referencia de ataque' : 'Movimento Fulcro di gioco',
+      movement: isEn ? 'shows as a physical reference and link player' : isEs ? 'se ofrece como referencia física y jugador de enlace' : 'si offre da riferimento fisico e sponda',
+      buyWhen: isEn ? 'you need hold-up play, long balls or a body in the box' : isEs ? 'necesitas juego de espaldas, balones largos o presencia en el área' : 'ti servono sponde, lanci lunghi o corpo in area',
+      caution: isEn ? 'not ideal if you want constant runs behind' : isEs ? 'no es ideal si quieres desmarques constantes a la espalda' : 'non ideale se vuoi attacchi continui alle spalle',
       score: 7 + body.score
     }
   }
@@ -607,10 +621,10 @@ function movementArchetype(technical = {}, position = '', lang = 'it') {
   if (style.includes('hole player') || style.includes('giocatore chiave')) {
     return {
       key: 'hole_player',
-      label: isEn ? 'Hole Player movement' : 'Movimento Giocatore chiave',
-      movement: isEn ? 'arrives from behind into scoring spaces' : 'si inserisce da dietro negli spazi da gol',
-      buyWhen: isEn ? 'you need late runs from midfield or second striker zones' : 'ti servono inserimenti da centrocampo o seconda punta',
-      caution: isEn ? 'needs service and space ahead' : 'ha bisogno di servizio e spazio davanti',
+      label: isEn ? 'Hole Player movement' : isEs ? 'Movimiento Jugador clave' : 'Movimento Giocatore chiave',
+      movement: isEn ? 'arrives from behind into scoring spaces' : isEs ? 'llega desde atrás a espacios de gol' : 'si inserisce da dietro negli spazi da gol',
+      buyWhen: isEn ? 'you need late runs from midfield or second striker zones' : isEs ? 'necesitas llegadas desde el mediocampo o zonas de segundo delantero' : 'ti servono inserimenti da centrocampo o seconda punta',
+      caution: isEn ? 'needs service and space ahead' : isEs ? 'necesita servicio y espacio por delante' : 'ha bisogno di servizio e spazio davanti',
       score: 7
     }
   }
@@ -618,10 +632,10 @@ function movementArchetype(technical = {}, position = '', lang = 'it') {
   if (style.includes('prolific winger') || style.includes('ala prolifica')) {
     return {
       key: 'prolific_winger',
-      label: isEn ? 'Prolific Winger movement' : 'Movimento Ala prolifica',
-      movement: isEn ? 'starts wide and attacks the final third' : 'parte largo e attacca l’ultimo terzo',
-      buyWhen: isEn ? 'you need width plus threat into the box' : 'ti servono ampiezza e minaccia verso l’area',
-      caution: isEn ? 'less useful if you never use wide lanes' : 'meno utile se non usi mai le corsie',
+      label: isEn ? 'Prolific Winger movement' : isEs ? 'Movimiento Extremo prolífico' : 'Movimento Ala prolifica',
+      movement: isEn ? 'starts wide and attacks the final third' : isEs ? 'parte desde banda y ataca el último tercio' : "parte largo e attacca l'ultimo terzo",
+      buyWhen: isEn ? 'you need width plus threat into the box' : isEs ? 'necesitas amplitud más amenaza hacia el área' : "ti servono ampiezza e minaccia verso l'area",
+      caution: isEn ? 'less useful if you never use wide lanes' : isEs ? 'menos útil si nunca usas las bandas' : 'meno utile se non usi mai le corsie',
       score: 6
     }
   }
@@ -639,6 +653,7 @@ function movementArchetype(technical = {}, position = '', lang = 'it') {
 /** Stesso ruolo ma profilo tattico diverso (movimento/body) — motivo d'acquisto per diversificare. */
 function rosterDiversificationProfile(cardTechnical, alternative, position, lang) {
   const isEn = lang === 'en'
+  const isEs = lang === 'es'
   if (!alternative) {
     return { score: 0, differentMovement: false, differentBody: false, line: '' }
   }
@@ -669,11 +684,15 @@ function rosterDiversificationProfile(cardTechnical, alternative, position, lang
   const line = differentMovement
     ? isEn
       ? `${cardMove.label} vs ${altLabel}: a different movement profile than your current ${alternative.name}.`
-      : `${cardMove.label} vs ${altLabel}: profilo di movimento diverso da ${alternative.name}.`
+      : isEs
+        ? `${cardMove.label} vs ${altLabel}: un perfil de movimiento diferente a tu ${alternative.name} actual.`
+        : `${cardMove.label} vs ${altLabel}: profilo di movimento diverso da ${alternative.name}.`
     : differentBody
       ? isEn
         ? `Different body type than ${alternative.name}: another way to play that lane.`
-        : `Body type diverso da ${alternative.name}: un altro modo di interpretare quella corsia.`
+        : isEs
+          ? `Tipo de cuerpo diferente a ${alternative.name}: otra forma de jugar esa banda.`
+          : `Body type diverso da ${alternative.name}: un altro modo di interpretare quella corsia.`
       : ''
 
   return { score, differentMovement, differentBody, cardMove, altMove, line }
@@ -702,23 +721,23 @@ function startersInRoleCount(sameRole = []) {
 }
 
 function mainLever(card, signals, roleGap, lang) {
-  if (roleGap) return lang === 'en' ? `Role coverage on ${card.position}` : `Copertura ruolo ${card.position}`
+  if (roleGap) return lang === 'en' ? `Role coverage on ${card.position}` : lang === 'es' ? `Cobertura de rol ${card.position}` : `Copertura ruolo ${card.position}`
   const family = roleFamily(card.position)
   const movement = movementArchetype(signals, card.position, lang)
-  if (movement.key === 'goal_poacher') return lang === 'en' ? 'Depth runs' : 'Attacco profondità'
-  if (movement.key === 'fox_in_box') return lang === 'en' ? 'Box finishing' : 'Presenza/finalizzazione in area'
-  if (movement.key === 'target_man') return lang === 'en' ? 'Physical reference' : 'Riferimento fisico'
+  if (movement.key === 'goal_poacher') return lang === 'en' ? 'Depth runs' : lang === 'es' ? 'Ataque en profundidad' : 'Attacco profondità'
+  if (movement.key === 'fox_in_box') return lang === 'en' ? 'Box finishing' : lang === 'es' ? 'Presencia/finalización en área' : 'Presenza/finalizzazione in area'
+  if (movement.key === 'target_man') return lang === 'en' ? 'Physical reference' : lang === 'es' ? 'Referencia física' : 'Riferimento fisico'
   if (family === 'def') {
-    if (signals.defend >= 80) return lang === 'en' ? 'Defensive timing and duels' : 'Tempo difensivo e duelli'
-    return lang === 'en' ? 'Backline coverage' : 'Copertura linea difensiva'
+    if (signals.defend >= 80) return lang === 'en' ? 'Defensive timing and duels' : lang === 'es' ? 'Timing defensivo y duelos' : 'Tempo difensivo e duelli'
+    return lang === 'en' ? 'Backline coverage' : lang === 'es' ? 'Cobertura de línea defensiva' : 'Copertura linea difensiva'
   }
   if (family === 'mid') {
-    if (signals.pass >= 80) return lang === 'en' ? 'Build-up control' : 'Controllo costruzione'
-    return lang === 'en' ? 'Midfield connection' : 'Connessione centrocampo'
+    if (signals.pass >= 80) return lang === 'en' ? 'Build-up control' : lang === 'es' ? 'Control de construcción' : 'Controllo costruzione'
+    return lang === 'en' ? 'Midfield connection' : lang === 'es' ? 'Conexión mediocampo' : 'Connessione centrocampo'
   }
-  if (family === 'gk') return lang === 'en' ? 'Goal stability' : 'Stabilita porta'
-  if (signals.pace >= 80) return lang === 'en' ? 'Depth attack' : 'Attacco profondita'
-  return lang === 'en' ? 'Final phase impact' : 'Impatto ultimi metri'
+  if (family === 'gk') return lang === 'en' ? 'Goal stability' : lang === 'es' ? 'Estabilidad en portería' : 'Stabilita porta'
+  if (signals.pace >= 80) return lang === 'en' ? 'Depth attack' : lang === 'es' ? 'Ataque en profundidad' : 'Attacco profondita'
+  return lang === 'en' ? 'Final phase impact' : lang === 'es' ? 'Impacto en últimos metros' : 'Impatto ultimi metri'
 }
 
 function recommendedUse(card, lang, tacticalStyle = '') {
@@ -726,21 +745,31 @@ function recommendedUse(card, lang, tacticalStyle = '') {
   const tactical = toAscii(tacticalStyle)
   if (family === 'def') return lang === 'en'
     ? `Use ${card.name} to protect the exposed side and win the first defensive duel after losing possession.`
-    : `Usa ${card.name} per proteggere il lato scoperto e vincere il primo duello dopo perdita palla.`
+    : lang === 'es'
+      ? `Usa a ${card.name} para proteger el lado expuesto y ganar el primer duelo defensivo tras perder la posesión.`
+      : `Usa ${card.name} per proteggere il lato scoperto e vincere il primo duello dopo perdita palla.`
   if (family === 'mid') return lang === 'en'
     ? `Use ${card.name} between your lines to connect first build-up and final third entries.`
-    : `Usa ${card.name} tra le linee per collegare prima costruzione e ultimo terzo.`
+    : lang === 'es'
+      ? `Usa a ${card.name} entre líneas para conectar la primera construcción y las entradas al último tercio.`
+      : `Usa ${card.name} tra le linee per collegare prima costruzione e ultimo terzo.`
   if (family === 'gk') return lang === 'en'
     ? `Use ${card.name} to stabilize the box and reduce second-ball rebounds.`
-    : `Usa ${card.name} per stabilizzare l'area e ridurre i rimbalzi da seconda palla.`
+    : lang === 'es'
+      ? `Usa a ${card.name} para estabilizar el área y reducir los rebotes de segunda jugada.`
+      : `Usa ${card.name} per stabilizzare l'area e ridurre i rimbalzi da seconda palla.`
   if (tactical.includes('possesso')) {
     return lang === 'en'
       ? `Use ${card.name} to attack the box after structured possession and finish central actions.`
-      : `Usa ${card.name} per attaccare area dopo possesso strutturato e chiudere le azioni centrali.`
+      : lang === 'es'
+        ? `Usa a ${card.name} para atacar el área tras posesión estructurada y finalizar las acciones centrales.`
+        : `Usa ${card.name} per attaccare area dopo possesso strutturato e chiudere le azioni centrali.`
   }
   return lang === 'en'
     ? `Use ${card.name} to attack depth early and finish the action in the first touch window.`
-    : `Usa ${card.name} per attaccare profondita in anticipo e chiudere l'azione nel primo tempo di gioco.`
+    : lang === 'es'
+      ? `Usa a ${card.name} para atacar la profundidad pronto y finalizar la acción en la primera ventana de toque.`
+      : `Usa ${card.name} per attaccare profondita in anticipo e chiudere l'azione nel primo tempo di gioco.`
 }
 
 function issuesRead(patterns = {}) {
@@ -851,72 +880,96 @@ function comboRead({ card, technical, players, issues, profileRead, gameRead, la
     return aerialTarget
       ? {
           key: 'cross-aerial',
-          label: lang === 'en' ? 'Wide-to-box combo' : 'Combo fascia-area',
+          label: lang === 'en' ? 'Wide-to-box combo' : lang === 'es' ? 'Combo banda-área' : 'Combo fascia-area',
           text: lang === 'en'
             ? `${card.name} has value on crosses because ${aerialTarget.name} gives your roster a real target in the box.`
-            : `${card.name} dà valore sui cross perché ${aerialTarget.name} ti offre un riferimento reale in area.`,
+            : lang === 'es'
+              ? `${card.name} da valor en los centros porque ${aerialTarget.name} te ofrece una referencia real en el área.`
+              : `${card.name} dà valore sui cross perché ${aerialTarget.name} ti offre un riferimento reale in area.`,
           detail: lang === 'en'
             ? `Native crossing skill plus an aerial target turns the wide lane into a concrete chance source.`
-            : `Skill da cross più un riferimento aereo trasformano la fascia in una fonte concreta di occasioni.`
+            : lang === 'es'
+              ? `Habilidad nativa de centro más una referencia aérea convierten la banda en una fuente concreta de ocasiones.`
+              : `Skill da cross più un riferimento aereo trasformano la fascia in una fonte concreta di occasioni.`
         }
       : {
           key: 'cross-no-target',
-          label: lang === 'en' ? 'Cross value limited' : 'Cross da sfruttare meglio',
+          label: lang === 'en' ? 'Cross value limited' : lang === 'es' ? 'Centro por aprovechar mejor' : 'Cross da sfruttare meglio',
           text: lang === 'en'
             ? `${card.name} has crossing value, but your roster does not show a strong aerial target yet.`
-            : `${card.name} ha valore nel cross, ma nella tua rosa non emerge ancora un riferimento forte nel gioco aereo.`,
+            : lang === 'es'
+              ? `${card.name} tiene valor en el centro, pero en tu plantilla todavía no destaca una referencia fuerte en el juego aéreo.`
+              : `${card.name} ha valore nel cross, ma nella tua rosa non emerge ancora un riferimento forte nel gioco aereo.`,
           detail: lang === 'en'
             ? `The skill is real, but it becomes more valuable when a striker or midfielder can attack those balls.`
-            : `La skill è reale, ma diventa più preziosa quando una punta o un centrocampista può attaccare quei palloni.`
+            : lang === 'es'
+              ? `La habilidad es real, pero se vuelve más valiosa cuando un delantero o centrocampista puede atacar esos balones.`
+              : `La skill è reale, ma diventa più preziosa quando una punta o un centrocampista può attaccare quei palloni.`
         }
   }
   if (/(through|filtrante)/.test(skills) || (groups.passing && technical.pass >= 80)) {
     return depthRunner
       ? {
           key: 'through-depth',
-          label: lang === 'en' ? 'Pass-to-depth combo' : 'Combo filtrante-profondità',
+          label: lang === 'en' ? 'Pass-to-depth combo' : lang === 'es' ? 'Combo pase filtrado-profundidad' : 'Combo filtrante-profondità',
           text: lang === 'en'
             ? `${card.name} can feed depth because ${depthRunner.name} gives your roster a player who can attack that space.`
-            : `${card.name} può servire la profondità perché ${depthRunner.name} ti dà un giocatore capace di attaccare quello spazio.`,
+            : lang === 'es'
+              ? `${card.name} puede servir la profundidad porque ${depthRunner.name} te da un jugador capaz de atacar ese espacio.`
+              : `${card.name} può servire la profondità perché ${depthRunner.name} ti dà un giocatore capace di attaccare quello spazio.`,
           detail: lang === 'en'
             ? `Passing skill plus a runner makes the card useful when you want faster vertical attacks.`
-            : `Skill di passaggio più un giocatore che attacca spazio rendono la carta utile quando vuoi verticalizzare più rapidamente.`
+            : lang === 'es'
+              ? `Habilidad de pase más un jugador que ataca el espacio hacen la carta útil cuando quieres verticalizar más rápido.`
+              : `Skill di passaggio più un giocatore che attacca spazio rendono la carta utile quando vuoi verticalizzare più rapidamente.`
         }
       : {
           key: 'through-no-runner',
-          label: lang === 'en' ? 'Creative value limited' : 'Creatività da completare',
+          label: lang === 'en' ? 'Creative value limited' : lang === 'es' ? 'Creatividad por completar' : 'Creatività da completare',
           text: lang === 'en'
             ? `${card.name} has passing value, but your roster does not show a clear depth runner to maximize it.`
-            : `${card.name} ha valore nel passaggio, ma nella tua rosa non emerge un attaccante della profondità per massimizzarlo.`,
+            : lang === 'es'
+              ? `${card.name} tiene valor en el pase, pero en tu plantilla no destaca un atacante de profundidad para maximizarlo.`
+              : `${card.name} ha valore nel passaggio, ma nella tua rosa non emerge un attaccante della profondità per massimizzarlo.`,
           detail: lang === 'en'
             ? `The skill remains useful, but it needs movement ahead of the ball to become decisive.`
-            : `La skill resta utile, ma ha bisogno di movimento davanti al pallone per diventare decisiva.`
+            : lang === 'es'
+              ? `La habilidad sigue siendo útil, pero necesita movimiento delante del balón para ser decisiva.`
+              : `La skill resta utile, ma ha bisogno di movimento davanti al pallone per diventare decisiva.`
         }
   }
   if (/(first time|tiro di prima)/.test(skills) || (groups.finishing && family === 'att')) {
     return creator
       ? {
           key: 'creator-finisher',
-          label: lang === 'en' ? 'Creator-to-finish combo' : 'Combo creator-finalizzatore',
+          label: lang === 'en' ? 'Creator-to-finish combo' : lang === 'es' ? 'Combo creador-finalizador' : 'Combo creator-finalizzatore',
           text: lang === 'en'
             ? `${card.name} gains value because ${creator.name} can already create the kind of balls a first-time finisher needs.`
-            : `${card.name} guadagna valore perché ${creator.name} può già creare palloni adatti a chi chiude di prima.`,
+            : lang === 'es'
+              ? `${card.name} gana valor porque ${creator.name} ya puede crear el tipo de balones que necesita un finalizador de primera.`
+              : `${card.name} guadagna valore perché ${creator.name} può già creare palloni adatti a chi chiude di prima.`,
           detail: lang === 'en'
             ? `Finishing skill becomes more concrete when the roster has a passer who can serve clean chances.`
-            : `La skill di finalizzazione diventa più concreta quando la rosa ha un passatore capace di creare occasioni pulite.`
+            : lang === 'es'
+              ? `La habilidad de finalización se vuelve más concreta cuando la plantilla tiene un pasador que puede servir ocasiones limpias.`
+              : `La skill di finalizzazione diventa più concreta quando la rosa ha un passatore capace di creare occasioni pulite.`
         }
       : null
   }
   if (groups.defensive && (issues?.needDefence || profileRead?.needDef || (gameRead?.shotsConceded != null && gameRead.shotsConceded >= 7))) {
     return {
       key: 'defensive-need',
-      label: lang === 'en' ? 'Defensive need match' : 'Risposta difensiva',
+      label: lang === 'en' ? 'Defensive need match' : lang === 'es' ? 'Respuesta defensiva' : 'Risposta difensiva',
       text: lang === 'en'
         ? `${card.name} matches a defensive need in your data: the native defensive skills support coverage, duels and interceptions.`
-        : `${card.name} risponde a un bisogno difensivo nei tuoi dati: le skill native aiutano copertura, duelli e intercetti.`,
+        : lang === 'es'
+          ? `${card.name} responde a una necesidad defensiva en tus datos: las habilidades defensivas nativas apoyan cobertura, duelos e intercepciones.`
+          : `${card.name} risponde a un bisogno difensivo nei tuoi dati: le skill native aiutano copertura, duelli e intercetti.`,
       detail: lang === 'en'
         ? `This is a real fit because the card skill set connects with an area your profile or match reads already highlight.`
-        : `È un fit reale perché il set di skill della carta si collega a un’area già emersa dal profilo o dalle letture partita.`
+        : lang === 'es'
+          ? `Es un encaje real porque el conjunto de habilidades de la carta se conecta con un área que tu perfil o lecturas de partido ya destacan.`
+          : `È un fit reale perché il set di skill della carta si collega a un'area già emersa dal profilo o dalle letture partita.`
     }
   }
   return null
@@ -989,23 +1042,25 @@ function movementProfile(technical, position, lang) {
   if (style.includes('full back finisher')) {
     return lang === 'en'
       ? 'forward full-back movement'
-      : 'movimento da terzino che attacca alto'
+      : lang === 'es'
+        ? 'movimiento de lateral que ataca arriba'
+        : 'movimento da terzino che attacca alto'
   }
-  if (style.includes('offensive full back')) return lang === 'en' ? 'wide overlap support' : 'spinta larga in sovrapposizione'
-  if (style.includes('defensive full back')) return lang === 'en' ? 'safer full-back positioning' : 'posizionamento più prudente da terzino'
-  if (style.includes('destroyer')) return lang === 'en' ? 'aggressive duel and interception movement' : 'movimento aggressivo su duelli e intercetti'
-  if (style.includes('build up')) return lang === 'en' ? 'build-up defender movement' : 'movimento da difensore di costruzione'
-  if (style.includes('box to box')) return lang === 'en' ? 'box-to-box support movement' : 'movimento continuo box-to-box'
-  if (style.includes('orchestrator')) return lang === 'en' ? 'central build-up control' : 'controllo centrale della costruzione'
-  if (style.includes('goal poacher') || style.includes('opportunista')) return lang === 'en' ? 'depth attack movement' : 'movimento ad attaccare la profondità'
-  if (style.includes('fox in the box') || style.includes('rapace')) return lang === 'en' ? 'central box-finisher movement' : 'movimento centrale da rapace d’area'
-  if (style.includes('target man') || style.includes('fulcro')) return lang === 'en' ? 'hold-up reference movement' : 'movimento da riferimento e sponda'
-  if (style.includes('hole player') || style.includes('giocatore chiave')) return lang === 'en' ? 'late box-arrival movement' : 'movimento di inserimento negli spazi'
-  if (style.includes('prolific winger') || style.includes('ala prolifica')) return lang === 'en' ? 'wide-to-box attacking movement' : 'movimento largo che attacca l’area'
-  if (family === 'gk') return lang === 'en' ? 'goal stability profile' : 'profilo di stabilità porta'
-  if (family === 'def') return lang === 'en' ? 'defensive control profile' : 'profilo di controllo difensivo'
-  if (family === 'mid') return lang === 'en' ? 'midfield connection profile' : 'profilo di connessione a centrocampo'
-  return lang === 'en' ? 'final-third profile' : 'profilo da ultimi metri'
+  if (style.includes('offensive full back')) return lang === 'en' ? 'wide overlap support' : lang === 'es' ? 'apoyo amplio en superposición' : 'spinta larga in sovrapposizione'
+  if (style.includes('defensive full back')) return lang === 'en' ? 'safer full-back positioning' : lang === 'es' ? 'posicionamiento más seguro de lateral' : 'posizionamento più prudente da terzino'
+  if (style.includes('destroyer')) return lang === 'en' ? 'aggressive duel and interception movement' : lang === 'es' ? 'movimiento agresivo en duelos e intercepciones' : 'movimento aggressivo su duelli e intercetti'
+  if (style.includes('build up')) return lang === 'en' ? 'build-up defender movement' : lang === 'es' ? 'movimiento de defensa de construcción' : 'movimento da difensore di costruzione'
+  if (style.includes('box to box')) return lang === 'en' ? 'box-to-box support movement' : lang === 'es' ? 'movimiento continuo box-to-box' : 'movimento continuo box-to-box'
+  if (style.includes('orchestrator')) return lang === 'en' ? 'central build-up control' : lang === 'es' ? 'control central de la construcción' : 'controllo centrale della costruzione'
+  if (style.includes('goal poacher') || style.includes('opportunista')) return lang === 'en' ? 'depth attack movement' : lang === 'es' ? 'movimiento de ataque en profundidad' : 'movimento ad attaccare la profondità'
+  if (style.includes('fox in the box') || style.includes('rapace')) return lang === 'en' ? 'central box-finisher movement' : lang === 'es' ? 'movimiento central de finalizador de área' : "movimento centrale da rapace d'area"
+  if (style.includes('target man') || style.includes('fulcro')) return lang === 'en' ? 'hold-up reference movement' : lang === 'es' ? 'movimiento de referencia y apoyo' : 'movimento da riferimento e sponda'
+  if (style.includes('hole player') || style.includes('giocatore chiave')) return lang === 'en' ? 'late box-arrival movement' : lang === 'es' ? 'movimiento de llegada al área' : 'movimento di inserimento negli spazi'
+  if (style.includes('prolific winger') || style.includes('ala prolifica')) return lang === 'en' ? 'wide-to-box attacking movement' : lang === 'es' ? 'movimiento desde banda que ataca el área' : "movimento largo che attacca l'area"
+  if (family === 'gk') return lang === 'en' ? 'goal stability profile' : lang === 'es' ? 'perfil de estabilidad en portería' : 'profilo di stabilità porta'
+  if (family === 'def') return lang === 'en' ? 'defensive control profile' : lang === 'es' ? 'perfil de control defensivo' : 'profilo di controllo difensivo'
+  if (family === 'mid') return lang === 'en' ? 'midfield connection profile' : lang === 'es' ? 'perfil de conexión en mediocampo' : 'profilo di connessione a centrocampo'
+  return lang === 'en' ? 'final-third profile' : lang === 'es' ? 'perfil de último tercio' : 'profilo da ultimi metri'
 }
 
 function tacticalStyleFit(technical, position, tacticalStyle, profileRead, lang) {
@@ -1060,37 +1115,37 @@ function tacticalStyleFit(technical, position, tacticalStyle, profileRead, lang)
 function roleRelevantStatEdges(position, technical, bestAlternative, lang) {
   const family = roleFamily(position)
   const common = [
-    ['pace', technical.pace - bestAlternative.signals.pace, lang === 'en' ? 'speed/recovery' : 'velocità/recupero'],
-    ['pass', technical.pass - bestAlternative.signals.pass, lang === 'en' ? 'passing' : 'passaggio'],
-    ['physical', technical.physical - bestAlternative.signals.physical, lang === 'en' ? 'physical duels' : 'duelli fisici']
+    ['pace', technical.pace - bestAlternative.signals.pace, lang === 'en' ? 'speed/recovery' : lang === 'es' ? 'Velocidad/recuperación' : 'velocità/recupero'],
+    ['pass', technical.pass - bestAlternative.signals.pass, lang === 'en' ? 'passing' : lang === 'es' ? 'Pase' : 'passaggio'],
+    ['physical', technical.physical - bestAlternative.signals.physical, lang === 'en' ? 'physical duels' : lang === 'es' ? 'Duelos físicos' : 'duelli fisici']
   ]
   if (family === 'gk') {
     return [
-      ['gk', technical.gk - bestAlternative.signals.gk, lang === 'en' ? 'goalkeeping' : 'parate'],
-      ['pass', technical.pass - bestAlternative.signals.pass, lang === 'en' ? 'build-up from goal' : 'uscita palla dal basso'],
-      ['physical', technical.physical - bestAlternative.signals.physical, lang === 'en' ? 'box presence' : 'presenza in area']
+      ['gk', technical.gk - bestAlternative.signals.gk, lang === 'en' ? 'goalkeeping' : lang === 'es' ? 'portería' : 'parate'],
+      ['pass', technical.pass - bestAlternative.signals.pass, lang === 'en' ? 'build-up from goal' : lang === 'es' ? 'salida limpia desde atrás' : 'uscita palla dal basso'],
+      ['physical', technical.physical - bestAlternative.signals.physical, lang === 'en' ? 'box presence' : lang === 'es' ? 'presencia en el área' : 'presenza in area']
     ]
   }
   if (family === 'def') {
     return [
-      ['defend', technical.defend - bestAlternative.signals.defend, lang === 'en' ? 'defensive timing' : 'tempo difensivo'],
-      ['aerial', technical.aerial - bestAlternative.signals.aerial, lang === 'en' ? 'aerial game' : 'gioco aereo'],
+      ['defend', technical.defend - bestAlternative.signals.defend, lang === 'en' ? 'defensive timing' : lang === 'es' ? 'timing defensivo' : 'tempo difensivo'],
+      ['aerial', technical.aerial - bestAlternative.signals.aerial, lang === 'en' ? 'aerial game' : lang === 'es' ? 'juego aéreo' : 'gioco aereo'],
       ...common
     ]
   }
   if (family === 'mid') {
     return [
-      ['pass', technical.pass - bestAlternative.signals.pass, lang === 'en' ? 'passing' : 'passaggio'],
-      ['defend', technical.defend - bestAlternative.signals.defend, lang === 'en' ? 'defensive balance' : 'equilibrio difensivo'],
-      ['pace', technical.pace - bestAlternative.signals.pace, lang === 'en' ? 'transition speed' : 'velocità nelle transizioni'],
-      ['physical', technical.physical - bestAlternative.signals.physical, lang === 'en' ? 'midfield duels' : 'duelli in mezzo']
+      ['pass', technical.pass - bestAlternative.signals.pass, lang === 'en' ? 'passing' : lang === 'es' ? 'Pase' : 'passaggio'],
+      ['defend', technical.defend - bestAlternative.signals.defend, lang === 'en' ? 'defensive balance' : lang === 'es' ? 'equilibrio defensivo' : 'equilibrio difensivo'],
+      ['pace', technical.pace - bestAlternative.signals.pace, lang === 'en' ? 'transition speed' : lang === 'es' ? 'velocidad en transiciones' : 'velocità nelle transizioni'],
+      ['physical', technical.physical - bestAlternative.signals.physical, lang === 'en' ? 'midfield duels' : lang === 'es' ? 'duelos en mediocampo' : 'duelli in mezzo']
     ]
   }
   return [
-    ['finish', technical.finish - bestAlternative.signals.finish, lang === 'en' ? 'finishing' : 'finalizzazione'],
-    ['pace', technical.pace - bestAlternative.signals.pace, lang === 'en' ? 'depth speed' : 'velocità in profondità'],
-    ['pass', technical.pass - bestAlternative.signals.pass, lang === 'en' ? 'final pass' : 'ultimo passaggio'],
-    ['aerial', technical.aerial - bestAlternative.signals.aerial, lang === 'en' ? 'aerial threat' : 'minaccia aerea']
+    ['finish', technical.finish - bestAlternative.signals.finish, lang === 'en' ? 'finishing' : lang === 'es' ? 'finalización' : 'finalizzazione'],
+    ['pace', technical.pace - bestAlternative.signals.pace, lang === 'en' ? 'depth speed' : lang === 'es' ? 'velocidad en profundidad' : 'velocità in profondità'],
+    ['pass', technical.pass - bestAlternative.signals.pass, lang === 'en' ? 'final pass' : lang === 'es' ? 'último pase' : 'ultimo passaggio'],
+    ['aerial', technical.aerial - bestAlternative.signals.aerial, lang === 'en' ? 'aerial threat' : lang === 'es' ? 'amenaza aérea' : 'minaccia aerea']
   ]
 }
 
@@ -1111,43 +1166,43 @@ function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, dupl
   if (!hasCompleteCardData) {
     return {
       level: 'needs-card-data',
-      label: lang === 'en' ? 'Card data loading' : 'Dati carta da completare',
-      title: lang === 'en' ? 'Read the full card before deciding' : 'Leggi la carta completa prima di decidere'
+      label: lang === 'en' ? 'Card data loading' : lang === 'es' ? 'Cargando datos de carta' : 'Dati carta da completare',
+      title: lang === 'en' ? 'Read the full card before deciding' : lang === 'es' ? 'Lee la carta completa antes de decidir' : 'Leggi la carta completa prima di decidere'
     }
   }
   if (!hasRoster) {
     return {
       level: 'needs-roster',
-      label: lang === 'en' ? 'Card value only' : 'Valore carta',
-      title: lang === 'en' ? 'Good card read, team fit needs your roster' : 'Buona carta, fit squadra da completare'
+      label: lang === 'en' ? 'Card value only' : lang === 'es' ? 'Solo valor de carta' : 'Valore carta',
+      title: lang === 'en' ? 'Good card read, team fit needs your roster' : lang === 'es' ? 'Buena lectura de carta, el encaje necesita tu plantilla' : 'Buona carta, fit squadra da completare'
     }
   }
   if (sameName && upgradeEdge) {
     return {
       level: 'buy',
-      label: lang === 'en' ? 'Version upgrade' : 'Upgrade versione',
-      title: lang === 'en' ? 'Buy only to replace your current version' : 'Compra solo per sostituire la versione attuale'
+      label: lang === 'en' ? 'Version upgrade' : lang === 'es' ? 'Mejora de versión' : 'Upgrade versione',
+      title: lang === 'en' ? 'Buy only to replace your current version' : lang === 'es' ? 'Compra solo para reemplazar tu versión actual' : 'Compra solo per sostituire la versione attuale'
     }
   }
   if (sameName) {
     return {
       level: 'watch',
-      label: lang === 'en' ? 'Same player' : 'Stesso giocatore',
-      title: lang === 'en' ? 'Not a rotation: compare version vs version' : 'Non è rotazione: confronto versione contro versione'
+      label: lang === 'en' ? 'Same player' : lang === 'es' ? 'Mismo jugador' : 'Stesso giocatore',
+      title: lang === 'en' ? 'Not a rotation: compare version vs version' : lang === 'es' ? 'No es rotación: compara versión contra versión' : 'Non è rotazione: confronto versione contro versione'
     }
   }
   if (upgradeEdge && (roleGap || score >= 70)) {
     return {
       level: 'buy',
-      label: lang === 'en' ? 'High team synergy' : 'Sinergia alta',
-      title: lang === 'en' ? 'Excellent fit for your team' : 'Ottimo fit per la tua squadra'
+      label: lang === 'en' ? 'High team synergy' : lang === 'es' ? 'Sinergia alta' : 'Sinergia alta',
+      title: lang === 'en' ? 'Excellent fit for your team' : lang === 'es' ? 'Excelente encaje para tu equipo' : 'Ottimo fit per la tua squadra'
     }
   }
   if (upgradeEdge && rosterCrowded) {
     return {
       level: 'watch',
-      label: lang === 'en' ? 'Upgrade option' : 'Opzione upgrade',
-      title: lang === 'en' ? 'Worth considering over your current option' : 'Da valutare rispetto all’opzione attuale'
+      label: lang === 'en' ? 'Upgrade option' : lang === 'es' ? 'Opción de mejora' : 'Opzione upgrade',
+      title: lang === 'en' ? 'Worth considering over your current option' : lang === 'es' ? 'Vale la pena considerarla frente a tu opción actual' : 'Da valutare rispetto all\'opzione attuale'
     }
   }
   // Soglie BUY diversificazione differenziate per affollamento ruolo:
@@ -1158,33 +1213,37 @@ function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, dupl
   if ((duplicate || starterBlocked) && diversificationValue && score >= buyDivThreshold) {
     return {
       level: 'buy',
-      label: lang === 'en' ? 'Diversify your squad' : 'Diversifica la rosa',
+      label: lang === 'en' ? 'Diversify your squad' : lang === 'es' ? 'Diversifica tu plantilla' : 'Diversifica la rosa',
       title: lang === 'en'
         ? 'Buy to add a different tactical profile in the same role'
-        : 'Compra per avere un profilo tattico diverso nello stesso ruolo'
+        : lang === 'es'
+          ? 'Compra para añadir un perfil táctico diferente en el mismo rol'
+          : 'Compra per avere un profilo tattico diverso nello stesso ruolo'
     }
   }
   if ((duplicate || starterBlocked) && diversificationValue && score >= 65) {
     return {
       level: 'watch',
-      label: lang === 'en' ? 'Tactical variety' : 'Varietà tattica',
+      label: lang === 'en' ? 'Tactical variety' : lang === 'es' ? 'Variedad táctica' : 'Varietà tattica',
       title: lang === 'en'
         ? 'Same role, different match plan — worth it if you like rotating'
-        : 'Stesso ruolo, piano partita diverso — vale se ti piace ruotare'
+        : lang === 'es'
+          ? 'Mismo rol, diferente plan de partido — vale la pena si te gusta rotar'
+          : 'Stesso ruolo, piano partita diverso — vale se ti piace ruotare'
     }
   }
   if ((duplicate || starterBlocked) && premiumCard && score >= (diversificationValue ? 84 : 88)) {
     return {
       level: 'buy',
-      label: lang === 'en' ? 'Premium rotation' : 'Rotazione premium',
-      title: lang === 'en' ? 'Buy if you want a premium role option' : 'Compra se vuoi un’opzione premium nel ruolo'
+      label: lang === 'en' ? 'Premium rotation' : lang === 'es' ? 'Rotación premium' : 'Rotazione premium',
+      title: lang === 'en' ? 'Buy if you want a premium role option' : lang === 'es' ? 'Compra si quieres una opción premium en el rol' : 'Compra se vuoi un\'opzione premium nel ruolo'
     }
   }
   if ((duplicate || starterBlocked) && premiumCard && score >= (diversificationValue ? 60 : 65)) {
     return {
       level: 'watch',
-      label: lang === 'en' ? 'Premium option' : 'Opzione premium',
-      title: lang === 'en' ? 'Strong card, worth considering as rotation' : 'Carta forte, da valutare come rotazione'
+      label: lang === 'en' ? 'Premium option' : lang === 'es' ? 'Opción premium' : 'Opzione premium',
+      title: lang === 'en' ? 'Strong card, worth considering as rotation' : lang === 'es' ? 'Carta fuerte, vale la pena considerarla como rotación' : 'Carta forte, da valutare come rotazione'
     }
   }
   // SKIP esplicito per ruoli realmente affollati senza upgrade ne diversificazione:
@@ -1192,39 +1251,43 @@ function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, dupl
   if (duplicate && rosterCrowded && !upgradeEdge && !diversificationValue && !premiumCard && score < 65) {
     return {
       level: 'skip',
-      label: lang === 'en' ? 'Role already covered' : 'Ruolo già coperto',
+      label: lang === 'en' ? 'Role already covered' : lang === 'es' ? 'Rol ya cubierto' : 'Ruolo già coperto',
       title: lang === 'en'
         ? 'Role is full and this card does not add a tactical option'
-        : 'Ruolo coperto e la carta non aggiunge un’opzione tattica'
+        : lang === 'es'
+          ? 'El rol está completo y esta carta no añade una opción táctica'
+          : 'Ruolo coperto e la carta non aggiunge un\'opzione tattica'
     }
   }
   if (duplicate || starterBlocked) {
     return {
       level: 'watch',
-      label: lang === 'en' ? 'Rotation option' : 'Opzione rotazione',
+      label: lang === 'en' ? 'Rotation option' : lang === 'es' ? 'Opción de rotación' : 'Opzione rotazione',
       title: lang === 'en'
         ? 'Covered role: judge it by rotation and match plan'
-        : 'Ruolo coperto: valutala per rotazione e piano partita'
+        : lang === 'es'
+          ? 'Rol cubierto: evalúala por rotación y plan de partido'
+          : 'Ruolo coperto: valutala per rotazione e piano partita'
     }
   }
   if (roleGap || score >= 74) {
     return {
       level: 'buy',
-      label: lang === 'en' ? 'High team synergy' : 'Sinergia alta',
-      title: lang === 'en' ? 'Excellent fit for your team' : 'Ottimo fit per la tua squadra'
+      label: lang === 'en' ? 'High team synergy' : lang === 'es' ? 'Sinergia alta' : 'Sinergia alta',
+      title: lang === 'en' ? 'Excellent fit for your team' : lang === 'es' ? 'Excelente encaje para tu equipo' : 'Ottimo fit per la tua squadra'
     }
   }
   if (score >= 58) {
     return {
       level: 'watch',
-      label: lang === 'en' ? 'Situational synergy' : 'Sinergia situazionale',
-      title: lang === 'en' ? 'Useful in the right match plan' : 'Utile nel piano partita giusto'
+      label: lang === 'en' ? 'Situational synergy' : lang === 'es' ? 'Sinergia situacional' : 'Sinergia situazionale',
+      title: lang === 'en' ? 'Useful in the right match plan' : lang === 'es' ? 'Útil en el plan de partido adecuado' : 'Utile nel piano partita giusto'
     }
   }
   return {
     level: 'skip',
-    label: lang === 'en' ? 'Low priority' : 'Bassa priorità',
-    title: lang === 'en' ? 'Not the upgrade your team needs now' : 'Non è l’upgrade che ti serve ora'
+    label: lang === 'en' ? 'Low priority' : lang === 'es' ? 'Baja prioridad' : 'Bassa priorità',
+    title: lang === 'en' ? 'Not the upgrade your team needs now' : lang === 'es' ? 'No es la mejora que tu equipo necesita ahora' : 'Non è l\'upgrade che ti serve ora'
   }
 }
 
@@ -1233,29 +1296,31 @@ function cardValueBullets(card, technical, lang) {
   const bullets = []
   if (technical.style) {
     const styleLabel = labelFromMap(EFHUB_STYLE_LABELS, technical.style, lang)
-    bullets.push(lang === 'en' ? `Native style: ${styleLabel}.` : `Stile nativo: ${styleLabel}.`)
+    bullets.push(lang === 'en' ? `Native style: ${styleLabel}.` : lang === 'es' ? `Estilo nativo: ${styleLabel}.` : `Stile nativo: ${styleLabel}.`)
   }
   if (family === 'gk') {
-    if (technical.gk >= 75) bullets.push(lang === 'en' ? 'Raises reliability inside the box.' : 'Alza affidabilità dentro l’area.')
-    if (technical.pass >= 70) bullets.push(lang === 'en' ? 'Can support safer build-up from the back.' : 'Può aiutare una costruzione più pulita dal basso.')
+    if (technical.gk >= 75) bullets.push(lang === 'en' ? 'Raises reliability inside the box.' : lang === 'es' ? 'Aumenta la fiabilidad dentro del área.' : 'Alza affidabilità dentro l’area.')
+    if (technical.pass >= 70) bullets.push(lang === 'en' ? 'Can support safer build-up from the back.' : lang === 'es' ? 'Puede apoyar una salida más segura desde atrás.' : 'Può aiutare una costruzione più pulita dal basso.')
   } else if (family === 'def') {
-    if (technical.defend >= 78) bullets.push(lang === 'en' ? 'Strong defensive base for duels and interceptions.' : 'Base difensiva forte per duelli e intercetti.')
-    if (technical.aerial >= 78) bullets.push(lang === 'en' ? 'Adds aerial value on crosses and set pieces.' : 'Aggiunge valore aereo su cross e palle ferme.')
-    if (technical.pace >= 74) bullets.push(lang === 'en' ? 'Has enough recovery speed to protect space.' : 'Ha velocità di recupero per proteggere campo.')
+    if (technical.defend >= 78) bullets.push(lang === 'en' ? 'Strong defensive base for duels and interceptions.' : lang === 'es' ? 'Base defensiva fuerte para duelos e intercepciones.' : 'Base difensiva forte per duelli e intercetti.')
+    if (technical.aerial >= 78) bullets.push(lang === 'en' ? 'Adds aerial value on crosses and set pieces.' : lang === 'es' ? 'Añade valor aéreo en centros y jugadas a balón parado.' : 'Aggiunge valore aereo su cross e palle ferme.')
+    if (technical.pace >= 74) bullets.push(lang === 'en' ? 'Has enough recovery speed to protect space.' : lang === 'es' ? 'Tiene suficiente velocidad de recuperación para proteger el espacio.' : 'Ha velocità di recupero per proteggere campo.')
   } else if (family === 'mid') {
-    if (technical.pass >= 76) bullets.push(lang === 'en' ? 'Improves connection between build-up and final third.' : 'Migliora il collegamento tra costruzione e ultimo terzo.')
-    if (technical.defend >= 72) bullets.push(lang === 'en' ? 'Adds useful balance when possession is lost.' : 'Aggiunge equilibrio utile dopo perdita palla.')
-    if (technical.physical >= 74) bullets.push(lang === 'en' ? 'Can hold midfield duels.' : 'Può reggere i duelli in mezzo.')
+    if (technical.pass >= 76) bullets.push(lang === 'en' ? 'Improves connection between build-up and final third.' : lang === 'es' ? 'Mejora la conexión entre construcción y último tercio.' : 'Migliora il collegamento tra costruzione e ultimo terzo.')
+    if (technical.defend >= 72) bullets.push(lang === 'en' ? 'Adds useful balance when possession is lost.' : lang === 'es' ? 'Añade equilibrio útil tras pérdida de posesión.' : 'Aggiunge equilibrio utile dopo perdita palla.')
+    if (technical.physical >= 74) bullets.push(lang === 'en' ? 'Can hold midfield duels.' : lang === 'es' ? 'Puede sostener los duelos en mediocampo.' : 'Può reggere i duelli in mezzo.')
   } else {
-    if (technical.finish >= 78) bullets.push(lang === 'en' ? 'Brings a real finishing threat.' : 'Porta una minaccia concreta in finalizzazione.')
-    if (technical.pace >= 78) bullets.push(lang === 'en' ? 'Attacks depth and creates separation.' : 'Attacca profondità e crea separazione.')
-    if (technical.pass >= 74) bullets.push(lang === 'en' ? 'Can also connect the last pass.' : 'Può collegare anche l’ultimo passaggio.')
+    if (technical.finish >= 78) bullets.push(lang === 'en' ? 'Brings a real finishing threat.' : lang === 'es' ? 'Aporta una amenaza real de finalización.' : 'Porta una minaccia concreta in finalizzazione.')
+    if (technical.pace >= 78) bullets.push(lang === 'en' ? 'Attacks depth and creates separation.' : lang === 'es' ? 'Ataca la profundidad y crea separación.' : 'Attacca profondità e crea separazione.')
+    if (technical.pass >= 74) bullets.push(lang === 'en' ? 'Can also connect the last pass.' : lang === 'es' ? 'También puede conectar el último pase.' : 'Può collegare anche l’ultimo passaggio.')
   }
   return bullets.length > 0
     ? bullets.slice(0, 3)
     : [lang === 'en'
         ? `${card.name} is readable by role and style, but the technical detail is still limited.`
-        : `${card.name} è leggibile per ruolo e stile, ma il dettaglio tecnico è ancora limitato.`]
+        : lang === 'es'
+          ? `${card.name} es legible por rol y estilo, pero el detalle técnico aún es limitado.`
+          : `${card.name} è leggibile per ruolo e stile, ma il dettaglio tecnico è ancora limitato.`]
 }
 
 function tacticalUseLine(card, technical, tacticalStyle, lang) {
@@ -1465,11 +1530,11 @@ function buildRosterRead({ card, sameRole, bestAlternative, roleGap, duplicate, 
 }
 
 function teamSynergyLabel(score, lang) {
-  if (score >= 85) return lang === 'en' ? 'Wow synergy' : 'Sinergia wow'
-  if (score >= 72) return lang === 'en' ? 'High synergy' : 'Sinergia alta'
-  if (score >= 58) return lang === 'en' ? 'Good synergy' : 'Sinergia buona'
-  if (score >= 44) return lang === 'en' ? 'Medium synergy' : 'Sinergia media'
-  return lang === 'en' ? 'Low synergy' : 'Sinergia bassa'
+  if (score >= 85) return lang === 'en' ? 'Wow synergy' : lang === 'es' ? 'Sinergia wow' : 'Sinergia wow'
+  if (score >= 72) return lang === 'en' ? 'High synergy' : lang === 'es' ? 'Sinergia alta' : 'Sinergia alta'
+  if (score >= 58) return lang === 'en' ? 'Good synergy' : lang === 'es' ? 'Sinergia buena' : 'Sinergia buona'
+  if (score >= 44) return lang === 'en' ? 'Medium synergy' : lang === 'es' ? 'Sinergia media' : 'Sinergia media'
+  return lang === 'en' ? 'Low synergy' : lang === 'es' ? 'Sinergia baja' : 'Sinergia bassa'
 }
 
 function addUniqueLine(lines, line) {
@@ -1480,18 +1545,18 @@ function addUniqueLine(lines, line) {
 
 function strongestTrait(technical, position, lang) {
   const family = roleFamily(position)
-  if (family === 'gk') return technical.gk >= 78 ? (lang === 'en' ? 'goal reliability' : 'affidabilità in porta') : ''
+  if (family === 'gk') return technical.gk >= 78 ? (lang === 'en' ? 'goal reliability' : lang === 'es' ? 'fiabilidad en portería' : 'affidabilità in porta') : ''
   if (family === 'def') {
-    if (technical.defend >= 78) return lang === 'en' ? 'defensive timing' : 'tempo difensivo'
-    if (technical.pace >= 76) return lang === 'en' ? 'recovery speed' : 'velocità di recupero'
+    if (technical.defend >= 78) return lang === 'en' ? 'defensive timing' : lang === 'es' ? 'timing defensivo' : 'tempo difensivo'
+    if (technical.pace >= 76) return lang === 'en' ? 'recovery speed' : lang === 'es' ? 'velocidad de recuperación' : 'velocità di recupero'
   }
   if (family === 'mid') {
-    if (technical.pass >= 78) return lang === 'en' ? 'cleaner build-up' : 'costruzione più pulita'
-    if (technical.defend >= 74) return lang === 'en' ? 'balance after ball loss' : 'equilibrio dopo perdita palla'
+    if (technical.pass >= 78) return lang === 'en' ? 'cleaner build-up' : lang === 'es' ? 'construcción más limpia' : 'costruzione più pulita'
+    if (technical.defend >= 74) return lang === 'en' ? 'balance after ball loss' : lang === 'es' ? 'equilibrio tras pérdida de balón' : 'equilibrio dopo perdita palla'
   }
-  if (technical.pace >= 78) return lang === 'en' ? 'depth and separation' : 'profondità e strappo'
-  if (technical.finish >= 78) return lang === 'en' ? 'finishing threat' : 'minaccia in finalizzazione'
-  if (technical.pass >= 76) return lang === 'en' ? 'last-pass quality' : 'qualità nell’ultimo passaggio'
+  if (technical.pace >= 78) return lang === 'en' ? 'depth and separation' : lang === 'es' ? 'profundidad y desmarque' : 'profondità e strappo'
+  if (technical.finish >= 78) return lang === 'en' ? 'finishing threat' : lang === 'es' ? 'amenaza de finalización' : 'minaccia in finalizzazione'
+  if (technical.pass >= 76) return lang === 'en' ? 'last-pass quality' : lang === 'es' ? 'calidad de último pase' : 'qualità nell\'ultimo passaggio'
   return ''
 }
 
@@ -1646,141 +1711,189 @@ function coachAdvice({ card, hasRoster, technical, combo, duplicate, starterBloc
 
   if (!hasRoster) {
     return {
-      title: lang === 'en' ? 'Card read' : 'Lettura carta',
+      title: lang === 'en' ? 'Card read' : lang === 'es' ? 'Lectura de carta' : 'Lettura carta',
       text: lang === 'en'
         ? `${card.name} is best read from style and native skills for now. The profile points to ${movement}; load your roster to know if that movement creates a real combo for your players.`
-        : `${card.name} va letto prima da stile e abilità native. Il profilo porta ${movement}; con la rosa caricata possiamo dirti se quel movimento crea una combo reale con i tuoi giocatori.`,
+        : lang === 'es'
+          ? `${card.name} se lee mejor desde el estilo y las habilidades nativas por ahora. El perfil apunta a ${movement}; carga tu plantilla para saber si ese movimiento crea un combo real para tus jugadores.`
+          : `${card.name} va letto prima da stile e abilità native. Il profilo porta ${movement}; con la rosa caricata possiamo dirti se quel movimento crea una combo reale con i tuoi giocatori.`,
       action: lang === 'en'
         ? 'Use this as a card review, not a personal roster verdict yet.'
-        : 'Usala come review della carta, non ancora come verdetto personale sulla tua rosa.'
+        : lang === 'es'
+          ? 'Úsalo como reseña de carta, no como veredicto personal sobre tu plantilla todavía.'
+          : 'Usala come review della carta, non ancora come verdetto personale sulla tua rosa.'
     }
   }
 
   if (combo?.key === 'cross-aerial') {
     return {
-      title: lang === 'en' ? 'Real wide combo' : 'Combo reale sulla fascia',
+      title: lang === 'en' ? 'Real wide combo' : lang === 'es' ? 'Combo real de banda' : 'Combo reale sulla fascia',
       text: lang === 'en'
         ? `${card.name} is useful because the crossing skill has a target in your roster. This is the kind of card I would use to turn the wide lane into chances, not just to add another full-back.`
-        : `${intro}${card.name} è utile perché la skill da cross trova un riferimento nella tua rosa. È una carta da usare per trasformare la fascia in occasioni, non solo per aggiungere un altro esterno.`,
+        : lang === 'es'
+          ? `${card.name} es útil porque la habilidad de centro tiene un objetivo en tu plantilla. Es el tipo de carta que usaría para convertir la banda en ocasiones, no solo para añadir otro lateral.`
+          : `${intro}${card.name} è utile perché la skill da cross trova un riferimento nella tua rosa. È una carta da usare per trasformare la fascia in occasioni, non solo per aggiungere un altro esterno.`,
       action: lang === 'en'
         ? 'Use him when you want width, early balls and pressure into the box.'
-        : 'Usalo quando vuoi ampiezza, palloni messi presto e più presenza in area.'
+        : lang === 'es'
+          ? 'Úsalo cuando quieras amplitud, balones tempranos y presión en el área.'
+          : 'Usalo quando vuoi ampiezza, palloni messi presto e più presenza in area.'
     }
   }
 
   if (combo?.key === 'cross-no-target') {
     return {
-      title: lang === 'en' ? 'Good skill, incomplete combo' : 'Skill forte, combo incompleta',
+      title: lang === 'en' ? 'Good skill, incomplete combo' : lang === 'es' ? 'Buena habilidad, combo incompleto' : 'Skill forte, combo incompleta',
       text: lang === 'en'
         ? `${card.name} brings width and crossing, but your roster does not give that skill a strong box target yet. I would not make him a priority unless you want to change how you attack from wide areas.`
-        : `${intro}${card.name} porta ampiezza e cross, ma nella tua rosa quella skill non ha ancora un riferimento forte in area. Non la metterei tra le priorità, a meno che tu voglia cambiare il modo in cui attacchi dalle fasce.`,
+        : lang === 'es'
+          ? `${card.name} aporta amplitud y centro, pero tu plantilla todavía no le da a esa habilidad un objetivo fuerte en el área. No lo haría una prioridad a menos que quieras cambiar cómo atacas desde las bandas.`
+          : `${intro}${card.name} porta ampiezza e cross, ma nella tua rosa quella skill non ha ancora un riferimento forte in area. Non la metterei tra le priorità, a meno che tu voglia cambiare il modo in cui attacchi dalle fasce.`,
       action: lang === 'en'
         ? 'Useful for width; less useful if your attack stays mostly on the ground.'
-        : 'Utile per dare ampiezza; meno utile se il tuo attacco resta soprattutto palla a terra.'
+        : lang === 'es'
+          ? 'Útil para amplitud; menos útil si tu ataque se mantiene principalmente por el suelo.'
+          : 'Utile per dare ampiezza; meno utile se il tuo attacco resta soprattutto palla a terra.'
     }
   }
 
   if (combo?.key === 'through-depth') {
     return {
-      title: lang === 'en' ? 'Vertical combo' : 'Combo verticale',
+      title: lang === 'en' ? 'Vertical combo' : lang === 'es' ? 'Combo vertical' : 'Combo verticale',
       text: lang === 'en'
         ? `${card.name} has a clear use: serve players who attack space. In your roster the pass has a runner, so this card can speed up your attacks instead of slowing the play down.`
-        : `${intro}${card.name} ha un uso chiaro: servire chi attacca lo spazio. Nella tua rosa il passaggio trova un corridore, quindi questa carta può velocizzare l’attacco invece di rallentare il gioco.`,
+        : lang === 'es'
+          ? `${card.name} tiene un uso claro: servir a jugadores que atacan el espacio. En tu plantilla el pase tiene un corredor, así que esta carta puede acelerar tus ataques en lugar de ralentizar el juego.`
+          : `${intro}${card.name} ha un uso chiaro: servire chi attacca lo spazio. Nella tua rosa il passaggio trova un corridore, quindi questa carta può velocizzare l'attacco invece di rallentare il gioco.`,
       action: lang === 'en'
         ? 'Use him when you want earlier vertical passes and runs behind the line.'
-        : 'Usalo quando vuoi verticalizzare prima e attaccare alle spalle della linea.'
+        : lang === 'es'
+          ? 'Úsalo cuando quieras pases verticales tempranos y desmarques a la espalda de la línea.'
+          : 'Usalo quando vuoi verticalizzare prima e attaccare alle spalle della linea.'
     }
   }
 
   if (combo?.key === 'creator-finisher') {
     return {
-      title: lang === 'en' ? 'Finishing combo' : 'Combo finalizzazione',
+      title: lang === 'en' ? 'Finishing combo' : lang === 'es' ? 'Combo de finalización' : 'Combo finalizzazione',
       text: lang === 'en'
         ? `${card.name} becomes more interesting because your roster already has a creator. The value is not generic: it is the link between service and first-time finishing.`
-        : `${intro}${card.name} diventa più interessante perché nella tua rosa c’è già chi può creare. Il valore non è generico: è il collegamento tra servizio e chiusura di prima.`,
+        : lang === 'es'
+          ? `${card.name} se vuelve más interesante porque tu plantilla ya tiene un creador. El valor no es genérico: es el vínculo entre servicio y finalización de primera.`
+          : `${intro}${card.name} diventa più interessante perché nella tua rosa c'è già chi può creare. Il valore non è generico: è il collegamento tra servizio e chiusura di prima.`,
       action: lang === 'en'
         ? 'Use him near the box, where clean service turns into quick shots.'
-        : 'Usalo vicino all’area, dove un servizio pulito può diventare tiro rapido.'
+        : lang === 'es'
+          ? 'Úsalo cerca del área, donde el servicio limpio se convierte en disparos rápidos.'
+          : "Usalo vicino all'area, dove un servizio pulito può diventare tiro rapido."
     }
   }
 
   if (combo?.key === 'defensive-need') {
     return {
-      title: lang === 'en' ? 'Defensive answer' : 'Risposta difensiva',
+      title: lang === 'en' ? 'Defensive answer' : lang === 'es' ? 'Respuesta defensiva' : 'Risposta difensiva',
       text: lang === 'en'
         ? `${card.name} is not just another defensive card: the native skills connect with a need already visible in your data. I would value him when you want more coverage, duels and interceptions.`
-        : `${intro}${card.name} non è solo un’altra carta difensiva: le skill native si collegano a un bisogno già visibile nei tuoi dati. La valuterei quando vuoi più copertura, duelli e intercetti.`,
+        : lang === 'es'
+          ? `${card.name} no es solo otra carta defensiva: las habilidades nativas conectan con una necesidad ya visible en tus datos. Lo valoraría cuando quieras más cobertura, duelos e intercepciones.`
+          : `${intro}${card.name} non è solo un'altra carta difensiva: le skill native si collegano a un bisogno già visibile nei tuoi dati. La valuterei quando vuoi più copertura, duelli e intercetti.`,
       action: lang === 'en'
         ? 'Use him to stabilize the zone before looking for a more attacking option.'
-        : 'Usalo per stabilizzare la zona prima di cercare una soluzione più offensiva.'
+        : lang === 'es'
+          ? 'Úsalo para estabilizar la zona antes de buscar una opción más ofensiva.'
+          : 'Usalo per stabilizzare la zona prima di cercare una soluzione più offensiva.'
     }
   }
 
   if (duplicate || starterBlocked) {
     if (evidence.diversificationValue && !diversification?.differentMovement && evidence.rotationPoolValue) {
       return {
-        title: lang === 'en' ? 'Elite rotation' : 'Rotazione d\'élite',
+        title: lang === 'en' ? 'Elite rotation' : lang === 'es' ? 'Rotación de élite' : 'Rotazione d\'élite',
         text: lang === 'en'
           ? `${card.name} shares the movement style with your ${card.position} starters but brings different tools (${trait || movement}). Worth coins for rotation and match plans.`
-          : `${intro}${card.name} condivide il movimento con i titolari ${card.position} ma porta tool diversi (${trait || movement}). Vale coins per rotazione e piano partita.`,
+          : lang === 'es'
+            ? `${card.name} comparte el estilo de movimiento con tus titulares de ${card.position} pero aporta herramientas diferentes (${trait || movement}). Vale coins para rotación y planes de partido.`
+            : `${intro}${card.name} condivide il movimento con i titolari ${card.position} ma porta tool diversi (${trait || movement}). Vale coins per rotazione e piano partita.`,
         action: lang === 'en'
           ? 'Buy to rotate profiles in the same role — not only as a weekly starter.'
-          : 'Comprala per ruotare i profili nello stesso ruolo — non solo come titolare fisso.'
+          : lang === 'es'
+            ? 'Compra para rotar perfiles en el mismo rol — no solo como titular fijo.'
+            : 'Comprala per ruotare i profili nello stesso ruolo — non solo come titolare fisso.'
       }
     }
     if (evidence.diversificationValue) {
       return {
-        title: lang === 'en' ? 'Diversify the lane' : 'Diversifica il reparto',
+        title: lang === 'en' ? 'Diversify the lane' : lang === 'es' ? 'Diversifica la banda' : 'Diversifica il reparto',
         text: lang === 'en'
           ? `${card.name} gives you another way to play ${card.position}: ${movement}. That is real value if you like rotating profiles, not only chasing a new starter.`
-          : `${intro}${card.name} ti dà un altro modo di giocare ${card.position}: ${movement}. È valore reale se ti piace ruotare i profili, non solo cercare un nuovo titolare.`,
+          : lang === 'es'
+            ? `${card.name} te da otra forma de jugar ${card.position}: ${movement}. Es valor real si te gusta rotar perfiles, no solo buscar un nuevo titular.`
+            : `${intro}${card.name} ti dà un altro modo di giocare ${card.position}: ${movement}. È valore reale se ti piace ruotare i profili, non solo cercare un nuovo titolare.`,
         action: lang === 'en'
           ? 'Buy when you want tactical variety in the same role; rotate by match plan.'
-          : 'Compralo quando vuoi varietà tattica nello stesso ruolo; ruota in base al piano partita.'
+          : lang === 'es'
+            ? 'Compra cuando quieras variedad táctica en el mismo rol; rota según plan de partido.'
+            : 'Compralo quando vuoi varietà tattica nello stesso ruolo; ruota in base al piano partita.'
       }
     }
     if (technical.premiumCard) {
       return {
-        title: lang === 'en' ? 'Premium rotation' : 'Rotazione premium',
+        title: lang === 'en' ? 'Premium rotation' : lang === 'es' ? 'Rotación premium' : 'Rotazione premium',
         text: lang === 'en'
           ? `${card.name} does not need to erase your starter to be worth coins: as a premium card, value it for ${trait || movement}, rotation and match-plan flexibility.`
-          : `${intro}${card.name} non deve per forza cancellare il titolare per valere coins: da carta premium va valutato per ${trait || movement}, rotazione e flessibilità nel piano partita.`,
+          : lang === 'es'
+            ? `${card.name} no necesita borrar a tu titular para valer coins: como carta premium, valórala por ${trait || movement}, rotación y flexibilidad en el plan de partido.`
+            : `${intro}${card.name} non deve per forza cancellare il titolare per valere coins: da carta premium va valutato per ${trait || movement}, rotazione e flessibilità nel piano partita.`,
         action: lang === 'en'
           ? 'Buy if you want that premium option, not only if he starts every match.'
-          : 'Compralo se vuoi quell’opzione premium, non solo se parte titolare sempre.'
+          : lang === 'es'
+            ? 'Compra si quieres esa opción premium, no solo si es titular siempre.'
+            : 'Compralo se vuoi quell\'opzione premium, non solo se parte titolare sempre.'
       }
     }
     return {
-      title: lang === 'en' ? 'Not a priority' : 'Non è una priorità',
+      title: lang === 'en' ? 'Not a priority' : lang === 'es' ? 'No es una prioridad' : 'Non è una priorità',
       text: lang === 'en'
         ? `${card.name} does not change the balance of your current players enough. I would keep him as a situational option, useful when you specifically want ${trait || movement}.`
-        : `${intro}${card.name} non cambia abbastanza l’equilibrio dei tuoi giocatori attuali. Lo terrei come opzione situazionale, utile quando vuoi proprio ${trait || movement}.`,
+        : lang === 'es'
+          ? `${card.name} no cambia lo suficiente el equilibrio de tus jugadores actuales. Lo mantendría como opción situacional, útil cuando quieras específicamente ${trait || movement}.`
+          : `${intro}${card.name} non cambia abbastanza l\'equilibrio dei tuoi giocatori attuali. Lo terrei come opzione situazionale, utile quando vuoi proprio ${trait || movement}.`,
       action: lang === 'en'
         ? 'Do not force him as a starter; use him for that specific match need.'
-        : 'Non forzarlo come titolare: usalo per quel bisogno specifico di partita.'
+        : lang === 'es'
+          ? 'No lo fuerces como titular; úsalo para esa necesidad específica de partido.'
+          : 'Non forzarlo come titolare: usalo per quel bisogno specifico di partita.'
     }
   }
 
   if (roleGap || evidence.profileNeedFit || evidence.teamStyleFit) {
     return {
-      title: lang === 'en' ? 'Useful fit' : 'Fit utile',
+      title: lang === 'en' ? 'Useful fit' : lang === 'es' ? 'Encaje útil' : 'Fit utile',
       text: lang === 'en'
         ? `${card.name} gives your roster something recognizable: ${trait || movement}. With ${style || 'your current setup'}, I would test him where that quality is missing most.`
-        : `${intro}${card.name} dà alla tua rosa qualcosa di riconoscibile: ${trait || movement}. Con ${style || 'il tuo assetto attuale'}, lo proverei dove questa qualità ti manca di più.`,
+        : lang === 'es'
+          ? `${card.name} le da a tu plantilla algo reconocible: ${trait || movement}. Con ${style || 'tu configuración actual'}, lo probaría donde más falta esa cualidad.`
+          : `${intro}${card.name} dà alla tua rosa qualcosa di riconoscibile: ${trait || movement}. Con ${style || 'il tuo assetto attuale'}, lo proverei dove questa qualità ti manca di più.`,
       action: lang === 'en'
         ? 'Use him to change the lane behaviour, not just to fill a position.'
-        : 'Usalo per cambiare il comportamento della zona, non solo per riempire un ruolo.'
+        : lang === 'es'
+          ? 'Úsalo para cambiar el comportamiento de la banda, no solo para ocupar una posición.'
+          : 'Usalo per cambiare il comportamento della zona, non solo per riempire un ruolo.'
     }
   }
 
   return {
-    title: lang === 'en' ? 'Situational card' : 'Carta situazionale',
+    title: lang === 'en' ? 'Situational card' : lang === 'es' ? 'Carta situacional' : 'Carta situazionale',
     text: lang === 'en'
       ? `${card.name} has a readable profile, but I do not see a strong roster trigger yet. He is useful if you want ${trait || movement}; otherwise he stays behind clearer needs.`
-      : `${intro}${card.name} ha un profilo leggibile, ma non vedo ancora un trigger forte nella tua rosa. È utile se vuoi ${trait || movement}; altrimenti resta dietro bisogni più chiari.`,
+      : lang === 'es'
+        ? `${card.name} tiene un perfil legible, pero todavía no veo un disparador fuerte en tu plantilla. Es útil si quieres ${trait || movement}; de lo contrario queda detrás de necesidades más claras.`
+        : `${intro}${card.name} ha un profilo leggibile, ma non vedo ancora un trigger forte nella tua rosa. È utile se vuoi ${trait || movement}; altrimenti resta dietro bisogni più chiari.`,
     action: lang === 'en'
       ? 'Keep him for a specific use case, not as an automatic priority.'
-      : 'Tienilo per un uso specifico, non come priorità automatica.'
+      : lang === 'es'
+        ? 'Mantenlo para un caso de uso específico, no como prioridad automática.'
+        : 'Tienilo per un uso specifico, non come priorità automatica.'
   }
 }
 
@@ -1812,67 +1925,89 @@ function teamSynergyDetails({ card, sameRole, bestAlternative, roleGap, duplicat
   if (movementRead.label) {
     details.push({
       key: 'movement_body',
-      label: lang === 'en' ? 'Movement and body type' : 'Movimento e body type',
+      label: lang === 'en' ? 'Movement and body type' : lang === 'es' ? 'Movimiento y tipo de cuerpo' : 'Movimento e body type',
       score: clamp(55 + movementRead.score * 4, 45, 90),
       text: lang === 'en'
         ? `${movementRead.label}: ${movementRead.movement}. Best when ${movementRead.buyWhen}; caution: ${movementRead.caution || 'judge it with your role plan'}.`
-        : `${movementRead.label}: ${movementRead.movement}. Rende quando ${movementRead.buyWhen}; attenzione: ${movementRead.caution || 'valutalo col piano ruolo'}.`
+        : lang === 'es'
+          ? `${movementRead.label}: ${movementRead.movement}. Rinde cuando ${movementRead.buyWhen}; precaución: ${movementRead.caution || 'evalúalo con tu plan de rol'}.`
+          : `${movementRead.label}: ${movementRead.movement}. Rende quando ${movementRead.buyWhen}; attenzione: ${movementRead.caution || 'valutalo col piano ruolo'}.`
     })
   }
 
   details.push({
     key: 'style',
-    label: lang === 'en' ? 'Movement' : 'Movimento',
+    label: lang === 'en' ? 'Movement' : lang === 'es' ? 'Movimiento' : 'Movimento',
     score: evidence.teamStyleFit ? 78 : tacticalStyle ? 56 : 50,
     text: evidence.teamStyleFit
       ? (lang === 'en'
           ? `With ${teamStyle}, this movement has a clear use in how your players already attack or defend.`
-          : `Con ${teamStyle}, questo movimento ha un uso chiaro nel modo in cui i tuoi giocatori attaccano o difendono.`)
+          : lang === 'es'
+            ? `Con ${teamStyle}, este movimiento tiene un uso claro en cómo tus jugadores ya atacan o defienden.`
+            : `Con ${teamStyle}, questo movimento ha un uso chiaro nel modo in cui i tuoi giocatori attaccano o difendono.`)
       : tacticalStyle
         ? (lang === 'en'
             ? `With ${teamStyle}, the value depends on using the card in the right lane and not forcing the movement.`
-            : `Con ${teamStyle}, il valore dipende dall’usare la carta nella corsia giusta senza forzare il movimento.`)
+            : lang === 'es'
+              ? `Con ${teamStyle}, el valor depende de usar la carta en la banda correcta sin forzar el movimiento.`
+              : `Con ${teamStyle}, il valore dipende dall'usare la carta nella corsia giusta senza forzare il movimento.`)
         : (lang === 'en'
             ? `The card movement is readable, but team style would make this part sharper.`
-            : `Il movimento della carta è leggibile, ma lo stile squadra renderebbe questa parte più precisa.`)
+            : lang === 'es'
+              ? `El movimiento de la carta es legible, pero el estilo de equipo haría esta parte más precisa.`
+              : `Il movimento della carta è leggibile, ma lo stile squadra renderebbe questa parte più precisa.`)
   })
 
   details.push({
     key: 'physicality',
-    label: lang === 'en' ? 'Physical profile' : 'Fisicità',
+    label: lang === 'en' ? 'Physical profile' : lang === 'es' ? 'Perfil físico' : 'Fisicità',
     score: clamp(physicalBase + Math.max(0, physicalEdge), 35, 88),
     text: physicalEdge >= 5
       ? (lang === 'en'
           ? `Compared with ${bestAlternative?.name || 'your current option'}, the physical edge can change duels, aerial balls or recovery runs.`
-          : `Rispetto a ${bestAlternative?.name || 'l’opzione attuale'}, il vantaggio fisico può cambiare duelli, palle alte o recuperi.`)
+          : lang === 'es'
+            ? `Comparado con ${bestAlternative?.name || 'tu opción actual'}, la ventaja física puede cambiar duelos, balones aéreos o recuperaciones.`
+            : `Rispetto a ${bestAlternative?.name || "l'opzione attuale"}, il vantaggio fisico può cambiare duelli, palle alte o recuperi.`)
       : physicalBase >= 76
         ? (lang === 'en'
             ? 'The physical base is useful, but it is not automatically a bigger upgrade than your current options.'
-            : 'La base fisica è utile, ma non è automaticamente un upgrade netto rispetto alle opzioni attuali.')
+            : lang === 'es'
+              ? 'La base física es útil, pero no es automáticamente una mejora mayor que tus opciones actuales.'
+              : 'La base fisica è utile, ma non è automaticamente un upgrade netto rispetto alle opzioni attuali.')
         : (lang === 'en'
             ? 'Physical impact is not the main reason to choose this card.'
-            : 'L’impatto fisico non è il motivo principale per scegliere questa carta.')
+            : lang === 'es'
+              ? 'El impacto físico no es la razón principal para elegir esta carta.'
+              : 'L\'impatto fisico non è il motivo principale per scegliere questa carta.')
   })
 
   details.push({
     key: 'squad',
-    label: lang === 'en' ? 'Roster impact' : 'Impatto rosa',
+    label: lang === 'en' ? 'Roster impact' : lang === 'es' ? 'Impacto en plantilla' : 'Impatto rosa',
     score: roleGap ? 84 : upgradeEdge ? 78 : duplicate || starterBlocked ? 50 : bestAlternative ? 64 : 60,
     text: roleGap
       ? (lang === 'en'
           ? `Clear squad value: you do not have a direct ${card.position} alternative with the same role coverage.`
-          : `Valore rosa chiaro: non hai una vera alternativa diretta da ${card.position} con la stessa copertura.`)
+          : lang === 'es'
+            ? `Valor claro de plantilla: no tienes una alternativa directa de ${card.position} con la misma cobertura de rol.`
+            : `Valore rosa chiaro: non hai una vera alternativa diretta da ${card.position} con la stessa copertura.`)
       : upgradeEdge
         ? (lang === 'en'
             ? `Profile and potential point to an upgrade over ${bestAlternative?.name || 'your current option'} in the ${card.position} lane.`
-            : `Profilo e potenziale indicano un upgrade su ${bestAlternative?.name || 'l’opzione attuale'} nella corsia ${card.position}.`)
+            : lang === 'es'
+              ? `Perfil y potencial apuntan a una mejora sobre ${bestAlternative?.name || 'tu opción actual'} en la banda de ${card.position}.`
+              : `Profilo e potenziale indicano un upgrade su ${bestAlternative?.name || "l'opzione attuale"} nella corsia ${card.position}.`)
         : duplicate || starterBlocked
           ? (lang === 'en'
               ? `${joinedAlternatives(sameRole) || 'Your current options'} already cover this lane; the card must offer a different match plan.`
-              : `${joinedAlternatives(sameRole) || 'Le opzioni attuali'} coprono già questa zona; la carta deve offrirti un piano partita diverso.`)
+              : lang === 'es'
+                ? `${joinedAlternatives(sameRole) || 'Tus opciones actuales'} ya cubren esta banda; la carta debe ofrecer un plan de partido diferente.`
+                : `${joinedAlternatives(sameRole) || 'Le opzioni attuali'} coprono già questa zona; la carta deve offrirti un piano partita diverso.`)
           : (lang === 'en'
               ? `The role is covered, so the question is whether ${movement} gives you a better use case than ${bestAlternative?.name || 'your current option'}.`
-              : `Il ruolo è coperto, quindi la domanda è se il ${movement} ti dà un caso d’uso migliore di ${bestAlternative?.name || 'l’opzione attuale'}.`)
+              : lang === 'es'
+                ? `El rol está cubierto, así que la pregunta es si ${movement} te da un mejor caso de uso que ${bestAlternative?.name || 'tu opción actual'}.`
+                : `Il ruolo è coperto, quindi la domanda è se il ${movement} ti dà un caso d'uso migliore di ${bestAlternative?.name || "l'opzione attuale"}.`)
   })
 
   const difficultyMatch = (
@@ -1885,15 +2020,19 @@ function teamSynergyDetails({ card, sameRole, bestAlternative, roleGap, duplicat
   )
   details.push({
     key: 'difficulty',
-    label: lang === 'en' ? 'Your difficulties' : 'Tue difficoltà',
+    label: lang === 'en' ? 'Your difficulties' : lang === 'es' ? 'Tus dificultades' : 'Tue difficoltà',
     score: difficultyMatch ? 76 : 52,
     text: difficultyMatch
       ? (lang === 'en'
           ? 'This card connects with one of your current weak points, so the recommendation is based on a real need from your data.'
-          : 'Questa carta si collega a una tua difficoltà attuale, quindi il consiglio nasce da un bisogno reale emerso dai tuoi dati.')
+          : lang === 'es'
+            ? 'Esta carta conecta con uno de tus puntos débiles actuales, así que la recomendación se basa en una necesidad real de tus datos.'
+            : 'Questa carta si collega a una tua difficoltà attuale, quindi il consiglio nasce da un bisogno reale emerso dai tuoi dati.')
       : (lang === 'en'
           ? 'No strong link with your current weak points emerged; treat it as a tactical option, not a problem-solver.'
-          : 'Non emerge un legame forte con le tue difficoltà attuali: considerala un’opzione tattica, non una soluzione diretta.')
+          : lang === 'es'
+            ? 'No surgió un vínculo fuerte con tus puntos débiles actuales; considérala una opción táctica, no una solución directa.'
+            : "Non emerge un legame forte con le tue difficoltà attuali: considerala un'opzione tattica, non una soluzione diretta.")
   })
 
   return details
@@ -2124,11 +2263,11 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
         : 'Uso ruolo chiaro: mantieni la carta nella corsia naturale per preservare valore tattico.'
 
   const nextCta = !hasRoster
-    ? { label: lang === 'en' ? 'Load roster for team synergy' : 'Carica la rosa per la sinergia squadra', target: 'formation' }
+    ? { label: lang === 'en' ? 'Load roster for team synergy' : lang === 'es' ? 'Carga la plantilla para sinergia de equipo' : 'Carica la rosa per la sinergia squadra', target: 'formation' }
     : !hasFormation
-      ? { label: lang === 'en' ? 'Save formation for starter fit' : 'Salva formazione per il fit titolari', target: 'formation' }
+      ? { label: lang === 'en' ? 'Save formation for starter fit' : lang === 'es' ? 'Guarda la formación para el encaje titular' : 'Salva formazione per il fit titolari', target: 'formation' }
       : !hasCoach
-        ? { label: lang === 'en' ? 'Add coach for team-style fit' : 'Aggiungi coach per il fit stile squadra', target: 'coach' }
+        ? { label: lang === 'en' ? 'Add coach for team-style fit' : lang === 'es' ? 'Añade entrenador para el encaje de estilo' : 'Aggiungi coach per il fit stile squadra', target: 'coach' }
         : null
   const teamSynergy = {
     score,
@@ -2260,7 +2399,7 @@ export async function POST(req) {
     if (authError || !userData?.user?.id) return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     const body = await req.json().catch(() => ({}))
     const card = normalizeCard(body.card)
-    const lang = body.lang === 'en' ? 'en' : 'it'
+    const lang = body.lang === 'en' ? 'en' : body.lang === 'es' ? 'es' : 'it'
     if (!card.name || !card.position) {
       return NextResponse.json({ error: 'Invalid card' }, { status: 400 })
     }

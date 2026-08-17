@@ -110,50 +110,68 @@ function bodyTypeRead({ height, weight, position }, lang = 'it') {
   const w = Number(weight) || 0
   if (!h && !w) return null
   const isEn = lang === 'en'
+  const isEs = lang === 'es'
   const pos = String(position || '').toUpperCase()
   const isAttacker = ['P', 'CF', 'SP', 'ST', 'ESA', 'EDA'].includes(pos)
   if (h >= 188 || w >= 85) {
     return isEn
       ? 'big body type: box reference, contact, aerial duels and shielding'
-      : 'body type fisico: riferimento in area, contatto, duelli aerei e protezione'
+      : isEs
+        ? 'tipo de cuerpo físico: referencia en área, contacto, duelos aéreos y protección'
+        : 'body type fisico: riferimento in area, contatto, duelli aerei e protezione'
   }
   if (isAttacker && h <= 175) {
     return isEn
       ? 'compact body type: quick turns, tight control and separation'
-      : 'body type compatto: girate rapide, stretto e separazione'
+      : isEs
+        ? 'tipo de cuerpo compacto: giros rápidos, control cercano y separación'
+        : 'body type compatto: girate rapide, stretto e separazione'
   }
   return isEn
     ? 'balanced body type: read with movement style, not only stats'
-    : 'body type equilibrato: da leggere insieme allo stile movimento, non solo alle stats'
+    : isEs
+      ? 'tipo de cuerpo equilibrado: léelo junto al estilo de movimiento, no solo las stats'
+      : 'body type equilibrato: da leggere insieme allo stile movimento, non solo alle stats'
 }
 
 function styleMovementRead(style, lang = 'it') {
   const s = toAscii(style)
   const isEn = lang === 'en'
+  const isEs = lang === 'es'
   if (s.includes('goal poacher') || s.includes('opportunista')) {
     return isEn
       ? 'Goal Poacher: last-line runner for through balls, depth and counterattacks; not the same as a static box striker.'
-      : 'Opportunista: attacca ultima linea, filtranti, profondità e contropiede; non è uguale a una punta statica da area.'
+      : isEs
+        ? 'Oportunista: atacante de última línea para pases filtrados, profundidad y contragolpes; no es igual que un delantero estático de área.'
+        : 'Opportunista: attacca ultima linea, filtranti, profondità e contropiede; non è uguale a una punta statica da area.'
   }
   if (s.includes('fox in the box') || s.includes('rapace')) {
     return isEn
       ? 'Fox in the Box: central penalty-area finisher for crosses, rebounds and quick shots; do not judge it only by pace.'
-      : "Rapace d'area: finalizzatore centrale per cross, ribalzi e tiri rapidi; non giudicarlo solo dalla velocità."
+      : isEs
+        ? 'Rapaz de área: finalizador central para centros, rebotes y disparos rápidos; no lo evalúes solo por velocidad.'
+        : "Rapace d'area: finalizzatore centrale per cross, ribalzi e tiri rapidi; non giudicarlo solo dalla velocità."
   }
   if (s.includes('target man') || s.includes('fulcro')) {
     return isEn
       ? 'Target Man: physical reference for hold-up play, long balls and lay-offs.'
-      : 'Fulcro di gioco: riferimento fisico per sponde, lanci lunghi e protezione.'
+      : isEs
+        ? 'Referencia de ataque: referencia física para juego de espaldas, balones largos y descargas.'
+        : 'Fulcro di gioco: riferimento fisico per sponde, lanci lunghi e protezione.'
   }
   if (s.includes('hole player') || s.includes('giocatore chiave')) {
     return isEn
       ? 'Hole Player: late runner from behind into scoring spaces.'
-      : 'Giocatore chiave: inserimenti da dietro negli spazi da gol.'
+      : isEs
+        ? 'Jugador clave: llegador desde atrás a espacios de gol.'
+        : 'Giocatore chiave: inserimenti da dietro negli spazi da gol.'
   }
   if (s.includes('prolific winger') || s.includes('ala prolifica')) {
     return isEn
       ? 'Prolific Winger: starts wide and attacks the box/final third.'
-      : 'Ala prolifica: parte larga e attacca area/ultimo terzo.'
+      : isEs
+        ? 'Extremo prolífico: parte desde banda y ataca el área/último tercio.'
+        : 'Ala prolifica: parte larga e attacca area/ultimo terzo.'
   }
   return null
 }
@@ -247,7 +265,7 @@ function sanitizeList(items = [], maxItems = 8, maxLen = 60) {
 }
 
 function canonSkillsForPrompt(rawList, lang, maxItems = 14, maxLen = 60) {
-  const code = lang === 'en' ? 'en' : 'it'
+  const code = lang === 'en' ? 'en' : lang === 'es' ? 'es' : 'it'
   const unique = [...new Set(
     normalizePlayerSkillsArray(Array.isArray(rawList) ? rawList : [])
       .map((s) => getSkillDisplayLabel(String(s || '').trim(), code))
@@ -752,16 +770,22 @@ function calibratePremiumVerdict(analysis, { card, catalogCard, anchorType, anch
       patched.setup_condition = ''
       patched.summary = lang === 'en'
         ? `${card.name} is a version upgrade: buy it only to replace ${anchorName || 'your current version'}, not to rotate both in the same squad.`
-        : `${card.name} è upgrade di versione: compralo per sostituire ${anchorName || 'la versione attuale'}, non per ruotarle entrambe nella stessa rosa.`
+        : lang === 'es'
+          ? `${card.name} es una mejora de versión: cómprala solo para reemplazar a ${anchorName || 'tu versión actual'}, no para rotar ambas en la misma plantilla.`
+          : `${card.name} è upgrade di versione: compralo per sostituire ${anchorName || 'la versione attuale'}, non per ruotarle entrambe nella stessa rosa.`
       patched.final_decision = lang === 'en'
         ? `Buy it if you want the new version as your Plan A; you cannot use two ${card.name} versions together, so the current one becomes replaced, not rotation.`
-        : `Comprala se vuoi la nuova versione come piano A; non puoi usare due ${card.name} insieme, quindi quella attuale viene sostituita, non ruotata.`
+        : lang === 'es'
+          ? `Cómprala si quieres la nueva versión como Plan A; no puedes usar dos versiones de ${card.name} juntas, así que la actual se reemplaza, no se rota.`
+          : `Comprala se vuoi la nuova versione come piano A; non puoi usare due ${card.name} insieme, quindi quella attuale viene sostituita, non ruotata.`
       patched.key_reasoning = [
         {
-          label: lang === 'en' ? 'Version upgrade' : 'Upgrade versione',
+          label: lang === 'en' ? 'Version upgrade' : lang === 'es' ? 'Mejora de versión' : 'Upgrade versione',
           text: lang === 'en'
             ? `Same-player rule: this is not a rotation pair. The new ${card.name} must replace ${anchorName || 'your current version'} if the upgrade matters.`
-            : `Regola stesso giocatore: non è una coppia da rotazione. Il nuovo ${card.name} deve sostituire ${anchorName || 'la versione attuale'} se l’upgrade ti serve.`
+            : lang === 'es'
+              ? `Regla mismo jugador: no es una pareja de rotación. El nuevo ${card.name} debe reemplazar a ${anchorName || 'tu versión actual'} si la mejora importa.`
+              : `Regola stesso giocatore: non è una coppia da rotazione. Il nuovo ${card.name} deve sostituire ${anchorName || 'la versione attuale'} se l’upgrade ti serve.`
         },
         ...(patched.key_reasoning || []).filter((item) => !/(rotaz|rotation|ruot|keep both|entramb|insieme)/i.test(`${item.label || ''} ${item.text || ''}`))
       ].slice(0, 4)
@@ -773,10 +797,14 @@ function calibratePremiumVerdict(analysis, { card, catalogCard, anchorType, anch
       patched.setup_condition = ''
       patched.summary = lang === 'en'
         ? `${card.name} is the same-player case: do not buy for rotation, because both versions cannot be used together.`
-        : `${card.name} è caso stesso giocatore: non comprarlo per rotazione, perché le due versioni non possono essere usate insieme.`
+        : lang === 'es'
+          ? `${card.name} es caso mismo jugador: no lo compres para rotación, porque las dos versiones no pueden usarse juntas.`
+          : `${card.name} è caso stesso giocatore: non comprarlo per rotazione, perché le due versioni non possono essere usate insieme.`
       patched.final_decision = lang === 'en'
         ? `Skip unless the new version clearly replaces your current ${card.name}; never plan to rotate both in the same squad.`
-        : `Salta salvo upgrade chiaro sulla versione attuale di ${card.name}; mai pianificare rotazione tra entrambe nella stessa rosa.`
+        : lang === 'es'
+          ? `Descártala salvo que la nueva versión reemplace claramente a tu ${card.name} actual; nunca planees rotar ambas en la misma plantilla.`
+          : `Salta salvo upgrade chiaro sulla versione attuale di ${card.name}; mai pianificare rotazione tra entrambe nella stessa rosa.`
       return patched
     }
   }
@@ -805,7 +833,9 @@ function calibratePremiumVerdict(analysis, { card, catalogCard, anchorType, anch
     patched.setup_condition = ''
     patched.summary = lang === 'en'
       ? `${card.name} is a starter-level upgrade for this wide lane: use it as Plan A, with ${anchorName || 'the current starter'} as rotation or Plan B.`
-      : `${card.name} è upgrade da titolare su questa fascia: usalo come piano A, con ${anchorName || 'il titolare attuale'} in rotazione o piano B.`
+      : lang === 'es'
+        ? `${card.name} es una mejora titular para esta banda: úsalo como Plan A, con ${anchorName || 'el titular actual'} en rotación o Plan B.`
+        : `${card.name} è upgrade da titolare su questa fascia: usalo come piano A, con ${anchorName || 'il titolare attuale'} in rotazione o piano B.`
   } else if (harshVerdict || coldVerdict || saysNoBuy || rosterBlockedLanguage || blockedByPlaystyle) {
     patched.verdict = 'premium_rotation'
     if (patched.purchase_fit === 'not_your_playstyle') {
@@ -825,24 +855,36 @@ function calibratePremiumVerdict(analysis, { card, catalogCard, anchorType, anch
             ? `Buy it: ${card.name} should start over ${anchorName || 'the current wide option'} when you want more 1v1, tempo change and final-third creation.`
             : `${card.name} is worth it as a roster weapon: use it for 1v1, tempo change and match-plan rotation, not only to replace the starter.`
         : 'Worth buying for elite rotation and match plans — not to replace your starter every week.'
-      : isGoalkeeper
-        ? `${card.name} ha senso come rotazione premium in porta: valutalo per affidabilità, reach, parate ravvicinate e controllo rimbalzi.`
-        : attackCreationCase
-          ? shouldStartOverAnchor
-            ? `Comprala: ${card.name} deve partire sopra ${anchorName || 'l’opzione larga attuale'} quando vuoi più 1v1, cambio ritmo e creazione nell’ultimo terzo.`
-            : `${card.name} ha senso come arma di rosa: usalo per 1v1, cambio ritmo e rotazione di piano partita, non solo per sostituire il titolare.`
-        : 'Ha senso comprarla per rotazione d\'élite e piano partita — non per sostituire il titolare ogni settimana.'
+      : lang === 'es'
+        ? isGoalkeeper
+          ? `${card.name} vale la pena como rotación premium en portería: evalúalo por fiabilidad, alcance, paradas cercanas y control de rebotes.`
+          : attackCreationCase
+            ? shouldStartOverAnchor
+              ? `Cómprala: ${card.name} debe ser titular por delante de ${anchorName || 'la opción de banda actual'} cuando quieras más 1v1, cambio de ritmo y creación en último tercio.`
+              : `${card.name} vale la pena como arma de plantilla: úsalo para 1v1, cambio de ritmo y rotación táctica, no solo para reemplazar al titular.`
+          : 'Vale la pena comprarla para rotación de élite y plan de partido — no para reemplazar al titular cada semana.'
+        : isGoalkeeper
+          ? `${card.name} ha senso come rotazione premium in porta: valutalo per affidabilità, reach, parate ravvicinate e controllo rimbalzi.`
+          : attackCreationCase
+            ? shouldStartOverAnchor
+              ? `Comprala: ${card.name} deve partire sopra ${anchorName || "l'opzione larga attuale"} quando vuoi più 1v1, cambio ritmo e creazione nell'ultimo terzo.`
+              : `${card.name} ha senso come arma di rosa: usalo per 1v1, cambio ritmo e rotazione di piano partita, non solo per sostituire il titolare.`
+          : 'Ha senso comprarla per rotazione d\'élite e piano partita — non per sostituire il titolare ogni settimana.'
   }
   if (shouldStartOverAnchor) {
     patched.final_decision = lang === 'en'
       ? `Buy it: ${card.name} should start over ${anchorName || 'the current wide option'} as Plan A; keep the current starter for rotation or a safer match plan.`
-      : `Comprala: ${card.name} deve partire sopra ${anchorName || 'l’opzione larga attuale'} come piano A; tieni il titolare attuale per rotazione o piano più conservativo.`
+      : lang === 'es'
+        ? `Cómprala: ${card.name} debe ser titular por delante de ${anchorName || 'la opción de banda actual'} como Plan A; mantén al titular actual para rotación o un plan más seguro.`
+        : `Comprala: ${card.name} deve partire sopra ${anchorName || "l'opzione larga attuale"} come piano A; tieni il titolare attuale per rotazione o piano più conservativo.`
     patched.key_reasoning = [
       {
-        label: lang === 'en' ? 'Squad hierarchy' : 'Gerarchia rosa',
+        label: lang === 'en' ? 'Squad hierarchy' : lang === 'es' ? 'Jerarquía de plantilla' : 'Gerarchia rosa',
         text: lang === 'en'
           ? `${card.name} is not just rotation: it changes the wide-lane hierarchy and pushes ${anchorName || 'the current starter'} into rotation.`
-          : `${card.name} non è solo rotazione: cambia la gerarchia della fascia e sposta ${anchorName || 'il titolare attuale'} in rotazione.`
+          : lang === 'es'
+            ? `${card.name} no es solo rotación: cambia la jerarquía de la banda y empuja a ${anchorName || 'el titular actual'} a la rotación.`
+            : `${card.name} non è solo rotazione: cambia la gerarchia della fascia e sposta ${anchorName || 'il titolare attuale'} in rotazione.`
       },
       ...(patched.key_reasoning || []).filter((item) => !/(skill delta|abilità|skill)/i.test(`${item.label || ''} ${item.text || ''}`))
     ].slice(0, 4)
@@ -855,7 +897,9 @@ function calibratePremiumVerdict(analysis, { card, catalogCard, anchorType, anch
         ...item,
         text: lang === 'en'
           ? 'Same movement style as your starters, but different card tools — elite rotation, not a forced weekly starter.'
-          : 'Stesso movimento dei titolari, ma tool carta diversi — rotazione d\'élite, non titolare fisso obbligatorio.'
+          : lang === 'es'
+            ? 'Mismo estilo de movimiento que tus titulares, pero herramientas de carta diferentes — rotación de élite, no titular fijo obligatorio.'
+            : 'Stesso movimento dei titolari, ma tool carta diversi — rotazione d\'élite, non titolare fisso obbligatorio.'
       }
     })
   }
@@ -877,10 +921,14 @@ function suppressDefenderShootingPurchaseReason(analysis, { card, lang }) {
     ...analysis,
     summary: lang === 'en'
       ? `${card.name} should be judged as a defender first: coverage, duels and ball exit. Shooting traits are only a secondary bonus, not the reason to buy.`
-      : `${card.name} va giudicato prima da difensore: copertura, duelli e uscita palla. Le skill tiro sono solo bonus secondario, non motivo d'acquisto.`,
+      : lang === 'es'
+        ? `${card.name} debe juzgarse primero como defensor: cobertura, duelos y salida de balón. Las habilidades de tiro son solo un bonus secundario, no el motivo de compra.`
+        : `${card.name} va giudicato prima da difensore: copertura, duelli e uscita palla. Le skill tiro sono solo bonus secondario, non motivo d'acquisto.`,
     final_decision: lang === 'en'
       ? 'Buy/rotate only if you want a defender for coverage and build-up; do not buy a defender for long shots.'
-      : 'Compralo/ruotalo solo se vuoi un difensore per copertura e uscita palla; non un DC per tirare da fuori.',
+      : lang === 'es'
+        ? 'Compra/rota solo si quieres un defensor para cobertura y salida de balón; no compres un defensa para disparos lejanos.'
+        : 'Compralo/ruotalo solo se vuoi un difensore per copertura e uscita palla; non un DC per tirare da fuori.',
     setup_condition: ''
   }
 
@@ -891,7 +939,9 @@ function suppressDefenderShootingPurchaseReason(analysis, { card, lang }) {
       ...item,
       text: lang === 'en'
         ? 'Shooting traits are a minor bonus on dead balls; the real read is defensive reliability plus ball exit.'
-        : 'Le skill tiro sono bonus minore su piazzati/seconda palla; la lettura vera è tenuta difensiva più uscita palla.'
+        : lang === 'es'
+          ? 'Las habilidades de tiro son un bonus menor en balones parados; la lectura real es fiabilidad defensiva más salida de balón.'
+          : 'Le skill tiro sono bonus minore su piazzati/seconda palla; la lettura vera è tenuta difensiva più uscita palla.'
     }
   })
 
@@ -901,7 +951,7 @@ function suppressDefenderShootingPurchaseReason(analysis, { card, lang }) {
 function normalizeDeepAnalysis(payload, lang, skillDeltaLine = '') {
   const clean = (value, maxLen = 500) => {
     const text = sanitize(value, maxLen)
-    return lang === 'en' ? text : localizeItalianTerms(text)
+    return lang === 'en' ? text : lang === 'es' ? text : localizeItalianTerms(text)
   }
   const arr = (value, maxItems = 3, maxLen = 150) => Array.isArray(value) ? value.map(item => clean(item, maxLen)).filter(Boolean).slice(0, maxItems) : []
   const reasoning = (value) => Array.isArray(value)
@@ -1019,7 +1069,7 @@ export async function POST(req) {
 
     const body = await req.json().catch(() => ({}))
     const card = normalizeCard(body.card)
-    const lang = body.lang === 'en' ? 'en' : 'it'
+    const lang = body.lang === 'en' ? 'en' : body.lang === 'es' ? 'es' : 'it'
     if (!card.name || !card.position) return NextResponse.json({ error: 'Invalid card' }, { status: 400 })
 
     const catalogCard = await resolveCatalogCardForDeepAnalysis(admin, card)
@@ -1033,6 +1083,8 @@ export async function POST(req) {
         {
           error: lang === 'en'
             ? 'Detailed analysis is not ready for this card yet.'
+            : lang === 'es'
+            ? 'El análisis detallado aún no está listo para esta carta.'
             : 'Analisi dettagliata non ancora pronta per questa carta.',
           code: 'card_data_not_ready'
         },
@@ -1046,6 +1098,8 @@ export async function POST(req) {
         {
           error: lang === 'en'
             ? `You need ${DEEP_ANALYSIS_COST} HP to unlock the Pro verdict.`
+            : lang === 'es'
+            ? `Necesitas ${DEEP_ANALYSIS_COST} HP para desbloquear el veredicto Pro.`
             : `Ti servono ${DEEP_ANALYSIS_COST} HP per sbloccare il verdetto Pro.`,
           code: 'insufficient_credits',
           requiredCredits: DEEP_ANALYSIS_COST

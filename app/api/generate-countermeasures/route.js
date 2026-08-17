@@ -216,16 +216,16 @@ export async function POST(req) {
 
     const body = await req.json().catch(() => ({}))
     const { opponent_formation_id, context, language = 'it' } = body
-    const lang = (language === 'en' || language === 'it') ? language : 'it'
+    const lang = (language === 'en' || language === 'it' || language === 'es') ? language : 'it'
 
     if (!opponent_formation_id || typeof opponent_formation_id !== 'string') {
-      return NextResponse.json({ error: 'opponent_formation_id is required' }, { status: 400 })
+      return NextResponse.json({ error: lang === 'es' ? 'Se requiere opponent_formation_id' : 'opponent_formation_id is required' }, { status: 400 })
     }
 
     // Validazione UUID
     const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
     if (!UUID_REGEX.test(opponent_formation_id)) {
-      return NextResponse.json({ error: 'Invalid opponent_formation_id format' }, { status: 400 })
+      return NextResponse.json({ error: lang === 'es' ? 'Formato de opponent_formation_id no válido' : 'Invalid opponent_formation_id format' }, { status: 400 })
     }
 
     // 1. Recupera formazione avversaria
@@ -238,7 +238,7 @@ export async function POST(req) {
 
     if (formationError || !opponentFormation) {
       return NextResponse.json(
-        { error: 'Opponent formation not found or access denied' },
+        { error: lang === 'es' ? 'Formación del oponente no encontrada o acceso denegado' : 'Opponent formation not found or access denied' },
         { status: 404 }
       )
     }
@@ -461,7 +461,7 @@ export async function POST(req) {
     // 9. Valida dati prima di generare prompt
 if (!opponentFormation || !opponentFormation.formation_name) {
   return NextResponse.json(
-    { error: 'Opponent formation data is incomplete' },
+    { error: lang === 'es' ? 'Los datos de la formación del oponente están incompletos' : 'Opponent formation data is incomplete' },
     { status: 400 }
   )
 }
@@ -510,7 +510,7 @@ if (process.env.NODE_ENV !== 'production') {
     } catch (promptErr) {
       console.error('[generate-countermeasures] Error generating prompt:', promptErr)
       return NextResponse.json(
-        { error: 'Error generating prompt. Please try again.' },
+        { error: lang === 'es' ? 'Error al generar el prompt. Inténtalo de nuevo.' : 'Error generating prompt. Please try again.' },
         { status: 500 }
       )
     }
@@ -520,7 +520,7 @@ if (process.env.NODE_ENV !== 'production') {
     const MAX_PROMPT_SIZE = 180 * 1024
     if (promptSize > MAX_PROMPT_SIZE) {
       return NextResponse.json(
-        { error: 'Countermeasures data too large. Please reduce data size.' },
+        { error: lang === 'es' ? 'Los datos de contramedidas son demasiado grandes. Reduce el tamaño de los datos.' : 'Countermeasures data too large. Please reduce data size.' },
         { status: 413 }
       )
     }
@@ -529,7 +529,7 @@ if (process.env.NODE_ENV !== 'production') {
     const deduction = await deductCredits(admin, userId, token, AI_COST, 'generate-countermeasures')
     if (!deduction.success) {
       return NextResponse.json(
-        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : 'Insufficient credits. Please recharge to continue.' },
+        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : lang === 'es' ? 'Créditos insuficientes. Recarga para continuar.' : 'Insufficient credits. Please recharge to continue.' },
         { status: 402 }
       )
     }
@@ -538,7 +538,7 @@ if (process.env.NODE_ENV !== 'production') {
     // 10. Default gpt-5.2 (alias gpt-5 deprecato), override con OPENAI_MODEL; fallback gpt-4o, gpt-4-turbo, gpt-4
     const apiKey = process.env.OPENAI_API_KEY
     if (!apiKey) {
-      return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 })
+      return NextResponse.json({ error: lang === 'es' ? 'Clave API de OpenAI no configurada' : 'OpenAI API key not configured' }, { status: 500 })
     }
 
     const preferredModel = process.env.OPENAI_MODEL || 'gpt-5.2'
@@ -633,6 +633,7 @@ if (process.env.NODE_ENV !== 'production') {
                           lastError?.message || 
                           lastError?.error?.message ||
                           'Unable to generate countermeasures. Please try again.'
+      const esError = lang === 'es' ? 'No se pudieron generar las contramedidas. Inténtalo de nuevo.' : errorMessage
       
       console.error('[generate-countermeasures] All models failed. Last error:', lastErrorDetails || lastError)
       if (creditChargeContext?.admin && creditChargeContext?.userId) {
@@ -648,7 +649,7 @@ if (process.env.NODE_ENV !== 'production') {
       }
       
       return NextResponse.json(
-        { error: errorMessage },
+        { error: esError },
         { status: 500 }
       )
     }
@@ -670,7 +671,7 @@ if (process.env.NODE_ENV !== 'production') {
         })
       }
       return NextResponse.json(
-        { error: 'No content in response' },
+        { error: lang === 'es' ? 'Sin contenido en la respuesta' : 'No content in response' },
         { status: 500 }
       )
     }
@@ -692,7 +693,7 @@ if (process.env.NODE_ENV !== 'production') {
         })
       }
       return NextResponse.json(
-        { error: 'Invalid response format from AI' },
+        { error: lang === 'es' ? 'Formato de respuesta no válido de la IA' : 'Invalid response format from AI' },
         { status: 500 }
       )
     }
@@ -949,14 +950,14 @@ if (process.env.NODE_ENV !== 'production') {
       })
     }
     
-    let errorMessage = 'Error generating countermeasures'
+    let errorMessage = lang === 'es' ? 'Error al generar contramedidas' : 'Error generating countermeasures'
     let statusCode = 500
     
     if (err.type === 'rate_limit') {
-      errorMessage = 'Rate limit exceeded. Please try again later.'
+      errorMessage = lang === 'es' ? 'Límite de tasa excedido. Inténtalo de nuevo más tarde.' : 'Rate limit exceeded. Please try again later.'
       statusCode = 429
     } else if (err.type === 'timeout') {
-      errorMessage = 'Request timeout. Please try again.'
+      errorMessage = lang === 'es' ? 'Tiempo de espera agotado. Inténtalo de nuevo.' : 'Request timeout. Please try again.'
       statusCode = 408
     } else if (err.message) {
       errorMessage = err.message

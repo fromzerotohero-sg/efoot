@@ -466,6 +466,10 @@ def main():
     parser.add_argument("--replace-active", action="store_true", help="Deactivate previous active efhub releases/cards before upserting current snapshot.")
     parser.add_argument("--export-only", action="store_true", help="Only scrape/enrich and write the JSON report. Does not require Supabase credentials.")
     parser.add_argument("--output-json", help="Optional local sync report path.")
+    parser.add_argument(
+        "--release-match",
+        help="Import only releases whose name contains this substring (case-insensitive).",
+    )
     args = parser.parse_args()
 
     supabase_url = env_or_arg(args.supabase_url, "NEXT_PUBLIC_SUPABASE_URL")
@@ -477,6 +481,11 @@ def main():
         deactivate_current(supabase_url, service_key)
 
     releases = parse_releases(fetch(args.home_url))
+    if args.release_match:
+        needle = args.release_match.strip().lower()
+        releases = [release for release in releases if needle in release["release_name"].lower()]
+        if not releases:
+            raise SystemExit(f"No release matched --release-match {args.release_match!r}")
     if args.limit_releases and args.limit_releases > 0:
         releases = releases[:args.limit_releases]
 

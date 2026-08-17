@@ -13,19 +13,21 @@ const MAX_HISTORY_CONTENT_LENGTH = 2000
 const MAX_MESSAGE_LENGTH = 2000
 
 const ERRORS = {
-  AUTH_REQUIRED: { it: 'Autenticazione richiesta.', en: 'Authentication required.' },
-  AUTH_INVALID: { it: 'Token non valido o scaduto.', en: 'Invalid or expired token.' },
-  BODY_INVALID: { it: 'Corpo della richiesta non valido.', en: 'Invalid request body.' },
-  MESSAGE_REQUIRED: { it: 'Il messaggio è obbligatorio.', en: 'Message is required.' },
-  MESSAGE_TOO_LONG: { it: 'Messaggio troppo lungo.', en: 'Message too long.' },
-  RATE_LIMIT: { it: 'Troppe richieste. Riprova tra poco.', en: 'Rate limit exceeded.' },
-  CONFIG: { it: 'Configurazione mancante.', en: 'Server configuration missing.' },
-  SERVER: { it: 'Errore temporaneo. Riprova.', en: 'Temporary error. Please retry.' }
+  AUTH_REQUIRED: { it: 'Autenticazione richiesta.', en: 'Authentication required.', es: 'Autenticación requerida.' },
+  AUTH_INVALID: { it: 'Token non valido o scaduto.', en: 'Invalid or expired token.', es: 'Token no válido o expirado.' },
+  BODY_INVALID: { it: 'Corpo della richiesta non valido.', en: 'Invalid request body.', es: 'Cuerpo de solicitud no válido.' },
+  MESSAGE_REQUIRED: { it: 'Il messaggio è obbligatorio.', en: 'Message is required.', es: 'El mensaje es obligatorio.' },
+  MESSAGE_TOO_LONG: { it: 'Messaggio troppo lungo.', en: 'Message too long.', es: 'Mensaje demasiado largo.' },
+  RATE_LIMIT: { it: 'Troppe richieste. Riprova tra poco.', en: 'Rate limit exceeded.', es: 'Demasiadas solicitudes. Inténtalo de nuevo pronto.' },
+  CONFIG: { it: 'Configurazione mancante.', en: 'Server configuration missing.', es: 'Configuración del servidor faltante.' },
+  SERVER: { it: 'Errore temporaneo. Riprova.', en: 'Temporary error. Please retry.', es: 'Error temporal. Vuelve a intentarlo.' }
 }
 
 function getLang(req) {
   const accept = req?.headers?.get?.('accept-language') || ''
-  return accept.toLowerCase().startsWith('it') || accept.includes('it') ? 'it' : 'en'
+  if (accept.toLowerCase().startsWith('es') || accept.includes('es')) return 'es'
+  if (accept.toLowerCase().startsWith('it') || accept.includes('it')) return 'it'
+  return 'en'
 }
 
 function normalizeHistory(raw) {
@@ -48,9 +50,7 @@ function normalizeHistory(raw) {
  * System prompt BLINDATO: un solo scopo (profilo + feedback), zero fuori contesto.
  */
 function buildSystemPrompt(lang, profileContext, matchContext) {
-  const isIt = lang === 'it'
-
-  const rules = isIt
+  const rules = lang === 'it'
     ? `UNICO SCOPO della Palestra Coach: raccogliere (1) profilo di gioco del cliente e (2) feedback post-partita. Nient'altro.
 
 LINGUA DI RISPOSTA: DEVI TASSATIVAMENTE RISPONDERE NELLA STESSA LINGUA USATA DALL'UTENTE NEL SUO MESSAGGIO (se l'utente scrive in inglese, rispondi in inglese; se scrive in italiano, rispondi in italiano).
@@ -92,6 +92,48 @@ FORMATO RISPOSTE:
 - Fai UNA domanda alla volta
 - Ringrazia per le informazioni condivise
 - Redirect solo se chiede esplicitamente consigli/formazioni/chi schierare; mai per "è andata bene" / "non ha funzionato" / "ho seguito il consiglio" (sono feedback).`
+    : lang === 'es'
+    ? `ÚNICO PROPÓSITO del Gimnasio Coach: recopilar (1) perfil de juego del cliente y (2) feedback post-partido. Nada más.
+
+IDIOMA DE RESPUESTA: DEBES RESPONDER ESTRICTAMENTE EN EL MISMO IDIOMA QUE USA EL USUARIO EN SU MENSAJE (si el usuario escribe en inglés, responde en inglés; si escribe en italiano, responde en italiano).
+
+FEEDBACK SUGERIDO POR LA APP (NO redirigir):
+Las frases que la app sugiere ("Ha ido bien", "No ha funcionado", "He seguido tu consejo") son FEEDBACK del partido. Responde continuando a recopilar feedback: pregunta cómo fue, qué funcionó o no, qué cambiaría. Nunca uses la frase de redirección para esto.
+
+FUERA DE CONTEXTO (redirigir solo aquí):
+Solo si el cliente pide explícitamente consejos tácticos, formaciones, a quién alinear, estrategias, contramedidas o análisis: responde con "Aquí solo recopilamos tu perfil y el feedback de los partidos. Para consejos tácticos personalizados usa el chat principal." No para frases como "he seguido el consejo" o "no ha funcionado" — eso es feedback, continúa con preguntas sobre cómo fue.
+
+PROHIBICIONES ABSOLUTAS (no violar NUNCA):
+- NO des consejos tácticos, sugerencias de formación o recomendaciones de juego
+- NO sugieras cambios de jugadores, estilos o estrategias
+- NO respondas a preguntas tácticas más allá de la frase de redirección anterior
+- NO analices partidos o formaciones: tu rol es solo recopilar datos
+
+OBJETIVO 1 - CONOCER AL CLIENTE (si el perfil está incompleto):
+Pregunta de forma natural y conversacional:
+- Plataforma (consola/pc/móvil)
+- Calidad de conexión (buena/inestable/lag)
+- Nivel de pase (PA1/PA2/PA3)
+- Smart assist (sí/no)
+- Input delay (sí/no/a veces)
+- Punto débil (defensa/ataque/balón parado/transiciones/final del partido)
+- Qué quiere aprender
+- Notas particulares
+No hagas un interrogatorio: integra las preguntas en el flujo natural, una a la vez.
+
+OBJETIVO 2 - RECOPILAR FEEDBACK DEL PARTIDO (si hay un partido reciente):
+Pregunta:
+- Cómo fue
+- Qué funcionó y qué no
+- Si siguió consejos anteriores y cómo fueron
+- Qué cambiaría
+
+FORMATO DE RESPUESTAS:
+- Máx. 2-3 frases por respuesta
+- Sé empático y breve
+- Haz UNA pregunta a la vez
+- Agradece la información compartida
+- Redirige solo si pide explícitamente consejos/formaciones/a quién alinear; nunca para "ha ido bien" / "no ha funcionado" / "he seguido el consejo" (son feedback).`
     : `SINGLE PURPOSE of Coach Gym: collect (1) the client's gaming profile and (2) post-match feedback. Nothing else.
 
 RESPONSE LANGUAGE: YOU MUST STRICTLY REPLY IN THE SAME LANGUAGE USED BY THE USER IN THEIR MESSAGE (if the user writes in Italian, reply in Italian; if they write in English, reply in English).
@@ -135,8 +177,10 @@ RESPONSE FORMAT:
 - Redirect only when they explicitly ask for advice/formations/who to play; never for "it went well" / "it didn't work" / "I followed your advice" (those are feedback).`
 
   let context = ''
-  if (profileContext) context += `\n\n${isIt ? 'PROFILO ATTUALE DEL CLIENTE' : 'CURRENT CLIENT PROFILE'}:\n${profileContext}`
-  if (matchContext) context += `\n\n${isIt ? 'ULTIMA PARTITA GIOCATA' : 'LAST MATCH PLAYED'}:\n${matchContext}`
+  const profileLabel = lang === 'it' ? 'PROFILO ATTUALE DEL CLIENTE' : lang === 'es' ? 'PERFIL ACTUAL DEL CLIENTE' : 'CURRENT CLIENT PROFILE'
+  const matchLabel = lang === 'it' ? 'ULTIMA PARTITA GIOCATA' : lang === 'es' ? 'ÚLTIMO PARTIDO JUGADO' : 'LAST MATCH PLAYED'
+  if (profileContext) context += `\n\n${profileLabel}:\n${profileContext}`
+  if (matchContext) context += `\n\n${matchLabel}:\n${matchContext}`
 
   return rules + context
 }
@@ -273,7 +317,7 @@ export async function POST(req) {
     const deduction = await deductCredits(admin, userId, token, AI_COST, 'coach-feedback-chat')
     if (!deduction.success) {
       return NextResponse.json(
-        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : 'Insufficient credits. Please recharge to continue.' },
+        { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : lang === 'es' ? 'Créditos insuficientes. Recarga para continuar.' : 'Insufficient credits. Please recharge to continue.' },
         { status: 402 }
       )
     }
@@ -293,7 +337,7 @@ export async function POST(req) {
           response = await callOpenAIWithRetry(openaiApiKey, requestBody, 'coach-feedback-chat')
           if (response?.ok) {
             const data = await response.json()
-            const assistantResponse = data?.choices?.[0]?.message?.content || (lang === 'it' ? 'Non ho capito, puoi ripetere?' : 'I didn\'t understand, can you repeat?')
+            const assistantResponse = data?.choices?.[0]?.message?.content || (lang === 'it' ? 'Non ho capito, puoi ripetere?' : lang === 'es' ? 'No he entendido, ¿puedes repetir?' : 'I didn\'t understand, can you repeat?')
             return NextResponse.json({
               response: assistantResponse,
               remaining: rateLimit.remaining,
@@ -309,7 +353,7 @@ export async function POST(req) {
     }
 
     const data = await response.json()
-    const assistantResponse = data?.choices?.[0]?.message?.content || (lang === 'it' ? 'Non ho capito, puoi ripetere?' : 'I didn\'t understand, can you repeat?')
+    const assistantResponse = data?.choices?.[0]?.message?.content || (lang === 'it' ? 'Non ho capito, puoi ripetere?' : lang === 'es' ? 'No he entendido, ¿puedes repetir?' : 'I didn\'t understand, can you repeat?')
 
     return NextResponse.json({
       response: assistantResponse,
