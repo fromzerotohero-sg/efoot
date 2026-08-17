@@ -1296,7 +1296,7 @@ export async function POST(req) {
     let efootballKnowledge = ''
     if (classifyQuestion(message) === 'efootball') {
       try {
-        efootballKnowledge = getRelevantSections(message, 18000)
+        efootballKnowledge = getRelevantSections(message)
         if (efootballKnowledge && process.env.NODE_ENV !== 'production') console.log('[assistant-chat] RAG eFootball: loaded sections')
       } catch (ragError) {
         console.error('[assistant-chat] RAG error (non-blocking):', ragError.message)

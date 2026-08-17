@@ -591,14 +591,16 @@ export default function CountermeasuresPreMatchPage() {
                     ? 'Captura nítida del módulo rival → lectura y sugerencias tácticas.'
                     : 'Screenshot nitido del modulo avversario → lettura modulo e suggerimenti tattici.'}
               </p>
-              <div style={{ marginTop: '14px' }}>
-                <div style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', opacity: 0.8, marginBottom: '8px' }}>
-                  {t('opponentFluidToggle')}
+              <div className="counter-fluid-control">
+                <div className="counter-fluid-label">
+                  <Layers3 size={16} aria-hidden="true" />
+                  <span>{t('opponentFluidToggle')}</span>
                 </div>
-                <div style={{ display: 'inline-flex', gap: '6px', marginBottom: '6px' }}>
+                <div className="counter-fluid-options" role="group" aria-label={t('opponentFluidToggle')}>
                   <button
                     type="button"
-                    className="counter-secondary-cta"
+                    className={`counter-fluid-option ${!opponentUsesFluid ? 'is-active' : ''}`}
+                    aria-pressed={!opponentUsesFluid}
                     disabled={isProcessing}
                     onClick={() => {
                       if (isProcessing) return
@@ -609,17 +611,14 @@ export default function CountermeasuresPreMatchPage() {
                         runFullPipeline(uploadImage, null, { fluid: false })
                       }
                     }}
-                    style={{
-                      minHeight: '36px',
-                      borderColor: !opponentUsesFluid ? 'rgba(34, 211, 238, 0.55)' : undefined,
-                      background: !opponentUsesFluid ? 'rgba(0, 212, 255, 0.16)' : undefined
-                    }}
                   >
-                    NO
+                    {!opponentUsesFluid && <CheckCircle2 size={15} aria-hidden="true" />}
+                    No
                   </button>
                   <button
                     type="button"
-                    className="counter-secondary-cta"
+                    className={`counter-fluid-option ${opponentUsesFluid ? 'is-active' : ''}`}
+                    aria-pressed={opponentUsesFluid}
                     disabled={isProcessing}
                     onClick={() => {
                       if (isProcessing) return
@@ -627,16 +626,12 @@ export default function CountermeasuresPreMatchPage() {
                       setExtractedFormation(null)
                       setCountermeasures(null)
                     }}
-                    style={{
-                      minHeight: '36px',
-                      borderColor: opponentUsesFluid ? 'rgba(34, 211, 238, 0.55)' : undefined,
-                      background: opponentUsesFluid ? 'rgba(0, 212, 255, 0.16)' : undefined
-                    }}
                   >
-                    {lang === 'en' ? 'YES' : lang === 'es' ? 'SÍ' : 'SÌ'}
+                    {opponentUsesFluid && <CheckCircle2 size={15} aria-hidden="true" />}
+                    {lang === 'en' ? 'Yes' : lang === 'es' ? 'Sí' : 'Sì'}
                   </button>
                 </div>
-                <em style={{ display: 'block', opacity: 0.7, fontStyle: 'normal', fontSize: '12px' }}>
+                <em className="counter-fluid-hint">
                   {opponentUsesFluid ? t('opponentFluidNeedBoth') : t('opponentFluidToggleHint')}
                 </em>
               </div>
@@ -1770,6 +1765,89 @@ export default function CountermeasuresPreMatchPage() {
           line-height: 1.6;
         }
 
+        .counter-fluid-control {
+          width: fit-content;
+          max-width: 100%;
+          margin-top: 16px;
+          padding: 12px;
+          border: 1px solid rgba(103, 232, 249, 0.20);
+          border-radius: 16px;
+          background: rgba(2, 12, 27, 0.58);
+        }
+
+        .counter-fluid-label {
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          margin-bottom: 9px;
+          color: rgba(255, 255, 255, 0.92);
+          font-size: 12px;
+          font-weight: 900;
+          letter-spacing: 0.045em;
+          text-transform: uppercase;
+        }
+
+        .counter-fluid-label svg {
+          flex: 0 0 auto;
+          color: #67e8f9;
+        }
+
+        .counter-fluid-options {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(76px, 1fr));
+          gap: 7px;
+        }
+
+        .counter-fluid-option {
+          min-height: 40px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 8px 16px;
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          border-radius: 11px;
+          color: rgba(255, 255, 255, 0.72);
+          background: rgba(255, 255, 255, 0.05);
+          font-size: 13px;
+          font-weight: 900;
+          cursor: pointer;
+          transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+        }
+
+        .counter-fluid-option:hover:not(:disabled) {
+          transform: translateY(-1px);
+          border-color: rgba(103, 232, 249, 0.42);
+          color: #fff;
+        }
+
+        .counter-fluid-option.is-active {
+          border-color: rgba(103, 232, 249, 0.72);
+          color: #fff;
+          background: linear-gradient(135deg, rgba(0, 212, 255, 0.24), rgba(34, 211, 238, 0.12));
+          box-shadow: inset 0 0 0 1px rgba(103, 232, 249, 0.08), 0 0 16px rgba(0, 212, 255, 0.10);
+        }
+
+        .counter-fluid-option:focus-visible {
+          outline: 2px solid #67e8f9;
+          outline-offset: 2px;
+        }
+
+        .counter-fluid-option:disabled {
+          cursor: not-allowed;
+          opacity: 0.55;
+        }
+
+        .counter-fluid-hint {
+          display: block;
+          max-width: 54ch;
+          margin-top: 8px;
+          color: rgba(255, 255, 255, 0.66);
+          font-size: 12px;
+          font-style: normal;
+          line-height: 1.45;
+        }
+
         .counter-upload-logo {
           position: relative;
           flex: 0 0 82px;
@@ -1985,6 +2063,11 @@ export default function CountermeasuresPreMatchPage() {
 
           .counter-cta-row {
             grid-template-columns: 1fr;
+          }
+
+          .counter-fluid-control {
+            width: 100%;
+            box-sizing: border-box;
           }
 
           .counter-processing-logo {

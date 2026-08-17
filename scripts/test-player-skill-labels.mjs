@@ -183,7 +183,8 @@ if (!isKnownPlayerSkill('Attacking Surge')) {
   console.error('FAIL known skill: "Attacking Surge" is not recognized')
   process.exit(1)
 }
-assertEqual(getSkillDisplayLabel('Attacking Surge', 'it'), 'Attacking Surge', 'Attacking Surge IT')
+assertEqual(getSkillDisplayLabel('Attacking Surge', 'it'), 'Sprint in attacco', 'Attacking Surge IT')
+assertEqual(canonicalSkillStorageName('Sprint in attacco'), 'Attacking Surge', 'Sprint in attacco canonical')
 assertEqual(getPlayerSkillSemantic('Attacking Surge')?.category, 'special', 'Attacking Surge semantic category')
 if (!hasSkillSemantic('Attacking Surge')) {
   console.error('FAIL Attacking Surge has no semantic definition')

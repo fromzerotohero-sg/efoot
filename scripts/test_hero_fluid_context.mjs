@@ -21,6 +21,8 @@ import {
   prependLiveLinkUpOverride,
   startersForLinkUpVerification
 } from '../lib/efootballV6TacticalModel.js'
+import { getRelevantSections } from '../lib/ragHelper.js'
+import { getCoachPoliciesText } from '../lib/coachPromptRules.js'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const results = []
@@ -219,6 +221,32 @@ assert(
     chatSrc.includes('from(\'formation_variants\')') &&
     !chatSrc.includes('VIETATO suggerire cambio formazione/modulo a meno che il cliente non lo chieda esplicitamente. Lavora sempre sulla formazione attuale salvata.'),
   'Hero prompt reads formation_variants and refines the formation guardrail'
+)
+const attackingSurgeRag = getRelevantSections('Che cos\'è Attacking Surge?')
+const sprintInAttaccoRag = getRelevantSections('Che cos\'è Sprint in attacco?')
+assert(
+  'attacking-surge-rag-retrieval',
+  attackingSurgeRag.includes('Attacking Surge') &&
+    attackingSurgeRag.includes('Sprint in attacco') &&
+    attackingSurgeRag.includes('aumenta l\'esplosività delle corse senza palla') &&
+    attackingSurgeRag.includes('distinta da Attack Trigger') &&
+    sprintInAttaccoRag.includes('Sprint in attacco') &&
+    sprintInAttaccoRag.includes('Attacking Surge'),
+  'English and Italian skill names retrieve the same definition and distinction'
+)
+assert(
+  'assistant-uses-rag-default-budget',
+  chatSrc.includes('getRelevantSections(message)') &&
+    !chatSrc.includes('getRelevantSections(message, 18000)'),
+  'Assistant route does not override the larger RAG budget with the obsolete 18k limit'
+)
+assert(
+  'unknown-mechanic-no-inference-policy',
+  ['it', 'en', 'es'].every((lang) => {
+    const policy = getCoachPoliciesText(lang)
+    return /RAG/i.test(policy) && /definizione|definition|definición/i.test(policy)
+  }),
+  'All prompt languages forbid inferring an unretrieved mechanic from its name'
 )
 
 const cachedActive = `${onText}\nFORMAZIONE FLUIDA: già ATTIVA. Riconoscila.`

@@ -728,7 +728,7 @@ Nota affidabilita: "special double touch" e varianti "tess/croqueta interrotta" 
 - **Riserva di lusso** *(Super Sub)*: Prestazioni migliorate quando subentra in corso partita. **Quando serve**: panchinari d'impatto, cambi tattici.
 - **Spirito combattivo** *(Fighting Spirit)*: Prestazioni migliori sotto pressione e fatica. **Quando serve**: Onnipresente, mediani, pressing. **Comunità**: ideale per tutti gli 11; fondamentale per DC, MED e TrQ (smistano palloni in spazi ridotti). I TrQ hanno spesso Resistenza bassa: anche se li sostituisci al 46', Spirito combattivo li aiuta già al primo tempo (intorno al 30' la Resistenza cala e influisce su lucidità e rapidità). Riduce impatto fatica, migliora anche gestione Resistenza.
 - **Astuzia** (Tattica): Maggiore probabilità di ottenere falli quando è in possesso di palla. **EVITARE su difensori**: Konami gestisce male l'abilità, effetto contrario – più falli a sfavore. Dare a centrocampisti/attaccanti se utile. **NOTA**: NON confondere con "Trickster" (vedi §8.11) che è invece skill move tecnico in 1v1.
-- **Attacking Surge**: aumenta l'esplosività delle corse senza palla del giocatore nella metà campo offensiva quando un compagno è in possesso, aiutandolo ad attaccare più rapidamente lo spazio e la profondità. È un'abilità speciale offensiva che si attiva automaticamente, senza input aggiuntivi. **NON** è un aumento permanente di Velocità o Accelerazione e **NON** va confusa con il pack omonimo.
+- **Sprint in attacco** *(Attacking Surge)*: aumenta l'esplosività delle corse senza palla del giocatore nella metà campo offensiva quando un compagno è in possesso, aiutandolo ad attaccare più rapidamente lo spazio e la profondità. È un'abilità speciale offensiva che si attiva automaticamente, senza input aggiuntivi. **NON** è un aumento permanente di Velocità o Accelerazione e **NON** va confusa con il pack omonimo.
 
 ### 8.8 Programmi Aggiunta Abilità
 - **Disponibile per**: In evidenza, In risalto, Epico, Leggendario, Standard
@@ -791,7 +791,7 @@ Carta forte senza abilità corrette non renderà in game come dovrebbe. **Obblig
 | Inserimento incisivo / Incisive Run | — | Taglio da fascia verso porta (trait offensivo) |
 | Corsa ubriacante / Mazing Run | — | Penetrazione con dribbling stretto e svolte |
 | Proiettile veloce / Speeding Bullet | — | Inserimenti e progressioni in velocità |
-| Attacking Surge | Abilità propria, distinta da Attack Trigger | Esplosività delle corse senza palla nella metà campo offensiva quando un compagno è in possesso; attiva automaticamente |
+| Sprint in attacco / Attacking Surge | Abilità propria, distinta da Attack Trigger | Esplosività delle corse senza palla nella metà campo offensiva quando un compagno è in possesso; attiva automaticamente |
 | Trickster | §8.3 (tecnico) | Skill move / dribbling flair in 1v1; utile su ali e TrQ tecnici |
 
 **Mappatura aggiuntiva (nomi EN che potrebbero apparire nel catalogo)**:
@@ -799,7 +799,7 @@ Carta forte senza abilità corrette non renderà in game come dovrebbe. **Obblig
 - **GK Directing Defense / GK Directing Defence** = **Direzione alla difesa** (§8.5)
 - **GK Spirit Roar** = **Portiere galvanizzatore** (§8.5)
 - **Attack Trigger** = **Attivatore d'attacco** (trait offensivo); citare solo l'effetto in scheda senza inventare numeri
-- **Attacking Surge** è un'abilità distinta da **Attack Trigger / Attivatore d'attacco**, **Acceleration Burst / Scatto bruciante** e **Incisive Run / Inserimento incisivo**. Nei dati può esistere anche un pack chiamato “Attacking Surge”: non attribuire al pack l'effetto dell'abilità e non inventare valori numerici.
+- **Attacking Surge** = **Sprint in attacco**. È un'abilità distinta da **Attack Trigger / Attivatore d'attacco**, **Acceleration Burst / Scatto bruciante** e **Incisive Run / Inserimento incisivo**. Nei dati può esistere anche un pack chiamato “Attacking Surge”: non attribuire al pack l'effetto dell'abilità e non inventare valori numerici.
 - **Gamesmanship** = **Astuzia** (§8.7) — NON confondere con Trickster (§8.3)
 
 **Regola generale per nomi EN non in elenco**: se appare un'abilità solo in inglese sulla carta, riportare l'effetto come scritto sulla scheda Konami/eFootball Lab senza tradurla in modo creativo.
@@ -856,7 +856,7 @@ Le policy comportamentali per il Coach AI (errori da evitare, terminologia, anti
 
 **Versione**: 9.0.2 ENTERPRISE | **Data**: 17 Agosto 2026 | **Ruleset**: eFootball v6.0.0
 **Principio**: FISSO vs CONFIGURABILE | **Terminologia**: Ufficiale eFootball | **Compatibilità**: read legacy / no new legacy
-**Changelog 9.0.2**: aggiunta l'abilità speciale offensiva Attacking Surge, distinta da Attack Trigger, Acceleration Burst, Incisive Run e dal pack omonimo; vietati boost permanenti o valori numerici non documentati.
+**Changelog 9.0.2**: aggiunta l'abilità speciale offensiva Sprint in attacco (Attacking Surge), distinta da Attack Trigger, Acceleration Burst, Incisive Run e dal pack omonimo; vietati boost permanenti o valori numerici non documentati.
 **Changelog 9.0.1**: corpus RAG riportato a Source of Truth italiana; sigle ES e alias stili/abilità restano ponti terminologici, non un secondo corpus.
 **Changelog 9.0.0**: allineamento v6.0.0: Pressing totale/Overload; Formazione fluida; modello stili giocatore attacco/difesa senza conteggio fisso; Classico n°10 aggiornato; Offensivo e Linea bassa marcati legacy e non più consigliabili; gameplay v6 §7.13; regola anti-inferenza per competenza coach Pressing totale.
 **Changelog 8.6.0**: §2.1 Posizioni attivazione corrette per TUTTI i 24 stili card (allineate a fonti ufficiali eFootball 2026: FIFPlay, Scribd Guide, Konami Help). Rimossi sigle IT vecchie (P/SP/TRQ/CLD/CLS/CC/MED/DC/TD/TS) sostituite con posizioni ufficiali EN (CF/SS/AMF/CMF/DMF/RWF/LWF/RMF/LMF/CB/RB/LB). Aggiunte note "compatibile ma AI inattiva" dove pertinente. Classic No. 10: confermato SS/AMF only. Collante: confermato DMF only.
