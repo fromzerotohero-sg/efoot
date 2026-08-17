@@ -4386,10 +4386,10 @@ export default withAuth(function NuovaRosaLabPage() {
     const errors = []
     let extractedCoachCount = 0
 
-    const orderedImages = [...images]
-      .filter((image) => image.type === 'main')
-      .concat(images.filter((image) => image.type !== 'main' && image.type !== 'connection' && image.type !== 'connection2'))
-    const cardImages = orderedImages.length ? orderedImages.slice(0, 1) : images.slice(0, 1)
+    const cardImages = images.filter((image) => image.type === 'main')
+    if (!cardImages.length) {
+      throw new Error(t('coachCardRequired'))
+    }
 
     for (const image of cardImages) {
       const response = await fetch('/api/extract-player', {
@@ -4458,6 +4458,10 @@ export default withAuth(function NuovaRosaLabPage() {
 
   const handleCoachPhotoUpload = React.useCallback(async () => {
     if (coachPhotoImages.length === 0) return
+    if (!coachPhotoImages.some((image) => image.type === 'main')) {
+      showToast(t('coachCardRequired'), 'error')
+      return
+    }
 
     setSavingCoach(true)
     try {
@@ -4495,7 +4499,7 @@ export default withAuth(function NuovaRosaLabPage() {
     } finally {
       setSavingCoach(false)
     }
-  }, [coachPhotoImages, extractCoachFromPhotos, lang, saveCoachAndSetActive, showToast])
+  }, [coachPhotoImages, extractCoachFromPhotos, lang, saveCoachAndSetActive, showToast, t])
 
   const checkPhotoMissingData = React.useCallback((playerData) => {
     const missing = { required: [], optional: [] }

@@ -114,13 +114,13 @@ Per ogni fase fornita estrai:
 - coach: solo dati allenatore visibili
 - visual_tactical_profile: central_density (low/medium/high), width_profile (narrow/balanced/wide), side_bias (left/right/balanced/unclear), attackable_zones[], defensive_gaps[], shape_confidence 0-1
 
-Se sono presenti due fasi, confrontale senza inventare cause e restituisci movement_summary con i cambiamenti di disposizione visivamente evidenti. Se sono quasi uguali, fluid_detected=false. Se non sei sicuro, fluid_detected=null.
+Se sono presenti due fasi, confrontale senza inventare cause e restituisci movement_summary con i cambiamenti di disposizione visivamente evidenti. Due immagini NON implicano Formazione fluida: se sono quasi identiche, fluid_detected=false; se le disposizioni differiscono in modo visibile, fluid_detected=true; se non sei sicuro, fluid_detected=null.
 
 JSON ESATTO:
 {
   "attack": {"formation":null,"playing_style":null,"tactical_style":null,"overall_strength":null,"players":[],"slot_positions":{},"coach":null,"visual_tactical_profile":null},
   "defense": ${defenseImage ? '{"formation":null,"playing_style":null,"tactical_style":null,"overall_strength":null,"players":[],"slot_positions":{},"coach":null,"visual_tactical_profile":null}' : 'null'},
-  "fluid_detected": ${defenseImage ? 'true' : 'null'},
+  "fluid_detected": null,
   "movement_summary": []
 }
 

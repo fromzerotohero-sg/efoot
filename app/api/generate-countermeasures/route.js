@@ -12,7 +12,8 @@ import {
   buildPhaseMatchupContext,
   evaluateLinkUpPlay,
   normalizeLinkUpPlays,
-  opponentFluidFromRow
+  opponentFluidFromRow,
+  shouldOmitFluidFormationRecommendation
 } from '@/lib/efootballV6TacticalModel'
 
 export const runtime = 'nodejs'
@@ -96,30 +97,42 @@ function clipText(value, max = 700) {
 function attachOptionalV6Fields(countermeasures, { linkUps, clientFluid, opponentFluid, matchup }) {
   if (!countermeasures || typeof countermeasures !== 'object') return countermeasures
 
-  const rawFluid = countermeasures.fluid_formation_recommendation
-  if (rawFluid && typeof rawFluid === 'object') {
-    const allowed = new Set(['keep_current', 'use', 'modify_attack', 'modify_defense', 'disable', 'not_needed', 'insufficient_data'])
-    countermeasures.fluid_formation_recommendation = {
-      decision: allowed.has(rawFluid.decision) ? rawFluid.decision : 'insufficient_data',
-      title: clipText(rawFluid.title, 220),
-      reason: clipText(rawFluid.reason, 900),
-      attack_action: clipText(rawFluid.attack_action, 700),
-      defense_action: clipText(rawFluid.defense_action, 700)
+  if (shouldOmitFluidFormationRecommendation(clientFluid, opponentFluid)) {
+    delete countermeasures.fluid_formation_recommendation
+  } else {
+    const rawFluid = countermeasures.fluid_formation_recommendation
+    if (rawFluid && typeof rawFluid === 'object') {
+      const allowed = new Set(['keep_current', 'use', 'modify_attack', 'modify_defense', 'disable', 'not_needed', 'insufficient_data'])
+      countermeasures.fluid_formation_recommendation = {
+        decision: allowed.has(rawFluid.decision) ? rawFluid.decision : 'insufficient_data',
+        title: clipText(rawFluid.title, 220),
+        reason: clipText(rawFluid.reason, 900),
+        attack_action: clipText(rawFluid.attack_action, 700),
+        defense_action: clipText(rawFluid.defense_action, 700)
+      }
     }
   }
 
   const allowedLinkNames = new Set((linkUps || []).map((item) => String(item.name || '').toLowerCase()))
+  const linkStatusByName = new Map((linkUps || []).map((item) => [String(item.name || '').toLowerCase(), item.verification_status]))
   if (Array.isArray(countermeasures.link_up_recommendations)) {
     countermeasures.link_up_recommendations = countermeasures.link_up_recommendations
       .filter((item) => allowedLinkNames.has(String(item?.name || '').toLowerCase()))
       .slice(0, 2)
-      .map((item) => ({
-        name: clipText(item.name, 180),
-        decision: ['use', 'do_not_use', 'not_activatable'].includes(item.decision) ? item.decision : 'not_activatable',
-        focal_player: clipText(item.focal_player, 100),
-        key_man_player: clipText(item.key_man_player, 100),
-        reason: clipText(item.reason, 600)
-      }))
+      .map((item) => {
+        const status = linkStatusByName.get(String(item?.name || '').toLowerCase())
+        const allowedDecisions = ['use', 'do_not_use', 'not_activatable', 'insufficient_data']
+        let decision = allowedDecisions.includes(item.decision) ? item.decision : 'not_activatable'
+        if (status === 'insufficient_data') decision = 'insufficient_data'
+        else if (status === 'not_activatable' && decision === 'use') decision = 'not_activatable'
+        return {
+          name: clipText(item.name, 180),
+          decision,
+          focal_player: clipText(item.focal_player, 100),
+          key_man_player: clipText(item.key_man_player, 100),
+          reason: clipText(item.reason, 600)
+        }
+      })
   }
 
   countermeasures.phase_data = {

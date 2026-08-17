@@ -106,8 +106,16 @@ export default function AllenatoriPage() {
 
     for (const file of validFiles) {
       try {
+        const occupied = new Set([
+          ...uploadImages.map((img) => img.type),
+          ...preparedImages.map((img) => img.type)
+        ])
+        const nextType = typeOrder.find((key) => !occupied.has(key))
+        if (!nextType) {
+          setError(t('maxThreeCoachPhotos'))
+          break
+        }
         const optimized = await optimizeImageFile(file)
-        const nextType = typeOrder[uploadImages.length + preparedImages.length] || 'connection2'
         preparedImages.push({
           id: Date.now() + preparedImages.length,
           file,
@@ -152,6 +160,10 @@ export default function AllenatoriPage() {
 
   const handleUploadCoach = async () => {
     if (uploadImages.length === 0) return
+    if (!uploadImages.some((img) => img.type === 'main')) {
+      setError(t('coachCardRequired'))
+      return
+    }
 
     setUploading(true)
     setError(null)
@@ -168,13 +180,17 @@ export default function AllenatoriPage() {
         throw new Error(t('sessionExpired'))
       }
 
-      // Estrai la carta allenatore (prima foto / tipo main)
+      // Estrai solo la carta allenatore (slot main). I Collegamenti restano screenshot, non carta.
       let coachData = null
       let allExtractedData = {}
       const photoSlots = {}
       const errors = []
-      const cardImages = uploadImages.filter((img) => img.type === 'main')
-      const toExtract = cardImages.length ? cardImages : uploadImages.slice(0, 1)
+      const toExtract = uploadImages.filter((img) => img.type === 'main')
+      if (!toExtract.length) {
+        setError(t('coachCardRequired'))
+        setUploading(false)
+        return
+      }
 
       for (const img of toExtract) {
         const extractRes = await fetch('/api/extract-coach', {

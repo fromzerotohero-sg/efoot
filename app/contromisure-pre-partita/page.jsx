@@ -166,6 +166,7 @@ export default function CountermeasuresPreMatchPage() {
   const [extracting, setExtracting] = React.useState(false)
   const [extractedFormation, setExtractedFormation] = React.useState(null)
   const [generating, setGenerating] = React.useState(false)
+  const pipelineLockRef = React.useRef(false)
   const [countermeasures, setCountermeasures] = React.useState(null)
   const [error, setError] = React.useState(null)
   const [expandedSections, setExpandedSections] = React.useState({
@@ -241,6 +242,10 @@ export default function CountermeasuresPreMatchPage() {
   }, [router])
 
   const handleImageSelect = async (e) => {
+    if (pipelineLockRef.current || extracting || generating) {
+      e.target.value = ''
+      return
+    }
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -269,6 +274,10 @@ export default function CountermeasuresPreMatchPage() {
   }
 
   const handleDefenseImageSelect = async (e) => {
+    if (pipelineLockRef.current || extracting || generating) {
+      e.target.value = ''
+      return
+    }
     const file = e.target.files?.[0]
     if (!file) return
     try {
@@ -290,6 +299,8 @@ export default function CountermeasuresPreMatchPage() {
   const runFullPipeline = async (imageDataUrl, defenseDataUrl = null, { fluid = opponentUsesFluid } = {}) => {
     if (!imageDataUrl) return
     if (fluid && !defenseDataUrl) return
+    if (pipelineLockRef.current) return
+    pipelineLockRef.current = true
     setExtracting(true)
     setError(null)
 
@@ -419,6 +430,7 @@ export default function CountermeasuresPreMatchPage() {
     } finally {
       setExtracting(false)
       setGenerating(false)
+      pipelineLockRef.current = false
     }
   }
 
@@ -427,6 +439,8 @@ export default function CountermeasuresPreMatchPage() {
       setError(t('noFormationUploaded'))
       return
     }
+    if (pipelineLockRef.current) return
+    pipelineLockRef.current = true
 
     setGenerating(true)
     setError(null)
@@ -469,6 +483,7 @@ export default function CountermeasuresPreMatchPage() {
       setError(err.message || t('errorGeneratingCountermeasures'))
     } finally {
       setGenerating(false)
+      pipelineLockRef.current = false
     }
   }
 
@@ -584,7 +599,9 @@ export default function CountermeasuresPreMatchPage() {
                   <button
                     type="button"
                     className="counter-secondary-cta"
+                    disabled={isProcessing}
                     onClick={() => {
+                      if (isProcessing) return
                       const wasFluid = opponentUsesFluid
                       setOpponentUsesFluid(false)
                       setDefenseImage(null)
@@ -603,7 +620,9 @@ export default function CountermeasuresPreMatchPage() {
                   <button
                     type="button"
                     className="counter-secondary-cta"
+                    disabled={isProcessing}
                     onClick={() => {
+                      if (isProcessing) return
                       setOpponentUsesFluid(true)
                       setExtractedFormation(null)
                       setCountermeasures(null)
@@ -634,7 +653,7 @@ export default function CountermeasuresPreMatchPage() {
             accept="image/*"
             onChange={handleImageSelect}
             style={{ display: 'none' }}
-            disabled={extracting}
+            disabled={isProcessing}
           />
           <input
             id="counter-camera-input"
@@ -643,7 +662,7 @@ export default function CountermeasuresPreMatchPage() {
             capture="environment"
             onChange={handleImageSelect}
             style={{ display: 'none' }}
-            disabled={extracting}
+            disabled={isProcessing}
           />
           <input
             id="counter-defense-upload-input"
@@ -651,7 +670,7 @@ export default function CountermeasuresPreMatchPage() {
             accept="image/*"
             onChange={handleDefenseImageSelect}
             style={{ display: 'none' }}
-            disabled={extracting}
+            disabled={isProcessing}
           />
           <input
             id="counter-defense-camera-input"
@@ -660,7 +679,7 @@ export default function CountermeasuresPreMatchPage() {
             capture="environment"
             onChange={handleDefenseImageSelect}
             style={{ display: 'none' }}
-            disabled={extracting}
+            disabled={isProcessing}
           />
 
           {opponentUsesFluid ? (
@@ -671,16 +690,18 @@ export default function CountermeasuresPreMatchPage() {
                   {uploadImage ? (
                     <>
                       <img src={uploadImage} alt="" style={{ width: '100%', maxHeight: '220px', objectFit: 'contain', borderRadius: '8px' }} />
+                      {!isProcessing && (
                       <button type="button" className="counter-secondary-cta" onClick={() => { setUploadImage(null); setExtractedFormation(null); setCountermeasures(null) }} style={{ marginTop: '8px', width: '100%' }}>
                         <X size={14} /> {t('remove')}
                       </button>
+                      )}
                     </>
                   ) : (
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      <button type="button" className="counter-primary-cta" onClick={() => document.getElementById('counter-upload-input')?.click()} disabled={extracting} style={{ flex: 1 }}>
+                      <button type="button" className="counter-primary-cta" onClick={() => document.getElementById('counter-upload-input')?.click()} disabled={isProcessing} style={{ flex: 1 }}>
                         <Upload size={14} /> {t('upload')}
                       </button>
-                      <button type="button" className="counter-secondary-cta" onClick={() => document.getElementById('counter-camera-input')?.click()} disabled={extracting}>
+                      <button type="button" className="counter-secondary-cta" onClick={() => document.getElementById('counter-camera-input')?.click()} disabled={isProcessing}>
                         <Camera size={14} />
                       </button>
                     </div>
@@ -691,16 +712,18 @@ export default function CountermeasuresPreMatchPage() {
                   {defenseImage ? (
                     <>
                       <img src={defenseImage} alt="" style={{ width: '100%', maxHeight: '220px', objectFit: 'contain', borderRadius: '8px' }} />
+                      {!isProcessing && (
                       <button type="button" className="counter-secondary-cta" onClick={() => { setDefenseImage(null); setExtractedFormation(null); setCountermeasures(null) }} style={{ marginTop: '8px', width: '100%' }}>
                         <X size={14} /> {t('remove')}
                       </button>
+                      )}
                     </>
                   ) : (
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      <button type="button" className="counter-primary-cta" onClick={() => document.getElementById('counter-defense-upload-input')?.click()} disabled={extracting} style={{ flex: 1 }}>
+                      <button type="button" className="counter-primary-cta" onClick={() => document.getElementById('counter-defense-upload-input')?.click()} disabled={isProcessing} style={{ flex: 1 }}>
                         <Upload size={14} /> {t('upload')}
                       </button>
-                      <button type="button" className="counter-secondary-cta" onClick={() => document.getElementById('counter-defense-camera-input')?.click()} disabled={extracting}>
+                      <button type="button" className="counter-secondary-cta" onClick={() => document.getElementById('counter-defense-camera-input')?.click()} disabled={isProcessing}>
                         <Camera size={14} />
                       </button>
                     </div>
@@ -730,7 +753,7 @@ export default function CountermeasuresPreMatchPage() {
                   borderRadius: '12px',
                   textAlign: 'center',
                   cursor: 'default',
-                  opacity: extracting ? 0.5 : 1,
+                  opacity: isProcessing ? 0.5 : 1,
                   transition: 'all 0.3s ease',
                   position: 'relative'
                 }}
@@ -754,7 +777,7 @@ export default function CountermeasuresPreMatchPage() {
                   type="button"
                   onClick={() => document.getElementById('counter-upload-input')?.click()}
                   className="counter-primary-cta"
-                  disabled={extracting}
+                  disabled={isProcessing}
                 >
                   <Upload size={16} />
                   {t('upload')}
@@ -763,7 +786,7 @@ export default function CountermeasuresPreMatchPage() {
                   type="button"
                   onClick={() => document.getElementById('counter-camera-input')?.click()}
                   className="counter-secondary-cta"
-                  disabled={extracting}
+                  disabled={isProcessing}
                 >
                   <Camera size={16} />
                   {t('cameraCaptureTitle')}
@@ -780,15 +803,16 @@ export default function CountermeasuresPreMatchPage() {
                 />
               </div>
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-                {extracting ? (
+                {isProcessing ? (
                   <div className="counter-inline-processing">
                     <RefreshCw size={18} style={{ animation: 'spin 1s linear infinite' }} />
-                    <span>{t('extracting')}</span>
+                    <span>{extracting ? t('extracting') : (lang === 'en' ? 'Building the plan...' : lang === 'es' ? 'Preparando el plan...' : 'Preparazione del piano...')}</span>
                   </div>
                 ) : (
                   <button
                     onClick={() => runFullPipeline(uploadImage, null, { fluid: false })}
                     className="counter-primary-cta"
+                    disabled={isProcessing}
                     style={{ flex: 1, minWidth: '200px' }}
                   >
                     <RefreshCw size={16} />
@@ -804,7 +828,7 @@ export default function CountermeasuresPreMatchPage() {
                     setError(null)
                   }}
                   className="counter-secondary-cta"
-                  disabled={extracting || generating}
+                  disabled={isProcessing}
                 >
                   <X size={16} />
                   {t('cancel')}
@@ -863,7 +887,7 @@ export default function CountermeasuresPreMatchPage() {
           <button
             onClick={handleGenerateCountermeasures}
             className="btn primary"
-            disabled={generating}
+            disabled={isProcessing}
             style={{ width: '100%' }}
           >
             {generating ? (
@@ -1011,7 +1035,7 @@ export default function CountermeasuresPreMatchPage() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
                       <strong>{pickLang(item.name, lang)}</strong>
                       <span style={{ color: 'var(--neon-blue)', fontSize: '11px', fontWeight: 800 }}>
-                        {item.decision === 'use' ? t('v6Use') : item.decision === 'do_not_use' ? t('v6DoNotUse') : t('v6NotActivatable')}
+                        {item.decision === 'use' ? t('v6Use') : item.decision === 'do_not_use' ? t('v6DoNotUse') : item.decision === 'insufficient_data' ? t('v6InsufficientData') : t('v6NotActivatable')}
                       </span>
                     </div>
                     <p style={{ margin: '6px 0 0', fontSize: '12px', opacity: 0.75 }}>
