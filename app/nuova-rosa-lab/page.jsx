@@ -2784,6 +2784,7 @@ function PremiumPlayerModal({
   slot,
   onClose,
   onSave,
+  onSaveRoles,
   onBuildCoach,
   onRemoveFromSlot,
   onDeletePlayer,
@@ -2841,6 +2842,8 @@ function PremiumPlayerModal({
   const [showAllSkills, setShowAllSkills] = React.useState(false)
   const [originalPositionsDraft, setOriginalPositionsDraft] = React.useState([])
   const [showPositionEditor, setShowPositionEditor] = React.useState(false)
+  const [savingRoles, setSavingRoles] = React.useState(false)
+  const rolesSnapshotRef = React.useRef([])
   const [interactiveBuildSliders, setInteractiveBuildSliders] = React.useState(null)
 
   React.useEffect(() => {
@@ -3411,7 +3414,14 @@ function PremiumPlayerModal({
                   <strong>{lang === 'en' ? 'Playable roles' : lang === 'es' ? 'Roles jugables' : 'Ruoli giocabili'}</strong>
                   <p>{lang === 'en' ? 'Main role is the first selected role.' : lang === 'es' ? 'El rol principal es el primer rol seleccionado.' : 'Il ruolo principale e il primo ruolo selezionato.'}</p>
                 </div>
-                <button type="button" className="nr-secondary-button" onClick={() => setShowPositionEditor(true)}>
+                <button
+                  type="button"
+                  className="nr-secondary-button"
+                  onClick={() => {
+                    rolesSnapshotRef.current = originalPositionsDraft
+                    setShowPositionEditor(true)
+                  }}
+                >
                   {lang === 'en' ? 'Edit roles' : lang === 'es' ? 'Editar roles' : 'Modifica ruoli'}
                 </button>
               </div>
@@ -3739,13 +3749,13 @@ function PremiumPlayerModal({
                 : 'Salva per confermare le modifiche al giocatore.')}
         </p>
         <div className="nr-modal-footer-actions">
-          <button type="button" className="nr-secondary-button" onClick={onClose} disabled={saving || building}>
+          <button type="button" className="nr-secondary-button" onClick={onClose} disabled={saving || savingRoles || building}>
             {lang === 'en' ? 'Cancel' : lang === 'es' ? 'Cancelar' : 'Annulla'}
           </button>
           <button
             type="button"
             className="nr-primary-button"
-            disabled={saving || building}
+            disabled={saving || savingRoles || building}
             onClick={() => onSave(getEditorSavePayload())}
           >
             {saving ? (lang === 'en' ? 'Saving...' : lang === 'es' ? 'Guardando...' : 'Salvataggio...') : (lang === 'en' ? 'Save player' : lang === 'es' ? 'Guardar jugador' : 'Salva giocatore')}
@@ -3759,9 +3769,23 @@ function PremiumPlayerModal({
           mainPosition={originalPositionsDraft[0]?.position || form.position || player.position}
           selectedPositions={originalPositionsDraft}
           onPositionsChange={setOriginalPositionsDraft}
-          onConfirm={() => setShowPositionEditor(false)}
-          uploading={false}
-          onCancel={() => setShowPositionEditor(false)}
+          onConfirm={async () => {
+            if (typeof onSaveRoles === 'function') {
+              setSavingRoles(true)
+              try {
+                const ok = await onSaveRoles(originalPositionsDraft)
+                if (!ok) return
+              } finally {
+                setSavingRoles(false)
+              }
+            }
+            setShowPositionEditor(false)
+          }}
+          uploading={saving || savingRoles}
+          onCancel={() => {
+            setOriginalPositionsDraft(rolesSnapshotRef.current || [])
+            setShowPositionEditor(false)
+          }}
         />
       )}
     </EnterpriseModalFrame>
@@ -5456,6 +5480,42 @@ export default withAuth(function NuovaRosaLabPage() {
     }
   }, [fetchRoster, lang, refreshDiagnosticAfterSave, selectedPlayer, showToast, t])
 
+  const handleSavePlayerRoles = React.useCallback(async (positions) => {
+    if (!selectedPlayer?.id) return false
+    if (!Array.isArray(positions) || positions.length === 0) return false
+    try {
+      let token = getTokenFallback()
+      if (!token && supabase) {
+        const { data: session } = await supabase.auth.getSession()
+        token = session?.session?.access_token
+      }
+      if (!token) throw new Error(t('sessionExpired'))
+
+      const response = await fetch(`/api/players/${selectedPlayer.id}`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          original_positions: positions,
+          position: positions[0]?.position || selectedPlayer.position
+        })
+      })
+      const data = await safeJsonResponse(response, t('errorSavingPlayerGeneric'))
+      if (data?.player) setSelectedPlayer(data.player)
+      await fetchRoster()
+      await refreshDiagnosticAfterSave()
+      showToast(t('competencesUpdated'), 'success')
+      return true
+    } catch (err) {
+      console.error('[NuovaRosaLab] roles save error:', err)
+      const { message } = mapErrorToUserMessage(err, t('errorSavingPlayerGeneric'), lang)
+      showToast(message, 'error')
+      return false
+    }
+  }, [fetchRoster, lang, refreshDiagnosticAfterSave, selectedPlayer, showToast, t])
+
   const runBuildCoachForPlayer = React.useCallback(async (player, options = {}) => {
     if (!player?.id) return
     setBuildingPlayerId(player.id)
@@ -6535,6 +6595,7 @@ export default withAuth(function NuovaRosaLabPage() {
           setSelectedPlayer(null)
         }}
         onSave={handlePremiumPlayerSave}
+        onSaveRoles={handleSavePlayerRoles}
         onBuildCoach={requestBuildCoachForPlayer}
         saving={savingPlayerEditor}
         building={buildingPlayerId === selectedPlayer?.id}
