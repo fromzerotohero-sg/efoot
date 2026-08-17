@@ -1,0 +1,45 @@
+name: Apply eFootball v6 production compatibility
+
+on:
+  push:
+    branches:
+      - prod-v6-compatibility
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-build:
+    if: ${{ !contains(github.event.head_commit.message, '[v6-patch-applied]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout hotfix branch
+        uses: actions/checkout@v4
+        with:
+          ref: prod-v6-compatibility
+          fetch-depth: 0
+
+      - name: Rebuild and apply deterministic compatibility patch
+        shell: bash
+        run: |
+          cat .v6_patch_chunks/00 .v6_patch_chunks/01 .v6_patch_chunks/02 .v6_patch_chunks/03 .v6_patch_chunks/04 .v6_patch_chunks/05 \
+            | base64 -d | gzip -d > /tmp/efootball_v6_compatibility.patch
+          git apply --check /tmp/efootball_v6_compatibility.patch
+          git apply /tmp/efootball_v6_compatibility.patch
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Production build gate
+        run: npm run build
+
+      - name: Commit validated hotfix
+        shell: bash
+        run: |
+          rm -rf .v6_patch_chunks .github/workflows/apply-prod-v6-compatibility.yml
+          git add -A
+          git config user.name "eFootball v6 Compatibility Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git commit -m "feat: align production with eFootball v6 rules [v6-patch-applied]"
+          git push origin HEAD:prod-v6-compatibility
