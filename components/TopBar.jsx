@@ -1,18 +1,21 @@
 'use client'
 
 import React from 'react'
-import { Menu, X, ShoppingCart, Home } from 'lucide-react'
+import { Menu, X, ShoppingCart, ArrowLeft } from 'lucide-react'
 import CreditsBar from '@/components/CreditsBar'
 import { InstallAppPromptButton } from '@/components/InstallAppPrompt'
 import LanguageSwitch from '@/components/LanguageSwitch'
 import { useSidebar } from '@/components/SidebarContext'
 import { useTranslation } from '@/lib/i18n'
 
-const HOME_DASHBOARD_URL = 'https://home.fromzerotohero.io/dashboard'
-
 export default function TopBar() {
-  const { t } = useTranslation()
+  const { t, lang } = useTranslation()
   const { isOpen, toggleSidebar } = useSidebar()
+  const backLabel = lang === 'en'
+    ? 'Back to previous page'
+    : lang === 'es'
+      ? 'Volver a la página anterior'
+      : 'Torna alla pagina precedente'
 
   return (
     <header 
@@ -67,14 +70,18 @@ export default function TopBar() {
             {isOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
 
-          {/* Home → Command Center (stessa scheda, ecosistema FZTH) */}
+          {/* Navigazione alla pagina precedente */}
           <button
             type="button"
             onClick={() => {
-              window.location.assign(HOME_DASHBOARD_URL)
+              if (window.history.length > 1) {
+                window.history.back()
+              } else {
+                window.location.assign('/')
+              }
             }}
-            aria-label="Vai alla dashboard From Zero to Hero"
-            title="Command Center"
+            aria-label={backLabel}
+            title={backLabel}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -90,7 +97,7 @@ export default function TopBar() {
               flexShrink: 0
             }}
           >
-            <Home size={18} />
+            <ArrowLeft size={18} />
           </button>
 
         </div>
