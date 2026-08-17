@@ -10,7 +10,8 @@ const PLAYSTYLE_KEYS = new Set([
   'contropiede_veloce',
   'contrattacco',
   'vie_laterali',
-  'passaggio_lungo'
+  'passaggio_lungo',
+  'pressing_totale'
 ])
 
 function toText(value) {

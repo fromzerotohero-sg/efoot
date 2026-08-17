@@ -13,6 +13,7 @@ import { buildRosterSkillAdvisorySection, formatPlayerSkillContext } from '@/lib
 import { localizeSkillTermsInText } from '@/lib/playerSkillLabels.js'
 import { buildCardAvailabilityBlock } from '@/lib/chatCardAvailability'
 import { fieldPositionMatchesCardCompetences } from '@/lib/playerSlotRoleMetadata'
+import { buildLegacyTacticalAiNotice } from '@/lib/efootballV6Rules'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -923,7 +924,7 @@ If the ANALYSIS SUMMARY includes "Game stats (eFootball Analisi, last 10 matches
 If the SUMMARY has Connection/Input delay/Lag (e.g. weak connection, input delay) OR the client mentions weak connection/lag/delay in the message, adapt advice: less reactive pressing and dribbling in defence (timing is harder), more positioning, coverage and structure; avoid suggestions that require perfect timing.
 PROFILE PRIORITY: For "Weak point", "Learn goals", and "Notes for AI" ALWAYS use the values from the PROFILE block at the top of the message (these are live/current). If the SUMMARY contains different values for the same fields, IGNORE those from the SUMMARY (they may be stale). Steer at least one piece of advice toward the weak point and learning goals when relevant to the question. Never quote the list back to the client (e.g. "you indicated you have difficulties in..."); use the data only to steer advice.
 
-CONSTRAINTS: only roster names; only 5 configurable team styles (Possession, Quick Counter, Long Ball Counter, Long Ball, Out Wide); contrattacco → contropiede_veloce and require coach competence >=70; individual instructions only max 5; formation limits §3.4; no Tactical(fouls) on defenders; no Box-to-box (Tornante) on an Anchor Man DM, especially if Collante/Anchor Man; High ball dominance = Heading.
+CONSTRAINTS: only roster names; current v6 team styles are Possession, Quick Counter, Long Ball Counter, Long Ball, Out Wide, Overload; never invent Overload coach competence when missing; current individual instructions are Defensive, Anchoring, Tight Marking, Man Marking, Counter Target; Offensive/Deep Line may be legacy saved data only and must not be recommended; formation limits §3.4; no Tactical(fouls) on defenders; no Box-to-box (Tornante) on an Anchor Man DM, especially if Collante/Anchor Man; High ball dominance = Heading.
 
 COACH OUTPUT: 2-4 imperative sentences; answer the specific question; vary advice; "In summary" only when useful.`
 
@@ -1166,6 +1167,30 @@ export async function POST(req) {
       } catch (fallbackError) {
         console.error('[assistant-chat] buildPersonalContext fallback error:', fallbackError?.message)
       }
+    }
+
+    // Safety overlay v6: il diagnostic cache può contenere tattiche salvate con regole precedenti.
+    // Prependiamo sempre lo stato live delle sole istruzioni legacy, senza mutare i dati utente.
+    try {
+      if (supabaseUrl && serviceKey) {
+        const compatibilityAdmin = createClient(supabaseUrl, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } })
+        const { data: currentTactics } = await compatibilityAdmin
+          .from('team_tactical_settings')
+          .select('individual_instructions')
+          .eq('user_id', userId)
+          .maybeSingle()
+        const legacyNotice = buildLegacyTacticalAiNotice(currentTactics?.individual_instructions, lang)
+        if (legacyNotice) {
+          personalContextSummary = `${legacyNotice}
+
+${personalContextSummary || ''}`.trim()
+          if (personalContextSummary.length > MAX_PERSONAL_CONTEXT_CHARS) {
+            personalContextSummary = personalContextSummary.slice(0, MAX_PERSONAL_CONTEXT_CHARS) + '\n... (riassunto troncato).'
+          }
+        }
+      }
+    } catch (compatError) {
+      console.warn('[assistant-chat] v6 compatibility context warning:', compatError?.message || compatError)
     }
 
     const microReminder =

@@ -11,6 +11,7 @@ import InstallAppPrompt from '@/components/InstallAppPrompt'
 import PrelaunchGate from '@/components/PrelaunchGate'
 import MaintenanceGate from '@/components/MaintenanceGate'
 import DailySpinWidget from '@/components/DailySpinWidget'
+import EfootballVersionCompatibilityGate from '@/components/EfootballVersionCompatibilityGate'
 import { isPrelaunchPublicPath } from '@/lib/prelaunchRoutes'
 import { isMaintenancePublicPath } from '@/lib/maintenanceRoutes'
 import { useSidebar } from '@/components/SidebarContext'
@@ -56,6 +57,7 @@ export default function AppLayoutShell({ children }) {
       </div>
 
       <BottomNavigation />
+      <EfootballVersionCompatibilityGate />
       <DailySpinWidget />
       <InstallAppPrompt />
       <LiveCoachLauncher showLauncherButton={false} />

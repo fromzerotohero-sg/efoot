@@ -3,6 +3,7 @@
 import React from 'react'
 import { useTranslation } from '@/lib/i18n'
 import { INDIVIDUAL_INSTRUCTIONS_CONFIG } from '@/lib/tacticalInstructions'
+import { TEAM_PLAYSTYLES, isLegacyIndividualInstruction, getLegacyInstructionLabel } from '@/lib/efootballV6Rules'
 import { ChevronDown, ChevronUp, Save, Settings } from 'lucide-react'
 
 export default function TacticalSettingsPanel({ 
@@ -11,7 +12,7 @@ export default function TacticalSettingsPanel({
   onSave,
   saving = false 
 }) {
-  const { t } = useTranslation()
+  const { t, lang } = useTranslation()
   
   const [isCollapsed, setIsCollapsed] = React.useState(true) // Inizia collassato
   const [teamPlayingStyle, setTeamPlayingStyle] = React.useState(
@@ -29,14 +30,19 @@ export default function TacticalSettingsPanel({
     }
   }, [tacticalSettings])
 
-  // Opzioni stile di gioco di squadra
-  const teamPlayingStyleOptions = [
-    { id: 'possesso_palla', nameKey: 'possesso_palla' },
-    { id: 'contropiede_veloce', nameKey: 'contropiede_veloce' },
-    { id: 'contrattacco', nameKey: 'contrattacco' },
-    { id: 'vie_laterali', nameKey: 'vie_laterali' },
-    { id: 'passaggio_lungo', nameKey: 'passaggio_lungo' }
-  ]
+  React.useEffect(() => {
+    const hasLegacy = Object.values(tacticalSettings?.individual_instructions || {})
+      .some(value => isLegacyIndividualInstruction(value?.instruction))
+    if (hasLegacy || (typeof window !== 'undefined' && window.location.hash === '#tactical-settings')) {
+      setIsCollapsed(false)
+    }
+  }, [tacticalSettings])
+
+  // Source of truth condivisa con backend/AI: include Pressing totale (eFootball v6.0.0).
+  const teamPlayingStyleOptions = TEAM_PLAYSTYLES.map(style => ({
+    id: style.id,
+    nameKey: style.id
+  }))
 
   const handleCategoryChange = (category, field, value) => {
     setIndividualInstructions(prev => ({
@@ -64,25 +70,14 @@ export default function TacticalSettingsPanel({
       ? INDIVIDUAL_INSTRUCTIONS_CONFIG[category].filterPlayers(list)
       : list
 
-    const inst = (instruction || '').trim()
-    if (!inst) return base
-
-    // Regole prodotto: compatibilità per istruzione (non solo per categoria)
-    if ((category === 'attacco_1' || category === 'attacco_2') && inst === 'offensivo') {
-      const disallowed = new Set(['ESA', 'EDA', 'SP', 'P'])
-      return base.filter(p => !disallowed.has(String(p?.position || '').toUpperCase().trim()))
-    }
-
-    if ((category === 'difesa_1' || category === 'difesa_2') && inst === 'linea_bassa') {
-      const disallowed = new Set(['DC', 'TD', 'TS'])
-      return base.filter(p => !disallowed.has(String(p?.position || '').toUpperCase().trim()))
-    }
-
+    // eFootball v6: le opzioni legacy non vengono più filtrate come opzioni attive.
+    // Se una configurazione vecchia è caricata, manteniamo l'elenco giocatori per consentire
+    // all'utente di vedere il dato storico e sostituirlo senza perdita silenziosa.
     return base
   }, [])
 
   return (
-    <div className="neon-card" style={{
+    <div id="tactical-settings" className="neon-card" style={{
       marginBottom: '24px',
       background: 'rgba(10, 14, 39, 0.95)',
       border: '1px solid rgba(0, 212, 255, 0.3)',
@@ -215,6 +210,8 @@ export default function TacticalSettingsPanel({
       }}>
         {Object.entries(INDIVIDUAL_INSTRUCTIONS_CONFIG).map(([category, config]) => {
           const currentSetting = individualInstructions[category] || {}
+          const isLegacy = isLegacyIndividualInstruction(currentSetting.instruction)
+          const legacyLabel = isLegacy ? getLegacyInstructionLabel(currentSetting.instruction, lang) : ''
           const compatiblePlayers = getCompatiblePlayersForSelectedInstruction(
             category,
             currentSetting.instruction,
@@ -273,6 +270,11 @@ export default function TacticalSettingsPanel({
                     }}
                   >
                     <option value="">{t('selectInstruction')}</option>
+                    {isLegacy && (
+                      <option value={currentSetting.instruction} disabled>
+                        {legacyLabel} — {lang === 'en' ? 'no longer available in v6' : 'non più disponibile in v6'}
+                      </option>
+                    )}
                     {config.availableInstructions.map(inst => (
                       <option key={inst.id} value={inst.id}>
                         {t(inst.nameKey)}
@@ -291,6 +293,22 @@ export default function TacticalSettingsPanel({
                     }}
                   />
                 </div>
+                {isLegacy && (
+                  <div style={{
+                    marginTop: '7px',
+                    padding: '8px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(255, 193, 7, 0.45)',
+                    background: 'rgba(255, 193, 7, 0.08)',
+                    color: '#ffe8a1',
+                    fontSize: 'clamp(11px, 1.2vw, 12px)',
+                    lineHeight: 1.4
+                  }}>
+                    {lang === 'en'
+                      ? `${legacyLabel} is a saved legacy instruction from an earlier eFootball version. It has not been changed automatically: choose a current instruction to update this slot.`
+                      : `${legacyLabel} è un'istruzione legacy salvata con una versione precedente di eFootball. Non è stata modificata automaticamente: scegli un'istruzione corrente per aggiornare questo slot.`}
+                  </div>
+                )}
               </div>
 
               {/* Dropdown Giocatore - Compatto */}

@@ -140,9 +140,9 @@ function ensureRichSmartCountermeasure(countermeasure, lang) {
           priority: 'high'
         },
         {
-          type: 'game_plan_adjustment',
-          suggestion: 'Official instruction: consider Deep Line on a valid DMF/CMF starter',
-          application_hint: 'Game Plan → Individual Instructions → Defence 1/2 → Deep Line. Do not assign it to CB/RB/LB.',
+          type: 'match_plan',
+          suggestion: 'In match: protect depth first with central cover and short pressing bursts',
+          application_hint: 'Deep Line is legacy in eFootball v6; use a practical defensive behavior or a current Individual Instruction only when it clearly fits.',
           reason: 'Protect depth first if the opponent can attack quickly between lines.',
           priority: 'high'
         },
@@ -163,9 +163,9 @@ function ensureRichSmartCountermeasure(countermeasure, lang) {
           priority: 'high'
         },
         {
-          type: 'game_plan_adjustment',
-          suggestion: 'Istruzione ufficiale: valuta Linea Bassa su un MED/CC titolare valido',
-          application_hint: 'Game Plan → Istruzioni individuali → Difesa 1/2 → Linea Bassa. Non assegnarla a TD, TS o DC.',
+          type: 'match_plan',
+          suggestion: 'In partita: proteggi prima la profondità con copertura centrale e pressing a scatti',
+          application_hint: 'Linea Bassa è legacy in eFootball v6: usa un comportamento difensivo pratico o una Istruzione Individuale corrente solo quando è davvero adatta.',
           reason: 'Proteggi prima la profondità se l’avversario può attaccare rapidamente tra le linee.',
           priority: 'high'
         },
