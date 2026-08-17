@@ -14,7 +14,7 @@ import { localizeSkillTermsInText } from '@/lib/playerSkillLabels.js'
 import { buildCardAvailabilityBlock } from '@/lib/chatCardAvailability'
 import { fieldPositionMatchesCardCompetences } from '@/lib/playerSlotRoleMetadata'
 import { buildLegacyTacticalAiNotice } from '@/lib/efootballV6Rules'
-import { buildFluidFormationState, buildHeroFluidPromptBlock, formatHeroFluidContext, prependLiveFluidOverride } from '@/lib/efootballV6TacticalModel'
+import { buildFluidFormationState, buildHeroFluidPromptBlock, formatCoachLinkUpsForHeroPrompt, formatHeroFluidContext, prependLiveFluidOverride, prependLiveLinkUpOverride, startersForLinkUpVerification } from '@/lib/efootballV6TacticalModel'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -234,70 +234,139 @@ function isLinkUpQuestion(message = '') {
     s.includes('link-up') ||
     s.includes('link up') ||
     s.includes('linkup') ||
-    s.includes('collegamento')
+    s.includes('collegamento') ||
+    s.includes('collegamenti') ||
+    s.includes('punto focale') ||
+    s.includes('uomo chiave') ||
+    s.includes('focal point') ||
+    s.includes('key man') ||
+    /\ballenatore.{0,40}\blink\b/.test(s) ||
+    /\bcoach.{0,40}\blink\b/.test(s) ||
+    /\blink\b.{0,40}(?:allenatore|coach|entrenador)/.test(s)
   )
 }
 
 function extractLinkUpFacts(summary = '') {
   const text = String(summary || '')
   if (!text) return null
+
+  const noneSaved = /COLLEGAMENTI ALLENATORE:\s*nessuno salvato|COACH LINK-UP PLAYS:\s*none saved|LINK-UP DEL ENTRENADOR:\s*ninguno guardado/i.test(text)
+  if (noneSaved) return { none: true, plays: [] }
+
+  const headerMatch = text.search(/COLLEGAMENTI ALLENATORE|COACH LINK-UP PLAYS|LINK-UP DEL ENTRENADOR/i)
+  if (headerMatch >= 0) {
+    const block = text.slice(headerMatch, headerMatch + 1800)
+    const plays = []
+    const playRe = /[-•]\s*\d+\.\s*([^:\n]+):\s*([^\n]+)/g
+    let match
+    while ((match = playRe.exec(block))) {
+      const name = String(match[1] || '').trim()
+      const status = String(match[2] || '').trim()
+      if (name) plays.push({ name, status })
+    }
+    if (plays.length) return { none: false, plays }
+  }
+
   const nameMatch = text.match(/Connection:\s*([^\n.]+)\./i)
   if (!nameMatch?.[1]) return null
-
   const focalMatch = text.match(/Focal Point[^:]*:\s*([^\n.]+)\./i)
   const keyManMatch = text.match(/Key Man[^:]*:\s*([^\n.]+)\./i)
-
   return {
-    name: String(nameMatch[1] || '').trim(),
-    focal: String(focalMatch?.[1] || '').trim(),
-    keyMan: String(keyManMatch?.[1] || '').trim()
+    none: false,
+    plays: [{
+      name: String(nameMatch[1] || '').trim(),
+      focal: String(focalMatch?.[1] || '').trim(),
+      keyMan: String(keyManMatch?.[1] || '').trim()
+    }]
   }
 }
 
 function buildLinkUpGroundedReply(lang = 'it', facts = null) {
-  if (!facts?.name) return ''
+  if (facts?.none) {
+    if (lang === 'en') {
+      return 'Your coach has no Link-up saved. Playing-style competence numbers (e.g. Quick Counter 90) are not a Link-up. Save the Link-up on the coach screen to evaluate Focal Point and Key Man.'
+    }
+    if (lang === 'es') {
+      return 'Tu entrenador no tiene Link-up guardado. Los números de competencia de estilo (ej. Contraataque rápido 90) no son un Link-up. Guarda el Link-up en la pantalla del entrenador para evaluar Punto focal y Hombre clave.'
+    }
+    return 'Il tuo allenatore non ha un Collegamento salvato. I numeri di competenza stile (es. Contropiede veloce 90) non sono un Link-up. Salva il Collegamento dalla scheda allenatore per valutare Punto focale e Uomo chiave.'
+  }
+
+  const plays = Array.isArray(facts?.plays) ? facts.plays.filter((play) => play?.name) : []
+  if (!plays.length && !facts?.name) return ''
+
+  if (facts?.name && !plays.length) {
+    plays.push({ name: facts.name, focal: facts.focal, keyMan: facts.keyMan })
+  }
+
   if (lang === 'en') {
-    const focalLine = facts.focal ? `Focal Point: ${facts.focal}.` : ''
-    const keyLine = facts.keyMan ? `Key Man: ${facts.keyMan}.` : ''
-    return [
-      `Your active Link-up is ${facts.name}.`,
-      focalLine,
-      keyLine
-    ].filter(Boolean).join(' ')
+    return plays.map((play) => {
+      const bits = [`Link-up: ${play.name}.`]
+      if (play.status) bits.push(play.status)
+      if (play.focal) bits.push(`Focal Point: ${play.focal}.`)
+      if (play.keyMan) bits.push(`Key Man: ${play.keyMan}.`)
+      return bits.filter(Boolean).join(' ')
+    }).join(' ')
   }
   if (lang === 'es') {
-    const focalLine = facts.focal ? `Focal Point: ${facts.focal}.` : ''
-    const keyLine = facts.keyMan ? `Key Man: ${facts.keyMan}.` : ''
-    return [
-      `Tu Link-up activo es ${facts.name}.`,
-      focalLine,
-      keyLine
-    ].filter(Boolean).join(' ')
+    return plays.map((play) => {
+      const bits = [`Link-up: ${play.name}.`]
+      if (play.status) bits.push(play.status)
+      if (play.focal) bits.push(`Punto focal: ${play.focal}.`)
+      if (play.keyMan) bits.push(`Hombre clave: ${play.keyMan}.`)
+      return bits.filter(Boolean).join(' ')
+    }).join(' ')
   }
-  const focalLine = facts.focal ? `Focal Point: ${facts.focal}.` : ''
-  const keyLine = facts.keyMan ? `Key Man: ${facts.keyMan}.` : ''
-  return [
-    `Il tuo Link-up attivo è ${facts.name}.`,
-    focalLine,
-    keyLine
-  ].filter(Boolean).join(' ')
+  return plays.map((play) => {
+    const bits = [`Collegamento: ${play.name}.`]
+    if (play.status) bits.push(play.status)
+    if (play.focal) bits.push(`Punto focale: ${play.focal}.`)
+    if (play.keyMan) bits.push(`Uomo chiave: ${play.keyMan}.`)
+    return bits.filter(Boolean).join(' ')
+  }).join(' ')
+}
+
+function replySaysLinkUpMissing(text = '') {
+  const low = String(text || '').toLowerCase()
+  return (
+    low.includes('non è salvato') ||
+    low.includes("non e' salvato") ||
+    low.includes('nessun collegamento') ||
+    low.includes('nessuno salvato') ||
+    low.includes('non ha un collegamento') ||
+    low.includes('none saved') ||
+    low.includes('no link-up saved') ||
+    low.includes('not saved') ||
+    low.includes('ninguno guardado') ||
+    low.includes('no está guardado') ||
+    low.includes('no esta guardado')
+  )
 }
 
 function enforceLinkUpGrounding({ message = '', summary = '', content = '', lang = 'it' }) {
   if (!isLinkUpQuestion(message)) return String(content || '').trim()
   const facts = extractLinkUpFacts(summary)
-  if (!facts?.name) return String(content || '').trim()
-
   const out = String(content || '').trim()
+  if (!facts) return out
+
+  if (facts.none) {
+    return replySaysLinkUpMissing(out) ? out : buildLinkUpGroundedReply(lang, facts)
+  }
+
+  const plays = Array.isArray(facts.plays) ? facts.plays : []
+  const firstName = plays[0]?.name || facts.name
+  if (!firstName) return out
+
   const low = out.toLowerCase()
-  const hasName = low.includes(String(facts.name).toLowerCase())
+  const hasName = plays.some((play) => play?.name && low.includes(String(play.name).toLowerCase())) || low.includes(String(firstName).toLowerCase())
   const contradictsKnownData = (
     low.includes('non risulta') ||
     low.includes('non lo vedo') ||
     low.includes('vedo solo') ||
     low.includes('not in your context') ||
     low.includes("i don't see") ||
-    low.includes('i only see')
+    low.includes('i only see') ||
+    replySaysLinkUpMissing(out)
   )
 
   if (contradictsKnownData || !hasName) {
@@ -739,10 +808,10 @@ async function buildPersonalContext(userId, lang = 'it') {
 
     const tacticsText = `${L.teamStyle}: ${teamStyle}. ${L.individualInstructions}: ${numInstructions} ${L.instructionsActive}.${formatIndividualInstructions(indInstr)}`
 
-    // Allenatore attivo (con competenze stili per intreccio dati)
+    // Allenatore attivo (competenze stile ≠ Collegamento)
     const { data: coachRow } = await admin
       .from('coaches')
-      .select('coach_name, playing_style_competence')
+      .select('coach_name, playing_style_competence, connection, extracted_data')
       .eq('user_id', userId)
       .eq('is_active', true)
       .maybeSingle()
@@ -759,6 +828,13 @@ async function buildPersonalContext(userId, lang = 'it') {
         coachText += ` ${L.competenceHint} ${L.advisableStyles}: ${ok.length ? ok.join(', ') : L.noneLabel}. ${L.notAdvisableStyles}: ${no.length ? no.join(', ') : '-'}.`
       }
     }
+    const linkUpBlock = formatCoachLinkUpsForHeroPrompt({
+      coach: coachRow,
+      starters: startersForLinkUpVerification(titolari, clientFluid),
+      stylesLookup,
+      lang
+    })
+    if (linkUpBlock) coachText += `\n${linkUpBlock}`
 
     // Pattern tattici (formation_usage, recurring_issues) - per intreccio consigli formazione/problemi
     let patternText = ''
@@ -976,7 +1052,7 @@ SCOPE: solo consulenza tattica eFootball basata su ROSA, PARTITE, ALLENATORE, TA
 
 FONTI: Nomi/rosa/partite/allenatore/tattica = solo dal blocco contesto sotto (ROSA E DATI o RIASSUNTO ANALISI). Regole eFootball = solo dal blocco RAG. Se manca un dato, non inventare.
 GIOCATORE NON IN ROSA: se il cliente chiede di un giocatore che NON appare nel contesto sottostante, DEVI dire "Non ho [nome] nella tua rosa salvata" e NON inventare competenze, stile o attivazione. Puoi solo citare info generiche dal RAG (se presenti) dichiarando "in generale".
-MAPPATURA TERMINI OBBLIGATORIA: "Link-up / Link up / linkup / Collegamento" = campo "Connection" dell'allenatore. Se nel RIASSUNTO è presente "Connection:", NON dire mai che manca: cita nome connection e, se presenti, Focal Point e Key Man.
+MAPPATURA TERMINI OBBLIGATORIA: "Link-up / Link up / linkup / Collegamento" = Collegamento allenatore (Punto focale + Uomo chiave, max 2). NON è playing_style_competence e NON è la qualità connessione internet. Se il contesto dice che non è salvato, dillo. Se elenca 1-2 Link-up, cita quelli e se sono attivabili con i titolari. Non inventare Punto focale o Uomo chiave.
 OVERALL/RATING FINALE: per qualunque domanda su overall, rating, valutazione totale o valore finale, se nel contesto del giocatore è presente una build PT/progressione, NON elencare l'overall/rating salvato come risposta principale e NON dire "rating 40/68/87" come valore finale. Rispondi così: "Per gli attaccanti vedo build e statistiche salvate, ma il numero overall finale va verificato direttamente in eFootball dopo aver applicato i punti." Poi cita build PT, ruolo e statistiche chiave aggiornate presenti nel contesto (es. "Ronaldo ha build da P con Tiro +11, Destrezza +8 e Forza arti inferiori +8").
 ABILITÀ GIOCATORI: cita sempre i nomi italiani ufficiali come nel blocco rosa (es. Passaggio filtrante, Tiro di prima, Tiro a salire, Tiro dalla distanza). Vietato l'inglese (Through Passing, One-touch Pass, Rising Shot, First-time Shot, Long-Range Shooting, ecc.).
 MECCANICHE CANCEL/SKILL AVANZATE: segui RAG §7.12. Usa prima i termini ufficiali (Super Cancel, Kick Cancel, Kick Feint, Double Touch) e tratta "tess/croqueta interrotta" solo come alias community tra parentesi.
@@ -1006,7 +1082,7 @@ SCOPE: only eFootball tactical advice based on ROSTER, MATCHES, COACH, TACTICS a
 
 SOURCES: Names/roster/matches/coach/tactics only from the context block below (ROSTER & DATA or ANALYSIS SUMMARY). eFootball rules only from the RAG block. If data is missing, do not invent.
 PLAYER NOT IN ROSTER: if the client asks about a player NOT listed in the context below, you MUST say "I don't have [name] in your saved roster" and NEVER invent competences, style, or activation. You may only cite generic info from RAG (if present) prefixed with "in general".
-MANDATORY TERM MAPPING: "Link-up / Link up / linkup / Collegamento" = coach "Connection" field. If the SUMMARY contains "Connection:", never say it's missing: cite the connection name and, when available, Focal Point and Key Man.
+MANDATORY TERM MAPPING: "Link-up / Link up / linkup / Collegamento" = coach Link-up (Focal Point + Key Man, max 2). It is NOT playing_style_competence and NOT internet connection quality. If context says none is saved, say that. If it lists 1-2 Link-ups, cite those and whether they are activatable with the starters. Do not invent Focal Point or Key Man.
 FINAL OVERALL/RATING: for any question about overall, rating, total value or final value, if the player's context includes a PT build/progression, do NOT list the saved overall/rating as the main answer and do NOT say "rating 40/68/87" as the final value. Answer like this: "For these forwards I can see saved builds and stats, but the final overall number should be checked directly in eFootball after applying the points." Then cite the PT build, role and key updated stats present in context (e.g. "Ronaldo has a CF build with Shooting +11, Dexterity +8 and Lower body +8").
 CANCEL/SKILL ADVANCED MECHANICS: follow RAG §7.12. Use official names first (Super Cancel, Kick Cancel, Kick Feint, Double Touch) and treat "tess/croqueta interrupted" only as community aliases in parentheses.
 ANTI-EXPLOIT: never coach macro/script/bug abuse, and do not recommend continuous spam of one skill. Always provide a safer fallback option if timing is unstable.
@@ -1037,7 +1113,7 @@ ALCANCE: solo asesoramiento táctico de eFootball basado en PLANTILLA, PARTIDOS,
 
 FUENTES: Nombres/plantilla/partidos/entrenador/táctica = solo del bloque de contexto abajo (PLANTILLA Y DATOS o RESUMEN ANÁLISIS). Reglas eFootball = solo del bloque RAG. Si falta un dato, no inventes.
 JUGADOR NO EN PLANTILLA: si el cliente pregunta por un jugador que NO aparece en el contexto abajo, DEBES decir "No tengo a [nombre] en tu plantilla guardada" y NUNCA inventes competencias, estilo o activación. Solo puedes citar info genérica del RAG (si está presente) declarando "en general".
-MAPEO OBLIGATORIO DE TÉRMINOS: "Link-up / Link up / linkup / Collegamento" = campo "Connection" del entrenador. Si en el RESUMEN está presente "Connection:", NUNCA digas que falta: cita el nombre de connection y, si están presentes, Focal Point y Key Man.
+MAPEO OBLIGATORIO DE TÉRMINOS: "Link-up / Link up / linkup / Collegamento" = Link-up del entrenador (Punto focal + Hombre clave, máx. 2). NO es playing_style_competence y NO es la calidad de conexión a internet. Si el contexto dice que no está guardado, dilo. Si lista 1-2 Link-up, cítalos y si son activables con los titulares. No inventes Punto focal ni Hombre clave.
 OVERALL/RATING FINAL: para cualquier pregunta sobre overall, rating, valoración total o valor final, si en el contexto del jugador hay una build PT/progresión, NO enumeres el overall/rating guardado como respuesta principal y NO digas "rating 40/68/87" como valor final. Responde así: "Para estos delanteros veo builds y estadísticas guardadas, pero el número overall final debe verificarse directamente en eFootball tras aplicar los puntos." Luego cita build PT, rol y estadísticas clave actualizadas presentes en el contexto (ej. "Ronaldo tiene build de DC con Tiro +11, Destreza +8 y Fuerza miembros inferiores +8").
 HABILIDADES DE JUGADORES: cita siempre los nombres italianos oficiales como en el bloque plantilla (ej. Passaggio filtrante, Tiro di prima, Tiro a salire, Tiro dalla distanza). Prohibido el inglés (Through Passing, One-touch Pass, Rising Shot, First-time Shot, Long-Range Shooting, etc.).
 MECÁNICAS CANCEL/SKILL AVANZADAS: sigue RAG §7.12. Usa primero los términos oficiales (Super Cancel, Kick Cancel, Kick Feint, Double Touch) y trata "tess/croqueta interrotta" solo como alias community entre paréntesis.
@@ -1050,7 +1126,7 @@ Si en el RESUMEN ANÁLISIS está presente la sección "Estadísticas de juego (A
 Si en el RESUMEN hay Conexión/Input delay/Retraso (ej. conexión débil, retraso input) O el cliente menciona conexión débil/lag/retraso en el mensaje, adapta los consejos: menos pressing reactivo y dribbling en defensa (timing difícil), más posicionamiento, cobertura y estructura; evita sugerencias que requieran timing perfecto.
 PRIORIDAD PERFIL: Para "Punto débil", "Qué quiere aprender" y "Notas para la IA" usa SIEMPRE los valores del bloque PERFIL al inicio del mensaje (son live/actualizados). Si el RESUMEN contiene valores diferentes para los mismos campos, IGNORA los del RESUMEN (pueden estar desactualizados). Orienta al menos un consejo hacia el punto débil y los objetivos de aprendizaje cuando sean relevantes para la pregunta. NUNCA cites la lista al cliente (ej. "has indicado que tienes dificultades en..."); usa el dato solo para orientar los consejos.
 
-RESTRICCIONES: solo nombres de plantilla; solo 5 estilos de equipo configurables (Possession, Quick Counter, Long Ball Counter, Long Ball, Out Wide); contrattacco → contropiede_veloce y requiere competencia entrenador >=70; instrucciones individuales solo max 5; límites de formación §3.4; no Táctico(faltas) en defensas; no Box-to-box (Tornante) en un Ancla MED, especialmente si Collante/Anchor Man; High ball dominance = Heading.
+RESTRICCIONES: solo nombres de plantilla; estilos de equipo v6 actuales: Possession, Quick Counter, Long Ball Counter, Long Ball, Out Wide, Overload; nunca inventes competencia Overload del entrenador si falta; instrucciones individuales actuales: Defensive, Anchoring, Tight Marking, Man Marking, Counter Target; Offensive/Deep Line pueden ser datos legacy guardados y no deben recomendarse; límites de formación §3.4; no Táctico(faltas) en defensas; no Box-to-box (Tornante) en un Ancla MED, especialmente si Collante/Anchor Man; High ball dominance = Heading.
 
 SALIDA COACH: 2-4 frases operativas, responde a la pregunta específica; varía los consejos; "En resumen" solo si es útil.`
 
@@ -1231,10 +1307,12 @@ export async function POST(req) {
           contextBlockLabel = 'RIASSUNTO ANALISI'
           if (personalContextSummary) console.log('[assistant-chat] Diagnostic from cache used')
           // Tattica live: la cache può essere vecchia; l'IA deve vedere sempre stile/istruzioni/fluida salvati in Supabase
-          const [{ data: tacticalRow }, { data: liveLayout }, { data: liveVariants }] = await Promise.all([
+          const [{ data: tacticalRow }, { data: liveLayout }, { data: liveVariants }, { data: liveCoach }, { data: stylesData }] = await Promise.all([
             admin.from('team_tactical_settings').select('team_playing_style, individual_instructions').eq('user_id', userId).maybeSingle(),
             admin.from('formation_layout').select('formation, slot_positions').eq('user_id', userId).maybeSingle(),
-            admin.from('formation_variants').select('id, phase, formation, slot_positions, is_active').eq('user_id', userId).in('phase', ['attack', 'defense']).eq('is_active', true)
+            admin.from('formation_variants').select('id, phase, formation, slot_positions, is_active').eq('user_id', userId).in('phase', ['attack', 'defense']).eq('is_active', true),
+            admin.from('coaches').select('coach_name, playing_style_competence, connection, extracted_data').eq('user_id', userId).eq('is_active', true).maybeSingle(),
+            admin.from('playing_styles').select('id, name')
           ])
           const liveStyle = tacticalRow?.team_playing_style?.trim()
           const liveInstr = tacticalRow?.individual_instructions
@@ -1247,12 +1325,14 @@ export async function POST(req) {
           // Risolvi nomi giocatori per istruzioni e segnala fit live: la cache può non evidenziare fuori ruolo recenti.
           let instrLines = ''
           let fitLines = ''
+          let livePlayers = []
           try {
             const { data: players } = await admin
               .from('players')
-              .select('id, player_name, position, slot_index, original_positions')
+              .select('id, player_name, position, slot_index, original_positions, playing_style_id')
               .eq('user_id', userId)
               .limit(23)
+            livePlayers = players || []
             const outOfPosition = getOutOfPositionStarterLines(players || [], lang)
             if (outOfPosition.length > 0) {
               fitLines = lang === 'en'
@@ -1288,6 +1368,16 @@ export async function POST(req) {
             personalContextSummary = fitLines + personalContextSummary
           }
           personalContextSummary = prependLiveFluidOverride(personalContextSummary, liveFluidText, lang)
+          const liveStylesLookup = {}
+          ;(stylesData || []).forEach((style) => { liveStylesLookup[style.id] = style.name || '' })
+          const liveFluid = buildFluidFormationState(liveLayout, liveVariants || [])
+          const liveLinkUpText = formatCoachLinkUpsForHeroPrompt({
+            coach: liveCoach,
+            starters: startersForLinkUpVerification(livePlayers, liveFluid),
+            stylesLookup: liveStylesLookup,
+            lang
+          })
+          personalContextSummary = prependLiveLinkUpOverride(personalContextSummary, liveLinkUpText, lang)
           if (personalContextSummary.length > MAX_PERSONAL_CONTEXT_CHARS) {
             personalContextSummary = personalContextSummary.slice(0, MAX_PERSONAL_CONTEXT_CHARS) + '\n... (riassunto troncato).'
           }

@@ -12,10 +12,12 @@ import {
   buildFluidFormationState,
   buildHeroFluidPromptBlock,
   evaluateLinkUpPlay,
+  formatCoachLinkUpsForHeroPrompt,
   formatHeroFluidContext,
   getFluidAdviceDirective,
   hasMotivatedFluidEvaluationEvidence,
   prependLiveFluidOverride,
+  prependLiveLinkUpOverride,
   startersForLinkUpVerification
 } from '../lib/efootballV6TacticalModel.js'
 
@@ -234,6 +236,90 @@ assert(
     chatSrc.includes('formatHeroFluidContext') &&
     /Diagnostic from cache used[\s\S]*formation_variants[\s\S]*prependLiveFluidOverride/.test(chatSrc),
   'Cached Hero path prepends live Fluid state from formation_variants'
+)
+
+const emptyCoachBlock = formatCoachLinkUpsForHeroPrompt({
+  coach: { coach_name: 'Antonio Conte', playing_style_competence: { Quick_Counter: 90, Possession: 89 } },
+  starters,
+  stylesLookup: {},
+  lang: 'it'
+})
+assert(
+  'link-up-none-not-competence',
+  emptyCoachBlock.includes('nessuno salvato') &&
+    emptyCoachBlock.includes('NON trattare i numeri di competenza stile') &&
+    !emptyCoachBlock.includes('Quick_Counter') &&
+    !/^- \d+\./m.test(emptyCoachBlock),
+  'Empty Link-up is explicit and is not confused with style competence numbers'
+)
+
+const dualCoach = {
+  extracted_data: {
+    link_up_plays: [
+      {
+        name: 'Wide classic',
+        focal_point: { playing_style: 'Orchestrator', position: 'MED' },
+        key_man: { playing_style: 'Classic No.10', position: 'CLS' }
+      },
+      {
+        name: 'Box target',
+        focal_point: { playing_style: 'Target Man', position: 'P' },
+        key_man: { playing_style: 'Prolific Winger', position: 'ESA' }
+      }
+    ]
+  }
+}
+const dualBlock = formatCoachLinkUpsForHeroPrompt({
+  coach: dualCoach,
+  starters: startersForLinkUpVerification(starters, onFluid),
+  stylesLookup: {},
+  lang: 'it'
+})
+assert(
+  'link-up-dual-independent',
+  dualBlock.includes('Wide classic') &&
+    dualBlock.includes('attivabile con questi titolari') &&
+    dualBlock.includes('Box target') &&
+    dualBlock.includes('non attivabile con questi titolari') &&
+    dualBlock.includes('Pirlo') &&
+    dualBlock.includes('Ronaldinho'),
+  'Two saved Link-ups are evaluated independently against current starters'
+)
+
+const staleConnectionCache = 'Allenatore: Conte. Connection: Quick Counter 90. Focal Point: nessuno.'
+const liveNoneOverlay = prependLiveLinkUpOverride(staleConnectionCache, emptyCoachBlock, 'it')
+assert(
+  'live-linkup-beats-stale-cache',
+  liveNoneOverlay.startsWith('[AGGIORNAMENTO LIVE]') &&
+    liveNoneOverlay.includes('nessuno salvato') &&
+    liveNoneOverlay.indexOf('nessuno salvato') < liveNoneOverlay.indexOf('Connection: Quick Counter 90'),
+  'Live Link-up none-saved overrides a stale diagnostic that still says Connection'
+)
+
+assert(
+  'cache-path-reads-live-linkup',
+  chatSrc.includes('prependLiveLinkUpOverride') &&
+    chatSrc.includes('formatCoachLinkUpsForHeroPrompt') &&
+    chatSrc.includes('extracted_data') &&
+    /Diagnostic from cache used[\s\S]*extracted_data[\s\S]*prependLiveLinkUpOverride/.test(chatSrc),
+  'Cached Hero path live-fetches coach extracted_data and prepends Link-up'
+)
+
+assert(
+  'prompt-linkup-not-competence',
+  !chatSrc.includes('Link-up / Link up / linkup / Collegamento" = campo "Connection"') &&
+    !chatSrc.includes('= coach "Connection" field') &&
+    chatSrc.includes('NON è playing_style_competence') &&
+    chatSrc.includes('Overload'),
+  'Hero prompt maps Link-up to coach plays, not competence or a single Connection field'
+)
+
+assert(
+  'diagnostic-includes-linkup-block',
+  diagnosticSrc.includes('formatCoachLinkUpsForHeroPrompt') &&
+    refreshSrc.includes('extracted_data') &&
+    !/if \(connection\?\.name\) \{\s*t \+= `Connection:/.test(diagnosticSrc),
+  'Diagnostic cache now carries the dedicated Link-up block and extracted_data'
 )
 
 const rosaSrc = readFileSync(join(root, 'app/nuova-rosa-lab/page.jsx'), 'utf8')

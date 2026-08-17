@@ -112,7 +112,7 @@ export async function POST(req) {
       admin.from('playing_styles').select('id, name'),
       admin.from('matches').select('opponent_name, result, formation_played, playing_style_played, match_date, opponent_formation_id, player_ratings, attack_areas, team_stats').eq('user_id', userId).order('match_date', { ascending: false }).limit(20),
       admin.from('team_tactical_settings').select('team_playing_style, individual_instructions').eq('user_id', userId).maybeSingle(),
-      admin.from('coaches').select('coach_name, playing_style_competence, connection, stat_boosters').eq('user_id', userId).eq('is_active', true).maybeSingle(),
+      admin.from('coaches').select('coach_name, playing_style_competence, connection, extracted_data, stat_boosters').eq('user_id', userId).eq('is_active', true).maybeSingle(),
       admin.from('team_tactical_patterns').select('formation_usage, playing_style_usage, recurring_issues, attack_areas_avg, recovery_zones_avg').eq('user_id', userId).maybeSingle(),
       admin.from('user_game_analysis').select('stats, captured_at').eq('user_id', userId).maybeSingle(),
       admin.from('user_tactical_feedback').select('insights, formation_played, opponent_name, outcome, session_type, created_at').eq('user_id', userId).gte('created_at', thirtyDaysAgo).order('created_at', { ascending: false }).limit(5)
