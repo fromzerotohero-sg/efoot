@@ -235,10 +235,10 @@ assert(
   'English and Italian skill names retrieve the same definition and distinction'
 )
 assert(
-  'assistant-uses-chat-rag-budget',
-  chatSrc.includes('getRelevantSections(message, CHAT_RAG_MAX_CHARS)') &&
-    chatSrc.includes('const CHAT_RAG_MAX_CHARS = 10000'),
-  'Assistant route uses the chat-specific RAG budget constant'
+  'assistant-uses-rag-default-budget',
+  chatSrc.includes('getRelevantSections(message)') &&
+    !chatSrc.includes('getRelevantSections(message, 18000)'),
+  'Assistant route does not override the larger RAG budget with the obsolete 18k limit'
 )
 assert(
   'unknown-mechanic-no-inference-policy',
