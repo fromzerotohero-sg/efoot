@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
+import { buildAuthoritativeCoachPayload } from '@/lib/coachCatalogNormalization'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -81,10 +82,54 @@ export async function POST(req) {
     } catch (parseError) {
       return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 })
     }
-    const { coach } = requestBody
+    let { coach } = requestBody
 
     if (!coach || !coach.coach_name) {
       return NextResponse.json({ error: 'Coach data is required' }, { status: 400 })
+    }
+
+    const catalogId = toText(coach?.source_catalog?.catalog_id)
+    if (catalogId) {
+      const { data: catalogCoach, error: catalogError } = await admin
+        .from('coach_catalog')
+        .select(`
+          id,
+          source,
+          source_coach_id,
+          source_card_image_url,
+          coach_name,
+          coach_name_ja,
+          category,
+          pack_type,
+          playing_style_competence,
+          stat_boosters,
+          boost_ids,
+          connection,
+          catalog_ready,
+          needs_review,
+          metadata,
+          coach_payload
+        `)
+        .eq('id', catalogId)
+        .eq('catalog_ready', true)
+        .eq('needs_review', false)
+        .maybeSingle()
+
+      if (catalogError) {
+        console.error('[save-coach] Catalog hydration error:', catalogError.message)
+        return NextResponse.json(
+          { error: `Failed to load catalog coach: ${catalogError.message}` },
+          { status: 500 }
+        )
+      }
+      if (!catalogCoach) {
+        return NextResponse.json(
+          { error: 'Catalog coach is unavailable or no longer verified' },
+          { status: 404 }
+        )
+      }
+
+      coach = buildAuthoritativeCoachPayload(coach, catalogCoach)
     }
 
     // Validazione lunghezza campi testo (max 255 caratteri)
@@ -129,7 +174,6 @@ export async function POST(req) {
       extracted_data: coach
     }
 
-    const catalogId = toText(coach?.source_catalog?.catalog_id)
     if (catalogId) {
       const { data: existingCoach, error: existingError } = await admin
         .from('coaches')
