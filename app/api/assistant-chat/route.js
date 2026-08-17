@@ -40,6 +40,7 @@ const API_ERRORS = {
   MESSAGE_REQUIRED: { it: 'Il messaggio è obbligatorio.', en: 'Message is required.', es: 'Mensaje requerido.' },
   MESSAGE_TOO_LONG: { it: 'Messaggio troppo lungo. Riduci il testo.', en: 'Message too long. Please shorten it.', es: 'Mensaje demasiado largo. Acorta el texto.' },
   RATE_LIMIT: { it: 'Troppe richieste. Riprova tra poco.', en: 'Rate limit exceeded. Please try again later.', es: 'Demasiadas solicitudes. Inténtalo de nuevo más tarde.' },
+  OPENAI_RATE_LIMIT: { it: 'Servizio AI momentaneamente saturo. Riprova tra 1 minuto.', en: 'AI service is temporarily busy. Try again in 1 minute.', es: 'El servicio de IA está saturado. Inténtalo de nuevo en 1 minuto.' },
   CONFIG_MISSING: { it: 'Configurazione mancante.', en: 'Supabase configuration missing.', es: 'Configuración faltante.' },
   OPENAI_KEY_MISSING: { it: 'Chiave API OpenAI non configurata.', en: 'OpenAI API key not configured.', es: 'Clave API de OpenAI no configurada.' },
   OPENAI_ERROR: { it: 'Errore nel servizio di risposta. Riprova.', en: 'Error calling AI service. Please try again.', es: 'Error en el servicio de respuesta. Inténtalo de nuevo.' },
@@ -1702,8 +1703,8 @@ ${personalContextSummary || ''}`.trim()
 
     if (errType === 'rate_limit' || /rate limit|429/i.test(msg)) {
       return NextResponse.json(
-        { error: getApiError('RATE_LIMIT', errLang) },
-        { status: 429, headers: { 'Content-Language': errLang } }
+        { error: getApiError('OPENAI_RATE_LIMIT', errLang), code: 'openai_rate_limit' },
+        { status: 503, headers: { 'Content-Language': errLang } }
       )
     }
     if (errType === 'timeout' || errType === 'network_error' || errType === 'server_error' || /timeout|openai|api key|invalid key|service.*unavailable|unable to complete/i.test(msg)) {

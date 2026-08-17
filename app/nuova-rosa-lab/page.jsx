@@ -4436,7 +4436,7 @@ export default withAuth(function NuovaRosaLabPage() {
     }
 
     for (const image of cardImages) {
-      const response = await fetch('/api/extract-player', {
+      const response = await fetch('/api/extract-coach', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -4579,7 +4579,7 @@ export default withAuth(function NuovaRosaLabPage() {
     const errors = []
 
     for (const image of images) {
-      const response = await fetch('/api/extract-coach', {
+      const response = await fetch('/api/extract-player', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
