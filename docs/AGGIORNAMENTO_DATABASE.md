@@ -150,7 +150,13 @@ where source = 'pesdb'
 
 # Parte B — Card Advisor (`card_advisor_*`) da eFHUB
 
-Fonte live: **https://efhub.com/it** (pack attualmente in homepage).
+Fonte live: **https://efhub.com/it**. Non tutte le sezioni della home sono pack valutabili.
+
+Il gate (`lib/cardAdvisorReleaseGate.js` / `scripts/card_advisor_release_gate.py`) tiene **solo** Selection, Highlight, Standout, Encore, Collaboration, Transfer, Edition e box datati. Esclude bonus, login, advertisement, starter set, skill-up, step-up, manager pack, webstore, campagne e rewards.
+
+Lo scrape (`--export-only`) e l'import RPC applicano lo stesso filtro: se l'export grezzo contiene 19 sezioni, l'import ne carica solo le valutabili.
+
+`release_date` va valorizzata dal nome (es. `17 Aug '26`) quando presente. Non importare JSON che riattiva bonus/campagne.
 
 ## B1. Export live eFHUB (scrape + arricchimento dettaglio)
 
@@ -206,8 +212,11 @@ Output atteso: una riga `200 <slug-pack> <N> {"cards": N, ...}` per ogni pack.
 select
   (select count(*) from card_advisor_releases where source='efhub' and is_active) as active_releases,
   (select count(*) from card_advisor_cards where source='efhub' and is_active) as active_cards,
-  (select count(*) from card_advisor_cards where source='efhub' and is_active and enrichment_status='complete') as complete_cards;
+  (select count(*) from card_advisor_cards where source='efhub' and is_active
+     and source_payload ? 'playing_styles') as cards_with_dual_contract;
 ```
+
+Atteso dopo il gate: **solo pack valutabili** (Selection / Transfer / Edition / Event), niente bonus/webstore/skill-up. Esempio batch 17 Aug 2026: **9 release attive**, **90 carte**.
 
 Per pack e giocatori specifici:
 

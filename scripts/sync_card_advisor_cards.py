@@ -4,9 +4,18 @@ import html
 import json
 import os
 import re
+import sys
 import time
 import urllib.parse
 import urllib.request
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from card_advisor_release_gate import (
+    category_from_release_name,
+    extract_release_date,
+    is_evaluable_card_advisor_release,
+)
 
 
 EFHUB_HOME_URL = "https://efhub.com/it"
@@ -83,21 +92,6 @@ def slugify(value=""):
     return re.sub(r"[^a-z0-9]+", "-", str(value).lower()).strip("-")
 
 
-def category_from_release_name(name=""):
-    lower = name.lower()
-    if "naruto" in lower or "collaboration" in lower:
-        return "Collaboration"
-    if "standout" in lower:
-        return "Standout"
-    if "highlight" in lower:
-        return "Highlight"
-    if "selection" in lower:
-        return "Selection"
-    if "encore" in lower:
-        return "Encore"
-    return "Special"
-
-
 def int_or_none(value):
     match = re.search(r"\d+", str(value or ""))
     return int(match.group(0)) if match else None
@@ -155,12 +149,14 @@ def parse_releases(markup):
         cards = parse_release_cards(section_markup, release_name)
         if not cards:
             continue
+        if not is_evaluable_card_advisor_release(release_name):
+            continue
         releases.append({
             "source": "efhub",
             "source_release_id": slugify(release_name),
             "source_url": EFHUB_HOME_URL,
             "release_name": release_name,
-            "release_date": (re.search(r"\d{1,2}\s+[A-Za-z]+\s+'?\d{2}", release_name) or [None])[0],
+            "release_date": extract_release_date(release_name),
             "category": category_from_release_name(release_name),
             "status": "active",
             "cards": cards,

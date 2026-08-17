@@ -1,8 +1,17 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import {
+  categoryFromReleaseName,
+  extractReleaseDate,
+  filterEvaluableReleases,
+  intersectDbWithLive,
+  isEvaluableCardAdvisorRelease
+} from '@/lib/cardAdvisorReleaseGate'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const fetchCache = 'force-no-store'
 
 const EFHUB_HOME_URL = 'https://efhub.com/it'
 
@@ -44,16 +53,6 @@ function slugify(value = '') {
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
-}
-
-function categoryFromReleaseName(name = '') {
-  const lower = name.toLowerCase()
-  if (lower.includes('naruto') || lower.includes('collaboration')) return 'Collaboration'
-  if (lower.includes('standout')) return 'Standout'
-  if (lower.includes('highlight')) return 'Highlight'
-  if (lower.includes('selection')) return 'Selection'
-  if (lower.includes('encore')) return 'Encore'
-  return 'Special'
 }
 
 function parseCards(sectionMarkup, releaseName) {
@@ -102,12 +101,14 @@ function parseReleases(markup) {
 
     const cards = parseCards(sectionMarkup, releaseName)
     if (cards.length === 0) continue
+    if (!isEvaluableCardAdvisorRelease(releaseName)) continue
 
     releases.push({
       id: slugify(releaseName),
       name: releaseName,
-      date: releaseName.match(/\d{1,2}\s+[A-Za-z]+\s+'?\d{2}/)?.[0] || '',
+      date: extractReleaseDate(releaseName) || '',
       status: 'active',
+      category: categoryFromReleaseName(releaseName),
       cards
     })
   }
@@ -120,7 +121,10 @@ function createAdminClient() {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!supabaseUrl || !serviceKey) return null
   return createClient(supabaseUrl, serviceKey, {
-    auth: { autoRefreshToken: false, persistSession: false }
+    auth: { autoRefreshToken: false, persistSession: false },
+    global: {
+      fetch: (url, options = {}) => fetch(url, { ...options, cache: 'no-store' }),
+    },
   })
 }
 
@@ -150,9 +154,9 @@ function normalizeDbRelease(release, cardsByRelease) {
     source: release.source || 'efhub',
     sourceUrl: release.source_url || EFHUB_HOME_URL,
     name: release.release_name,
-    date: release.release_date || '',
+    date: release.release_date || extractReleaseDate(release.release_name) || '',
     status: release.status || 'active',
-    category: release.category || 'Special',
+    category: release.category || categoryFromReleaseName(release.release_name) || 'Special',
     cards: cards.map(normalizeDbCard)
   }
 }
@@ -191,6 +195,7 @@ async function fetchDbReleases() {
   return (releasesRes.data || [])
     .map(release => normalizeDbRelease(release, cardsByRelease))
     .filter(release => release.cards.length > 0)
+    .filter(release => isEvaluableCardAdvisorRelease(release.name))
 }
 
 async function fetchLiveReleases() {
@@ -212,24 +217,25 @@ async function fetchLiveReleases() {
 
 export async function GET() {
   try {
-    const dbReleases = await fetchDbReleases()
-    const dbTotalCards = dbReleases.reduce((sum, release) => sum + release.cards.length, 0)
+    const dbReleases = filterEvaluableReleases(await fetchDbReleases())
 
     let liveReleases = []
     try {
-      liveReleases = await fetchLiveReleases()
+      liveReleases = filterEvaluableReleases(await fetchLiveReleases())
     } catch (liveError) {
       console.warn('[card-advisor-lab:releases] live source unavailable:', liveError)
     }
     const liveTotalCards = liveReleases.reduce((sum, release) => sum + release.cards.length, 0)
+    const servedDbReleases = intersectDbWithLive(dbReleases, liveReleases)
+    const servedDbCards = servedDbReleases.reduce((sum, release) => sum + release.cards.length, 0)
 
-    if (dbReleases.length > 0 && dbTotalCards > 0) {
+    if (servedDbReleases.length > 0 && servedDbCards > 0) {
       return NextResponse.json(
         {
           source: 'card_advisor_cards',
           sourceUrl: EFHUB_HOME_URL,
           fetchedAt: new Date().toISOString(),
-          releases: dbReleases
+          releases: servedDbReleases
         },
         {
           headers: {

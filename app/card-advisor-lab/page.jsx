@@ -67,7 +67,7 @@ const copy = {
     dataBadge: 'Analisi carta + fit squadra',
     notPublic: 'Sulla tua rosa, non generico.',
     releaseTitle: 'Catalogo carte',
-    sourceNote: 'Pack o ricerca: profili pronti per confrontare al volo.',
+    sourceNote: 'Solo pack valutabili ora — non bonus, webstore o campagne.',
     cardScore: 'Sinergia',
     cardIdentity: 'Identità',
     role: 'Ruolo',
@@ -153,6 +153,8 @@ const copy = {
     searchPlaceholder: 'Cerca giocatore, ruolo o pack...',
     cardsAvailable: 'carte disponibili',
     noCardsFound: 'Nessuna carta trovata con questi filtri.',
+    catalogLoading: 'Carico i pack valutabili…',
+    catalogUnavailable: 'Catalogo pack non disponibile. Riprova tra poco.',
     needsSourceReview: 'In aggiornamento',
     similarPlayers: 'Profili considerati',
     priorityVerdict: 'Lettura per te',
@@ -234,7 +236,7 @@ const copy = {
     dataBadge: 'Card analysis + team fit',
     notPublic: 'Your roster, not generic advice.',
     releaseTitle: 'Card catalog',
-    sourceNote: 'Pick a pack or search — profiles ready to compare fast.',
+    sourceNote: 'Only packs you can evaluate now — not bonuses, webstore, or campaigns.',
     cardScore: 'Synergy',
     cardIdentity: 'Identity',
     role: 'Role',
@@ -320,6 +322,8 @@ const copy = {
     searchPlaceholder: 'Search player, role, or pack...',
     cardsAvailable: 'cards available',
     noCardsFound: 'No cards found with these filters.',
+    catalogLoading: 'Loading evaluable packs…',
+    catalogUnavailable: 'Pack catalog unavailable. Try again shortly.',
     needsSourceReview: 'Updating',
     similarPlayers: 'Profiles considered',
     priorityVerdict: 'Read for you',
@@ -401,7 +405,7 @@ const copy = {
     dataBadge: 'Análisis de carta + encaje en plantilla',
     notPublic: 'Sobre tu plantilla, no genérico.',
     releaseTitle: 'Catálogo de cartas',
-    sourceNote: 'Sobre o búsqueda: perfiles listos para comparar al instante.',
+    sourceNote: 'Solo packs evaluables ahora — no bonuses, webstore ni campañas.',
     cardScore: 'Sinergia',
     cardIdentity: 'Identidad',
     role: 'Rol',
@@ -487,6 +491,8 @@ const copy = {
     searchPlaceholder: 'Buscar jugador, rol o pack...',
     cardsAvailable: 'cartas disponibles',
     noCardsFound: 'Ninguna carta encontrada con estos filtros.',
+    catalogLoading: 'Cargando packs evaluables…',
+    catalogUnavailable: 'Catálogo de packs no disponible. Prueba de nuevo en un momento.',
     needsSourceReview: 'En actualización',
     similarPlayers: 'Perfiles considerados',
     priorityVerdict: 'Lectura para ti',
@@ -695,32 +701,6 @@ function enrichCard(card) {
   }
 }
 
-function makeCard(name, overall, position, category, style = 'Profilo da analizzare') {
-  const score = scoreFor(overall, position)
-  return enrichCard({
-    id: `${normalizeKey(category)}-${normalizeKey(name)}-${position}-${overall}`,
-    name,
-    position,
-    overall,
-    category,
-    style,
-    imageUrl: imageByName[name] || '',
-    score,
-    verdict: verdictFor(score)
-  })
-}
-
-function makeRelease(id, name, date, category, rows, status = 'active') {
-  return {
-    id,
-    name,
-    date,
-    category,
-    status,
-    cards: rows.map(([playerName, overall, position, style]) => makeCard(playerName, overall, position, category, style))
-  }
-}
-
 function getReleaseCategory(release) {
   if (release?.category) return String(release.category).trim()
   const fromCard = release?.cards?.[0]?.category
@@ -766,52 +746,6 @@ function ReleaseTabButton({ active, title, typeLabel, onClick }) {
     </button>
   )
 }
-
-const releases = [
-  makeRelease('standout-guardians-season-best', "Standout Guardians 25-26 Season's Best", 'May 2026', 'Standout', [
-    ['Gabriel Magalhaes', 86, 'DC'], ['Gianluigi Donnarumma', 86, 'PT'], ['Achraf Hakimi', 86, 'TD'],
-    ['Leonardo Spinazzola', 80, 'TS'], ['Ramy Bensebaini', 80, 'DC'], ['Nordi Mukiele', 84, 'TD'],
-    ['Boubacar Kamara', 82, 'MED'], ['Clinton Mata', 79, 'DC'], ['Jakub Kiwior', 83, 'DC'],
-    ['Robin Risser', 80, 'PT'], ['Sidny Cabral', 77, 'TD']
-  ]),
-  makeRelease('standout-midfielders-season-best', "Standout Midfielders 25-26 Season's Best", 'May 2026', 'Standout', [
-    ['Antoine Semenyo', 86, 'CLS'], ['Federico Valverde', 86, 'CC'], ['Elliot Anderson', 85, 'MED'],
-    ['Pierre Hojbjerg', 81, 'CC'], ['Kouadio Kone', 81, 'CC'], ['Vitaly Janelt', 80, 'MED'],
-    ['Ismael Saibari', 80, 'TRQ'], ['Martin Baturina', 82, 'CC'], ['Valentin Barco', 81, 'CC'],
-    ['Tyler Morton', 80, 'MED'], ['Darko Nejasmic', 78, 'MED']
-  ]),
-  makeRelease('highlight-9-may-26', "Highlight 9 May '26", '9 May 2026', 'Highlight', [
-    ['Antoine Griezmann', 85, 'P'], ['Geoffrey Kondogbia', 81, 'MED'], ['Stefan Savic', 80, 'DC'], ['Lucas Hernandez', 82, 'DC']
-  ]),
-  makeRelease('j1-league-selection-7-may-26', "J1 LEAGUE Selection 7 May '26", '7 May 2026', 'Selection', [
-    ['Hiroki Sakai', 83, 'TD'], ['Zico', 84, 'TRQ'], ['Genta Miura', 77, 'DC'], ['Koya Kitagawa', 76, 'P'],
-    ['Motohiko Nakajima', 76, 'SP'], ['Shunya Yoneda', 75, 'TS'], ['Shintaro Nago', 76, 'TRQ'],
-    ['Tetsushi Yamakawa', 77, 'DC'], ['Reon Yamahara', 76, 'TS'], ['Akito Suzuki', 78, 'P'],
-    ['George Onaiwu', 74, 'CLD'], ['Eiji Miyamoto', 76, 'CC'], ['Soichiro Mori', 74, 'TD'], ['Yoon Sung-Jun', 75, 'CC']
-  ]),
-  makeRelease('brasileirao-selection-7-may-26', "Brasileirao Betano Selection 7 May '26", '7 May 2026', 'Selection', [
-    ['Alvaro Barreal', 80, 'CLS'], ['Vitor Roque', 82, 'P'], ['Damian Bobadilla', 81, 'CC'], ['Lucas Moura', 81, 'SP'],
-    ['Jorginho', 81, 'MED'], ['Ze Ivaldo', 79, 'DC'], ['Luan Peres', 79, 'DC'], ['Ademir', 80, 'ESA'],
-    ['Bruno Fuchs', 79, 'DC'], ['Raniele', 80, 'MED'], ['Viery', 77, 'DC'], ['Gustavo Henrique', 81, 'DC']
-  ]),
-  makeRelease('naruto-collab-2026', 'NARUTO SHIPPUDEN Collaboration Campaign 2026', 'May 2026', 'Collaboration', [
-    ['Takefusa Kubo', 95, 'CLD', 'Roaming Flank'], ['Robert Lewandowski', 95, 'P', 'Fox in the Box'],
-    ['Neymar Jr', 95, 'SP'], ['Martin Odegaard', 95, 'TRQ'], ['Luka Modric', 94, 'CC'],
-    ['Christian Pulisic', 95, 'SP'], ['Rafael Leao', 95, 'ESA'], ['Alexis Saelemaekers', 94, 'CLD']
-  ]),
-  makeRelease('standout-attackers-season-best', "Standout Attackers 25-26 Season's Best", 'May 2026', 'Standout', [
-    ['Bruno Fernandes', 87, 'TRQ'], ['Vinicius Junior', 87, 'ESA'], ['Ousmane Dembele', 87, 'P', 'Goal Poacher'],
-    ['Gerard Moreno', 82, 'P'], ['Dennis Man', 78, 'EDA'], ['Luis Suarez', 80, 'P'],
-    ['Igor Paixao', 81, 'ESA'], ['Charles De Ketelaere', 82, 'SP'], ['Ferran Jutgla', 78, 'P'],
-    ['Jonathan Burkardt', 83, 'P'], ['Anis Hadj Moussa', 79, 'EDA']
-  ]),
-  makeRelease('worldwide-clubs-selection-30-apr-26', "Worldwide Clubs Selection 30 Apr '26", '30 Apr 2026', 'Selection', [
-    ['P. E. Aubameyang', 86, 'P'], ['Marcelo', 86, 'TS'], ['Gareth Bale', 88, 'EDA'], ['Thiago Silva', 81, 'DC'],
-    ['Isco', 82, 'TRQ'], ['Hamari Traore', 80, 'TD'], ['Jonas Hofmann', 80, 'TRQ'], ['Santi Comesana', 80, 'CC'],
-    ['Jorgen Strand Larsen', 81, 'P'], ['Andreas Schjelderup', 81, 'ESA'], ['Lucas Beraldo', 83, 'DC']
-  ]),
-  makeRelease('encore-new-year-2026', 'Encore New Year 2026', '2026', 'Encore', [], 'needs_review')
-]
 
 function normalizeRelease(release) {
   return {
@@ -1721,10 +1655,12 @@ export default withAuth(function CardAdvisorLabPage() {
   const { lang } = useTranslation()
   const labels = copy[lang === 'en' ? 'en' : lang === 'es' ? 'es' : 'it']
   const [liveReleases, setLiveReleases] = React.useState(null)
+  const [releasesError, setReleasesError] = React.useState(false)
+  const catalogLoading = liveReleases === null
   const activeReleases = React.useMemo(() => (
-    Array.isArray(liveReleases) && liveReleases.length > 0 ? liveReleases : releases
+    Array.isArray(liveReleases) ? liveReleases : []
   ), [liveReleases])
-  const [releaseId, setReleaseId] = React.useState(releases[0].id)
+  const [releaseId, setReleaseId] = React.useState('all')
   const [rosterSummary, setRosterSummary] = React.useState({ status: 'loading', totalPlayers: 0, starters: 0, formation: '-' })
   const [searchQuery, setSearchQuery] = React.useState('')
   const [deepAnalysesByCard, setDeepAnalysesByCard] = React.useState({})
@@ -1739,14 +1675,15 @@ export default withAuth(function CardAdvisorLabPage() {
   )
   const releaseTabsRef = React.useRef(null)
   const cards = React.useMemo(() => {
-    const baseCards = releaseId === 'all'
+    const query = searchQuery.trim().toLowerCase()
+    const scopeAll = releaseId === 'all' || Boolean(query)
+    const baseCards = scopeAll
       ? activeReleases.flatMap(release => release.cards.map(card => ({ ...card, releaseName: release.name, releaseStatus: release.status })))
       : (activeReleases.find(release => release.id === releaseId)?.cards || []).map(card => ({
           ...card,
           releaseName: activeReleases.find(release => release.id === releaseId)?.name,
           releaseStatus: activeReleases.find(release => release.id === releaseId)?.status
         }))
-    const query = searchQuery.trim().toLowerCase()
     if (!query) return baseCards
     return baseCards.filter(card => (
       card.name.toLowerCase().includes(query) ||
@@ -1812,12 +1749,13 @@ export default withAuth(function CardAdvisorLabPage() {
           : []
 
         if (!active) return
-        if (normalized.length > 0) {
-          setLiveReleases(normalized)
-          setReleaseId(normalized[0].id)
-        }
+        setReleasesError(false)
+        setLiveReleases(normalized)
       } catch (error) {
         console.warn('[card-advisor-lab] live releases unavailable:', error)
+        if (!active) return
+        setLiveReleases([])
+        setReleasesError(true)
       }
     }
 
@@ -1983,7 +1921,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
   const selectedRelease = releaseId === 'all'
     ? { name: labels.allCards, cards: activeReleases.flatMap(release => release.cards), status: 'active' }
-    : activeReleases.find(release => release.id === releaseId) || activeReleases[0]
+    : activeReleases.find(release => release.id === releaseId) || activeReleases[0] || { name: labels.allCards, cards: [], status: 'active' }
 
   return (
     <main className="card-advisor-page">
@@ -2069,7 +2007,13 @@ export default withAuth(function CardAdvisorLabPage() {
               )) : (
                 <div className="empty-card-state">
                   <AlertTriangle size={20} />
-                  <span>{selectedRelease.status === 'needs_review' ? labels.needsSourceReview : labels.noCardsFound}</span>
+                  <span>
+                    {catalogLoading
+                      ? labels.catalogLoading
+                      : releasesError
+                        ? labels.catalogUnavailable
+                        : selectedRelease.status === 'needs_review' ? labels.needsSourceReview : labels.noCardsFound}
+                  </span>
                 </div>
               )}
             </div>
