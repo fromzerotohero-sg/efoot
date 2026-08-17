@@ -272,6 +272,37 @@ assert(
   'generate-countermeasures verifies Link-up on attack-phase starters and selects metadata (dual playing_styles)'
 )
 
+const saveTacticalSrc = readFileSync(join(root, 'app/api/supabase/save-tactical-settings/route.js'), 'utf8')
+assert(
+  'P0-SAVE',
+  saveTacticalSrc.includes('TEAM_PLAYSTYLE_IDS')
+    && saveTacticalSrc.includes('const validStyles = TEAM_PLAYSTYLE_IDS')
+    && TEAM_PLAYSTYLE_IDS.includes('pressing_totale'),
+  'save-tactical-settings accepts pressing_totale via TEAM_PLAYSTYLE_IDS'
+)
+
+const constraintMigrationSrc = readFileSync(
+  join(root, 'migrations/20260817_allow_pressing_totale_team_playing_style.sql'),
+  'utf8'
+)
+const allowedIds = [
+  'possesso_palla',
+  'contropiede_veloce',
+  'contrattacco',
+  'vie_laterali',
+  'passaggio_lungo',
+  'pressing_totale'
+]
+assert(
+  'P0-CONSTRAINT',
+  allowedIds.every((id) => constraintMigrationSrc.includes(`'${id}'::text`))
+    && !/UPDATE\s+public\.team_tactical_settings/i.test(constraintMigrationSrc)
+    && !/INSERT\s+INTO\s+public\.team_tactical_settings/i.test(constraintMigrationSrc)
+    && !/DELETE\s+FROM\s+public\.team_tactical_settings/i.test(constraintMigrationSrc)
+    && !constraintMigrationSrc.includes("'overload'::text"),
+  'constraint migration adds pressing_totale only and does not rewrite rows'
+)
+
 const failed = results.filter((item) => !item.ok)
 console.log(`\n${results.length - failed.length}/${results.length} passed`)
 if (failed.length) process.exit(1)
