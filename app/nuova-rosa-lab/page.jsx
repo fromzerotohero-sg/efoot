@@ -6194,8 +6194,12 @@ export default withAuth(function NuovaRosaLabPage() {
               </div>
               <div className="nr-build-coach-secondary-grid">
                 <button type="button" className="nr-formation-inline-tile" onClick={showFormationHelp}>
-                  <span>{fluidEnabled ? t('fluidBaseFormation') : (lang === 'en' ? 'Formation' : lang === 'es' ? 'Formación' : 'Modulo')}</span>
-                  <strong>{layout?.formation || '4-3-3'}</strong>
+                  <span>{fluidEnabled
+                    ? (fluidPhase === 'attack' ? t('fluidAttack') : t('fluidDefense'))
+                    : (lang === 'en' ? 'Formation' : lang === 'es' ? 'Formación' : 'Modulo')}</span>
+                  <strong>{fluidEnabled
+                    ? (fluidDraft[fluidPhase]?.formation || layout?.formation || '4-3-3')
+                    : (layout?.formation || '4-3-3')}</strong>
                   <em className="nr-formation-inline-style">{activeTeamPlaystyleLabel}</em>
                 </button>
                 <button type="button" className="nr-move-players-wide-button" onClick={() => setFieldEditMode(true)} disabled={fieldEditMode}>
