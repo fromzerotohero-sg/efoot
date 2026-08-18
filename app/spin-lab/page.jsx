@@ -106,7 +106,7 @@ export default function SpinLabPage() {
         mid,
         labelPoint,
         path: describeArc(250, 250, 236, start, end),
-        colors: SEGMENT_COLORS[index],
+        colors: SEGMENT_COLORS[index % SEGMENT_COLORS.length],
       };
     });
   }, [segmentAngle]);
@@ -404,7 +404,7 @@ export default function SpinLabPage() {
             <p>
               {status?.claimed_today
                 ? "Hai già usato la ruota di oggi."
-                : "Premi possibili: 0, 5, 10, 20, 30 e 100 HP (100 al massimo una volta al mese)."}
+                : "Premi possibili: 0, 2, 5, 10, 20, 30 e 100 HP (100 al massimo una volta al mese)."}
             </p>
             {error && <p style={{ color: "#fb7185" }}>{error}</p>}
           </div>
@@ -440,7 +440,7 @@ export default function SpinLabPage() {
 
           {!lastReward && (
             <p className="empty-result">
-              Premi possibili: 0, 5, 10, 20, 30 e 100 HP.
+              Premi possibili: 0, 2, 5, 10, 20, 30 e 100 HP.
             </p>
           )}
 
