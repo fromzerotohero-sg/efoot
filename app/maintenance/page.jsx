@@ -97,7 +97,7 @@ export default function MaintenancePage() {
             <span className="maintenance-live-dot" />
             Addestramento IA in corso
           </div>
-          <p className="maintenance-window">12 – 17 agosto · eFootball 2027</p>
+          <p className="maintenance-window">Dal 18 agosto ore 20:00 · eFootball 2027</p>
         </header>
 
         <section className="maintenance-panel">
