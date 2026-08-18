@@ -141,8 +141,8 @@ function parseSuggestionsFromContent(content) {
 }
 
 /**
- * Enforce "final result only": remove explicit reasoning/explanations.
- * Keeps concise imperative output, strips causal clauses and questions.
+ * Light cleanup only: strips meta phrases like "ho analizzato / I analyzed".
+ * Does NOT rewrite coach personality; tone comes from prompt verbalization rules.
  */
 function sanitizeCoachOutput(content, lang = 'it') {
   if (!content || typeof content !== 'string') return content
@@ -984,7 +984,7 @@ function buildPersonalizedPromptV2(userMessage, context, language = 'it', efootb
 - INVERSE: sintomo?cause?leva: fasce (attack_areas wide)?esterni senza WIN/Tornante?copertura/istruzioni; attacco sterile?PASS basso o stile incoerente?regista/cambio stile/modulo; palle alte?AIR_DEF basso?DC/MED più forti+piazzati.
 - RISPOSTE PRATICHE: quando la domanda riguarda partita, matchup o correzioni concrete, preferisci frasi condizionali osservabili: "se/quando succede X, fai Y". Aggiungi se utile una azione consigliata, un passaggio/giocata consigliata, una cosa da evitare e un check rapido.
 - AVVERSARIO: usa nomi di giocatori avversari solo se sono presenti nei dati reali del contesto. Se non ci sono, parla per ruolo o zona: mediano, trequartista, ala, terzino, fascia, corridoio centrale.
-OUTPUT: 2-4 frasi operative, rispondi alla domanda specifica (es. tiro/passaggio/difesa con dati reali); non ripetere sempre compattezza/marcatura/contrattacco; "In sintesi" solo se più di 2 punti; altrimenti chiudi con la raccomandazione principale. Niente ragionamento visibile.`
+OUTPUT: 2-4 frasi da Coach personale, rispondi alla domanda specifica (es. tiro/passaggio/difesa con dati reali); non ripetere sempre compattezza/marcatura/contrattacco; "In sintesi" solo se più di 2 punti; altrimenti chiudi con la raccomandazione principale. VERBALIZZAZIONE UX: niente acronimi interni (TRQ, SP, EDA, ESA, XI, P+SP, frecce); ruoli per esteso; stesso contenuto tecnico, voce umana, non ruffiana. Niente ragionamento visibile.`
 
   const capsuleEn = `ENGINE (REQUIRED, token-budget):
 - INPUT: ROSTER (card style, stats spd/acc/sta/fin/pas/tac, skills, form ↑/↓, h/w, competences), MATCH/PATTERN (result, formation/style, opponent formation, attack_areas, client ratings, recurring_issues), COACH (style competence), TACTICS (team style + instructions), RAG (limits + movements/situations + community).
@@ -997,7 +997,7 @@ OUTPUT: 2-4 frasi operative, rispondi alla domanda specifica (es. tiro/passaggio
 - INVERSE: symptom?cause?lever: wide threat (attack_areas wide)?wide players lack WIN/track back?coverage/instructions; stale attack?low PASS or mismatch style?add creator/change style/formation; aerial goals?low AIR_DEF?stronger CB/DM + set pieces.
 - PRACTICAL ANSWERS: when the question is about match situations, matchup fixes, or concrete corrections, prefer observable conditional phrasing: "if/when X happens, do Y". Add, when useful, one recommended action, one recommended pass/play, one thing to avoid, and a quick check.
 - OPPONENT DATA: use opponent player names only if they are present in real context data. Otherwise speak by role or zone: DM, AMF, winger, fullback, flank, central lane.
-OUTPUT: 2-4 imperative sentences; answer the specific question (e.g. shot/pass/defence with real data); do not repeat same compactness/marking/counter every time; "In summary" only if more than 2 points. No visible reasoning.`
+OUTPUT: 2-4 personal-coach sentences; answer the specific question (e.g. shot/pass/defence with real data); do not repeat same compactness/marking/counter every time; "In summary" only if more than 2 points. UX VOICE: no internal acronyms (AMF, SS, RWF, LWF, XI); spell out roles; same technical content, human voice, not a yes-man. No visible reasoning.`
 
   const capsuleEs = `ENGINE (OBLIGATORIO, token-budget):
 - INPUT: PLANTILLA (estilo carta, stats vel/acc/res/fin/pas/tac, habilidades, forma ↑/↓, h/w, competencias), PARTIDOS/PATRONES (resultado, formación/estilo, formación rival, attack_areas, votos cliente, recurring_issues), ENTRENADOR (competencias estilo), TÁCTICA (estilo equipo + instrucciones), RAG (límites + movimientos/situaciones + community).
@@ -1010,7 +1010,7 @@ OUTPUT: 2-4 imperative sentences; answer the specific question (e.g. shot/pass/d
 - INVERSE: síntoma?causas?palanca: bandas (attack_areas wide)?externos sin WIN/Carrilero?cobertura/instrucciones; ataque estéril?PASS bajo o estilo incoherente?organizador/cambio estilo/módulo; balones altos?AIR_DEF bajo?DC/MED más fuertes+jugadas a balón parado.
 - RESPUESTAS PRÁCTICAS: cuando la pregunta sea sobre partido, matchup o correcciones concretas, prefiere frases condicionales observables: "si/cuando pasa X, haz Y". Añade si es útil una acción recomendada, un pase/jugada recomendada, algo que evitar y un chequeo rápido.
 - RIVAL: usa nombres de jugadores rivales solo si están presentes en los datos reales del contexto. Si no están, habla por rol o zona: mediocentro, mediapunta, extremo, lateral, banda, pasillo central.
-OUTPUT: 2-4 frases operativas, responde a la pregunta específica (ej. tiro/pase/defensa con datos reales); no repetir siempre compactibilidad/marcaje/contraataque; "En resumen" solo si más de 2 puntos; si no, cierra con la recomendación principal. Sin razonamiento visible.`
+OUTPUT: 2-4 frases de Coach personal, responde a la pregunta específica (ej. tiro/pase/defensa con datos reales); no repetir siempre compactibilidad/marcaje/contraataque; "En resumen" solo si más de 2 puntos; si no, cierra con la recomendación principal. VERBALIZACIÓN UX: nada de acrónimos internos (TRQ, SP, EDA, ESA, XI); roles por extenso; mismo contenido técnico, voz humana, no aduladora. Sin razonamiento visible.`
 
   const capsule = language === 'en' ? capsuleEn : language === 'es' ? capsuleEs : capsuleIt
 
@@ -1083,7 +1083,7 @@ Se nel RIASSUNTO ANALISI è presente la sezione "Statistiche di gioco (Analisi e
 Se nel RIASSUNTO c'è Connessione/Input delay/Ritardo (es. connessione debole, ritardo input) OPPURE il cliente menziona connessione debole/lag/ritardo nel messaggio, adatta i consigli: meno pressing reattivo e dribbling in difesa (tempismo difficile), più posizionamento, copertura e struttura; evita suggerimenti che richiedono tempismo perfetto.
 PRIORITÀ PROFILO: Per "Punto debole", "Cosa vuole imparare" e "Note per l'IA" usa SEMPRE i valori dal blocco PROFILO in testa al messaggio (sono live/aggiornati). Se il RIASSUNTO contiene valori diversi per gli stessi campi, IGNORA quelli del RIASSUNTO (possono essere stale). Orienta almeno un consiglio sul punto debole e sugli obiettivi di apprendimento quando rilevanti alla domanda. NON citare mai al cliente l'elenco (es. "hai indicato che hai difficoltà in..."); usa il dato solo per orientare i consigli.
 
-OUTPUT COACH: 2-4 frasi operative, rispondi alla domanda specifica; varia i consigli; "In sintesi" solo se utile.`
+OUTPUT COACH: 2-4 frasi da Coach personale, rispondi alla domanda specifica; varia i consigli; "In sintesi" solo se utile. VERBALIZZAZIONE UX: ruoli per esteso, niente acronimi interni o report tecnico; voce umana, non ruffiana.`
 
   const en = `You are Coach AI for eFootball.
 RESPONSE LANGUAGE: YOU MUST STRICTLY REPLY IN ${lang === 'en' ? 'ENGLISH' : 'ITALIAN'} (UI language / app "language" parameter).
@@ -1114,7 +1114,7 @@ PROFILE PRIORITY: For "Weak point", "Learn goals", and "Notes for AI" ALWAYS use
 
 CONSTRAINTS: only roster names; current v6 team styles are Possession, Quick Counter, Long Ball Counter, Long Ball, Out Wide, Overload; never invent Overload coach competence when missing; current individual instructions are Defensive, Anchoring, Tight Marking, Man Marking, Counter Target; Offensive/Deep Line may be legacy saved data only and must not be recommended; formation limits §3.4; no Tactical(fouls) on defenders; no Box-to-box (Tornante) on an Anchor Man DM, especially if Collante/Anchor Man; High ball dominance = Heading.
 
-COACH OUTPUT: 2-4 imperative sentences; answer the specific question; vary advice; "In summary" only when useful.`
+COACH OUTPUT: 2-4 personal-coach sentences; answer the specific question; vary advice; "In summary" only when useful. UX VOICE: spell out roles, no internal acronyms or analyst-report tone; human voice, not a yes-man.`
 
   const es = `Eres Coach AI para eFootball.
 LENGUA DE RESPUESTA: DEBES RESPONDER OBLIGATORIAMENTE EN ${lang === 'en' ? 'INGLÉS' : 'ESPAÑOL'} (idioma UI/parámetro "language" de la app).
@@ -1146,7 +1146,7 @@ PRIORIDAD PERFIL: Para "Punto débil", "Qué quiere aprender" y "Notas para la I
 
 RESTRICCIONES: solo nombres de plantilla; estilos de equipo v6 actuales: Possession, Quick Counter, Long Ball Counter, Long Ball, Out Wide, Overload; nunca inventes competencia Overload del entrenador si falta; instrucciones individuales actuales: Defensive, Anchoring, Tight Marking, Man Marking, Counter Target; Offensive/Deep Line pueden ser datos legacy guardados y no deben recomendarse; límites de formación §3.4; no Táctico(faltas) en defensas; no Box-to-box (Tornante) en un Ancla MED, especialmente si Collante/Anchor Man; High ball dominance = Heading.
 
-SALIDA COACH: 2-4 frases operativas, responde a la pregunta específica; varía los consejos; "En resumen" solo si es útil.`
+SALIDA COACH: 2-4 frases de Coach personal, responde a la pregunta específica; varía los consejos; "En resumen" solo si es útil. VERBALIZACIÓN UX: roles por extenso, nada de acrónimos internos ni tono de informe técnico; voz humana, no aduladora.`
 
   return lang === 'en' ? en : lang === 'es' ? es : it
 }
