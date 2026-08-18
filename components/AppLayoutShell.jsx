@@ -9,29 +9,21 @@ import AssistantChat from '@/components/AssistantChat'
 import LiveCoachLauncher from '@/components/LiveCoachLauncher'
 import InstallAppPrompt from '@/components/InstallAppPrompt'
 import PrelaunchGate from '@/components/PrelaunchGate'
-import MaintenanceGate from '@/components/MaintenanceGate'
 import DailySpinWidget from '@/components/DailySpinWidget'
 import EfootballVersionCompatibilityGate from '@/components/EfootballVersionCompatibilityGate'
 import { isPrelaunchPublicPath } from '@/lib/prelaunchRoutes'
-import { isMaintenancePublicPath } from '@/lib/maintenanceRoutes'
 import { useSidebar } from '@/components/SidebarContext'
 
 export default function AppLayoutShell({ children }) {
   const pathname = usePathname()
   const { isOpen: sidebarOpen } = useSidebar()
-  const isPublicPath =
-    isPrelaunchPublicPath(pathname || '/') || isMaintenancePublicPath(pathname || '/')
+  const isPublicPath = isPrelaunchPublicPath(pathname || '/')
 
   if (isPublicPath) {
-    return (
-      <MaintenanceGate>
-        <PrelaunchGate>{children}</PrelaunchGate>
-      </MaintenanceGate>
-    )
+    return <PrelaunchGate>{children}</PrelaunchGate>
   }
 
   return (
-    <MaintenanceGate>
     <>
       <div className="flex h-screen overflow-hidden">
         <SidebarNew />
@@ -63,6 +55,5 @@ export default function AppLayoutShell({ children }) {
       <LiveCoachLauncher showLauncherButton={false} />
       <AssistantChat mode="popup" />
     </>
-    </MaintenanceGate>
   )
 }
