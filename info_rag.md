@@ -103,7 +103,24 @@ Valori di riferimento per costruzione squadra. Le statistiche restano FISSE sull
 
 **Esempio ufficiale v6**: una card può avere uno stile offensivo come **Opportunista** e uno stile difensivo come **Pressione in attacco**. Questo è un esempio di struttura duale, non una regola universale per tutti i giocatori.
 
-La tabella seguente resta il **catalogo di compatibilità degli stili storicamente gestiti dalla piattaforma** e serve per interpretare le card già salvate; non è un elenco esaustivo dei nuovi stili v6.
+### 2.0 Stili di gioco in difesa v6 (nuovi / duali) — DEFINIZIONI OBBLIGATORIE
+
+Questi stili regolano il comportamento **senza palla** (quando la squadra non ha possesso). **NON** sono stili di attacco. Su card duali (PESDB/EFHub: `Att:` / `Def:`) possono coesistere con uno stile offensivo diverso.
+
+**ANTI-CONFUSIONE OBBLIGATORIA (mai violare)**:
+- **Front Line Poacher** ≠ **Goal Poacher** / **Opportunista**. Condividono solo la parola "Poacher" nel nome EN: sono stili **diversi** (difesa vs attacco).
+- **Front Line Poacher** ≠ **Front Line Pressure** / **Pressione in attacco**. Entrambi sono stili **difensivi** per punte/esterni, ma il comportamento è diverso (posizionamento intelligente vs pressing aggressivo).
+- Se l’utente chiede "Front Line Poacher", spiega **solo** lo stile difensivo qui sotto. **VIETATO** rispondere come se fosse Opportunista (linea fuorigioco, filtranti, Contropiede come consiglio da punta).
+
+| Nome (catalogo EN / PESDB / EFHub) | Alias IT noti | Fase | Posizioni tipiche | Cosa fa (1–2 frasi) | Quando serve |
+|---|---|---|---|---|---|
+| **Front Line Poacher** | (EN usato anche in cataloghi; NON tradurre come Opportunista) | **Difesa** | CF/SS/RWF/LWF (P/SP/EDA/ESA) | Senza palla si **posiziona** sulle linee di passaggio: legge l’impostazione avversaria e cerca di **intercettare o disturbare** la costruzione. Non insegue continuamente il pallone come il pressing alto. | Contro costruzione dal basso; pressing “intelligente” ad alto; meno consumo di resistenza rispetto al pressing costante. |
+| **Front Line Pressure** | **Pressione in attacco** (IT client / policy v6) | **Difesa** | CF/SS/RWF/LWF (P/SP/EDA/ESA) | Senza palla **preme aggressivamente** da davanti su difensori e portiere, per forzare errori in impostazione. | Contropiede veloce / Pressing totale (Overload) / linea alta: primo pressing dopo perdita palla. |
+| **Goal Poacher** | **Opportunista** | **Attacco** | CF (compat. SS) | **Con possesso**: resta sulla linea dell’ultimo difensore, cerca profondità e finalizzazione. | Filtranti, contropiede **in attacco** — **non** è Front Line Poacher. |
+
+**Risposta tipo (Front Line Poacher)**: «È uno **stile di gioco in difesa** (v6): senza palla si posiziona sulle linee di passaggio per intercettare/disturbare l’impostazione, non è l’Opportunista (Goal Poacher) che taglia in profondità in attacco, e non è la Pressione in attacco (Front Line Pressure) che preme aggressivamente da davanti.»
+
+La tabella seguente resta il **catalogo di compatibilità degli stili storicamente gestiti dalla piattaforma** e serve per interpretare le card già salvate; non è un elenco esaustivo dei nuovi stili v6 (vedi anche §2.0).
 
 **Sigle posizioni — bridge IT ↔ EN ufficiale Konami** (l'AI deve riconoscere entrambe):
 
@@ -175,7 +192,7 @@ La tabella seguente resta il **catalogo di compatibilità degli stili storicamen
 ### 2.1 Stili Senza Palla (Comportamento senza possesso)
 
 #### Attaccanti e Centrocampisti Offensivi
-- **Opportunista** (CF=P; compatibile SS=SP): Resta **in linea con l'ultimo difensore avversario** (fuorigioco), scatta verso porta sul filtrante/occasione, sovraffolla l'area. **NON** significa "giocare come un difensore". **Quando serve**: passaggi filtranti, palle in profondità, contropiede. *(Goal Poacher)*
+- **Opportunista** (CF=P; compatibile SS=SP): Resta **in linea con l'ultimo difensore avversario** (fuorigioco), scatta verso porta sul filtrante/occasione, sovraffolla l'area. **NON** significa "giocare come un difensore". **Quando serve**: passaggi filtranti, palle in profondità, contropiede. *(Goal Poacher)*. **≠ Front Line Poacher** (quello è stile **difensivo** v6: vedi §2.0).
 - **Senza palla** (CF/SS/AMF = P/SP/TRQ): Attira difensori per creare spazi per inserimenti. **Quando serve**: squadre che cercano imprevedibilità; crea spazi per compagni. *(Dummy Runner)*
 - **Rapace d'area** (CF=P): Sempre in agguato in area di rigore per finalizzare; ottimo su cross e ribalzi. **Quando serve**: cross, attaccanti con centrocampisti/esterni che forniscono assist. *(Fox in the Box)*
 - **Attaccante di rientro** (CF/SS = P/SP; compatibile AMF=TRQ): Arretra in mezzo al campo per impostare, contribuisce alla costruzione. **Quando serve**: possesso palla, squadre che costruiscono dal basso. **Perché**: idealmente abbinato a esterni veloci che corrono oltre i difensori. *(Deep-Lying Forward — non "Punta arretrata")*
@@ -854,8 +871,9 @@ Le policy comportamentali per il Coach AI (errori da evitare, terminologia, anti
 
 ---
 
-**Versione**: 9.0.2 ENTERPRISE | **Data**: 17 Agosto 2026 | **Ruleset**: eFootball v6.0.0
+**Versione**: 9.0.3 ENTERPRISE | **Data**: 19 Agosto 2026 | **Ruleset**: eFootball v6.0.0
 **Principio**: FISSO vs CONFIGURABILE | **Terminologia**: Ufficiale eFootball | **Compatibilità**: read legacy / no new legacy
+**Changelog 9.0.3**: §2.0 stili difesa v6 — **Front Line Poacher** (posizionamento/intercetti sulle linee di passaggio; CF/SS/RWF/LWF) distinto da **Front Line Pressure** / Pressione in attacco e da **Goal Poacher** / Opportunista; anti-confusione obbligatoria sul pezzo "Poacher".
 **Changelog 9.0.2**: aggiunta l'abilità speciale offensiva Sprint in attacco (Attacking Surge), distinta da Attack Trigger, Acceleration Burst, Incisive Run e dal pack omonimo; vietati boost permanenti o valori numerici non documentati.
 **Changelog 9.0.1**: corpus RAG riportato a Source of Truth italiana; sigle ES e alias stili/abilità restano ponti terminologici, non un secondo corpus.
 **Changelog 9.0.0**: allineamento v6.0.0: Pressing totale/Overload; Formazione fluida; modello stili giocatore attacco/difesa senza conteggio fisso; Classico n°10 aggiornato; Offensivo e Linea bassa marcati legacy e non più consigliabili; gameplay v6 §7.13; regola anti-inferenza per competenza coach Pressing totale.
