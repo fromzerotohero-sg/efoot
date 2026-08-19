@@ -103,24 +103,39 @@ Valori di riferimento per costruzione squadra. Le statistiche restano FISSE sull
 
 **Esempio ufficiale v6**: una card può avere uno stile offensivo come **Opportunista** e uno stile difensivo come **Pressione in attacco**. Questo è un esempio di struttura duale, non una regola universale per tutti i giocatori.
 
-### 2.0 Stili di gioco in difesa v6 (nuovi / duali) — DEFINIZIONI OBBLIGATORIE
+### 2.0 Stili di gioco in difesa v6 (fase senza palla) — DEFINIZIONI OBBLIGATORIE
 
-Questi stili regolano il comportamento **senza palla** (quando la squadra non ha possesso). **NON** sono stili di attacco. Su card duali (PESDB/EFHub: `Att:` / `Def:`) possono coesistere con uno stile offensivo diverso.
+Questi sono gli **stili di gioco in difesa** del client italiano (v6): regolano il comportamento **senza possesso**. Non sono istruzioni di formazione fluida; la formazione fluida cambia il modulo, mentre questi stili cambiano il comportamento individuale senza palla. Su card duali (PESDB/EFHub: `Att:` / `Def:`) possono coesistere con uno stile offensivo diverso.
 
 **ANTI-CONFUSIONE OBBLIGATORIA (mai violare)**:
-- **Front Line Poacher** ≠ **Goal Poacher** / **Opportunista**. Condividono solo la parola "Poacher" nel nome EN: sono stili **diversi** (difesa vs attacco).
-- **Front Line Poacher** ≠ **Front Line Pressure** / **Pressione in attacco**. Entrambi sono stili **difensivi** per punte/esterni, ma il comportamento è diverso (posizionamento intelligente vs pressing aggressivo).
-- Se l’utente chiede "Front Line Poacher", spiega **solo** lo stile difensivo qui sotto. **VIETATO** rispondere come se fosse Opportunista (linea fuorigioco, filtranti, Contropiede come consiglio da punta).
+- **Rapace in avanti** *(Front Line Poacher)* ≠ **Opportunista** *(Goal Poacher)*: solo la parola "Poacher" in EN; fasi diverse (difesa vs attacco).
+- **Rapace in avanti** ≠ **Rapace d'area** *(Fox in the Box)*: entrambi hanno "Rapace" in IT; il primo è **difesa** (linee di passaggio), il secondo è **attacco** (finalizzazione in area).
+- **Rapace in avanti** ≠ **Pressione in attacco** *(Front Line Pressure)*: entrambi difesa su P/SP/EDA/ESA, ma posizionamento intelligente vs pressing aggressivo.
+- **Fulcro dell'attacco** *(Attack Outlet)* ≠ **Fulcro di gioco** *(Target Man)*: il primo resta alto **senza palla** per risparmiare energie; il secondo è stile **attacco** da riferimento fisico.
+- **Onnipresente / Collante / Incontrista / PT offensivo / PT difensivo**: possono comparire come stile di fase difesa con lo **stesso nome** del catalogo classico; se i dati card dicono fase difesa, spiega il comportamento **senza palla**, non inventare un secondo stile diverso.
+- Se l’utente chiede Front Line Poacher / Rapace in avanti: **VIETATO** rispondere come Opportunista (linea fuorigioco, filtranti da punta).
 
-| Nome (catalogo EN / PESDB / EFHub) | Alias IT noti | Fase | Posizioni tipiche | Cosa fa (1–2 frasi) | Quando serve |
-|---|---|---|---|---|---|
-| **Front Line Poacher** | (EN usato anche in cataloghi; NON tradurre come Opportunista) | **Difesa** | CF/SS/RWF/LWF (P/SP/EDA/ESA) | Senza palla si **posiziona** sulle linee di passaggio: legge l’impostazione avversaria e cerca di **intercettare o disturbare** la costruzione. Non insegue continuamente il pallone come il pressing alto. | Contro costruzione dal basso; pressing “intelligente” ad alto; meno consumo di resistenza rispetto al pressing costante. |
-| **Front Line Pressure** | **Pressione in attacco** (IT client / policy v6) | **Difesa** | CF/SS/RWF/LWF (P/SP/EDA/ESA) | Senza palla **preme aggressivamente** da davanti su difensori e portiere, per forzare errori in impostazione. | Contropiede veloce / Pressing totale (Overload) / linea alta: primo pressing dopo perdita palla. |
-| **Goal Poacher** | **Opportunista** | **Attacco** | CF (compat. SS) | **Con possesso**: resta sulla linea dell’ultimo difensore, cerca profondità e finalizzazione. | Filtranti, contropiede **in attacco** — **non** è Front Line Poacher. |
+**Catalogo ufficiale client IT — stili fase senza palla (v6)** — nomi IT = Source of Truth chat IT; EN = catalogo PESDB/EFHub:
 
-**Risposta tipo (Front Line Poacher)**: «È uno **stile di gioco in difesa** (v6): senza palla si posiziona sulle linee di passaggio per intercettare/disturbare l’impostazione, non è l’Opportunista (Goal Poacher) che taglia in profondità in attacco, e non è la Pressione in attacco (Front Line Pressure) che preme aggressivamente da davanti.»
+| Nome IT (client) | Nome EN (catalogo) | Posizioni (IT) | Comportamento ufficiale |
+|---|---|---|---|
+| **Pressione in attacco** | Front Line Pressure | P/SP/EDA/ESA | Pressa con decisione il portiere avversario e i difensori con i giocatori più avanzati. |
+| **Rapace in avanti** | Front Line Poacher | P/SP/EDA/ESA | Tiene d'occhio le linee di passaggio dell'avversario e si posiziona in modo intelligente. |
+| **Fulcro dell'attacco** | Attack Outlet | P/SP/EDA/ESA/TRQ | A seconda della situazione, evita di difendere per risparmiare energie e rimane in avanti in attesa di attaccare. |
+| **Difensore instancabile** | All-action Defender | TRQ/CLD/CLS/CC/MED | Torna indietro con grinta quando la squadra è in difesa e reagisce agli attacchi degli avversari. |
+| **Disturbatore di passaggi** | Pass Disruptor | TRQ/CLD/CLS/CC/MED | Difende bloccando attivamente le linee di passaggio dell'avversario. |
+| **Onnipresente** | Box-to-Box | CLD/CLS/CC/MED | Copre instancabilmente ogni zolla del manto erboso per tutti i 90 minuti (anche in fase senza palla). |
+| **Collante** | Anchor Man | MED (tipico) | Centrocampista arretrato che opera davanti alla difesa. |
+| **Incontrista** | The Destroyer | CC/MED/TD/TS/DC | Esercita un pressing aggressivo quando si trova vicino a un avversario in possesso palla. |
+| **Ruolo di copertura** | Covering Role | CC/MED/TD/TS/DC | Copre attivamente i compagni di squadra impegnati nei Testa a testa. |
+| **Maestro della difesa alta** | High Line Master | TD/TS/DC | Cerca di mantenere una linea difensiva efficace, preservandone la struttura mentre difende. |
+| **PT offensivo** | Offensive / Attacking Goalkeeper | PT | Esce con decisione per limitare gli angoli di tiro e intervenire sui palloni a scavalcare la difesa. Alias catalogo già gestito: **Portiere offensivo**. |
+| **PT difensivo** | Defensive Goalkeeper | PT | Si posiziona vicino alla propria porta ed evita di uscire in modo aggressivo. Alias: **Portiere difensivo**. |
+| **PT stopper** | Sweeper GK | PT | Occupa una posizione avanzata e si lancia in avanti con grinta per coprire un'ampia zona alle spalle della difesa. |
 
-La tabella seguente resta il **catalogo di compatibilità degli stili storicamente gestiti dalla piattaforma** e serve per interpretare le card già salvate; non è un elenco esaustivo dei nuovi stili v6 (vedi anche §2.0).
+**Risposta tipo (Rapace in avanti / Front Line Poacher)**: «È lo stile di gioco **in difesa** (senza palla): tiene d'occhio le linee di passaggio e si posiziona in modo intelligente. Non è l’Opportunista (attacco) né la Pressione in attacco (pressing aggressivo da davanti) né il Rapace d’area (finalizzatore in area).»
+
+La tabella seguente resta il **catalogo di compatibilità degli stili storicamente gestiti dalla piattaforma** e serve per interpretare le card già salvate; per i nuovi stili solo-difesa v6 usa sempre §2.0.
 
 **Sigle posizioni — bridge IT ↔ EN ufficiale Konami** (l'AI deve riconoscere entrambe):
 
@@ -192,11 +207,11 @@ La tabella seguente resta il **catalogo di compatibilità degli stili storicamen
 ### 2.1 Stili Senza Palla (Comportamento senza possesso)
 
 #### Attaccanti e Centrocampisti Offensivi
-- **Opportunista** (CF=P; compatibile SS=SP): Resta **in linea con l'ultimo difensore avversario** (fuorigioco), scatta verso porta sul filtrante/occasione, sovraffolla l'area. **NON** significa "giocare come un difensore". **Quando serve**: passaggi filtranti, palle in profondità, contropiede. *(Goal Poacher)*. **≠ Front Line Poacher** (quello è stile **difensivo** v6: vedi §2.0).
+- **Opportunista** (CF=P; compatibile SS=SP): Resta **in linea con l'ultimo difensore avversario** (fuorigioco), scatta verso porta sul filtrante/occasione, sovraffolla l'area. **NON** significa "giocare come un difensore". **Quando serve**: passaggi filtranti, palle in profondità, contropiede. *(Goal Poacher)*. **≠ Rapace in avanti / Front Line Poacher** (stile **difesa** v6: vedi §2.0).
 - **Senza palla** (CF/SS/AMF = P/SP/TRQ): Attira difensori per creare spazi per inserimenti. **Quando serve**: squadre che cercano imprevedibilità; crea spazi per compagni. *(Dummy Runner)*
-- **Rapace d'area** (CF=P): Sempre in agguato in area di rigore per finalizzare; ottimo su cross e ribalzi. **Quando serve**: cross, attaccanti con centrocampisti/esterni che forniscono assist. *(Fox in the Box)*
+- **Rapace d'area** (CF=P): Sempre in agguato in area di rigore per finalizzare; ottimo su cross e ribalzi. **Quando serve**: cross, attaccanti con centrocampisti/esterni che forniscono assist. *(Fox in the Box)*. **≠ Rapace in avanti** (difesa v6: linee di passaggio senza palla — §2.0).
 - **Attaccante di rientro** (CF/SS = P/SP; compatibile AMF=TRQ): Arretra in mezzo al campo per impostare, contribuisce alla costruzione. **Quando serve**: possesso palla, squadre che costruiscono dal basso. **Perché**: idealmente abbinato a esterni veloci che corrono oltre i difensori. *(Deep-Lying Forward — non "Punta arretrata")*
-- **Fulcro di gioco** (CF=P): Protegge palla con fisico, riferimento offensivo. **Quando serve**: gioco aereo, sponde, attaccanti fisici. **Perché**: presenza fisica, crea spazio per esterni e trequartisti. *(Target Man — community usa anche "L'uomo bersaglio")*
+- **Fulcro di gioco** (CF=P): Protegge palla con fisico, riferimento offensivo. **Quando serve**: gioco aereo, sponde, attaccanti fisici. **Perché**: presenza fisica, crea spazio per esterni e trequartisti. *(Target Man — community usa anche "L'uomo bersaglio")*. **≠ Fulcro dell'attacco** (stile **difesa** v6 Attack Outlet: resta alto senza palla — §2.0).
 - **Specialista di cross** (RWF/LWF/RMF/LMF = EDA/ESA/CLD/CLS): Resta sulla fascia per crossare. *(Cross Specialist)*
 - **Classico n° 10** (SS/AMF = SP/TRQ): Playmaker tra le linee, utile per gestione del ritmo, ricezione e rifinitura. **v6.0.0**: è stato rimosso l’effetto che ne riduceva il coinvolgimento difensivo; NON dire più che lo stile “minimizza lo sforzo difensivo” o che difende meno per definizione. NON si attiva su CMF=CC (dal 2024).
 - **Regista creativo** (SS/AMF/RWF/LWF = SP/TRQ/EDA/ESA; compatibile RMF/LMF/CMF = CLD/CLS/CC ma AI inattiva): Si muove liberamente in fase offensiva, cerca spazi per ricevere palla e creare occasioni. **Quando serve**: imprevedibilità offensiva, disorganizzare la difesa avversaria. **Perché**: movimenti intelligenti di smarcamento. *(Creative Playmaker)*
@@ -216,8 +231,8 @@ La tabella seguente resta il **catalogo di compatibilità degli stili storicamen
 - **Terzino offensivo** (RB/LB = ETD/ETS; compatibile RMF/LMF = CLD/CLS): Si unisce ad attacco, sovrapposizioni continue, spinta sulla fascia. **Quando serve**: ampiezza, cross, dominio territoriale. **Rischio**: lascia spazio dietro. *(Attacking Full-back / Offensive Full-back)*
 - **Terzino difensivo** (RB/LB = ETD/ETS; compatibile CB=DC): Rimane arretrato per proteggere difesa, copertura prioritaria. **Quando serve**: solidità difensiva, contro ali veloci avversarie. *(Defensive Full-back)*
 - **Terzino mattatore** (RB/LB = ETD/ETS): Si inserisce in azioni offensive centrali. **Quando serve**: moduli che spingono i terzini in attacco centrale. *(Full-back Finisher)*
-- **Portiere offensivo** (PT=GK): Più avanzato, esce per anticipare; proattivo nelle uscite. **Quando serve**: linea alta, pressing, gioco aggressivo. **Rischio**: palloni scavalcati. *(Offensive Goalkeeper)*
-- **Portiere difensivo** (PT=GK): Rimane vicino alla linea di porta, reattivo. **Quando serve**: gioco conservativo, contro squadre con tiri da lontano. *(Defensive Goalkeeper)*
+- **Portiere offensivo** (PT=GK): Più avanzato, esce per anticipare; proattivo nelle uscite. **Quando serve**: linea alta, pressing, gioco aggressivo. **Rischio**: palloni scavalcati. *(Offensive Goalkeeper — client v6 fase difesa: PT offensivo)*. Vedi anche **PT stopper** in §2.0 (Sweeper GK: più aggressivo alle spalle della linea).
+- **Portiere difensivo** (PT=GK): Rimane vicino alla linea di porta, reattivo. **Quando serve**: gioco conservativo, contro squadre con tiri da lontano. *(Defensive Goalkeeper — client v6: PT difensivo)*
 
 ### 2.2 Attivazione stile e posizione (logica "passiva spenta se fuori ruolo")
 
@@ -871,8 +886,9 @@ Le policy comportamentali per il Coach AI (errori da evitare, terminologia, anti
 
 ---
 
-**Versione**: 9.0.3 ENTERPRISE | **Data**: 19 Agosto 2026 | **Ruleset**: eFootball v6.0.0
+**Versione**: 9.0.4 ENTERPRISE | **Data**: 19 Agosto 2026 | **Ruleset**: eFootball v6.0.0
 **Principio**: FISSO vs CONFIGURABILE | **Terminologia**: Ufficiale eFootball | **Compatibilità**: read legacy / no new legacy
+**Changelog 9.0.4**: §2.0 catalogo completo stili **fase senza palla** da client IT ufficiale (Rapace in avanti, Fulcro dell'attacco, Difensore instancabile, Disturbatore di passaggi, Ruolo di copertura, Maestro della difesa alta, PT stopper, ecc.); anti-confusione Rapace in avanti≠Rapace d'area, Fulcro dell'attacco≠Fulcro di gioco; Front Line Poacher = Rapace in avanti.
 **Changelog 9.0.3**: §2.0 stili difesa v6 — **Front Line Poacher** (posizionamento/intercetti sulle linee di passaggio; CF/SS/RWF/LWF) distinto da **Front Line Pressure** / Pressione in attacco e da **Goal Poacher** / Opportunista; anti-confusione obbligatoria sul pezzo "Poacher".
 **Changelog 9.0.2**: aggiunta l'abilità speciale offensiva Sprint in attacco (Attacking Surge), distinta da Attack Trigger, Acceleration Burst, Incisive Run e dal pack omonimo; vietati boost permanenti o valori numerici non documentati.
 **Changelog 9.0.1**: corpus RAG riportato a Source of Truth italiana; sigle ES e alias stili/abilità restano ponti terminologici, non un secondo corpus.
