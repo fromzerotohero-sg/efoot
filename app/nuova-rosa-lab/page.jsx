@@ -32,7 +32,7 @@ import {
 import { MAX_TACCE_PER_MACRO } from '@/lib/efootballProgressionCost'
 import { PLAYER_SKILL_PRESETS, getSkillDisplayLabel, normalizePlayerSkillsArray, normalizeSkillKey } from '@/lib/playerSkillLabels'
 import { resolvePlayerCardImageUrl } from '@/lib/playerCardImage'
-import { resolvePlayingStyleDbName, getPlayerPhaseStyleDisplay } from '@/lib/playingStyleResolve'
+import { resolvePlayingStyleDbName, getPlayerPhaseStyleDisplay, getPlayerStyleDisplayName, stripPlayingStylePhasePrefix } from '@/lib/playingStyleResolve'
 import {
   buildCatalogPlayerSavePayload,
   buildPhotoPlayerSavePayload,
@@ -1300,7 +1300,7 @@ function EnterpriseReservePicker({ reserves, lang, onPick, slotPosition, onAddNe
           <button key={player.id} type="button" className="nr-bench-item" onClick={() => onPick(player)} disabled={pickDisabled}>
             <div className="nr-bench-item-copy">
               <strong>{player.player_name}</strong>
-              <span>{player.position || '-'} · {player.role || player.playing_style_name || '-'} · {compatibilityLabel(compatibility, lang)}</span>
+              <span>{player.position || '-'} · {getPlayerStyleDisplayName(player) || stripPlayingStylePhasePrefix(player.role) || player.playing_style_name || '-'} · {compatibilityLabel(compatibility, lang)}</span>
             </div>
             <span className={`nr-fit-pill compat-${compatibility}`}>{compatibilityLabel(compatibility, lang)}</span>
             <ChevronRight size={16} />
@@ -2004,6 +2004,13 @@ function QuickPlayerPanel({
   const dualStyleLine = dualStyle
     ? `${getTranslation('dualStyleAttack', lang)} ${dualStyle.attack || '-'} · ${getTranslation('dualStyleDefense', lang)} ${dualStyle.defense || getTranslation('noSpecialDefenseStyle', lang)}`
     : null
+  const styleFallback =
+    getPlayerStyleDisplayName(player) ||
+    resolvePlayingStyleDbName(player.role) ||
+    stripPlayingStylePhasePrefix(player.role) ||
+    player.playing_style_name ||
+    player.card_type ||
+    '-'
 
   return (
     <div className="nr-modal-backdrop" onClick={onClose}>
@@ -2012,7 +2019,7 @@ function QuickPlayerPanel({
           <div>
             <span className="nr-mini-kicker">{lang === 'en' ? 'Player details' : lang === 'es' ? 'Detalles del jugador' : 'Dettaglio giocatore'}</span>
             <h2>{player.player_name}</h2>
-            <p>{player.position || '-'} · {dualStyleLine || player.role || player.playing_style_name || player.card_type || '-'}</p>
+            <p>{player.position || '-'} · {dualStyleLine || styleFallback}</p>
           </div>
           <button type="button" className="nr-icon-button" onClick={onClose}>
             <X size={18} />
@@ -2031,7 +2038,7 @@ function QuickPlayerPanel({
                 {player?.metadata?.catalog_card_type || (lang === 'en' ? 'Roster player' : lang === 'es' ? 'Jugador de la plantilla' : 'Giocatore rosa')}
               </span>
               <h3>{player.player_name}</h3>
-              <p>{player.position || '-'} · {dualStyleLine || player.role || player.playing_style_name || '-'}</p>
+              <p>{player.position || '-'} · {dualStyleLine || styleFallback}</p>
             </div>
           </div>
 
@@ -6359,7 +6366,7 @@ export default withAuth(function NuovaRosaLabPage() {
                     </div>
                     <div className="nr-reserve-card-copy">
                       <strong>{player.player_name}</strong>
-                      <span>{player.role || player.playing_style_name || player.card_type || '-'}</span>
+                      <span>{getPlayerStyleDisplayName(player) || stripPlayingStylePhasePrefix(player.role) || player.playing_style_name || player.card_type || '-'}</span>
                     </div>
                     <span className="nr-reserve-position-pill">{player.position || '-'}</span>
                     <ChevronRight size={14} />
