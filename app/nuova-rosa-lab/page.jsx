@@ -5606,10 +5606,10 @@ export default withAuth(function NuovaRosaLabPage() {
                 : 'Nessun punto crescita per questa carta (livello massimo 1). Se in gioco si potenzia, imposta il livello massimo corretto nel profilo giocatore.')
           : isNonProgressionType
             ? (lang === 'en'
-                ? 'This card type has fixed progression in the game and cannot be optimized.'
+                ? 'Trending cards (POTW/OTW) have fixed progression and cannot be optimized.'
                 : lang === 'es'
-                  ? 'Este tipo de carta tiene progresión fija en el juego y no puede ser optimizada.'
-                  : 'Questo tipo di carta ha progressione fissa nel gioco e non può essere ottimizzata.')
+                  ? 'Las cartas Trending (POTW/OTW) tienen progresión fija y no se pueden optimizar.'
+                  : 'Le carte Trending (POTW/OTW) hanno progressione fissa e non possono essere ottimizzate.')
             : (lang === 'en' ? 'Unable to calculate build.' : lang === 'es' ? 'No se pudo calcular la build.' : 'Impossibile calcolare la build.'),
         lang
       )

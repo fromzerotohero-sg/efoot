@@ -4,7 +4,10 @@ import { efhubStatsToPlayerBaseStats, normalizeStatsToEfhub } from '@/lib/efootb
 import { calculateGameplayBuild, resolveProgressionLevelCap } from '@/lib/gameplayBuildCoach'
 import {
   BUILD_COACH_CATALOG_SELECT,
-  enrichCatalogCardForBuildCoach
+  enrichCatalogCardForBuildCoach,
+  getNonProgressionReason,
+  getSlotPosition,
+  withFallbacks
 } from '@/lib/buildCoachServerUtils'
 
 export async function resolveBuildCoachContext(req) {
@@ -70,21 +73,6 @@ export async function fetchRosterContext(admin, userId) {
   }
 }
 
-function getSlotPosition(player, layout) {
-  if (player?.slot_index === null || player?.slot_index === undefined) return null
-  const rawSlots = layout?.slot_positions
-  const slots = Array.isArray(rawSlots)
-    ? rawSlots
-    : rawSlots && typeof rawSlots === 'object'
-      ? Object.entries(rawSlots).map(([slotIndex, value]) => ({
-          ...(value && typeof value === 'object' ? value : {}),
-          slot_index: Number(value?.slot_index ?? slotIndex)
-        }))
-      : []
-  const slot = slots.find((entry) => Number(entry?.slot_index) === Number(player.slot_index))
-  return slot?.position || null
-}
-
 export async function findCatalogCardForPlayer(admin, player) {
   const metadata = player?.metadata || {}
   const sourcePlayerId = metadata.catalog_source_player_id || metadata.source_player_id || metadata.sourcePlayerId
@@ -98,76 +86,6 @@ export async function findCatalogCardForPlayer(admin, player) {
     .limit(1)
     .maybeSingle()
   return data || null
-}
-
-function normalizeCardType(value) {
-  return String(value || '').toLowerCase().trim()
-}
-
-function isNonProgressionCardType(value) {
-  const normalized = normalizeCardType(value)
-  if (!normalized) return false
-  return (
-    normalized.includes('trending') ||
-    normalized.includes('potw') ||
-    normalized.includes('player of the week') ||
-    normalized.includes('players of the week') ||
-    normalized.includes('otw') ||
-    normalized.includes('one to watch') ||
-    normalized.includes('card strike arena')
-  )
-}
-
-function getEffectiveCardType(player, catalogCard) {
-  return (
-    player?.metadata?.catalog_card_type ||
-    player?.metadata?.card_category ||
-    player?.card_type ||
-    catalogCard?.card_type ||
-    catalogCard?.card_category ||
-    catalogCard?.players_payload?.card_type
-  )
-}
-
-function getNonProgressionReason(player, catalogCard) {
-  const cardType = getEffectiveCardType(player, catalogCard)
-  if (isNonProgressionCardType(cardType)) {
-    return { blocked: true, reason: 'non_progression_card_type', cardType }
-  }
-  const levelCap = resolveProgressionLevelCap(player, catalogCard)
-  if (levelCap == null || levelCap <= 1) {
-    return { blocked: true, reason: 'max_level_one', cardType }
-  }
-  return { blocked: false, reason: null, cardType }
-}
-
-function withFallbacks(player, catalogCard) {
-  const next = { ...player }
-  const estimated = []
-
-  if ((!next.base_stats || Object.keys(next.base_stats || {}).length === 0) && catalogCard?.players_payload?.base_stats) {
-    next.base_stats = catalogCard.players_payload.base_stats
-    estimated.push('base_stats')
-  } else if ((!next.base_stats || Object.keys(next.base_stats || {}).length === 0) && catalogCard?.base_stats) {
-    next.base_stats = catalogCard.base_stats
-    estimated.push('base_stats')
-  }
-
-  const resolvedLevelCap = resolveProgressionLevelCap(next, catalogCard)
-  const currentLevelCap = Number(next.level_cap)
-  if (!Number.isFinite(currentLevelCap) || currentLevelCap <= 1) {
-    if (resolvedLevelCap && resolvedLevelCap > 1) {
-      next.level_cap = resolvedLevelCap
-      estimated.push('level_cap')
-    }
-  }
-
-  if (!next.height) {
-    next.height = catalogCard?.height || next.extracted_data?.height_cm || next.extracted_data?.height || 175
-    estimated.push('height')
-  }
-
-  return { player: next, estimated }
 }
 
 export function buildPlayerUpdatePayload({ player, build, contextEstimated = [], catalogCard = null }) {
