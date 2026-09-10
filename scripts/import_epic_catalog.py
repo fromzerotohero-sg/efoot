@@ -152,20 +152,93 @@ def stat_value(value):
     return parsed if parsed is not None else str(value or "").strip()
 
 
+def get_dd(markup, label):
+    pattern = r"<dt>\s*" + re.escape(label) + r"\s*</dt>\s*<dd>(.*?)</dd>"
+    match = re.search(pattern, markup, re.S | re.I)
+    return clean(match.group(1)) if match else None
+
+
 def get_field(markup, label):
     pattern = r"<tr><th>" + re.escape(label) + r":</th><td><span[^>]*>(.*?)</span></td></tr>"
     match = re.search(pattern, markup, re.S)
-    return clean(match.group(1)) if match else None
+    if match:
+        return clean(match.group(1))
+    aliases = {
+        "Team Name": ("Team Name", "Club"),
+        "Foot": ("Foot", "Stronger Foot"),
+        "Maximum Level": ("Maximum Level", "Max Level"),
+    }
+    for candidate in aliases.get(label, (label,)):
+        value = get_dd(markup, candidate)
+        if value:
+            return value
+    return None
+
+
+def extract_progression_data(markup):
+    match = re.search(
+        r'<script[^>]+id="player-progression-data"[^>]*>([\s\S]*?)</script>',
+        markup or "",
+        re.I,
+    )
+    if not match:
+        return {}
+    try:
+        payload = json.loads(match.group(1).strip())
+    except json.JSONDecodeError:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+STAT_SNAKE_TO_LABEL = {
+    "offensive_awareness": "Offensive Awareness",
+    "ball_control": "Ball Control",
+    "dribbling": "Dribbling",
+    "tight_possession": "Tight Possession",
+    "low_pass": "Low Pass",
+    "lofted_pass": "Lofted Pass",
+    "finishing": "Finishing",
+    "heading": "Heading",
+    "set_piece_taking": "Set Piece Taking",
+    "curl": "Curl",
+    "defensive_awareness": "Defensive Awareness",
+    "tackling": "Tackling",
+    "aggression": "Aggression",
+    "defensive_engagement": "Defensive Engagement",
+    "gk_awareness": "GK Awareness",
+    "gk_catching": "GK Catching",
+    "gk_parrying": "GK Parrying",
+    "gk_reflexes": "GK Reflexes",
+    "gk_reach": "GK Reach",
+    "speed": "Speed",
+    "acceleration": "Acceleration",
+    "kicking_power": "Kicking Power",
+    "jumping": "Jumping",
+    "physical_contact": "Physical Contact",
+    "balance": "Balance",
+    "stamina": "Stamina",
+}
 
 
 def parse_position(markup):
     pattern = r'<tr><th>Position:</th><td><span[^>]*>.*?<div title="([^"]+)">([^<]+)</div>.*?</span></td></tr>'
     match = re.search(pattern, markup, re.S)
-    if not match:
+    if match:
+        raw_code = clean(match.group(2))
+        raw_label = clean(match.group(1))
+        return raw_code, POSITION_MAP.get(raw_code, raw_code), raw_label
+    raw_code = get_dd(markup, "Primary Position")
+    if not raw_code:
+        hero = re.search(
+            r'class="position player-hero-position"[^>]*>[\s\S]*?>([A-Z]{2,3})</a>',
+            markup or "",
+            re.I,
+        )
+        raw_code = clean(hero.group(1)) if hero else None
+    if not raw_code:
         return None, None, None
-    raw_code = clean(match.group(2))
-    raw_label = clean(match.group(1))
-    return raw_code, POSITION_MAP.get(raw_code, raw_code), raw_label
+    raw_code = raw_code.upper()
+    return raw_code, POSITION_MAP.get(raw_code, raw_code), raw_code
 
 
 def parse_stats(markup):
@@ -175,6 +248,25 @@ def parse_stats(markup):
         match = re.search(pattern, markup, re.S)
         if match:
             result[label] = stat_value(clean(match.group(1)))
+    if result:
+        return result
+    progression = extract_progression_data(markup)
+    base_stats = progression.get("baseStats") if isinstance(progression.get("baseStats"), dict) else {}
+    for snake, label in STAT_SNAKE_TO_LABEL.items():
+        if snake in base_stats:
+            result[label] = stat_value(base_stats.get(snake))
+    if progression.get("baseOverall") is not None:
+        result["Overall Rating"] = stat_value(progression.get("baseOverall"))
+    if result:
+        return result
+    for match in re.finditer(
+        r'<div class="ability-row">\s*<span>(.*?)</span>\s*<strong[^>]*>(.*?)</strong>',
+        markup or "",
+        re.S,
+    ):
+        label = clean(match.group(1))
+        if label:
+            result[label] = stat_value(clean(match.group(2)))
     return result
 
 
@@ -226,7 +318,7 @@ def parse_styles(markup):
         "primary": None,
     }
     if not match:
-        return None, player_skills, ai_playstyles, empty_contract
+        return parse_styles_from_v2_page(markup, empty_contract)
 
     rows = re.findall(r"<tr><(th|td)>(.*?)</\1></tr>", match.group(1), re.S)
     section = None
@@ -272,9 +364,70 @@ def parse_styles(markup):
     return attack, player_skills, ai_playstyles, contract
 
 
+def _chip_texts(block):
+    return [clean(item) for item in re.findall(r"<a[^>]*>(.*?)</a>", block or "", re.S) if clean(item)]
+
+
+def parse_styles_from_v2_page(markup, empty_contract):
+    player_skills = []
+    ai_playstyles = []
+    attack = None
+    defense = None
+    raw_lines = []
+
+    att_match = re.search(
+        r"Attacking Playing Style</span>\s*<strong>(.*?)</strong>",
+        markup or "",
+        re.S | re.I,
+    )
+    if att_match:
+        attack = clean(att_match.group(1)) or None
+        if attack:
+            raw_lines.append(f"Att: {attack}")
+    def_match = re.search(
+        r"Defensive Playing Style</span>\s*<strong>(.*?)</strong>",
+        markup or "",
+        re.S | re.I,
+    )
+    if def_match:
+        defense = clean(def_match.group(1)) or None
+        if defense:
+            raw_lines.append(f"Def: {defense}")
+
+    skills_match = re.search(
+        r"Player Skills</h2>\s*<div class=\"skill-chips[^\"]*\">(.*?)</div>",
+        markup or "",
+        re.S | re.I,
+    )
+    if skills_match:
+        player_skills = _chip_texts(skills_match.group(1))
+    ai_match = re.search(
+        r"AI Playing Styles</h2>\s*<div class=\"skill-chips[^\"]*\">(.*?)</div>",
+        markup or "",
+        re.S | re.I,
+    )
+    if ai_match:
+        ai_playstyles = _chip_texts(ai_match.group(1))
+
+    if not attack and not defense and not player_skills and not ai_playstyles:
+        return None, [], [], empty_contract
+
+    has_defense = bool(defense)
+    contract = {
+        "format": "dual" if has_defense else "single",
+        "attack": attack,
+        "defense": defense if has_defense else None,
+        "primary": attack,
+        "source_raw": raw_lines,
+    }
+    return attack, player_skills, ai_playstyles, contract
+
+
 def parse_card_type(markup):
     match = re.search(r"</div></div></div></div>([^<]+)</td></tr>", markup)
-    return clean(match.group(1)) if match else None
+    if match:
+        return clean(match.group(1))
+    return get_dd(markup, "Card Type")
 
 
 def parse_position_compatibility(markup):
@@ -283,6 +436,17 @@ def parse_position_compatibility(markup):
         code = match.group(1).upper()
         label = clean(match.group(2))
         positions[POSITION_MAP.get(code, code)] = {"source_code": code, "label": label}
+    if positions:
+        return positions
+    for code, state in re.findall(
+        r"position-pitch-zone position-pitch-([a-z]+) (is-(?:full|partial))",
+        markup or "",
+    ):
+        source_code = code.upper()
+        positions[POSITION_MAP.get(source_code, source_code)] = {
+            "source_code": source_code,
+            "label": "Full Familiarity" if state == "is-full" else "Partial Familiarity",
+        }
     return positions
 
 
@@ -304,6 +468,40 @@ def collect_player_ids(list_urls):
                 {
                     "source_player_id": source_player_id,
                     "list_name": clean(match.group(2)),
+                    "list_url": list_url,
+                }
+            )
+        for match in re.finditer(
+            r'<a[^>]+href="/efootball/players/[^"]+-(\d+)"[^>]*>([^<]+)</a>',
+            markup,
+        ):
+            source_player_id = match.group(1)
+            # Featured/Dream Team cards have long IDs. Short IDs are Authentic/base players.
+            if len(source_player_id) < 10:
+                continue
+            if source_player_id in seen:
+                continue
+            seen.add(source_player_id)
+            players.append(
+                {
+                    "source_player_id": source_player_id,
+                    "list_name": clean(match.group(2)),
+                    "list_url": list_url,
+                }
+            )
+        # Pack detail pages wrap the name in <h2>, so the text-node regex above misses them.
+        for match in re.finditer(
+            r'href="/efootball/players/([^"/]+)-(\d{10,})"',
+            markup,
+        ):
+            source_player_id = match.group(2)
+            if source_player_id in seen:
+                continue
+            seen.add(source_player_id)
+            players.append(
+                {
+                    "source_player_id": source_player_id,
+                    "list_name": clean(match.group(1).replace("-", " ")),
                     "list_url": list_url,
                 }
             )
@@ -373,16 +571,27 @@ def parse_player(source_player_id, list_url):
     source_url = f"{BASE_URL}?id={source_player_id}"
     max_url = f"{source_url}&mode=max_level"
     base_markup = fetch_with_retry(source_url)
-    max_markup = fetch_with_retry(max_url)
+    progression_preview = extract_progression_data(base_markup)
+    if progression_preview.get("baseStats"):
+        max_markup = base_markup
+    else:
+        max_markup = fetch_with_retry(max_url)
 
     card_type = parse_card_type(base_markup)
     source_position, position, position_label = parse_position(base_markup)
     meta = {label: get_field(base_markup, label) for label in META_LABELS}
+    if not meta.get("Team Name"):
+        meta["Team Name"] = get_dd(base_markup, "Club")
+    if not meta.get("Foot"):
+        meta["Foot"] = get_dd(base_markup, "Stronger Foot")
+    progression = extract_progression_data(base_markup)
     base_stats = parse_stats(base_markup)
     max_stats = parse_stats(max_markup)
     playing_style, player_skills, ai_playstyles, playing_styles_contract = parse_styles(base_markup)
     position_compatibility = parse_position_compatibility(base_markup)
-    overall = int_or_none(base_stats.get("Overall Rating"))
+    overall = int_or_none(base_stats.get("Overall Rating")) or int_or_none(progression.get("baseOverall"))
+    if not meta.get("Maximum Level") and progression.get("maxLevel") is not None:
+        meta["Maximum Level"] = str(progression.get("maxLevel"))
     source_version = parse_source_version(base_markup)
 
     record = {
@@ -405,7 +614,9 @@ def parse_player(source_player_id, list_url):
         "max_level": int_or_none(meta.get("Maximum Level")),
         "rating": meta.get("Rating"),
         "overall_level_1": overall,
-        "overall_max_level": int_or_none(max_stats.get("Overall Rating")),
+        "overall_max_level": int_or_none(max_stats.get("Overall Rating"))
+        or int_or_none(progression.get("databaseMaxOverall"))
+        or int_or_none(get_dd(base_markup, "Max Overall")),
         "base_stats": {key: value for key, value in base_stats.items() if key != "Overall Rating"},
         "max_stats": {key: value for key, value in max_stats.items() if key != "Overall Rating"},
         "playing_style": playing_style,

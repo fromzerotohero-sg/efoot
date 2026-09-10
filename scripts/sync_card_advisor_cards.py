@@ -18,7 +18,7 @@ from card_advisor_release_gate import (
 )
 
 
-EFHUB_HOME_URL = "https://efhub.com/it"
+EFHUB_HOME_URL = "https://efhub.com/it/new-players"
 HUB_LEGACY_BASE_URL = "https://www.efootballhub.net"
 USER_AGENT = "Mozilla/5.0 (compatible; FromZeroToHeroCardAdvisorSync/1.0)"
 
@@ -105,7 +105,7 @@ def text_by_id(markup, element_id):
 def parse_release_cards(section_markup, release_name):
     cards = []
     pattern = re.compile(
-        r'<a\b[^>]*href="/players/(\d+)"[\s\S]*?'
+        r'<a\b[^>]*href="(?:/[a-z]{2})?/players/(\d+)"[\s\S]*?'
         r'<img\b[^>]*src="([^"]+)"[^>]*alt="([^"]+)"[\s\S]*?'
         r'<span class="text-white"[^>]*>(\d+)</span><span class="text-white"[^>]*>([^<]+)</span>',
         re.S,

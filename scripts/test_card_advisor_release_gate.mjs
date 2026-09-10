@@ -36,6 +36,8 @@ const ALLOW = [
   'National Team Icons vol.3',
   "National Team Rising Stars 2 Jul '26",
   'Spain 2010 Selection',
+  '2026 PFA TOTY',
+  'Gracias, Leo!',
 ]
 
 const DENY = [

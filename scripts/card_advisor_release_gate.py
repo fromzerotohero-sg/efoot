@@ -34,6 +34,8 @@ ALLOW_SUBSTRINGS = (
     "icons",
     "national stars",
     "rising stars",
+    "toty",
+    "gracias",
 )
 
 RELEASE_DATE_RE = re.compile(r"(\d{1,2}\s+[A-Za-z]{3,9}\s+'?\d{2})")
