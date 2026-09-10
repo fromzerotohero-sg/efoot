@@ -5213,6 +5213,7 @@ export default withAuth(function NuovaRosaLabPage() {
           body: JSON.stringify({
             slot_index: targetSlot.slot_index,
             player_id: player.id,
+            slot_position: targetSlot.position || null,
             formation_layout: formationLayoutPayloadFromState(layout)
           })
         })

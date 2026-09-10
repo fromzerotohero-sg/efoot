@@ -20,6 +20,12 @@ function toText(v) {
   return typeof v === 'string' && v.trim().length ? v.trim() : null
 }
 
+function invalidateDiagnosticCache(admin, userId) {
+  admin.from('user_diagnostic_cache').delete().eq('user_id', userId).then(({ error: delErr }) => {
+    if (delErr) console.error('[assign-player-to-slot] Cache invalidation error (non-blocking):', delErr.message)
+  })
+}
+
 export async function PATCH(req) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -68,7 +74,7 @@ export async function PATCH(req) {
       return NextResponse.json({ error: 'Too many requests. Please try again later.', resetAt: rateLimit.resetAt }, { status: 429 })
     }
 
-    let { slot_index, player_id, player_data, formation_layout: formationLayoutSnap } = await req.json()
+    let { slot_index, player_id, player_data, formation_layout: formationLayoutSnap, slot_position: clientSlotPosition } = await req.json()
 
     // Ensure slot_index is a number
     slot_index = Number(slot_index)
@@ -95,7 +101,8 @@ export async function PATCH(req) {
         ? formationLayoutSnap.slot_positions
         : formationLayout?.slot_positions
 
-    const slotPosition = slotPositionsForRole?.[slot_index]?.position || null
+    const layoutSlotPosition = slotPositionsForRole?.[slot_index]?.position || null
+    const slotPosition = toText(clientSlotPosition) || layoutSlotPosition
 
     // Se slot già occupato, libera vecchio giocatore
     const { data: existingPlayerInSlot } = await admin
@@ -285,6 +292,8 @@ export async function PATCH(req) {
         })
       }
 
+      invalidateDiagnosticCache(admin, userId)
+
       return NextResponse.json({
         success: true,
         player_id: player_id,
@@ -376,6 +385,8 @@ export async function PATCH(req) {
           console.error('[assign-player-to-slot] Failed to import aiKnowledgeHelper (non-blocking):', err)
         })
       }
+
+      invalidateDiagnosticCache(admin, userId)
 
       return NextResponse.json({
         success: true,

@@ -12,9 +12,9 @@ import { getPlayerDisplayStats } from '@/lib/playerEffectiveStats'
 import { buildRosterSkillAdvisorySection, formatPlayerSkillContext } from '@/lib/rosterSkillsContext'
 import { localizeSkillTermsInText } from '@/lib/playerSkillLabels.js'
 import { buildCardAvailabilityBlock } from '@/lib/chatCardAvailability'
-import { fieldPositionMatchesCardCompetences } from '@/lib/playerSlotRoleMetadata'
 import { buildLegacyTacticalAiNotice } from '@/lib/efootballV6Rules'
 import { buildFluidFormationState, buildHeroFluidPromptBlock, formatCoachLinkUpsForHeroPrompt, formatHeroFluidContext, prependLiveFluidOverride, prependLiveLinkUpOverride, startersForLinkUpVerification } from '@/lib/efootballV6TacticalModel'
+import { formatDispositionRoles, formatStarterPlacementToken, getPlacementWarningLines, getPlacementWarningTitle } from '@/lib/playerFieldPlacement'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -425,35 +425,6 @@ function normalizeHistory(raw) {
   return out
 }
 
-function formatCompetencePositions(originalPositions) {
-  if (!Array.isArray(originalPositions) || originalPositions.length === 0) return ''
-  return originalPositions
-    .map((p) => {
-      if (typeof p === 'string') return p.trim()
-      if (!p?.position) return ''
-      return p.competence ? `${p.position} ${p.competence}` : p.position
-    })
-    .filter(Boolean)
-    .join(', ')
-}
-
-function getOutOfPositionStarterLines(players, lang = 'it') {
-  const starters = (Array.isArray(players) ? players : [])
-    .filter(p => p?.slot_index != null && p.slot_index >= 0 && p.slot_index <= 10)
-    .sort((a, b) => (Number(a.slot_index) || 0) - (Number(b.slot_index) || 0))
-
-  const lines = []
-  for (const p of starters) {
-    const current = String(p?.position || '').trim().toUpperCase()
-    const originals = Array.isArray(p?.original_positions) ? p.original_positions : []
-    if (!current || originals.length === 0) continue
-    if (fieldPositionMatchesCardCompetences(current, originals)) continue
-    const comp = formatCompetencePositions(originals) || (lang === 'en' ? 'not set' : lang === 'es' ? 'no establecidas' : 'non impostate')
-    const slot = p.slot_index != null ? ` slot ${p.slot_index}` : ''
-    lines.push(`- ${p.player_name || '?'}${slot}: in campo ${current}; competenze card ${comp}`)
-  }
-  return lines
-}
 
 /**
  * Costruisce contesto personale per AI
@@ -506,7 +477,7 @@ const CONTEXT_LABELS = {
     competenceHint: 'Competenze stili TATTICI (chiavi distinte: contrattacco → contropiede_veloce; solo >= 70 consigliabili):',
     boxTitle: 'CONTESTO PERSONALE CLIENTE - DATI REALI DELLA ROSA',
     boxSubtitle: 'USA QUESTI DATI - PERSONALIZZA - CITA NOMI REALI - NON GENERICO',
-    positionNote: 'POSIZIONE: per ogni giocatore vedi "position" (ruolo assegnato in formazione) e "competenze" (posizioni ideali dalla card, es. CC Alta, MED Intermedia). Se position è diverso dalle competenze (es. competenze=CC Alta ma position=DC), CORREGGI: "X è centrocampista (CC) dalla card, non DC. Meglio schierarlo come CC o cambiare ruolo in Gestione Formazione." Siamo noi i coach: non assecondare l\'errore del cliente.',
+    positionNote: 'POSIZIONE: lo slot in cui il cliente ha messo il giocatore è dove STA (riga roster; con Fluida: attacco/difesa). "competenze" sono i ruoli della carta. NON correggere lo schieramento come se fosse un errore. Se manca competenza Alta, sottolinea il compromesso e puoi suggerire il ruolo naturale. Con Fluida, se in attacco è CC non è "un difensore" in questo momento (la difesa è l\'altra fase).',
     statsNote: 'STATS: vel, acc, res, fin, pas, tac (RAG §1). forma:↑=ottima, forma:↓=bassa. h/w=altezza/peso (duelli aerei). ABILITÀ: elencate. Usa stili+stats+abilità+forma+h/w per ragionamento. Ogni dato ha utilità.',
     teamStyle: 'Stile squadra',
     individualInstructions: 'Istruzioni individuali',
@@ -533,7 +504,7 @@ const CONTEXT_LABELS = {
     competenceHint: 'Style competences (contrattacco → contropiede_veloce; only >= 70 advisable):',
     boxTitle: 'PERSONAL CLIENT CONTEXT - REAL ROSA DATA',
     boxSubtitle: 'USE THIS DATA - PERSONALIZE - CITE REAL NAMES - NOT GENERIC',
-    positionNote: 'POSITION: for each player see "position" (assigned role) and "competenze" (ideal positions from card, e.g. CM High, DM Intermediate). If position differs from competenze (e.g. competenze=CM High but position=CB), CORRECT: "X is midfielder (CM) from card, not CB. Better field him as CM or change role in Formation Manager." We are the coaches: do not indulge client errors.',
+    positionNote: 'POSITION: the slot where the client fielded the player is where he IS (roster line; with Fluid: attack/defence). "competenze" are card roles. Do NOT correct the placement as if it were a mistake. If High competence is missing, underline the trade-off and you may suggest the natural card role. With Fluid, if he is CMF in attack he is not "a defender" right now (defence is the other phase).',
     statsNote: 'STATS (if present): vel=Speed, acc=Acceleration, res=Stamina (RAG §1), fin=Finishing, pas=Passing, tac=Tackling. SKILLS: listed in roster. Use styles + stats + skills for tactical reasoning.',
     teamStyle: 'Team style',
     individualInstructions: 'Individual instructions',
@@ -560,7 +531,7 @@ const CONTEXT_LABELS = {
     competenceHint: 'Competencias de estilos TÁCTICOS (contrattacco → contropiede_veloce; solo >= 70 recomendables):',
     boxTitle: 'CONTEXTO PERSONAL DEL CLIENTE - DATOS REALES DE LA PLANTILLA',
     boxSubtitle: 'USA ESTOS DATOS - PERSONALIZA - CITA NOMBRES REALES - NADA GENÉRICO',
-    positionNote: 'POSICIÓN: para cada jugador consulta "position" (rol asignado en formación) y "competenze" (posiciones ideales de la carta, ej. CC Alta, MED Intermedia). Si position difiere de competenze (ej. competenze=CC Alta pero position=DC), CORRIGE: "X es centrocampista (CC) por carta, no DC. Mejor alinearlo como CC o cambiar rol en Gestión Formación." Somos los entrenadores: no consientas el error del cliente.',
+    positionNote: 'POSICIÓN: el slot en el que el cliente alineó al jugador es dónde ESTÁ (línea de plantilla; con Fluida: ataque/defensa). "competenze" son los roles de la carta. NO corrijas la alineación como si fuera un error. Si falta competencia Alta, subraya el compromiso y puedes sugerir el rol natural. Con Fluida, si en ataque es CC no es "un defensa" en este momento (la defensa es la otra fase).',
     statsNote: 'STATS: vel, acc, res, fin, pas, tac (RAG §1). forma:↑=óptima, forma:↓=baja. h/w=altura/peso (duelos aéreos). HABILIDADES: listadas. Usa estilos+stats+habilidades+forma+h/w para razonamiento. Cada dato tiene utilidad.',
     teamStyle: 'Estilo de equipo',
     individualInstructions: 'Instrucciones individuales',
@@ -685,14 +656,10 @@ async function buildPersonalContext(userId, lang = 'it') {
     const riserve = roster.filter(p => p.slot_index == null)
 
     let rosterLines = []
-    const outOfPositionLines = getOutOfPositionStarterLines(titolari, lang)
-    if (outOfPositionLines.length > 0) {
-      rosterLines.push(lang === 'en'
-        ? 'OUT OF POSITION STARTERS (fix FIT before other changes):'
-        : lang === 'es'
-          ? 'TITULARES FUERA DE POSICIÓN (corrige FIT antes de otros cambios):'
-          : 'TITOLARI FUORI POSIZIONE (correggi FIT prima di altri cambi):')
-      rosterLines.push(...outOfPositionLines.map(line => `  ${line}`))
+    const placementWarningLines = getPlacementWarningLines(titolari, lang, clientFluid)
+    if (placementWarningLines.length > 0) {
+      rosterLines.push(getPlacementWarningTitle(lang))
+      rosterLines.push(...placementWarningLines.map(line => `  ${line}`))
     }
     for (const p of titolari) {
       const styleName = getPlayerStyleDisplayName(p, stylesLookup) || (p.playing_style_id && stylesLookup[p.playing_style_id]) || (p.role ? String(p.role).trim() : '') || '-'
@@ -708,7 +675,7 @@ async function buildPersonalContext(userId, lang = 'it') {
       const statsPart = statsStr ? ` | stats: ${statsStr}` : ''
       const extra = [formStr, physStr].filter(Boolean).join(' ')
       const buildSnip = formatBuildCoachSnippet(p, lang)
-      rosterLines.push(`  ${p.player_name || '?'} (${p.position || '?'}, ${styleName}, ${p.overall_rating ?? '-'}${statsPart}${extra ? ' | ' + extra : ''} | profilazione: ${prof}, competenze: ${comp}${skillsStr}${buildSnip})`)
+      rosterLines.push(`  ${p.player_name || '?'} (${formatStarterPlacementToken(p, clientFluid, lang) || '?'}, ${styleName}, ${p.overall_rating ?? '-'}${statsPart}${extra ? ' | ' + extra : ''} | profilazione: ${prof}, competenze: ${comp}${skillsStr}${buildSnip})`)
     }
     const reservesHeader = L.reserves + ':'
     rosterLines.push(reservesHeader)
@@ -739,8 +706,8 @@ async function buildPersonalContext(userId, lang = 'it') {
       .maybeSingle()
     const skillAdvisoryBlock = buildRosterSkillAdvisorySection(roster, gameAnalysisRow, lang)
 
-    // Disposizione reale in campo (da titolari per slot), non dal nome modulo formation
-    const positionsOrdered = titolari.map(p => (p.position || '?').trim() || '?').join(', ')
+    // Disposizione reale in campo (slot cliente; con Fluida: attacco e difesa)
+    const positionsOrdered = formatDispositionRoles(titolari, clientFluid, lang)
     const DEF = ['DC', 'TD', 'TS']
     const MID = ['MED', 'CC', 'TRQ', 'CLS', 'CLD']
     const FWD = ['P', 'SP', 'CF']
@@ -753,10 +720,12 @@ async function buildPersonalContext(userId, lang = 'it') {
       else if (FWD.includes(pos)) counts.fwd += 1
     })
     const summaryParts = []
-    if (counts.pt) summaryParts.push(lang === 'en' ? '1 GK' : lang === 'es' ? '1 PT' : '1 PT')
-    if (counts.def) summaryParts.push(lang === 'en' ? `${counts.def} defenders` : lang === 'es' ? `${counts.def} defensas` : `${counts.def} difensori`)
-    if (counts.mid) summaryParts.push(lang === 'en' ? `${counts.mid} midfield` : lang === 'es' ? `${counts.mid} centrocampo` : `${counts.mid} centrocampo`)
-    if (counts.fwd) summaryParts.push(lang === 'en' ? `${counts.fwd} forwards` : lang === 'es' ? `${counts.fwd} delanteros` : `${counts.fwd} attaccanti`)
+    if (!clientFluid?.enabled) {
+      if (counts.pt) summaryParts.push(lang === 'en' ? '1 GK' : lang === 'es' ? '1 PT' : '1 PT')
+      if (counts.def) summaryParts.push(lang === 'en' ? `${counts.def} defenders` : lang === 'es' ? `${counts.def} defensas` : `${counts.def} difensori`)
+      if (counts.mid) summaryParts.push(lang === 'en' ? `${counts.mid} midfield` : lang === 'es' ? `${counts.mid} centrocampo` : `${counts.mid} centrocampo`)
+      if (counts.fwd) summaryParts.push(lang === 'en' ? `${counts.fwd} forwards` : lang === 'es' ? `${counts.fwd} delanteros` : `${counts.fwd} attaccanti`)
+    }
     const dispositionSummary = summaryParts.length ? ` (${summaryParts.join(', ')})` : ''
     const dispositionLine = `${L.dispositionInField}: ${positionsOrdered || L.formationNotSet}.${dispositionSummary}`
 
@@ -1335,12 +1304,8 @@ export async function POST(req) {
           const liveStyle = tacticalRow?.team_playing_style?.trim()
           const liveInstr = tacticalRow?.individual_instructions
           const numLive = (liveInstr && typeof liveInstr === 'object') ? Object.keys(liveInstr).length : 0
-          const liveFluidText = formatHeroFluidContext({
-            fluid: buildFluidFormationState(liveLayout, liveVariants || []),
-            starters: [],
-            lang
-          })
-          // Risolvi nomi giocatori per istruzioni e segnala fit live: la cache può non evidenziare fuori ruolo recenti.
+          const liveFluid = buildFluidFormationState(liveLayout, liveVariants || [])
+          // Risolvi nomi giocatori per istruzioni, Fluida e avvisi competenza: la cache può essere vecchia.
           let instrLines = ''
           let fitLines = ''
           let livePlayers = []
@@ -1351,17 +1316,9 @@ export async function POST(req) {
               .eq('user_id', userId)
               .limit(23)
             livePlayers = players || []
-            const outOfPosition = getOutOfPositionStarterLines(players || [], lang)
-            if (outOfPosition.length > 0) {
-              fitLines = lang === 'en'
-                ? `\n[LIVE] Out-of-position starters (fix FIT first):\n${outOfPosition.join('\n')}\n`
-                : lang === 'es'
-                  ? `\n[ACTUALIZACIÓN LIVE] Titulares fuera de posición (corrige FIT primero):\n${outOfPosition.join('\n')}\n`
-                  : `\n[AGGIORNAMENTO LIVE] Titolari fuori posizione (correggi FIT prima):\n${outOfPosition.join('\n')}\n`
-            }
             if (liveInstr && typeof liveInstr === 'object') {
               const map = {}
-              ;(players || []).forEach(p => { if (p?.id) map[String(p.id)] = p.player_name || '?' })
+              livePlayers.forEach(p => { if (p?.id) map[String(p.id)] = p.player_name || '?' })
               const entries = Object.entries(liveInstr)
                 .map(([slot, v]) => ({ slot, v }))
                 .filter(({ v }) => v && typeof v === 'object' && v.enabled === true && v.instruction)
@@ -1375,6 +1332,17 @@ export async function POST(req) {
               }
             }
           } catch (_) {}
+          const liveStarters = livePlayers.filter((player) => player?.slot_index != null && Number(player.slot_index) >= 0 && Number(player.slot_index) <= 10)
+          const liveFluidText = formatHeroFluidContext({
+            fluid: liveFluid,
+            starters: liveStarters,
+            lang
+          })
+          const placementWarn = getPlacementWarningLines(liveStarters, lang, liveFluid)
+          if (placementWarn.length > 0) {
+            const liveTag = lang === 'en' ? '[LIVE]' : lang === 'es' ? '[ACTUALIZACIÓN LIVE]' : '[AGGIORNAMENTO LIVE]'
+            fitLines = `\n${liveTag} ${getPlacementWarningTitle(lang)}\n${placementWarn.join('\n')}\n`
+          }
           if (liveStyle || numLive > 0) {
             const liveLine = lang === 'en'
               ? `[LIVE] Team style: ${liveStyle || 'not set'}. Individual instructions: ${numLive} active.${instrLines}\n`
@@ -1388,13 +1356,9 @@ export async function POST(req) {
           personalContextSummary = prependLiveFluidOverride(personalContextSummary, liveFluidText, lang)
           const liveStylesLookup = {}
           ;(stylesData || []).forEach((style) => { liveStylesLookup[style.id] = style.name || '' })
-          const liveFluid = buildFluidFormationState(liveLayout, liveVariants || [])
           const liveLinkUpText = formatCoachLinkUpsForHeroPrompt({
             coach: liveCoach,
-            starters: startersForLinkUpVerification(
-              livePlayers.filter((player) => player?.slot_index != null && Number(player.slot_index) >= 0 && Number(player.slot_index) <= 10),
-              liveFluid
-            ),
+            starters: startersForLinkUpVerification(liveStarters, liveFluid),
             stylesLookup: liveStylesLookup,
             lang
           })

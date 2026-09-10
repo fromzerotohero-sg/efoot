@@ -266,6 +266,12 @@ assert(
     /Diagnostic from cache used[\s\S]*formation_variants[\s\S]*prependLiveFluidOverride/.test(chatSrc),
   'Cached Hero path prepends live Fluid state from formation_variants'
 )
+assert(
+  'cache-path-passes-live-starters-to-fluid',
+  chatSrc.includes('starters: liveStarters') &&
+    !/formatHeroFluidContext\(\{[\s\S]*?starters:\s*\[\]/.test(chatSrc),
+  'Cached Hero Fluid overlay uses live starters, not empty names'
+)
 
 const emptyCoachBlock = formatCoachLinkUpsForHeroPrompt({
   coach: { coach_name: 'Antonio Conte', playing_style_competence: { Quick_Counter: 90, Possession: 89 } },

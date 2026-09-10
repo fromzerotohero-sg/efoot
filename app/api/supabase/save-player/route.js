@@ -432,6 +432,11 @@ export async function POST(req) {
           })
         }
 
+        // Invalida diagnostic cache (rosa cambiata → cache stale)
+        admin.from('user_diagnostic_cache').delete().eq('user_id', userId).then(({ error: delErr }) => {
+          if (delErr) console.error('[save-player] Cache invalidation error (non-blocking):', delErr.message)
+        })
+
         return NextResponse.json({
           success: true,
           player_id: updated.id,
