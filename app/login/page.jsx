@@ -45,15 +45,15 @@ export default function LoginPage() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: '#03050c',
+      background: 'var(--shell-bg)',
       padding: '24px'
     }}>
       <div style={{
         width: '100%',
         maxWidth: '400px',
         padding: '40px',
-        background: 'rgba(5, 8, 20, 0.8)',
-        border: '1px solid rgba(0, 212, 255, 0.3)',
+        background: 'var(--surface)',
+        border: '1px solid var(--info-border)',
         borderRadius: '12px',
         boxShadow: 'var(--shadow-lg)',
         textAlign: 'center'
@@ -63,14 +63,14 @@ export default function LoginPage() {
           <h1 style={{
             fontSize: '28px',
             fontWeight: 600,
-            color: '#FFFFFF',
+            color: 'var(--text-main)',
             marginBottom: '8px'
           }}>
             Login
           </h1>
           <p style={{
             fontSize: '14px',
-            color: 'rgba(0, 212, 255, 0.7)',
+            color: 'var(--info)',
             margin: 0
           }}>
             From Zero to Hero
@@ -150,7 +150,7 @@ export default function LoginPage() {
         {loading && (
           <div style={{ marginTop: '20px' }}>
             <p style={{
-              color: 'rgba(0, 212, 255, 0.7)',
+              color: 'var(--info)',
               fontSize: '14px',
               margin: 0
             }}>

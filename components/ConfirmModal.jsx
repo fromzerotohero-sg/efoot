@@ -89,7 +89,7 @@ export default function ConfirmModal({
           display: flex;
           gap: 10px;
           flex-shrink: 0;
-          border-top: 1px solid rgba(255, 255, 255, 0.06);
+          border-top: 1px solid var(--border-soft);
         }
         .confirm-modal-actions button {
           min-height: 48px;
@@ -192,7 +192,7 @@ export default function ConfirmModal({
               <p
                 style={{
                   fontSize: 'clamp(13px, 3.6vw, 15px)',
-                  color: 'rgba(0, 212, 255, 0.7)',
+                  color: 'var(--info)',
                   marginBottom: 0,
                   lineHeight: 1.55,
                   whiteSpace: 'pre-line',

@@ -213,7 +213,7 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
             type="button"
             onClick={() => !loading && onClose?.()}
             disabled={loading}
-            style={{ background: 'transparent', border: 'none', color: 'rgba(255, 255, 255, 0.7)', cursor: loading ? 'not-allowed' : 'pointer', padding: '8px', opacity: loading ? 0.5 : 1, minWidth: 44, minHeight: 44 }}
+            style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: loading ? 'not-allowed' : 'pointer', padding: '8px', opacity: loading ? 0.5 : 1, minWidth: 44, minHeight: 44 }}
             aria-label={t('close')}
           >
             <X size={20} />
@@ -237,7 +237,7 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
               borderRadius: '12px',
               border: '1px solid rgba(255, 191, 0, 0.35)',
               background: 'rgba(255, 191, 0, 0.08)',
-              color: '#ffd76a',
+              color: 'var(--gold-text)',
               fontSize: '12px',
               lineHeight: 1.45,
               textAlign: 'center'
@@ -266,7 +266,7 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
             {ANALYSIS_EXAMPLE_IMAGES.map((item) => (
               <div key={item.key} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.76)', textAlign: 'center' }}>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center' }}>
                   {t(item.slotLabel)}
                 </div>
                 <img
@@ -277,7 +277,7 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
                     aspectRatio: '16 / 9',
                     objectFit: 'cover',
                     borderRadius: '10px',
-                    border: '1px solid rgba(255,255,255,0.12)'
+                    border: '1px solid var(--border-soft)'
                   }}
                 />
               </div>
@@ -321,7 +321,7 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
                         </button>
                       </div>
                       <img src={value.dataUrl} alt={t(labelKey)} style={{ width: '100%', maxHeight: '160px', objectFit: 'cover', borderRadius: '12px', marginBottom: '12px', border: '1px solid rgba(0,212,255,0.3)' }} />
-                      <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>{t('uploadedPhotoLabel')}</span>
+                      <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{t('uploadedPhotoLabel')}</span>
                     </>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -361,11 +361,11 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
                           <Camera size={20} style={{ color, flexShrink: 0, filter: 'drop-shadow(0 0 5px rgba(0,212,255,0.35))' }} />
                           <span style={{ fontSize: '15px', fontWeight: 600, color }}>{t('cameraCaptureTitle')}</span>
                         </label>
-                        <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)', fontWeight: 500, width: '100%' }}>Non caricata</span>
+                        <span style={{ fontSize: '14px', color: 'var(--text-dim)', fontWeight: 500, width: '100%' }}>Non caricata</span>
                       </div>
                       <div style={{ marginTop: '8px' }}>
                         <div style={{ fontSize: '16px', fontWeight: 700, color, marginBottom: '4px', textShadow: '0 0 10px rgba(0,212,255,0.2)' }}>{t(labelKey)}</div>
-                        <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>{t(descKey)}</div>
+                        <div style={{ fontSize: '13px', color: 'var(--text-dim)' }}>{t(descKey)}</div>
                       </div>
                     </div>
                   )}
@@ -389,7 +389,7 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
             </p>
           )}
 
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '20px', marginTop: '20px' }}>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap', borderTop: '1px solid var(--border-soft)', paddingTop: '20px', marginTop: '20px' }}>
             <div style={{ marginRight: 'auto', fontSize: '13px', opacity: 0.7 }}>
               {!hasAny
                 ? t('gameAnalysisNoImage')

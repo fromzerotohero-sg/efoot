@@ -133,7 +133,7 @@ export default function InstallAppPrompt() {
           justify-content: center;
           font-size: 13px;
           font-weight: 700;
-          color: var(--surface);
+          color: var(--gold-ink);
           background: linear-gradient(135deg, var(--primary-gold), var(--primary-teal));
         }
       `}</style>
@@ -185,9 +185,9 @@ export default function InstallAppPrompt() {
               width: 36,
               height: 36,
               borderRadius: 10,
-              border: '1px solid rgba(255,255,255,0.12)',
-              background: 'rgba(255,255,255,0.06)',
-              color: 'rgba(255,255,255,0.7)',
+              border: '1px solid var(--border-soft)',
+              background: 'var(--surface-2)',
+              color: 'var(--text-secondary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -213,7 +213,7 @@ export default function InstallAppPrompt() {
                   width: 72,
                   height: 72,
                   borderRadius: 18,
-                  background: '#fff',
+                  background: '#101a20',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -242,13 +242,13 @@ export default function InstallAppPrompt() {
                 >
                   {t('pwaInstallTitle')}
                 </h2>
-                <p style={{ margin: '6px 0 0', fontSize: 13, color: 'rgba(0, 212, 255, 0.75)', lineHeight: 1.45 }}>
+                <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--info)', lineHeight: 1.45 }}>
                   {t('pwaInstallSubtitle')}
                 </p>
               </div>
             </div>
 
-            <p style={{ margin: '0 0 14px', fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>
+            <p style={{ margin: '0 0 14px', fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.5 }}>
               {t('pwaInstallBenefit')}
             </p>
 
@@ -259,14 +259,14 @@ export default function InstallAppPrompt() {
                   <div key={index} className="pwa-install-step">
                     <span className="pwa-install-step-num">{index + 1}</span>
                     <StepIcon size={20} style={{ flexShrink: 0, marginTop: 2, color: 'var(--accent)' }} />
-                    <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.88)', lineHeight: 1.45 }}>{step.text}</span>
+                    <span style={{ fontSize: 14, color: 'var(--text-main)', lineHeight: 1.45 }}>{step.text}</span>
                   </div>
                 )
               })}
             </div>
 
             {isIos && (
-              <p style={{ margin: '12px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.45 }}>
+              <p style={{ margin: '12px 0 0', fontSize: 12, color: 'var(--text-dim)', lineHeight: 1.45 }}>
                 {t('pwaInstallIosHint')}
               </p>
             )}
@@ -276,7 +276,7 @@ export default function InstallAppPrompt() {
             style={{
               flexShrink: 0,
               padding: '12px 20px max(16px, env(safe-area-inset-bottom, 0px))',
-              borderTop: '1px solid rgba(255,255,255,0.06)',
+              borderTop: '1px solid var(--border-soft)',
             }}
           >
             {showAndroidInstall ? (

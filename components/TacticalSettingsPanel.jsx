@@ -85,7 +85,7 @@ export default function TacticalSettingsPanel({
   return (
     <div className="neon-card" style={{
       marginBottom: '24px',
-      background: 'rgba(10, 14, 39, 0.95)',
+      background: 'var(--surface)',
       border: '1px solid rgba(0, 212, 255, 0.3)',
       borderRadius: '10px',
       overflow: 'hidden'
@@ -154,7 +154,7 @@ export default function TacticalSettingsPanel({
           fontSize: 'clamp(12px, 1.3vw, 13px)',
           fontWeight: 600,
           marginBottom: '6px',
-          color: '#fff',
+          color: 'var(--text-main)',
           opacity: 0.9
         }}>
           {t('teamPlayingStyle')}
@@ -167,10 +167,10 @@ export default function TacticalSettingsPanel({
               width: '100%',
               padding: '10px 12px',
               paddingRight: '40px',
-              background: 'rgba(10, 14, 39, 0.8)',
+              background: 'var(--inset-bg)',
               border: '1px solid var(--neon-blue)',
               borderRadius: '8px',
-              color: '#fff',
+              color: 'var(--text-main)',
               fontSize: 'clamp(13px, 1.5vw, 15px)',
               cursor: 'pointer',
               appearance: 'none',
@@ -262,10 +262,10 @@ export default function TacticalSettingsPanel({
                       width: '100%',
                       padding: '8px 12px',
                       paddingRight: '35px',
-                      background: 'rgba(10, 14, 39, 0.8)',
+                      background: 'var(--inset-bg)',
                       border: '1px solid var(--neon-blue)',
                       borderRadius: '6px',
-                      color: '#fff',
+                      color: 'var(--text-main)',
                       fontSize: 'clamp(12px, 1.3vw, 14px)',
                       cursor: 'pointer',
                       appearance: 'none',
@@ -313,12 +313,10 @@ export default function TacticalSettingsPanel({
                       width: '100%',
                       padding: '8px 12px',
                       paddingRight: '35px',
-                      background: compatiblePlayers.length === 0 
-                        ? 'rgba(10, 14, 39, 0.4)' 
-                        : 'rgba(10, 14, 39, 0.8)',
+                      background: 'var(--inset-bg)',
                       border: '1px solid var(--neon-blue)',
                       borderRadius: '6px',
-                      color: compatiblePlayers.length === 0 ? 'rgba(255, 255, 255, 0.5)' : '#fff',
+                      color: compatiblePlayers.length === 0 ? 'var(--text-dim)' : 'var(--text-main)',
                       fontSize: 'clamp(12px, 1.3vw, 14px)',
                       cursor: compatiblePlayers.length === 0 ? 'not-allowed' : 'pointer',
                       appearance: 'none',

@@ -31,19 +31,19 @@ function getResultTone(result) {
   if (numeric) {
     const scored = parseInt(numeric[1], 10)
     const conceded = parseInt(numeric[2], 10)
-    if (scored > conceded) return { label: 'win', color: '#15803d', bg: 'rgba(39,167,106,0.12)', border: 'rgba(39,167,106,0.28)' }
-    if (scored < conceded) return { label: 'loss', color: '#b91c1c', bg: 'rgba(217,83,95,0.12)', border: 'rgba(217,83,95,0.28)' }
+    if (scored > conceded) return { label: 'win', color: 'var(--success-text)', bg: 'rgba(39,167,106,0.12)', border: 'rgba(39,167,106,0.28)' }
+    if (scored < conceded) return { label: 'loss', color: 'var(--danger-text)', bg: 'rgba(217,83,95,0.12)', border: 'rgba(217,83,95,0.28)' }
   }
 
   const upper = value.toUpperCase()
   if (upper.includes('VITTORIA') || upper.includes('WIN')) {
-    return { label: 'win', color: '#86efac', bg: 'rgba(34,197,94,0.16)', border: 'rgba(34,197,94,0.36)' }
+    return { label: 'win', color: 'var(--success-text)', bg: 'rgba(34,197,94,0.16)', border: 'rgba(34,197,94,0.36)' }
   }
   if (upper.includes('SCONFITTA') || upper.includes('LOSS')) {
-    return { label: 'loss', color: '#fca5a5', bg: 'rgba(239,68,68,0.16)', border: 'rgba(239,68,68,0.36)' }
+    return { label: 'loss', color: 'var(--danger-text)', bg: 'rgba(239,68,68,0.16)', border: 'rgba(239,68,68,0.36)' }
   }
 
-  return { label: 'draw', color: '#facc15', bg: 'rgba(250,204,21,0.14)', border: 'rgba(250,204,21,0.34)' }
+  return { label: 'draw', color: 'var(--gold-text)', bg: 'rgba(250,204,21,0.14)', border: 'rgba(250,204,21,0.34)' }
 }
 
 const MATCH_LIST_PAGE_SIZE = 10
@@ -547,8 +547,16 @@ export default function MatchHistoryPage() {
         .empty-state,
         .history-error,
         .history-loading {
-          border: 1px solid rgba(0, 0, 0, 0.08);
+          border: 1px solid var(--border-soft);
           background: var(--surface);
+          box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35), inset 0 1px rgba(255, 255, 255, 0.06);
+        }
+
+        :global(html[data-theme='light']) .history-hero,
+        :global(html[data-theme='light']) .match-card,
+        :global(html[data-theme='light']) .empty-state,
+        :global(html[data-theme='light']) .history-error,
+        :global(html[data-theme='light']) .history-loading {
           box-shadow: 0 14px 36px rgba(29, 29, 31, 0.07), inset 0 1px rgba(255, 255, 255, 0.9);
         }
 
@@ -606,7 +614,7 @@ export default function MatchHistoryPage() {
         .hero-copy p {
           max-width: 680px;
           margin: 14px 0 0;
-          color: #6b6b6b;
+          color: var(--text-dim);
           font-size: clamp(15px, 2vw, 17px);
           line-height: 1.55;
         }
@@ -628,7 +636,7 @@ export default function MatchHistoryPage() {
           border-radius: 16px;
           padding: 14px;
           background: var(--surface-2);
-          border: 1px solid rgba(0, 0, 0, 0.08);
+          border: 1px solid var(--border-soft);
         }
 
         .hero-stats span {
@@ -641,7 +649,7 @@ export default function MatchHistoryPage() {
         .hero-stats small {
           display: block;
           margin-top: 4px;
-          color: #6b6b6b;
+          color: var(--text-dim);
           font-size: 12px;
           line-height: 1.25;
           font-weight: 800;
@@ -686,7 +694,7 @@ export default function MatchHistoryPage() {
 
         .match-list-meta {
           margin: 0;
-          color: #6b6b6b;
+          color: var(--text-dim);
           font-size: 13px;
           font-weight: 800;
           letter-spacing: 0.2px;
@@ -702,7 +710,7 @@ export default function MatchHistoryPage() {
           border-radius: 14px;
           border: 1px solid rgba(0, 212, 255, 0.34);
           background: rgba(0, 212, 255, 0.08);
-          color: #7dd3fc;
+          color: var(--info-text);
           font-size: 14px;
           font-weight: 900;
           cursor: pointer;
@@ -726,7 +734,7 @@ export default function MatchHistoryPage() {
           gap: 10px;
           margin-bottom: 16px;
           border-color: rgba(239, 68, 68, 0.38);
-          color: #fca5a5;
+          color: var(--danger-text);
           border-radius: 14px;
           padding: 14px 16px;
         }
@@ -741,7 +749,7 @@ export default function MatchHistoryPage() {
           justify-content: center;
           gap: 14px;
           text-align: center;
-          color: #6b6b6b;
+          color: var(--text-dim);
         }
 
         .empty-state {
@@ -756,7 +764,7 @@ export default function MatchHistoryPage() {
           place-items: center;
           background: rgba(0, 212, 255, 0.11);
           border: 1px solid rgba(0, 212, 255, 0.22);
-          color: #7dd3fc;
+          color: var(--info-text);
         }
 
         .empty-state h2 {
@@ -768,7 +776,7 @@ export default function MatchHistoryPage() {
         .empty-state p {
           max-width: 520px;
           margin: 0;
-          color: #6b6b6b;
+          color: var(--text-dim);
           line-height: 1.55;
         }
 
@@ -821,7 +829,7 @@ export default function MatchHistoryPage() {
           place-items: center;
           background: rgba(0, 212, 255, 0.09);
           border: 1px solid rgba(0, 212, 255, 0.18);
-          color: #7dd3fc;
+          color: var(--info-text);
           font-weight: 950;
         }
 
@@ -862,19 +870,19 @@ export default function MatchHistoryPage() {
         }
 
         .date-pill {
-          color: #6b6b6b;
+          color: var(--text-dim);
           background: var(--surface-2);
-          border: 1px solid rgba(0, 0, 0, 0.08);
+          border: 1px solid var(--border-soft);
         }
 
         .completion-pill.complete {
-          color: #86efac;
+          color: var(--success-text);
           background: rgba(34,197,94,0.13);
           border: 1px solid rgba(34,197,94,0.32);
         }
 
         .completion-pill.partial {
-          color: #facc15;
+          color: var(--gold-text);
           background: rgba(250,204,21,0.12);
           border: 1px solid rgba(250,204,21,0.3);
         }
@@ -899,7 +907,7 @@ export default function MatchHistoryPage() {
         }
 
         .field-label {
-          color: #9b9b9b;
+          color: var(--text-dim);
           text-transform: uppercase;
           letter-spacing: 0.7px;
           font-size: 11px;
@@ -927,7 +935,7 @@ export default function MatchHistoryPage() {
         }
 
         .opponent-display svg {
-          color: #7dd3fc;
+          color: var(--info-text);
           opacity: 0.78;
           flex-shrink: 0;
         }
@@ -967,15 +975,15 @@ export default function MatchHistoryPage() {
         }
 
         .icon-action {
-          border: 1px solid rgba(0, 0, 0, 0.08);
+          border: 1px solid var(--border-soft);
           background: var(--surface-2);
-          color: #d1d5db;
+          color: var(--text-secondary);
         }
 
         .icon-action.save {
           border-color: rgba(34,197,94,0.34);
           background: rgba(34,197,94,0.14);
-          color: #86efac;
+          color: var(--success-text);
         }
 
         .score-pill {
@@ -1028,7 +1036,7 @@ export default function MatchHistoryPage() {
           border: 1px solid rgba(0, 212, 255, 0.25);
           border-radius: 12px;
           background: rgba(0, 212, 255, 0.1);
-          color: #7dd3fc;
+          color: var(--info-text);
           padding: 0 14px;
           font-weight: 900;
           cursor: pointer;
@@ -1037,7 +1045,7 @@ export default function MatchHistoryPage() {
         .delete-button {
           border: 1px solid rgba(239,68,68,0.26);
           background: rgba(239,68,68,0.1);
-          color: #fca5a5;
+          color: var(--danger-text);
         }
 
         .details-button:hover,

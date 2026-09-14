@@ -6447,6 +6447,10 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-page {
+          color: #f4f6f7;
+        }
+
+        .nr-page {
           width: min(1440px, 100%);
           margin: 0 auto;
           padding: clamp(18px, 3vw, 32px);

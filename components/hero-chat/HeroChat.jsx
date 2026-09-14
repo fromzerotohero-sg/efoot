@@ -733,6 +733,7 @@ export default function HeroChat({
   const feedRef = React.useRef(null)
   const cameraInputRef = React.useRef(null)
   const galleryInputRef = React.useRef(null)
+  const autoCounterAnalyzeRef = React.useRef(false)
   const stickToBottomRef = React.useRef(true)
   const pendingScrollRef = React.useRef(false)
 
@@ -1275,8 +1276,12 @@ export default function HeroChat({
         setMessages((prev) => [...prev, { role: 'hero', content: L(lang, COPY.attachError), kind: 'error' }])
       }
     }
-    setAttachments(next.slice(0, maxFiles))
-  }, [attachments, lang, matchFlow])
+    const nextAttachments = next.slice(0, maxFiles)
+    setAttachments(nextAttachments)
+    if (attachmentMode === 'counter' && nextAttachments.length > 0) {
+      autoCounterAnalyzeRef.current = true
+    }
+  }, [attachments, attachmentMode, lang, matchFlow])
 
   const removeAttachment = React.useCallback((id) => {
     setAttachments((prev) => prev.filter((a) => a.id !== id))
@@ -1653,6 +1658,7 @@ export default function HeroChat({
         )
         setCounterConfirmDraft(draft)
         setAttachments([])
+        setActiveWorkflowId(null)
         const confirmMessage = {
           role: 'hero',
           content: '',
@@ -1720,6 +1726,18 @@ export default function HeroChat({
     onStatsSuccess,
     persistMessages
   ])
+
+  React.useEffect(() => {
+    if (
+      attachmentMode !== 'counter'
+      || !autoCounterAnalyzeRef.current
+      || !attachments.length
+      || attachAnalyzing
+    ) return
+
+    autoCounterAnalyzeRef.current = false
+    void analyzeAttachments()
+  }, [analyzeAttachments, attachAnalyzing, attachmentMode, attachments])
 
   const openFeedCard = (cardId) => {
     setFeedCards((prev) => (prev.includes(cardId) ? prev : [...prev, cardId]))
@@ -1930,7 +1948,7 @@ export default function HeroChat({
                     ))}
                   </div>
                 )}
-                {attachments.length < MAX_ATTACH && (
+                {(attachmentMode !== 'counter' || attachments.length === 0) && attachments.length < MAX_ATTACH && (
                   <div className="hc-attachAddRow">
                     <button type="button" className="hc-attachAdd" onClick={() => cameraInputRef.current?.click()}>
                       <Camera size={14} aria-hidden="true" />
@@ -1942,16 +1960,18 @@ export default function HeroChat({
                     </button>
                   </div>
                 )}
-                <button
-                  type="button"
-                  className="hc-attachAnalyze"
-                  disabled={!attachments.length || attachAnalyzing || lowHp}
-                  onClick={analyzeAttachments}
-                >
-                  {attachAnalyzing
-                    ? (attachmentMode === 'counter' ? L(lang, COPY.counterAnalyzing) : L(lang, COPY.attachAnalyzing))
-                    : (attachmentMode === 'counter' ? L(lang, COPY.counterAnalyze) : L(lang, COPY.attachAnalyze))}
-                </button>
+                {attachmentMode !== 'counter' && (
+                  <button
+                    type="button"
+                    className="hc-attachAnalyze"
+                    disabled={!attachments.length || attachAnalyzing || lowHp}
+                    onClick={analyzeAttachments}
+                  >
+                    {attachAnalyzing
+                      ? L(lang, COPY.attachAnalyzing)
+                      : L(lang, COPY.attachAnalyze)}
+                  </button>
+                )}
               </div>
             )
           }

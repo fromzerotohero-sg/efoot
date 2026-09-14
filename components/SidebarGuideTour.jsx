@@ -135,27 +135,27 @@ export default function SidebarGuideTour({ onClick }) {
         fontSize: '14px',
         fontWeight: 600,
         background: 'transparent',
-        color: 'rgba(255, 255, 255, 0.6)',
+        color: 'var(--text-dim)',
         border: '1px solid transparent',
         cursor: 'pointer',
         transition: 'all 0.3s ease',
         textAlign: 'left'
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)'
-        e.currentTarget.style.color = '#00d4ff'
-        e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.25)'
+        e.currentTarget.style.background = 'var(--info-bg)'
+        e.currentTarget.style.color = 'var(--info)'
+        e.currentTarget.style.borderColor = 'var(--info-border)'
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.background = 'transparent'
-        e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)'
+        e.currentTarget.style.color = 'var(--text-dim)'
         e.currentTarget.style.borderColor = 'transparent'
       }}
     >
       {hasNewGuide ? (
-        <Sparkles size={18} style={{ color: '#00d4ff' }} />
+        <Sparkles size={18} style={{ color: 'var(--info)' }} />
       ) : (
-        <Compass size={18} style={{ color: '#00d4ff' }} />
+        <Compass size={18} style={{ color: 'var(--info)' }} />
       )}
       <span>{running ? (lang === 'en' ? 'Loading...' : 'Caricamento...') : t('tourShowMeHow')}</span>
     </button>

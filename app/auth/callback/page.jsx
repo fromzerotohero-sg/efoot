@@ -143,15 +143,15 @@ function AuthCallbackContent() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%)',
+      background: 'var(--shell-bg)',
       padding: '24px'
     }}>
       <div className="neon-panel" style={{
         width: '100%',
         maxWidth: '420px',
         padding: '32px',
-        background: 'rgba(10, 14, 39, 0.95)',
-        border: '1px solid rgba(0, 212, 255, 0.3)',
+        background: 'var(--surface)',
+        border: '1px solid var(--info-border)',
         borderRadius: '16px',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
         textAlign: 'center'
@@ -162,7 +162,7 @@ function AuthCallbackContent() {
               width: '60px',
               height: '60px',
               margin: '0 auto 24px',
-              border: '3px solid rgba(0, 212, 255, 0.2)',
+              border: '3px solid var(--info-border)',
               borderTopColor: 'var(--neon-blue)',
               borderRadius: '50%',
               animation: 'spin 0.8s linear infinite'
@@ -177,7 +177,7 @@ function AuthCallbackContent() {
             </h2>
             <p style={{
               fontSize: '16px',
-              color: 'rgba(255, 255, 255, 0.7)',
+              color: 'var(--text-secondary)',
               margin: 0
             }}>
               Verifying your Metalgate account...
@@ -198,7 +198,7 @@ function AuthCallbackContent() {
             </h2>
             <p style={{
               fontSize: '16px',
-              color: 'rgba(255, 255, 255, 0.7)',
+              color: 'var(--text-secondary)',
               margin: 0
             }}>
               Redirecting to your dashboard...
@@ -219,7 +219,7 @@ function AuthCallbackContent() {
             </h2>
             <p style={{
               fontSize: '16px',
-              color: 'rgba(255, 255, 255, 0.7)',
+              color: 'var(--text-secondary)',
               margin: '0 0 24px 0'
             }}>
               {error}
@@ -301,8 +301,8 @@ export default function AuthCallbackPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#050814',
-        color: 'white'
+        background: 'var(--shell-bg)',
+        color: 'var(--text-main)'
       }}>
         Loading...
       </div>

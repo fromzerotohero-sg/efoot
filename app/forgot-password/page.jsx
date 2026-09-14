@@ -58,7 +58,7 @@ export default function ForgotPasswordPage() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%)',
+      background: 'var(--shell-bg)',
       padding: '24px'
     }}>
 
@@ -66,8 +66,8 @@ export default function ForgotPasswordPage() {
         width: '100%',
         maxWidth: '420px',
         padding: '32px',
-        background: 'rgba(10, 14, 39, 0.95)',
-        border: '1px solid rgba(0, 212, 255, 0.3)',
+        background: 'var(--surface)',
+        border: '1px solid var(--info-border)',
         borderRadius: '16px',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)'
       }}>
@@ -75,7 +75,7 @@ export default function ForgotPasswordPage() {
           <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--neon-blue)', marginBottom: '8px' }}>
             {t('forgotPasswordTitle')}
           </h1>
-          <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)', margin: 0 }}>
+          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0 }}>
             {t('forgotPasswordDescription')}
           </p>
         </div>
@@ -119,11 +119,11 @@ export default function ForgotPasswordPage() {
         {!success && (
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.9)', marginBottom: '8px' }}>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '8px' }}>
                 {t('email')}
               </label>
               <div style={{ position: 'relative' }}>
-                <Mail size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255, 255, 255, 0.5)' }} />
+                <Mail size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
                 <input
                   type="email"
                   value={email}
@@ -135,10 +135,10 @@ export default function ForgotPasswordPage() {
                   style={{
                     width: '100%',
                     padding: '12px 12px 12px 40px',
-                    background: 'rgba(0, 0, 0, 0.3)',
-                    border: '1px solid rgba(0, 212, 255, 0.2)',
+                    background: 'var(--inset-bg)',
+                    border: '1px solid var(--info-border)',
                     borderRadius: '8px',
-                    color: '#fff',
+                    color: 'var(--text-main)',
                     fontSize: '14px',
                     outline: 'none'
                   }}
@@ -166,7 +166,7 @@ export default function ForgotPasswordPage() {
           </form>
         )}
 
-        <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid rgba(0, 212, 255, 0.2)', textAlign: 'center' }}>
+        <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--info-border)', textAlign: 'center' }}>
           <Link
             href="/login"
             style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: 'var(--neon-blue)', fontSize: '14px', textDecoration: 'none' }}

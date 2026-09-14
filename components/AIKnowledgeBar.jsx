@@ -288,7 +288,7 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
               <stop offset="100%" stopColor="#27A76A" />
             </linearGradient>
           </defs>
-          <circle cx={center} cy={center} r={gaugeRadius} fill="none" stroke={light ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.07)'} strokeWidth={compact || variant === 'row' ? 7 : 10} />
+          <circle cx={center} cy={center} r={gaugeRadius} fill="none" stroke={light ? 'var(--border-soft)' : 'var(--border-softer)'} strokeWidth={compact || variant === 'row' ? 7 : 10} />
           <circle
             cx={center}
             cy={center}
@@ -304,7 +304,7 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
           />
         </svg>
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ fontSize: light ? '18px' : '26px', fontWeight: 800, color: light ? '#1D1D1F' : '#F7FAFC', lineHeight: 1 }}>
+          <span style={{ fontSize: light ? '18px' : '26px', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1 }}>
             {scoreLabel}
           </span>
         </div>
@@ -352,18 +352,18 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
             }}>
               <Brain size={16} aria-hidden="true" />
             </span>
-            <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, color: '#1D1D1F' }}>{title}</span>
-            <span style={{ fontSize: 15, fontWeight: 800, color: '#1D1D1F', fontVariantNumeric: 'tabular-nums' }}>{scoreLabel}</span>
+            <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, color: 'var(--text-main)' }}>{title}</span>
+            <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-main)', fontVariantNumeric: 'tabular-nums' }}>{scoreLabel}</span>
             <ChevronDown
               size={16}
               aria-hidden="true"
-              style={{ color: '#9B9B9B', transform: rowOpen ? 'rotate(180deg)' : 'none', transition: 'transform 160ms ease' }}
+              style={{ color: 'var(--text-dim)', transform: rowOpen ? 'rotate(180deg)' : 'none', transition: 'transform 160ms ease' }}
             />
           </button>
           {rowOpen ? (
             <div style={{ padding: '4px 16px 16px', textAlign: 'center' }}>
               {gaugeVisual}
-              <p style={{ margin: '10px 0 0', fontSize: 12, lineHeight: 1.45, color: '#6B6B6B' }}>{sub}</p>
+              <p style={{ margin: '10px 0 0', fontSize: 12, lineHeight: 1.45, color: 'var(--text-dim)' }}>{sub}</p>
             </div>
           ) : null}
         </>
@@ -374,7 +374,7 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: compact ? '6px' : '10px', padding: '4px 0' }}>
         {gaugeVisual}
         {!compact ? (
-          <span style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.55)' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-dim)' }}>
             {pickLang(lang, { it: 'Livello conoscenza', en: 'Knowledge level', es: 'Nivel de conocimiento' })}
           </span>
         ) : null}
@@ -390,10 +390,10 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
             <RefreshCw size={24} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
           </div>
           <div>
-            <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>
+            <div style={{ fontSize: '14px', color: 'var(--text-dim)', marginBottom: '4px' }}>
               {t('loading')}
             </div>
-            <div style={{ fontSize: '18px', fontWeight: '600', color: 'rgba(255,255,255,0.8)' }}>
+            <div style={{ fontSize: '18px', fontWeight: '600', color: 'var(--text-secondary)' }}>
               {t('loadingShort') || 'Loading...'}
             </div>
           </div>
@@ -496,7 +496,7 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
                 style={{
                   ...styles.marker,
                   left: `${mark}%`,
-                  background: score >= mark ? currentLevel.color : 'rgba(255,255,255,0.2)',
+                  background: score >= mark ? currentLevel.color : 'var(--border-strong)',
                   boxShadow: score >= mark ? `0 0 10px ${currentLevel.glow}` : 'none'
                 }}
               />
@@ -532,11 +532,11 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
 const styles = {
   card: {
     position: 'relative',
-    background: 'linear-gradient(145deg, rgba(6, 12, 30, 0.92), rgba(13, 18, 43, 0.86))',
+    background: 'var(--surface)',
     backdropFilter: 'blur(20px)',
     WebkitBackdropFilter: 'blur(20px)',
     borderRadius: '24px',
-    border: '1px solid rgba(0, 212, 255, 0.28)',
+    border: '1px solid var(--info-border)',
     overflow: 'hidden',
     marginBottom: '18px',
     boxShadow: '0 24px 70px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255,255,255,0.08)',
@@ -598,7 +598,7 @@ const styles = {
   subtitle: {
     margin: 0,
     maxWidth: '420px',
-    color: 'rgba(255,255,255,0.66)',
+    color: 'var(--text-secondary)',
     fontSize: '13px',
     lineHeight: 1.45,
   },
@@ -641,7 +641,7 @@ const styles = {
     width: '15px',
     height: '15px',
     borderRadius: '50%',
-    border: '2px solid rgba(10, 14, 28, 0.8)',
+    border: '2px solid var(--surface)',
   },
   scoreRow: {
     display: 'flex',
@@ -657,7 +657,7 @@ const styles = {
   },
   scoreValue: {
     fontWeight: '800',
-    background: 'linear-gradient(180deg, #FFFFFF 0%, rgba(255,255,255,0.7) 100%)',
+    background: 'linear-gradient(180deg, var(--text-main) 0%, var(--text-secondary) 100%)',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
     backgroundClip: 'text',
@@ -666,7 +666,7 @@ const styles = {
   },
   scorePercent: {
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.5)',
+    color: 'var(--text-dim)',
   },
   scoreLabel: {
     display: 'inline-flex',
@@ -675,7 +675,7 @@ const styles = {
     padding: '6px 10px',
     border: '1px solid',
     borderRadius: '999px',
-    background: 'rgba(255,255,255,0.045)',
+    background: 'var(--surface-2)',
     fontSize: '12px',
     fontWeight: '800',
     whiteSpace: 'nowrap',
@@ -686,7 +686,7 @@ const styles = {
   progressTrack: {
     width: '100%',
     height: '9px',
-    backgroundColor: 'rgba(2, 6, 18, 0.74)',
+    backgroundColor: 'var(--surface)',
     borderRadius: '999px',
     overflow: 'hidden',
     position: 'relative',
@@ -723,7 +723,7 @@ const styles = {
     height: '12px',
     borderRadius: '50%',
     transform: 'translateX(-50%)',
-    border: '2px solid rgba(10, 14, 28, 0.8)',
+    border: '2px solid var(--surface)',
     transition: 'all 0.3s ease',
   },
   levelSection: {
@@ -747,18 +747,18 @@ const styles = {
     fontWeight: '700',
   },
   levelDescription: {
-    color: 'rgba(255,255,255,0.5)',
+    color: 'var(--text-dim)',
   },
   footer: {
     display: 'flex',
     alignItems: 'center',
     gap: '6px',
     paddingTop: '16px',
-    borderTop: '1px solid rgba(255,255,255,0.05)',
+    borderTop: '1px solid var(--border-soft)',
   },
   footerText: {
     fontSize: '11px',
-    color: 'rgba(255,255,255,0.35)',
+    color: 'var(--text-dim)',
     letterSpacing: '0.5px',
   },
 }

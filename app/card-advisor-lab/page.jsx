@@ -2101,7 +2101,7 @@ export default withAuth(function CardAdvisorLabPage() {
         .hero-copy p,
         .release-header p,
         .fit-panel p {
-          color: rgba(255,255,255,0.72);
+          color: var(--text-secondary);
           line-height: 1.65;
         }
 
@@ -2294,9 +2294,9 @@ export default withAuth(function CardAdvisorLabPage() {
           margin-top: 10px;
           padding: 9px 12px;
           border-radius: 12px;
-          border: 1px solid rgba(255, 203, 5, 0.35);
-          background: rgba(255, 203, 5, 0.09);
-          color: #ffcb05;
+          border: 1px solid var(--gold-border);
+          background: var(--gold-bg);
+          color: var(--gold-text);
           font-size: 13px;
           font-weight: 800;
         }
@@ -2440,14 +2440,14 @@ export default withAuth(function CardAdvisorLabPage() {
           border-radius: 20px;
           background:
             radial-gradient(circle at top left, rgba(251,191,36,0.14), transparent 28%),
-            rgba(255,255,255,0.045);
+            var(--surface-2);
         }
 
         .roster-status-panel.ready {
           border-color: rgba(34,197,94,0.35);
           background:
             radial-gradient(circle at top left, rgba(34,197,94,0.16), transparent 28%),
-            rgba(255,255,255,0.045);
+            var(--surface-2);
         }
 
         .roster-status-main h3 {
@@ -2458,7 +2458,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .roster-status-main p {
           margin: 0;
-          color: rgba(255,255,255,0.72);
+          color: var(--text-secondary);
           line-height: 1.6;
         }
 
@@ -2476,16 +2476,16 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .roster-metrics div {
-          border: 1px solid rgba(255,255,255,0.10);
+          border: 1px solid var(--border-soft);
           border-radius: 14px;
           padding: 10px;
-          background: rgba(2,4,12,0.34);
+          background: var(--inset-bg);
           min-width: 0;
         }
 
         .roster-metrics span {
           display: block;
-          color: rgba(255,255,255,0.52);
+          color: var(--text-dim);
           font-size: 10px;
           text-transform: uppercase;
           letter-spacing: 0.06em;
@@ -2522,7 +2522,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .selected-hint {
           margin: 0 0 12px;
-          color: rgba(255,255,255,0.58);
+          color: var(--text-secondary);
           font-size: 13px;
         }
 
@@ -2550,7 +2550,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .fit-summary-grid span {
           display: block;
-          color: rgba(255,255,255,0.56);
+          color: var(--text-secondary);
           font-size: 10px;
           font-weight: 800;
           letter-spacing: 0.06em;
@@ -2569,7 +2569,7 @@ export default withAuth(function CardAdvisorLabPage() {
           border: 1px solid rgba(251,191,36,0.24);
           border-radius: 18px;
           background: rgba(251,191,36,0.08);
-          color: rgba(255,255,255,0.82);
+          color: var(--text-secondary);
           min-height: 130px;
           display: flex;
           align-items: center;
@@ -2631,7 +2631,7 @@ export default withAuth(function CardAdvisorLabPage() {
           width: 40px;
           height: 40px;
           border-radius: 12px;
-          border: 1px solid rgba(255,255,255,0.18);
+          border: 1px solid var(--border-strong);
           background: rgba(2,4,12,0.76);
           color: var(--text-main);
           display: flex;
@@ -2647,8 +2647,8 @@ export default withAuth(function CardAdvisorLabPage() {
           justify-self: center;
           text-align: left;
           color: var(--text-main);
-          border: 1px solid rgba(255,255,255,0.10);
-          background: rgba(255,255,255,0.045);
+          border: 1px solid var(--border-soft);
+          background: var(--surface-2);
           border-radius: 18px;
           padding: 10px;
           cursor: pointer;
@@ -2683,7 +2683,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .release-card p {
           margin: 5px 0 0;
-          color: rgba(255,255,255,0.58);
+          color: var(--text-secondary);
           font-size: 12px;
           line-height: 1.35;
         }
@@ -2697,7 +2697,7 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .score-row strong {
-          color: #fbbf24;
+          color: var(--gold-text);
           font-size: 14px;
         }
 
@@ -2886,7 +2886,7 @@ export default withAuth(function CardAdvisorLabPage() {
           z-index: 3;
           min-height: clamp(44px, 13.5cqi, 68px);
           padding: clamp(8px, 2.4cqi, 12px) clamp(8px, 2.8cqi, 14px) clamp(9px, 2.8cqi, 14px);
-          background: linear-gradient(180deg, rgba(2, 4, 12, 0.98), var(--shell-bg) 52%, var(--shell-bg) 100%);
+          background: linear-gradient(180deg, var(--shell-bg), var(--shell-bg) 52%, var(--shell-bg) 100%);
           color: var(--text-main);
           font-size: clamp(11px, 3.4cqi, 15px);
           font-weight: 900;
@@ -2936,7 +2936,7 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .detail-copy > p {
-          color: rgba(255,255,255,0.66);
+          color: var(--text-secondary);
           margin-bottom: 16px;
         }
 
@@ -2948,15 +2948,15 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .detail-metrics div {
-          border: 1px solid rgba(255,255,255,0.10);
+          border: 1px solid var(--border-soft);
           border-radius: 16px;
           padding: 12px;
-          background: rgba(255,255,255,0.05);
+          background: var(--surface-2);
         }
 
         .detail-metrics span {
           display: block;
-          color: rgba(255,255,255,0.54);
+          color: var(--text-dim);
           font-size: 11px;
           text-transform: uppercase;
           letter-spacing: 0.08em;
@@ -2976,17 +2976,17 @@ export default withAuth(function CardAdvisorLabPage() {
           border: 1px solid;
           border-radius: 14px;
           padding: 12px;
-          background: rgba(255,255,255,0.05);
+          background: var(--surface-2);
         }
 
         .team-synergy-card {
           margin-top: 12px;
-          border: 1px solid rgba(255,255,255,0.12);
+          border: 1px solid var(--border-soft);
           border-radius: 18px;
           padding: 14px;
           background:
             radial-gradient(circle at 85% 10%, rgba(34,197,94,0.14), transparent 34%),
-            linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.035));
+            linear-gradient(180deg, var(--surface-3), var(--surface-2));
           box-shadow: 0 16px 34px rgba(0,0,0,0.18);
         }
 
@@ -2999,7 +2999,7 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .team-synergy-head span {
-          color: rgba(255,255,255,0.62);
+          color: var(--text-secondary);
           font-size: 11px;
           text-transform: uppercase;
           letter-spacing: 0.10em;
@@ -3053,7 +3053,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .team-synergy-caption p {
           margin: 0;
-          color: rgba(255,255,255,0.76);
+          color: var(--text-secondary);
           font-size: 13px;
           line-height: 1.55;
         }
@@ -3068,7 +3068,7 @@ export default withAuth(function CardAdvisorLabPage() {
           word-break: break-word;
           background:
             radial-gradient(circle at 8% 0%, rgba(192,132,252,0.12), transparent 32%),
-            rgba(255,255,255,0.045);
+            var(--surface-2);
         }
 
         .coach-advice-card span {
@@ -3090,7 +3090,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .coach-advice-card p {
           margin: 0;
-          color: rgba(255,255,255,0.80);
+          color: var(--text-secondary);
           line-height: 1.62;
           font-size: 14px;
         }
@@ -3098,7 +3098,7 @@ export default withAuth(function CardAdvisorLabPage() {
         .coach-advice-card strong {
           display: block;
           margin-top: 10px;
-          color: #facc15;
+          color: var(--gold-text);
           font-size: 13px;
           line-height: 1.55;
           overflow-wrap: anywhere;
@@ -3116,7 +3116,7 @@ export default withAuth(function CardAdvisorLabPage() {
           background:
             radial-gradient(circle at 0% 0%, rgba(251,191,36,0.18), transparent 38%),
             radial-gradient(circle at 100% 0%, rgba(249,115,22,0.14), transparent 40%),
-            rgba(255,255,255,0.055);
+            var(--surface-2);
           box-shadow: 0 18px 45px rgba(0,0,0,0.18);
         }
 
@@ -3128,8 +3128,8 @@ export default withAuth(function CardAdvisorLabPage() {
           gap: 10px;
           border-radius: 999px;
           padding: 7px 10px;
-          border: 1px solid rgba(255,255,255,0.10);
-          background: rgba(2,4,12,0.46);
+          border: 1px solid var(--border-soft);
+          background: var(--inset-bg);
         }
 
         .advisor-section-marker span {
@@ -3152,7 +3152,7 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .advisor-section-marker small {
-          color: rgba(255,255,255,0.58);
+          color: var(--text-secondary);
           font-size: 11px;
           font-weight: 800;
           white-space: nowrap;
@@ -3166,7 +3166,7 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .advisor-section-marker-premium span {
-          color: #facc15;
+          color: var(--gold-text);
         }
 
         .advisor-section-marker-free {
@@ -3177,7 +3177,7 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .advisor-section-marker-free span {
-          color: #67e8f9;
+          color: var(--info-text);
         }
 
         .chart-insight-card {
@@ -3191,7 +3191,7 @@ export default withAuth(function CardAdvisorLabPage() {
           padding: 12px;
           background:
             radial-gradient(circle at 0% 0%, rgba(192,132,252,0.12), transparent 40%),
-            rgba(5,8,20,0.46);
+            var(--surface);
           box-shadow: 0 14px 34px rgba(0,0,0,0.16);
           min-width: 0;
         }
@@ -3200,7 +3200,7 @@ export default withAuth(function CardAdvisorLabPage() {
           border-color: rgba(34,197,94,0.24);
           background:
             radial-gradient(circle at 0% 0%, rgba(34,197,94,0.11), transparent 40%),
-            rgba(5,8,20,0.46);
+            var(--surface);
         }
 
         .chart-insight-icon {
@@ -3216,7 +3216,7 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .chart-insight-card-ready .chart-insight-icon {
-          color: #86efac;
+          color: var(--success-text);
           background: rgba(34,197,94,0.10);
           box-shadow: inset 0 0 0 1px rgba(34,197,94,0.18);
         }
@@ -3234,7 +3234,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .chart-insight-copy p {
           margin: 0;
-          color: rgba(255,255,255,0.72);
+          color: var(--text-secondary);
           font-size: 12px;
           line-height: 1.45;
         }
@@ -3253,7 +3253,7 @@ export default withAuth(function CardAdvisorLabPage() {
         .chart-insight-card-ready button {
           border-color: rgba(34,197,94,0.30);
           background: rgba(34,197,94,0.09);
-          color: #86efac;
+          color: var(--success-text);
         }
 
         .chart-insight-card-secondary {
@@ -3261,13 +3261,13 @@ export default withAuth(function CardAdvisorLabPage() {
           padding: 8px 10px;
           gap: 8px;
           border-radius: 12px;
-          border-color: rgba(255,255,255,0.08);
-          background: rgba(255,255,255,0.03);
+          border-color: var(--border-soft);
+          background: var(--surface-2);
           box-shadow: none;
         }
 
         .chart-insight-card-secondary.chart-insight-card-ready {
-          border-color: rgba(255,255,255,0.10);
+          border-color: var(--border-soft);
           background: rgba(34,197,94,0.04);
         }
 
@@ -3281,12 +3281,12 @@ export default withAuth(function CardAdvisorLabPage() {
         .chart-insight-card-secondary .chart-insight-copy h3 {
           font-size: 12px;
           font-weight: 650;
-          color: rgba(255,255,255,0.82);
+          color: var(--text-secondary);
         }
 
         .chart-insight-card-secondary .chart-insight-copy p {
           font-size: 11px;
-          color: rgba(255,255,255,0.52);
+          color: var(--text-dim);
           line-height: 1.35;
         }
 
@@ -3329,7 +3329,7 @@ export default withAuth(function CardAdvisorLabPage() {
           border-color: rgba(192,132,252,0.22);
           background:
             radial-gradient(circle at 0% 0%, rgba(192,132,252,0.11), transparent 38%),
-            rgba(255,255,255,0.045);
+            var(--surface-2);
         }
 
         .deep-analysis-entry-copy {
@@ -3357,7 +3357,7 @@ export default withAuth(function CardAdvisorLabPage() {
           border: 1px solid rgba(251,191,36,0.34);
           border-radius: 999px;
           background: rgba(251,191,36,0.14);
-          color: #facc15;
+          color: var(--gold-text);
           padding: 5px 9px;
           font-size: 11px;
           font-weight: 950;
@@ -3366,7 +3366,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .deep-analysis-summary span {
           display: block;
-          color: #facc15;
+          color: var(--gold-text);
           font-size: 11px;
           font-weight: 950;
           letter-spacing: 0.12em;
@@ -3376,7 +3376,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .deep-analysis-entry p {
           margin: 0;
-          color: rgba(255,255,255,0.82);
+          color: var(--text-secondary);
           font-size: 14px;
           line-height: 1.55;
           max-width: 72ch;
@@ -3394,8 +3394,8 @@ export default withAuth(function CardAdvisorLabPage() {
         .deep-analysis-entry li {
           border: 1px solid rgba(251,191,36,0.18);
           border-radius: 999px;
-          background: rgba(5,8,20,0.34);
-          color: rgba(255,255,255,0.78);
+          background: var(--surface-2);
+          color: var(--text-secondary);
           padding: 6px 9px;
           font-size: 12px;
           font-weight: 750;
@@ -3446,7 +3446,7 @@ export default withAuth(function CardAdvisorLabPage() {
               #fde047 100%
             );
           background-size: 220% 220%;
-          color: var(--surface);
+          color: var(--gold-ink);
           font-weight: 950;
           box-shadow:
             0 0 0 1px rgba(250, 204, 21, 0.35) inset,
@@ -3604,7 +3604,7 @@ export default withAuth(function CardAdvisorLabPage() {
           border-radius: 16px;
           background:
             linear-gradient(135deg, rgba(192, 132, 252, 0.10), rgba(138, 43, 226, 0.10)),
-            rgba(2, 4, 12, 0.42);
+            var(--inset-bg);
           padding: 8px 10px;
           color: var(--text-main);
         }
@@ -3649,14 +3649,14 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .deep-analysis-inline-loader b {
-          color: #67e8f9;
+          color: var(--info-text);
           font-size: 11px;
           letter-spacing: 0.12em;
           text-transform: uppercase;
         }
 
         .deep-analysis-inline-loader small {
-          color: rgba(255,255,255,0.72);
+          color: var(--text-secondary);
           font-size: 11px;
           line-height: 1.25;
         }
@@ -3669,7 +3669,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .deep-analysis-error {
           margin: 10px 0 0;
-          color: #ff9d9d;
+          color: var(--danger-text);
           font-size: 13px;
         }
 
@@ -3680,14 +3680,14 @@ export default withAuth(function CardAdvisorLabPage() {
           background:
             radial-gradient(circle at 0% 0%, rgba(251,191,36,0.12), transparent 36%),
             rgba(251,191,36,0.055);
-          color: rgba(255,255,255,0.80);
+          color: var(--text-secondary);
         }
 
         .deep-analysis-error-credits div {
           display: flex;
           align-items: center;
           gap: 8px;
-          color: #facc15;
+          color: var(--gold-text);
           font-size: 13px;
           font-weight: 950;
           margin-bottom: 6px;
@@ -3695,7 +3695,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .deep-analysis-error-credits p {
           margin: 0;
-          color: rgba(255,255,255,0.76);
+          color: var(--text-secondary);
           font-size: 13px;
           line-height: 1.5;
         }
@@ -3707,7 +3707,7 @@ export default withAuth(function CardAdvisorLabPage() {
           justify-content: center;
           border-radius: 999px;
           background: linear-gradient(135deg, #facc15, #f97316);
-          color: var(--surface);
+          color: var(--gold-ink);
           min-height: 34px;
           padding: 7px 12px;
           font-size: 12px;
@@ -3730,7 +3730,7 @@ export default withAuth(function CardAdvisorLabPage() {
           padding: 16px;
           background:
             radial-gradient(circle at 90% 0%, rgba(251,191,36,0.10), transparent 34%),
-            rgba(5,8,20,0.72);
+            var(--surface);
         }
 
         .deep-analysis-summary h3 {
@@ -3743,7 +3743,7 @@ export default withAuth(function CardAdvisorLabPage() {
         .deep-analysis-summary p,
         .deep-analysis-final p {
           margin: 0;
-          color: rgba(255,255,255,0.80);
+          color: var(--text-secondary);
           line-height: 1.65;
           font-size: 14px;
         }
@@ -3752,7 +3752,7 @@ export default withAuth(function CardAdvisorLabPage() {
           margin-top: 10px;
           padding-top: 10px;
           border-top: 1px solid rgba(250, 204, 21, 0.22);
-          color: rgba(255, 255, 255, 0.92);
+          color: var(--text-main);
           font-size: 13px;
           line-height: 1.55;
         }
@@ -3788,7 +3788,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .deep-reasoning-list article p {
           margin: 0;
-          color: rgba(255,255,255,0.80);
+          color: var(--text-secondary);
           line-height: 1.58;
           font-size: 13px;
         }
@@ -3801,7 +3801,7 @@ export default withAuth(function CardAdvisorLabPage() {
           border-radius: 999px;
           background:
             linear-gradient(135deg, rgba(251,191,36,0.18), rgba(249,115,22,0.14)),
-            rgba(5,8,20,0.60);
+            var(--surface);
           color: var(--text-main);
           min-height: 40px;
           padding: 9px 14px;
@@ -3813,7 +3813,7 @@ export default withAuth(function CardAdvisorLabPage() {
           cursor: pointer;
           box-shadow:
             0 0 24px rgba(251,191,36,0.12),
-            inset 0 0 0 1px rgba(255,255,255,0.06);
+            inset 0 0 0 1px var(--border-soft);
           transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
         }
 
@@ -3834,7 +3834,7 @@ export default withAuth(function CardAdvisorLabPage() {
           border-color: rgba(251,191,36,0.82);
           box-shadow:
             0 0 28px rgba(251,191,36,0.20),
-            inset 0 0 0 1px rgba(255,255,255,0.08);
+            inset 0 0 0 1px var(--border-soft);
           outline: none;
         }
 
@@ -3857,9 +3857,9 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .deep-analysis-card {
-          --deep-tone: rgba(255,255,255,0.34);
-          --deep-tone-soft: rgba(255,255,255,0.07);
-          --deep-tone-glow: rgba(255,255,255,0.06);
+          --deep-tone: var(--text-dim);
+          --deep-tone-soft: var(--border-soft);
+          --deep-tone-glow: var(--surface-2);
           position: relative;
           overflow: hidden;
           border: 1px solid var(--deep-tone-soft);
@@ -3867,7 +3867,7 @@ export default withAuth(function CardAdvisorLabPage() {
           padding: 13px;
           background:
             radial-gradient(circle at 100% 0%, var(--deep-tone-glow), transparent 42%),
-            rgba(255,255,255,0.045);
+            var(--surface-2);
         }
 
         .deep-analysis-card::before {
@@ -3911,7 +3911,7 @@ export default withAuth(function CardAdvisorLabPage() {
           position: relative;
           margin: 0;
           padding-left: 15px;
-          color: rgba(255,255,255,0.77);
+          color: var(--text-secondary);
           font-size: 13px;
           line-height: 1.55;
         }
@@ -3965,13 +3965,13 @@ export default withAuth(function CardAdvisorLabPage() {
           background:
             radial-gradient(circle at 0% 0%, rgba(251,191,36,0.13), transparent 38%),
             radial-gradient(circle at 100% 0%, rgba(192,132,252,0.12), transparent 42%),
-            rgba(255,255,255,0.055);
+            var(--surface-2);
         }
 
         .deep-analysis-card-decision p {
           position: relative;
           margin: 0;
-          color: rgba(255,255,255,0.84);
+          color: var(--text-main);
           line-height: 1.65;
           font-size: 14px;
         }
@@ -3984,7 +3984,7 @@ export default withAuth(function CardAdvisorLabPage() {
           border-radius: 999px;
           background:
             linear-gradient(135deg, rgba(192,132,252,0.14), rgba(34,197,94,0.08)),
-            rgba(5,8,20,0.56);
+            var(--surface);
           color: var(--text-main);
           display: inline-flex;
           align-items: center;
@@ -4029,10 +4029,10 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .team-synergy-detail-item {
-          border: 1px solid rgba(255,255,255,0.10);
+          border: 1px solid var(--border-soft);
           border-radius: 14px;
           padding: 10px;
-          background: rgba(3,6,16,0.34);
+          background: var(--inset-bg);
         }
 
         .team-synergy-detail-item div {
@@ -4044,7 +4044,7 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .team-synergy-detail-item span {
-          color: rgba(255,255,255,0.62);
+          color: var(--text-secondary);
           font-size: 10px;
           text-transform: uppercase;
           letter-spacing: 0.08em;
@@ -4053,7 +4053,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .team-synergy-detail-item p {
           margin: 0;
-          color: rgba(255,255,255,0.72);
+          color: var(--text-secondary);
           font-size: 12px;
           line-height: 1.45;
         }
@@ -4068,7 +4068,7 @@ export default withAuth(function CardAdvisorLabPage() {
           word-break: break-word;
           background:
             radial-gradient(circle at 0% 0%, rgba(192,132,252,0.09), transparent 36%),
-            rgba(5,8,20,0.42);
+            var(--surface);
         }
 
         .quick-read-top,
@@ -4088,10 +4088,10 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .quick-read-top strong {
-          border: 1px solid rgba(255,255,255,0.12);
+          border: 1px solid var(--border-soft);
           border-radius: 999px;
-          background: rgba(255,255,255,0.06);
-          color: rgba(255,255,255,0.72);
+          background: var(--surface-2);
+          color: var(--text-secondary);
           padding: 4px 8px;
           font-size: 10px;
           font-weight: 900;
@@ -4104,7 +4104,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .quick-read-score small {
           display: block;
-          color: rgba(255,255,255,0.50);
+          color: var(--text-dim);
           font-size: 10px;
           font-weight: 900;
           letter-spacing: 0.08em;
@@ -4118,7 +4118,7 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .quick-read-score > strong {
-          color: #86efac;
+          color: var(--success-text);
           font-size: 22px;
           letter-spacing: -0.04em;
         }
@@ -4141,7 +4141,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .quick-read-card > p {
           margin: 10px 0 0;
-          color: rgba(255,255,255,0.74);
+          color: var(--text-secondary);
           font-size: 13px;
           line-height: 1.55;
         }
@@ -4159,10 +4159,10 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .detail-grid article,
         .fit-panel {
-          border: 1px solid rgba(255,255,255,0.10);
+          border: 1px solid var(--border-soft);
           border-radius: 18px;
           padding: 14px;
-          background: rgba(255,255,255,0.045);
+          background: var(--surface-2);
         }
 
         .detail-grid h3,
@@ -4176,7 +4176,7 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .detail-grid article p {
-          color: rgba(255,255,255,0.72);
+          color: var(--text-secondary);
           line-height: 1.6;
           margin: 0;
           font-size: 13px;
@@ -4196,7 +4196,7 @@ export default withAuth(function CardAdvisorLabPage() {
         .card-advisor-page ul {
           margin: 0;
           padding-left: 18px;
-          color: rgba(255,255,255,0.72);
+          color: var(--text-secondary);
           line-height: 1.55;
           font-size: 13px;
         }
@@ -4220,7 +4220,7 @@ export default withAuth(function CardAdvisorLabPage() {
           border: 1px solid rgba(192, 132, 252, 0.22);
           background:
             linear-gradient(145deg, rgba(192, 132, 252, 0.08), rgba(138, 43, 226, 0.06)),
-            rgba(4, 10, 24, 0.72);
+            var(--surface);
         }
 
         .build-preview-shell-loading,
@@ -4246,13 +4246,13 @@ export default withAuth(function CardAdvisorLabPage() {
           font-size: 12px;
           letter-spacing: 0.12em;
           text-transform: uppercase;
-          color: rgba(192, 132, 252, 0.9);
+          color: var(--cards-accent);
           font-weight: 700;
         }
 
         .build-preview-shell-head p {
           margin: 4px 0 0;
-          color: rgba(255, 255, 255, 0.72);
+          color: var(--text-secondary);
           font-size: 13px;
           line-height: 1.45;
         }
@@ -4267,7 +4267,7 @@ export default withAuth(function CardAdvisorLabPage() {
           padding: 12px;
           border-radius: 14px;
           border: 1px solid var(--border-soft);
-          background: rgba(255, 255, 255, 0.04);
+          background: var(--surface-2);
         }
 
         .build-preview-card-meta {
@@ -4385,7 +4385,7 @@ export default withAuth(function CardAdvisorLabPage() {
           margin: 4px 0 0;
           font-size: 11px;
           line-height: 1.35;
-          color: rgba(255, 255, 255, 0.58);
+          color: var(--text-secondary);
         }
 
         .build-preview-ovr-row {
@@ -4403,7 +4403,7 @@ export default withAuth(function CardAdvisorLabPage() {
           padding: 4px 9px;
           border-radius: 999px;
           font-size: 11px;
-          background: rgba(255, 255, 255, 0.06);
+          background: var(--surface-2);
           border: 1px solid var(--border-soft);
         }
 
@@ -4431,7 +4431,7 @@ export default withAuth(function CardAdvisorLabPage() {
           padding: 5px 8px;
           border-radius: 8px;
           font-size: 11px;
-          background: rgba(0, 0, 0, 0.28);
+          background: var(--inset-bg);
           border: 1px solid var(--border-soft);
         }
 
@@ -4448,7 +4448,7 @@ export default withAuth(function CardAdvisorLabPage() {
         .build-preview-why {
           margin-top: 10px;
           padding-top: 10px;
-          border-top: 1px dashed rgba(255, 255, 255, 0.1);
+          border-top: 1px dashed var(--border-soft);
         }
 
         .build-preview-why-toggle {
@@ -4483,7 +4483,7 @@ export default withAuth(function CardAdvisorLabPage() {
           margin: 0 0 12px;
           font-size: 13px;
           line-height: 1.55;
-          color: rgba(255, 255, 255, 0.92);
+          color: var(--text-main);
           font-weight: 500;
         }
 
@@ -4491,7 +4491,7 @@ export default withAuth(function CardAdvisorLabPage() {
           margin: 0 0 10px;
           font-size: 12px;
           line-height: 1.45;
-          color: rgba(255, 255, 255, 0.72);
+          color: var(--text-secondary);
         }
 
         .build-preview-why-section {
@@ -4527,7 +4527,7 @@ export default withAuth(function CardAdvisorLabPage() {
           padding-left: 12px;
           font-size: 11px;
           line-height: 1.45;
-          color: rgba(255, 255, 255, 0.78);
+          color: var(--text-secondary);
         }
 
         .build-preview-why-section li::before {
@@ -4538,7 +4538,7 @@ export default withAuth(function CardAdvisorLabPage() {
           width: 4px;
           height: 4px;
           border-radius: 50%;
-          background: rgba(255, 255, 255, 0.35);
+          background: var(--text-dim);
         }
 
         .build-preview-card-roster .build-preview-why-section li::before {
@@ -4556,7 +4556,7 @@ export default withAuth(function CardAdvisorLabPage() {
           border: 1px solid rgba(192, 132, 252, 0.35);
           border-radius: 999px;
           background: rgba(192, 132, 252, 0.1);
-          color: #b8f4ff;
+          color: var(--info-text);
           font-size: 11px;
           font-weight: 600;
           padding: 6px 10px;
@@ -4570,7 +4570,7 @@ export default withAuth(function CardAdvisorLabPage() {
           gap: 10px 14px;
           margin: 10px 0;
           font-size: 12px;
-          color: rgba(255, 255, 255, 0.72);
+          color: var(--text-secondary);
         }
 
         .build-preview-stats strong {
@@ -4590,7 +4590,7 @@ export default withAuth(function CardAdvisorLabPage() {
           gap: 8px;
           padding: 8px 10px;
           border-radius: 10px;
-          background: rgba(0, 0, 0, 0.22);
+          background: var(--inset-bg);
           border: 1px solid var(--border-soft);
           font-size: 12px;
         }
@@ -4611,7 +4611,7 @@ export default withAuth(function CardAdvisorLabPage() {
         .build-preview-skills {
           margin-top: 12px;
           padding-top: 12px;
-          border-top: 1px solid rgba(255, 255, 255, 0.08);
+          border-top: 1px solid var(--border-soft);
         }
 
         .build-preview-skills-head {
@@ -4640,13 +4640,13 @@ export default withAuth(function CardAdvisorLabPage() {
           background: rgba(192, 132, 252, 0.08);
           border: 1px solid rgba(192, 132, 252, 0.22);
           font-size: 11px;
-          color: rgba(255, 255, 255, 0.92);
+          color: var(--text-main);
         }
 
         .build-preview-skill-pill-fixed {
           background: rgba(250, 204, 21, 0.1);
           border-color: rgba(250, 204, 21, 0.38);
-          color: rgba(255, 248, 220, 0.95);
+          color: var(--text-main);
         }
 
         .build-preview-skill-next {
@@ -4663,13 +4663,13 @@ export default withAuth(function CardAdvisorLabPage() {
           font-weight: 800;
           letter-spacing: 0.06em;
           text-transform: uppercase;
-          color: rgba(192, 132, 252, 0.95);
+          color: var(--cards-accent);
         }
 
         .build-preview-skill-next-hint {
           margin: 4px 0 8px;
           font-size: 12px;
-          color: rgba(255, 255, 255, 0.68);
+          color: var(--text-secondary);
           line-height: 1.4;
         }
 
@@ -4679,8 +4679,8 @@ export default withAuth(function CardAdvisorLabPage() {
           gap: 3px;
           padding: 10px 12px;
           border-radius: 10px;
-          background: rgba(5, 8, 20, 0.55);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: var(--surface-2);
+          border: 1px solid var(--border-soft);
         }
 
         .build-preview-skill-next-card + .build-preview-skill-next-card {
@@ -4694,14 +4694,14 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .build-preview-skill-next-card span {
           font-size: 12px;
-          color: rgba(255, 255, 255, 0.72);
+          color: var(--text-secondary);
           line-height: 1.35;
         }
 
         .build-preview-skills-note {
           margin: 10px 0 0;
           font-size: 12px;
-          color: rgba(255, 255, 255, 0.62);
+          color: var(--text-secondary);
           line-height: 1.45;
         }
 
@@ -4712,7 +4712,7 @@ export default withAuth(function CardAdvisorLabPage() {
           background:
             radial-gradient(circle at 0% 0%, rgba(192,132,252,0.09), transparent 34%),
             radial-gradient(circle at 100% 0%, rgba(34,197,94,0.08), transparent 40%),
-            rgba(255,255,255,0.038);
+            var(--surface-2);
         }
 
         .synergy-read-card::before {
@@ -4747,7 +4747,7 @@ export default withAuth(function CardAdvisorLabPage() {
           border: 1px solid rgba(34,197,94,0.26);
           border-radius: 999px;
           background: rgba(34,197,94,0.10);
-          color: #86efac;
+          color: var(--success-text);
           padding: 6px 10px;
           font-size: 11px;
           font-weight: 950;
@@ -4757,7 +4757,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .synergy-read-card p {
           max-width: 78ch;
-          color: rgba(255,255,255,0.78);
+          color: var(--text-secondary);
         }
 
         .synergy-read-context {
@@ -4768,7 +4768,7 @@ export default withAuth(function CardAdvisorLabPage() {
           max-width: 100%;
           border: 1px solid rgba(192,132,252,0.20);
           background: rgba(192,132,252,0.075);
-          color: rgba(255,255,255,0.78);
+          color: var(--text-secondary);
           border-radius: 999px;
           padding: 7px 10px;
           font-size: 12px;
@@ -4792,7 +4792,7 @@ export default withAuth(function CardAdvisorLabPage() {
           display: inline-flex;
           border: 1px solid rgba(34,197,94,0.20);
           background: rgba(34,197,94,0.08);
-          color: rgba(255,255,255,0.82);
+          color: var(--text-secondary);
           border-radius: 999px;
           padding: 7px 10px;
           font-size: 12px;
@@ -5311,6 +5311,73 @@ export default withAuth(function CardAdvisorLabPage() {
         :global(html[data-theme='light']) .build-preview-card-top p,
         :global(html[data-theme='light']) .build-preview-card-head p {
           color: var(--text-dim);
+        }
+
+        :global(html[data-theme='light']) .release-tabs-shell::after {
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.92));
+        }
+
+        :global(html[data-theme='light']) .detail-close-button {
+          background: var(--surface-2);
+          border-color: var(--border-soft);
+          box-shadow: 0 4px 14px rgba(0,0,0,0.10);
+        }
+
+        :global(html[data-theme='light']) .deep-analysis-card-pro {
+          --deep-tone: #15803d;
+        }
+
+        :global(html[data-theme='light']) .deep-analysis-card-cons {
+          --deep-tone: #be123c;
+        }
+
+        :global(html[data-theme='light']) .deep-analysis-card-synergy {
+          --deep-tone: #0369a1;
+        }
+
+        :global(html[data-theme='light']) .deep-analysis-card-use,
+        :global(html[data-theme='light']) .deep-analysis-card-decision {
+          --deep-tone: #a16207;
+        }
+
+        :global(html[data-theme='light']) .deep-analysis-card-avoid {
+          --deep-tone: #c2410c;
+        }
+
+        :global(html[data-theme='light']) .build-preview-card-badge-meta {
+          color: #6d28d9;
+          background: rgba(139, 92, 246, 0.12);
+          border-color: rgba(139, 92, 246, 0.35);
+        }
+
+        :global(html[data-theme='light']) .build-preview-card-badge-roster {
+          color: #047857;
+          background: rgba(16, 185, 129, 0.10);
+          border-color: rgba(16, 185, 129, 0.35);
+        }
+
+        :global(html[data-theme='light']) .build-preview-card-meta .build-preview-pt-tag b,
+        :global(html[data-theme='light']) .build-preview-why-toggle-meta,
+        :global(html[data-theme='light']) .build-preview-card-meta .build-preview-why-section h5 {
+          color: #7c3aed;
+        }
+
+        :global(html[data-theme='light']) .build-preview-card-roster .build-preview-pt-tag b,
+        :global(html[data-theme='light']) .build-preview-why-toggle-roster,
+        :global(html[data-theme='light']) .build-preview-card-roster .build-preview-why-section h5 {
+          color: #047857;
+        }
+
+        :global(html[data-theme='light']) .build-preview-card-meta .build-preview-copy {
+          color: #6d28d9;
+          background: rgba(139, 92, 246, 0.10);
+          border-color: rgba(139, 92, 246, 0.32);
+        }
+
+        :global(html[data-theme='light']) .build-preview-card-roster .build-preview-copy {
+          color: #047857;
+          background: rgba(16, 185, 129, 0.10);
+          border-color: rgba(16, 185, 129, 0.32);
         }
 
         @media (prefers-reduced-motion: reduce) {

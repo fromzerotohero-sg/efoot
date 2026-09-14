@@ -74,7 +74,7 @@ export default function RootLayout({ children }) {
           </>
         )}
       </head>
-      <body className="text-[#FFFFFF]">
+      <body>
         <LanguageProviderWrapper>
           <GameAnalysisModalNavProvider>
             <SidebarProvider>

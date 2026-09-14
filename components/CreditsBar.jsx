@@ -328,11 +328,11 @@ export default function CreditsBar() {
           padding: "0 10px",
           fontSize: "13px",
           fontWeight: 700,
-          color: "#1D1D1F",
-          background: "#EFECE6",
+          color: "var(--text-main)",
+          background: "var(--surface-3)",
           border: highlight
             ? "1px solid rgba(201, 150, 48, 0.7)"
-            : "1px solid rgba(0, 0, 0, 0.08)",
+            : "1px solid var(--border-soft)",
           borderRadius: "10px",
           cursor: "pointer",
           boxShadow: highlight
@@ -353,13 +353,13 @@ export default function CreditsBar() {
           <Zap size={16} color="#C99630" fill="#C99630" />
         )}
         {compactLabel != null && (
-          <span style={{ fontWeight: 700, whiteSpace: "nowrap", color: "#1D1D1F" }}>
+          <span style={{ fontWeight: 700, whiteSpace: "nowrap", color: "var(--text-main)" }}>
             {compactLabel}
           </span>
         )}
         <ChevronDown
           size={14}
-          color="#6B6B6B"
+          color="var(--text-dim)"
           style={{
             transform: open ? "rotate(180deg)" : "rotate(0deg)",
             transition: "transform 0.15s ease",
@@ -371,7 +371,7 @@ export default function CreditsBar() {
               marginLeft: "2px",
               fontSize: "11px",
               fontWeight: 800,
-              color: "#ffcb05",
+              color: "var(--gold-text)",
             }}
           >
             +{lastAccredited}
@@ -398,7 +398,7 @@ export default function CreditsBar() {
               backgroundColor: "var(--bg-elevated)",
               borderRadius: "12px",
               padding: "20px",
-              border: "1px solid rgba(0, 212, 255, 0.3)",
+              border: "1px solid var(--info-border)",
               boxShadow: "var(--shadow-lg)",
             }}
             onClick={(e) => e.stopPropagation()}
@@ -409,7 +409,7 @@ export default function CreditsBar() {
                   display: "flex",
                   alignItems: "center",
                   gap: "12px",
-                  color: "rgba(0, 212, 255, 0.7)",
+                  color: "var(--info-text)",
                 }}
               >
                 <RefreshCw
@@ -475,7 +475,7 @@ export default function CreditsBar() {
                       style={{
                         margin: 0,
                         fontSize: "13px",
-                        color: "rgba(0, 212, 255, 0.7)",
+                        color: "var(--info-text)",
                         maxWidth: "320px",
                       }}
                     >
@@ -485,7 +485,7 @@ export default function CreditsBar() {
                   <div
                     style={{
                       fontSize: "13px",
-                      color: "rgba(0, 212, 255, 0.5)",
+                      color: "var(--info-text)",
                       whiteSpace: "nowrap",
                     }}
                   >
@@ -509,7 +509,7 @@ export default function CreditsBar() {
                   </span>
                   {tempBalance > 0 && (
                     <>
-                      <span style={{ color: "#facc15" }}>
+                      <span style={{ color: "var(--gold-text)" }}>
                         {tempBalance}{" "}
                         {t("creditsTemporary") || "crediti temporanei"}
                       </span>
@@ -517,7 +517,7 @@ export default function CreditsBar() {
                         style={{
                           fontSize: "12px",
                           fontWeight: 400,
-                          color: "rgba(250, 204, 21, 0.7)",
+                          color: "var(--gold-text)",
                           marginTop: "2px",
                         }}
                       >

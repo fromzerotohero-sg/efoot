@@ -178,8 +178,8 @@ export default function DailySpinWidget({ lang: langProp } = {}) {
           top: 12px;
           right: 12px;
           border: 0;
-          background: rgba(255,255,255,0.06);
-          color: rgba(255,255,255,0.72);
+          background: var(--surface-2);
+          color: var(--text-secondary);
           width: 34px;
           height: 34px;
           border-radius: 999px;
@@ -210,7 +210,7 @@ export default function DailySpinWidget({ lang: langProp } = {}) {
           padding: 6px 11px;
           border: 1px solid rgba(255,203,5,0.34);
           border-radius: 999px;
-          color: #ffdf66;
+          color: var(--gold-text);
           background: rgba(255,203,5,0.10);
           font-size: 12px;
           font-weight: 950;
@@ -227,7 +227,7 @@ export default function DailySpinWidget({ lang: langProp } = {}) {
 
         .daily-login-card p {
           margin: 0;
-          color: rgba(255,255,255,0.74);
+          color: var(--text-secondary);
           line-height: 1.48;
           font-size: 14px;
         }
@@ -258,9 +258,9 @@ export default function DailySpinWidget({ lang: langProp } = {}) {
         }
 
         .daily-login-secondary {
-          border: 1px solid rgba(255,255,255,0.16);
-          background: rgba(255,255,255,0.06);
-          color: rgba(255,255,255,0.82);
+          border: 1px solid var(--border-strong);
+          background: var(--surface-2);
+          color: var(--text-secondary);
         }
 
         @keyframes dailyLoginPulse {

@@ -590,8 +590,8 @@ export default function NewMatchPage() {
     marginBottom: "16px",
     borderRadius: "12px",
     overflow: "hidden",
-    border: "1px solid rgba(255, 255, 255, 0.16)",
-    background: "rgba(0, 0, 0, 0.24)",
+    border: "1px solid var(--border-strong)",
+    background: "var(--surface-3)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -610,6 +610,7 @@ export default function NewMatchPage() {
       ? {
           label: isItalian ? "Analisi completa" : "Complete analysis",
           tone: "#22c55e",
+          textTone: "#22c55e",
           description: isItalian
             ? "Tutti gli screenshot chiave sono stati letti. Il Coach avra il massimo contesto."
             : "All key screenshots have been read. The Coach will have maximum context.",
@@ -618,6 +619,7 @@ export default function NewMatchPage() {
         ? {
             label: isItalian ? "Analisi buona" : "Good analysis",
             tone: "#facc15",
+            textTone: "var(--gold-text)",
             description: isItalian
               ? "Puoi salvare ora. Aggiungi altri screenshot per rendere i consigli piu precisi."
               : "You can save now. Add more screenshots to make advice more precise.",
@@ -625,6 +627,7 @@ export default function NewMatchPage() {
         : {
             label: isItalian ? "In preparazione" : "Preparing",
             tone: "var(--accent)",
+            textTone: "var(--accent)",
             description: isItalian
               ? "Servono almeno 3 screenshot letti per salvare una partita utile al Coach."
               : "At least 3 read screenshots are needed to save a useful match for the Coach.",
@@ -685,13 +688,12 @@ export default function NewMatchPage() {
     if (stepData[step.id] && stepData[step.id] !== null) return "#22c55e";
     if (stepData[step.id] === null) return "#9ca3af";
     if (step.id === currentSection) return "var(--accent)";
-    return "rgba(255,255,255,0.48)";
+    return "var(--text-dim)";
   };
   const readableSections = photosComplete.length;
   const minimumReached = photosUploaded >= 3;
   const shellCardStyle = {
-    background:
-      "linear-gradient(145deg, rgba(5, 12, 25, 0.92) 0%, rgba(2, 4, 10, 0.96) 100%)",
+    background: "var(--surface)",
     border: "1px solid rgba(61, 220, 151, 0.22)",
     borderRadius: "22px",
     boxShadow:
@@ -704,7 +706,7 @@ export default function NewMatchPage() {
     borderRadius: "14px",
     border: "1px solid rgba(61, 220, 151, 0.52)",
     background: "linear-gradient(135deg, var(--accent), var(--accent-strong))",
-    color: "#020510",
+    color: "var(--accent-ink)",
     fontWeight: 900,
     fontSize: "15px",
     cursor: extracting || saving || currentData ? "not-allowed" : "pointer",
@@ -759,9 +761,9 @@ export default function NewMatchPage() {
             gap: "8px",
             padding: "8px 12px",
             borderRadius: "999px",
-            border: "1px solid rgba(255, 203, 5, 0.28)",
-            background: "rgba(255, 203, 5, 0.08)",
-            color: "#facc15",
+            border: "1px solid var(--gold-border)",
+            background: "var(--gold-bg)",
+            color: "var(--gold-text)",
             fontSize: "12px",
             fontWeight: 800,
             letterSpacing: "0.4px",
@@ -802,7 +804,7 @@ export default function NewMatchPage() {
                 borderRadius: "999px",
                 background: "rgba(61, 220, 151, 0.10)",
                 border: "1px solid rgba(61, 220, 151, 0.25)",
-                color: "#7dd3fc",
+                color: "var(--info-text)",
                 fontSize: "12px",
                 fontWeight: 800,
                 marginBottom: "16px",
@@ -828,7 +830,7 @@ export default function NewMatchPage() {
               style={{
                 margin: "18px 0 0",
                 maxWidth: "680px",
-                color: "rgba(255,255,255,0.74)",
+                color: "var(--text-secondary)",
                 fontSize: "clamp(15px, 2vw, 18px)",
                 lineHeight: 1.55,
               }}
@@ -843,7 +845,7 @@ export default function NewMatchPage() {
             style={{
               borderRadius: "18px",
               border: `1px solid ${analysisQuality.tone}66`,
-              background: `linear-gradient(145deg, ${analysisQuality.tone}20, rgba(255,255,255,0.04))`,
+              background: `linear-gradient(145deg, ${analysisQuality.tone}20, var(--surface-2))`,
               padding: "18px",
               boxShadow: `0 0 30px ${analysisQuality.tone}22`,
             }}
@@ -870,7 +872,7 @@ export default function NewMatchPage() {
                 </div>
                 <div
                   style={{
-                    color: analysisQuality.tone,
+                    color: analysisQuality.textTone,
                     fontSize: "24px",
                     fontWeight: 950,
                     marginTop: "2px",
@@ -887,18 +889,18 @@ export default function NewMatchPage() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  background: "rgba(0,0,0,0.24)",
+                  background: "var(--inset-bg)",
                   border: `1px solid ${analysisQuality.tone}55`,
                 }}
               >
-                <Target size={28} color={analysisQuality.tone} />
+                <Target size={28} color={analysisQuality.textTone} />
               </div>
             </div>
             <div
               style={{
                 height: "10px",
                 borderRadius: "999px",
-                background: "rgba(255,255,255,0.10)",
+                background: "var(--surface-3)",
                 overflow: "hidden",
                 marginTop: "18px",
               }}
@@ -908,7 +910,7 @@ export default function NewMatchPage() {
                   height: "100%",
                   width: `${(photosUploaded / photoSteps.length) * 100}%`,
                   borderRadius: "999px",
-                  background: `linear-gradient(90deg, #00d4ff, ${analysisQuality.tone})`,
+                  background: `linear-gradient(90deg, var(--info), ${analysisQuality.tone})`,
                   transition: "width 0.45s ease",
                 }}
               />
@@ -916,7 +918,7 @@ export default function NewMatchPage() {
             <p
               style={{
                 margin: "12px 0 0",
-                color: "rgba(255,255,255,0.72)",
+                color: "var(--text-secondary)",
                 fontSize: "13px",
                 lineHeight: 1.45,
               }}
@@ -927,7 +929,7 @@ export default function NewMatchPage() {
               style={{
                 marginTop: "14px",
                 fontSize: "13px",
-                color: "rgba(255,255,255,0.84)",
+                color: "var(--text-main)",
                 fontWeight: 800,
               }}
             >
@@ -972,13 +974,13 @@ export default function NewMatchPage() {
                     ? "rgba(34, 197, 94, 0.10)"
                     : isSkipped
                       ? "rgba(156, 163, 175, 0.10)"
-                      : "rgba(255, 255, 255, 0.045)",
+                      : "var(--surface-2)",
                 border: `1px solid ${
                   isActive
                     ? "rgba(61, 220, 151, 0.55)"
                     : isCompleted
                       ? "rgba(34, 197, 94, 0.35)"
-                      : "rgba(255, 255, 255, 0.10)"
+                      : "var(--border-soft)"
                 }`,
                 cursor: "pointer",
                 transition: "all 0.22s ease",
@@ -1050,7 +1052,7 @@ export default function NewMatchPage() {
             display: "flex",
             alignItems: "center",
             gap: "8px",
-            color: "#fca5a5",
+            color: "var(--danger-text)",
           }}
         >
           <AlertCircle size={20} />
@@ -1070,7 +1072,7 @@ export default function NewMatchPage() {
             display: "flex",
             alignItems: "center",
             gap: "8px",
-            color: "#86efac",
+            color: "var(--success-text)",
           }}
         >
           <CheckCircle2 size={20} />
@@ -1109,7 +1111,7 @@ export default function NewMatchPage() {
                   borderRadius: "999px",
                   background: "rgba(61, 220, 151, 0.08)",
                   border: "1px solid rgba(61, 220, 151, 0.18)",
-                  color: "#7dd3fc",
+                  color: "var(--info-text)",
                   fontSize: "12px",
                   fontWeight: 900,
                   marginBottom: "12px",
@@ -1159,14 +1161,14 @@ export default function NewMatchPage() {
                   background: currentData
                     ? "rgba(34,197,94,0.10)"
                     : hasImageForExtract
-                      ? "rgba(250,204,21,0.10)"
-                      : "rgba(255,255,255,0.05)",
-                  border: `1px solid ${currentData ? "rgba(34,197,94,0.35)" : hasImageForExtract ? "rgba(250,204,21,0.32)" : "rgba(255,255,255,0.10)"}`,
+                      ? "var(--gold-bg)"
+                      : "var(--surface-2)",
+                  border: `1px solid ${currentData ? "rgba(34,197,94,0.35)" : hasImageForExtract ? "var(--gold-border)" : "var(--border-soft)"}`,
                   color: currentData
-                    ? "#86efac"
+                    ? "var(--success-text)"
                     : hasImageForExtract
-                      ? "#facc15"
-                      : "rgba(255,255,255,0.70)",
+                      ? "var(--gold-text)"
+                      : "var(--text-secondary)",
                   fontWeight: 900,
                 }}
               >
@@ -1239,8 +1241,8 @@ export default function NewMatchPage() {
                     minHeight: "154px",
                     background: isHome
                       ? "linear-gradient(145deg, rgba(61,220,151,0.22), rgba(0,161,166,0.10))"
-                      : "rgba(255,255,255,0.045)",
-                    border: `1px solid ${isHome ? "rgba(61, 220, 151, 0.65)" : "rgba(255,255,255,0.10)"}`,
+                      : "var(--surface-2)",
+                    border: `1px solid ${isHome ? "rgba(61, 220, 151, 0.65)" : "var(--border-soft)"}`,
                     borderRadius: "18px",
                     color: "var(--text-main)",
                     textAlign: "left",
@@ -1253,7 +1255,7 @@ export default function NewMatchPage() {
                 >
                   <Home
                     size={28}
-                    color={isHome ? "var(--accent)" : "rgba(255,255,255,0.55)"}
+                    color={isHome ? "var(--accent)" : "var(--text-dim)"}
                   />
                   <div
                     style={{
@@ -1267,7 +1269,7 @@ export default function NewMatchPage() {
                   <div
                     style={{
                       fontSize: "13px",
-                      color: "rgba(255,255,255,0.66)",
+                      color: "var(--text-secondary)",
                       lineHeight: 1.4,
                       marginTop: "6px",
                     }}
@@ -1294,8 +1296,8 @@ export default function NewMatchPage() {
                     minHeight: "154px",
                     background: !isHome
                       ? "linear-gradient(145deg, rgba(61,220,151,0.22), rgba(0,161,166,0.10))"
-                      : "rgba(255,255,255,0.045)",
-                    border: `1px solid ${!isHome ? "rgba(61, 220, 151, 0.65)" : "rgba(255,255,255,0.10)"}`,
+                      : "var(--surface-2)",
+                    border: `1px solid ${!isHome ? "rgba(61, 220, 151, 0.65)" : "var(--border-soft)"}`,
                     borderRadius: "18px",
                     color: "var(--text-main)",
                     textAlign: "left",
@@ -1308,7 +1310,7 @@ export default function NewMatchPage() {
                 >
                   <Plane
                     size={28}
-                    color={!isHome ? "var(--accent)" : "rgba(255,255,255,0.55)"}
+                    color={!isHome ? "var(--accent)" : "var(--text-dim)"}
                   />
                   <div
                     style={{
@@ -1322,7 +1324,7 @@ export default function NewMatchPage() {
                   <div
                     style={{
                       fontSize: "13px",
-                      color: "rgba(255,255,255,0.66)",
+                      color: "var(--text-secondary)",
                       lineHeight: 1.4,
                       marginTop: "6px",
                     }}
@@ -1339,7 +1341,7 @@ export default function NewMatchPage() {
                   alignItems: "center",
                   gap: "8px",
                   fontSize: "13px",
-                  color: "rgba(125, 211, 252, 0.92)",
+                  color: "var(--info-text)",
                   background: "rgba(61, 220, 151, 0.08)",
                   border: "1px solid rgba(61, 220, 151, 0.16)",
                   borderRadius: "12px",
@@ -1362,7 +1364,7 @@ export default function NewMatchPage() {
                     background: "rgba(239, 68, 68, 0.15)",
                     border: "1px solid rgba(239, 68, 68, 0.4)",
                     borderRadius: "8px",
-                    color: "#fca5a5",
+                    color: "var(--danger-text)",
                     fontSize: "14px",
                     display: "flex",
                     alignItems: "center",
@@ -1378,7 +1380,7 @@ export default function NewMatchPage() {
                   marginBottom: "16px",
                   padding: "16px",
                   background:
-                    "linear-gradient(145deg, rgba(61, 220, 151, 0.10), rgba(255,255,255,0.035))",
+                    "linear-gradient(145deg, rgba(61, 220, 151, 0.10), var(--surface-2))",
                   border: "1px solid rgba(61, 220, 151, 0.20)",
                   borderRadius: "16px",
                 }}
@@ -1387,7 +1389,7 @@ export default function NewMatchPage() {
                   style={{
                     fontSize: "16px",
                     fontWeight: 900,
-                    color: "#7dd3fc",
+                    color: "var(--info-text)",
                     marginBottom: "6px",
                     display: "flex",
                     alignItems: "center",
@@ -1652,7 +1654,7 @@ export default function NewMatchPage() {
                       border: `1px solid ${currentData ? "rgba(34, 197, 94, 0.45)" : "rgba(61, 220, 151, 0.55)"}`,
                       borderRadius: "14px",
                       padding: "14px",
-                      color: currentData ? "#86efac" : "#020510",
+                      color: currentData ? "var(--success-text)" : "#020510",
                       cursor:
                         extracting || saving || currentData
                           ? "not-allowed"
@@ -1697,11 +1699,11 @@ export default function NewMatchPage() {
                   disabled={extracting || saving}
                   style={{
                     flex: hasImageForExtract ? 0.5 : 1,
-                    background: "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.12)",
+                    background: "var(--surface-2)",
+                    border: "1px solid var(--border-soft)",
                     borderRadius: "14px",
                     padding: "12px",
-                    color: "rgba(255,255,255,0.72)",
+                    color: "var(--text-secondary)",
                     cursor: extracting || saving ? "not-allowed" : "pointer",
                     opacity: extracting || saving ? 0.5 : 1,
                     display: "flex",
@@ -1723,11 +1725,11 @@ export default function NewMatchPage() {
                     marginTop: "16px",
                     padding: "12px",
                     background:
-                      "linear-gradient(145deg, rgba(34, 197, 94, 0.14), rgba(255,255,255,0.04))",
+                      "linear-gradient(145deg, rgba(34, 197, 94, 0.14), var(--surface-2))",
                     border: "1px solid rgba(34, 197, 94, 0.32)",
                     borderRadius: "14px",
                     fontSize: "13px",
-                    color: "#86efac",
+                    color: "var(--success-text)",
                   }}
                 >
                   <strong>
@@ -1764,7 +1766,7 @@ export default function NewMatchPage() {
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
-                color: analysisQuality.tone,
+                color: analysisQuality.textTone,
                 fontWeight: 950,
                 fontSize: "17px",
               }}
@@ -1779,7 +1781,7 @@ export default function NewMatchPage() {
             <p
               style={{
                 margin: "6px 0 0",
-                color: "rgba(255,255,255,0.68)",
+                color: "var(--text-secondary)",
                 fontSize: "13px",
               }}
             >
@@ -1808,7 +1810,7 @@ export default function NewMatchPage() {
               border: `1px solid ${saving || photosUploaded < 3 ? "rgba(156, 163, 175, 0.35)" : "rgba(134, 239, 172, 0.55)"}`,
               borderRadius: "16px",
               padding: "16px 22px",
-              color: saving || photosUploaded < 3 ? "#d1d5db" : "#021006",
+              color: saving || photosUploaded < 3 ? "var(--text-secondary)" : "#021006",
               cursor:
                 saving || photosUploaded < 3 || typeof isHome !== "boolean"
                   ? "not-allowed"
@@ -1875,8 +1877,7 @@ export default function NewMatchPage() {
         >
           <div
             style={{
-              background:
-                "linear-gradient(145deg, rgba(5, 12, 25, 0.98) 0%, rgba(2, 4, 10, 0.99) 100%)",
+              background: "var(--surface)",
               border: "1px solid rgba(61, 220, 151, 0.26)",
               borderRadius: "24px",
               padding: "clamp(16px, 4vw, 24px)",
@@ -1899,8 +1900,8 @@ export default function NewMatchPage() {
                 position: "absolute",
                 top: "16px",
                 right: "16px",
-                background: "rgba(255, 255, 255, 0.1)",
-                border: "1px solid rgba(255, 255, 255, 0.2)",
+                background: "var(--surface-3)",
+                border: "1px solid var(--border-strong)",
                 borderRadius: "8px",
                 padding: "8px",
                 color: "var(--text-main)",
@@ -1952,7 +1953,7 @@ export default function NewMatchPage() {
               <p
                 style={{
                   margin: "8px 0 0",
-                  color: "rgba(255,255,255,0.68)",
+                  color: "var(--text-secondary)",
                   fontSize: "14px",
                   lineHeight: 1.45,
                 }}
@@ -1978,7 +1979,7 @@ export default function NewMatchPage() {
                   border: "1px solid rgba(34, 197, 94, 0.28)",
                   borderRadius: "14px",
                   padding: "12px",
-                  color: "#86efac",
+                  color: "var(--success-text)",
                 }}
               >
                 <div
@@ -2008,7 +2009,7 @@ export default function NewMatchPage() {
                   border: "1px solid rgba(61, 220, 151, 0.20)",
                   borderRadius: "14px",
                   padding: "12px",
-                  color: "#7dd3fc",
+                  color: "var(--info-text)",
                 }}
               >
                 <div
@@ -2038,7 +2039,7 @@ export default function NewMatchPage() {
                   border: `1px solid ${analysisQuality.tone}40`,
                   borderRadius: "14px",
                   padding: "12px",
-                  color: analysisQuality.tone,
+                  color: analysisQuality.textTone,
                 }}
               >
                 <div
@@ -2227,7 +2228,7 @@ export default function NewMatchPage() {
                   >
                     {t("sectionsComplete")} ({photosComplete.length})
                   </div>
-                  <div style={{ fontSize: "14px", color: "#86efac" }}>
+                  <div style={{ fontSize: "14px", color: "var(--success-text)" }}>
                     {photosComplete.join(", ")}
                   </div>
                 </div>
@@ -2286,9 +2287,9 @@ export default function NewMatchPage() {
                       gap: "9px",
                       padding: "10px 12px",
                       borderRadius: "12px",
-                      background: "rgba(255,255,255,0.045)",
-                      border: "1px solid rgba(255,255,255,0.09)",
-                      color: "rgba(255,255,255,0.78)",
+                      background: "var(--surface-2)",
+                      border: "1px solid var(--border-soft)",
+                      color: "var(--text-secondary)",
                       fontSize: "13px",
                       fontWeight: 800,
                     }}
@@ -2318,8 +2319,7 @@ export default function NewMatchPage() {
               padding: "clamp(12px, 3vw, 16px) clamp(16px, 4vw, 24px)",
               paddingBottom:
                 "calc(clamp(12px, 3vw, 16px) + env(safe-area-inset-bottom, 0px))",
-              background:
-                "linear-gradient(180deg, rgba(2, 4, 10, 0.72) 0%, rgba(2, 4, 10, 0.98) 30%)",
+              background: "var(--surface)",
               backdropFilter: "blur(12px)",
               borderTop: "1px solid rgba(61, 220, 151, 0.12)",
               zIndex: 1001,
@@ -2337,7 +2337,7 @@ export default function NewMatchPage() {
                 border: `1px solid ${saving ? "rgba(156, 163, 175, 0.5)" : "rgba(134, 239, 172, 0.55)"}`,
                 borderRadius: "14px",
                 padding: "14px",
-                color: saving ? "#d1d5db" : "#021006",
+                color: saving ? "var(--text-secondary)" : "#021006",
                 cursor: saving ? "not-allowed" : "pointer",
                 opacity: saving ? 0.5 : 1,
                 display: "flex",
@@ -2370,11 +2370,11 @@ export default function NewMatchPage() {
               style={{
                 flex: 1,
                 minWidth: "120px",
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.12)",
+                background: "var(--surface-2)",
+                border: "1px solid var(--border-soft)",
                 borderRadius: "14px",
                 padding: "12px",
-                color: "#d1d5db",
+                color: "var(--text-secondary)",
                 cursor: saving ? "not-allowed" : "pointer",
                 opacity: saving ? 0.5 : 1,
                 display: "flex",
@@ -2440,9 +2440,9 @@ export default function NewMatchPage() {
           gap: 8px;
           padding: 10px 13px;
           border-radius: 12px;
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          background: rgba(255, 255, 255, 0.045);
-          color: rgba(255, 255, 255, 0.78);
+          border: 1px solid var(--border-soft);
+          background: var(--surface-2);
+          color: var(--text-secondary);
           font-weight: 800;
           cursor: pointer;
           transition: all 180ms ease;

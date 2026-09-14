@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>FZTH · Daily Penalty</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+    :root { --bg:#07090d; --line:rgba(255,255,255,.08); --text:#f3f4f2; --mute:rgba(243,244,242,.58); --cyan:#4ce0ff; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    #c { position: fixed; inset: 0; display: block; }
+    .ui { position: fixed; inset: 0; pointer-events: none; display: flex; flex-direction: column; }
+    .top { padding: 22px 24px 0; }
+    .brand { font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--cyan); }
+    .title { margin: 6px 0 0; font-size: clamp(22px, 3vw, 34px); font-weight: 800; letter-spacing: -.03em; }
+    .meta { font-size: 12px; color: var(--mute); margin-top: 6px; }
+    .bottom { margin-top: auto; padding: 0 24px calc(22px + env(safe-area-inset-bottom)); display: flex; justify-content: center; }
+    button.primary {
+      pointer-events: auto; min-height: 52px; min-width: min(360px, 92vw);
+      border: 0; border-radius: 14px; background: #f4f6f3; color: #111;
+      font-weight: 700; font-size: 14px; cursor: pointer;
+    }
+    button.primary:disabled { opacity: .38; cursor: default; }
+    .veil, .boot {
+      position: fixed; inset: 0; display: none; place-items: center;
+      background: rgba(6,8,12,.55); backdrop-filter: blur(16px);
+    }
+    .veil.on, .boot.on { display: grid; }
+    .boot { background: #07090d; }
+    .sheet {
+      width: min(380px, calc(100vw - 32px)); padding: 28px 24px 22px; border-radius: 22px;
+      background: rgba(16,18,22,.92); border: 1px solid var(--line); text-align: center;
+    }
+    .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); }
+    .amount { font-size: 64px; font-weight: 800; letter-spacing: -.05em; margin: 8px 0 4px; }
+    .copy { color: var(--mute); font-size: 14px; }
+    .again, .boot p { margin-top: 18px; }
+    .again {
+      width: 100%; min-height: 46px; border: 0; border-radius: 12px;
+      background: #f4f6f3; color: #111; font-weight: 700; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div class="ui">
+    <div class="top">
+      <div class="brand">From Zero To Hero</div>
+      <div class="title">Daily Penalty</div>
+      <div class="meta">Un tiro al giorno. Il portiere decide il premio.</div>
+    </div>
+    <div class="bottom"><button class="primary" id="kick" type="button" disabled>Caricamento…</button></div>
+  </div>
+  <div class="boot on" id="boot"><div class="eyebrow">Preparazione del portiere</div></div>
+  <div class="veil" id="veil">
+    <div class="sheet">
+      <div class="eyebrow" id="eyebrow">Esito</div>
+      <div class="amount" id="amount">0 HP</div>
+      <div class="copy" id="copy"></div>
+      <button class="again" id="again" type="button">Nuovo tiro</button>
+    </div>
+  </div>
+  <script type="importmap">
+    { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    } }
+  </script>
+  <script type="module">
+    import * as THREE from "three"
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js"
+    import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js"
+    import { RenderPass } from "three/addons/postprocessing/RenderPass.js"
+    import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js"
+    import { OutputPass } from "three/addons/postprocessing/OutputPass.js"
+
+    const WEIGHTS = { 5: 9000, 0: 3200, 10: 2800, 20: 1000, 30: 1000, 100: 20 }
+    const VALUES = [5, 0, 10, 20, 30, 100]
+    const pick = () => {
+      let n = Math.random() * VALUES.reduce((s, v) => s + WEIGHTS[v], 0)
+      for (const v of VALUES) { n -= WEIGHTS[v]; if (n <= 0) return v }
+      return 5
+    }
+
+    const canvas = document.getElementById("c")
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" })
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
+    renderer.setSize(innerWidth, innerHeight)
+    renderer.shadowMap.enabled = true
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    renderer.toneMapping = THREE.ACESFilmicToneMapping
+    renderer.toneMappingExposure = 1.08
+    renderer.outputColorSpace = THREE.SRGBColorSpace
+
+    const scene = new THREE.Scene()
+    scene.background = new THREE.Color("#070b12")
+    scene.fog = new THREE.Fog("#070b12", 28, 78)
+    const camera = new THREE.PerspectiveCamera(32, innerWidth / innerHeight, 0.1, 200)
+    camera.position.set(0, 1.55, 16.8)
+    camera.lookAt(0, 1.35, 0)
+
+    const composer = new EffectComposer(renderer)
+    composer.addPass(new RenderPass(scene, camera))
+    const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.28, 0.7, 0.82)
+    composer.addPass(bloom)
+    composer.addPass(new OutputPass())
+
+    scene.add(new THREE.HemisphereLight(0x9eb7d6, 0x1a3324, 0.55))
+    const key = new THREE.DirectionalLight(0xfff3d4, 1.4)
+    key.position.set(-8, 14, 10)
+    key.castShadow = true
+    key.shadow.mapSize.set(2048, 2048)
+    key.shadow.camera.near = 1
+    key.shadow.camera.far = 50
+    Object.assign(key.shadow.camera, { left: -18, right: 18, top: 18, bottom: -18 })
+    scene.add(key)
+    const rim = new THREE.DirectionalLight(0x4ce0ff, 0.5)
+    rim.position.set(6, 4, -8)
+    scene.add(rim)
+    const flood = (x, z) => {
+      const s = new THREE.SpotLight(0xfff6dd, 48, 42, 0.42, 0.45, 1.4)
+      s.position.set(x, 11.5, z)
+      s.target.position.set(0, 0, 2)
+      scene.add(s, s.target)
+    }
+    flood(-10, 8); flood(10, 8); flood(-9, -4); flood(9, -4)
+
+    function noiseTex(w, h, paint) {
+      const c = document.createElement("canvas")
+      c.width = w; c.height = h
+      paint(c.getContext("2d"), w, h)
+      const t = new THREE.CanvasTexture(c)
+      t.colorSpace = THREE.SRGBColorSpace
+      t.anisotropy = 8
+      return t
+    }
+    const grass = noiseTex(1024, 1024, (g, w, h) => {
+      for (let x = 0; x < w; x += 64) {
+        g.fillStyle = (x / 64) % 2 ? "#0c5a31" : "#0a4d2a"
+        g.fillRect(x, 0, 64, h)
+      }
+      const img = g.getImageData(0, 0, w, h)
+      for (let i = 0; i < img.data.length; i += 4) {
+        const n = (Math.random() - 0.5) * 22
+        img.data[i] += n; img.data[i + 1] += n; img.data[i + 2] += n
+      }
+      g.putImageData(img, 0, 0)
+    })
+    grass.wrapS = grass.wrapT = THREE.RepeatWrapping
+    grass.repeat.set(18, 12)
+    const pitch = new THREE.Mesh(new THREE.PlaneGeometry(80, 56), new THREE.MeshStandardMaterial({ map: grass, roughness: 0.92 }))
+    pitch.rotation.x = -Math.PI / 2
+    pitch.receiveShadow = true
+    scene.add(pitch)
+
+    const lineMat = new THREE.MeshBasicMaterial({ color: "#eef5f0" })
+    const addLine = (w, d, x, z) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.02, d), lineMat)
+      m.position.set(x, 0.02, z)
+      scene.add(m)
+    }
+    addLine(16.5, 0.08, 0, 0.04)
+    addLine(0.08, 16.5, -8.25, 8.25)
+    addLine(0.08, 16.5, 8.25, 8.25)
+    addLine(16.5, 0.08, 0, 16.5)
+    const spot = new THREE.Mesh(new THREE.RingGeometry(0.18, 0.24, 32), lineMat)
+    spot.rotation.x = -Math.PI / 2
+    spot.position.set(0, 0.03, 11)
+    scene.add(spot)
+
+    const postMat = new THREE.MeshStandardMaterial({ color: "#f4f7f5", metalness: 0.65, roughness: 0.22 })
+    const postL = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.44, 16), postMat)
+    const postR = postL.clone()
+    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 7.44, 16), postMat)
+    postL.position.set(-3.66, 1.22, 0)
+    postR.position.set(3.66, 1.22, 0)
+    bar.rotation.z = Math.PI / 2
+    bar.position.set(0, 2.44, 0)
+    ;[postL, postR, bar].forEach((m) => { m.castShadow = true; scene.add(m) })
+
+    const netGeo = new THREE.BufferGeometry()
+    const netPos = []
+    for (let i = 0; i <= 14; i++) {
+      const x = -3.6 + i * (7.2 / 14)
+      netPos.push(x, 0.08, -0.02, x, 2.4, -0.02)
+    }
+    for (let j = 0; j <= 8; j++) {
+      const y = 0.08 + j * (2.32 / 8)
+      netPos.push(-3.6, y, -0.02, 3.6, y, -0.02)
+    }
+    netGeo.setAttribute("position", new THREE.Float32BufferAttribute(netPos, 3))
+    scene.add(new THREE.LineSegments(netGeo, new THREE.LineBasicMaterial({ color: "#cfe7ff", transparent: true, opacity: 0.28 })))
+
+    const bowl = new THREE.Mesh(
+      new THREE.CylinderGeometry(28, 34, 10, 48, 1, true),
+      new THREE.MeshStandardMaterial({ color: "#10161c", roughness: 0.9, side: THREE.BackSide })
+    )
+    bowl.position.y = 4.2
+    scene.add(bowl)
+
+    const ballTex = noiseTex(512, 512, (g, w, h) => {
+      g.fillStyle = "#f6f6f4"; g.fillRect(0, 0, w, h)
+      g.fillStyle = "#161616"
+      for (let i = 0; i < 12; i++) {
+        g.beginPath()
+        g.arc((i % 4) * 128 + 64, Math.floor(i / 4) * 170 + 80, 28, 0, Math.PI * 2)
+        g.fill()
+      }
+    })
+    const ball = new THREE.Mesh(
+      new THREE.SphereGeometry(0.11, 48, 32),
+      new THREE.MeshStandardMaterial({ map: ballTex, roughness: 0.38, metalness: 0.08 })
+    )
+    ball.castShadow = true
+    ball.position.set(0, 0.11, 11)
+    scene.add(ball)
+
+    let keeperRoot, mixer, idleAction, bones = {}
+    let phase = "load"
+    let t0 = 0
+    let hp = 0
+    let shot = { to: new THREE.Vector3(), dive: 0, from: new THREE.Vector3() }
+    const kickBtn = document.getElementById("kick")
+    const veil = document.getElementById("veil")
+    const boot = document.getElementById("boot")
+
+    const bone = (key) => {
+      const hit = Object.keys(bones).find((n) => n.toLowerCase().endsWith(key.toLowerCase()) || n.toLowerCase().includes(key.toLowerCase()))
+      return hit ? bones[hit] : null
+    }
+
+    function attachGlove(hand) {
+      if (!hand) return
+      const mat = new THREE.MeshStandardMaterial({ color: "#f3f4f2", roughness: 0.42, metalness: 0.05 })
+      const g = new THREE.Mesh(new THREE.SphereGeometry(0.055, 16, 12), mat)
+      g.scale.set(1.15, 0.85, 1.35)
+      g.position.set(0, 0.02, 0.04)
+      g.castShadow = true
+      hand.add(g)
+    }
+
+    const gltf = await new GLTFLoader().loadAsync(
+      "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r170/examples/models/gltf/Xbot.glb"
+    )
+    keeperRoot = gltf.scene
+    keeperRoot.traverse((o) => {
+      if (o.isBone) bones[o.name] = o
+      if (!o.isMesh) return
+      o.castShadow = true
+      o.receiveShadow = true
+      const mats = Array.isArray(o.material) ? o.material : [o.material]
+      mats.forEach((m) => {
+        if (!m) return
+        const n = `${m.name || ""} ${o.name || ""}`.toLowerCase()
+        if (n.includes("joint") || n.includes("head") || n.includes("face")) m.color.set("#e3b59a")
+        else if (n.includes("bottom") || n.includes("leg") || n.includes("hip")) m.color.set("#101418")
+        else m.color.set("#12b7c9")
+        m.roughness = 0.48
+        m.metalness = 0.04
+      })
+    })
+    const box = new THREE.Box3().setFromObject(keeperRoot)
+    const size = box.getSize(new THREE.Vector3())
+    keeperRoot.scale.setScalar(1.84 / size.y)
+    keeperRoot.position.set(0, 0, 0.62)
+    keeperRoot.rotation.y = Math.PI
+    attachGlove(bone("LeftHand"))
+    attachGlove(bone("RightHand"))
+    scene.add(keeperRoot)
+
+    mixer = new THREE.AnimationMixer(keeperRoot)
+    const idleClip = gltf.animations.find((c) => /idle/i.test(c.name)) || gltf.animations[0]
+    if (idleClip) {
+      idleAction = mixer.clipAction(idleClip)
+      idleAction.play()
+    }
+    boot.classList.remove("on")
+    kickBtn.disabled = false
+    kickBtn.textContent = "Calcia"
+    phase = "idle"
+
+    function reset() {
+      phase = "idle"
+      ball.position.set(0, 0.11, 11)
+      ball.rotation.set(0, 0, 0)
+      keeperRoot.position.set(0, 0, 0.62)
+      keeperRoot.rotation.set(0, Math.PI, 0)
+      camera.position.set(0, 1.55, 16.8)
+      if (idleAction) { idleAction.reset(); idleAction.fadeIn(0.2); idleAction.play() }
+      kickBtn.disabled = false
+      veil.classList.remove("on")
+      bloom.strength = 0.28
+    }
+
+    function shoot() {
+      if (phase !== "idle") return
+      hp = pick()
+      const goal = hp > 0
+      const side = [-1, 0, 1][Math.floor(Math.random() * 3)]
+      const aim = goal ? (side === 0 ? (Math.random() > 0.5 ? -1 : 1) : -side) : side
+      shot.to.set(aim * 2.55, 1.1 + Math.random() * 0.75, 0.12)
+      shot.dive = side
+      shot.from = ball.position.clone()
+      phase = "kick"
+      t0 = performance.now()
+      kickBtn.disabled = true
+      if (idleAction) idleAction.fadeOut(0.12)
+    }
+
+    function reveal() {
+      const win = hp > 0
+      document.getElementById("eyebrow").textContent = win ? "Gol" : "Parata"
+      document.getElementById("amount").textContent = hp + " HP"
+      document.getElementById("copy").textContent = win ? "Premio accreditato sul saldo." : "Nessun Hero Point questa volta."
+      veil.classList.add("on")
+    }
+
+    kickBtn.onclick = shoot
+    document.getElementById("again").onclick = reset
+
+    const clock = new THREE.Clock()
+    function frame() {
+      const dt = clock.getDelta()
+      const now = performance.now()
+      if (mixer) mixer.update(dt)
+      const leftArm = bone("LeftArm")
+      const rightArm = bone("RightArm")
+
+      if (phase === "kick") {
+        const u = Math.min(1, (now - t0) / 820)
+        const e = 1 - Math.pow(1 - u, 3)
+        ball.position.lerpVectors(shot.from, shot.to, e)
+        ball.position.y += Math.sin(e * Math.PI) * 0.55
+        ball.rotation.x += 0.3
+        keeperRoot.position.x = THREE.MathUtils.lerp(0, shot.dive * 2.35, e)
+        keeperRoot.position.y = Math.abs(shot.dive) * e * 0.22
+        keeperRoot.rotation.z = THREE.MathUtils.lerp(0, shot.dive * 0.85, e)
+        if (leftArm) leftArm.rotation.z = THREE.MathUtils.lerp(leftArm.rotation.z, shot.dive <= 0 ? 1.1 : 0.2, 0.15)
+        if (rightArm) rightArm.rotation.z = THREE.MathUtils.lerp(rightArm.rotation.z, shot.dive >= 0 ? -1.1 : -0.2, 0.15)
+        camera.position.z = THREE.MathUtils.lerp(16.8, 14.7, e)
+        if (u >= 1) {
+          phase = hp > 0 ? "goal" : "save"
+          t0 = now
+          if (hp > 0) bloom.strength = 0.52
+        }
+      }
+      if (phase === "goal" || phase === "save") {
+        const u = Math.min(1, (now - t0) / 900)
+        if (phase === "goal") {
+          camera.position.x = Math.sin(now * 0.05) * 0.03
+          bloom.strength = THREE.MathUtils.lerp(0.52, 0.28, u)
+        } else {
+          ball.position.x = keeperRoot.position.x
+          ball.position.y = 1.05
+          ball.position.z = 0.85
+        }
+        if (u >= 1 && phase !== "done") { phase = "done"; reveal() }
+      }
+      composer.render()
+      requestAnimationFrame(frame)
+    }
+    frame()
+
+    addEventListener("resize", () => {
+      camera.aspect = innerWidth / innerHeight
+      camera.updateProjectionMatrix()
+      renderer.setSize(innerWidth, innerHeight)
+      composer.setSize(innerWidth, innerHeight)
+    })
+  </script>
+</body>
+</html>

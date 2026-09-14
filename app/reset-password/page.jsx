@@ -88,11 +88,11 @@ export default function ResetPasswordPage() {
 
   if (invalidLink) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%)', padding: '24px' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--shell-bg)', padding: '24px' }}>
         <div className="neon-panel" style={{ maxWidth: '420px', padding: '32px', textAlign: 'center' }}>
           <AlertCircle size={48} color="#ef4444" style={{ marginBottom: '16px' }} />
-          <h1 style={{ fontSize: '20px', color: '#fff', marginBottom: '8px' }}>{t('resetPasswordError')}</h1>
-          <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', marginBottom: '24px' }}>
+          <h1 style={{ fontSize: '20px', color: 'var(--text-main)', marginBottom: '8px' }}>{t('resetPasswordError')}</h1>
+          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '24px' }}>
             {t('resetLinkExpired')}
           </p>
           <Link href="/forgot-password" style={{ display: 'inline-block', padding: '12px 24px', background: 'var(--neon-blue)', color: '#fff', borderRadius: '8px', textDecoration: 'none', fontWeight: 600 }}>
@@ -108,9 +108,9 @@ export default function ResetPasswordPage() {
 
   if (!sessionReady) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%)' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--shell-bg)' }}>
         <div style={{ color: 'var(--neon-blue)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '24px', height: '24px', border: '2px solid rgba(0,212,255,0.3)', borderTopColor: 'var(--neon-blue)', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
+          <div style={{ width: '24px', height: '24px', border: '2px solid var(--info-border)', borderTopColor: 'var(--neon-blue)', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
           <span>{t('creditsLoading')}</span>
         </div>
         <style jsx>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
@@ -124,7 +124,7 @@ export default function ResetPasswordPage() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%)',
+      background: 'var(--shell-bg)',
       padding: '24px'
     }}>
 
@@ -132,8 +132,8 @@ export default function ResetPasswordPage() {
         width: '100%',
         maxWidth: '420px',
         padding: '32px',
-        background: 'rgba(10, 14, 39, 0.95)',
-        border: '1px solid rgba(0, 212, 255, 0.3)',
+        background: 'var(--surface)',
+        border: '1px solid var(--info-border)',
         borderRadius: '16px',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)'
       }}>
@@ -141,7 +141,7 @@ export default function ResetPasswordPage() {
           <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--neon-blue)', marginBottom: '8px' }}>
             {t('resetPasswordTitle')}
           </h1>
-          <p style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)', margin: 0 }}>
+          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0 }}>
             {t('resetPasswordDescription')}
           </p>
         </div>
@@ -185,9 +185,9 @@ export default function ResetPasswordPage() {
         {!success && (
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.9)', marginBottom: '8px' }}>{t('password')}</label>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '8px' }}>{t('password')}</label>
               <div style={{ position: 'relative' }}>
-                <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255, 255, 255, 0.5)' }} />
+                <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
                 <input
                   type="password"
                   value={password}
@@ -200,10 +200,10 @@ export default function ResetPasswordPage() {
                   style={{
                     width: '100%',
                     padding: '12px 12px 12px 40px',
-                    background: 'rgba(0, 0, 0, 0.3)',
-                    border: '1px solid rgba(0, 212, 255, 0.2)',
+                    background: 'var(--inset-bg)',
+                    border: '1px solid var(--info-border)',
                     borderRadius: '8px',
-                    color: '#fff',
+                    color: 'var(--text-main)',
                     fontSize: '14px',
                     outline: 'none'
                   }}
@@ -211,9 +211,9 @@ export default function ResetPasswordPage() {
               </div>
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.9)', marginBottom: '8px' }}>{t('confirmPassword')}</label>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '8px' }}>{t('confirmPassword')}</label>
               <div style={{ position: 'relative' }}>
-                <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255, 255, 255, 0.5)' }} />
+                <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
                 <input
                   type="password"
                   value={confirmPassword}
@@ -226,10 +226,10 @@ export default function ResetPasswordPage() {
                   style={{
                     width: '100%',
                     padding: '12px 12px 12px 40px',
-                    background: 'rgba(0, 0, 0, 0.3)',
-                    border: '1px solid rgba(0, 212, 255, 0.2)',
+                    background: 'var(--inset-bg)',
+                    border: '1px solid var(--info-border)',
                     borderRadius: '8px',
-                    color: '#fff',
+                    color: 'var(--text-main)',
                     fontSize: '14px',
                     outline: 'none'
                   }}
@@ -257,7 +257,7 @@ export default function ResetPasswordPage() {
           </form>
         )}
 
-        <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid rgba(0, 212, 255, 0.2)', textAlign: 'center' }}>
+        <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--info-border)', textAlign: 'center' }}>
           <Link href="/login" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: 'var(--neon-blue)', fontSize: '14px', textDecoration: 'none' }}>
             <ArrowLeft size={16} />
             {t('backToLogin')}

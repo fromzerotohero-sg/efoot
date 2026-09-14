@@ -182,7 +182,7 @@ export default function PositionSelectionModal({
                 border: `1px solid ${group.color}30`,
                 borderRadius: '12px',
                 overflow: 'hidden',
-                background: 'rgba(0,0,0,0.2)'
+                background: 'var(--inset-bg)'
               }}>
                 {/* Header gruppo */}
                 <div style={{
@@ -246,14 +246,14 @@ export default function PositionSelectionModal({
                           borderRadius: '8px',
                           cursor: 'pointer',
                           border: `1.5px solid ${selected ? group.color : 'transparent'}`,
-                          background: selected ? `${group.color}20` : 'rgba(255,255,255,0.03)',
+                          background: selected ? `${group.color}20` : 'var(--surface-2)',
                           transition: 'all 0.2s ease'
                         }}
                         onMouseEnter={(e) => {
-                          if (!selected) e.currentTarget.style.background = 'rgba(255,255,255,0.08)'
+                          if (!selected) e.currentTarget.style.background = 'var(--surface-3)'
                         }}
                         onMouseLeave={(e) => {
-                          if (!selected) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
+                          if (!selected) e.currentTarget.style.background = 'var(--surface-2)'
                         }}
                       >
                         <div style={{
@@ -265,7 +265,7 @@ export default function PositionSelectionModal({
                             width: '18px',
                             height: '18px',
                             borderRadius: '4px',
-                            border: `2px solid ${selected ? group.color : 'rgba(255,255,255,0.3)'}`,
+                            border: `2px solid ${selected ? group.color : 'var(--border-strong)'}`,
                             background: selected ? group.color : 'transparent',
                             display: 'flex',
                             alignItems: 'center',
@@ -278,7 +278,7 @@ export default function PositionSelectionModal({
                           </div>
                           <span style={{
                             fontWeight: isMain ? 600 : 400,
-                            color: isMain ? group.color : '#FFFFFF',
+                            color: isMain ? group.color : 'var(--text-main)',
                             fontSize: '13px'
                           }}>
                             {displayCode}
@@ -307,7 +307,7 @@ export default function PositionSelectionModal({
                               padding: '4px 8px',
                               borderRadius: '6px',
                               border: `1px solid ${group.color}50`,
-                              background: 'rgba(0,0,0,0.5)',
+                              background: 'var(--inset-bg)',
                               color: 'var(--text-main)',
                               fontSize: '11px',
                               cursor: 'pointer'

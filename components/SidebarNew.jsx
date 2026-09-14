@@ -209,7 +209,7 @@ export default function SidebarNew() {
               : (item.variant === 'gold'
                 ? 'rgba(201, 162, 39, 0.22)'
                 : 'rgba(48, 176, 96, 0.18)'),
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            border: '1px solid var(--border-soft)',
             boxShadow: 'none'
           }}
         >
@@ -357,7 +357,7 @@ export default function SidebarNew() {
                 width: '100%',
                 minHeight: 52,
                 padding: '8px 10px',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                border: '1px solid var(--border-soft)',
                 borderRadius: 14,
                 background: accountOpen ? 'var(--surface-2)' : 'var(--surface-2)',
                 color: 'var(--text-main)',
@@ -535,7 +535,7 @@ export default function SidebarNew() {
             borderRadius: '12px',
             flexShrink: 0,
             background: 'var(--surface-2)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            border: '1px solid var(--border-soft)',
             color: 'var(--text-dim)',
             cursor: 'pointer'
           }}
@@ -640,11 +640,11 @@ export default function SidebarNew() {
           position: relative;
           width: min(400px, 94vw);
           padding: clamp(24px, 5vw, 34px);
-          border: 1px solid rgba(34, 211, 238, 0.35);
+          border: 1px solid var(--info-border);
           border-radius: 24px;
           background:
             radial-gradient(circle at 50% 0%, rgba(34, 211, 238, 0.12), transparent 42%),
-            linear-gradient(145deg, rgba(8, 16, 34, 0.98), rgba(2, 6, 23, 0.98));
+            var(--surface);
           box-shadow: 0 24px 90px rgba(0,0,0,0.58), 0 0 54px rgba(34, 211, 238, 0.15);
           color: var(--text-main);
           text-align: center;
@@ -674,13 +674,13 @@ export default function SidebarNew() {
 
         .redirect-card p {
           margin: 0 0 6px;
-          color: rgba(226, 232, 240, 0.82);
+          color: var(--text-main);
           line-height: 1.48;
           font-size: 0.94rem;
         }
 
         .redirect-sub {
-          color: rgba(34, 211, 238, 0.7);
+          color: var(--info);
           font-size: 0.85rem;
         }
 
@@ -716,13 +716,13 @@ export default function SidebarNew() {
         }
 
         .redirect-secondary {
-          border: 1px solid rgba(255, 255, 255, 0.16);
-          background: rgba(255, 255, 255, 0.06);
-          color: rgba(255, 255, 255, 0.78);
+          border: 1px solid var(--border-strong);
+          background: var(--surface-2);
+          color: var(--text-secondary);
         }
 
         .redirect-secondary:hover {
-          background: rgba(255, 255, 255, 0.12);
+          background: var(--surface-3);
         }
 
         @keyframes redirect-fade-in {

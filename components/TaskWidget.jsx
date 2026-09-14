@@ -201,7 +201,7 @@ export default function TaskWidget() {
           padding: 'clamp(16px, 4vw, 20px)',
           cursor: 'pointer',
           userSelect: 'none',
-          color: '#fff',
+          color: 'var(--text-main)',
           minHeight: '44px',
           boxSizing: 'border-box'
         }}
@@ -213,7 +213,7 @@ export default function TaskWidget() {
           <div style={{ fontWeight: 700, marginBottom: '4px', fontSize: 'clamp(16px, 4vw, 18px)' }}>
             {t('weeklyGoals') || 'Obiettivi Settimanali'}
           </div>
-          <div style={{ fontSize: 'clamp(13px, 3vw, 14px)', color: 'rgba(255,255,255,0.85)' }}>
+          <div style={{ fontSize: 'clamp(13px, 3vw, 14px)', color: 'var(--text-main)' }}>
             {summaryText}
           </div>
         </div>
@@ -228,7 +228,7 @@ export default function TaskWidget() {
       {isExpanded && (
         <p style={{
           fontSize: '12px',
-          color: 'rgba(255,255,255,0.6)',
+          color: 'var(--text-secondary)',
           margin: '0 20px 12px',
           lineHeight: '1.4'
         }}>
@@ -263,9 +263,9 @@ export default function TaskWidget() {
       {isExpanded && (
         <div style={{ padding: '0 20px 20px' }}>
           {tasks.length === 0 ? (
-            <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', textAlign: 'center', padding: '16px', lineHeight: '1.5' }}>
+            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', textAlign: 'center', padding: '16px', lineHeight: '1.5' }}>
               {t('noGoalsThisWeek') || 'Nessun obiettivo questa settimana'}
-              <span style={{ display: 'block', fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>
+              <span style={{ display: 'block', fontSize: '12px', color: 'var(--text-dim)', marginTop: '4px' }}>
                 {t('goalsWillBeGenerated') || 'Gli obiettivi verranno generati automaticamente ogni domenica'}
               </span>
             </div>
@@ -290,7 +290,7 @@ export default function TaskWidget() {
                     key={task.id}
                     style={{
                       padding: '12px',
-                      background: isCompleted ? 'rgba(0, 212, 255, 0.08)' : 'linear-gradient(145deg, rgba(13, 20, 40, 0.6) 0%, rgba(8, 15, 30, 0.8) 100%)',
+                      background: isCompleted ? 'rgba(0, 212, 255, 0.08)' : 'var(--surface)',
                       borderColor: isCompleted ? 'rgba(0, 212, 255, 0.4)' : 'rgba(0, 212, 255, 0.15)',
                       border: '1px solid',
                       borderRadius: '12px',
@@ -303,7 +303,7 @@ export default function TaskWidget() {
                       <div style={{ marginTop: '2px', flexShrink: 0 }}>
                         {isCompleted && <CheckCircle2 size={16} color="#22c55e" />}
                         {isFailed && <XCircle size={16} color="#ef4444" />}
-                        {isActive && <Circle size={16} color="rgba(255,255,255,0.4)" />}
+                        {isActive && <Circle size={16} color="var(--text-dim)" />}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 600, marginBottom: '4px', color: 'var(--text-main)' }}>
@@ -322,7 +322,7 @@ export default function TaskWidget() {
                             </span>
                           )}
                           {isActive && task.target_value > 0 && (
-                            <span style={{ color: 'rgba(255,255,255,0.8)' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>
                               {typeof task.current_value === 'number' ? task.current_value.toFixed(1) : 0}/{task.target_value}
                             </span>
                           )}
@@ -334,7 +334,7 @@ export default function TaskWidget() {
                           {isFailed && <span style={{ color: '#ef4444', fontSize: '12px' }}>{t('goalFailed')}</span>}
                         </div>
                         {isActive && task.target_value > 0 && (
-                          <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden', marginTop: '8px' }}>
+                          <div style={{ width: '100%', height: '4px', background: 'var(--surface-3)', borderRadius: '2px', overflow: 'hidden', marginTop: '8px' }}>
                             <div style={{ width: `${progressPct}%`, height: '100%', background: 'var(--neon-cyan)', borderRadius: '2px', transition: 'width 0.3s ease' }} />
                           </div>
                         )}

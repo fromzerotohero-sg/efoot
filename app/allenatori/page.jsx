@@ -489,7 +489,7 @@ export default function AllenatoriPage() {
                     className="neon-card"
                     style={{
                       padding: '20px',
-                      border: coach.is_active ? '2px solid var(--accent)' : '2px solid rgba(0, 212, 255, 0.3)',
+                      border: coach.is_active ? '2px solid var(--accent)' : '2px solid var(--info-border)',
                       position: 'relative'
                     }}
                   >
@@ -504,9 +504,10 @@ export default function AllenatoriPage() {
                         height: '32px',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        justifyContent: 'center',
+                        color: 'var(--accent-ink)'
                       }}>
-                        <Star size={18} fill="white" color="white" />
+                        <Star size={18} fill="currentColor" color="currentColor" />
                       </div>
                     )}
 
@@ -667,8 +668,8 @@ export default function AllenatoriPage() {
               marginBottom: '20px',
               padding: '14px',
               borderRadius: '12px',
-              border: '1px solid rgba(0, 212, 255, 0.25)',
-              background: 'rgba(0, 212, 255, 0.04)'
+              border: '1px solid var(--info-border)',
+              background: 'var(--info-bg)'
             }}>
               <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '6px' }}>
                 {lang === 'en' ? 'Example screenshots' : 'Esempi di screenshot'}
@@ -689,7 +690,7 @@ export default function AllenatoriPage() {
                       display: 'block',
                       borderRadius: '10px',
                       overflow: 'hidden',
-                      border: '1px solid rgba(0, 212, 255, 0.2)',
+                      border: '1px solid var(--info-border)',
                       textDecoration: 'none',
                       color: 'inherit'
                     }}
@@ -713,7 +714,7 @@ export default function AllenatoriPage() {
               style={{
                 marginBottom: '20px',
                 padding: uploadImages.length === 0 ? '48px' : '24px',
-                border: '2px dashed rgba(0, 212, 255, 0.3)',
+                border: '2px dashed var(--info-border)',
                 borderRadius: '8px',
                 className: 'neon-panel',
                 textAlign: 'center',
@@ -745,7 +746,7 @@ export default function AllenatoriPage() {
                         style={{
                           width: '100%',
                           borderRadius: '8px',
-                          border: '2px solid rgba(0, 212, 255, 0.3)',
+                          border: '2px solid var(--info-border)',
                           maxHeight: '180px',
                           objectFit: 'contain'
                         }}
@@ -781,7 +782,7 @@ export default function AllenatoriPage() {
                   {uploadImages.length < 2 && (
                     <div
                       style={{
-                        border: '2px dashed rgba(0, 212, 255, 0.3)',
+                        border: '2px dashed var(--info-border)',
                         borderRadius: '8px',
                         padding: '32px',
                         display: 'flex',
@@ -789,7 +790,7 @@ export default function AllenatoriPage() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
-                        background: 'rgba(0, 212, 255, 0.03)',
+                        background: 'var(--info-bg)',
                         minHeight: '160px'
                       }}
                       onClick={(e) => {
@@ -832,7 +833,7 @@ export default function AllenatoriPage() {
               flexWrap: 'wrap',
               flexShrink: 0,
               paddingTop: '8px',
-              borderTop: '1px solid rgba(0, 212, 255, 0.1)'
+              borderTop: '1px solid var(--info-border)'
             }}>
               <button
                 onClick={() => document.getElementById('coach-file-input')?.click()}
@@ -1016,7 +1017,7 @@ export default function AllenatoriPage() {
             </div>
 
             {/* Footer */}
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '16px', flexShrink: 0, paddingTop: '8px', borderTop: '1px solid rgba(0, 212, 255, 0.1)' }}>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '16px', flexShrink: 0, paddingTop: '8px', borderTop: '1px solid var(--info-border)' }}>
               {!selectedCoach.is_active && (
                 <button
                   onClick={() => {

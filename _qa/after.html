@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Coach MetalGate after</title>
+  <link rel="stylesheet" href="/_qa/after.css" />
+  <style>
+    html, body { margin: 0; background: #F9F6F1; color: #1D1D1F; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    .shell { display: flex; min-height: 100vh; background: #F9F6F1; }
+    .sidebar {
+      width: 196px; flex-shrink: 0; background: rgba(255,255,255,.82);
+      backdrop-filter: blur(24px); border-right: 1px solid rgba(0,0,0,.07);
+      display: flex; flex-direction: column; padding: 12px;
+    }
+    .logo { height: 36px; object-fit: contain; margin: 8px auto 18px; display: block; }
+    .nav-item { position: relative; display: flex; align-items: center; gap: 12px; height: 48px; padding: 0 12px; border-radius: 10px; font-size: 14px; font-weight: 650; color: #6B6B6B; text-decoration: none; }
+    .nav-item.active { background: #EFECE6; color: #1D1D1F; border: 1px solid rgba(0,0,0,.06); font-weight: 700; box-shadow: inset 0 1px rgba(255,255,255,.9); }
+    .nav-item.active::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 2px; background: #00A8C8; border-radius: 1px; }
+    .account { margin-top: auto; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 8px 10px; border-radius: 14px; border: 1px solid rgba(0,0,0,.08); background: #fff; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: #00A8C8; background: rgba(0,168,200,.12); }
+    .workspace { flex: 1; padding: 16px; min-width: 0; }
+    .topbar { display: none; height: 56px; align-items: center; justify-content: space-between; padding: 0 16px; background: rgba(245,245,247,.8); border-bottom: 1px solid rgba(0,0,0,.08); }
+    .bottom { display: none; position: fixed; left: 0; right: 0; bottom: 0; height: 64px; background: rgba(255,255,255,.88); border-top: 1px solid rgba(0,0,0,.08); align-items: center; justify-content: space-around; }
+    .tab { font-size: 10px; color: #9B9B9B; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .tab.active { color: #00A8C8; font-weight: 700; }
+    @media (max-width: 767px) {
+      .sidebar, .rail { display: none !important; }
+      .topbar, .bottom, .mobileKnowledge, .mobileContext { display: flex; }
+      .mobileKnowledge, .mobileContext { display: block; }
+      .workspace { padding: 16px 16px 88px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <img class="logo" src="/public/logo.png" alt="FZTH" />
+      <a class="nav-item active" href="#">Coach</a>
+      <a class="nav-item" href="#" style="color:#2878E0">Rosa</a>
+      <a class="nav-item" href="#" style="color:#9A72E8">Carte</a>
+      <div class="account">
+        <div class="avatar">A</div>
+        <div><div style="font-size:13px;font-weight:700">Attilio</div><div style="font-size:10px;color:#6B6B6B">Hero Coach</div></div>
+      </div>
+    </aside>
+    <div style="flex:1;min-width:0">
+      <header class="topbar"><img src="/public/logo.png" alt="" style="height:28px" /><span>☰</span></header>
+      <div class="workspace">
+        <div class="root">
+          <header class="header">
+            <p class="overline">Hero Coach</p>
+            <h1 class="greeting">Ciao Attilio</h1>
+            <p class="subtitle">Sono qui per aiutarti a far diventare la tua squadra una leggenda.</p>
+          </header>
+          <div class="grid">
+            <div class="main">
+              <div class="composerWrap">
+                <button class="composer" type="button">
+                  <span class="composerPlaceholder">Chiedi qualsiasi cosa sulla tua squadra...</span>
+                  <span class="composerSend">✈</span>
+                </button>
+                <p class="composerHint">Esempi: tattiche, formazione, giocatori, carte, prossima partita...</p>
+              </div>
+              <section>
+                <p class="suggestionsTitle">Suggerimenti per te</p>
+                <div class="suggestions">
+                  <button class="suggestion intentRosa" type="button">
+                    <span class="suggestionArt">
+                      <svg viewBox="0 0 160 88" class="artSvg"><ellipse cx="80" cy="46" rx="54" ry="30" fill="rgba(0,168,200,.12)" stroke="#00A8C8" stroke-opacity=".28"/><circle cx="80" cy="22" r="4.5" fill="#00A8C8"/><circle cx="48" cy="40" r="4.5" fill="#2878E0"/><circle cx="112" cy="40" r="4.5" fill="#2878E0"/><circle cx="58" cy="64" r="4.5" fill="#1D1D1F"/><circle cx="102" cy="64" r="4.5" fill="#1D1D1F"/><path d="M80 26 L48 40 L58 64 L102 64 L112 40 Z" fill="none" stroke="#00A8C8" stroke-opacity=".45"/></svg>
+                    </span>
+                    <span class="suggestionBody">
+                      <span class="suggestionMicro">Analisi</span>
+                      <h3 class="suggestionTitle">Analizza la mia rosa</h3>
+                      <p class="suggestionCopy">Valuta giocatori, ruoli, chimica e priorità della tua formazione.</p>
+                    </span>
+                    <span class="suggestionArrow">↗</span>
+                  </button>
+                  <button class="suggestion intentMatch" type="button">
+                    <span class="suggestionArt">
+                      <svg viewBox="0 0 160 88" class="artSvg"><circle cx="80" cy="44" r="30" fill="none" stroke="#27A76A" stroke-opacity=".16"/><circle cx="80" cy="44" r="22" fill="none" stroke="#27A76A" stroke-opacity=".28"/><circle cx="80" cy="44" r="16" fill="#F7FBF8" stroke="#27A76A"/></svg>
+                    </span>
+                    <span class="suggestionBody">
+                      <span class="suggestionMicro">Feedback</span>
+                      <h3 class="suggestionTitle">Ho appena giocato</h3>
+                      <p class="suggestionCopy">Racconta a Hero com'è andata e trasformala in esperienza utile.</p>
+                    </span>
+                    <span class="suggestionArrow">↗</span>
+                  </button>
+                  <button class="suggestion intentTactics" type="button">
+                    <span class="suggestionArt">
+                      <svg viewBox="0 0 160 88" class="artSvg"><rect x="18" y="12" width="124" height="64" rx="8" fill="rgba(201,150,48,.12)" stroke="#C99630" stroke-opacity=".35"/><circle cx="48" cy="58" r="4" fill="#C99630"/><circle cx="80" cy="50" r="4" fill="#1D1D1F"/><circle cx="112" cy="28" r="4" fill="#C99630"/></svg>
+                    </span>
+                    <span class="suggestionBody">
+                      <span class="suggestionMicro">Tattiche</span>
+                      <h3 class="suggestionTitle">Prepara la prossima partita</h3>
+                      <p class="suggestionCopy">Studia avversario, tattiche e piano gara.</p>
+                    </span>
+                    <span class="suggestionArrow">↗</span>
+                  </button>
+                </div>
+              </section>
+              <div class="tools mobileKnowledge">
+                <button class="knowledgeRow" type="button">
+                  <span class="knowledgeRowIcon">◎</span>
+                  <span class="knowledgeRowCopy"><span class="knowledgeRowTitle">Quanto Hero ti conosce</span></span>
+                  <span class="knowledgeRowScore">—</span>
+                  <span>›</span>
+                </button>
+              </div>
+              <details class="tools mobileContext">
+                <summary class="toolsSummary">
+                  <span class="toolsLead">
+                    <span class="toolsIcon">▣</span>
+                    <span class="toolsCopy">
+                      <span class="toolsTitle">Il tuo contesto</span>
+                      <span class="toolsMicro">Rosa 11/11 · Attivo</span>
+                    </span>
+                  </span>
+                  <span class="toolsChevron">⌄</span>
+                </summary>
+              </details>
+              <details class="tools">
+                <summary class="toolsSummary">
+                  <span class="toolsLead">
+                    <span class="toolsIcon">⚒</span>
+                    <span class="toolsCopy">
+                      <span class="toolsTitle">Strumenti Coach</span>
+                      <span class="toolsMicro">Progressi, partite e Live Coach</span>
+                    </span>
+                  </span>
+                  <span class="toolsChevron">⌄</span>
+                </summary>
+              </details>
+            </div>
+            <aside class="rail">
+              <section class="contextCard knowledgeCard">
+                <p class="cardOverline">Quanto Hero ti conosce</p>
+                <div style="width:72px;height:72px;margin:8px auto;border-radius:50%;border:7px solid rgba(0,0,0,.08);border-top-color:#00A8C8;border-right-color:#27A76A"></div>
+                <p class="knowledgeCopy">Hero conosce meglio la tua squadra quando aggiorni rosa, partite e feedback.</p>
+              </section>
+              <section class="contextCard">
+                <p class="cardOverline">Il tuo contesto</p>
+                <div class="contextRow"><span class="contextLabel">Rosa</span><span class="contextValue">11/11</span></div>
+                <div class="contextRow"><span class="contextLabel">Allenatore</span><span class="contextValue">Attivo</span></div>
+                <div class="contextRow"><span class="contextLabel">Statistiche</span><span class="contextValue">Disponibili</span></div>
+              </section>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <nav class="bottom"><div class="tab active">Coach</div><div class="tab">Rosa</div><div class="tab">Carte</div></nav>
+</body>
+</html>

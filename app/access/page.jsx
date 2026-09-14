@@ -87,7 +87,7 @@ export default function AccessPage() {
   return (
     <main style={{
       minHeight: '100vh',
-      background: 'radial-gradient(circle at top, rgba(0, 212, 255, 0.12), transparent 35%), #03050c',
+      background: 'radial-gradient(circle at top, var(--info-bg), transparent 35%), var(--shell-bg)',
       padding: 'clamp(20px, 4vw, 40px)'
     }}>
       <div style={{
@@ -108,8 +108,8 @@ export default function AccessPage() {
         alignItems: 'start'
       }}>
         <section style={{
-          background: 'linear-gradient(180deg, rgba(9, 13, 28, 0.94) 0%, rgba(5, 8, 20, 0.98) 100%)',
-          border: '1px solid rgba(0, 212, 255, 0.18)',
+          background: 'var(--surface)',
+          border: '1px solid var(--info-border)',
           borderRadius: '24px',
           padding: 'clamp(24px, 4vw, 40px)',
           boxShadow: '0 20px 60px rgba(0, 0, 0, 0.35)'
@@ -134,8 +134,8 @@ export default function AccessPage() {
             gap: '8px',
             padding: '8px 14px',
             borderRadius: '999px',
-            background: 'rgba(0, 212, 255, 0.08)',
-            border: '1px solid rgba(0, 212, 255, 0.24)',
+            background: 'var(--info-bg)',
+            border: '1px solid var(--info-border)',
             color: 'var(--primary-cyan)',
             fontSize: '13px',
             fontWeight: 700,
@@ -150,7 +150,7 @@ export default function AccessPage() {
             lineHeight: 1.02,
             fontWeight: 800,
             margin: '0 0 14px',
-            color: '#FFFFFF'
+            color: 'var(--text-main)'
           }}>
             {t('prelaunchThanksTitle')}
           </h1>
@@ -158,7 +158,7 @@ export default function AccessPage() {
           <p style={{
             fontSize: 'clamp(16px, 2.3vw, 18px)',
             lineHeight: 1.65,
-            color: 'rgba(255, 255, 255, 0.78)',
+            color: 'var(--text-secondary)',
             margin: '0 0 14px'
           }}>
             {t('prelaunchAccountCreated')}
@@ -169,7 +169,7 @@ export default function AccessPage() {
             padding: '18px',
             borderRadius: '18px',
             background: 'linear-gradient(135deg, rgba(255, 203, 5, 0.12), rgba(168, 85, 247, 0.10), rgba(0, 212, 255, 0.10))',
-            border: '1px solid rgba(255, 203, 5, 0.24)',
+            border: '1px solid var(--gold-border)',
             boxShadow: '0 0 24px rgba(255, 203, 5, 0.08)'
           }}>
             <div style={{
@@ -177,7 +177,7 @@ export default function AccessPage() {
               fontWeight: 800,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
-              color: '#ffcb05',
+              color: 'var(--gold-text)',
               marginBottom: '8px'
             }}>
               Coming soon
@@ -186,7 +186,7 @@ export default function AccessPage() {
               fontSize: 'clamp(20px, 3vw, 28px)',
               lineHeight: 1.15,
               fontWeight: 900,
-              color: '#FFFFFF',
+              color: 'var(--text-main)',
               marginBottom: '8px'
             }}>
               Disponibile da domani alle 18:00
@@ -195,7 +195,7 @@ export default function AccessPage() {
               margin: 0,
               fontSize: '14px',
               lineHeight: 1.6,
-              color: 'rgba(255,255,255,0.74)'
+              color: 'var(--text-secondary)'
             }}>
               Se hai ricevuto una chiave di accesso anticipato, inseriscila per entrare subito nella piattaforma.
             </p>
@@ -204,7 +204,7 @@ export default function AccessPage() {
           <p style={{
             fontSize: '15px',
             lineHeight: 1.7,
-            color: 'rgba(0, 212, 255, 0.78)',
+            color: 'var(--info)',
             margin: 0
           }}>
             {t('prelaunchReservedAccessText')}
@@ -220,9 +220,9 @@ export default function AccessPage() {
               minHeight: '48px',
               padding: '12px 18px',
               borderRadius: '14px',
-              background: 'rgba(0, 212, 255, 0.12)',
-              border: '1px solid rgba(0, 212, 255, 0.28)',
-              color: '#FFFFFF',
+              background: 'var(--info-bg)',
+              border: '1px solid var(--info-border)',
+              color: 'var(--text-main)',
               fontSize: '14px',
               fontWeight: 800,
               textDecoration: 'none'
@@ -243,13 +243,13 @@ export default function AccessPage() {
                 style={{
                   padding: '18px',
                   borderRadius: '18px',
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)'
+                  background: 'var(--surface-2)',
+                  border: '1px solid var(--border-soft)'
                 }}
               >
                 <Icon size={20} color="var(--primary-cyan)" style={{ marginBottom: '12px' }} />
-                <div style={{ fontSize: '16px', fontWeight: 700, color: '#FFFFFF', marginBottom: '8px' }}>{title}</div>
-                <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.55, color: 'rgba(255, 255, 255, 0.68)' }}>{text}</p>
+                <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '8px' }}>{title}</div>
+                <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.55, color: 'var(--text-secondary)' }}>{text}</p>
               </div>
             ))}
           </div>
@@ -257,8 +257,8 @@ export default function AccessPage() {
 
         <section style={{ display: 'grid', gap: '20px' }}>
           <div style={{
-            background: 'linear-gradient(180deg, rgba(9, 13, 28, 0.96) 0%, rgba(5, 8, 20, 0.98) 100%)',
-            border: '1px solid rgba(255, 203, 5, 0.22)',
+            background: 'var(--surface)',
+            border: '1px solid var(--gold-border)',
             borderRadius: '24px',
             padding: 'clamp(24px, 4vw, 32px)',
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
@@ -269,9 +269,9 @@ export default function AccessPage() {
               gap: '8px',
               padding: '8px 12px',
               borderRadius: '999px',
-              background: 'rgba(255, 203, 5, 0.08)',
-              border: '1px solid rgba(255, 203, 5, 0.2)',
-              color: '#ffcb05',
+              background: 'var(--gold-bg)',
+              border: '1px solid var(--gold-border)',
+              color: 'var(--gold-text)',
               fontSize: '13px',
               fontWeight: 700,
               marginBottom: '18px'
@@ -280,11 +280,11 @@ export default function AccessPage() {
               {t('prelaunchCodeBadge')}
             </div>
 
-            <h2 style={{ fontSize: '28px', lineHeight: 1.1, fontWeight: 800, margin: '0 0 12px', color: '#FFFFFF' }}>
+            <h2 style={{ fontSize: '28px', lineHeight: 1.1, fontWeight: 800, margin: '0 0 12px', color: 'var(--text-main)' }}>
               Chiave di accesso anticipato
             </h2>
 
-            <p style={{ margin: '0 0 22px', color: 'rgba(255,255,255,0.72)', lineHeight: 1.65, fontSize: '15px' }}>
+            <p style={{ margin: '0 0 22px', color: 'var(--text-secondary)', lineHeight: 1.65, fontSize: '15px' }}>
               Inserisci la chiave riservata per sbloccare l’accesso prima dell’apertura pubblica.
             </p>
 
@@ -300,9 +300,9 @@ export default function AccessPage() {
                   boxSizing: 'border-box',
                   padding: '16px 18px',
                   borderRadius: '14px',
-                  border: '1px solid rgba(0, 212, 255, 0.22)',
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  color: '#FFFFFF',
+                  border: '1px solid var(--info-border)',
+                  background: 'var(--surface-2)',
+                  color: 'var(--text-main)',
                   fontSize: '15px',
                   outline: 'none'
                 }}
@@ -345,7 +345,7 @@ export default function AccessPage() {
               </div>
             )}
 
-            <p style={{ margin: '16px 0 0', color: 'rgba(255,255,255,0.56)', fontSize: '13px', lineHeight: 1.55 }}>
+            <p style={{ margin: '16px 0 0', color: 'var(--text-dim)', fontSize: '13px', lineHeight: 1.55 }}>
               {t('prelaunchCodeHint')}
             </p>
           </div>
@@ -353,8 +353,8 @@ export default function AccessPage() {
           <div style={{
             overflow: 'hidden',
             borderRadius: '24px',
-            border: '1px solid rgba(0, 212, 255, 0.16)',
-            background: 'rgba(5, 8, 20, 0.9)'
+            border: '1px solid var(--info-border)',
+            background: 'var(--surface)'
           }}>
             <div style={{ position: 'relative', aspectRatio: '1 / 1' }}>
               <Image
@@ -375,14 +375,14 @@ export default function AccessPage() {
                 bottom: '20px',
                 padding: '18px',
                 borderRadius: '18px',
-                background: 'rgba(5, 8, 20, 0.78)',
-                border: '1px solid rgba(0, 212, 255, 0.16)',
+                background: 'var(--surface)',
+                border: '1px solid var(--info-border)',
                 backdropFilter: 'blur(10px)'
               }}>
-                <div style={{ color: '#FFFFFF', fontSize: '20px', fontWeight: 800, marginBottom: '8px' }}>
+                <div style={{ color: 'var(--text-main)', fontSize: '20px', fontWeight: 800, marginBottom: '8px' }}>
                   {t('prelaunchInsideTitle')}
                 </div>
-                <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, fontSize: '14px' }}>
+                <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.6, fontSize: '14px' }}>
                   {t('prelaunchInsideText')}
                 </p>
               </div>
@@ -392,13 +392,13 @@ export default function AccessPage() {
           <div style={{
             padding: '24px',
             borderRadius: '24px',
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.08)'
+            background: 'var(--surface-2)',
+            border: '1px solid var(--border-soft)'
           }}>
-            <h3 style={{ margin: '0 0 10px', fontSize: '22px', fontWeight: 800, color: '#FFFFFF' }}>
+            <h3 style={{ margin: '0 0 10px', fontSize: '22px', fontWeight: 800, color: 'var(--text-main)' }}>
               {t('prelaunchNoCodeTitle')}
             </h3>
-            <p style={{ margin: 0, fontSize: '15px', lineHeight: 1.7, color: 'rgba(255,255,255,0.72)' }}>
+            <p style={{ margin: 0, fontSize: '15px', lineHeight: 1.7, color: 'var(--text-secondary)' }}>
               {t('prelaunchNoCodeText')}
             </p>
           </div>

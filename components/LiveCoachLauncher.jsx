@@ -959,7 +959,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-main)' }}>{t('liveCoachTitle', { coachName: coachDisplayName })}</span>
+                  <span style={{ fontSize: '15px', fontWeight: 800, color: '#FFF4CC' }}>{t('liveCoachTitle', { coachName: coachDisplayName })}</span>
                   <span style={{
                     padding: '4px 8px',
                     borderRadius: '999px',
@@ -1008,7 +1008,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                 padding: '8px 10px',
                 borderRadius: '12px',
                 background: 'rgba(255,255,255,0.05)',
-                color: 'var(--text-main)',
+                color: '#FFF4CC',
                 fontSize: '12px',
                 fontWeight: 700
               }}>
@@ -1022,7 +1022,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                 padding: '8px 10px',
                 borderRadius: '12px',
                 background: isConnected ? 'rgba(0,212,255,0.08)' : 'rgba(255,255,255,0.05)',
-                color: 'var(--text-main)',
+                color: '#FFF4CC',
                 fontSize: '12px',
                 fontWeight: 700
               }}>
@@ -1070,8 +1070,8 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
               maxHeight: 'min(88vh, 820px)',
               overflowY: 'auto',
               borderRadius: '26px',
-              border: '1px solid rgba(255, 215, 100, 0.35)',
-              background: 'linear-gradient(180deg, rgba(9,12,28,0.99), rgba(5,8,20,0.99))',
+              border: '1px solid var(--gold-border)',
+              background: 'var(--surface)',
               boxShadow: '0 24px 80px rgba(0,0,0,0.6), 0 0 60px rgba(255,196,0,0.14)',
               padding: '18px'
             }}
@@ -1084,16 +1084,16 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
               marginBottom: '14px',
               padding: '16px',
               borderRadius: '20px',
-              background: 'linear-gradient(135deg, rgba(255,215,100,0.08), rgba(0,212,255,0.05))',
-              border: '1px solid rgba(255,255,255,0.08)'
+              background: 'linear-gradient(135deg, var(--gold-bg), var(--info-bg))',
+              border: '1px solid var(--border-soft)'
             }}>
               <div>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '8px', padding: '6px 10px', borderRadius: '999px', border: '1px solid rgba(255,215,100,0.28)', background: 'rgba(255,215,100,0.08)', color: '#FFD76A', fontSize: '12px', fontWeight: 700 }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '8px', padding: '6px 10px', borderRadius: '999px', border: '1px solid var(--gold-border)', background: 'var(--gold-bg)', color: 'var(--gold-text)', fontSize: '12px', fontWeight: 700 }}>
                   <Sparkles size={14} />
                   {t('liveCoachPremiumBadge')}
                 </div>
                 <h2 style={{ margin: 0, fontSize: '26px', fontWeight: 800, color: 'var(--text-main)' }}>{t('liveCoachTitle', { coachName: coachDisplayName })}</h2>
-                <p style={{ margin: '8px 0 0', color: 'rgba(255,255,255,0.72)', lineHeight: 1.5 }}>{t('liveCoachSubtitle', { coachName: coachDisplayName })}</p>
+                <p style={{ margin: '8px 0 0', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{t('liveCoachSubtitle', { coachName: coachDisplayName })}</p>
               </div>
               <button
                 type="button"
@@ -1102,7 +1102,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                   await stopRealtime(true)
                 }}
                 aria-label={t('liveCoachClose')}
-                style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.7)' }}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)' }}
               >
                 <X size={22} />
               </button>
@@ -1110,14 +1110,14 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
 
             <div style={{ display: 'grid', gap: '14px' }}>
               <div className="live-coach-quickstart">
-                <div style={{ borderRadius: '20px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', padding: '16px' }}>
+                <div style={{ borderRadius: '20px', border: '1px solid var(--border-soft)', background: 'var(--surface-2)', padding: '16px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
-                    <div style={{ width: '44px', height: '44px', borderRadius: '14px', display: 'grid', placeItems: 'center', background: 'rgba(255,215,100,0.1)', color: '#FFD76A' }}>
+                    <div style={{ width: '44px', height: '44px', borderRadius: '14px', display: 'grid', placeItems: 'center', background: 'var(--gold-bg)', color: 'var(--gold-text)' }}>
                       <ImagePlus size={20} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>{t('liveCoachPhotoTitle')}</div>
-                      <div style={{ marginTop: '4px', fontSize: '13px', color: 'rgba(255,255,255,0.66)', lineHeight: 1.5 }}>{t('liveCoachPhotoHelper')}</div>
+                      <div style={{ marginTop: '4px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{t('liveCoachPhotoHelper')}</div>
                     </div>
                   </div>
 
@@ -1130,9 +1130,9 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                         flex: '1 1 180px',
                         minHeight: '52px',
                         borderRadius: '16px',
-                        border: '1px dashed rgba(255,215,100,0.32)',
-                        background: 'rgba(255,215,100,0.06)',
-                        color: '#FFF3CB',
+                        border: '1px dashed var(--gold-border)',
+                        background: 'var(--gold-bg)',
+                        color: 'var(--gold-text)',
                         padding: '14px 16px',
                         display: 'flex',
                         alignItems: 'center',
@@ -1152,8 +1152,8 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                         flex: '1 1 180px',
                         minHeight: '52px',
                         borderRadius: '16px',
-                        border: '1px solid rgba(255,255,255,0.14)',
-                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid var(--border-strong)',
+                        background: 'var(--surface-2)',
                         color: 'var(--text-main)',
                         padding: '14px 16px',
                         display: 'flex',
@@ -1172,22 +1172,22 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                   <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" hidden onChange={handlePhotoPick} />
 
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '9px 11px', borderRadius: '999px', background: opponentContext?.formation ? 'rgba(0,212,255,0.10)' : 'rgba(255,255,255,0.05)', color: opponentContext?.formation ? 'var(--accent)' : 'rgba(255,255,255,0.78)', fontSize: '12px', fontWeight: 700 }}>
-                      <ImagePlus size={13} color={opponentContext?.formation ? 'var(--accent)' : '#FFD76A'} />
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '9px 11px', borderRadius: '999px', background: opponentContext?.formation ? 'var(--info-bg)' : 'var(--surface-2)', color: opponentContext?.formation ? 'var(--accent)' : 'var(--text-secondary)', fontSize: '12px', fontWeight: 700 }}>
+                      <ImagePlus size={13} color={opponentContext?.formation ? 'var(--accent)' : 'var(--gold-text)'} />
                       {opponentContext?.formation ? `${t('liveCoachOpponentReady')} ${opponentContext.formation}` : t('liveCoachOpponentMissing')}
                     </div>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '9px 11px', borderRadius: '999px', background: 'rgba(255,255,255,0.05)', color: 'var(--text-main)', fontSize: '12px', fontWeight: 700 }}>
-                      <Zap size={13} color="#FFD76A" />
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '9px 11px', borderRadius: '999px', background: 'var(--surface-2)', color: 'var(--text-main)', fontSize: '12px', fontWeight: 700 }}>
+                      <Zap size={13} color="var(--gold-text)" />
                       {creditsLoading ? '...' : (balanceRemaining ?? '--')} HP
                     </div>
                   </div>
                 </div>
 
-                <div style={{ borderRadius: '20px', border: '1px solid rgba(255,215,100,0.20)', background: 'linear-gradient(180deg, rgba(255,215,100,0.08), rgba(0,212,255,0.04))', padding: '16px' }}>
+                <div style={{ borderRadius: '20px', border: '1px solid var(--gold-border)', background: 'linear-gradient(180deg, var(--gold-bg), var(--info-bg))', padding: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap', marginBottom: '12px' }}>
                     <div>
                       <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>{t('liveCoachVoiceTitle', { coachName: coachDisplayName })}</div>
-                      <div style={{ marginTop: '4px', fontSize: '13px', color: 'rgba(255,255,255,0.66)', lineHeight: 1.5 }}>{t('liveCoachVoiceHelper', { coachName: coachDisplayName })}</div>
+                      <div style={{ marginTop: '4px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{t('liveCoachVoiceHelper', { coachName: coachDisplayName })}</div>
                     </div>
                     <div style={{
                       display: 'inline-flex',
@@ -1195,8 +1195,8 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                       gap: '7px',
                       padding: '8px 10px',
                       borderRadius: '999px',
-                      background: isConnected ? 'rgba(52,199,89,0.12)' : 'rgba(255,255,255,0.05)',
-                      color: isConnected ? '#7DFF9A' : 'rgba(255,255,255,0.82)',
+                      background: isConnected ? 'rgba(52,199,89,0.12)' : 'var(--surface-2)',
+                      color: isConnected ? '#7DFF9A' : 'var(--text-secondary)',
                       fontSize: '12px',
                       fontWeight: 800
                     }}>
@@ -1216,9 +1216,9 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                       style={{
                         minHeight: '44px',
                         borderRadius: '12px',
-                        background: 'rgba(255,255,255,0.06)',
+                        background: 'var(--surface-3)',
                         color: 'var(--text-main)',
-                        border: '1px solid rgba(255,255,255,0.12)',
+                        border: '1px solid var(--border-soft)',
                         padding: '10px 12px',
                         fontSize: '13px',
                         display: 'flex',
@@ -1408,12 +1408,12 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                 </div>
               </div>
 
-              <div style={{ borderRadius: '20px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', padding: '16px' }}>
+              <div style={{ borderRadius: '20px', border: '1px solid var(--border-soft)', background: 'var(--surface-2)', padding: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
                   <div>
                     <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-main)' }}>{t('liveCoachLiveFeed')}</div>
                     {!hasConversation && (
-                      <div style={{ marginTop: '4px', fontSize: '12px', color: 'rgba(255,255,255,0.66)', lineHeight: 1.5 }}>
+                      <div style={{ marginTop: '4px', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                         {t('liveCoachFeedHelper', { coachName: coachDisplayName })}
                       </div>
                     )}
@@ -1424,7 +1424,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                     gap: '6px',
                     padding: '8px 10px',
                     borderRadius: '999px',
-                    background: 'rgba(255,255,255,0.05)',
+                    background: 'var(--surface-2)',
                     color: 'var(--text-main)',
                     fontSize: '12px',
                     fontWeight: 700
@@ -1434,15 +1434,15 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                   </div>
                 </div>
                 <div style={{ display: 'grid', gap: '10px' }}>
-                  <div style={{ borderRadius: '14px', background: 'rgba(255,255,255,0.03)', padding: '14px', minHeight: '76px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(0,212,255,0.9)', marginBottom: '6px' }}>{t('liveCoachYou')}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.82)', minHeight: '20px', lineHeight: 1.6 }}>{userLine || t('liveCoachWaitingYou')}</div>
+                  <div style={{ borderRadius: '14px', background: 'var(--surface-3)', padding: '14px', minHeight: '76px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--info)', marginBottom: '6px' }}>{t('liveCoachYou')}</div>
+                    <div style={{ color: 'var(--text-secondary)', minHeight: '20px', lineHeight: 1.6 }}>{userLine || t('liveCoachWaitingYou')}</div>
                   </div>
                 </div>
               </div>
 
               {error && (
-                <div style={{ borderRadius: '16px', border: '1px solid rgba(255,59,48,0.22)', background: 'rgba(255,59,48,0.08)', color: '#FFDAD6', padding: '14px 16px', fontWeight: 600 }}>
+                <div style={{ borderRadius: '16px', border: '1px solid rgba(255,59,48,0.22)', background: 'rgba(255,59,48,0.08)', color: 'var(--danger-text)', padding: '14px 16px', fontWeight: 600 }}>
                   {error}
                 </div>
               )}

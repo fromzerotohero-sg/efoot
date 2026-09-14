@@ -346,7 +346,7 @@ export default function SpinLabPage() {
                   cx="250"
                   cy="250"
                   r="245"
-                  fill="rgba(255,255,255,0.12)"
+                  style={{ fill: 'var(--surface-3)' }}
                 />
                 {segments.map((segment) => (
                   <g key={segment.index}>
@@ -379,7 +379,7 @@ export default function SpinLabPage() {
                   cy="250"
                   r="96"
                   fill="rgba(3,7,18,0.76)"
-                  stroke="rgba(255,255,255,0.72)"
+                  style={{ stroke: 'var(--text-main)' }}
                   strokeWidth="5"
                 />
               </svg>
@@ -608,7 +608,7 @@ export default function SpinLabPage() {
           gap: 8px;
           padding: 8px 12px;
           border-radius: 999px;
-          color: #a7f3d0;
+          color: var(--success-text);
           background: rgba(20, 184, 166, 0.16);
           border: 1px solid rgba(45, 212, 191, 0.28);
           box-shadow: 0 0 18px rgba(20, 184, 166, 0.18);
@@ -633,12 +633,12 @@ export default function SpinLabPage() {
         .hero-card p {
           max-width: 760px;
           margin: 0;
-          color: rgba(226, 232, 240, 0.84);
+          color: var(--text-main);
           font-size: clamp(0.96rem, 2vw, 1.12rem);
         }
 
         .hero-card strong {
-          color: #facc15;
+          color: var(--gold-text);
         }
 
         .bonus-card {
@@ -670,13 +670,13 @@ export default function SpinLabPage() {
           border-radius: 12px;
           background: rgba(250, 204, 21, 0.07);
           border: 1px solid rgba(250, 204, 21, 0.22);
-          color: rgba(226, 232, 240, 0.82);
+          color: var(--text-main);
           font-size: clamp(0.88rem, 1.8vw, 0.97rem);
           line-height: 1.55;
         }
 
         .bonus-notice strong {
-          color: #facc15;
+          color: var(--gold-text);
         }
 
         .game-card {
@@ -740,7 +740,7 @@ export default function SpinLabPage() {
             #facc15 42%,
             #b45309
           );
-          border: 3px solid rgba(255, 255, 255, 0.9);
+          border: 3px solid var(--text-main);
           box-shadow: 0 0 18px rgba(250, 204, 21, 0.85);
         }
 
@@ -787,8 +787,8 @@ export default function SpinLabPage() {
           margin-left: -3.5px;
           transform-origin: 50% 0;
           border-radius: 999px;
-          background: rgba(255, 255, 255, 0.8);
-          box-shadow: 0 0 12px rgba(255, 255, 255, 0.7);
+          background: var(--text-main);
+          box-shadow: 0 0 12px var(--text-main);
         }
 
         .wheel-rotor {
@@ -802,8 +802,8 @@ export default function SpinLabPage() {
           transform-origin: center center;
           transition: transform 5.2s cubic-bezier(0.08, 0.78, 0.08, 1);
           box-shadow:
-            0 0 0 8px rgba(255, 255, 255, 0.12),
-            0 0 0 15px rgba(0, 212, 255, 0.12),
+            0 0 0 8px var(--surface-3),
+            0 0 0 15px var(--info-bg),
             0 0 70px rgba(0, 212, 255, 0.36);
         }
 
@@ -843,16 +843,16 @@ export default function SpinLabPage() {
           background:
             radial-gradient(
               circle at 40% 28%,
-              rgba(255, 255, 255, 0.92),
+              var(--text-main),
               rgba(250, 204, 21, 0.55) 42%,
               rgba(8, 13, 31, 0.92) 72%
             ),
             linear-gradient(
               135deg,
-              rgba(255, 255, 255, 0.18),
+              var(--border-strong),
               rgba(0, 212, 255, 0.05)
             );
-          border: 5px solid rgba(255, 255, 255, 0.78);
+          border: 5px solid var(--text-main);
           box-shadow:
             0 0 22px rgba(250, 204, 21, 0.65),
             0 0 38px rgba(0, 212, 255, 0.34),
@@ -865,7 +865,7 @@ export default function SpinLabPage() {
           position: absolute;
           inset: 8%;
           border-radius: inherit;
-          border: 1px solid rgba(255, 255, 255, 0.35);
+          border: 1px solid var(--border-strong);
           box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.2);
         }
 
@@ -937,7 +937,7 @@ export default function SpinLabPage() {
 
         .controls p {
           margin: 0;
-          color: rgba(226, 232, 240, 0.62);
+          color: var(--text-secondary);
           font-size: 0.88rem;
         }
 
@@ -950,7 +950,7 @@ export default function SpinLabPage() {
           border-radius: 20px;
           background:
             linear-gradient(135deg, rgba(109, 40, 217, 0.18), rgba(59, 130, 246, 0.12)),
-            rgba(8, 16, 34, 0.82);
+            var(--surface);
           box-shadow: 0 0 30px rgba(124, 58, 237, 0.15);
           text-decoration: none;
           color: inherit;
@@ -987,12 +987,12 @@ export default function SpinLabPage() {
         .tournament-cta-title {
           font-weight: 900;
           font-size: clamp(0.96rem, 2vw, 1.05rem);
-          color: #ede9fe;
+          color: var(--text-main);
         }
 
         .tournament-cta-sub {
           font-size: 0.88rem;
-          color: rgba(203, 213, 225, 0.78);
+          color: var(--text-secondary);
           line-height: 1.42;
         }
 
@@ -1049,7 +1049,7 @@ export default function SpinLabPage() {
           display: flex;
           align-items: center;
           gap: 9px;
-          color: #fef3c7;
+          color: var(--gold-text);
           font-weight: 900;
           text-transform: uppercase;
           letter-spacing: 0.08em;
@@ -1058,7 +1058,7 @@ export default function SpinLabPage() {
 
         .empty-result {
           margin: 14px 0 0;
-          color: rgba(226, 232, 240, 0.72);
+          color: var(--text-secondary);
         }
 
         .win-content {
@@ -1091,12 +1091,12 @@ export default function SpinLabPage() {
           margin: 4px 0 0;
           font-size: clamp(1.35rem, 4vw, 2.2rem);
           letter-spacing: -0.04em;
-          color: #ffffff;
+          color: var(--text-main);
         }
 
         .win-content p {
           margin: 0;
-          color: rgba(255, 255, 255, 0.86);
+          color: var(--text-main);
           max-width: 700px;
         }
 
@@ -1132,6 +1132,34 @@ export default function SpinLabPage() {
           animation-name: confetti-drop;
           animation-timing-function: cubic-bezier(0.18, 0.78, 0.28, 1);
           animation-fill-mode: both;
+        }
+
+        :global(html[data-theme='light']) .spin-lab-page {
+          background: var(--shell-bg);
+        }
+
+        :global(html[data-theme='light']) .spin-lab-page::before {
+          background-image:
+            linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+            linear-gradient(
+              90deg,
+              rgba(0, 0, 0, 0.04) 1px,
+              transparent 1px
+            );
+        }
+
+        :global(html[data-theme='light']) .hero-card,
+        :global(html[data-theme='light']) .game-card,
+        :global(html[data-theme='light']) .result-card,
+        :global(html[data-theme='light']) .bonus-card {
+          background: var(--surface);
+          border-color: var(--border-soft);
+        }
+
+        :global(html[data-theme='light']) h1 {
+          background: none;
+          color: var(--text-main);
+          text-shadow: none;
         }
 
         @media (min-width: 920px) {
@@ -1177,8 +1205,8 @@ export default function SpinLabPage() {
             width: 86%;
             height: 86%;
             box-shadow:
-              0 0 0 6px rgba(255, 255, 255, 0.12),
-              0 0 0 12px rgba(0, 212, 255, 0.12),
+              0 0 0 6px var(--surface-3),
+              0 0 0 12px var(--info-bg),
               0 0 52px rgba(0, 212, 255, 0.34);
           }
 
