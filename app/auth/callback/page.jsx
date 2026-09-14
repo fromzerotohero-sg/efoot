@@ -71,11 +71,6 @@ function AuthCallbackContent() {
         throw new Error('No token received')
       }
 
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('[Metalgate Callback] Received token:', token.substring(0, 20) + '...')
-        console.log('[Metalgate Callback] Action:', action)
-      }
-
       let response = await fetch('/api/auth/metalgate-callback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

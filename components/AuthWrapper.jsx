@@ -50,7 +50,6 @@ export function withAuth(WrappedComponent) {
           }
 
           if (authToken) {
-            console.log('Verifying Metalgate token with backend...')
             try {
               // Same-origin proxy: evita CORS su preview Vercel vs api.fromzerotohero.io
               const response = await fetch('/api/auth/metalgate-verify', {
@@ -64,7 +63,6 @@ export function withAuth(WrappedComponent) {
               if (response.ok) {
                 const data = await response.json()
                 if (data.valid) {
-                  console.log('Metalgate token verified successfully')
                   // Update user data in localStorage to keep it fresh
                   localStorage.setItem('metalgate_user', JSON.stringify({
                     id: data.user.id,
@@ -82,7 +80,6 @@ export function withAuth(WrappedComponent) {
                 console.error('Token verification failed:', response.status)
                 // Only clear if explicitly invalid (401/403)
                 if (response.status === 401 || response.status === 403) {
-                  console.log('Token rejected by server, clearing')
                   localStorage.removeItem('auth_token')
                   localStorage.removeItem('metalgate_user')
                   try {
@@ -99,7 +96,6 @@ export function withAuth(WrappedComponent) {
             // consider authenticated and STOP here.
             // Do NOT fall through to Supabase check which would fail and redirect.
             if (localStorage.getItem('auth_token')) {
-              console.log('Proceeding with custom token (optimistic or verified)')
               authVerifiedOnce = true
               setIsAuthenticated(true)
               setIsLoading(false)
@@ -112,18 +108,15 @@ export function withAuth(WrappedComponent) {
           if (supabase) {
             const { data: { session }, error } = await supabase.auth.getSession()
             if (session && !error) {
-              console.log('Supabase session found')
               authVerifiedOnce = true
               setIsAuthenticated(true)
             } else {
-              console.log('No valid session found, redirecting to login')
               try {
                 sessionStorage.removeItem('dashboard_coach_mode_modal_seen_session_v1')
               } catch {}
               router.push('/login')
             }
           } else {
-            console.log('No Supabase client, redirecting to login')
             try {
               sessionStorage.removeItem('dashboard_coach_mode_modal_seen_session_v1')
             } catch {}

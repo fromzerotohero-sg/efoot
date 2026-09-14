@@ -1,10 +1,5 @@
 # 📁 Cartella Backgrounds
 
-## Template attivi
-
-- **`stadium-night.png`** – Sfondo stadio notturno (blu/cyan, tema eFootball). Usato come template della pagina principale in `app/globals.css` (body background).
-- **`chat-bicycle.png`** – Sfondo chat (bicycle kick neon in cerchio blu). Usato in `components/AssistantChat.jsx` per popup e modalità page (centrato, cover, overlay per leggibilità).
-
 ## ✅ DOVE METTERE IL TUO SFONDO
 
 Metti qui la tua immagine di sfondo!

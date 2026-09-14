@@ -230,7 +230,6 @@ export default function ImpostazioniProfiloPage() {
         }
         
         const profileData = await res.json()
-        console.log('[Impostazioni Profilo] Loaded profile data:', profileData)
         
         if (profileData) {
            setProfileData(profileData)
