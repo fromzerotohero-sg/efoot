@@ -1334,7 +1334,7 @@ export default function CountermeasuresPreMatchPage() {
         }
 
         .counter-page :global(.neon-card) {
-          border: 1px solid rgba(0, 212, 255, 0.22) !important;
+          border: 1px solid var(--border-soft) !important;
           border-radius: 22px !important;
           background:
             radial-gradient(circle at top right, rgba(0, 212, 255, 0.10), transparent 34%),
@@ -1343,6 +1343,12 @@ export default function CountermeasuresPreMatchPage() {
             0 18px 46px rgba(0, 0, 0, 0.32),
             inset 0 0 0 1px rgba(255, 255, 255, 0.04) !important;
           backdrop-filter: blur(16px);
+        }
+
+        html[data-theme='light'] .counter-page :global(.neon-card) {
+          border: 1px solid rgba(0, 0, 0, 0.08) !important;
+          background: #ffffff !important;
+          box-shadow: 0 14px 36px rgba(29, 29, 31, 0.07) !important;
         }
 
         .counter-page :global(.neon-card)::before {

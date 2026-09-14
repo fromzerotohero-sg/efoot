@@ -22,8 +22,8 @@ export default function LanguageSwitch() {
         height: 36,
         padding: 3,
         borderRadius: 10,
-        background: '#EFECE6',
-        border: '1px solid rgba(0, 0, 0, 0.08)',
+        background: 'var(--surface-2)',
+        border: '1px solid var(--border-soft)',
         flexShrink: 0
       }}
     >
@@ -42,9 +42,9 @@ export default function LanguageSwitch() {
               padding: '0 7px',
               border: 0,
               borderRadius: 7,
-              background: active ? '#FFFFFF' : 'transparent',
-              color: active ? '#1D1D1F' : '#6B6B6B',
-              boxShadow: active ? '0 1px 3px rgba(29, 29, 31, 0.12)' : 'none',
+              background: active ? 'var(--accent-bg)' : 'transparent',
+              color: active ? 'var(--accent)' : 'var(--text-dim)',
+              border: active ? '1px solid var(--accent-border)' : '1px solid transparent',
               font: 'inherit',
               fontSize: 11,
               fontWeight: active ? 800 : 650,

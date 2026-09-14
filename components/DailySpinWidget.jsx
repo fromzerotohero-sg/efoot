@@ -24,7 +24,7 @@ export default function DailySpinWidget({ lang: langProp } = {}) {
   const [loading, setLoading] = React.useState(true)
   const [status, setStatus] = React.useState(null)
   const [open, setOpen] = React.useState(false)
-  const isEn = lang === 'en'
+  const isEn = lang === 'en' || lang === 'es'
 
   React.useEffect(() => {
     if ((pathname || '').startsWith('/spin-lab')) {

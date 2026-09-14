@@ -1641,3 +1641,18 @@ html[data-theme='light'] .ux-v2-light-tool .neon-card,
 html[data-theme='light'] .ux-v2-light-tool .neon-panel {
   box-shadow: 0 14px 36px rgba(29, 29, 31, 0.07);
 }
+
+/* .card legacy (es. pagina HP gestione-profilo): override light */
+html[data-theme='light'] .card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 14px 36px rgba(29, 29, 31, 0.07);
+  color: #1d1d1f;
+}
+
+html[data-theme='light'] .card h1,
+html[data-theme='light'] .card h2,
+html[data-theme='light'] .card h3,
+html[data-theme='light'] .card strong {
+  color: #1d1d1f;
+}

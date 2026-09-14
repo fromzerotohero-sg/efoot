@@ -679,7 +679,7 @@ export default function NewMatchPage() {
       className="match-upload-page"
       style={{
         minHeight: "100vh",
-        color: "#fff",
+        color: "var(--text-main)",
         padding: "clamp(14px, 3vw, 28px)",
         paddingBottom: "110px",
         maxWidth: "1180px",
@@ -934,7 +934,7 @@ export default function NewMatchPage() {
                 }`,
                 cursor: "pointer",
                 transition: "all 0.22s ease",
-                color: "#fff",
+                color: "var(--text-main)",
                 minHeight: "104px",
                 boxShadow: isActive
                   ? "0 0 24px rgba(0, 212, 255, 0.18)"
@@ -1194,7 +1194,7 @@ export default function NewMatchPage() {
                       : "rgba(255,255,255,0.045)",
                     border: `1px solid ${isHome ? "rgba(0, 212, 255, 0.65)" : "rgba(255,255,255,0.10)"}`,
                     borderRadius: "18px",
-                    color: "#fff",
+                    color: "var(--text-main)",
                     textAlign: "left",
                     cursor: "pointer",
                     transition: "all 0.22s ease",
@@ -1249,7 +1249,7 @@ export default function NewMatchPage() {
                       : "rgba(255,255,255,0.045)",
                     border: `1px solid ${!isHome ? "rgba(0, 212, 255, 0.65)" : "rgba(255,255,255,0.10)"}`,
                     borderRadius: "18px",
-                    color: "#fff",
+                    color: "var(--text-main)",
                     textAlign: "left",
                     cursor: "pointer",
                     transition: "all 0.22s ease",
@@ -1855,7 +1855,7 @@ export default function NewMatchPage() {
                 border: "1px solid rgba(255, 255, 255, 0.2)",
                 borderRadius: "8px",
                 padding: "8px",
-                color: "#fff",
+                color: "var(--text-main)",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
