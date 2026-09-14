@@ -4,7 +4,10 @@ import React from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
-import { Save, RefreshCw, User, Gamepad2, Brain, CheckCircle2, AlertCircle, X, Wallet, Zap, LogOut, BookOpen, Gift, Pencil } from 'lucide-react'
+import {
+  RefreshCw, CheckCircle2, AlertCircle, X,
+  Zap, LogOut, BookOpen, Gift, Pencil
+} from 'lucide-react'
 import LanguageSwitch from '@/components/LanguageSwitch'
 import ThemeToggle from '@/components/ThemeToggle'
 
@@ -96,8 +99,8 @@ function AccountUtilitySection({ t, lang, router }) {
     hp: {
       display: 'inline-flex', alignItems: 'center', gap: 5,
       padding: '6px 12px', borderRadius: 999, flexShrink: 0,
-      background: 'rgba(255, 203, 5, 0.09)', border: '1px solid rgba(255, 203, 5, 0.28)',
-      color: '#ffcb05', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap'
+      background: 'rgba(255, 203, 5, 0.16)', border: '1px solid rgba(255, 203, 5, 0.45)',
+      color: 'var(--text-main)', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap'
     },
     grid: { display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' },
     item: { display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 40 },
@@ -110,7 +113,7 @@ function AccountUtilitySection({ t, lang, router }) {
       fontFamily: 'inherit', textDecoration: 'none', cursor: 'pointer'
     },
     logout: {
-      color: '#ff8585', borderColor: 'rgba(255, 80, 80, 0.3)', background: 'rgba(255, 80, 80, 0.08)'
+      color: '#d93025', borderColor: 'rgba(217, 48, 37, 0.32)', background: 'rgba(217, 48, 37, 0.10)'
     }
   }
 
@@ -179,9 +182,7 @@ export default function ImpostazioniProfiloPage() {
   const [editSaving, setEditSaving] = React.useState(false)
   const [editError, setEditError] = React.useState(null)
   const [loading, setLoading] = React.useState(true)
-  const [saving, setSaving] = React.useState(false)
   const [error, setError] = React.useState(null)
-  const [success, setSuccess] = React.useState(null)
   const [toast, setToast] = React.useState(null) // { message, type: 'success' | 'error' }
   
   // Divisioni disponibili
@@ -245,13 +246,14 @@ export default function ImpostazioniProfiloPage() {
         }
       } catch (err) {
         console.error('[Impostazioni Profilo] Error loading profile:', err)
+        setToast({ type: 'error', message: err.message || t('errorProfileLoad') })
       } finally {
         setLoading(false)
       }
     }
 
     fetchProfile()
-  }, [router])
+  }, [router, t])
 
   // Ricarica i dati profilo dal server (dopo una modifica singola)
   const reloadProfileData = React.useCallback(async () => {
@@ -290,6 +292,11 @@ export default function ImpostazioniProfiloPage() {
   // Editor singolo campo: le card metriche sono cliccabili e modificabili.
   // Contratti reali: campi AI -> /api/supabase/save-ai-info (whitelist); anagrafica -> /api/supabase/save-profile.
   const FIELD_EDITOR_TYPES = {
+    first_name: { type: 'text', target: 'profile' },
+    last_name: { type: 'text', target: 'profile' },
+    favorite_team: { type: 'text', target: 'profile' },
+    ai_name: { type: 'text', target: 'ai-info' },
+    how_to_remember: { type: 'textarea', target: 'profile' },
     current_division: { type: 'text', target: 'profile' },
     team_name: { type: 'text', target: 'profile' },
     platform: { type: 'select', options: ['console', 'pc', 'mobile', 'other'], target: 'ai-info' },
@@ -354,115 +361,22 @@ export default function ImpostazioniProfiloPage() {
 
       await reloadProfileData()
       setEditingField(null)
+      setToast({
+        type: 'success',
+        message: (lang === 'en' || lang === 'es') ? 'Saved correctly' : 'Salvato correttamente'
+      })
     } catch (err) {
       setEditError(err.message || t('errorProfileSave'))
+      setToast({
+        type: 'error',
+        message: err.message || t('errorProfileSave')
+      })
     } finally {
       setEditSaving(false)
     }
   }
 
   // Salva profilo (incrementale)
-  const handleSave = async (sectionName) => {
-    setSaving(true)
-    setError(null)
-    setSuccess(null)
-
-    try {
-      let token = localStorage.getItem('auth_token')
-      
-      if (!token && supabase) {
-        const { data: session } = await supabase.auth.getSession()
-        token = session?.session?.access_token
-      }
-
-      if (!token) {
-        router.push('/login')
-        return
-      }
-
-      const response = await fetch('/api/supabase/save-profile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(profile)
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || t('errorProfileSave'))
-      }
-
-      const data = await response.json()
-      if (data.profile) {
-        const p = data.profile
-        setProfileData(prev => prev ? {
-          ...prev,
-          profile_completion_score: p.profile_completion_score,
-          profile_completion_level: p.profile_completion_level,
-          first_name: p.first_name ?? prev.first_name,
-          last_name: p.last_name ?? prev.last_name,
-          current_division: p.current_division ?? prev.current_division,
-          favorite_team: p.favorite_team ?? prev.favorite_team,
-          team_name: p.team_name ?? prev.team_name,
-          ai_name: p.ai_name ?? prev.ai_name,
-          how_to_remember: p.how_to_remember ?? prev.how_to_remember,
-          hours_per_week: p.hours_per_week ?? prev.hours_per_week,
-          common_problems: p.common_problems ?? prev.common_problems
-        } : {
-          profile_completion_score: p.profile_completion_score,
-          profile_completion_level: p.profile_completion_level,
-          first_name: p.first_name ?? null,
-          last_name: p.last_name ?? null,
-          current_division: p.current_division ?? null,
-          favorite_team: p.favorite_team ?? null,
-          team_name: p.team_name ?? null,
-          ai_name: p.ai_name ?? null,
-          how_to_remember: p.how_to_remember ?? null,
-          hours_per_week: p.hours_per_week ?? null,
-          common_problems: p.common_problems ?? null
-        })
-        setProfile(prev => ({
-          ...prev,
-          first_name: p.first_name != null ? p.first_name : prev.first_name,
-          last_name: p.last_name != null ? p.last_name : prev.last_name,
-          current_division: p.current_division != null ? p.current_division : prev.current_division,
-          favorite_team: p.favorite_team != null ? p.favorite_team : prev.favorite_team,
-          team_name: p.team_name != null ? p.team_name : prev.team_name,
-          ai_name: p.ai_name != null ? p.ai_name : prev.ai_name,
-          how_to_remember: p.how_to_remember != null ? p.how_to_remember : prev.how_to_remember,
-          hours_per_week: p.hours_per_week != null ? p.hours_per_week : prev.hours_per_week,
-          common_problems: Array.isArray(p.common_problems) ? p.common_problems : prev.common_problems
-        }))
-      }
-      const successMsg = data.profile
-        ? `${sectionName} ${t('profileSectionSaved')}`
-        : t('profileSectionSaved')
-      setSuccess(successMsg)
-      setToast({ message: successMsg, type: 'success' })
-      setTimeout(() => setSuccess(null), 3000)
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('knowledge-should-refresh'))
-      }
-
-      // Aggiorna riassunto analisi (diagnostic) per la chat
-      try {
-        await fetch('/api/refresh-diagnostic', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` }
-        })
-      } catch (_) { /* non bloccare UI */ }
-    } catch (err) {
-      console.error('[Impostazioni Profilo] Error saving profile:', err)
-      const errMsg = err.message || t('errorProfileSave')
-      setError(errMsg)
-      setToast({ message: errMsg, type: 'error' })
-      setTimeout(() => setError(null), 5000)
-    } finally {
-      setSaving(false)
-    }
-  }
 
   React.useEffect(() => {
     if (toast) {
@@ -510,6 +424,37 @@ export default function ImpostazioniProfiloPage() {
     return map[raw] || raw
   }
   const profileOverviewCards = [
+    {
+      field: 'first_name',
+      label: (lang === 'en' || lang === 'es') ? 'Name' : 'Nome',
+      value: cleanValue(profile.first_name),
+      hint: (lang === 'en' || lang === 'es') ? 'How Hero calls you' : 'Come ti chiama Hero'
+    },
+    {
+      field: 'last_name',
+      label: (lang === 'en' || lang === 'es') ? 'Last name' : 'Cognome',
+      value: cleanValue(profile.last_name),
+      hint: (lang === 'en' || lang === 'es') ? 'Personal data' : 'Dati anagrafici'
+    },
+    {
+      field: 'favorite_team',
+      label: (lang === 'en' || lang === 'es') ? 'Favourite club' : 'Squadra del cuore',
+      value: cleanValue(profile.favorite_team),
+      hint: (lang === 'en' || lang === 'es') ? 'The club you support' : 'La squadra che tifi'
+    },
+    {
+      field: 'ai_name',
+      label: (lang === 'en' || lang === 'es') ? 'Coach name' : 'Nome del tuo coach',
+      value: cleanValue(profile.ai_name),
+      hint: (lang === 'en' || lang === 'es') ? 'How you call your coach' : 'Come chiami il tuo coach'
+    },
+    {
+      field: 'how_to_remember',
+      label: (lang === 'en' || lang === 'es') ? 'Coach memory note' : 'Nota memoria per il coach',
+      value: cleanValue(profile.how_to_remember),
+      hint: (lang === 'en' || lang === 'es') ? 'What Hero should remember' : 'Cosa deve ricordare Hero'
+    },
+
     {
       label: (lang === 'en' || lang === 'es') ? 'Division' : 'Divisione',
       field: 'current_division',
@@ -643,7 +588,7 @@ export default function ImpostazioniProfiloPage() {
           ) : (
             <AlertCircle size={20} color="#ffffff" />
           )}
-          <span style={{ color: 'var(--text-main)', fontSize: '14px', fontWeight: 600, flex: 1 }}>
+          <span style={{ color: '#ffffff', fontSize: '14px', fontWeight: 600, flex: 1 }}>
             {typeof toast.message === 'string' ? toast.message : (toast.message?.message ?? String(toast.message ?? ''))}
           </span>
           <button
@@ -652,7 +597,7 @@ export default function ImpostazioniProfiloPage() {
             style={{
               background: 'transparent',
               border: 'none',
-              color: 'var(--text-main)',
+              color: '#ffffff',
               cursor: 'pointer',
               padding: '4px',
               display: 'flex',
@@ -718,6 +663,20 @@ export default function ImpostazioniProfiloPage() {
                   )
                 })}
               </div>
+            ) : editingField.type === 'textarea' ? (
+              <textarea
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                maxLength={1000}
+                rows={5}
+                autoFocus
+                style={{
+                  width: '100%', padding: '12px 14px', resize: 'vertical',
+                  borderRadius: 12, border: '1px solid var(--border-soft)',
+                  background: 'var(--surface-2)', color: 'var(--text-main)',
+                  fontSize: 15, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', lineHeight: 1.5
+                }}
+              />
             ) : (
               <input
                 type="text"
@@ -735,7 +694,7 @@ export default function ImpostazioniProfiloPage() {
             )}
 
             {editError && (
-              <p style={{ margin: 0, fontSize: 13, color: '#ff8a8a' }}>{editError}</p>
+              <p style={{ margin: 0, fontSize: 13, color: '#d93025' }}>{editError}</p>
             )}
 
             <div style={{ display: 'flex', gap: 10 }}>
@@ -769,204 +728,6 @@ export default function ImpostazioniProfiloPage() {
           </div>
         </div>
       )}
-
-      {/* Messaggi Success/Error */}
-      {success && (
-        <div style={{
-          backgroundColor: 'var(--accent-bg)',
-          border: '1px solid var(--accent-border)',
-          borderRadius: '8px',
-          padding: '12px',
-          marginBottom: '16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          color: 'var(--accent)'
-        }}>
-          <CheckCircle2 size={18} />
-          <span>{success}</span>
-        </div>
-      )}
-
-      {error && (
-        <div style={{
-          backgroundColor: '#ff444420',
-          border: '1px solid #ff4444',
-          borderRadius: '8px',
-          padding: '12px',
-          marginBottom: '16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          color: '#ff4444'
-        }}>
-          <AlertCircle size={18} />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* Sezione: Dati Personali (stile allineato a Dashboard) */}
-      <div data-tour-id="tour-profile-personal" style={{
-        backgroundColor: 'var(--surface)',
-        borderRadius: '16px',
-        padding: 'clamp(16px, 4vw, 24px)',
-        marginBottom: '24px',
-        border: '1px solid var(--border-soft)',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.2)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-          <User size={20} color="var(--accent)" />
-          <h2 style={{ margin: 0, fontSize: 'clamp(16px, 4vw, 18px)', fontWeight: '600' }}>{t('personalData')}</h2>
-        </div>
-
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-dim)' }}>
-            {t('firstName')} · {(lang === 'en' || lang === 'es') ? 'how Hero calls you' : 'come ti chiama Hero'}
-          </label>
-          <input
-            type="text"
-            value={profile.first_name}
-            onChange={(e) => setProfile(prev => ({ ...prev, first_name: e.target.value }))}
-            placeholder={t('placeholderYourName')}
-            maxLength={255}
-            style={{
-              width: '100%',
-              boxSizing: 'border-box',
-              padding: '12px',
-              backgroundColor: 'var(--surface)',
-              border: '1px solid var(--border-soft)',
-              borderRadius: '8px',
-              color: 'var(--text-main)',
-              fontSize: 'clamp(16px, 4vw, 16px)'
-            }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-dim)' }}>
-            {t('lastName')}
-          </label>
-          <input
-            type="text"
-            value={profile.last_name}
-            onChange={(e) => setProfile(prev => ({ ...prev, last_name: e.target.value }))}
-            placeholder={t('yourLastName')}
-            maxLength={255}
-            style={{
-              width: '100%',
-              boxSizing: 'border-box',
-              padding: '12px',
-              backgroundColor: 'var(--surface)',
-              border: '1px solid var(--border-soft)',
-              borderRadius: '8px',
-              color: 'var(--text-main)',
-              fontSize: 'clamp(16px, 4vw, 16px)'
-            }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-dim)' }}>
-            {t('favoriteTeam')}
-          </label>
-          <input
-            type="text"
-            value={profile.favorite_team}
-            onChange={(e) => setProfile(prev => ({ ...prev, favorite_team: e.target.value }))}
-            placeholder={t('favoriteTeamPlaceholder')}
-            maxLength={255}
-            style={{
-              width: '100%',
-              boxSizing: 'border-box',
-              padding: '12px',
-              backgroundColor: 'var(--surface)',
-              border: '1px solid var(--border-soft)',
-              borderRadius: '8px',
-              color: 'var(--text-main)',
-              fontSize: '16px'
-            }}
-          />
-        </div>
-
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button
-            onClick={() => handleSave(t('personalData'))}
-            disabled={saving}
-            style={{
-              flex: 1,
-              padding: '12px',
-              backgroundColor: saving ? 'var(--surface-2)' : 'var(--accent)',
-              color: saving ? 'var(--text-dim)' : 'var(--accent-ink)',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: '600',
-              cursor: saving ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px'
-            }}
-          >
-            <Save size={18} />
-            {saving ? t('saving') : t('save')}
-          </button>
-        </div>
-      </div>
-
-      {/* Sezione: Personalizzazione Coach */}
-      <div data-tour-id="tour-profile-coach-personalization" className="profile-coach-personalization">
-        <div className="profile-section-heading">
-          <Brain size={20} color="var(--accent)" />
-          <div>
-            <h2>{(lang === 'en' || lang === 'es') ? 'Your Coach' : 'Il tuo Coach'}</h2>
-            <p>
-              {lang === 'en'
-                ? 'Choose how the coach talks to you. These details change the tone and memory of chat and live coach.'
-                : 'Scegli come il coach parla con te. Questi dettagli cambiano tono e memoria di chat e live coach.'}
-            </p>
-          </div>
-        </div>
-
-        <div className="profile-personalization-grid">
-          <div>
-            <label>
-              {(lang === 'en' || lang === 'es') ? 'Coach name' : 'Nome del tuo coach'}
-            </label>
-            <input
-              type="text"
-              value={profile.ai_name}
-              onChange={(e) => setProfile(prev => ({ ...prev, ai_name: e.target.value }))}
-              placeholder={t('aiNamePlaceholder')}
-              maxLength={255}
-            />
-          </div>
-        </div>
-
-        <div style={{ marginTop: '16px' }}>
-          <label>
-            {(lang === 'en' || lang === 'es') ? 'Coach memory note' : 'Nota memoria per il coach'}
-          </label>
-          <textarea
-            value={profile.how_to_remember}
-            onChange={(e) => setProfile(prev => ({ ...prev, how_to_remember: e.target.value }))}
-            placeholder={t('howToRememberPlaceholder')}
-            maxLength={1000}
-            rows={4}
-          />
-        </div>
-
-        <div className="profile-personalization-actions">
-          <button
-            onClick={() => handleSave((lang === 'en' || lang === 'es') ? 'Coach personalization' : 'Personalizzazione Coach')}
-            disabled={saving}
-            className="profile-save-button"
-          >
-            <Save size={18} />
-            {saving ? t('saving') : t('save')}
-          </button>
-        </div>
-      </div>
 
       <style jsx>{`
 
@@ -1016,10 +777,10 @@ export default function ImpostazioniProfiloPage() {
 .profile-metric-card {
           min-height: 116px;
           padding: 18px;
-          border: 1px solid rgba(61, 220, 151, 0.16);
+          border: 1px solid var(--border-soft);
           border-radius: 18px;
-          background: linear-gradient(135deg, rgba(10, 18, 38, 0.94), rgba(13, 25, 48, 0.78));
-          box-shadow: 0 12px 34px rgba(0, 0, 0, 0.20);
+          background: var(--surface);
+          box-shadow: 0 12px 34px rgba(0, 0, 0, 0.08);
         }
 
         .profile-metric-card span,
@@ -1046,88 +807,9 @@ export default function ImpostazioniProfiloPage() {
         }
 
         .profile-metric-card--empty strong {
-          color: var(--text-main);
-          font-size: clamp(18px, 3.3vw, 24px);
-        }
-
-        .profile-page :global([data-tour-id='tour-profile-personal']),
-        .profile-page :global([data-tour-id='tour-profile-game']),
-        .profile-coach-personalization {
-          border: 1px solid var(--border-soft) !important;
-          border-radius: 22px !important;
-          background: var(--surface) !important;
-          box-shadow: 0 14px 42px rgba(0, 0, 0, 0.24) !important;
-        }
-
-        .profile-coach-personalization {
-          padding: 20px;
-          margin-bottom: 24px;
-        }
-
-        .profile-section-heading {
-          display: flex;
-          align-items: flex-start;
-          gap: 10px;
-          margin-bottom: 18px;
-        }
-
-        .profile-section-heading h2 {
-          margin: 0 0 5px;
-          color: var(--text-main);
-          font-size: 18px;
-          font-weight: 800;
-        }
-
-        .profile-section-heading p {
-          margin: 0;
           color: var(--text-dim);
-          font-size: 13px;
-          line-height: 1.5;
-        }
-
-        .profile-personalization-grid {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 14px;
-        }
-
-        .profile-coach-personalization :global(label) {
-          display: block;
-          margin-bottom: 8px;
-        }
-
-        .profile-coach-personalization :global(input),
-        .profile-coach-personalization :global(textarea) {
-          width: 100% !important;
-          box-sizing: border-box;
-        }
-
-        .profile-personalization-actions {
-          display: flex;
-          justify-content: flex-end;
-          margin-top: 16px;
-        }
-
-        .profile-save-button {
-          min-height: 46px;
-          padding: 12px 18px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          border: none;
-          border-radius: 14px;
-          color: var(--accent-ink);
-          background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-          font-size: 15px;
-          font-weight: 900;
-          cursor: pointer;
-          box-shadow: 0 8px 24px rgba(39, 167, 106, 0.24);
-        }
-
-        .profile-save-button:disabled {
-          cursor: not-allowed;
-          opacity: 0.65;
+          font-size: clamp(16px, 3vw, 22px);
+          font-weight: 700;
         }
 
         .profile-page :global(input),
@@ -1152,9 +834,9 @@ export default function ImpostazioniProfiloPage() {
         .profile-page :global(input:focus),
         .profile-page :global(select:focus),
         .profile-page :global(textarea:focus) {
-          border-color: rgba(61, 220, 151, 0.72) !important;
-          background: rgba(5, 13, 30, 0.96) !important;
-          box-shadow: 0 0 0 3px rgba(61, 220, 151, 0.12), 0 0 22px rgba(61, 220, 151, 0.12) !important;
+          border-color: var(--accent-border) !important;
+          background: var(--surface-2) !important;
+          box-shadow: 0 0 0 3px var(--accent-bg) !important;
         }
 
         .profile-page :global(label) {
@@ -1162,23 +844,17 @@ export default function ImpostazioniProfiloPage() {
           font-weight: 700 !important;
         }
 
-        @media (max-width: 900px) {
-          @media (max-width: 640px) {
+        @media (max-width: 640px) {
           .profile-page {
             padding: 12px;
           }
 
-          .profile-hero-link {
-            width: 100%;
+          .profile-metric-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
           }
 
           .profile-page :global(button) {
             min-height: 46px;
-          }
-
-          .profile-personalization-actions,
-          .profile-save-button {
-            width: 100%;
           }
         }
       `}</style>
