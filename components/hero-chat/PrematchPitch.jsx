@@ -1,7 +1,37 @@
 'use client'
 
 import React from 'react'
-import { DEFAULT_SLOT_POSITIONS } from '@/lib/formationDefaultSlots'
+import { DEFAULT_SLOT_POSITIONS, completeSlotPositions } from '@/lib/formationDefaultSlots'
+import { supabase } from '@/lib/supabaseClient'
+
+const POSITION_ALIASES = {
+  GK: 'PT',
+  PT: 'PT',
+  CB: 'DC',
+  DC: 'DC',
+  RB: 'TD',
+  TD: 'TD',
+  LB: 'TS',
+  TS: 'TS',
+  DMF: 'MED',
+  MED: 'MED',
+  CMF: 'CC',
+  CC: 'CC',
+  AMF: 'TRQ',
+  TRQ: 'TRQ',
+  RMF: 'CLD',
+  CLD: 'CLD',
+  LMF: 'CLS',
+  CLS: 'CLS',
+  RWF: 'EDA',
+  EDA: 'EDA',
+  LWF: 'ESA',
+  ESA: 'ESA',
+  SS: 'SP',
+  SP: 'SP',
+  CF: 'P',
+  P: 'P'
+}
 
 function asText(value, lang = 'it') {
   if (value == null) return ''
@@ -16,8 +46,8 @@ function shortName(name) {
   const raw = String(name || '').trim()
   if (!raw) return ''
   const parts = raw.split(/\s+/).filter(Boolean)
-  if (parts.length === 1) return parts[0].slice(0, 10)
-  return parts[parts.length - 1].slice(0, 10)
+  if (parts.length === 1) return parts[0].slice(0, 11)
+  return parts[parts.length - 1].slice(0, 11)
 }
 
 function shortInstruction(raw, lang) {
@@ -39,17 +69,26 @@ function shortInstruction(raw, lang) {
     linea_bassa: 'LB',
     'linea bassa': 'LB'
   }
-  if (map[key] || map[key.replace(/\s+/g, '_')]) {
-    return map[key] || map[key.replace(/\s+/g, '_')]
-  }
-  return text.slice(0, 8)
+  const compact = key.replace(/\s+/g, '_')
+  return map[key] || map[compact] || text.slice(0, 8)
 }
 
 function normalizePos(value) {
-  return String(value || '')
+  const raw = String(value || '')
     .trim()
     .toUpperCase()
     .replace(/\s+/g, '')
+  if (!raw) return ''
+  return POSITION_ALIASES[raw] || raw
+}
+
+function nameKey(value) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
 }
 
 function claimSlot(slots, preferredPos, used) {
@@ -69,40 +108,119 @@ function claimSlot(slots, preferredPos, used) {
   return null
 }
 
+function findSlotByPlayer(slots, playerId, playerName) {
+  if (playerId) {
+    const byId = slots.find((s) => s.playerId && s.playerId === playerId)
+    if (byId) return byId
+  }
+  const key = nameKey(playerName)
+  if (!key) return null
+  return slots.find((s) => {
+    const candidates = [s.name, s.inName, s.outName].filter(Boolean).map(nameKey)
+    return candidates.some((c) => c === key || c.includes(key) || key.includes(c))
+  }) || null
+}
+
 /**
- * Mini campo read-only: slot default + overlay swap/istruzioni.
- * Nessuna interazione — solo lettura del piano contromisure.
+ * Mini campo read-only: titolari reali + overlay swap/istruzioni.
  */
 export default function PrematchPitch({
   playerSuggestions = [],
   individualInstructions = [],
+  focusText = '',
   lang = 'it'
 }) {
+  const [starters, setStarters] = React.useState([])
+  const [slotPositions, setSlotPositions] = React.useState(DEFAULT_SLOT_POSITIONS)
+
+  React.useEffect(() => {
+    let cancelled = false
+    async function loadRoster() {
+      if (!supabase) return
+      try {
+        const { data: auth } = await supabase.auth.getUser()
+        const userId = auth?.user?.id
+        if (!userId) return
+
+        const [{ data: players }, { data: layout }] = await Promise.all([
+          supabase
+            .from('players')
+            .select('id, player_name, position, slot_index')
+            .eq('user_id', userId)
+            .not('slot_index', 'is', null)
+            .gte('slot_index', 0)
+            .lte('slot_index', 10),
+          supabase
+            .from('formation_layout')
+            .select('slot_positions')
+            .eq('user_id', userId)
+            .maybeSingle()
+        ])
+
+        if (cancelled) return
+        setStarters(Array.isArray(players) ? players : [])
+        if (layout?.slot_positions) {
+          setSlotPositions(completeSlotPositions(layout.slot_positions))
+        }
+      } catch {
+        // fallback: default slots without names
+      }
+    }
+    void loadRoster()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const overlay = React.useMemo(() => {
-    const base = Object.entries(DEFAULT_SLOT_POSITIONS).map(([idx, slot]) => ({
-      index: Number(idx),
-      x: slot.x,
-      y: slot.y,
-      position: slot.position,
-      outName: null,
-      inName: null,
-      instruction: null,
-      roleLabel: slot.position
-    }))
+    const positions = completeSlotPositions(slotPositions || DEFAULT_SLOT_POSITIONS)
+    const base = Object.entries(positions).map(([idx, slot]) => {
+      const index = Number(idx)
+      const starter = starters.find((p) => Number(p.slot_index) === index)
+      return {
+        index,
+        x: Number(slot.x) || 50,
+        y: Number(slot.y) || 50,
+        position: slot.position || DEFAULT_SLOT_POSITIONS[index]?.position || '?',
+        playerId: starter?.id || null,
+        name: starter?.player_name || null,
+        outName: null,
+        inName: null,
+        instruction: null,
+        focus: false,
+        roleLabel: slot.position || DEFAULT_SLOT_POSITIONS[index]?.position || '?'
+      }
+    })
 
     const usedForSwap = new Set()
     const suggestions = Array.isArray(playerSuggestions) ? playerSuggestions : []
     for (const sug of suggestions) {
       if (sug?.action && sug.action !== 'add_to_starting_xi') continue
-      const inName = sug.player_name || null
-      const outName = sug.replace_player_name || null
-      if (!inName && !outName) continue
-      const pos = sug.position || sug.slot_role || sug.replace_position
-      const slot = claimSlot(base, pos, usedForSwap)
+      const inName = sug.player_name || sug.in_player_name || null
+      const outName = sug.replace_player_name || sug.out_player_name || null
+      const inId = sug.player_id || sug.in_player_id || null
+      const outId = sug.replace_player_id || sug.out_player_id || null
+      if (!inName && !outName && !inId && !outId) continue
+
+      let slot =
+        findSlotByPlayer(base, outId, outName) ||
+        findSlotByPlayer(base, inId, inName)
+      if (slot && usedForSwap.has(slot.index)) slot = null
+      if (!slot) {
+        const pos = sug.position || sug.slot_role || sug.replace_position
+        slot = claimSlot(base, pos, usedForSwap)
+      } else {
+        usedForSwap.add(slot.index)
+      }
       if (!slot) continue
-      slot.outName = outName
+
+      slot.outName = outName || slot.name
       slot.inName = inName
-      if (pos) slot.roleLabel = normalizePos(pos) || slot.position
+      if (inName) slot.name = inName
+      if (sug.position || sug.replace_position || sug.slot_role) {
+        slot.roleLabel = normalizePos(sug.position || sug.replace_position || sug.slot_role) || slot.position
+      }
+      slot.focus = true
     }
 
     const usedForInstr = new Set()
@@ -110,29 +228,32 @@ export default function PrematchPitch({
     for (const row of instructions) {
       const badge = shortInstruction(row?.instruction, lang)
       if (!badge) continue
-      const byName = String(row?.player_name || '').trim().toLowerCase()
-      let slot = null
-      if (byName) {
-        slot = base.find(
-          (s) =>
-            !usedForInstr.has(s.index) &&
-            ((s.inName && s.inName.toLowerCase() === byName) ||
-              (s.outName && s.outName.toLowerCase() === byName))
-        )
-      }
-      if (!slot) {
-        slot = claimSlot(base, row?.position || row?.slot_role || row?.slot, usedForInstr)
-      } else {
-        usedForInstr.add(slot.index)
-      }
+      let slot =
+        findSlotByPlayer(base, row?.player_id, row?.player_name) ||
+        claimSlot(base, row?.position || row?.slot_role, usedForInstr)
+      if (slot && !usedForInstr.has(slot.index)) usedForInstr.add(slot.index)
       if (!slot) continue
       slot.instruction = badge
-      if (!slot.inName && row?.player_name) slot.inName = row.player_name
+      slot.focus = true
+      if (!slot.name && row?.player_name) slot.name = row.player_name
+    }
+
+    const focusBlob = nameKey(focusText)
+    if (focusBlob) {
+      for (const slot of base) {
+        const n = nameKey(slot.name || slot.inName)
+        if (!n || n.length < 4) continue
+        const last = n.split(' ').pop()
+        if ((last && focusBlob.includes(last)) || focusBlob.includes(n)) {
+          slot.focus = true
+        }
+      }
     }
 
     return base
-  }, [playerSuggestions, individualInstructions, lang])
+  }, [starters, slotPositions, playerSuggestions, individualInstructions, focusText, lang])
 
+  const hasPlayers = overlay.some((s) => s.name || s.inName || s.outName)
   const hasOverlay = overlay.some((s) => s.outName || s.inName || s.instruction)
 
   return (
@@ -150,11 +271,11 @@ export default function PrematchPitch({
 
         {overlay.map((slot) => {
           const showSwap = !!(slot.outName || slot.inName)
-          const primary = slot.inName || slot.outName
+          const displayName = slot.inName || slot.name
           return (
             <div
               key={slot.index}
-              className={`hc-pitchSlot${slot.inName ? ' hc-pitchSlotIn' : ''}${slot.outName && !slot.inName ? ' hc-pitchSlotOut' : ''}${slot.instruction ? ' hc-pitchSlotInstr' : ''}`}
+              className={`hc-pitchSlot${slot.inName ? ' hc-pitchSlotIn' : ''}${slot.outName && !slot.inName ? ' hc-pitchSlotOut' : ''}${slot.focus ? ' hc-pitchSlotFocus' : ''}${slot.instruction ? ' hc-pitchSlotInstr' : ''}`}
               style={{ left: `${slot.x}%`, top: `${slot.y}%` }}
             >
               <span className="hc-pitchRole">{slot.roleLabel}</span>
@@ -169,7 +290,9 @@ export default function PrematchPitch({
                 </span>
               ) : (
                 <span className="hc-pitchNames">
-                  <span className="hc-pitchIdle">{primary ? shortName(primary) : '—'}</span>
+                  <span className={displayName ? 'hc-pitchIdle' : 'hc-pitchEmpty'}>
+                    {displayName ? shortName(displayName) : '—'}
+                  </span>
                 </span>
               )}
               {slot.instruction && (
@@ -179,8 +302,11 @@ export default function PrematchPitch({
           )
         })}
       </div>
-      {!hasOverlay && (
-        <p className="hc-pitchHint">Formazione base 4-3-3 — applica i consigli sotto</p>
+      {!hasPlayers && (
+        <p className="hc-pitchHint">Carico la tua formazione…</p>
+      )}
+      {hasPlayers && !hasOverlay && (
+        <p className="hc-pitchHint">Tua formazione — i consigli sotto evidenziano i ruoli chiave</p>
       )}
       <style jsx>{`
         .hc-pitch {
@@ -297,17 +423,22 @@ export default function PrematchPitch({
         .hc-pitchSlot {
           position: absolute;
           transform: translate(-50%, -50%);
-          width: clamp(52px, 14vw, 68px);
+          width: clamp(54px, 14vw, 72px);
           min-height: 44px;
           padding: 4px 4px 6px;
           border-radius: 10px;
           border: 1px solid rgba(255, 255, 255, 0.22);
-          background: rgba(6, 18, 14, 0.82);
+          background: rgba(6, 18, 14, 0.88);
           display: flex;
           flex-direction: column;
           align-items: center;
           gap: 2px;
           z-index: 2;
+        }
+
+        .hc-pitchSlotFocus {
+          border-color: rgba(61, 220, 151, 0.55);
+          box-shadow: 0 0 0 1px rgba(61, 220, 151, 0.2);
         }
 
         .hc-pitchSlotIn {
@@ -360,8 +491,18 @@ export default function PrematchPitch({
 
         .hc-pitchIdle {
           font-size: 10px;
+          font-weight: 700;
+          color: rgba(255, 255, 255, 0.92);
+          max-width: 100%;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .hc-pitchEmpty {
+          font-size: 10px;
           font-weight: 600;
-          color: rgba(255, 255, 255, 0.55);
+          color: rgba(255, 255, 255, 0.35);
         }
 
         .hc-pitchBadge {
@@ -390,7 +531,7 @@ export default function PrematchPitch({
           }
 
           .hc-pitchSlot {
-            width: clamp(46px, 15vw, 58px);
+            width: clamp(48px, 15vw, 60px);
             min-height: 42px;
             padding: 3px;
           }

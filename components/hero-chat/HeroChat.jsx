@@ -269,14 +269,42 @@ function PrematchPlanCard({ plan, lang }) {
   const raw = plan.countermeasures || {}
   const analysis = raw.analysis || {}
   const tactics = raw.countermeasures || {}
-  const summary = raw.play_summary || {}
+  const changeSet = plan.change_set || {}
+  const summary = raw.play_summary || changeSet.play_summary || {}
   const formationAdjustments = Array.isArray(tactics.formation_adjustments) ? tactics.formation_adjustments : []
   const tacticalAdjustments = Array.isArray(tactics.tactical_adjustments) ? tactics.tactical_adjustments : []
-  const playerSuggestions = Array.isArray(tactics.player_suggestions) ? tactics.player_suggestions : []
-  const individualInstructions = Array.isArray(tactics.individual_instructions) ? tactics.individual_instructions : []
+  const playerSuggestions = (() => {
+    const fromApi = Array.isArray(tactics.player_suggestions) ? tactics.player_suggestions : []
+    if (fromApi.length) return fromApi
+    const fromChangeSet = Array.isArray(changeSet.substitutions) ? changeSet.substitutions : []
+    return fromChangeSet.map((sub) => ({
+      action: 'add_to_starting_xi',
+      player_id: sub.in_player_id,
+      player_name: sub.in_player_name,
+      replace_player_id: sub.out_player_id,
+      replace_player_name: sub.out_player_name,
+      position: sub.position,
+      reason: sub.reason,
+      priority: sub.priority
+    }))
+  })()
+  const individualInstructions = (() => {
+    const fromApi = Array.isArray(tactics.individual_instructions) ? tactics.individual_instructions : []
+    if (fromApi.length) return fromApi
+    return Object.entries(changeSet.individual_instructions || {}).map(([slot, row]) => ({
+      slot,
+      player_id: row?.player_id,
+      player_name: row?.player_name,
+      position: row?.position,
+      instruction: row?.instruction,
+      reason: row?.reason
+    }))
+  })()
   const strengths = Array.isArray(analysis.strengths) ? analysis.strengths : []
   const weaknesses = Array.isArray(analysis.weaknesses) ? analysis.weaknesses : []
-  const warnings = Array.isArray(raw.warnings) ? raw.warnings : []
+  const warnings = Array.isArray(raw.warnings)
+    ? raw.warnings
+    : (Array.isArray(changeSet.warnings) ? changeSet.warnings : [])
 
   const localized = (value) => {
     if (typeof value === 'string' || typeof value === 'number') return String(value)
@@ -349,6 +377,14 @@ function PrematchPlanCard({ plan, lang }) {
       <PrematchPitch
         playerSuggestions={playerSuggestions}
         individualInstructions={individualInstructions}
+        focusText={[
+          localized(summary.match_key),
+          localized(summary.base_plan),
+          localized(summary.attacking),
+          localized(summary.defending),
+          ...tacticalAdjustments.map((item) => localized(item?.suggestion)),
+          ...individualInstructions.map((item) => item?.player_name || '')
+        ].filter(Boolean).join(' ')}
         lang={lang}
       />
 
@@ -1663,7 +1699,7 @@ export default function HeroChat({
       <header className="hc-header">
         <div className="hc-identity">
           <span className="hc-avatarWrap">
-            <img src="/coach.jpg" alt="" className="hc-avatar" />
+            <img src="/logo.png" alt="" className="hc-avatar" />
             <span className="hc-online" aria-hidden="true" />
           </span>
           <span className="hc-nameBlock">
@@ -1718,7 +1754,7 @@ export default function HeroChat({
 
         <div className="hc-row">
           <span className="hc-bubbleAvatar" aria-hidden="true">
-            <img src="/coach.jpg" alt="" />
+            <img src="/logo.png" alt="" />
           </span>
           <div className="hc-bubble hc-bubbleHero">
             {greetingVariant === 'first'
@@ -1863,7 +1899,7 @@ export default function HeroChat({
                   <div key={`fb-${fi}`} className={fm.role === 'user' ? 'hc-row hc-rowUser' : 'hc-row'}>
                     {fm.role === 'hero' && (
                       <span className="hc-bubbleAvatar" aria-hidden="true">
-                        <img src="/coach.jpg" alt="" />
+                        <img src="/logo.png" alt="" />
                       </span>
                     )}
                     <div className={fm.role === 'user' ? 'hc-bubble hc-bubbleUser' : `hc-bubble hc-bubbleHero${fm.kind === 'error' || fm.kind === 'lowhp' ? ' hc-bubbleWarn' : ''}`}>
@@ -1882,7 +1918,7 @@ export default function HeroChat({
                 {feedbackSending && (
                   <div className="hc-row">
                     <span className="hc-bubbleAvatar" aria-hidden="true">
-                      <img src="/coach.jpg" alt="" />
+                      <img src="/logo.png" alt="" />
                     </span>
                     <div className="hc-bubble hc-bubbleHero hc-thinking">
                       <span className="hc-dot" /><span className="hc-dot" /><span className="hc-dot" />
@@ -1920,7 +1956,7 @@ export default function HeroChat({
                 {m.content ? (
                   <div className="hc-row">
                     <span className="hc-bubbleAvatar" aria-hidden="true">
-                      <img src="/coach.jpg" alt="" />
+                      <img src="/logo.png" alt="" />
                     </span>
                     <div className="hc-bubble hc-bubbleHero hc-bubbleOk">
                       <span className="hc-warnRow"><CheckCircle2 size={14} aria-hidden="true" /></span>
@@ -1954,7 +1990,7 @@ export default function HeroChat({
             <div key={key} className={m.role === 'user' ? 'hc-row hc-rowUser' : 'hc-row'}>
               {m.role === 'hero' && (
                 <span className="hc-bubbleAvatar" aria-hidden="true">
-                  <img src="/coach.jpg" alt="" />
+                  <img src="/logo.png" alt="" />
                 </span>
               )}
               <div className={m.role === 'user' ? 'hc-bubble hc-bubbleUser' : `hc-bubble hc-bubbleHero${kind === 'error' || kind === 'lowhp' ? ' hc-bubbleWarn' : ''}${kind === 'success' ? ' hc-bubbleOk' : ''}`}>
@@ -1994,7 +2030,7 @@ export default function HeroChat({
         {sending && (
           <div className="hc-row">
             <span className="hc-bubbleAvatar" aria-hidden="true">
-              <img src="/coach.jpg" alt="" />
+              <img src="/logo.png" alt="" />
             </span>
             <div className="hc-bubble hc-bubbleHero hc-thinking">
               <span className="hc-dot" /><span className="hc-dot" /><span className="hc-dot" />
@@ -2210,7 +2246,8 @@ export default function HeroChat({
           width: 40px;
           height: 40px;
           border-radius: 50%;
-          object-fit: cover;
+          object-fit: contain;
+          background: #0b1220;
           border: 2px solid var(--accent-border);
           display: block;
         }
@@ -2470,7 +2507,8 @@ export default function HeroChat({
           width: 30px;
           height: 30px;
           border-radius: 50%;
-          object-fit: cover;
+          object-fit: contain;
+          background: #0b1220;
           border: 1px solid var(--accent-border);
           display: block;
         }
