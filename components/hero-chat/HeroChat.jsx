@@ -106,7 +106,7 @@ const COPY = {
   counterConfirmCta: { it: 'Genera piano', en: 'Generate plan', es: 'Generar plan' },
   counterConfirmFix: { it: 'Modulo', en: 'Formation', es: 'Módulo' },
   planTitle: { it: 'Piano pre-partita', en: 'Pre-match plan', es: 'Plan previo' },
-  planSaved: { it: 'Piano salvato nella conversazione. Applicalo prima del fischio.', en: 'Plan saved in this conversation. Apply it before kickoff.', es: 'Plan guardado en la conversación. Aplícalo antes del pitido.' },
+  planSaved: { it: 'Piano salvato in Hero. Imposta manualmente formazione, stile e istruzioni prima del calcio d’inizio.', en: 'Plan saved in Hero. Set the formation, style, and instructions manually before kickoff.', es: 'Plan guardado en Hero. Configura manualmente la formación, el estilo y las instrucciones antes del pitido.' },
   planRead: { it: 'Lettura avversario', en: 'Opponent read', es: 'Lectura del rival' },
   planStrengths: { it: 'Cosa fa bene', en: 'What they do well', es: 'Lo que hace bien' },
   planWeaknesses: { it: 'Dove attaccare', en: 'Where to attack', es: 'Dónde atacar' },
@@ -118,12 +118,12 @@ const COPY = {
   planSubstitutions: { it: 'Cambi consigliati', en: 'Suggested substitutions', es: 'Cambios sugeridos' },
   planManual: { it: 'Da verificare manualmente', en: 'Review manually', es: 'Revisar manualmente' },
   planQuickTips: { it: 'Piano iniziale', en: 'Starting plan', es: 'Plan inicial' },
+  planSteps: { it: 'Passaggi chiave', en: 'Key steps', es: 'Pasos clave' },
+  planCountermeasures: { it: 'Contromisure', en: 'Countermeasures', es: 'Contramedidas' },
+  planAttackLine: { it: 'Linea d’attacco', en: 'Attacking line', es: 'Línea de ataque' },
+  planDefenseLine: { it: 'Linea difensiva', en: 'Defensive line', es: 'Línea defensiva' },
+  planNoCountermeasure: { it: 'Nessuna modifica necessaria: parti dal tuo assetto e segui i passaggi chiave.', en: 'No change needed: start from your shape and follow the key steps.', es: 'No hace falta cambiar: empieza con tu estructura y sigue los pasos clave.' },
   planDetails: { it: 'Perché questo piano?', en: 'Why this plan?', es: '¿Por qué este plan?' },
-  planApply: { it: 'Applica piano', en: 'Apply plan', es: 'Aplicar plan' },
-  planApplying: { it: 'Applico…', en: 'Applying…', es: 'Aplicando…' },
-  planApplied: { it: 'Setup applicato alla tua formazione.', en: 'Setup applied to your formation.', es: 'Setup aplicado a tu formación.' },
-  planApplyError: { it: 'Non sono riuscito ad applicare il piano. Riprova.', en: 'Couldn’t apply the plan. Try again.', es: 'No pude aplicar el plan. Inténtalo de nuevo.' },
-  planAlreadyApplied: { it: 'Già applicato', en: 'Already applied', es: 'Ya aplicado' },
   attachAnalyzing: { it: 'Sto leggendo le tue statistiche…', en: 'Reading your stats…', es: 'Leyendo tus estadísticas…' },
   attachDone: { it: 'Statistiche aggiornate. Ora posso consigliarti meglio.', en: 'Stats updated. I can advise you better now.', es: 'Estadísticas actualizadas. Ahora puedo aconsejarte mejor.' },
   attachError: { it: 'Non sono riuscito a leggere le foto. Riprova con screenshot più nitidi.', en: 'I couldn’t read the photos. Try clearer screenshots.', es: 'No pude leer las fotos. Prueba capturas más nítidas.' },
@@ -272,12 +272,7 @@ const COUNTER_FORMATIONS = [
   '5-3-2', '5-4-1', '4-5-1', '4-1-3-2', '3-3-2-2', '4-2-2-2'
 ]
 
-function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, formation = null, onApplied }) {
-  const [applyState, setApplyState] = React.useState(
-    plan?.status === 'applied' ? 'done' : 'idle'
-  )
-  const [applyError, setApplyError] = React.useState('')
-
+function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, formation = null }) {
   if (!plan) return null
 
   const raw = plan.countermeasures || {}
@@ -360,56 +355,21 @@ function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, for
     return fromChange.map((t) => localized(t)).filter(Boolean).slice(0, 3)
   })()
 
+  const countermeasures = customer?.countermeasures || {}
+  const attackLines = Array.isArray(countermeasures.attack) ? countermeasures.attack : []
+  const defenseLines = Array.isArray(countermeasures.defense) ? countermeasures.defense : []
   const whyBits = [fitProof, trait, localized(customer?.opponent_read?.assumption)]
     .map((t) => String(t || '').trim())
     .filter(Boolean)
-
-  const canApply = plan.status === 'ready' || plan.status === 'draft'
-  const isApplied = applyState === 'done' || plan.status === 'applied'
-
-  const handleApply = async () => {
-    if (isApplied || applyState === 'busy' || !canApply) return
-    setApplyState('busy')
-    setApplyError('')
-    try {
-      let token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
-      if (!token && supabase) {
-        const { data } = await supabase.auth.getSession()
-        token = data?.session?.access_token || null
-      }
-      if (!token) throw new Error('auth')
-      const res = await fetch('/api/hero-chat/plans', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ id: plan.id, action: 'apply' })
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok || !data.success) throw new Error(data.error || 'apply')
-      setApplyState('done')
-      onApplied?.(data.plan || { ...plan, status: 'applied' })
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('diagnostic-updated'))
-        window.dispatchEvent(new CustomEvent('knowledge-should-refresh'))
-      }
-    } catch {
-      setApplyState('idle')
-      setApplyError(L(lang, COPY.planApplyError))
-    }
-  }
 
   return (
     <div className="hc-planCard">
       <div className="hc-planHead">
         <Trophy size={16} aria-hidden="true" />
         <strong>{L(lang, COPY.planTitle)}</strong>
-        <span className={`hc-planStatus${isApplied ? ' hc-planStatusDone' : ''}`}>
-          {isApplied ? '✓' : 'ready'}
-        </span>
+        <span className="hc-planStatus hc-planStatusDone">✓</span>
       </div>
-      <p className="hc-planSaved">{isApplied ? L(lang, COPY.planApplied) : L(lang, COPY.planSaved)}</p>
+      <p className="hc-planSaved">{L(lang, COPY.planSaved)}</p>
 
       <div className="hc-planHero">
         <strong>{diagnosis}</strong>
@@ -423,36 +383,60 @@ function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, for
         playerSuggestions={playerSuggestions}
         individualInstructions={individualInstructions}
         teamStyle={teamStyle}
-        focusText={diagnosis}
+        attackLine={attackLines[0] || null}
+        defenseLine={defenseLines[0] || null}
         lang={lang}
       />
 
+      <section className="hc-countermeasures" aria-label={L(lang, COPY.planCountermeasures)}>
+        <div className="hc-countermeasuresHead">
+          <span className="hc-planQuickLabel">{L(lang, COPY.planCountermeasures)}</span>
+          <span className="hc-countermeasuresHint">{L(lang, COPY.planManual)}</span>
+        </div>
+        {(attackLines.length > 0 || defenseLines.length > 0) ? (
+          <div className="hc-countermeasuresGrid">
+            <article className="hc-countermeasureColumn hc-countermeasureAttack">
+              <h3>{L(lang, COPY.planAttackLine)}</h3>
+              {attackLines.length > 0 ? (
+                <ol>
+                  {attackLines.map((item, index) => (
+                    <li key={`attack-${index}`}>
+                      <strong>{localized(item.title)}</strong>
+                      {item.reason ? <small>{localized(item.reason)}</small> : null}
+                    </li>
+                  ))}
+                </ol>
+              ) : <p>{L(lang, COPY.planNoCountermeasure)}</p>}
+            </article>
+            <article className="hc-countermeasureColumn hc-countermeasureDefense">
+              <h3>{L(lang, COPY.planDefenseLine)}</h3>
+              {defenseLines.length > 0 ? (
+                <ol>
+                  {defenseLines.map((item, index) => (
+                    <li key={`defense-${index}`}>
+                      <strong>{localized(item.title)}</strong>
+                      {item.reason ? <small>{localized(item.reason)}</small> : null}
+                    </li>
+                  ))}
+                </ol>
+              ) : <p>{L(lang, COPY.planNoCountermeasure)}</p>}
+            </article>
+          </div>
+        ) : (
+          <p className="hc-countermeasuresEmpty">{L(lang, COPY.planNoCountermeasure)}</p>
+        )}
+      </section>
+
       {startingPlan.length > 0 && (
         <div className="hc-planQuick">
-          <span className="hc-planQuickLabel">{L(lang, COPY.planQuickTips)}</span>
-          <ul className="hc-planQuickList">
+          <span className="hc-planQuickLabel">{L(lang, COPY.planSteps)}</span>
+          <ol className="hc-planQuickList">
             {startingPlan.map((tip, index) => (
               <li key={`start-${index}`}>{tip}</li>
             ))}
-          </ul>
+          </ol>
         </div>
       )}
-
-      <div className="hc-planActions">
-        <button
-          type="button"
-          className="hc-planApply"
-          onClick={handleApply}
-          disabled={isApplied || applyState === 'busy' || !canApply}
-        >
-          {isApplied
-            ? L(lang, COPY.planAlreadyApplied)
-            : applyState === 'busy'
-              ? L(lang, COPY.planApplying)
-              : L(lang, COPY.planApply)}
-        </button>
-        {applyError ? <p className="hc-planApplyError">{applyError}</p> : null}
-      </div>
 
       {whyBits.length > 0 && (
         <details className="hc-planDetails">
@@ -2068,14 +2052,6 @@ export default function HeroChat({
                   starters={starters}
                   slotPositions={slotPositions}
                   formation={formation}
-                  onApplied={(nextPlan) => {
-                    setPrematchPlan(nextPlan)
-                    setMessages((prev) => prev.map((row) => (
-                      row === m || row.plan?.id === nextPlan?.id
-                        ? { ...row, plan: nextPlan, payload: { ...(row.payload || {}), plan: nextPlan } }
-                        : row
-                    )))
-                  }}
                 />
               </React.Fragment>
             )
@@ -3361,35 +3337,6 @@ export default function HeroChat({
           font-size: 12px;
         }
 
-        :global(.hc-planActions) {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-        }
-
-        :global(.hc-planApply) {
-          appearance: none;
-          border: 0;
-          border-radius: 12px;
-          padding: 11px 14px;
-          background: var(--accent);
-          color: #04140c;
-          font-size: 13px;
-          font-weight: 800;
-          cursor: pointer;
-        }
-
-        :global(.hc-planApply:disabled) {
-          opacity: 0.55;
-          cursor: default;
-        }
-
-        :global(.hc-planApplyError) {
-          margin: 0;
-          color: #f87171;
-          font-size: 12px;
-        }
-
         :global(.hc-counterConfirm) {
           display: flex;
           flex-direction: column;
@@ -3476,6 +3423,97 @@ export default function HeroChat({
           line-height: 1.45;
         }
 
+        :global(.hc-countermeasures) {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          padding: 12px;
+          border: 1px solid var(--border-soft);
+          border-radius: 14px;
+          background: var(--surface-2);
+        }
+
+        :global(.hc-countermeasuresHead) {
+          display: flex;
+          align-items: baseline;
+          justify-content: space-between;
+          gap: 10px;
+        }
+
+        :global(.hc-countermeasuresHint) {
+          color: var(--text-dim);
+          font-size: 10px;
+        }
+
+        :global(.hc-countermeasuresGrid) {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 8px;
+        }
+
+        :global(.hc-countermeasureColumn) {
+          min-width: 0;
+          padding: 10px;
+          border-radius: 11px;
+          background: var(--inset-bg);
+          border: 1px solid var(--border-soft);
+        }
+
+        :global(.hc-countermeasureColumn h3) {
+          margin: 0;
+          font-size: 11px;
+          font-weight: 850;
+          letter-spacing: 0.02em;
+        }
+
+        :global(.hc-countermeasureAttack h3) {
+          color: #e5bd25;
+        }
+
+        :global(.hc-countermeasureDefense h3) {
+          color: #78aef5;
+        }
+
+        :global(.hc-countermeasureColumn ol) {
+          display: grid;
+          gap: 7px;
+          margin: 9px 0 0;
+          padding-left: 20px;
+          color: var(--text-main);
+          font-size: 12px;
+          line-height: 1.35;
+        }
+
+        :global(.hc-countermeasureColumn li) {
+          padding-left: 2px;
+        }
+
+        :global(.hc-countermeasureColumn li::marker) {
+          color: var(--accent);
+          font-weight: 800;
+        }
+
+        :global(.hc-countermeasureColumn li strong) {
+          display: block;
+          font-weight: 750;
+        }
+
+        :global(.hc-countermeasureColumn li small) {
+          display: block;
+          margin-top: 3px;
+          color: var(--text-dim);
+          font-size: 10px;
+          line-height: 1.35;
+        }
+
+        :global(.hc-countermeasureColumn p),
+        :global(.hc-countermeasuresEmpty) {
+          margin: 8px 0 0;
+          color: var(--text-dim);
+          font-size: 12px;
+          line-height: 1.4;
+        }
+
         :global(.hc-planQuick) {
           display: flex;
           flex-direction: column;
@@ -3502,6 +3540,12 @@ export default function HeroChat({
           color: var(--text-main);
           font-size: 13px;
           line-height: 1.4;
+        }
+
+        @media (max-width: 560px) {
+          :global(.hc-countermeasuresGrid) {
+            grid-template-columns: 1fr;
+          }
         }
 
         :global(.hc-planDetails) {

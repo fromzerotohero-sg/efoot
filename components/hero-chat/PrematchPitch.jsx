@@ -27,6 +27,8 @@ export default function PrematchPitch({
   playerSuggestions = [],
   individualInstructions = [],
   teamStyle = null,
+  attackLine = null,
+  defenseLine = null,
   focusText = '',
   lang = 'it'
 }) {
@@ -202,6 +204,40 @@ export default function PrematchPitch({
             <path d="M 41 118 A 11 11 0 0 1 59 118" />
           </g>
         </svg>
+        {(attackLine || defenseLine) ? (
+          <svg
+            className="hc-pitchTacticalLines"
+            viewBox="0 0 100 140"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <defs>
+              <marker id="hcPitchAttackArrow" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+                <path d="M0,0 L5,2.5 L0,5 z" fill="#ffcb05" />
+              </marker>
+            </defs>
+            {attackLine ? (
+              <path
+                className="hc-pitchAttackLine"
+                d="M50 82 C44 68 32 52 22 32"
+                markerEnd="url(#hcPitchAttackArrow)"
+              />
+            ) : null}
+            {defenseLine ? (
+              <path className="hc-pitchDefenseLine" d="M20 104 C38 107 62 107 80 104" />
+            ) : null}
+          </svg>
+        ) : null}
+        {attackLine ? (
+          <span className="hc-pitchLineTag hc-pitchLineTagAttack" aria-hidden="true">
+            Attacco
+          </span>
+        ) : null}
+        {defenseLine ? (
+          <span className="hc-pitchLineTag hc-pitchLineTagDefense" aria-hidden="true">
+            Difesa
+          </span>
+        ) : null}
 
         {overlay.map((slot) => {
           const hasSwap = Boolean(slot.inName || (slot.outName && slot.outName !== slot.name))

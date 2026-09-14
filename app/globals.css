@@ -1726,6 +1726,34 @@ html[data-theme='light'] ::-webkit-scrollbar-thumb:hover {
   pointer-events: none;
 }
 .hc-pitchSvg { z-index: 0; }
+.hc-pitchTacticalLines {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 2;
+}
+.hc-pitchAttackLine {
+  fill: none; stroke: rgba(255,203,5,0.95); stroke-width: 1.15;
+  stroke-linecap: round; stroke-dasharray: 2.2 1.4;
+  filter: drop-shadow(0 0 2px rgba(255,203,5,0.55));
+}
+.hc-pitchDefenseLine {
+  fill: none; stroke: rgba(96,165,250,0.95); stroke-width: 1.15;
+  stroke-linecap: round; stroke-dasharray: 1.4 1.4;
+  filter: drop-shadow(0 0 2px rgba(96,165,250,0.5));
+}
+.hc-pitchLineTag {
+  position: absolute; z-index: 3; pointer-events: none;
+  padding: 3px 6px; border-radius: 5px;
+  font-size: 8px; font-weight: 900; letter-spacing: 0.04em;
+  text-transform: uppercase; white-space: nowrap;
+}
+.hc-pitchLineTagAttack {
+  left: 12%; top: 20%;
+  color: #171306; background: rgba(255,203,5,0.94);
+}
+.hc-pitchLineTagDefense {
+  right: 10%; top: 69%;
+  color: #071325; background: rgba(147,197,253,0.94);
+}
 .hc-pitchZones { z-index: 1; }
 .hc-pitchArrows { z-index: 2; }
 .hc-pitchZoneShape { opacity: 0.55; }

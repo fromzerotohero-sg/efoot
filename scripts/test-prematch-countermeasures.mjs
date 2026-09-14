@@ -79,6 +79,8 @@ const defenseCategory = Object.keys(INDIVIDUAL_INSTRUCTIONS_CONFIG).find((key) =
   const plan = presented.customer_plan
   assert(Boolean(plan.diagnosis), 'empty bench still has diagnosis')
   assert(Array.isArray(plan.starting_plan) && plan.starting_plan.length >= 1, 'starting_plan present')
+  assert(plan.countermeasures.attack.length === 1, 'attack line restored')
+  assert(plan.countermeasures.defense.length === 1, 'defense line restored')
   assert(plan.setup.team_playing_style === 'Vie laterali', 'team style extracted')
   assert(!('confidence' in presented), 'confidence stripped')
   assert(!('warnings' in presented), 'warnings stripped')
