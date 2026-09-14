@@ -1091,6 +1091,17 @@ export default function ImpostazioniProfiloPage() {
           gap: 14px;
         }
 
+        .profile-coach-personalization :global(label) {
+          display: block;
+          margin-bottom: 8px;
+        }
+
+        .profile-coach-personalization :global(input),
+        .profile-coach-personalization :global(textarea) {
+          width: 100% !important;
+          box-sizing: border-box;
+        }
+
         .profile-personalization-actions {
           display: flex;
           justify-content: flex-end;

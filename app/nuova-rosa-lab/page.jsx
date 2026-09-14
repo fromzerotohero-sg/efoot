@@ -6437,7 +6437,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         html[data-theme='light'] body:has(.nr-page) {
-          background: #f9f6f1 !important;
+          background: #0a1117 !important;
         }
 
         .nr-page {
