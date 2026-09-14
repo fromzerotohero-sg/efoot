@@ -179,17 +179,17 @@ export default function GuidaPage() {
       id: 'contromisure-pre-partita',
       icon: Shield,
       color: '#f59e0b',
-      path: '/contromisure-pre-partita',
+      path: '/?openCountermeasures=1',
       title: (lang === 'en' || lang === 'es') ? 'Pre-Match Countermeasures' : 'Contromisure Pre-partita',
       description: lang === 'en'
-        ? 'Upload opponent formation screenshot to get AI-generated tactical countermeasures and instructions.'
-        : 'Carica screenshot formazione avversaria per ricevere contromisure tattiche e istruzioni generate da AI.',
+        ? 'In Hero Chat, upload the opponent formation photo to get a clear setup plan before kickoff.'
+        : 'In Hero Chat, carica la foto della formazione avversaria e ricevi il piano da impostare prima del fischio.',
       steps: [
+        (lang === 'en' || lang === 'es') ? 'Open Hero Chat and start Pre-match Plan' : 'Apri Hero Chat e avvia Piano pre-partita',
         (lang === 'en' || lang === 'es') ? 'Upload opponent formation screenshot' : 'Carica screenshot formazione avversaria',
-        (lang === 'en' || lang === 'es') ? 'AI extracts formation automatically' : 'L\'AI estrae la formazione automaticamente',
-        (lang === 'en' || lang === 'es') ? 'Review extracted formation' : 'Rivedi la formazione estratta',
-        (lang === 'en' || lang === 'es') ? 'Generate countermeasures with AI' : 'Genera contromisure con AI',
-        (lang === 'en' || lang === 'es') ? 'View tactical analysis and instructions' : 'Visualizza analisi tattica e istruzioni'
+        (lang === 'en' || lang === 'es') ? 'Confirm the opponent read' : 'Conferma la lettura avversaria',
+        (lang === 'en' || lang === 'es') ? 'Review setup on your pitch' : 'Rivedi il setup sul tuo campo',
+        (lang === 'en' || lang === 'es') ? 'Apply the plan before kickoff' : 'Applica il piano prima del fischio'
       ]
     },
     {
@@ -383,7 +383,7 @@ export default function GuidaPage() {
             <div style={{
               width: '100%',
               height: '12px',
-              background: 'rgba(255, 255, 255, 0.1)',
+              background: 'var(--surface-3)',
               borderRadius: '6px',
               overflow: 'hidden'
             }}>
@@ -796,7 +796,7 @@ export default function GuidaPage() {
                               alignItems: 'flex-start',
                               gap: '12px',
                               padding: '12px',
-                              background: 'rgba(255, 255, 255, 0.05)',
+                              background: 'var(--surface-2)',
                               borderRadius: '8px',
                               border: `1px solid ${guide.color}20`
                             }}

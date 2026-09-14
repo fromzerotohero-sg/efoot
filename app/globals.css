@@ -11,6 +11,7 @@
   /* Palette nuova: oro/teal su background blu scuro */
   --primary-gold: #dda62f;
   --primary-teal: #00a1a6;
+  --primary-orange: #ff9500;
   --neon-cyan: #00d4ff;
   --neon-blue: #0080ff;
   --neon-purple: #8a2be2;
@@ -1369,6 +1370,21 @@ body > * {
   --accent-bg: rgba(61, 220, 151, 0.12);
   --accent-border: rgba(61, 220, 151, 0.3);
   --cards-accent: #c084fc;
+  /* Semantic tokens (dark) */
+  --surface-3: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.2);
+  --inset-bg: rgba(0, 0, 0, 0.25);
+  --info: #00d4ff;
+  --info-text: #7dd3fc;
+  --info-bg: rgba(0, 212, 255, 0.1);
+  --info-border: rgba(0, 212, 255, 0.35);
+  --gold-text: #ffd76a;
+  --gold-bg: rgba(255, 203, 5, 0.1);
+  --gold-border: rgba(255, 203, 5, 0.3);
+  --gold-ink: #1f1300;
+  --success-text: #86efac;
+  --danger-text: #fca5a5;
+  --skeleton-bg: rgba(255, 255, 255, 0.06);
 }
 
 html[data-theme='light'] {
@@ -1391,10 +1407,55 @@ html[data-theme='light'] {
   --accent-bg: rgba(31, 157, 107, 0.1);
   --accent-border: rgba(31, 157, 107, 0.35);
   --cards-accent: #9333ea;
+  /* Legacy palette light overrides */
+  --primary-orange: #c2410c;
+  --neon-cyan: #0e7490;
+  --neon-pink: #a16207;
+  --neon-orange: #a16207;
+  --bg-primary: #f9f6f1;
+  --bg-secondary: rgba(255, 255, 255, 0.85);
+  --bg-tertiary: rgba(0, 0, 0, 0.03);
+  --bg-elevated: #ffffff;
+  --bg-overlay: rgba(255, 255, 255, 0.92);
+  --bg-dark: #f9f6f1;
+  --bg-darker: #efece6;
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-default: rgba(0, 0, 0, 0.14);
+  --border-gold: rgba(161, 98, 7, 0.35);
+  --border-teal: rgba(14, 116, 144, 0.35);
+  --border-neon: rgba(14, 116, 144, 0.5);
+  --border-cyan: rgba(14, 116, 144, 0.35);
+  --glow-cyan: 0 0 12px rgba(14, 116, 144, 0.15);
+  --glow-teal: 0 0 16px rgba(15, 118, 110, 0.12);
+  --glow-gold: 0 0 12px rgba(161, 98, 7, 0.15);
+  --glow-strong: 0 0 20px rgba(14, 116, 144, 0.18), 0 0 40px rgba(15, 118, 110, 0.1);
+  --glow-blue: 0 0 16px rgba(14, 116, 144, 0.12);
+  --glow-purple: 0 0 16px rgba(147, 51, 234, 0.12);
+  --glow-pink: 0 0 12px rgba(161, 98, 7, 0.15);
+  --glow-orange: 0 0 12px rgba(161, 98, 7, 0.15);
+  --shadow-sm: 0 2px 8px rgba(29, 29, 31, 0.08);
+  --shadow-md: 0 4px 20px rgba(29, 29, 31, 0.1);
+  --shadow-lg: 0 8px 40px rgba(29, 29, 31, 0.16);
+  /* Semantic tokens (light) */
+  --surface-3: #e6e1d8;
+  --border-strong: rgba(0, 0, 0, 0.18);
+  --inset-bg: rgba(0, 0, 0, 0.04);
+  --info: #0e7490;
+  --info-text: #0369a1;
+  --info-bg: rgba(14, 116, 144, 0.08);
+  --info-border: rgba(14, 116, 144, 0.35);
+  --gold-text: #a16207;
+  --gold-bg: rgba(161, 98, 7, 0.08);
+  --gold-border: rgba(161, 98, 7, 0.3);
+  --gold-ink: #1f1300;
+  --success-text: #15803d;
+  --danger-text: #b91c1c;
+  --skeleton-bg: rgba(0, 0, 0, 0.08);
 }
 
 html[data-theme='light'] body {
   background: #f9f6f1;
+  color: var(--text-main);
 }
 
 html[data-theme='light'] body::before,
@@ -1462,6 +1523,148 @@ html[data-theme='light'] .card h2,
 html[data-theme='light'] .card h3,
 html[data-theme='light'] .card strong {
   color: #1d1d1f;
+}
+
+/* Input/select legacy in light: sfondo chiaro, testo scuro, bordo visibile */
+html[data-theme='light'] .select,
+html[data-theme='light'] .input,
+html[data-theme='light'] .neon-input {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  color: #1d1d1f;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+html[data-theme='light'] .select:focus,
+html[data-theme='light'] .input:focus,
+html[data-theme='light'] .neon-input:focus {
+  outline: none;
+  background: #ffffff;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+html[data-theme='light'] .select option {
+  background: #ffffff;
+  color: #1d1d1f;
+}
+
+/* .btn base legacy in light (.btn.primary resta var-driven) */
+html[data-theme='light'] .btn {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  color: #1d1d1f;
+  box-shadow: 0 2px 8px rgba(29, 29, 31, 0.08);
+}
+
+html[data-theme='light'] .btn::before {
+  display: none;
+}
+
+html[data-theme='light'] .btn:hover {
+  background: #f5f2ec;
+  border-color: rgba(31, 157, 107, 0.4);
+  box-shadow: 0 4px 14px rgba(29, 29, 31, 0.1);
+  transform: translateY(-1px);
+}
+
+html[data-theme='light'] .btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(29, 29, 31, 0.08);
+}
+
+html[data-theme='light'] .btn:disabled {
+  background: #efece6;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: none;
+}
+
+/* .json: bg via --bg-tertiary flippa, serve solo un bordo visibile su chiaro */
+html[data-theme='light'] .json {
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+/* Driver.js tour popovers in light */
+html[data-theme='light'] .driver-popover.driver-popover-neon,
+html[data-theme='light'] .driver-popover-neon {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 8px 40px rgba(29, 29, 31, 0.16) !important;
+}
+
+html[data-theme='light'] .driver-popover-neon .driver-popover-title {
+  color: #1d1d1f !important;
+  text-shadow: none !important;
+}
+
+html[data-theme='light'] .driver-popover-neon .driver-popover-description {
+  color: #4b4b4b !important;
+  text-shadow: none !important;
+}
+
+html[data-theme='light'] .driver-popover-neon .driver-popover-progress-text {
+  color: var(--info-text) !important;
+}
+
+html[data-theme='light'] .driver-popover-neon .driver-popover-navigation-btns button {
+  background: var(--info) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(14, 116, 144, 0.25) !important;
+}
+
+html[data-theme='light'] .driver-popover-neon .driver-popover-navigation-btns button:hover:not(:disabled) {
+  background: #155e75 !important;
+  box-shadow: 0 4px 12px rgba(14, 116, 144, 0.3) !important;
+}
+
+html[data-theme='light'] .driver-popover-neon .driver-popover-close-btn {
+  color: #6b6b6b !important;
+}
+
+html[data-theme='light'] .driver-popover-neon .driver-popover-close-btn:hover {
+  color: #1d1d1f !important;
+}
+
+html[data-theme='light'] .driver-popover.driver-popover-neon .driver-popover-prev-btn,
+html[data-theme='light'] .driver-popover.driver-popover-neon .driver-popover-next-btn,
+html[data-theme='light'] .driver-popover.driver-popover-neon .driver-popover-close-btn {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.14);
+  color: #1d1d1f;
+  box-shadow: var(--shadow-sm);
+}
+
+html[data-theme='light'] .driver-popover.driver-popover-neon .driver-popover-prev-btn:hover,
+html[data-theme='light'] .driver-popover.driver-popover-neon .driver-popover-next-btn:hover {
+  background: #f5f2ec;
+  border-color: var(--info-border);
+  box-shadow: var(--shadow-md);
+}
+
+html[data-theme='light'] .driver-popover.driver-popover-neon .driver-popover-close-btn {
+  color: #6b6b6b;
+}
+
+html[data-theme='light'] .driver-popover.driver-popover-neon .driver-popover-close-btn:hover {
+  background: #f5f2ec;
+}
+
+html[data-theme='light'] .driver-overlay {
+  background: rgba(29, 29, 31, 0.45);
+}
+
+/* Scrollbar in light */
+html[data-theme='light'] ::-webkit-scrollbar-track {
+  background: #efece6;
+}
+
+html[data-theme='light'] ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+  border-color: #efece6;
+}
+
+html[data-theme='light'] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.28);
 }
 
 /* ===== PrematchPitch (Hero Chat) — premium tactics board ===== */
@@ -1714,6 +1917,21 @@ html[data-theme='light'] .hc-pitchTokenTooltip {
   color: #ffe166;
   font-size: 10px;
   font-weight: 800;
+}
+.hc-pitchStyleChip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 58%;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 203, 5, 0.45);
+  background: rgba(255, 203, 5, 0.14);
+  color: #ffe9a3;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .hc-pitchField {
   aspect-ratio: 4 / 5;

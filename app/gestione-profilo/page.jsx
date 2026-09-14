@@ -24,13 +24,13 @@ export default function GestioneProfiloPage() {
         { href: '/?openAssistantChat=1', icon: MessageCircle, title: 'Hero Chat', text: 'Ask the AI coach what to improve and how to prepare the next match.' },
         { href: '/card-advisor-lab', icon: Sparkles, title: 'Card Advisor', text: 'Check if a new card really improves your team before spending in-game resources.' },
         { href: '/?openGameAnalysis=1', icon: BarChart3, title: 'Game Analysis', text: 'Turn match stats into clear priorities for attack, defence and passing.' },
-        { href: '/contromisure-pre-partita', icon: Shield, title: 'Pre-match Plan', text: 'Generate countermeasures and enter the match with a tactical idea.' }
+        { href: '/?openCountermeasures=1', icon: Shield, title: 'Pre-match Plan', text: 'Generate countermeasures and enter the match with a tactical idea.' }
       ]
     : [
         { href: '/?openAssistantChat=1', icon: MessageCircle, title: 'Hero Chat', text: 'Chiedi al Coach AI cosa migliorare e come preparare la prossima partita.' },
         { href: '/card-advisor-lab', icon: Sparkles, title: 'Card Advisor', text: 'Controlla se una nuova carta migliora davvero la rosa prima di spendere risorse nel gioco.' },
         { href: '/?openGameAnalysis=1', icon: BarChart3, title: 'Analisi partita', text: 'Trasforma le statistiche in priorita chiare su attacco, difesa e passaggi.' },
-        { href: '/contromisure-pre-partita', icon: Shield, title: 'Piano pre-partita', text: 'Genera contromisure ed entra in partita con un’idea tattica precisa.' }
+        { href: '/?openCountermeasures=1', icon: Shield, title: 'Piano pre-partita', text: 'Genera contromisure ed entra in partita con un’idea tattica precisa.' }
       ]
 
   const rows = lang === 'en'
@@ -74,7 +74,7 @@ export default function GestioneProfiloPage() {
           </Link>
         </div>
 
-        <p style={{ margin: '0 0 18px', color: 'rgba(255,255,255,0.74)', lineHeight: 1.5 }}>
+        <p style={{ margin: '0 0 18px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
           {lang === 'en'
             ? 'Hero Points are for the moments where you want help from the coach: a better card choice, a match plan, or a clear next step.'
             : 'Gli Hero Points servono quando vuoi un aiuto concreto dal Coach: scegliere meglio una carta, preparare un match o capire la prossima cosa da migliorare.'}
@@ -85,7 +85,7 @@ export default function GestioneProfiloPage() {
             const Icon = item.icon
             return (
               <Link key={item.title} href={item.href} className="hp-use-card">
-                <Icon size={22} color="#ffcb05" />
+                <Icon size={22} color="var(--gold-text)" />
                 <strong>{item.title}</strong>
                 <p>{item.text}</p>
                 <span className="hp-card-link">
@@ -174,9 +174,9 @@ export default function GestioneProfiloPage() {
           min-height: 36px;
           padding: 8px 13px;
           border-radius: 999px;
-          border: 1px solid rgba(255, 203, 5, 0.35);
-          color: #ffcb05;
-          background: rgba(255, 203, 5, 0.08);
+          border: 1px solid var(--gold-border);
+          color: var(--gold-text);
+          background: var(--gold-bg);
           text-decoration: none;
           font-size: 12px;
           font-weight: 850;
@@ -193,10 +193,10 @@ export default function GestioneProfiloPage() {
         .hp-use-card {
           display: block;
           padding: 16px;
-          border: 1px solid rgba(255, 203, 5, 0.22);
+          border: 1px solid var(--gold-border);
           border-radius: 16px;
           background:
-            radial-gradient(circle at 0% 0%, rgba(255,203,5,0.10), transparent 42%),
+            radial-gradient(circle at 0% 0%, var(--gold-bg), transparent 42%),
             var(--surface);
           box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
           text-decoration: none;
@@ -205,7 +205,7 @@ export default function GestioneProfiloPage() {
 
         .hp-use-card:hover {
           transform: translateY(-2px);
-          border-color: rgba(255,203,5,0.45);
+          border-color: var(--gold-border);
           box-shadow: 0 14px 30px rgba(0, 0, 0, 0.24);
         }
 
@@ -228,7 +228,7 @@ export default function GestioneProfiloPage() {
           display: inline-flex;
           align-items: center;
           gap: 5px;
-          color: #ffcb05;
+          color: var(--gold-text);
           font-size: 12px;
           font-weight: 900;
         }
@@ -249,7 +249,7 @@ export default function GestioneProfiloPage() {
         }
 
         .hp-cost-head {
-          background: rgba(255, 203, 5, 0.08);
+          background: var(--gold-bg);
           border-bottom: 1px solid var(--border-soft);
           font-weight: 800;
           font-size: 13px;
@@ -273,7 +273,7 @@ export default function GestioneProfiloPage() {
         }
 
         .hp-cost-row strong {
-          color: #ffcb05;
+          color: var(--gold-text);
           white-space: nowrap;
           font-size: clamp(13px, 2.7vw, 15px);
         }

@@ -4,6 +4,7 @@ import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { callOpenAIWithRetry } from '@/lib/openaiHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { enforcePlanCoherence, focusCountermeasuresOutput, generateCountermeasuresPrompt, validateCountermeasuresOutput } from '@/lib/countermeasuresHelper'
+import { presentCountermeasuresForCustomer } from '@/lib/prematchCustomerPlan'
 import { deductCredits, AI_COST, handleCreditOperationError } from '@/lib/creditService'
 import { validateIndividualInstruction } from '@/lib/tacticalInstructions'
 import { validateStartingXISwap } from '@/lib/formationDefenseRules'
@@ -81,6 +82,12 @@ function asPlainText(value) {
   return ''
 }
 
+function asTextDiagnosis(output) {
+  return asPlainText(output?.diagnosis).trim()
+    || asPlainText(output?.play_summary?.match_key).trim()
+    || asPlainText(output?.analysis?.opponent_formation_analysis).trim()
+}
+
 function hasFlankJustification(value) {
   const text = asPlainText(value)
     .toLowerCase()
@@ -129,11 +136,12 @@ function sanitizeCountermeasureWarnings(warnings, { removedPlayerSuggestions = 0
     add(text)
   }
 
+  // Filter diagnostics stay server-side only — never add synthetic customer warnings.
   if (removedPlayerSuggestions > 0) {
-    add(`${removedPlayerSuggestions} cambio rosa non mostrato perché non applicabile alla tua formazione attuale.`)
+    console.info('[generate-countermeasures] filtered player suggestions', removedPlayerSuggestions)
   }
   if (removedInstructions > 0) {
-    add(`${removedInstructions} istruzione individuale non mostrata perché non configurabile con quei giocatori o slot.`)
+    console.info('[generate-countermeasures] filtered instructions', removedInstructions)
   }
 
   return result
@@ -215,7 +223,7 @@ export async function POST(req) {
     }
 
     const body = await req.json().catch(() => ({}))
-    const { opponent_formation_id, context, language = 'it' } = body
+    const { opponent_formation_id, context, language = 'it', corrected_formation } = body
     const lang = (language === 'en' || language === 'it') ? language : 'it'
 
     if (!opponent_formation_id || typeof opponent_formation_id !== 'string') {
@@ -241,6 +249,28 @@ export async function POST(req) {
         { error: 'Opponent formation not found or access denied' },
         { status: 404 }
       )
+    }
+
+    // Optional human correction from Hero confirm step — override before AI + persist.
+    const corrected = typeof corrected_formation === 'string' ? corrected_formation.trim() : ''
+    if (corrected && /^\d+-\d+(-\d+)?(-\d+)?$/.test(corrected)) {
+      const nextExtracted = {
+        ...(opponentFormation.extracted_data && typeof opponentFormation.extracted_data === 'object'
+          ? opponentFormation.extracted_data
+          : {}),
+        formation: corrected
+      }
+      opponentFormation.formation_name = corrected
+      opponentFormation.extracted_data = nextExtracted
+      await admin
+        .from('opponent_formations')
+        .update({
+          formation_name: corrected,
+          extracted_data: nextExtracted,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', opponent_formation_id)
+        .eq('user_id', userId)
     }
 
     // 2. Recupera rosa partita: 11 titolari (slot 0-10) + massimo 12 riserve (slot null)
@@ -876,6 +906,22 @@ if (process.env.NODE_ENV !== 'production') {
     enforcePlanCoherence(countermeasures)
     focusCountermeasuresOutput(countermeasures)
 
+    // Safe fallback: never return an empty/meaningless plan after filtering.
+    if (!asTextDiagnosis(countermeasures)) {
+      const formationName = opponentFormation.formation_name || opponentFormation.formation || ''
+      countermeasures.diagnosis = formationName
+        ? `Avversario in ${formationName}: mantieni la tua disposizione e chiudi le zone aperte.`
+        : 'Mantieni la tua disposizione e chiudi le zone aperte della foto.'
+      if (!countermeasures.play_summary) countermeasures.play_summary = {}
+      countermeasures.play_summary.match_key = countermeasures.diagnosis
+    }
+    if (!Array.isArray(countermeasures.starting_plan) || countermeasures.starting_plan.length === 0) {
+      const tips = []
+      const key = asTextDiagnosis(countermeasures)
+      if (key) tips.push(key)
+      countermeasures.starting_plan = tips.slice(0, 1)
+    }
+
     countermeasures.warnings = sanitizeCountermeasureWarnings(countermeasures.warnings, {
       removedPlayerSuggestions,
       removedInstructions,
@@ -922,17 +968,38 @@ if (process.env.NODE_ENV !== 'production') {
       if (typeof p.reason === 'string') p.reason = toBilingual(p.reason)
     })
     ;(countermeasures.countermeasures?.individual_instructions || []).forEach((i) => {
-      if (typeof i.instruction === 'string') i.instruction = toBilingual(i.instruction)
+      // Keep instruction as technical ID for apply/validation; only bilingualize reason.
       if (typeof i.reason === 'string') i.reason = toBilingual(i.reason)
     })
-    if (Array.isArray(countermeasures.warnings)) {
-      countermeasures.warnings = countermeasures.warnings.map(toBilingual)
+    if (Array.isArray(countermeasures.starting_plan)) {
+      countermeasures.starting_plan = countermeasures.starting_plan
+        .map((item) => {
+          if (typeof item === 'string') return item.trim()
+          if (item && typeof item === 'object') return String(item.it || item.en || item.es || '').trim()
+          return ''
+        })
+        .filter(Boolean)
+        .slice(0, 3)
     }
 
-    // 14. Restituisci contromisure (formato bilingue)
+    // Keep diagnostics for logs only — never return them to the customer UI.
+    if (Array.isArray(countermeasures.warnings) && countermeasures.warnings.length) {
+      console.info('[generate-countermeasures] internal warnings', {
+        count: countermeasures.warnings.length,
+        sample: countermeasures.warnings.slice(0, 3)
+      })
+    }
+
+    const presented = presentCountermeasuresForCustomer(countermeasures, {
+      lang: language === 'en' || language === 'es' ? language : 'it',
+      opponentFormation
+    })
+
+    // 14. Restituisci piano cliente + dati apply
     return NextResponse.json({
       success: true,
-      countermeasures,
+      countermeasures: presented,
+      customer_plan: presented.customer_plan,
       model_used: data.model || 'unknown'
     })
   } catch (err) {

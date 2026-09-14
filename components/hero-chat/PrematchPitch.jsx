@@ -6,6 +6,7 @@ import {
   normalizePos, nameKey, asText, displayName, shortInstruction,
   claimSlot, findSlotByPlayer, formationLabel
 } from '@/lib/prematchPitchHelpers'
+import { instructionLabel } from '@/lib/prematchCustomerPlan'
 
 async function resolveAuthToken() {
   if (typeof window === 'undefined') return null
@@ -25,6 +26,7 @@ export default function PrematchPitch({
   formation: formationProp = null,
   playerSuggestions = [],
   individualInstructions = [],
+  teamStyle = null,
   focusText = '',
   lang = 'it'
 }) {
@@ -84,8 +86,9 @@ export default function PrematchPitch({
         position: slot?.position || DEFAULT_SLOT_POSITIONS[index].position,
         playerId: starter?.id || null,
         name: starter?.player_name || null,
-        outName: null, inName: null,
-        instruction: null, instructionText: null, actionReason: null,
+        outName: null,
+        inName: null,
+        instruction: null,
         focus: false,
         roleLabel: slot?.position || DEFAULT_SLOT_POSITIONS[index].position
       }
@@ -109,7 +112,6 @@ export default function PrematchPitch({
       if (!slot) continue
       slot.outName = outName || slot.name
       slot.inName = inName
-      slot.actionReason = asText(sug.reason || sug.application_hint, lang)
       if (inName) slot.name = inName
       if (sug.position || sug.replace_position || sug.slot_role) {
         slot.roleLabel = normalizePos(sug.position || sug.replace_position || sug.slot_role) || slot.position
@@ -120,15 +122,15 @@ export default function PrematchPitch({
     const usedForInstr = new Set()
     const instructions = Array.isArray(individualInstructions) ? individualInstructions : []
     for (const row of instructions) {
-      const badge = shortInstruction(row?.instruction, lang)
-      if (!badge) continue
+      const label = row?.instruction_label
+        || instructionLabel(row?.instruction, lang)
+        || shortInstruction(row?.instruction, lang)
+      if (!label) continue
       let slot = findSlotByPlayer(base, row?.player_id, row?.player_name) ||
         claimSlot(base, row?.position || row?.slot_role, usedForInstr)
       if (slot && !usedForInstr.has(slot.index)) usedForInstr.add(slot.index)
       if (!slot) continue
-      slot.instruction = badge
-      slot.instructionText = asText(row?.instruction, lang)
-      slot.actionReason = asText(row?.reason, lang)
+      slot.instruction = label
       slot.focus = true
       if (!slot.name && row?.player_name) slot.name = row.player_name
     }
@@ -145,50 +147,22 @@ export default function PrematchPitch({
     return base
   }, [starters, slotPositions, playerSuggestions, individualInstructions, focusText, lang])
 
-  const formationStr = React.useMemo(() => formationLabel(formation, slotPositions, lang), [formation, slotPositions, lang])
+  const formationStr = React.useMemo(
+    () => formationLabel(formation, slotPositions, lang),
+    [formation, slotPositions, lang]
+  )
 
   const hasPlayers = overlay.some((s) => s.name || s.inName || s.outName)
-  const actions = React.useMemo(() => {
-    const rows = []
-    for (const slot of overlay) {
-      if (slot.inName || slot.outName) {
-        rows.push({
-          slotIndex: slot.index,
-          kind: 'swap',
-          kicker: 'Cambio consigliato',
-          title: slot.inName && slot.outName
-            ? `${displayName(slot.inName)} per ${displayName(slot.outName)}`
-            : displayName(slot.inName || slot.outName),
-          detail: slot.actionReason
-        })
-      }
-    }
-    for (const slot of overlay) {
-      if (!slot.instruction || rows.some((row) => row.slotIndex === slot.index)) continue
-      rows.push({
-        slotIndex: slot.index,
-        kind: 'instruction',
-        kicker: `Istruzione · ${displayName(slot.name) || slot.roleLabel}`,
-        title: slot.instructionText || slot.instruction,
-        detail: slot.actionReason
-      })
-    }
-    return rows.slice(0, 3).map((row, index) => ({ ...row, number: index + 1 }))
-  }, [overlay])
-
-  const actionBySlot = React.useMemo(
-    () => new Map(actions.map((action) => [action.slotIndex, action])),
-    [actions]
-  )
+  const styleLabel = asText(teamStyle, lang)
 
   return (
     <div className="hc-pitch" aria-label="Campo piano contromisure">
       <div className="hc-pitchHeader">
         <div className="hc-pitchHeaderLeft">
-          <span className="hc-pitchHeaderLabel">Piano visuale</span>
+          <span className="hc-pitchHeaderLabel">Setup</span>
           <span className="hc-pitchHeaderFormation">{formationStr || 'La tua formazione'}</span>
         </div>
-        {actions.length > 0 && <span className="hc-pitchHeaderCount">{actions.length} priorità</span>}
+        {styleLabel ? <span className="hc-pitchStyleChip">{styleLabel}</span> : null}
       </div>
 
       <div className="hc-pitchField">
@@ -213,7 +187,6 @@ export default function PrematchPitch({
             <rect key={x} x={x} y="0" width="10" height="140" fill="url(#hcPitchStripe)" opacity="0.5" />
           ))}
           <rect x="0" y="0" width="100" height="140" fill="url(#hcPitchVignette)" />
-          {/* Pitch markings */}
           <g fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="0.4">
             <rect x="2" y="2" width="96" height="136" rx="1" />
             <line x1="2" y1="70" x2="98" y2="70" />
@@ -227,56 +200,52 @@ export default function PrematchPitch({
             <rect x="36" y="130" width="28" height="8" />
             <circle cx="50" cy="126" r="0.8" fill="rgba(255,255,255,0.5)" stroke="none" />
             <path d="M 41 118 A 11 11 0 0 1 59 118" />
-            <path d="M 2 8 A 4 4 0 0 1 6 12" transform="rotate(-90 2 8)" />
-            <path d="M 98 8 A 4 4 0 0 0 94 12" transform="rotate(90 98 8)" />
-            <path d="M 2 132 A 4 4 0 0 0 6 128" transform="rotate(90 2 132)" />
-            <path d="M 98 132 A 4 4 0 0 1 94 128" transform="rotate(-90 98 132)" />
-          </g>
-          <g fill="rgba(255,255,255,0.18)" stroke="none">
-            <rect x="48" y="0" width="4" height="2" />
-            <rect x="48" y="138" width="4" height="2" />
           </g>
         </svg>
 
         {overlay.map((slot) => {
-          const name = slot.inName || slot.name
-          const action = actionBySlot.get(slot.index)
+          const hasSwap = Boolean(slot.inName || (slot.outName && slot.outName !== slot.name))
+          const tokenClass = [
+            'hc-pitchToken',
+            hasSwap || slot.instruction ? 'hc-pitchTokenAction' : '',
+            slot.focus ? 'hc-pitchTokenFocus' : ''
+          ].filter(Boolean).join(' ')
           return (
             <div
               key={slot.index}
-              className={`hc-pitchToken${action ? ' hc-pitchTokenAction' : ''}`}
+              className={tokenClass}
               style={{ left: `${slot.x}%`, top: `${slot.y}%` }}
-              aria-label={`${slot.roleLabel} ${name || slot.outName || ''}`}
+              aria-label={`${slot.roleLabel} ${slot.name || slot.outName || ''}`}
             >
               <span className="hc-pitchTokenCircle">
                 <span className="hc-pitchTokenRole">{slot.roleLabel}</span>
-                {action && <span className="hc-pitchTokenActionNum">{action.number}</span>}
               </span>
-              <span className={`hc-pitchTokenName${name ? '' : ' hc-pitchTokenEmpty'}`}>
-                {name ? displayName(name) : '—'}
-              </span>
+              {hasSwap ? (
+                <span className="hc-pitchTokenNames">
+                  {slot.outName ? (
+                    <span className="hc-pitchTokenOut">{displayName(slot.outName)}</span>
+                  ) : null}
+                  <span className="hc-pitchTokenInName">
+                    {displayName(slot.inName || slot.name) || '—'}
+                  </span>
+                </span>
+              ) : (
+                <span className={`hc-pitchTokenName${slot.name ? '' : ' hc-pitchTokenEmpty'}`}>
+                  {slot.name ? displayName(slot.name) : '—'}
+                </span>
+              )}
+              {slot.instruction ? (
+                <span className="hc-pitchTokenBadge">{slot.instruction}</span>
+              ) : null}
             </div>
           )
         })}
       </div>
 
-      {actions.length > 0 && (
-        <div className="hc-pitchActions">
-          {actions.map((action) => (
-            <div key={`${action.kind}-${action.slotIndex}`} className="hc-pitchAction">
-              <span className="hc-pitchActionNum">{action.number}</span>
-              <span className="hc-pitchActionCopy">
-                <span className="hc-pitchActionKicker">{action.kicker}</span>
-                <strong className="hc-pitchActionTitle">{action.title}</strong>
-                {action.detail && <span className="hc-pitchActionDetail">{action.detail}</span>}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
       {!hasPlayers && loadState === 'loading' && <p className="hc-pitchHint">Carico la tua formazione…</p>}
-      {!hasPlayers && loadState !== 'loading' && <p className="hc-pitchHint">Formazione non disponibile — apri la rosa e riprova</p>}
-      {hasPlayers && actions.length === 0 && <p className="hc-pitchHint">Nessuna modifica alla formazione consigliata.</p>}
+      {!hasPlayers && loadState !== 'loading' && (
+        <p className="hc-pitchHint">Formazione non disponibile — apri la rosa e riprova</p>
+      )}
     </div>
   )
 }

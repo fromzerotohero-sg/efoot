@@ -15,8 +15,8 @@ import {
 } from 'lucide-react'
 import PageLoading from '@/components/PageLoading'
 
-/** Legge query URL: openCoach=1 → Palestra Coach; openAssistantChat=1 → chat principale; openGameAnalysis=1 → GameAnalysisModal; openCardAdvisor=1 → Card Advisor Lab. */
-function OpenCoachListener({ onOpenCoach, onOpenAssistantChat, onOpenGameAnalysis, onOpenCardAdvisor }) {
+/** Legge query URL: openCoach=1 → Palestra Coach; openAssistantChat=1 → chat principale; openGameAnalysis=1 → GameAnalysisModal; openCardAdvisor=1 → Card Advisor Lab; openCountermeasures=1 → Hero contromisure. */
+function OpenCoachListener({ onOpenCoach, onOpenAssistantChat, onOpenGameAnalysis, onOpenCardAdvisor, onOpenCountermeasures }) {
   const searchParams = useSearchParams()
   const router = useRouter()
   // useLayoutEffect: apre modal prima del paint così non si vede la dashboard “vuota” un frame
@@ -30,6 +30,11 @@ function OpenCoachListener({ onOpenCoach, onOpenAssistantChat, onOpenGameAnalysi
       onOpenCardAdvisor?.()
       return
     }
+    if (searchParams?.get('openCountermeasures') === '1') {
+      onOpenCountermeasures?.()
+      router.replace('/', { scroll: false })
+      return
+    }
     if (searchParams?.get('openAssistantChat') === '1') {
       onOpenAssistantChat?.()
       router.replace('/', { scroll: false })
@@ -39,7 +44,7 @@ function OpenCoachListener({ onOpenCoach, onOpenAssistantChat, onOpenGameAnalysi
       onOpenCoach()
       router.replace('/', { scroll: false })
     }
-  }, [searchParams, onOpenCoach, onOpenAssistantChat, onOpenGameAnalysis, onOpenCardAdvisor, router])
+  }, [searchParams, onOpenCoach, onOpenAssistantChat, onOpenGameAnalysis, onOpenCardAdvisor, onOpenCountermeasures, router])
   return null
 }
 
@@ -330,7 +335,7 @@ function HomePage() {
         <div className="neon-card" style={{ maxWidth: '480px', textAlign: 'center', padding: '32px' }}>
           <AlertCircle size={40} color="var(--primary-orange)" style={{ marginBottom: '16px' }} />
           <h2 style={{ marginBottom: '12px', fontSize: '20px', fontWeight: 600, color: 'var(--text-main)' }}>{t('error')}</h2>
-          <p style={{ marginBottom: '24px', color: 'rgba(244, 246, 247, 0.6)' }}>{error}</p>
+          <p style={{ marginBottom: '24px', color: 'var(--text-dim)' }}>{error}</p>
           <button onClick={() => setRetryTrigger(t => t + 1)} className="btn primary">
             {t('retry')}
           </button>
@@ -356,6 +361,11 @@ function HomePage() {
           }}
           onOpenGameAnalysis={() => setShowGameAnalysisModal(true)}
           onOpenCardAdvisor={openCardAdvisor}
+          onOpenCountermeasures={() => {
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('open-countermeasures'))
+            }
+          }}
         />
       </Suspense>
       

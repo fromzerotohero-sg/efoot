@@ -28,6 +28,7 @@ import { daysSince, STATS_STALE_DAYS } from '@/lib/chatReadiness'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import ChatMarkdown from '@/components/hero-chat/ChatMarkdown'
 import PrematchPitch from '@/components/hero-chat/PrematchPitch'
+import { opponentVisualTrait, instructionLabel } from '@/lib/prematchCustomerPlan'
 
 /**
  * HERO CHAT — superficie conversazionale principale (Home).
@@ -96,10 +97,16 @@ const COPY = {
   attachAnalyze: { it: 'Analizza e salva', en: 'Analyze and save', es: 'Analizar y guardar' },
   counterAnalyze: { it: 'Crea contromisure', en: 'Build countermeasures', es: 'Crear contramedidas' },
   counterAnalyzing: { it: 'Sto leggendo l’assetto avversario…', en: 'Reading the opponent setup…', es: 'Leyendo el planteamiento rival…' },
-  counterRequest: { it: 'Mandami una o due foto della formazione avversaria: preparo qui il piano partita, senza aprire altre pagine.', en: 'Send me one or two photos of the opponent formation: I’ll build the match plan here, without opening another page.', es: 'Envíame una o dos fotos de la formación rival: prepararé aquí el plan de partido, sin abrir otras páginas.' },
-  counterDone: { it: 'Piano pronto. Qui trovi la lettura dell’avversario e cosa fare in partita.', en: 'Plan ready. Here is the opponent read and what to do in the match.', es: 'Plan listo. Aquí tienes la lectura del rival y qué hacer durante el partido.' },
-  planTitle: { it: 'Piano contromisure', en: 'Countermeasure plan', es: 'Plan de contramedidas' },
-  planSaved: { it: 'Piano salvato nella conversazione. Usalo nella prossima partita.', en: 'Plan saved in this conversation. Use it in your next match.', es: 'Plan guardado en la conversación. Úsalo en tu próximo partido.' },
+  counterConfirming: { it: 'Sto preparando il piano sul tuo setup…', en: 'Building the plan on your setup…', es: 'Preparando el plan sobre tu setup…' },
+  counterRequest: { it: 'Mandami una o due foto della formazione avversaria: preparo qui il piano pre-partita, senza aprire altre pagine.', en: 'Send me one or two photos of the opponent formation: I’ll build the pre-match plan here, without opening another page.', es: 'Envíame una o dos fotos de la formación rival: prepararé aquí el plan previo, sin abrir otras páginas.' },
+  counterDone: { it: 'Piano pre-partita pronto. Applica il setup e tieni a mente le indicazioni iniziali.', en: 'Pre-match plan ready. Apply the setup and keep the starting tips in mind.', es: 'Plan previo listo. Aplica el setup y ten en cuenta las indicaciones iniciales.' },
+  counterConfirmTitle: { it: 'Ho letto', en: 'I read', es: 'He leído' },
+  counterConfirmHint: { it: 'Conferma il modulo oppure correggilo prima di generare il piano.', en: 'Confirm the formation or correct it before generating the plan.', es: 'Confirma el módulo o corrígelo antes de generar el plan.' },
+  counterConfirmUncertain: { it: 'La foto non è chiarissima: correggi il modulo se serve, poi genera.', en: 'The photo is a bit unclear: correct the formation if needed, then generate.', es: 'La foto no está clara: corrige el módulo si hace falta y genera.' },
+  counterConfirmCta: { it: 'Genera piano', en: 'Generate plan', es: 'Generar plan' },
+  counterConfirmFix: { it: 'Modulo', en: 'Formation', es: 'Módulo' },
+  planTitle: { it: 'Piano pre-partita', en: 'Pre-match plan', es: 'Plan previo' },
+  planSaved: { it: 'Piano salvato nella conversazione. Applicalo prima del fischio.', en: 'Plan saved in this conversation. Apply it before kickoff.', es: 'Plan guardado en la conversación. Aplícalo antes del pitido.' },
   planRead: { it: 'Lettura avversario', en: 'Opponent read', es: 'Lectura del rival' },
   planStrengths: { it: 'Cosa fa bene', en: 'What they do well', es: 'Lo que hace bien' },
   planWeaknesses: { it: 'Dove attaccare', en: 'Where to attack', es: 'Dónde atacar' },
@@ -110,8 +117,13 @@ const COPY = {
   planInstructions: { it: 'Istruzioni individuali', en: 'Individual instructions', es: 'Instrucciones individuales' },
   planSubstitutions: { it: 'Cambi consigliati', en: 'Suggested substitutions', es: 'Cambios sugeridos' },
   planManual: { it: 'Da verificare manualmente', en: 'Review manually', es: 'Revisar manualmente' },
-  planQuickTips: { it: 'Consigli veloci', en: 'Quick tips', es: 'Consejos rápidos' },
-  planDetails: { it: 'Dettagli', en: 'Details', es: 'Detalles' },
+  planQuickTips: { it: 'Piano iniziale', en: 'Starting plan', es: 'Plan inicial' },
+  planDetails: { it: 'Perché questo piano?', en: 'Why this plan?', es: '¿Por qué este plan?' },
+  planApply: { it: 'Applica piano', en: 'Apply plan', es: 'Aplicar plan' },
+  planApplying: { it: 'Applico…', en: 'Applying…', es: 'Aplicando…' },
+  planApplied: { it: 'Setup applicato alla tua formazione.', en: 'Setup applied to your formation.', es: 'Setup aplicado a tu formación.' },
+  planApplyError: { it: 'Non sono riuscito ad applicare il piano. Riprova.', en: 'Couldn’t apply the plan. Try again.', es: 'No pude aplicar el plan. Inténtalo de nuevo.' },
+  planAlreadyApplied: { it: 'Già applicato', en: 'Already applied', es: 'Ya aplicado' },
   attachAnalyzing: { it: 'Sto leggendo le tue statistiche…', en: 'Reading your stats…', es: 'Leyendo tus estadísticas…' },
   attachDone: { it: 'Statistiche aggiornate. Ora posso consigliarti meglio.', en: 'Stats updated. I can advise you better now.', es: 'Estadísticas actualizadas. Ahora puedo aconsejarte mejor.' },
   attachError: { it: 'Non sono riuscito a leggere le foto. Riprova con screenshot più nitidi.', en: 'I couldn’t read the photos. Try clearer screenshots.', es: 'No pude leer las fotos. Prueba capturas más nítidas.' },
@@ -254,229 +266,261 @@ function Lfn(lang, entry, ...args) {
   return typeof fn === 'function' ? fn(...args) : fn
 }
 
-function priorityRank(value) {
-  const key = String(value || '').toLowerCase()
-  if (key === 'high' || key === 'alta' || key === 'critical') return 0
-  if (key === 'medium' || key === 'media') return 1
-  return 2
-}
+const COUNTER_FORMATIONS = [
+  '4-3-3', '4-4-2', '4-2-1-3', '4-1-2-3', '4-3-1-2', '4-2-3-1', '4-1-4-1',
+  '3-4-3', '3-5-2', '3-4-1-2', '3-1-4-2',
+  '5-3-2', '5-4-1', '4-5-1', '4-1-3-2', '3-3-2-2', '4-2-2-2'
+]
 
-function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, formation = null }) {
+function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, formation = null, onApplied }) {
+  const [applyState, setApplyState] = React.useState(
+    plan?.status === 'applied' ? 'done' : 'idle'
+  )
+  const [applyError, setApplyError] = React.useState('')
+
   if (!plan) return null
+
   const raw = plan.countermeasures || {}
-  const analysis = raw.analysis || {}
-  const tactics = raw.countermeasures || {}
+  const customer = raw.customer_plan || plan.change_set?.customer_plan || null
   const changeSet = plan.change_set || {}
-  const summary = raw.play_summary || changeSet.play_summary || {}
-  const formationAdjustments = Array.isArray(tactics.formation_adjustments) ? tactics.formation_adjustments : []
-  const tacticalAdjustments = Array.isArray(tactics.tactical_adjustments) ? tactics.tactical_adjustments : []
+  const setup = customer?.setup || {}
+  const localized = (value) => {
+    if (typeof value === 'string' || typeof value === 'number') return String(value)
+    return L(lang, value) || ''
+  }
+
+  const diagnosis = localized(customer?.diagnosis)
+    || localized(raw.play_summary?.match_key)
+    || localized(raw.diagnosis)
+    || L(lang, COPY.planTitle)
+
+  const trait = localized(customer?.opponent_read?.trait) || ''
+  const fitProof = localized(customer?.fit_proof) || ''
+  const teamStyle = setup.team_playing_style
+    || changeSet.team_playing_style
+    || null
+
   const playerSuggestions = (() => {
-    const fromApi = Array.isArray(tactics.player_suggestions) ? tactics.player_suggestions : []
+    const fromSetup = Array.isArray(setup.substitutions) ? setup.substitutions : []
+    if (fromSetup.length) {
+      return fromSetup.map((sub) => ({
+        action: 'add_to_starting_xi',
+        player_id: sub.in_player_id,
+        player_name: sub.in_player_name,
+        replace_player_id: sub.out_player_id,
+        replace_player_name: sub.out_player_name,
+        position: sub.position
+      }))
+    }
+    const fromApi = Array.isArray(raw.countermeasures?.player_suggestions)
+      ? raw.countermeasures.player_suggestions
+      : []
     if (fromApi.length) return fromApi
-    const fromChangeSet = Array.isArray(changeSet.substitutions) ? changeSet.substitutions : []
-    return fromChangeSet.map((sub) => ({
+    return (Array.isArray(changeSet.substitutions) ? changeSet.substitutions : []).map((sub) => ({
       action: 'add_to_starting_xi',
       player_id: sub.in_player_id,
       player_name: sub.in_player_name,
       replace_player_id: sub.out_player_id,
       replace_player_name: sub.out_player_name,
-      position: sub.position,
-      reason: sub.reason,
-      priority: sub.priority
+      position: sub.position
     }))
   })()
+
   const individualInstructions = (() => {
-    const fromApi = Array.isArray(tactics.individual_instructions) ? tactics.individual_instructions : []
-    if (fromApi.length) return fromApi
+    const fromSetup = Array.isArray(setup.individual_instructions) ? setup.individual_instructions : []
+    if (fromSetup.length) {
+      return fromSetup.map((row) => ({
+        ...row,
+        instruction_label: row.instruction_label || instructionLabel(row.instruction, lang)
+      }))
+    }
+    const fromApi = Array.isArray(raw.countermeasures?.individual_instructions)
+      ? raw.countermeasures.individual_instructions
+      : []
+    if (fromApi.length) {
+      return fromApi.map((row) => ({
+        ...row,
+        instruction_label: instructionLabel(row.instruction, lang)
+      }))
+    }
     return Object.entries(changeSet.individual_instructions || {}).map(([slot, row]) => ({
       slot,
       player_id: row?.player_id,
       player_name: row?.player_name,
       position: row?.position,
       instruction: row?.instruction,
-      reason: row?.reason
+      instruction_label: instructionLabel(row?.instruction, lang)
     }))
   })()
-  const strengths = Array.isArray(analysis.strengths) ? analysis.strengths : []
-  const weaknesses = Array.isArray(analysis.weaknesses) ? analysis.weaknesses : []
-  const localized = (value) => {
-    if (typeof value === 'string' || typeof value === 'number') return String(value)
-    return L(lang, value) || ''
-  }
-  const list = (items) => items.filter(Boolean).map((item, index) => (
-    <li key={`${index}-${String(localized(item))}`}>{localized(item)}</li>
-  ))
 
-  const quickTips = []
-  const matchKey = localized(summary.match_key)
-  if (matchKey) quickTips.push(matchKey)
-  const ranked = [...formationAdjustments, ...tacticalAdjustments]
-    .map((item) => ({
-      text: localized(item?.suggestion),
-      priority: priorityRank(item?.priority)
-    }))
-    .filter((item) => item.text)
-    .sort((a, b) => a.priority - b.priority)
-  for (const item of ranked) {
-    if (quickTips.length >= 3) break
-    if (quickTips.some((t) => t.toLowerCase() === item.text.toLowerCase())) continue
-    quickTips.push(item.text)
-  }
-  if (quickTips.length < 3) {
-    for (const sug of playerSuggestions) {
-      if (quickTips.length >= 3) break
-      const label = sug.replace_player_name
-        ? `${sug.player_name || sug.player_id} → ${sug.replace_player_name}`
-        : (sug.player_name || localized(sug.reason) || '')
-      if (!label) continue
-      if (quickTips.some((t) => t.toLowerCase() === label.toLowerCase())) continue
-      quickTips.push(label)
+  const startingPlan = (() => {
+    const fromCustomer = Array.isArray(customer?.starting_plan) ? customer.starting_plan : []
+    if (fromCustomer.length) return fromCustomer.map((t) => localized(t)).filter(Boolean).slice(0, 3)
+    const fromChange = Array.isArray(changeSet.starting_plan) ? changeSet.starting_plan : []
+    return fromChange.map((t) => localized(t)).filter(Boolean).slice(0, 3)
+  })()
+
+  const whyBits = [fitProof, trait, localized(customer?.opponent_read?.assumption)]
+    .map((t) => String(t || '').trim())
+    .filter(Boolean)
+
+  const canApply = plan.status === 'ready' || plan.status === 'draft'
+  const isApplied = applyState === 'done' || plan.status === 'applied'
+
+  const handleApply = async () => {
+    if (isApplied || applyState === 'busy' || !canApply) return
+    setApplyState('busy')
+    setApplyError('')
+    try {
+      let token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+      if (!token && supabase) {
+        const { data } = await supabase.auth.getSession()
+        token = data?.session?.access_token || null
+      }
+      if (!token) throw new Error('auth')
+      const res = await fetch('/api/hero-chat/plans', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ id: plan.id, action: 'apply' })
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.success) throw new Error(data.error || 'apply')
+      setApplyState('done')
+      onApplied?.(data.plan || { ...plan, status: 'applied' })
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('diagnostic-updated'))
+        window.dispatchEvent(new CustomEvent('knowledge-should-refresh'))
+      }
+    } catch {
+      setApplyState('idle')
+      setApplyError(L(lang, COPY.planApplyError))
     }
   }
-
-  const hasDetails =
-    analysis.opponent_formation_analysis ||
-    strengths.length ||
-    weaknesses.length ||
-    summary.attacking ||
-    summary.defending ||
-    summary.avoid ||
-    formationAdjustments.length ||
-    tacticalAdjustments.length ||
-    playerSuggestions.length ||
-    individualInstructions.length
 
   return (
     <div className="hc-planCard">
       <div className="hc-planHead">
         <Trophy size={16} aria-hidden="true" />
         <strong>{L(lang, COPY.planTitle)}</strong>
-        <span className="hc-planStatus hc-planStatusDone">✓</span>
+        <span className={`hc-planStatus${isApplied ? ' hc-planStatusDone' : ''}`}>
+          {isApplied ? '✓' : 'ready'}
+        </span>
       </div>
-      <p className="hc-planSaved">{L(lang, COPY.planSaved)}</p>
+      <p className="hc-planSaved">{isApplied ? L(lang, COPY.planApplied) : L(lang, COPY.planSaved)}</p>
 
       <div className="hc-planHero">
-        {summary.match_key ? (
-          <strong>{localized(summary.match_key)}</strong>
-        ) : (
-          <strong>{L(lang, COPY.planTitle)}</strong>
-        )}
-        {summary.base_plan && <p>{localized(summary.base_plan)}</p>}
+        <strong>{diagnosis}</strong>
+        {trait ? <p>{trait}</p> : null}
       </div>
 
       <PrematchPitch
         starters={starters}
         slotPositions={slotPositions}
-        formation={formation}
+        formation={setup.formation || formation}
         playerSuggestions={playerSuggestions}
         individualInstructions={individualInstructions}
-        focusText={[
-          localized(summary.match_key),
-          localized(summary.base_plan),
-          localized(summary.attacking),
-          localized(summary.defending),
-          ...tacticalAdjustments.map((item) => localized(item?.suggestion)),
-          ...individualInstructions.map((item) => item?.player_name || '')
-        ].filter(Boolean).join(' ')}
+        teamStyle={teamStyle}
+        focusText={diagnosis}
         lang={lang}
       />
 
-      {quickTips.length > 0 && (
+      {startingPlan.length > 0 && (
         <div className="hc-planQuick">
           <span className="hc-planQuickLabel">{L(lang, COPY.planQuickTips)}</span>
           <ul className="hc-planQuickList">
-            {quickTips.slice(0, 3).map((tip, index) => (
-              <li key={`quick-${index}`}>{tip}</li>
+            {startingPlan.map((tip, index) => (
+              <li key={`start-${index}`}>{tip}</li>
             ))}
           </ul>
         </div>
       )}
 
-      {hasDetails && (
+      <div className="hc-planActions">
+        <button
+          type="button"
+          className="hc-planApply"
+          onClick={handleApply}
+          disabled={isApplied || applyState === 'busy' || !canApply}
+        >
+          {isApplied
+            ? L(lang, COPY.planAlreadyApplied)
+            : applyState === 'busy'
+              ? L(lang, COPY.planApplying)
+              : L(lang, COPY.planApply)}
+        </button>
+        {applyError ? <p className="hc-planApplyError">{applyError}</p> : null}
+      </div>
+
+      {whyBits.length > 0 && (
         <details className="hc-planDetails">
           <summary>{L(lang, COPY.planDetails)}</summary>
-          <div className="hc-planVisualGrid">
-            {(analysis.opponent_formation_analysis || strengths.length || weaknesses.length) && (
-              <div className="hc-planSection">
-                <span className="hc-planSectionTitle">{L(lang, COPY.planRead)}</span>
-                {analysis.opponent_formation_analysis && <p>{localized(analysis.opponent_formation_analysis)}</p>}
-                {strengths.length > 0 && (
-                  <div className="hc-planListGroup">
-                    <span>{L(lang, COPY.planStrengths)}</span>
-                    <ul>{list(strengths)}</ul>
-                  </div>
-                )}
-                {weaknesses.length > 0 && (
-                  <div className="hc-planListGroup">
-                    <span>{L(lang, COPY.planWeaknesses)}</span>
-                    <ul>{list(weaknesses)}</ul>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {(summary.attacking || formationAdjustments.length || tacticalAdjustments.length) && (
-              <div className="hc-planSection">
-                <span className="hc-planSectionTitle">{L(lang, COPY.planAttack)}</span>
-                {summary.attacking && <p>{localized(summary.attacking)}</p>}
-                {formationAdjustments.map((item, index) => (
-                  <div key={`formation-${index}`} className="hc-planAdvice">
-                    <strong>{localized(item.suggestion)}</strong>
-                    {item.reason && <small>{localized(item.reason)}</small>}
-                  </div>
-                ))}
-                {tacticalAdjustments.map((item, index) => (
-                  <div key={`tactical-${index}`} className="hc-planAdvice">
-                    <strong>{localized(item.suggestion)}</strong>
-                    {item.reason && <small>{localized(item.reason)}</small>}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {(summary.defending || summary.avoid) && (
-              <div className="hc-planSection">
-                <span className="hc-planSectionTitle">{L(lang, COPY.planDefend)}</span>
-                {summary.defending && <p>{localized(summary.defending)}</p>}
-                {summary.avoid && (
-                  <div className="hc-planAdvice hc-planAdviceWarning">
-                    <strong>{L(lang, COPY.planAvoid)}</strong>
-                    <small>{localized(summary.avoid)}</small>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {playerSuggestions.length > 0 && (
-              <div className="hc-planSection">
-                <span className="hc-planSectionTitle">{L(lang, COPY.planSubstitutions)}</span>
-                {playerSuggestions.map((item, index) => (
-                  <div key={`player-${index}`} className="hc-planAdvice">
-                    <strong>
-                      {item.player_name || item.player_id}
-                      {item.replace_player_name ? ` → ${item.replace_player_name}` : ''}
-                    </strong>
-                    {item.reason && <small>{localized(item.reason)}</small>}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {individualInstructions.length > 0 && (
-              <div className="hc-planSection">
-                <span className="hc-planSectionTitle">{L(lang, COPY.planInstructions)}</span>
-                {individualInstructions.map((item, index) => (
-                  <div key={`instruction-${index}`} className="hc-planAdvice">
-                    <strong>{item.player_name || item.player_id}: {localized(item.instruction)}</strong>
-                    {item.reason && <small>{localized(item.reason)}</small>}
-                  </div>
-                ))}
-              </div>
-            )}
+          <div className="hc-planSection">
+            {whyBits.map((bit, index) => (
+              <p key={`why-${index}`}>{bit}</p>
+            ))}
           </div>
-
         </details>
       )}
+    </div>
+  )
+}
+
+function CounterConfirmCard({
+  draft,
+  lang,
+  confirming,
+  onConfirm
+}) {
+  const [formation, setFormation] = React.useState(draft?.formation || '')
+  React.useEffect(() => {
+    setFormation(draft?.formation || '')
+  }, [draft?.formation, draft?.formationId])
+
+  if (!draft) return null
+  const uncertain = Boolean(draft.uncertain)
+  const trait = draft.trait || ''
+  const options = COUNTER_FORMATIONS.includes(formation) || !formation
+    ? COUNTER_FORMATIONS
+    : [formation, ...COUNTER_FORMATIONS]
+
+  return (
+    <div className="hc-counterConfirm">
+      <div className="hc-counterConfirmHead">
+        <Trophy size={16} aria-hidden="true" />
+        <strong>
+          {L(lang, COPY.counterConfirmTitle)}
+          {formation ? ` ${formation}` : ''}
+        </strong>
+      </div>
+      {trait ? <p className="hc-counterConfirmTrait">{trait}</p> : null}
+      <p className="hc-counterConfirmHint">
+        {L(lang, uncertain ? COPY.counterConfirmUncertain : COPY.counterConfirmHint)}
+      </p>
+      <label className="hc-counterConfirmLabel" htmlFor="hc-counter-formation">
+        {L(lang, COPY.counterConfirmFix)}
+      </label>
+      <select
+        id="hc-counter-formation"
+        className="hc-counterConfirmSelect"
+        value={formation}
+        onChange={(e) => setFormation(e.target.value)}
+        disabled={confirming}
+      >
+        {options.map((f) => (
+          <option key={f} value={f}>{f}</option>
+        ))}
+      </select>
+      <button
+        type="button"
+        className="hc-counterConfirmCta"
+        disabled={confirming || !draft.formationId}
+        onClick={() => onConfirm?.(formation)}
+      >
+        {confirming ? L(lang, COPY.counterConfirming) : L(lang, COPY.counterConfirmCta)}
+      </button>
     </div>
   )
 }
@@ -698,6 +742,8 @@ export default function HeroChat({
   const [threadId, setThreadId] = React.useState(null)
   const [historyLoading, setHistoryLoading] = React.useState(true)
   const [prematchPlan, setPrematchPlan] = React.useState(null)
+  const [counterConfirmDraft, setCounterConfirmDraft] = React.useState(null)
+  const [counterConfirming, setCounterConfirming] = React.useState(false)
   const [activeWorkflowId, setActiveWorkflowId] = React.useState(null)
   const recognitionRef = React.useRef(null)
   const feedRef = React.useRef(null)
@@ -1264,13 +1310,20 @@ export default function HeroChat({
 
   const openCounterCamera = React.useCallback(() => {
     beginFocusedAttachment('counter')
+    setCounterConfirmDraft(null)
     setActionsOpen(false)
     setMessages((prev) => [
-      ...prev,
+      ...prev.filter((m) => m.kind !== 'counter_confirm'),
       { role: 'hero', content: L(lang, COPY.counterRequest), kind: 'system' }
     ])
     cameraInputRef.current?.click()
   }, [beginFocusedAttachment, lang])
+
+  React.useEffect(() => {
+    const onOpenCountermeasures = () => openCounterCamera()
+    window.addEventListener('open-countermeasures', onOpenCountermeasures)
+    return () => window.removeEventListener('open-countermeasures', onOpenCountermeasures)
+  }, [openCounterCamera])
 
   const analyzeMatchAttachment = React.useCallback(async (token, imageDataUrls) => {
     const flow = matchFlow
@@ -1440,7 +1493,7 @@ export default function HeroChat({
     }
   }, [lang, matchFlow, matchSaving, persistMessages, router])
 
-  const analyzeCountermeasureAttachment = React.useCallback(async (token, imageDataUrls) => {
+  const extractCountermeasureAttachment = React.useCallback(async (token, imageDataUrls) => {
     const extractRes = await fetch('/api/extract-formation', {
       method: 'POST',
       headers: {
@@ -1479,6 +1532,22 @@ export default function HeroChat({
       throw new Error(saveData.error || L(lang, COPY.attachError))
     }
 
+    const profile = extractData.visual_tactical_profile || null
+    const conf = Number(profile?.formation_confidence)
+    const uncertain = !extractData.formation
+      || (Number.isFinite(conf) && conf < 0.55)
+      || (Array.isArray(profile?.uncertain_points) && profile.uncertain_points.length > 0)
+
+    return {
+      formationId: saveData.formation.id,
+      formation: extractData.formation || saveData.formation.formation_name || '',
+      trait: opponentVisualTrait(profile, lang),
+      uncertain,
+      profile
+    }
+  }, [lang])
+
+  const generateCountermeasurePlan = React.useCallback(async (token, formationId, correctedFormation) => {
     const generateRes = await fetch('/api/generate-countermeasures', {
       method: 'POST',
       headers: {
@@ -1486,8 +1555,9 @@ export default function HeroChat({
         Authorization: `Bearer ${token}`
       },
       body: JSON.stringify({
-        opponent_formation_id: saveData.formation.id,
-        language: lang
+        opponent_formation_id: formationId,
+        language: lang,
+        corrected_formation: correctedFormation || undefined
       })
     })
     const generateData = await generateRes.json().catch(() => ({}))
@@ -1503,10 +1573,10 @@ export default function HeroChat({
       },
       body: JSON.stringify({
         countermeasures: generateData.countermeasures,
-        opponent_formation_id: saveData.formation.id,
+        opponent_formation_id: formationId,
         thread_id: threadId,
         language: lang,
-        idempotency_key: `hero-${saveData.formation.id}-${Date.now()}`
+        idempotency_key: `hero-${formationId}-${Date.now()}`
       })
     })
     const planData = await planRes.json().catch(() => ({}))
@@ -1515,6 +1585,58 @@ export default function HeroChat({
     }
     return planData.plan
   }, [lang, threadId])
+
+  const confirmCountermeasureDraft = React.useCallback(async (correctedFormation) => {
+    if (!counterConfirmDraft?.formationId || counterConfirming) return
+    setCounterConfirming(true)
+    const processingMessage = {
+      role: 'hero',
+      content: L(lang, COPY.counterConfirming),
+      kind: 'system'
+    }
+    setMessages((prev) => [...prev.filter((m) => m.kind !== 'counter_confirm'), processingMessage])
+    try {
+      const token = await resolveToken()
+      if (!token) {
+        router.push('/login')
+        return
+      }
+      const plan = await generateCountermeasurePlan(
+        token,
+        counterConfirmDraft.formationId,
+        correctedFormation || counterConfirmDraft.formation
+      )
+      setPrematchPlan(plan)
+      setCounterConfirmDraft(null)
+      setActiveWorkflowId(null)
+      const doneMessage = {
+        role: 'hero',
+        content: L(lang, COPY.counterDone),
+        kind: 'plan',
+        plan,
+        payload: { kind: 'plan', plan }
+      }
+      setMessages((prev) => [...prev.filter((m) => m.kind !== 'system'), doneMessage])
+      void persistMessages([doneMessage])
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('credits-consumed'))
+      }
+    } catch {
+      setMessages((prev) => [
+        ...prev.filter((m) => m.kind !== 'system'),
+        { role: 'hero', content: L(lang, COPY.attachError), kind: 'error' }
+      ])
+    } finally {
+      setCounterConfirming(false)
+    }
+  }, [
+    counterConfirmDraft,
+    counterConfirming,
+    generateCountermeasurePlan,
+    lang,
+    persistMessages,
+    router
+  ])
 
   const analyzeAttachments = React.useCallback(async () => {
     if (!attachments.length || attachAnalyzing) return
@@ -1541,22 +1663,19 @@ export default function HeroChat({
         return
       }
       if (attachmentMode === 'counter') {
-        const plan = await analyzeCountermeasureAttachment(token, attachments.map((attachment) => attachment.dataUrl))
-        setPrematchPlan(plan)
+        const draft = await extractCountermeasureAttachment(
+          token,
+          attachments.map((attachment) => attachment.dataUrl)
+        )
+        setCounterConfirmDraft(draft)
         setAttachments([])
-        setActiveWorkflowId(null)
-        const doneMessage = {
+        const confirmMessage = {
           role: 'hero',
-          content: L(lang, COPY.counterDone),
-          kind: 'plan',
-          plan,
-          payload: { kind: 'plan', plan }
+          content: '',
+          kind: 'counter_confirm',
+          payload: { kind: 'counter_confirm', draft }
         }
-        setMessages((prev) => [...prev.filter((m) => m.kind !== 'system'), doneMessage])
-        void persistMessages([doneMessage])
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('credits-consumed'))
-        }
+        setMessages((prev) => [...prev.filter((m) => m.kind !== 'system'), confirmMessage])
         return
       }
       const res = await fetch('/api/extract-game-analysis', {
@@ -1611,7 +1730,7 @@ export default function HeroChat({
     attachmentMode,
     matchFlow,
     analyzeMatchAttachment,
-    analyzeCountermeasureAttachment,
+    extractCountermeasureAttachment,
     lang,
     router,
     onStatsSuccess,
@@ -1696,7 +1815,7 @@ export default function HeroChat({
               onClick={() => openFeedCard('knowledge')}
             >
               <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
-                <circle cx="13" cy="13" r="10" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="3" />
+                <circle cx="13" cy="13" r="10" fill="none" stroke="var(--border-soft)" strokeWidth="3" />
                 <circle
                   cx="13" cy="13" r="10" fill="none" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round"
                   strokeDasharray={scoreRing.c} strokeDashoffset={scoreRing.offset} transform="rotate(-90 13 13)"
@@ -1949,8 +2068,29 @@ export default function HeroChat({
                   starters={starters}
                   slotPositions={slotPositions}
                   formation={formation}
+                  onApplied={(nextPlan) => {
+                    setPrematchPlan(nextPlan)
+                    setMessages((prev) => prev.map((row) => (
+                      row === m || row.plan?.id === nextPlan?.id
+                        ? { ...row, plan: nextPlan, payload: { ...(row.payload || {}), plan: nextPlan } }
+                        : row
+                    )))
+                  }}
                 />
               </React.Fragment>
+            )
+          }
+
+          if (kind === 'counter_confirm') {
+            const draft = m.payload?.draft || counterConfirmDraft
+            return (
+              <CounterConfirmCard
+                key={key}
+                draft={draft}
+                lang={lang}
+                confirming={counterConfirming}
+                onConfirm={confirmCountermeasureDraft}
+              />
             )
           }
 
@@ -2303,9 +2443,9 @@ export default function HeroChat({
           gap: 5px;
           padding: 6px 12px;
           border-radius: 999px;
-          background: rgba(255, 203, 5, 0.09);
-          border: 1px solid rgba(255, 203, 5, 0.28);
-          color: #ffcb05;
+          background: var(--gold-bg);
+          border: 1px solid var(--gold-border);
+          color: var(--gold-text);
           font-size: 12px;
           font-weight: 800;
           white-space: nowrap;
@@ -2345,7 +2485,7 @@ export default function HeroChat({
           padding: 8px 12px;
           border-radius: 999px;
           border: 1px solid var(--border-soft);
-          background: rgba(255, 255, 255, 0.03);
+          background: var(--surface-2);
           color: var(--text-dim);
           font-size: 12px;
           font-weight: 700;
@@ -2407,7 +2547,7 @@ export default function HeroChat({
           font-size: 0.92em;
           padding: 0.1em 0.35em;
           border-radius: 6px;
-          background: rgba(255, 255, 255, 0.06);
+          background: var(--surface-2);
         }
 
         :global(.hc-md-quote) {
@@ -2423,7 +2563,7 @@ export default function HeroChat({
           padding: 6px 11px;
           border-radius: 999px;
           border: 1px solid var(--border-soft);
-          background: rgba(255, 255, 255, 0.04);
+          background: var(--surface-2);
           color: var(--text-dim);
           font: inherit;
           font-size: 11px;
@@ -2442,7 +2582,7 @@ export default function HeroChat({
           background:
             radial-gradient(circle at 82% 12%, rgba(61, 220, 151, 0.16), transparent 44%),
             radial-gradient(circle at 12% 88%, rgba(0, 168, 200, 0.12), transparent 40%),
-            linear-gradient(150deg, #0e1a1d 0%, #0a1418 55%, #081014 100%);
+            var(--surface);
           border: 1px solid rgba(61, 220, 151, 0.14);
         }
 
@@ -2461,7 +2601,7 @@ export default function HeroChat({
           font-weight: 850;
           line-height: 1.16;
           letter-spacing: -0.01em;
-          color: #ffffff;
+          color: var(--text-main);
           max-width: 20ch;
         }
 
@@ -2518,7 +2658,7 @@ export default function HeroChat({
           background: linear-gradient(135deg, var(--accent-border), rgba(39, 167, 106, 0.18));
           border: 1px solid var(--accent-border);
           border-radius: 16px 4px 16px 16px;
-          color: #eafaf2;
+          color: var(--text-main);
         }
 
         .hc-bubbleWarn {
@@ -2530,15 +2670,15 @@ export default function HeroChat({
           align-items: center;
           gap: 8px;
           margin-bottom: 6px;
-          color: #ffd76a;
+          color: var(--gold-text);
         }
 
         .hc-lowHpCta {
           padding: 4px 12px;
           border-radius: 8px;
           border: 1px solid rgba(255, 203, 5, 0.5);
-          background: rgba(255, 203, 5, 0.12);
-          color: #ffcb05;
+          background: var(--gold-bg);
+          color: var(--gold-text);
           font-size: 12px;
           font-weight: 700;
           font-family: inherit;
@@ -2578,7 +2718,7 @@ export default function HeroChat({
         .hc-stateCard {
           border-radius: 16px;
           padding: 16px 18px;
-          background: linear-gradient(150deg, var(--accent-bg), rgba(10, 20, 24, 0.6));
+          background: linear-gradient(150deg, var(--accent-bg), var(--surface));
           border: 1px solid var(--accent-border);
           display: flex;
           flex-direction: column;
@@ -2705,7 +2845,7 @@ export default function HeroChat({
           padding: 12px;
           border: 1px solid var(--accent-border);
           border-radius: 14px;
-          background: linear-gradient(140deg, var(--accent-bg), rgba(255, 255, 255, 0.02));
+          background: linear-gradient(140deg, var(--accent-bg), var(--surface-2));
         }
 
         :global(.hc-guidedIcon) {
@@ -2716,7 +2856,7 @@ export default function HeroChat({
           height: 34px;
           border-radius: 10px;
           color: var(--accent);
-          background: rgba(255, 255, 255, 0.08);
+          background: var(--surface-3);
         }
 
         :global(.hc-guidedCopy) {
@@ -2807,7 +2947,7 @@ export default function HeroChat({
         .hc-saveCard {
           border-radius: 16px;
           padding: 16px 18px;
-          background: linear-gradient(150deg, var(--accent-bg), rgba(10, 20, 24, 0.65));
+          background: linear-gradient(150deg, var(--accent-bg), var(--surface));
           border: 1px solid var(--accent-border);
           display: flex;
           flex-direction: column;
@@ -2837,7 +2977,7 @@ export default function HeroChat({
         .hc-saveError {
           margin: 0;
           font-size: 12px;
-          color: #ff8a8a;
+          color: var(--danger-text);
         }
 
         .hc-lowHpBanner {
@@ -2850,7 +2990,7 @@ export default function HeroChat({
           border-radius: 12px;
           border: 1px solid rgba(255, 191, 0, 0.35);
           background: rgba(255, 191, 0, 0.08);
-          color: #ffd76a;
+          color: var(--gold-text);
           font-size: 12px;
           flex-shrink: 0;
         }
@@ -3157,7 +3297,7 @@ export default function HeroChat({
           border-radius: 14px;
           border: none;
           background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-          color: #020510;
+          color: var(--accent-ink);
           font: inherit;
           font-size: 14px;
           font-weight: 900;
@@ -3180,7 +3320,7 @@ export default function HeroChat({
           padding: 14px;
           border-radius: 16px;
           border: 1px solid var(--accent-border);
-          background: linear-gradient(145deg, rgba(61, 220, 151, 0.11), rgba(255, 255, 255, 0.03));
+          background: linear-gradient(145deg, rgba(61, 220, 151, 0.11), var(--surface-2));
         }
 
         :global(.hc-planHead) {
@@ -3194,7 +3334,7 @@ export default function HeroChat({
           margin-left: auto;
           padding: 4px 8px;
           border-radius: 999px;
-          background: rgba(255, 255, 255, 0.08);
+          background: var(--surface-3);
           color: var(--text-dim);
           font-size: 10px;
           font-weight: 800;
@@ -3210,8 +3350,8 @@ export default function HeroChat({
           display: block;
           padding: 11px 12px;
           border-radius: 12px;
-          border: 1px solid rgba(255, 255, 255, 0.09);
-          background: rgba(0, 0, 0, 0.12);
+          border: 1px solid var(--border-soft);
+          background: var(--inset-bg);
           font-size: 13px;
         }
 
@@ -3219,6 +3359,101 @@ export default function HeroChat({
           margin: -4px 0 2px;
           color: var(--text-dim);
           font-size: 12px;
+        }
+
+        :global(.hc-planActions) {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        :global(.hc-planApply) {
+          appearance: none;
+          border: 0;
+          border-radius: 12px;
+          padding: 11px 14px;
+          background: var(--accent);
+          color: #04140c;
+          font-size: 13px;
+          font-weight: 800;
+          cursor: pointer;
+        }
+
+        :global(.hc-planApply:disabled) {
+          opacity: 0.55;
+          cursor: default;
+        }
+
+        :global(.hc-planApplyError) {
+          margin: 0;
+          color: #f87171;
+          font-size: 12px;
+        }
+
+        :global(.hc-counterConfirm) {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          padding: 14px;
+          border-radius: 16px;
+          border: 1px solid var(--accent-border);
+          background: linear-gradient(145deg, rgba(61, 220, 151, 0.1), var(--surface-2));
+        }
+
+        :global(.hc-counterConfirmHead) {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: var(--accent);
+        }
+
+        :global(.hc-counterConfirmTrait),
+        :global(.hc-counterConfirmHint) {
+          margin: 0;
+          color: var(--text-dim);
+          font-size: 13px;
+          line-height: 1.4;
+        }
+
+        :global(.hc-counterConfirmTrait) {
+          color: var(--text-main);
+          font-weight: 600;
+        }
+
+        :global(.hc-counterConfirmLabel) {
+          font-size: 11px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          color: var(--text-dim);
+        }
+
+        :global(.hc-counterConfirmSelect) {
+          appearance: none;
+          border-radius: 10px;
+          border: 1px solid var(--border-soft);
+          background: var(--inset-bg);
+          color: var(--text-main);
+          padding: 10px 12px;
+          font-size: 14px;
+          font-weight: 700;
+        }
+
+        :global(.hc-counterConfirmCta) {
+          appearance: none;
+          border: 0;
+          border-radius: 12px;
+          padding: 11px 14px;
+          background: var(--accent);
+          color: #04140c;
+          font-size: 13px;
+          font-weight: 800;
+          cursor: pointer;
+        }
+
+        :global(.hc-counterConfirmCta:disabled) {
+          opacity: 0.55;
+          cursor: default;
         }
 
         :global(.hc-planHero) {
@@ -3248,7 +3483,7 @@ export default function HeroChat({
           padding: 10px 12px;
           border-radius: 12px;
           border: 1px solid var(--border-soft);
-          background: rgba(255, 255, 255, 0.03);
+          background: var(--surface-2);
         }
 
         :global(.hc-planQuickLabel) {
@@ -3272,7 +3507,7 @@ export default function HeroChat({
         :global(.hc-planDetails) {
           border-radius: 12px;
           border: 1px solid var(--border-soft);
-          background: rgba(0, 0, 0, 0.08);
+          background: var(--inset-bg);
           padding: 4px 10px 10px;
         }
 
@@ -3335,7 +3570,7 @@ export default function HeroChat({
           padding: 8px 9px;
           border-left: 2px solid var(--accent);
           border-radius: 0 8px 8px 0;
-          background: rgba(255, 255, 255, 0.045);
+          background: var(--surface-2);
         }
 
         :global(.hc-planAdvice strong) {
@@ -3361,7 +3596,7 @@ export default function HeroChat({
           padding: 14px;
           border-radius: 16px;
           border: 1px solid rgba(61, 220, 151, 0.32);
-          background: linear-gradient(145deg, rgba(61, 220, 151, 0.10), rgba(255, 255, 255, 0.035));
+          background: linear-gradient(145deg, rgba(61, 220, 151, 0.10), var(--surface-2));
         }
 
         :global(.hc-matchHead) {
@@ -3398,7 +3633,7 @@ export default function HeroChat({
           padding: 9px 11px;
           border-radius: 11px;
           border: 1px solid var(--border-soft);
-          background: rgba(0, 0, 0, 0.16);
+          background: var(--inset-bg);
           color: var(--text-main);
           font: inherit;
           font-size: 12px;
@@ -3431,7 +3666,7 @@ export default function HeroChat({
           padding: 8px 10px;
           border-radius: 10px;
           border: 1px solid var(--border-soft);
-          background: rgba(0, 0, 0, 0.2);
+          background: var(--inset-bg);
           color: var(--text-main);
           font: inherit;
           font-size: 13px;
@@ -3476,7 +3711,7 @@ export default function HeroChat({
           flex: 1;
           height: 4px;
           border-radius: 999px;
-          background: rgba(255, 255, 255, 0.12);
+          background: var(--surface-3);
         }
 
         :global(.hc-matchProgressDone),
@@ -3553,7 +3788,7 @@ export default function HeroChat({
           height: 150px;
           border-radius: 10px;
           object-fit: contain;
-          background: rgba(0, 0, 0, 0.28);
+          background: var(--inset-bg);
           border: 1px solid var(--accent-border);
         }
 
@@ -3601,7 +3836,7 @@ export default function HeroChat({
           width: 100%;
           height: 72px;
           object-fit: cover;
-          background: rgba(0, 0, 0, 0.24);
+          background: var(--inset-bg);
           display: block;
         }
 
@@ -3671,7 +3906,7 @@ export default function HeroChat({
           border-radius: 14px;
           border: none;
           background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-          color: #020510;
+          color: var(--accent-ink);
           font: inherit;
           font-size: 14px;
           font-weight: 900;
@@ -3724,7 +3959,7 @@ export default function HeroChat({
           gap: 8px;
           padding: 8px 9px;
           border-radius: 9px;
-          background: rgba(0, 0, 0, 0.15);
+          background: var(--inset-bg);
           color: var(--text-main);
           font-size: 12px;
         }
@@ -3781,7 +4016,7 @@ export default function HeroChat({
           display: inline-flex;
           padding: 7px 9px;
           border-radius: 9px;
-          background: rgba(0, 0, 0, 0.16);
+          background: var(--inset-bg);
           color: var(--text-main);
           font-size: 12px;
         }
@@ -3793,7 +4028,7 @@ export default function HeroChat({
           padding: 9px;
           border-radius: 10px;
           border: 1px solid rgba(255, 191, 0, 0.35);
-          color: #ffd76a;
+          color: var(--gold-text);
           font-size: 12px;
         }
 
