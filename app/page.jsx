@@ -57,6 +57,8 @@ function HomePage() {
     riserve: 0,
     formation: null
   })
+  const [starters, setStarters] = React.useState([])
+  const [slotPositions, setSlotPositions] = React.useState(null)
   const [recentMatches, setRecentMatches] = React.useState([])
   const [showGameAnalysisModal, setShowGameAnalysisModal] = React.useState(false)
   const [gameAnalysisLastCapture, setGameAnalysisLastCapture] = React.useState(null)
@@ -171,6 +173,15 @@ function HomePage() {
           riserve: riserve.length,
           formation: data.layout?.formation || null
         })
+        setStarters(
+          titolari.map((p) => ({
+            id: p.id,
+            player_name: p.player_name,
+            position: p.position,
+            slot_index: Number(p.slot_index)
+          }))
+        )
+        setSlotPositions(data.layout?.slot_positions || null)
         
         setRecentMatches(data.matches || [])
         setHasActiveCoach(data.hasActiveCoach)
@@ -367,6 +378,8 @@ function HomePage() {
         lang={lang}
         userProfile={userProfile}
         stats={stats}
+        starters={starters}
+        slotPositions={slotPositions}
         hasActiveCoach={hasActiveCoach}
         recentMatches={recentMatches}
         gameAnalysisLastCapture={gameAnalysisLastCapture}

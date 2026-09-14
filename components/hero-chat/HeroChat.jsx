@@ -264,7 +264,7 @@ function priorityRank(value) {
   return 2
 }
 
-function PrematchPlanCard({ plan, lang }) {
+function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null }) {
   if (!plan) return null
   const raw = plan.countermeasures || {}
   const analysis = raw.analysis || {}
@@ -375,6 +375,8 @@ function PrematchPlanCard({ plan, lang }) {
       </div>
 
       <PrematchPitch
+        starters={starters}
+        slotPositions={slotPositions}
         playerSuggestions={playerSuggestions}
         individualInstructions={individualInstructions}
         focusText={[
@@ -685,6 +687,8 @@ export default function HeroChat({
   lang,
   userProfile,
   stats,
+  starters = [],
+  slotPositions = null,
   hasActiveCoach,
   recentMatches,
   gameAnalysisLastCapture,
@@ -1964,7 +1968,12 @@ export default function HeroChat({
                     </div>
                   </div>
                 ) : null}
-                <PrematchPlanCard plan={m.plan} lang={lang} />
+                <PrematchPlanCard
+                  plan={m.plan}
+                  lang={lang}
+                  starters={starters}
+                  slotPositions={slotPositions}
+                />
               </React.Fragment>
             )
           }

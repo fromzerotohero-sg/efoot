@@ -61,7 +61,7 @@ export async function GET(request) {
       { data: gameAnalysis }
     ] = await Promise.all([
       // 1. Formation layout (User specific)
-      supabase.from('formation_layout').select('formation').eq('user_id', userId).maybeSingle(),
+      supabase.from('formation_layout').select('formation, slot_positions').eq('user_id', userId).maybeSingle(),
       
       // 2. Players
       supabase.from('players')

@@ -136,18 +136,27 @@ function findSlotByPlayer(slots, playerId, playerName) {
 
 /**
  * Mini campo read-only: titolari reali + overlay swap/istruzioni.
+ * Preferisce starters/slotPositions dalla Home (dashboard già autenticata).
  */
 export default function PrematchPitch({
+  starters: startersProp = null,
+  slotPositions: slotPositionsProp = null,
   playerSuggestions = [],
   individualInstructions = [],
   focusText = '',
   lang = 'it'
 }) {
-  const [starters, setStarters] = React.useState([])
-  const [slotPositions, setSlotPositions] = React.useState(DEFAULT_SLOT_POSITIONS)
-  const [loadState, setLoadState] = React.useState('loading') // loading | ready | empty
+  const hasPropStarters = Array.isArray(startersProp) && startersProp.length > 0
+  const [fetchedStarters, setFetchedStarters] = React.useState([])
+  const [fetchedSlots, setFetchedSlots] = React.useState(null)
+  const [loadState, setLoadState] = React.useState(hasPropStarters ? 'ready' : 'loading')
 
   React.useEffect(() => {
+    if (hasPropStarters) {
+      setLoadState('ready')
+      return undefined
+    }
+
     let cancelled = false
     async function loadRoster() {
       setLoadState('loading')
@@ -158,7 +167,8 @@ export default function PrematchPitch({
           return
         }
 
-        const res = await fetch('/api/formation', {
+        // Stesso endpoint della Home (Metalgate-safe)
+        const res = await fetch(`/api/dashboard?t=${Date.now()}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Cache-Control': 'no-cache'
@@ -174,7 +184,7 @@ export default function PrematchPitch({
 
         const players = Array.isArray(data.players) ? data.players : []
         const titolari = players
-          .filter((p) => p?.id && p?.player_name && p.slot_index != null)
+          .filter((p) => p?.id && p?.player_name && p.slot_index != null && p.slot_index !== '')
           .filter((p) => {
             const n = Number(p.slot_index)
             return Number.isFinite(n) && n >= 0 && n <= 10
@@ -186,10 +196,8 @@ export default function PrematchPitch({
             slot_index: Number(p.slot_index)
           }))
 
-        setStarters(titolari)
-        if (data.layout?.slot_positions) {
-          setSlotPositions(completeSlotPositions(data.layout.slot_positions))
-        }
+        setFetchedStarters(titolari)
+        if (data.layout?.slot_positions) setFetchedSlots(data.layout.slot_positions)
         setLoadState(titolari.length ? 'ready' : 'empty')
       } catch {
         if (!cancelled) setLoadState('empty')
@@ -199,25 +207,29 @@ export default function PrematchPitch({
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [hasPropStarters])
+
+  const starters = hasPropStarters ? startersProp : fetchedStarters
+  const slotPositions = slotPositionsProp || fetchedSlots || DEFAULT_SLOT_POSITIONS
 
   const overlay = React.useMemo(() => {
     const positions = completeSlotPositions(slotPositions || DEFAULT_SLOT_POSITIONS)
-    const base = Object.entries(positions).map(([idx, slot]) => {
-      const index = Number(idx)
-      const starter = starters.find((p) => Number(p.slot_index) === index)
+    const base = Object.keys(DEFAULT_SLOT_POSITIONS).map((key) => {
+      const index = Number(key)
+      const slot = positions[index] || positions[String(index)] || DEFAULT_SLOT_POSITIONS[index]
+      const starter = (starters || []).find((p) => Number(p.slot_index) === index)
       return {
         index,
-        x: Number(slot.x) || 50,
-        y: Number(slot.y) || 50,
-        position: slot.position || DEFAULT_SLOT_POSITIONS[index]?.position || '?',
+        x: Number(slot?.x) || DEFAULT_SLOT_POSITIONS[index].x,
+        y: Number(slot?.y) || DEFAULT_SLOT_POSITIONS[index].y,
+        position: slot?.position || DEFAULT_SLOT_POSITIONS[index].position,
         playerId: starter?.id || null,
         name: starter?.player_name || null,
         outName: null,
         inName: null,
         instruction: null,
         focus: false,
-        roleLabel: slot.position || DEFAULT_SLOT_POSITIONS[index]?.position || '?'
+        roleLabel: slot?.position || DEFAULT_SLOT_POSITIONS[index].position
       }
     })
 
