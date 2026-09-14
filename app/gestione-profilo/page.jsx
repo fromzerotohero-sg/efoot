@@ -7,10 +7,10 @@ import { ArrowRight, BarChart3, MessageCircle, Shield, Sparkles, Wallet, X } fro
 export default function GestioneProfiloPage() {
   const { lang } = useTranslation()
 
-  const pageTitle = lang === 'en' ? 'Use your Hero Points' : 'Usa i tuoi Hero Points'
-  const buyLabel = lang === 'en' ? 'Buy Hero Points' : 'Acquista Hero Points'
-  const tableHeaderService = lang === 'en' ? 'Tool' : 'Strumento'
-  const tableHeaderCost = lang === 'en' ? 'HP' : 'HP'
+  const pageTitle = (lang === 'en' || lang === 'es') ? 'Use your Hero Points' : 'Usa i tuoi Hero Points'
+  const buyLabel = (lang === 'en' || lang === 'es') ? 'Buy Hero Points' : 'Acquista Hero Points'
+  const tableHeaderService = (lang === 'en' || lang === 'es') ? 'Tool' : 'Strumento'
+  const tableHeaderCost = (lang === 'en' || lang === 'es') ? 'HP' : 'HP'
   const refundDisclaimerLine1 = lang === 'en'
     ? 'If a platform error prevents an analysis from completing, the HP are automatically returned.'
     : 'Se un errore della piattaforma blocca un’analisi, gli HP vengono riaccreditati automaticamente.'
@@ -57,7 +57,7 @@ export default function GestioneProfiloPage() {
   return (
     <main style={{ padding: 'clamp(12px, 4vw, 24px)', minHeight: '100vh', maxWidth: '980px', margin: '0 auto' }}>
       <section className="card hp-page-card">
-        <a href="/" className="hp-close-button" aria-label={lang === 'en' ? 'Back to dashboard' : 'Torna alla dashboard'}>
+        <a href="/" className="hp-close-button" aria-label={(lang === 'en' || lang === 'es') ? 'Back to dashboard' : 'Torna alla dashboard'}>
           <X size={18} />
         </a>
 
@@ -69,7 +69,7 @@ export default function GestioneProfiloPage() {
             </h1>
           </div>
           <a href="/" className="hp-dashboard-link">
-            {lang === 'en' ? 'Back to dashboard' : 'Torna alla dashboard'}
+            {(lang === 'en' || lang === 'es') ? 'Back to dashboard' : 'Torna alla dashboard'}
           </a>
         </div>
 
@@ -88,7 +88,7 @@ export default function GestioneProfiloPage() {
                 <strong>{item.title}</strong>
                 <p>{item.text}</p>
                 <span className="hp-card-link">
-                  {lang === 'en' ? 'Open' : 'Apri'}
+                  {(lang === 'en' || lang === 'es') ? 'Open' : 'Apri'}
                   <ArrowRight size={13} />
                 </span>
               </a>
@@ -118,7 +118,7 @@ export default function GestioneProfiloPage() {
 
         <div className="hp-actions">
           <a href="/" className="hp-back-link">
-            {lang === 'en' ? 'Back to dashboard' : 'Torna alla dashboard'}
+            {(lang === 'en' || lang === 'es') ? 'Back to dashboard' : 'Torna alla dashboard'}
           </a>
           <a href="https://home.fromzerotohero.io/dashboard?usage" target="_blank" rel="noopener noreferrer" className="hp-buy-link">
             {buyLabel}
@@ -151,18 +151,18 @@ export default function GestioneProfiloPage() {
           border-radius: 999px;
           display: grid;
           place-items: center;
-          color: rgba(255,255,255,0.78);
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.12);
+          color: var(--text-dim);
+          background: var(--surface-2);
+          border: 1px solid var(--border-soft);
           text-decoration: none;
           transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
         }
 
         .hp-close-button:hover {
           transform: scale(1.04);
-          color: #fff;
-          background: rgba(0,212,255,0.12);
-          border-color: rgba(0,212,255,0.35);
+          color: var(--text-main);
+          background: var(--surface-2);
+          border-color: var(--border-soft);
         }
 
         .hp-dashboard-link,
@@ -173,9 +173,9 @@ export default function GestioneProfiloPage() {
           min-height: 36px;
           padding: 8px 13px;
           border-radius: 999px;
-          border: 1px solid rgba(0,212,255,0.24);
-          color: var(--neon-blue);
-          background: rgba(0,212,255,0.07);
+          border: 1px solid rgba(255, 203, 5, 0.35);
+          color: #ffcb05;
+          background: rgba(255, 203, 5, 0.08);
           text-decoration: none;
           font-size: 12px;
           font-weight: 850;
@@ -192,32 +192,32 @@ export default function GestioneProfiloPage() {
         .hp-use-card {
           display: block;
           padding: 16px;
-          border: 1px solid rgba(0,212,255,0.18);
+          border: 1px solid rgba(255, 203, 5, 0.22);
           border-radius: 16px;
           background:
             radial-gradient(circle at 0% 0%, rgba(255,203,5,0.10), transparent 42%),
-            linear-gradient(145deg, rgba(0,212,255,0.08), rgba(255,255,255,0.03));
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+            var(--surface);
+          box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
           text-decoration: none;
           transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
         }
 
         .hp-use-card:hover {
           transform: translateY(-2px);
-          border-color: rgba(255,203,5,0.42);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 12px 28px rgba(0,212,255,0.10);
+          border-color: rgba(255,203,5,0.45);
+          box-shadow: 0 14px 30px rgba(0, 0, 0, 0.24);
         }
 
         .hp-use-card strong {
           display: block;
           margin-top: 10px;
-          color: #fff;
+          color: var(--text-main);
           font-size: 15px;
         }
 
         .hp-use-card p {
           margin: 6px 0 0;
-          color: rgba(255,255,255,0.68);
+          color: var(--text-dim);
           font-size: 13px;
           line-height: 1.45;
         }
@@ -233,7 +233,7 @@ export default function GestioneProfiloPage() {
         }
 
         .hp-cost-table {
-          border: 1px solid rgba(255,255,255,0.08);
+          border: 1px solid var(--border-soft);
           border-radius: 14px;
           overflow: hidden;
         }
@@ -248,17 +248,17 @@ export default function GestioneProfiloPage() {
         }
 
         .hp-cost-head {
-          background: rgba(0,212,255,0.08);
-          border-bottom: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255, 203, 5, 0.08);
+          border-bottom: 1px solid var(--border-soft);
           font-weight: 800;
           font-size: 13px;
-          color: rgba(255,255,255,0.88);
+          color: var(--text-main);
           text-transform: uppercase;
           letter-spacing: 0.04em;
         }
 
         .hp-cost-row {
-          border-bottom: 1px solid rgba(255,255,255,0.06);
+          border-bottom: 1px solid var(--border-softer);
         }
 
         .hp-cost-row:last-child {
@@ -266,7 +266,7 @@ export default function GestioneProfiloPage() {
         }
 
         .hp-cost-row span {
-          color: rgba(255,255,255,0.92);
+          color: var(--text-main);
           font-size: clamp(13px, 2.7vw, 15px);
           overflow-wrap: anywhere;
         }
@@ -279,7 +279,7 @@ export default function GestioneProfiloPage() {
 
         .hp-note {
           margin: 12px 0 0;
-          color: rgba(255,255,255,0.72);
+          color: var(--text-dim);
           font-size: clamp(12px, 2.4vw, 13px);
           line-height: 1.45;
         }
@@ -298,8 +298,8 @@ export default function GestioneProfiloPage() {
           justify-content: center;
           min-height: 44px;
           padding: 10px 16px;
-          background: var(--neon-orange);
-          color: #000;
+          background: linear-gradient(135deg, #ffcb05, #f59e0b);
+          color: #1f1300;
           border-radius: 999px;
           text-decoration: none;
           font-weight: 900;
