@@ -255,6 +255,17 @@ export default function ImpostazioniProfiloPage() {
     fetchProfile()
   }, [router, t])
 
+  // Blocca lo scroll del body quando la modale di editing è aperta
+  // (evita il salto a fondo pagina su mobile quando l'input riceve il focus)
+  React.useEffect(() => {
+    if (!editingField) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [editingField])
+
   // Ricarica i dati profilo dal server (dopo una modifica singola)
   const reloadProfileData = React.useCallback(async () => {
     try {
@@ -550,6 +561,7 @@ export default function ImpostazioniProfiloPage() {
             key={card.label}
             onClick={() => openFieldEditor(card)}
             aria-label={`${card.label}: ${card.value || 'modifica'}`}
+            style={{ color: 'var(--text-main)' }}
           >
             <span className="profile-metric-card-head">
               <span>{card.label}</span>
@@ -628,12 +640,15 @@ export default function ImpostazioniProfiloPage() {
             onClick={(e) => e.stopPropagation()}
             style={{
               width: 'min(480px, 100%)',
+              maxHeight: '100dvh',
+              overflowY: 'auto',
               borderRadius: '20px 20px 0 0',
               background: 'var(--surface)',
               border: '1px solid var(--border-soft)',
               borderBottom: 'none',
-              padding: '18px 18px calc(18px + env(safe-area-inset-bottom, 0px))',
-              display: 'flex', flexDirection: 'column', gap: 14
+              padding: '18px 18px calc(20px + env(safe-area-inset-bottom, 0px))',
+              display: 'flex', flexDirection: 'column', gap: 14,
+              WebkitOverflowScrolling: 'touch'
             }}
           >
             <div style={{ width: 40, height: 4, borderRadius: 999, background: 'var(--border-soft)', margin: '0 auto' }} aria-hidden="true" />
@@ -669,12 +684,11 @@ export default function ImpostazioniProfiloPage() {
                 onChange={(e) => setEditValue(e.target.value)}
                 maxLength={1000}
                 rows={5}
-                autoFocus
                 style={{
                   width: '100%', padding: '12px 14px', resize: 'vertical',
                   borderRadius: 12, border: '1px solid var(--border-soft)',
                   background: 'var(--surface-2)', color: 'var(--text-main)',
-                  fontSize: 15, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', lineHeight: 1.5
+                  fontSize: 16, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', lineHeight: 1.5
                 }}
               />
             ) : (
@@ -683,12 +697,11 @@ export default function ImpostazioniProfiloPage() {
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
                 maxLength={255}
-                autoFocus
                 style={{
                   width: '100%', minHeight: 48, padding: '12px 14px',
                   borderRadius: 12, border: '1px solid var(--border-soft)',
                   background: 'var(--surface-2)', color: 'var(--text-main)',
-                  fontSize: 15, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box'
+                  fontSize: 16, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box'
                 }}
               />
             )}
@@ -697,7 +710,7 @@ export default function ImpostazioniProfiloPage() {
               <p style={{ margin: 0, fontSize: 13, color: '#d93025' }}>{editError}</p>
             )}
 
-            <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ display: 'flex', gap: 10, position: 'sticky', bottom: 0, background: 'var(--surface)', paddingTop: 10, marginTop: 'auto' }}>
               <button
                 type="button"
                 onClick={saveFieldEdit}
@@ -780,6 +793,7 @@ export default function ImpostazioniProfiloPage() {
           border: 1px solid var(--border-soft);
           border-radius: 18px;
           background: var(--surface);
+          color: var(--text-main);
           box-shadow: 0 12px 34px rgba(0, 0, 0, 0.08);
         }
 
