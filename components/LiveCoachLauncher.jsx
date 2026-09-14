@@ -180,7 +180,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
   const latestCoachLineRef = useRef(coachLine)
   const latestMicroLoopRef = useRef(null)
 
-  const premiumLabel = useMemo(() => lang === 'en' ? 'Premium' : 'Premium', [lang])
+  const premiumLabel = useMemo(() => (lang === 'en' || lang === 'es') ? 'Premium' : 'Premium', [lang])
   const balanceRemaining = Number.isFinite(Number(creditsData?.balance_remaining)) ? Number(creditsData.balance_remaining) : null
   const currentSessionSpent = Number.isFinite(Number(sessionInfo?.totalHpCharged)) ? Number(sessionInfo.totalHpCharged) : 0
   const elapsedMs = sessionStartedAt ? Math.max(0, nowTick - sessionStartedAt) : 0
@@ -189,7 +189,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
   const launcherWidth = 'min(268px, calc(100vw - 28px))'
   const coachDisplayName = useMemo(() => {
     const custom = userProfile?.ai_name && String(userProfile.ai_name).trim()
-    return custom || (lang === 'en' ? 'your coach' : 'il tuo coach')
+    return custom || ((lang === 'en' || lang === 'es') ? 'your coach' : 'il tuo coach')
   }, [lang, userProfile?.ai_name])
 
   const getToken = useCallback(async () => {
@@ -1026,7 +1026,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                 fontSize: '12px',
                 fontWeight: 700
               }}>
-                <Clock3 size={13} color={isConnected ? 'var(--neon-cyan)' : 'rgba(255,255,255,0.7)'} />
+                <Clock3 size={13} color={isConnected ? 'var(--accent)' : 'rgba(255,255,255,0.7)'} />
                 {t('liveCoachStatTime')}: {liveDuration}
               </div>
               <div style={{
@@ -1172,8 +1172,8 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                   <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" hidden onChange={handlePhotoPick} />
 
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '9px 11px', borderRadius: '999px', background: opponentContext?.formation ? 'rgba(0,212,255,0.10)' : 'rgba(255,255,255,0.05)', color: opponentContext?.formation ? 'var(--neon-cyan)' : 'rgba(255,255,255,0.78)', fontSize: '12px', fontWeight: 700 }}>
-                      <ImagePlus size={13} color={opponentContext?.formation ? 'var(--neon-cyan)' : '#FFD76A'} />
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '9px 11px', borderRadius: '999px', background: opponentContext?.formation ? 'rgba(0,212,255,0.10)' : 'rgba(255,255,255,0.05)', color: opponentContext?.formation ? 'var(--accent)' : 'rgba(255,255,255,0.78)', fontSize: '12px', fontWeight: 700 }}>
+                      <ImagePlus size={13} color={opponentContext?.formation ? 'var(--accent)' : '#FFD76A'} />
                       {opponentContext?.formation ? `${t('liveCoachOpponentReady')} ${opponentContext.formation}` : t('liveCoachOpponentMissing')}
                     </div>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '9px 11px', borderRadius: '999px', background: 'rgba(255,255,255,0.05)', color: '#FFFFFF', fontSize: '12px', fontWeight: 700 }}>
@@ -1429,7 +1429,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                     fontSize: '12px',
                     fontWeight: 700
                   }}>
-                    <Clock3 size={13} color="var(--neon-cyan)" />
+                    <Clock3 size={13} color="var(--accent)" />
                     {liveDuration}
                   </div>
                 </div>

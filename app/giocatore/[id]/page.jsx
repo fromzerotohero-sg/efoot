@@ -524,7 +524,7 @@ export default function PlayerDetailPage() {
   if (loading) {
     return (
       <main style={{ padding: '32px 24px', minHeight: '100vh', textAlign: 'center' }}>
-        <RefreshCw size={32} style={{ animation: 'spin 1s linear infinite', marginBottom: '16px', color: 'var(--neon-blue)' }} />
+        <RefreshCw size={32} style={{ animation: 'spin 1s linear infinite', marginBottom: '16px', color: 'var(--accent)' }} />
         <div>{t('loading')}</div>
       </main>
     )
@@ -599,8 +599,8 @@ export default function PlayerDetailPage() {
           style={{
             display: 'inline-flex', alignItems: 'center', gap: '6px',
             padding: '8px 14px', background: 'rgba(0,212,255,0.1)',
-            border: '1px solid var(--neon-blue)', borderRadius: '8px',
-            color: 'var(--neon-blue)', fontSize: '13px', cursor: 'pointer',
+            border: '1px solid var(--accent)', borderRadius: '8px',
+            color: 'var(--accent)', fontSize: '13px', cursor: 'pointer',
             fontWeight: 600, transition: 'all 0.2s'
           }}
         >
@@ -647,7 +647,7 @@ export default function PlayerDetailPage() {
           {player.overall_rating && (
             <div>
               <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '4px' }}>{t('overallRating')}</div>
-              <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--neon-blue)' }}>{getPlayerDisplayOverall(player)}</div>
+              <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--accent)' }}>{getPlayerDisplayOverall(player)}</div>
             </div>
           )}
           {player.age && (
@@ -671,7 +671,7 @@ export default function PlayerDetailPage() {
           {(playingStyleName || player.role) && (
             <div>
               <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '4px' }}>{t('playingStyle')}</div>
-              <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--neon-orange)' }}>{playingStyleName || player.role}</div>
+              <div style={{ fontSize: '16px', fontWeight: 600, color: '#f59e0b' }}>{playingStyleName || player.role}</div>
             </div>
           )}
         </div>
@@ -838,7 +838,7 @@ function StatsSection({ player, photoSlots, isExpanded, onToggle, onFileSelect, 
               {/* Attacco */}
               {baseStats.attacking && Object.keys(baseStats.attacking).length > 0 && (
                 <div style={{ marginBottom: '20px' }}>
-                  <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '12px', color: 'var(--neon-blue)' }}>
+                  <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '12px', color: 'var(--accent)' }}>
                     {t('attacking')}
                   </h3>
                   <div style={{ 
@@ -856,7 +856,7 @@ function StatsSection({ player, photoSlots, isExpanded, onToggle, onFileSelect, 
                         <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '4px' }}>
                           {t(key) || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                         </div>
-                        <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--neon-blue)' }}>
+                        <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--accent)' }}>
                           {value}
                         </div>
                       </div>
@@ -983,7 +983,7 @@ function SkillsSection({ player, photoSlots, isExpanded, onToggle, onFileSelect,
               {/* Abilità Giocatore */}
               {skills.length > 0 && (
                 <div style={{ marginBottom: '20px' }}>
-                  <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '12px', color: 'var(--neon-purple)' }}>
+                  <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '12px', color: 'var(--cards-accent)' }}>
                     {t('playerSkills')}
                   </h3>
                   <div style={{ 
@@ -999,7 +999,7 @@ function SkillsSection({ player, photoSlots, isExpanded, onToggle, onFileSelect,
                         borderRadius: '20px',
                         fontSize: '13px',
                         fontWeight: 500,
-                        color: 'var(--neon-purple)'
+                        color: 'var(--cards-accent)'
                       }}>
                         {getSkillDisplayLabel(skill, lang)}
                       </div>
@@ -1126,7 +1126,7 @@ function BoostersSection({ player, photoSlots, isExpanded, onToggle, onFileSelec
                     fontSize: '16px', 
                     fontWeight: 700, 
                     marginBottom: '8px',
-                    color: 'var(--neon-orange)'
+                    color: '#f59e0b'
                   }}>
                     {booster.name || `${t('boostersSection')} ${idx + 1}`}
                   </div>
@@ -1239,8 +1239,8 @@ function PlayerDetailUploadPanel({
             className="neon-button"
             style={{
               padding: '10px 14px',
-              borderColor: 'var(--neon-blue)',
-              color: 'var(--neon-blue)',
+              borderColor: 'var(--accent)',
+              color: 'var(--accent)',
               background: 'transparent',
               display: 'inline-flex',
               alignItems: 'center',
@@ -1496,8 +1496,8 @@ function PlayerDetailUploadPanel({
               className="neon-button"
               style={{
                 padding: '8px 14px',
-                borderColor: 'var(--neon-orange)',
-                color: 'var(--neon-orange)',
+                borderColor: '#f59e0b',
+                color: '#f59e0b',
                 background: 'transparent',
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -1621,7 +1621,7 @@ function ConfirmUpdateModal({
           padding: 'clamp(16px, 4vw, 24px)',
           paddingBottom: 'calc(16px + 72px + env(safe-area-inset-bottom, 0px))',
           background: 'rgba(10, 14, 39, 0.95)',
-          border: `2px solid ${hasMismatch ? '#ef4444' : 'var(--neon-blue)'}`,
+          border: `2px solid ${hasMismatch ? '#ef4444' : 'var(--accent)'}`,
           borderRadius: '16px',
           marginTop: 'auto',
           marginBottom: 'auto',
@@ -1763,8 +1763,8 @@ function ConfirmUpdateModal({
               flex: '1 1 160px',
               minHeight: '48px',
               padding: '12px 16px',
-              background: hasMismatch ? '#ef4444' : 'var(--neon-blue)',
-              borderColor: hasMismatch ? '#ef4444' : 'var(--neon-blue)',
+              background: hasMismatch ? '#ef4444' : 'var(--accent)',
+              borderColor: hasMismatch ? '#ef4444' : 'var(--accent)',
               justifyContent: 'center'
             }}
           >

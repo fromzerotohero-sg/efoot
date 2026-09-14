@@ -34,7 +34,7 @@ export default function AssistantPage() {
             borderRadius: '8px',
             background: 'transparent',
             border: '1px solid rgba(0, 212, 255, 0.4)',
-            color: 'var(--neon-cyan)',
+            color: 'var(--accent)',
             cursor: 'pointer',
             boxShadow: '0 0 10px rgba(0, 212, 255, 0.2)'
           }}

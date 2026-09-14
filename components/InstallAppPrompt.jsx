@@ -236,7 +236,7 @@ export default function InstallAppPrompt() {
                     margin: 0,
                     fontSize: 'clamp(17px, 4.5vw, 20px)',
                     fontWeight: 700,
-                    color: '#fff',
+                    color: 'var(--text-main)',
                     lineHeight: 1.25,
                   }}
                 >
@@ -258,7 +258,7 @@ export default function InstallAppPrompt() {
                 return (
                   <div key={index} className="pwa-install-step">
                     <span className="pwa-install-step-num">{index + 1}</span>
-                    <StepIcon size={20} style={{ flexShrink: 0, marginTop: 2, color: 'var(--neon-cyan)' }} />
+                    <StepIcon size={20} style={{ flexShrink: 0, marginTop: 2, color: 'var(--accent)' }} />
                     <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.88)', lineHeight: 1.45 }}>{step.text}</span>
                   </div>
                 )
