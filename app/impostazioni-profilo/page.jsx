@@ -10,7 +10,8 @@ import LanguageSwitch from '@/components/LanguageSwitch'
 import ThemeToggle from '@/components/ThemeToggle'
 
 
-/** Hub Account & Utility stile app: identita reale, HP reali, utility di sistema, logout reale. */
+/** Hub Account & Utility stile app: identita reale, HP reali, utility di sistema, logout reale.
+ *  Stili inline: la pagina ha gia un blocco styled-jsx e il componente deve restare indipendente. */
 function AccountUtilitySection({ t, lang, router }) {
   const [account, setAccount] = React.useState({ name: '', email: '' })
   const [hpBalance, setHpBalance] = React.useState(null)
@@ -77,45 +78,77 @@ function AccountUtilitySection({ t, lang, router }) {
 
   const initial = (account.name || account.email || 'H').charAt(0).toUpperCase()
 
+  const st = {
+    section: {
+      display: 'flex', flexDirection: 'column', gap: 16,
+      marginBottom: 16, padding: '16px 18px',
+      borderRadius: 18, background: 'var(--surface)', border: '1px solid var(--border-soft)'
+    },
+    head: { display: 'flex', alignItems: 'center', gap: 12 },
+    avatar: {
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      width: 46, height: 46, borderRadius: '50%', flexShrink: 0,
+      background: 'var(--accent-bg)', border: '1px solid var(--accent-border)',
+      color: 'var(--accent)', fontSize: 19, fontWeight: 900
+    },
+    idBlock: { display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: 1 },
+    idName: { fontSize: 16, fontWeight: 800, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+    idMail: { fontSize: 12, color: 'var(--text-dim)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+    hp: {
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      padding: '6px 12px', borderRadius: 999, flexShrink: 0,
+      background: 'rgba(255, 203, 5, 0.09)', border: '1px solid rgba(255, 203, 5, 0.28)',
+      color: '#ffcb05', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap'
+    },
+    grid: { display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' },
+    item: { display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 40 },
+    label: { fontSize: 12, fontWeight: 700, color: 'var(--text-dim)' },
+    link: {
+      display: 'inline-flex', alignItems: 'center', gap: 8,
+      minHeight: 40, padding: '9px 14px', borderRadius: 10,
+      border: '1px solid var(--border-soft)', background: 'var(--surface-2)',
+      color: 'var(--text-main)', fontSize: 13, fontWeight: 600,
+      fontFamily: 'inherit', textDecoration: 'none', cursor: 'pointer'
+    },
+    logout: {
+      color: '#ff8585', borderColor: 'rgba(255, 80, 80, 0.3)', background: 'rgba(255, 80, 80, 0.08)'
+    }
+  }
+
   return (
-    <section className="account-utility" aria-label="Account">
-      <div className="account-utility-head">
-        <span className="account-avatar" aria-hidden="true">{initial}</span>
-        <div className="account-id">
-          <strong>{account.name || t('profile')}</strong>
-          {account.email ? <small>{account.email}</small> : null}
+    <section style={st.section} aria-label="Account">
+      <div style={st.head}>
+        <span style={st.avatar} aria-hidden="true">{initial}</span>
+        <div style={st.idBlock}>
+          <span style={st.idName}>{account.name || t('profile')}</span>
+          {account.email ? <span style={st.idMail}>{account.email}</span> : null}
         </div>
         {typeof hpBalance === 'number' && (
-          <span className="account-hp">
+          <span style={st.hp}>
             <Zap size={13} />
             {hpBalance} HP
           </span>
         )}
       </div>
 
-      <div className="account-utility-grid">
-        <div className="account-utility-item">
-          <span className="account-utility-label">{(lang === 'en' || lang === 'es') ? 'Language' : 'Lingua'}</span>
+      <div style={st.grid}>
+        <div style={st.item}>
+          <span style={st.label}>{(lang === 'en' || lang === 'es') ? 'Language' : 'Lingua'}</span>
           <LanguageSwitch />
         </div>
-        <div className="account-utility-item">
-          <span className="account-utility-label">{(lang === 'en' || lang === 'es') ? 'Theme' : 'Tema'}</span>
+        <div style={st.item}>
+          <span style={st.label}>{(lang === 'en' || lang === 'es') ? 'Theme' : 'Tema'}</span>
           <ThemeToggle />
         </div>
-        <a className="account-utility-item account-utility-link" href="/guida">
+        <a style={st.link} href="/guida">
           <BookOpen size={16} />
           <span>{t('guide')}</span>
         </a>
-        <a
-          className="account-utility-item account-utility-link"
-          href="https://tornei.fromzerotohero.io/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <a style={st.link} href="https://tornei.fromzerotohero.io/" target="_blank" rel="noopener noreferrer">
           <Gift size={16} />
           <span>Tornei</span>
         </a>
-        <button type="button" className="account-utility-item account-utility-link account-logout" onClick={handleLogout}>
+        <button type="button" style={{ ...st.link, ...st.logout }} onClick={handleLogout}>
           <LogOut size={16} />
           <span>{t('logout')}</span>
         </button>
@@ -357,6 +390,24 @@ export default function ImpostazioniProfiloPage() {
     if (value === null || value === undefined || value === '') return null
     return String(value)
   }
+  const FIELD_LABELS = {
+    platform: { console: 'Console', pc: 'PC', mobile: 'Mobile', other: (lang === 'en' || lang === 'es') ? 'Other' : 'Altro' },
+    pass_level: { pa1: 'PA1', pa2: 'PA2', pa3: 'PA3' },
+    ai_weak_point: {
+      defence: (lang === 'en' || lang === 'es') ? 'Defence' : 'Difesa',
+      attack: (lang === 'en' || lang === 'es') ? 'Attack' : 'Attacco',
+      set_pieces: (lang === 'en' || lang === 'es') ? 'Set pieces' : 'Palle inattive',
+      transitions: (lang === 'en' || lang === 'es') ? 'Transitions' : 'Transizioni',
+      final_minutes: (lang === 'en' || lang === 'es') ? 'Final minutes' : 'Minuti finali'
+    }
+  }
+  const fieldValue = (field, value) => {
+    const raw = cleanValue(value)
+    if (!raw) return raw
+    const map = FIELD_LABELS[field]
+    if (!map) return raw
+    return map[raw] || raw
+  }
   const profileOverviewCards = [
     {
       label: (lang === 'en' || lang === 'es') ? 'Division' : 'Divisione',
@@ -370,17 +421,17 @@ export default function ImpostazioniProfiloPage() {
     },
     {
       label: (lang === 'en' || lang === 'es') ? 'Platform' : 'Piattaforma',
-      value: cleanValue(profileData?.platform),
+      value: fieldValue('platform', profileData?.platform),
       hint: (lang === 'en' || lang === 'es') ? 'From Coach Gym' : 'Da Palestra Coach'
     },
     {
       label: (lang === 'en' || lang === 'es') ? 'Pass level' : 'Livello passaggi',
-      value: cleanValue(profileData?.pass_level),
+      value: fieldValue('pass_level', profileData?.pass_level),
       hint: (lang === 'en' || lang === 'es') ? 'Control profile' : 'Profilo comandi'
     },
     {
       label: (lang === 'en' || lang === 'es') ? 'Weak point' : 'Punto debole',
-      value: cleanValue(profileData?.ai_weak_point || profile.common_problems),
+      value: fieldValue('ai_weak_point', profileData?.ai_weak_point || profile.common_problems),
       hint: (lang === 'en' || lang === 'es') ? 'What the coach should watch' : 'Cosa deve osservare il coach'
     },
     {
@@ -541,18 +592,16 @@ export default function ImpostazioniProfiloPage() {
         <button 
           onClick={() => setShowCoachGym(true)}
           className="neon-button"
-          style={{ 
+          style={{
             whiteSpace: 'nowrap',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(0, 180, 216, 0.3))',
-            border: '2px solid #00d4ff',
-            color: 'var(--text-main)',
-            fontWeight: 600,
-            flexShrink: 0,
-            boxShadow: '0 0 15px rgba(0, 212, 255, 0.4), inset 0 0 10px rgba(0, 212, 255, 0.1)',
-            textShadow: '0 0 8px rgba(0, 212, 255, 0.8)'
+            background: 'var(--accent-bg)',
+            border: '1px solid var(--accent-border)',
+            color: 'var(--accent)',
+            fontWeight: 700,
+            flexShrink: 0
           }}
         >
           <Zap size={16} />
@@ -951,124 +1000,6 @@ export default function ImpostazioniProfiloPage() {
       />
       <style jsx>{`
 
-        .account-utility {
-          display: flex;
-          flex-direction: column;
-          gap: 14px;
-          margin-bottom: 16px;
-          padding: 16px 18px;
-          border-radius: 18px;
-          background: var(--surface);
-          border: 1px solid var(--border-soft);
-        }
-
-        .account-utility-head {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .account-avatar {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 44px;
-          height: 44px;
-          border-radius: 50%;
-          background: var(--accent-bg);
-          border: 1px solid var(--accent-border);
-          color: var(--accent);
-          font-size: 18px;
-          font-weight: 900;
-          flex-shrink: 0;
-        }
-
-        .account-id {
-          display: flex;
-          flex-direction: column;
-          min-width: 0;
-          flex: 1;
-        }
-
-        .account-id strong {
-          font-size: 16px;
-          font-weight: 800;
-          color: var(--text-main);
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .account-id small {
-          font-size: 12px;
-          color: var(--text-dim);
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .account-hp {
-          display: inline-flex;
-          align-items: center;
-          gap: 5px;
-          padding: 6px 12px;
-          border-radius: 999px;
-          background: rgba(255, 203, 5, 0.09);
-          border: 1px solid rgba(255, 203, 5, 0.28);
-          color: #ffcb05;
-          font-size: 12px;
-          font-weight: 800;
-          white-space: nowrap;
-        }
-
-        .account-utility-grid {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-          align-items: center;
-        }
-
-        .account-utility-item {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          min-height: 40px;
-        }
-
-        .account-utility-label {
-          font-size: 12px;
-          font-weight: 700;
-          color: var(--text-dim);
-        }
-
-        .account-utility-link {
-          padding: 9px 14px;
-          border-radius: 10px;
-          border: 1px solid var(--border-soft);
-          background: var(--surface-2);
-          color: var(--text-main);
-          font-size: 13px;
-          font-weight: 600;
-          font-family: inherit;
-          text-decoration: none;
-          cursor: pointer;
-        }
-
-        .account-utility-link:hover {
-          border-color: var(--accent-border);
-          color: var(--accent);
-        }
-
-        .account-logout {
-          color: #ff8585;
-          border-color: rgba(255, 80, 80, 0.3);
-          background: rgba(255, 80, 80, 0.08);
-        }
-
-        .account-logout:hover {
-          border-color: rgba(255, 80, 80, 0.5);
-          color: #ff8585;
-        }
 
         .profile-page {
           width: min(1180px, 100%);
@@ -1169,15 +1100,15 @@ export default function ImpostazioniProfiloPage() {
 
         .profile-hero-link:hover {
           transform: translateY(-2px);
-          border-color: rgba(0, 212, 255, 0.45);
-          background: rgba(0, 212, 255, 0.10);
+          border-color: var(--accent-border);
+          background: var(--accent-bg);
         }
 
         .profile-hero-link--primary {
-          color: #001018;
-          border-color: rgba(0, 212, 255, 0.82);
-          background: linear-gradient(135deg, #00d4ff, #67e8f9);
-          box-shadow: 0 0 22px rgba(0, 212, 255, 0.24);
+          color: var(--accent-ink);
+          border-color: var(--accent-border);
+          background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+          box-shadow: 0 8px 24px rgba(39, 167, 106, 0.28);
         }
 
         .profile-score-panel {
@@ -1342,12 +1273,12 @@ export default function ImpostazioniProfiloPage() {
           gap: 8px;
           border: none;
           border-radius: 14px;
-          color: #001018;
-          background: linear-gradient(135deg, #00d4ff, #67e8f9);
+          color: var(--accent-ink);
+          background: linear-gradient(135deg, var(--accent), var(--accent-strong));
           font-size: 15px;
           font-weight: 900;
           cursor: pointer;
-          box-shadow: 0 0 22px rgba(0, 212, 255, 0.20);
+          box-shadow: 0 8px 24px rgba(39, 167, 106, 0.24);
         }
 
         .profile-save-button:disabled {
