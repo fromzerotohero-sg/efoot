@@ -2,14 +2,36 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslation, pickLang } from '@/lib/i18n'
+
+/**
+ * Verifica sessione UNA VOLTA per sessione JS: le API validano comunque il token
+ * a ogni richiesta (401 -> login), quindi al cambio pagina non serve ri-verificare.
+ * Il flag si invalida se il token sparisce (logout).
+ */
+let authVerifiedOnce = false
 
 export function withAuth(WrappedComponent) {
   return function AuthWrapper(props) {
     const router = useRouter()
-    const [isLoading, setIsLoading] = useState(true)
-    const [isAuthenticated, setIsAuthenticated] = useState(false)
+    const { lang } = useTranslation()
+    const [isLoading, setIsLoading] = useState(() => {
+      if (typeof window === 'undefined') return true
+      return !(authVerifiedOnce && localStorage.getItem('auth_token'))
+    })
+    const [isAuthenticated, setIsAuthenticated] = useState(() => {
+      if (typeof window === 'undefined') return false
+      return authVerifiedOnce && !!localStorage.getItem('auth_token')
+    })
 
     useEffect(() => {
+      // Gia verificata in questa sessione: niente schermata di attesa al cambio pagina
+      if (authVerifiedOnce && localStorage.getItem('auth_token')) {
+        setIsAuthenticated(true)
+        setIsLoading(false)
+        return
+      }
+
       const checkAuth = async () => {
         try {
           // Check for custom Metalgate session
@@ -26,7 +48,7 @@ export function withAuth(WrappedComponent) {
             router.push('/login')
             return
           }
-          
+
           if (authToken) {
             console.log('Verifying Metalgate token with backend...')
             try {
@@ -51,6 +73,7 @@ export function withAuth(WrappedComponent) {
                     username: data.user.username,
                     isMetalgateUser: true
                   }))
+                  authVerifiedOnce = true
                   setIsAuthenticated(true)
                   setIsLoading(false)
                   return
@@ -71,12 +94,13 @@ export function withAuth(WrappedComponent) {
               console.error('Error verifying token:', verifyError)
               // Network error: Do nothing, keep token
             }
-            
-            // If token still exists (verification succeeded, or network error/optimistic), 
+
+            // If token still exists (verification succeeded, or network error/optimistic),
             // consider authenticated and STOP here.
             // Do NOT fall through to Supabase check which would fail and redirect.
             if (localStorage.getItem('auth_token')) {
               console.log('Proceeding with custom token (optimistic or verified)')
+              authVerifiedOnce = true
               setIsAuthenticated(true)
               setIsLoading(false)
               return
@@ -89,6 +113,7 @@ export function withAuth(WrappedComponent) {
             const { data: { session }, error } = await supabase.auth.getSession()
             if (session && !error) {
               console.log('Supabase session found')
+              authVerifiedOnce = true
               setIsAuthenticated(true)
             } else {
               console.log('No valid session found, redirecting to login')
@@ -126,35 +151,35 @@ export function withAuth(WrappedComponent) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: 'var(--bg-primary)',
+          backgroundColor: 'var(--shell-bg)',
           fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
         }}>
           <div style={{
             textAlign: 'center',
-            padding: '32px',
-            backgroundColor: 'rgba(5, 8, 20, 0.8)',
-            borderRadius: '12px',
-            boxShadow: 'var(--shadow-lg)',
-            border: '1px solid rgba(0, 212, 255, 0.3)',
+            padding: '28px 32px',
+            backgroundColor: 'var(--surface)',
+            borderRadius: '16px',
+            boxShadow: '0 18px 48px rgba(0, 0, 0, 0.35)',
+            border: '1px solid var(--border-soft)',
             maxWidth: '360px'
           }}>
             <div style={{
               width: '36px',
               height: '36px',
-              border: '3px solid rgba(0, 212, 255, 0.05)',
-              borderTop: '3px solid var(--primary-cyan)',
+              border: '3px solid var(--border-soft)',
+              borderTop: '3px solid var(--accent)',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               margin: '0 auto 1rem'
             }} />
-            <h2 style={{ margin: '0 0 0.5rem', color: '#FFFFFF', fontSize: '18px', fontWeight: 600 }}>
-              Verifying Session...
+            <h2 style={{ margin: '0 0 0.5rem', color: 'var(--text-main)', fontSize: '17px', fontWeight: 700 }}>
+              {pickLang(lang, { it: 'Verifica sessione…', en: 'Verifying session…', es: 'Verificando sesión…' })}
             </h2>
-            <p style={{ margin: 0, color: 'rgba(0, 212, 255, 0.7)', fontSize: '14px' }}>
-              Connecting to Metalgate...
+            <p style={{ margin: 0, color: 'var(--text-dim)', fontSize: '13px' }}>
+              {pickLang(lang, { it: 'Un momento, sto preparando tutto.', en: 'One moment, getting everything ready.', es: 'Un momento, estoy preparándolo todo.' })}
             </p>
           </div>
-          
+
           <style jsx>{`
             @keyframes spin {
               0% { transform: rotate(0deg); }
