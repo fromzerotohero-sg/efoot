@@ -110,9 +110,6 @@ const COPY = {
   planInstructions: { it: 'Istruzioni individuali', en: 'Individual instructions', es: 'Instrucciones individuales' },
   planSubstitutions: { it: 'Cambi consigliati', en: 'Suggested substitutions', es: 'Cambios sugeridos' },
   planManual: { it: 'Da verificare manualmente', en: 'Review manually', es: 'Revisar manualmente' },
-  planWarnings: { it: 'Attenzione', en: 'Warnings', es: 'Advertencias' },
-  planConfidence: { it: 'Confidenza', en: 'Confidence', es: 'Confianza' },
-  planQuality: { it: 'Qualità dati', en: 'Data quality', es: 'Calidad de datos' },
   planQuickTips: { it: 'Consigli veloci', en: 'Quick tips', es: 'Consejos rápidos' },
   planDetails: { it: 'Dettagli', en: 'Details', es: 'Detalles' },
   attachAnalyzing: { it: 'Sto leggendo le tue statistiche…', en: 'Reading your stats…', es: 'Leyendo tus estadísticas…' },
@@ -302,10 +299,6 @@ function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, for
   })()
   const strengths = Array.isArray(analysis.strengths) ? analysis.strengths : []
   const weaknesses = Array.isArray(analysis.weaknesses) ? analysis.weaknesses : []
-  const warnings = Array.isArray(raw.warnings)
-    ? raw.warnings
-    : (Array.isArray(changeSet.warnings) ? changeSet.warnings : [])
-
   const localized = (value) => {
     if (typeof value === 'string' || typeof value === 'number') return String(value)
     return L(lang, value) || ''
@@ -351,10 +344,7 @@ function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, for
     formationAdjustments.length ||
     tacticalAdjustments.length ||
     playerSuggestions.length ||
-    individualInstructions.length ||
-    warnings.length ||
-    raw.confidence != null ||
-    raw.data_quality
+    individualInstructions.length
 
   return (
     <div className="hc-planCard">
@@ -485,23 +475,6 @@ function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, for
             )}
           </div>
 
-          {(warnings.length > 0 || raw.confidence != null || raw.data_quality) && (
-            <div className="hc-planMeta">
-              {warnings.length > 0 && (
-                <div className="hc-planWarnings">
-                  <strong>{L(lang, COPY.planWarnings)}</strong>
-                  <ul>{list(warnings)}</ul>
-                </div>
-              )}
-              {(raw.confidence != null || raw.data_quality) && (
-                <small>
-                  {raw.confidence != null ? `${L(lang, COPY.planConfidence)}: ${raw.confidence}%` : ''}
-                  {raw.confidence != null && raw.data_quality ? ' · ' : ''}
-                  {raw.data_quality ? `${L(lang, COPY.planQuality)}: ${raw.data_quality}` : ''}
-                </small>
-              )}
-            </div>
-          )}
         </details>
       )}
     </div>
@@ -3336,8 +3309,7 @@ export default function HeroChat({
           margin-top: 10px;
         }
 
-        :global(.hc-planListGroup > span),
-        :global(.hc-planWarnings > strong) {
+        :global(.hc-planListGroup > span) {
           color: var(--accent);
           font-size: 11px;
           font-weight: 800;
@@ -3345,8 +3317,7 @@ export default function HeroChat({
           letter-spacing: 0.03em;
         }
 
-        :global(.hc-planListGroup ul),
-        :global(.hc-planWarnings ul) {
+        :global(.hc-planListGroup ul) {
           display: grid;
           gap: 5px;
           margin: 6px 0 0;
@@ -3381,20 +3352,6 @@ export default function HeroChat({
 
         :global(.hc-planAdviceWarning) {
           border-left-color: #ffbf4d;
-        }
-
-        :global(.hc-planMeta) {
-          display: grid;
-          gap: 8px;
-          color: var(--text-dim);
-          font-size: 11px;
-        }
-
-        :global(.hc-planWarnings) {
-          padding: 9px;
-          border-radius: 10px;
-          background: rgba(255, 191, 77, 0.08);
-          border: 1px solid rgba(255, 191, 77, 0.2);
         }
 
         :global(.hc-matchCard) {

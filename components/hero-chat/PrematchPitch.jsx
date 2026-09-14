@@ -3,9 +3,8 @@
 import React from 'react'
 import { DEFAULT_SLOT_POSITIONS, completeSlotPositions } from '@/lib/formationDefaultSlots'
 import {
-  normalizePos, nameKey, asText, roleGroup, displayName, shortInstruction,
-  buildZones, claimSlot, findSlotByPlayer, buildSwapArrows, buildMovementArrows,
-  formationLabel
+  normalizePos, nameKey, asText, displayName, shortInstruction,
+  claimSlot, findSlotByPlayer, formationLabel
 } from '@/lib/prematchPitchHelpers'
 
 async function resolveAuthToken() {
@@ -34,8 +33,6 @@ export default function PrematchPitch({
   const [fetchedSlots, setFetchedSlots] = React.useState(null)
   const [fetchedFormation, setFetchedFormation] = React.useState(null)
   const [loadState, setLoadState] = React.useState(hasPropStarters ? 'ready' : 'loading')
-  const [layers, setLayers] = React.useState({ swaps: true, instructions: true, zones: true, moves: true })
-  const [selectedSlot, setSelectedSlot] = React.useState(null)
 
   React.useEffect(() => {
     if (hasPropStarters) { setLoadState('ready'); return undefined }
@@ -88,10 +85,9 @@ export default function PrematchPitch({
         playerId: starter?.id || null,
         name: starter?.player_name || null,
         outName: null, inName: null,
-        instruction: null, instructionText: null, movement: null,
+        instruction: null, instructionText: null, actionReason: null,
         focus: false,
-        roleLabel: slot?.position || DEFAULT_SLOT_POSITIONS[index].position,
-        group: roleGroup(slot?.position || DEFAULT_SLOT_POSITIONS[index].position)
+        roleLabel: slot?.position || DEFAULT_SLOT_POSITIONS[index].position
       }
     })
 
@@ -113,10 +109,10 @@ export default function PrematchPitch({
       if (!slot) continue
       slot.outName = outName || slot.name
       slot.inName = inName
+      slot.actionReason = asText(sug.reason || sug.application_hint, lang)
       if (inName) slot.name = inName
       if (sug.position || sug.replace_position || sug.slot_role) {
         slot.roleLabel = normalizePos(sug.position || sug.replace_position || sug.slot_role) || slot.position
-        slot.group = roleGroup(slot.roleLabel)
       }
       slot.focus = true
     }
@@ -132,7 +128,7 @@ export default function PrematchPitch({
       if (!slot) continue
       slot.instruction = badge
       slot.instructionText = asText(row?.instruction, lang)
-      slot.movement = buildMovementArrows([slot], [row], lang)[0] || null
+      slot.actionReason = asText(row?.reason, lang)
       slot.focus = true
       if (!slot.name && row?.player_name) slot.name = row.player_name
     }
@@ -149,45 +145,50 @@ export default function PrematchPitch({
     return base
   }, [starters, slotPositions, playerSuggestions, individualInstructions, focusText, lang])
 
-  const zones = React.useMemo(() => buildZones(focusText, lang), [focusText, lang])
-  const swapArrows = React.useMemo(() => buildSwapArrows(overlay, playerSuggestions), [overlay, playerSuggestions])
-  const moveArrows = React.useMemo(() => buildMovementArrows(overlay, individualInstructions, lang), [overlay, individualInstructions, lang])
   const formationStr = React.useMemo(() => formationLabel(formation, slotPositions, lang), [formation, slotPositions, lang])
 
   const hasPlayers = overlay.some((s) => s.name || s.inName || s.outName)
-  const hasSwaps = swapArrows.length > 0
-  const hasInstructions = overlay.some((s) => s.instruction)
-  const hasMoves = moveArrows.length > 0
-  const hasZones = zones.length > 0
-  const hasFocus = overlay.some((s) => s.focus && !s.inName && !s.instruction)
+  const actions = React.useMemo(() => {
+    const rows = []
+    for (const slot of overlay) {
+      if (slot.inName || slot.outName) {
+        rows.push({
+          slotIndex: slot.index,
+          kind: 'swap',
+          kicker: 'Cambio consigliato',
+          title: slot.inName && slot.outName
+            ? `${displayName(slot.inName)} per ${displayName(slot.outName)}`
+            : displayName(slot.inName || slot.outName),
+          detail: slot.actionReason
+        })
+      }
+    }
+    for (const slot of overlay) {
+      if (!slot.instruction || rows.some((row) => row.slotIndex === slot.index)) continue
+      rows.push({
+        slotIndex: slot.index,
+        kind: 'instruction',
+        kicker: `Istruzione · ${displayName(slot.name) || slot.roleLabel}`,
+        title: slot.instructionText || slot.instruction,
+        detail: slot.actionReason
+      })
+    }
+    return rows.slice(0, 3).map((row, index) => ({ ...row, number: index + 1 }))
+  }, [overlay])
 
-  const toggleLayer = (key) => setLayers((prev) => ({ ...prev, [key]: !prev[key] }))
+  const actionBySlot = React.useMemo(
+    () => new Map(actions.map((action) => [action.slotIndex, action])),
+    [actions]
+  )
 
   return (
     <div className="hc-pitch" aria-label="Campo piano contromisure">
       <div className="hc-pitchHeader">
         <div className="hc-pitchHeaderLeft">
-          <span className="hc-pitchHeaderLabel">Contromisure pre-partita</span>
-          <span className="hc-pitchHeaderFormation">{formationStr || 'Formazione'}</span>
+          <span className="hc-pitchHeaderLabel">Piano visuale</span>
+          <span className="hc-pitchHeaderFormation">{formationStr || 'La tua formazione'}</span>
         </div>
-        <div className="hc-pitchHeaderRight">
-          {(hasSwaps || hasInstructions || hasMoves || hasZones) && (
-            <div className="hc-pitchLayers" role="group" aria-label="Livelli visualizzazione">
-              {hasSwaps && (
-                <button type="button" onClick={() => toggleLayer('swaps')} className={`hc-pitchLayer${layers.swaps ? ' is-on' : ''}`} aria-pressed={layers.swaps}>Cambi</button>
-              )}
-              {hasInstructions && (
-                <button type="button" onClick={() => toggleLayer('instructions')} className={`hc-pitchLayer${layers.instructions ? ' is-on' : ''}`} aria-pressed={layers.instructions}>Istruzioni</button>
-              )}
-              {hasMoves && (
-                <button type="button" onClick={() => toggleLayer('moves')} className={`hc-pitchLayer${layers.moves ? ' is-on' : ''}`} aria-pressed={layers.moves}>Movimenti</button>
-              )}
-              {hasZones && (
-                <button type="button" onClick={() => toggleLayer('zones')} className={`hc-pitchLayer${layers.zones ? ' is-on' : ''}`} aria-pressed={layers.zones}>Zone</button>
-              )}
-            </div>
-          )}
-        </div>
+        {actions.length > 0 && <span className="hc-pitchHeaderCount">{actions.length} priorità</span>}
       </div>
 
       <div className="hc-pitchField">
@@ -237,99 +238,45 @@ export default function PrematchPitch({
           </g>
         </svg>
 
-        {layers.zones && hasZones && (
-          <svg className="hc-pitchZones" viewBox="0 0 100 140" preserveAspectRatio="none" aria-hidden="true">
-            {zones.map((z) => (
-              <ellipse key={z.id} cx={z.cx} cy={z.cy * 1.4} rx={z.rx} ry={z.ry * 1.4} className={`hc-pitchZoneShape ${z.className}`} />
-            ))}
-          </svg>
-        )}
-
-        {(layers.swaps && hasSwaps) || (layers.moves && hasMoves) ? (
-          <svg className="hc-pitchArrows" viewBox="0 0 100 140" preserveAspectRatio="none" aria-hidden="true">
-            <defs>
-              <marker id="hcArrowSwap" markerWidth="5" markerHeight="5" refX="4.2" refY="2.5" orient="auto">
-                <path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(255,203,5,0.95)" />
-              </marker>
-              <marker id="hcArrowMove" markerWidth="5" markerHeight="5" refX="4.2" refY="2.5" orient="auto">
-                <path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(99,179,237,0.95)" />
-              </marker>
-            </defs>
-            {layers.swaps && swapArrows.map((a) => {
-              const dx = a.x2 - a.x1, dy = (a.y2 - a.y1) * 1.4
-              const len = Math.sqrt(dx * dx + dy * dy) || 1
-              const shrink = 6
-              const x1 = a.x1 + (dx / len) * shrink
-              const y1 = a.y1 * 1.4 + (dy / len) * shrink
-              const x2 = a.x2 - (dx / len) * shrink
-              const y2 = a.y2 * 1.4 - (dy / len) * shrink
-              const mx = (x1 + x2) / 2, my = (y1 + y2) / 2
-              const cx = mx + (dy !== 0 ? 5 : 0), cy = my + (dx !== 0 ? 5 : 0)
-              return <path key={a.id} d={`M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`} fill="none" stroke="rgba(255,203,5,0.9)" strokeWidth="0.9" strokeLinecap="round" markerEnd="url(#hcArrowSwap)" />
-            })}
-            {layers.moves && moveArrows.map((a) => {
-              const x2c = Math.max(3, Math.min(97, a.x2))
-              const y2c = Math.max(3, Math.min(137, a.y2 * 1.4))
-              return (
-                <g key={a.id}>
-                  <path d={`M ${a.x1} ${a.y1 * 1.4} Q ${a.cx} ${a.cy * 1.4} ${x2c} ${y2c}`} fill="none" stroke="rgba(99,179,237,0.85)" strokeWidth="0.8" strokeDasharray="2 1.5" strokeLinecap="round" markerEnd="url(#hcArrowMove)" />
-                </g>
-              )
-            })}
-          </svg>
-        ) : null}
         {overlay.map((slot) => {
-          const showSwap = !!(slot.outName || slot.inName)
           const name = slot.inName || slot.name
-          const isSelected = selectedSlot === slot.index
-          const dim = selectedSlot != null && !isSelected
-          const showInstr = layers.instructions && slot.instruction
+          const action = actionBySlot.get(slot.index)
           return (
             <div
               key={slot.index}
-              className={`hc-pitchToken hc-pitchToken-${slot.group}${slot.inName ? ' hc-pitchTokenIn' : ''}${slot.outName && !slot.inName ? ' hc-pitchTokenOut' : ''}${slot.focus ? ' hc-pitchTokenFocus' : ''}${isSelected ? ' hc-pitchTokenSelected' : ''}${dim ? ' hc-pitchTokenDim' : ''}${showInstr ? ' hc-pitchTokenInstr' : ''}`}
+              className={`hc-pitchToken${action ? ' hc-pitchTokenAction' : ''}`}
               style={{ left: `${slot.x}%`, top: `${slot.y}%` }}
-              onClick={() => setSelectedSlot((prev) => (prev === slot.index ? null : slot.index))}
-              role="button"
-              tabIndex={0}
               aria-label={`${slot.roleLabel} ${name || slot.outName || ''}`}
             >
               <span className="hc-pitchTokenCircle">
-                <span className="hc-pitchTokenNum">{slot.index === 0 ? 1 : slot.index + 1}</span>
+                <span className="hc-pitchTokenRole">{slot.roleLabel}</span>
+                {action && <span className="hc-pitchTokenActionNum">{action.number}</span>}
               </span>
-              <span className="hc-pitchTokenRole">{slot.roleLabel}</span>
-              {showSwap ? (
-                <span className="hc-pitchTokenNames">
-                  {slot.outName && <span className="hc-pitchTokenOut">{displayName(slot.outName)}</span>}
-                  {slot.inName && <span className="hc-pitchTokenInName">{displayName(slot.inName)}</span>}
-                </span>
-              ) : (
-                <span className={`hc-pitchTokenName${name ? '' : ' hc-pitchTokenEmpty'}`}>{name ? displayName(name) : '—'}</span>
-              )}
-              {showInstr && <span className="hc-pitchTokenBadge">{slot.instruction}</span>}
-              {isSelected && slot.instructionText && (
-                <span className="hc-pitchTokenTooltip">{slot.instructionText}</span>
-              )}
+              <span className={`hc-pitchTokenName${name ? '' : ' hc-pitchTokenEmpty'}`}>
+                {name ? displayName(name) : '—'}
+              </span>
             </div>
           )
         })}
       </div>
 
-      {(hasSwaps || hasInstructions || hasMoves || hasZones || hasFocus) && (
-        <div className="hc-pitchLegend" aria-hidden="true">
-          {hasZones && zones.map((z) => (
-            <span key={z.id} className={`hc-pitchLegendChip hc-pitchLegend-${z.id}`}><span className="hc-pitchLegendDot" />{z.label}</span>
+      {actions.length > 0 && (
+        <div className="hc-pitchActions">
+          {actions.map((action) => (
+            <div key={`${action.kind}-${action.slotIndex}`} className="hc-pitchAction">
+              <span className="hc-pitchActionNum">{action.number}</span>
+              <span className="hc-pitchActionCopy">
+                <span className="hc-pitchActionKicker">{action.kicker}</span>
+                <strong className="hc-pitchActionTitle">{action.title}</strong>
+                {action.detail && <span className="hc-pitchActionDetail">{action.detail}</span>}
+              </span>
+            </div>
           ))}
-          {hasFocus && <span className="hc-pitchLegendChip hc-pitchLegend-focus"><span className="hc-pitchLegendDot" />Ruolo chiave</span>}
-          {hasInstructions && <span className="hc-pitchLegendChip hc-pitchLegend-instr"><span className="hc-pitchLegendDot" />Istruzione</span>}
-          {hasMoves && <span className="hc-pitchLegendChip hc-pitchLegend-move"><span className="hc-pitchLegendDot" />Movimento</span>}
-          {hasSwaps && <span className="hc-pitchLegendChip hc-pitchLegend-swap"><span className="hc-pitchLegendDot" />Cambio</span>}
         </div>
       )}
       {!hasPlayers && loadState === 'loading' && <p className="hc-pitchHint">Carico la tua formazione…</p>}
       {!hasPlayers && loadState !== 'loading' && <p className="hc-pitchHint">Formazione non disponibile — apri la rosa e riprova</p>}
-      {hasPlayers && !hasSwaps && !hasInstructions && !hasMoves && !hasZones && <p className="hc-pitchHint">Tua formazione — i consigli del coach evidenzieranno ruoli chiave, cambi e movimenti</p>}
-      {hasPlayers && (hasSwaps || hasInstructions || hasMoves || hasZones) && <p className="hc-pitchHint">Tocca un giocatore per leggere l'istruzione individuale</p>}
+      {hasPlayers && actions.length === 0 && <p className="hc-pitchHint">Nessuna modifica alla formazione consigliata.</p>}
     </div>
   )
 }

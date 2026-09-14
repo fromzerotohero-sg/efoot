@@ -1701,5 +1701,176 @@ html[data-theme='light'] .hc-pitchTokenTooltip {
   background: rgba(255,255,255,0.98); color: #0b1220; border-color: rgba(255,203,5,0.5);
 }
 
+/* PrematchPitch clarity pass: formation first, actions second. */
+.hc-pitchHeader {
+  align-items: center;
+  padding-bottom: 10px;
+}
+.hc-pitchHeaderCount {
+  padding: 4px 9px;
+  border: 1px solid rgba(255, 203, 5, 0.34);
+  border-radius: 999px;
+  background: rgba(255, 203, 5, 0.1);
+  color: #ffe166;
+  font-size: 10px;
+  font-weight: 800;
+}
+.hc-pitchField {
+  aspect-ratio: 4 / 5;
+  max-height: 500px;
+}
+.hc-pitchToken {
+  width: 24%;
+  max-width: 82px;
+  gap: 4px;
+  cursor: default;
+}
+.hc-pitchToken:hover {
+  transform: translate(-50%, -50%);
+  z-index: 3;
+}
+.hc-pitchTokenCircle {
+  width: 29px;
+  height: 29px;
+  background: #0b2013;
+  border: 1.5px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.34);
+}
+.hc-pitchTokenRole {
+  margin: 0;
+  color: #f7faf8;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+}
+.hc-pitchTokenName,
+.hc-pitchTokenEmpty {
+  max-width: 100%;
+  padding: 2px 5px;
+  border: 0;
+  border-radius: 4px;
+  background: rgba(2, 12, 6, 0.82);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 1.15;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+}
+.hc-pitchTokenAction .hc-pitchTokenCircle {
+  border: 2px solid #ffcb05;
+  background: #142311;
+  box-shadow: 0 0 0 3px rgba(255, 203, 5, 0.13), 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+.hc-pitchTokenActionNum {
+  position: absolute;
+  top: -8px;
+  right: -9px;
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border: 2px solid #0b1b10;
+  border-radius: 50%;
+  background: #ffcb05;
+  color: #101608;
+  font-size: 9px;
+  font-weight: 950;
+  line-height: 1;
+}
+.hc-pitchActions {
+  display: grid;
+  gap: 7px;
+  margin-top: 10px;
+}
+.hc-pitchAction {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 10px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.035);
+}
+.hc-pitchActionNum {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: 50%;
+  background: #ffcb05;
+  color: #11170a;
+  font-size: 12px;
+  font-weight: 950;
+}
+.hc-pitchActionCopy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+.hc-pitchActionKicker {
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.hc-pitchActionTitle {
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.3;
+}
+.hc-pitchActionDetail {
+  display: -webkit-box;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.64);
+  font-size: 10px;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+html[data-theme='light'] .hc-pitchHeaderCount {
+  color: #755900;
+}
+html[data-theme='light'] .hc-pitchTokenCircle {
+  background: #17361f;
+}
+html[data-theme='light'] .hc-pitchTokenRole {
+  color: #fff;
+}
+html[data-theme='light'] .hc-pitchTokenName,
+html[data-theme='light'] .hc-pitchTokenEmpty {
+  border: 0;
+  background: rgba(255, 255, 255, 0.93);
+  color: #111;
+}
+html[data-theme='light'] .hc-pitchAction {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.75);
+}
+html[data-theme='light'] .hc-pitchActionKicker,
+html[data-theme='light'] .hc-pitchActionDetail {
+  color: rgba(0, 0, 0, 0.58);
+}
+html[data-theme='light'] .hc-pitchActionTitle {
+  color: #171717;
+}
+@media (max-width: 720px) {
+  .hc-pitchField {
+    max-height: 430px;
+  }
+  .hc-pitchToken {
+    width: 25%;
+  }
+  .hc-pitchTokenCircle {
+    width: 27px;
+    height: 27px;
+  }
+  .hc-pitchTokenName {
+    font-size: 9px;
+  }
+}
+
 
 
