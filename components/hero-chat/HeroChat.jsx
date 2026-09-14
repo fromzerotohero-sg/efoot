@@ -880,7 +880,7 @@ export default function HeroChat({
           border-radius: 10px;
           background: var(--surface-2);
           border: 1px solid var(--border-soft);
-          color: rgba(255, 255, 255, 0.65);
+          color: var(--text-dim);
           cursor: pointer;
         }
 
@@ -969,7 +969,7 @@ export default function HeroChat({
           background: var(--surface);
           border: 1px solid var(--border-softer);
           border-radius: 4px 16px 16px 16px;
-          color: rgba(244, 246, 247, 0.92);
+          color: var(--text-main);
         }
 
         .hc-bubbleUser {
@@ -1047,7 +1047,7 @@ export default function HeroChat({
           margin: 0;
           font-size: 16px;
           font-weight: 800;
-          color: #ffffff;
+          color: var(--text-main);
         }
 
         .hc-stateDesc {
@@ -1098,7 +1098,7 @@ export default function HeroChat({
         .hc-richHead strong {
           flex: 1;
           font-size: 14px;
-          color: #ffffff;
+          color: var(--text-main);
         }
 
         .hc-richClose {
@@ -1110,7 +1110,7 @@ export default function HeroChat({
           border-radius: 8px;
           border: none;
           background: transparent;
-          color: rgba(255, 255, 255, 0.45);
+          color: var(--text-dim);
           cursor: pointer;
         }
 
@@ -1282,7 +1282,7 @@ export default function HeroChat({
           border: none;
           border-radius: 10px;
           background: transparent;
-          color: rgba(244, 246, 247, 0.85);
+          color: var(--text-main);
           font-size: 13px;
           font-weight: 600;
           font-family: inherit;

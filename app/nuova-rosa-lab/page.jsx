@@ -97,10 +97,10 @@ function getSlotCompatibility(slotPosition = '', cardPosition = '') {
 }
 
 function compatibilityLabel(compatibility, lang) {
-  if (compatibility === 'perfect') return lang === 'en' ? 'Perfect fit' : 'Fit perfetto'
-  if (compatibility === 'adaptable') return lang === 'en' ? 'Adaptable' : 'Adattabile'
-  if (compatibility === 'out_of_role') return lang === 'en' ? 'Out of role' : 'Fuori ruolo'
-  return lang === 'en' ? 'Unknown' : 'Non definito'
+  if (compatibility === 'perfect') return (lang === 'en' || lang === 'es') ? 'Perfect fit' : 'Fit perfetto'
+  if (compatibility === 'adaptable') return (lang === 'en' || lang === 'es') ? 'Adaptable' : 'Adattabile'
+  if (compatibility === 'out_of_role') return (lang === 'en' || lang === 'es') ? 'Out of role' : 'Fuori ruolo'
+  return (lang === 'en' || lang === 'es') ? 'Unknown' : 'Non definito'
 }
 
 function buildPlayerPayloadFromCatalog(card, slotIndex = null, { originalPositions = null, fieldPosition = null } = {}) {
@@ -249,8 +249,8 @@ function getPhotoProfileCompletion(player, lang = 'it') {
   const skillsReady = hasPlayerSkills(player)
   const boostersReady = hasPlayerBoosters(player)
   const sections = [
-    { key: 'stats', ready: statsReady, label: lang === 'en' ? 'stats' : 'statistiche' },
-    { key: 'skills', ready: skillsReady, label: lang === 'en' ? 'skills' : 'abilita' },
+    { key: 'stats', ready: statsReady, label: (lang === 'en' || lang === 'es') ? 'stats' : 'statistiche' },
+    { key: 'skills', ready: skillsReady, label: (lang === 'en' || lang === 'es') ? 'skills' : 'abilita' },
     { key: 'boosters', ready: boostersReady, label: 'booster' }
   ]
   const missing = sections.filter((section) => !section.ready)
@@ -359,7 +359,7 @@ function getPlayerBuildCoachData(player) {
 
 function getBuildSliderLabel(key, lang) {
   const label = BUILD_SLIDER_LABELS[key]
-  return label ? (lang === 'en' ? label.en : label.it) : key
+  return label ? ((lang === 'en' || lang === 'es') ? label.en : label.it) : key
 }
 
 function getTokenFallback() {
@@ -655,8 +655,8 @@ function SlotPlayerCard({
       {typeof onRemove === 'function' && (
         <span
           role="button"
-          aria-label={lang === 'en' ? 'Remove from slot' : 'Rimuovi dallo slot'}
-          title={lang === 'en' ? 'Remove from slot' : 'Rimuovi dallo slot'}
+          aria-label={(lang === 'en' || lang === 'es') ? 'Remove from slot' : 'Rimuovi dallo slot'}
+          title={(lang === 'en' || lang === 'es') ? 'Remove from slot' : 'Rimuovi dallo slot'}
           className="nr-slot-remove"
           onMouseDown={(event) => event.stopPropagation()}
           onTouchStart={(event) => event.stopPropagation()}
@@ -819,7 +819,7 @@ function CatalogCard({ card, lang, onSelect }) {
         <strong>{card.player_name}</strong>
         <p>{card.card_type} · {card.position} · {card.playing_style || '-'}</p>
         <div className="nr-catalog-card-meta">
-          <em>{lang === 'en' ? 'Free catalog' : 'Catalogo libero'}</em>
+          <em>{(lang === 'en' || lang === 'es') ? 'Free catalog' : 'Catalogo libero'}</em>
         </div>
       </div>
       <ChevronRight size={16} />
@@ -849,14 +849,14 @@ function CoachCatalogCard({ coach, lang, t, onSelect, disabled }) {
       </div>
       <div className="nr-catalog-card-copy">
         <strong>{coach.coach_name}</strong>
-        <p>{category || (lang === 'en' ? 'Coach catalog' : 'Catalogo allenatori')} · {coach.pack_type || 'Special'}</p>
+        <p>{category || ((lang === 'en' || lang === 'es') ? 'Coach catalog' : 'Catalogo allenatori')} · {coach.pack_type || 'Special'}</p>
         <div className="nr-catalog-card-meta">
           <span>
             {bestPlaystyle
               ? `${t(bestPlaystyle[0]) || bestPlaystyle[0].replace(/_/g, ' ')} ${bestPlaystyle[1]}`
-              : (lang === 'en' ? 'Tactics ready' : 'Tattiche pronte')}
+              : ((lang === 'en' || lang === 'es') ? 'Tactics ready' : 'Tattiche pronte')}
           </span>
-          <em>{boosterCount > 0 ? `${boosterCount} booster` : (lang === 'en' ? 'No booster' : 'Nessun booster')}</em>
+          <em>{boosterCount > 0 ? `${boosterCount} booster` : ((lang === 'en' || lang === 'es') ? 'No booster' : 'Nessun booster')}</em>
         </div>
       </div>
       {disabled ? <RefreshCw size={16} className="nr-spin" /> : <ChevronRight size={16} />}
@@ -889,8 +889,8 @@ function CoachCatalogModal({
       onClose={() => {
         if (!saving) onClose()
       }}
-      title={lang === 'en' ? 'Choose coach from catalog' : 'Scegli allenatore da catalogo'}
-      subtitle={lang === 'en' ? 'Coach catalog' : 'Catalogo allenatori'}
+      title={(lang === 'en' || lang === 'es') ? 'Choose coach from catalog' : 'Scegli allenatore da catalogo'}
+      subtitle={(lang === 'en' || lang === 'es') ? 'Coach catalog' : 'Catalogo allenatori'}
       className="nr-picker-shell nr-coach-picker-shell"
     >
       <div className="nr-picker-toolbar">
@@ -901,27 +901,27 @@ function CoachCatalogModal({
               type="search"
               value={searchQuery}
               onChange={(event) => onSearchChange(event.target.value)}
-              placeholder={lang === 'en' ? 'Search coach name' : 'Cerca nome allenatore'}
+              placeholder={(lang === 'en' || lang === 'es') ? 'Search coach name' : 'Cerca nome allenatore'}
               disabled={saving}
             />
           </label>
           <button type="button" className="nr-secondary-button nr-upload-inline-button" onClick={onUploadFallback} disabled={saving}>
             <Upload size={14} />
-            {lang === 'en' ? 'Upload photos' : 'Carica le foto'}
+            {(lang === 'en' || lang === 'es') ? 'Upload photos' : 'Carica le foto'}
           </button>
         </div>
         <div className="nr-catalog-meta">
           <span>
             {total > 0
-              ? (lang === 'en' ? `${results.length} of ${total} coaches` : `${results.length} di ${total} allenatori`)
-              : (lang === 'en' ? 'No coaches loaded yet' : 'Nessun allenatore caricato')}
+              ? ((lang === 'en' || lang === 'es') ? `${results.length} of ${total} coaches` : `${results.length} di ${total} allenatori`)
+              : ((lang === 'en' || lang === 'es') ? 'No coaches loaded yet' : 'Nessun allenatore caricato')}
           </span>
           <label>
-            {lang === 'en' ? 'Sort' : 'Ordina'}
+            {(lang === 'en' || lang === 'es') ? 'Sort' : 'Ordina'}
             <select value={sort} onChange={(event) => onSortChange(event.target.value)} disabled={saving}>
-              <option value="name_asc">{lang === 'en' ? 'Name A-Z' : 'Nome A-Z'}</option>
+              <option value="name_asc">{(lang === 'en' || lang === 'es') ? 'Name A-Z' : 'Nome A-Z'}</option>
               <option value="best_playstyle" disabled={!activePlaystyle}>
-                {lang === 'en' ? 'Best for team style' : 'Migliore per stile squadra'}
+                {(lang === 'en' || lang === 'es') ? 'Best for team style' : 'Migliore per stile squadra'}
               </option>
             </select>
           </label>
@@ -933,7 +933,7 @@ function CoachCatalogModal({
           <section>
             <div className="nr-section-head">
               <div>
-                <h3>{lang === 'en' ? 'Catalog coaches' : 'Allenatori catalogo'}</h3>
+                <h3>{(lang === 'en' || lang === 'es') ? 'Catalog coaches' : 'Allenatori catalogo'}</h3>
                 {activePlaystyle ? (
                   <p>
                     {lang === 'en'
@@ -945,7 +945,7 @@ function CoachCatalogModal({
             </div>
             <div className="nr-catalog-list">
               {loading ? (
-                <div className="nr-empty-state">{lang === 'en' ? 'Loading...' : 'Caricamento...'}</div>
+                <div className="nr-empty-state">{(lang === 'en' || lang === 'es') ? 'Loading...' : 'Caricamento...'}</div>
               ) : results.length > 0 ? (
                 results.map((coach) => (
                   <CoachCatalogCard
@@ -988,7 +988,7 @@ function CoachPhotoUploadModal({
   const imageTypes = [
     {
       key: 'main',
-      label: lang === 'en' ? 'Coach card' : 'Carta allenatore',
+      label: (lang === 'en' || lang === 'es') ? 'Coach card' : 'Carta allenatore',
       description: lang === 'en'
         ? 'Main screen: name, nationality, team, playing style competence and booster.'
         : 'Schermata principale: nome, nazionalita, squadra, competenza stili di gioco e booster.',
@@ -996,7 +996,7 @@ function CoachPhotoUploadModal({
     },
     {
       key: 'connection',
-      label: lang === 'en' ? 'Tactical connection' : 'Collegamento',
+      label: (lang === 'en' || lang === 'es') ? 'Tactical connection' : 'Collegamento',
       description: lang === 'en'
         ? 'Connection screen with focal point and key man (optional but recommended).'
         : 'Schermata collegamento con punto focale e uomo chiave (opzionale ma consigliata).',
@@ -1043,8 +1043,8 @@ function CoachPhotoUploadModal({
       onClose={() => {
         if (!uploading) onClose()
       }}
-      title={lang === 'en' ? 'Add coach from photo' : 'Aggiungi allenatore da foto'}
-      subtitle={lang === 'en' ? 'Coach photo extraction' : 'Estrazione foto coach'}
+      title={(lang === 'en' || lang === 'es') ? 'Add coach from photo' : 'Aggiungi allenatore da foto'}
+      subtitle={(lang === 'en' || lang === 'es') ? 'Coach photo extraction' : 'Estrazione foto coach'}
       className="nr-photo-upload-shell"
     >
       <div className="nr-photo-upload-body">
@@ -1065,7 +1065,7 @@ function CoachPhotoUploadModal({
                 <span>{uploading && image ? <RefreshCw size={14} className="nr-spin" /> : image ? <Upload size={13} /> : index + 1}</span>
                 <small>
                   <strong>{type.label}</strong>
-                  <em>{image ? (lang === 'en' ? 'Selected' : 'Selezionata') : type.required ? (lang === 'en' ? 'Needed' : 'Necessaria') : (lang === 'en' ? 'Optional' : 'Opzionale')}</em>
+                  <em>{image ? ((lang === 'en' || lang === 'es') ? 'Selected' : 'Selezionata') : type.required ? ((lang === 'en' || lang === 'es') ? 'Needed' : 'Necessaria') : ((lang === 'en' || lang === 'es') ? 'Optional' : 'Opzionale')}</em>
                 </small>
               </div>
             )
@@ -1092,7 +1092,7 @@ function CoachPhotoUploadModal({
                     <strong>{label}</strong>
                     <p>{description}</p>
                   </div>
-                  <span>{required ? (lang === 'en' ? 'Needed' : 'Necessaria') : (lang === 'en' ? 'Optional' : 'Opzionale')}</span>
+                  <span>{required ? ((lang === 'en' || lang === 'es') ? 'Needed' : 'Necessaria') : ((lang === 'en' || lang === 'es') ? 'Optional' : 'Opzionale')}</span>
                 </div>
 
                 {image ? (
@@ -1100,11 +1100,11 @@ function CoachPhotoUploadModal({
                     <img src={image.dataUrl} alt={label} />
                     <div>
                       <span>
-                        {image.name || (lang === 'en' ? 'Selected photo' : 'Foto selezionata')}
-                        <small>{lang === 'en' ? 'Will be extracted when you confirm.' : 'Sara estratta quando confermi.'}</small>
+                        {image.name || ((lang === 'en' || lang === 'es') ? 'Selected photo' : 'Foto selezionata')}
+                        <small>{(lang === 'en' || lang === 'es') ? 'Will be extracted when you confirm.' : 'Sara estratta quando confermi.'}</small>
                       </span>
                       <button type="button" className="nr-secondary-button" onClick={() => removeImage(key)} disabled={uploading}>
-                        {lang === 'en' ? 'Remove' : 'Rimuovi'}
+                        {(lang === 'en' || lang === 'es') ? 'Remove' : 'Rimuovi'}
                       </button>
                     </div>
                   </div>
@@ -1113,12 +1113,12 @@ function CoachPhotoUploadModal({
                     <label className="nr-secondary-button">
                       <input type="file" accept="image/*" multiple onChange={(event) => handleFileSelect(event, key)} disabled={uploading} />
                       <Upload size={14} />
-                      {lang === 'en' ? 'Upload' : 'Carica'}
+                      {(lang === 'en' || lang === 'es') ? 'Upload' : 'Carica'}
                     </label>
                     <label className="nr-secondary-button">
                       <input type="file" accept="image/*" capture="environment" onChange={(event) => handleFileSelect(event, key)} disabled={uploading} />
                       <Camera size={14} />
-                      {lang === 'en' ? 'Camera' : 'Fotocamera'}
+                      {(lang === 'en' || lang === 'es') ? 'Camera' : 'Fotocamera'}
                     </label>
                   </div>
                 )}
@@ -1134,8 +1134,8 @@ function CoachPhotoUploadModal({
           <button type="button" className="nr-primary-button" onClick={onUpload} disabled={uploading || images.length === 0}>
             {uploading ? <RefreshCw size={14} className="nr-spin" /> : <CheckCircle2 size={14} />}
             {uploading
-              ? (lang === 'en' ? 'Extracting coach...' : 'Estrazione coach...')
-              : (lang === 'en' ? 'Save coach from photos' : 'Salva coach da foto')}
+              ? ((lang === 'en' || lang === 'es') ? 'Extracting coach...' : 'Estrazione coach...')
+              : ((lang === 'en' || lang === 'es') ? 'Save coach from photos' : 'Salva coach da foto')}
           </button>
         </div>
       </div>
@@ -1149,11 +1149,11 @@ function CoachDetailsModal({ show, coach, onClose, onReplaceFromCatalog, onRepla
   const image = getCoachCardImage(coach)
   const bestPlaystyle = getBestCoachPlaystyle(coach)
   const infoRows = [
-    [lang === 'en' ? 'Age' : 'Eta', coach.age],
-    [lang === 'en' ? 'Nationality' : 'Nazionalita', coach.nationality],
-    [lang === 'en' ? 'Team' : 'Squadra', coach.team],
-    [lang === 'en' ? 'Category' : 'Categoria', getCoachDisplayCategory(coach.category)],
-    [lang === 'en' ? 'Type' : 'Tipo', coach.pack_type]
+    [(lang === 'en' || lang === 'es') ? 'Age' : 'Eta', coach.age],
+    [(lang === 'en' || lang === 'es') ? 'Nationality' : 'Nazionalita', coach.nationality],
+    [(lang === 'en' || lang === 'es') ? 'Team' : 'Squadra', coach.team],
+    [(lang === 'en' || lang === 'es') ? 'Category' : 'Categoria', getCoachDisplayCategory(coach.category)],
+    [(lang === 'en' || lang === 'es') ? 'Type' : 'Tipo', coach.pack_type]
   ].filter(([, value]) => value !== null && value !== undefined && value !== '')
   const playstyles = Object.entries(coach.playing_style_competence || {})
     .filter(([, value]) => value !== null && value !== undefined && value !== '')
@@ -1166,8 +1166,8 @@ function CoachDetailsModal({ show, coach, onClose, onReplaceFromCatalog, onRepla
     <EnterpriseModalFrame
       show={show}
       onClose={onClose}
-      title={coach.coach_name || (lang === 'en' ? 'Coach details' : 'Dettaglio allenatore')}
-      subtitle={lang === 'en' ? 'Coach details' : 'Dettaglio allenatore'}
+      title={coach.coach_name || ((lang === 'en' || lang === 'es') ? 'Coach details' : 'Dettaglio allenatore')}
+      subtitle={(lang === 'en' || lang === 'es') ? 'Coach details' : 'Dettaglio allenatore'}
       className="nr-coach-details-shell"
     >
       <div className="nr-coach-details-body">
@@ -1176,24 +1176,24 @@ function CoachDetailsModal({ show, coach, onClose, onReplaceFromCatalog, onRepla
             {image ? <img src={image} alt={coach.coach_name || 'coach'} /> : <Star size={22} />}
           </div>
           <div>
-            <span className="nr-mini-kicker">{coach.is_active ? (lang === 'en' ? 'Active coach' : 'Coach attivo') : (lang === 'en' ? 'Saved coach' : 'Coach salvato')}</span>
+            <span className="nr-mini-kicker">{coach.is_active ? ((lang === 'en' || lang === 'es') ? 'Active coach' : 'Coach attivo') : ((lang === 'en' || lang === 'es') ? 'Saved coach' : 'Coach salvato')}</span>
             <h3>{coach.coach_name || '-'}</h3>
             <p>
               {bestPlaystyle
                 ? `${formatCoachLabel(bestPlaystyle[0], t)} ${bestPlaystyle[1]}`
-                : (coach.category || coach.team || (lang === 'en' ? 'Personal coach' : 'Allenatore personale'))}
+                : (coach.category || coach.team || ((lang === 'en' || lang === 'es') ? 'Personal coach' : 'Allenatore personale'))}
             </p>
           </div>
         </div>
 
         {!hasDetails && (
           <div className="nr-empty-state">
-            <span>{lang === 'en' ? 'No extra coach details available yet.' : 'Nessun dettaglio allenatore aggiuntivo disponibile.'}</span>
+            <span>{(lang === 'en' || lang === 'es') ? 'No extra coach details available yet.' : 'Nessun dettaglio allenatore aggiuntivo disponibile.'}</span>
           </div>
         )}
 
         {infoRows.length > 0 && (
-          <EnterpriseSection title={lang === 'en' ? 'Information' : 'Informazioni'}>
+          <EnterpriseSection title={(lang === 'en' || lang === 'es') ? 'Information' : 'Informazioni'}>
             <div className="nr-coach-info-grid">
               {infoRows.map(([label, value]) => (
                 <div key={label} className="nr-coach-info-row">
@@ -1206,7 +1206,7 @@ function CoachDetailsModal({ show, coach, onClose, onReplaceFromCatalog, onRepla
         )}
 
         {playstyles.length > 0 && (
-          <EnterpriseSection title={lang === 'en' ? 'Playing style competence' : 'Competenza stili di gioco'}>
+          <EnterpriseSection title={(lang === 'en' || lang === 'es') ? 'Playing style competence' : 'Competenza stili di gioco'}>
             <div className="nr-coach-style-list">
               {playstyles.map(([style, value]) => (
                 <div key={style} className="nr-coach-style-row">
@@ -1219,13 +1219,13 @@ function CoachDetailsModal({ show, coach, onClose, onReplaceFromCatalog, onRepla
         )}
 
         {coach.training_affinity_description && (
-          <EnterpriseSection title={lang === 'en' ? 'Training affinity' : 'Affinita di allenamento'}>
+          <EnterpriseSection title={(lang === 'en' || lang === 'es') ? 'Training affinity' : 'Affinita di allenamento'}>
             <p className="nr-coach-description">{coach.training_affinity_description}</p>
           </EnterpriseSection>
         )}
 
         {boosters.length > 0 && (
-          <EnterpriseSection title={lang === 'en' ? 'Stat boosters' : 'Stat boosters'}>
+          <EnterpriseSection title={(lang === 'en' || lang === 'es') ? 'Stat boosters' : 'Stat boosters'}>
             <div className="nr-coach-style-list">
               {boosters.map((booster, index) => (
                 <div key={`${booster.stat_name || booster.name || 'booster'}-${index}`} className="nr-coach-style-row">
@@ -1238,18 +1238,18 @@ function CoachDetailsModal({ show, coach, onClose, onReplaceFromCatalog, onRepla
         )}
 
         {connection && (
-          <EnterpriseSection title={lang === 'en' ? 'Connection' : 'Collegamento'}>
+          <EnterpriseSection title={(lang === 'en' || lang === 'es') ? 'Connection' : 'Collegamento'}>
             <div className="nr-coach-connection">
               {connection.name && <strong>{connection.name}</strong>}
               {connection.description && <p>{connection.description}</p>}
               {connection.focal_point && (
                 <span>
-                  <b>{lang === 'en' ? 'Focal point' : 'Punto focale'}:</b> {connection.focal_point.playing_style || '-'} ({connection.focal_point.position || '-'})
+                  <b>{(lang === 'en' || lang === 'es') ? 'Focal point' : 'Punto focale'}:</b> {connection.focal_point.playing_style || '-'} ({connection.focal_point.position || '-'})
                 </span>
               )}
               {connection.key_man && (
                 <span>
-                  <b>{lang === 'en' ? 'Key man' : 'Uomo chiave'}:</b> {connection.key_man.playing_style || '-'} ({connection.key_man.position || '-'})
+                  <b>{(lang === 'en' || lang === 'es') ? 'Key man' : 'Uomo chiave'}:</b> {connection.key_man.playing_style || '-'} ({connection.key_man.position || '-'})
                 </span>
               )}
             </div>
@@ -1263,7 +1263,7 @@ function CoachDetailsModal({ show, coach, onClose, onReplaceFromCatalog, onRepla
           </button>
           <button type="button" className="nr-primary-button" onClick={onReplaceFromCatalog} disabled={saving}>
             <Search size={14} />
-            {lang === 'en' ? 'Change from catalog' : 'Cambia da catalogo'}
+            {(lang === 'en' || lang === 'es') ? 'Change from catalog' : 'Cambia da catalogo'}
           </button>
         </div>
       </div>
@@ -1279,7 +1279,7 @@ function EnterpriseReservePicker({ reserves, lang, onPick, slotPosition, onAddNe
   })
 
   return (
-    <EnterpriseSection title={lang === 'en' ? 'Available reserves' : 'Riserve disponibili'}>
+    <EnterpriseSection title={(lang === 'en' || lang === 'es') ? 'Available reserves' : 'Riserve disponibili'}>
       <div className="nr-reserve-inline-list">
         {orderedReserves.length > 0 ? orderedReserves.map((player) => {
           const compatibility = getSlotCompatibility(slotPosition, player.position)
@@ -1295,9 +1295,9 @@ function EnterpriseReservePicker({ reserves, lang, onPick, slotPosition, onAddNe
           )
         }) : (
           <div className="nr-empty-state">
-            <span>{lang === 'en' ? 'No reserves available yet. Add a new player instead.' : 'Nessuna riserva disponibile. Aggiungi un nuovo giocatore.'}</span>
+            <span>{(lang === 'en' || lang === 'es') ? 'No reserves available yet. Add a new player instead.' : 'Nessuna riserva disponibile. Aggiungi un nuovo giocatore.'}</span>
             <button type="button" className="nr-secondary-button" onClick={onAddNew}>
-              {lang === 'en' ? 'Add new player' : 'Aggiungi nuovo'}
+              {(lang === 'en' || lang === 'es') ? 'Add new player' : 'Aggiungi nuovo'}
             </button>
           </div>
         )}
@@ -1352,19 +1352,19 @@ function CatalogPickerModal({
   const showChoice = !isReserveMode && slotFlow === 'choice'
   const showReserves = !isReserveMode && slotFlow === 'reserves'
   const sortOptions = [
-    { id: 'name_asc', label: lang === 'en' ? 'Name A-Z' : 'Nome A-Z' },
-    { id: 'role_asc', label: lang === 'en' ? 'Role A-Z' : 'Ruolo A-Z' }
+    { id: 'name_asc', label: (lang === 'en' || lang === 'es') ? 'Name A-Z' : 'Nome A-Z' },
+    { id: 'role_asc', label: (lang === 'en' || lang === 'es') ? 'Role A-Z' : 'Ruolo A-Z' }
   ]
   const resultCountLabel = total > 0
-    ? (lang === 'en' ? `${results.length} of ${total} cards` : `${results.length} di ${total} carte`)
-    : (lang === 'en' ? 'No cards loaded yet' : 'Nessuna carta caricata')
+    ? ((lang === 'en' || lang === 'es') ? `${results.length} of ${total} cards` : `${results.length} di ${total} carte`)
+    : ((lang === 'en' || lang === 'es') ? 'No cards loaded yet' : 'Nessuna carta caricata')
   const title = isReserveMode
-    ? (lang === 'en' ? 'Add reserve' : 'Aggiungi riserva')
+    ? ((lang === 'en' || lang === 'es') ? 'Add reserve' : 'Aggiungi riserva')
     : showChoice
-      ? `${lang === 'en' ? 'Add player in' : 'Aggiungi giocatore in'} ${slotPosition}`
+      ? `${(lang === 'en' || lang === 'es') ? 'Add player in' : 'Aggiungi giocatore in'} ${slotPosition}`
       : showReserves
-        ? `${lang === 'en' ? 'Choose a reserve for' : 'Scegli una riserva per'} ${slotPosition}`
-        : `${lang === 'en' ? 'Choose from catalog for' : 'Scegli dal catalogo per'} ${slotPosition}`
+        ? `${(lang === 'en' || lang === 'es') ? 'Choose a reserve for' : 'Scegli una riserva per'} ${slotPosition}`
+        : `${(lang === 'en' || lang === 'es') ? 'Choose from catalog for' : 'Scegli dal catalogo per'} ${slotPosition}`
   const description = isReserveMode
     ? (lang === 'en'
         ? 'Search the official catalog or upload photos if the player is not available.'
@@ -1390,7 +1390,7 @@ function CatalogPickerModal({
         <div className="nr-modal-header">
           <div>
             <span className="nr-mini-kicker">
-              {isReserveMode ? (lang === 'en' ? 'Reserve target' : 'Target riserva') : (lang === 'en' ? 'Slot target' : 'Slot target')}
+              {isReserveMode ? ((lang === 'en' || lang === 'es') ? 'Reserve target' : 'Target riserva') : ((lang === 'en' || lang === 'es') ? 'Slot target' : 'Slot target')}
             </span>
             <h2>{title}</h2>
             <p>{description}</p>
@@ -1410,10 +1410,10 @@ function CatalogPickerModal({
             >
               <span className="nr-choice-icon"><User size={18} /></span>
               <div>
-                <strong>{reserves.length > 0 ? (lang === 'en' ? 'Use a reserve' : 'Usa una riserva') : (lang === 'en' ? 'No reserves available' : 'Nessuna riserva disponibile')}</strong>
+                <strong>{reserves.length > 0 ? ((lang === 'en' || lang === 'es') ? 'Use a reserve' : 'Usa una riserva') : ((lang === 'en' || lang === 'es') ? 'No reserves available' : 'Nessuna riserva disponibile')}</strong>
                 <p>{reserves.length > 0
-                  ? (lang === 'en' ? `${reserves.length} players already in your bench.` : `${reserves.length} giocatori gia in panchina.`)
-                  : (lang === 'en' ? 'Add a new player from catalog or photo instead.' : 'Aggiungi un nuovo giocatore da catalogo o foto.')}</p>
+                  ? ((lang === 'en' || lang === 'es') ? `${reserves.length} players already in your bench.` : `${reserves.length} giocatori gia in panchina.`)
+                  : ((lang === 'en' || lang === 'es') ? 'Add a new player from catalog or photo instead.' : 'Aggiungi un nuovo giocatore da catalogo o foto.')}</p>
               </div>
               <ChevronRight size={18} />
             </button>
@@ -1421,8 +1421,8 @@ function CatalogPickerModal({
             <button type="button" className={`nr-picker-choice-card ${reserves.length === 0 ? 'primary' : ''}`} onClick={() => setSlotFlow('catalog')}>
               <span className="nr-choice-icon"><Search size={18} /></span>
               <div>
-                <strong>{lang === 'en' ? 'Add new player' : 'Aggiungi nuovo'}</strong>
-                <p>{lang === 'en' ? 'Search the catalog first, then use photo upload only if needed.' : 'Cerca prima nel catalogo, poi usa la foto solo se serve.'}</p>
+                <strong>{(lang === 'en' || lang === 'es') ? 'Add new player' : 'Aggiungi nuovo'}</strong>
+                <p>{(lang === 'en' || lang === 'es') ? 'Search the catalog first, then use photo upload only if needed.' : 'Cerca prima nel catalogo, poi usa la foto solo se serve.'}</p>
               </div>
               <ChevronRight size={18} />
             </button>
@@ -1432,7 +1432,7 @@ function CatalogPickerModal({
         {showReserves && (
           <div className="nr-picker-subnav">
             <button type="button" className="nr-secondary-button" onClick={goBackToChoice}>
-              {lang === 'en' ? 'Back to choices' : 'Torna alle scelte'}
+              {(lang === 'en' || lang === 'es') ? 'Back to choices' : 'Torna alle scelte'}
             </button>
           </div>
         )}
@@ -1442,7 +1442,7 @@ function CatalogPickerModal({
             <div className="nr-picker-subnav">
               {!isReserveMode && (
                 <button type="button" className="nr-secondary-button" onClick={goBackToChoice}>
-                  {lang === 'en' ? 'Back to choices' : 'Torna alle scelte'}
+                  {(lang === 'en' || lang === 'es') ? 'Back to choices' : 'Torna alle scelte'}
                 </button>
               )}
             </div>
@@ -1455,18 +1455,18 @@ function CatalogPickerModal({
                     type="search"
                     value={searchQuery}
                     onChange={(event) => onSearchChange(event.target.value)}
-                    placeholder={lang === 'en' ? 'Search player, role, or card type' : 'Cerca giocatore, ruolo o tipo carta'}
+                    placeholder={(lang === 'en' || lang === 'es') ? 'Search player, role, or card type' : 'Cerca giocatore, ruolo o tipo carta'}
                   />
                 </label>
                 <button type="button" className="nr-secondary-button nr-upload-inline-button" onClick={onUploadFallback}>
                   <Upload size={14} />
-                  {lang === 'en' ? 'Upload photo' : 'Carica foto'}
+                  {(lang === 'en' || lang === 'es') ? 'Upload photo' : 'Carica foto'}
                 </button>
               </div>
               <div className="nr-catalog-meta">
                 <span>{resultCountLabel}</span>
                 <label>
-                  {lang === 'en' ? 'Sort' : 'Ordina'}
+                  {(lang === 'en' || lang === 'es') ? 'Sort' : 'Ordina'}
                   <select value={sort} onChange={(event) => onSortChange(event.target.value)}>
                     {sortOptions.map((option) => (
                       <option key={option.id} value={option.id}>{option.label}</option>
@@ -1497,11 +1497,11 @@ function CatalogPickerModal({
             <div className="nr-picker-results">
               <section>
               <div className="nr-section-head">
-                <h3>{isReserveMode ? (lang === 'en' ? 'Catalog cards' : 'Carte catalogo') : (lang === 'en' ? 'Catalog results' : 'Risultati catalogo')}</h3>
+                <h3>{isReserveMode ? ((lang === 'en' || lang === 'es') ? 'Catalog cards' : 'Carte catalogo') : ((lang === 'en' || lang === 'es') ? 'Catalog results' : 'Risultati catalogo')}</h3>
               </div>
               <div className="nr-catalog-list">
                 {loading ? (
-                  <div className="nr-empty-state">{lang === 'en' ? 'Loading...' : 'Caricamento...'}</div>
+                  <div className="nr-empty-state">{(lang === 'en' || lang === 'es') ? 'Loading...' : 'Caricamento...'}</div>
                 ) : results.length > 0 ? (
                   <>
                     {results.map((card) => (
@@ -1514,13 +1514,13 @@ function CatalogPickerModal({
                     ))}
                     {hasMore && (
                       <button type="button" className="nr-load-more-button" onClick={onLoadMore} disabled={loadingMore}>
-                        {loadingMore ? (lang === 'en' ? 'Loading more...' : 'Caricamento...') : (lang === 'en' ? 'Show more cards' : 'Mostra altri giocatori')}
+                        {loadingMore ? ((lang === 'en' || lang === 'es') ? 'Loading more...' : 'Caricamento...') : ((lang === 'en' || lang === 'es') ? 'Show more cards' : 'Mostra altri giocatori')}
                       </button>
                     )}
                   </>
                 ) : (
                   <div className="nr-empty-state">
-                    {lang === 'en' ? 'No cards found with this search.' : 'Nessuna carta trovata con questa ricerca.'}
+                    {(lang === 'en' || lang === 'es') ? 'No cards found with this search.' : 'Nessuna carta trovata con questa ricerca.'}
                   </div>
                 )}
               </div>
@@ -1575,7 +1575,7 @@ function PhotoUploadExamples({ lang, examples = PLAYER_UPLOAD_EXAMPLES, descript
   return (
     <section className="nr-photo-example-panel">
       <div className="nr-photo-example-copy">
-        <strong>{lang === 'en' ? 'Example screenshots' : 'Esempi di screenshot'}</strong>
+        <strong>{(lang === 'en' || lang === 'es') ? 'Example screenshots' : 'Esempi di screenshot'}</strong>
         <p>{description || defaultDescription}</p>
       </div>
       <div className="nr-photo-example-grid">
@@ -1587,8 +1587,8 @@ function PhotoUploadExamples({ lang, examples = PLAYER_UPLOAD_EXAMPLES, descript
             rel="noreferrer"
             className="nr-photo-example-card"
           >
-            <img src={example.src} alt={example.labels[lang === 'en' ? 'en' : 'it']} />
-            <span>{example.labels[lang === 'en' ? 'en' : 'it']}</span>
+            <img src={example.src} alt={example.labels[(lang === 'en' || lang === 'es') ? 'en' : 'it']} />
+            <span>{example.labels[(lang === 'en' || lang === 'es') ? 'en' : 'it']}</span>
           </a>
         ))}
       </div>
@@ -1613,14 +1613,14 @@ function PhotoUploadModal({
   if (!show) return null
 
   const labelByKey = {
-    card: lang === 'en' ? 'Card / stats' : 'Carta / statistiche',
-    stats: lang === 'en' ? 'Skills photo' : 'Foto abilita',
-    skills: lang === 'en' ? 'Boosters photo' : 'Foto booster'
+    card: (lang === 'en' || lang === 'es') ? 'Card / stats' : 'Carta / statistiche',
+    stats: (lang === 'en' || lang === 'es') ? 'Skills photo' : 'Foto abilita',
+    skills: (lang === 'en' || lang === 'es') ? 'Boosters photo' : 'Foto booster'
   }
   const descByKey = {
-    card: lang === 'en' ? 'Needed to create the player and read visible stats.' : 'Necessaria per creare il giocatore e leggere le statistiche visibili.',
-    stats: lang === 'en' ? 'Recommended to complete player skills.' : 'Consigliata per completare le abilita.',
-    skills: lang === 'en' ? 'Only upload it if this player has boosters.' : 'Caricala solo se questo giocatore ha booster.'
+    card: (lang === 'en' || lang === 'es') ? 'Needed to create the player and read visible stats.' : 'Necessaria per creare il giocatore e leggere le statistiche visibili.',
+    stats: (lang === 'en' || lang === 'es') ? 'Recommended to complete player skills.' : 'Consigliata per completare le abilita.',
+    skills: (lang === 'en' || lang === 'es') ? 'Only upload it if this player has boosters.' : 'Caricala solo se questo giocatore ha booster.'
   }
   const imageTypes = PHOTO_TYPE_KEYS.map((key) => ({
     ...getPhotoTypeConfig(key),
@@ -1628,10 +1628,10 @@ function PhotoUploadModal({
     description: descByKey[key]
   }))
   const destination = mode === 'reserve'
-    ? (lang === 'en' ? 'Reserve bench' : 'Riserve')
+    ? ((lang === 'en' || lang === 'es') ? 'Reserve bench' : 'Riserve')
     : mode === 'complete'
-      ? (completionTarget?.player_name || (lang === 'en' ? 'existing player' : 'giocatore esistente'))
-    : (slot?.position || (lang === 'en' ? 'selected slot' : 'slot selezionato'))
+      ? (completionTarget?.player_name || ((lang === 'en' || lang === 'es') ? 'existing player' : 'giocatore esistente'))
+    : (slot?.position || ((lang === 'en' || lang === 'es') ? 'selected slot' : 'slot selezionato'))
   const completionStatus = completionTarget ? getPhotoProfileCompletion(completionTarget, lang) : null
   const missingText = completionStatus?.missing?.map((section) => section.label).join(', ')
 
@@ -1668,11 +1668,11 @@ function PhotoUploadModal({
         if (!uploading) onClose()
       }}
       title={mode === 'reserve'
-        ? (lang === 'en' ? 'Add reserve from photo' : 'Aggiungi riserva da foto')
+        ? ((lang === 'en' || lang === 'es') ? 'Add reserve from photo' : 'Aggiungi riserva da foto')
         : mode === 'complete'
-          ? (lang === 'en' ? 'Complete player with photos' : 'Completa giocatore con foto')
-        : `${lang === 'en' ? 'Add player from photo' : 'Aggiungi giocatore da foto'} · ${destination}`}
-      subtitle={lang === 'en' ? 'Photo extraction' : 'Estrazione foto'}
+          ? ((lang === 'en' || lang === 'es') ? 'Complete player with photos' : 'Completa giocatore con foto')
+        : `${(lang === 'en' || lang === 'es') ? 'Add player from photo' : 'Aggiungi giocatore da foto'} · ${destination}`}
+      subtitle={(lang === 'en' || lang === 'es') ? 'Photo extraction' : 'Estrazione foto'}
       className="nr-photo-upload-shell"
     >
       <div className="nr-photo-upload-body">
@@ -1708,10 +1708,10 @@ function PhotoUploadModal({
           {imageTypes.map((type, index) => {
             const image = getImageForType(type.key)
             const statusLabel = uploading && image
-              ? (lang === 'en' ? 'Extracting' : 'Estrazione')
+              ? ((lang === 'en' || lang === 'es') ? 'Extracting' : 'Estrazione')
               : image
-                ? (lang === 'en' ? 'Selected, not extracted yet' : 'Selezionata, non ancora estratta')
-                : (lang === 'en' ? 'Not selected' : 'Non selezionata')
+                ? ((lang === 'en' || lang === 'es') ? 'Selected, not extracted yet' : 'Selezionata, non ancora estratta')
+                : ((lang === 'en' || lang === 'es') ? 'Not selected' : 'Non selezionata')
             return (
               <div key={type.key} className={`nr-photo-step ${uploading && image ? 'extracting' : image ? 'selected' : ''}`}>
                 <span>{uploading && image ? <RefreshCw size={14} className="nr-spin" /> : image ? <Upload size={13} /> : index + 1}</span>
@@ -1745,12 +1745,12 @@ function PhotoUploadModal({
                     <p>{description}</p>
                   </div>
                   <span>{image
-                    ? (lang === 'en' ? 'Ready to extract' : 'Da estrarre')
+                    ? ((lang === 'en' || lang === 'es') ? 'Ready to extract' : 'Da estrarre')
                     : key === 'card'
-                      ? (lang === 'en' ? 'Needed' : 'Necessaria')
+                      ? ((lang === 'en' || lang === 'es') ? 'Needed' : 'Necessaria')
                       : key === 'stats'
-                        ? (lang === 'en' ? 'Recommended' : 'Consigliata')
-                        : (lang === 'en' ? 'Only if present' : 'Solo se presente')}</span>
+                        ? ((lang === 'en' || lang === 'es') ? 'Recommended' : 'Consigliata')
+                        : ((lang === 'en' || lang === 'es') ? 'Only if present' : 'Solo se presente')}</span>
                 </div>
 
                 {image ? (
@@ -1758,11 +1758,11 @@ function PhotoUploadModal({
                     <img src={image.dataUrl} alt={label} />
                     <div>
                       <span>
-                        {image.name || (lang === 'en' ? 'Selected photo' : 'Foto selezionata')}
-                        <small>{lang === 'en' ? 'Will be extracted when you press Extract data from photos.' : 'Sara estratta quando premi Estrai dati dalle foto.'}</small>
+                        {image.name || ((lang === 'en' || lang === 'es') ? 'Selected photo' : 'Foto selezionata')}
+                        <small>{(lang === 'en' || lang === 'es') ? 'Will be extracted when you press Extract data from photos.' : 'Sara estratta quando premi Estrai dati dalle foto.'}</small>
                       </span>
                       <button type="button" className="nr-secondary-button" onClick={() => removeImage(key)} disabled={uploading}>
-                        {lang === 'en' ? 'Remove' : 'Rimuovi'}
+                        {(lang === 'en' || lang === 'es') ? 'Remove' : 'Rimuovi'}
                       </button>
                     </div>
                   </div>
@@ -1771,12 +1771,12 @@ function PhotoUploadModal({
                     <label className="nr-secondary-button">
                       <input type="file" accept="image/*" onChange={(event) => handleFileSelect(event, key)} disabled={uploading} />
                       <Upload size={14} />
-                      {lang === 'en' ? 'Upload' : 'Carica'}
+                      {(lang === 'en' || lang === 'es') ? 'Upload' : 'Carica'}
                     </label>
                     <label className="nr-secondary-button">
                       <input type="file" accept="image/*" capture="environment" onChange={(event) => handleFileSelect(event, key)} disabled={uploading} />
                       <Camera size={14} />
-                      {lang === 'en' ? 'Camera' : 'Fotocamera'}
+                      {(lang === 'en' || lang === 'es') ? 'Camera' : 'Fotocamera'}
                     </label>
                   </div>
                 )}
@@ -1792,8 +1792,8 @@ function PhotoUploadModal({
           <button type="button" className="nr-primary-button" onClick={onUpload} disabled={uploading || images.length === 0}>
             {uploading ? <RefreshCw size={14} className="nr-spin" /> : <CheckCircle2 size={14} />}
             {uploading
-              ? (lang === 'en' ? 'Extracting data...' : 'Estrazione dati...')
-              : (lang === 'en' ? 'Extract data from photos' : 'Estrai dati dalle foto')}
+              ? ((lang === 'en' || lang === 'es') ? 'Extracting data...' : 'Estrazione dati...')
+              : ((lang === 'en' || lang === 'es') ? 'Extract data from photos' : 'Estrai dati dalle foto')}
           </button>
         </div>
       </div>
@@ -1822,38 +1822,38 @@ function PhotoExtractionReviewModal({
   const skillsReady = isCompletion ? hasPlayerSkills(completionTarget) || extractedSkillsReady : extractedSkillsReady
   const boostersReady = isCompletion ? hasPlayerBoosters(completionTarget) || extractedBoostersReady : extractedBoostersReady
   const destination = mode === 'reserve'
-    ? (lang === 'en' ? 'Reserve bench' : 'Riserve')
+    ? ((lang === 'en' || lang === 'es') ? 'Reserve bench' : 'Riserve')
     : mode === 'complete'
-      ? (completionTarget?.player_name || (lang === 'en' ? 'existing player' : 'giocatore esistente'))
-    : (slot?.position || (lang === 'en' ? 'selected slot' : 'slot selezionato'))
+      ? (completionTarget?.player_name || ((lang === 'en' || lang === 'es') ? 'existing player' : 'giocatore esistente'))
+    : (slot?.position || ((lang === 'en' || lang === 'es') ? 'selected slot' : 'slot selezionato'))
   const rows = [
     {
       key: 'base',
-      label: lang === 'en' ? 'Base player data' : 'Dati base giocatore',
+      label: (lang === 'en' || lang === 'es') ? 'Base player data' : 'Dati base giocatore',
       ready: baseReady,
       detail: `${playerData.player_name || '-'} · ${playerData.position || '-'}`
     },
     {
       key: 'stats',
-      label: lang === 'en' ? 'Performance stats' : 'Statistiche',
+      label: (lang === 'en' || lang === 'es') ? 'Performance stats' : 'Statistiche',
       ready: statsReady,
       newData: extractedStatsReady,
       detail: extractedStatsReady
-        ? (lang === 'en' ? 'New stats detected from this upload' : 'Nuove statistiche rilevate da questo upload')
+        ? ((lang === 'en' || lang === 'es') ? 'New stats detected from this upload' : 'Nuove statistiche rilevate da questo upload')
         : statsReady
-          ? (lang === 'en' ? 'Already present on this player' : 'Gia presenti su questo giocatore')
-          : (lang === 'en' ? 'Not detected yet' : 'Non rilevate')
+          ? ((lang === 'en' || lang === 'es') ? 'Already present on this player' : 'Gia presenti su questo giocatore')
+          : ((lang === 'en' || lang === 'es') ? 'Not detected yet' : 'Non rilevate')
     },
     {
       key: 'skills',
-      label: lang === 'en' ? 'Skills' : 'Abilita',
+      label: (lang === 'en' || lang === 'es') ? 'Skills' : 'Abilita',
       ready: skillsReady,
       newData: extractedSkillsReady,
       detail: extractedSkillsReady
-        ? (lang === 'en' ? 'New skills detected from this upload' : 'Nuove abilita rilevate da questo upload')
+        ? ((lang === 'en' || lang === 'es') ? 'New skills detected from this upload' : 'Nuove abilita rilevate da questo upload')
         : skillsReady
-          ? (lang === 'en' ? 'Already present on this player' : 'Gia presenti su questo giocatore')
-          : (lang === 'en' ? 'Can be completed later' : 'Completabile dopo')
+          ? ((lang === 'en' || lang === 'es') ? 'Already present on this player' : 'Gia presenti su questo giocatore')
+          : ((lang === 'en' || lang === 'es') ? 'Can be completed later' : 'Completabile dopo')
     },
     {
       key: 'boosters',
@@ -1861,10 +1861,10 @@ function PhotoExtractionReviewModal({
       ready: boostersReady,
       newData: extractedBoostersReady,
       detail: extractedBoostersReady
-        ? (lang === 'en' ? 'New boosters detected from this upload' : 'Nuovi booster rilevati da questo upload')
+        ? ((lang === 'en' || lang === 'es') ? 'New boosters detected from this upload' : 'Nuovi booster rilevati da questo upload')
         : boostersReady
-          ? (lang === 'en' ? 'Already present on this player' : 'Gia presenti su questo giocatore')
-          : (lang === 'en' ? 'Optional, can be completed later' : 'Opzionali, completabili dopo')
+          ? ((lang === 'en' || lang === 'es') ? 'Already present on this player' : 'Gia presenti su questo giocatore')
+          : ((lang === 'en' || lang === 'es') ? 'Optional, can be completed later' : 'Opzionali, completabili dopo')
     }
   ]
   const hasNewCompletionData = rows.some((row) => row.key !== 'base' && row.newData)
@@ -1874,15 +1874,15 @@ function PhotoExtractionReviewModal({
       show={show}
       onClose={onCancel}
       title={isCompletion
-        ? (lang === 'en' ? 'Review added data' : 'Controlla dati aggiunti')
-        : (lang === 'en' ? 'Extraction complete' : 'Estrazione completata')}
-      subtitle={lang === 'en' ? `Review before saving to ${destination}` : `Controlla prima di salvare in ${destination}`}
+        ? ((lang === 'en' || lang === 'es') ? 'Review added data' : 'Controlla dati aggiunti')
+        : ((lang === 'en' || lang === 'es') ? 'Extraction complete' : 'Estrazione completata')}
+      subtitle={(lang === 'en' || lang === 'es') ? `Review before saving to ${destination}` : `Controlla prima di salvare in ${destination}`}
       className="nr-photo-review-shell"
     >
       <div className="nr-photo-review-body">
         <div className="nr-photo-review-hero">
           <div>
-            <span className="nr-mini-kicker">{lang === 'en' ? 'Extracted player' : 'Giocatore estratto'}</span>
+            <span className="nr-mini-kicker">{(lang === 'en' || lang === 'es') ? 'Extracted player' : 'Giocatore estratto'}</span>
             <h3>{playerData.player_name || '-'}</h3>
             <p>{playerData.position || '-'}</p>
           </div>
@@ -1899,11 +1899,11 @@ function PhotoExtractionReviewModal({
               </div>
               <em>{isCompletion
                 ? row.newData
-                  ? (lang === 'en' ? 'New' : 'Nuovo')
+                  ? ((lang === 'en' || lang === 'es') ? 'New' : 'Nuovo')
                   : row.ready
-                    ? (lang === 'en' ? 'Present' : 'Presente')
-                    : (lang === 'en' ? 'To complete' : 'Da completare')
-                : row.ready ? (lang === 'en' ? 'Extracted' : 'Estratto') : (lang === 'en' ? 'To complete' : 'Da completare')}</em>
+                    ? ((lang === 'en' || lang === 'es') ? 'Present' : 'Presente')
+                    : ((lang === 'en' || lang === 'es') ? 'To complete' : 'Da completare')
+                : row.ready ? ((lang === 'en' || lang === 'es') ? 'Extracted' : 'Estratto') : ((lang === 'en' || lang === 'es') ? 'To complete' : 'Da completare')}</em>
             </div>
           ))}
         </div>
@@ -1927,12 +1927,12 @@ function PhotoExtractionReviewModal({
 
         <div className="nr-modal-footer">
           <button type="button" className="nr-secondary-button" onClick={onCancel}>
-            {lang === 'en' ? 'Cancel' : 'Annulla'}
+            {(lang === 'en' || lang === 'es') ? 'Cancel' : 'Annulla'}
           </button>
           <button type="button" className="nr-primary-button" onClick={onContinue}>
             {isCompletion
-              ? (lang === 'en' ? 'Save added data' : 'Salva dati aggiunti')
-              : (lang === 'en' ? 'Confirm roles' : 'Conferma ruoli')}
+              ? ((lang === 'en' || lang === 'es') ? 'Save added data' : 'Salva dati aggiunti')
+              : ((lang === 'en' || lang === 'es') ? 'Confirm roles' : 'Conferma ruoli')}
             <ArrowRight size={14} />
           </button>
         </div>
@@ -2264,8 +2264,8 @@ function ReserveStarterSlotModal({ show, player, slotChoices, assigning, onClose
       onClose={() => {
         if (!assigning) onClose()
       }}
-      title={lang === 'en' ? 'Choose starter slot' : 'Scegli slot titolare'}
-      subtitle={lang === 'en' ? 'Move reserve to starters' : 'Sposta riserva tra i titolari'}
+      title={(lang === 'en' || lang === 'es') ? 'Choose starter slot' : 'Scegli slot titolare'}
+      subtitle={(lang === 'en' || lang === 'es') ? 'Move reserve to starters' : 'Sposta riserva tra i titolari'}
       className="nr-picker-shell"
     >
       <div className="nr-picker-body single">
@@ -2294,14 +2294,14 @@ function ReserveStarterSlotModal({ show, player, slotChoices, assigning, onClose
                     <strong>{slot.position || '-'} · Slot {slot.slot_index + 1}</strong>
                     <span>
                       {occupant
-                        ? (lang === 'en' ? `Replaces ${occupant.player_name}` : `Sostituisce ${occupant.player_name}`)
-                        : (lang === 'en' ? 'Free slot' : 'Slot libero')}
+                        ? ((lang === 'en' || lang === 'es') ? `Replaces ${occupant.player_name}` : `Sostituisce ${occupant.player_name}`)
+                        : ((lang === 'en' || lang === 'es') ? 'Free slot' : 'Slot libero')}
                     </span>
                   </div>
                   <span className={`nr-fit-pill ${occupant ? 'compat-adaptable' : 'compat-perfect'}`}>
                     {occupant
-                      ? (lang === 'en' ? 'Swap' : 'Scambio')
-                      : (lang === 'en' ? 'Free' : 'Libero')}
+                      ? ((lang === 'en' || lang === 'es') ? 'Swap' : 'Scambio')
+                      : ((lang === 'en' || lang === 'es') ? 'Free' : 'Libero')}
                   </span>
                   <ChevronRight size={16} />
                 </button>
@@ -2331,8 +2331,8 @@ function BuildCoachPlayerPickerModal({ show, players, buildingPlayerId, onClose,
       onClose={() => {
         if (!buildingPlayerId) onClose()
       }}
-      title={lang === 'en' ? 'Choose player' : 'Scegli giocatore'}
-      subtitle={lang === 'en' ? 'Guided build for one player' : 'Build guidata singolo giocatore'}
+      title={(lang === 'en' || lang === 'es') ? 'Choose player' : 'Scegli giocatore'}
+      subtitle={(lang === 'en' || lang === 'es') ? 'Guided build for one player' : 'Build guidata singolo giocatore'}
       className="nr-picker-shell"
     >
       <div className="nr-picker-body single">
@@ -2340,7 +2340,7 @@ function BuildCoachPlayerPickerModal({ show, players, buildingPlayerId, onClose,
           <section>
             <div className="nr-section-head">
               <div>
-                <h3>{lang === 'en' ? 'Starters and reserves' : 'Titolari e riserve'}</h3>
+                <h3>{(lang === 'en' || lang === 'es') ? 'Starters and reserves' : 'Titolari e riserve'}</h3>
                 <p>{lang === 'en'
                   ? 'Choose a player already in your squad: we will suggest a game-ready progression build.'
                   : 'Scegli un giocatore gia nella rosa: ti suggeriamo una build pronta da replicare in gioco.'}</p>
@@ -2369,14 +2369,14 @@ function BuildCoachPlayerPickerModal({ show, players, buildingPlayerId, onClose,
                       <strong>{player.player_name}</strong>
                       <span>
                         {player.slot_index == null
-                          ? (lang === 'en' ? 'Reserve' : 'Riserva')
-                          : `${lang === 'en' ? 'Starter' : 'Titolare'} · Slot ${Number(player.slot_index) + 1}`}
+                          ? ((lang === 'en' || lang === 'es') ? 'Reserve' : 'Riserva')
+                          : `${(lang === 'en' || lang === 'es') ? 'Starter' : 'Titolare'} · Slot ${Number(player.slot_index) + 1}`}
                         {' · '}
                         {player.position || '-'}
                       </span>
                     </div>
                     <span className="nr-reserve-position-pill">
-                      {isBuilding ? (lang === 'en' ? 'Calculating' : 'Calcolo') : (lang === 'en' ? 'Optimize' : 'Ottimizza')}
+                      {isBuilding ? ((lang === 'en' || lang === 'es') ? 'Calculating' : 'Calcolo') : ((lang === 'en' || lang === 'es') ? 'Optimize' : 'Ottimizza')}
                     </span>
                   </button>
                 )
@@ -3331,7 +3331,7 @@ function PremiumPlayerModal({
       show={show}
       onClose={onClose}
       title={player.player_name}
-      subtitle={lang === 'en' ? 'Player editor' : 'Editor giocatore'}
+      subtitle={(lang === 'en' || lang === 'es') ? 'Player editor' : 'Editor giocatore'}
       className="nr-premium-player-shell"
     >
       <div className="nr-premium-player-scroll">
@@ -3340,7 +3340,7 @@ function PremiumPlayerModal({
           <div className="nr-premium-hero-top">
             <div className="nr-premium-hero-copy">
               <span className="nr-mini-kicker">
-                {player?.metadata?.catalog_card_type || player.card_type || (lang === 'en' ? 'Roster player' : 'Giocatore rosa')}
+                {player?.metadata?.catalog_card_type || player.card_type || ((lang === 'en' || lang === 'es') ? 'Roster player' : 'Giocatore rosa')}
               </span>
               <h3>{player.player_name}</h3>
               <p>{player.role || player.playing_style_name || '-'} · {player.position || '-'}</p>
@@ -3358,44 +3358,44 @@ function PremiumPlayerModal({
 
             <div className="nr-premium-side-stats">
               <div>
-                <span>{lang === 'en' ? 'Height' : 'Altezza'}</span>
+                <span>{(lang === 'en' || lang === 'es') ? 'Height' : 'Altezza'}</span>
                 <strong>{player.height ?? '-'}</strong>
               </div>
               <div>
-                <span>{lang === 'en' ? 'Weight' : 'Peso'}</span>
+                <span>{(lang === 'en' || lang === 'es') ? 'Weight' : 'Peso'}</span>
                 <strong>{player.weight ?? '-'}</strong>
               </div>
               <div>
-                <span>{lang === 'en' ? 'Age' : 'Eta'}</span>
+                <span>{(lang === 'en' || lang === 'es') ? 'Age' : 'Eta'}</span>
                 <strong>{player.age ?? '-'}</strong>
               </div>
               <div>
-                <span>{lang === 'en' ? 'Club' : 'Club'}</span>
+                <span>{(lang === 'en' || lang === 'es') ? 'Club' : 'Club'}</span>
                 <strong>{player.club_name || '-'}</strong>
               </div>
               <div>
-                <span>{lang === 'en' ? 'Nationality' : 'Nazionalita'}</span>
+                <span>{(lang === 'en' || lang === 'es') ? 'Nationality' : 'Nazionalita'}</span>
                 <strong>{player.nationality || '-'}</strong>
               </div>
               <div>
-                <span>{lang === 'en' ? 'Card type' : 'Tipo carta'}</span>
+                <span>{(lang === 'en' || lang === 'es') ? 'Card type' : 'Tipo carta'}</span>
                 <strong>{player.card_type || '-'}</strong>
               </div>
             </div>
           </div>
 
           <div className="nr-premium-summary-row">
-            <div><span>{lang === 'en' ? 'Skills' : 'Abilita'}</span><strong>{skillsDraft.length}</strong></div>
-            <div><span>{lang === 'en' ? 'Boosters' : 'Boosters'}</span><strong>{boosterCount}</strong></div>
-            <div><span>{lang === 'en' ? 'Roles' : 'Ruoli'}</span><strong>{roleCount}</strong></div>
+            <div><span>{(lang === 'en' || lang === 'es') ? 'Skills' : 'Abilita'}</span><strong>{skillsDraft.length}</strong></div>
+            <div><span>{(lang === 'en' || lang === 'es') ? 'Boosters' : 'Boosters'}</span><strong>{boosterCount}</strong></div>
+            <div><span>{(lang === 'en' || lang === 'es') ? 'Roles' : 'Ruoli'}</span><strong>{roleCount}</strong></div>
           </div>
         </section>
 
         <section className="nr-premium-sections">
-          <EnterpriseSection title={lang === 'en' ? 'Player setup' : 'Setup giocatore'}>
+          <EnterpriseSection title={(lang === 'en' || lang === 'es') ? 'Player setup' : 'Setup giocatore'}>
             <div className="nr-build-coach-inline">
               <div>
-                <strong>{lang === 'en' ? 'Guided build' : 'Build guidata'}</strong>
+                <strong>{(lang === 'en' || lang === 'es') ? 'Guided build' : 'Build guidata'}</strong>
                 <p>{lang === 'en'
                   ? 'Suggested growth points for role, native skills, team style and squad needs.'
                   : 'Punti crescita consigliati per ruolo, abilità native, stile squadra e bisogni della rosa.'}</p>
@@ -3407,14 +3407,14 @@ function PremiumPlayerModal({
                 disabled={saving || building}
               >
                 {building ? <RefreshCw size={14} className="nr-spin" /> : <Sparkles size={14} />}
-                {building ? (lang === 'en' ? 'Calculating...' : 'Calcolo...') : (lang === 'en' ? 'Suggest build' : 'Consiglia build')}
+                {building ? ((lang === 'en' || lang === 'es') ? 'Calculating...' : 'Calcolo...') : ((lang === 'en' || lang === 'es') ? 'Suggest build' : 'Consiglia build')}
               </button>
             </div>
             {buildSliders && (
               <div className="nr-build-copy-card">
                 <div className="nr-build-copy-head">
                   <div>
-                    <strong>{lang === 'en' ? 'Build ready to copy in game' : 'Build pronta da copiare in gioco'}</strong>
+                    <strong>{(lang === 'en' || lang === 'es') ? 'Build ready to copy in game' : 'Build pronta da copiare in gioco'}</strong>
                     <p>{lang === 'en'
                       ? 'Use these progression values in the game if you want to reproduce this build.'
                       : 'Usa questi valori nella schermata progressione del gioco se vuoi replicare questa build.'}</p>
@@ -3472,7 +3472,7 @@ function PremiumPlayerModal({
                             className="nr-build-macro-nudge"
                             disabled={!canDec || saving || building}
                             onClick={() => handleBuildMacroNudge(key, -1)}
-                            aria-label={lang === 'en' ? 'Decrease' : 'Diminuisci'}
+                            aria-label={(lang === 'en' || lang === 'es') ? 'Decrease' : 'Diminuisci'}
                           >
                             <Minus size={14} />
                           </button>
@@ -3482,7 +3482,7 @@ function PremiumPlayerModal({
                             className="nr-build-macro-nudge"
                             disabled={!canInc || saving || building}
                             onClick={() => handleBuildMacroNudge(key, 1)}
-                            aria-label={lang === 'en' ? 'Increase' : 'Aumenta'}
+                            aria-label={(lang === 'en' || lang === 'es') ? 'Increase' : 'Aumenta'}
                           >
                             <Plus size={14} />
                           </button>
@@ -3504,7 +3504,7 @@ function PremiumPlayerModal({
                 ) : null}
                 {buildReasonsLines.length > 0 ? (
                   <div className="nr-build-coach-notes-reasons">
-                    <strong>{lang === 'en' ? 'Why these points' : 'Perché questi punti'}</strong>
+                    <strong>{(lang === 'en' || lang === 'es') ? 'Why these points' : 'Perché questi punti'}</strong>
                     <ul>
                       {buildReasonsLines.map((line, idx) => (
                         <li key={`bcr-${idx}`}>{line}</li>
@@ -3517,11 +3517,11 @@ function PremiumPlayerModal({
             <div className="nr-role-editor-card">
               <div className="nr-role-editor-head">
                 <div>
-                  <strong>{lang === 'en' ? 'Playable roles' : 'Ruoli giocabili'}</strong>
-                  <p>{lang === 'en' ? 'Main role is the first selected role.' : 'Il ruolo principale e il primo ruolo selezionato.'}</p>
+                  <strong>{(lang === 'en' || lang === 'es') ? 'Playable roles' : 'Ruoli giocabili'}</strong>
+                  <p>{(lang === 'en' || lang === 'es') ? 'Main role is the first selected role.' : 'Il ruolo principale e il primo ruolo selezionato.'}</p>
                 </div>
                 <button type="button" className="nr-secondary-button" onClick={() => setShowPositionEditor(true)}>
-                  {lang === 'en' ? 'Edit roles' : 'Modifica ruoli'}
+                  {(lang === 'en' || lang === 'es') ? 'Edit roles' : 'Modifica ruoli'}
                 </button>
               </div>
               <div className="nr-role-chip-row">
@@ -3531,10 +3531,10 @@ function PremiumPlayerModal({
                     className="nr-role-chip"
                     title={t(getPositionRoleTranslationKey(entry.position))}
                   >
-                    {entry.position} · {entry.competence || (lang === 'en' ? 'High' : 'Alta')}
+                    {entry.position} · {entry.competence || ((lang === 'en' || lang === 'es') ? 'High' : 'Alta')}
                   </span>
                 )) : (
-                  <span className="nr-skill-empty">{lang === 'en' ? 'No playable roles set.' : 'Nessun ruolo giocabile impostato.'}</span>
+                  <span className="nr-skill-empty">{(lang === 'en' || lang === 'es') ? 'No playable roles set.' : 'Nessun ruolo giocabile impostato.'}</span>
                 )}
               </div>
             </div>
@@ -3626,7 +3626,7 @@ function PremiumPlayerModal({
 
           <div className="nr-reference-support-grid">
             <section className="nr-reference-skills">
-              <EnterpriseSection title={lang === 'en' ? 'Skills' : 'Abilita'} collapsible>
+              <EnterpriseSection title={(lang === 'en' || lang === 'es') ? 'Skills' : 'Abilita'} collapsible>
                 <div className="nr-skill-command-panel">
                   <label className="nr-form-field">
                     <span>{t('nuovaRosaSelectOfficialSkill')}</span>
@@ -3656,14 +3656,14 @@ function PremiumPlayerModal({
                       <X size={12} />
                     </button>
                   )) : (
-                    <span className="nr-skill-empty">{lang === 'en' ? 'No skills yet.' : 'Nessuna abilita ancora.'}</span>
+                    <span className="nr-skill-empty">{(lang === 'en' || lang === 'es') ? 'No skills yet.' : 'Nessuna abilita ancora.'}</span>
                   )}
                 </div>
                 {skillsDraft.length > 10 ? (
                   <button type="button" className="nr-secondary-button nr-skills-toggle" onClick={() => setShowAllSkills((prev) => !prev)}>
                     {showAllSkills
-                      ? (lang === 'en' ? 'Show less' : 'Mostra meno')
-                      : (lang === 'en' ? `Show all (${skillsDraft.length})` : `Mostra tutte (${skillsDraft.length})`)}
+                      ? ((lang === 'en' || lang === 'es') ? 'Show less' : 'Mostra meno')
+                      : ((lang === 'en' || lang === 'es') ? `Show all (${skillsDraft.length})` : `Mostra tutte (${skillsDraft.length})`)}
                   </button>
                 ) : null}
                 {!showAllSkills && hiddenSkillsCount > 0 ? (
@@ -3678,7 +3678,7 @@ function PremiumPlayerModal({
 
             {comSkillsDraft.length > 0 && (
               <section className="nr-reference-com-skills">
-                <EnterpriseSection title={lang === 'en' ? 'COM skills / AI styles' : 'Abilità COM / stili IA'} collapsible>
+                <EnterpriseSection title={(lang === 'en' || lang === 'es') ? 'COM skills / AI styles' : 'Abilità COM / stili IA'} collapsible>
                   <div className="nr-skill-chip-row nr-skill-chip-row-com">
                     {comSkillsDraft.map((skill) => (
                       <span key={skill} className="nr-skill-chip nr-skill-chip-readonly">
@@ -3696,7 +3696,7 @@ function PremiumPlayerModal({
             )}
 
             <section className="nr-reference-boosters">
-              <EnterpriseSection title={lang === 'en' ? 'Boosters' : 'Boosters'} collapsible>
+              <EnterpriseSection title={(lang === 'en' || lang === 'es') ? 'Boosters' : 'Boosters'} collapsible>
                 {activeCoach ? (
                   <button
                     type="button"
@@ -3707,8 +3707,8 @@ function PremiumPlayerModal({
                       : 'Usa i bonus dell’allenatore attivo nel calcolo campo'}
                   >
                     {fieldCoachActive
-                      ? (lang === 'en' ? 'Coach field active' : 'Coach campo attivo')
-                      : (lang === 'en' ? 'Coach field off' : 'Coach campo off')}
+                      ? ((lang === 'en' || lang === 'es') ? 'Coach field active' : 'Coach campo attivo')
+                      : ((lang === 'en' || lang === 'es') ? 'Coach field off' : 'Coach campo off')}
                   </button>
                 ) : null}
                 <div className="nr-booster-slot-grid">
@@ -3725,7 +3725,7 @@ function PremiumPlayerModal({
                       (slotIndex === 0 && boostersDraft.length === 0)
                       || (slotIndex === 1 && boostersDraft.length === 1)
                     )
-                    const addHint = lang === 'en' ? 'Add booster' : 'Aggiungi booster'
+                    const addHint = (lang === 'en' || lang === 'es') ? 'Add booster' : 'Aggiungi booster'
                     return (
                       <div key={`booster-slot-${slotIndex}`} className="nr-booster-slot-card nr-booster-slot-card--ef">
                         <div className="nr-booster-slot-top">
@@ -3744,7 +3744,7 @@ function PremiumPlayerModal({
                                   type="button"
                                   className="nr-icon-button"
                                   onClick={() => removeBooster(slotIndex)}
-                                  aria-label={lang === 'en' ? 'Remove booster' : 'Rimuovi booster'}
+                                  aria-label={(lang === 'en' || lang === 'es') ? 'Remove booster' : 'Rimuovi booster'}
                                 >
                                   <X size={12} />
                                 </button>
@@ -3755,31 +3755,31 @@ function PremiumPlayerModal({
                         {booster ? (
                           <>
                             <label className="nr-form-field nr-form-field--tight">
-                              <span className="nr-booster-cat-lbl">{lang === 'en' ? 'Type' : 'Tipo'}</span>
+                              <span className="nr-booster-cat-lbl">{(lang === 'en' || lang === 'es') ? 'Type' : 'Tipo'}</span>
                               <select
-                                aria-label={lang === 'en' ? 'Booster category' : 'Categoria booster'}
+                                aria-label={(lang === 'en' || lang === 'es') ? 'Booster category' : 'Categoria booster'}
                                 value={selectedPreset}
                                 onChange={(event) => updateBoosterPreset(slotIndex, event.target.value)}
                               >
                                 {BOOSTER_PRESETS.map((preset) => (
                                   <option key={preset.value} value={preset.value}>
-                                    {lang === 'en' ? preset.labels.en : preset.labels.it}
+                                    {(lang === 'en' || lang === 'es') ? preset.labels.en : preset.labels.it}
                                   </option>
                                 ))}
-                                <option value="custom">{lang === 'en' ? 'Custom' : 'Personalizzato'}</option>
+                                <option value="custom">{(lang === 'en' || lang === 'es') ? 'Custom' : 'Personalizzato'}</option>
                               </select>
                             </label>
                             {selectedPreset === 'custom' ? (
                               <EnterpriseInput
-                                label={lang === 'en' ? 'Name' : 'Nome'}
+                                label={(lang === 'en' || lang === 'es') ? 'Name' : 'Nome'}
                                 value={String(booster?.name || '')}
                                 onChange={(value) => updateBooster(slotIndex, 'name', value)}
-                                placeholder={lang === 'en' ? 'Custom' : 'Personalizzato'}
+                                placeholder={(lang === 'en' || lang === 'es') ? 'Custom' : 'Personalizzato'}
                               />
                             ) : null}
                             <div className="nr-booster-level-compact">
                               <span className="nr-booster-level-compact-lbl">
-                                {lang === 'en' ? 'Level' : 'Livello'}
+                                {(lang === 'en' || lang === 'es') ? 'Level' : 'Livello'}
                               </span>
                               {slotIndex === 0 ? (
                                 <div className="nr-booster-level-buttons nr-booster-level-buttons--inline">
@@ -3795,7 +3795,7 @@ function PremiumPlayerModal({
                                   ))}
                                 </div>
                               ) : (
-                                <span className="nr-booster-level-pill" title={lang === 'en' ? 'Link slot: +1 only' : 'Collegamento: solo +1'}>+1</span>
+                                <span className="nr-booster-level-pill" title={(lang === 'en' || lang === 'es') ? 'Link slot: +1 only' : 'Collegamento: solo +1'}>+1</span>
                               )}
                             </div>
                             <button
@@ -3807,8 +3807,8 @@ function PremiumPlayerModal({
                                 : 'Mantieni questo booster disponibile per l analisi IA; le statistiche visive della build contano solo i PT'}
                             >
                               {isFieldActive
-                                ? (lang === 'en' ? 'AI active' : 'Attivo IA')
-                                : (lang === 'en' ? 'AI off' : 'IA off')}
+                                ? ((lang === 'en' || lang === 'es') ? 'AI active' : 'Attivo IA')
+                                : ((lang === 'en' || lang === 'es') ? 'AI off' : 'IA off')}
                             </button>
                           </>
                         ) : null}
@@ -3835,7 +3835,7 @@ function PremiumPlayerModal({
         </p>
         <div className="nr-modal-footer-actions">
           <button type="button" className="nr-secondary-button" onClick={onClose} disabled={saving || building}>
-            {lang === 'en' ? 'Cancel' : 'Annulla'}
+            {(lang === 'en' || lang === 'es') ? 'Cancel' : 'Annulla'}
           </button>
           <button
             type="button"
@@ -3843,7 +3843,7 @@ function PremiumPlayerModal({
             disabled={saving || building}
             onClick={() => onSave(getEditorSavePayload())}
           >
-            {saving ? (lang === 'en' ? 'Saving...' : 'Salvataggio...') : (lang === 'en' ? 'Save player' : 'Salva giocatore')}
+            {saving ? ((lang === 'en' || lang === 'es') ? 'Saving...' : 'Salvataggio...') : ((lang === 'en' || lang === 'es') ? 'Save player' : 'Salva giocatore')}
             <Save size={16} />
           </button>
         </div>
@@ -3931,7 +3931,7 @@ export default withAuth(function NuovaRosaLabPage() {
   const activeTeamPlaystyle = tacticalSettings?.team_playing_style || null
   const activeTeamPlaystyleLabel = activeTeamPlaystyle
     ? (t(activeTeamPlaystyle) || String(activeTeamPlaystyle).replace(/_/g, ' '))
-    : (lang === 'en' ? 'Not set' : 'Non impostato')
+    : ((lang === 'en' || lang === 'es') ? 'Not set' : 'Non impostato')
 
   const showToast = React.useCallback((message, type = 'success') => {
     setToast({ message, type })
@@ -4122,7 +4122,7 @@ export default withAuth(function NuovaRosaLabPage() {
       if (err?.name === 'AbortError') return
       if (requestSeq !== catalogLoadSeqRef.current) return
       console.error('[NuovaRosaLab] catalog error:', err)
-      showToast(lang === 'en' ? 'Unable to load the catalog.' : 'Impossibile caricare il catalogo.', 'error')
+      showToast((lang === 'en' || lang === 'es') ? 'Unable to load the catalog.' : 'Impossibile caricare il catalogo.', 'error')
       if (!append) {
         setPickerResults([])
         setPickerTotal(0)
@@ -4237,7 +4237,7 @@ export default withAuth(function NuovaRosaLabPage() {
       return
     }
     if (nextMode === 'slot' && !nextSlot) {
-      showToast(lang === 'en' ? 'Select a slot before uploading a photo.' : 'Seleziona uno slot prima di caricare una foto.', 'error')
+      showToast((lang === 'en' || lang === 'es') ? 'Select a slot before uploading a photo.' : 'Seleziona uno slot prima di caricare una foto.', 'error')
       return
     }
 
@@ -4381,7 +4381,7 @@ export default withAuth(function NuovaRosaLabPage() {
       setCoachCatalogTotal(Number(data.total || 0))
     } catch (err) {
       console.error('[NuovaRosaLab] coach catalog error:', err)
-      showToast(lang === 'en' ? 'Unable to load the coach catalog.' : 'Impossibile caricare il catalogo allenatori.', 'error')
+      showToast((lang === 'en' || lang === 'es') ? 'Unable to load the coach catalog.' : 'Impossibile caricare il catalogo allenatori.', 'error')
       setCoachCatalogResults([])
       setCoachCatalogTotal(0)
     } finally {
@@ -4399,7 +4399,7 @@ export default withAuth(function NuovaRosaLabPage() {
 
   const saveCoachAndSetActive = React.useCallback(async (coachPayload) => {
     if (!coachPayload?.coach_name) {
-      throw new Error(lang === 'en' ? 'Coach data is incomplete.' : 'Dati allenatore incompleti.')
+      throw new Error((lang === 'en' || lang === 'es') ? 'Coach data is incomplete.' : 'Dati allenatore incompleti.')
     }
 
     let token = getTokenFallback()
@@ -4414,22 +4414,22 @@ export default withAuth(function NuovaRosaLabPage() {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
-        'Accept-Language': lang === 'en' ? 'en' : 'it'
+        'Accept-Language': (lang === 'en' || lang === 'es') ? 'en' : 'it'
       },
       body: JSON.stringify({ coach: coachPayload })
     })
-    const saved = await safeJsonResponse(saveResponse, lang === 'en' ? 'Unable to save coach.' : 'Impossibile salvare l allenatore.')
+    const saved = await safeJsonResponse(saveResponse, (lang === 'en' || lang === 'es') ? 'Unable to save coach.' : 'Impossibile salvare l allenatore.')
 
     const activeResponse = await fetch('/api/supabase/set-active-coach', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
-        'Accept-Language': lang === 'en' ? 'en' : 'it'
+        'Accept-Language': (lang === 'en' || lang === 'es') ? 'en' : 'it'
       },
       body: JSON.stringify({ coach_id: saved.coach_id })
     })
-    await safeJsonResponse(activeResponse, lang === 'en' ? 'Unable to set active coach.' : 'Impossibile impostare l allenatore attivo.')
+    await safeJsonResponse(activeResponse, (lang === 'en' || lang === 'es') ? 'Unable to set active coach.' : 'Impossibile impostare l allenatore attivo.')
 
     await fetchRoster()
     await refreshDiagnosticAfterSave()
@@ -4444,10 +4444,10 @@ export default withAuth(function NuovaRosaLabPage() {
       setCoachCatalogQuery('')
       setCoachCatalogResults([])
       setCoachCatalogTotal(0)
-      showToast(lang === 'en' ? 'Coach added and set active.' : 'Allenatore aggiunto e impostato attivo.', 'success')
+      showToast((lang === 'en' || lang === 'es') ? 'Coach added and set active.' : 'Allenatore aggiunto e impostato attivo.', 'success')
     } catch (err) {
       console.error('[NuovaRosaLab] save catalog coach error:', err)
-      const { message } = mapErrorToUserMessage(err, lang === 'en' ? 'Unable to save coach.' : 'Impossibile salvare l allenatore.', lang)
+      const { message } = mapErrorToUserMessage(err, (lang === 'en' || lang === 'es') ? 'Unable to save coach.' : 'Impossibile salvare l allenatore.', lang)
       showToast(message, 'error')
     } finally {
       setSavingCoach(false)
@@ -4479,7 +4479,7 @@ export default withAuth(function NuovaRosaLabPage() {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
-          'Accept-Language': lang === 'en' ? 'en' : 'it'
+          'Accept-Language': (lang === 'en' || lang === 'es') ? 'en' : 'it'
         },
         body: JSON.stringify({ imageDataUrl: image.dataUrl })
       })
@@ -4488,12 +4488,12 @@ export default withAuth(function NuovaRosaLabPage() {
       try {
         data = await response.json()
       } catch (_) {
-        errors.push(`${lang === 'en' ? 'Server error' : 'Errore server'}: ${response.status} ${response.statusText}`)
+        errors.push(`${(lang === 'en' || lang === 'es') ? 'Server error' : 'Errore server'}: ${response.status} ${response.statusText}`)
         continue
       }
 
       if (!response.ok) {
-        const { message } = mapErrorToUserMessage(data?.error || '', lang === 'en' ? 'Unknown error' : 'Errore sconosciuto', lang)
+        const { message } = mapErrorToUserMessage(data?.error || '', (lang === 'en' || lang === 'es') ? 'Unknown error' : 'Errore sconosciuto', lang)
         errors.push(message)
         continue
       }
@@ -4526,9 +4526,9 @@ export default withAuth(function NuovaRosaLabPage() {
       const quotaError = errors.find((error) => String(error || '').toLowerCase().includes('quota') || String(error || '').toLowerCase().includes('billing'))
       if (quotaError) throw new Error(t('openAQuotaError'))
       if (errors.length > 0) {
-        throw new Error(`${lang === 'en' ? 'Unable to extract coach data' : 'Impossibile estrarre i dati allenatore'}: ${errors[0]}`)
+        throw new Error(`${(lang === 'en' || lang === 'es') ? 'Unable to extract coach data' : 'Impossibile estrarre i dati allenatore'}: ${errors[0]}`)
       }
-      throw new Error(lang === 'en' ? 'No coach data extracted from the uploaded photos.' : 'Nessun dato allenatore estratto dalle foto caricate.')
+      throw new Error((lang === 'en' || lang === 'es') ? 'No coach data extracted from the uploaded photos.' : 'Nessun dato allenatore estratto dalle foto caricate.')
     }
 
     return {
@@ -4547,10 +4547,10 @@ export default withAuth(function NuovaRosaLabPage() {
       await saveCoachAndSetActive(coachPayload)
       setShowCoachPhotoUploadModal(false)
       setCoachPhotoImages([])
-      showToast(lang === 'en' ? 'Coach saved and set active.' : 'Allenatore salvato e impostato attivo.', 'success')
+      showToast((lang === 'en' || lang === 'es') ? 'Coach saved and set active.' : 'Allenatore salvato e impostato attivo.', 'success')
     } catch (err) {
       console.error('[NuovaRosaLab] coach photo upload error:', err)
-      const { message } = mapErrorToUserMessage(err, lang === 'en' ? 'Unable to upload coach photos.' : 'Impossibile caricare le foto allenatore.', lang)
+      const { message } = mapErrorToUserMessage(err, (lang === 'en' || lang === 'es') ? 'Unable to upload coach photos.' : 'Impossibile caricare le foto allenatore.', lang)
       showToast(message, 'error')
     } finally {
       setSavingCoach(false)
@@ -4560,16 +4560,16 @@ export default withAuth(function NuovaRosaLabPage() {
   const checkPhotoMissingData = React.useCallback((playerData) => {
     const missing = { required: [], optional: [] }
     if (!playerData.player_name || String(playerData.player_name).trim().length === 0) {
-      missing.required.push({ field: 'player_name', label: lang === 'en' ? 'Player name' : 'Nome giocatore' })
+      missing.required.push({ field: 'player_name', label: (lang === 'en' || lang === 'es') ? 'Player name' : 'Nome giocatore' })
     }
     if (!playerData.position && (!Array.isArray(playerData.original_positions) || playerData.original_positions.length === 0)) {
-      missing.required.push({ field: 'position', label: lang === 'en' ? 'Position' : 'Ruolo' })
+      missing.required.push({ field: 'position', label: (lang === 'en' || lang === 'es') ? 'Position' : 'Ruolo' })
     }
     if (!playerData.base_stats || Object.keys(playerData.base_stats || {}).length === 0) {
-      missing.optional.push({ field: 'base_stats', label: lang === 'en' ? 'Stats' : 'Statistiche' })
+      missing.optional.push({ field: 'base_stats', label: (lang === 'en' || lang === 'es') ? 'Stats' : 'Statistiche' })
     }
     if (!Array.isArray(playerData.skills) || playerData.skills.length === 0) {
-      missing.optional.push({ field: 'skills', label: lang === 'en' ? 'Skills' : 'Abilita' })
+      missing.optional.push({ field: 'skills', label: (lang === 'en' || lang === 'es') ? 'Skills' : 'Abilita' })
     }
     if (!Array.isArray(playerData.available_boosters) && !Array.isArray(playerData.boosters)) {
       missing.optional.push({ field: 'boosters', label: 'Boosters' })
@@ -4596,7 +4596,7 @@ export default withAuth(function NuovaRosaLabPage() {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
-          'Accept-Language': lang === 'en' ? 'en' : 'it'
+          'Accept-Language': (lang === 'en' || lang === 'es') ? 'en' : 'it'
         },
         body: JSON.stringify({ imageDataUrl: image.dataUrl })
       })
@@ -4605,12 +4605,12 @@ export default withAuth(function NuovaRosaLabPage() {
       try {
         data = await response.json()
       } catch (_) {
-        errors.push(`${lang === 'en' ? 'Server error' : 'Errore server'}: ${response.status} ${response.statusText}`)
+        errors.push(`${(lang === 'en' || lang === 'es') ? 'Server error' : 'Errore server'}: ${response.status} ${response.statusText}`)
         continue
       }
 
       if (!response.ok) {
-        const { message } = mapErrorToUserMessage(data?.error || '', lang === 'en' ? 'Unknown error' : 'Errore sconosciuto', lang)
+        const { message } = mapErrorToUserMessage(data?.error || '', (lang === 'en' || lang === 'es') ? 'Unknown error' : 'Errore sconosciuto', lang)
         errors.push(message)
         continue
       }
@@ -4665,9 +4665,9 @@ export default withAuth(function NuovaRosaLabPage() {
       const quotaError = errors.find((error) => String(error).toLowerCase().includes('quota') || String(error).toLowerCase().includes('billing'))
       if (quotaError) throw new Error(t('openAQuotaError'))
       if (errors.length > 0) {
-        throw new Error(`${lang === 'en' ? 'Unable to extract player data' : 'Impossibile estrarre i dati giocatore'}: ${errors[0]}`)
+        throw new Error(`${(lang === 'en' || lang === 'es') ? 'Unable to extract player data' : 'Impossibile estrarre i dati giocatore'}: ${errors[0]}`)
       }
-      throw new Error(lang === 'en' ? 'No player data extracted from the uploaded photos.' : 'Nessun dato giocatore estratto dalle foto caricate.')
+      throw new Error((lang === 'en' || lang === 'es') ? 'No player data extracted from the uploaded photos.' : 'Nessun dato giocatore estratto dalle foto caricate.')
     }
 
     const ratings = Object.values(allExtractedData)
@@ -4687,11 +4687,11 @@ export default withAuth(function NuovaRosaLabPage() {
       return
     }
     if (photoUploadMode === 'slot' && !photoUploadSlot) {
-      showToast(lang === 'en' ? 'Select a slot before uploading a photo.' : 'Seleziona uno slot prima di caricare una foto.', 'error')
+      showToast((lang === 'en' || lang === 'es') ? 'Select a slot before uploading a photo.' : 'Seleziona uno slot prima di caricare una foto.', 'error')
       return
     }
     if (photoUploadMode === 'complete' && !photoCompletionTarget?.id) {
-      showToast(lang === 'en' ? 'Select the player to complete first.' : 'Seleziona prima il giocatore da completare.', 'error')
+      showToast((lang === 'en' || lang === 'es') ? 'Select the player to complete first.' : 'Seleziona prima il giocatore da completare.', 'error')
       return
     }
 
@@ -4740,7 +4740,7 @@ export default withAuth(function NuovaRosaLabPage() {
       setShowPhotoReviewModal(true)
     } catch (err) {
       console.error('[NuovaRosaLab] photo extraction error:', err)
-      const { message } = mapErrorToUserMessage(err, lang === 'en' ? 'Unable to upload photo.' : 'Impossibile caricare la foto.', lang)
+      const { message } = mapErrorToUserMessage(err, (lang === 'en' || lang === 'es') ? 'Unable to upload photo.' : 'Impossibile caricare la foto.', lang)
       showToast(message, 'error')
     } finally {
       setUploadingPhoto(false)
@@ -4805,7 +4805,7 @@ export default withAuth(function NuovaRosaLabPage() {
       await fetchRoster()
       await refreshDiagnosticAfterSave()
       resetPhotoPositionFlow()
-      showToast(lang === 'en' ? 'Player completed with photos.' : 'Giocatore completato con foto.', 'success')
+      showToast((lang === 'en' || lang === 'es') ? 'Player completed with photos.' : 'Giocatore completato con foto.', 'success')
     } catch (err) {
       console.error('[NuovaRosaLab] photo completion error:', err)
       const { message } = mapErrorToUserMessage(err, t('errorUpdatingPlayer'), lang)
@@ -4861,14 +4861,14 @@ export default withAuth(function NuovaRosaLabPage() {
           setUploadingPhoto(false)
           setConfirmModal({
             ...showConfirmConfig({
-              title: lang === 'en' ? 'Player already in lineup' : 'Giocatore gia titolare',
+              title: (lang === 'en' || lang === 'es') ? 'Player already in lineup' : 'Giocatore gia titolare',
               message: lang === 'en'
                 ? `${extractedPlayerData.player_name} is already assigned to another slot. Replace that starter?`
                 : `${extractedPlayerData.player_name} e gia assegnato a un altro slot. Vuoi sostituire quel titolare?`,
               details: lang === 'en'
                 ? 'The existing starter will move to reserves if there is room.'
                 : 'Il titolare esistente verra spostato in riserva se c e spazio.',
-              confirmLabel: lang === 'en' ? 'Replace starter' : 'Sostituisci titolare',
+              confirmLabel: (lang === 'en' || lang === 'es') ? 'Replace starter' : 'Sostituisci titolare',
               cancelLabel: t('cancel')
             }),
             onConfirm: async () => {
@@ -4911,7 +4911,7 @@ export default withAuth(function NuovaRosaLabPage() {
             setUploadingPhoto(false)
             setConfirmModal({
               ...showConfirmConfig({
-                title: lang === 'en' ? 'Reserve already exists' : 'Riserva gia presente',
+                title: (lang === 'en' || lang === 'es') ? 'Reserve already exists' : 'Riserva gia presente',
                 message: lang === 'en'
                   ? `${extractedPlayerData.player_name} is already in reserves. Replace the old reserve?`
                   : `${extractedPlayerData.player_name} e gia nelle riserve. Vuoi sostituire la vecchia riserva?`,
@@ -4962,7 +4962,7 @@ export default withAuth(function NuovaRosaLabPage() {
         await fetchRoster()
         await refreshDiagnosticAfterSave()
         resetPhotoPositionFlow()
-        showToast(lang === 'en' ? 'Player saved from photo.' : 'Giocatore salvato da foto.', 'success')
+        showToast((lang === 'en' || lang === 'es') ? 'Player saved from photo.' : 'Giocatore salvato da foto.', 'success')
       } catch (err) {
         console.error('[NuovaRosaLab] photo save error:', err)
         const { message } = mapErrorToUserMessage(err, t('errorSavingPlayerGeneric'), lang)
@@ -4978,21 +4978,21 @@ export default withAuth(function NuovaRosaLabPage() {
   const showCatalogDuplicateAlert = React.useCallback((existingPlayer, card) => {
     if (!existingPlayer) return
     const location = existingPlayer.slot_index == null
-      ? (lang === 'en' ? 'reserves' : 'riserve')
-      : `${lang === 'en' ? 'starter slot' : 'slot titolare'} ${Number(existingPlayer.slot_index) + 1}`
-    const playerName = existingPlayer.player_name || card?.player_name || card?.name || (lang === 'en' ? 'This player' : 'Questo giocatore')
+      ? ((lang === 'en' || lang === 'es') ? 'reserves' : 'riserve')
+      : `${(lang === 'en' || lang === 'es') ? 'starter slot' : 'slot titolare'} ${Number(existingPlayer.slot_index) + 1}`
+    const playerName = existingPlayer.player_name || card?.player_name || card?.name || ((lang === 'en' || lang === 'es') ? 'This player' : 'Questo giocatore')
 
     setConfirmModal({
       ...showConfirmConfig({
-        title: lang === 'en' ? 'Player already in squad' : 'Giocatore già in rosa',
+        title: (lang === 'en' || lang === 'es') ? 'Player already in squad' : 'Giocatore già in rosa',
         message: lang === 'en'
           ? `${playerName} is already saved in your squad.`
           : `${playerName} è già salvato nella tua rosa.`,
         details: lang === 'en'
           ? `You can find him in ${location}. Open his card to edit data, photos, boosters or build.`
           : `Lo trovi in ${location}. Apri la scheda per modificare dati, foto, booster o build.`,
-        confirmLabel: lang === 'en' ? 'Open player card' : 'Apri scheda',
-        cancelLabel: lang === 'en' ? 'Close' : 'Chiudi',
+        confirmLabel: (lang === 'en' || lang === 'es') ? 'Open player card' : 'Apri scheda',
+        cancelLabel: (lang === 'en' || lang === 'es') ? 'Close' : 'Chiudi',
         variant: 'info'
       }),
       onConfirm: () => {
@@ -5019,11 +5019,11 @@ export default withAuth(function NuovaRosaLabPage() {
     const compatibility = getSlotCompatibility(selectedSlot.position, card.position)
     const isOutOfRole = compatibility === 'out_of_role'
     const cardSummary = `${card.player_name} · ${card.position || '-'}`
-    const targetSummary = selectedSlot.position || (lang === 'en' ? 'selected slot' : 'slot selezionato')
+    const targetSummary = selectedSlot.position || ((lang === 'en' || lang === 'es') ? 'selected slot' : 'slot selezionato')
 
     setConfirmModal({
       ...showConfirmConfig({
-        title: lang === 'en' ? 'Confirm catalog player' : 'Conferma giocatore catalogo',
+        title: (lang === 'en' || lang === 'es') ? 'Confirm catalog player' : 'Conferma giocatore catalogo',
         message: lang === 'en'
           ? `Assign ${card.player_name} to ${targetSummary}?`
           : `Assegnare ${card.player_name} a ${targetSummary}?`,
@@ -5032,8 +5032,8 @@ export default withAuth(function NuovaRosaLabPage() {
               ? `${cardSummary}\nCard role differs from the slot, but the catalog remains free.`
               : `${cardSummary}\nIl ruolo carta e diverso dallo slot, ma il catalogo resta libero.`)
           : cardSummary,
-        confirmLabel: lang === 'en' ? 'Assign player' : 'Assegna giocatore',
-        cancelLabel: lang === 'en' ? 'Cancel' : t('cancel')
+        confirmLabel: (lang === 'en' || lang === 'es') ? 'Assign player' : 'Assegna giocatore',
+        cancelLabel: (lang === 'en' || lang === 'es') ? 'Cancel' : t('cancel')
       }),
       onConfirm: async () => {
         setConfirmModal(null)
@@ -5067,13 +5067,13 @@ export default withAuth(function NuovaRosaLabPage() {
     const cardSummary = `${card.player_name} · ${card.position || '-'}`
     setConfirmModal({
       ...showConfirmConfig({
-        title: lang === 'en' ? 'Confirm reserve' : 'Conferma riserva',
+        title: (lang === 'en' || lang === 'es') ? 'Confirm reserve' : 'Conferma riserva',
         message: lang === 'en'
           ? `Add ${card.player_name} to reserves?`
           : `Aggiungere ${card.player_name} in riserva?`,
         details: cardSummary,
-        confirmLabel: lang === 'en' ? 'Add reserve' : 'Aggiungi riserva',
-        cancelLabel: lang === 'en' ? 'Cancel' : t('cancel')
+        confirmLabel: (lang === 'en' || lang === 'es') ? 'Add reserve' : 'Aggiungi riserva',
+        cancelLabel: (lang === 'en' || lang === 'es') ? 'Cancel' : t('cancel')
       }),
       onConfirm: async () => {
         setConfirmModal(null)
@@ -5131,8 +5131,8 @@ export default withAuth(function NuovaRosaLabPage() {
       await refreshDiagnosticAfterSave()
       showToast(
         slotIndex === null
-          ? (lang === 'en' ? 'Reserve added successfully.' : 'Riserva aggiunta con successo.')
-          : (lang === 'en' ? 'Player added successfully.' : 'Giocatore aggiunto con successo.'),
+          ? ((lang === 'en' || lang === 'es') ? 'Reserve added successfully.' : 'Riserva aggiunta con successo.')
+          : ((lang === 'en' || lang === 'es') ? 'Player added successfully.' : 'Giocatore aggiunto con successo.'),
         'upgrade'
       )
       return data
@@ -5223,13 +5223,13 @@ export default withAuth(function NuovaRosaLabPage() {
     }
 
     const playerSummary = `${player.player_name} · ${player.position || '-'}`
-    const targetSummary = targetSlot.position ? `${targetSlot.position}` : (lang === 'en' ? 'selected slot' : 'slot selezionato')
+    const targetSummary = targetSlot.position ? `${targetSlot.position}` : ((lang === 'en' || lang === 'es') ? 'selected slot' : 'slot selezionato')
     const isOutOfRole = !isOriginal && targetSlot.position
     setConfirmModal({
       ...showConfirmConfig({
         title: isOutOfRole
-          ? (lang === 'en' ? 'Confirm role change' : 'Conferma cambio ruolo')
-          : (lang === 'en' ? 'Assign reserve to slot' : 'Assegna riserva allo slot'),
+          ? ((lang === 'en' || lang === 'es') ? 'Confirm role change' : 'Conferma cambio ruolo')
+          : ((lang === 'en' || lang === 'es') ? 'Assign reserve to slot' : 'Assegna riserva allo slot'),
         message: isOutOfRole
           ? (lang === 'en'
               ? `${player.player_name} is not natural for ${targetSummary}. Assign anyway?`
@@ -5242,7 +5242,7 @@ export default withAuth(function NuovaRosaLabPage() {
               ? `${playerSummary}\nYou can still edit role compatibility later.`
               : `${playerSummary}\nPuoi comunque modificare la compatibilita ruolo in seguito.`)
           : playerSummary,
-        confirmLabel: lang === 'en' ? 'Assign player' : 'Assegna giocatore',
+        confirmLabel: (lang === 'en' || lang === 'es') ? 'Assign player' : 'Assegna giocatore',
         cancelLabel: t('cancel')
       }),
       onConfirm: async () => {
@@ -5294,7 +5294,7 @@ export default withAuth(function NuovaRosaLabPage() {
               details: lang === 'en'
                 ? 'The old reserve copy will be deleted and the player will be moved from the slot.'
                 : 'La copia riserva precedente verra eliminata e il giocatore verra spostato dallo slot.',
-              confirmLabel: lang === 'en' ? 'Replace' : t('replace'),
+              confirmLabel: (lang === 'en' || lang === 'es') ? 'Replace' : t('replace'),
               cancelLabel: t('cancel')
             }),
             onConfirm: async () => {
@@ -5324,7 +5324,7 @@ export default withAuth(function NuovaRosaLabPage() {
                 setSelectedSlot(null)
                 await fetchRoster()
                 await refreshDiagnosticAfterSave()
-                showToast(lang === 'en' ? 'Player moved to reserves.' : 'Giocatore spostato in riserva.', 'success')
+                showToast((lang === 'en' || lang === 'es') ? 'Player moved to reserves.' : 'Giocatore spostato in riserva.', 'success')
               } catch (retryErr) {
                 console.error('[NuovaRosaLab] remove retry error:', retryErr)
                 const { message } = mapErrorToUserMessage(retryErr, t('errorRemovalAfterDuplicate'), lang)
@@ -5348,7 +5348,7 @@ export default withAuth(function NuovaRosaLabPage() {
       setSelectedSlot(null)
       await fetchRoster()
       await refreshDiagnosticAfterSave()
-      showToast(lang === 'en' ? 'Player moved to reserves.' : 'Giocatore spostato in riserva.', 'success')
+      showToast((lang === 'en' || lang === 'es') ? 'Player moved to reserves.' : 'Giocatore spostato in riserva.', 'success')
     } catch (err) {
       console.error('[NuovaRosaLab] remove error:', err)
       const { message } = mapErrorToUserMessage(err, t('errorRemovalAfterDuplicate'), lang)
@@ -5458,7 +5458,7 @@ export default withAuth(function NuovaRosaLabPage() {
       setSelectedPlayer(null)
       await fetchRoster()
       await refreshDiagnosticAfterSave()
-      showToast(lang === 'en' ? 'Player updated.' : 'Giocatore aggiornato.', 'success')
+      showToast((lang === 'en' || lang === 'es') ? 'Player updated.' : 'Giocatore aggiornato.', 'success')
     } catch (err) {
       console.error('[NuovaRosaLab] premium save error:', err)
       const { message } = mapErrorToUserMessage(err, t('errorSavingPlayerGeneric'), lang)
@@ -5472,7 +5472,7 @@ export default withAuth(function NuovaRosaLabPage() {
     if (!player?.id) return
     setBuildingPlayerId(player.id)
     setBuildCoachOverlay({
-      title: lang === 'en' ? 'Preparing player build' : 'Preparo la build giocatore',
+      title: (lang === 'en' || lang === 'es') ? 'Preparing player build' : 'Preparo la build giocatore',
       message: lang === 'en'
         ? 'We are assigning growth points and updating the visible stats.'
         : 'Stiamo assegnando i punti crescita e aggiornando le statistiche visibili.'
@@ -5492,7 +5492,7 @@ export default withAuth(function NuovaRosaLabPage() {
           'Content-Type': 'application/json'
         }
       })
-      const data = await safeJsonResponse(response, lang === 'en' ? 'Unable to calculate build.' : 'Impossibile calcolare la build.')
+      const data = await safeJsonResponse(response, (lang === 'en' || lang === 'es') ? 'Unable to calculate build.' : 'Impossibile calcolare la build.')
       const updatedResponse = await fetch(`/api/players/${player.id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -5500,7 +5500,7 @@ export default withAuth(function NuovaRosaLabPage() {
         },
         cache: 'no-store'
       })
-      const updatedData = await safeJsonResponse(updatedResponse, lang === 'en' ? 'Unable to reload player.' : 'Impossibile ricaricare il giocatore.')
+      const updatedData = await safeJsonResponse(updatedResponse, (lang === 'en' || lang === 'es') ? 'Unable to reload player.' : 'Impossibile ricaricare il giocatore.')
       if (updatedData?.player) {
         setSelectedPlayer(updatedData.player)
         if (options.openEditor) {
@@ -5545,7 +5545,7 @@ export default withAuth(function NuovaRosaLabPage() {
             ? (lang === 'en'
                 ? 'This card type has fixed progression in the game and cannot be optimized.'
                 : 'Questo tipo di carta ha progressione fissa nel gioco e non può essere ottimizzata.')
-            : (lang === 'en' ? 'Unable to calculate build.' : 'Impossibile calcolare la build.'),
+            : ((lang === 'en' || lang === 'es') ? 'Unable to calculate build.' : 'Impossibile calcolare la build.'),
         lang
       )
       showToast(message, 'error')
@@ -5559,14 +5559,14 @@ export default withAuth(function NuovaRosaLabPage() {
     if (!player?.id) return
     setConfirmModal({
       ...showConfirmConfig({
-        title: lang === 'en' ? 'Suggest player build' : 'Consiglia build giocatore',
+        title: (lang === 'en' || lang === 'es') ? 'Suggest player build' : 'Consiglia build giocatore',
         message: lang === 'en'
           ? 'We will suggest growth points for this player using role, native skills, team style and squad context.'
           : 'Consigliamo i punti crescita usando ruolo, abilita native, stile squadra e contesto rosa.',
         details: lang === 'en'
           ? 'You can copy the progression values in-game and edit everything later.'
           : 'Puoi copiare i valori crescita in gioco e modificare tutto in seguito.',
-        confirmLabel: lang === 'en' ? 'Suggest build' : 'Consiglia build',
+        confirmLabel: (lang === 'en' || lang === 'es') ? 'Suggest build' : 'Consiglia build',
         cancelLabel: t('cancel'),
         variant: 'info'
       }),
@@ -5581,7 +5581,7 @@ export default withAuth(function NuovaRosaLabPage() {
   const runBuildCoachForRoster = React.useCallback(async () => {
     setBuildingRoster(true)
     setBuildCoachOverlay({
-      title: lang === 'en' ? 'Optimizing squad' : 'Ottimizzazione rosa',
+      title: (lang === 'en' || lang === 'es') ? 'Optimizing squad' : 'Ottimizzazione rosa',
       message: lang === 'en'
         ? 'We are preparing growth builds for starters and reserves. This may take a few seconds.'
         : 'Stiamo preparando le build crescita di titolari e riserve. Potrebbero servire alcuni secondi.'
@@ -5601,7 +5601,7 @@ export default withAuth(function NuovaRosaLabPage() {
           'Content-Type': 'application/json'
         }
       })
-      const data = await safeJsonResponse(response, lang === 'en' ? 'Unable to optimize squad.' : 'Impossibile ottimizzare la rosa.')
+      const data = await safeJsonResponse(response, (lang === 'en' || lang === 'es') ? 'Unable to optimize squad.' : 'Impossibile ottimizzare la rosa.')
       await fetchRoster()
       await refreshDiagnosticAfterSave()
       const summary = data?.summary || {}
@@ -5613,7 +5613,7 @@ export default withAuth(function NuovaRosaLabPage() {
       )
     } catch (err) {
       console.error('[NuovaRosaLab] build coach roster error:', err)
-      const { message } = mapErrorToUserMessage(err, lang === 'en' ? 'Unable to optimize squad.' : 'Impossibile ottimizzare la rosa.', lang)
+      const { message } = mapErrorToUserMessage(err, (lang === 'en' || lang === 'es') ? 'Unable to optimize squad.' : 'Impossibile ottimizzare la rosa.', lang)
       showToast(message, 'error')
     } finally {
       setBuildingRoster(false)
@@ -5624,14 +5624,14 @@ export default withAuth(function NuovaRosaLabPage() {
   const requestBuildCoachForRoster = React.useCallback(() => {
     setConfirmModal({
       ...showConfirmConfig({
-        title: lang === 'en' ? 'Optimize squad builds' : 'Ottimizza build rosa',
+        title: (lang === 'en' || lang === 'es') ? 'Optimize squad builds' : 'Ottimizza build rosa',
         message: lang === 'en'
           ? 'We will prepare growth builds based on role, native skills, team style and squad needs.'
           : 'Prepariamo le build in base a ruolo, abilita native, stile squadra e bisogni della rosa.',
         details: lang === 'en'
           ? 'Card profile stats use level-1 base + your PT + equipped booster only. Coach bonuses are not on the card profile. You can edit every player after the suggestion.'
           : 'Le statistiche del profilo carta usano base livello 1 + PT + solo booster equipaggiato. I bonus allenatore non compaiono sul profilo carta. Potrai modificare ogni giocatore dopo il suggerimento.',
-        confirmLabel: lang === 'en' ? 'Prepare builds' : 'Prepara build',
+        confirmLabel: (lang === 'en' || lang === 'es') ? 'Prepare builds' : 'Prepara build',
         cancelLabel: t('cancel'),
         variant: 'info'
       }),
@@ -5809,12 +5809,12 @@ export default withAuth(function NuovaRosaLabPage() {
             .join('\n')
           setConfirmModal({
             ...showConfirmConfig({
-              title: lang === 'en' ? 'Players out of role' : 'Giocatori fuori ruolo',
+              title: (lang === 'en' || lang === 'es') ? 'Players out of role' : 'Giocatori fuori ruolo',
               message: lang === 'en'
                 ? 'Some moved players are no longer in one of their original roles.'
                 : 'Alcuni giocatori spostati non sono piu in uno dei loro ruoli originali.',
               details,
-              confirmLabel: lang === 'en' ? 'Save anyway' : 'Salva comunque',
+              confirmLabel: (lang === 'en' || lang === 'es') ? 'Save anyway' : 'Salva comunque',
               cancelLabel: t('cancel')
             }),
             onConfirm: async () => {
@@ -5877,14 +5877,14 @@ export default withAuth(function NuovaRosaLabPage() {
   const showFormationHelp = React.useCallback(() => {
     setConfirmModal({
       ...showConfirmConfig({
-        title: lang === 'en' ? 'Customize your formation' : 'Personalizzazione modulo 100%',
+        title: (lang === 'en' || lang === 'es') ? 'Customize your formation' : 'Personalizzazione modulo 100%',
         message: lang === 'en'
           ? 'Move your players on the pitch and save the positions exactly how you like to play.'
           : 'Sposta i tuoi giocatori sul campo e salva le posizioni come meglio ti piace.',
         details: lang === 'en'
           ? 'Tap "Move positions", drag the players into your preferred shape, then press "Save positions". You can personalize the shape without rebuilding your squad.'
           : 'Clicca "Muovi posizioni", trascina i giocatori nella disposizione che vuoi usare e poi premi "Salva posizioni". Puoi personalizzare la forma senza rifare la rosa.',
-        confirmLabel: lang === 'en' ? 'Move positions' : 'Muovi posizioni',
+        confirmLabel: (lang === 'en' || lang === 'es') ? 'Move positions' : 'Muovi posizioni',
         cancelLabel: t('cancel'),
         variant: 'info',
         confirmVariant: 'primary'
@@ -5901,14 +5901,14 @@ export default withAuth(function NuovaRosaLabPage() {
     <main className="nr-page">
       <section className="nr-hero-card">
         <div className="nr-hero-copy">
-          <h1>{lang === 'en' ? 'My squad' : 'La mia rosa'}</h1>
+          <h1>{(lang === 'en' || lang === 'es') ? 'My squad' : 'La mia rosa'}</h1>
           <div className="nr-coach-header-panel">
             <button
               type="button"
               className={`nr-coach-header-main ${activeCoach?.coach_name ? 'is-clickable' : ''}`}
               onClick={openCoachDetails}
               disabled={!activeCoach?.coach_name}
-              title={activeCoach?.coach_name ? (lang === 'en' ? 'Open coach details' : 'Apri dettagli allenatore') : undefined}
+              title={activeCoach?.coach_name ? ((lang === 'en' || lang === 'es') ? 'Open coach details' : 'Apri dettagli allenatore') : undefined}
             >
               <div className="nr-coach-avatar">
                 {getCoachCardImage(activeCoach) ? (
@@ -5918,19 +5918,19 @@ export default withAuth(function NuovaRosaLabPage() {
                 )}
               </div>
               <div>
-                <span>{lang === 'en' ? 'Coach' : 'Allenatore'}</span>
-                <strong>{activeCoach?.coach_name || (lang === 'en' ? 'Not selected yet' : 'Non selezionato')}</strong>
+                <span>{(lang === 'en' || lang === 'es') ? 'Coach' : 'Allenatore'}</span>
+                <strong>{activeCoach?.coach_name || ((lang === 'en' || lang === 'es') ? 'Not selected yet' : 'Non selezionato')}</strong>
                 <p>
                   {activeCoach?.coach_name
                     ? (getBestCoachPlaystyle(activeCoach)
                       ? `${t(getBestCoachPlaystyle(activeCoach)[0]) || getBestCoachPlaystyle(activeCoach)[0].replace(/_/g, ' ')} ${getBestCoachPlaystyle(activeCoach)[1]}`
-                      : (activeCoach.category || activeCoach.team || (lang === 'en' ? 'Active coach' : 'Coach attivo')))
+                      : (activeCoach.category || activeCoach.team || ((lang === 'en' || lang === 'es') ? 'Active coach' : 'Coach attivo')))
                     : (lang === 'en'
                       ? 'Choose from catalog or upload screenshots.'
                       : 'Scegli da catalogo o carica screenshot.')}
                 </p>
                 {activeCoach?.coach_name && (
-                  <small>{lang === 'en' ? 'Click to view details' : 'Clicca per vedere i dettagli'}</small>
+                  <small>{(lang === 'en' || lang === 'es') ? 'Click to view details' : 'Clicca per vedere i dettagli'}</small>
                 )}
               </div>
             </button>
@@ -5938,8 +5938,8 @@ export default withAuth(function NuovaRosaLabPage() {
               <button type="button" className="nr-primary-button" onClick={openCoachCatalog} disabled={savingCoach}>
                 <Search size={14} />
                 {activeCoach?.coach_name
-                  ? (lang === 'en' ? 'Change catalog' : 'Cambia da catalogo')
-                  : (lang === 'en' ? 'Choose catalog' : 'Scegli catalogo')}
+                  ? ((lang === 'en' || lang === 'es') ? 'Change catalog' : 'Cambia da catalogo')
+                  : ((lang === 'en' || lang === 'es') ? 'Choose catalog' : 'Scegli catalogo')}
               </button>
             </div>
           </div>
@@ -5959,15 +5959,15 @@ export default withAuth(function NuovaRosaLabPage() {
             <div className={`nr-build-coach-command-card${showBuildCommands ? '' : ' nr-collapsed'}`}>
               <div className="nr-build-coach-command-head">
                 <div>
-                  <span className="nr-mini-kicker">{lang === 'en' ? 'Guided builds' : 'Build guidate'}</span>
-                  <p>{lang === 'en' ? 'Choose where you want a suggestion' : 'Scegli dove vuoi un consiglio'}</p>
+                  <span className="nr-mini-kicker">{(lang === 'en' || lang === 'es') ? 'Guided builds' : 'Build guidate'}</span>
+                  <p>{(lang === 'en' || lang === 'es') ? 'Choose where you want a suggestion' : 'Scegli dove vuoi un consiglio'}</p>
                 </div>
                 <button
                   type="button"
                   className="nr-icon-button"
                   onClick={() => setShowBuildCommands((prev) => !prev)}
                   aria-expanded={showBuildCommands}
-                  aria-label={lang === 'en' ? 'Toggle guided builds' : 'Mostra/nascondi build guidate'}
+                  aria-label={(lang === 'en' || lang === 'es') ? 'Toggle guided builds' : 'Mostra/nascondi build guidate'}
                 >
                   {showBuildCommands ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
@@ -5976,27 +5976,27 @@ export default withAuth(function NuovaRosaLabPage() {
                 <button type="button" className="nr-build-coach-action primary" onClick={requestBuildCoachForRoster} disabled={buildingRoster || loading}>
                   {buildingRoster ? <RefreshCw size={18} className="nr-spin" /> : <Sparkles size={18} />}
                   <span>
-                    <strong>{lang === 'en' ? 'Prepare squad builds' : 'Prepara build rosa'}</strong>
-                    <small>{lang === 'en' ? 'Role and squad needs' : 'Ruolo e bisogni rosa'}</small>
+                    <strong>{(lang === 'en' || lang === 'es') ? 'Prepare squad builds' : 'Prepara build rosa'}</strong>
+                    <small>{(lang === 'en' || lang === 'es') ? 'Role and squad needs' : 'Ruolo e bisogni rosa'}</small>
                   </span>
                 </button>
                 <button type="button" className="nr-build-coach-action" onClick={() => setBuildCoachPlayerPickerOpen(true)} disabled={buildingRoster || allRosterPlayers.length === 0}>
                   <User size={18} />
                   <span>
-                    <strong>{lang === 'en' ? 'Suggest one build' : 'Consiglia una build'}</strong>
-                    <small>{lang === 'en' ? 'Progression points and stats' : 'Punti crescita e statistiche'}</small>
+                    <strong>{(lang === 'en' || lang === 'es') ? 'Suggest one build' : 'Consiglia una build'}</strong>
+                    <small>{(lang === 'en' || lang === 'es') ? 'Progression points and stats' : 'Punti crescita e statistiche'}</small>
                   </span>
                 </button>
               </div>
               <div className="nr-build-coach-secondary-grid">
                 <button type="button" className="nr-formation-inline-tile" onClick={showFormationHelp}>
-                  <span>{lang === 'en' ? 'Formation' : 'Modulo'}</span>
+                  <span>{(lang === 'en' || lang === 'es') ? 'Formation' : 'Modulo'}</span>
                   <strong>{layout?.formation || '4-3-3'}</strong>
                   <em className="nr-formation-inline-style">{activeTeamPlaystyleLabel}</em>
                 </button>
                 <button type="button" className="nr-move-players-wide-button" onClick={() => setFieldEditMode(true)} disabled={fieldEditMode}>
                   <ArrowRight size={14} />
-                  <span>{lang === 'en' ? 'Move positions' : 'Muovi posizioni'}</span>
+                  <span>{(lang === 'en' || lang === 'es') ? 'Move positions' : 'Muovi posizioni'}</span>
                 </button>
               </div>
             </div>
@@ -6008,7 +6008,7 @@ export default withAuth(function NuovaRosaLabPage() {
                   {t('cancel')}
                 </button>
                 <button type="button" className="nr-primary-button" onClick={() => saveFieldLayout()} disabled={savingFieldLayout}>
-                  {savingFieldLayout ? (lang === 'en' ? 'Saving...' : 'Salvataggio...') : (lang === 'en' ? 'Save positions' : 'Salva posizioni')}
+                  {savingFieldLayout ? ((lang === 'en' || lang === 'es') ? 'Saving...' : 'Salvataggio...') : ((lang === 'en' || lang === 'es') ? 'Save positions' : 'Salva posizioni')}
                 </button>
               </div>
             )}
@@ -6067,11 +6067,11 @@ export default withAuth(function NuovaRosaLabPage() {
                 onClick={openPickerForReserve}
                 disabled={riserve.length >= MAX_RESERVES}
                 aria-label={riserve.length >= MAX_RESERVES
-                  ? (lang === 'en' ? 'Reserves are full' : 'Riserve al completo')
-                  : (lang === 'en' ? 'Add reserve' : 'Aggiungi riserva')}
+                  ? ((lang === 'en' || lang === 'es') ? 'Reserves are full' : 'Riserve al completo')
+                  : ((lang === 'en' || lang === 'es') ? 'Add reserve' : 'Aggiungi riserva')}
                 title={riserve.length >= MAX_RESERVES
-                  ? (lang === 'en' ? 'Reserves are full' : 'Riserve al completo')
-                  : (lang === 'en' ? 'Add reserve' : 'Aggiungi riserva')}
+                  ? ((lang === 'en' || lang === 'es') ? 'Reserves are full' : 'Riserve al completo')
+                  : ((lang === 'en' || lang === 'es') ? 'Add reserve' : 'Aggiungi riserva')}
               >
                 <Plus size={16} />
               </button>
@@ -6080,14 +6080,14 @@ export default withAuth(function NuovaRosaLabPage() {
                 className="nr-icon-button"
                 onClick={() => setShowReserves((prev) => !prev)}
                 aria-expanded={showReserves}
-                aria-label={lang === 'en' ? 'Toggle reserves' : 'Mostra/nascondi riserve'}
+                aria-label={(lang === 'en' || lang === 'es') ? 'Toggle reserves' : 'Mostra/nascondi riserve'}
               >
                 {showReserves ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
               </button>
             </div>
             {riserve.length >= MAX_RESERVES && (
               <div className="nr-limit-note">
-                {lang === 'en' ? 'Reserve bench full. Delete a reserve before adding another one.' : 'Panchina riserve piena. Elimina una riserva prima di aggiungerne un altra.'}
+                {(lang === 'en' || lang === 'es') ? 'Reserve bench full. Delete a reserve before adding another one.' : 'Panchina riserve piena. Elimina una riserva prima di aggiungerne un altra.'}
               </div>
             )}
             <div className="nr-reserve-grid">
@@ -6147,8 +6147,8 @@ export default withAuth(function NuovaRosaLabPage() {
                       }}
                       onMouseDown={(event) => event.stopPropagation()}
                       onTouchStart={(event) => event.stopPropagation()}
-                      aria-label={lang === 'en' ? 'Edit reserve' : 'Modifica riserva'}
-                      title={lang === 'en' ? 'Edit reserve' : 'Modifica riserva'}
+                      aria-label={(lang === 'en' || lang === 'es') ? 'Edit reserve' : 'Modifica riserva'}
+                      title={(lang === 'en' || lang === 'es') ? 'Edit reserve' : 'Modifica riserva'}
                     >
                       <Pencil size={14} />
                     </button>
@@ -6162,8 +6162,8 @@ export default withAuth(function NuovaRosaLabPage() {
                       }}
                       onMouseDown={(event) => event.stopPropagation()}
                       onTouchStart={(event) => event.stopPropagation()}
-                      aria-label={lang === 'en' ? 'Delete reserve' : 'Elimina riserva'}
-                      title={lang === 'en' ? 'Delete reserve' : 'Elimina riserva'}
+                      aria-label={(lang === 'en' || lang === 'es') ? 'Delete reserve' : 'Elimina riserva'}
+                      title={(lang === 'en' || lang === 'es') ? 'Delete reserve' : 'Elimina riserva'}
                     >
                       <X size={16} />
                     </button>

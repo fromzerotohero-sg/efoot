@@ -104,19 +104,19 @@ export default function GuidaPage() {
       icon: LayoutDashboard,
       color: 'var(--neon-blue)',
       path: '/',
-      title: lang === 'en' ? 'Dashboard' : 'Dashboard',
+      title: (lang === 'en' || lang === 'es') ? 'Dashboard' : 'Dashboard',
       description: lang === 'en' 
         ? 'Your command center: AI Knowledge score, weekly goals, squad overview, and quick navigation to all features.'
         : 'Il tuo centro di comando: punteggio AI Knowledge, obiettivi settimanali, panoramica squadra e navigazione rapida a tutte le funzioni.',
       steps: [
-        lang === 'en' ? 'Check your AI Knowledge score (0-100%)' : 'Controlla il tuo punteggio AI Knowledge (0-100%)',
-        lang === 'en' ? 'Open new card analysis to check releases against your roster' : 'Apri l’analisi carte nuove per valutarle sulla tua rosa',
-        lang === 'en' ? 'View weekly goals and track progress' : 'Visualizza obiettivi settimanali e traccia i progressi',
-        lang === 'en' ? 'Monitor weekly goals and app progress' : 'Monitora obiettivi settimanali e progressi nell\'app',
-        lang === 'en' ? 'Access Mission Center for daily challenges' : 'Accedi al Centro Missioni per sfide giornaliere',
-        lang === 'en' ? 'Quick links to add match or manage squad' : 'Link rapidi per aggiungere partita o gestire rosa',
-        lang === 'en' ? 'Check the Setup Banner for missing configuration' : 'Controlla il Banner Setup per configurazioni mancanti',
-        lang === 'en' ? 'View recent matches and edit details' : 'Visualizza partite recenti e modifica dettagli'
+        (lang === 'en' || lang === 'es') ? 'Check your AI Knowledge score (0-100%)' : 'Controlla il tuo punteggio AI Knowledge (0-100%)',
+        (lang === 'en' || lang === 'es') ? 'Open new card analysis to check releases against your roster' : 'Apri l’analisi carte nuove per valutarle sulla tua rosa',
+        (lang === 'en' || lang === 'es') ? 'View weekly goals and track progress' : 'Visualizza obiettivi settimanali e traccia i progressi',
+        (lang === 'en' || lang === 'es') ? 'Monitor weekly goals and app progress' : 'Monitora obiettivi settimanali e progressi nell\'app',
+        (lang === 'en' || lang === 'es') ? 'Access Mission Center for daily challenges' : 'Accedi al Centro Missioni per sfide giornaliere',
+        (lang === 'en' || lang === 'es') ? 'Quick links to add match or manage squad' : 'Link rapidi per aggiungere partita o gestire rosa',
+        (lang === 'en' || lang === 'es') ? 'Check the Setup Banner for missing configuration' : 'Controlla il Banner Setup per configurazioni mancanti',
+        (lang === 'en' || lang === 'es') ? 'View recent matches and edit details' : 'Visualizza partite recenti e modifica dettagli'
       ]
     },
     {
@@ -124,18 +124,18 @@ export default function GuidaPage() {
       icon: Users,
       color: 'var(--neon-purple)',
       path: '/gestione-formazione',
-      title: lang === 'en' ? 'Squad Management' : 'Gestione Rosa',
+      title: (lang === 'en' || lang === 'es') ? 'Squad Management' : 'Gestione Rosa',
       description: lang === 'en'
         ? 'Manage your 11 starters and 12 reserves on the 2D field. Upload players from screenshots and customize tactical settings.'
         : 'Gestisci i tuoi 11 titolari e 12 riserve sul campo 2D. Carica giocatori da screenshot e personalizza impostazioni tattiche.',
       steps: [
-        lang === 'en' ? 'View your 2D tactical field' : 'Visualizza il tuo campo tattico 2D',
-        lang === 'en' ? 'Click empty slots to assign players' : 'Clicca slot vuoti per assegnare giocatori',
-        lang === 'en' ? 'Upload players from screenshots (card/stats/skills)' : 'Carica giocatori da screenshot (card/statistiche/abilità)',
-        lang === 'en' ? 'Manage reserves (max 12 players)' : 'Gestisci riserve (max 12 giocatori)',
-        lang === 'en' ? 'Customize tactical settings per player' : 'Personalizza impostazioni tattiche per giocatore',
-        lang === 'en' ? 'Change formation (14 official eFootball formations)' : 'Cambia formazione (14 formazioni ufficiali eFootball)',
-        lang === 'en' ? 'Set your active coach' : 'Imposta il tuo allenatore attivo'
+        (lang === 'en' || lang === 'es') ? 'View your 2D tactical field' : 'Visualizza il tuo campo tattico 2D',
+        (lang === 'en' || lang === 'es') ? 'Click empty slots to assign players' : 'Clicca slot vuoti per assegnare giocatori',
+        (lang === 'en' || lang === 'es') ? 'Upload players from screenshots (card/stats/skills)' : 'Carica giocatori da screenshot (card/statistiche/abilità)',
+        (lang === 'en' || lang === 'es') ? 'Manage reserves (max 12 players)' : 'Gestisci riserve (max 12 giocatori)',
+        (lang === 'en' || lang === 'es') ? 'Customize tactical settings per player' : 'Personalizza impostazioni tattiche per giocatore',
+        (lang === 'en' || lang === 'es') ? 'Change formation (14 official eFootball formations)' : 'Cambia formazione (14 formazioni ufficiali eFootball)',
+        (lang === 'en' || lang === 'es') ? 'Set your active coach' : 'Imposta il tuo allenatore attivo'
       ]
     },
     {
@@ -143,16 +143,16 @@ export default function GuidaPage() {
       icon: Sparkles,
       color: 'var(--neon-cyan)',
       path: '/card-advisor-lab',
-      title: lang === 'en' ? 'New Card Analysis' : 'Analisi Carte Nuove',
+      title: (lang === 'en' || lang === 'es') ? 'New Card Analysis' : 'Analisi Carte Nuove',
       description: lang === 'en'
         ? 'Evaluate new releases against your real roster, needs and performance data before spending coins.'
         : 'Valuta le nuove uscite sulla tua rosa reale, sulle tue esigenze e sui tuoi dati performance prima di spendere coins.',
       steps: [
-        lang === 'en' ? 'Open the latest card releases' : 'Apri le ultime carte uscite',
-        lang === 'en' ? 'Compare the card with starters, bench, coach and team style' : 'Confronta la carta con titolari, panchina, coach e stile squadra',
-        lang === 'en' ? 'Unlock a clear verdict: sign, skip or rotation' : 'Sblocca un verdetto chiaro: prendi, salta o rotazione',
-        lang === 'en' ? 'Use roster and performance context instead of hype or overall only' : 'Usa contesto rosa e performance, non hype o solo overall',
-        lang === 'en' ? 'Use it whenever a new pack drops' : 'Usala ogni volta che esce un nuovo pack'
+        (lang === 'en' || lang === 'es') ? 'Open the latest card releases' : 'Apri le ultime carte uscite',
+        (lang === 'en' || lang === 'es') ? 'Compare the card with starters, bench, coach and team style' : 'Confronta la carta con titolari, panchina, coach e stile squadra',
+        (lang === 'en' || lang === 'es') ? 'Unlock a clear verdict: sign, skip or rotation' : 'Sblocca un verdetto chiaro: prendi, salta o rotazione',
+        (lang === 'en' || lang === 'es') ? 'Use roster and performance context instead of hype or overall only' : 'Usa contesto rosa e performance, non hype o solo overall',
+        (lang === 'en' || lang === 'es') ? 'Use it whenever a new pack drops' : 'Usala ogni volta che esce un nuovo pack'
       ]
     },
     {
@@ -160,18 +160,18 @@ export default function GuidaPage() {
       icon: Calendar,
       color: 'var(--neon-orange)',
       path: '/match/new',
-      title: lang === 'en' ? 'Add Match' : 'Aggiungi Partita',
+      title: (lang === 'en' || lang === 'es') ? 'Add Match' : 'Aggiungi Partita',
       description: lang === 'en'
         ? '6-step wizard to record match data: Home/Away, player ratings, team stats, attack areas, ball recovery, and opponent formation.'
         : 'Wizard a 6 step per registrare dati partita: Casa/Fuori, pagelle giocatori, statistiche squadra, aree attacco, recuperi palla e formazione avversaria.',
       steps: [
-        lang === 'en' ? 'Step 1: Select Home or Away' : 'Step 1: Seleziona Casa o Fuori',
-        lang === 'en' ? 'Step 2: Upload player ratings screenshot' : 'Step 2: Carica screenshot pagelle giocatori',
-        lang === 'en' ? 'Step 3: Upload team stats screenshot' : 'Step 3: Carica screenshot statistiche squadra',
-        lang === 'en' ? 'Step 4: Upload attack areas screenshot' : 'Step 4: Carica screenshot aree attacco',
-        lang === 'en' ? 'Step 5: Upload ball recovery zones' : 'Step 5: Carica zone recupero palla',
-        lang === 'en' ? 'Step 6: Upload opponent formation' : 'Step 6: Carica formazione avversaria',
-        lang === 'en' ? 'Review and save match' : 'Rivedi e salva partita'
+        (lang === 'en' || lang === 'es') ? 'Step 1: Select Home or Away' : 'Step 1: Seleziona Casa o Fuori',
+        (lang === 'en' || lang === 'es') ? 'Step 2: Upload player ratings screenshot' : 'Step 2: Carica screenshot pagelle giocatori',
+        (lang === 'en' || lang === 'es') ? 'Step 3: Upload team stats screenshot' : 'Step 3: Carica screenshot statistiche squadra',
+        (lang === 'en' || lang === 'es') ? 'Step 4: Upload attack areas screenshot' : 'Step 4: Carica screenshot aree attacco',
+        (lang === 'en' || lang === 'es') ? 'Step 5: Upload ball recovery zones' : 'Step 5: Carica zone recupero palla',
+        (lang === 'en' || lang === 'es') ? 'Step 6: Upload opponent formation' : 'Step 6: Carica formazione avversaria',
+        (lang === 'en' || lang === 'es') ? 'Review and save match' : 'Rivedi e salva partita'
       ]
     },
     {
@@ -179,16 +179,16 @@ export default function GuidaPage() {
       icon: Shield,
       color: 'var(--neon-orange)',
       path: '/contromisure-pre-partita',
-      title: lang === 'en' ? 'Pre-Match Countermeasures' : 'Contromisure Pre-partita',
+      title: (lang === 'en' || lang === 'es') ? 'Pre-Match Countermeasures' : 'Contromisure Pre-partita',
       description: lang === 'en'
         ? 'Upload opponent formation screenshot to get AI-generated tactical countermeasures and instructions.'
         : 'Carica screenshot formazione avversaria per ricevere contromisure tattiche e istruzioni generate da AI.',
       steps: [
-        lang === 'en' ? 'Upload opponent formation screenshot' : 'Carica screenshot formazione avversaria',
-        lang === 'en' ? 'AI extracts formation automatically' : 'L\'AI estrae la formazione automaticamente',
-        lang === 'en' ? 'Review extracted formation' : 'Rivedi la formazione estratta',
-        lang === 'en' ? 'Generate countermeasures with AI' : 'Genera contromisure con AI',
-        lang === 'en' ? 'View tactical analysis and instructions' : 'Visualizza analisi tattica e istruzioni'
+        (lang === 'en' || lang === 'es') ? 'Upload opponent formation screenshot' : 'Carica screenshot formazione avversaria',
+        (lang === 'en' || lang === 'es') ? 'AI extracts formation automatically' : 'L\'AI estrae la formazione automaticamente',
+        (lang === 'en' || lang === 'es') ? 'Review extracted formation' : 'Rivedi la formazione estratta',
+        (lang === 'en' || lang === 'es') ? 'Generate countermeasures with AI' : 'Genera contromisure con AI',
+        (lang === 'en' || lang === 'es') ? 'View tactical analysis and instructions' : 'Visualizza analisi tattica e istruzioni'
       ]
     },
     {
@@ -196,16 +196,16 @@ export default function GuidaPage() {
       icon: UserRound,
       color: 'var(--neon-cyan)',
       path: '/allenatori',
-      title: lang === 'en' ? 'Coaches' : 'Allenatori',
+      title: (lang === 'en' || lang === 'es') ? 'Coaches' : 'Allenatori',
       description: lang === 'en'
         ? 'Manage your coaches: upload photos, set active coach, and view tactical competences.'
         : 'Gestisci i tuoi allenatori: carica foto, imposta allenatore attivo e visualizza competenze tattiche.',
       steps: [
-        lang === 'en' ? 'Upload coach screenshot (main photo)' : 'Carica screenshot allenatore (foto principale)',
-        lang === 'en' ? 'Optionally upload connection style photo' : 'Opzionalmente carica foto stile connessione',
-        lang === 'en' ? 'AI extracts name, team and competences' : 'L\'AI estrae nome, squadra e competenze',
-        lang === 'en' ? 'Set coach as active (star icon)' : 'Imposta allenatore come attivo (icona stella)',
-        lang === 'en' ? 'View coach details and tactical style' : 'Visualizza dettagli allenatore e stile tattico'
+        (lang === 'en' || lang === 'es') ? 'Upload coach screenshot (main photo)' : 'Carica screenshot allenatore (foto principale)',
+        (lang === 'en' || lang === 'es') ? 'Optionally upload connection style photo' : 'Opzionalmente carica foto stile connessione',
+        (lang === 'en' || lang === 'es') ? 'AI extracts name, team and competences' : 'L\'AI estrae nome, squadra e competenze',
+        (lang === 'en' || lang === 'es') ? 'Set coach as active (star icon)' : 'Imposta allenatore come attivo (icona stella)',
+        (lang === 'en' || lang === 'es') ? 'View coach details and tactical style' : 'Visualizza dettagli allenatore e stile tattico'
       ]
     },
     {
@@ -214,16 +214,16 @@ export default function GuidaPage() {
       color: 'var(--neon-orange)',
       path: 'https://home.fromzerotohero.io/dashboard?usage',
       external: true,
-      title: lang === 'en' ? 'Purchase Hero Points' : 'Acquista Hero Points',
+      title: (lang === 'en' || lang === 'es') ? 'Purchase Hero Points' : 'Acquista Hero Points',
       description: lang === 'en'
         ? 'Buy Hero Points to use AI features: match analysis, player extraction, chat with coach, and more.'
         : 'Acquista Hero Points per usare funzionalità AI: analisi partite, estrazione giocatori, chat con coach e altro.',
       steps: [
-        lang === 'en' ? 'Click to open purchase page' : 'Clicca per aprire pagina acquisto',
-        lang === 'en' ? 'Choose Hero Points package' : 'Scegli pacchetto Hero Points',
-        lang === 'en' ? 'Complete payment securely' : 'Completa pagamento in sicurezza',
-        lang === 'en' ? 'Credits added instantly' : 'Crediti aggiunti istantaneamente',
-        lang === 'en' ? 'Start using AI features' : 'Inizia a usare funzionalità AI'
+        (lang === 'en' || lang === 'es') ? 'Click to open purchase page' : 'Clicca per aprire pagina acquisto',
+        (lang === 'en' || lang === 'es') ? 'Choose Hero Points package' : 'Scegli pacchetto Hero Points',
+        (lang === 'en' || lang === 'es') ? 'Complete payment securely' : 'Completa pagamento in sicurezza',
+        (lang === 'en' || lang === 'es') ? 'Credits added instantly' : 'Crediti aggiunti istantaneamente',
+        (lang === 'en' || lang === 'es') ? 'Start using AI features' : 'Inizia a usare funzionalità AI'
       ]
     }
   ]
@@ -308,14 +308,14 @@ export default function GuidaPage() {
                 gap: '12px'
               }}>
                 <BookOpen size={32} />
-                {lang === 'en' ? 'Complete Guide' : 'Guida Completa'}
+                {(lang === 'en' || lang === 'es') ? 'Complete Guide' : 'Guida Completa'}
               </h1>
               <p style={{
                 fontSize: '16px',
                 opacity: 0.8,
                 color: 'white'
               }}>
-                {lang === 'en' ? 'Discover how to make the most of the platform' : 'Scopri come usare al meglio la piattaforma'}
+                {(lang === 'en' || lang === 'es') ? 'Discover how to make the most of the platform' : 'Scopri come usare al meglio la piattaforma'}
               </p>
             </div>
           </div>
@@ -359,7 +359,7 @@ export default function GuidaPage() {
                 alignItems: 'center',
                 gap: '8px'
               }}>
-                {lang === 'en' ? 'Complete Your Profile' : 'Completa il Tuo Profilo'}
+                {(lang === 'en' || lang === 'es') ? 'Complete Your Profile' : 'Completa il Tuo Profilo'}
                 {profileCompletion === 100 && <CheckCircle2 size={24} color="var(--neon-blue)" />}
               </h2>
               <p style={{
@@ -367,7 +367,7 @@ export default function GuidaPage() {
                 opacity: 0.9,
                 color: 'white'
               }}>
-                {lang === 'en' ? 'The more you complete your profile, the better the AI can help you!' : 'Più completi il profilo, più l\'AI può aiutarti!'}
+                {(lang === 'en' || lang === 'es') ? 'The more you complete your profile, the better the AI can help you!' : 'Più completi il profilo, più l\'AI può aiutarti!'}
               </p>
             </div>
           </div>
@@ -385,7 +385,7 @@ export default function GuidaPage() {
                 opacity: 0.8,
                 color: 'white'
               }}>
-                {lang === 'en' ? 'Profile Completion' : 'Completamento Profilo'}
+                {(lang === 'en' || lang === 'es') ? 'Profile Completion' : 'Completamento Profilo'}
               </span>
               <span style={{
                 fontSize: '18px',
@@ -438,8 +438,8 @@ export default function GuidaPage() {
           >
             <Settings size={20} />
             {profileCompletion === 100
-              ? (lang === 'en' ? 'Profile Complete' : 'Profilo Completo')
-              : (lang === 'en' ? 'Complete Your Profile' : 'Completa il Profilo')}
+              ? ((lang === 'en' || lang === 'es') ? 'Profile Complete' : 'Profilo Completo')
+              : ((lang === 'en' || lang === 'es') ? 'Complete Your Profile' : 'Completa il Profilo')}
             <ArrowRight size={20} />
           </button>
         </div>
@@ -483,7 +483,7 @@ export default function GuidaPage() {
                 gap: '8px'
               }}>
                 <Sparkles size={24} color="var(--neon-purple)" />
-                {lang === 'en' ? 'AI Assistant' : 'Assistente AI'}
+                {(lang === 'en' || lang === 'es') ? 'AI Assistant' : 'Assistente AI'}
               </h2>
               <p style={{
                 fontSize: '16px',
@@ -517,14 +517,14 @@ export default function GuidaPage() {
                 color: 'var(--neon-purple)',
                 marginBottom: '4px'
               }}>
-                {lang === 'en' ? 'Personal Guide' : 'Guida Personale'}
+                {(lang === 'en' || lang === 'es') ? 'Personal Guide' : 'Guida Personale'}
               </div>
               <div style={{
                 fontSize: '12px',
                 opacity: 0.8,
                 color: 'white'
               }}>
-                {lang === 'en' ? 'Accompanies you every step' : 'Ti accompagna in ogni passo'}
+                {(lang === 'en' || lang === 'es') ? 'Accompanies you every step' : 'Ti accompagna in ogni passo'}
               </div>
             </div>
             <div style={{
@@ -540,14 +540,14 @@ export default function GuidaPage() {
                 color: 'var(--neon-pink)',
                 marginBottom: '4px'
               }}>
-                {lang === 'en' ? 'Tactical Advice' : 'Consigli Tattici'}
+                {(lang === 'en' || lang === 'es') ? 'Tactical Advice' : 'Consigli Tattici'}
               </div>
               <div style={{
                 fontSize: '12px',
                 opacity: 0.8,
                 color: 'white'
               }}>
-                {lang === 'en' ? 'Based on your squad and matches' : 'Basati sulla tua rosa e partite'}
+                {(lang === 'en' || lang === 'es') ? 'Based on your squad and matches' : 'Basati sulla tua rosa e partite'}
               </div>
             </div>
             <div style={{
@@ -563,14 +563,14 @@ export default function GuidaPage() {
                 color: 'var(--neon-blue)',
                 marginBottom: '4px'
               }}>
-                {lang === 'en' ? 'Match Analysis' : 'Analisi Partite'}
+                {(lang === 'en' || lang === 'es') ? 'Match Analysis' : 'Analisi Partite'}
               </div>
               <div style={{
                 fontSize: '12px',
                 opacity: 0.8,
                 color: 'white'
               }}>
-                {lang === 'en' ? 'Insights on your performance' : 'Insight sulle tue prestazioni'}
+                {(lang === 'en' || lang === 'es') ? 'Insights on your performance' : 'Insight sulle tue prestazioni'}
               </div>
             </div>
           </div>
@@ -615,7 +615,7 @@ export default function GuidaPage() {
                 gap: '8px'
               }}>
                 <Sparkles size={24} color="var(--neon-cyan)" />
-                {lang === 'en' ? 'Interactive Tour' : 'Tour Interattivo'}
+                {(lang === 'en' || lang === 'es') ? 'Interactive Tour' : 'Tour Interattivo'}
               </h2>
               <p style={{
                 fontSize: '16px',
@@ -648,14 +648,14 @@ export default function GuidaPage() {
                 color: 'var(--neon-cyan)',
                 marginBottom: '4px'
               }}>
-                {lang === 'en' ? 'Contextual Tours' : 'Tour Contestuali'}
+                {(lang === 'en' || lang === 'es') ? 'Contextual Tours' : 'Tour Contestuali'}
               </div>
               <div style={{
                 fontSize: '12px',
                 opacity: 0.8,
                 color: 'white'
               }}>
-                {lang === 'en' ? 'Different tour for each page' : 'Un tour diverso per ogni pagina'}
+                {(lang === 'en' || lang === 'es') ? 'Different tour for each page' : 'Un tour diverso per ogni pagina'}
               </div>
             </div>
             <div style={{
@@ -671,14 +671,14 @@ export default function GuidaPage() {
                 color: 'var(--neon-blue)',
                 marginBottom: '4px'
               }}>
-                {lang === 'en' ? 'Interactive Steps' : 'Step Interattivi'}
+                {(lang === 'en' || lang === 'es') ? 'Interactive Steps' : 'Step Interattivi'}
               </div>
               <div style={{
                 fontSize: '12px',
                 opacity: 0.8,
                 color: 'white'
               }}>
-                {lang === 'en' ? 'Click highlighted elements' : 'Clicca elementi evidenziati'}
+                {(lang === 'en' || lang === 'es') ? 'Click highlighted elements' : 'Clicca elementi evidenziati'}
               </div>
             </div>
           </div>
@@ -698,7 +698,7 @@ export default function GuidaPage() {
             gap: '12px'
           }}>
             <BookOpen size={28} color="var(--neon-blue)" />
-            {lang === 'en' ? 'Page Guides' : 'Guide per Pagina'}
+            {(lang === 'en' || lang === 'es') ? 'Page Guides' : 'Guide per Pagina'}
           </h2>
 
           <div style={{
@@ -793,7 +793,7 @@ export default function GuidaPage() {
                         color: guide.color,
                         marginBottom: '12px'
                       }}>
-                        {lang === 'en' ? 'Steps' : 'Step'}
+                        {(lang === 'en' || lang === 'es') ? 'Steps' : 'Step'}
                       </div>
                       <ul style={{
                         listStyle: 'none',
@@ -873,8 +873,8 @@ export default function GuidaPage() {
                         }}
                       >
                         {guide.external || guide.path.startsWith('http') 
-                          ? (lang === 'en' ? 'Open Purchase Page' : 'Apri Pagina Acquisto')
-                          : (lang === 'en' ? 'Go to Page' : 'Vai alla Pagina')}
+                          ? ((lang === 'en' || lang === 'es') ? 'Open Purchase Page' : 'Apri Pagina Acquisto')
+                          : ((lang === 'en' || lang === 'es') ? 'Go to Page' : 'Vai alla Pagina')}
                         <ArrowRight size={16} />
                       </button>
                       {guide.id === 'gestione-formazione' && (
@@ -902,7 +902,7 @@ export default function GuidaPage() {
                           }}
                         >
                           <BookOpen size={16} />
-                          {lang === 'en' ? 'Roster Tutorial' : 'Tutorial Rosa'}
+                          {(lang === 'en' || lang === 'es') ? 'Roster Tutorial' : 'Tutorial Rosa'}
                         </button>
                       )}
                     </div>
@@ -930,7 +930,7 @@ export default function GuidaPage() {
             color: 'white',
             marginBottom: '12px'
           }}>
-            {lang === 'en' ? 'Questions?' : 'Domande?'}
+            {(lang === 'en' || lang === 'es') ? 'Questions?' : 'Domande?'}
           </h3>
           <p style={{
             fontSize: '16px',

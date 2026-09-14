@@ -96,7 +96,7 @@ export default function AssistantChat({
     const recognition = new SpeechRecognition()
     recognition.continuous = false
     recognition.interimResults = true
-    recognition.lang = lang === 'en' ? 'en-US' : 'it-IT'
+    recognition.lang = (lang === 'en' || lang === 'es') ? 'en-US' : 'it-IT'
 
     recognition.onstart = () => {
       setIsListening(true)
@@ -235,25 +235,25 @@ export default function AssistantChat({
       {
         id: 'profile',
         done: hasProfile,
-        label: lang === 'en' ? 'Profile' : 'Profilo',
-        text: lang === 'en' ? 'Tell the coach who you are.' : 'Dici al coach chi sei.',
-        cta: lang === 'en' ? 'Complete profile' : 'Completa profilo',
+        label: (lang === 'en' || lang === 'es') ? 'Profile' : 'Profilo',
+        text: (lang === 'en' || lang === 'es') ? 'Tell the coach who you are.' : 'Dici al coach chi sei.',
+        cta: (lang === 'en' || lang === 'es') ? 'Complete profile' : 'Completa profilo',
         action: () => { if (typeof window !== 'undefined') window.location.href = '/impostazioni-profilo' }
       },
       {
         id: 'roster',
         done: hasRoster,
-        label: lang === 'en' ? 'Roster' : 'Rosa',
-        text: lang === 'en' ? `${Math.min(startersCount, 11)}/11 starters saved.` : `${Math.min(startersCount, 11)}/11 titolari salvati.`,
-        cta: lang === 'en' ? 'Open roster' : 'Apri rosa',
+        label: (lang === 'en' || lang === 'es') ? 'Roster' : 'Rosa',
+        text: (lang === 'en' || lang === 'es') ? `${Math.min(startersCount, 11)}/11 starters saved.` : `${Math.min(startersCount, 11)}/11 titolari salvati.`,
+        cta: (lang === 'en' || lang === 'es') ? 'Open roster' : 'Apri rosa',
         action: () => { if (typeof window !== 'undefined') window.location.href = '/nuova-rosa-lab' }
       },
       {
         id: 'game-analysis',
         done: hasGameAnalysis,
-        label: lang === 'en' ? 'Game stats' : 'Statistiche di gioco',
-        text: lang === 'en' ? 'Most important for advice on shot, passing and defence.' : 'Fondamentali per consigli su tiro, passaggi e difesa.',
-        cta: lang === 'en' ? 'Upload stats' : 'Carica statistiche',
+        label: (lang === 'en' || lang === 'es') ? 'Game stats' : 'Statistiche di gioco',
+        text: (lang === 'en' || lang === 'es') ? 'Most important for advice on shot, passing and defence.' : 'Fondamentali per consigli su tiro, passaggi e difesa.',
+        cta: (lang === 'en' || lang === 'es') ? 'Upload stats' : 'Carica statistiche',
         action: () => {
           if (typeof window === 'undefined') return
           if (currentPage === '/') {
@@ -324,7 +324,7 @@ export default function AssistantChat({
       const hasGreeted = localStorage.getItem('assistant_greeted')
       if (!hasGreeted && profile.first_name) {
         setTimeout(() => {
-          const aiName = profile.ai_name || (lang === 'en' ? 'your Coach AI' : 'il tuo Coach AI')
+          const aiName = profile.ai_name || ((lang === 'en' || lang === 'es') ? 'your Coach AI' : 'il tuo Coach AI')
           const greeting = lang === 'en'
             ? `Hi ${profile.first_name}! 👋 I'm ${aiName}. I'm here to help and guide you. Just tell me what you need! 💪`
             : `Ciao ${profile.first_name}! 👋 Sono ${aiName}. Sono qui per aiutarti e guidarti. Dimmi pure cosa ti serve! 💪`
@@ -420,7 +420,7 @@ export default function AssistantChat({
           ])
           return
         }
-        const errMsg = errorBody?.error || (res.status === 503 ? (lang === 'en' ? 'Service temporarily unavailable. Try again.' : 'Servizio temporaneamente non disponibile. Riprova.') : 'Error generating response')
+        const errMsg = errorBody?.error || (res.status === 503 ? ((lang === 'en' || lang === 'es') ? 'Service temporarily unavailable. Try again.' : 'Servizio temporaneamente non disponibile. Riprova.') : 'Error generating response')
         throw new Error(errMsg)
       }
       
@@ -439,7 +439,7 @@ export default function AssistantChat({
       }
 
       // Aggiungi risposta AI (fallback doppia lingua); mostra modello usato (es. gpt-5 / gpt-4o)
-      const fallbackNoResponse = lang === 'en' ? "Sorry, I didn't receive a valid response." : 'Mi dispiace, non ho ricevuto una risposta valida.'
+      const fallbackNoResponse = (lang === 'en' || lang === 'es') ? "Sorry, I didn't receive a valid response." : 'Mi dispiace, non ho ricevuto una risposta valida.'
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: responseContent || fallbackNoResponse,
@@ -921,7 +921,7 @@ export default function AssistantChat({
                   <Sparkles size={18} color="#00d4ff" style={{ flexShrink: 0, marginTop: '2px' }} />
                   <div>
                     <strong style={{ display: 'block', color: '#fff', fontSize: '14px', marginBottom: '3px' }}>
-                      {lang === 'en' ? 'Make my advice personal' : 'Rendi i consigli davvero tuoi'}
+                      {(lang === 'en' || lang === 'es') ? 'Make my advice personal' : 'Rendi i consigli davvero tuoi'}
                     </strong>
                     <span style={{ display: 'block', color: 'rgba(255,255,255,0.68)', fontSize: '12px', lineHeight: 1.45 }}>
                       {lang === 'en'
@@ -1000,8 +1000,8 @@ export default function AssistantChat({
           }}>
             <strong style={{ display: 'block', color: '#fff', fontSize: '13px', marginBottom: '4px' }}>
               {chatSetupCta.primary.id === 'game-analysis'
-                ? (lang === 'en' ? 'Missing game stats' : 'Mancano le statistiche di gioco')
-                : (lang === 'en' ? 'Missing setup data' : 'Mancano dati per personalizzare')}
+                ? ((lang === 'en' || lang === 'es') ? 'Missing game stats' : 'Mancano le statistiche di gioco')
+                : ((lang === 'en' || lang === 'es') ? 'Missing setup data' : 'Mancano dati per personalizzare')}
             </strong>
             <span style={{ display: 'block', color: 'rgba(255,255,255,0.68)', fontSize: '12px', lineHeight: 1.45, marginBottom: '10px' }}>
               {lang === 'en'
@@ -1148,7 +1148,7 @@ export default function AssistantChat({
             type="button"
             onClick={() => setSuggestionsExpanded(s => !s)}
             aria-expanded={suggestionsExpanded}
-            aria-label={lang === 'en' ? 'Show or hide suggestions' : 'Mostra o nascondi suggerimenti'}
+            aria-label={(lang === 'en' || lang === 'es') ? 'Show or hide suggestions' : 'Mostra o nascondi suggerimenti'}
             style={{
               width: '100%',
               padding: '8px 12px',
@@ -1168,7 +1168,7 @@ export default function AssistantChat({
             onFocus={(e) => { e.currentTarget.style.outline = '2px solid var(--neon-blue)'; e.currentTarget.style.outlineOffset = '2px' }}
             onBlur={(e) => { e.currentTarget.style.outline = 'none' }}
           >
-            <span>💡 {lang === 'en' ? 'Suggestions (3)' : 'Suggerimenti (3)'}</span>
+            <span>💡 {(lang === 'en' || lang === 'es') ? 'Suggestions (3)' : 'Suggerimenti (3)'}</span>
             {suggestionsExpanded ? <ChevronUp size={16} color="var(--neon-blue)" /> : <ChevronDown size={16} color="var(--neon-blue)" />}
           </button>
           {suggestionsExpanded && (
@@ -1211,7 +1211,7 @@ export default function AssistantChat({
             type="button"
             onClick={() => setSuggestionsExpanded(s => !s)}
             aria-expanded={suggestionsExpanded}
-            aria-label={lang === 'en' ? 'Show or hide suggestions' : 'Mostra o nascondi suggerimenti'}
+            aria-label={(lang === 'en' || lang === 'es') ? 'Show or hide suggestions' : 'Mostra o nascondi suggerimenti'}
             style={{
               width: '100%',
               padding: '8px 12px',
@@ -1231,7 +1231,7 @@ export default function AssistantChat({
             onFocus={(e) => { e.currentTarget.style.outline = '2px solid var(--neon-blue)'; e.currentTarget.style.outlineOffset = '2px' }}
             onBlur={(e) => { e.currentTarget.style.outline = 'none' }}
           >
-            <span>💡 {lang === 'en' ? 'Suggestions (3)' : 'Suggerimenti (3)'}</span>
+            <span>💡 {(lang === 'en' || lang === 'es') ? 'Suggestions (3)' : 'Suggerimenti (3)'}</span>
             {suggestionsExpanded ? <ChevronUp size={16} color="var(--neon-blue)" /> : <ChevronDown size={16} color="var(--neon-blue)" />}
           </button>
           {suggestionsExpanded && (

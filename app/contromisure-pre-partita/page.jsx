@@ -61,10 +61,10 @@ export default function CountermeasuresPreMatchPage() {
   const router = useRouter()
 
   const individualSlotLabel = (slot) => {
-    if (slot === 'attacco_1') return lang === 'en' ? 'Attack instruction 1 (not a role change)' : 'Istruzione attacco 1 (non cambio ruolo)'
-    if (slot === 'attacco_2') return lang === 'en' ? 'Attack instruction 2 (not a role change)' : 'Istruzione attacco 2 (non cambio ruolo)'
-    if (slot === 'difesa_1') return lang === 'en' ? 'Defence instruction 1' : 'Istruzione difesa 1'
-    if (slot === 'difesa_2') return lang === 'en' ? 'Defence instruction 2' : 'Istruzione difesa 2'
+    if (slot === 'attacco_1') return (lang === 'en' || lang === 'es') ? 'Attack instruction 1 (not a role change)' : 'Istruzione attacco 1 (non cambio ruolo)'
+    if (slot === 'attacco_2') return (lang === 'en' || lang === 'es') ? 'Attack instruction 2 (not a role change)' : 'Istruzione attacco 2 (non cambio ruolo)'
+    if (slot === 'difesa_1') return (lang === 'en' || lang === 'es') ? 'Defence instruction 1' : 'Istruzione difesa 1'
+    if (slot === 'difesa_2') return (lang === 'en' || lang === 'es') ? 'Defence instruction 2' : 'Istruzione difesa 2'
     const nameKey = INDIVIDUAL_INSTRUCTIONS_CONFIG[slot]?.nameKey
     return nameKey ? t(nameKey) : slot
   }
@@ -80,11 +80,11 @@ export default function CountermeasuresPreMatchPage() {
 
   const officialTeamStyleFromText = (text) => {
     const value = String(text || '').toLowerCase()
-    if (/possesso palla|possession/.test(value)) return lang === 'en' ? 'Possession Game' : 'Possesso palla'
-    if (/contropiede veloce|quick counter/.test(value)) return lang === 'en' ? 'Quick Counter' : 'Contropiede veloce'
-    if (/contrattacco|long ball counter/.test(value)) return lang === 'en' ? 'Long Ball Counter' : 'Contrattacco'
-    if (/passaggio lungo|long ball(?! counter)/.test(value)) return lang === 'en' ? 'Long Ball' : 'Passaggio lungo'
-    if (/vie laterali|out wide/.test(value)) return lang === 'en' ? 'Out Wide' : 'Vie laterali'
+    if (/possesso palla|possession/.test(value)) return (lang === 'en' || lang === 'es') ? 'Possession Game' : 'Possesso palla'
+    if (/contropiede veloce|quick counter/.test(value)) return (lang === 'en' || lang === 'es') ? 'Quick Counter' : 'Contropiede veloce'
+    if (/contrattacco|long ball counter/.test(value)) return (lang === 'en' || lang === 'es') ? 'Long Ball Counter' : 'Contrattacco'
+    if (/passaggio lungo|long ball(?! counter)/.test(value)) return (lang === 'en' || lang === 'es') ? 'Long Ball' : 'Passaggio lungo'
+    if (/vie laterali|out wide/.test(value)) return (lang === 'en' || lang === 'es') ? 'Out Wide' : 'Vie laterali'
     return ''
   }
 
@@ -106,8 +106,8 @@ export default function CountermeasuresPreMatchPage() {
 
   const normalizeTacticalDisplay = (adj) => {
     const rawSuggestion = cleanCustomerTacticalText(pickLang(adj?.suggestion, lang))
-      .replace(/\bTeam Playing Style\b/gi, lang === 'en' ? 'Team Playstyle' : 'Stile squadra')
-      .replace(/\bTeam Playstyle\b/gi, lang === 'en' ? 'Team Playstyle' : 'Stile squadra')
+      .replace(/\bTeam Playing Style\b/gi, (lang === 'en' || lang === 'es') ? 'Team Playstyle' : 'Stile squadra')
+      .replace(/\bTeam Playstyle\b/gi, (lang === 'en' || lang === 'es') ? 'Team Playstyle' : 'Stile squadra')
       .replace(/^(in (partita|match)\s*:\s*){2,}/i, (match) => match.toLowerCase().includes('match') ? 'In match: ' : 'In partita: ')
       .replace(/\b(inserisci|usa)\s+(.+?)\s+come\s+(.+?)\s+per\s+cambiare\s+gioco\b/gi, 'usa $2 per cambiare gioco')
       .replace(/\bsviluppo azione usando\b/gi, 'sviluppo azione con')
@@ -118,7 +118,7 @@ export default function CountermeasuresPreMatchPage() {
     if ((type === 'team_playing_style' || type === 'playing_style_change') && officialStyle) {
       return {
         type: 'team_playing_style',
-        suggestion: lang === 'en' ? `Team Playstyle: ${officialStyle}` : `Stile squadra: ${officialStyle}`,
+        suggestion: (lang === 'en' || lang === 'es') ? `Team Playstyle: ${officialStyle}` : `Stile squadra: ${officialStyle}`,
         hint: pickLang(adj?.application_hint, lang)
       }
     }
@@ -133,7 +133,7 @@ export default function CountermeasuresPreMatchPage() {
               : 'In partita: attacca con più ampiezza sulle corsie laterali quando il centro è chiuso')
           : (rawSuggestion.toLowerCase().startsWith('in partita:') || rawSuggestion.toLowerCase().startsWith('in match:')
               ? rawSuggestion
-              : `${lang === 'en' ? 'In match' : 'In partita'}: ${rawSuggestion}`),
+              : `${(lang === 'en' || lang === 'es') ? 'In match' : 'In partita'}: ${rawSuggestion}`),
         hint: lang === 'en'
           ? 'This is not one of the 5 official team playstyles: treat it as a match plan, not a setting.'
           : 'Non è uno dei 5 stili squadra ufficiali: trattalo come piano in partita, non come impostazione.'
@@ -151,13 +151,13 @@ export default function CountermeasuresPreMatchPage() {
     const labels = {
       team_playing_style: t('changePlayingStyle'),
       playing_style_change: t('changePlayingStyle'),
-      game_plan_adjustment: lang === 'en' ? 'Configurable Game Plan Action' : 'Azione configurabile nel Game Plan',
-      match_plan: lang === 'en' ? 'In-Match Practical Plan' : 'Piano pratico in partita',
-      defensive_line: lang === 'en' ? 'Defensive Line Clarification' : 'Chiarimento linea difensiva',
-      pressing: lang === 'en' ? 'Pressing Plan' : 'Piano pressing',
-      possession_strategy: lang === 'en' ? 'Possession Plan' : 'Piano possesso'
+      game_plan_adjustment: (lang === 'en' || lang === 'es') ? 'Configurable Game Plan Action' : 'Azione configurabile nel Game Plan',
+      match_plan: (lang === 'en' || lang === 'es') ? 'In-Match Practical Plan' : 'Piano pratico in partita',
+      defensive_line: (lang === 'en' || lang === 'es') ? 'Defensive Line Clarification' : 'Chiarimento linea difensiva',
+      pressing: (lang === 'en' || lang === 'es') ? 'Pressing Plan' : 'Piano pressing',
+      possession_strategy: (lang === 'en' || lang === 'es') ? 'Possession Plan' : 'Piano possesso'
     }
-    return labels[type] || (lang === 'en' ? 'Tactical Adjustment' : 'Adeguamento tattico')
+    return labels[type] || ((lang === 'en' || lang === 'es') ? 'Tactical Adjustment' : 'Adeguamento tattico')
   }
   
   const [uploadImage, setUploadImage] = React.useState(null)
@@ -182,8 +182,8 @@ export default function CountermeasuresPreMatchPage() {
   const processingCopy = React.useMemo(() => {
     if (extracting) {
       return {
-        kicker: lang === 'en' ? 'Reading opponent setup' : 'Lettura assetto avversario',
-        title: lang === 'en' ? 'Hero AI is extracting the formation' : 'Hero AI sta estraendo la formazione',
+        kicker: (lang === 'en' || lang === 'es') ? 'Reading opponent setup' : 'Lettura assetto avversario',
+        title: (lang === 'en' || lang === 'es') ? 'Hero AI is extracting the formation' : 'Hero AI sta estraendo la formazione',
         text: lang === 'en'
           ? 'We identify formation, player slots, coach clues and playing style before creating the tactical answer.'
           : 'Identifichiamo modulo, slot giocatori, indizi sul coach e stile di gioco prima di creare la risposta tattica.',
@@ -193,8 +193,8 @@ export default function CountermeasuresPreMatchPage() {
       }
     }
     return {
-      kicker: lang === 'en' ? 'Building countermeasures' : 'Costruzione contromisure',
-      title: lang === 'en' ? 'Hero AI is turning data into a match plan' : 'Hero AI trasforma i dati in piano partita',
+      kicker: (lang === 'en' || lang === 'es') ? 'Building countermeasures' : 'Costruzione contromisure',
+      title: (lang === 'en' || lang === 'es') ? 'Hero AI is turning data into a match plan' : 'Hero AI trasforma i dati in piano partita',
       text: lang === 'en'
         ? 'We cross the opponent shape with your pre-match logic to produce priorities, risks and actionable instructions.'
         : 'Incrociamo struttura avversaria e logica pre-partita per produrre priorità, rischi e istruzioni operative.',
@@ -287,7 +287,7 @@ export default function CountermeasuresPreMatchPage() {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
-          'Accept-Language': lang === 'en' ? 'en' : 'it'
+          'Accept-Language': (lang === 'en' || lang === 'es') ? 'en' : 'it'
         },
         body: JSON.stringify({ imageDataUrl })
       })
@@ -506,7 +506,7 @@ export default function CountermeasuresPreMatchPage() {
             <div>
               <div className="counter-kicker">
                 <Shield size={14} />
-                {lang === 'en' ? 'Pre-match counter plan' : 'Piano contromisure pre-partita'}
+                {(lang === 'en' || lang === 'es') ? 'Pre-match counter plan' : 'Piano contromisure pre-partita'}
               </div>
               <h2>{t('uploadOpponentFormation')}</h2>
               <p>

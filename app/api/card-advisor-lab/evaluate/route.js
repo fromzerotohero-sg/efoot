@@ -119,7 +119,7 @@ function positionLabel(position = '', lang = 'it') {
     ESA: { it: 'ala sinistra', en: 'left winger' },
     EDA: { it: 'ala destra', en: 'right winger' }
   }
-  return labels[position]?.[lang === 'en' ? 'en' : 'it'] || position
+  return labels[position]?.[(lang === 'en' || lang === 'es') ? 'en' : 'it'] || position
 }
 
 function sanitizeIlike(value = '') {
@@ -160,7 +160,7 @@ function labelFromMap(map, value, lang) {
   const entry = map[raw] ||
     map[normalized] ||
     Object.entries(map).find(([key]) => key.toLowerCase() === normalized.toLowerCase() || key.toLowerCase() === asciiKey)?.[1]
-  if (entry) return lang === 'en' ? entry.en : entry.it
+  if (entry) return (lang === 'en' || lang === 'es') ? entry.en : entry.it
   return humanizeCamelCase(raw)
 }
 
@@ -479,28 +479,28 @@ function technicalProfile(card, signals, lang) {
   const tags = []
   const body = bodyTypeProfile(signals, card.position, lang)
   if (family === 'gk') {
-    if (signals.gk >= 80) tags.push(lang === 'en' ? 'Top shot-stopping' : 'Parate alto livello')
-    if (signals.pass >= 76) tags.push(lang === 'en' ? 'Build-up from the back' : 'Uscita palla pulita')
-    if (signals.physical >= 76) tags.push(lang === 'en' ? 'Box presence' : 'Presenza in area')
+    if (signals.gk >= 80) tags.push((lang === 'en' || lang === 'es') ? 'Top shot-stopping' : 'Parate alto livello')
+    if (signals.pass >= 76) tags.push((lang === 'en' || lang === 'es') ? 'Build-up from the back' : 'Uscita palla pulita')
+    if (signals.physical >= 76) tags.push((lang === 'en' || lang === 'es') ? 'Box presence' : 'Presenza in area')
   } else if (family === 'def') {
-    if (signals.defend >= 80) tags.push(lang === 'en' ? 'Strong defensive timing' : 'Tempo difensivo alto')
-    if (signals.physical >= 78) tags.push(lang === 'en' ? 'Physical duels' : 'Duelli fisici')
-    if (signals.pass >= 75) tags.push(lang === 'en' ? 'Safe first pass' : 'Primo passaggio pulito')
-    if (signals.aerial >= 78) tags.push(lang === 'en' ? 'Aerial impact' : 'Impatto aereo')
+    if (signals.defend >= 80) tags.push((lang === 'en' || lang === 'es') ? 'Strong defensive timing' : 'Tempo difensivo alto')
+    if (signals.physical >= 78) tags.push((lang === 'en' || lang === 'es') ? 'Physical duels' : 'Duelli fisici')
+    if (signals.pass >= 75) tags.push((lang === 'en' || lang === 'es') ? 'Safe first pass' : 'Primo passaggio pulito')
+    if (signals.aerial >= 78) tags.push((lang === 'en' || lang === 'es') ? 'Aerial impact' : 'Impatto aereo')
   } else if (family === 'mid') {
-    if (signals.pass >= 80) tags.push(lang === 'en' ? 'Playmaking lane control' : 'Controllo linee di passaggio')
-    if (signals.pace >= 78) tags.push(lang === 'en' ? 'Tempo in transition' : 'Ritmo nelle transizioni')
-    if (signals.defend >= 74) tags.push(lang === 'en' ? 'Defensive contribution' : 'Contributo difensivo')
-    if (signals.physical >= 76) tags.push(lang === 'en' ? 'Midfield duels' : 'Duelli in mezzo')
+    if (signals.pass >= 80) tags.push((lang === 'en' || lang === 'es') ? 'Playmaking lane control' : 'Controllo linee di passaggio')
+    if (signals.pace >= 78) tags.push((lang === 'en' || lang === 'es') ? 'Tempo in transition' : 'Ritmo nelle transizioni')
+    if (signals.defend >= 74) tags.push((lang === 'en' || lang === 'es') ? 'Defensive contribution' : 'Contributo difensivo')
+    if (signals.physical >= 76) tags.push((lang === 'en' || lang === 'es') ? 'Midfield duels' : 'Duelli in mezzo')
   } else {
-    if (signals.finish >= 82) tags.push(lang === 'en' ? 'Clinical finishing' : 'Finalizzazione alta')
-    if (signals.pace >= 80) tags.push(lang === 'en' ? 'Depth attack' : 'Attacco profondita')
-    if (signals.pass >= 75) tags.push(lang === 'en' ? 'Final pass quality' : 'Qualita ultimo passaggio')
-    if (signals.aerial >= 78) tags.push(lang === 'en' ? 'Aerial threat' : 'Minaccia aerea')
+    if (signals.finish >= 82) tags.push((lang === 'en' || lang === 'es') ? 'Clinical finishing' : 'Finalizzazione alta')
+    if (signals.pace >= 80) tags.push((lang === 'en' || lang === 'es') ? 'Depth attack' : 'Attacco profondita')
+    if (signals.pass >= 75) tags.push((lang === 'en' || lang === 'es') ? 'Final pass quality' : 'Qualita ultimo passaggio')
+    if (signals.aerial >= 78) tags.push((lang === 'en' || lang === 'es') ? 'Aerial threat' : 'Minaccia aerea')
   }
   const styleLabel = labelFromMap(EFHUB_STYLE_LABELS, signals.style, lang)
   const styleTag = styleLabel
-    ? (lang === 'en' ? `Style: ${styleLabel}` : `Stile: ${styleLabel}`)
+    ? ((lang === 'en' || lang === 'es') ? `Style: ${styleLabel}` : `Stile: ${styleLabel}`)
     : null
   if (styleTag) tags.unshift(styleTag)
   if (body.label) tags.push(body.label)
@@ -702,23 +702,23 @@ function startersInRoleCount(sameRole = []) {
 }
 
 function mainLever(card, signals, roleGap, lang) {
-  if (roleGap) return lang === 'en' ? `Role coverage on ${card.position}` : `Copertura ruolo ${card.position}`
+  if (roleGap) return (lang === 'en' || lang === 'es') ? `Role coverage on ${card.position}` : `Copertura ruolo ${card.position}`
   const family = roleFamily(card.position)
   const movement = movementArchetype(signals, card.position, lang)
-  if (movement.key === 'goal_poacher') return lang === 'en' ? 'Depth runs' : 'Attacco profondità'
-  if (movement.key === 'fox_in_box') return lang === 'en' ? 'Box finishing' : 'Presenza/finalizzazione in area'
-  if (movement.key === 'target_man') return lang === 'en' ? 'Physical reference' : 'Riferimento fisico'
+  if (movement.key === 'goal_poacher') return (lang === 'en' || lang === 'es') ? 'Depth runs' : 'Attacco profondità'
+  if (movement.key === 'fox_in_box') return (lang === 'en' || lang === 'es') ? 'Box finishing' : 'Presenza/finalizzazione in area'
+  if (movement.key === 'target_man') return (lang === 'en' || lang === 'es') ? 'Physical reference' : 'Riferimento fisico'
   if (family === 'def') {
-    if (signals.defend >= 80) return lang === 'en' ? 'Defensive timing and duels' : 'Tempo difensivo e duelli'
-    return lang === 'en' ? 'Backline coverage' : 'Copertura linea difensiva'
+    if (signals.defend >= 80) return (lang === 'en' || lang === 'es') ? 'Defensive timing and duels' : 'Tempo difensivo e duelli'
+    return (lang === 'en' || lang === 'es') ? 'Backline coverage' : 'Copertura linea difensiva'
   }
   if (family === 'mid') {
-    if (signals.pass >= 80) return lang === 'en' ? 'Build-up control' : 'Controllo costruzione'
-    return lang === 'en' ? 'Midfield connection' : 'Connessione centrocampo'
+    if (signals.pass >= 80) return (lang === 'en' || lang === 'es') ? 'Build-up control' : 'Controllo costruzione'
+    return (lang === 'en' || lang === 'es') ? 'Midfield connection' : 'Connessione centrocampo'
   }
-  if (family === 'gk') return lang === 'en' ? 'Goal stability' : 'Stabilita porta'
-  if (signals.pace >= 80) return lang === 'en' ? 'Depth attack' : 'Attacco profondita'
-  return lang === 'en' ? 'Final phase impact' : 'Impatto ultimi metri'
+  if (family === 'gk') return (lang === 'en' || lang === 'es') ? 'Goal stability' : 'Stabilita porta'
+  if (signals.pace >= 80) return (lang === 'en' || lang === 'es') ? 'Depth attack' : 'Attacco profondita'
+  return (lang === 'en' || lang === 'es') ? 'Final phase impact' : 'Impatto ultimi metri'
 }
 
 function recommendedUse(card, lang, tacticalStyle = '') {
@@ -851,7 +851,7 @@ function comboRead({ card, technical, players, issues, profileRead, gameRead, la
     return aerialTarget
       ? {
           key: 'cross-aerial',
-          label: lang === 'en' ? 'Wide-to-box combo' : 'Combo fascia-area',
+          label: (lang === 'en' || lang === 'es') ? 'Wide-to-box combo' : 'Combo fascia-area',
           text: lang === 'en'
             ? `${card.name} has value on crosses because ${aerialTarget.name} gives your roster a real target in the box.`
             : `${card.name} dà valore sui cross perché ${aerialTarget.name} ti offre un riferimento reale in area.`,
@@ -861,7 +861,7 @@ function comboRead({ card, technical, players, issues, profileRead, gameRead, la
         }
       : {
           key: 'cross-no-target',
-          label: lang === 'en' ? 'Cross value limited' : 'Cross da sfruttare meglio',
+          label: (lang === 'en' || lang === 'es') ? 'Cross value limited' : 'Cross da sfruttare meglio',
           text: lang === 'en'
             ? `${card.name} has crossing value, but your roster does not show a strong aerial target yet.`
             : `${card.name} ha valore nel cross, ma nella tua rosa non emerge ancora un riferimento forte nel gioco aereo.`,
@@ -874,7 +874,7 @@ function comboRead({ card, technical, players, issues, profileRead, gameRead, la
     return depthRunner
       ? {
           key: 'through-depth',
-          label: lang === 'en' ? 'Pass-to-depth combo' : 'Combo filtrante-profondità',
+          label: (lang === 'en' || lang === 'es') ? 'Pass-to-depth combo' : 'Combo filtrante-profondità',
           text: lang === 'en'
             ? `${card.name} can feed depth because ${depthRunner.name} gives your roster a player who can attack that space.`
             : `${card.name} può servire la profondità perché ${depthRunner.name} ti dà un giocatore capace di attaccare quello spazio.`,
@@ -884,7 +884,7 @@ function comboRead({ card, technical, players, issues, profileRead, gameRead, la
         }
       : {
           key: 'through-no-runner',
-          label: lang === 'en' ? 'Creative value limited' : 'Creatività da completare',
+          label: (lang === 'en' || lang === 'es') ? 'Creative value limited' : 'Creatività da completare',
           text: lang === 'en'
             ? `${card.name} has passing value, but your roster does not show a clear depth runner to maximize it.`
             : `${card.name} ha valore nel passaggio, ma nella tua rosa non emerge un attaccante della profondità per massimizzarlo.`,
@@ -897,7 +897,7 @@ function comboRead({ card, technical, players, issues, profileRead, gameRead, la
     return creator
       ? {
           key: 'creator-finisher',
-          label: lang === 'en' ? 'Creator-to-finish combo' : 'Combo creator-finalizzatore',
+          label: (lang === 'en' || lang === 'es') ? 'Creator-to-finish combo' : 'Combo creator-finalizzatore',
           text: lang === 'en'
             ? `${card.name} gains value because ${creator.name} can already create the kind of balls a first-time finisher needs.`
             : `${card.name} guadagna valore perché ${creator.name} può già creare palloni adatti a chi chiude di prima.`,
@@ -910,7 +910,7 @@ function comboRead({ card, technical, players, issues, profileRead, gameRead, la
   if (groups.defensive && (issues?.needDefence || profileRead?.needDef || (gameRead?.shotsConceded != null && gameRead.shotsConceded >= 7))) {
     return {
       key: 'defensive-need',
-      label: lang === 'en' ? 'Defensive need match' : 'Risposta difensiva',
+      label: (lang === 'en' || lang === 'es') ? 'Defensive need match' : 'Risposta difensiva',
       text: lang === 'en'
         ? `${card.name} matches a defensive need in your data: the native defensive skills support coverage, duels and interceptions.`
         : `${card.name} risponde a un bisogno difensivo nei tuoi dati: le skill native aiutano copertura, duelli e intercetti.`,
@@ -991,21 +991,21 @@ function movementProfile(technical, position, lang) {
       ? 'forward full-back movement'
       : 'movimento da terzino che attacca alto'
   }
-  if (style.includes('offensive full back')) return lang === 'en' ? 'wide overlap support' : 'spinta larga in sovrapposizione'
-  if (style.includes('defensive full back')) return lang === 'en' ? 'safer full-back positioning' : 'posizionamento più prudente da terzino'
-  if (style.includes('destroyer')) return lang === 'en' ? 'aggressive duel and interception movement' : 'movimento aggressivo su duelli e intercetti'
-  if (style.includes('build up')) return lang === 'en' ? 'build-up defender movement' : 'movimento da difensore di costruzione'
-  if (style.includes('box to box')) return lang === 'en' ? 'box-to-box support movement' : 'movimento continuo box-to-box'
-  if (style.includes('orchestrator')) return lang === 'en' ? 'central build-up control' : 'controllo centrale della costruzione'
-  if (style.includes('goal poacher') || style.includes('opportunista')) return lang === 'en' ? 'depth attack movement' : 'movimento ad attaccare la profondità'
-  if (style.includes('fox in the box') || style.includes('rapace')) return lang === 'en' ? 'central box-finisher movement' : 'movimento centrale da rapace d’area'
-  if (style.includes('target man') || style.includes('fulcro')) return lang === 'en' ? 'hold-up reference movement' : 'movimento da riferimento e sponda'
-  if (style.includes('hole player') || style.includes('giocatore chiave')) return lang === 'en' ? 'late box-arrival movement' : 'movimento di inserimento negli spazi'
-  if (style.includes('prolific winger') || style.includes('ala prolifica')) return lang === 'en' ? 'wide-to-box attacking movement' : 'movimento largo che attacca l’area'
-  if (family === 'gk') return lang === 'en' ? 'goal stability profile' : 'profilo di stabilità porta'
-  if (family === 'def') return lang === 'en' ? 'defensive control profile' : 'profilo di controllo difensivo'
-  if (family === 'mid') return lang === 'en' ? 'midfield connection profile' : 'profilo di connessione a centrocampo'
-  return lang === 'en' ? 'final-third profile' : 'profilo da ultimi metri'
+  if (style.includes('offensive full back')) return (lang === 'en' || lang === 'es') ? 'wide overlap support' : 'spinta larga in sovrapposizione'
+  if (style.includes('defensive full back')) return (lang === 'en' || lang === 'es') ? 'safer full-back positioning' : 'posizionamento più prudente da terzino'
+  if (style.includes('destroyer')) return (lang === 'en' || lang === 'es') ? 'aggressive duel and interception movement' : 'movimento aggressivo su duelli e intercetti'
+  if (style.includes('build up')) return (lang === 'en' || lang === 'es') ? 'build-up defender movement' : 'movimento da difensore di costruzione'
+  if (style.includes('box to box')) return (lang === 'en' || lang === 'es') ? 'box-to-box support movement' : 'movimento continuo box-to-box'
+  if (style.includes('orchestrator')) return (lang === 'en' || lang === 'es') ? 'central build-up control' : 'controllo centrale della costruzione'
+  if (style.includes('goal poacher') || style.includes('opportunista')) return (lang === 'en' || lang === 'es') ? 'depth attack movement' : 'movimento ad attaccare la profondità'
+  if (style.includes('fox in the box') || style.includes('rapace')) return (lang === 'en' || lang === 'es') ? 'central box-finisher movement' : 'movimento centrale da rapace d’area'
+  if (style.includes('target man') || style.includes('fulcro')) return (lang === 'en' || lang === 'es') ? 'hold-up reference movement' : 'movimento da riferimento e sponda'
+  if (style.includes('hole player') || style.includes('giocatore chiave')) return (lang === 'en' || lang === 'es') ? 'late box-arrival movement' : 'movimento di inserimento negli spazi'
+  if (style.includes('prolific winger') || style.includes('ala prolifica')) return (lang === 'en' || lang === 'es') ? 'wide-to-box attacking movement' : 'movimento largo che attacca l’area'
+  if (family === 'gk') return (lang === 'en' || lang === 'es') ? 'goal stability profile' : 'profilo di stabilità porta'
+  if (family === 'def') return (lang === 'en' || lang === 'es') ? 'defensive control profile' : 'profilo di controllo difensivo'
+  if (family === 'mid') return (lang === 'en' || lang === 'es') ? 'midfield connection profile' : 'profilo di connessione a centrocampo'
+  return (lang === 'en' || lang === 'es') ? 'final-third profile' : 'profilo da ultimi metri'
 }
 
 function tacticalStyleFit(technical, position, tacticalStyle, profileRead, lang) {
@@ -1060,37 +1060,37 @@ function tacticalStyleFit(technical, position, tacticalStyle, profileRead, lang)
 function roleRelevantStatEdges(position, technical, bestAlternative, lang) {
   const family = roleFamily(position)
   const common = [
-    ['pace', technical.pace - bestAlternative.signals.pace, lang === 'en' ? 'speed/recovery' : 'velocità/recupero'],
-    ['pass', technical.pass - bestAlternative.signals.pass, lang === 'en' ? 'passing' : 'passaggio'],
-    ['physical', technical.physical - bestAlternative.signals.physical, lang === 'en' ? 'physical duels' : 'duelli fisici']
+    ['pace', technical.pace - bestAlternative.signals.pace, (lang === 'en' || lang === 'es') ? 'speed/recovery' : 'velocità/recupero'],
+    ['pass', technical.pass - bestAlternative.signals.pass, (lang === 'en' || lang === 'es') ? 'passing' : 'passaggio'],
+    ['physical', technical.physical - bestAlternative.signals.physical, (lang === 'en' || lang === 'es') ? 'physical duels' : 'duelli fisici']
   ]
   if (family === 'gk') {
     return [
-      ['gk', technical.gk - bestAlternative.signals.gk, lang === 'en' ? 'goalkeeping' : 'parate'],
-      ['pass', technical.pass - bestAlternative.signals.pass, lang === 'en' ? 'build-up from goal' : 'uscita palla dal basso'],
-      ['physical', technical.physical - bestAlternative.signals.physical, lang === 'en' ? 'box presence' : 'presenza in area']
+      ['gk', technical.gk - bestAlternative.signals.gk, (lang === 'en' || lang === 'es') ? 'goalkeeping' : 'parate'],
+      ['pass', technical.pass - bestAlternative.signals.pass, (lang === 'en' || lang === 'es') ? 'build-up from goal' : 'uscita palla dal basso'],
+      ['physical', technical.physical - bestAlternative.signals.physical, (lang === 'en' || lang === 'es') ? 'box presence' : 'presenza in area']
     ]
   }
   if (family === 'def') {
     return [
-      ['defend', technical.defend - bestAlternative.signals.defend, lang === 'en' ? 'defensive timing' : 'tempo difensivo'],
-      ['aerial', technical.aerial - bestAlternative.signals.aerial, lang === 'en' ? 'aerial game' : 'gioco aereo'],
+      ['defend', technical.defend - bestAlternative.signals.defend, (lang === 'en' || lang === 'es') ? 'defensive timing' : 'tempo difensivo'],
+      ['aerial', technical.aerial - bestAlternative.signals.aerial, (lang === 'en' || lang === 'es') ? 'aerial game' : 'gioco aereo'],
       ...common
     ]
   }
   if (family === 'mid') {
     return [
-      ['pass', technical.pass - bestAlternative.signals.pass, lang === 'en' ? 'passing' : 'passaggio'],
-      ['defend', technical.defend - bestAlternative.signals.defend, lang === 'en' ? 'defensive balance' : 'equilibrio difensivo'],
-      ['pace', technical.pace - bestAlternative.signals.pace, lang === 'en' ? 'transition speed' : 'velocità nelle transizioni'],
-      ['physical', technical.physical - bestAlternative.signals.physical, lang === 'en' ? 'midfield duels' : 'duelli in mezzo']
+      ['pass', technical.pass - bestAlternative.signals.pass, (lang === 'en' || lang === 'es') ? 'passing' : 'passaggio'],
+      ['defend', technical.defend - bestAlternative.signals.defend, (lang === 'en' || lang === 'es') ? 'defensive balance' : 'equilibrio difensivo'],
+      ['pace', technical.pace - bestAlternative.signals.pace, (lang === 'en' || lang === 'es') ? 'transition speed' : 'velocità nelle transizioni'],
+      ['physical', technical.physical - bestAlternative.signals.physical, (lang === 'en' || lang === 'es') ? 'midfield duels' : 'duelli in mezzo']
     ]
   }
   return [
-    ['finish', technical.finish - bestAlternative.signals.finish, lang === 'en' ? 'finishing' : 'finalizzazione'],
-    ['pace', technical.pace - bestAlternative.signals.pace, lang === 'en' ? 'depth speed' : 'velocità in profondità'],
-    ['pass', technical.pass - bestAlternative.signals.pass, lang === 'en' ? 'final pass' : 'ultimo passaggio'],
-    ['aerial', technical.aerial - bestAlternative.signals.aerial, lang === 'en' ? 'aerial threat' : 'minaccia aerea']
+    ['finish', technical.finish - bestAlternative.signals.finish, (lang === 'en' || lang === 'es') ? 'finishing' : 'finalizzazione'],
+    ['pace', technical.pace - bestAlternative.signals.pace, (lang === 'en' || lang === 'es') ? 'depth speed' : 'velocità in profondità'],
+    ['pass', technical.pass - bestAlternative.signals.pass, (lang === 'en' || lang === 'es') ? 'final pass' : 'ultimo passaggio'],
+    ['aerial', technical.aerial - bestAlternative.signals.aerial, (lang === 'en' || lang === 'es') ? 'aerial threat' : 'minaccia aerea']
   ]
 }
 
@@ -1111,43 +1111,43 @@ function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, dupl
   if (!hasCompleteCardData) {
     return {
       level: 'needs-card-data',
-      label: lang === 'en' ? 'Card data loading' : 'Dati carta da completare',
-      title: lang === 'en' ? 'Read the full card before deciding' : 'Leggi la carta completa prima di decidere'
+      label: (lang === 'en' || lang === 'es') ? 'Card data loading' : 'Dati carta da completare',
+      title: (lang === 'en' || lang === 'es') ? 'Read the full card before deciding' : 'Leggi la carta completa prima di decidere'
     }
   }
   if (!hasRoster) {
     return {
       level: 'needs-roster',
-      label: lang === 'en' ? 'Card value only' : 'Valore carta',
-      title: lang === 'en' ? 'Good card read, team fit needs your roster' : 'Buona carta, fit squadra da completare'
+      label: (lang === 'en' || lang === 'es') ? 'Card value only' : 'Valore carta',
+      title: (lang === 'en' || lang === 'es') ? 'Good card read, team fit needs your roster' : 'Buona carta, fit squadra da completare'
     }
   }
   if (sameName && upgradeEdge) {
     return {
       level: 'buy',
-      label: lang === 'en' ? 'Version upgrade' : 'Upgrade versione',
-      title: lang === 'en' ? 'Buy only to replace your current version' : 'Compra solo per sostituire la versione attuale'
+      label: (lang === 'en' || lang === 'es') ? 'Version upgrade' : 'Upgrade versione',
+      title: (lang === 'en' || lang === 'es') ? 'Buy only to replace your current version' : 'Compra solo per sostituire la versione attuale'
     }
   }
   if (sameName) {
     return {
       level: 'watch',
-      label: lang === 'en' ? 'Same player' : 'Stesso giocatore',
-      title: lang === 'en' ? 'Not a rotation: compare version vs version' : 'Non è rotazione: confronto versione contro versione'
+      label: (lang === 'en' || lang === 'es') ? 'Same player' : 'Stesso giocatore',
+      title: (lang === 'en' || lang === 'es') ? 'Not a rotation: compare version vs version' : 'Non è rotazione: confronto versione contro versione'
     }
   }
   if (upgradeEdge && (roleGap || score >= 70)) {
     return {
       level: 'buy',
-      label: lang === 'en' ? 'High team synergy' : 'Sinergia alta',
-      title: lang === 'en' ? 'Excellent fit for your team' : 'Ottimo fit per la tua squadra'
+      label: (lang === 'en' || lang === 'es') ? 'High team synergy' : 'Sinergia alta',
+      title: (lang === 'en' || lang === 'es') ? 'Excellent fit for your team' : 'Ottimo fit per la tua squadra'
     }
   }
   if (upgradeEdge && rosterCrowded) {
     return {
       level: 'watch',
-      label: lang === 'en' ? 'Upgrade option' : 'Opzione upgrade',
-      title: lang === 'en' ? 'Worth considering over your current option' : 'Da valutare rispetto all’opzione attuale'
+      label: (lang === 'en' || lang === 'es') ? 'Upgrade option' : 'Opzione upgrade',
+      title: (lang === 'en' || lang === 'es') ? 'Worth considering over your current option' : 'Da valutare rispetto all’opzione attuale'
     }
   }
   // Soglie BUY diversificazione differenziate per affollamento ruolo:
@@ -1158,7 +1158,7 @@ function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, dupl
   if ((duplicate || starterBlocked) && diversificationValue && score >= buyDivThreshold) {
     return {
       level: 'buy',
-      label: lang === 'en' ? 'Diversify your squad' : 'Diversifica la rosa',
+      label: (lang === 'en' || lang === 'es') ? 'Diversify your squad' : 'Diversifica la rosa',
       title: lang === 'en'
         ? 'Buy to add a different tactical profile in the same role'
         : 'Compra per avere un profilo tattico diverso nello stesso ruolo'
@@ -1167,7 +1167,7 @@ function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, dupl
   if ((duplicate || starterBlocked) && diversificationValue && score >= 65) {
     return {
       level: 'watch',
-      label: lang === 'en' ? 'Tactical variety' : 'Varietà tattica',
+      label: (lang === 'en' || lang === 'es') ? 'Tactical variety' : 'Varietà tattica',
       title: lang === 'en'
         ? 'Same role, different match plan — worth it if you like rotating'
         : 'Stesso ruolo, piano partita diverso — vale se ti piace ruotare'
@@ -1176,15 +1176,15 @@ function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, dupl
   if ((duplicate || starterBlocked) && premiumCard && score >= (diversificationValue ? 84 : 88)) {
     return {
       level: 'buy',
-      label: lang === 'en' ? 'Premium rotation' : 'Rotazione premium',
-      title: lang === 'en' ? 'Buy if you want a premium role option' : 'Compra se vuoi un’opzione premium nel ruolo'
+      label: (lang === 'en' || lang === 'es') ? 'Premium rotation' : 'Rotazione premium',
+      title: (lang === 'en' || lang === 'es') ? 'Buy if you want a premium role option' : 'Compra se vuoi un’opzione premium nel ruolo'
     }
   }
   if ((duplicate || starterBlocked) && premiumCard && score >= (diversificationValue ? 60 : 65)) {
     return {
       level: 'watch',
-      label: lang === 'en' ? 'Premium option' : 'Opzione premium',
-      title: lang === 'en' ? 'Strong card, worth considering as rotation' : 'Carta forte, da valutare come rotazione'
+      label: (lang === 'en' || lang === 'es') ? 'Premium option' : 'Opzione premium',
+      title: (lang === 'en' || lang === 'es') ? 'Strong card, worth considering as rotation' : 'Carta forte, da valutare come rotazione'
     }
   }
   // SKIP esplicito per ruoli realmente affollati senza upgrade ne diversificazione:
@@ -1192,7 +1192,7 @@ function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, dupl
   if (duplicate && rosterCrowded && !upgradeEdge && !diversificationValue && !premiumCard && score < 65) {
     return {
       level: 'skip',
-      label: lang === 'en' ? 'Role already covered' : 'Ruolo già coperto',
+      label: (lang === 'en' || lang === 'es') ? 'Role already covered' : 'Ruolo già coperto',
       title: lang === 'en'
         ? 'Role is full and this card does not add a tactical option'
         : 'Ruolo coperto e la carta non aggiunge un’opzione tattica'
@@ -1201,7 +1201,7 @@ function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, dupl
   if (duplicate || starterBlocked) {
     return {
       level: 'watch',
-      label: lang === 'en' ? 'Rotation option' : 'Opzione rotazione',
+      label: (lang === 'en' || lang === 'es') ? 'Rotation option' : 'Opzione rotazione',
       title: lang === 'en'
         ? 'Covered role: judge it by rotation and match plan'
         : 'Ruolo coperto: valutala per rotazione e piano partita'
@@ -1210,21 +1210,21 @@ function purchaseDecision({ score, hasRoster, hasCompleteCardData, roleGap, dupl
   if (roleGap || score >= 74) {
     return {
       level: 'buy',
-      label: lang === 'en' ? 'High team synergy' : 'Sinergia alta',
-      title: lang === 'en' ? 'Excellent fit for your team' : 'Ottimo fit per la tua squadra'
+      label: (lang === 'en' || lang === 'es') ? 'High team synergy' : 'Sinergia alta',
+      title: (lang === 'en' || lang === 'es') ? 'Excellent fit for your team' : 'Ottimo fit per la tua squadra'
     }
   }
   if (score >= 58) {
     return {
       level: 'watch',
-      label: lang === 'en' ? 'Situational synergy' : 'Sinergia situazionale',
-      title: lang === 'en' ? 'Useful in the right match plan' : 'Utile nel piano partita giusto'
+      label: (lang === 'en' || lang === 'es') ? 'Situational synergy' : 'Sinergia situazionale',
+      title: (lang === 'en' || lang === 'es') ? 'Useful in the right match plan' : 'Utile nel piano partita giusto'
     }
   }
   return {
     level: 'skip',
-    label: lang === 'en' ? 'Low priority' : 'Bassa priorità',
-    title: lang === 'en' ? 'Not the upgrade your team needs now' : 'Non è l’upgrade che ti serve ora'
+    label: (lang === 'en' || lang === 'es') ? 'Low priority' : 'Bassa priorità',
+    title: (lang === 'en' || lang === 'es') ? 'Not the upgrade your team needs now' : 'Non è l’upgrade che ti serve ora'
   }
 }
 
@@ -1233,23 +1233,23 @@ function cardValueBullets(card, technical, lang) {
   const bullets = []
   if (technical.style) {
     const styleLabel = labelFromMap(EFHUB_STYLE_LABELS, technical.style, lang)
-    bullets.push(lang === 'en' ? `Native style: ${styleLabel}.` : `Stile nativo: ${styleLabel}.`)
+    bullets.push((lang === 'en' || lang === 'es') ? `Native style: ${styleLabel}.` : `Stile nativo: ${styleLabel}.`)
   }
   if (family === 'gk') {
-    if (technical.gk >= 75) bullets.push(lang === 'en' ? 'Raises reliability inside the box.' : 'Alza affidabilità dentro l’area.')
-    if (technical.pass >= 70) bullets.push(lang === 'en' ? 'Can support safer build-up from the back.' : 'Può aiutare una costruzione più pulita dal basso.')
+    if (technical.gk >= 75) bullets.push((lang === 'en' || lang === 'es') ? 'Raises reliability inside the box.' : 'Alza affidabilità dentro l’area.')
+    if (technical.pass >= 70) bullets.push((lang === 'en' || lang === 'es') ? 'Can support safer build-up from the back.' : 'Può aiutare una costruzione più pulita dal basso.')
   } else if (family === 'def') {
-    if (technical.defend >= 78) bullets.push(lang === 'en' ? 'Strong defensive base for duels and interceptions.' : 'Base difensiva forte per duelli e intercetti.')
-    if (technical.aerial >= 78) bullets.push(lang === 'en' ? 'Adds aerial value on crosses and set pieces.' : 'Aggiunge valore aereo su cross e palle ferme.')
-    if (technical.pace >= 74) bullets.push(lang === 'en' ? 'Has enough recovery speed to protect space.' : 'Ha velocità di recupero per proteggere campo.')
+    if (technical.defend >= 78) bullets.push((lang === 'en' || lang === 'es') ? 'Strong defensive base for duels and interceptions.' : 'Base difensiva forte per duelli e intercetti.')
+    if (technical.aerial >= 78) bullets.push((lang === 'en' || lang === 'es') ? 'Adds aerial value on crosses and set pieces.' : 'Aggiunge valore aereo su cross e palle ferme.')
+    if (technical.pace >= 74) bullets.push((lang === 'en' || lang === 'es') ? 'Has enough recovery speed to protect space.' : 'Ha velocità di recupero per proteggere campo.')
   } else if (family === 'mid') {
-    if (technical.pass >= 76) bullets.push(lang === 'en' ? 'Improves connection between build-up and final third.' : 'Migliora il collegamento tra costruzione e ultimo terzo.')
-    if (technical.defend >= 72) bullets.push(lang === 'en' ? 'Adds useful balance when possession is lost.' : 'Aggiunge equilibrio utile dopo perdita palla.')
-    if (technical.physical >= 74) bullets.push(lang === 'en' ? 'Can hold midfield duels.' : 'Può reggere i duelli in mezzo.')
+    if (technical.pass >= 76) bullets.push((lang === 'en' || lang === 'es') ? 'Improves connection between build-up and final third.' : 'Migliora il collegamento tra costruzione e ultimo terzo.')
+    if (technical.defend >= 72) bullets.push((lang === 'en' || lang === 'es') ? 'Adds useful balance when possession is lost.' : 'Aggiunge equilibrio utile dopo perdita palla.')
+    if (technical.physical >= 74) bullets.push((lang === 'en' || lang === 'es') ? 'Can hold midfield duels.' : 'Può reggere i duelli in mezzo.')
   } else {
-    if (technical.finish >= 78) bullets.push(lang === 'en' ? 'Brings a real finishing threat.' : 'Porta una minaccia concreta in finalizzazione.')
-    if (technical.pace >= 78) bullets.push(lang === 'en' ? 'Attacks depth and creates separation.' : 'Attacca profondità e crea separazione.')
-    if (technical.pass >= 74) bullets.push(lang === 'en' ? 'Can also connect the last pass.' : 'Può collegare anche l’ultimo passaggio.')
+    if (technical.finish >= 78) bullets.push((lang === 'en' || lang === 'es') ? 'Brings a real finishing threat.' : 'Porta una minaccia concreta in finalizzazione.')
+    if (technical.pace >= 78) bullets.push((lang === 'en' || lang === 'es') ? 'Attacks depth and creates separation.' : 'Attacca profondità e crea separazione.')
+    if (technical.pass >= 74) bullets.push((lang === 'en' || lang === 'es') ? 'Can also connect the last pass.' : 'Può collegare anche l’ultimo passaggio.')
   }
   return bullets.length > 0
     ? bullets.slice(0, 3)
@@ -1465,11 +1465,11 @@ function buildRosterRead({ card, sameRole, bestAlternative, roleGap, duplicate, 
 }
 
 function teamSynergyLabel(score, lang) {
-  if (score >= 85) return lang === 'en' ? 'Wow synergy' : 'Sinergia wow'
-  if (score >= 72) return lang === 'en' ? 'High synergy' : 'Sinergia alta'
-  if (score >= 58) return lang === 'en' ? 'Good synergy' : 'Sinergia buona'
-  if (score >= 44) return lang === 'en' ? 'Medium synergy' : 'Sinergia media'
-  return lang === 'en' ? 'Low synergy' : 'Sinergia bassa'
+  if (score >= 85) return (lang === 'en' || lang === 'es') ? 'Wow synergy' : 'Sinergia wow'
+  if (score >= 72) return (lang === 'en' || lang === 'es') ? 'High synergy' : 'Sinergia alta'
+  if (score >= 58) return (lang === 'en' || lang === 'es') ? 'Good synergy' : 'Sinergia buona'
+  if (score >= 44) return (lang === 'en' || lang === 'es') ? 'Medium synergy' : 'Sinergia media'
+  return (lang === 'en' || lang === 'es') ? 'Low synergy' : 'Sinergia bassa'
 }
 
 function addUniqueLine(lines, line) {
@@ -1480,18 +1480,18 @@ function addUniqueLine(lines, line) {
 
 function strongestTrait(technical, position, lang) {
   const family = roleFamily(position)
-  if (family === 'gk') return technical.gk >= 78 ? (lang === 'en' ? 'goal reliability' : 'affidabilità in porta') : ''
+  if (family === 'gk') return technical.gk >= 78 ? ((lang === 'en' || lang === 'es') ? 'goal reliability' : 'affidabilità in porta') : ''
   if (family === 'def') {
-    if (technical.defend >= 78) return lang === 'en' ? 'defensive timing' : 'tempo difensivo'
-    if (technical.pace >= 76) return lang === 'en' ? 'recovery speed' : 'velocità di recupero'
+    if (technical.defend >= 78) return (lang === 'en' || lang === 'es') ? 'defensive timing' : 'tempo difensivo'
+    if (technical.pace >= 76) return (lang === 'en' || lang === 'es') ? 'recovery speed' : 'velocità di recupero'
   }
   if (family === 'mid') {
-    if (technical.pass >= 78) return lang === 'en' ? 'cleaner build-up' : 'costruzione più pulita'
-    if (technical.defend >= 74) return lang === 'en' ? 'balance after ball loss' : 'equilibrio dopo perdita palla'
+    if (technical.pass >= 78) return (lang === 'en' || lang === 'es') ? 'cleaner build-up' : 'costruzione più pulita'
+    if (technical.defend >= 74) return (lang === 'en' || lang === 'es') ? 'balance after ball loss' : 'equilibrio dopo perdita palla'
   }
-  if (technical.pace >= 78) return lang === 'en' ? 'depth and separation' : 'profondità e strappo'
-  if (technical.finish >= 78) return lang === 'en' ? 'finishing threat' : 'minaccia in finalizzazione'
-  if (technical.pass >= 76) return lang === 'en' ? 'last-pass quality' : 'qualità nell’ultimo passaggio'
+  if (technical.pace >= 78) return (lang === 'en' || lang === 'es') ? 'depth and separation' : 'profondità e strappo'
+  if (technical.finish >= 78) return (lang === 'en' || lang === 'es') ? 'finishing threat' : 'minaccia in finalizzazione'
+  if (technical.pass >= 76) return (lang === 'en' || lang === 'es') ? 'last-pass quality' : 'qualità nell’ultimo passaggio'
   return ''
 }
 
@@ -1646,7 +1646,7 @@ function coachAdvice({ card, hasRoster, technical, combo, duplicate, starterBloc
 
   if (!hasRoster) {
     return {
-      title: lang === 'en' ? 'Card read' : 'Lettura carta',
+      title: (lang === 'en' || lang === 'es') ? 'Card read' : 'Lettura carta',
       text: lang === 'en'
         ? `${card.name} is best read from style and native skills for now. The profile points to ${movement}; load your roster to know if that movement creates a real combo for your players.`
         : `${card.name} va letto prima da stile e abilità native. Il profilo porta ${movement}; con la rosa caricata possiamo dirti se quel movimento crea una combo reale con i tuoi giocatori.`,
@@ -1658,7 +1658,7 @@ function coachAdvice({ card, hasRoster, technical, combo, duplicate, starterBloc
 
   if (combo?.key === 'cross-aerial') {
     return {
-      title: lang === 'en' ? 'Real wide combo' : 'Combo reale sulla fascia',
+      title: (lang === 'en' || lang === 'es') ? 'Real wide combo' : 'Combo reale sulla fascia',
       text: lang === 'en'
         ? `${card.name} is useful because the crossing skill has a target in your roster. This is the kind of card I would use to turn the wide lane into chances, not just to add another full-back.`
         : `${intro}${card.name} è utile perché la skill da cross trova un riferimento nella tua rosa. È una carta da usare per trasformare la fascia in occasioni, non solo per aggiungere un altro esterno.`,
@@ -1670,7 +1670,7 @@ function coachAdvice({ card, hasRoster, technical, combo, duplicate, starterBloc
 
   if (combo?.key === 'cross-no-target') {
     return {
-      title: lang === 'en' ? 'Good skill, incomplete combo' : 'Skill forte, combo incompleta',
+      title: (lang === 'en' || lang === 'es') ? 'Good skill, incomplete combo' : 'Skill forte, combo incompleta',
       text: lang === 'en'
         ? `${card.name} brings width and crossing, but your roster does not give that skill a strong box target yet. I would not make him a priority unless you want to change how you attack from wide areas.`
         : `${intro}${card.name} porta ampiezza e cross, ma nella tua rosa quella skill non ha ancora un riferimento forte in area. Non la metterei tra le priorità, a meno che tu voglia cambiare il modo in cui attacchi dalle fasce.`,
@@ -1682,7 +1682,7 @@ function coachAdvice({ card, hasRoster, technical, combo, duplicate, starterBloc
 
   if (combo?.key === 'through-depth') {
     return {
-      title: lang === 'en' ? 'Vertical combo' : 'Combo verticale',
+      title: (lang === 'en' || lang === 'es') ? 'Vertical combo' : 'Combo verticale',
       text: lang === 'en'
         ? `${card.name} has a clear use: serve players who attack space. In your roster the pass has a runner, so this card can speed up your attacks instead of slowing the play down.`
         : `${intro}${card.name} ha un uso chiaro: servire chi attacca lo spazio. Nella tua rosa il passaggio trova un corridore, quindi questa carta può velocizzare l’attacco invece di rallentare il gioco.`,
@@ -1694,7 +1694,7 @@ function coachAdvice({ card, hasRoster, technical, combo, duplicate, starterBloc
 
   if (combo?.key === 'creator-finisher') {
     return {
-      title: lang === 'en' ? 'Finishing combo' : 'Combo finalizzazione',
+      title: (lang === 'en' || lang === 'es') ? 'Finishing combo' : 'Combo finalizzazione',
       text: lang === 'en'
         ? `${card.name} becomes more interesting because your roster already has a creator. The value is not generic: it is the link between service and first-time finishing.`
         : `${intro}${card.name} diventa più interessante perché nella tua rosa c’è già chi può creare. Il valore non è generico: è il collegamento tra servizio e chiusura di prima.`,
@@ -1706,7 +1706,7 @@ function coachAdvice({ card, hasRoster, technical, combo, duplicate, starterBloc
 
   if (combo?.key === 'defensive-need') {
     return {
-      title: lang === 'en' ? 'Defensive answer' : 'Risposta difensiva',
+      title: (lang === 'en' || lang === 'es') ? 'Defensive answer' : 'Risposta difensiva',
       text: lang === 'en'
         ? `${card.name} is not just another defensive card: the native skills connect with a need already visible in your data. I would value him when you want more coverage, duels and interceptions.`
         : `${intro}${card.name} non è solo un’altra carta difensiva: le skill native si collegano a un bisogno già visibile nei tuoi dati. La valuterei quando vuoi più copertura, duelli e intercetti.`,
@@ -1719,7 +1719,7 @@ function coachAdvice({ card, hasRoster, technical, combo, duplicate, starterBloc
   if (duplicate || starterBlocked) {
     if (evidence.diversificationValue && !diversification?.differentMovement && evidence.rotationPoolValue) {
       return {
-        title: lang === 'en' ? 'Elite rotation' : 'Rotazione d\'élite',
+        title: (lang === 'en' || lang === 'es') ? 'Elite rotation' : 'Rotazione d\'élite',
         text: lang === 'en'
           ? `${card.name} shares the movement style with your ${card.position} starters but brings different tools (${trait || movement}). Worth coins for rotation and match plans.`
           : `${intro}${card.name} condivide il movimento con i titolari ${card.position} ma porta tool diversi (${trait || movement}). Vale coins per rotazione e piano partita.`,
@@ -1730,7 +1730,7 @@ function coachAdvice({ card, hasRoster, technical, combo, duplicate, starterBloc
     }
     if (evidence.diversificationValue) {
       return {
-        title: lang === 'en' ? 'Diversify the lane' : 'Diversifica il reparto',
+        title: (lang === 'en' || lang === 'es') ? 'Diversify the lane' : 'Diversifica il reparto',
         text: lang === 'en'
           ? `${card.name} gives you another way to play ${card.position}: ${movement}. That is real value if you like rotating profiles, not only chasing a new starter.`
           : `${intro}${card.name} ti dà un altro modo di giocare ${card.position}: ${movement}. È valore reale se ti piace ruotare i profili, non solo cercare un nuovo titolare.`,
@@ -1741,7 +1741,7 @@ function coachAdvice({ card, hasRoster, technical, combo, duplicate, starterBloc
     }
     if (technical.premiumCard) {
       return {
-        title: lang === 'en' ? 'Premium rotation' : 'Rotazione premium',
+        title: (lang === 'en' || lang === 'es') ? 'Premium rotation' : 'Rotazione premium',
         text: lang === 'en'
           ? `${card.name} does not need to erase your starter to be worth coins: as a premium card, value it for ${trait || movement}, rotation and match-plan flexibility.`
           : `${intro}${card.name} non deve per forza cancellare il titolare per valere coins: da carta premium va valutato per ${trait || movement}, rotazione e flessibilità nel piano partita.`,
@@ -1751,7 +1751,7 @@ function coachAdvice({ card, hasRoster, technical, combo, duplicate, starterBloc
       }
     }
     return {
-      title: lang === 'en' ? 'Not a priority' : 'Non è una priorità',
+      title: (lang === 'en' || lang === 'es') ? 'Not a priority' : 'Non è una priorità',
       text: lang === 'en'
         ? `${card.name} does not change the balance of your current players enough. I would keep him as a situational option, useful when you specifically want ${trait || movement}.`
         : `${intro}${card.name} non cambia abbastanza l’equilibrio dei tuoi giocatori attuali. Lo terrei come opzione situazionale, utile quando vuoi proprio ${trait || movement}.`,
@@ -1763,7 +1763,7 @@ function coachAdvice({ card, hasRoster, technical, combo, duplicate, starterBloc
 
   if (roleGap || evidence.profileNeedFit || evidence.teamStyleFit) {
     return {
-      title: lang === 'en' ? 'Useful fit' : 'Fit utile',
+      title: (lang === 'en' || lang === 'es') ? 'Useful fit' : 'Fit utile',
       text: lang === 'en'
         ? `${card.name} gives your roster something recognizable: ${trait || movement}. With ${style || 'your current setup'}, I would test him where that quality is missing most.`
         : `${intro}${card.name} dà alla tua rosa qualcosa di riconoscibile: ${trait || movement}. Con ${style || 'il tuo assetto attuale'}, lo proverei dove questa qualità ti manca di più.`,
@@ -1774,7 +1774,7 @@ function coachAdvice({ card, hasRoster, technical, combo, duplicate, starterBloc
   }
 
   return {
-    title: lang === 'en' ? 'Situational card' : 'Carta situazionale',
+    title: (lang === 'en' || lang === 'es') ? 'Situational card' : 'Carta situazionale',
     text: lang === 'en'
       ? `${card.name} has a readable profile, but I do not see a strong roster trigger yet. He is useful if you want ${trait || movement}; otherwise he stays behind clearer needs.`
       : `${intro}${card.name} ha un profilo leggibile, ma non vedo ancora un trigger forte nella tua rosa. È utile se vuoi ${trait || movement}; altrimenti resta dietro bisogni più chiari.`,
@@ -1812,7 +1812,7 @@ function teamSynergyDetails({ card, sameRole, bestAlternative, roleGap, duplicat
   if (movementRead.label) {
     details.push({
       key: 'movement_body',
-      label: lang === 'en' ? 'Movement and body type' : 'Movimento e body type',
+      label: (lang === 'en' || lang === 'es') ? 'Movement and body type' : 'Movimento e body type',
       score: clamp(55 + movementRead.score * 4, 45, 90),
       text: lang === 'en'
         ? `${movementRead.label}: ${movementRead.movement}. Best when ${movementRead.buyWhen}; caution: ${movementRead.caution || 'judge it with your role plan'}.`
@@ -1822,7 +1822,7 @@ function teamSynergyDetails({ card, sameRole, bestAlternative, roleGap, duplicat
 
   details.push({
     key: 'style',
-    label: lang === 'en' ? 'Movement' : 'Movimento',
+    label: (lang === 'en' || lang === 'es') ? 'Movement' : 'Movimento',
     score: evidence.teamStyleFit ? 78 : tacticalStyle ? 56 : 50,
     text: evidence.teamStyleFit
       ? (lang === 'en'
@@ -1839,7 +1839,7 @@ function teamSynergyDetails({ card, sameRole, bestAlternative, roleGap, duplicat
 
   details.push({
     key: 'physicality',
-    label: lang === 'en' ? 'Physical profile' : 'Fisicità',
+    label: (lang === 'en' || lang === 'es') ? 'Physical profile' : 'Fisicità',
     score: clamp(physicalBase + Math.max(0, physicalEdge), 35, 88),
     text: physicalEdge >= 5
       ? (lang === 'en'
@@ -1856,7 +1856,7 @@ function teamSynergyDetails({ card, sameRole, bestAlternative, roleGap, duplicat
 
   details.push({
     key: 'squad',
-    label: lang === 'en' ? 'Roster impact' : 'Impatto rosa',
+    label: (lang === 'en' || lang === 'es') ? 'Roster impact' : 'Impatto rosa',
     score: roleGap ? 84 : upgradeEdge ? 78 : duplicate || starterBlocked ? 50 : bestAlternative ? 64 : 60,
     text: roleGap
       ? (lang === 'en'
@@ -1885,7 +1885,7 @@ function teamSynergyDetails({ card, sameRole, bestAlternative, roleGap, duplicat
   )
   details.push({
     key: 'difficulty',
-    label: lang === 'en' ? 'Your difficulties' : 'Tue difficoltà',
+    label: (lang === 'en' || lang === 'es') ? 'Your difficulties' : 'Tue difficoltà',
     score: difficultyMatch ? 76 : 52,
     text: difficultyMatch
       ? (lang === 'en'
@@ -2124,11 +2124,11 @@ function evaluate({ card, catalogCard, players, formation, coach, tacticalSettin
         : 'Uso ruolo chiaro: mantieni la carta nella corsia naturale per preservare valore tattico.'
 
   const nextCta = !hasRoster
-    ? { label: lang === 'en' ? 'Load roster for team synergy' : 'Carica la rosa per la sinergia squadra', target: 'formation' }
+    ? { label: (lang === 'en' || lang === 'es') ? 'Load roster for team synergy' : 'Carica la rosa per la sinergia squadra', target: 'formation' }
     : !hasFormation
-      ? { label: lang === 'en' ? 'Save formation for starter fit' : 'Salva formazione per il fit titolari', target: 'formation' }
+      ? { label: (lang === 'en' || lang === 'es') ? 'Save formation for starter fit' : 'Salva formazione per il fit titolari', target: 'formation' }
       : !hasCoach
-        ? { label: lang === 'en' ? 'Add coach for team-style fit' : 'Aggiungi coach per il fit stile squadra', target: 'coach' }
+        ? { label: (lang === 'en' || lang === 'es') ? 'Add coach for team-style fit' : 'Aggiungi coach per il fit stile squadra', target: 'coach' }
         : null
   const teamSynergy = {
     score,
@@ -2260,7 +2260,7 @@ export async function POST(req) {
     if (authError || !userData?.user?.id) return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     const body = await req.json().catch(() => ({}))
     const card = normalizeCard(body.card)
-    const lang = body.lang === 'en' ? 'en' : 'it'
+    const lang = (body.lang === 'en' || body.lang === 'es') ? 'en' : 'it'
     if (!card.name || !card.position) {
       return NextResponse.json({ error: 'Invalid card' }, { status: 400 })
     }

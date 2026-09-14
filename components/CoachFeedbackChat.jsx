@@ -197,7 +197,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
       const token = tokenOverride || await getAccessToken()
       if (!token) {
         if (!silent) {
-          setSaveError(lang === 'en' ? 'Session expired. Please log in again.' : 'Sessione scaduta. Accedi di nuovo.')
+          setSaveError((lang === 'en' || lang === 'es') ? 'Session expired. Please log in again.' : 'Sessione scaduta. Accedi di nuovo.')
         }
         return false
       }
@@ -243,13 +243,13 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
       const errorText = await res.text()
       console.error('[CoachFeedbackChat] Form save error:', errorText)
       if (!silent) {
-        setSaveError(lang === 'en' ? 'Unable to save profile data.' : 'Impossibile salvare i dati profilo.')
+        setSaveError((lang === 'en' || lang === 'es') ? 'Unable to save profile data.' : 'Impossibile salvare i dati profilo.')
       }
       return false
     } catch (err) {
       console.error('[CoachFeedbackChat] Form save error:', err)
       if (!silent) {
-        setSaveError(lang === 'en' ? 'Unable to save profile data.' : 'Impossibile salvare i dati profilo.')
+        setSaveError((lang === 'en' || lang === 'es') ? 'Unable to save profile data.' : 'Impossibile salvare i dati profilo.')
       }
       return false
     } finally {
@@ -274,11 +274,11 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     setSaved(false)
     setSaveError('')
 
-    const firstName = userProfile?.first_name || (lang === 'en' ? 'friend' : 'amico')
+    const firstName = userProfile?.first_name || ((lang === 'en' || lang === 'es') ? 'friend' : 'amico')
 
     let greeting = ''
     if (sessionMode === 'feedback' && lastMatch) {
-      const opp = lastMatch.opponent_name || (lang === 'en' ? 'your opponent' : 'il tuo avversario')
+      const opp = lastMatch.opponent_name || ((lang === 'en' || lang === 'es') ? 'your opponent' : 'il tuo avversario')
       const form = lastMatch.formation_played || '?'
       const result = lastMatch.result || '?'
       greeting = lang === 'en'
@@ -491,7 +491,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
 
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: data.response || (lang === 'en' ? "I didn't understand, can you repeat?" : 'Non ho capito, puoi ripetere?')
+        content: data.response || ((lang === 'en' || lang === 'es') ? "I didn't understand, can you repeat?" : 'Non ho capito, puoi ripetere?')
       }])
 
       if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('credits-consumed'))
@@ -499,7 +499,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     } catch (error) {
       if (error?.name === 'AbortError') return
       console.error('[CoachFeedbackChat] Error:', error)
-      const { message: friendlyMsg } = mapErrorToUserMessage(error, lang === 'en' ? 'Please try again.' : 'Riprova tra poco.', lang)
+      const { message: friendlyMsg } = mapErrorToUserMessage(error, (lang === 'en' || lang === 'es') ? 'Please try again.' : 'Riprova tra poco.', lang)
       setMessages(prev => [...prev, { role: 'assistant', content: friendlyMsg }])
     } finally {
       setLoading(false)
@@ -522,13 +522,13 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
     try {
       const token = await getAccessToken()
       if (!token) {
-        setSaveError(lang === 'en' ? 'Session expired. Please log in again.' : 'Sessione scaduta. Accedi di nuovo.')
+        setSaveError((lang === 'en' || lang === 'es') ? 'Session expired. Please log in again.' : 'Sessione scaduta. Accedi di nuovo.')
         return
       }
 
       const profileSaved = await handleFormSave({ silent: true, tokenOverride: token })
       if (!profileSaved) {
-        setSaveError(lang === 'en' ? 'Unable to save profile data.' : 'Impossibile salvare i dati profilo.')
+        setSaveError((lang === 'en' || lang === 'es') ? 'Unable to save profile data.' : 'Impossibile salvare i dati profilo.')
         return
       }
 
@@ -570,11 +570,11 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
       } else {
         const errorText = await res.text()
         console.error('[CoachFeedbackChat] Save error:', errorText)
-        setSaveError(lang === 'en' ? 'Unable to save chat feedback.' : 'Impossibile salvare il feedback chat.')
+        setSaveError((lang === 'en' || lang === 'es') ? 'Unable to save chat feedback.' : 'Impossibile salvare il feedback chat.')
       }
     } catch (err) {
       console.error('[CoachFeedbackChat] Save error:', err)
-      setSaveError(lang === 'en' ? 'Unable to save changes. Please try again.' : 'Impossibile salvare le modifiche. Riprova.')
+      setSaveError((lang === 'en' || lang === 'es') ? 'Unable to save changes. Please try again.' : 'Impossibile salvare le modifiche. Riprova.')
     } finally {
       setSaving(false)
     }
@@ -666,7 +666,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                   textOverflow: 'ellipsis'
                 }}
               >
-                {lang === 'en' ? 'Coach Gym' : 'Palestra Coach'}
+                {(lang === 'en' || lang === 'es') ? 'Coach Gym' : 'Palestra Coach'}
               </h2>
               <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', display: isMobile ? 'none' : 'block' }}>
                 {lang === 'en'
@@ -698,17 +698,17 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
               onMouseLeave={(e) => { if (!saving) e.currentTarget.style.background = 'rgba(0,212,255,0.2)' }}
             >
               {saved ? (
-                <><CheckCircle2 size={16} /> {isNarrowMobile ? (lang === 'en' ? 'Saved' : 'Salvato') : (lang === 'en' ? 'Saved!' : 'Salvato!')}</>
+                <><CheckCircle2 size={16} /> {isNarrowMobile ? ((lang === 'en' || lang === 'es') ? 'Saved' : 'Salvato') : ((lang === 'en' || lang === 'es') ? 'Saved!' : 'Salvato!')}</>
               ) : saving ? (
-                <>{isNarrowMobile ? (lang === 'en' ? 'Saving' : 'Salvo') : (lang === 'en' ? 'Saving...' : 'Salvo...')}</>
+                <>{isNarrowMobile ? ((lang === 'en' || lang === 'es') ? 'Saving' : 'Salvo') : ((lang === 'en' || lang === 'es') ? 'Saving...' : 'Salvo...')}</>
               ) : (
-                <><Save size={16} /> {isNarrowMobile ? (lang === 'en' ? 'Save' : 'Salva') : (lang === 'en' ? 'Save All' : 'Salva tutto')}</>
+                <><Save size={16} /> {isNarrowMobile ? ((lang === 'en' || lang === 'es') ? 'Save' : 'Salva') : ((lang === 'en' || lang === 'es') ? 'Save All' : 'Salva tutto')}</>
               )}
             </button>
             <button
               ref={closeButtonRef}
               type="button"
-              aria-label={lang === 'en' ? 'Close coach gym' : 'Chiudi palestra coach'}
+              aria-label={(lang === 'en' || lang === 'es') ? 'Close coach gym' : 'Chiudi palestra coach'}
               onClick={() => {
                 if (!saving && !formSaving) onClose?.()
               }}
@@ -793,7 +793,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
               onClick={() => setFormExpanded(e => !e)}
               aria-expanded={formExpanded}
               aria-controls={profileSectionId}
-              aria-label={lang === 'en' ? 'Toggle gaming profile form' : 'Mostra o nascondi il profilo di gioco'}
+              aria-label={(lang === 'en' || lang === 'es') ? 'Toggle gaming profile form' : 'Mostra o nascondi il profilo di gioco'}
               style={{
                 width: '100%',
                 padding: isMobile ? '12px 14px' : '16px 20px',
@@ -811,7 +811,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <User size={20} color="var(--neon-cyan)" />
                 <span style={{ fontWeight: 600, fontSize: 'clamp(13px, 2vw, 15px)' }}>
-                  {lang === 'en' ? 'Your Gaming Profile' : 'Il tuo Profilo di Gioco'}
+                  {(lang === 'en' || lang === 'es') ? 'Your Gaming Profile' : 'Il tuo Profilo di Gioco'}
                 </span>
                 {formSaved && (
                   <span style={{ 
@@ -822,7 +822,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                     gap: '4px',
                     marginLeft: '8px'
                   }}>
-                    <CheckCircle2 size={12} /> {lang === 'en' ? 'Saved' : 'Salvato'}
+                    <CheckCircle2 size={12} /> {(lang === 'en' || lang === 'es') ? 'Saved' : 'Salvato'}
                   </span>
                 )}
               </div>
@@ -847,7 +847,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                   <div>
                     <label htmlFor={platformFieldId} style={styles.formLabel}>
                       <Gamepad2 size={12} style={{ display: 'inline', marginRight: '4px' }} />
-                      {lang === 'en' ? 'Platform' : 'Piattaforma'}
+                      {(lang === 'en' || lang === 'es') ? 'Platform' : 'Piattaforma'}
                     </label>
                     <select 
                       id={platformFieldId}
@@ -856,7 +856,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                       value={formData.platform || ''} 
                       onChange={e => setFormData(p => ({ ...p, platform: e.target.value }))}
                     >
-                      <option value="">{lang === 'en' ? 'Select' : 'Seleziona'}</option>
+                      <option value="">{(lang === 'en' || lang === 'es') ? 'Select' : 'Seleziona'}</option>
                       <option value="console">Console</option>
                       <option value="pc">PC</option>
                       <option value="mobile">Mobile</option>
@@ -867,7 +867,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                   <div>
                     <label htmlFor={connectionFieldId} style={styles.formLabel}>
                       <Wifi size={12} style={{ display: 'inline', marginRight: '4px' }} />
-                      {lang === 'en' ? 'Connection' : 'Connessione'}
+                      {(lang === 'en' || lang === 'es') ? 'Connection' : 'Connessione'}
                     </label>
                     <select 
                       id={connectionFieldId}
@@ -876,9 +876,9 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                       value={formData.connection_quality || ''} 
                       onChange={e => setFormData(p => ({ ...p, connection_quality: e.target.value }))}
                     >
-                      <option value="">{lang === 'en' ? 'Select' : 'Seleziona'}</option>
-                      <option value="good">{lang === 'en' ? 'Good' : 'Buona'}</option>
-                      <option value="unstable">{lang === 'en' ? 'Unstable' : 'Instabile'}</option>
+                      <option value="">{(lang === 'en' || lang === 'es') ? 'Select' : 'Seleziona'}</option>
+                      <option value="good">{(lang === 'en' || lang === 'es') ? 'Good' : 'Buona'}</option>
+                      <option value="unstable">{(lang === 'en' || lang === 'es') ? 'Unstable' : 'Instabile'}</option>
                       <option value="lag">Lag</option>
                     </select>
                   </div>
@@ -887,7 +887,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                   <div>
                     <label htmlFor={passLevelFieldId} style={styles.formLabel}>
                       <Zap size={12} style={{ display: 'inline', marginRight: '4px' }} />
-                      {lang === 'en' ? 'Pass Level' : 'Passaggi'}
+                      {(lang === 'en' || lang === 'es') ? 'Pass Level' : 'Passaggi'}
                     </label>
                     <select 
                       id={passLevelFieldId}
@@ -896,7 +896,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                       value={formData.pass_level || ''} 
                       onChange={e => setFormData(p => ({ ...p, pass_level: e.target.value }))}
                     >
-                      <option value="">{lang === 'en' ? 'Select' : 'Seleziona'}</option>
+                      <option value="">{(lang === 'en' || lang === 'es') ? 'Select' : 'Seleziona'}</option>
                       <option value="pa1">PA1</option>
                       <option value="pa2">PA2</option>
                       <option value="pa3">PA3</option>
@@ -916,8 +916,8 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                       value={formData.smart_assist || ''} 
                       onChange={e => setFormData(p => ({ ...p, smart_assist: e.target.value }))}
                     >
-                      <option value="">{lang === 'en' ? 'Select' : 'Seleziona'}</option>
-                      <option value="yes">{lang === 'en' ? 'Yes' : 'Sì'}</option>
+                      <option value="">{(lang === 'en' || lang === 'es') ? 'Select' : 'Seleziona'}</option>
+                      <option value="yes">{(lang === 'en' || lang === 'es') ? 'Yes' : 'Sì'}</option>
                       <option value="no">No</option>
                     </select>
                   </div>
@@ -926,7 +926,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                 {/* Weak Point */}
                 <div style={{ marginBottom: '16px' }}>
                   <label htmlFor={weakPointFieldId} style={styles.formLabel}>
-                    {lang === 'en' ? 'Main Weakness' : 'Punto Debole Principale'}
+                    {(lang === 'en' || lang === 'es') ? 'Main Weakness' : 'Punto Debole Principale'}
                   </label>
                   <select 
                     id={weakPointFieldId}
@@ -935,25 +935,25 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                     value={formData.ai_weak_point || ''} 
                     onChange={e => setFormData(p => ({ ...p, ai_weak_point: e.target.value }))}
                   >
-                    <option value="">{lang === 'en' ? 'Select' : 'Seleziona'}</option>
-                    <option value="defence">{lang === 'en' ? 'Defence' : 'Difesa'}</option>
-                    <option value="attack">{lang === 'en' ? 'Attack' : 'Attacco'}</option>
-                    <option value="set_pieces">{lang === 'en' ? 'Set Pieces' : 'Piazzati'}</option>
-                    <option value="transitions">{lang === 'en' ? 'Transitions' : 'Transizioni'}</option>
-                    <option value="final_minutes">{lang === 'en' ? 'Final Minutes' : 'Minuti Finali'}</option>
+                    <option value="">{(lang === 'en' || lang === 'es') ? 'Select' : 'Seleziona'}</option>
+                    <option value="defence">{(lang === 'en' || lang === 'es') ? 'Defence' : 'Difesa'}</option>
+                    <option value="attack">{(lang === 'en' || lang === 'es') ? 'Attack' : 'Attacco'}</option>
+                    <option value="set_pieces">{(lang === 'en' || lang === 'es') ? 'Set Pieces' : 'Piazzati'}</option>
+                    <option value="transitions">{(lang === 'en' || lang === 'es') ? 'Transitions' : 'Transizioni'}</option>
+                    <option value="final_minutes">{(lang === 'en' || lang === 'es') ? 'Final Minutes' : 'Minuti Finali'}</option>
                   </select>
                 </div>
 
                 {/* Division */}
                 <div style={{ marginBottom: '16px' }}>
                   <label htmlFor={divisionFieldId} style={styles.formLabel}>
-                    {lang === 'en' ? 'Current Division' : 'Divisione Attuale'}
+                    {(lang === 'en' || lang === 'es') ? 'Current Division' : 'Divisione Attuale'}
                   </label>
                   <input 
                     id={divisionFieldId}
                     type="text"
                     style={styles.formField}
-                    placeholder={lang === 'en' ? 'e.g. Division 3' : 'es. Divisione 3'}
+                    placeholder={(lang === 'en' || lang === 'es') ? 'e.g. Division 3' : 'es. Divisione 3'}
                     value={formData.current_division || ''} 
                     onChange={e => setFormData(p => ({ ...p, current_division: e.target.value }))}
                   />
@@ -962,7 +962,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                 {/* Hours per week */}
                 <div style={{ marginBottom: '16px' }}>
                   <label htmlFor={hoursFieldId} style={styles.formLabel}>
-                    {lang === 'en' ? 'Hours per week' : 'Ore a settimana'}
+                    {(lang === 'en' || lang === 'es') ? 'Hours per week' : 'Ore a settimana'}
                   </label>
                   <input
                     id={hoursFieldId}
@@ -970,7 +970,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                     min="0"
                     max="168"
                     style={styles.formField}
-                    placeholder={lang === 'en' ? 'e.g. 5' : 'es. 5'}
+                    placeholder={(lang === 'en' || lang === 'es') ? 'e.g. 5' : 'es. 5'}
                     value={formData.hours_per_week ?? ''}
                     onChange={e => setFormData(p => ({ ...p, hours_per_week: e.target.value }))}
                   />
@@ -979,13 +979,13 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                 {/* Notes */}
                 <div style={{ marginBottom: '16px' }}>
                   <label htmlFor={notesFieldId} style={styles.formLabel}>
-                    {lang === 'en' ? 'Notes for Coach' : 'Note per il Coach'}
+                    {(lang === 'en' || lang === 'es') ? 'Notes for Coach' : 'Note per il Coach'}
                   </label>
                   <input 
                     id={notesFieldId}
                     type="text"
                     style={styles.formField}
-                    placeholder={lang === 'en' ? 'Anything else...' : 'Qualsiasi altra cosa...'}
+                    placeholder={(lang === 'en' || lang === 'es') ? 'Anything else...' : 'Qualsiasi altra cosa...'}
                     value={formData.ai_notes || ''} 
                     onChange={e => setFormData(p => ({ ...p, ai_notes: e.target.value }))}
                   />
@@ -1011,9 +1011,9 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                   }}
                 >
                   {formSaving ? (
-                    <>{lang === 'en' ? 'Saving...' : 'Salvataggio...'}</>
+                    <>{(lang === 'en' || lang === 'es') ? 'Saving...' : 'Salvataggio...'}</>
                   ) : (
-                    <><Save size={16} /> {lang === 'en' ? 'Save Profile' : 'Salva Profilo'}</>
+                    <><Save size={16} /> {(lang === 'en' || lang === 'es') ? 'Save Profile' : 'Salva Profilo'}</>
                   )}
                 </button>
               </div>
@@ -1031,10 +1031,10 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
             }}>
               <MessageCircle size={18} color="var(--neon-cyan)" />
               <span style={{ fontWeight: 600, color: 'white', fontSize: '14px' }}>
-                {lang === 'en' ? 'Chat with Coach' : 'Chat con Coach'}
+                {(lang === 'en' || lang === 'es') ? 'Chat with Coach' : 'Chat con Coach'}
               </span>
               <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginLeft: 'auto', display: isNarrowMobile ? 'none' : 'inline' }}>
-                {lang === 'en' ? 'Be specific → better tips' : 'Sii preciso → consigli utili'}
+                {(lang === 'en' || lang === 'es') ? 'Be specific → better tips' : 'Sii preciso → consigli utili'}
               </span>
             </div>
 
@@ -1166,7 +1166,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                   border: 0
                 }}
               >
-                {lang === 'en' ? 'Chat input for Coach Gym' : 'Campo chat della Palestra Coach'}
+                {(lang === 'en' || lang === 'es') ? 'Chat input for Coach Gym' : 'Campo chat della Palestra Coach'}
               </label>
               <input
                 id={chatInputId}
@@ -1180,7 +1180,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                     handleSend()
                   }
                 }}
-                placeholder={lang === 'en' ? 'Ask me specific things about your game...' : 'Chiedimi cose specifiche sul tuo gioco...'}
+                placeholder={(lang === 'en' || lang === 'es') ? 'Ask me specific things about your game...' : 'Chiedimi cose specifiche sul tuo gioco...'}
                 disabled={loading || saving}
                 style={{
                   flex: 1,

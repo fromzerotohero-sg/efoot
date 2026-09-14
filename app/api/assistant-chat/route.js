@@ -91,11 +91,11 @@ function getDefaultSuggestions(lang, currentPage = '') {
     { page: 'allenatori', q: ['What style fits my coach with my roster?', 'Do my game stats suit the players I have?', 'What priorities with this coach?'] },
     { page: '', q: ['Do my analysis stats match the roster I have?', 'Am I using commands (passing, shot, defence) in line with my roster\'s skills?', 'Based on matches and data, what should I work on first?'] }
   ]
-  const list = lang === 'en' ? en : it
+  const list = (lang === 'en' || lang === 'es') ? en : it
   for (const { page: p, q } of list) {
     if (p && page.includes(p)) return q
   }
-  return (lang === 'en' ? en : it).find(x => x.page === '').q
+  return ((lang === 'en' || lang === 'es') ? en : it).find(x => x.page === '').q
 }
 
 /**
@@ -333,7 +333,7 @@ function getOutOfPositionStarterLines(players, lang = 'it') {
     const originals = Array.isArray(p?.original_positions) ? p.original_positions : []
     if (!current || originals.length === 0) continue
     if (fieldPositionMatchesCardCompetences(current, originals)) continue
-    const comp = formatCompetencePositions(originals) || (lang === 'en' ? 'not set' : 'non impostate')
+    const comp = formatCompetencePositions(originals) || ((lang === 'en' || lang === 'es') ? 'not set' : 'non impostate')
     const slot = p.slot_index != null ? ` slot ${p.slot_index}` : ''
     lines.push(`- ${p.player_name || '?'}${slot}: in campo ${current}; competenze card ${comp}`)
   }
@@ -438,7 +438,7 @@ const CONTEXT_LABELS = {
  * @returns {Promise<string>} Testo compatto (max MAX_PERSONAL_CONTEXT_CHARS) o ''
  */
 async function buildPersonalContext(userId, lang = 'it') {
-  const L = CONTEXT_LABELS[lang === 'en' ? 'en' : 'it']
+  const L = CONTEXT_LABELS[(lang === 'en' || lang === 'es') ? 'en' : 'it']
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!serviceKey || !supabaseUrl) return ''
@@ -602,10 +602,10 @@ async function buildPersonalContext(userId, lang = 'it') {
       else if (FWD.includes(pos)) counts.fwd += 1
     })
     const summaryParts = []
-    if (counts.pt) summaryParts.push(lang === 'en' ? '1 GK' : '1 PT')
-    if (counts.def) summaryParts.push(lang === 'en' ? `${counts.def} defenders` : `${counts.def} difensori`)
-    if (counts.mid) summaryParts.push(lang === 'en' ? `${counts.mid} midfield` : `${counts.mid} centrocampo`)
-    if (counts.fwd) summaryParts.push(lang === 'en' ? `${counts.fwd} forwards` : `${counts.fwd} attaccanti`)
+    if (counts.pt) summaryParts.push((lang === 'en' || lang === 'es') ? '1 GK' : '1 PT')
+    if (counts.def) summaryParts.push((lang === 'en' || lang === 'es') ? `${counts.def} defenders` : `${counts.def} difensori`)
+    if (counts.mid) summaryParts.push((lang === 'en' || lang === 'es') ? `${counts.mid} midfield` : `${counts.mid} centrocampo`)
+    if (counts.fwd) summaryParts.push((lang === 'en' || lang === 'es') ? `${counts.fwd} forwards` : `${counts.fwd} attaccanti`)
     const dispositionSummary = summaryParts.length ? ` (${summaryParts.join(', ')})` : ''
     const dispositionLine = `${L.dispositionInField}: ${positionsOrdered || L.formationNotSet}.${dispositionSummary}`
 
@@ -869,7 +869,7 @@ function buildSystemContentV2(lang) {
   const sharedCore = getCoachSharedCoreText(lang)
 
   const it = `Sei Coach AI per eFootball.
-LINGUA DI RISPOSTA: DEVI TASSATIVAMENTE RISPONDERE IN ${lang === 'en' ? 'INGLESE' : 'ITALIANO'} (lingua UI/parametro "language" dell'app).
+LINGUA DI RISPOSTA: DEVI TASSATIVAMENTE RISPONDERE IN ${(lang === 'en' || lang === 'es') ? 'INGLESE' : 'ITALIANO'} (lingua UI/parametro "language" dell'app).
 
 ${policies}
 
@@ -898,7 +898,7 @@ PRIORITÀ PROFILO: Per "Punto debole", "Cosa vuole imparare" e "Note per l'IA" u
 OUTPUT COACH: 2-4 frasi operative, rispondi alla domanda specifica; varia i consigli; "In sintesi" solo se utile.`
 
   const en = `You are Coach AI for eFootball.
-RESPONSE LANGUAGE: YOU MUST STRICTLY REPLY IN ${lang === 'en' ? 'ENGLISH' : 'ITALIAN'} (UI language / app "language" parameter).
+RESPONSE LANGUAGE: YOU MUST STRICTLY REPLY IN ${(lang === 'en' || lang === 'es') ? 'ENGLISH' : 'ITALIAN'} (UI language / app "language" parameter).
 
 ${policies}
 
@@ -927,7 +927,7 @@ CONSTRAINTS: only roster names; only 5 configurable team styles (Possession, Qui
 
 COACH OUTPUT: 2-4 imperative sentences; answer the specific question; vary advice; "In summary" only when useful.`
 
-  return lang === 'en' ? en : it
+  return (lang === 'en' || lang === 'es') ? en : it
 }
 
 export async function POST(req) {
@@ -1135,7 +1135,7 @@ export async function POST(req) {
                   const pName = pid && map[pid] ? map[pid] : (pid ? `player:${pid.slice(0, 8)}` : '?')
                   return `  - ${slot}: ${String(v.instruction).trim()} → ${pName}`
                 })
-                instrLines = `\n${lang === 'en' ? 'Individual instructions' : 'Istruzioni individuali'}:\n${lines.join('\n')}\n`
+                instrLines = `\n${(lang === 'en' || lang === 'es') ? 'Individual instructions' : 'Istruzioni individuali'}:\n${lines.join('\n')}\n`
               }
             }
           } catch (_) {}
@@ -1269,7 +1269,7 @@ export async function POST(req) {
           const fallbackResponse = await callOpenAIWithRetry(apiKey, requestBody, 'assistant-chat')
           if (fallbackResponse?.ok) {
             const fallbackData = await fallbackResponse.json().catch(() => ({}))
-            const fallbackMsg = lang === 'en' ? "Sorry, I didn't get that. Can you repeat?" : 'Mi dispiace, non ho capito. Puoi ripetere?'
+            const fallbackMsg = (lang === 'en' || lang === 'es') ? "Sorry, I didn't get that. Can you repeat?" : 'Mi dispiace, non ho capito. Puoi ripetere?'
             const raw = fallbackData.choices?.[0]?.message?.content || fallbackMsg
             const { cleanContent: fc, suggestions: fs } = parseSuggestionsFromContent(raw)
             const sanitizedFallback = sanitizeCoachOutput(fc, lang)
@@ -1313,7 +1313,7 @@ export async function POST(req) {
               const fallbackResponse = await callOpenAIWithRetry(apiKey, requestBody, 'assistant-chat')
               if (fallbackResponse && fallbackResponse.ok) {
                 const fallbackData = await fallbackResponse.json().catch(() => ({}))
-                const fallbackMsg = lang === 'en' ? "Sorry, I didn't get that. Can you repeat?" : 'Mi dispiace, non ho capito. Puoi ripetere?'
+                const fallbackMsg = (lang === 'en' || lang === 'es') ? "Sorry, I didn't get that. Can you repeat?" : 'Mi dispiace, non ho capito. Puoi ripetere?'
                 const raw = fallbackData.choices?.[0]?.message?.content || fallbackMsg
                 const { cleanContent: fc, suggestions: fs } = parseSuggestionsFromContent(raw)
                 const sanitizedFallback = sanitizeCoachOutput(fc, lang)
@@ -1357,7 +1357,7 @@ export async function POST(req) {
     }
     
     // Estrai contenuto con fallback sicuro (doppia lingua)
-    const fallbackReply = lang === 'en' ? "Sorry, I didn't get that. Can you repeat?" : 'Mi dispiace, non ho capito. Puoi ripetere?'
+    const fallbackReply = (lang === 'en' || lang === 'es') ? "Sorry, I didn't get that. Can you repeat?" : 'Mi dispiace, non ho capito. Puoi ripetere?'
     const rawContent = data?.choices?.[0]?.message?.content ||
                        data?.choices?.[0]?.content ||
                        fallbackReply

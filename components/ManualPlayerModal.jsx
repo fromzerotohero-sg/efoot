@@ -408,7 +408,7 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
             {/* Tipo carta + Stile (2 colonne) */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
               <div>
-                <label style={labelStyle}>{lang === 'en' ? 'Card type' : 'Tipo carta'}</label>
+                <label style={labelStyle}>{(lang === 'en' || lang === 'es') ? 'Card type' : 'Tipo carta'}</label>
                 <select className="mp-select" style={selectStyle} value={form.card_type}
                   onChange={e => updateForm('card_type', e.target.value)}>
                   {CARD_TYPES.map(ct => (
@@ -418,7 +418,7 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
               </div>
               <div>
                 <label style={labelStyle}>
-                  {lang === 'en' ? 'Playing style' : 'Stile giocatore'}
+                  {(lang === 'en' || lang === 'es') ? 'Playing style' : 'Stile giocatore'}
                   {form.position && <span style={{ color: cardColor, marginLeft: '4px' }}>({filteredStyles.length})</span>}
                 </label>
                 <select className="mp-select" style={selectStyle} value={form.playing_style}
@@ -440,9 +440,9 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
               border: 'none', cursor: 'pointer', color: 'var(--neon-blue)', fontSize: '13px', fontWeight: 600
             }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Zap size={14} /> {lang === 'en' ? 'Stats' : 'Statistiche'}
+                <Zap size={14} /> {(lang === 'en' || lang === 'es') ? 'Stats' : 'Statistiche'}
                 <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 400 }}>
-                  ({lang === 'en' ? 'optional' : 'opzionale'})
+                  ({(lang === 'en' || lang === 'es') ? 'optional' : 'opzionale'})
                 </span>
               </span>
               {expandedSections.stats ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -450,13 +450,13 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
             {expandedSections.stats && (
               <div style={{ padding: '12px 14px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                 {[
-                  { key: 'speed', label: lang === 'en' ? 'Speed' : 'Velocita' },
-                  { key: 'acceleration', label: lang === 'en' ? 'Acceleration' : 'Accelerazione' },
-                  { key: 'finishing', label: lang === 'en' ? 'Finishing' : 'Finalizzazione' },
-                  { key: 'passing', label: lang === 'en' ? 'Passing' : 'Passaggio' },
+                  { key: 'speed', label: (lang === 'en' || lang === 'es') ? 'Speed' : 'Velocita' },
+                  { key: 'acceleration', label: (lang === 'en' || lang === 'es') ? 'Acceleration' : 'Accelerazione' },
+                  { key: 'finishing', label: (lang === 'en' || lang === 'es') ? 'Finishing' : 'Finalizzazione' },
+                  { key: 'passing', label: (lang === 'en' || lang === 'es') ? 'Passing' : 'Passaggio' },
                   { key: 'dribbling', label: 'Dribbling' },
-                  { key: 'defending', label: lang === 'en' ? 'Defending' : 'Difesa' },
-                  { key: 'physical', label: lang === 'en' ? 'Physical' : 'Fisico' }
+                  { key: 'defending', label: (lang === 'en' || lang === 'es') ? 'Defending' : 'Difesa' },
+                  { key: 'physical', label: (lang === 'en' || lang === 'es') ? 'Physical' : 'Fisico' }
                 ].map(stat => (
                   <div key={stat.key}>
                     <label style={{ ...labelStyle, fontSize: '11px' }}>{stat.label}</label>
@@ -477,7 +477,7 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
               border: 'none', cursor: 'pointer', color: '#a855f7', fontSize: '13px', fontWeight: 600
             }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Star size={14} /> {lang === 'en' ? 'Skills' : 'Abilita'}
+                <Star size={14} /> {(lang === 'en' || lang === 'es') ? 'Skills' : 'Abilita'}
                 {form.skills.length > 0 && <span style={{ background: '#a855f7', color: 'white', borderRadius: '10px', padding: '1px 7px', fontSize: '11px' }}>{form.skills.length}</span>}
                 <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 400 }}>
                   (max 10)
@@ -521,9 +521,9 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
               border: 'none', cursor: 'pointer', color: 'var(--neon-orange)', fontSize: '13px', fontWeight: 600
             }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Shield size={14} /> {lang === 'en' ? 'Details' : 'Dettagli'}
+                <Shield size={14} /> {(lang === 'en' || lang === 'es') ? 'Details' : 'Dettagli'}
                 <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 400 }}>
-                  ({lang === 'en' ? 'optional' : 'opzionale'})
+                  ({(lang === 'en' || lang === 'es') ? 'optional' : 'opzionale'})
                 </span>
               </span>
               {expandedSections.details ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -532,19 +532,19 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
               <div style={{ padding: '12px 14px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
                   <div>
-                    <label style={{ ...labelStyle, fontSize: '11px' }}>{lang === 'en' ? 'Height cm' : 'Altezza cm'}</label>
+                    <label style={{ ...labelStyle, fontSize: '11px' }}>{(lang === 'en' || lang === 'es') ? 'Height cm' : 'Altezza cm'}</label>
                     <input type="number" style={{ ...inputStyle, padding: '8px 10px', fontSize: '13px' }}
                       min="150" max="210" placeholder="170"
                       value={form.height} onChange={e => updateForm('height', e.target.value)} />
                   </div>
                   <div>
-                    <label style={{ ...labelStyle, fontSize: '11px' }}>{lang === 'en' ? 'Weight kg' : 'Peso kg'}</label>
+                    <label style={{ ...labelStyle, fontSize: '11px' }}>{(lang === 'en' || lang === 'es') ? 'Weight kg' : 'Peso kg'}</label>
                     <input type="number" style={{ ...inputStyle, padding: '8px 10px', fontSize: '13px' }}
                       min="50" max="120" placeholder="75"
                       value={form.weight} onChange={e => updateForm('weight', e.target.value)} />
                   </div>
                   <div>
-                    <label style={{ ...labelStyle, fontSize: '11px' }}>{lang === 'en' ? 'Age' : 'Eta'}</label>
+                    <label style={{ ...labelStyle, fontSize: '11px' }}>{(lang === 'en' || lang === 'es') ? 'Age' : 'Eta'}</label>
                     <input type="number" style={{ ...inputStyle, padding: '8px 10px', fontSize: '13px' }}
                       min="15" max="50" placeholder="25"
                       value={form.age} onChange={e => updateForm('age', e.target.value)} />
@@ -552,9 +552,9 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '8px' }}>
                   <div>
-                    <label style={{ ...labelStyle, fontSize: '11px' }}>{lang === 'en' ? 'Nationality' : 'Nazionalita'}</label>
+                    <label style={{ ...labelStyle, fontSize: '11px' }}>{(lang === 'en' || lang === 'es') ? 'Nationality' : 'Nazionalita'}</label>
                     <input type="text" style={{ ...inputStyle, padding: '8px 10px', fontSize: '13px' }}
-                      maxLength={50} placeholder={lang === 'en' ? 'e.g. France' : 'es. Francia'}
+                      maxLength={50} placeholder={(lang === 'en' || lang === 'es') ? 'e.g. France' : 'es. Francia'}
                       value={form.nationality} onChange={e => updateForm('nationality', e.target.value)} />
                   </div>
                   <div>
@@ -629,7 +629,7 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
 
           {/* Errore / Successo */}
           {error && <div style={{ marginTop: '12px', padding: '10px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', color: '#ef4444', fontSize: '13px' }}>{error}</div>}
-          {success && <div style={{ marginTop: '12px', padding: '10px', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: '8px', color: '#22c55e', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}><Check size={16} /> {lang === 'en' ? 'Player saved!' : 'Giocatore salvato!'}</div>}
+          {success && <div style={{ marginTop: '12px', padding: '10px', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: '8px', color: '#22c55e', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}><Check size={16} /> {(lang === 'en' || lang === 'es') ? 'Player saved!' : 'Giocatore salvato!'}</div>}
         </div>
 
         {/* Footer */}
@@ -638,7 +638,7 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
             padding: '10px 20px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)',
             borderRadius: '8px', color: 'rgba(255,255,255,0.6)', fontSize: '13px', cursor: 'pointer'
           }}>
-            {lang === 'en' ? 'Cancel' : 'Annulla'}
+            {(lang === 'en' || lang === 'es') ? 'Cancel' : 'Annulla'}
           </button>
           <button onClick={handleSave} disabled={saving || success} style={{
             padding: '10px 24px', background: saving || success ? 'rgba(255,255,255,0.1)' : cardColor,
@@ -646,7 +646,7 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
             cursor: saving || success ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
             opacity: saving ? 0.7 : 1
           }}>
-            {saving ? (lang === 'en' ? 'Saving...' : 'Salvo...') : success ? (lang === 'en' ? 'Saved!' : 'Salvato!') : (lang === 'en' ? 'Save player' : 'Salva giocatore')}
+            {saving ? ((lang === 'en' || lang === 'es') ? 'Saving...' : 'Salvo...') : success ? ((lang === 'en' || lang === 'es') ? 'Saved!' : 'Salvato!') : ((lang === 'en' || lang === 'es') ? 'Save player' : 'Salva giocatore')}
           </button>
         </div>
       </div>

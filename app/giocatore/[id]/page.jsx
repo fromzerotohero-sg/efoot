@@ -59,7 +59,7 @@ export default function PlayerDetailPage() {
     if (queueStatus.phase === 'extracting') {
       return {
         tone: 'info',
-        title: lang === 'en' ? `Analyzing ${activeLabel} (${stepLabel})` : `Sto analizzando ${activeLabel} (${stepLabel})`,
+        title: (lang === 'en' || lang === 'es') ? `Analyzing ${activeLabel} (${stepLabel})` : `Sto analizzando ${activeLabel} (${stepLabel})`,
         description: lang === 'en'
           ? 'Please wait. The app is reading the selected screenshot before asking for confirmation.'
           : 'Attendi un attimo. L’app sta leggendo lo screenshot selezionato prima di chiederti conferma.'
@@ -69,7 +69,7 @@ export default function PlayerDetailPage() {
     if (queueStatus.phase === 'confirming') {
       return {
         tone: 'warning',
-        title: lang === 'en' ? `Confirm ${activeLabel} (${stepLabel})` : `Conferma ${activeLabel} (${stepLabel})`,
+        title: (lang === 'en' || lang === 'es') ? `Confirm ${activeLabel} (${stepLabel})` : `Conferma ${activeLabel} (${stepLabel})`,
         description: lang === 'en'
           ? 'Review the extracted data in the modal. After confirming, the app will continue with the next queued photo.'
           : 'Controlla i dati estratti nel modal. Dopo la conferma, l’app continuera con la foto successiva in coda.'
@@ -79,7 +79,7 @@ export default function PlayerDetailPage() {
     if (queueStatus.phase === 'saving') {
       return {
         tone: 'success',
-        title: lang === 'en' ? `Saving ${activeLabel} (${stepLabel})` : `Sto salvando ${activeLabel} (${stepLabel})`,
+        title: (lang === 'en' || lang === 'es') ? `Saving ${activeLabel} (${stepLabel})` : `Sto salvando ${activeLabel} (${stepLabel})`,
         description: lang === 'en'
           ? 'Do not close this page. The current section is being updated now.'
           : 'Non chiudere questa pagina. La sezione corrente si sta aggiornando adesso.'
@@ -87,8 +87,8 @@ export default function PlayerDetailPage() {
     }
 
     const countLabel = images.length === 1
-      ? (lang === 'en' ? '1 photo ready' : '1 foto pronta')
-      : (lang === 'en' ? `${images.length} photos ready` : `${images.length} foto pronte`)
+      ? ((lang === 'en' || lang === 'es') ? '1 photo ready' : '1 foto pronta')
+      : ((lang === 'en' || lang === 'es') ? `${images.length} photos ready` : `${images.length} foto pronte`)
 
     return {
       tone: 'neutral',
@@ -291,7 +291,7 @@ export default function PlayerDetailPage() {
       headers: { 
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
-        'Accept-Language': lang === 'en' ? 'en' : 'it'
+        'Accept-Language': (lang === 'en' || lang === 'es') ? 'en' : 'it'
       },
       body: JSON.stringify({ imageDataUrl: img.dataUrl })
     })
@@ -605,7 +605,7 @@ export default function PlayerDetailPage() {
           }}
         >
           <Pencil size={14} />
-          {lang === 'en' ? 'Edit' : 'Modifica'}
+          {(lang === 'en' || lang === 'es') ? 'Edit' : 'Modifica'}
         </button>
         {isProfileComplete && (
           <div style={{
@@ -1223,7 +1223,7 @@ function PlayerDetailUploadPanel({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
         <div>
           <h2 style={{ fontSize: 'clamp(20px, 5vw, 24px)', fontWeight: 700, margin: 0 }}>
-            {lang === 'en' ? 'Update Player Photos' : 'Aggiorna Foto Giocatore'}
+            {(lang === 'en' || lang === 'es') ? 'Update Player Photos' : 'Aggiorna Foto Giocatore'}
           </h2>
           <div style={{ fontSize: '14px', opacity: 0.82, marginTop: '8px', lineHeight: 1.5 }}>
             {lang === 'en'
@@ -1250,7 +1250,7 @@ function PlayerDetailUploadPanel({
             }}
           >
             <Pencil size={16} />
-            {lang === 'en' ? 'Edit player data' : 'Modifica dati giocatore'}
+            {(lang === 'en' || lang === 'es') ? 'Edit player data' : 'Modifica dati giocatore'}
           </button>
         )}
       </div>
@@ -1364,11 +1364,11 @@ function PlayerDetailUploadPanel({
                     }}>
                       {isActive
                         ? (queueStatus.phase === 'confirming'
-                          ? (lang === 'en' ? 'Confirm now' : 'Conferma ora')
+                          ? ((lang === 'en' || lang === 'es') ? 'Confirm now' : 'Conferma ora')
                           : queueStatus.phase === 'saving'
-                          ? (lang === 'en' ? 'Saving' : 'Salvataggio')
-                          : (lang === 'en' ? 'Analyzing' : 'In analisi'))
-                        : (lang === 'en' ? 'Ready' : 'Pronta')}
+                          ? ((lang === 'en' || lang === 'es') ? 'Saving' : 'Salvataggio')
+                          : ((lang === 'en' || lang === 'es') ? 'Analyzing' : 'In analisi'))
+                        : ((lang === 'en' || lang === 'es') ? 'Ready' : 'Pronta')}
                     </div>
                   </div>
                   <img
@@ -1410,10 +1410,10 @@ function PlayerDetailUploadPanel({
                       background: alreadyPresent ? 'rgba(34, 197, 94, 0.18)' : 'rgba(255,255,255,0.08)'
                     }}>
                       {alreadyPresent
-                        ? (lang === 'en' ? 'Already present' : 'Gia presente')
+                        ? ((lang === 'en' || lang === 'es') ? 'Already present' : 'Gia presente')
                         : required
-                        ? (lang === 'en' ? 'Required' : 'Obbligatoria')
-                        : (lang === 'en' ? 'Optional' : 'Opzionale')}
+                        ? ((lang === 'en' || lang === 'es') ? 'Required' : 'Obbligatoria')
+                        : ((lang === 'en' || lang === 'es') ? 'Optional' : 'Opzionale')}
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -1507,7 +1507,7 @@ function PlayerDetailUploadPanel({
               }}
             >
               <Pencil size={14} />
-              {lang === 'en' ? 'Manual booster' : 'Booster manuale'}
+              {(lang === 'en' || lang === 'es') ? 'Manual booster' : 'Booster manuale'}
             </button>
           )}
           <span style={{ fontSize: '13px', opacity: 0.7 }}>
@@ -1559,7 +1559,7 @@ function PlayerDetailUploadPanel({
               <>
                 <CheckCircle2 size={18} />
                 {selectedCount > 1
-                  ? (lang === 'en' ? `Save and update ${selectedCount} photos` : `Salva e aggiorna ${selectedCount} foto`)
+                  ? ((lang === 'en' || lang === 'es') ? `Save and update ${selectedCount} photos` : `Salva e aggiorna ${selectedCount} foto`)
                   : t('saveAndUpdate')}
               </>
             )}

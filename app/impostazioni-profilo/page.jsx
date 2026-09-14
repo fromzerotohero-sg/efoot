@@ -242,34 +242,34 @@ export default function ImpostazioniProfiloPage() {
   }
   const profileOverviewCards = [
     {
-      label: lang === 'en' ? 'Division' : 'Divisione',
+      label: (lang === 'en' || lang === 'es') ? 'Division' : 'Divisione',
       value: cleanValue(profile.current_division),
-      hint: lang === 'en' ? 'Competitive level' : 'Livello competitivo'
+      hint: (lang === 'en' || lang === 'es') ? 'Competitive level' : 'Livello competitivo'
     },
     {
-      label: lang === 'en' ? 'In-game team' : 'Team in game',
+      label: (lang === 'en' || lang === 'es') ? 'In-game team' : 'Team in game',
       value: cleanValue(profile.team_name || profile.favorite_team),
-      hint: lang === 'en' ? 'Identity used in analyses' : 'Identita usata nelle analisi'
+      hint: (lang === 'en' || lang === 'es') ? 'Identity used in analyses' : 'Identita usata nelle analisi'
     },
     {
-      label: lang === 'en' ? 'Platform' : 'Piattaforma',
+      label: (lang === 'en' || lang === 'es') ? 'Platform' : 'Piattaforma',
       value: cleanValue(profileData?.platform),
-      hint: lang === 'en' ? 'From Coach Gym' : 'Da Palestra Coach'
+      hint: (lang === 'en' || lang === 'es') ? 'From Coach Gym' : 'Da Palestra Coach'
     },
     {
-      label: lang === 'en' ? 'Pass level' : 'Livello passaggi',
+      label: (lang === 'en' || lang === 'es') ? 'Pass level' : 'Livello passaggi',
       value: cleanValue(profileData?.pass_level),
-      hint: lang === 'en' ? 'Control profile' : 'Profilo comandi'
+      hint: (lang === 'en' || lang === 'es') ? 'Control profile' : 'Profilo comandi'
     },
     {
-      label: lang === 'en' ? 'Weak point' : 'Punto debole',
+      label: (lang === 'en' || lang === 'es') ? 'Weak point' : 'Punto debole',
       value: cleanValue(profileData?.ai_weak_point || profile.common_problems),
-      hint: lang === 'en' ? 'What the coach should watch' : 'Cosa deve osservare il coach'
+      hint: (lang === 'en' || lang === 'es') ? 'What the coach should watch' : 'Cosa deve osservare il coach'
     },
     {
-      label: lang === 'en' ? 'Favourite player' : 'Giocatore preferito',
+      label: (lang === 'en' || lang === 'es') ? 'Favourite player' : 'Giocatore preferito',
       value: cleanValue(profileData?.favourite_player_name),
-      hint: lang === 'en' ? 'Useful for examples' : 'Utile per esempi e consigli'
+      hint: (lang === 'en' || lang === 'es') ? 'Useful for examples' : 'Utile per esempi e consigli'
     }
   ]
 
@@ -289,7 +289,7 @@ export default function ImpostazioniProfiloPage() {
         <div className="profile-hero-copy">
           <span className="profile-kicker">
             <User size={16} />
-            {lang === 'en' ? 'Player identity' : 'Identita giocatore'}
+            {(lang === 'en' || lang === 'es') ? 'Player identity' : 'Identita giocatore'}
           </span>
           <h1>
             {t('profileSettings')}
@@ -327,11 +327,11 @@ export default function ImpostazioniProfiloPage() {
         </div>
       </section>
 
-      <section className="profile-metric-grid" aria-label={lang === 'en' ? 'Profile overview' : 'Panoramica profilo'}>
+      <section className="profile-metric-grid" aria-label={(lang === 'en' || lang === 'es') ? 'Profile overview' : 'Panoramica profilo'}>
         {profileOverviewCards.map((card) => (
           <div className={`profile-metric-card ${card.value ? '' : 'profile-metric-card--empty'}`} key={card.label}>
             <span>{card.label}</span>
-            <strong>{card.value || (lang === 'en' ? 'Missing' : 'Da completare')}</strong>
+            <strong>{card.value || ((lang === 'en' || lang === 'es') ? 'Missing' : 'Da completare')}</strong>
             <small>{card.hint}</small>
           </div>
         ))}
@@ -733,7 +733,7 @@ export default function ImpostazioniProfiloPage() {
         <div className="profile-section-heading">
           <Brain size={20} color="#00d4ff" />
           <div>
-            <h2>{lang === 'en' ? 'Coach personalization' : 'Personalizzazione Coach'}</h2>
+            <h2>{(lang === 'en' || lang === 'es') ? 'Coach personalization' : 'Personalizzazione Coach'}</h2>
             <p>
               {lang === 'en'
                 ? 'Choose how the coach talks to you. These details change the tone and memory of chat and live coach.'
@@ -745,7 +745,7 @@ export default function ImpostazioniProfiloPage() {
         <div className="profile-personalization-grid">
           <div>
             <label>
-              {lang === 'en' ? 'What should the coach call you?' : 'Come vuoi che ti chiami?'}
+              {(lang === 'en' || lang === 'es') ? 'What should the coach call you?' : 'Come vuoi che ti chiami?'}
             </label>
             <input
               type="text"
@@ -758,7 +758,7 @@ export default function ImpostazioniProfiloPage() {
 
           <div>
             <label>
-              {lang === 'en' ? 'Coach name' : 'Nome del tuo coach'}
+              {(lang === 'en' || lang === 'es') ? 'Coach name' : 'Nome del tuo coach'}
             </label>
             <input
               type="text"
@@ -772,7 +772,7 @@ export default function ImpostazioniProfiloPage() {
 
         <div style={{ marginTop: '16px' }}>
           <label>
-            {lang === 'en' ? 'Coach memory note' : 'Nota memoria per il coach'}
+            {(lang === 'en' || lang === 'es') ? 'Coach memory note' : 'Nota memoria per il coach'}
           </label>
           <textarea
             value={profile.how_to_remember}
@@ -785,7 +785,7 @@ export default function ImpostazioniProfiloPage() {
 
         <div className="profile-personalization-actions">
           <button
-            onClick={() => handleSave(lang === 'en' ? 'Coach personalization' : 'Personalizzazione Coach')}
+            onClick={() => handleSave((lang === 'en' || lang === 'es') ? 'Coach personalization' : 'Personalizzazione Coach')}
             disabled={saving}
             className="profile-save-button"
           >
