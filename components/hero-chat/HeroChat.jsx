@@ -128,6 +128,7 @@ const COPY = {
   matchOpponent: { it: 'Contro chi hai giocato? (opzionale)', en: 'Who did you play against? (optional)', es: '¿Contra quién jugaste? (opcional)' },
   matchOpponentPlaceholder: { it: 'Nome avversario', en: 'Opponent name', es: 'Nombre del rival' },
   matchStartPhotos: { it: 'Inizia con le foto', en: 'Start with photos', es: 'Empezar con las fotos' },
+  matchSetup: { it: 'Impostazione', en: 'Setup', es: 'Preparación' },
   matchSection: { it: 'Sezione', en: 'Section', es: 'Sección' },
   matchRead: { it: 'Letta', en: 'Read', es: 'Leída' },
   matchReady: { it: 'Pronta da leggere', en: 'Ready to read', es: 'Lista para leer' },
@@ -141,6 +142,7 @@ const COPY = {
   matchMin: { it: 'Per un’analisi utile servono almeno 3 sezioni lette.', en: 'At least 3 sections must be read for a useful analysis.', es: 'Se necesitan al menos 3 secciones leídas para un análisis útil.' },
   matchSaved: { it: 'Partita salvata. Ora posso collegare dati, pattern e feedback.', en: 'Match saved. I can now connect data, patterns and feedback.', es: 'Partido guardado. Ahora puedo conectar datos, patrones y feedback.' },
   matchAskFeedback: { it: 'Vuoi raccontarmi com’è andata? Così collego i numeri a quello che hai vissuto in partita.', en: 'Want to tell me how it went? I’ll connect the numbers to what you experienced.', es: '¿Quieres contarme cómo fue? Conectaré los datos con lo que viviste.' },
+  showHistory: { it: 'Mostra conversazione precedente', en: 'Show previous conversation', es: 'Mostrar conversación anterior' },
   tipExpand: { it: 'Approfondisci', en: 'Expand', es: 'Ampliar' },
   tipCollapse: { it: 'Riduci', en: 'Collapse', es: 'Reducir' },
   deepenAsk: { it: 'Spiegami meglio questo punto', en: 'Explain this point better', es: 'Explícame mejor este punto' },
@@ -439,7 +441,11 @@ function MatchUploadCard({
       <div className="hc-matchHead">
         <ClipboardList size={17} aria-hidden="true" />
         <strong>{L(lang, COPY.actionMatch)}</strong>
-        <span>{completed}/{MATCH_SECTIONS.length}</span>
+        <span>
+          {flow.phase === 'context'
+            ? L(lang, COPY.matchSetup)
+            : `${flow.phase === 'review' ? completed : flow.sectionIndex + 1}/${MATCH_SECTIONS.length}`}
+        </span>
       </div>
 
       {flow.phase === 'context' && (
@@ -592,6 +598,8 @@ export default function HeroChat({
   const [threadId, setThreadId] = React.useState(null)
   const [historyLoading, setHistoryLoading] = React.useState(true)
   const [prematchPlan, setPrematchPlan] = React.useState(null)
+  const [workflowFocus, setWorkflowFocus] = React.useState(null)
+  const [historyExpanded, setHistoryExpanded] = React.useState(false)
   const recognitionRef = React.useRef(null)
   const feedRef = React.useRef(null)
   const cameraInputRef = React.useRef(null)
@@ -845,20 +853,36 @@ export default function HeroChat({
   const enterFeedbackMode = React.useCallback((matchId = null) => {
     setActionsOpen(false)
     setMatchFlow(null)
+    setPrematchPlan(null)
     setAttachments([])
     setAttachmentMode('stats')
+    setWorkflowFocus({ startIndex: messages.length })
+    setHistoryExpanded(false)
     setFeedbackMode(true)
     setFeedbackMatchId(matchId || null)
     setSaveState('idle')
     setFeedbackMessages([{ role: 'hero', content: L(lang, COPY.feedbackIntro) }])
-  }, [lang])
+  }, [lang, messages.length])
 
   const exitFeedbackMode = React.useCallback(() => {
     setFeedbackMode(false)
     setFeedbackMatchId(null)
     setFeedbackMessages([])
+    setPrematchPlan(null)
     setSaveState('idle')
+    setWorkflowFocus(null)
+    setHistoryExpanded(false)
   }, [])
+
+  const beginFocusedAttachment = React.useCallback(() => {
+    setWorkflowFocus({ startIndex: messages.length })
+    setHistoryExpanded(false)
+    setMatchFlow(null)
+    setFeedbackMode(false)
+    setFeedbackMessages([])
+    setPrematchPlan(null)
+    setAttachments([])
+  }, [messages.length])
 
   // Eventi globali: la chat Hero e l'unica superficie conversazionale.
   // 'open-assistant-chat' (deep link ?openAssistantChat=1, link "chiedi al coach")
@@ -994,6 +1018,9 @@ export default function HeroChat({
     setActionsOpen(false)
     setFeedbackMode(false)
     setFeedbackMessages([])
+    setPrematchPlan(null)
+    setWorkflowFocus({ startIndex: messages.length })
+    setHistoryExpanded(false)
     setAttachments([])
     setAttachmentMode('match')
     setMatchFlow({
@@ -1007,7 +1034,7 @@ export default function HeroChat({
     const intro = { role: 'hero', content: L(lang, COPY.matchIntro), kind: 'system' }
     setMessages((prev) => [...prev, intro])
     void persistMessages([intro])
-  }, [lang, persistMessages])
+  }, [lang, messages.length, persistMessages])
 
   const updateMatchOpponent = React.useCallback((opponentName) => {
     setMatchFlow((prev) => prev ? { ...prev, opponentName } : prev)
@@ -1073,11 +1100,13 @@ export default function HeroChat({
   }, [])
 
   const openStatsCamera = React.useCallback(() => {
+    beginFocusedAttachment()
     setAttachmentMode('stats')
     openCamera()
-  }, [openCamera])
+  }, [beginFocusedAttachment, openCamera])
 
   const openCounterCamera = React.useCallback(() => {
+    beginFocusedAttachment()
     setAttachmentMode('counter')
     setActionsOpen(false)
     setMessages((prev) => [
@@ -1085,7 +1114,7 @@ export default function HeroChat({
       { role: 'hero', content: L(lang, COPY.counterRequest), kind: 'system' }
     ])
     cameraInputRef.current?.click()
-  }, [lang])
+  }, [beginFocusedAttachment, lang, messages.length])
 
   const analyzeMatchAttachment = React.useCallback(async (token, imageDataUrls) => {
     const flow = matchFlow
@@ -1411,6 +1440,10 @@ export default function HeroChat({
 
   const lastHeroMessage = [...messages].reverse().find((m) => m.role === 'hero')
   const activeSuggestions = !sending && lastHeroMessage?.suggestions?.length ? lastHeroMessage.suggestions : []
+  const visibleMessages = workflowFocus && !historyExpanded
+    ? messages.slice(workflowFocus.startIndex)
+    : messages
+  const hasHiddenHistory = !!workflowFocus && !historyExpanded && workflowFocus.startIndex > 0
 
   const scoreRing = (() => {
     if (typeof knowledgeScore !== 'number') return null
@@ -1512,25 +1545,38 @@ export default function HeroChat({
 
       {/* Feed conversazione */}
       <div className="hc-feed" ref={feedRef}>
-        {/* Banner Hero (reference foto 1) */}
-        <div className="hc-banner">
-          <p className="hc-bannerOverline">{L(lang, { it: 'Il tuo assistente di gioco', en: 'Your game assistant', es: 'Tu asistente de juego' })}</p>
-          <h1 className="hc-bannerTitle">{L(lang, COPY.heroTitle)}</h1>
-          <p className="hc-bannerSub">{L(lang, COPY.heroSub)}</p>
-        </div>
+        {hasHiddenHistory && (
+          <button
+            type="button"
+            className="hc-historyPeek"
+            onClick={() => setHistoryExpanded(true)}
+          >
+            {L(lang, COPY.showHistory)}
+          </button>
+        )}
+        {(!workflowFocus || historyExpanded) && (
+          <>
+            {/* Banner Hero (reference foto 1) */}
+            <div className="hc-banner">
+              <p className="hc-bannerOverline">{L(lang, { it: 'Il tuo assistente di gioco', en: 'Your game assistant', es: 'Tu asistente de juego' })}</p>
+              <h1 className="hc-bannerTitle">{L(lang, COPY.heroTitle)}</h1>
+              <p className="hc-bannerSub">{L(lang, COPY.heroSub)}</p>
+            </div>
 
-        <div className="hc-row">
-          <span className="hc-bubbleAvatar" aria-hidden="true">
-            <img src="/coach.jpg" alt="" />
-          </span>
-          <div className="hc-bubble hc-bubbleHero">
-            {greetingVariant === 'first'
-              ? Lfn(lang, COPY.greetingNamed, clientName)
-              : Lfn(lang, COPY.greetingReturningNamed, clientName)}
-          </div>
-        </div>
+            <div className="hc-row">
+              <span className="hc-bubbleAvatar" aria-hidden="true">
+                <img src="/coach.jpg" alt="" />
+              </span>
+              <div className="hc-bubble hc-bubbleHero">
+                {greetingVariant === 'first'
+                  ? Lfn(lang, COPY.greetingNamed, clientName)
+                  : Lfn(lang, COPY.greetingReturningNamed, clientName)}
+              </div>
+            </div>
+          </>
+        )}
 
-        {messages.map((m, i) => (
+        {visibleMessages.map((m, i) => (
           <div key={i} className={m.role === 'user' ? 'hc-row hc-rowUser' : 'hc-row'}>
             {m.role === 'hero' && (
               <span className="hc-bubbleAvatar" aria-hidden="true">
@@ -2031,6 +2077,25 @@ export default function HeroChat({
           gap: 14px;
           padding: 2px 4px 10px;
           overscroll-behavior: contain;
+        }
+
+        .hc-historyPeek {
+          align-self: center;
+          min-height: 32px;
+          padding: 6px 11px;
+          border-radius: 999px;
+          border: 1px solid var(--border-soft);
+          background: rgba(255, 255, 255, 0.04);
+          color: var(--text-dim);
+          font: inherit;
+          font-size: 11px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .hc-historyPeek:hover {
+          color: var(--text-main);
+          border-color: var(--accent-border);
         }
 
         .hc-banner {
