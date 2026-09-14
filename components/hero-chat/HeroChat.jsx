@@ -13,7 +13,6 @@ import {
   X,
   BarChart3,
   Trophy,
-  Sparkles,
   MessageSquareHeart,
   AlertCircle,
   Camera,
@@ -66,6 +65,13 @@ const COPY = {
   actionPrepare: { it: 'Prepara la prossima partita', en: 'Prepare the next match', es: 'Preparar el próximo partido' },
   actionCards: { it: 'Controlla una carta', en: 'Check a card', es: 'Revisar una carta' },
   actionFeedback: { it: 'Racconta l’ultima partita', en: 'Talk about the last match', es: 'Cuenta el último partido' },
+  nextActionsTitle: { it: 'La prossima cosa utile', en: 'Your next useful step', es: 'Tu próximo paso útil' },
+  nextStatsTitle: { it: 'Aggiorna le statistiche', en: 'Update your stats', es: 'Actualiza tus estadísticas' },
+  nextStatsDesc: { it: 'Fai vedere a Hero come stai giocando davvero.', en: 'Show Hero how you are really playing.', es: 'Muestra a Hero cómo estás jugando de verdad.' },
+  nextMatchTitle: { it: 'Racconta l’ultima partita', en: 'Review your last match', es: 'Revisa tu último partido' },
+  nextMatchDesc: { it: 'Trasformiamo quello che è successo in una correzione concreta.', en: 'Turn what happened into one concrete correction.', es: 'Convierte lo ocurrido en una corrección concreta.' },
+  nextCounterTitle: { it: 'Prepara la prossima partita', en: 'Prepare the next match', es: 'Prepara el próximo partido' },
+  nextCounterDesc: { it: 'Leggi l’avversario e costruisci il piano prima del calcio d’inizio.', en: 'Read the opponent and build the plan before kickoff.', es: 'Lee al rival y crea el plan antes del saque inicial.' },
   lowHp: { it: 'Saldo HP insufficiente per le azioni AI (costo standard: 2 HP).', en: 'Not enough HP for AI actions (standard cost: 2 HP).', es: 'HP insuficientes para acciones de IA (costo estándar: 2 HP).' },
   lowHpCta: { it: 'Ottieni HP', en: 'Get HP', es: 'Conseguir HP' },
   errorGeneric: { it: 'Qualcosa non ha funzionato. Riprova tra un momento.', en: 'Something went wrong. Try again in a moment.', es: 'Algo salió mal. Inténtalo de nuevo en un momento.' },
@@ -754,11 +760,6 @@ export default function HeroChat({
     openGallery()
   }, [openGallery])
 
-  const openCounterCamera = React.useCallback(() => {
-    setAttachmentMode('counter')
-    openCamera()
-  }, [openCamera])
-
   const analyzeCountermeasureAttachment = React.useCallback(async (token, imageDataUrl) => {
     const extractRes = await fetch('/api/extract-formation', {
       method: 'POST',
@@ -1029,16 +1030,34 @@ export default function HeroChat({
 
   const quickActions = [
     { key: 'camera', icon: Camera, label: L(lang, COPY.attachCamera), run: openStatsCamera },
-    { key: 'gallery', icon: ImagePlus, label: L(lang, COPY.attachGallery), run: openStatsGallery },
-    { key: 'counter', icon: Trophy, label: L(lang, COPY.actionPrepare), run: openCounterCamera },
-    { key: 'stats', icon: BarChart3, label: L(lang, COPY.actionStats), run: openStatsCamera },
+    { key: 'gallery', icon: ImagePlus, label: L(lang, COPY.attachGallery), run: openStatsGallery }
+  ]
+
+  const nextActionCards = [
     {
-      key: 'cards',
-      icon: Sparkles,
-      label: L(lang, COPY.actionCards),
-      run: () => startChatPrompt('Controlla una carta della mia rosa e dimmi come posso usarla meglio.')
+      key: 'next-stats',
+      icon: BarChart3,
+      title: L(lang, COPY.nextStatsTitle),
+      desc: L(lang, COPY.nextStatsDesc),
+      tone: 'cyan',
+      run: () => onOpenGameAnalysis?.()
     },
-    { key: 'feedback', icon: MessageSquareHeart, label: L(lang, COPY.actionFeedback), run: enterFeedbackMode }
+    {
+      key: 'next-match',
+      icon: MessageSquareHeart,
+      title: L(lang, COPY.nextMatchTitle),
+      desc: L(lang, COPY.nextMatchDesc),
+      tone: 'green',
+      run: enterFeedbackMode
+    },
+    {
+      key: 'next-counter',
+      icon: Trophy,
+      title: L(lang, COPY.nextCounterTitle),
+      desc: L(lang, COPY.nextCounterDesc),
+      tone: 'gold',
+      run: () => router.push('/contromisure-pre-partita')
+    }
   ]
 
   return (
@@ -1262,7 +1281,31 @@ export default function HeroChat({
         )}
 
         {/* Suggerimenti reali dal backend */}
-        {activeSuggestions.length > 0 && (
+        {homeState === 'OPERATIONAL' && !feedbackMode ? (
+          <section className="hc-nextActions" aria-label={L(lang, COPY.nextActionsTitle)}>
+            <p className="hc-nextActionsTitle">{L(lang, COPY.nextActionsTitle)}</p>
+            <div className="hc-nextActionsGrid">
+              {nextActionCards.map((card) => {
+                const Icon = card.icon
+                return (
+                  <button
+                    key={card.key}
+                    type="button"
+                    className={`hc-nextAction hc-nextAction-${card.tone}`}
+                    onClick={card.run}
+                  >
+                    <span className="hc-nextActionIcon"><Icon size={20} aria-hidden="true" /></span>
+                    <span className="hc-nextActionText">
+                      <strong>{card.title}</strong>
+                      <small>{card.desc}</small>
+                    </span>
+                    <span className="hc-nextActionArrow" aria-hidden="true">→</span>
+                  </button>
+                )
+              })}
+            </div>
+          </section>
+        ) : activeSuggestions.length > 0 && (
           <div className="hc-suggestions">
             {activeSuggestions.map((sug) => (
               <button key={sug} type="button" className="hc-suggestionPill" onClick={() => sendMessage(sug)}>
@@ -1826,6 +1869,101 @@ export default function HeroChat({
           text-align: left;
         }
 
+        .hc-nextActions {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          margin-top: 4px;
+        }
+
+        .hc-nextActionsTitle {
+          margin: 0;
+          color: var(--text-dim);
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .hc-nextActionsGrid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .hc-nextAction {
+          position: relative;
+          min-height: 142px;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 10px;
+          padding: 14px;
+          border: 1px solid var(--border-soft);
+          border-radius: 16px;
+          background: var(--surface);
+          color: var(--text-main);
+          font-family: inherit;
+          text-align: left;
+          cursor: pointer;
+          transition: transform 0.18s ease, border-color 0.18s ease;
+        }
+
+        .hc-nextAction:hover {
+          transform: translateY(-2px);
+          border-color: var(--accent-border);
+        }
+
+        .hc-nextActionIcon {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 38px;
+          height: 38px;
+          border-radius: 12px;
+        }
+
+        .hc-nextAction-cyan .hc-nextActionIcon {
+          color: #7ddcff;
+          background: rgba(125, 220, 255, 0.12);
+        }
+
+        .hc-nextAction-green .hc-nextActionIcon {
+          color: var(--accent);
+          background: var(--accent-bg);
+        }
+
+        .hc-nextAction-gold .hc-nextActionIcon {
+          color: #ffd76a;
+          background: rgba(255, 215, 106, 0.12);
+        }
+
+        .hc-nextActionText {
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+          padding-right: 12px;
+        }
+
+        .hc-nextActionText strong {
+          font-size: 13px;
+          line-height: 1.2;
+        }
+
+        .hc-nextActionText small {
+          color: var(--text-dim);
+          font-size: 11px;
+          line-height: 1.35;
+        }
+
+        .hc-nextActionArrow {
+          position: absolute;
+          right: 14px;
+          bottom: 13px;
+          color: var(--accent);
+          font-size: 18px;
+        }
+
         .hc-feedbackBadge {
           display: flex;
           align-items: center;
@@ -2354,6 +2492,21 @@ export default function HeroChat({
 
           .hc-bubble {
             max-width: 86%;
+          }
+
+          .hc-nextActionsGrid {
+            grid-template-columns: 1fr;
+          }
+
+          .hc-nextAction {
+            min-height: 92px;
+            flex-direction: row;
+            align-items: flex-start;
+            padding: 12px;
+          }
+
+          .hc-nextActionText {
+            padding-right: 18px;
           }
         }
       `}</style>
