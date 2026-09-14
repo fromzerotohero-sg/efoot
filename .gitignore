@@ -44,3 +44,9 @@ Thumbs.db
 # Logs
 logs
 *.log
+
+# Owner working files
+_qa/
+_refactoring-docs/
+ChatGPT Image*.png
+FZTH_HERO_FIRST_ENTERPRISE_MASTER_v1.0.md
