@@ -4,15 +4,12 @@ import React, { Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase, getValidAccessToken } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
-import ConfirmModal from '@/components/ConfirmModal'
 import CoachFeedbackChat from '@/components/CoachFeedbackChat'
 import GameAnalysisModal from '@/components/GameAnalysisModal'
 import { useGameAnalysisModalNav, OPEN_GAME_ANALYSIS_MODAL_EVENT, CLOSE_GAME_ANALYSIS_MODAL_EVENT } from '@/components/GameAnalysisModalNavContext'
 import TaskWidget from '@/components/TaskWidget'
 import OnboardingFlow from '@/components/OnboardingFlow'
 import CoachWorkspace from '@/components/coach-v2/CoachWorkspace'
-import { safeJsonResponse } from '@/lib/fetchHelper'
-import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import { fetchCoachProfileFromApi, resolveAuthToken, buildAuthHeaders } from '@/lib/profileUxHelpers'
 import { withAuth } from '@/components/AuthWrapper'
 import {
@@ -63,19 +60,12 @@ function HomePage() {
     formation: null
   })
   const [recentMatches, setRecentMatches] = React.useState([])
-  const [matchesExpanded, setMatchesExpanded] = React.useState(false)
-  const [deletingMatchId, setDeletingMatchId] = React.useState(null)
-  const [editingOpponentId, setEditingOpponentId] = React.useState(null)
-  const [editingOpponentName, setEditingOpponentName] = React.useState('')
-  const [savingOpponentName, setSavingOpponentName] = React.useState(false)
   const [tacticalPatterns, setTacticalPatterns] = React.useState(null) // Pattern tattici per AI Insights
   const [showCoachFeedback, setShowCoachFeedback] = React.useState(false)
   const [showGameAnalysisModal, setShowGameAnalysisModal] = React.useState(false)
   const [gameAnalysisLastCapture, setGameAnalysisLastCapture] = React.useState(null)
   const [hasActiveCoach, setHasActiveCoach] = React.useState(false)
   const [userProfile, setUserProfile] = React.useState(null)
-  const [confirmModal, setConfirmModal] = React.useState(null) // { show, title, message, onConfirm, onCancel }
-  const [coachChatInitialMessage, setCoachChatInitialMessage] = React.useState(null)
 
   React.useEffect(() => {
     setGameAnalysisNavOpen(showGameAnalysisModal)
@@ -350,122 +340,6 @@ function HomePage() {
     }
   }, [loading])
 
-  const handleDeleteMatch = async (matchId, e) => {
-    e.stopPropagation() // Previeni click sul card
-    
-    setConfirmModal({
-      show: true,
-      title: t('confirm'),
-      message: t('confirmDeleteMatch'),
-      onConfirm: async () => {
-        setConfirmModal(null)
-        setDeletingMatchId(matchId)
-        setError(null)
-    
-        try {
-          let token = localStorage.getItem('auth_token')
-          
-          if (!token && supabase) {
-            const { data: session } = await supabase.auth.getSession()
-            token = session?.session?.access_token
-          }
-    
-          if (!token) {
-            throw new Error(t('sessionExpired'))
-          }
-    
-          const res = await fetch(`/api/supabase/delete-match?match_id=${matchId}`, {
-            method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          })
-    
-          const data = await safeJsonResponse(res, t('deleteMatchError'))
-    
-          // Rimuovi match dalla lista
-          setRecentMatches(prev => prev.filter(m => m.id !== matchId))
-    
-          // Aggiorna riassunto analisi (diagnostic) per la chat
-          try {
-            await fetch('/api/refresh-diagnostic', {
-              method: 'POST',
-              headers: { Authorization: `Bearer ${token}` }
-            })
-          } catch (_) { /* non bloccare UI */ }
-        } catch (err) {
-          console.error('[Dashboard] Delete match error:', err)
-          setError(err.message || t('deleteMatchError'))
-        } finally {
-          setDeletingMatchId(null)
-        }
-      },
-      onCancel: () => setConfirmModal(null)
-    })
-  }
-
-  const handleSaveOpponentName = async (matchId, e) => {
-    e.stopPropagation() // Evita click sulla card
-
-    if (!editingOpponentName.trim()) {
-      setEditingOpponentId(null)
-      return
-    }
-
-    setSavingOpponentName(true)
-    setError(null)
-    try {
-      let token = localStorage.getItem('auth_token')
-      
-      if (!token && supabase) {
-        const { data: session } = await supabase.auth.getSession()
-        token = session?.session?.access_token
-      }
-
-      if (!token) {
-        throw new Error(t('sessionExpired'))
-      }
-
-      const updateRes = await fetch(`/api/supabase/update-match`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          match_id: matchId,
-          opponent_name: editingOpponentName.trim()
-        })
-      })
-
-      const errorData = await updateRes.json().catch(() => ({}))
-      if (!updateRes.ok) {
-        throw new Error(errorData.error || t('updateMatchError'))
-      }
-
-      setRecentMatches(prev => prev.map(m =>
-        m.id === matchId
-          ? { ...m, opponent_name: editingOpponentName.trim() }
-          : m
-      ))
-      setEditingOpponentId(null)
-      setEditingOpponentName('')
-
-      // Aggiorna riassunto analisi (diagnostic) per la chat
-      try {
-        await fetch('/api/refresh-diagnostic', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` }
-        })
-      } catch (_) { /* non bloccare UI */ }
-    } catch (err) {
-      console.error('[Dashboard] Error saving opponent name:', err)
-      setError(err.message || t('updateMatchError'))
-    } finally {
-      setSavingOpponentName(false)
-    }
-  }
-
   if (loading) {
     return (
       <div className="container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -545,29 +419,11 @@ function HomePage() {
 
       <CoachFeedbackChat 
         show={showCoachFeedback} 
-        onClose={() => {
-          setShowCoachFeedback(false)
-          setCoachChatInitialMessage(null)
-        }} 
+        onClose={() => setShowCoachFeedback(false)} 
         userProfile={userProfile} 
         lastMatch={recentMatches?.[0] || null}
-        initialMessage={coachChatInitialMessage}
       />
 
-      {/* Confirm Modal */}
-      {confirmModal && (
-        <ConfirmModal
-          show={confirmModal.show}
-          title={confirmModal.title}
-          message={confirmModal.message}
-          confirmLabel={confirmModal.confirmLabel || t('delete')}
-          cancelLabel={confirmModal.cancelLabel || t('cancel')}
-          variant={confirmModal.variant || 'danger'}
-          confirmVariant={confirmModal.confirmVariant || 'danger'}
-          onConfirm={confirmModal.onConfirm}
-          onCancel={confirmModal.onCancel}
-        />
-      )}
       <GameAnalysisModal 
         show={showGameAnalysisModal} 
         onClose={() => {
