@@ -5164,6 +5164,154 @@ export default withAuth(function CardAdvisorLabPage() {
           }
         }
 
+        :global(html[data-theme='light']) .chart-insight-card,
+        :global(html[data-theme='light']) .chart-insight-card-secondary {
+          background: var(--surface);
+          border-color: var(--border-soft);
+          box-shadow: 0 8px 22px rgba(0,0,0,0.06);
+        }
+
+        :global(html[data-theme='light']) .chart-insight-card-secondary {
+          background: var(--surface-2);
+        }
+
+        :global(html[data-theme='light']) .chart-insight-card-secondary.chart-insight-card-ready {
+          background: rgba(31, 157, 107, 0.08);
+          border-color: rgba(31, 157, 107, 0.30);
+        }
+
+        :global(html[data-theme='light']) .chart-insight-card-secondary .chart-insight-copy h3 {
+          color: var(--text-main);
+        }
+
+        :global(html[data-theme='light']) .chart-insight-card-secondary .chart-insight-copy p {
+          color: var(--text-dim);
+        }
+
+        :global(html[data-theme='light']) .chart-insight-card-secondary .chart-insight-link {
+          color: var(--accent);
+          opacity: 0.92;
+        }
+
+        :global(html[data-theme='light']) .chart-insight-card-secondary.chart-insight-card-ready .chart-insight-link {
+          color: var(--accent);
+        }
+
+        :global(html[data-theme='light']) .chart-insight-card-secondary .chart-insight-link:hover {
+          color: var(--accent-strong);
+        }
+
+        :global(html[data-theme='light']) .chart-insight-icon {
+          color: var(--accent);
+          background: var(--accent-bg);
+          box-shadow: inset 0 0 0 1px var(--accent-border);
+        }
+
+        :global(html[data-theme='light']) .chart-insight-card-ready .chart-insight-icon {
+          color: var(--accent-strong);
+          background: rgba(31, 157, 107, 0.12);
+          box-shadow: inset 0 0 0 1px rgba(31, 157, 107, 0.30);
+        }
+
+        :global(html[data-theme='light']) .chart-insight-copy h3 {
+          color: var(--text-main);
+        }
+
+        :global(html[data-theme='light']) .chart-insight-copy p {
+          color: var(--text-dim);
+        }
+
+        :global(html[data-theme='light']) .chart-insight-card button {
+          border-color: var(--accent-border);
+          background: var(--accent-bg);
+          color: var(--accent-strong);
+        }
+
+        :global(html[data-theme='light']) .chart-insight-card-ready button {
+          border-color: rgba(31, 157, 107, 0.30);
+          background: rgba(31, 157, 107, 0.10);
+          color: var(--accent-strong);
+        }
+
+        :global(html[data-theme='light']) .advisor-section-marker {
+          background: var(--surface);
+          border-color: var(--border-soft);
+        }
+
+        :global(html[data-theme='light']) .advisor-section-marker small {
+          color: var(--text-dim);
+        }
+
+        :global(html[data-theme='light']) .advisor-section-marker-premium {
+          background: linear-gradient(90deg, rgba(251,191,36,0.10), rgba(249,115,22,0.04));
+          border-color: rgba(202,138,4,0.30);
+        }
+
+        :global(html[data-theme='light']) .advisor-section-marker-free {
+          background: linear-gradient(90deg, rgba(147,51,234,0.06), rgba(31,157,107,0.04));
+          border-color: rgba(147,51,234,0.20);
+        }
+
+        :global(html[data-theme='light']) .deep-analysis-entry {
+          background:
+            radial-gradient(circle at 0% 0%, rgba(251,191,36,0.10), transparent 38%),
+            radial-gradient(circle at 100% 0%, rgba(249,115,22,0.08), transparent 40%),
+            var(--surface);
+          border-color: rgba(202,138,4,0.30);
+          box-shadow: 0 10px 28px rgba(0,0,0,0.06);
+        }
+
+        :global(html[data-theme='light']) .deep-analysis-entry p {
+          color: var(--text-dim);
+        }
+
+        :global(html[data-theme='light']) .deep-analysis-entry-title h3 {
+          color: var(--text-main);
+        }
+
+        :global(html[data-theme='light']) .build-preview-shell {
+          background:
+            linear-gradient(145deg, rgba(147, 51, 234, 0.06), rgba(147, 51, 234, 0.03)),
+            var(--surface);
+          border-color: rgba(147, 51, 234, 0.22);
+        }
+
+        :global(html[data-theme='light']) .build-preview-shell-head span {
+          color: var(--cards-accent);
+        }
+
+        :global(html[data-theme='light']) .build-preview-shell-head p {
+          color: var(--text-dim);
+        }
+
+        :global(html[data-theme='light']) .build-preview-card {
+          background: var(--surface-2);
+          border-color: var(--border-soft);
+        }
+
+        :global(html[data-theme='light']) .build-preview-card-meta {
+          background: linear-gradient(165deg, rgba(147, 51, 234, 0.08) 0%, var(--surface-2) 100%);
+          border-color: rgba(147, 51, 234, 0.25);
+          box-shadow: none;
+        }
+
+        :global(html[data-theme='light']) .build-preview-card-roster {
+          background: linear-gradient(165deg, rgba(31, 157, 107, 0.10) 0%, var(--surface-2) 100%);
+          border-color: rgba(31, 157, 107, 0.30);
+          box-shadow: none;
+        }
+
+        :global(html[data-theme='light']) .build-preview-card h4,
+        :global(html[data-theme='light']) .build-preview-card-top h4 {
+          color: var(--text-main);
+        }
+
+        :global(html[data-theme='light']) .build-preview-card p,
+        :global(html[data-theme='light']) .build-preview-card-top p,
+        :global(html[data-theme='light']) .build-preview-card-head p {
+          color: var(--text-dim);
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .brand-analysis-logo,
           .brand-analysis-orbit,
