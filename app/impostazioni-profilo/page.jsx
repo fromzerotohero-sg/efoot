@@ -4,7 +4,7 @@ import React from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
-import { Save, SkipForward, RefreshCw, User, Gamepad2, Brain, CheckCircle2, AlertCircle, X, Wallet, Zap, LogOut, BookOpen, Gift, Pencil } from 'lucide-react'
+import { Save, RefreshCw, User, Gamepad2, Brain, CheckCircle2, AlertCircle, X, Wallet, Zap, LogOut, BookOpen, Gift, Pencil } from 'lucide-react'
 import LanguageSwitch from '@/components/LanguageSwitch'
 import ThemeToggle from '@/components/ThemeToggle'
 
@@ -472,10 +472,6 @@ export default function ImpostazioniProfiloPage() {
   }, [toast])
 
   // Skip sezione
-  const handleSkip = (sectionName) => {
-    setSuccess(`${t('skipped')} ${sectionName}`)
-    setTimeout(() => setSuccess(null), 2000)
-  }
 
   // Calcola percentuale completamento (se disponibile)
   const completionScore = profileData?.profile_completion_score ?? 0
@@ -688,57 +684,6 @@ export default function ImpostazioniProfiloPage() {
         </div>
       )}
 
-      {/* Banner Palestra Coach - Dati Tecnici (responsive: stack su mobile) */}
-      <div style={{
-        background: 'var(--accent-bg)',
-        border: '1px solid var(--accent-border)',
-        borderRadius: '16px',
-        padding: 'clamp(16px, 4vw, 24px)',
-        marginBottom: '24px',
-        display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        gap: '16px'
-      }}>
-        <div style={{
-          width: '48px',
-          height: '48px',
-          borderRadius: '12px',
-          background: 'var(--accent-bg)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0
-        }}>
-          <Brain size={24} color="var(--accent)" />
-        </div>
-        <div style={{ flex: '1 1 200px', minWidth: 0 }}>
-          <h3 style={{ fontWeight: 600, margin: '0 0 6px', fontSize: 'clamp(15px, 3.5vw, 17px)', lineHeight: 1.3 }}>
-            {t('coachDataSettingsTitle') || 'Dati tecnici di gioco'}
-          </h3>
-          <p style={{ fontSize: 'clamp(13px, 2.5vw, 14px)', color: 'var(--text-dim)', lineHeight: 1.45, margin: 0 }}>
-            {t('coachDataSettingsDesc') || 'Parlane con Hero nella chat: piattaforma, connessione, livello passaggio e punto debole li impara da come giochi.'}
-          </p>
-        </div>
-        <button 
-          onClick={() => router.push('/?openCoach=1')}
-          className="neon-button"
-          style={{
-            whiteSpace: 'nowrap',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            background: 'var(--accent-bg)',
-            border: '1px solid var(--accent-border)',
-            color: 'var(--accent)',
-            fontWeight: 700,
-            flexShrink: 0
-          }}
-        >
-          <Zap size={16} />
-          {t('openCoachGym') || 'Apri Palestra Coach'}
-        </button>
-      </div>
 
       {/* Foglio modifica campo (stile app): si apre dalla card cliccata */}
       {editingField && (
@@ -881,7 +826,7 @@ export default function ImpostazioniProfiloPage() {
 
       {/* Sezione: Dati Personali (stile allineato a Dashboard) */}
       <div data-tour-id="tour-profile-personal" style={{
-        backgroundColor: '#1a1d24',
+        backgroundColor: 'var(--surface)',
         borderRadius: '16px',
         padding: 'clamp(16px, 4vw, 24px)',
         marginBottom: '24px',
@@ -895,7 +840,7 @@ export default function ImpostazioniProfiloPage() {
 
         <div style={{ marginBottom: '16px' }}>
           <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-dim)' }}>
-            {t('firstName')}
+            {t('firstName')} · {(lang === 'en' || lang === 'es') ? 'how Hero calls you' : 'come ti chiama Hero'}
           </label>
           <input
             type="text"
@@ -939,6 +884,29 @@ export default function ImpostazioniProfiloPage() {
           />
         </div>
 
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-dim)' }}>
+            {t('favoriteTeam')}
+          </label>
+          <input
+            type="text"
+            value={profile.favorite_team}
+            onChange={(e) => setProfile(prev => ({ ...prev, favorite_team: e.target.value }))}
+            placeholder={t('favoriteTeamPlaceholder')}
+            maxLength={255}
+            style={{
+              width: '100%',
+              boxSizing: 'border-box',
+              padding: '12px',
+              backgroundColor: 'var(--surface)',
+              border: '1px solid var(--border-soft)',
+              borderRadius: '8px',
+              color: 'var(--text-main)',
+              fontSize: '16px'
+            }}
+          />
+        </div>
+
         <div style={{ display: 'flex', gap: '12px' }}>
           <button
             onClick={() => handleSave(t('personalData'))}
@@ -962,173 +930,6 @@ export default function ImpostazioniProfiloPage() {
             <Save size={18} />
             {saving ? t('saving') : t('save')}
           </button>
-          <button
-            onClick={() => handleSkip(t('personalData'))}
-            style={{
-              padding: '12px 20px',
-              backgroundColor: 'transparent',
-              color: 'var(--text-dim)',
-              border: '1px solid var(--border-soft)',
-              borderRadius: '8px',
-              fontSize: '16px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            <SkipForward size={18} />
-            {t('skip')}
-          </button>
-        </div>
-      </div>
-
-      {/* Sezione: Dati Gioco */}
-      <div data-tour-id="tour-profile-game" style={{
-        backgroundColor: '#1a1a1a',
-        borderRadius: '12px',
-        padding: '20px',
-        marginBottom: '24px',
-        border: '1px solid var(--border-soft)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-          <Gamepad2 size={20} color="var(--accent)" />
-          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>{t('gameData')}</h2>
-        </div>
-
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-dim)' }}>
-            Divisione attuale
-          </label>
-          <select
-            value={profile.current_division}
-            onChange={(e) => setProfile(prev => ({ ...prev, current_division: e.target.value }))}
-            style={{
-              width: '100%',
-              padding: '12px',
-              backgroundColor: 'var(--surface)',
-              border: '1px solid var(--border-soft)',
-              borderRadius: '8px',
-              color: 'var(--text-main)',
-              fontSize: '16px'
-            }}
-          >
-            <option value="">{t('selectDivision')}</option>
-            {divisions.map(div => (
-              <option key={div} value={div}>{div}</option>
-            ))}
-          </select>
-        </div>
-
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-dim)' }}>
-            {t('favoriteTeam')}
-          </label>
-          <input
-            type="text"
-            value={profile.favorite_team}
-            onChange={(e) => setProfile(prev => ({ ...prev, favorite_team: e.target.value }))}
-            placeholder={t('favoriteTeamPlaceholder')}
-            maxLength={255}
-            style={{
-              width: '100%',
-              padding: '12px',
-              backgroundColor: 'var(--surface)',
-              border: '1px solid var(--border-soft)',
-              borderRadius: '8px',
-              color: 'var(--text-main)',
-              fontSize: '16px'
-            }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            <label style={{ fontSize: '14px', color: 'var(--text-dim)', flex: 1 }}>
-              {t('teamNameInGame')}
-            </label>
-            <span style={{
-              fontSize: '11px',
-              padding: '4px 8px',
-              background: 'var(--accent-bg)',
-              border: '1px solid var(--accent-border)',
-              borderRadius: '4px',
-              color: 'var(--accent)',
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px'
-            }}>
-              {t('important')}
-            </span>
-          </div>
-          <input
-            type="text"
-            value={profile.team_name}
-            onChange={(e) => setProfile(prev => ({ ...prev, team_name: e.target.value }))}
-            placeholder={t('placeholderTeamExample')}
-            maxLength={255}
-            style={{
-              width: '100%',
-              padding: '12px',
-              backgroundColor: 'var(--surface)',
-              border: profile.team_name ? '1px solid var(--accent-border)' : '1px solid var(--border-soft)',
-              borderRadius: '8px',
-              color: 'var(--text-main)',
-              fontSize: '16px'
-            }}
-          />
-          <div style={{
-            fontSize: '12px',
-            color: '#666',
-            marginTop: '6px',
-            fontStyle: 'italic',
-            lineHeight: '1.4'
-          }}>
-            {t('teamNameDescription')}
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button
-            onClick={() => handleSave(t('gameData'))}
-            disabled={saving}
-            style={{
-              flex: 1,
-              padding: '12px',
-              backgroundColor: saving ? 'var(--surface-2)' : 'var(--accent)',
-              color: saving ? 'var(--text-dim)' : 'var(--accent-ink)',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: '600',
-              cursor: saving ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px'
-            }}
-          >
-            <Save size={18} />
-            {saving ? t('saving') : t('save')}
-          </button>
-          <button
-            onClick={() => handleSkip(t('gameData'))}
-            style={{
-              padding: '12px 20px',
-              backgroundColor: 'transparent',
-              color: 'var(--text-dim)',
-              border: '1px solid var(--border-soft)',
-              borderRadius: '8px',
-              fontSize: '16px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            <SkipForward size={18} />
-            {t('skip')}
-          </button>
         </div>
       </div>
 
@@ -1137,7 +938,7 @@ export default function ImpostazioniProfiloPage() {
         <div className="profile-section-heading">
           <Brain size={20} color="var(--accent)" />
           <div>
-            <h2>{(lang === 'en' || lang === 'es') ? 'Coach personalization' : 'Personalizzazione Coach'}</h2>
+            <h2>{(lang === 'en' || lang === 'es') ? 'Your Coach' : 'Il tuo Coach'}</h2>
             <p>
               {lang === 'en'
                 ? 'Choose how the coach talks to you. These details change the tone and memory of chat and live coach.'
@@ -1147,19 +948,6 @@ export default function ImpostazioniProfiloPage() {
         </div>
 
         <div className="profile-personalization-grid">
-          <div>
-            <label>
-              {(lang === 'en' || lang === 'es') ? 'What should the coach call you?' : 'Come vuoi che ti chiami?'}
-            </label>
-            <input
-              type="text"
-              value={profile.first_name}
-              onChange={(e) => setProfile(prev => ({ ...prev, first_name: e.target.value }))}
-              placeholder={t('placeholderYourName')}
-              maxLength={255}
-            />
-          </div>
-
           <div>
             <label>
               {(lang === 'en' || lang === 'es') ? 'Coach name' : 'Nome del tuo coach'}
@@ -1199,34 +987,6 @@ export default function ImpostazioniProfiloPage() {
         </div>
       </div>
 
-      {/* Bottone Completa Profilo */}
-      <button
-        data-tour-id="tour-profile-complete"
-        onClick={() => {
-          handleSave(t('completeProfile'))
-          setTimeout(() => router.push('/'), 2000)
-        }}
-        disabled={saving}
-        style={{
-          width: '100%',
-          padding: '16px',
-          backgroundColor: saving ? 'var(--surface-2)' : 'var(--accent)',
-          color: '#000',
-          border: 'none',
-          borderRadius: '12px',
-          fontSize: '18px',
-          fontWeight: '600',
-          cursor: saving ? 'not-allowed' : 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '8px',
-          marginBottom: '32px'
-        }}
-      >
-        <CheckCircle2 size={20} />
-        {saving ? t('saving') : t('completeProfile')}
-      </button>
       <style jsx>{`
 
 
