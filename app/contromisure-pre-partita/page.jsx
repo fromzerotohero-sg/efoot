@@ -670,7 +670,7 @@ export default function CountermeasuresPreMatchPage() {
           position: 'relative',
           overflow: 'hidden',
           border: '1px solid rgba(255, 215, 100, 0.24)',
-          background: 'linear-gradient(135deg, rgba(28, 21, 10, 0.94), rgba(7, 18, 30, 0.98) 55%, rgba(5, 8, 20, 0.98) 100%)',
+          background: 'linear-gradient(135deg, rgba(28, 21, 10, 0.94), rgba(7, 18, 30, 0.98) 55%, var(--surface) 100%)',
           boxShadow: '0 18px 36px rgba(0, 0, 0, 0.28), 0 0 28px rgba(255, 196, 0, 0.10)'
         }}
       >

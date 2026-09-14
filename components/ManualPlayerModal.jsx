@@ -334,7 +334,7 @@ export default function ManualPlayerModal({ show, onClose, onSaved, slotIndex = 
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)' }}>
-      <style>{`.mp-select option { background: #1a1a2e; color: #fff; } .mp-select option:checked { background: #0d47a1; }`}</style>
+      <style>{`.mp-select option { background: #1a1a2e; color: var(--text-main); } .mp-select option:checked { background: #0d47a1; }`}</style>
 
       <div style={{
         width: 'clamp(340px, 94vw, 480px)', maxHeight: '92vh',

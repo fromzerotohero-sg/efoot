@@ -663,7 +663,7 @@ export default function AssistantChat({
               padding: '0 10px',
               borderRadius: '999px',
               background: 'linear-gradient(135deg, #ffcb05 0%, #f97316 100%)',
-              border: '2px solid #050814',
+              border: '2px solid var(--surface)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

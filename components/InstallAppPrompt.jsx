@@ -133,7 +133,7 @@ export default function InstallAppPrompt() {
           justify-content: center;
           font-size: 13px;
           font-weight: 700;
-          color: #03050c;
+          color: var(--surface);
           background: linear-gradient(135deg, var(--primary-gold), var(--primary-teal));
         }
       `}</style>

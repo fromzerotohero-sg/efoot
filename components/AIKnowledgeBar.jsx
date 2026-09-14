@@ -595,7 +595,7 @@ const styles = {
   title: {
     margin: 0,
     fontWeight: '900',
-    color: '#FFFFFF',
+    color: 'var(--text-main)',
     letterSpacing: '-0.5px',
   },
   subtitle: {

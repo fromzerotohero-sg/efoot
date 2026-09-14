@@ -123,10 +123,10 @@ function AccountUtilitySection({ t, lang, router }) {
           {account.email ? <span style={st.idMail}>{account.email}</span> : null}
         </div>
         {typeof hpBalance === 'number' && (
-          <span style={st.hp}>
+          <a href="/gestione-profilo" style={{ ...st.hp, textDecoration: 'none' }} title="Hero Points">
             <Zap size={13} />
             {hpBalance} HP
-          </span>
+          </a>
         )}
       </div>
 
@@ -486,11 +486,6 @@ export default function ImpostazioniProfiloPage() {
   }
 
   const safeCompletionScore = Math.max(0, Math.min(100, Number(completionScore) || 0))
-  const profileGradient = safeCompletionScore >= 87.5
-    ? 'conic-gradient(var(--accent) 0deg, var(--accent) var(--score-angle), var(--border-soft) var(--score-angle), var(--border-soft) 360deg)'
-    : safeCompletionScore >= 50
-      ? 'conic-gradient(var(--accent) 0deg, var(--accent) var(--score-angle), var(--border-soft) var(--score-angle), var(--border-soft) 360deg)'
-      : 'conic-gradient(#ffcb05 0deg, #ffcb05 var(--score-angle), var(--border-soft) var(--score-angle), var(--border-soft) 360deg)'
   const cleanValue = (value) => {
     if (Array.isArray(value)) return value.filter(Boolean).join(', ')
     if (value === null || value === undefined || value === '') return null
@@ -571,47 +566,33 @@ export default function ImpostazioniProfiloPage() {
   return (
     <main data-tour-id="tour-profile-intro" className="profile-page">
       {/* Page Header */}
-      <section className="profile-hero">
-        <div className="profile-hero-copy">
-          <span className="profile-kicker">
-            <User size={16} />
+      {/* Header compatto: titolo + chip completamento (niente hero glow) */}
+      <header style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
+        <div style={{ minWidth: 0 }}>
+          <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>
             {(lang === 'en' || lang === 'es') ? 'Player identity' : 'Identita giocatore'}
-          </span>
-          <h1>
+          </p>
+          <h1 style={{ margin: 0, fontSize: 'clamp(24px, 5vw, 32px)', fontWeight: 800, letterSpacing: '-0.01em', color: 'var(--text-main)' }}>
             {t('profileSettings')}
           </h1>
-          <p>
+          <p style={{ margin: '6px 0 0', fontSize: 13, lineHeight: 1.5, color: 'var(--text-dim)', maxWidth: 560 }}>
             {lang === 'en'
               ? 'Your profile is the memory layer of the coach: the more complete it is, the more personal every suggestion becomes.'
               : 'Il profilo e la memoria del coach: piu e completo, piu ogni consiglio diventa personale.'}
           </p>
-          <div className="profile-hero-actions">
-            <a href="/gestione-profilo" className="profile-hero-link profile-hero-link--primary">
-              <Wallet size={17} />
-              {t('goToHeroPoints')}
-            </a>
-          </div>
         </div>
-
-        <div className="profile-score-panel">
-          <div
-            className="profile-score-orb"
-            style={{
-              '--score-angle': `${safeCompletionScore * 3.6}deg`,
-              background: profileGradient
-            }}
-          >
-            <div>
-              <strong>{Math.round(safeCompletionScore)}%</strong>
-              <span>{t('profiling')}</span>
-            </div>
-          </div>
-          <div className="profile-score-caption">
-            <strong>{getLevelText(completionLevel)}</strong>
-            <span>{safeCompletionScore >= 100 ? t('guideProfileComplete') : t('completeFor100')}</span>
-          </div>
-        </div>
-      </section>
+        <span
+          style={{
+            display: 'inline-flex', alignItems: 'baseline', gap: 6,
+            padding: '6px 12px', borderRadius: 999, flexShrink: 0,
+            background: 'var(--accent-bg)', border: '1px solid var(--accent-border)', color: 'var(--accent)'
+          }}
+          aria-label={`${Math.round(safeCompletionScore)}%`}
+        >
+          <strong style={{ fontSize: 15, fontWeight: 900 }}>{Math.round(safeCompletionScore)}%</strong>
+          <small style={{ fontSize: 11, fontWeight: 700 }}>{getLevelText(completionLevel)}</small>
+        </span>
+      </header>
 
       {/* Account & Utility: hub stile app — identita, HP reali, utility di sistema, logout reale */}
       <AccountUtilitySection t={t} lang={lang} router={router} />
@@ -997,169 +978,6 @@ export default function ImpostazioniProfiloPage() {
           min-height: 100vh;
         }
 
-        .profile-hero {
-          position: relative;
-          display: grid;
-          grid-template-columns: minmax(0, 1fr) minmax(220px, 300px);
-          gap: 22px;
-          margin-bottom: 18px;
-          padding: clamp(20px, 4vw, 32px);
-          overflow: hidden;
-          border: 1px solid rgba(61, 220, 151, 0.26);
-          border-radius: 26px;
-          background:
-            radial-gradient(circle at 12% 0%, rgba(61, 220, 151, 0.20), transparent 34%),
-            radial-gradient(circle at 90% 10%, rgba(255, 203, 5, 0.14), transparent 30%),
-            linear-gradient(135deg, rgba(8, 14, 31, 0.98), rgba(9, 24, 43, 0.92));
-          box-shadow: 0 18px 60px rgba(0, 0, 0, 0.32), 0 0 34px rgba(61, 220, 151, 0.10);
-        }
-
-        .profile-hero::after {
-          content: '';
-          position: absolute;
-          inset: auto -20% -45% 35%;
-          height: 190px;
-          border-radius: 999px;
-          background: radial-gradient(circle, rgba(61, 220, 151, 0.16), transparent 70%);
-          pointer-events: none;
-        }
-
-        .profile-hero-copy,
-        .profile-score-panel {
-          position: relative;
-          z-index: 1;
-        }
-
-        .profile-kicker {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 12px;
-          padding: 7px 10px;
-          border: 1px solid rgba(61, 220, 151, 0.28);
-          border-radius: 999px;
-          background: rgba(61, 220, 151, 0.08);
-          color: #8ff2ff;
-          font-size: 12px;
-          font-weight: 800;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-        }
-
-        .profile-hero h1 {
-          margin: 0 0 10px;
-          color: #fff;
-          font-size: clamp(30px, 5vw, 48px);
-          font-weight: 900;
-          line-height: 0.98;
-          letter-spacing: -0.04em;
-        }
-
-        .profile-hero p {
-          max-width: 640px;
-          margin: 0;
-          color: var(--text-main);
-          font-size: clamp(14px, 2.2vw, 16px);
-          line-height: 1.65;
-        }
-
-        .profile-hero-actions {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-          margin-top: 20px;
-        }
-
-        .profile-hero-link {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          min-height: 44px;
-          padding: 10px 14px;
-          border: 1px solid var(--border-soft);
-          border-radius: 999px;
-          color: var(--text-main);
-          background: var(--surface-2);
-          text-decoration: none;
-          font-size: 14px;
-          font-weight: 800;
-          transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
-        }
-
-        .profile-hero-link:hover {
-          transform: translateY(-2px);
-          border-color: var(--accent-border);
-          background: var(--accent-bg);
-        }
-
-        .profile-hero-link--primary {
-          color: var(--accent-ink);
-          border-color: var(--accent-border);
-          background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-          box-shadow: 0 8px 24px rgba(39, 167, 106, 0.28);
-        }
-
-        .profile-score-panel {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 14px;
-          min-height: 230px;
-          border: 1px solid var(--border-soft);
-          border-radius: 24px;
-          background: var(--surface-2);
-          backdrop-filter: blur(10px);
-        }
-
-        .profile-score-orb {
-          width: 152px;
-          height: 152px;
-          display: grid;
-          place-items: center;
-          border-radius: 999px;
-          box-shadow: 0 0 32px rgba(61, 220, 151, 0.16);
-        }
-
-        .profile-score-orb > div {
-          width: 116px;
-          height: 116px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          border-radius: 999px;
-          background: rgba(5, 8, 20, 0.94);
-          border: 1px solid var(--border-soft);
-        }
-
-        .profile-score-orb strong {
-          color: #fff;
-          font-size: 34px;
-          font-weight: 900;
-          line-height: 1;
-        }
-
-        .profile-score-orb span,
-        .profile-score-caption span {
-          color: var(--text-dim);
-          font-size: 12px;
-          font-weight: 700;
-        }
-
-        .profile-score-caption {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 4px;
-          text-align: center;
-        }
-
-        .profile-score-caption strong {
-          color: #fff;
-          font-size: 16px;
-        }
 
         .profile-metric-grid {
           display: grid;
@@ -1215,7 +1033,7 @@ export default function ImpostazioniProfiloPage() {
         .profile-metric-card strong {
           display: block;
           margin: 8px 0 4px;
-          color: #fff;
+          color: var(--text-main);
           font-size: clamp(22px, 4vw, 30px);
           font-weight: 900;
           line-height: 1.05;
@@ -1329,62 +1147,14 @@ export default function ImpostazioniProfiloPage() {
         }
 
         .profile-page :global(label) {
-          color: rgba(255, 255, 255, 0.70) !important;
+          color: var(--text-dim) !important;
           font-weight: 700 !important;
         }
 
         @media (max-width: 900px) {
-          .profile-hero {
-            grid-template-columns: 1fr;
-          }
-
-          .profile-score-panel {
-            min-height: auto;
-            padding: 18px;
-            flex-direction: row;
-            justify-content: flex-start;
-          }
-
-          .profile-score-orb {
-            width: 118px;
-            height: 118px;
-            flex: 0 0 118px;
-          }
-
-          .profile-score-orb > div {
-            width: 88px;
-            height: 88px;
-          }
-
-          .profile-score-orb strong {
-            font-size: 26px;
-          }
-
-          .profile-score-caption {
-            align-items: flex-start;
-            text-align: left;
-          }
-
-          .profile-metric-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .profile-personalization-grid {
-            grid-template-columns: 1fr;
-          }
-        }
-
-        @media (max-width: 640px) {
+          @media (max-width: 640px) {
           .profile-page {
             padding: 12px;
-          }
-
-          .profile-hero {
-            border-radius: 20px;
-          }
-
-          .profile-hero-actions {
-            flex-direction: column;
           }
 
           .profile-hero-link {

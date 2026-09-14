@@ -51,7 +51,7 @@ const boxStyle = {
   overflowY: 'auto',
   padding: 'clamp(20px, 4vw, 32px)',
   paddingBottom: 'calc(24px + 64px + env(safe-area-inset-bottom, 0px))',
-  background: '#050814',
+  background: 'var(--surface)',
   border: '2px solid #00d4ff',
   borderRadius: '20px',
   boxShadow: '0 0 10px #00d4ff, 0 0 30px rgba(0, 212, 255, 0.4)',

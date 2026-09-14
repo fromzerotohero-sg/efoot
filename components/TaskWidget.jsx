@@ -132,7 +132,7 @@ export default function TaskWidget() {
   if (loading) {
     return (
       <div style={{
-        backgroundColor: 'rgba(5, 8, 20, 0.8)',
+        backgroundColor: 'var(--surface)',
         borderRadius: '12px',
         padding: '20px',
         marginBottom: '24px',
@@ -151,7 +151,7 @@ export default function TaskWidget() {
   if (error) {
     return (
       <div style={{
-        backgroundColor: 'rgba(5, 8, 20, 0.8)',
+        backgroundColor: 'var(--surface)',
         borderRadius: '12px',
         padding: '20px',
         marginBottom: '24px',
@@ -179,7 +179,7 @@ export default function TaskWidget() {
         width: '100%',
         maxWidth: '100%',
         boxSizing: 'border-box',
-        background: 'rgba(5, 8, 20, 0.8)',
+        background: 'var(--surface)',
         border: '1px solid rgba(0, 212, 255, 0.3)',
         borderRadius: '12px',
         overflow: 'hidden',
@@ -306,7 +306,7 @@ export default function TaskWidget() {
                         {isActive && <Circle size={16} color="rgba(255,255,255,0.4)" />}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 600, marginBottom: '4px', color: '#FFFFFF' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '4px', color: 'var(--text-main)' }}>
                           {task.goal_description}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', fontSize: '12px' }}>

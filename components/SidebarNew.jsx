@@ -646,7 +646,7 @@ export default function SidebarNew() {
             radial-gradient(circle at 50% 0%, rgba(34, 211, 238, 0.12), transparent 42%),
             linear-gradient(145deg, rgba(8, 16, 34, 0.98), rgba(2, 6, 23, 0.98));
           box-shadow: 0 24px 90px rgba(0,0,0,0.58), 0 0 54px rgba(34, 211, 238, 0.15);
-          color: #fff;
+          color: var(--text-main);
           text-align: center;
           overflow: hidden;
           animation: redirect-slide-in 0.3s cubic-bezier(0.18, 0.78, 0.28, 1) both;
@@ -669,7 +669,7 @@ export default function SidebarNew() {
           margin: 0 0 10px;
           font-size: clamp(1.3rem, 5vw, 1.7rem);
           letter-spacing: -0.04em;
-          color: #fff;
+          color: var(--text-main);
         }
 
         .redirect-card p {

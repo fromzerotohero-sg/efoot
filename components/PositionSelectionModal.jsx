@@ -128,7 +128,7 @@ export default function PositionSelectionModal({
     >
       <div 
         style={{
-          backgroundColor: 'var(--bg-primary, #1a1a1a)',
+          backgroundColor: 'var(--bg-primary, var(--surface))',
           borderRadius: '12px',
           padding: '24px',
           paddingBottom: 'calc(24px + 64px + env(safe-area-inset-bottom, 0px))',
@@ -308,7 +308,7 @@ export default function PositionSelectionModal({
                               borderRadius: '6px',
                               border: `1px solid ${group.color}50`,
                               background: 'rgba(0,0,0,0.5)',
-                              color: '#FFFFFF',
+                              color: 'var(--text-main)',
                               fontSize: '11px',
                               cursor: 'pointer'
                             }}
