@@ -18,8 +18,6 @@ import {
   ImagePlus,
   CheckCircle2,
   Users,
-  UserRound,
-  BadgeCheck,
   ClipboardList
 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
@@ -1665,9 +1663,6 @@ export default function HeroChat({
   })()
 
   const quickActions = [
-    { key: 'roster', icon: Users, label: L(lang, COPY.actionRoster), run: () => startAssetUpload('roster') },
-    { key: 'player', icon: UserRound, label: L(lang, COPY.actionPlayer), run: () => startAssetUpload('player') },
-    { key: 'coach', icon: BadgeCheck, label: L(lang, COPY.actionCoach), run: () => startAssetUpload('coach') },
     { key: 'stats', icon: Camera, label: L(lang, COPY.actionStats), run: openStatsCamera },
     { key: 'counter', icon: Trophy, label: L(lang, COPY.actionPrepare), run: openCounterCamera },
     { key: 'match', icon: ClipboardList, label: L(lang, COPY.actionMatch), run: startMatchUpload },
@@ -3348,22 +3343,35 @@ export default function HeroChat({
         }
 
         :global(.hc-matchThumbs) {
-          display: flex;
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
           gap: 8px;
-          flex-wrap: wrap;
+          width: 100%;
         }
 
         :global(.hc-matchThumbs img) {
-          width: 68px;
-          height: 68px;
+          width: 100%;
+          height: 150px;
           border-radius: 10px;
-          object-fit: cover;
+          object-fit: contain;
+          background: rgba(0, 0, 0, 0.28);
           border: 1px solid var(--accent-border);
         }
 
         :global(.hc-matchUploadFooter) {
-          align-items: center;
-          justify-content: space-between;
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        :global(.hc-matchUploadFooter .hc-saveLater) {
+          align-self: center;
+          min-height: 32px;
+          padding: 4px 10px;
+          font-size: 12px;
+        }
+
+        :global(.hc-matchUploadFooter .hc-attachAnalyze) {
+          width: 100%;
         }
 
         :global(.hc-matchReviewIntro) {
