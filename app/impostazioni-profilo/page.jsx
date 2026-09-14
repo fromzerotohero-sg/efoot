@@ -1237,8 +1237,7 @@ export default function ImpostazioniProfiloPage() {
         .profile-coach-personalization {
           border: 1px solid var(--border-soft) !important;
           border-radius: 22px !important;
-          background:
-            linear-gradient(135deg, rgba(10, 18, 38, 0.96), rgba(13, 25, 48, 0.82)) !important;
+          background: var(--surface) !important;
           box-shadow: 0 14px 42px rgba(0, 0, 0, 0.24) !important;
         }
 
@@ -1256,7 +1255,7 @@ export default function ImpostazioniProfiloPage() {
 
         .profile-section-heading h2 {
           margin: 0 0 5px;
-          color: #fff;
+          color: var(--text-main);
           font-size: 18px;
           font-weight: 800;
         }
@@ -1270,7 +1269,7 @@ export default function ImpostazioniProfiloPage() {
 
         .profile-personalization-grid {
           display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+          grid-template-columns: 1fr;
           gap: 14px;
         }
 
