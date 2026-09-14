@@ -558,7 +558,7 @@ export default function AssistantChat({
             width: isMobileViewport ? '56px' : '72px',
             height: isMobileViewport ? '56px' : '72px',
             borderRadius: '50%',
-            background: '#050814',
+            background: 'var(--surface)',
             border: '2px solid rgba(255, 203, 5, 0.9)',
             cursor: 'pointer',
             boxShadow: '0 0 24px rgba(255, 176, 32, 0.6), inset 0 0 12px rgba(255, 203, 5, 0.35)',
@@ -686,9 +686,8 @@ export default function AssistantChat({
   
   // Sfondo chat: glow leggero, senza elementi sopra ai messaggi.
   const chatBgOverlay = [
-    'radial-gradient(circle at 50% 24%, rgba(0,212,255,0.22), transparent 30%)',
-    'radial-gradient(circle at 50% 42%, rgba(138,43,226,0.14), transparent 42%)',
-    'linear-gradient(180deg, rgba(0,0,0,0.74) 0%, rgba(0,0,0,0.90) 100%)'
+    'radial-gradient(circle at 50% 24%, rgba(61,220,151,0.10), transparent 34%)',
+    'linear-gradient(180deg, var(--surface) 0%, var(--shell-bg) 100%)'
   ].join(', ')
   const chatBgCommon = {
     backgroundImage: chatBgOverlay,
@@ -766,8 +765,8 @@ export default function AssistantChat({
       <div
         style={{
           padding: '16px',
-          background: 'linear-gradient(135deg, rgba(5, 8, 20, 0.95), rgba(13, 20, 40, 0.9))',
-          borderBottom: '1px solid rgba(0, 212, 255, 0.3)',
+          background: 'linear-gradient(135deg, var(--surface), var(--shell-bg))',
+          borderBottom: '1px solid rgba(61, 220, 151, 0.3)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -781,8 +780,8 @@ export default function AssistantChat({
             height: '40px',
             borderRadius: '50%',
             overflow: 'visible',
-            border: '2px solid rgba(0, 212, 255, 0.8)',
-            boxShadow: '0 0 10px rgba(0, 212, 255, 0.5)',
+            border: '2px solid rgba(61, 220, 151, 0.8)',
+            boxShadow: '0 0 10px rgba(61, 220, 151, 0.5)',
             flexShrink: 0
           }}>
             <img
@@ -792,7 +791,7 @@ export default function AssistantChat({
                 width: '100%',
                 height: '100%',
                 objectFit: 'contain',
-                filter: 'drop-shadow(0 0 9px rgba(0, 212, 255, 0.55))'
+                filter: 'drop-shadow(0 0 9px rgba(61, 220, 151, 0.55))'
               }}
             />
           </div>
@@ -823,7 +822,7 @@ export default function AssistantChat({
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = '#fff';
-              e.currentTarget.style.filter = 'drop-shadow(0 0 8px rgba(0, 212, 255, 0.8))';
+              e.currentTarget.style.filter = 'drop-shadow(0 0 8px rgba(61, 220, 151, 0.8))';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.color = 'var(--accent)';
@@ -861,9 +860,9 @@ export default function AssistantChat({
               borderRadius: '22px',
               display: 'grid',
               placeItems: 'center',
-              border: '1px solid rgba(0, 212, 255, 0.28)',
-              background: 'radial-gradient(circle, rgba(0, 212, 255, 0.14), rgba(138, 43, 226, 0.08) 62%, transparent 78%)',
-              boxShadow: '0 0 22px rgba(0, 212, 255, 0.26)'
+              border: '1px solid rgba(61, 220, 151, 0.28)',
+              background: 'radial-gradient(circle, rgba(61, 220, 151, 0.14), rgba(192, 132, 252, 0.08) 62%, transparent 78%)',
+              boxShadow: '0 0 22px rgba(61, 220, 151, 0.26)'
             }}>
               <img
                 src="/logo.png"
@@ -872,7 +871,7 @@ export default function AssistantChat({
                   width: '76px',
                   maxHeight: '58px',
                   objectFit: 'contain',
-                  filter: 'drop-shadow(0 0 12px rgba(0, 212, 255, 0.55))'
+                  filter: 'drop-shadow(0 0 12px rgba(61, 220, 151, 0.55))'
                 }}
               />
             </div>
@@ -883,8 +882,8 @@ export default function AssistantChat({
               marginBottom: '10px',
               padding: '5px 12px',
               borderRadius: '999px',
-              background: 'rgba(0, 212, 255, 0.12)',
-              border: '1px solid rgba(0, 212, 255, 0.28)',
+              background: 'rgba(61, 220, 151, 0.12)',
+              border: '1px solid rgba(61, 220, 151, 0.28)',
               color: '#67e8f9',
               fontSize: '11px',
               fontWeight: 900,
@@ -912,13 +911,13 @@ export default function AssistantChat({
               <div style={{
                 marginTop: '16px',
                 padding: '14px',
-                border: '1px solid rgba(0, 212, 255, 0.28)',
+                border: '1px solid rgba(61, 220, 151, 0.28)',
                 borderRadius: '16px',
-                background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.10), rgba(255, 203, 5, 0.06))',
+                background: 'linear-gradient(135deg, rgba(61, 220, 151, 0.10), rgba(255, 203, 5, 0.06))',
                 textAlign: 'left'
               }}>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '10px' }}>
-                  <Sparkles size={18} color="#00d4ff" style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <Sparkles size={18} color="var(--accent)" style={{ flexShrink: 0, marginTop: '2px' }} />
                   <div>
                     <strong style={{ display: 'block', color: 'var(--text-main)', fontSize: '14px', marginBottom: '3px' }}>
                       {(lang === 'en' || lang === 'es') ? 'Make my advice personal' : 'Rendi i consigli davvero tuoi'}
@@ -965,7 +964,7 @@ export default function AssistantChat({
                       borderRadius: '12px',
                       background: chatSetupCta.primary.id === 'game-analysis'
                         ? 'linear-gradient(135deg, #ffcb05, #f97316)'
-                        : 'linear-gradient(135deg, #00d4ff, #67e8f9)',
+                        : 'linear-gradient(135deg, var(--accent), #67e8f9)',
                       color: '#06101f',
                       fontSize: '13px',
                       fontWeight: 900,
@@ -996,7 +995,7 @@ export default function AssistantChat({
             padding: '12px',
             border: '1px solid rgba(255, 203, 5, 0.28)',
             borderRadius: '14px',
-            background: 'linear-gradient(135deg, rgba(255,203,5,0.11), rgba(0,212,255,0.08))'
+            background: 'linear-gradient(135deg, rgba(255,203,5,0.11), rgba(61,220,151,0.08))'
           }}>
             <strong style={{ display: 'block', color: 'var(--text-main)', fontSize: '13px', marginBottom: '4px' }}>
               {chatSetupCta.primary.id === 'game-analysis'
@@ -1018,7 +1017,7 @@ export default function AssistantChat({
                 borderRadius: '999px',
                 background: chatSetupCta.primary.id === 'game-analysis'
                   ? 'linear-gradient(135deg, #ffcb05, #f97316)'
-                  : 'linear-gradient(135deg, #00d4ff, #67e8f9)',
+                  : 'linear-gradient(135deg, var(--accent), #67e8f9)',
                 color: '#06101f',
                 fontSize: '12px',
                 fontWeight: 900,
@@ -1045,7 +1044,7 @@ export default function AssistantChat({
                 height: '28px',
                 borderRadius: '50%',
                 overflow: 'visible',
-                border: '1px solid rgba(0, 212, 255, 0.6)',
+                border: '1px solid rgba(61, 220, 151, 0.6)',
                 flexShrink: 0,
                 marginTop: '4px'
               }}>
@@ -1056,7 +1055,7 @@ export default function AssistantChat({
                     width: '100%',
                     height: '100%',
                     objectFit: 'contain',
-                    filter: 'drop-shadow(0 0 7px rgba(0, 212, 255, 0.55))'
+                    filter: 'drop-shadow(0 0 7px rgba(61, 220, 151, 0.55))'
                   }}
                 />
               </div>
@@ -1071,7 +1070,7 @@ export default function AssistantChat({
                 fontSize: '14px',
                 lineHeight: '1.6',
                 wordWrap: 'break-word',
-                border: msg.role === 'assistant' ? '1px solid rgba(0, 212, 255, 0.3)' : 'none',
+                border: msg.role === 'assistant' ? '1px solid rgba(61, 220, 151, 0.3)' : 'none',
                 color: msg.role === 'user' ? '#fff' : 'rgba(255, 255, 255, 0.9)',
                 maxWidth: '100%'
               }}
@@ -1143,7 +1142,7 @@ export default function AssistantChat({
         const showInitialSuggestions = messages.length === 0 || (messages.length === 1 && messages[0]?.role === 'assistant')
         return showInitialSuggestions
       })() && (
-        <div style={{ borderTop: '1px solid rgba(0, 212, 255, 0.2)', background: 'rgba(0, 0, 0, 0.3)' }}>
+        <div style={{ borderTop: '1px solid rgba(61, 220, 151, 0.2)', background: 'rgba(0, 0, 0, 0.3)' }}>
           <button
             type="button"
             onClick={() => setSuggestionsExpanded(s => !s)}
@@ -1163,7 +1162,7 @@ export default function AssistantChat({
               fontSize: '12px',
               transition: 'background 0.2s'
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(61, 220, 151, 0.08)' }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
             onFocus={(e) => { e.currentTarget.style.outline = '2px solid var(--accent)'; e.currentTarget.style.outlineOffset = '2px' }}
             onBlur={(e) => { e.currentTarget.style.outline = 'none' }}
@@ -1180,7 +1179,7 @@ export default function AssistantChat({
                   onClick={() => handleQuickAction(text)}
                   style={{
                     padding: '6px 12px',
-                    background: 'rgba(0, 212, 255, 0.1)',
+                    background: 'rgba(61, 220, 151, 0.1)',
                     border: '1px solid var(--accent)',
                     borderRadius: '20px',
                     fontSize: '12px',
@@ -1190,11 +1189,11 @@ export default function AssistantChat({
                     maxWidth: '100%'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(0, 212, 255, 0.2)'
+                    e.currentTarget.style.background = 'rgba(61, 220, 151, 0.2)'
                     e.currentTarget.style.boxShadow = 'var(--glow-blue)'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(0, 212, 255, 0.1)'
+                    e.currentTarget.style.background = 'rgba(61, 220, 151, 0.1)'
                     e.currentTarget.style.boxShadow = 'none'
                   }}
                 >
@@ -1206,7 +1205,7 @@ export default function AssistantChat({
         </div>
       )}
       {messages.length >= 2 && lastSuggestions.length > 0 && (
-        <div style={{ borderTop: '1px solid rgba(0, 212, 255, 0.2)', background: 'rgba(0, 0, 0, 0.3)' }}>
+        <div style={{ borderTop: '1px solid rgba(61, 220, 151, 0.2)', background: 'rgba(0, 0, 0, 0.3)' }}>
           <button
             type="button"
             onClick={() => setSuggestionsExpanded(s => !s)}
@@ -1226,7 +1225,7 @@ export default function AssistantChat({
               fontSize: '12px',
               transition: 'background 0.2s'
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(61, 220, 151, 0.08)' }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
             onFocus={(e) => { e.currentTarget.style.outline = '2px solid var(--accent)'; e.currentTarget.style.outlineOffset = '2px' }}
             onBlur={(e) => { e.currentTarget.style.outline = 'none' }}
@@ -1243,7 +1242,7 @@ export default function AssistantChat({
                   onClick={() => handleQuickAction(text)}
                   style={{
                     padding: '6px 12px',
-                    background: 'rgba(0, 212, 255, 0.1)',
+                    background: 'rgba(61, 220, 151, 0.1)',
                     border: '1px solid var(--accent)',
                     borderRadius: '20px',
                     fontSize: '12px',
@@ -1253,11 +1252,11 @@ export default function AssistantChat({
                     maxWidth: '100%'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(0, 212, 255, 0.2)'
+                    e.currentTarget.style.background = 'rgba(61, 220, 151, 0.2)'
                     e.currentTarget.style.boxShadow = 'var(--glow-blue)'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(0, 212, 255, 0.1)'
+                    e.currentTarget.style.background = 'rgba(61, 220, 151, 0.1)'
                     e.currentTarget.style.boxShadow = 'none'
                   }}
                 >
@@ -1273,7 +1272,7 @@ export default function AssistantChat({
       <div
         style={{
           padding: '16px',
-          borderTop: '1px solid rgba(0, 212, 255, 0.2)',
+          borderTop: '1px solid rgba(61, 220, 151, 0.2)',
           display: 'flex',
           gap: '8px',
           background: 'rgba(0, 0, 0, 0.5)',
@@ -1340,10 +1339,10 @@ export default function AssistantChat({
                   height: '44px',
                   background: isListening 
                     ? 'linear-gradient(135deg, #FF3B30 0%, #FF6B6B 100%)' 
-                    : 'linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 161, 166, 0.1) 100%)',
+                    : 'linear-gradient(135deg, rgba(61, 220, 151, 0.15) 0%, rgba(0, 161, 166, 0.1) 100%)',
                   border: isListening 
                     ? '2px solid #FF3B30' 
-                    : '2px solid rgba(0, 212, 255, 0.6)',
+                    : '2px solid rgba(61, 220, 151, 0.6)',
                   borderRadius: '12px',
                   cursor: loading ? 'not-allowed' : 'pointer',
                   display: 'flex',
@@ -1352,21 +1351,21 @@ export default function AssistantChat({
                   transition: 'all 0.2s ease',
                   boxShadow: isListening 
                     ? '0 0 20px rgba(255, 59, 48, 0.5)' 
-                    : '0 0 10px rgba(0, 212, 255, 0.2)'
+                    : '0 0 10px rgba(61, 220, 151, 0.2)'
                 }}
                 onMouseEnter={(e) => {
                   if (!loading && !isListening) {
-                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 212, 255, 0.25) 0%, rgba(0, 161, 166, 0.2) 100%)'
-                    e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.9)'
-                    e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 212, 255, 0.4)'
+                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(61, 220, 151, 0.25) 0%, rgba(0, 161, 166, 0.2) 100%)'
+                    e.currentTarget.style.borderColor = 'rgba(61, 220, 151, 0.9)'
+                    e.currentTarget.style.boxShadow = '0 0 15px rgba(61, 220, 151, 0.4)'
                     e.currentTarget.style.transform = 'scale(1.05)'
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!loading && !isListening) {
-                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 161, 166, 0.1) 100%)'
-                    e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.6)'
-                    e.currentTarget.style.boxShadow = '0 0 10px rgba(0, 212, 255, 0.2)'
+                    e.currentTarget.style.background = 'linear-gradient(135deg, rgba(61, 220, 151, 0.15) 0%, rgba(0, 161, 166, 0.1) 100%)'
+                    e.currentTarget.style.borderColor = 'rgba(61, 220, 151, 0.6)'
+                    e.currentTarget.style.boxShadow = '0 0 10px rgba(61, 220, 151, 0.2)'
                     e.currentTarget.style.transform = 'scale(1)'
                   }
                 }}
@@ -1382,7 +1381,7 @@ export default function AssistantChat({
                     <span />
                   </div>
                 ) : (
-                  <Mic size={22} color="#00d4ff" style={{ filter: 'drop-shadow(0 0 4px rgba(0, 212, 255, 0.8))' }} />
+                  <Mic size={22} color="var(--accent)" style={{ filter: 'drop-shadow(0 0 4px rgba(61, 220, 151, 0.8))' }} />
                 )}
               </button>
             </>

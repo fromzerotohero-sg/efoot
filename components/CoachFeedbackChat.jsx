@@ -31,8 +31,8 @@ const styles = {
   formField: {
     width: '100%',
     padding: 'clamp(10px, 1.5vw, 12px) clamp(12px, 2vw, 14px)',
-    background: 'rgba(0, 212, 255, 0.05)',
-    border: '1px solid rgba(0, 212, 255, 0.2)',
+    background: 'rgba(61, 220, 151, 0.05)',
+    border: '1px solid rgba(61, 220, 151, 0.2)',
     borderRadius: '10px',
     color: 'var(--text-main)',
     fontSize: 'clamp(13px, 1.8vw, 14px)',
@@ -617,10 +617,10 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
           maxHeight: isMobile
             ? 'calc((var(--coach-vh, 1vh) * 100) - var(--bottom-nav-height, 64px) - env(safe-area-inset-bottom, 0px) - 16px)'
             : 'calc(100dvh - clamp(24px, 5vw, 64px))',
-          background: 'linear-gradient(180deg, rgba(5,8,20,0.98) 0%, rgba(3,5,12,0.98) 100%)',
-          border: '1px solid rgba(0, 212, 255, 0.3)',
+          background: 'linear-gradient(180deg, var(--surface) 0%, var(--shell-bg) 100%)',
+          border: '1px solid rgba(61, 220, 151, 0.3)',
           borderRadius: isMobile ? '18px' : '24px',
-          boxShadow: '0 0 60px rgba(0, 212, 255, 0.15), 0 25px 50px rgba(0,0,0,0.5)',
+          boxShadow: '0 0 60px rgba(61, 220, 151, 0.15), 0 25px 50px rgba(0,0,0,0.5)',
           display: 'flex',
           flexDirection: 'column',
           minHeight: 0,
@@ -632,8 +632,8 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         <div
           style={{
             padding: isMobile ? '10px 12px' : 'clamp(14px, 2.2vw, 18px) clamp(16px, 2.8vw, 22px)',
-            background: 'linear-gradient(135deg, rgba(0,212,255,0.15), rgba(0,128,255,0.1))',
-            borderBottom: '1px solid rgba(0, 212, 255, 0.2)',
+            background: 'linear-gradient(135deg, rgba(61,220,151,0.15), rgba(0,128,255,0.1))',
+            borderBottom: '1px solid rgba(61, 220, 151, 0.2)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -649,7 +649,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 0 20px rgba(0, 212, 255, 0.4)'
+              boxShadow: '0 0 20px rgba(61, 220, 151, 0.4)'
             }}>
               <Dumbbell size={isMobile ? 18 : 22} color="white" />
             </div>
@@ -680,8 +680,8 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
               onClick={handleSaveAndClose}
               disabled={saving}
               style={{
-                background: saving ? 'rgba(255,255,255,0.1)' : 'rgba(0,212,255,0.2)',
-                border: '1px solid rgba(0,212,255,0.4)',
+                background: saving ? 'rgba(255,255,255,0.1)' : 'rgba(61,220,151,0.2)',
+                border: '1px solid rgba(61,220,151,0.4)',
                 borderRadius: '10px',
                 cursor: saving ? 'wait' : 'pointer',
                 color: 'var(--text-main)',
@@ -694,8 +694,8 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                 fontWeight: 600,
                 transition: 'all 0.2s'
               }}
-              onMouseEnter={(e) => { if (!saving) e.currentTarget.style.background = 'rgba(0,212,255,0.3)' }}
-              onMouseLeave={(e) => { if (!saving) e.currentTarget.style.background = 'rgba(0,212,255,0.2)' }}
+              onMouseEnter={(e) => { if (!saving) e.currentTarget.style.background = 'rgba(61,220,151,0.3)' }}
+              onMouseLeave={(e) => { if (!saving) e.currentTarget.style.background = 'rgba(61,220,151,0.2)' }}
             >
               {saved ? (
                 <><CheckCircle2 size={16} /> {isNarrowMobile ? ((lang === 'en' || lang === 'es') ? 'Saved' : 'Salvato') : ((lang === 'en' || lang === 'es') ? 'Saved!' : 'Salvato!')}</>
@@ -801,7 +801,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                background: formExpanded ? 'rgba(0,212,255,0.08)' : 'transparent',
+                background: formExpanded ? 'rgba(61,220,151,0.08)' : 'transparent',
                 border: 'none',
                 cursor: 'pointer',
                 color: 'var(--text-main)',
@@ -997,7 +997,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                   style={{
                     width: '100%',
                     padding: '14px',
-                    background: formSaving ? 'rgba(0,212,255,0.1)' : 'linear-gradient(135deg, var(--accent), var(--accent))',
+                    background: formSaving ? 'rgba(61,220,151,0.1)' : 'linear-gradient(135deg, var(--accent), var(--accent))',
                     border: 'none',
                     borderRadius: '12px',
                     color: 'var(--text-main)',
@@ -1068,7 +1068,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                       fontSize: 'clamp(13px, 2vw, 14px)',
                       lineHeight: '1.5',
                       wordBreak: 'break-word',
-                      border: msg.role === 'assistant' ? '1px solid rgba(0,212,255,0.2)' : 'none'
+                      border: msg.role === 'assistant' ? '1px solid rgba(61,220,151,0.2)' : 'none'
                     }}
                   >
                     {msg.content}
@@ -1121,8 +1121,8 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                     onClick={() => handleQuickAction(text)}
                     style={{
                       padding: '8px 14px',
-                      background: 'rgba(0,212,255,0.1)',
-                      border: '1px solid rgba(0,212,255,0.3)',
+                      background: 'rgba(61,220,151,0.1)',
+                      border: '1px solid rgba(61,220,151,0.3)',
                       borderRadius: '20px',
                       color: 'var(--accent)',
                       fontSize: '12px',
@@ -1132,10 +1132,10 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                       transition: 'all 0.2s'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(0,212,255,0.2)'
+                      e.currentTarget.style.background = 'rgba(61,220,151,0.2)'
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(0,212,255,0.1)'
+                      e.currentTarget.style.background = 'rgba(61,220,151,0.1)'
                     }}
                   >
                     {text}
@@ -1150,7 +1150,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
               borderTop: '1px solid rgba(255,255,255,0.08)',
               display: 'flex',
               gap: '10px',
-              background: 'rgba(5,8,20,0.98)'
+              background: 'var(--surface)'
             }}>
               <label
                 htmlFor={chatInputId}
@@ -1244,7 +1244,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
           }
         }
         .coach-form-select option {
-          background: #0a0e1a;
+          background: var(--surface);
           color: #fff;
           padding: 10px;
         }
@@ -1255,9 +1255,9 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
         .coach-feedback-modal :global(button:focus-visible),
         .coach-feedback-modal :global(input:focus-visible),
         .coach-feedback-modal :global(select:focus-visible) {
-          outline: 2px solid rgba(0, 212, 255, 0.9);
+          outline: 2px solid rgba(61, 220, 151, 0.9);
           outline-offset: 2px;
-          box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
+          box-shadow: 0 0 0 3px rgba(61, 220, 151, 0.2);
         }
       `}</style>
     </div>
