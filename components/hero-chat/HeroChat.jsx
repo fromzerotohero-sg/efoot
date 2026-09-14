@@ -24,9 +24,10 @@ import { supabase } from '@/lib/supabaseClient'
 import { pickLang } from '@/lib/i18n'
 import AIKnowledgeBar from '@/components/AIKnowledgeBar'
 import { resolveHomeState, resolveGreetingName } from '@/components/coach-v2/homeState'
-import { daysSince, splitAdviceIntoTips, STATS_STALE_DAYS } from '@/lib/chatReadiness'
+import { daysSince, STATS_STALE_DAYS } from '@/lib/chatReadiness'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import ChatMarkdown from '@/components/hero-chat/ChatMarkdown'
+import PrematchPitch from '@/components/hero-chat/PrematchPitch'
 
 /**
  * HERO CHAT — superficie conversazionale principale (Home).
@@ -41,12 +42,6 @@ const GREETED_KEY = 'hero_chat_greeted_v1'
 const MAX_ATTACH = 2
 const MAX_ATTACH_BYTES = 1.8 * 1024 * 1024
 const ATTACH_MAX_SIDE = 1200
-
-const TIP_TITLES = [
-  { it: 'Priorità', en: 'Priority', es: 'Prioridad' },
-  { it: 'Azione', en: 'Action', es: 'Acción' },
-  { it: 'Dettaglio', en: 'Detail', es: 'Detalle' }
-]
 
 const COPY = {
   online: { it: 'Online', en: 'Online', es: 'En línea' },
@@ -118,6 +113,8 @@ const COPY = {
   planWarnings: { it: 'Attenzione', en: 'Warnings', es: 'Advertencias' },
   planConfidence: { it: 'Confidenza', en: 'Confidence', es: 'Confianza' },
   planQuality: { it: 'Qualità dati', en: 'Data quality', es: 'Calidad de datos' },
+  planQuickTips: { it: 'Consigli veloci', en: 'Quick tips', es: 'Consejos rápidos' },
+  planDetails: { it: 'Dettagli', en: 'Details', es: 'Detalles' },
   attachAnalyzing: { it: 'Sto leggendo le tue statistiche…', en: 'Reading your stats…', es: 'Leyendo tus estadísticas…' },
   attachDone: { it: 'Statistiche aggiornate. Ora posso consigliarti meglio.', en: 'Stats updated. I can advise you better now.', es: 'Estadísticas actualizadas. Ahora puedo aconsejarte mejor.' },
   attachError: { it: 'Non sono riuscito a leggere le foto. Riprova con screenshot più nitidi.', en: 'I couldn’t read the photos. Try clearer screenshots.', es: 'No pude leer las fotos. Prueba capturas más nítidas.' },
@@ -260,46 +257,11 @@ function Lfn(lang, entry, ...args) {
   return typeof fn === 'function' ? fn(...args) : fn
 }
 
-function TipCards({ tips, lang, onDeepen }) {
-  const [expanded, setExpanded] = React.useState({})
-  if (!tips?.length) return null
-  return (
-    <div className="hc-tips">
-      {tips.map((tip, idx) => {
-        const open = !!expanded[tip.id]
-        const title = L(lang, TIP_TITLES[idx] || TIP_TITLES[0])
-        const body = String(tip.body || '')
-        const needsClamp = body.length > 160
-        return (
-          <div key={tip.id} className={`hc-tip${open ? ' hc-tipOpen' : ''}`}>
-            <button
-              type="button"
-              className="hc-tipHead"
-              onClick={() => setExpanded((p) => ({ ...p, [tip.id]: !p[tip.id] }))}
-            >
-              <span className="hc-tipBadge">{idx + 1}</span>
-              <span className="hc-tipTitle">{title}</span>
-              {needsClamp && (
-                <span className="hc-tipToggle">{open ? L(lang, COPY.tipCollapse) : L(lang, COPY.tipExpand)}</span>
-              )}
-            </button>
-            <div className={`hc-tipBody${needsClamp && !open ? ' hc-tipBodyClamp' : ''}`}>
-              <ChatMarkdown>{body}</ChatMarkdown>
-            </div>
-            {(open || !needsClamp) && (
-              <button
-                type="button"
-                className="hc-tipDeepen"
-                onClick={() => onDeepen?.(body)}
-              >
-                {L(lang, COPY.deepenAsk)}
-              </button>
-            )}
-          </div>
-        )
-      })}
-    </div>
-  )
+function priorityRank(value) {
+  const key = String(value || '').toLowerCase()
+  if (key === 'high' || key === 'alta' || key === 'critical') return 0
+  if (key === 'medium' || key === 'media') return 1
+  return 2
 }
 
 function PrematchPlanCard({ plan, lang }) {
@@ -324,6 +286,48 @@ function PrematchPlanCard({ plan, lang }) {
     <li key={`${index}-${String(localized(item))}`}>{localized(item)}</li>
   ))
 
+  const quickTips = []
+  const matchKey = localized(summary.match_key)
+  if (matchKey) quickTips.push(matchKey)
+  const ranked = [...formationAdjustments, ...tacticalAdjustments]
+    .map((item) => ({
+      text: localized(item?.suggestion),
+      priority: priorityRank(item?.priority)
+    }))
+    .filter((item) => item.text)
+    .sort((a, b) => a.priority - b.priority)
+  for (const item of ranked) {
+    if (quickTips.length >= 3) break
+    if (quickTips.some((t) => t.toLowerCase() === item.text.toLowerCase())) continue
+    quickTips.push(item.text)
+  }
+  if (quickTips.length < 3) {
+    for (const sug of playerSuggestions) {
+      if (quickTips.length >= 3) break
+      const label = sug.replace_player_name
+        ? `${sug.player_name || sug.player_id} → ${sug.replace_player_name}`
+        : (sug.player_name || localized(sug.reason) || '')
+      if (!label) continue
+      if (quickTips.some((t) => t.toLowerCase() === label.toLowerCase())) continue
+      quickTips.push(label)
+    }
+  }
+
+  const hasDetails =
+    analysis.opponent_formation_analysis ||
+    strengths.length ||
+    weaknesses.length ||
+    summary.attacking ||
+    summary.defending ||
+    summary.avoid ||
+    formationAdjustments.length ||
+    tacticalAdjustments.length ||
+    playerSuggestions.length ||
+    individualInstructions.length ||
+    warnings.length ||
+    raw.confidence != null ||
+    raw.data_quality
+
   return (
     <div className="hc-planCard">
       <div className="hc-planHead">
@@ -333,109 +337,133 @@ function PrematchPlanCard({ plan, lang }) {
       </div>
       <p className="hc-planSaved">{L(lang, COPY.planSaved)}</p>
 
-      {(summary.match_key || summary.base_plan) && (
-        <div className="hc-planHero">
-          {summary.match_key && <strong>{localized(summary.match_key)}</strong>}
-          {summary.base_plan && <p>{localized(summary.base_plan)}</p>}
+      <div className="hc-planHero">
+        {summary.match_key ? (
+          <strong>{localized(summary.match_key)}</strong>
+        ) : (
+          <strong>{L(lang, COPY.planTitle)}</strong>
+        )}
+        {summary.base_plan && <p>{localized(summary.base_plan)}</p>}
+      </div>
+
+      <PrematchPitch
+        playerSuggestions={playerSuggestions}
+        individualInstructions={individualInstructions}
+        lang={lang}
+      />
+
+      {quickTips.length > 0 && (
+        <div className="hc-planQuick">
+          <span className="hc-planQuickLabel">{L(lang, COPY.planQuickTips)}</span>
+          <ul className="hc-planQuickList">
+            {quickTips.slice(0, 3).map((tip, index) => (
+              <li key={`quick-${index}`}>{tip}</li>
+            ))}
+          </ul>
         </div>
       )}
 
-      <div className="hc-planVisualGrid">
-        {(analysis.opponent_formation_analysis || strengths.length || weaknesses.length) && (
-          <details className="hc-planSection" open>
-            <summary>{L(lang, COPY.planRead)}</summary>
-            {analysis.opponent_formation_analysis && <p>{localized(analysis.opponent_formation_analysis)}</p>}
-            {strengths.length > 0 && (
-              <div className="hc-planListGroup">
-                <span>{L(lang, COPY.planStrengths)}</span>
-                <ul>{list(strengths)}</ul>
+      {hasDetails && (
+        <details className="hc-planDetails">
+          <summary>{L(lang, COPY.planDetails)}</summary>
+          <div className="hc-planVisualGrid">
+            {(analysis.opponent_formation_analysis || strengths.length || weaknesses.length) && (
+              <div className="hc-planSection">
+                <span className="hc-planSectionTitle">{L(lang, COPY.planRead)}</span>
+                {analysis.opponent_formation_analysis && <p>{localized(analysis.opponent_formation_analysis)}</p>}
+                {strengths.length > 0 && (
+                  <div className="hc-planListGroup">
+                    <span>{L(lang, COPY.planStrengths)}</span>
+                    <ul>{list(strengths)}</ul>
+                  </div>
+                )}
+                {weaknesses.length > 0 && (
+                  <div className="hc-planListGroup">
+                    <span>{L(lang, COPY.planWeaknesses)}</span>
+                    <ul>{list(weaknesses)}</ul>
+                  </div>
+                )}
               </div>
             )}
-            {weaknesses.length > 0 && (
-              <div className="hc-planListGroup">
-                <span>{L(lang, COPY.planWeaknesses)}</span>
-                <ul>{list(weaknesses)}</ul>
+
+            {(summary.attacking || formationAdjustments.length || tacticalAdjustments.length) && (
+              <div className="hc-planSection">
+                <span className="hc-planSectionTitle">{L(lang, COPY.planAttack)}</span>
+                {summary.attacking && <p>{localized(summary.attacking)}</p>}
+                {formationAdjustments.map((item, index) => (
+                  <div key={`formation-${index}`} className="hc-planAdvice">
+                    <strong>{localized(item.suggestion)}</strong>
+                    {item.reason && <small>{localized(item.reason)}</small>}
+                  </div>
+                ))}
+                {tacticalAdjustments.map((item, index) => (
+                  <div key={`tactical-${index}`} className="hc-planAdvice">
+                    <strong>{localized(item.suggestion)}</strong>
+                    {item.reason && <small>{localized(item.reason)}</small>}
+                  </div>
+                ))}
               </div>
             )}
-          </details>
-        )}
 
-        {(summary.attacking || formationAdjustments.length || tacticalAdjustments.length) && (
-          <details className="hc-planSection" open>
-            <summary>{L(lang, COPY.planAttack)}</summary>
-            {summary.attacking && <p>{localized(summary.attacking)}</p>}
-            {formationAdjustments.map((item, index) => (
-              <div key={`formation-${index}`} className="hc-planAdvice">
-                <strong>{localized(item.suggestion)}</strong>
-                {item.reason && <small>{localized(item.reason)}</small>}
-              </div>
-            ))}
-            {tacticalAdjustments.map((item, index) => (
-              <div key={`tactical-${index}`} className="hc-planAdvice">
-                <strong>{localized(item.suggestion)}</strong>
-                {item.reason && <small>{localized(item.reason)}</small>}
-              </div>
-            ))}
-          </details>
-        )}
-
-        {(summary.defending || summary.avoid) && (
-          <details className="hc-planSection" open>
-            <summary>{L(lang, COPY.planDefend)}</summary>
-            {summary.defending && <p>{localized(summary.defending)}</p>}
-            {summary.avoid && (
-              <div className="hc-planAdvice hc-planAdviceWarning">
-                <strong>{L(lang, COPY.planAvoid)}</strong>
-                <small>{localized(summary.avoid)}</small>
+            {(summary.defending || summary.avoid) && (
+              <div className="hc-planSection">
+                <span className="hc-planSectionTitle">{L(lang, COPY.planDefend)}</span>
+                {summary.defending && <p>{localized(summary.defending)}</p>}
+                {summary.avoid && (
+                  <div className="hc-planAdvice hc-planAdviceWarning">
+                    <strong>{L(lang, COPY.planAvoid)}</strong>
+                    <small>{localized(summary.avoid)}</small>
+                  </div>
+                )}
               </div>
             )}
-          </details>
-        )}
 
-        {playerSuggestions.length > 0 && (
-          <details className="hc-planSection">
-            <summary>{L(lang, COPY.planSubstitutions)}</summary>
-            {playerSuggestions.map((item, index) => (
-              <div key={`player-${index}`} className="hc-planAdvice">
-                <strong>
-                  {item.player_name || item.player_id}
-                  {item.replace_player_name ? ` → ${item.replace_player_name}` : ''}
-                </strong>
-                {item.reason && <small>{localized(item.reason)}</small>}
+            {playerSuggestions.length > 0 && (
+              <div className="hc-planSection">
+                <span className="hc-planSectionTitle">{L(lang, COPY.planSubstitutions)}</span>
+                {playerSuggestions.map((item, index) => (
+                  <div key={`player-${index}`} className="hc-planAdvice">
+                    <strong>
+                      {item.player_name || item.player_id}
+                      {item.replace_player_name ? ` → ${item.replace_player_name}` : ''}
+                    </strong>
+                    {item.reason && <small>{localized(item.reason)}</small>}
+                  </div>
+                ))}
               </div>
-            ))}
-          </details>
-        )}
+            )}
 
-        {individualInstructions.length > 0 && (
-          <details className="hc-planSection">
-            <summary>{L(lang, COPY.planInstructions)}</summary>
-            {individualInstructions.map((item, index) => (
-              <div key={`instruction-${index}`} className="hc-planAdvice">
-                <strong>{item.player_name || item.player_id}: {localized(item.instruction)}</strong>
-                {item.reason && <small>{localized(item.reason)}</small>}
+            {individualInstructions.length > 0 && (
+              <div className="hc-planSection">
+                <span className="hc-planSectionTitle">{L(lang, COPY.planInstructions)}</span>
+                {individualInstructions.map((item, index) => (
+                  <div key={`instruction-${index}`} className="hc-planAdvice">
+                    <strong>{item.player_name || item.player_id}: {localized(item.instruction)}</strong>
+                    {item.reason && <small>{localized(item.reason)}</small>}
+                  </div>
+                ))}
               </div>
-            ))}
-          </details>
-        )}
-      </div>
+            )}
+          </div>
 
-      {(warnings.length > 0 || raw.confidence != null || raw.data_quality) && (
-        <div className="hc-planMeta">
-          {warnings.length > 0 && (
-            <div className="hc-planWarnings">
-              <strong>{L(lang, COPY.planWarnings)}</strong>
-              <ul>{list(warnings)}</ul>
+          {(warnings.length > 0 || raw.confidence != null || raw.data_quality) && (
+            <div className="hc-planMeta">
+              {warnings.length > 0 && (
+                <div className="hc-planWarnings">
+                  <strong>{L(lang, COPY.planWarnings)}</strong>
+                  <ul>{list(warnings)}</ul>
+                </div>
+              )}
+              {(raw.confidence != null || raw.data_quality) && (
+                <small>
+                  {raw.confidence != null ? `${L(lang, COPY.planConfidence)}: ${raw.confidence}%` : ''}
+                  {raw.confidence != null && raw.data_quality ? ' · ' : ''}
+                  {raw.data_quality ? `${L(lang, COPY.planQuality)}: ${raw.data_quality}` : ''}
+                </small>
+              )}
             </div>
           )}
-          {(raw.confidence != null || raw.data_quality) && (
-            <small>
-              {raw.confidence != null ? `${L(lang, COPY.planConfidence)}: ${raw.confidence}%` : ''}
-              {raw.confidence != null && raw.data_quality ? ' · ' : ''}
-              {raw.data_quality ? `${L(lang, COPY.planQuality)}: ${raw.data_quality}` : ''}
-            </small>
-          )}
-        </div>
+        </details>
       )}
     </div>
   )
@@ -906,13 +934,10 @@ export default function HeroChat({
 
       const answer = data.response || data.answer || L(lang, COPY.errorGeneric)
       const suggestions = Array.isArray(data.suggestions) ? data.suggestions.filter(Boolean).slice(0, 3) : []
-      const apiTips = Array.isArray(data.tips) ? data.tips.filter((t) => t?.body).slice(0, 3) : null
-      const tips = apiTips?.length > 1 ? apiTips : splitAdviceIntoTips(answer, 3)
       const heroMessage = {
         role: 'hero',
         content: answer,
-        suggestions,
-        tips: tips.length > 1 ? tips : null
+        suggestions
       }
       setMessages((prev) => [
         ...prev,
@@ -1946,10 +1971,20 @@ export default function HeroChat({
                     <CheckCircle2 size={14} aria-hidden="true" />
                   </span>
                 )}
-                {m.tips?.length > 1 ? (
-                  <TipCards tips={m.tips} lang={lang} onDeepen={(body) => sendMessage(`${L(lang, COPY.deepenAsk)}: ${body}`)} />
-                ) : (
-                  <ChatMarkdown>{m.content}</ChatMarkdown>
+                {m.content ? <ChatMarkdown>{m.content}</ChatMarkdown> : null}
+                {m.role === 'hero' && Array.isArray(m.suggestions) && m.suggestions.length > 0 && (
+                  <div className="hc-bubbleActions">
+                    {m.suggestions.filter(Boolean).slice(0, 2).map((sug) => (
+                      <button
+                        key={sug}
+                        type="button"
+                        className="hc-bubbleAction"
+                        onClick={() => sendMessage(sug)}
+                      >
+                        {sug}
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
@@ -2955,87 +2990,31 @@ export default function HeroChat({
           border-color: rgba(61, 220, 151, 0.35);
         }
 
-        :global(.hc-tips) {
+        .hc-bubbleActions {
           display: flex;
-          flex-direction: column;
+          flex-wrap: wrap;
           gap: 8px;
-          width: 100%;
+          margin-top: 10px;
         }
 
-        :global(.hc-tip) {
-          border-radius: 12px;
-          border: 1px solid var(--border-soft);
-          background: rgba(255, 255, 255, 0.03);
-          padding: 10px 12px;
-        }
-
-        :global(.hc-tipHead) {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          width: 100%;
-          border: none;
-          background: transparent;
-          color: inherit;
-          font: inherit;
-          padding: 0;
-          cursor: pointer;
-          text-align: left;
-        }
-
-        :global(.hc-tipBadge) {
-          width: 22px;
-          height: 22px;
-          border-radius: 50%;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 11px;
-          font-weight: 800;
+        .hc-bubbleAction {
+          min-height: 44px;
+          padding: 8px 14px;
+          border-radius: 999px;
+          border: 1px solid var(--accent-border);
           background: var(--accent-bg);
-          color: var(--accent);
-          flex-shrink: 0;
-        }
-
-        :global(.hc-tipTitle) {
-          flex: 1;
-          font-size: 12px;
-          font-weight: 800;
-          letter-spacing: 0.02em;
-          text-transform: uppercase;
-          color: var(--accent);
-        }
-
-        :global(.hc-tipToggle) {
-          font-size: 11px;
-          color: var(--text-dim);
-          font-weight: 600;
-        }
-
-        :global(.hc-tipBody) {
-          margin: 8px 0 0;
-          font-size: 13px;
-          line-height: 1.45;
-          color: var(--text-main);
-        }
-
-        :global(.hc-tipBodyClamp) {
-          display: -webkit-box;
-          -webkit-line-clamp: 4;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-
-        :global(.hc-tipDeepen) {
-          margin-top: 8px;
-          border: none;
-          background: transparent;
           color: var(--accent);
           font-size: 12px;
           font-weight: 700;
           font-family: inherit;
-          padding: 0;
           cursor: pointer;
+          text-align: left;
+          line-height: 1.25;
+          max-width: 100%;
+        }
+
+        .hc-bubbleAction:hover {
+          filter: brightness(1.06);
         }
 
         .hc-attachBar {
@@ -3239,18 +3218,68 @@ export default function HeroChat({
           line-height: 1.45;
         }
 
+        :global(.hc-planQuick) {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          padding: 10px 12px;
+          border-radius: 12px;
+          border: 1px solid var(--border-soft);
+          background: rgba(255, 255, 255, 0.03);
+        }
+
+        :global(.hc-planQuickLabel) {
+          color: var(--accent);
+          font-size: 11px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.03em;
+        }
+
+        :global(.hc-planQuickList) {
+          margin: 0;
+          padding-left: 18px;
+          display: grid;
+          gap: 6px;
+          color: var(--text-main);
+          font-size: 13px;
+          line-height: 1.4;
+        }
+
+        :global(.hc-planDetails) {
+          border-radius: 12px;
+          border: 1px solid var(--border-soft);
+          background: rgba(0, 0, 0, 0.08);
+          padding: 4px 10px 10px;
+        }
+
+        :global(.hc-planDetails > summary) {
+          cursor: pointer;
+          min-height: 44px;
+          display: flex;
+          align-items: center;
+          color: var(--text-main);
+          font-size: 13px;
+          font-weight: 800;
+          list-style-position: inside;
+        }
+
+        :global(.hc-planDetails[open] > summary) {
+          margin-bottom: 8px;
+        }
+
         :global(.hc-planVisualGrid) {
           display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+          grid-template-columns: 1fr;
           gap: 8px;
         }
 
-        :global(.hc-planSection summary) {
-          cursor: pointer;
+        :global(.hc-planSectionTitle) {
+          display: block;
           color: var(--text-main);
           font-size: 12px;
           font-weight: 800;
-          list-style-position: inside;
+          margin-bottom: 4px;
         }
 
         :global(.hc-planListGroup) {
@@ -3775,6 +3804,7 @@ export default function HeroChat({
         .hc-stateBtn:focus-visible,
         .hc-richCta:focus-visible,
         .hc-suggestionPill:focus-visible,
+        .hc-bubbleAction:focus-visible,
         .hc-actionItem:focus-visible,
         .hc-lowHpCta:focus-visible {
           outline: 2px solid var(--accent);
@@ -3790,8 +3820,8 @@ export default function HeroChat({
             max-width: 86%;
           }
 
-          :global(.hc-planVisualGrid) {
-            grid-template-columns: 1fr;
+          .hc-bubbleAction {
+            width: 100%;
           }
 
         }
