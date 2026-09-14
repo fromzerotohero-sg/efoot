@@ -2034,14 +2034,14 @@ function QuickPlayerPanel({
   const actionableMissing = profileCompletion.missing.filter((section) => section.key !== 'boosters')
   const missingLabels = actionableMissing.map((section) => section.label).join(', ')
 
-  const displayStats = (typeof getPlayerDisplayStats === 'function' ? getPlayerDisplayStats(player) : null) || {}
+  const displayStats = normalizeBaseStatsForEditor((typeof getPlayerDisplayStats === 'function' ? getPlayerDisplayStats(player) : null) || {})
   const positionUpper = String(player.position || '').toUpperCase()
   const isGk = positionUpper.includes('PT') || positionUpper.includes('GK')
   const statGroups = QUICK_STAT_GROUPS
     .filter((group) => !group.gkOnly || isGk)
     .map((group) => ({
       ...group,
-      visible: group.stats.filter(([key]) => Number.isFinite(Number(displayStats[key])))
+      visible: group.stats.filter(([key]) => displayStats[key] !== '' && displayStats[key] != null && Number.isFinite(Number(displayStats[key])))
     }))
     .filter((group) => group.visible.length > 0)
 
@@ -2051,9 +2051,12 @@ function QuickPlayerPanel({
     .map(quickBoosterName)
     .filter(Boolean)
   const activeBoosterName = player.active_booster_name || null
-  const metaBits = [player.club_name, player.age ? `${player.age}` : null, player.nationality].filter(Boolean)
+  const metaBits = [player.club_name, player.age ? `${player.age}` : null, player.nationality]
+    .filter(Boolean)
+    .filter((bit, i, arr) => arr.findIndex((other) => String(other).toLowerCase() === String(bit).toLowerCase()) === i)
 
   return (
+    <ModalPortal>
     <div className="nr-modal-backdrop nr-quick-backdrop" onClick={onClose}>
       <div className="nr-modal-shell nr-quick-shell nr-quick-sheet" onClick={(event) => event.stopPropagation()}>
         <div className="nr-sheet-grip" aria-hidden="true" />
@@ -2210,6 +2213,7 @@ function QuickPlayerPanel({
         </div>
       </div>
     </div>
+    </ModalPortal>
   )
 }
 
