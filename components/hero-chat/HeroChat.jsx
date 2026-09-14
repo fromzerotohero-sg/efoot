@@ -17,7 +17,8 @@ import {
   Camera,
   ImagePlus,
   CheckCircle2,
-  ClipboardList
+  ClipboardList,
+  ChevronLeft
 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { pickLang } from '@/lib/i18n'
@@ -136,6 +137,9 @@ const COPY = {
   matchSectionDone: { it: 'Sezione letta. Passiamo alla prossima.', en: 'Section read. Let’s move to the next one.', es: 'Sección leída. Pasemos a la siguiente.' },
   matchAllRead: { it: 'Ho letto tutte le sezioni. Controlla il riepilogo e conferma il salvataggio.', en: 'I’ve read all sections. Check the summary and confirm the save.', es: 'He leído todas las secciones. Revisa el resumen y confirma el guardado.' },
   matchSkip: { it: 'Salta per ora', en: 'Skip for now', es: 'Saltar por ahora' },
+  matchBack: { it: 'Indietro', en: 'Back', es: 'Atrás' },
+  matchContinue: { it: 'Mantieni e continua', en: 'Keep and continue', es: 'Mantener y continuar' },
+  matchReviewSections: { it: 'Torna alle sezioni', en: 'Back to sections', es: 'Volver a las secciones' },
   matchExampleTitle: { it: 'Esempio schermata', en: 'Screenshot example', es: 'Ejemplo de pantalla' },
   matchExampleHint: { it: 'Tocca per ingrandire', en: 'Tap to enlarge', es: 'Toca para ampliar' },
   matchReview: { it: 'Rivedi partita', en: 'Review match', es: 'Revisar partido' },
@@ -446,6 +450,7 @@ function MatchUploadCard({
   onRead,
   onSkip,
   onSave,
+  onBack,
   onShowExample
 }) {
   if (!flow) return null
@@ -508,6 +513,10 @@ function MatchUploadCard({
 
       {flow.phase === 'upload' && (
         <div className="hc-matchUpload">
+          <button type="button" className="hc-matchBack" onClick={onBack} disabled={analyzing}>
+            <ChevronLeft size={16} aria-hidden="true" />
+            {L(lang, COPY.matchBack)}
+          </button>
           <div className="hc-matchProgress" aria-label={`${L(lang, COPY.matchSection)} ${flow.sectionIndex + 1} di ${MATCH_SECTIONS.length}`}>
             {MATCH_SECTIONS.map((section, index) => (
               <span
@@ -566,7 +575,7 @@ function MatchUploadCard({
             {analyzing ? L(lang, COPY.attachAnalyzing) : L(lang, COPY.attachRead)}
           </button>
           <button type="button" className="hc-matchSkip" onClick={onSkip} disabled={analyzing}>
-            {L(lang, COPY.matchSkip)}
+            {flow.data?.[currentSection.id] ? L(lang, COPY.matchContinue) : L(lang, COPY.matchSkip)}
           </button>
         </div>
       )}
@@ -589,6 +598,10 @@ function MatchUploadCard({
             ))}
           </div>
           <p className="hc-matchHint">{L(lang, COPY.matchMin)}</p>
+          <button type="button" className="hc-matchBack hc-matchReviewBack" onClick={onBack} disabled={saving}>
+            <ChevronLeft size={16} aria-hidden="true" />
+            {L(lang, COPY.matchReviewSections)}
+          </button>
           <button type="button" className="hc-attachAnalyze" onClick={onSave} disabled={saving || completed < 3}>
             {saving ? L(lang, COPY.matchSaving) : L(lang, COPY.matchSave)}
           </button>
@@ -1212,12 +1225,29 @@ export default function HeroChat({
     setMatchFlow((prev) => {
       if (!prev || prev.phase !== 'upload') return prev
       const isLast = prev.sectionIndex >= MATCH_SECTIONS.length - 1
+      const sectionId = MATCH_SECTIONS[prev.sectionIndex].id
+      const hasExistingData = Boolean(prev.data?.[sectionId])
       return {
         ...prev,
         phase: isLast ? 'review' : 'upload',
         sectionIndex: isLast ? prev.sectionIndex : prev.sectionIndex + 1,
-        data: { ...prev.data, [MATCH_SECTIONS[prev.sectionIndex].id]: null }
+        data: hasExistingData ? prev.data : { ...prev.data, [sectionId]: null }
       }
+    })
+    setAttachments([])
+  }, [])
+
+  const goBackMatchSection = React.useCallback(() => {
+    setMatchFlow((prev) => {
+      if (!prev) return prev
+      if (prev.phase === 'review') {
+        return { ...prev, phase: 'upload', sectionIndex: MATCH_SECTIONS.length - 1 }
+      }
+      if (prev.phase !== 'upload') return prev
+      if (prev.sectionIndex <= 0) {
+        return { ...prev, phase: 'context', sectionIndex: 0 }
+      }
+      return { ...prev, sectionIndex: prev.sectionIndex - 1 }
     })
     setAttachments([])
   }, [])
@@ -1660,6 +1690,7 @@ export default function HeroChat({
             onRead={analyzeAttachments}
             onSkip={skipMatchSection}
             onSave={saveMatchFlow}
+            onBack={goBackMatchSection}
             onShowExample={setExampleLightbox}
           />
         )}
@@ -3180,6 +3211,36 @@ export default function HeroChat({
         :global(.hc-matchProgress) {
           display: flex;
           gap: 6px;
+        }
+
+        :global(.hc-matchBack) {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          min-height: 36px;
+          margin: 0 0 8px;
+          padding: 6px 2px;
+          border: 0;
+          background: transparent;
+          color: var(--text-dim);
+          font: inherit;
+          font-size: 12px;
+          font-weight: 750;
+          cursor: pointer;
+        }
+
+        :global(.hc-matchBack:hover) {
+          color: var(--text-main);
+        }
+
+        :global(.hc-matchBack:disabled) {
+          opacity: 0.45;
+          cursor: default;
+        }
+
+        :global(.hc-matchReviewBack) {
+          margin-bottom: 0;
+          justify-content: center;
         }
 
         :global(.hc-matchProgressDot) {
