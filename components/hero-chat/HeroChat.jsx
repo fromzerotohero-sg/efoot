@@ -17,7 +17,6 @@ import {
   Camera,
   ImagePlus,
   CheckCircle2,
-  Users,
   ClipboardList
 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
@@ -122,17 +121,6 @@ const COPY = {
   attachError: { it: 'Non sono riuscito a leggere le foto. Riprova con screenshot più nitidi.', en: 'I couldn’t read the photos. Try clearer screenshots.', es: 'No pude leer las fotos. Prueba capturas más nítidas.' },
   attachRead: { it: 'Leggi questa sezione', en: 'Read this section', es: 'Leer esta sección' },
   attachReadMore: { it: 'Aggiungi foto', en: 'Add photo', es: 'Añadir foto' },
-  actionRoster: { it: 'Carica rosa', en: 'Upload squad', es: 'Cargar plantilla' },
-  actionPlayer: { it: 'Carica giocatore', en: 'Upload player', es: 'Cargar jugador' },
-  actionCoach: { it: 'Carica allenatore', en: 'Upload coach', es: 'Cargar entrenador' },
-  assetIntroRoster: { it: 'Carica le schermate delle card dei tuoi giocatori. Le leggerò tutte insieme e ti mostrerò l’elenco prima di salvarlo.', en: 'Upload your player-card screenshots. I’ll read them together and show the list before saving.', es: 'Carga las capturas de las cartas de tus jugadores. Las leeré y mostraré la lista antes de guardarla.' },
-  assetIntroPlayer: { it: 'Carica la schermata completa della card del giocatore. La leggerò e ti mostrerò i dati prima di salvarli.', en: 'Upload the player card screen. I’ll read it and show the data before saving.', es: 'Carga la pantalla completa de la carta del jugador. Leeré los datos y te los mostraré antes de guardarlos.' },
-  assetIntroCoach: { it: 'Carica la schermata completa dell’allenatore. La leggerò e ti mostrerò i dati prima di salvarli.', en: 'Upload the full coach screen. I’ll read it and show the data before saving.', es: 'Carga la pantalla completa del entrenador. Leeré los datos y te los mostraré antes de guardarlos.' },
-  assetRead: { it: 'Leggi e prepara anteprima', en: 'Read and prepare preview', es: 'Leer y preparar vista previa' },
-  assetSave: { it: 'Conferma e salva', en: 'Confirm and save', es: 'Confirmar y guardar' },
-  assetSaving: { it: 'Salvataggio…', en: 'Saving…', es: 'Guardando…' },
-  assetPreview: { it: 'Controlla i dati estratti prima di salvare.', en: 'Review the extracted data before saving.', es: 'Revisa los datos extraídos antes de guardar.' },
-  assetEmpty: { it: 'Non ho trovato dati leggibili. Prova con una schermata completa e nitida.', en: 'I could not find readable data. Try a clear full-screen screenshot.', es: 'No encontré datos legibles. Prueba con una captura completa y nítida.' },
   matchIntro: { it: 'Raccogliamo la partita dentro la chat. Ti guiderò foto per foto e non salverò nulla finché non mi dai conferma.', en: 'Let’s collect the match inside the chat. I’ll guide you photo by photo and won’t save anything until you confirm.', es: 'Recopilemos el partido dentro del chat. Te guiaré foto a foto y no guardaré nada hasta que confirmes.' },
   matchHomeQuestion: { it: 'Hai giocato in casa o fuori casa?', en: 'Did you play at home or away?', es: '¿Jugaste en casa o fuera?' },
   matchHome: { it: 'Casa', en: 'Home', es: 'Casa' },
@@ -567,86 +555,6 @@ function MatchUploadCard({
   )
 }
 
-function AssetUploadCard({
-  flow,
-  lang,
-  attachments,
-  analyzing,
-  saving,
-  lowHp,
-  onCamera,
-  onGallery,
-  onRead,
-  onSave
-}) {
-  if (!flow) return null
-  const isRoster = flow.type === 'roster'
-  const title = flow.type === 'coach'
-    ? COPY.actionCoach
-    : flow.type === 'player'
-      ? COPY.actionPlayer
-      : COPY.actionRoster
-  const maxImages = isRoster ? 12 : 1
-  const results = Array.isArray(flow.results) ? flow.results : []
-  const canRead = attachments.length > 0 && !analyzing && !lowHp
-
-  return (
-    <div className="hc-assetCard">
-      <div className="hc-matchHead">
-        <Users size={17} aria-hidden="true" />
-        <strong>{L(lang, title)}</strong>
-        <span>{flow.phase === 'review' ? results.length : `${attachments.length}/${maxImages}`}</span>
-      </div>
-      <p className="hc-assetIntro">{L(lang, flow.type === 'coach' ? COPY.assetIntroCoach : flow.type === 'player' ? COPY.assetIntroPlayer : COPY.assetIntroRoster)}</p>
-
-      {flow.phase === 'upload' && (
-        <>
-          <div className="hc-matchUploadActions">
-            <button type="button" className="hc-matchUploadButton" onClick={onCamera} disabled={analyzing}>
-              <Camera size={15} aria-hidden="true" />
-              {L(lang, COPY.attachCamera)}
-            </button>
-            <button type="button" className="hc-matchUploadButton" onClick={onGallery} disabled={analyzing}>
-              <ImagePlus size={15} aria-hidden="true" />
-              {L(lang, COPY.attachGallery)}
-            </button>
-          </div>
-          {attachments.length > 0 && (
-            <div className="hc-matchThumbs">
-              {attachments.map((attachment) => (
-                <img key={attachment.id} src={attachment.dataUrl} alt="" />
-              ))}
-            </div>
-          )}
-          <button type="button" className="hc-attachAnalyze" onClick={onRead} disabled={!canRead}>
-            {analyzing ? L(lang, COPY.attachAnalyzing) : L(lang, COPY.assetRead)}
-          </button>
-        </>
-      )}
-
-      {flow.phase === 'review' && (
-        <>
-          <p className="hc-assetPreview">{L(lang, COPY.assetPreview)}</p>
-          <div className="hc-assetResults">
-            {results.map((item, index) => (
-              <div className="hc-assetResult" key={`${item.player_name || item.coach_name || index}-${index}`}>
-                <strong>{item.player_name || item.coach_name || L(lang, COPY.assetEmpty)}</strong>
-                <span>
-                  {item.position || item.team || item.nationality || item.category || ''}
-                  {item.overall_rating ? ` · ${item.overall_rating}` : ''}
-                </span>
-              </div>
-            ))}
-          </div>
-          <button type="button" className="hc-attachAnalyze" onClick={onSave} disabled={saving || !results.length}>
-            {saving ? L(lang, COPY.assetSaving) : L(lang, COPY.assetSave)}
-          </button>
-        </>
-      )}
-    </div>
-  )
-}
-
 export default function HeroChat({
   lang,
   userProfile,
@@ -681,8 +589,6 @@ export default function HeroChat({
   const [matchSaving, setMatchSaving] = React.useState(false)
   const [feedbackMatchId, setFeedbackMatchId] = React.useState(null)
   const [lastSavedMatchId, setLastSavedMatchId] = React.useState(null)
-  const [assetFlow, setAssetFlow] = React.useState(null)
-  const [assetSaving, setAssetSaving] = React.useState(false)
   const [threadId, setThreadId] = React.useState(null)
   const [historyLoading, setHistoryLoading] = React.useState(true)
   const [prematchPlan, setPrematchPlan] = React.useState(null)
@@ -939,7 +845,6 @@ export default function HeroChat({
   const enterFeedbackMode = React.useCallback((matchId = null) => {
     setActionsOpen(false)
     setMatchFlow(null)
-    setAssetFlow(null)
     setAttachments([])
     setAttachmentMode('stats')
     setFeedbackMode(true)
@@ -1085,37 +990,10 @@ export default function HeroChat({
     }
   }, [saveState, feedbackMessages, feedbackMatchId, lastMatch, lang, router, exitFeedbackMode])
 
-  const startAssetUpload = React.useCallback((type) => {
-    setActionsOpen(false)
-    setFeedbackMode(false)
-    setFeedbackMessages([])
-    setMatchFlow(null)
-    setAttachments([])
-    setAttachmentMode('asset')
-    setAssetFlow({ type, phase: 'upload', results: [] })
-    const copy = type === 'coach' ? COPY.assetIntroCoach : type === 'player' ? COPY.assetIntroPlayer : COPY.assetIntroRoster
-    const intro = { role: 'hero', content: L(lang, copy), kind: 'system' }
-    setMessages((prev) => [...prev, intro])
-    void persistMessages([intro])
-  }, [lang, persistMessages])
-
-  const openAssetCamera = React.useCallback(() => {
-    setAttachmentMode('asset')
-    setActionsOpen(false)
-    cameraInputRef.current?.click()
-  }, [])
-
-  const openAssetGallery = React.useCallback(() => {
-    setAttachmentMode('asset')
-    setActionsOpen(false)
-    galleryInputRef.current?.click()
-  }, [])
-
   const startMatchUpload = React.useCallback(() => {
     setActionsOpen(false)
     setFeedbackMode(false)
     setFeedbackMessages([])
-    setAssetFlow(null)
     setAttachments([])
     setAttachmentMode('match')
     setMatchFlow({
@@ -1165,7 +1043,7 @@ export default function HeroChat({
     setActionsOpen(false)
     const next = [...attachments]
     const currentSection = matchFlow?.phase === 'upload' ? MATCH_SECTIONS[matchFlow.sectionIndex] : null
-    const maxFiles = currentSection?.maxImages || (assetFlow ? (assetFlow.type === 'roster' ? 12 : 1) : MAX_ATTACH)
+    const maxFiles = currentSection?.maxImages || MAX_ATTACH
     for (const file of files) {
       if (next.length >= maxFiles) break
       try {
@@ -1183,7 +1061,7 @@ export default function HeroChat({
       }
     }
     setAttachments(next.slice(0, maxFiles))
-  }, [attachments, assetFlow, lang, matchFlow])
+  }, [attachments, lang, matchFlow])
 
   const removeAttachment = React.useCallback((id) => {
     setAttachments((prev) => prev.filter((a) => a.id !== id))
@@ -1208,40 +1086,6 @@ export default function HeroChat({
     ])
     cameraInputRef.current?.click()
   }, [lang])
-
-  const analyzeAssetAttachments = React.useCallback(async (token, imageDataUrls) => {
-    const flow = assetFlow
-    if (!flow) throw new Error(L(lang, COPY.attachError))
-    const results = []
-
-    for (const imageDataUrl of imageDataUrls) {
-      const endpoint = flow.type === 'coach' ? '/api/extract-coach' : '/api/extract-player'
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-          'Accept-Language': lang === 'en' ? 'en' : lang === 'es' ? 'es' : 'it'
-        },
-        body: JSON.stringify({ imageDataUrl })
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error || L(lang, COPY.attachError))
-      const item = flow.type === 'coach' ? data.coach : data.player
-      if (item) results.push(item)
-      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('credits-consumed'))
-    }
-
-    setAssetFlow((prev) => prev ? { ...prev, phase: 'review', results } : prev)
-    setAttachments([])
-    const message = {
-      role: 'hero',
-      content: results.length ? L(lang, COPY.assetPreview) : L(lang, COPY.assetEmpty),
-      kind: results.length ? 'success' : 'error'
-    }
-    setMessages((prev) => [...prev.filter((item) => item.kind !== 'system'), message])
-    void persistMessages([message])
-  }, [assetFlow, lang, persistMessages])
 
   const analyzeMatchAttachment = React.useCallback(async (token, imageDataUrls) => {
     const flow = matchFlow
@@ -1310,53 +1154,6 @@ export default function HeroChat({
     })
     setAttachments([])
   }, [])
-
-  const saveAssetFlow = React.useCallback(async () => {
-    if (!assetFlow || assetFlow.phase !== 'review' || assetSaving || !assetFlow.results?.length) return
-    setAssetSaving(true)
-    let savedCount = 0
-    try {
-      const token = await resolveToken()
-      if (!token) {
-        router.push('/login')
-        return
-      }
-      for (const item of assetFlow.results) {
-        const endpoint = assetFlow.type === 'coach' ? '/api/supabase/save-coach' : '/api/supabase/save-player'
-        const body = assetFlow.type === 'coach' ? { coach: item } : { player: item }
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify(body)
-        })
-        const data = await res.json().catch(() => ({}))
-        if (!res.ok || data.success === false) throw new Error(data.error || L(lang, COPY.errorGeneric))
-        savedCount += 1
-      }
-      setAssetFlow(null)
-      setAttachmentMode('stats')
-      setMessages((prev) => [...prev, {
-        role: 'hero',
-        content: `${savedCount} ${L(lang, assetFlow.type === 'coach' ? COPY.actionCoach : assetFlow.type === 'player' ? COPY.actionPlayer : COPY.actionRoster)} salvato.`,
-        kind: 'success'
-      }])
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('knowledge-should-refresh'))
-        window.dispatchEvent(new CustomEvent('diagnostic-updated'))
-      }
-    } catch {
-      setMessages((prev) => [...prev, {
-        role: 'hero',
-        content: savedCount ? `${savedCount} salvato. Il resto non è stato completato.` : L(lang, COPY.errorGeneric),
-        kind: 'error'
-      }])
-    } finally {
-      setAssetSaving(false)
-    }
-  }, [assetFlow, assetSaving, lang, router])
 
   const saveMatchFlow = React.useCallback(async () => {
     if (!matchFlow || matchFlow.phase !== 'review' || matchSaving) return
@@ -1515,9 +1312,7 @@ export default function HeroChat({
     const matchSection = matchFlow?.phase === 'upload' ? MATCH_SECTIONS[matchFlow.sectionIndex] : null
     const processingMessage = {
       role: 'hero',
-      content: attachmentMode === 'asset'
-        ? L(lang, COPY.attachAnalyzing)
-        : attachmentMode === 'match' && matchSection
+      content: attachmentMode === 'match' && matchSection
         ? `${L(lang, matchSection.title)}…`
         : attachmentMode === 'counter'
         ? L(lang, COPY.counterAnalyzing)
@@ -1529,10 +1324,6 @@ export default function HeroChat({
       const token = await resolveToken()
       if (!token) {
         router.push('/login')
-        return
-      }
-      if (attachmentMode === 'asset') {
-        await analyzeAssetAttachments(token, attachments.map((attachment) => attachment.dataUrl))
         return
       }
       if (attachmentMode === 'match') {
@@ -1606,7 +1397,6 @@ export default function HeroChat({
     attachAnalyzing,
     attachmentMode,
     matchFlow,
-    analyzeAssetAttachments,
     analyzeMatchAttachment,
     analyzeCountermeasureAttachment,
     lang,
@@ -1789,22 +1579,7 @@ export default function HeroChat({
           />
         )}
 
-        {!feedbackMode && assetFlow && (
-          <AssetUploadCard
-            flow={assetFlow}
-            lang={lang}
-            attachments={attachments}
-            analyzing={attachAnalyzing}
-            saving={assetSaving}
-            lowHp={lowHp}
-            onCamera={openAssetCamera}
-            onGallery={openAssetGallery}
-            onRead={analyzeAttachments}
-            onSave={saveAssetFlow}
-          />
-        )}
-
-        {!feedbackMode && !matchFlow && !assetFlow && lastSavedMatchId && (
+        {!feedbackMode && !matchFlow && lastSavedMatchId && (
           <div className="hc-afterMatchCard">
             <p>{L(lang, COPY.matchAskFeedback)}</p>
             <button
@@ -1898,7 +1673,7 @@ export default function HeroChat({
         )}
 
         {/* Card di stato reale (setup/post-match/stats): una sola, mai fake */}
-        {stateCopy && stateCta && !feedbackMode && !matchFlow && !assetFlow && (
+        {stateCopy && stateCta && !feedbackMode && !matchFlow && (
           <div className="hc-stateCard">
             <p className="hc-stateTitle">{L(lang, stateCopy.title)}</p>
             <p className="hc-stateDesc">{stateDesc}</p>
@@ -1934,7 +1709,7 @@ export default function HeroChat({
         )}
 
         {/* Suggerimenti reali dal backend: solo dopo una risposta del coach. */}
-        {activeSuggestions.length > 0 && !feedbackMode && !matchFlow && !assetFlow && (
+        {activeSuggestions.length > 0 && !feedbackMode && !matchFlow && (
           <div className="hc-suggestions">
             {activeSuggestions.map((sug) => (
               <button key={sug} type="button" className="hc-suggestionPill" onClick={() => sendMessage(sug)}>
@@ -1980,7 +1755,7 @@ export default function HeroChat({
             e.target.value = ''
           }}
         />
-        {attachments.length > 0 && !matchFlow && !assetFlow && (
+        {attachments.length > 0 && !matchFlow && (
           <div className="hc-attachBar" role="region" aria-label={L(lang, COPY.attachStatsHint)}>
             <p className="hc-attachHint">
               {attachmentMode === 'counter' ? L(lang, COPY.actionPrepare) : L(lang, COPY.attachStatsHint)}
@@ -3440,49 +3215,6 @@ export default function HeroChat({
           color: var(--text-dim);
           font-size: 12px;
           line-height: 1.4;
-        }
-
-        :global(.hc-assetCard) {
-          display: flex;
-          flex-direction: column;
-          gap: 11px;
-          padding: 14px;
-          border-radius: 16px;
-          border: 1px solid rgba(125, 211, 252, 0.28);
-          background: linear-gradient(145deg, rgba(37, 99, 235, 0.11), rgba(255, 255, 255, 0.035));
-        }
-
-        :global(.hc-assetIntro),
-        :global(.hc-assetPreview) {
-          margin: 0;
-          color: var(--text-dim);
-          font-size: 12px;
-          line-height: 1.45;
-        }
-
-        :global(.hc-assetResults) {
-          display: grid;
-          gap: 6px;
-          max-height: 230px;
-          overflow: auto;
-        }
-
-        :global(.hc-assetResult) {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 10px;
-          padding: 8px 9px;
-          border-radius: 9px;
-          background: rgba(0, 0, 0, 0.16);
-          color: var(--text-main);
-          font-size: 12px;
-        }
-
-        :global(.hc-assetResult span) {
-          color: var(--text-dim);
-          font-size: 11px;
-          text-align: right;
         }
 
         :global(.hc-planLabel) {
