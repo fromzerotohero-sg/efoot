@@ -52,8 +52,8 @@ export function withAuth(WrappedComponent) {
           if (authToken) {
             console.log('Verifying Metalgate token with backend...')
             try {
-              // Verify token with backend
-              const response = await fetch(`${process.env.NEXT_PUBLIC_METALGATE_API_URL || 'http://localhost:4001/api'}/sso/verify`, {
+              // Same-origin proxy: evita CORS su preview Vercel vs api.fromzerotohero.io
+              const response = await fetch('/api/auth/metalgate-verify', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json'
