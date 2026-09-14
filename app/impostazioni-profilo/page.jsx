@@ -4,8 +4,125 @@ import React from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
-import { Save, SkipForward, RefreshCw, User, Gamepad2, Brain, CheckCircle2, AlertCircle, X, Wallet, Zap } from 'lucide-react'
+import { Save, SkipForward, RefreshCw, User, Gamepad2, Brain, CheckCircle2, AlertCircle, X, Wallet, Zap, LogOut, BookOpen, Gift } from 'lucide-react'
 import CoachFeedbackChat from '@/components/CoachFeedbackChat'
+import LanguageSwitch from '@/components/LanguageSwitch'
+import ThemeToggle from '@/components/ThemeToggle'
+
+
+/** Hub Account & Utility stile app: identita reale, HP reali, utility di sistema, logout reale. */
+function AccountUtilitySection({ t, lang, router }) {
+  const [account, setAccount] = React.useState({ name: '', email: '' })
+  const [hpBalance, setHpBalance] = React.useState(null)
+
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem('metalgate_user')
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        const name = String(parsed?.username || '').trim()
+        const email = String(parsed?.email || '').trim()
+        setAccount({ name: name || (email ? email.split('@')[0] : ''), email })
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [])
+
+  React.useEffect(() => {
+    let cancelled = false
+    const fetchBalance = async () => {
+      try {
+        let token = localStorage.getItem('auth_token')
+        if (!token && supabase) {
+          const { data: session } = await supabase.auth.getSession()
+          token = session?.session?.access_token
+        }
+        if (!token || cancelled) return
+        const res = await fetch('/api/credits/usage', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+          cache: 'no-store'
+        })
+        if (!res.ok || cancelled) return
+        const data = await res.json().catch(() => null)
+        const balance = Number(data?.balance_remaining)
+        if (!cancelled && Number.isFinite(balance)) setHpBalance(balance)
+      } catch {
+        /* saldo non disponibile: niente pill */
+      }
+    }
+    fetchBalance()
+    window.addEventListener('credits-consumed', fetchBalance)
+    window.addEventListener('credits-accredited', fetchBalance)
+    return () => {
+      cancelled = true
+      window.removeEventListener('credits-consumed', fetchBalance)
+      window.removeEventListener('credits-accredited', fetchBalance)
+    }
+  }, [])
+
+  const handleLogout = () => {
+    fetch('/api/prelaunch/logout', { method: 'POST' }).catch(() => {})
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('metalgate_user')
+    try {
+      sessionStorage.removeItem('dashboard_coach_mode_modal_seen_session_v1')
+    } catch {
+      /* ignore */
+    }
+    router.push('/login')
+  }
+
+  const initial = (account.name || account.email || 'H').charAt(0).toUpperCase()
+
+  return (
+    <section className="account-utility" aria-label="Account">
+      <div className="account-utility-head">
+        <span className="account-avatar" aria-hidden="true">{initial}</span>
+        <div className="account-id">
+          <strong>{account.name || t('profile')}</strong>
+          {account.email ? <small>{account.email}</small> : null}
+        </div>
+        {typeof hpBalance === 'number' && (
+          <span className="account-hp">
+            <Zap size={13} />
+            {hpBalance} HP
+          </span>
+        )}
+      </div>
+
+      <div className="account-utility-grid">
+        <div className="account-utility-item">
+          <span className="account-utility-label">{(lang === 'en' || lang === 'es') ? 'Language' : 'Lingua'}</span>
+          <LanguageSwitch />
+        </div>
+        <div className="account-utility-item">
+          <span className="account-utility-label">{(lang === 'en' || lang === 'es') ? 'Theme' : 'Tema'}</span>
+          <ThemeToggle />
+        </div>
+        <a className="account-utility-item account-utility-link" href="/guida">
+          <BookOpen size={16} />
+          <span>{t('guide')}</span>
+        </a>
+        <a
+          className="account-utility-item account-utility-link"
+          href="https://tornei.fromzerotohero.io/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Gift size={16} />
+          <span>Tornei</span>
+        </a>
+        <button type="button" className="account-utility-item account-utility-link account-logout" onClick={handleLogout}>
+          <LogOut size={16} />
+          <span>{t('logout')}</span>
+        </button>
+      </div>
+    </section>
+  )
+}
 
 export default function ImpostazioniProfiloPage() {
   const { t, lang } = useTranslation()
@@ -326,6 +443,9 @@ export default function ImpostazioniProfiloPage() {
           </div>
         </div>
       </section>
+
+      {/* Account & Utility: hub stile app — identita, HP reali, utility di sistema, logout reale */}
+      <AccountUtilitySection t={t} lang={lang} router={router} />
 
       <section className="profile-metric-grid" aria-label={(lang === 'en' || lang === 'es') ? 'Profile overview' : 'Panoramica profilo'}>
         {profileOverviewCards.map((card) => (
@@ -830,6 +950,126 @@ export default function ImpostazioniProfiloPage() {
         lastMatch={null}
       />
       <style jsx>{`
+
+        .account-utility {
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+          margin-bottom: 16px;
+          padding: 16px 18px;
+          border-radius: 18px;
+          background: var(--surface);
+          border: 1px solid var(--border-soft);
+        }
+
+        .account-utility-head {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .account-avatar {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          background: var(--accent-bg);
+          border: 1px solid var(--accent-border);
+          color: var(--accent);
+          font-size: 18px;
+          font-weight: 900;
+          flex-shrink: 0;
+        }
+
+        .account-id {
+          display: flex;
+          flex-direction: column;
+          min-width: 0;
+          flex: 1;
+        }
+
+        .account-id strong {
+          font-size: 16px;
+          font-weight: 800;
+          color: var(--text-main);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .account-id small {
+          font-size: 12px;
+          color: var(--text-dim);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .account-hp {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 6px 12px;
+          border-radius: 999px;
+          background: rgba(255, 203, 5, 0.09);
+          border: 1px solid rgba(255, 203, 5, 0.28);
+          color: #ffcb05;
+          font-size: 12px;
+          font-weight: 800;
+          white-space: nowrap;
+        }
+
+        .account-utility-grid {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          align-items: center;
+        }
+
+        .account-utility-item {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          min-height: 40px;
+        }
+
+        .account-utility-label {
+          font-size: 12px;
+          font-weight: 700;
+          color: var(--text-dim);
+        }
+
+        .account-utility-link {
+          padding: 9px 14px;
+          border-radius: 10px;
+          border: 1px solid var(--border-soft);
+          background: var(--surface-2);
+          color: var(--text-main);
+          font-size: 13px;
+          font-weight: 600;
+          font-family: inherit;
+          text-decoration: none;
+          cursor: pointer;
+        }
+
+        .account-utility-link:hover {
+          border-color: var(--accent-border);
+          color: var(--accent);
+        }
+
+        .account-logout {
+          color: #ff8585;
+          border-color: rgba(255, 80, 80, 0.3);
+          background: rgba(255, 80, 80, 0.08);
+        }
+
+        .account-logout:hover {
+          border-color: rgba(255, 80, 80, 0.5);
+          color: #ff8585;
+        }
+
         .profile-page {
           width: min(1180px, 100%);
           margin: 0 auto;
@@ -1048,7 +1288,7 @@ export default function ImpostazioniProfiloPage() {
         .profile-page :global([data-tour-id='tour-profile-personal']),
         .profile-page :global([data-tour-id='tour-profile-game']),
         .profile-coach-personalization {
-          border: 1px solid rgba(0, 212, 255, 0.14) !important;
+          border: 1px solid var(--border-soft) !important;
           border-radius: 22px !important;
           background:
             linear-gradient(135deg, rgba(10, 18, 38, 0.96), rgba(13, 25, 48, 0.82)) !important;
@@ -1120,10 +1360,10 @@ export default function ImpostazioniProfiloPage() {
         .profile-page :global(textarea) {
           min-height: 48px !important;
           padding: 14px 15px !important;
-          border: 1px solid rgba(0, 212, 255, 0.18) !important;
+          border: 1px solid var(--border-soft) !important;
           border-radius: 14px !important;
-          background: rgba(4, 10, 24, 0.86) !important;
-          color: #fff !important;
+          background: var(--surface) !important;
+          color: var(--text-main) !important;
           box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02) !important;
           outline: none !important;
           transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease !important;

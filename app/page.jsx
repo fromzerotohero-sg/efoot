@@ -4,7 +4,6 @@ import React, { Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase, getValidAccessToken } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
-import CoachFeedbackChat from '@/components/CoachFeedbackChat'
 import GameAnalysisModal from '@/components/GameAnalysisModal'
 import { useGameAnalysisModalNav, OPEN_GAME_ANALYSIS_MODAL_EVENT, CLOSE_GAME_ANALYSIS_MODAL_EVENT } from '@/components/GameAnalysisModalNavContext'
 import TaskWidget from '@/components/TaskWidget'
@@ -59,7 +58,6 @@ function HomePage() {
     formation: null
   })
   const [recentMatches, setRecentMatches] = React.useState([])
-  const [showCoachFeedback, setShowCoachFeedback] = React.useState(false)
   const [showGameAnalysisModal, setShowGameAnalysisModal] = React.useState(false)
   const [gameAnalysisLastCapture, setGameAnalysisLastCapture] = React.useState(null)
   const [hasActiveCoach, setHasActiveCoach] = React.useState(false)
@@ -346,7 +344,11 @@ function HomePage() {
     <main data-tour-id="tour-dashboard-intro" className="max-w-7xl mx-auto" style={{ padding: '16px', height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Suspense fallback={null}>
         <OpenCoachListener
-          onOpenCoach={() => setShowCoachFeedback(true)}
+          onOpenCoach={() => {
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('open-coach-feedback'))
+            }
+          }}
           onOpenAssistantChat={() => {
             if (typeof window !== 'undefined') {
               const msg = t('chartsAndComparisonAskCoachContext')
@@ -382,13 +384,6 @@ function HomePage() {
         gameAnalysisLastCapture={gameAnalysisLastCapture}
         hpBalance={hpBalance}
         onOpenGameAnalysis={() => setShowGameAnalysisModal(true)}
-      />
-
-      <CoachFeedbackChat 
-        show={showCoachFeedback} 
-        onClose={() => setShowCoachFeedback(false)} 
-        userProfile={userProfile} 
-        lastMatch={recentMatches?.[0] || null}
       />
 
       <GameAnalysisModal 

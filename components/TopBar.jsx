@@ -178,22 +178,17 @@ export default function TopBar({ showInstallPrompt = true }) {
             <LanguageSwitch />
           </div>
 
-          {/* Avatar/account trigger: desktop → pagina Account; mobile → drawer utility */}
+          {/* Avatar: sempre alla pagina Profilo (account + utility), mai drawer */}
           <div className="topbar-avatar-desktop">
             <Link href="/impostazioni-profilo" aria-label={accountLabel} title={accountLabel} style={avatarStyle}>
               <User size={18} />
             </Link>
           </div>
-          <button
-            type="button"
-            className="topbar-avatar-mobile"
-            onClick={toggleSidebar}
-            aria-label={accountLabel}
-            title={accountLabel}
-            style={avatarStyle}
-          >
-            <User size={18} />
-          </button>
+          <div className="topbar-avatar-mobile">
+            <Link href="/impostazioni-profilo" aria-label={accountLabel} title={accountLabel} style={avatarStyle}>
+              <User size={18} />
+            </Link>
+          </div>
         </div>
       </div>
 

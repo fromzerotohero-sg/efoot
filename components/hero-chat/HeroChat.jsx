@@ -312,6 +312,25 @@ export default function HeroChat({
     setSaveState('idle')
   }, [])
 
+  // Eventi globali: la chat Hero e l'unica superficie conversazionale.
+  // 'open-assistant-chat' (deep link ?openAssistantChat=1, link "chiedi al coach")
+  // pre-compila il composer; 'open-coach-feedback' apre la modalita partita (Palestra in chat).
+  React.useEffect(() => {
+    const onOpenAssistant = (event) => {
+      const message = event?.detail?.message ? String(event.detail.message) : ''
+      if (message) setInput(message)
+      const el = feedRef.current
+      if (el) el.scrollTop = el.scrollHeight
+    }
+    const onOpenFeedback = () => enterFeedbackMode()
+    window.addEventListener('open-assistant-chat', onOpenAssistant)
+    window.addEventListener('open-coach-feedback', onOpenFeedback)
+    return () => {
+      window.removeEventListener('open-assistant-chat', onOpenAssistant)
+      window.removeEventListener('open-coach-feedback', onOpenFeedback)
+    }
+  }, [enterFeedbackMode])
+
   const sendFeedbackMessage = React.useCallback(async (raw) => {
     const message = String(raw || '').trim()
     if (!message || feedbackSending) return

@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation'
 import SidebarNew from '@/components/SidebarNew'
 import TopBar from '@/components/TopBar'
 import BottomNavigation from '@/components/BottomNavigation'
-import AssistantChat from '@/components/AssistantChat'
 import LiveCoachLauncher from '@/components/LiveCoachLauncher'
 import InstallAppPrompt from '@/components/InstallAppPrompt'
 import PrelaunchGate from '@/components/PrelaunchGate'
@@ -54,7 +53,6 @@ export default function AppLayoutShell({ children, showInstallPrompt = true, sho
       <DailySpinWidget />
       {showInstallPrompt && <InstallAppPrompt />}
       <LiveCoachLauncher showLauncherButton={false} />
-      <AssistantChat mode="popup" />
       {showStagingBadge && (
         <div
           aria-hidden="true"
