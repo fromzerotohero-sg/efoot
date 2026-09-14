@@ -136,6 +136,8 @@ const COPY = {
   matchSectionDone: { it: 'Sezione letta. Passiamo alla prossima.', en: 'Section read. Let’s move to the next one.', es: 'Sección leída. Pasemos a la siguiente.' },
   matchAllRead: { it: 'Ho letto tutte le sezioni. Controlla il riepilogo e conferma il salvataggio.', en: 'I’ve read all sections. Check the summary and confirm the save.', es: 'He leído todas las secciones. Revisa el resumen y confirma el guardado.' },
   matchSkip: { it: 'Salta per ora', en: 'Skip for now', es: 'Saltar por ahora' },
+  matchExampleTitle: { it: 'Esempio schermata', en: 'Screenshot example', es: 'Ejemplo de pantalla' },
+  matchExampleHint: { it: 'Tocca per ingrandire', en: 'Tap to enlarge', es: 'Toca para ampliar' },
   matchReview: { it: 'Rivedi partita', en: 'Review match', es: 'Revisar partido' },
   matchSave: { it: 'Conferma e salva partita', en: 'Confirm and save match', es: 'Confirmar y guardar partido' },
   matchSaving: { it: 'Salvataggio…', en: 'Saving…', es: 'Guardando…' },
@@ -215,6 +217,19 @@ const MATCH_SECTIONS = [
     title: { it: 'Formazione e stile avversario', en: 'Opponent formation and style', es: 'Formación y estilo rival' },
     description: { it: 'La schermata con modulo, stile di gioco e forza della squadra avversaria.', en: 'The screen with the opponent formation, playstyle and team strength.', es: 'La pantalla con la formación, estilo de juego y fuerza del rival.' },
     maxImages: 1
+  }
+]
+
+const MATCH_EXAMPLES = [
+  {
+    id: 'team_stats',
+    src: '/examples/game-analysis/analisi-tiro-comandi.jpg',
+    caption: { it: 'Tiri, gol, comandi', en: 'Shots, goals, commands', es: 'Tiros, goles, comandos' }
+  },
+  {
+    id: 'attack_areas',
+    src: '/examples/game-analysis/analisi-passaggio-dribbling-difesa.jpg',
+    caption: { it: 'Passaggi, dribbling, difesa', en: 'Passes, dribbling, defense', es: 'Pases, regate, defensa' }
   }
 ]
 
@@ -430,7 +445,8 @@ function MatchUploadCard({
   onGallery,
   onRead,
   onSkip,
-  onSave
+  onSave,
+  onShowExample
 }) {
   if (!flow) return null
   const completed = MATCH_SECTIONS.filter((section) => flow.data?.[section.id]).length
@@ -506,6 +522,29 @@ function MatchUploadCard({
           </div>
           <h3>{L(lang, currentSection.title)}</h3>
           <p>{L(lang, currentSection.description)}</p>
+          {(() => {
+            const examples = MATCH_EXAMPLES.filter((ex) => ex.id === currentSection.id)
+            if (examples.length === 0) return null
+            return (
+              <div className="hc-matchExamples">
+                <span className="hc-matchExamplesLabel">{L(lang, COPY.matchExampleTitle)}</span>
+                <div className="hc-matchExamplesGrid">
+                  {examples.map((ex) => (
+                    <button
+                      key={ex.id}
+                      type="button"
+                      className="hc-matchExampleThumb"
+                      onClick={() => onShowExample && onShowExample(ex)}
+                      aria-label={L(lang, COPY.matchExampleHint)}
+                    >
+                      <img src={ex.src} alt={L(lang, ex.caption)} loading="lazy" />
+                      <span className="hc-matchExampleCaption">{L(lang, ex.caption)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
           <div className="hc-matchUploadActions">
             <button type="button" className="hc-matchUploadButton" onClick={onCamera} disabled={analyzing}>
               <Camera size={18} aria-hidden="true" />
@@ -591,6 +630,7 @@ export default function HeroChat({
   const [attachmentMode, setAttachmentMode] = React.useState('stats') // stats | counter | match
   const [matchFlow, setMatchFlow] = React.useState(null)
   const [matchSaving, setMatchSaving] = React.useState(false)
+  const [exampleLightbox, setExampleLightbox] = React.useState(null)
   const [feedbackMatchId, setFeedbackMatchId] = React.useState(null)
   const [lastSavedMatchId, setLastSavedMatchId] = React.useState(null)
   const [threadId, setThreadId] = React.useState(null)
@@ -1620,6 +1660,7 @@ export default function HeroChat({
             onRead={analyzeAttachments}
             onSkip={skipMatchSection}
             onSave={saveMatchFlow}
+            onShowExample={setExampleLightbox}
           />
         )}
 
@@ -1935,6 +1976,32 @@ export default function HeroChat({
           </button>
         </form>
       </div>
+
+      {exampleLightbox && (
+        <div
+          className="hc-exampleLightbox"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setExampleLightbox(null)}
+        >
+          <button
+            type="button"
+            className="hc-exampleLightboxClose"
+            aria-label={L(lang, COPY.matchExampleHint)}
+            onClick={() => setExampleLightbox(null)}
+          >
+            <X size={20} />
+          </button>
+          <img
+            src={exampleLightbox.src}
+            alt={exampleLightbox.caption ? L(lang, exampleLightbox.caption) : ''}
+            onClick={(e) => e.stopPropagation()}
+          />
+          {exampleLightbox.caption && (
+            <span className="hc-exampleLightboxCaption">{L(lang, exampleLightbox.caption)}</span>
+          )}
+        </div>
+      )}
 
       <style jsx>{`
         .heroChat {
@@ -3198,6 +3265,113 @@ export default function HeroChat({
           object-fit: contain;
           background: rgba(0, 0, 0, 0.28);
           border: 1px solid var(--accent-border);
+        }
+
+        :global(.hc-matchExamples) {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          margin-top: 4px;
+          margin-bottom: 4px;
+        }
+
+        :global(.hc-matchExamplesLabel) {
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--text-dim);
+        }
+
+        :global(.hc-matchExamplesGrid) {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+          gap: 8px;
+        }
+
+        :global(.hc-matchExampleThumb) {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          padding: 0;
+          border: 1px solid var(--border-soft);
+          border-radius: 10px;
+          background: transparent;
+          cursor: pointer;
+          overflow: hidden;
+          transition: border-color 0.18s ease, transform 0.18s ease;
+        }
+
+        :global(.hc-matchExampleThumb:hover) {
+          border-color: var(--accent);
+          transform: translateY(-1px);
+        }
+
+        :global(.hc-matchExampleThumb img) {
+          width: 100%;
+          height: 72px;
+          object-fit: cover;
+          background: rgba(0, 0, 0, 0.24);
+          display: block;
+        }
+
+        :global(.hc-matchExampleCaption) {
+          padding: 4px 6px;
+          font-size: 10px;
+          font-weight: 700;
+          color: var(--text-dim);
+          line-height: 1.3;
+        }
+
+        .hc-exampleLightbox {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.92);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          z-index: 9999;
+          padding: clamp(12px, 4vw, 24px);
+          box-sizing: border-box;
+          animation: hc-exampleFade 0.18s ease;
+        }
+
+        @keyframes hc-exampleFade {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        .hc-exampleLightbox img {
+          max-width: min(100%, 560px);
+          max-height: 78vh;
+          object-fit: contain;
+          border-radius: 12px;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .hc-exampleLightboxCaption {
+          color: rgba(255, 255, 255, 0.86);
+          font-size: 13px;
+          font-weight: 700;
+          text-align: center;
+        }
+
+        .hc-exampleLightboxClose {
+          position: absolute;
+          top: max(16px, env(safe-area-inset-top, 0px));
+          right: max(16px, env(safe-area-inset-right, 0px));
+          width: 40px;
+          height: 40px;
+          border-radius: 999px;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.08);
+          color: #fff;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
         }
 
         :global(.hc-matchPrimary) {
