@@ -231,10 +231,10 @@ export default function ImpostazioniProfiloPage() {
 
   const safeCompletionScore = Math.max(0, Math.min(100, Number(completionScore) || 0))
   const profileGradient = safeCompletionScore >= 87.5
-    ? 'conic-gradient(#00ff88 0deg, #00ff88 var(--score-angle), rgba(255,255,255,0.08) var(--score-angle), rgba(255,255,255,0.08) 360deg)'
+    ? 'conic-gradient(#00ff88 0deg, #00ff88 var(--score-angle), var(--border-soft) var(--score-angle), var(--border-soft) 360deg)'
     : safeCompletionScore >= 50
-      ? 'conic-gradient(#00d4ff 0deg, #00d4ff var(--score-angle), rgba(255,255,255,0.08) var(--score-angle), rgba(255,255,255,0.08) 360deg)'
-      : 'conic-gradient(#ffcb05 0deg, #ffcb05 var(--score-angle), rgba(255,255,255,0.08) var(--score-angle), rgba(255,255,255,0.08) 360deg)'
+      ? 'conic-gradient(#00d4ff 0deg, #00d4ff var(--score-angle), var(--border-soft) var(--score-angle), var(--border-soft) 360deg)'
+      : 'conic-gradient(#ffcb05 0deg, #ffcb05 var(--score-angle), var(--border-soft) var(--score-angle), var(--border-soft) 360deg)'
   const cleanValue = (value) => {
     if (Array.isArray(value)) return value.filter(Boolean).join(', ')
     if (value === null || value === undefined || value === '') return null
@@ -276,7 +276,7 @@ export default function ImpostazioniProfiloPage() {
   if (loading) {
     return (
       <main style={{ padding: '32px 24px', minHeight: '100vh', textAlign: 'center' }}>
-        <RefreshCw size={32} style={{ animation: 'spin 1s linear infinite', marginBottom: '16px', color: 'var(--neon-blue)' }} />
+        <RefreshCw size={32} style={{ animation: 'spin 1s linear infinite', marginBottom: '16px', color: 'var(--accent)' }} />
         <div>{t('loadingProfile')}</div>
       </main>
     )
@@ -428,7 +428,7 @@ export default function ImpostazioniProfiloPage() {
             gap: '8px',
             background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(0, 180, 216, 0.3))',
             border: '2px solid #00d4ff',
-            color: '#fff',
+            color: 'var(--text-main)',
             fontWeight: 600,
             flexShrink: 0,
             boxShadow: '0 0 15px rgba(0, 212, 255, 0.4), inset 0 0 10px rgba(0, 212, 255, 0.1)',
@@ -649,7 +649,7 @@ export default function ImpostazioniProfiloPage() {
               background: 'rgba(0, 212, 255, 0.2)',
               border: '1px solid rgba(0, 212, 255, 0.4)',
               borderRadius: '4px',
-              color: 'var(--neon-blue)',
+              color: 'var(--accent)',
               fontWeight: 600,
               textTransform: 'uppercase',
               letterSpacing: '0.5px'
@@ -898,7 +898,7 @@ export default function ImpostazioniProfiloPage() {
         .profile-hero p {
           max-width: 640px;
           margin: 0;
-          color: rgba(255, 255, 255, 0.74);
+          color: var(--text-main);
           font-size: clamp(14px, 2.2vw, 16px);
           line-height: 1.65;
         }
@@ -917,10 +917,10 @@ export default function ImpostazioniProfiloPage() {
           gap: 8px;
           min-height: 44px;
           padding: 10px 14px;
-          border: 1px solid rgba(255, 255, 255, 0.12);
+          border: 1px solid var(--border-soft);
           border-radius: 999px;
-          color: rgba(255, 255, 255, 0.86);
-          background: rgba(255, 255, 255, 0.05);
+          color: var(--text-main);
+          background: var(--surface-2);
           text-decoration: none;
           font-size: 14px;
           font-weight: 800;
@@ -947,9 +947,9 @@ export default function ImpostazioniProfiloPage() {
           justify-content: center;
           gap: 14px;
           min-height: 230px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          border: 1px solid var(--border-soft);
           border-radius: 24px;
-          background: rgba(255, 255, 255, 0.045);
+          background: var(--surface-2);
           backdrop-filter: blur(10px);
         }
 
@@ -971,7 +971,7 @@ export default function ImpostazioniProfiloPage() {
           justify-content: center;
           border-radius: 999px;
           background: rgba(5, 8, 20, 0.94);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          border: 1px solid var(--border-soft);
         }
 
         .profile-score-orb strong {
@@ -983,7 +983,7 @@ export default function ImpostazioniProfiloPage() {
 
         .profile-score-orb span,
         .profile-score-caption span {
-          color: rgba(255, 255, 255, 0.58);
+          color: var(--text-dim);
           font-size: 12px;
           font-weight: 700;
         }
@@ -1020,7 +1020,7 @@ export default function ImpostazioniProfiloPage() {
         .profile-metric-card span,
         .profile-metric-card small {
           display: block;
-          color: rgba(255, 255, 255, 0.58);
+          color: var(--text-dim);
           font-size: 12px;
           line-height: 1.35;
         }
@@ -1041,7 +1041,7 @@ export default function ImpostazioniProfiloPage() {
         }
 
         .profile-metric-card--empty strong {
-          color: rgba(255, 255, 255, 0.72);
+          color: var(--text-main);
           font-size: clamp(18px, 3.3vw, 24px);
         }
 
@@ -1076,7 +1076,7 @@ export default function ImpostazioniProfiloPage() {
 
         .profile-section-heading p {
           margin: 0;
-          color: rgba(255, 255, 255, 0.62);
+          color: var(--text-dim);
           font-size: 13px;
           line-height: 1.5;
         }
