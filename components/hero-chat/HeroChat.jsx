@@ -508,7 +508,7 @@ function MatchUploadCard({
           />
           <button
             type="button"
-            className="hc-attachAnalyze"
+            className="hc-matchPrimary"
             disabled={typeof flow.isHome !== 'boolean'}
             onClick={onBegin}
           >
@@ -3144,22 +3144,31 @@ export default function HeroChat({
           cursor: pointer;
         }
 
-        .hc-attachAnalyze {
+        :global(.hc-attachAnalyze) {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
           align-self: stretch;
-          min-height: 40px;
-          border-radius: 10px;
-          border: 1px solid var(--accent-border);
-          background: var(--accent-bg);
-          color: var(--accent);
-          font-size: 13px;
-          font-weight: 700;
-          font-family: inherit;
+          width: 100%;
+          min-height: 48px;
+          padding: 11px 14px;
+          border-radius: 14px;
+          border: none;
+          background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+          color: #020510;
+          font: inherit;
+          font-size: 14px;
+          font-weight: 900;
           cursor: pointer;
         }
 
-        .hc-attachAnalyze:disabled {
-          opacity: 0.5;
+        :global(.hc-attachAnalyze:disabled) {
+          opacity: 0.45;
           cursor: default;
+        }
+
+        :global(.hc-attachAnalyze:not(:disabled):hover) {
+          filter: brightness(1.05);
         }
 
         :global(.hc-planCard) {
