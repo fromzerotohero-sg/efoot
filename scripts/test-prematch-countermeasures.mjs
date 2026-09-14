@@ -44,7 +44,7 @@ const defenseCategory = Object.keys(INDIVIDUAL_INSTRUCTIONS_CONFIG).find((key) =
     diagnosis: 'Avversario in 4-2-1-3: centro denso, attacca le fasce.',
     play_summary: {
       match_key: 'Avversario in 4-2-1-3: centro denso, attacca le fasce.',
-      attacking: 'Usa le fasce al primo possesso',
+      attacking: 'Cerca ampiezza con Beckham',
       defending: 'Chiudi i centrali tra le linee',
       base_plan: 'Mantieni il tuo 4-3-3'
     },
@@ -74,7 +74,8 @@ const defenseCategory = Object.keys(INDIVIDUAL_INSTRUCTIONS_CONFIG).find((key) =
       extracted_data: {
         visual_tactical_profile: { central_density: 'high', width_profile: 'narrow' }
       }
-    }
+    },
+    roster: [{ player_name: 'Rijkaard' }]
   })
   const plan = presented.customer_plan
   assert(Boolean(plan.diagnosis), 'empty bench still has diagnosis')
@@ -88,6 +89,10 @@ const defenseCategory = Object.keys(INDIVIDUAL_INSTRUCTIONS_CONFIG).find((key) =
   for (const tip of plan.starting_plan) {
     assert(!hasTechnicalLeak(tip), `tip clean: ${tip}`)
   }
+  assert(
+    plan.starting_plan.every((tip) => !/beckham/i.test(tip)),
+    'unknown player removed from customer copy'
+  )
 }
 
 // --- Case: instruction labels are human ---

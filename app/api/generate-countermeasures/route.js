@@ -797,6 +797,10 @@ if (process.env.NODE_ENV !== 'production') {
             } else {
               const replaced = titolariMap.get(replaceId)
               const reserve = riserveMap.get(playerId)
+              if (!reserve?.player_name || !replaced?.player_name) {
+                isValid = false
+                reason = 'Sostituzione senza nomi verificabili nella rosa'
+              }
               if (!replaceName) {
                 suggestion.replace_player_name = replaced.player_name || replaced.name || '?'
               }
@@ -820,6 +824,10 @@ if (process.env.NODE_ENV !== 'production') {
               } else if (String(swapCheck.slotRole || slotRole).trim().toUpperCase() === 'DC' && hasFlankJustification(suggestion.reason)) {
                 isValid = false
                 reason = `Sostituzione incoerente: un cambio nello slot DC non può essere motivato con copertura fascia/terzino`
+              }
+              if (isValid) {
+                suggestion.player_name = String(reserve.player_name).trim()
+                suggestion.replace_player_name = String(replaced.player_name).trim()
               }
             }
           }
@@ -890,8 +898,8 @@ if (process.env.NODE_ENV !== 'production') {
             ...instr,
             slot,
             instruction,
-            player_name: nameFromModel || nameFromRoster || null,
-            position: posFromModel || posFromRoster || null
+            player_name: nameFromRoster || nameFromModel || null,
+            position: posFromRoster || posFromModel || null
           })
         } else invalidInstructions.push({ instr, reason: check.error || 'istruzione non valida' })
       }
@@ -992,7 +1000,8 @@ if (process.env.NODE_ENV !== 'production') {
 
     const presented = presentCountermeasuresForCustomer(countermeasures, {
       lang: language === 'en' || language === 'es' ? language : 'it',
-      opponentFormation
+      opponentFormation,
+      roster
     })
 
     // 14. Restituisci piano cliente + dati apply
