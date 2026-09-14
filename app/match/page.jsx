@@ -542,7 +542,7 @@ export default function MatchHistoryPage() {
         .history-error,
         .history-loading {
           border: 1px solid rgba(0, 0, 0, 0.08);
-          background: #ffffff;
+          background: #101a20;
           box-shadow: 0 14px 36px rgba(29, 29, 31, 0.07), inset 0 1px rgba(255, 255, 255, 0.9);
         }
 
@@ -590,7 +590,7 @@ export default function MatchHistoryPage() {
 
         h1 {
           margin: 0;
-          color: #1d1d1f;
+          color: #f4f6f7;
           font-size: clamp(28px, 4vw, 36px);
           line-height: 0.98;
           letter-spacing: -1.2px;
@@ -621,13 +621,13 @@ export default function MatchHistoryPage() {
           min-height: 86px;
           border-radius: 16px;
           padding: 14px;
-          background: #efece6;
+          background: rgba(255, 255, 255, 0.06);
           border: 1px solid rgba(0, 0, 0, 0.08);
         }
 
         .hero-stats span {
           display: block;
-          color: #1d1d1f;
+          color: #f4f6f7;
           font-size: 26px;
           font-weight: 950;
         }
@@ -754,7 +754,7 @@ export default function MatchHistoryPage() {
         }
 
         .empty-state h2 {
-          color: #1d1d1f;
+          color: #f4f6f7;
           font-size: 24px;
           margin: 4px 0 0;
         }
@@ -857,7 +857,7 @@ export default function MatchHistoryPage() {
 
         .date-pill {
           color: #6b6b6b;
-          background: #efece6;
+          background: rgba(255, 255, 255, 0.06);
           border: 1px solid rgba(0, 0, 0, 0.08);
         }
 
@@ -907,7 +907,7 @@ export default function MatchHistoryPage() {
           border: 0;
           padding: 0;
           background: transparent;
-          color: #1d1d1f;
+          color: #f4f6f7;
           font-size: clamp(17px, 2vw, 21px);
           font-weight: 950;
           cursor: text;
@@ -938,7 +938,7 @@ export default function MatchHistoryPage() {
           border-radius: 12px;
           border: 1px solid rgba(0, 212, 255, 0.38);
           background: rgba(0, 212, 255, 0.09);
-          color: #1d1d1f;
+          color: #f4f6f7;
           padding: 0 12px;
           outline: none;
           font-size: 14px;
@@ -962,7 +962,7 @@ export default function MatchHistoryPage() {
 
         .icon-action {
           border: 1px solid rgba(0, 0, 0, 0.08);
-          background: #efece6;
+          background: rgba(255, 255, 255, 0.06);
           color: #d1d5db;
         }
 
@@ -993,7 +993,7 @@ export default function MatchHistoryPage() {
           min-width: 110px;
           overflow: hidden;
           border-radius: 999px;
-          background: #efece6;
+          background: rgba(255, 255, 255, 0.06);
         }
 
         .progress-track span {
@@ -1005,7 +1005,7 @@ export default function MatchHistoryPage() {
         }
 
         .progress-row strong {
-          color: #1d1d1f;
+          color: #f4f6f7;
           font-size: 13px;
           min-width: 28px;
         }

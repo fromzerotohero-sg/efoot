@@ -83,7 +83,7 @@ function SummaryLineChart({ summary, categoryLabels, t }) {
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
         <TrendingUp size={20} style={{ color: '#00A8C8' }} />
-        <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#1d1d1f', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+        <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#f4f6f7', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
           {t('chartsAndComparisonOverview') || 'Panoramica'}
         </h2>
       </div>
@@ -143,7 +143,7 @@ function LineChartCard({ title, series, isPercent, t }) {
       minWidth: 0,
       maxWidth: '100%'
     }}>
-      <h3 style={{ margin: '0 0 12px', fontSize: 'clamp(14px, 3vw, 15px)', fontWeight: 700, color: '#1d1d1f' }}>{title}</h3>
+      <h3 style={{ margin: '0 0 12px', fontSize: 'clamp(14px, 3vw, 15px)', fontWeight: 700, color: '#f4f6f7' }}>{title}</h3>
       <div style={{ display: 'flex', gap: '16px', marginBottom: '8px', fontSize: '11px', color: '#6b6b6b' }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           <span style={{ width: 10, height: 2, background: 'var(--neon-blue)' }} /> Tu
@@ -173,7 +173,7 @@ function LineChartCard({ title, series, isPercent, t }) {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', marginTop: '8px', fontSize: 'clamp(10px, 2.5vw, 11px)', color: '#6b6b6b' }}>
         {series.map(({ label, tu, div1 }) => (
           <span key={String(label)} style={{ display: 'inline-flex', gap: '6px' }}>
-            <strong style={{ color: '#1d1d1f' }}>{t ? (t(String(label)) || String(label)) : String(label)}:</strong> Tu {formatVal(tu)} · Top {formatVal(div1)}
+            <strong style={{ color: '#f4f6f7' }}>{t ? (t(String(label)) || String(label)) : String(label)}:</strong> Tu {formatVal(tu)} · Top {formatVal(div1)}
           </span>
         ))}
       </div>
@@ -236,7 +236,7 @@ export default function GraficiComparazionePage() {
   const isPercentCategories = { shot_usage: true, passing: true, dribbling: true, defense: true, special_commands: false }
 
   return (
-    <div className="ux-v2-light-tool" style={{ minHeight: '100%', overflowX: 'hidden', color: '#1d1d1f' }}>
+    <div className="ux-v2-light-tool" style={{ minHeight: '100%', overflowX: 'hidden', color: '#f4f6f7' }}>
       <header style={{
         display: 'flex',
         alignItems: 'center',
@@ -258,7 +258,7 @@ export default function GraficiComparazionePage() {
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <BarChart3 size={22} style={{ color: '#00A8C8' }} />
-            <h1 style={{ margin: 0, fontSize: 'clamp(18px, 4vw, 22px)', fontWeight: 800, wordBreak: 'break-word', color: '#1d1d1f' }}>{t('chartsAndComparisonTitle')}</h1>
+            <h1 style={{ margin: 0, fontSize: 'clamp(18px, 4vw, 22px)', fontWeight: 800, wordBreak: 'break-word', color: '#f4f6f7' }}>{t('chartsAndComparisonTitle')}</h1>
           </div>
         </div>
       </header>

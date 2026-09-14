@@ -1498,17 +1498,17 @@ body > * {
   to { transform: rotate(360deg); }
 }
 
-/* UX V2 — Coach tool pages on MetalGate light shell */
+/* UX V2 — Coach tool pages on dark premium shell (era tema chiaro: convertito) */
 .ux-v2-light-tool {
-  color: #1d1d1f;
+  color: #f4f6f7;
 }
 
 .ux-v2-light-tool .neon-card,
 .ux-v2-light-tool .neon-panel {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 14px 36px rgba(29, 29, 31, 0.07), inset 0 1px rgba(255, 255, 255, 0.9);
-  color: #1d1d1f;
+  background: #101a20;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
+  color: #f4f6f7;
 }
 
 .ux-v2-light-tool .neon-card::before {
@@ -1516,22 +1516,22 @@ body > * {
 }
 
 .ux-v2-light-tool .neon-card:hover {
-  border-color: rgba(0, 0, 0, 0.12);
-  box-shadow: 0 18px 44px rgba(29, 29, 31, 0.1);
+  border-color: rgba(61, 220, 151, 0.28);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45);
   transform: translateY(-2px);
 }
 
 .ux-v2-light-tool .neon-button {
-  background: #efece6;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  color: #1d1d1f;
+  background: rgba(61, 220, 151, 0.1);
+  border: 1px solid rgba(61, 220, 151, 0.3);
+  color: #3ddc97;
   box-shadow: none;
   text-shadow: none;
 }
 
 .ux-v2-light-tool .neon-button:hover {
-  background: #ffffff;
-  border-color: rgba(0, 168, 200, 0.35);
+  background: rgba(61, 220, 151, 0.16);
+  border-color: rgba(61, 220, 151, 0.5);
   box-shadow: none;
   transform: translateY(-1px);
   text-shadow: none;
@@ -1540,7 +1540,7 @@ body > * {
 .ux-v2-light-tool .neon-text,
 .ux-v2-light-tool .neon-text-gold,
 .ux-v2-light-tool .text-glow {
-  color: #1d1d1f;
+  color: #f4f6f7;
   text-shadow: none;
 }
 

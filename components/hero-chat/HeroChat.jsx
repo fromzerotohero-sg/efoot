@@ -7,7 +7,6 @@ import {
   Mic,
   MicOff,
   Plus,
-  Users,
   Gauge,
   Settings,
   Zap,
@@ -44,14 +43,8 @@ const COPY = {
   micStop: { it: 'Ferma dettatura', en: 'Stop dictation', es: 'Detener dictado' },
   listening: { it: 'Ti sto ascoltando…', en: 'Listening…', es: 'Escuchando…' },
   thinking: { it: 'Hero sta scrivendo…', en: 'Hero is typing…', es: 'Hero está escribiendo…' },
-  roster: { it: 'Rosa', en: 'Squad', es: 'Plantilla' },
   knowledge: { it: 'Quanto ti conosce', en: 'How well it knows you', es: 'Cuánto te conoce' },
-  rosterCardTitle: { it: 'La tua rosa', en: 'Your squad', es: 'Tu plantilla' },
-  rosterCardCta: { it: 'Gestisci rosa', en: 'Manage squad', es: 'Gestionar plantilla' },
   starters: { it: 'titolari', en: 'starters', es: 'titulares' },
-  reserves: { it: 'riserve', en: 'reserves', es: 'suplentes' },
-  coachActive: { it: 'Allenatore attivo', en: 'Active coach', es: 'Entrenador activo' },
-  coachMissing: { it: 'Allenatore da configurare', en: 'Coach to set up', es: 'Entrenador por configurar' },
   knowledgeCardTitle: { it: 'Quanto Hero ti conosce', en: 'How well Hero knows you', es: 'Cuánto te conoce Hero' },
   knowledgeCardSub: { it: 'Dati reali usati per personalizzare i consigli.', en: 'Real data used to personalize advice.', es: 'Datos reales usados para personalizar los consejos.' },
   actions: { it: 'Azioni rapide', en: 'Quick actions', es: 'Acciones rápidas' },
@@ -649,27 +642,6 @@ export default function HeroChat({
         )}
 
         {/* Card ricche in-conversazione (dati reali) */}
-        {feedCards.includes('roster') && (
-          <div className="hc-richCard">
-            <div className="hc-richHead">
-              <Users size={16} aria-hidden="true" />
-              <strong>{L(lang, COPY.rosterCardTitle)}</strong>
-              <button type="button" className="hc-richClose" aria-label="X" onClick={() => setFeedCards((p) => p.filter((c) => c !== 'roster'))}>
-                <X size={14} />
-              </button>
-            </div>
-            <div className="hc-rosterRows">
-              <span>{L(lang, COPY.starters)}: <strong>{stats?.titolari ?? 0}/11</strong></span>
-              <span>{L(lang, COPY.reserves)}: <strong>{stats?.riserve ?? 0}</strong></span>
-              <span>{hasActiveCoach ? L(lang, COPY.coachActive) : L(lang, COPY.coachMissing)}</span>
-              {stats?.formation && <span>{stats.formation}</span>}
-            </div>
-            <button type="button" className="hc-richCta" onClick={() => router.push('/gestione-formazione')}>
-              {L(lang, COPY.rosterCardCta)}
-            </button>
-          </div>
-        )}
-
         {feedCards.includes('knowledge') && (
           <div className="hc-richCard">
             <div className="hc-richHead">
@@ -706,14 +678,6 @@ export default function HeroChat({
           </button>
         </div>
       )}
-
-      {/* Quick actions (reference foto 1: Rosa; "Quanto ti conosce" si apre dall'anello header) */}
-      <div className="hc-quickRow">
-        <button type="button" className="hc-quickBtn" onClick={() => openFeedCard('roster')}>
-          <Users size={16} aria-hidden="true" />
-          {L(lang, COPY.roster)}
-        </button>
-      </div>
 
       {/* Composer */}
       <div className="hc-composerWrap">
@@ -1147,17 +1111,6 @@ export default function HeroChat({
           cursor: pointer;
         }
 
-        .hc-rosterRows {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px 16px;
-          font-size: 13px;
-          color: rgba(244, 246, 247, 0.7);
-        }
-
-        .hc-rosterRows strong {
-          color: #3ddc97;
-        }
 
         .hc-richCta {
           align-self: flex-start;
@@ -1294,33 +1247,6 @@ export default function HeroChat({
           min-width: 180px;
         }
 
-        .hc-quickRow {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 10px;
-          padding: 10px 4px 8px;
-          flex-shrink: 0;
-        }
-
-        .hc-quickBtn {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          min-height: 46px;
-          border-radius: 12px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          background: #101a20;
-          color: rgba(244, 246, 247, 0.85);
-          font-size: 13px;
-          font-weight: 700;
-          font-family: inherit;
-          cursor: pointer;
-        }
-
-        .hc-quickBtn:hover {
-          border-color: rgba(61, 220, 151, 0.4);
-        }
 
         .hc-composerWrap {
           position: relative;
@@ -1463,7 +1389,6 @@ export default function HeroChat({
         }
 
         .hc-iconBtn:focus-visible,
-        .hc-quickBtn:focus-visible,
         .hc-sendBtn:focus-visible,
         .hc-micBtn:focus-visible,
         .hc-plusBtn:focus-visible,
