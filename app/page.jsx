@@ -380,6 +380,7 @@ function HomePage() {
         stats={stats}
         starters={starters}
         slotPositions={slotPositions}
+        formation={stats.formation}
         hasActiveCoach={hasActiveCoach}
         recentMatches={recentMatches}
         gameAnalysisLastCapture={gameAnalysisLastCapture}
