@@ -5904,6 +5904,16 @@ export default withAuth(function NuovaRosaLabPage() {
         <div className="nr-hero-copy">
           <h1>{(lang === 'en' || lang === 'es') ? 'My squad' : 'La mia rosa'}</h1>
           <div className="nr-coach-header-panel">
+            {loading ? (
+              <div className="nr-coach-header-main nr-coach-header-skeleton" aria-hidden="true">
+                <div className="nr-coach-avatar nr-coach-avatar-skeleton" />
+                <div className="nr-coach-header-skeletonText">
+                  <span className="nr-skeleton-line nr-skeleton-line-sm" />
+                  <span className="nr-skeleton-line nr-skeleton-line-md" />
+                  <span className="nr-skeleton-line nr-skeleton-line-lg" />
+                </div>
+              </div>
+            ) : (
             <button
               type="button"
               className={`nr-coach-header-main ${activeCoach?.coach_name ? 'is-clickable' : ''}`}
@@ -5935,12 +5945,15 @@ export default withAuth(function NuovaRosaLabPage() {
                 )}
               </div>
             </button>
+            )}
             <div className="nr-coach-header-actions">
-              <button type="button" className="nr-primary-button" onClick={openCoachCatalog} disabled={savingCoach}>
+              <button type="button" className="nr-primary-button" onClick={openCoachCatalog} disabled={savingCoach || loading}>
                 <Search size={14} />
-                {activeCoach?.coach_name
-                  ? ((lang === 'en' || lang === 'es') ? 'Change catalog' : 'Cambia da catalogo')
-                  : ((lang === 'en' || lang === 'es') ? 'Choose catalog' : 'Scegli catalogo')}
+                {loading
+                  ? ((lang === 'en' || lang === 'es') ? 'Loading…' : 'Caricamento…')
+                  : activeCoach?.coach_name
+                    ? ((lang === 'en' || lang === 'es') ? 'Change catalog' : 'Cambia da catalogo')
+                    : ((lang === 'en' || lang === 'es') ? 'Choose catalog' : 'Scegli catalogo')}
               </button>
             </div>
           </div>
@@ -7765,6 +7778,62 @@ export default withAuth(function NuovaRosaLabPage() {
           width: 100%;
           height: 100%;
           object-fit: cover;
+        }
+
+        .nr-coach-header-skeleton {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          padding: 12px 14px;
+          cursor: default;
+          opacity: 0.85;
+        }
+
+        .nr-coach-avatar-skeleton {
+          background: var(--skeleton-bg, rgba(255, 255, 255, 0.06));
+          border: none;
+          animation: nr-skeleton-shimmer 1.4s ease-in-out infinite;
+          background-size: 200% 100%;
+        }
+
+        :global(html[data-theme='light']) .nr-coach-avatar-skeleton {
+          background: rgba(0, 0, 0, 0.06);
+        }
+
+        .nr-coach-header-skeletonText {
+          display: flex;
+          flex-direction: column;
+          gap: 7px;
+          flex: 1;
+          min-width: 0;
+        }
+
+        .nr-skeleton-line {
+          height: 11px;
+          border-radius: 6px;
+          background: var(--skeleton-bg, rgba(255, 255, 255, 0.08));
+          animation: nr-skeleton-shimmer 1.4s ease-in-out infinite;
+          background-size: 200% 100%;
+        }
+
+        :global(html[data-theme='light']) .nr-skeleton-line {
+          background: rgba(0, 0, 0, 0.08);
+        }
+
+        .nr-skeleton-line-sm { width: 38%; }
+        .nr-skeleton-line-md { width: 62%; height: 14px; }
+        .nr-skeleton-line-lg { width: 80%; }
+
+        @keyframes nr-skeleton-shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .nr-coach-avatar-skeleton,
+          .nr-skeleton-line {
+            animation: none;
+          }
         }
 
         .nr-coach-header-main span {
