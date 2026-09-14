@@ -10,7 +10,9 @@ export const dynamic = 'force-dynamic'
 
 function getLang(req) {
   const accept = req?.headers?.get?.('accept-language') || ''
-  return accept.toLowerCase().startsWith('it') || accept.includes('it') ? 'it' : 'en'
+  const normalized = accept.toLowerCase()
+  if (normalized.startsWith('es') || normalized.includes('es')) return 'es'
+  return normalized.startsWith('it') || normalized.includes('it') ? 'it' : 'en'
 }
 
 const ERRORS = {
@@ -120,13 +122,22 @@ export async function POST(req) {
       return NextResponse.json({ error: L.config }, { status: 500 })
     }
 
-    const { imageDataUrl } = await req.json()
+    const body = await req.json().catch(() => ({}))
+    let imageDataUrls = body.imageDataUrls || (body.imageDataUrl ? [body.imageDataUrl] : [])
+    if (!Array.isArray(imageDataUrls)) imageDataUrls = [imageDataUrls].filter(Boolean)
+    imageDataUrls = imageDataUrls.filter((url) => url && typeof url === 'string')
 
-    if (!imageDataUrl || typeof imageDataUrl !== 'string') {
+    if (imageDataUrls.length === 0) {
       return NextResponse.json({ error: L.imageRequired }, { status: 400 })
     }
+    if (imageDataUrls.length > 2) {
+      return NextResponse.json({ error: lang === 'it' ? 'Massimo 2 immagini.' : 'Maximum 2 images.' }, { status: 400 })
+    }
 
-    if (imageDataUrl.startsWith('data:image/')) {
+    for (const imageDataUrl of imageDataUrls) {
+      if (!/^data:image\/[a-z0-9.+-]+;base64,/i.test(imageDataUrl)) {
+        return NextResponse.json({ error: L.extraction, code: 'invalid_image_payload' }, { status: 400 })
+      }
       const base64Image = imageDataUrl.split(',')[1]
       if (base64Image) {
         const imageSizeBytes = (base64Image.length * 3) / 4
@@ -136,17 +147,19 @@ export async function POST(req) {
       }
     }
 
-    const deduction = await deductCredits(admin, userId, token, AI_COST, 'extract-formation')
+    const totalCost = imageDataUrls.length * AI_COST
+    const deduction = await deductCredits(admin, userId, token, totalCost, 'extract-formation')
     if (!deduction.success) {
       return NextResponse.json(
         { error: lang === 'it' ? 'Crediti insufficienti. Ricarica per continuare.' : 'Insufficient credits. Please recharge to continue.' },
         { status: 402, headers: { 'Content-Language': lang } }
       )
     }
-    creditChargeContext = { admin, userId, cost: AI_COST, operationType: 'extract-formation', functionName: 'extract-formation:POST' }
+    creditChargeContext = { admin, userId, cost: totalCost, operationType: 'extract-formation', functionName: 'extract-formation:POST' }
 
     // Prompt per estrazione formazione completa (11 giocatori + allenatore opzionale)
-    const prompt = `Analizza questo screenshot di eFootball che mostra una formazione completa con 11 giocatori sul campo.
+    const prompt = `Analizza uno o due screenshot di eFootball che mostrano la stessa formazione avversaria con 11 giocatori sul campo.
+Se ricevi due immagini, usale insieme: possono mostrare viste complementari della stessa schermata. Non duplicare i giocatori e non inventare dati mancanti.
 
 IMPORTANTE:
 - Identifica TUTTI gli 11 giocatori visibili sul campo (formazione completa)
@@ -234,13 +247,13 @@ Restituisci SOLO JSON valido, senza altro testo.`
             role: 'user',
             content: [
               { type: 'text', text: prompt },
-              {
+              ...imageDataUrls.map((imageDataUrl) => ({
                 type: 'image_url',
                 image_url: {
                   url: imageDataUrl,
                   detail: 'high'
                 }
-              }
+              }))
             ]
           }
         ],
@@ -421,6 +434,7 @@ Restituisci SOLO JSON valido, senza altro testo.`
 
     return NextResponse.json({
       formation: formationData.formation || null,
+      images_processed: imageDataUrls.length,
       slot_positions: formationData.slot_positions || {},
       players: formationData.players || [], // Opzionale, per preview
       coach: formationData.coach || null, // Allenatore opzionale (null se non presente)

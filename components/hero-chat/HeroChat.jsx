@@ -60,14 +60,10 @@ const COPY = {
   knowledgeCardTitle: { it: 'Quanto Hero ti conosce', en: 'How well Hero knows you', es: 'Cuánto te conoce Hero' },
   knowledgeCardSub: { it: 'Dati reali usati per personalizzare i consigli.', en: 'Real data used to personalize advice.', es: 'Datos reales usados para personalizar los consejos.' },
   actions: { it: 'Azioni rapide', en: 'Quick actions', es: 'Acciones rápidas' },
-  actionStats: { it: 'Aggiungi statistiche', en: 'Add game stats', es: 'Añadir estadísticas' },
-  actionPrepare: { it: 'Prepara la prossima partita', en: 'Prepare the next match', es: 'Preparar el próximo partido' },
+  actionStats: { it: 'Carica statistiche', en: 'Upload stats', es: 'Cargar estadísticas' },
+  actionPrepare: { it: 'Carica contromisure', en: 'Upload countermeasures', es: 'Cargar contramedidas' },
   actionCards: { it: 'Controlla una carta', en: 'Check a card', es: 'Revisar una carta' },
   actionFeedback: { it: 'Racconta l’ultima partita', en: 'Talk about the last match', es: 'Cuenta el último partido' },
-  guidedQuestion: { it: 'Vuoi preparare una partita?', en: 'Do you want to prepare a match?', es: '¿Quieres preparar un partido?' },
-  guidedQuestionSub: { it: 'Ti chiedo solo la foto della formazione avversaria. Poi penso io al piano.', en: 'I only need a screenshot of the opponent formation. Then I’ll build the plan.', es: 'Solo necesito una captura de la formación rival. Después preparo el plan.' },
-  guidedYes: { it: 'Sì, prepariamola', en: 'Yes, let’s prepare it', es: 'Sí, preparémoslo' },
-  guidedLater: { it: 'Non ora', en: 'Not now', es: 'Ahora no' },
   lowHp: { it: 'Saldo HP insufficiente per le azioni AI (costo standard: 2 HP).', en: 'Not enough HP for AI actions (standard cost: 2 HP).', es: 'HP insuficientes para acciones de IA (costo estándar: 2 HP).' },
   lowHpCta: { it: 'Ottieni HP', en: 'Get HP', es: 'Conseguir HP' },
   errorGeneric: { it: 'Qualcosa non ha funzionato. Riprova tra un momento.', en: 'Something went wrong. Try again in a moment.', es: 'Algo salió mal. Inténtalo de nuevo en un momento.' },
@@ -97,21 +93,28 @@ const COPY = {
   attachStatsMode: { it: 'Statistiche', en: 'Stats', es: 'Estadísticas' },
   attachCounterMode: { it: 'Contromisure', en: 'Countermeasures', es: 'Contramedidas' },
   attachStatsHint: { it: 'Foto Analisi eFootball (max 2)', en: 'eFootball Analysis screenshots (max 2)', es: 'Capturas de Análisis (máx. 2)' },
+  attachAddPhoto: { it: 'Aggiungi foto', en: 'Add photo', es: 'Añadir foto' },
+  attachAddGallery: { it: 'Scegli dalla galleria', en: 'Choose from gallery', es: 'Elegir de la galería' },
   attachAnalyze: { it: 'Analizza e salva', en: 'Analyze and save', es: 'Analizar y guardar' },
   counterAnalyze: { it: 'Crea contromisure', en: 'Build countermeasures', es: 'Crear contramedidas' },
   counterAnalyzing: { it: 'Sto leggendo l’assetto avversario…', en: 'Reading the opponent setup…', es: 'Leyendo el planteamiento rival…' },
-  counterRequest: { it: 'Mandami lo screenshot della formazione avversaria: preparo qui il piano partita, senza aprire altre pagine.', en: 'Send me the opponent formation screenshot: I’ll build the match plan here, without opening another page.', es: 'Envíame la captura de la formación rival: prepararé aquí el plan de partido, sin abrir otras páginas.' },
-  counterDone: { it: 'Piano pronto: controlla cosa cambierà prima di applicarlo.', en: 'Plan ready: review what will change before applying it.', es: 'Plan listo: revisa qué cambiará antes de aplicarlo.' },
+  counterRequest: { it: 'Mandami una o due foto della formazione avversaria: preparo qui il piano partita, senza aprire altre pagine.', en: 'Send me one or two photos of the opponent formation: I’ll build the match plan here, without opening another page.', es: 'Envíame una o dos fotos de la formación rival: prepararé aquí el plan de partido, sin abrir otras páginas.' },
+  counterDone: { it: 'Piano pronto. Qui trovi la lettura dell’avversario e cosa fare in partita.', en: 'Plan ready. Here is the opponent read and what to do in the match.', es: 'Plan listo. Aquí tienes la lectura del rival y qué hacer durante el partido.' },
   planTitle: { it: 'Piano contromisure', en: 'Countermeasure plan', es: 'Plan de contramedidas' },
-  planApply: { it: 'Applica piano', en: 'Apply plan', es: 'Aplicar plan' },
-  planApplying: { it: 'Applico in sicurezza…', en: 'Applying safely…', es: 'Aplicando de forma segura…' },
-  planDismiss: { it: 'Non applicare', en: 'Do not apply', es: 'No aplicar' },
+  planSaved: { it: 'Piano salvato nella conversazione. Usalo nella prossima partita.', en: 'Plan saved in this conversation. Use it in your next match.', es: 'Plan guardado en la conversación. Úsalo en tu próximo partido.' },
+  planRead: { it: 'Lettura avversario', en: 'Opponent read', es: 'Lectura del rival' },
+  planStrengths: { it: 'Cosa fa bene', en: 'What they do well', es: 'Lo que hace bien' },
+  planWeaknesses: { it: 'Dove attaccare', en: 'Where to attack', es: 'Dónde atacar' },
+  planAttack: { it: 'Piano offensivo', en: 'Attacking plan', es: 'Plan ofensivo' },
+  planDefend: { it: 'Piano difensivo', en: 'Defensive plan', es: 'Plan defensivo' },
+  planAvoid: { it: 'Evita', en: 'Avoid', es: 'Evita' },
   planStyle: { it: 'Stile squadra', en: 'Team playstyle', es: 'Estilo de equipo' },
   planInstructions: { it: 'Istruzioni individuali', en: 'Individual instructions', es: 'Instrucciones individuales' },
   planSubstitutions: { it: 'Cambi consigliati', en: 'Suggested substitutions', es: 'Cambios sugeridos' },
   planManual: { it: 'Da verificare manualmente', en: 'Review manually', es: 'Revisar manualmente' },
-  planApplied: { it: 'Piano applicato. Ho aggiornato le impostazioni valide e lasciato in evidenza ciò che richiede controllo manuale.', en: 'Plan applied. Valid settings were updated and anything requiring manual review is highlighted.', es: 'Plan aplicado. Actualicé los ajustes válidos y destaqué lo que requiere revisión manual.' },
-  planError: { it: 'Non ho applicato modifiche. Controlla la formazione e riprova.', en: 'No changes were applied. Check your lineup and try again.', es: 'No se aplicaron cambios. Revisa tu alineación e inténtalo de nuevo.' },
+  planWarnings: { it: 'Attenzione', en: 'Warnings', es: 'Advertencias' },
+  planConfidence: { it: 'Confidenza', en: 'Confidence', es: 'Confianza' },
+  planQuality: { it: 'Qualità dati', en: 'Data quality', es: 'Calidad de datos' },
   attachAnalyzing: { it: 'Sto leggendo le tue statistiche…', en: 'Reading your stats…', es: 'Leyendo tus estadísticas…' },
   attachDone: { it: 'Statistiche aggiornate. Ora posso consigliarti meglio.', en: 'Stats updated. I can advise you better now.', es: 'Estadísticas actualizadas. Ahora puedo aconsejarte mejor.' },
   attachError: { it: 'Non sono riuscito a leggere le foto. Riprova con screenshot più nitidi.', en: 'I couldn’t read the photos. Try clearer screenshots.', es: 'No pude leer las fotos. Prueba capturas más nítidas.' },
@@ -202,69 +205,139 @@ function TipCards({ tips, lang, onDeepen }) {
   )
 }
 
-function PrematchPlanCard({ plan, lang, applying, onApply, onDismiss }) {
+function PrematchPlanCard({ plan, lang }) {
   if (!plan) return null
-  const changeSet = plan.change_set || {}
-  const instructions = Object.values(changeSet.individual_instructions || {})
-  const substitutions = Array.isArray(changeSet.substitutions) ? changeSet.substitutions : []
-  const manual = Array.isArray(plan.apply_result?.manual_substitutions)
-    ? plan.apply_result.manual_substitutions
-    : []
-  const applied = plan.status === 'applied'
+  const raw = plan.countermeasures || {}
+  const analysis = raw.analysis || {}
+  const tactics = raw.countermeasures || {}
+  const summary = raw.play_summary || {}
+  const formationAdjustments = Array.isArray(tactics.formation_adjustments) ? tactics.formation_adjustments : []
+  const tacticalAdjustments = Array.isArray(tactics.tactical_adjustments) ? tactics.tactical_adjustments : []
+  const playerSuggestions = Array.isArray(tactics.player_suggestions) ? tactics.player_suggestions : []
+  const individualInstructions = Array.isArray(tactics.individual_instructions) ? tactics.individual_instructions : []
+  const strengths = Array.isArray(analysis.strengths) ? analysis.strengths : []
+  const weaknesses = Array.isArray(analysis.weaknesses) ? analysis.weaknesses : []
+  const warnings = Array.isArray(raw.warnings) ? raw.warnings : []
+
+  const localized = (value) => {
+    if (typeof value === 'string' || typeof value === 'number') return String(value)
+    return L(lang, value) || ''
+  }
+  const list = (items) => items.filter(Boolean).map((item, index) => (
+    <li key={`${index}-${String(localized(item))}`}>{localized(item)}</li>
+  ))
 
   return (
     <div className="hc-planCard">
       <div className="hc-planHead">
         <Trophy size={16} aria-hidden="true" />
         <strong>{L(lang, COPY.planTitle)}</strong>
-        <span className={`hc-planStatus${applied ? ' hc-planStatusDone' : ''}`}>
-          {applied ? '✓' : 'Preview'}
-        </span>
+        <span className="hc-planStatus hc-planStatusDone">✓</span>
       </div>
-      {changeSet.team_playing_style && (
-        <div className="hc-planRow">
-          <span className="hc-planLabel">{L(lang, COPY.planStyle)}</span>
-          <strong>{changeSet.team_playing_style.replace(/_/g, ' ')}</strong>
+      <p className="hc-planSaved">{L(lang, COPY.planSaved)}</p>
+
+      {(summary.match_key || summary.base_plan) && (
+        <div className="hc-planHero">
+          {summary.match_key && <strong>{localized(summary.match_key)}</strong>}
+          {summary.base_plan && <p>{localized(summary.base_plan)}</p>}
         </div>
       )}
-      {instructions.length > 0 && (
-        <div className="hc-planSection">
-          <span className="hc-planLabel">{L(lang, COPY.planInstructions)}</span>
-          {instructions.map((item, index) => (
-            <span key={`${item.player_id}-${index}`} className="hc-planChip">
-              {item.player_name || item.player_id}: {item.instruction.replace(/_/g, ' ')}
-            </span>
-          ))}
-        </div>
-      )}
-      {substitutions.length > 0 && (
-        <div className="hc-planSection">
-          <span className="hc-planLabel">{L(lang, COPY.planSubstitutions)}</span>
-          {substitutions.map((item, index) => (
-            <span key={`${item.in_player_id}-${index}`} className="hc-planChip">
-              {item.in_player_name || item.in_player_id} → {item.out_player_name || item.out_player_id}
-            </span>
-          ))}
-        </div>
-      )}
-      {manual.length > 0 && (
-        <div className="hc-planManual">
-          <strong>{L(lang, COPY.planManual)}</strong>
-          {manual.map((item, index) => (
-            <span key={`${item.in_player_id}-${index}`}>
-              {item.in_player_name || item.in_player_id} → {item.out_player_name || item.out_player_id}
-            </span>
-          ))}
-        </div>
-      )}
-      {!applied && (
-        <div className="hc-planActions">
-          <button type="button" className="hc-stateBtn" onClick={onApply} disabled={applying}>
-            {applying ? L(lang, COPY.planApplying) : L(lang, COPY.planApply)}
-          </button>
-          <button type="button" className="hc-saveLater" onClick={onDismiss} disabled={applying}>
-            {L(lang, COPY.planDismiss)}
-          </button>
+
+      <div className="hc-planVisualGrid">
+        {(analysis.opponent_formation_analysis || strengths.length || weaknesses.length) && (
+          <details className="hc-planSection" open>
+            <summary>{L(lang, COPY.planRead)}</summary>
+            {analysis.opponent_formation_analysis && <p>{localized(analysis.opponent_formation_analysis)}</p>}
+            {strengths.length > 0 && (
+              <div className="hc-planListGroup">
+                <span>{L(lang, COPY.planStrengths)}</span>
+                <ul>{list(strengths)}</ul>
+              </div>
+            )}
+            {weaknesses.length > 0 && (
+              <div className="hc-planListGroup">
+                <span>{L(lang, COPY.planWeaknesses)}</span>
+                <ul>{list(weaknesses)}</ul>
+              </div>
+            )}
+          </details>
+        )}
+
+        {(summary.attacking || formationAdjustments.length || tacticalAdjustments.length) && (
+          <details className="hc-planSection" open>
+            <summary>{L(lang, COPY.planAttack)}</summary>
+            {summary.attacking && <p>{localized(summary.attacking)}</p>}
+            {formationAdjustments.map((item, index) => (
+              <div key={`formation-${index}`} className="hc-planAdvice">
+                <strong>{localized(item.suggestion)}</strong>
+                {item.reason && <small>{localized(item.reason)}</small>}
+              </div>
+            ))}
+            {tacticalAdjustments.map((item, index) => (
+              <div key={`tactical-${index}`} className="hc-planAdvice">
+                <strong>{localized(item.suggestion)}</strong>
+                {item.reason && <small>{localized(item.reason)}</small>}
+              </div>
+            ))}
+          </details>
+        )}
+
+        {(summary.defending || summary.avoid) && (
+          <details className="hc-planSection" open>
+            <summary>{L(lang, COPY.planDefend)}</summary>
+            {summary.defending && <p>{localized(summary.defending)}</p>}
+            {summary.avoid && (
+              <div className="hc-planAdvice hc-planAdviceWarning">
+                <strong>{L(lang, COPY.planAvoid)}</strong>
+                <small>{localized(summary.avoid)}</small>
+              </div>
+            )}
+          </details>
+        )}
+
+        {playerSuggestions.length > 0 && (
+          <details className="hc-planSection">
+            <summary>{L(lang, COPY.planSubstitutions)}</summary>
+            {playerSuggestions.map((item, index) => (
+              <div key={`player-${index}`} className="hc-planAdvice">
+                <strong>
+                  {item.player_name || item.player_id}
+                  {item.replace_player_name ? ` → ${item.replace_player_name}` : ''}
+                </strong>
+                {item.reason && <small>{localized(item.reason)}</small>}
+              </div>
+            ))}
+          </details>
+        )}
+
+        {individualInstructions.length > 0 && (
+          <details className="hc-planSection">
+            <summary>{L(lang, COPY.planInstructions)}</summary>
+            {individualInstructions.map((item, index) => (
+              <div key={`instruction-${index}`} className="hc-planAdvice">
+                <strong>{item.player_name || item.player_id}: {localized(item.instruction)}</strong>
+                {item.reason && <small>{localized(item.reason)}</small>}
+              </div>
+            ))}
+          </details>
+        )}
+      </div>
+
+      {(warnings.length > 0 || raw.confidence != null || raw.data_quality) && (
+        <div className="hc-planMeta">
+          {warnings.length > 0 && (
+            <div className="hc-planWarnings">
+              <strong>{L(lang, COPY.planWarnings)}</strong>
+              <ul>{list(warnings)}</ul>
+            </div>
+          )}
+          {(raw.confidence != null || raw.data_quality) && (
+            <small>
+              {raw.confidence != null ? `${L(lang, COPY.planConfidence)}: ${raw.confidence}%` : ''}
+              {raw.confidence != null && raw.data_quality ? ' · ' : ''}
+              {raw.data_quality ? `${L(lang, COPY.planQuality)}: ${raw.data_quality}` : ''}
+            </small>
+          )}
         </div>
       )}
     </div>
@@ -304,8 +377,6 @@ export default function HeroChat({
   const [threadId, setThreadId] = React.useState(null)
   const [historyLoading, setHistoryLoading] = React.useState(true)
   const [prematchPlan, setPrematchPlan] = React.useState(null)
-  const [prematchApplying, setPrematchApplying] = React.useState(false)
-  const [guidedPromptDismissed, setGuidedPromptDismissed] = React.useState(false)
   const recognitionRef = React.useRef(null)
   const feedRef = React.useRef(null)
   const cameraInputRef = React.useRef(null)
@@ -734,20 +805,10 @@ export default function HeroChat({
     cameraInputRef.current?.click()
   }, [])
 
-  const openGallery = React.useCallback(() => {
-    setActionsOpen(false)
-    galleryInputRef.current?.click()
-  }, [])
-
   const openStatsCamera = React.useCallback(() => {
     setAttachmentMode('stats')
     openCamera()
   }, [openCamera])
-
-  const openStatsGallery = React.useCallback(() => {
-    setAttachmentMode('stats')
-    openGallery()
-  }, [openGallery])
 
   const openCounterCamera = React.useCallback(() => {
     setAttachmentMode('counter')
@@ -759,7 +820,7 @@ export default function HeroChat({
     cameraInputRef.current?.click()
   }, [lang])
 
-  const analyzeCountermeasureAttachment = React.useCallback(async (token, imageDataUrl) => {
+  const analyzeCountermeasureAttachment = React.useCallback(async (token, imageDataUrls) => {
     const extractRes = await fetch('/api/extract-formation', {
       method: 'POST',
       headers: {
@@ -767,7 +828,7 @@ export default function HeroChat({
         Authorization: `Bearer ${token}`,
         'Accept-Language': lang === 'en' ? 'en' : lang === 'es' ? 'es' : 'it'
       },
-      body: JSON.stringify({ imageDataUrl })
+      body: JSON.stringify({ imageDataUrls })
     })
     const extractData = await extractRes.json().catch(() => ({}))
     if (!extractRes.ok) throw new Error(extractData.error || L(lang, COPY.attachError))
@@ -853,7 +914,7 @@ export default function HeroChat({
         return
       }
       if (attachmentMode === 'counter') {
-        const plan = await analyzeCountermeasureAttachment(token, attachments[0].dataUrl)
+        const plan = await analyzeCountermeasureAttachment(token, attachments.map((attachment) => attachment.dataUrl))
         setPrematchPlan(plan)
         setAttachments([])
         const doneMessage = {
@@ -925,62 +986,6 @@ export default function HeroChat({
     persistMessages
   ])
 
-  const applyPrematchPlan = React.useCallback(async () => {
-    if (!prematchPlan?.id || prematchApplying) return
-    setPrematchApplying(true)
-    try {
-      const token = await resolveToken()
-      if (!token) {
-        router.push('/login')
-        return
-      }
-      const res = await fetch('/api/hero-chat/plans', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ plan_id: prematchPlan.id, action: 'apply' })
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || L(lang, COPY.planError))
-      }
-      setPrematchPlan(data.plan || prematchPlan)
-      const appliedMessage = { role: 'hero', content: L(lang, COPY.planApplied), kind: 'success' }
-      setMessages((prev) => [...prev, appliedMessage])
-      void persistMessages([appliedMessage])
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('diagnostic-updated'))
-        window.dispatchEvent(new CustomEvent('knowledge-should-refresh'))
-      }
-    } catch {
-      const errorMessage = { role: 'hero', content: L(lang, COPY.planError), kind: 'error' }
-      setMessages((prev) => [...prev, errorMessage])
-      void persistMessages([errorMessage])
-    } finally {
-      setPrematchApplying(false)
-    }
-  }, [lang, persistMessages, prematchApplying, prematchPlan, router])
-
-  const dismissPrematchPlan = React.useCallback(async () => {
-    if (!prematchPlan?.id) return
-    try {
-      const token = await resolveToken()
-      if (!token) return
-      await fetch('/api/hero-chat/plans', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ plan_id: prematchPlan.id, action: 'dismiss' })
-      })
-    } finally {
-      setPrematchPlan(null)
-    }
-  }, [prematchPlan])
-
   const openFeedCard = (cardId) => {
     setFeedCards((prev) => (prev.includes(cardId) ? prev : [...prev, cardId]))
   }
@@ -1029,8 +1034,8 @@ export default function HeroChat({
   })()
 
   const quickActions = [
-    { key: 'camera', icon: Camera, label: L(lang, COPY.attachCamera), run: openStatsCamera },
-    { key: 'gallery', icon: ImagePlus, label: L(lang, COPY.attachGallery), run: openStatsGallery }
+    { key: 'stats', icon: Camera, label: L(lang, COPY.actionStats), run: openStatsCamera },
+    { key: 'counter', icon: Trophy, label: L(lang, COPY.actionPrepare), run: openCounterCamera }
   ]
 
   return (
@@ -1232,9 +1237,6 @@ export default function HeroChat({
           <PrematchPlanCard
             plan={prematchPlan}
             lang={lang}
-            applying={prematchApplying}
-            onApply={applyPrematchPlan}
-            onDismiss={dismissPrematchPlan}
           />
         )}
 
@@ -1252,29 +1254,6 @@ export default function HeroChat({
             <p className="hc-richSub">{L(lang, COPY.knowledgeCardSub)}</p>
           </div>
         )}
-
-        {/* Una sola domanda contestuale: Hero guida il primo passo senza creare un menu. */}
-        {homeState === 'OPERATIONAL'
-          && messages.length === 0
-          && !guidedPromptDismissed
-          && !prematchPlan
-          && !feedbackMode && (
-            <div className="hc-guidedCard">
-              <div className="hc-guidedIcon"><Trophy size={18} aria-hidden="true" /></div>
-              <div className="hc-guidedCopy">
-                <strong>{L(lang, COPY.guidedQuestion)}</strong>
-                <small>{L(lang, COPY.guidedQuestionSub)}</small>
-              </div>
-              <div className="hc-guidedActions">
-                <button type="button" className="hc-guidedPrimary" onClick={openCounterCamera}>
-                  {L(lang, COPY.guidedYes)}
-                </button>
-                <button type="button" className="hc-guidedSecondary" onClick={() => setGuidedPromptDismissed(true)}>
-                  {L(lang, COPY.guidedLater)}
-                </button>
-              </div>
-            </div>
-          )}
 
         {/* Suggerimenti reali dal backend: solo dopo una risposta del coach. */}
         {activeSuggestions.length > 0 && !feedbackMode && (
@@ -1358,6 +1337,26 @@ export default function HeroChat({
                 </div>
               ))}
             </div>
+            {attachments.length < MAX_ATTACH && (
+              <div className="hc-attachAddRow">
+                <button
+                  type="button"
+                  className="hc-attachAdd"
+                  onClick={() => cameraInputRef.current?.click()}
+                >
+                  <Camera size={14} aria-hidden="true" />
+                  {L(lang, COPY.attachAddPhoto)}
+                </button>
+                <button
+                  type="button"
+                  className="hc-attachAdd"
+                  onClick={() => galleryInputRef.current?.click()}
+                >
+                  <ImagePlus size={14} aria-hidden="true" />
+                  {L(lang, COPY.attachAddGallery)}
+                </button>
+              </div>
+            )}
             <button
               type="button"
               className="hc-attachAnalyze"
@@ -2289,6 +2288,32 @@ export default function HeroChat({
           flex-wrap: wrap;
         }
 
+        .hc-attachAddRow {
+          display: flex;
+          gap: 7px;
+          flex-wrap: wrap;
+        }
+
+        .hc-attachAdd {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          min-height: 30px;
+          padding: 5px 9px;
+          border-radius: 999px;
+          border: 1px dashed var(--border-soft);
+          background: transparent;
+          color: var(--text-dim);
+          font: inherit;
+          font-size: 11px;
+          cursor: pointer;
+        }
+
+        .hc-attachAdd:hover {
+          color: var(--text-main);
+          border-color: var(--accent-border);
+        }
+
         .hc-attachThumb {
           position: relative;
           width: 64px;
@@ -2372,13 +2397,118 @@ export default function HeroChat({
           background: var(--accent-bg);
         }
 
-        :global(.hc-planRow),
         :global(.hc-planSection) {
-          display: flex;
-          align-items: center;
-          flex-wrap: wrap;
-          gap: 7px;
+          display: block;
+          padding: 11px 12px;
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.09);
+          background: rgba(0, 0, 0, 0.12);
           font-size: 13px;
+        }
+
+        :global(.hc-planSaved) {
+          margin: -4px 0 2px;
+          color: var(--text-dim);
+          font-size: 12px;
+        }
+
+        :global(.hc-planHero) {
+          padding: 12px;
+          border-radius: 12px;
+          background: rgba(61, 220, 151, 0.09);
+          border: 1px solid rgba(61, 220, 151, 0.22);
+        }
+
+        :global(.hc-planHero strong) {
+          display: block;
+          color: var(--text-main);
+          font-size: 14px;
+        }
+
+        :global(.hc-planHero p),
+        :global(.hc-planSection p) {
+          margin: 6px 0 0;
+          color: var(--text-dim);
+          line-height: 1.45;
+        }
+
+        :global(.hc-planVisualGrid) {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 8px;
+        }
+
+        :global(.hc-planSection summary) {
+          cursor: pointer;
+          color: var(--text-main);
+          font-size: 12px;
+          font-weight: 800;
+          list-style-position: inside;
+        }
+
+        :global(.hc-planListGroup) {
+          margin-top: 10px;
+        }
+
+        :global(.hc-planListGroup > span),
+        :global(.hc-planWarnings > strong) {
+          color: var(--accent);
+          font-size: 11px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.03em;
+        }
+
+        :global(.hc-planListGroup ul),
+        :global(.hc-planWarnings ul) {
+          display: grid;
+          gap: 5px;
+          margin: 6px 0 0;
+          padding-left: 17px;
+          color: var(--text-dim);
+          font-size: 12px;
+          line-height: 1.4;
+        }
+
+        :global(.hc-planAdvice) {
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+          margin-top: 9px;
+          padding: 8px 9px;
+          border-left: 2px solid var(--accent);
+          border-radius: 0 8px 8px 0;
+          background: rgba(255, 255, 255, 0.045);
+        }
+
+        :global(.hc-planAdvice strong) {
+          color: var(--text-main);
+          font-size: 12px;
+          line-height: 1.35;
+        }
+
+        :global(.hc-planAdvice small) {
+          color: var(--text-dim);
+          font-size: 11px;
+          line-height: 1.35;
+        }
+
+        :global(.hc-planAdviceWarning) {
+          border-left-color: #ffbf4d;
+        }
+
+        :global(.hc-planMeta) {
+          display: grid;
+          gap: 8px;
+          color: var(--text-dim);
+          font-size: 11px;
+        }
+
+        :global(.hc-planWarnings) {
+          padding: 9px;
+          border-radius: 10px;
+          background: rgba(255, 191, 77, 0.08);
+          border: 1px solid rgba(255, 191, 77, 0.2);
         }
 
         :global(.hc-planLabel) {
@@ -2437,6 +2567,10 @@ export default function HeroChat({
 
           .hc-bubble {
             max-width: 86%;
+          }
+
+          :global(.hc-planVisualGrid) {
+            grid-template-columns: 1fr;
           }
 
         }
