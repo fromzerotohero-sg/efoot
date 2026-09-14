@@ -102,7 +102,7 @@ export default function GuidaPage() {
     {
       id: 'dashboard',
       icon: LayoutDashboard,
-      color: 'var(--neon-blue)',
+      color: 'var(--accent)',
       path: '/',
       title: (lang === 'en' || lang === 'es') ? 'Dashboard' : 'Dashboard',
       description: lang === 'en' 
@@ -122,7 +122,7 @@ export default function GuidaPage() {
     {
       id: 'gestione-formazione',
       icon: Users,
-      color: 'var(--neon-purple)',
+      color: 'var(--cards-accent)',
       path: '/gestione-formazione',
       title: (lang === 'en' || lang === 'es') ? 'Squad Management' : 'Gestione Rosa',
       description: lang === 'en'
@@ -141,7 +141,7 @@ export default function GuidaPage() {
     {
       id: 'card-advisor',
       icon: Sparkles,
-      color: 'var(--neon-cyan)',
+      color: 'var(--accent)',
       path: '/card-advisor-lab',
       title: (lang === 'en' || lang === 'es') ? 'New Card Analysis' : 'Analisi Carte Nuove',
       description: lang === 'en'
@@ -158,7 +158,7 @@ export default function GuidaPage() {
     {
       id: 'aggiungi-partita',
       icon: Calendar,
-      color: 'var(--neon-orange)',
+      color: '#f59e0b',
       path: '/match/new',
       title: (lang === 'en' || lang === 'es') ? 'Add Match' : 'Aggiungi Partita',
       description: lang === 'en'
@@ -177,7 +177,7 @@ export default function GuidaPage() {
     {
       id: 'contromisure-pre-partita',
       icon: Shield,
-      color: 'var(--neon-orange)',
+      color: '#f59e0b',
       path: '/contromisure-pre-partita',
       title: (lang === 'en' || lang === 'es') ? 'Pre-Match Countermeasures' : 'Contromisure Pre-partita',
       description: lang === 'en'
@@ -194,7 +194,7 @@ export default function GuidaPage() {
     {
       id: 'allenatori',
       icon: UserRound,
-      color: 'var(--neon-cyan)',
+      color: 'var(--accent)',
       path: '/allenatori',
       title: (lang === 'en' || lang === 'es') ? 'Coaches' : 'Allenatori',
       description: lang === 'en'
@@ -211,7 +211,7 @@ export default function GuidaPage() {
     {
       id: 'acquisto-crediti',
       icon: Wallet,
-      color: 'var(--neon-orange)',
+      color: '#f59e0b',
       path: 'https://home.fromzerotohero.io/dashboard?usage',
       external: true,
       title: (lang === 'en' || lang === 'es') ? 'Purchase Hero Points' : 'Acquista Hero Points',
@@ -239,7 +239,7 @@ export default function GuidaPage() {
       }}>
         <div style={{
           textAlign: 'center',
-          color: 'var(--neon-blue)',
+          color: 'var(--accent)',
           fontSize: '18px'
         }}>
           {t('loading')}
@@ -273,14 +273,14 @@ export default function GuidaPage() {
               onClick={() => router.push('/')}
               style={{
                 background: 'rgba(0, 212, 255, 0.1)',
-                border: '1px solid var(--neon-blue)',
+                border: '1px solid var(--accent)',
                 borderRadius: '8px',
                 padding: '8px 12px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                color: 'var(--neon-blue)',
+                color: 'var(--accent)',
                 transition: 'all 0.2s'
               }}
               onMouseEnter={(e) => {
@@ -299,7 +299,7 @@ export default function GuidaPage() {
               <h1 style={{
                 fontSize: '32px',
                 fontWeight: 700,
-                background: 'linear-gradient(135deg, var(--neon-blue), var(--neon-purple))',
+                background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 marginBottom: '8px',
@@ -313,7 +313,7 @@ export default function GuidaPage() {
               <p style={{
                 fontSize: '16px',
                 opacity: 0.8,
-                color: 'white'
+                color: 'var(--text-main)'
               }}>
                 {(lang === 'en' || lang === 'es') ? 'Discover how to make the most of the platform' : 'Scopri come usare al meglio la piattaforma'}
               </p>
@@ -326,7 +326,7 @@ export default function GuidaPage() {
           padding: '32px',
           marginBottom: '32px',
           background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(168, 85, 247, 0.1))',
-          border: '2px solid var(--neon-blue)',
+          border: '2px solid var(--accent)',
           boxShadow: 'var(--glow-blue)',
           position: 'relative',
           overflow: 'hidden'
@@ -341,7 +341,7 @@ export default function GuidaPage() {
               width: '64px',
               height: '64px',
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, var(--neon-blue), var(--neon-purple))',
+              background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -353,19 +353,19 @@ export default function GuidaPage() {
               <h2 style={{
                 fontSize: '24px',
                 fontWeight: 700,
-                color: 'white',
+                color: 'var(--text-main)',
                 marginBottom: '8px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px'
               }}>
                 {(lang === 'en' || lang === 'es') ? 'Complete Your Profile' : 'Completa il Tuo Profilo'}
-                {profileCompletion === 100 && <CheckCircle2 size={24} color="var(--neon-blue)" />}
+                {profileCompletion === 100 && <CheckCircle2 size={24} color="var(--accent)" />}
               </h2>
               <p style={{
                 fontSize: '16px',
                 opacity: 0.9,
-                color: 'white'
+                color: 'var(--text-main)'
               }}>
                 {(lang === 'en' || lang === 'es') ? 'The more you complete your profile, the better the AI can help you!' : 'Più completi il profilo, più l\'AI può aiutarti!'}
               </p>
@@ -383,14 +383,14 @@ export default function GuidaPage() {
               <span style={{
                 fontSize: '14px',
                 opacity: 0.8,
-                color: 'white'
+                color: 'var(--text-main)'
               }}>
                 {(lang === 'en' || lang === 'es') ? 'Profile Completion' : 'Completamento Profilo'}
               </span>
               <span style={{
                 fontSize: '18px',
                 fontWeight: 700,
-                color: profileCompletion === 100 ? 'var(--neon-blue)' : 'var(--neon-orange)'
+                color: profileCompletion === 100 ? 'var(--accent)' : '#f59e0b'
               }}>
                 {profileCompletion}%
               </span>
@@ -406,8 +406,8 @@ export default function GuidaPage() {
                 width: `${profileCompletion}%`,
                 height: '100%',
                 background: profileCompletion === 100
-                  ? 'linear-gradient(90deg, var(--neon-blue), var(--neon-cyan))'
-                  : 'linear-gradient(90deg, var(--neon-orange), var(--neon-pink))',
+                  ? 'linear-gradient(90deg, var(--accent), var(--accent))'
+                  : 'linear-gradient(90deg, #f59e0b, var(--neon-pink))',
                 borderRadius: '6px',
                 transition: 'width 0.5s ease'
               }} />
@@ -427,12 +427,12 @@ export default function GuidaPage() {
               justifyContent: 'center',
               gap: '12px',
               background: profileCompletion === 100
-                ? 'linear-gradient(135deg, var(--neon-blue), var(--neon-cyan))'
-                : 'linear-gradient(135deg, var(--neon-orange), var(--neon-pink))',
+                ? 'linear-gradient(135deg, var(--accent), var(--accent))'
+                : 'linear-gradient(135deg, #f59e0b, var(--neon-pink))',
               border: 'none',
               boxShadow: profileCompletion === 100 ? 'var(--glow-blue)' : 'var(--glow-orange)',
               borderRadius: '8px',
-              color: 'white',
+              color: 'var(--text-main)',
               cursor: 'pointer'
             }}
           >
@@ -449,7 +449,7 @@ export default function GuidaPage() {
           padding: '32px',
           marginBottom: '32px',
           background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(236, 72, 153, 0.1))',
-          border: '2px solid var(--neon-purple)',
+          border: '2px solid var(--cards-accent)',
           boxShadow: 'var(--glow-purple)',
           position: 'relative',
           overflow: 'hidden'
@@ -464,7 +464,7 @@ export default function GuidaPage() {
               width: '64px',
               height: '64px',
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, var(--neon-purple), var(--neon-pink))',
+              background: 'linear-gradient(135deg, var(--cards-accent), var(--neon-pink))',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -476,19 +476,19 @@ export default function GuidaPage() {
               <h2 style={{
                 fontSize: '24px',
                 fontWeight: 700,
-                color: 'white',
+                color: 'var(--text-main)',
                 marginBottom: '8px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px'
               }}>
-                <Sparkles size={24} color="var(--neon-purple)" />
+                <Sparkles size={24} color="var(--cards-accent)" />
                 {(lang === 'en' || lang === 'es') ? 'AI Assistant' : 'Assistente AI'}
               </h2>
               <p style={{
                 fontSize: '16px',
                 opacity: 0.9,
-                color: 'white',
+                color: 'var(--text-main)',
                 lineHeight: '1.6'
               }}>
                 {lang === 'en' 
@@ -510,11 +510,11 @@ export default function GuidaPage() {
               borderRadius: '8px',
               border: '1px solid rgba(168, 85, 247, 0.3)'
             }}>
-              <Zap size={20} color="var(--neon-purple)" style={{ marginBottom: '8px' }} />
+              <Zap size={20} color="var(--cards-accent)" style={{ marginBottom: '8px' }} />
               <div style={{
                 fontSize: '14px',
                 fontWeight: 600,
-                color: 'var(--neon-purple)',
+                color: 'var(--cards-accent)',
                 marginBottom: '4px'
               }}>
                 {(lang === 'en' || lang === 'es') ? 'Personal Guide' : 'Guida Personale'}
@@ -522,7 +522,7 @@ export default function GuidaPage() {
               <div style={{
                 fontSize: '12px',
                 opacity: 0.8,
-                color: 'white'
+                color: 'var(--text-main)'
               }}>
                 {(lang === 'en' || lang === 'es') ? 'Accompanies you every step' : 'Ti accompagna in ogni passo'}
               </div>
@@ -545,7 +545,7 @@ export default function GuidaPage() {
               <div style={{
                 fontSize: '12px',
                 opacity: 0.8,
-                color: 'white'
+                color: 'var(--text-main)'
               }}>
                 {(lang === 'en' || lang === 'es') ? 'Based on your squad and matches' : 'Basati sulla tua rosa e partite'}
               </div>
@@ -556,11 +556,11 @@ export default function GuidaPage() {
               borderRadius: '8px',
               border: '1px solid rgba(0, 212, 255, 0.3)'
             }}>
-              <BarChart3 size={20} color="var(--neon-blue)" style={{ marginBottom: '8px' }} />
+              <BarChart3 size={20} color="var(--accent)" style={{ marginBottom: '8px' }} />
               <div style={{
                 fontSize: '14px',
                 fontWeight: 600,
-                color: 'var(--neon-blue)',
+                color: 'var(--accent)',
                 marginBottom: '4px'
               }}>
                 {(lang === 'en' || lang === 'es') ? 'Match Analysis' : 'Analisi Partite'}
@@ -568,7 +568,7 @@ export default function GuidaPage() {
               <div style={{
                 fontSize: '12px',
                 opacity: 0.8,
-                color: 'white'
+                color: 'var(--text-main)'
               }}>
                 {(lang === 'en' || lang === 'es') ? 'Insights on your performance' : 'Insight sulle tue prestazioni'}
               </div>
@@ -581,7 +581,7 @@ export default function GuidaPage() {
           padding: '32px',
           marginBottom: '32px',
           background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(34, 197, 94, 0.1))',
-          border: '2px solid var(--neon-cyan)',
+          border: '2px solid var(--accent)',
           boxShadow: '0 0 24px rgba(0, 245, 255, 0.2)',
           position: 'relative',
           overflow: 'hidden'
@@ -596,7 +596,7 @@ export default function GuidaPage() {
               width: '64px',
               height: '64px',
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, var(--neon-cyan), var(--neon-blue))',
+              background: 'linear-gradient(135deg, var(--accent), var(--accent))',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -608,19 +608,19 @@ export default function GuidaPage() {
               <h2 style={{
                 fontSize: '24px',
                 fontWeight: 700,
-                color: 'white',
+                color: 'var(--text-main)',
                 marginBottom: '8px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px'
               }}>
-                <Sparkles size={24} color="var(--neon-cyan)" />
+                <Sparkles size={24} color="var(--accent)" />
                 {(lang === 'en' || lang === 'es') ? 'Interactive Tour' : 'Tour Interattivo'}
               </h2>
               <p style={{
                 fontSize: '16px',
                 opacity: 0.9,
-                color: 'white',
+                color: 'var(--text-main)',
                 lineHeight: '1.6'
               }}>
                 {lang === 'en'
@@ -641,11 +641,11 @@ export default function GuidaPage() {
               borderRadius: '8px',
               border: '1px solid rgba(0, 245, 255, 0.3)'
             }}>
-              <Compass size={20} color="var(--neon-cyan)" style={{ marginBottom: '8px' }} />
+              <Compass size={20} color="var(--accent)" style={{ marginBottom: '8px' }} />
               <div style={{
                 fontSize: '14px',
                 fontWeight: 600,
-                color: 'var(--neon-cyan)',
+                color: 'var(--accent)',
                 marginBottom: '4px'
               }}>
                 {(lang === 'en' || lang === 'es') ? 'Contextual Tours' : 'Tour Contestuali'}
@@ -653,7 +653,7 @@ export default function GuidaPage() {
               <div style={{
                 fontSize: '12px',
                 opacity: 0.8,
-                color: 'white'
+                color: 'var(--text-main)'
               }}>
                 {(lang === 'en' || lang === 'es') ? 'Different tour for each page' : 'Un tour diverso per ogni pagina'}
               </div>
@@ -664,11 +664,11 @@ export default function GuidaPage() {
               borderRadius: '8px',
               border: '1px solid rgba(0, 212, 255, 0.3)'
             }}>
-              <Zap size={20} color="var(--neon-blue)" style={{ marginBottom: '8px' }} />
+              <Zap size={20} color="var(--accent)" style={{ marginBottom: '8px' }} />
               <div style={{
                 fontSize: '14px',
                 fontWeight: 600,
-                color: 'var(--neon-blue)',
+                color: 'var(--accent)',
                 marginBottom: '4px'
               }}>
                 {(lang === 'en' || lang === 'es') ? 'Interactive Steps' : 'Step Interattivi'}
@@ -676,7 +676,7 @@ export default function GuidaPage() {
               <div style={{
                 fontSize: '12px',
                 opacity: 0.8,
-                color: 'white'
+                color: 'var(--text-main)'
               }}>
                 {(lang === 'en' || lang === 'es') ? 'Click highlighted elements' : 'Clicca elementi evidenziati'}
               </div>
@@ -691,13 +691,13 @@ export default function GuidaPage() {
           <h2 style={{
             fontSize: '28px',
             fontWeight: 700,
-            color: 'white',
+            color: 'var(--text-main)',
             marginBottom: '24px',
             display: 'flex',
             alignItems: 'center',
             gap: '12px'
           }}>
-            <BookOpen size={28} color="var(--neon-blue)" />
+            <BookOpen size={28} color="var(--accent)" />
             {(lang === 'en' || lang === 'es') ? 'Page Guides' : 'Guide per Pagina'}
           </h2>
 
@@ -720,7 +720,7 @@ export default function GuidaPage() {
                   style={{
                     padding: 'clamp(16px, 4vw, 24px)',
                     border: `2px solid ${guide.color}`,
-                    background: `rgba(${guide.color === 'var(--neon-blue)' ? '0, 212, 255' : guide.color === 'var(--neon-purple)' ? '168, 85, 247' : guide.color === 'var(--neon-orange)' ? '255, 107, 53' : '0, 245, 255'}, 0.05)`,
+                    background: `rgba(${guide.color === 'var(--accent)' ? '0, 212, 255' : guide.color === 'var(--cards-accent)' ? '168, 85, 247' : guide.color === '#f59e0b' ? '255, 107, 53' : '0, 245, 255'}, 0.05)`,
                     transition: 'all 0.3s ease',
                     cursor: 'pointer',
                     minHeight: '44px',
@@ -760,7 +760,7 @@ export default function GuidaPage() {
                       <h3 style={{
                         fontSize: 'clamp(18px, 4vw, 20px)',
                         fontWeight: 700,
-                        color: 'white',
+                        color: 'var(--text-main)',
                         marginBottom: '8px',
                         display: 'flex',
                         alignItems: 'center',
@@ -773,7 +773,7 @@ export default function GuidaPage() {
                       <p style={{
                         fontSize: '14px',
                         opacity: 0.8,
-                        color: 'white',
+                        color: 'var(--text-main)',
                         lineHeight: '1.5'
                       }}>
                         {guide.description}
@@ -827,13 +827,13 @@ export default function GuidaPage() {
                               flexShrink: 0,
                               fontSize: '12px',
                               fontWeight: 700,
-                              color: 'white'
+                              color: 'var(--text-main)'
                             }}>
                               {idx + 1}
                             </div>
                             <span style={{
                               fontSize: '14px',
-                              color: 'white',
+                              color: 'var(--text-main)',
                               lineHeight: '1.6',
                               flex: 1
                             }}>
@@ -860,7 +860,7 @@ export default function GuidaPage() {
                           background: guide.color,
                           border: 'none',
                           borderRadius: '8px',
-                          color: 'white',
+                          color: 'var(--text-main)',
                           fontSize: 'clamp(13px, 3vw, 14px)',
                           fontWeight: 600,
                           cursor: 'pointer',
@@ -888,9 +888,9 @@ export default function GuidaPage() {
                             width: '100%',
                             padding: '12px',
                             background: 'rgba(168, 85, 247, 0.2)',
-                            border: '1px solid var(--neon-purple)',
+                            border: '1px solid var(--cards-accent)',
                             borderRadius: '8px',
-                            color: 'var(--neon-purple)',
+                            color: 'var(--cards-accent)',
                             fontSize: '14px',
                             fontWeight: 600,
                             cursor: 'pointer',
@@ -918,16 +918,16 @@ export default function GuidaPage() {
           padding: '32px',
           textAlign: 'center',
           background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(168, 85, 247, 0.1))',
-          border: '2px solid var(--neon-blue)',
+          border: '2px solid var(--accent)',
           boxShadow: 'var(--glow-blue)'
         }}>
-          <MessageCircle size={48} color="var(--neon-blue)" style={{
+          <MessageCircle size={48} color="var(--accent)" style={{
             marginBottom: '16px'
           }} />
           <h3 style={{
             fontSize: '24px',
             fontWeight: 700,
-            color: 'white',
+            color: 'var(--text-main)',
             marginBottom: '12px'
           }}>
             {(lang === 'en' || lang === 'es') ? 'Questions?' : 'Domande?'}
@@ -935,7 +935,7 @@ export default function GuidaPage() {
           <p style={{
             fontSize: '16px',
             opacity: 0.9,
-            color: 'white',
+            color: 'var(--text-main)',
             marginBottom: '24px',
             lineHeight: '1.6'
           }}>

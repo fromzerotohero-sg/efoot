@@ -407,7 +407,7 @@ export default function AllenatoriPage() {
   }
 
   return (
-    <div data-tour-id="tour-coaches-intro" style={{ minHeight: '100vh', padding: 'clamp(16px, 3vw, 32px)', background: 'var(--bg-dark)' }}>
+    <div data-tour-id="tour-coaches-intro" style={{ minHeight: '100vh', padding: 'clamp(16px, 3vw, 32px)', background: 'var(--shell-bg)' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header */}
         <div style={{
@@ -461,7 +461,7 @@ export default function AllenatoriPage() {
           <>
             {coaches.length === 0 ? (
               <div data-tour-id="tour-coaches-list" className="neon-card" style={{ padding: '48px 24px', textAlign: 'center' }}>
-                <Info size={48} style={{ marginBottom: '16px', opacity: 0.5, color: 'var(--neon-blue)' }} />
+                <Info size={48} style={{ marginBottom: '16px', opacity: 0.5, color: 'var(--accent)' }} />
                 <div style={{ fontSize: '20px', marginBottom: '12px', fontWeight: 600 }}>
                   {t('noCoachesLoaded')}
                 </div>
@@ -490,7 +490,7 @@ export default function AllenatoriPage() {
                     className="neon-card"
                     style={{
                       padding: '20px',
-                      border: coach.is_active ? '2px solid var(--neon-blue)' : '2px solid rgba(0, 212, 255, 0.3)',
+                      border: coach.is_active ? '2px solid var(--accent)' : '2px solid rgba(0, 212, 255, 0.3)',
                       position: 'relative'
                     }}
                   >
@@ -499,7 +499,7 @@ export default function AllenatoriPage() {
                         position: 'absolute',
                         top: '12px',
                         right: '12px',
-                        background: 'var(--neon-blue)',
+                        background: 'var(--accent)',
                         borderRadius: '50%',
                         width: '32px',
                         height: '32px',
@@ -575,10 +575,10 @@ export default function AllenatoriPage() {
               <div className="neon-card" style={{ 
                 padding: '16px', 
                 className: 'neon-panel',
-                border: '2px solid var(--neon-blue)'
+                border: '2px solid var(--accent)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                  <Star size={18} fill="var(--neon-blue)" color="var(--neon-blue)" />
+                  <Star size={18} fill="var(--accent)" color="var(--accent)" />
                   <div>
                     <div style={{ fontSize: '14px', opacity: 0.8, marginBottom: '4px' }}>
                       {t('activeCoach')}
@@ -644,7 +644,7 @@ export default function AllenatoriPage() {
                   background: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
-                  color: 'white',
+                  color: 'var(--text-main)',
                   fontSize: '24px',
                   padding: '4px',
                   marginLeft: '8px',
@@ -725,14 +725,14 @@ export default function AllenatoriPage() {
             >
               {uploadImages.length === 0 ? (
                 <>
-                  <Upload size={32} style={{ marginBottom: '12px', color: 'var(--neon-blue)' }} />
+                  <Upload size={32} style={{ marginBottom: '12px', color: 'var(--accent)' }} />
                   <div style={{ fontSize: '14px', marginBottom: '8px' }}>
                     {t('dragDropPhotos')}
                   </div>
                   <div style={{ fontSize: '12px', opacity: 0.6 }}>
                     {t('maxTwoPhotosFormat')}
                   </div>
-                  <div style={{ fontSize: '12px', opacity: 0.75, marginTop: '12px', color: 'rgba(255,255,255,0.85)' }}>
+                  <div style={{ fontSize: '12px', opacity: 0.75, marginTop: '12px', color: 'var(--text-main)' }}>
                     {lang === 'en' ? 'Tap here to upload screenshots from gallery or files.' : 'Tocca qui per caricare screenshot da galleria o file.'}
                   </div>
                 </>
@@ -769,7 +769,7 @@ export default function AllenatoriPage() {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: 'white'
+                          color: 'var(--text-main)'
                         }}
                       >
                         <X size={16} />
@@ -798,7 +798,7 @@ export default function AllenatoriPage() {
                         document.getElementById('coach-file-input')?.click()
                       }}
                     >
-                      <Plus size={24} style={{ marginBottom: '8px', color: 'var(--neon-blue)' }} />
+                      <Plus size={24} style={{ marginBottom: '8px', color: 'var(--accent)' }} />
                       <div style={{ fontSize: '12px', opacity: 0.8 }}>{t('addPhoto')}</div>
                     </div>
                   )}
@@ -919,7 +919,7 @@ export default function AllenatoriPage() {
                   background: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
-                  color: 'white',
+                  color: 'var(--text-main)',
                   fontSize: '24px',
                   padding: '4px'
                 }}
