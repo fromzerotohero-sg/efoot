@@ -18,7 +18,6 @@ import {
   ImagePlus,
   CheckCircle2,
   Users,
-  UserRound,
   ClipboardList
 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
@@ -1664,7 +1663,6 @@ export default function HeroChat({
   })()
 
   const quickActions = [
-    { key: 'player', icon: UserRound, label: L(lang, COPY.actionPlayer), run: () => startAssetUpload('player') },
     { key: 'stats', icon: Camera, label: L(lang, COPY.actionStats), run: openStatsCamera },
     { key: 'counter', icon: Trophy, label: L(lang, COPY.actionPrepare), run: openCounterCamera },
     { key: 'match', icon: ClipboardList, label: L(lang, COPY.actionMatch), run: startMatchUpload },
