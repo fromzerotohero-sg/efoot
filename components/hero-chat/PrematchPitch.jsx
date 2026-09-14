@@ -2,7 +2,6 @@
 
 import React from 'react'
 import { DEFAULT_SLOT_POSITIONS, completeSlotPositions } from '@/lib/formationDefaultSlots'
-import { supabase } from '@/lib/supabaseClient'
 
 const POSITION_ALIASES = {
   GK: 'PT',
@@ -31,6 +30,20 @@ const POSITION_ALIASES = {
   SP: 'SP',
   CF: 'P',
   P: 'P'
+}
+
+async function resolveAuthToken() {
+  if (typeof window === 'undefined') return null
+  let token = localStorage.getItem('auth_token')
+  if (token) return token
+  try {
+    const { supabase } = await import('@/lib/supabaseClient')
+    if (!supabase) return null
+    const { data } = await supabase.auth.getSession()
+    return data?.session?.access_token || null
+  } catch {
+    return null
+  }
 }
 
 function asText(value, lang = 'it') {
@@ -132,38 +145,54 @@ export default function PrematchPitch({
 }) {
   const [starters, setStarters] = React.useState([])
   const [slotPositions, setSlotPositions] = React.useState(DEFAULT_SLOT_POSITIONS)
+  const [loadState, setLoadState] = React.useState('loading') // loading | ready | empty
 
   React.useEffect(() => {
     let cancelled = false
     async function loadRoster() {
-      if (!supabase) return
+      setLoadState('loading')
       try {
-        const { data: auth } = await supabase.auth.getUser()
-        const userId = auth?.user?.id
-        if (!userId) return
-
-        const [{ data: players }, { data: layout }] = await Promise.all([
-          supabase
-            .from('players')
-            .select('id, player_name, position, slot_index')
-            .eq('user_id', userId)
-            .not('slot_index', 'is', null)
-            .gte('slot_index', 0)
-            .lte('slot_index', 10),
-          supabase
-            .from('formation_layout')
-            .select('slot_positions')
-            .eq('user_id', userId)
-            .maybeSingle()
-        ])
-
-        if (cancelled) return
-        setStarters(Array.isArray(players) ? players : [])
-        if (layout?.slot_positions) {
-          setSlotPositions(completeSlotPositions(layout.slot_positions))
+        const token = await resolveAuthToken()
+        if (!token) {
+          if (!cancelled) setLoadState('empty')
+          return
         }
+
+        const res = await fetch('/api/formation', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Cache-Control': 'no-cache'
+          },
+          cache: 'no-store'
+        })
+        const data = await res.json().catch(() => ({}))
+        if (cancelled) return
+        if (!res.ok) {
+          setLoadState('empty')
+          return
+        }
+
+        const players = Array.isArray(data.players) ? data.players : []
+        const titolari = players
+          .filter((p) => p?.id && p?.player_name && p.slot_index != null)
+          .filter((p) => {
+            const n = Number(p.slot_index)
+            return Number.isFinite(n) && n >= 0 && n <= 10
+          })
+          .map((p) => ({
+            id: p.id,
+            player_name: p.player_name,
+            position: p.position,
+            slot_index: Number(p.slot_index)
+          }))
+
+        setStarters(titolari)
+        if (data.layout?.slot_positions) {
+          setSlotPositions(completeSlotPositions(data.layout.slot_positions))
+        }
+        setLoadState(titolari.length ? 'ready' : 'empty')
       } catch {
-        // fallback: default slots without names
+        if (!cancelled) setLoadState('empty')
       }
     }
     void loadRoster()
@@ -302,8 +331,11 @@ export default function PrematchPitch({
           )
         })}
       </div>
-      {!hasPlayers && (
+      {!hasPlayers && loadState === 'loading' && (
         <p className="hc-pitchHint">Carico la tua formazione…</p>
+      )}
+      {!hasPlayers && loadState !== 'loading' && (
+        <p className="hc-pitchHint">Formazione non disponibile — apri la rosa e riprova</p>
       )}
       {hasPlayers && !hasOverlay && (
         <p className="hc-pitchHint">Tua formazione — i consigli sotto evidenziano i ruoli chiave</p>
