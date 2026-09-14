@@ -18,9 +18,9 @@ const avatarStyle = {
   width: '36px',
   height: '36px',
   borderRadius: '50%',
-  background: '#EFECE6',
-  border: '1px solid rgba(0, 0, 0, 0.08)',
-  color: '#1D1D1F',
+  background: 'rgba(255, 255, 255, 0.05)',
+  border: '1px solid rgba(255, 255, 255, 0.12)',
+  color: '#f4f6f7',
   cursor: 'pointer',
   transition: 'all 0.2s',
   flexShrink: 0,
@@ -38,8 +38,8 @@ export default function TopBar({ showInstallPrompt = true }) {
     <header
       className="sticky top-0 z-30 h-16 flex items-center"
       style={{
-        background: 'rgba(245, 245, 247, 0.80)',
-        borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+        background: 'rgba(10, 17, 23, 0.85)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.07)',
         backdropFilter: 'blur(20px)',
         position: 'relative'
       }}
@@ -51,7 +51,7 @@ export default function TopBar({ showInstallPrompt = true }) {
           left: '0',
           right: '0',
           height: '1px',
-          background: 'linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.08), transparent)'
+          background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent)'
         }}
       />
       <div
@@ -77,9 +77,9 @@ export default function TopBar({ showInstallPrompt = true }) {
               width: '40px',
               height: '40px',
               borderRadius: '10px',
-              background: '#EFECE6',
-              border: '1px solid rgba(0, 0, 0, 0.08)',
-              color: '#1D1D1F',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              color: '#f4f6f7',
               boxShadow: 'none',
               flexShrink: 0
             }}
@@ -117,9 +117,9 @@ export default function TopBar({ showInstallPrompt = true }) {
               width: '36px',
               height: '36px',
               borderRadius: '8px',
-              background: '#EFECE6',
-              border: '1px solid rgba(0, 0, 0, 0.08)',
-              color: '#1D1D1F',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              color: '#f4f6f7',
               cursor: 'pointer',
               transition: 'all 0.2s',
               flexShrink: 0
@@ -158,9 +158,9 @@ export default function TopBar({ showInstallPrompt = true }) {
               width: '36px',
               height: '36px',
               borderRadius: '8px',
-              background: '#EFECE6',
-              border: '1px solid rgba(0, 0, 0, 0.08)',
-              color: '#1D1D1F',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              color: '#f4f6f7',
               cursor: 'pointer',
               transition: 'all 0.2s',
               flexShrink: 0

@@ -32,7 +32,7 @@ export default function AppLayoutShell({ children, showInstallPrompt = true, sho
   return (
     <MaintenanceGate>
     <>
-      <div className="flex h-screen overflow-hidden" style={{ background: '#F9F6F1' }}>
+      <div className="flex h-screen overflow-hidden" style={{ background: '#0a1117' }}>
         <SidebarNew />
 
         <div
@@ -43,7 +43,7 @@ export default function AppLayoutShell({ children, showInstallPrompt = true, sho
 
           <main
             className="flex-1 overflow-y-auto shell-main"
-            style={{ background: '#F9F6F1' }}
+            style={{ background: '#0a1117' }}
           >
             <PrelaunchGate>{children}</PrelaunchGate>
           </main>
@@ -68,9 +68,9 @@ export default function AppLayoutShell({ children, showInstallPrompt = true, sho
             fontSize: 10,
             fontWeight: 600,
             letterSpacing: '0.08em',
-            color: '#6B6B6B',
-            background: 'rgba(255,255,255,0.88)',
-            border: '1px solid rgba(0,0,0,0.08)',
+            color: 'rgba(61, 220, 151, 0.75)',
+            background: 'rgba(10, 17, 23, 0.72)',
+            border: '1px solid rgba(61, 220, 151, 0.25)',
             pointerEvents: 'none',
             userSelect: 'none',
           }}

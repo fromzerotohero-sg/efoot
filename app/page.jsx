@@ -8,8 +8,7 @@ import CoachFeedbackChat from '@/components/CoachFeedbackChat'
 import GameAnalysisModal from '@/components/GameAnalysisModal'
 import { useGameAnalysisModalNav, OPEN_GAME_ANALYSIS_MODAL_EVENT, CLOSE_GAME_ANALYSIS_MODAL_EVENT } from '@/components/GameAnalysisModalNavContext'
 import TaskWidget from '@/components/TaskWidget'
-import OnboardingFlow from '@/components/OnboardingFlow'
-import CoachWorkspace from '@/components/coach-v2/CoachWorkspace'
+import HeroChat from '@/components/hero-chat/HeroChat'
 import { fetchCoachProfileFromApi, resolveAuthToken, buildAuthHeaders } from '@/lib/profileUxHelpers'
 import { withAuth } from '@/components/AuthWrapper'
 import {
@@ -60,7 +59,6 @@ function HomePage() {
     formation: null
   })
   const [recentMatches, setRecentMatches] = React.useState([])
-  const [tacticalPatterns, setTacticalPatterns] = React.useState(null) // Pattern tattici per AI Insights
   const [showCoachFeedback, setShowCoachFeedback] = React.useState(false)
   const [showGameAnalysisModal, setShowGameAnalysisModal] = React.useState(false)
   const [gameAnalysisLastCapture, setGameAnalysisLastCapture] = React.useState(null)
@@ -108,27 +106,6 @@ function HomePage() {
     router.push('/card-advisor-lab')
   }, [router])
 
-  // UX V2: "Chiedi a Hero" apre sempre il motore assistant reale (mai la Palestra).
-  // Una domanda normale → open-assistant-chat. Il feedback post-match resta su CoachFeedbackChat.
-  const handleAskHero = React.useCallback(() => {
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('open-assistant-chat'))
-    }
-  }, [])
-
-  // Pill contestuali della Home: stesso contratto esistente, con messaggio precompilato.
-  const handleAskHeroMessage = React.useCallback((message) => {
-    if (typeof window !== 'undefined' && message) {
-      window.dispatchEvent(new CustomEvent('open-assistant-chat', { detail: { message } }))
-    }
-  }, [])
-
-  // Live Coach resta modalita speciale: solo evento esistente, nessuna modifica a session/billing.
-  const handleOpenLiveCoach = React.useCallback(() => {
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('open-live-coach'))
-    }
-  }, [])
 
   React.useEffect(() => {
     const onOpen = () => {
@@ -198,7 +175,6 @@ function HomePage() {
         })
         
         setRecentMatches(data.matches || [])
-        setTacticalPatterns(data.patterns || null)
         setHasActiveCoach(data.hasActiveCoach)
         const coachProfile = await fetchCoachProfileFromApi(token)
         setUserProfile(coachProfile ? { ...(data.profile || {}), ...coachProfile } : data.profile)
@@ -394,27 +370,19 @@ function HomePage() {
       )}
 
       {/* UX V2 — Coach workspace presentation. Motori/dati restano in questa page. */}
-      <CoachWorkspace
+      {/* HERO CHAT — superficie conversazionale principale (reference owner: 3 foto chat).
+          Motore /api/assistant-chat reale; card solo da dati reali. CoachWorkspace (coach-v2,
+          tema chiaro) sostituito dalla nuova direzione Hero-first dark. */}
+      <HeroChat
         lang={lang}
+        userProfile={userProfile}
         stats={stats}
         hasActiveCoach={hasActiveCoach}
         recentMatches={recentMatches}
         gameAnalysisLastCapture={gameAnalysisLastCapture}
-        tacticalPatterns={tacticalPatterns}
         hpBalance={hpBalance}
-        userProfile={userProfile}
-        onAskHero={handleAskHero}
-        onAskHeroMessage={handleAskHeroMessage}
         onOpenFeedback={() => setShowCoachFeedback(true)}
         onOpenGameAnalysis={() => setShowGameAnalysisModal(true)}
-        onOpenLiveCoach={handleOpenLiveCoach}
-        onOpenRoster={() => router.push('/gestione-formazione')}
-        onOpenCoachSetup={() => router.push('/nuova-rosa-lab')}
-        onOpenCountermeasures={() => router.push('/contromisure-pre-partita')}
-        onOpenProgress={() => router.push('/grafici-comparazione')}
-        onOpenMatches={() => router.push('/match')}
-        onGetHp={() => router.push('/gestione-profilo')}
-        toolsExtra={<OnboardingFlow />}
       />
 
       <CoachFeedbackChat 
