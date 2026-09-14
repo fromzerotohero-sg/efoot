@@ -26,6 +26,7 @@ import AIKnowledgeBar from '@/components/AIKnowledgeBar'
 import { resolveHomeState, resolveGreetingName } from '@/components/coach-v2/homeState'
 import { daysSince, splitAdviceIntoTips, STATS_STALE_DAYS } from '@/lib/chatReadiness'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
+import ChatMarkdown from '@/components/hero-chat/ChatMarkdown'
 
 /**
  * HERO CHAT — superficie conversazionale principale (Home).
@@ -226,16 +227,15 @@ const MATCH_SECTIONS = [
 
 const MATCH_EXAMPLES = [
   {
-    id: 'team_stats',
-    src: '/examples/game-analysis/analisi-tiro-comandi.jpg',
-    caption: { it: 'Tiri, gol, comandi', en: 'Shots, goals, commands', es: 'Tiros, goles, comandos' }
-  },
-  {
-    id: 'attack_areas',
-    src: '/examples/game-analysis/analisi-passaggio-dribbling-difesa.jpg',
-    caption: { it: 'Passaggi, dribbling, difesa', en: 'Passes, dribbling, defense', es: 'Pases, regate, defensa' }
+    id: 'formation_style',
+    src: '/examples/formation-upload/formazione-game-plan-esempio.png',
+    caption: { it: 'Formazione e game plan', en: 'Formation and game plan', es: 'Formación y game plan' }
   }
 ]
+
+function makeWorkflowId(type) {
+  return `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+}
 
 function mergePlayerRatingsData(listOfData) {
   const cliente = {}
@@ -268,6 +268,8 @@ function TipCards({ tips, lang, onDeepen }) {
       {tips.map((tip, idx) => {
         const open = !!expanded[tip.id]
         const title = L(lang, TIP_TITLES[idx] || TIP_TITLES[0])
+        const body = String(tip.body || '')
+        const needsClamp = body.length > 160
         return (
           <div key={tip.id} className={`hc-tip${open ? ' hc-tipOpen' : ''}`}>
             <button
@@ -277,14 +279,18 @@ function TipCards({ tips, lang, onDeepen }) {
             >
               <span className="hc-tipBadge">{idx + 1}</span>
               <span className="hc-tipTitle">{title}</span>
-              <span className="hc-tipToggle">{open ? L(lang, COPY.tipCollapse) : L(lang, COPY.tipExpand)}</span>
+              {needsClamp && (
+                <span className="hc-tipToggle">{open ? L(lang, COPY.tipCollapse) : L(lang, COPY.tipExpand)}</span>
+              )}
             </button>
-            <p className={`hc-tipBody${open ? '' : ' hc-tipBodyClamp'}`}>{tip.body}</p>
-            {open && (
+            <div className={`hc-tipBody${needsClamp && !open ? ' hc-tipBodyClamp' : ''}`}>
+              <ChatMarkdown>{body}</ChatMarkdown>
+            </div>
+            {(open || !needsClamp) && (
               <button
                 type="button"
                 className="hc-tipDeepen"
-                onClick={() => onDeepen?.(tip.body)}
+                onClick={() => onDeepen?.(body)}
               >
                 {L(lang, COPY.deepenAsk)}
               </button>
@@ -649,12 +655,13 @@ export default function HeroChat({
   const [threadId, setThreadId] = React.useState(null)
   const [historyLoading, setHistoryLoading] = React.useState(true)
   const [prematchPlan, setPrematchPlan] = React.useState(null)
-  const [workflowFocus, setWorkflowFocus] = React.useState(null)
-  const [historyExpanded, setHistoryExpanded] = React.useState(false)
+  const [activeWorkflowId, setActiveWorkflowId] = React.useState(null)
   const recognitionRef = React.useRef(null)
   const feedRef = React.useRef(null)
   const cameraInputRef = React.useRef(null)
   const galleryInputRef = React.useRef(null)
+  const stickToBottomRef = React.useRef(true)
+  const pendingScrollRef = React.useRef(false)
 
   const lastMatch = Array.isArray(recentMatches) && recentMatches.length > 0 ? recentMatches[0] : null
   const lastMatchRaw = lastMatch?.created_at || lastMatch?.match_date || null
@@ -707,11 +714,26 @@ export default function HeroChat({
     }
   }, [])
 
-  // Autoscroll del feed
+  // Autoscroll solo se l'utente è vicino al fondo o ha appena inviato un messaggio
   React.useEffect(() => {
     const el = feedRef.current
-    if (el) el.scrollTop = el.scrollHeight
-  }, [messages, feedCards, sending, attachments, attachAnalyzing, feedbackMessages, feedbackSending])
+    if (!el) return
+    const onScroll = () => {
+      const distance = el.scrollHeight - el.scrollTop - el.clientHeight
+      stickToBottomRef.current = distance < 80
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [])
+
+  React.useEffect(() => {
+    const el = feedRef.current
+    if (!el) return
+    if (pendingScrollRef.current || stickToBottomRef.current) {
+      el.scrollTop = el.scrollHeight
+      pendingScrollRef.current = false
+    }
+  }, [messages, sending, feedbackMessages, feedbackSending, matchFlow, attachments, attachAnalyzing, prematchPlan])
 
   // Mic: Web Speech API (stesso pattern di AssistantChat)
   const stopListening = React.useCallback(() => {
@@ -779,6 +801,9 @@ export default function HeroChat({
             payload: {
               ...(item.payload || {}),
               kind: item.kind || item.payload?.kind || null,
+              workflowId: item.workflowId || item.payload?.workflowId || null,
+              workflowType: item.workflowType || item.payload?.workflowType || null,
+              matchId: item.matchId || item.payload?.matchId || null,
               suggestions: item.suggestions || item.payload?.suggestions || null,
               tips: item.tips || item.payload?.tips || null,
               plan: item.plan || item.payload?.plan || null
@@ -827,11 +852,15 @@ export default function HeroChat({
     if (!message || sending) return
     stopListening()
     setActionsOpen(false)
+    pendingScrollRef.current = true
 
-    const historyForApi = messages.slice(-10).map((m) => ({
-      role: m.role === 'hero' ? 'assistant' : 'user',
-      content: m.content
-    }))
+    const historyForApi = messages
+      .filter((m) => m.role === 'user' || (m.role === 'hero' && m.content && !String(m.kind || '').startsWith('workflow')))
+      .slice(-10)
+      .map((m) => ({
+        role: m.role === 'hero' ? 'assistant' : 'user',
+        content: m.content
+      }))
 
     setMessages((prev) => [...prev, { role: 'user', content: message }])
     void persistMessages([{ role: 'user', content: message }])
@@ -907,13 +936,24 @@ export default function HeroChat({
     setPrematchPlan(null)
     setAttachments([])
     setAttachmentMode('stats')
-    setWorkflowFocus({ startIndex: messages.length })
-    setHistoryExpanded(false)
+    const workflowId = makeWorkflowId('feedback')
+    setActiveWorkflowId(workflowId)
     setFeedbackMode(true)
     setFeedbackMatchId(matchId || null)
     setSaveState('idle')
     setFeedbackMessages([{ role: 'hero', content: L(lang, COPY.feedbackIntro) }])
-  }, [lang, messages.length])
+    const workflowMsg = {
+      role: 'hero',
+      content: '',
+      kind: 'workflow_feedback',
+      workflowId,
+      workflowType: 'feedback',
+      payload: { kind: 'workflow_feedback', workflowId, workflowType: 'feedback' }
+    }
+    pendingScrollRef.current = true
+    setMessages((prev) => [...prev, workflowMsg])
+    void persistMessages([workflowMsg])
+  }, [lang, persistMessages])
 
   const exitFeedbackMode = React.useCallback(() => {
     setFeedbackMode(false)
@@ -921,19 +961,35 @@ export default function HeroChat({
     setFeedbackMessages([])
     setPrematchPlan(null)
     setSaveState('idle')
-    setWorkflowFocus(null)
-    setHistoryExpanded(false)
+    setActiveWorkflowId((id) => (String(id || '').startsWith('feedback') ? null : id))
   }, [])
 
-  const beginFocusedAttachment = React.useCallback(() => {
-    setWorkflowFocus({ startIndex: messages.length })
-    setHistoryExpanded(false)
+  const beginFocusedAttachment = React.useCallback((mode = 'stats') => {
     setMatchFlow(null)
     setFeedbackMode(false)
     setFeedbackMessages([])
     setPrematchPlan(null)
     setAttachments([])
-  }, [messages.length])
+    const workflowId = makeWorkflowId(mode === 'counter' ? 'counter' : 'stats')
+    setActiveWorkflowId(workflowId)
+    setAttachmentMode(mode === 'counter' ? 'counter' : 'stats')
+    const workflowMsg = {
+      role: 'hero',
+      content: '',
+      kind: 'workflow_attach',
+      workflowId,
+      workflowType: mode === 'counter' ? 'counter' : 'stats',
+      payload: {
+        kind: 'workflow_attach',
+        workflowId,
+        workflowType: mode === 'counter' ? 'counter' : 'stats'
+      }
+    }
+    pendingScrollRef.current = true
+    setMessages((prev) => [...prev, workflowMsg])
+    void persistMessages([workflowMsg])
+    return workflowId
+  }, [persistMessages])
 
   // Eventi globali: la chat Hero e l'unica superficie conversazionale.
   // 'open-assistant-chat' (deep link ?openAssistantChat=1, link "chiedi al coach")
@@ -958,6 +1014,7 @@ export default function HeroChat({
     const message = String(raw || '').trim()
     if (!message || feedbackSending) return
     stopListening()
+    pendingScrollRef.current = true
 
     const historyForApi = feedbackMessages.slice(-10).map((m) => ({
       role: m.role === 'hero' ? 'assistant' : 'user',
@@ -1070,11 +1127,12 @@ export default function HeroChat({
     setFeedbackMode(false)
     setFeedbackMessages([])
     setPrematchPlan(null)
-    setWorkflowFocus({ startIndex: messages.length })
-    setHistoryExpanded(false)
     setAttachments([])
     setAttachmentMode('match')
+    const workflowId = makeWorkflowId('match')
+    setActiveWorkflowId(workflowId)
     setMatchFlow({
+      workflowId,
       phase: 'context',
       isHome: null,
       opponentName: '',
@@ -1083,9 +1141,18 @@ export default function HeroChat({
       result: null
     })
     const intro = { role: 'hero', content: L(lang, COPY.matchIntro), kind: 'system' }
-    setMessages((prev) => [...prev, intro])
-    void persistMessages([intro])
-  }, [lang, messages.length, persistMessages])
+    const workflowMsg = {
+      role: 'hero',
+      content: '',
+      kind: 'workflow_match',
+      workflowId,
+      workflowType: 'match',
+      payload: { kind: 'workflow_match', workflowId, workflowType: 'match' }
+    }
+    pendingScrollRef.current = true
+    setMessages((prev) => [...prev, intro, workflowMsg])
+    void persistMessages([intro, workflowMsg])
+  }, [lang, persistMessages])
 
   const updateMatchOpponent = React.useCallback((opponentName) => {
     setMatchFlow((prev) => prev ? { ...prev, opponentName } : prev)
@@ -1151,21 +1218,19 @@ export default function HeroChat({
   }, [])
 
   const openStatsCamera = React.useCallback(() => {
-    beginFocusedAttachment()
-    setAttachmentMode('stats')
+    beginFocusedAttachment('stats')
     openCamera()
   }, [beginFocusedAttachment, openCamera])
 
   const openCounterCamera = React.useCallback(() => {
-    beginFocusedAttachment()
-    setAttachmentMode('counter')
+    beginFocusedAttachment('counter')
     setActionsOpen(false)
     setMessages((prev) => [
       ...prev,
       { role: 'hero', content: L(lang, COPY.counterRequest), kind: 'system' }
     ])
     cameraInputRef.current?.click()
-  }, [beginFocusedAttachment, lang, messages.length])
+  }, [beginFocusedAttachment, lang])
 
   const analyzeMatchAttachment = React.useCallback(async (token, imageDataUrls) => {
     const flow = matchFlow
@@ -1303,10 +1368,18 @@ export default function HeroChat({
       setLastSavedMatchId(savedMatchId)
       setFeedbackMatchId(savedMatchId)
       setMatchFlow(null)
+      setActiveWorkflowId(null)
       setAttachmentMode('stats')
       const message = { role: 'hero', content: L(lang, COPY.matchSaved), kind: 'success' }
-      setMessages((prev) => [...prev, message])
-      void persistMessages([message])
+      const afterMsg = {
+        role: 'hero',
+        content: L(lang, COPY.matchAskFeedback),
+        kind: 'after_match',
+        matchId: savedMatchId,
+        payload: { kind: 'after_match', matchId: savedMatchId }
+      }
+      setMessages((prev) => [...prev, message, afterMsg])
+      void persistMessages([message, afterMsg])
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('match-saved'))
         window.dispatchEvent(new CustomEvent('diagnostic-updated'))
@@ -1431,11 +1504,13 @@ export default function HeroChat({
         const plan = await analyzeCountermeasureAttachment(token, attachments.map((attachment) => attachment.dataUrl))
         setPrematchPlan(plan)
         setAttachments([])
+        setActiveWorkflowId(null)
         const doneMessage = {
           role: 'hero',
           content: L(lang, COPY.counterDone),
-          kind: 'success',
-          plan: plan.change_set || null
+          kind: 'plan',
+          plan,
+          payload: { kind: 'plan', plan }
         }
         setMessages((prev) => [...prev.filter((m) => m.kind !== 'system'), doneMessage])
         void persistMessages([doneMessage])
@@ -1464,6 +1539,7 @@ export default function HeroChat({
         return
       }
       setAttachments([])
+      setActiveWorkflowId(null)
       const doneMessage = { role: 'hero', content: L(lang, COPY.attachDone), kind: 'success' }
       setMessages((prev) => [...dropSystem(prev), doneMessage])
       void persistMessages([doneMessage])
@@ -1506,12 +1582,8 @@ export default function HeroChat({
     setFeedCards((prev) => (prev.includes(cardId) ? prev : [...prev, cardId]))
   }
 
-  const lastHeroMessage = [...messages].reverse().find((m) => m.role === 'hero')
+  const lastHeroMessage = [...messages].reverse().find((m) => m.role === 'hero' && m.content && !String(m.kind || '').startsWith('workflow'))
   const activeSuggestions = !sending && lastHeroMessage?.suggestions?.length ? lastHeroMessage.suggestions : []
-  const visibleMessages = workflowFocus && !historyExpanded
-    ? messages.slice(workflowFocus.startIndex)
-    : messages
-  const hasHiddenHistory = !!workflowFocus && !historyExpanded && workflowFocus.startIndex > 0
 
   const scoreRing = (() => {
     if (typeof knowledgeScore !== 'number') return null
@@ -1613,168 +1685,276 @@ export default function HeroChat({
 
       {/* Feed conversazione */}
       <div className="hc-feed" ref={feedRef}>
-        {hasHiddenHistory && (
-          <button
-            type="button"
-            className="hc-historyPeek"
-            onClick={() => setHistoryExpanded(true)}
-          >
-            {L(lang, COPY.showHistory)}
-          </button>
-        )}
-        {(!workflowFocus || historyExpanded) && (
-          <>
-            {/* Banner Hero (reference foto 1) */}
-            <div className="hc-banner">
-              <p className="hc-bannerOverline">{L(lang, { it: 'Il tuo assistente di gioco', en: 'Your game assistant', es: 'Tu asistente de juego' })}</p>
-              <h1 className="hc-bannerTitle">{L(lang, COPY.heroTitle)}</h1>
-              <p className="hc-bannerSub">{L(lang, COPY.heroSub)}</p>
-            </div>
+        <div className="hc-banner">
+          <p className="hc-bannerOverline">{L(lang, { it: 'Il tuo assistente di gioco', en: 'Your game assistant', es: 'Tu asistente de juego' })}</p>
+          <h1 className="hc-bannerTitle">{L(lang, COPY.heroTitle)}</h1>
+          <p className="hc-bannerSub">{L(lang, COPY.heroSub)}</p>
+        </div>
 
-            <div className="hc-row">
-              <span className="hc-bubbleAvatar" aria-hidden="true">
-                <img src="/coach.jpg" alt="" />
-              </span>
-              <div className="hc-bubble hc-bubbleHero">
-                {greetingVariant === 'first'
-                  ? Lfn(lang, COPY.greetingNamed, clientName)
-                  : Lfn(lang, COPY.greetingReturningNamed, clientName)}
+        <div className="hc-row">
+          <span className="hc-bubbleAvatar" aria-hidden="true">
+            <img src="/coach.jpg" alt="" />
+          </span>
+          <div className="hc-bubble hc-bubbleHero">
+            {greetingVariant === 'first'
+              ? Lfn(lang, COPY.greetingNamed, clientName)
+              : Lfn(lang, COPY.greetingReturningNamed, clientName)}
+          </div>
+        </div>
+
+        {messages.map((m, i) => {
+          const key = m.id || `msg-${i}`
+          const kind = m.kind || m.payload?.kind || null
+          const workflowId = m.workflowId || m.payload?.workflowId || null
+
+          if (kind === 'workflow_match') {
+            const isActive = Boolean(matchFlow && matchFlow.workflowId === workflowId)
+            if (!isActive) {
+              return (
+                <div key={key} className="hc-workflowDone">
+                  <ClipboardList size={14} aria-hidden="true" />
+                  <span>{L(lang, COPY.actionMatch)}</span>
+                </div>
+              )
+            }
+            return (
+              <MatchUploadCard
+                key={key}
+                flow={matchFlow}
+                lang={lang}
+                attachments={attachments}
+                analyzing={attachAnalyzing}
+                lowHp={lowHp}
+                saving={matchSaving}
+                onSide={chooseMatchSide}
+                onOpponentChange={updateMatchOpponent}
+                onBegin={beginMatchPhotos}
+                onCamera={openMatchCamera}
+                onGallery={openMatchGallery}
+                onRead={analyzeAttachments}
+                onSkip={skipMatchSection}
+                onSave={saveMatchFlow}
+                onBack={goBackMatchSection}
+                onShowExample={setExampleLightbox}
+              />
+            )
+          }
+
+          if (kind === 'workflow_attach') {
+            const isActive = activeWorkflowId === workflowId && !matchFlow && !feedbackMode && (attachmentMode === 'stats' || attachmentMode === 'counter')
+            if (!isActive) {
+              return (
+                <div key={key} className="hc-workflowDone">
+                  {attachmentMode === 'counter' || m.workflowType === 'counter' ? <Trophy size={14} aria-hidden="true" /> : <Camera size={14} aria-hidden="true" />}
+                  <span>{m.workflowType === 'counter' ? L(lang, COPY.actionPrepare) : L(lang, COPY.actionStats)}</span>
+                </div>
+              )
+            }
+            return (
+              <div key={key} className="hc-attachBar hc-attachBarInline" role="region" aria-label={L(lang, COPY.attachStatsHint)}>
+                <p className="hc-attachHint">
+                  {attachmentMode === 'counter' ? L(lang, COPY.actionPrepare) : L(lang, COPY.attachStatsHint)}
+                </p>
+                <div className="hc-attachModes" role="tablist">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={attachmentMode === 'stats'}
+                    className={`hc-attachMode${attachmentMode === 'stats' ? ' hc-attachModeActive' : ''}`}
+                    onClick={() => setAttachmentMode('stats')}
+                  >
+                    {L(lang, COPY.attachStatsMode)}
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={attachmentMode === 'counter'}
+                    className={`hc-attachMode${attachmentMode === 'counter' ? ' hc-attachModeActive' : ''}`}
+                    onClick={() => setAttachmentMode('counter')}
+                  >
+                    {L(lang, COPY.attachCounterMode)}
+                  </button>
+                </div>
+                {attachments.length > 0 && (
+                  <div className="hc-attachThumbs">
+                    {attachments.map((a) => (
+                      <div key={a.id} className="hc-attachThumb">
+                        <img src={a.dataUrl} alt="" />
+                        <button type="button" className="hc-attachRemove" aria-label="X" onClick={() => removeAttachment(a.id)}>
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {attachments.length < MAX_ATTACH && (
+                  <div className="hc-attachAddRow">
+                    <button type="button" className="hc-attachAdd" onClick={() => cameraInputRef.current?.click()}>
+                      <Camera size={14} aria-hidden="true" />
+                      {L(lang, COPY.attachAddPhoto)}
+                    </button>
+                    <button type="button" className="hc-attachAdd" onClick={() => galleryInputRef.current?.click()}>
+                      <ImagePlus size={14} aria-hidden="true" />
+                      {L(lang, COPY.attachAddGallery)}
+                    </button>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  className="hc-attachAnalyze"
+                  disabled={!attachments.length || attachAnalyzing || lowHp}
+                  onClick={analyzeAttachments}
+                >
+                  {attachAnalyzing
+                    ? (attachmentMode === 'counter' ? L(lang, COPY.counterAnalyzing) : L(lang, COPY.attachAnalyzing))
+                    : (attachmentMode === 'counter' ? L(lang, COPY.counterAnalyze) : L(lang, COPY.attachAnalyze))}
+                </button>
+              </div>
+            )
+          }
+
+          if (kind === 'workflow_feedback') {
+            const isActive = feedbackMode && activeWorkflowId === workflowId
+            if (!isActive) {
+              return (
+                <div key={key} className="hc-workflowDone">
+                  <MessageSquareHeart size={14} aria-hidden="true" />
+                  <span>{L(lang, COPY.actionFeedback)}</span>
+                </div>
+              )
+            }
+            return (
+              <div key={key} className="hc-feedbackBlock">
+                <div className="hc-feedbackBadge" role="status">
+                  <span className="hc-feedbackBadgeDot" aria-hidden="true" />
+                  <span className="hc-feedbackBadgeText">
+                    {L(lang, COPY.feedbackBadge)} · {L(lang, COPY.feedbackCostNote)}
+                  </span>
+                  <button type="button" className="hc-feedbackExit" onClick={exitFeedbackMode}>
+                    {L(lang, COPY.feedbackExit)}
+                  </button>
+                </div>
+                {feedbackMessages.map((fm, fi) => (
+                  <div key={`fb-${fi}`} className={fm.role === 'user' ? 'hc-row hc-rowUser' : 'hc-row'}>
+                    {fm.role === 'hero' && (
+                      <span className="hc-bubbleAvatar" aria-hidden="true">
+                        <img src="/coach.jpg" alt="" />
+                      </span>
+                    )}
+                    <div className={fm.role === 'user' ? 'hc-bubble hc-bubbleUser' : `hc-bubble hc-bubbleHero${fm.kind === 'error' || fm.kind === 'lowhp' ? ' hc-bubbleWarn' : ''}`}>
+                      {fm.kind === 'lowhp' && (
+                        <span className="hc-warnRow">
+                          <AlertCircle size={14} aria-hidden="true" />
+                          <button type="button" className="hc-lowHpCta" onClick={() => router.push('/gestione-profilo')}>
+                            {L(lang, COPY.lowHpCta)}
+                          </button>
+                        </span>
+                      )}
+                      <ChatMarkdown>{fm.content}</ChatMarkdown>
+                    </div>
+                  </div>
+                ))}
+                {feedbackSending && (
+                  <div className="hc-row">
+                    <span className="hc-bubbleAvatar" aria-hidden="true">
+                      <img src="/coach.jpg" alt="" />
+                    </span>
+                    <div className="hc-bubble hc-bubbleHero hc-thinking">
+                      <span className="hc-dot" /><span className="hc-dot" /><span className="hc-dot" />
+                      <span className="hc-srOnly">{L(lang, COPY.thinking)}</span>
+                    </div>
+                  </div>
+                )}
+                {saveState !== 'saved' && feedbackMessages.some((fm) => fm.role === 'user') && (
+                  <div className="hc-saveCard">
+                    <p className="hc-stateTitle">{L(lang, COPY.saveCardTitle)}</p>
+                    <p className="hc-stateDesc">{L(lang, COPY.saveCardSub)}</p>
+                    {saveState === 'error' && <p className="hc-saveError">{L(lang, COPY.saveError)}</p>}
+                    <div className="hc-saveActions">
+                      <button
+                        type="button"
+                        className="hc-stateBtn"
+                        onClick={handleSaveFeedback}
+                        disabled={saveState === 'saving'}
+                      >
+                        {saveState === 'saving' ? L(lang, COPY.saveCardSaving) : L(lang, COPY.saveCardSave)}
+                      </button>
+                      <button type="button" className="hc-saveLater" onClick={exitFeedbackMode}>
+                        {L(lang, COPY.saveCardLater)}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          }
+
+          if (kind === 'plan' && m.plan) {
+            return (
+              <React.Fragment key={key}>
+                {m.content ? (
+                  <div className="hc-row">
+                    <span className="hc-bubbleAvatar" aria-hidden="true">
+                      <img src="/coach.jpg" alt="" />
+                    </span>
+                    <div className="hc-bubble hc-bubbleHero hc-bubbleOk">
+                      <span className="hc-warnRow"><CheckCircle2 size={14} aria-hidden="true" /></span>
+                      <ChatMarkdown>{m.content}</ChatMarkdown>
+                    </div>
+                  </div>
+                ) : null}
+                <PrematchPlanCard plan={m.plan} lang={lang} />
+              </React.Fragment>
+            )
+          }
+
+          if (kind === 'after_match') {
+            return (
+              <div key={key} className="hc-afterMatchCard">
+                <p>{m.content || L(lang, COPY.matchAskFeedback)}</p>
+                <button
+                  type="button"
+                  className="hc-guidedPrimary"
+                  onClick={() => enterFeedbackMode(m.matchId || m.payload?.matchId || lastSavedMatchId)}
+                >
+                  {L(lang, COPY.actionFeedback)}
+                </button>
+              </div>
+            )
+          }
+
+          if (!m.content && kind === 'system') return null
+
+          return (
+            <div key={key} className={m.role === 'user' ? 'hc-row hc-rowUser' : 'hc-row'}>
+              {m.role === 'hero' && (
+                <span className="hc-bubbleAvatar" aria-hidden="true">
+                  <img src="/coach.jpg" alt="" />
+                </span>
+              )}
+              <div className={m.role === 'user' ? 'hc-bubble hc-bubbleUser' : `hc-bubble hc-bubbleHero${kind === 'error' || kind === 'lowhp' ? ' hc-bubbleWarn' : ''}${kind === 'success' ? ' hc-bubbleOk' : ''}`}>
+                {kind === 'lowhp' && (
+                  <span className="hc-warnRow">
+                    <AlertCircle size={14} aria-hidden="true" />
+                    <button type="button" className="hc-lowHpCta" onClick={() => router.push('/gestione-profilo')}>
+                      {L(lang, COPY.lowHpCta)}
+                    </button>
+                  </span>
+                )}
+                {kind === 'success' && (
+                  <span className="hc-warnRow">
+                    <CheckCircle2 size={14} aria-hidden="true" />
+                  </span>
+                )}
+                {m.tips?.length > 1 ? (
+                  <TipCards tips={m.tips} lang={lang} onDeepen={(body) => sendMessage(`${L(lang, COPY.deepenAsk)}: ${body}`)} />
+                ) : (
+                  <ChatMarkdown>{m.content}</ChatMarkdown>
+                )}
               </div>
             </div>
-          </>
-        )}
-
-        {visibleMessages.map((m, i) => (
-          <div key={i} className={m.role === 'user' ? 'hc-row hc-rowUser' : 'hc-row'}>
-            {m.role === 'hero' && (
-              <span className="hc-bubbleAvatar" aria-hidden="true">
-                <img src="/coach.jpg" alt="" />
-              </span>
-            )}
-            <div className={m.role === 'user' ? 'hc-bubble hc-bubbleUser' : `hc-bubble hc-bubbleHero${m.kind === 'error' || m.kind === 'lowhp' ? ' hc-bubbleWarn' : ''}${m.kind === 'success' ? ' hc-bubbleOk' : ''}`}>
-              {m.kind === 'lowhp' && (
-                <span className="hc-warnRow">
-                  <AlertCircle size={14} aria-hidden="true" />
-                  <button type="button" className="hc-lowHpCta" onClick={() => router.push('/gestione-profilo')}>
-                    {L(lang, COPY.lowHpCta)}
-                  </button>
-                </span>
-              )}
-              {m.kind === 'success' && (
-                <span className="hc-warnRow">
-                  <CheckCircle2 size={14} aria-hidden="true" />
-                </span>
-              )}
-              {m.tips?.length > 1 ? (
-                <TipCards tips={m.tips} lang={lang} onDeepen={(body) => sendMessage(`${L(lang, COPY.deepenAsk)}: ${body}`)} />
-              ) : (
-                m.content
-              )}
-            </div>
-          </div>
-        ))}
-
-        {!feedbackMode && matchFlow && (
-          <MatchUploadCard
-            flow={matchFlow}
-            lang={lang}
-            attachments={attachments}
-            analyzing={attachAnalyzing}
-            lowHp={lowHp}
-            saving={matchSaving}
-            onSide={chooseMatchSide}
-            onOpponentChange={updateMatchOpponent}
-            onBegin={beginMatchPhotos}
-            onCamera={openMatchCamera}
-            onGallery={openMatchGallery}
-            onRead={analyzeAttachments}
-            onSkip={skipMatchSection}
-            onSave={saveMatchFlow}
-            onBack={goBackMatchSection}
-            onShowExample={setExampleLightbox}
-          />
-        )}
-
-        {!feedbackMode && !matchFlow && lastSavedMatchId && (
-          <div className="hc-afterMatchCard">
-            <p>{L(lang, COPY.matchAskFeedback)}</p>
-            <button
-              type="button"
-              className="hc-guidedPrimary"
-              onClick={() => enterFeedbackMode(lastSavedMatchId)}
-            >
-              {L(lang, COPY.actionFeedback)}
-            </button>
-          </div>
-        )}
-
-        {/* Modalita partita (Palestra in chat): badge + thread feedback reale */}
-        {feedbackMode && (
-          <div className="hc-feedbackBadge" role="status">
-            <span className="hc-feedbackBadgeDot" aria-hidden="true" />
-            <span className="hc-feedbackBadgeText">
-              {L(lang, COPY.feedbackBadge)} · {L(lang, COPY.feedbackCostNote)}
-            </span>
-            <button type="button" className="hc-feedbackExit" onClick={exitFeedbackMode}>
-              {L(lang, COPY.feedbackExit)}
-            </button>
-          </div>
-        )}
-
-        {feedbackMode && feedbackMessages.map((m, i) => (
-          <div key={`fb-${i}`} className={m.role === 'user' ? 'hc-row hc-rowUser' : 'hc-row'}>
-            {m.role === 'hero' && (
-              <span className="hc-bubbleAvatar" aria-hidden="true">
-                <img src="/coach.jpg" alt="" />
-              </span>
-            )}
-            <div className={m.role === 'user' ? 'hc-bubble hc-bubbleUser' : `hc-bubble hc-bubbleHero${m.kind === 'error' || m.kind === 'lowhp' ? ' hc-bubbleWarn' : ''}`}>
-              {m.kind === 'lowhp' && (
-                <span className="hc-warnRow">
-                  <AlertCircle size={14} aria-hidden="true" />
-                  <button type="button" className="hc-lowHpCta" onClick={() => router.push('/gestione-profilo')}>
-                    {L(lang, COPY.lowHpCta)}
-                  </button>
-                </span>
-              )}
-              {m.content}
-            </div>
-          </div>
-        ))}
-
-        {feedbackMode && feedbackSending && (
-          <div className="hc-row">
-            <span className="hc-bubbleAvatar" aria-hidden="true">
-              <img src="/coach.jpg" alt="" />
-            </span>
-            <div className="hc-bubble hc-bubbleHero hc-thinking">
-              <span className="hc-dot" /><span className="hc-dot" /><span className="hc-dot" />
-              <span className="hc-srOnly">{L(lang, COPY.thinking)}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Card salvataggio memoria (consenso): solo se l'utente ha scritto qualcosa */}
-        {feedbackMode && saveState !== 'saved' && feedbackMessages.some((m) => m.role === 'user') && (
-          <div className="hc-saveCard">
-            <p className="hc-stateTitle">{L(lang, COPY.saveCardTitle)}</p>
-            <p className="hc-stateDesc">{L(lang, COPY.saveCardSub)}</p>
-            {saveState === 'error' && <p className="hc-saveError">{L(lang, COPY.saveError)}</p>}
-            <div className="hc-saveActions">
-              <button
-                type="button"
-                className="hc-stateBtn"
-                onClick={handleSaveFeedback}
-                disabled={saveState === 'saving'}
-              >
-                {saveState === 'saving' ? L(lang, COPY.saveCardSaving) : L(lang, COPY.saveCardSave)}
-              </button>
-              <button type="button" className="hc-saveLater" onClick={exitFeedbackMode}>
-                {L(lang, COPY.saveCardLater)}
-              </button>
-            </div>
-          </div>
-        )}
+          )
+        })}
 
         {sending && (
           <div className="hc-row">
@@ -1788,7 +1968,6 @@ export default function HeroChat({
           </div>
         )}
 
-        {/* Card di stato reale (setup/post-match/stats): una sola, mai fake */}
         {stateCopy && stateCta && !feedbackMode && !matchFlow && (
           <div className="hc-stateCard">
             <p className="hc-stateTitle">{L(lang, stateCopy.title)}</p>
@@ -1802,14 +1981,6 @@ export default function HeroChat({
           </div>
         )}
 
-        {!feedbackMode && prematchPlan && (
-          <PrematchPlanCard
-            plan={prematchPlan}
-            lang={lang}
-          />
-        )}
-
-        {/* Card ricche in-conversazione (dati reali) */}
         {feedCards.includes('knowledge') && (
           <div className="hc-richCard">
             <div className="hc-richHead">
@@ -1824,7 +1995,6 @@ export default function HeroChat({
           </div>
         )}
 
-        {/* Suggerimenti reali dal backend: solo dopo una risposta del coach. */}
         {activeSuggestions.length > 0 && !feedbackMode && !matchFlow && (
           <div className="hc-suggestions">
             {activeSuggestions.map((sug) => (
@@ -1871,73 +2041,6 @@ export default function HeroChat({
             e.target.value = ''
           }}
         />
-        {attachments.length > 0 && !matchFlow && (
-          <div className="hc-attachBar" role="region" aria-label={L(lang, COPY.attachStatsHint)}>
-            <p className="hc-attachHint">
-              {attachmentMode === 'counter' ? L(lang, COPY.actionPrepare) : L(lang, COPY.attachStatsHint)}
-            </p>
-            <div className="hc-attachModes" role="tablist">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={attachmentMode === 'stats'}
-                className={`hc-attachMode${attachmentMode === 'stats' ? ' hc-attachModeActive' : ''}`}
-                onClick={() => setAttachmentMode('stats')}
-              >
-                {L(lang, COPY.attachStatsMode)}
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={attachmentMode === 'counter'}
-                className={`hc-attachMode${attachmentMode === 'counter' ? ' hc-attachModeActive' : ''}`}
-                onClick={() => setAttachmentMode('counter')}
-              >
-                {L(lang, COPY.attachCounterMode)}
-              </button>
-            </div>
-            <div className="hc-attachThumbs">
-              {attachments.map((a) => (
-                <div key={a.id} className="hc-attachThumb">
-                  <img src={a.dataUrl} alt="" />
-                  <button type="button" className="hc-attachRemove" aria-label="X" onClick={() => removeAttachment(a.id)}>
-                    <X size={12} />
-                  </button>
-                </div>
-              ))}
-            </div>
-            {attachments.length < MAX_ATTACH && (
-              <div className="hc-attachAddRow">
-                <button
-                  type="button"
-                  className="hc-attachAdd"
-                  onClick={() => cameraInputRef.current?.click()}
-                >
-                  <Camera size={14} aria-hidden="true" />
-                  {L(lang, COPY.attachAddPhoto)}
-                </button>
-                <button
-                  type="button"
-                  className="hc-attachAdd"
-                  onClick={() => galleryInputRef.current?.click()}
-                >
-                  <ImagePlus size={14} aria-hidden="true" />
-                  {L(lang, COPY.attachAddGallery)}
-                </button>
-              </div>
-            )}
-            <button
-              type="button"
-              className="hc-attachAnalyze"
-              disabled={attachAnalyzing || lowHp}
-              onClick={analyzeAttachments}
-            >
-              {attachAnalyzing
-                ? (attachmentMode === 'counter' ? L(lang, COPY.counterAnalyzing) : L(lang, COPY.attachAnalyzing))
-                : (attachmentMode === 'counter' ? L(lang, COPY.counterAnalyze) : L(lang, COPY.attachAnalyze))}
-            </button>
-          </div>
-        )}
         {actionsOpen && (
           <div className="hc-actionsSheet" role="menu" aria-label={L(lang, COPY.actions)}>
             {quickActions.map((a) => {
@@ -2171,8 +2274,90 @@ export default function HeroChat({
           display: flex;
           flex-direction: column;
           gap: 14px;
-          padding: 2px 4px 10px;
+          padding: 2px 4px calc(12px + env(safe-area-inset-bottom, 0px));
           overscroll-behavior: contain;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .hc-workflowDone {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          align-self: flex-start;
+          min-height: 36px;
+          padding: 8px 12px;
+          border-radius: 999px;
+          border: 1px solid var(--border-soft);
+          background: rgba(255, 255, 255, 0.03);
+          color: var(--text-dim);
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .hc-feedbackBlock {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .hc-attachBarInline {
+          width: 100%;
+          max-width: min(100%, 560px);
+        }
+
+        :global(.hc-md) {
+          display: flex;
+          flex-direction: column;
+          gap: 0.55em;
+        }
+
+        :global(.hc-md-p) {
+          margin: 0;
+        }
+
+        :global(.hc-md-strong) {
+          font-weight: 800;
+          color: inherit;
+        }
+
+        :global(.hc-md-em) {
+          font-style: italic;
+        }
+
+        :global(.hc-md-ul),
+        :global(.hc-md-ol) {
+          margin: 0;
+          padding-left: 1.2em;
+        }
+
+        :global(.hc-md-li) {
+          margin: 0.2em 0;
+        }
+
+        :global(.hc-md-a) {
+          color: var(--accent);
+          text-decoration: underline;
+          text-underline-offset: 2px;
+        }
+
+        :global(.hc-md-heading) {
+          margin: 0;
+          font-weight: 800;
+        }
+
+        :global(.hc-md-code) {
+          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+          font-size: 0.92em;
+          padding: 0.1em 0.35em;
+          border-radius: 6px;
+          background: rgba(255, 255, 255, 0.06);
+        }
+
+        :global(.hc-md-quote) {
+          margin: 0;
+          padding-left: 0.75em;
+          border-left: 2px solid var(--accent-border);
+          color: var(--text-dim);
         }
 
         .hc-historyPeek {
@@ -2621,7 +2806,7 @@ export default function HeroChat({
         .hc-composerWrap {
           position: relative;
           flex-shrink: 0;
-          padding: 0 4px 6px;
+          padding: 0 4px calc(8px + env(safe-area-inset-bottom, 0px));
         }
 
         .hc-actionsSheet {
@@ -2832,12 +3017,11 @@ export default function HeroChat({
           font-size: 13px;
           line-height: 1.45;
           color: var(--text-main);
-          white-space: pre-wrap;
         }
 
         :global(.hc-tipBodyClamp) {
           display: -webkit-box;
-          -webkit-line-clamp: 2;
+          -webkit-line-clamp: 4;
           -webkit-box-orient: vertical;
           overflow: hidden;
         }
