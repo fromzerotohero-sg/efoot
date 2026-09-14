@@ -185,7 +185,7 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
       <div className="neon-card" style={boxStyle} onClick={(e) => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h2 style={{ fontSize: 'clamp(18px, 4vw, 20px)', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <BarChart3 size={22} style={{ color: 'var(--neon-blue)', flexShrink: 0 }} />
+            <BarChart3 size={22} style={{ color: 'var(--accent)', flexShrink: 0 }} />
             {t('gameAnalysisTitle')}
           </h2>
           <button
@@ -217,7 +217,7 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
             background: 'rgba(0, 212, 255, 0.04)'
           }}
         >
-          <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--neon-cyan)', marginBottom: '10px', textAlign: 'center' }}>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--accent)', marginBottom: '10px', textAlign: 'center' }}>
             {lang === 'en' ? 'Correct screen examples' : 'Esempi schermate corrette'}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
@@ -248,7 +248,7 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
             {SLOTS.map(({ key, labelKey, descKey }) => {
               const value = getSlot(key)
               const ref = key === 'slot1' ? inputRef1 : inputRef2
-              const color = 'var(--neon-blue)'
+              const color = 'var(--accent)'
               return (
                 <div
                   key={key}
@@ -264,9 +264,9 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
                     <>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <BarChart3 size={20} style={{ color: 'var(--neon-cyan)', flexShrink: 0 }} />
-                          <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--neon-cyan)', textShadow: '0 0 10px rgba(0,212,255,0.5)' }}>{t(labelKey)}</span>
-                          <span style={{ fontSize: '11px', padding: '2px 6px', background: 'var(--neon-cyan)', color: '#000', borderRadius: '4px', fontWeight: 700, boxShadow: '0 0 10px rgba(0,212,255,0.5)' }}>✓</span>
+                          <BarChart3 size={20} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                          <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--accent)', textShadow: '0 0 10px rgba(0,212,255,0.5)' }}>{t(labelKey)}</span>
+                          <span style={{ fontSize: '11px', padding: '2px 6px', background: 'var(--accent)', color: '#000', borderRadius: '4px', fontWeight: 700, boxShadow: '0 0 10px rgba(0,212,255,0.5)' }}>✓</span>
                         </div>
                         <button
                           type="button"

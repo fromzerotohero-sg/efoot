@@ -34,7 +34,7 @@ const styles = {
     background: 'rgba(0, 212, 255, 0.05)',
     border: '1px solid rgba(0, 212, 255, 0.2)',
     borderRadius: '10px',
-    color: 'white',
+    color: 'var(--text-main)',
     fontSize: 'clamp(13px, 1.8vw, 14px)',
     outline: 'none',
     transition: 'all 0.2s'
@@ -645,7 +645,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
               width: isMobile ? '36px' : '44px',
               height: isMobile ? '36px' : '44px',
               borderRadius: isMobile ? '10px' : '12px',
-              background: 'linear-gradient(135deg, var(--neon-cyan), var(--neon-blue))',
+              background: 'linear-gradient(135deg, var(--accent), var(--accent))',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -658,7 +658,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                 id={dialogTitleId}
                 style={{
                   fontWeight: 700,
-                  color: 'white',
+                  color: 'var(--text-main)',
                   fontSize: isMobile ? '15px' : '17px',
                   marginBottom: isMobile ? '0' : '2px',
                   whiteSpace: 'nowrap',
@@ -684,7 +684,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                 border: '1px solid rgba(0,212,255,0.4)',
                 borderRadius: '10px',
                 cursor: saving ? 'wait' : 'pointer',
-                color: 'white',
+                color: 'var(--text-main)',
                 padding: isNarrowMobile ? '7px 9px' : (isMobile ? '8px 12px' : '10px 16px'),
                 minHeight: '44px',
                 display: 'flex',
@@ -804,12 +804,12 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                 background: formExpanded ? 'rgba(0,212,255,0.08)' : 'transparent',
                 border: 'none',
                 cursor: 'pointer',
-                color: 'white',
+                color: 'var(--text-main)',
                 transition: 'all 0.2s'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <User size={20} color="var(--neon-cyan)" />
+                <User size={20} color="var(--accent)" />
                 <span style={{ fontWeight: 600, fontSize: 'clamp(13px, 2vw, 15px)' }}>
                   {(lang === 'en' || lang === 'es') ? 'Your Gaming Profile' : 'Il tuo Profilo di Gioco'}
                 </span>
@@ -997,10 +997,10 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                   style={{
                     width: '100%',
                     padding: '14px',
-                    background: formSaving ? 'rgba(0,212,255,0.1)' : 'linear-gradient(135deg, var(--neon-cyan), var(--neon-blue))',
+                    background: formSaving ? 'rgba(0,212,255,0.1)' : 'linear-gradient(135deg, var(--accent), var(--accent))',
                     border: 'none',
                     borderRadius: '12px',
-                    color: 'white',
+                    color: 'var(--text-main)',
                     fontWeight: 600,
                     cursor: formSaving ? 'wait' : 'pointer',
                     fontSize: '14px',
@@ -1029,8 +1029,8 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
               alignItems: 'center',
               gap: '10px'
             }}>
-              <MessageCircle size={18} color="var(--neon-cyan)" />
-              <span style={{ fontWeight: 600, color: 'white', fontSize: '14px' }}>
+              <MessageCircle size={18} color="var(--accent)" />
+              <span style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '14px' }}>
                 {(lang === 'en' || lang === 'es') ? 'Chat with Coach' : 'Chat con Coach'}
               </span>
               <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginLeft: 'auto', display: isNarrowMobile ? 'none' : 'inline' }}>
@@ -1062,7 +1062,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                       padding: isMobile ? '10px 13px' : '12px 16px',
                       borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
                       background: msg.role === 'user' 
-                        ? 'linear-gradient(135deg, var(--neon-cyan), var(--neon-blue))'
+                        ? 'linear-gradient(135deg, var(--accent), var(--accent))'
                         : 'rgba(255,255,255,0.08)',
                       color: msg.role === 'user' ? 'white' : 'rgba(255,255,255,0.9)',
                       fontSize: 'clamp(13px, 2vw, 14px)',
@@ -1082,21 +1082,21 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                     width: '8px', 
                     height: '8px', 
                     borderRadius: '50%', 
-                    background: 'var(--neon-cyan)',
+                    background: 'var(--accent)',
                     animation: 'bounce 1s infinite'
                   }} />
                   <div style={{ 
                     width: '8px', 
                     height: '8px', 
                     borderRadius: '50%', 
-                    background: 'var(--neon-cyan)',
+                    background: 'var(--accent)',
                     animation: 'bounce 1s infinite 0.2s'
                   }} />
                   <div style={{ 
                     width: '8px', 
                     height: '8px', 
                     borderRadius: '50%', 
-                    background: 'var(--neon-cyan)',
+                    background: 'var(--accent)',
                     animation: 'bounce 1s infinite 0.4s'
                   }} />
                 </div>
@@ -1124,7 +1124,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                       background: 'rgba(0,212,255,0.1)',
                       border: '1px solid rgba(0,212,255,0.3)',
                       borderRadius: '20px',
-                      color: 'var(--neon-cyan)',
+                      color: 'var(--accent)',
                       fontSize: '12px',
                       cursor: 'pointer',
                       minHeight: isMobile ? '44px' : undefined,
@@ -1188,7 +1188,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                   background: 'rgba(255,255,255,0.05)',
                   border: '1px solid rgba(255,255,255,0.15)',
                   borderRadius: '12px',
-                  color: 'white',
+                  color: 'var(--text-main)',
                   fontSize: 'clamp(13px, 2vw, 14px)',
                   outline: 'none'
                 }}
@@ -1198,10 +1198,10 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
                 disabled={loading || saving || !input.trim()}
                 style={{
                   padding: '12px 16px',
-                  background: !input.trim() ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, var(--neon-cyan), var(--neon-blue))',
+                  background: !input.trim() ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, var(--accent), var(--accent))',
                   border: 'none',
                   borderRadius: '12px',
-                  color: 'white',
+                  color: 'var(--text-main)',
                   cursor: !input.trim() ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -1249,7 +1249,7 @@ export default function CoachFeedbackChat({ show, onClose, userProfile: external
           padding: 10px;
         }
         .coach-form-select option:checked {
-          background: var(--neon-cyan);
+          background: var(--accent);
           color: #000;
         }
         .coach-feedback-modal :global(button:focus-visible),

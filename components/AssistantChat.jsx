@@ -638,7 +638,7 @@ export default function AssistantChat({
               position: 'absolute',
               left: isMobileViewport ? '72px' : '88px',
               whiteSpace: 'nowrap',
-              color: '#fff',
+              color: 'var(--text-main)',
               fontSize: '14px',
               fontWeight: 700,
               opacity: 0,
@@ -737,7 +737,7 @@ export default function AssistantChat({
             right: '20px',
             width: 'clamp(320px, 90vw, 400px)',
             height: 'clamp(500px, 70vh, 600px)',
-            border: '2px solid var(--neon-blue)',
+            border: '2px solid var(--accent)',
             borderRadius: '16px',
             boxShadow: 'var(--glow-blue)',
             display: 'flex',
@@ -797,7 +797,7 @@ export default function AssistantChat({
             />
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700, color: 'var(--neon-cyan)', fontSize: '16px', textShadow: '0 0 8px rgba(0, 212, 255, 0.4)' }}>
+            <div style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '16px' }}>
               {titleOverride || userProfile?.ai_name || 'Hero Chat'}
             </div>
             {(subtitleOverride || userProfile?.first_name) && (
@@ -814,7 +814,7 @@ export default function AssistantChat({
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
-              color: 'var(--neon-cyan)',
+              color: 'var(--accent)',
               padding: '4px',
               display: 'flex',
               alignItems: 'center',
@@ -826,7 +826,7 @@ export default function AssistantChat({
               e.currentTarget.style.filter = 'drop-shadow(0 0 8px rgba(0, 212, 255, 0.8))';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = 'var(--neon-cyan)';
+              e.currentTarget.style.color = 'var(--accent)';
               e.currentTarget.style.filter = 'none';
             }}
             aria-label={t('closeAssistant') || 'Chiudi assistente'}
@@ -893,7 +893,7 @@ export default function AssistantChat({
             }}>
               Hero Chat
             </div>
-            <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--neon-cyan)', marginBottom: '8px' }}>
+            <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--accent)', marginBottom: '8px' }}>
               {userProfile?.first_name 
                 ? (lang === 'en' 
                     ? `Hi ${userProfile.first_name}! How can I help you?` 
@@ -920,7 +920,7 @@ export default function AssistantChat({
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '10px' }}>
                   <Sparkles size={18} color="#00d4ff" style={{ flexShrink: 0, marginTop: '2px' }} />
                   <div>
-                    <strong style={{ display: 'block', color: '#fff', fontSize: '14px', marginBottom: '3px' }}>
+                    <strong style={{ display: 'block', color: 'var(--text-main)', fontSize: '14px', marginBottom: '3px' }}>
                       {(lang === 'en' || lang === 'es') ? 'Make my advice personal' : 'Rendi i consigli davvero tuoi'}
                     </strong>
                     <span style={{ display: 'block', color: 'rgba(255,255,255,0.68)', fontSize: '12px', lineHeight: 1.45 }}>
@@ -998,7 +998,7 @@ export default function AssistantChat({
             borderRadius: '14px',
             background: 'linear-gradient(135deg, rgba(255,203,5,0.11), rgba(0,212,255,0.08))'
           }}>
-            <strong style={{ display: 'block', color: '#fff', fontSize: '13px', marginBottom: '4px' }}>
+            <strong style={{ display: 'block', color: 'var(--text-main)', fontSize: '13px', marginBottom: '4px' }}>
               {chatSetupCta.primary.id === 'game-analysis'
                 ? ((lang === 'en' || lang === 'es') ? 'Missing game stats' : 'Mancano le statistiche di gioco')
                 : ((lang === 'en' || lang === 'es') ? 'Missing setup data' : 'Mancano dati per personalizzare')}
@@ -1066,7 +1066,7 @@ export default function AssistantChat({
                 padding: '12px 16px',
                 borderRadius: '12px',
                 background: msg.role === 'user' 
-                  ? 'var(--neon-blue)'
+                  ? 'var(--accent)'
                   : 'rgba(255, 255, 255, 0.1)',
                 fontSize: '14px',
                 lineHeight: '1.6',
@@ -1114,21 +1114,21 @@ export default function AssistantChat({
                 width: '8px', 
                 height: '8px', 
                 borderRadius: '50%', 
-                background: 'var(--neon-blue)', 
+                background: 'var(--accent)', 
                 animation: 'bounce 1s infinite' 
               }} />
               <div style={{ 
                 width: '8px', 
                 height: '8px', 
                 borderRadius: '50%', 
-                background: 'var(--neon-blue)', 
+                background: 'var(--accent)', 
                 animation: 'bounce 1s infinite 0.2s' 
               }} />
               <div style={{ 
                 width: '8px', 
                 height: '8px', 
                 borderRadius: '50%', 
-                background: 'var(--neon-blue)', 
+                background: 'var(--accent)', 
                 animation: 'bounce 1s infinite 0.4s' 
               }} />
             </div>
@@ -1159,17 +1159,17 @@ export default function AssistantChat({
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
-              color: 'var(--neon-blue)',
+              color: 'var(--accent)',
               fontSize: '12px',
               transition: 'background 0.2s'
             }}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)' }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-            onFocus={(e) => { e.currentTarget.style.outline = '2px solid var(--neon-blue)'; e.currentTarget.style.outlineOffset = '2px' }}
+            onFocus={(e) => { e.currentTarget.style.outline = '2px solid var(--accent)'; e.currentTarget.style.outlineOffset = '2px' }}
             onBlur={(e) => { e.currentTarget.style.outline = 'none' }}
           >
             <span>💡 {(lang === 'en' || lang === 'es') ? 'Suggestions (3)' : 'Suggerimenti (3)'}</span>
-            {suggestionsExpanded ? <ChevronUp size={16} color="var(--neon-blue)" /> : <ChevronDown size={16} color="var(--neon-blue)" />}
+            {suggestionsExpanded ? <ChevronUp size={16} color="var(--accent)" /> : <ChevronDown size={16} color="var(--accent)" />}
           </button>
           {suggestionsExpanded && (
             <div style={{ padding: '8px 12px 12px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -1181,12 +1181,12 @@ export default function AssistantChat({
                   style={{
                     padding: '6px 12px',
                     background: 'rgba(0, 212, 255, 0.1)',
-                    border: '1px solid var(--neon-blue)',
+                    border: '1px solid var(--accent)',
                     borderRadius: '20px',
                     fontSize: '12px',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
-                    color: 'white',
+                    color: 'var(--text-main)',
                     maxWidth: '100%'
                   }}
                   onMouseEnter={(e) => {
@@ -1222,17 +1222,17 @@ export default function AssistantChat({
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
-              color: 'var(--neon-blue)',
+              color: 'var(--accent)',
               fontSize: '12px',
               transition: 'background 0.2s'
             }}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)' }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-            onFocus={(e) => { e.currentTarget.style.outline = '2px solid var(--neon-blue)'; e.currentTarget.style.outlineOffset = '2px' }}
+            onFocus={(e) => { e.currentTarget.style.outline = '2px solid var(--accent)'; e.currentTarget.style.outlineOffset = '2px' }}
             onBlur={(e) => { e.currentTarget.style.outline = 'none' }}
           >
             <span>💡 {(lang === 'en' || lang === 'es') ? 'Suggestions (3)' : 'Suggerimenti (3)'}</span>
-            {suggestionsExpanded ? <ChevronUp size={16} color="var(--neon-blue)" /> : <ChevronDown size={16} color="var(--neon-blue)" />}
+            {suggestionsExpanded ? <ChevronUp size={16} color="var(--accent)" /> : <ChevronDown size={16} color="var(--accent)" />}
           </button>
           {suggestionsExpanded && (
             <div style={{ padding: '8px 12px 12px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -1244,12 +1244,12 @@ export default function AssistantChat({
                   style={{
                     padding: '6px 12px',
                     background: 'rgba(0, 212, 255, 0.1)',
-                    border: '1px solid var(--neon-blue)',
+                    border: '1px solid var(--accent)',
                     borderRadius: '20px',
                     fontSize: '12px',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
-                    color: 'white',
+                    color: 'var(--text-main)',
                     maxWidth: '100%'
                   }}
                   onMouseEnter={(e) => {
@@ -1426,7 +1426,7 @@ export default function AssistantChat({
             padding: '12px 16px',
             background: loading || !input.trim() || isListening
               ? 'rgba(255, 255, 255, 0.1)'
-              : 'var(--neon-blue)',
+              : 'var(--accent)',
             border: 'none',
             borderRadius: '8px',
             cursor: loading || !input.trim() || isListening ? 'not-allowed' : 'pointer',
@@ -1437,13 +1437,13 @@ export default function AssistantChat({
           }}
           onMouseEnter={(e) => {
             if (!loading && input.trim() && !isListening) {
-              e.currentTarget.style.background = 'var(--neon-orange)'
+              e.currentTarget.style.background = '#f59e0b'
               e.currentTarget.style.transform = 'scale(1.05)'
             }
           }}
           onMouseLeave={(e) => {
             if (!loading && input.trim() && !isListening) {
-              e.currentTarget.style.background = 'var(--neon-blue)'
+              e.currentTarget.style.background = 'var(--accent)'
               e.currentTarget.style.transform = 'scale(1)'
             }
           }}
