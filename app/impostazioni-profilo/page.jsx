@@ -4,7 +4,7 @@ import React from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
-import { Save, SkipForward, RefreshCw, User, Gamepad2, Brain, CheckCircle2, AlertCircle, X, Wallet, Zap, LogOut, BookOpen, Gift } from 'lucide-react'
+import { Save, SkipForward, RefreshCw, User, Gamepad2, Brain, CheckCircle2, AlertCircle, X, Wallet, Zap, LogOut, BookOpen, Gift, Pencil } from 'lucide-react'
 import LanguageSwitch from '@/components/LanguageSwitch'
 import ThemeToggle from '@/components/ThemeToggle'
 
@@ -174,6 +174,10 @@ export default function ImpostazioniProfiloPage() {
   })
   
   const [profileData, setProfileData] = React.useState(null) // Dati completi dal server
+  const [editingField, setEditingField] = React.useState(null) // { key, type, label }
+  const [editValue, setEditValue] = React.useState('')
+  const [editSaving, setEditSaving] = React.useState(false)
+  const [editError, setEditError] = React.useState(null)
   const [loading, setLoading] = React.useState(true)
   const [saving, setSaving] = React.useState(false)
   const [error, setError] = React.useState(null)
@@ -248,6 +252,114 @@ export default function ImpostazioniProfiloPage() {
 
     fetchProfile()
   }, [router])
+
+  // Ricarica i dati profilo dal server (dopo una modifica singola)
+  const reloadProfileData = React.useCallback(async () => {
+    try {
+      let token = localStorage.getItem('auth_token')
+      if (!token && supabase) {
+        const { data: session } = await supabase.auth.getSession()
+        token = session?.session?.access_token
+      }
+      if (!token) return
+      const res = await fetch('/api/user/profile', {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store'
+      })
+      if (!res.ok) return
+      const fresh = await res.json()
+      if (fresh) {
+        setProfileData(fresh)
+        setProfile({
+          first_name: fresh.first_name || '',
+          last_name: fresh.last_name || '',
+          current_division: fresh.current_division || '',
+          favorite_team: fresh.favorite_team || '',
+          team_name: fresh.team_name || '',
+          ai_name: fresh.ai_name || '',
+          how_to_remember: fresh.how_to_remember || '',
+          hours_per_week: fresh.hours_per_week || null,
+          common_problems: fresh.common_problems || []
+        })
+      }
+    } catch {
+      /* ricarica non critica */
+    }
+  }, [])
+
+  // Editor singolo campo: le card metriche sono cliccabili e modificabili.
+  // Contratti reali: campi AI -> /api/supabase/save-ai-info (whitelist); anagrafica -> /api/supabase/save-profile.
+  const FIELD_EDITOR_TYPES = {
+    current_division: { type: 'text', target: 'profile' },
+    team_name: { type: 'text', target: 'profile' },
+    platform: { type: 'select', options: ['console', 'pc', 'mobile', 'other'], target: 'ai-info' },
+    pass_level: { type: 'select', options: ['pa1', 'pa2', 'pa3'], target: 'ai-info' },
+    ai_weak_point: { type: 'select', options: ['defence', 'attack', 'set_pieces', 'transitions', 'final_minutes'], target: 'ai-info' },
+    favourite_player_name: { type: 'text', target: 'ai-info' }
+  }
+
+  const openFieldEditor = (card) => {
+    const config = FIELD_EDITOR_TYPES[card.field]
+    if (!config) return
+    const raw = card.field === 'current_division'
+      ? profileData?.current_division
+      : card.field === 'team_name'
+        ? (profileData?.team_name || profileData?.favorite_team)
+        : profileData?.[card.field]
+    setEditingField({ key: card.field, label: card.label, ...config })
+    setEditValue(raw == null ? '' : String(raw))
+    setEditError(null)
+  }
+
+  const saveFieldEdit = async () => {
+    if (!editingField) return
+    setEditSaving(true)
+    setEditError(null)
+    try {
+      let token = localStorage.getItem('auth_token')
+      if (!token && supabase) {
+        const { data: session } = await supabase.auth.getSession()
+        token = session?.session?.access_token
+      }
+      if (!token) {
+        router.push('/login')
+        return
+      }
+
+      if (editingField.target === 'ai-info') {
+        const res = await fetch('/api/supabase/save-ai-info', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ [editingField.key]: editValue })
+        })
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}))
+          throw new Error(errData.error || t('errorProfileSave'))
+        }
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('knowledge-should-refresh'))
+        }
+      } else {
+        const nextProfile = { ...profile, [editingField.key]: editValue }
+        const res = await fetch('/api/supabase/save-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(nextProfile)
+        })
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}))
+          throw new Error(errData.error || t('errorProfileSave'))
+        }
+      }
+
+      await reloadProfileData()
+      setEditingField(null)
+    } catch (err) {
+      setEditError(err.message || t('errorProfileSave'))
+    } finally {
+      setEditSaving(false)
+    }
+  }
 
   // Salva profilo (incrementale)
   const handleSave = async (sectionName) => {
@@ -409,31 +521,43 @@ export default function ImpostazioniProfiloPage() {
   const profileOverviewCards = [
     {
       label: (lang === 'en' || lang === 'es') ? 'Division' : 'Divisione',
+      field: 'current_division',
+
       value: cleanValue(profile.current_division),
       hint: (lang === 'en' || lang === 'es') ? 'Competitive level' : 'Livello competitivo'
     },
     {
       label: (lang === 'en' || lang === 'es') ? 'In-game team' : 'Team in game',
+      field: 'team_name',
+
       value: cleanValue(profile.team_name || profile.favorite_team),
       hint: (lang === 'en' || lang === 'es') ? 'Identity used in analyses' : 'Identita usata nelle analisi'
     },
     {
       label: (lang === 'en' || lang === 'es') ? 'Platform' : 'Piattaforma',
+      field: 'platform',
+
       value: fieldValue('platform', profileData?.platform),
       hint: (lang === 'en' || lang === 'es') ? 'From Coach Gym' : 'Da Palestra Coach'
     },
     {
       label: (lang === 'en' || lang === 'es') ? 'Pass level' : 'Livello passaggi',
+      field: 'pass_level',
+
       value: fieldValue('pass_level', profileData?.pass_level),
       hint: (lang === 'en' || lang === 'es') ? 'Control profile' : 'Profilo comandi'
     },
     {
       label: (lang === 'en' || lang === 'es') ? 'Weak point' : 'Punto debole',
+      field: 'ai_weak_point',
+
       value: fieldValue('ai_weak_point', profileData?.ai_weak_point || profile.common_problems),
       hint: (lang === 'en' || lang === 'es') ? 'What the coach should watch' : 'Cosa deve osservare il coach'
     },
     {
       label: (lang === 'en' || lang === 'es') ? 'Favourite player' : 'Giocatore preferito',
+      field: 'favourite_player_name',
+
       value: cleanValue(profileData?.favourite_player_name),
       hint: (lang === 'en' || lang === 'es') ? 'Useful for examples' : 'Utile per esempi e consigli'
     }
@@ -498,11 +622,20 @@ export default function ImpostazioniProfiloPage() {
 
       <section className="profile-metric-grid" aria-label={(lang === 'en' || lang === 'es') ? 'Profile overview' : 'Panoramica profilo'}>
         {profileOverviewCards.map((card) => (
-          <div className={`profile-metric-card ${card.value ? '' : 'profile-metric-card--empty'}`} key={card.label}>
-            <span>{card.label}</span>
+          <button
+            type="button"
+            className={`profile-metric-card profile-metric-card--editable ${card.value ? '' : 'profile-metric-card--empty'}`}
+            key={card.label}
+            onClick={() => openFieldEditor(card)}
+            aria-label={`${card.label}: ${card.value || 'modifica'}`}
+          >
+            <span className="profile-metric-card-head">
+              <span>{card.label}</span>
+              <Pencil size={13} aria-hidden="true" />
+            </span>
             <strong>{card.value || ((lang === 'en' || lang === 'es') ? 'Missing' : 'Da completare')}</strong>
             <small>{card.hint}</small>
-          </div>
+          </button>
         ))}
       </section>
 
@@ -606,6 +739,110 @@ export default function ImpostazioniProfiloPage() {
           {t('openCoachGym') || 'Apri Palestra Coach'}
         </button>
       </div>
+
+      {/* Foglio modifica campo (stile app): si apre dalla card cliccata */}
+      {editingField && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={editingField.label}
+          onClick={() => !editSaving && setEditingField(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 100300,
+            background: 'rgba(3, 7, 18, 0.72)',
+            display: 'flex', alignItems: 'flex-end', justifyContent: 'center'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: 'min(480px, 100%)',
+              borderRadius: '20px 20px 0 0',
+              background: 'var(--surface)',
+              border: '1px solid var(--border-soft)',
+              borderBottom: 'none',
+              padding: '18px 18px calc(18px + env(safe-area-inset-bottom, 0px))',
+              display: 'flex', flexDirection: 'column', gap: 14
+            }}
+          >
+            <div style={{ width: 40, height: 4, borderRadius: 999, background: 'var(--border-soft)', margin: '0 auto' }} aria-hidden="true" />
+            <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: 'var(--text-main)' }}>
+              {editingField.label}
+            </h3>
+
+            {editingField.type === 'select' ? (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {editingField.options.map((opt) => {
+                  const active = editValue === opt
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => setEditValue(opt)}
+                      style={{
+                        minHeight: 42, padding: '9px 16px', borderRadius: 999,
+                        border: active ? '1px solid var(--accent-border)' : '1px solid var(--border-soft)',
+                        background: active ? 'var(--accent-bg)' : 'var(--surface-2)',
+                        color: active ? 'var(--accent)' : 'var(--text-main)',
+                        fontSize: 13, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer'
+                      }}
+                    >
+                      {fieldValue(editingField.key, opt)}
+                    </button>
+                  )
+                })}
+              </div>
+            ) : (
+              <input
+                type="text"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                maxLength={255}
+                autoFocus
+                style={{
+                  width: '100%', minHeight: 48, padding: '12px 14px',
+                  borderRadius: 12, border: '1px solid var(--border-soft)',
+                  background: 'var(--surface-2)', color: 'var(--text-main)',
+                  fontSize: 15, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box'
+                }}
+              />
+            )}
+
+            {editError && (
+              <p style={{ margin: 0, fontSize: 13, color: '#ff8a8a' }}>{editError}</p>
+            )}
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                type="button"
+                onClick={saveFieldEdit}
+                disabled={editSaving}
+                style={{
+                  flex: 1, minHeight: 48, border: 'none', borderRadius: 12,
+                  background: editSaving ? 'var(--surface-2)' : 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
+                  color: editSaving ? 'var(--text-dim)' : 'var(--accent-ink)',
+                  fontSize: 15, fontWeight: 800, fontFamily: 'inherit', cursor: editSaving ? 'wait' : 'pointer'
+                }}
+              >
+                {editSaving ? t('saving') : t('save')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingField(null)}
+                disabled={editSaving}
+                style={{
+                  minHeight: 48, padding: '0 18px', borderRadius: 12,
+                  border: '1px solid var(--border-soft)', background: 'transparent',
+                  color: 'var(--text-dim)', fontSize: 14, fontWeight: 700,
+                  fontFamily: 'inherit', cursor: 'pointer'
+                }}
+              >
+                {t('cancel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Messaggi Success/Error */}
       {success && (
@@ -1171,7 +1408,34 @@ export default function ImpostazioniProfiloPage() {
           margin-bottom: 24px;
         }
 
-        .profile-metric-card {
+        
+        .profile-metric-card--editable {
+          font: inherit;
+          text-align: left;
+          cursor: pointer;
+          width: 100%;
+          transition: border-color 0.15s ease, transform 0.15s ease;
+        }
+
+        .profile-metric-card--editable:hover {
+          border-color: var(--accent-border);
+          transform: translateY(-2px);
+        }
+
+        .profile-metric-card--editable:focus-visible {
+          outline: 2px solid var(--accent);
+          outline-offset: 2px;
+        }
+
+        .profile-metric-card-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          color: var(--text-dim);
+        }
+
+.profile-metric-card {
           min-height: 116px;
           padding: 18px;
           border: 1px solid rgba(61, 220, 151, 0.16);
