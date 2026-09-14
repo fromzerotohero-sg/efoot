@@ -3150,34 +3150,38 @@ export default function HeroChat({
           line-height: 1.45;
         }
 
-        :global(.hc-matchUploadActions),
-        :global(.hc-matchUploadFooter) {
-          display: flex;
+        :global(.hc-matchUploadActions) {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 8px;
-          flex-wrap: wrap;
         }
 
         :global(.hc-matchUploadButton) {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          gap: 6px;
-          min-height: 38px;
-          flex: 1 1 130px;
-          padding: 7px 10px;
-          border-radius: 10px;
-          border: 1px solid var(--border-soft);
-          background: rgba(255, 255, 255, 0.05);
+          gap: 8px;
+          min-height: 52px;
+          padding: 10px 12px;
+          border-radius: 14px;
+          border: 1px solid rgba(61, 220, 151, 0.32);
+          background: rgba(61, 220, 151, 0.10);
           color: var(--text-main);
           font: inherit;
-          font-size: 12px;
+          font-size: 13px;
           font-weight: 800;
           cursor: pointer;
+          transition: border-color 0.18s ease, background 0.18s ease;
         }
 
         :global(.hc-matchUploadButton:hover) {
-          border-color: var(--accent-border);
-          color: var(--accent);
+          border-color: var(--accent);
+          background: rgba(61, 220, 151, 0.18);
+        }
+
+        :global(.hc-matchUploadButton:disabled) {
+          opacity: 0.55;
+          cursor: default;
         }
 
         :global(.hc-matchThumbs) {
@@ -3196,20 +3200,40 @@ export default function HeroChat({
           border: 1px solid var(--accent-border);
         }
 
-        :global(.hc-matchUploadFooter) {
-          flex-direction: column;
-          align-items: stretch;
+        :global(.hc-matchPrimary) {
+          width: 100%;
+          min-height: 48px;
+          padding: 11px 14px;
+          border-radius: 14px;
+          border: none;
+          background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+          color: #020510;
+          font: inherit;
+          font-size: 14px;
+          font-weight: 900;
+          cursor: pointer;
         }
 
-        :global(.hc-matchUploadFooter .hc-saveLater) {
+        :global(.hc-matchPrimary:disabled) {
+          opacity: 0.45;
+          cursor: default;
+        }
+
+        :global(.hc-matchSkip) {
           align-self: center;
           min-height: 32px;
           padding: 4px 10px;
+          border: none;
+          background: transparent;
+          color: var(--text-dim);
+          font: inherit;
           font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
         }
 
-        :global(.hc-matchUploadFooter .hc-attachAnalyze) {
-          width: 100%;
+        :global(.hc-matchSkip:hover) {
+          color: var(--text-main);
         }
 
         :global(.hc-matchReviewIntro) {
