@@ -379,9 +379,9 @@ export default function ImpostazioniProfiloPage() {
 
   const safeCompletionScore = Math.max(0, Math.min(100, Number(completionScore) || 0))
   const profileGradient = safeCompletionScore >= 87.5
-    ? 'conic-gradient(#00ff88 0deg, #00ff88 var(--score-angle), var(--border-soft) var(--score-angle), var(--border-soft) 360deg)'
+    ? 'conic-gradient(var(--accent) 0deg, var(--accent) var(--score-angle), var(--border-soft) var(--score-angle), var(--border-soft) 360deg)'
     : safeCompletionScore >= 50
-      ? 'conic-gradient(#00d4ff 0deg, #00d4ff var(--score-angle), var(--border-soft) var(--score-angle), var(--border-soft) 360deg)'
+      ? 'conic-gradient(var(--accent) 0deg, var(--accent) var(--score-angle), var(--border-soft) var(--score-angle), var(--border-soft) 360deg)'
       : 'conic-gradient(#ffcb05 0deg, #ffcb05 var(--score-angle), var(--border-soft) var(--score-angle), var(--border-soft) 360deg)'
   const cleanValue = (value) => {
     if (Array.isArray(value)) return value.filter(Boolean).join(', ')
@@ -533,7 +533,7 @@ export default function ImpostazioniProfiloPage() {
           ) : (
             <AlertCircle size={20} color="#ffffff" />
           )}
-          <span style={{ color: '#ffffff', fontSize: '14px', fontWeight: 600, flex: 1 }}>
+          <span style={{ color: 'var(--text-main)', fontSize: '14px', fontWeight: 600, flex: 1 }}>
             {typeof toast.message === 'string' ? toast.message : (toast.message?.message ?? String(toast.message ?? ''))}
           </span>
           <button
@@ -542,7 +542,7 @@ export default function ImpostazioniProfiloPage() {
             style={{
               background: 'transparent',
               border: 'none',
-              color: '#ffffff',
+              color: 'var(--text-main)',
               cursor: 'pointer',
               padding: '4px',
               display: 'flex',
@@ -557,8 +557,8 @@ export default function ImpostazioniProfiloPage() {
 
       {/* Banner Palestra Coach - Dati Tecnici (responsive: stack su mobile) */}
       <div style={{
-        background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(255, 140, 0, 0.05))',
-        border: '1px solid rgba(0, 212, 255, 0.3)',
+        background: 'var(--accent-bg)',
+        border: '1px solid var(--accent-border)',
         borderRadius: '16px',
         padding: 'clamp(16px, 4vw, 24px)',
         marginBottom: '24px',
@@ -571,19 +571,19 @@ export default function ImpostazioniProfiloPage() {
           width: '48px',
           height: '48px',
           borderRadius: '12px',
-          background: 'rgba(0, 212, 255, 0.15)',
+          background: 'var(--accent-bg)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0
         }}>
-          <Brain size={24} color="#00d4ff" />
+          <Brain size={24} color="var(--accent)" />
         </div>
         <div style={{ flex: '1 1 200px', minWidth: 0 }}>
           <h3 style={{ fontWeight: 600, margin: '0 0 6px', fontSize: 'clamp(15px, 3.5vw, 17px)', lineHeight: 1.3 }}>
             {t('coachDataSettingsTitle') || 'Dati tecnici di gioco'}
           </h3>
-          <p style={{ fontSize: 'clamp(13px, 2.5vw, 14px)', color: '#888', lineHeight: 1.45, margin: 0 }}>
+          <p style={{ fontSize: 'clamp(13px, 2.5vw, 14px)', color: 'var(--text-dim)', lineHeight: 1.45, margin: 0 }}>
             {t('coachDataSettingsDesc') || 'Parlane con Hero nella chat: piattaforma, connessione, livello passaggio e punto debole li impara da come giochi.'}
           </p>
         </div>
@@ -610,15 +610,15 @@ export default function ImpostazioniProfiloPage() {
       {/* Messaggi Success/Error */}
       {success && (
         <div style={{
-          backgroundColor: '#00ff8820',
-          border: '1px solid #00ff88',
+          backgroundColor: 'var(--accent-bg)',
+          border: '1px solid var(--accent-border)',
           borderRadius: '8px',
           padding: '12px',
           marginBottom: '16px',
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
-          color: '#00ff88'
+          color: 'var(--accent)'
         }}>
           <CheckCircle2 size={18} />
           <span>{success}</span>
@@ -648,16 +648,16 @@ export default function ImpostazioniProfiloPage() {
         borderRadius: '16px',
         padding: 'clamp(16px, 4vw, 24px)',
         marginBottom: '24px',
-        border: '1px solid rgba(255,255,255,0.06)',
+        border: '1px solid var(--border-soft)',
         boxShadow: '0 4px 24px rgba(0,0,0,0.2)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-          <User size={20} color="#00d4ff" />
+          <User size={20} color="var(--accent)" />
           <h2 style={{ margin: 0, fontSize: 'clamp(16px, 4vw, 18px)', fontWeight: '600' }}>{t('personalData')}</h2>
         </div>
 
         <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#888' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-dim)' }}>
             {t('firstName')}
           </label>
           <input
@@ -670,17 +670,17 @@ export default function ImpostazioniProfiloPage() {
               width: '100%',
               boxSizing: 'border-box',
               padding: '12px',
-              backgroundColor: '#0a0a0a',
-              border: '1px solid #2a2a2a',
+              backgroundColor: 'var(--surface)',
+              border: '1px solid var(--border-soft)',
               borderRadius: '8px',
-              color: '#ffffff',
+              color: 'var(--text-main)',
               fontSize: 'clamp(16px, 4vw, 16px)'
             }}
           />
         </div>
 
         <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#888' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-dim)' }}>
             {t('lastName')}
           </label>
           <input
@@ -693,10 +693,10 @@ export default function ImpostazioniProfiloPage() {
               width: '100%',
               boxSizing: 'border-box',
               padding: '12px',
-              backgroundColor: '#0a0a0a',
-              border: '1px solid #2a2a2a',
+              backgroundColor: 'var(--surface)',
+              border: '1px solid var(--border-soft)',
               borderRadius: '8px',
-              color: '#ffffff',
+              color: 'var(--text-main)',
               fontSize: 'clamp(16px, 4vw, 16px)'
             }}
           />
@@ -709,8 +709,8 @@ export default function ImpostazioniProfiloPage() {
             style={{
               flex: 1,
               padding: '12px',
-              backgroundColor: saving ? '#2a2a2a' : '#00d4ff',
-              color: '#000',
+              backgroundColor: saving ? 'var(--surface-2)' : 'var(--accent)',
+              color: saving ? 'var(--text-dim)' : 'var(--accent-ink)',
               border: 'none',
               borderRadius: '8px',
               fontSize: '16px',
@@ -730,8 +730,8 @@ export default function ImpostazioniProfiloPage() {
             style={{
               padding: '12px 20px',
               backgroundColor: 'transparent',
-              color: '#888',
-              border: '1px solid #2a2a2a',
+              color: 'var(--text-dim)',
+              border: '1px solid var(--border-soft)',
               borderRadius: '8px',
               fontSize: '16px',
               cursor: 'pointer',
@@ -752,15 +752,15 @@ export default function ImpostazioniProfiloPage() {
         borderRadius: '12px',
         padding: '20px',
         marginBottom: '24px',
-        border: '1px solid #2a2a2a'
+        border: '1px solid var(--border-soft)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-          <Gamepad2 size={20} color="#00d4ff" />
+          <Gamepad2 size={20} color="var(--accent)" />
           <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>{t('gameData')}</h2>
         </div>
 
         <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#888' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-dim)' }}>
             Divisione attuale
           </label>
           <select
@@ -769,10 +769,10 @@ export default function ImpostazioniProfiloPage() {
             style={{
               width: '100%',
               padding: '12px',
-              backgroundColor: '#0a0a0a',
-              border: '1px solid #2a2a2a',
+              backgroundColor: 'var(--surface)',
+              border: '1px solid var(--border-soft)',
               borderRadius: '8px',
-              color: '#ffffff',
+              color: 'var(--text-main)',
               fontSize: '16px'
             }}
           >
@@ -784,7 +784,7 @@ export default function ImpostazioniProfiloPage() {
         </div>
 
         <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#888' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-dim)' }}>
             {t('favoriteTeam')}
           </label>
           <input
@@ -796,10 +796,10 @@ export default function ImpostazioniProfiloPage() {
             style={{
               width: '100%',
               padding: '12px',
-              backgroundColor: '#0a0a0a',
-              border: '1px solid #2a2a2a',
+              backgroundColor: 'var(--surface)',
+              border: '1px solid var(--border-soft)',
               borderRadius: '8px',
-              color: '#ffffff',
+              color: 'var(--text-main)',
               fontSize: '16px'
             }}
           />
@@ -807,14 +807,14 @@ export default function ImpostazioniProfiloPage() {
 
         <div style={{ marginBottom: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            <label style={{ fontSize: '14px', color: '#888', flex: 1 }}>
+            <label style={{ fontSize: '14px', color: 'var(--text-dim)', flex: 1 }}>
               {t('teamNameInGame')}
             </label>
             <span style={{
               fontSize: '11px',
               padding: '4px 8px',
-              background: 'rgba(0, 212, 255, 0.2)',
-              border: '1px solid rgba(0, 212, 255, 0.4)',
+              background: 'var(--accent-bg)',
+              border: '1px solid var(--accent-border)',
               borderRadius: '4px',
               color: 'var(--accent)',
               fontWeight: 600,
@@ -833,10 +833,10 @@ export default function ImpostazioniProfiloPage() {
             style={{
               width: '100%',
               padding: '12px',
-              backgroundColor: '#0a0a0a',
-              border: profile.team_name ? '1px solid rgba(0, 212, 255, 0.3)' : '1px solid #2a2a2a',
+              backgroundColor: 'var(--surface)',
+              border: profile.team_name ? '1px solid var(--accent-border)' : '1px solid var(--border-soft)',
               borderRadius: '8px',
-              color: '#ffffff',
+              color: 'var(--text-main)',
               fontSize: '16px'
             }}
           />
@@ -858,8 +858,8 @@ export default function ImpostazioniProfiloPage() {
             style={{
               flex: 1,
               padding: '12px',
-              backgroundColor: saving ? '#2a2a2a' : '#00d4ff',
-              color: '#000',
+              backgroundColor: saving ? 'var(--surface-2)' : 'var(--accent)',
+              color: saving ? 'var(--text-dim)' : 'var(--accent-ink)',
               border: 'none',
               borderRadius: '8px',
               fontSize: '16px',
@@ -879,8 +879,8 @@ export default function ImpostazioniProfiloPage() {
             style={{
               padding: '12px 20px',
               backgroundColor: 'transparent',
-              color: '#888',
-              border: '1px solid #2a2a2a',
+              color: 'var(--text-dim)',
+              border: '1px solid var(--border-soft)',
               borderRadius: '8px',
               fontSize: '16px',
               cursor: 'pointer',
@@ -898,7 +898,7 @@ export default function ImpostazioniProfiloPage() {
       {/* Sezione: Personalizzazione Coach */}
       <div data-tour-id="tour-profile-coach-personalization" className="profile-coach-personalization">
         <div className="profile-section-heading">
-          <Brain size={20} color="#00d4ff" />
+          <Brain size={20} color="var(--accent)" />
           <div>
             <h2>{(lang === 'en' || lang === 'es') ? 'Coach personalization' : 'Personalizzazione Coach'}</h2>
             <p>
@@ -973,7 +973,7 @@ export default function ImpostazioniProfiloPage() {
         style={{
           width: '100%',
           padding: '16px',
-          backgroundColor: saving ? '#2a2a2a' : '#00ff88',
+          backgroundColor: saving ? 'var(--surface-2)' : 'var(--accent)',
           color: '#000',
           border: 'none',
           borderRadius: '12px',
@@ -1008,13 +1008,13 @@ export default function ImpostazioniProfiloPage() {
           margin-bottom: 18px;
           padding: clamp(20px, 4vw, 32px);
           overflow: hidden;
-          border: 1px solid rgba(0, 212, 255, 0.26);
+          border: 1px solid rgba(61, 220, 151, 0.26);
           border-radius: 26px;
           background:
-            radial-gradient(circle at 12% 0%, rgba(0, 212, 255, 0.20), transparent 34%),
+            radial-gradient(circle at 12% 0%, rgba(61, 220, 151, 0.20), transparent 34%),
             radial-gradient(circle at 90% 10%, rgba(255, 203, 5, 0.14), transparent 30%),
             linear-gradient(135deg, rgba(8, 14, 31, 0.98), rgba(9, 24, 43, 0.92));
-          box-shadow: 0 18px 60px rgba(0, 0, 0, 0.32), 0 0 34px rgba(0, 212, 255, 0.10);
+          box-shadow: 0 18px 60px rgba(0, 0, 0, 0.32), 0 0 34px rgba(61, 220, 151, 0.10);
         }
 
         .profile-hero::after {
@@ -1023,7 +1023,7 @@ export default function ImpostazioniProfiloPage() {
           inset: auto -20% -45% 35%;
           height: 190px;
           border-radius: 999px;
-          background: radial-gradient(circle, rgba(0, 212, 255, 0.16), transparent 70%);
+          background: radial-gradient(circle, rgba(61, 220, 151, 0.16), transparent 70%);
           pointer-events: none;
         }
 
@@ -1039,9 +1039,9 @@ export default function ImpostazioniProfiloPage() {
           gap: 8px;
           margin-bottom: 12px;
           padding: 7px 10px;
-          border: 1px solid rgba(0, 212, 255, 0.28);
+          border: 1px solid rgba(61, 220, 151, 0.28);
           border-radius: 999px;
-          background: rgba(0, 212, 255, 0.08);
+          background: rgba(61, 220, 151, 0.08);
           color: #8ff2ff;
           font-size: 12px;
           font-weight: 800;
@@ -1122,7 +1122,7 @@ export default function ImpostazioniProfiloPage() {
           display: grid;
           place-items: center;
           border-radius: 999px;
-          box-shadow: 0 0 32px rgba(0, 212, 255, 0.16);
+          box-shadow: 0 0 32px rgba(61, 220, 151, 0.16);
         }
 
         .profile-score-orb > div {
@@ -1174,7 +1174,7 @@ export default function ImpostazioniProfiloPage() {
         .profile-metric-card {
           min-height: 116px;
           padding: 18px;
-          border: 1px solid rgba(0, 212, 255, 0.16);
+          border: 1px solid rgba(61, 220, 151, 0.16);
           border-radius: 18px;
           background: linear-gradient(135deg, rgba(10, 18, 38, 0.94), rgba(13, 25, 48, 0.78));
           box-shadow: 0 12px 34px rgba(0, 0, 0, 0.20);
@@ -1300,9 +1300,9 @@ export default function ImpostazioniProfiloPage() {
         .profile-page :global(input:focus),
         .profile-page :global(select:focus),
         .profile-page :global(textarea:focus) {
-          border-color: rgba(0, 212, 255, 0.72) !important;
+          border-color: rgba(61, 220, 151, 0.72) !important;
           background: rgba(5, 13, 30, 0.96) !important;
-          box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.12), 0 0 22px rgba(0, 212, 255, 0.12) !important;
+          box-shadow: 0 0 0 3px rgba(61, 220, 151, 0.12), 0 0 22px rgba(61, 220, 151, 0.12) !important;
         }
 
         .profile-page :global(label) {
