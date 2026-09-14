@@ -6,6 +6,7 @@ import { Menu, X, ShoppingCart, Home, User } from 'lucide-react'
 import CreditsBar from '@/components/CreditsBar'
 import { InstallAppPromptButton } from '@/components/InstallAppPrompt'
 import LanguageSwitch from '@/components/LanguageSwitch'
+import ThemeToggle from '@/components/ThemeToggle'
 import { useSidebar } from '@/components/SidebarContext'
 import { useTranslation, pickLang } from '@/lib/i18n'
 
@@ -18,9 +19,9 @@ const avatarStyle = {
   width: '36px',
   height: '36px',
   borderRadius: '50%',
-  background: 'rgba(255, 255, 255, 0.05)',
-  border: '1px solid rgba(255, 255, 255, 0.12)',
-  color: '#f4f6f7',
+  background: 'var(--surface-2)',
+  border: '1px solid var(--border-soft)',
+  color: 'var(--text-main)',
   cursor: 'pointer',
   transition: 'all 0.2s',
   flexShrink: 0,
@@ -38,8 +39,8 @@ export default function TopBar({ showInstallPrompt = true }) {
     <header
       className="sticky top-0 z-30 h-16 flex items-center"
       style={{
-        background: 'rgba(10, 17, 23, 0.85)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.07)',
+        background: 'var(--topbar-bg)',
+        borderBottom: '1px solid var(--border-softer)',
         backdropFilter: 'blur(20px)',
         position: 'relative'
       }}
@@ -77,9 +78,9 @@ export default function TopBar({ showInstallPrompt = true }) {
               width: '40px',
               height: '40px',
               borderRadius: '10px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              color: '#f4f6f7',
+              background: 'var(--surface-2)',
+              border: '1px solid var(--border-soft)',
+              color: 'var(--text-main)',
               boxShadow: 'none',
               flexShrink: 0
             }}
@@ -117,9 +118,9 @@ export default function TopBar({ showInstallPrompt = true }) {
               width: '36px',
               height: '36px',
               borderRadius: '8px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              color: '#f4f6f7',
+              background: 'var(--surface-2)',
+              border: '1px solid var(--border-soft)',
+              color: 'var(--text-main)',
               cursor: 'pointer',
               transition: 'all 0.2s',
               flexShrink: 0
@@ -158,9 +159,9 @@ export default function TopBar({ showInstallPrompt = true }) {
               width: '36px',
               height: '36px',
               borderRadius: '8px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              color: '#f4f6f7',
+              background: 'var(--surface-2)',
+              border: '1px solid var(--border-soft)',
+              color: 'var(--text-main)',
               cursor: 'pointer',
               transition: 'all 0.2s',
               flexShrink: 0
@@ -170,6 +171,8 @@ export default function TopBar({ showInstallPrompt = true }) {
           >
             <ShoppingCart size={18} />
           </button>
+
+          <ThemeToggle />
 
           <div style={{ flexShrink: 0 }}>
             <LanguageSwitch />

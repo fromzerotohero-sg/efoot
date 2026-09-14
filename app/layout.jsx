@@ -41,6 +41,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="it">
       <head>
+        {/* Tema UX V2: applicato pre-paint per evitare flash (persistenza: localStorage 'fzth_theme') */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{var t=localStorage.getItem('fzth_theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t}}catch(e){}"
+          }}
+        />
         {!disableAnalytics && (
           <>
             <Script id="microsoft-clarity" strategy="afterInteractive">

@@ -7,9 +7,9 @@ import { useGameAnalysisModalNav, CLOSE_GAME_ANALYSIS_MODAL_EVENT } from '@/comp
 import { MessageSquare, Users, Sparkles } from 'lucide-react'
 
 const TONES = {
-  coach: { active: '#3ddc97', idle: 'rgba(255,255,255,0.5)', bg: 'rgba(61,220,151,.12)' },
-  rosa: { active: '#60a5fa', idle: 'rgba(255,255,255,0.5)', bg: 'rgba(96,165,250,.12)' },
-  carte: { active: '#c084fc', idle: 'rgba(255,255,255,0.5)', bg: 'rgba(192,132,252,.12)' }
+  coach: { active: 'var(--accent)', idle: 'var(--text-dim)', bg: 'rgba(61,220,151,.12)' },
+  rosa: { active: '#60a5fa', idle: 'var(--text-dim)', bg: 'rgba(96,165,250,.12)' },
+  carte: { active: '#c084fc', idle: 'var(--text-dim)', bg: 'rgba(192,132,252,.12)' }
 }
 
 export default function BottomNavigation() {
@@ -57,7 +57,7 @@ export default function BottomNavigation() {
             >
               <span className="item" style={{ color: active ? tone.active : tone.idle, background: active ? tone.bg : 'transparent' }}>
                 <span className="iconBox" aria-hidden="true"><Icon size={21} strokeWidth={active ? 2.35 : 1.9} /></span>
-                <span className="navLabel" style={{ color: active ? tone.active : 'rgba(255,255,255,0.45)', fontWeight: active ? 850 : 700 }}>{item.label}</span>
+                <span className="navLabel" style={{ color: active ? tone.active : 'var(--text-dim)', fontWeight: active ? 850 : 700 }}>{item.label}</span>
                 {active ? <span className="activeDot" style={{ background: tone.active }} aria-hidden="true" /> : null}
               </span>
             </button>
@@ -65,7 +65,7 @@ export default function BottomNavigation() {
         })}
       </div>
       <style jsx>{`
-        .bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:100;display:none;height:calc(76px + env(safe-area-inset-bottom,0px));padding:0 0 env(safe-area-inset-bottom,0px);background:rgba(11,16,24,.97);border-top:1px solid rgba(255,255,255,.07);box-shadow:0 -12px 32px rgba(0,0,0,.4);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-sizing:border-box}
+        .bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:100;display:none;height:calc(76px + env(safe-area-inset-bottom,0px));padding:0 0 env(safe-area-inset-bottom,0px);background:var(--bottomnav-bg);border-top:1px solid var(--border-softer);box-shadow:0 -12px 32px rgba(0,0,0,.4);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-sizing:border-box}
         .inner{height:76px;max-width:520px;margin:0 auto;padding:7px 10px 6px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch;gap:5px;box-sizing:border-box}
         .navButton{appearance:none;-webkit-appearance:none;width:100%;height:100%;min-width:0;margin:0;padding:0;border:0;outline:0;background:transparent;color:inherit;font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
         .item{position:relative;width:100%;height:100%;min-height:62px;padding:7px 8px 9px;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;box-sizing:border-box;transition:background .16s ease,color .16s ease,transform .16s ease}
@@ -73,7 +73,7 @@ export default function BottomNavigation() {
         .navLabel{display:block;min-height:13px;font-size:10.5px;line-height:13px;letter-spacing:-.01em;white-space:nowrap;text-align:center;text-decoration:none;opacity:1}
         .activeDot{position:absolute;left:50%;bottom:4px;width:4px;height:4px;border-radius:999px;transform:translateX(-50%)}
         .navButton:active .item{transform:scale(.97)}
-        .navButton:focus-visible .item{outline:2px solid #3ddc97;outline-offset:-2px}
+        .navButton:focus-visible .item{outline:2px solid var(--accent);outline-offset:-2px}
         @media(max-width:767px){.bottom-nav{display:block}}
         @media(min-width:768px){.bottom-nav{display:none}}
       `}</style>

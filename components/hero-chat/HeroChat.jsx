@@ -492,7 +492,7 @@ export default function HeroChat({
               <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
                 <circle cx="13" cy="13" r="10" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="3" />
                 <circle
-                  cx="13" cy="13" r="10" fill="none" stroke="#3ddc97" strokeWidth="3" strokeLinecap="round"
+                  cx="13" cy="13" r="10" fill="none" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round"
                   strokeDasharray={scoreRing.c} strokeDashoffset={scoreRing.offset} transform="rotate(-90 13 13)"
                 />
               </svg>
@@ -760,7 +760,7 @@ export default function HeroChat({
           max-width: 860px;
           margin: 0 auto;
           width: 100%;
-          color: #f4f6f7;
+          color: var(--text-main);
           position: relative;
         }
 
@@ -790,7 +790,7 @@ export default function HeroChat({
           height: 40px;
           border-radius: 50%;
           object-fit: cover;
-          border: 2px solid rgba(61, 220, 151, 0.4);
+          border: 2px solid var(--accent-border);
           display: block;
         }
 
@@ -801,8 +801,8 @@ export default function HeroChat({
           width: 10px;
           height: 10px;
           border-radius: 50%;
-          background: #3ddc97;
-          border: 2px solid #0a1117;
+          background: var(--accent);
+          border: 2px solid var(--shell-bg);
         }
 
         .hc-nameBlock {
@@ -821,7 +821,7 @@ export default function HeroChat({
 
         .hc-nameBlock small {
           font-size: 11px;
-          color: #3ddc97;
+          color: var(--accent);
           font-weight: 600;
         }
 
@@ -838,20 +838,20 @@ export default function HeroChat({
           gap: 6px;
           padding: 4px 10px 4px 5px;
           border-radius: 999px;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.09);
+          background: var(--surface-2);
+          border: 1px solid var(--border-soft);
           cursor: pointer;
           font-family: inherit;
         }
 
         .hc-ringPill:hover {
-          border-color: rgba(61, 220, 151, 0.45);
+          border-color: var(--accent-border);
         }
 
         .hc-ringValue {
           font-size: 11px;
           font-weight: 800;
-          color: #3ddc97;
+          color: var(--accent);
         }
 
         .hc-hpPill {
@@ -875,8 +875,8 @@ export default function HeroChat({
           width: 34px;
           height: 34px;
           border-radius: 10px;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.09);
+          background: var(--surface-2);
+          border: 1px solid var(--border-soft);
           color: rgba(255, 255, 255, 0.65);
           cursor: pointer;
         }
@@ -908,7 +908,7 @@ export default function HeroChat({
           font-weight: 800;
           letter-spacing: 0.22em;
           text-transform: uppercase;
-          color: rgba(61, 220, 151, 0.65);
+          color: var(--accent);
         }
 
         .hc-bannerTitle {
@@ -925,7 +925,7 @@ export default function HeroChat({
           margin: 10px 0 0;
           font-size: 13px;
           line-height: 1.5;
-          color: rgba(244, 246, 247, 0.6);
+          color: var(--text-dim);
         }
 
         .hc-row {
@@ -949,7 +949,7 @@ export default function HeroChat({
           height: 30px;
           border-radius: 50%;
           object-fit: cover;
-          border: 1px solid rgba(61, 220, 151, 0.35);
+          border: 1px solid var(--accent-border);
           display: block;
         }
 
@@ -963,15 +963,15 @@ export default function HeroChat({
         }
 
         .hc-bubbleHero {
-          background: #111c22;
-          border: 1px solid rgba(255, 255, 255, 0.07);
+          background: var(--surface);
+          border: 1px solid var(--border-softer);
           border-radius: 4px 16px 16px 16px;
           color: rgba(244, 246, 247, 0.92);
         }
 
         .hc-bubbleUser {
-          background: linear-gradient(135deg, rgba(61, 220, 151, 0.22), rgba(39, 167, 106, 0.18));
-          border: 1px solid rgba(61, 220, 151, 0.3);
+          background: linear-gradient(135deg, var(--accent-border), rgba(39, 167, 106, 0.18));
+          border: 1px solid var(--accent-border);
           border-radius: 16px 4px 16px 16px;
           color: #eafaf2;
         }
@@ -1010,7 +1010,7 @@ export default function HeroChat({
           width: 6px;
           height: 6px;
           border-radius: 50%;
-          background: rgba(61, 220, 151, 0.8);
+          background: var(--accent);
           animation: hcDotPulse 1.1s ease-in-out infinite;
         }
 
@@ -1033,8 +1033,8 @@ export default function HeroChat({
         .hc-stateCard {
           border-radius: 16px;
           padding: 16px 18px;
-          background: linear-gradient(150deg, rgba(61, 220, 151, 0.1), rgba(10, 20, 24, 0.6));
-          border: 1px solid rgba(61, 220, 151, 0.22);
+          background: linear-gradient(150deg, var(--accent-bg), rgba(10, 20, 24, 0.6));
+          border: 1px solid var(--accent-border);
           display: flex;
           flex-direction: column;
           gap: 8px;
@@ -1051,14 +1051,14 @@ export default function HeroChat({
           margin: 0;
           font-size: 13px;
           line-height: 1.5;
-          color: rgba(244, 246, 247, 0.65);
+          color: var(--text-dim);
         }
 
         .hc-stateMeta {
           margin: 0;
           font-size: 13px;
           font-weight: 800;
-          color: #3ddc97;
+          color: var(--accent);
         }
 
         .hc-stateBtn {
@@ -1067,8 +1067,8 @@ export default function HeroChat({
           padding: 10px 18px;
           border: none;
           border-radius: 12px;
-          background: linear-gradient(135deg, #3ddc97, #27a76a);
-          color: #05231a;
+          background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+          color: var(--accent-ink);
           font-size: 14px;
           font-weight: 800;
           font-family: inherit;
@@ -1078,8 +1078,8 @@ export default function HeroChat({
         .hc-richCard {
           border-radius: 16px;
           padding: 16px 18px;
-          background: #0f171d;
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: var(--surface);
+          border: 1px solid var(--border-soft);
           display: flex;
           flex-direction: column;
           gap: 10px;
@@ -1089,7 +1089,7 @@ export default function HeroChat({
           display: flex;
           align-items: center;
           gap: 8px;
-          color: #3ddc97;
+          color: var(--accent);
         }
 
         .hc-richHead strong {
@@ -1117,9 +1117,9 @@ export default function HeroChat({
           min-height: 40px;
           padding: 8px 16px;
           border-radius: 10px;
-          border: 1px solid rgba(61, 220, 151, 0.35);
-          background: rgba(61, 220, 151, 0.1);
-          color: #3ddc97;
+          border: 1px solid var(--accent-border);
+          background: var(--accent-bg);
+          color: var(--accent);
           font-size: 13px;
           font-weight: 700;
           font-family: inherit;
@@ -1129,7 +1129,7 @@ export default function HeroChat({
         .hc-richSub {
           margin: 0;
           font-size: 12px;
-          color: rgba(244, 246, 247, 0.5);
+          color: var(--text-dim);
         }
 
         .hc-suggestions {
@@ -1142,9 +1142,9 @@ export default function HeroChat({
           min-height: 36px;
           padding: 8px 14px;
           border-radius: 999px;
-          border: 1px solid rgba(61, 220, 151, 0.25);
-          background: rgba(61, 220, 151, 0.07);
-          color: rgba(61, 220, 151, 0.95);
+          border: 1px solid var(--accent-border);
+          background: var(--accent-bg);
+          color: var(--accent);
           font-size: 12px;
           font-weight: 600;
           font-family: inherit;
@@ -1159,15 +1159,15 @@ export default function HeroChat({
           gap: 8px;
           padding: 9px 14px;
           border-radius: 999px;
-          background: rgba(61, 220, 151, 0.1);
-          border: 1px solid rgba(61, 220, 151, 0.3);
+          background: var(--accent-bg);
+          border: 1px solid var(--accent-border);
         }
 
         .hc-feedbackBadgeDot {
           width: 8px;
           height: 8px;
           border-radius: 50%;
-          background: #3ddc97;
+          background: var(--accent);
           flex-shrink: 0;
         }
 
@@ -1176,15 +1176,15 @@ export default function HeroChat({
           min-width: 0;
           font-size: 12px;
           font-weight: 700;
-          color: #3ddc97;
+          color: var(--accent);
         }
 
         .hc-feedbackExit {
           padding: 4px 10px;
           border-radius: 999px;
-          border: 1px solid rgba(61, 220, 151, 0.35);
+          border: 1px solid var(--accent-border);
           background: transparent;
-          color: rgba(61, 220, 151, 0.9);
+          color: var(--accent);
           font-size: 11px;
           font-weight: 700;
           font-family: inherit;
@@ -1194,8 +1194,8 @@ export default function HeroChat({
         .hc-saveCard {
           border-radius: 16px;
           padding: 16px 18px;
-          background: linear-gradient(150deg, rgba(61, 220, 151, 0.12), rgba(10, 20, 24, 0.65));
-          border: 1px solid rgba(61, 220, 151, 0.3);
+          background: linear-gradient(150deg, var(--accent-bg), rgba(10, 20, 24, 0.65));
+          border: 1px solid var(--accent-border);
           display: flex;
           flex-direction: column;
           gap: 8px;
@@ -1214,7 +1214,7 @@ export default function HeroChat({
           padding: 10px 14px;
           border: none;
           background: transparent;
-          color: rgba(244, 246, 247, 0.6);
+          color: var(--text-dim);
           font-size: 13px;
           font-weight: 600;
           font-family: inherit;
@@ -1261,8 +1261,8 @@ export default function HeroChat({
           min-width: 240px;
           border-radius: 14px;
           padding: 6px;
-          background: #101a20;
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: var(--surface);
+          border: 1px solid var(--border-soft);
           box-shadow: 0 18px 48px rgba(0, 0, 0, 0.5);
           display: flex;
           flex-direction: column;
@@ -1288,8 +1288,8 @@ export default function HeroChat({
         }
 
         .hc-actionItem:hover {
-          background: rgba(61, 220, 151, 0.08);
-          color: #3ddc97;
+          background: var(--accent-bg);
+          color: var(--accent);
         }
 
         .hc-composer {
@@ -1299,13 +1299,13 @@ export default function HeroChat({
           min-height: 54px;
           padding: 7px 8px;
           border-radius: 999px;
-          background: #101a20;
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: var(--surface);
+          border: 1px solid var(--border-soft);
         }
 
         .hc-composer:focus-within {
-          border-color: rgba(61, 220, 151, 0.45);
-          box-shadow: 0 0 0 3px rgba(61, 220, 151, 0.1);
+          border-color: var(--accent-border);
+          box-shadow: 0 0 0 3px var(--accent-bg);
         }
 
         .hc-plusBtn {
@@ -1315,9 +1315,9 @@ export default function HeroChat({
           width: 38px;
           height: 38px;
           border-radius: 50%;
-          border: 1px solid rgba(255, 255, 255, 0.12);
+          border: 1px solid var(--border-soft);
           background: transparent;
-          color: rgba(244, 246, 247, 0.7);
+          color: var(--text-dim);
           cursor: pointer;
           flex-shrink: 0;
           transition: transform 0.15s ease;
@@ -1325,8 +1325,8 @@ export default function HeroChat({
 
         .hc-plusBtnOpen {
           transform: rotate(45deg);
-          color: #3ddc97;
-          border-color: rgba(61, 220, 151, 0.4);
+          color: var(--accent);
+          border-color: var(--accent-border);
         }
 
         .hc-input {
@@ -1335,13 +1335,13 @@ export default function HeroChat({
           border: none;
           outline: none;
           background: transparent;
-          color: #f4f6f7;
+          color: var(--text-main);
           font-size: 14px;
           font-family: inherit;
         }
 
         .hc-input::placeholder {
-          color: rgba(244, 246, 247, 0.35);
+          color: var(--text-dim);
         }
 
         .hc-micBtn {
@@ -1353,19 +1353,19 @@ export default function HeroChat({
           border-radius: 50%;
           border: none;
           background: transparent;
-          color: rgba(244, 246, 247, 0.6);
+          color: var(--text-dim);
           cursor: pointer;
           flex-shrink: 0;
         }
 
         .hc-micBtnActive {
-          color: #3ddc97;
-          background: rgba(61, 220, 151, 0.12);
+          color: var(--accent);
+          background: var(--accent-bg);
           animation: hcMicPulse 1.4s ease-in-out infinite;
         }
 
         @keyframes hcMicPulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(61, 220, 151, 0.3); }
+          0%, 100% { box-shadow: 0 0 0 0 var(--accent-border); }
           50% { box-shadow: 0 0 0 6px rgba(61, 220, 151, 0.06); }
         }
 
@@ -1377,8 +1377,8 @@ export default function HeroChat({
           height: 40px;
           border-radius: 50%;
           border: none;
-          background: linear-gradient(135deg, #3ddc97, #27a76a);
-          color: #05231a;
+          background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+          color: var(--accent-ink);
           cursor: pointer;
           flex-shrink: 0;
         }
@@ -1397,7 +1397,7 @@ export default function HeroChat({
         .hc-suggestionPill:focus-visible,
         .hc-actionItem:focus-visible,
         .hc-lowHpCta:focus-visible {
-          outline: 2px solid rgba(61, 220, 151, 0.85);
+          outline: 2px solid var(--accent);
           outline-offset: 2px;
         }
 

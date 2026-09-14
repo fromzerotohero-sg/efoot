@@ -343,7 +343,7 @@ function HomePage() {
   }
 
   return (
-    <main data-tour-id="tour-dashboard-intro" className="max-w-7xl mx-auto" style={{ padding: '16px', minHeight: '100%' }}>
+    <main data-tour-id="tour-dashboard-intro" className="max-w-7xl mx-auto" style={{ padding: '16px', height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Suspense fallback={null}>
         <OpenCoachListener
           onOpenCoach={() => setShowCoachFeedback(true)}

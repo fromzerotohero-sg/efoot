@@ -434,7 +434,7 @@ export default function CountermeasuresPreMatchPage() {
     <main className="counter-page ux-v2-light-tool" data-tour-id="tour-counter-intro" style={{ 
       minHeight: '100%', 
       padding: 'clamp(16px, 4vw, 24px)',
-      color: '#f4f6f7'
+      color: 'var(--text-main)'
     }}>
       {/* Header pagina: non fixed, così non collide con la top nav mobile. */}
       <div
@@ -447,7 +447,7 @@ export default function CountermeasuresPreMatchPage() {
           gap: '12px',
           marginBottom: '18px',
           padding: '10px 12px',
-          background: '#101a20',
+          background: 'var(--surface)',
           border: '1px solid rgba(0, 0, 0, 0.08)',
           borderRadius: '18px',
           boxShadow: '0 14px 36px rgba(29, 29, 31, 0.07)',
@@ -462,7 +462,7 @@ export default function CountermeasuresPreMatchPage() {
             <ArrowLeft size={18} />
             <span>{t('back')}</span>
           </button>
-          <h1 style={{ fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 800, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: '#f4f6f7' }}>
+          <h1 style={{ fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 800, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-main)' }}>
             {t('countermeasuresLive')}
           </h1>
         </div>
@@ -724,7 +724,7 @@ export default function CountermeasuresPreMatchPage() {
               <Sparkles size={14} />
               {t('liveCoachPremiumBadge')}
             </div>
-            <h2 style={{ margin: 0, fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: 800, color: '#f4f6f7', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <h2 style={{ margin: 0, fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
               <Radio size={20} color="#FFD76A" />
               {t('liveCoachDashboardTitle')}
             </h2>
@@ -732,7 +732,7 @@ export default function CountermeasuresPreMatchPage() {
               {t('liveCoachDashboardSubtitle')}
             </p>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '14px' }}>
-              <span style={{ padding: '8px 12px', borderRadius: '999px', background: 'rgba(255, 255, 255, 0.06)', color: '#f4f6f7', fontSize: '12px', fontWeight: 700 }}>
+              <span style={{ padding: '8px 12px', borderRadius: '999px', background: 'var(--surface-2)', color: 'var(--text-main)', fontSize: '12px', fontWeight: 700 }}>
                 {t('liveCoachHpHint')}
               </span>
               <span style={{ padding: '8px 12px', borderRadius: '999px', background: 'rgba(0,212,255,0.08)', color: 'var(--neon-cyan)', fontSize: '12px', fontWeight: 700 }}>
@@ -756,7 +756,7 @@ export default function CountermeasuresPreMatchPage() {
               borderRadius: '18px',
               border: '1px solid rgba(255,215,100,0.30)',
               background: 'linear-gradient(135deg, rgba(255,215,100,0.16), rgba(0,212,255,0.12))',
-              color: '#f4f6f7',
+              color: 'var(--text-main)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -1126,7 +1126,7 @@ export default function CountermeasuresPreMatchPage() {
                         <div style={{ fontWeight: 700, color: key === 'match_key' ? 'var(--neon-orange)' : 'var(--neon-blue)', marginBottom: '6px', fontSize: 'clamp(13px, 3vw, 14px)' }}>
                           {label}
                         </div>
-                        <div style={{ fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: 1.6, color: '#f4f6f7' }}>
+                        <div style={{ fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: 1.6, color: 'var(--text-main)' }}>
                           {text}
                         </div>
                       </div>
@@ -1199,7 +1199,7 @@ export default function CountermeasuresPreMatchPage() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
-                color: '#f4f6f7'
+                color: 'var(--text-main)'
               }}
             >
               <Trophy size={22} style={{ color: 'var(--neon-orange)', flexShrink: 0 }} aria-hidden />
@@ -1215,7 +1215,7 @@ export default function CountermeasuresPreMatchPage() {
                 border: '1px solid rgba(0, 212, 255, 0.15)'
               }}
             >
-              <p style={{ margin: '0 0 12px 0', fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: 1.65, color: '#f4f6f7' }}>
+              <p style={{ margin: '0 0 12px 0', fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: 1.65, color: 'var(--text-main)' }}>
                 {t('countermeasuresPostMatchPhotosIntro')}
               </p>
               <Link
@@ -1244,7 +1244,7 @@ export default function CountermeasuresPreMatchPage() {
                 border: '1px solid rgba(251, 191, 36, 0.2)'
               }}
             >
-              <p style={{ margin: '0 0 12px 0', fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: 1.65, color: '#f4f6f7' }}>
+              <p style={{ margin: '0 0 12px 0', fontSize: 'clamp(13px, 3vw, 14px)', lineHeight: 1.65, color: 'var(--text-main)' }}>
                 {t('countermeasuresPostMatchPalestraIntro')}
               </p>
               <button
@@ -1294,7 +1294,7 @@ export default function CountermeasuresPreMatchPage() {
 
       <style jsx>{`
         :global(body:has(.counter-page)) {
-          background: #0a1117 !important;
+          background: var(--shell-bg) !important;
         }
 
         :global(body:has(.counter-page)::before),
@@ -1307,7 +1307,7 @@ export default function CountermeasuresPreMatchPage() {
           margin: 0 auto;
           position: relative;
           isolation: isolate;
-          color: #f4f6f7;
+          color: var(--text-main);
         }
 
         .counter-page::before {
@@ -1382,8 +1382,8 @@ export default function CountermeasuresPreMatchPage() {
           flex-shrink: 0;
           border: 1px solid rgba(0, 212, 255, 0.28);
           border-radius: 14px;
-          color: #f4f6f7;
-          background: rgba(255, 255, 255, 0.06);
+          color: var(--text-main);
+          background: var(--surface-2);
           box-shadow: none;
           font-size: 13px;
           font-weight: 800;
@@ -1392,7 +1392,7 @@ export default function CountermeasuresPreMatchPage() {
 
         .counter-back-button:hover {
           border-color: rgba(0, 168, 200, 0.35);
-          background: #101a20;
+          background: var(--surface);
         }
 
         @media (max-width: 640px) {
@@ -1483,7 +1483,7 @@ export default function CountermeasuresPreMatchPage() {
 
         .counter-upload-head h2 {
           margin: 0;
-          color: #f4f6f7;
+          color: var(--text-main);
           font-size: clamp(24px, 5.5vw, 34px);
           line-height: 1.03;
           font-weight: 800;
@@ -1569,8 +1569,8 @@ export default function CountermeasuresPreMatchPage() {
 
         .counter-secondary-cta {
           border: 1px solid rgba(0, 0, 0, 0.08);
-          color: #f4f6f7;
-          background: rgba(255, 255, 255, 0.06);
+          color: var(--text-main);
+          background: var(--surface-2);
         }
 
         .counter-primary-cta:hover,
@@ -1646,7 +1646,7 @@ export default function CountermeasuresPreMatchPage() {
 
         .counter-processing-copy strong {
           display: block;
-          color: #f4f6f7;
+          color: var(--text-main);
           font-size: clamp(18px, 4vw, 24px);
           line-height: 1.12;
         }

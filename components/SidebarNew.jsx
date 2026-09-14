@@ -66,11 +66,11 @@ export default function SidebarNew() {
   // Toni campionati dalla tavola: Coach green, Rosa blue, Carte purple. Gold solo HP.
   const PILLAR_TONES = {
     coach: {
-      color: '#3ddc97',
-      activeBg: 'rgba(61, 220, 151, 0.12)',
-      activeBorder: 'rgba(61, 220, 151, 0.3)',
-      accent: '#3ddc97',
-      idleIcon: 'rgba(61, 220, 151, 0.65)'
+      color: 'var(--accent)',
+      activeBg: 'var(--accent-bg)',
+      activeBorder: 'var(--accent-border)',
+      accent: 'var(--accent)',
+      idleIcon: 'var(--accent)'
     },
     rosa: {
       color: '#60a5fa',
@@ -130,8 +130,8 @@ export default function SidebarNew() {
     fontSize: '13px',
     fontWeight: 500,
     fontFamily: 'inherit',
-    background: active ? 'rgba(255, 255, 255, 0.07)' : 'transparent',
-    color: active ? '#f4f6f7' : 'rgba(255, 255, 255, 0.55)',
+    background: active ? 'var(--surface-2)' : 'transparent',
+    color: active ? 'var(--text-main)' : 'var(--text-dim)',
     border: '1px solid transparent',
     transition: 'background 0.15s ease, color 0.15s ease',
     cursor: 'pointer',
@@ -140,13 +140,13 @@ export default function SidebarNew() {
   })
 
   const handleUtilityMouseEnter = (e) => {
-    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.07)'
-    e.currentTarget.style.color = '#f4f6f7'
+    e.currentTarget.style.background = 'var(--surface-2)'
+    e.currentTarget.style.color = 'var(--text-main)'
   }
 
   const handleUtilityMouseLeave = (e, active) => {
-    e.currentTarget.style.background = active ? 'rgba(255, 255, 255, 0.07)' : 'transparent'
-    e.currentTarget.style.color = active ? '#f4f6f7' : 'rgba(255, 255, 255, 0.55)'
+    e.currentTarget.style.background = active ? 'var(--surface-2)' : 'transparent'
+    e.currentTarget.style.color = active ? 'var(--text-main)' : 'var(--text-dim)'
   }
 
   // Pilastri: stile minimale per tono (reference: bordi sottili, niente glow, niente text-shadow)
@@ -162,7 +162,7 @@ export default function SidebarNew() {
       fontSize: '14px',
       fontWeight: active ? 700 : 650,
       background: active ? tone.activeBg : 'transparent',
-      color: active ? '#f4f6f7' : 'rgba(255, 255, 255, 0.6)',
+      color: active ? 'var(--text-main)' : 'var(--text-dim)',
       border: `1px solid ${active ? tone.activeBorder : 'transparent'}`,
       position: 'relative',
       overflow: 'hidden',
@@ -176,14 +176,14 @@ export default function SidebarNew() {
     if (active) return
     const tone = PILLAR_TONES[item.tone] || PILLAR_TONES.coach
     e.currentTarget.style.background = tone.activeBg
-    e.currentTarget.style.color = '#f4f6f7'
+    e.currentTarget.style.color = 'var(--text-main)'
     e.currentTarget.style.borderColor = tone.activeBorder
   }
 
   const handleNavMouseLeave = (e, item, active) => {
     if (active) return
     e.currentTarget.style.background = 'transparent'
-    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)'
+    e.currentTarget.style.color = 'var(--text-dim)'
     e.currentTarget.style.borderColor = 'transparent'
   }
 
@@ -203,7 +203,7 @@ export default function SidebarNew() {
             letterSpacing: '0.5px',
             textTransform: 'uppercase',
             lineHeight: 1.2,
-            color: isWow ? '#03101d' : (item.variant === 'gold' ? '#1f1300' : '#f4f6f7'),
+            color: isWow ? '#03101d' : (item.variant === 'gold' ? '#1f1300' : 'var(--text-main)'),
             background: isWow
               ? 'rgba(48, 176, 96, 0.18)'
               : (item.variant === 'gold'
@@ -232,8 +232,8 @@ export default function SidebarNew() {
           letterSpacing: '0.6px',
           textTransform: 'uppercase',
           lineHeight: 1.2,
-          color: '#3ddc97',
-          background: 'rgba(61, 220, 151, 0.12)',
+          color: 'var(--accent)',
+          background: 'var(--accent-bg)',
           border: '1px solid rgba(61, 220, 151, 0.3)',
           boxShadow: 'none'
         }}
@@ -262,12 +262,12 @@ export default function SidebarNew() {
         `}
         style={{
           width: 196,
-          background: 'rgba(12, 17, 24, .97)',
+          background: 'var(--sidebar-bg)',
           backdropFilter: 'blur(24px)',
-          borderRight: '1px solid rgba(255, 255, 255, 0.07)',
+          borderRight: '1px solid var(--border-softer)',
         }}
       >
-        <div className="p-3 flex justify-center items-center relative" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.07)' }}>
+        <div className="p-3 flex justify-center items-center relative" style={{ borderBottom: '1px solid var(--border-softer)' }}>
           <button
             type="button"
             className="lg:hidden absolute right-3 top-3 flex items-center justify-center w-8 h-8 rounded-lg border border-[rgba(0,0,0,0.08)] bg-transparent text-[#6B6B6B]"
@@ -344,7 +344,7 @@ export default function SidebarNew() {
 
           {/* Account: HP + Profilo, visibili come nella reference. Altro: utility secondarie. */}
           <div style={{ marginTop: 'auto', paddingTop: '12px' }}>
-            <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.08)', margin: '0 4px 10px' }} />
+            <div style={{ height: '1px', background: 'var(--border-soft)', margin: '0 4px 10px' }} />
             <button
               type="button"
               onClick={() => setAccountOpen((open) => !open)}
@@ -359,8 +359,8 @@ export default function SidebarNew() {
                 padding: '8px 10px',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: 14,
-                background: accountOpen ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.03)',
-                color: '#f4f6f7',
+                background: accountOpen ? 'var(--surface-2)' : 'var(--surface-2)',
+                color: 'var(--text-main)',
                 cursor: 'pointer',
                 fontFamily: 'inherit'
               }}
@@ -372,16 +372,16 @@ export default function SidebarNew() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'rgba(61, 220, 151, 0.12)',
-                border: '1px solid rgba(61, 220, 151, 0.25)',
-                color: '#3ddc97',
+                background: 'var(--accent-bg)',
+                border: '1px solid var(--accent-border)',
+                color: 'var(--accent)',
                 flexShrink: 0
               }}>
                 <User size={14} />
               </span>
               <span style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
                 <span style={{ display: 'block', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{accountLabel}</span>
-                <span style={{ display: 'block', fontSize: 10, color: 'rgba(255, 255, 255, 0.5)' }}>Hero Coach</span>
+                <span style={{ display: 'block', fontSize: 10, color: 'var(--text-dim)' }}>Hero Coach</span>
               </span>
               {accountOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
@@ -534,9 +534,9 @@ export default function SidebarNew() {
             height: '44px',
             borderRadius: '12px',
             flexShrink: 0,
-            background: 'rgba(255, 255, 255, 0.05)',
+            background: 'var(--surface-2)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
-            color: 'rgba(255, 255, 255, 0.6)',
+            color: 'var(--text-dim)',
             cursor: 'pointer'
           }}
         >
@@ -604,8 +604,8 @@ export default function SidebarNew() {
             width: 64px;
             z-index: 35;
             padding: 12px 10px 16px;
-            background: #0c1118;
-            border-right: 1px solid rgba(255, 255, 255, 0.07);
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-softer);
           }
         }
 

@@ -1516,22 +1516,22 @@ body > * {
 }
 
 .ux-v2-light-tool .neon-card:hover {
-  border-color: rgba(61, 220, 151, 0.28);
+  border-color: var(--accent-border);
   box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45);
   transform: translateY(-2px);
 }
 
 .ux-v2-light-tool .neon-button {
-  background: rgba(61, 220, 151, 0.1);
-  border: 1px solid rgba(61, 220, 151, 0.3);
-  color: #3ddc97;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  color: var(--accent);
   box-shadow: none;
   text-shadow: none;
 }
 
 .ux-v2-light-tool .neon-button:hover {
-  background: rgba(61, 220, 151, 0.16);
-  border-color: rgba(61, 220, 151, 0.5);
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
   box-shadow: none;
   transform: translateY(-1px);
   text-shadow: none;
@@ -1540,7 +1540,102 @@ body > * {
 .ux-v2-light-tool .neon-text,
 .ux-v2-light-tool .neon-text-gold,
 .ux-v2-light-tool .text-glow {
-  color: #f4f6f7;
+  color: var(--text-main);
   text-shadow: none;
 }
 
+
+/* ===== UX V2 THEME SYSTEM (dark default / light opzionale) ===== */
+:root {
+  --shell-bg: #0a1117;
+  --surface: #101a20;
+  --surface-2: rgba(255, 255, 255, 0.05);
+  --border-soft: rgba(255, 255, 255, 0.08);
+  --border-softer: rgba(255, 255, 255, 0.07);
+  --text-main: #f4f6f7;
+  --text-dim: rgba(255, 255, 255, 0.55);
+  --topbar-bg: rgba(10, 17, 23, 0.85);
+  --sidebar-bg: rgba(12, 17, 24, 0.97);
+  --bottomnav-bg: rgba(11, 16, 24, 0.97);
+  --accent: #3ddc97;
+  --accent-strong: #27a76a;
+  --accent-ink: #05231a;
+  --accent-bg: rgba(61, 220, 151, 0.12);
+  --accent-border: rgba(61, 220, 151, 0.3);
+}
+
+html[data-theme='light'] {
+  --shell-bg: #f9f6f1;
+  --surface: #ffffff;
+  --surface-2: #efece6;
+  --border-soft: rgba(0, 0, 0, 0.09);
+  --border-softer: rgba(0, 0, 0, 0.07);
+  --text-main: #1d1d1f;
+  --text-dim: #6b6b6b;
+  --topbar-bg: rgba(245, 245, 247, 0.85);
+  --sidebar-bg: rgba(255, 255, 255, 0.92);
+  --bottomnav-bg: rgba(255, 255, 255, 0.97);
+  --accent: #1f9d6b;
+  --accent-strong: #1f9d6b;
+  --accent-ink: #ffffff;
+  --accent-bg: rgba(31, 157, 107, 0.1);
+  --accent-border: rgba(31, 157, 107, 0.35);
+}
+
+html[data-theme='light'] body {
+  background: #f9f6f1;
+}
+
+html[data-theme='light'] body::before,
+html[data-theme='light'] body::after {
+  display: none;
+}
+
+/* Superfici globali legacy in light: copertura ampia (pagine motore usano .neon-card/.neon-button) */
+html[data-theme='light'] .neon-card,
+html[data-theme='light'] .neon-panel {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 14px 36px rgba(29, 29, 31, 0.07);
+  color: #1d1d1f;
+}
+
+html[data-theme='light'] .neon-button {
+  background: #efece6;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: #1d1d1f;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+html[data-theme='light'] .neon-button:hover {
+  background: #ffffff;
+  border-color: rgba(31, 157, 107, 0.4);
+  box-shadow: none;
+  text-shadow: none;
+}
+
+html[data-theme='light'] .neon-text,
+html[data-theme='light'] .neon-text-gold,
+html[data-theme='light'] .text-glow {
+  color: #1d1d1f;
+  text-shadow: none;
+}
+
+/* Tool pages: il blocco .ux-v2-light-tool base e gia var-driven */
+.ux-v2-light-tool {
+  color: var(--text-main);
+}
+
+.ux-v2-light-tool .neon-card,
+.ux-v2-light-tool .neon-panel {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
+  color: var(--text-main);
+}
+
+html[data-theme='light'] .ux-v2-light-tool .neon-card,
+html[data-theme='light'] .ux-v2-light-tool .neon-panel {
+  box-shadow: 0 14px 36px rgba(29, 29, 31, 0.07);
+}
