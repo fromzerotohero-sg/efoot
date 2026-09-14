@@ -247,7 +247,12 @@ function AuthCallbackContent() {
               </button>
               {error?.includes('verify your email') && (
                 <button
-                  onClick={() => window.open('http://localhost:3000/verify-email', '_blank')}
+                  onClick={() => {
+                    const metalgateBase = (process.env.NEXT_PUBLIC_METALGATE_LOGIN_URL || '')
+                      .replace(/\/login\.html$/, '')
+                      .replace(/\/+$/, '')
+                    window.open(metalgateBase ? `${metalgateBase}/verify-email` : '/verify-email', '_blank')
+                  }}
                   style={{
                     padding: '12px 24px',
                     background: 'linear-gradient(135deg, #ff6b35 0%, #f72b1c 100%)',

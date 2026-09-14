@@ -449,19 +449,68 @@ async function buildPersonalContext(userId, lang = 'it') {
       auth: { autoRefreshToken: false, persistSession: false }
     })
 
-    // Formation layout
-    const { data: formationRow } = await admin
-      .from('formation_layout')
-      .select('formation, slot_positions')
-      .eq('user_id', userId)
-      .maybeSingle()
-    // Players (titolari + riserve) - include skills, forma, altezza/peso per ragionamento enterprise
-    const { data: playersData, error: playersError } = await admin
-      .from('players')
-      .select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, photo_slots, base_stats, original_positions, card_type, skills, com_skills, form, height, weight, extracted_data, metadata, development_points')
-      .eq('user_id', userId)
-      .order('slot_index', { ascending: true, nullsFirst: false })
-      .limit(50)
+    // Batch delle query indipendenti: una sola Promise.all per ridurre la latenza pre-OpenAI.
+    // Le query sulle formazioni avversarie restano dopo (dipendono dai match caricati).
+    const [
+      { data: formationRow },
+      playersResult,
+      { data: stylesData },
+      { data: gameAnalysisRow },
+      { data: matchesData },
+      { data: tacticalRow },
+      { data: coachRow },
+      { data: patternsRow }
+    ] = await Promise.all([
+      // Formation layout
+      admin
+        .from('formation_layout')
+        .select('formation, slot_positions')
+        .eq('user_id', userId)
+        .maybeSingle(),
+      // Players (titolari + riserve) - include skills, forma, altezza/peso per ragionamento enterprise
+      admin
+        .from('players')
+        .select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, photo_slots, base_stats, original_positions, card_type, skills, com_skills, form, height, weight, extracted_data, metadata, development_points')
+        .eq('user_id', userId)
+        .order('slot_index', { ascending: true, nullsFirst: false })
+        .limit(50),
+      // Playing styles lookup
+      admin.from('playing_styles').select('id, name'),
+      // Game analysis (statistiche di gioco cliente)
+      admin
+        .from('user_game_analysis')
+        .select('stats, captured_at')
+        .eq('user_id', userId)
+        .maybeSingle(),
+      // Matches (ultime 10) - con formazione avversario, voti, zone attacco (enterprise)
+      admin
+        .from('matches')
+        .select('opponent_name, result, formation_played, playing_style_played, match_date, opponent_formation_id, player_ratings, attack_areas')
+        .eq('user_id', userId)
+        .order('match_date', { ascending: false })
+        .limit(10),
+      // Team tactical settings
+      admin
+        .from('team_tactical_settings')
+        .select('team_playing_style, individual_instructions')
+        .eq('user_id', userId)
+        .maybeSingle(),
+      // Allenatore attivo (con competenze stili per intreccio dati)
+      admin
+        .from('coaches')
+        .select('coach_name, playing_style_competence')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .maybeSingle(),
+      // Pattern tattici (formation_usage, recurring_issues) - per intreccio consigli formazione/problemi
+      admin
+        .from('team_tactical_patterns')
+        .select('formation_usage, playing_style_usage, recurring_issues')
+        .eq('user_id', userId)
+        .maybeSingle()
+    ])
+
+    const { data: playersData, error: playersError } = playersResult
     if (playersError) {
       console.error('[assistant-chat] buildPersonalContext players error:', playersError.message)
       return ''
@@ -474,8 +523,7 @@ async function buildPersonalContext(userId, lang = 'it') {
       if (p?.id) playerNameById[String(p.id)] = p.player_name || '?'
     }
 
-    // Playing styles lookup
-    const { data: stylesData } = await admin.from('playing_styles').select('id, name')
+    // Playing styles lookup (da batch iniziale)
     const stylesLookup = {}
     if (stylesData) {
       stylesData.forEach(s => { stylesLookup[s.id] = s.name || '' })
@@ -582,11 +630,6 @@ async function buildPersonalContext(userId, lang = 'it') {
 
     const buildProgressionBlock = formatBuildProgressionSection(roster, lang)
 
-    const { data: gameAnalysisRow } = await admin
-      .from('user_game_analysis')
-      .select('stats, captured_at')
-      .eq('user_id', userId)
-      .maybeSingle()
     const skillAdvisoryBlock = buildRosterSkillAdvisorySection(roster, gameAnalysisRow, lang)
 
     // Disposizione reale in campo (da titolari per slot), non dal nome modulo formation
@@ -610,13 +653,7 @@ async function buildPersonalContext(userId, lang = 'it') {
     const dispositionSummary = summaryParts.length ? ` (${summaryParts.join(', ')})` : ''
     const dispositionLine = `${L.dispositionInField}: ${positionsOrdered || L.formationNotSet}.${dispositionSummary}`
 
-    // Matches (ultime 10) - con formazione avversario, voti, zone attacco (enterprise)
-    const { data: matchesData } = await admin
-      .from('matches')
-      .select('opponent_name, result, formation_played, playing_style_played, match_date, opponent_formation_id, player_ratings, attack_areas')
-      .eq('user_id', userId)
-      .order('match_date', { ascending: false })
-      .limit(10)
+    // Matches (ultime 10, da batch iniziale) - con formazione avversario, voti, zone attacco (enterprise)
     const matches = matchesData || []
     // Fetch opponent formations for matches that have opponent_formation_id
     const oppIds = [...new Set(matches.map(m => m.opponent_formation_id).filter(Boolean))]
@@ -646,12 +683,7 @@ async function buildPersonalContext(userId, lang = 'it') {
           return `  ${d} vs ${m.opponent_name || '?'} ${m.result || '-'} (form: ${m.formation_played || '-'}, stile: ${m.playing_style_played || '-'}${vsForm})${votiStr}`
         })
 
-    // Team tactical settings
-    const { data: tacticalRow } = await admin
-      .from('team_tactical_settings')
-      .select('team_playing_style, individual_instructions')
-      .eq('user_id', userId)
-      .maybeSingle()
+    // Team tactical settings (da batch iniziale)
     const teamStyle = tacticalRow?.team_playing_style || L.formationNotSet
     const indInstr = tacticalRow?.individual_instructions
     const numInstructions = Array.isArray(indInstr) ? indInstr.length : (indInstr && typeof indInstr === 'object' ? Object.keys(indInstr).length : 0)
@@ -676,13 +708,7 @@ async function buildPersonalContext(userId, lang = 'it') {
 
     const tacticsText = `${L.teamStyle}: ${teamStyle}. ${L.individualInstructions}: ${numInstructions} ${L.instructionsActive}.${formatIndividualInstructions(indInstr)}`
 
-    // Allenatore attivo (con competenze stili per intreccio dati)
-    const { data: coachRow } = await admin
-      .from('coaches')
-      .select('coach_name, playing_style_competence')
-      .eq('user_id', userId)
-      .eq('is_active', true)
-      .maybeSingle()
+    // Allenatore attivo (da batch iniziale, con competenze stili per intreccio dati)
     let coachText = coachRow?.coach_name ? `${L.activeCoach}: ${coachRow.coach_name}.` : L.coachNotSet
     if (coachRow?.playing_style_competence && typeof coachRow.playing_style_competence === 'object') {
       const entries = Object.entries(coachRow.playing_style_competence)
@@ -697,13 +723,8 @@ async function buildPersonalContext(userId, lang = 'it') {
       }
     }
 
-    // Pattern tattici (formation_usage, recurring_issues) - per intreccio consigli formazione/problemi
+    // Pattern tattici (da batch iniziale, formation_usage, recurring_issues) - per intreccio consigli formazione/problemi
     let patternText = ''
-    const { data: patternsRow } = await admin
-      .from('team_tactical_patterns')
-      .select('formation_usage, playing_style_usage, recurring_issues')
-      .eq('user_id', userId)
-      .maybeSingle()
     if (patternsRow) {
       const formUsage = patternsRow.formation_usage && typeof patternsRow.formation_usage === 'object' && Object.keys(patternsRow.formation_usage).length > 0
       const issues = Array.isArray(patternsRow.recurring_issues) && patternsRow.recurring_issues.length > 0

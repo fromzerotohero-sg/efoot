@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useTranslation } from '@/lib/i18n'
 import { supabase } from '@/lib/supabaseClient'
 import { BarChart3, X, Upload, Camera, Image as ImageIcon, RefreshCw, CheckCircle2 } from 'lucide-react'
@@ -69,6 +69,18 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
   const [success, setSuccess] = useState(false)
   const inputRef1 = useRef(null)
   const inputRef2 = useRef(null)
+
+  // Reset stato ad ogni apertura: evita slot/errori/successo residui dalla sessione precedente
+  useEffect(() => {
+    if (!show) return
+    setSlot1(null)
+    setSlot2(null)
+    setError(null)
+    setSuccess(false)
+    setLoading(false)
+    if (inputRef1.current) inputRef1.current.value = ''
+    if (inputRef2.current) inputRef2.current.value = ''
+  }, [show])
   const statsAgeDays = daysSince(lastCaptureDate)
   const lastCaptureLabel = lastCaptureDate
     ? new Date(lastCaptureDate).toLocaleDateString(
@@ -119,6 +131,7 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
       setError(t('gameAnalysisNoImage'))
       return
     }
+    if (loading || success) return
     setLoading(true)
     setError(null)
     setSuccess(false)
@@ -388,8 +401,8 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
             <button
               type="submit"
               className="btn primary"
-              disabled={loading || !hasAny}
-              style={{ padding: '12px 24px', minHeight: 44, opacity: loading ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: '8px' }}
+              disabled={loading || success || !hasAny}
+              style={{ padding: '12px 24px', minHeight: 44, opacity: (loading || success) ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: '8px' }}
             >
               {loading ? (
                 <>

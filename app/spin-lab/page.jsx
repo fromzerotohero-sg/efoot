@@ -89,6 +89,21 @@ export default function SpinLabPage() {
   const [showServiceCTA, setShowServiceCTA] = React.useState(false);
   const [error, setError] = React.useState("");
   const wheelRef = React.useRef(null);
+  const timeoutsRef = React.useRef([]);
+
+  const scheduleTimeout = React.useCallback((fn, ms) => {
+    const id = window.setTimeout(fn, ms);
+    timeoutsRef.current.push(id);
+    return id;
+  }, []);
+
+  // Pulisci i timeout della ruota se si naviga via a metà giro
+  React.useEffect(() => {
+    const pending = timeoutsRef.current;
+    return () => {
+      pending.forEach((id) => window.clearTimeout(id));
+    };
+  }, []);
 
   const segmentAngle = 360 / WHEEL_SEGMENTS.length;
 
@@ -187,7 +202,7 @@ export default function SpinLabPage() {
       const finalRotation = getRotationForSegment(rotation, segmentIndex);
       setRotation(finalRotation);
 
-      window.setTimeout(() => {
+      scheduleTimeout(() => {
         setLastReward(reward);
         setMessage(pickRandomSuggestion());
         setStatus((prev) => ({
@@ -217,9 +232,9 @@ export default function SpinLabPage() {
         window.dispatchEvent(new CustomEvent("credits-consumed"));
         setIsSpinning(false);
         setCelebrating(true);
-        window.setTimeout(() => {
+        scheduleTimeout(() => {
           setCelebrating(false);
-          window.setTimeout(() => setShowServiceCTA(true), 600);
+          scheduleTimeout(() => setShowServiceCTA(true), 600);
         }, 3300);
       }, 5200);
     } catch (err) {
@@ -433,19 +448,19 @@ export default function SpinLabPage() {
           </a>
         )}
 
-        <section className={`result-card ${lastReward ? "has-result" : ""}`}>
+        <section className={`result-card ${lastReward !== null ? "has-result" : ""}`}>
           <div className="result-heading">
             <Trophy size={20} />
             <span>Premio giornaliero</span>
           </div>
 
-          {!lastReward && (
+          {lastReward === null && (
             <p className="empty-result">
               Premi possibili: 0, 5, 10, 20, 30 e 100 HP.
             </p>
           )}
 
-          {lastReward && (
+          {lastReward !== null && (
             <div className="win-content">
               <div className="win-badge">
                 <Coins size={30} />

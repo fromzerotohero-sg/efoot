@@ -1715,7 +1715,7 @@ export default withAuth(function CardAdvisorLabPage() {
   const [detailsCardId, setDetailsCardId] = React.useState(null)
 
   React.useEffect(() => {
-    setSelectedId(cards[0]?.id)
+    setSelectedId(prev => (prev && cards.some(card => card.id === prev) ? prev : cards[0]?.id))
   }, [cards])
 
   const fetchCreditsUsage = React.useCallback(async () => {
@@ -1796,8 +1796,9 @@ export default withAuth(function CardAdvisorLabPage() {
     : null
 
   const requestDeepAnalysis = React.useCallback(async () => {
+    if (!detailsCard?.id) return
     const analysisKey = deepAnalysisCacheKey(detailsCard.id, lang)
-    if (!detailsCard?.id || deepAnalysesByCard[analysisKey] || deepAnalysisLoadingId) return
+    if (deepAnalysesByCard[analysisKey] || deepAnalysisLoadingId) return
     const token = await resolveClientAuthBearer()
     if (!token) return
 

@@ -177,11 +177,8 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
     window.addEventListener('match-saved', onMatchSaved)
     window.addEventListener('knowledge-should-refresh', onKnowledgeRefresh)
 
-    const interval = setInterval(() => { fetchAIKnowledge(ac.signal, true) }, 1 * 60 * 1000)
-
     return () => {
       ac.abort()
-      clearInterval(interval)
       if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current)
       window.removeEventListener('match-saved', onMatchSaved)
       window.removeEventListener('knowledge-should-refresh', onKnowledgeRefresh)

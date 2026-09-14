@@ -34,6 +34,33 @@ import { getImageOptimizeUserMessage } from "@/lib/imageOptimizeUserMessage";
 const STORAGE_KEY = "match_wizard_progress";
 const HOME_AWAY_STEP_ID = "home_away";
 
+// Chiave localStorage per-utente: evita che due utenti sullo stesso browser condividano la bozza partita
+function storageKeyForUser(userId) {
+  return userId ? `${STORAGE_KEY}_${userId}` : STORAGE_KEY;
+}
+
+async function resolveWizardUserId() {
+  try {
+    if (supabase) {
+      const { data: session } = await supabase.auth.getSession();
+      const sessionUserId = session?.session?.user?.id;
+      if (sessionUserId) return sessionUserId;
+    }
+  } catch (_) {
+    /* fallback sotto */
+  }
+  try {
+    const raw = localStorage.getItem("metalgate_user");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return parsed?.profile_id || parsed?.supabase_user_id || null;
+    }
+  } catch (_) {
+    /* noop */
+  }
+  return null;
+}
+
 export default function NewMatchPage() {
   const { t, lang } = useTranslation();
   const router = useRouter();
@@ -66,14 +93,24 @@ export default function NewMatchPage() {
   const [showSummary, setShowSummary] = React.useState(false);
   const [opponentName, setOpponentName] = React.useState("");
   const [isHome, setIsHome] = React.useState(true); // Default: Casa
+  const [wizardStorageKey, setWizardStorageKey] = React.useState(null);
 
-  // Carica progresso salvato al mount
+  // Carica progresso salvato al mount (chiave per-utente; legacy letta una sola volta)
   React.useEffect(() => {
-    setMounted(true);
-    setPortalTarget(document.body);
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
+    let cancelled = false;
+    const loadProgress = async () => {
+      const userId = await resolveWizardUserId();
+      if (cancelled) return;
+      const key = storageKeyForUser(userId);
+      setWizardStorageKey(key);
+      setMounted(true);
+      setPortalTarget(document.body);
+      try {
+        let saved = localStorage.getItem(key);
+        if (!saved && key !== STORAGE_KEY) {
+          saved = localStorage.getItem(STORAGE_KEY);
+        }
+        if (saved) {
         const parsed = JSON.parse(saved);
         const loadedStepData = parsed.stepData || {};
         // Retrocompatibilità: se isHome era salvato ma manca stepData.home_away, considera step Casa/Fuori già fatto
@@ -110,16 +147,22 @@ export default function NewMatchPage() {
           setCurrentStep(firstEmptyStep);
         }
       }
-    } catch (err) {
-      console.warn("[NewMatch] Error loading saved progress:", err);
-    }
+      } catch (err) {
+        console.warn("[NewMatch] Error loading saved progress:", err);
+      }
+    };
+    loadProgress();
+    return () => {
+      cancelled = true;
+    };
   }, [STEPS]);
 
   // Salva progresso in localStorage (include opponentName per persistenza)
   const saveProgress = React.useCallback(() => {
+    if (!wizardStorageKey) return;
     try {
       localStorage.setItem(
-        STORAGE_KEY,
+        wizardStorageKey,
         JSON.stringify({
           stepData,
           stepImages,
@@ -128,10 +171,14 @@ export default function NewMatchPage() {
           timestamp: Date.now(),
         }),
       );
+      if (wizardStorageKey !== STORAGE_KEY) {
+        // Migrazione completata: rimuovi la bozza legacy condivisa
+        localStorage.removeItem(STORAGE_KEY);
+      }
     } catch (err) {
       console.warn("[NewMatch] Error saving progress:", err);
     }
-  }, [stepData, stepImages, opponentName, isHome]);
+  }, [stepData, stepImages, opponentName, isHome, wizardStorageKey]);
 
   React.useEffect(() => {
     if (mounted) {
@@ -142,6 +189,7 @@ export default function NewMatchPage() {
   // Pulisci localStorage dopo salvataggio riuscito
   const clearProgress = () => {
     try {
+      if (wizardStorageKey) localStorage.removeItem(wizardStorageKey);
       localStorage.removeItem(STORAGE_KEY);
     } catch (err) {
       console.warn("[NewMatch] Error clearing progress:", err);

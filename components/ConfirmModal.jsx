@@ -35,6 +35,11 @@ export default function ConfirmModal({
       iconColor: '#FF3B30',
       borderColor: 'rgba(255, 59, 48, 0.3)'
     },
+    danger: {
+      icon: AlertCircle,
+      iconColor: '#FF3B30',
+      borderColor: 'rgba(255, 59, 48, 0.3)'
+    },
     warning: {
       icon: AlertTriangle,
       iconColor: '#FF9500',
@@ -235,7 +240,11 @@ export default function ConfirmModal({
           </button>
           <button
             type="button"
-            onClick={onConfirm}
+            onClick={() => {
+              if (disabled) return
+              onConfirm?.()
+            }}
+            disabled={disabled}
             className="btn primary"
             style={{
               padding: '12px 14px',

@@ -8,6 +8,9 @@ import { supabase } from '@/lib/supabaseClient'
 
 const DISMISS_PREFIX = 'daily_spin_remind_later_'
 
+// Cache di sessione dello status ruota, chiave = giorno (Europe/Rome): evita refetch ad ogni navigazione
+let cachedSpinStatus = null
+
 function todayRomeDateKey() {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Europe/Rome',
@@ -32,6 +35,20 @@ export default function DailySpinWidget({ lang: langProp } = {}) {
       return
     }
 
+    const applyStatus = (data) => {
+      setStatus(data)
+      const dayKey = data?.spin_date || todayRomeDateKey()
+      const dismissed = localStorage.getItem(`${DISMISS_PREFIX}${dayKey}`) === '1'
+      if (data?.available && !dismissed) setOpen(true)
+    }
+
+    const dayKey = todayRomeDateKey()
+    if (cachedSpinStatus?.dayKey === dayKey) {
+      applyStatus(cachedSpinStatus.data)
+      setLoading(false)
+      return
+    }
+
     const loadStatus = async () => {
       try {
         let token = localStorage.getItem('auth_token')
@@ -48,10 +65,8 @@ export default function DailySpinWidget({ lang: langProp } = {}) {
         const data = await res.json().catch(() => ({}))
         if (!res.ok) return
 
-        setStatus(data)
-        const dayKey = data?.spin_date || todayRomeDateKey()
-        const dismissed = localStorage.getItem(`${DISMISS_PREFIX}${dayKey}`) === '1'
-        if (data?.available && !dismissed) setOpen(true)
+        cachedSpinStatus = { dayKey, data }
+        applyStatus(data)
       } finally {
         setLoading(false)
       }
@@ -59,6 +74,15 @@ export default function DailySpinWidget({ lang: langProp } = {}) {
 
     loadStatus()
   }, [pathname])
+
+  // Dopo uno spin lo status cambia: invalida la cache per il prossimo check
+  React.useEffect(() => {
+    const onSpinDone = (e) => {
+      if (e?.detail?.source === 'daily-spin') cachedSpinStatus = null
+    }
+    window.addEventListener('credits-accredited', onSpinDone)
+    return () => window.removeEventListener('credits-accredited', onSpinDone)
+  }, [])
 
   const remindLater = () => {
     const dayKey = status?.spin_date || todayRomeDateKey()
@@ -71,7 +95,7 @@ export default function DailySpinWidget({ lang: langProp } = {}) {
   return (
     <div className="daily-login-overlay" role="dialog" aria-modal="true" aria-label={isEn ? 'Daily wheel reward' : 'Premio ruota giornaliera'}>
       <div className="daily-login-card">
-        <button className="daily-login-close" type="button" onClick={() => setOpen(false)} aria-label={isEn ? 'Close' : 'Chiudi'}>
+        <button className="daily-login-close" type="button" onClick={remindLater} aria-label={isEn ? 'Close' : 'Chiudi'}>
           <X size={18} />
         </button>
 

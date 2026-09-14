@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
 import { supabase } from '@/lib/supabaseClient'
@@ -82,6 +82,7 @@ export default function MatchHistoryPage() {
     deleteTitle: t('confirm') || (isItalian ? 'Conferma' : 'Confirm'),
     deleteMessage: t('confirmDeleteMatch') || (isItalian ? 'Vuoi eliminare questa partita?' : 'Delete this match?'),
     deleteMatch: t('deleteMatch') || (isItalian ? 'Elimina partita' : 'Delete match'),
+    deleteError: isItalian ? 'Non riesco a eliminare la partita. Riprova.' : 'Could not delete the match. Please try again.',
     showMoreMatches: (count) => (
       t('showMoreMatches', { count }) || (isItalian ? `Mostra altre ${count} partite...` : `Show ${count} more matches...`)
     ),
@@ -101,6 +102,8 @@ export default function MatchHistoryPage() {
   const [savingOpponentName, setSavingOpponentName] = useState(false)
   const [confirmModal, setConfirmModal] = useState(null)
   const [deletingMatchId, setDeletingMatchId] = useState(null)
+  // Offset paginazione: avanza solo su fetch "load more" riuscite, non si sposta dopo una delete
+  const nextOffsetRef = useRef(0)
 
   const summary = useMemo(() => {
     if (matchSummary) return matchSummary
@@ -150,6 +153,7 @@ export default function MatchHistoryPage() {
       const data = await res.json()
       const nextMatches = Array.isArray(data) ? data : (data.matches || [])
 
+      nextOffsetRef.current = offset + nextMatches.length
       setMatches((prev) => (append ? [...prev, ...nextMatches] : nextMatches))
       setMatchSummary(Array.isArray(data) ? null : (data.summary ?? null))
       setHasMoreMatches(Array.isArray(data) ? false : Boolean(data.pagination?.hasMore))
@@ -171,7 +175,7 @@ export default function MatchHistoryPage() {
 
   const handleLoadMoreMatches = () => {
     if (loadingMore || !hasMoreMatches) return
-    fetchMatchPage({ offset: matches.length, append: true })
+    fetchMatchPage({ offset: nextOffsetRef.current, append: true })
   }
 
   useEffect(() => {
@@ -243,6 +247,7 @@ export default function MatchHistoryPage() {
       onConfirm: async () => {
         setConfirmModal(null)
         setDeletingMatchId(matchId)
+        setError(null)
 
         try {
           let token = localStorage.getItem('auth_token')
@@ -279,6 +284,7 @@ export default function MatchHistoryPage() {
           })
         } catch (err) {
           console.error('Delete match error:', err)
+          setError(copy.deleteError)
         } finally {
           setDeletingMatchId(null)
         }
