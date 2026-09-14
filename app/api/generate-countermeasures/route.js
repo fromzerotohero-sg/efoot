@@ -7,7 +7,7 @@ import { enforcePlanCoherence, focusCountermeasuresOutput, generateCountermeasur
 import { presentCountermeasuresForCustomer } from '@/lib/prematchCustomerPlan'
 import { deductCredits, AI_COST, handleCreditOperationError } from '@/lib/creditService'
 import { validateIndividualInstruction } from '@/lib/tacticalInstructions'
-import { validateStartingXISwap } from '@/lib/formationDefenseRules'
+import { rolesAreEquivalent, validateStartingXISwap } from '@/lib/formationDefenseRules'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -107,6 +107,92 @@ function hasFlankJustification(value) {
     /\bwide\b/,
     /\bflank\b/
   ].some((pattern) => pattern.test(text))
+}
+
+function normalizePlayerName(value) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+function countermeasureCopy(output) {
+  const summary = output?.play_summary || {}
+  const cm = output?.countermeasures || {}
+  return [
+    output?.diagnosis,
+    output?.fit_proof,
+    summary.match_key,
+    summary.base_plan,
+    summary.attacking,
+    summary.defending,
+    summary.avoid,
+    ...(Array.isArray(output?.starting_plan) ? output.starting_plan : []),
+    ...(Array.isArray(cm.formation_adjustments) ? cm.formation_adjustments.flatMap((row) => [row?.suggestion, row?.reason]) : []),
+    ...(Array.isArray(cm.tactical_adjustments) ? cm.tactical_adjustments.flatMap((row) => [row?.suggestion, row?.reason]) : [])
+  ].map(asPlainText).filter(Boolean).join(' ')
+}
+
+/**
+ * If the model names a real bench player in the customer copy but forgets to
+ * emit the structured swap, recover it only when the replacement slot is
+ * unambiguous and passes the same deterministic swap rules.
+ */
+function inferStructuredBenchSwap(output, riserve, titolari) {
+  const suggestions = output?.countermeasures?.player_suggestions
+  if (Array.isArray(suggestions) && suggestions.length > 0) return null
+  if (!Array.isArray(riserve) || !Array.isArray(titolari) || !titolari.length) return null
+
+  const copy = countermeasureCopy(output)
+  const normalizedCopy = normalizePlayerName(copy)
+  if (!/\b(cambia|schiera|inserisci|usa|utilizza|sfrutta|ampiezza|fasce|with|use|start)\b/i.test(copy)) {
+    return null
+  }
+
+  const mentionedReserves = riserve
+    .filter((player) => {
+      const name = normalizePlayerName(player?.player_name)
+      return name && normalizedCopy.includes(name)
+    })
+  if (mentionedReserves.length !== 1) return null
+
+  const reserve = mentionedReserves[0]
+  const mentionedStarters = titolari.filter((player) => {
+    const name = normalizePlayerName(player?.player_name)
+    return name && normalizedCopy.includes(name)
+  })
+  const validReplacements = titolari.filter((player) => (
+    validateStartingXISwap(titolari, reserve, player.id).valid
+  ))
+  const reserveRoles = [
+    reserve.position,
+    ...(Array.isArray(reserve.original_positions) ? reserve.original_positions : [])
+  ].map((role) => typeof role === 'string' ? role : role?.position)
+  const exactRole = validReplacements.filter((player) => (
+    reserveRoles.some((role) => rolesAreEquivalent(role, player.position))
+  ))
+  const namedReplacement = mentionedStarters.filter((player) => validReplacements.includes(player))
+  const replacements = namedReplacement.length === 1
+    ? namedReplacement
+    : exactRole.length === 1
+      ? exactRole
+      : []
+  if (replacements.length !== 1) return null
+
+  const outgoing = replacements[0]
+  return {
+    action: 'add_to_starting_xi',
+    player_id: reserve.id,
+    player_name: reserve.player_name,
+    position: reserve.position,
+    replace_player_id: outgoing.id,
+    replace_player_name: outgoing.player_name,
+    replace_position: outgoing.position,
+    reason: 'Il piano cita questa riserva come leva per il setup.',
+    priority: 'high'
+  }
 }
 
 function sanitizeCountermeasureWarnings(warnings, { removedPlayerSuggestions = 0, removedInstructions = 0, verifiedRoster = false } = {}) {
@@ -869,6 +955,15 @@ if (process.env.NODE_ENV !== 'production') {
       if (invalidSuggestions.length > 0) {
         removedPlayerSuggestions = invalidSuggestions.length
       }
+    }
+
+    const inferredSwap = inferStructuredBenchSwap(countermeasures, riserve, titolari)
+    if (inferredSwap) {
+      countermeasures.countermeasures.player_suggestions = [inferredSwap]
+      console.info('[generate-countermeasures] Recovered structured bench swap from verified customer copy', {
+        incoming: inferredSwap.player_name,
+        outgoing: inferredSwap.replace_player_name
+      })
     }
 
     // 12.2 Valida istruzioni individuali suggerite rispetto alle regole prodotto
