@@ -270,7 +270,7 @@ export default function SidebarNew() {
         <div className="p-3 flex justify-center items-center relative" style={{ borderBottom: '1px solid var(--border-softer)' }}>
           <button
             type="button"
-            className="lg:hidden absolute right-3 top-3 flex items-center justify-center w-8 h-8 rounded-lg border border-[rgba(0,0,0,0.08)] bg-transparent text-[#6B6B6B]"
+            className="sb-close sb-close-mobile" style={{ position: 'absolute', right: 12, top: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, border: '1px solid var(--border-soft)', background: 'transparent', color: 'var(--text-dim)' }}
             onClick={() => setIsOpen(false)}
             aria-label={t('toggleMenu')}
             title={t('toggleMenu')}
@@ -279,7 +279,7 @@ export default function SidebarNew() {
           </button>
           <button
             type="button"
-            className="hidden lg:flex absolute right-3 top-1/2 -translate-y-1/2 items-center justify-center w-8 h-8 rounded-lg border border-[rgba(0,0,0,0.08)] bg-transparent text-[#6B6B6B] hover:bg-[#EFECE6]"
+            className="sb-close sb-close-desktop" style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, border: '1px solid var(--border-soft)', background: 'transparent', color: 'var(--text-dim)' }}
             onClick={() => setIsOpen(false)}
             aria-label={t('toggleMenu')}
             title={t('toggleMenu')}
@@ -587,6 +587,20 @@ export default function SidebarNew() {
       )}
 
       <style jsx>{`
+        .sb-close-desktop {
+          display: none !important;
+        }
+
+        @media (min-width: 1024px) {
+          .sb-close-mobile {
+            display: none !important;
+          }
+
+          .sb-close-desktop {
+            display: flex !important;
+          }
+        }
+
         .tablet-rail {
           display: none;
         }
