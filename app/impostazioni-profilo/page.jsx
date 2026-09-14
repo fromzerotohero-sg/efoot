@@ -631,9 +631,10 @@ export default function ImpostazioniProfiloPage() {
           aria-label={editingField.label}
           onClick={() => !editSaving && setEditingField(null)}
           style={{
-            position: 'fixed', inset: 0, zIndex: 100300,
+            position: 'fixed', inset: 0, zIndex: 999999,
             background: 'rgba(3, 7, 18, 0.72)',
-            display: 'flex', alignItems: 'flex-end', justifyContent: 'center'
+            display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+            paddingBottom: 'calc(76px + env(safe-area-inset-bottom, 0px))'
           }}
         >
           <div
