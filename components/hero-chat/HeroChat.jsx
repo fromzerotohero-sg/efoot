@@ -104,6 +104,7 @@ const COPY = {
   attachAnalyze: { it: 'Analizza e salva', en: 'Analyze and save', es: 'Analizar y guardar' },
   counterAnalyze: { it: 'Crea contromisure', en: 'Build countermeasures', es: 'Crear contramedidas' },
   counterAnalyzing: { it: 'Sto leggendo l’assetto avversario…', en: 'Reading the opponent setup…', es: 'Leyendo el planteamiento rival…' },
+  counterRequest: { it: 'Mandami lo screenshot della formazione avversaria: preparo qui il piano partita, senza aprire altre pagine.', en: 'Send me the opponent formation screenshot: I’ll build the match plan here, without opening another page.', es: 'Envíame la captura de la formación rival: prepararé aquí el plan de partido, sin abrir otras páginas.' },
   counterDone: { it: 'Piano pronto: controlla cosa cambierà prima di applicarlo.', en: 'Plan ready: review what will change before applying it.', es: 'Plan listo: revisa qué cambiará antes de aplicarlo.' },
   planTitle: { it: 'Piano contromisure', en: 'Countermeasure plan', es: 'Plan de contramedidas' },
   planApply: { it: 'Applica piano', en: 'Apply plan', es: 'Aplicar plan' },
@@ -760,6 +761,16 @@ export default function HeroChat({
     openGallery()
   }, [openGallery])
 
+  const openCounterCamera = React.useCallback(() => {
+    setAttachmentMode('counter')
+    setActionsOpen(false)
+    setMessages((prev) => [
+      ...prev,
+      { role: 'hero', content: L(lang, COPY.counterRequest), kind: 'system' }
+    ])
+    cameraInputRef.current?.click()
+  }, [lang])
+
   const analyzeCountermeasureAttachment = React.useCallback(async (token, imageDataUrl) => {
     const extractRes = await fetch('/api/extract-formation', {
       method: 'POST',
@@ -1056,7 +1067,7 @@ export default function HeroChat({
       title: L(lang, COPY.nextCounterTitle),
       desc: L(lang, COPY.nextCounterDesc),
       tone: 'gold',
-      run: () => router.push('/contromisure-pre-partita')
+      run: openCounterCamera
     }
   ]
 
