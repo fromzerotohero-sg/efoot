@@ -381,7 +381,6 @@ function HomePage() {
         recentMatches={recentMatches}
         gameAnalysisLastCapture={gameAnalysisLastCapture}
         hpBalance={hpBalance}
-        onOpenFeedback={() => setShowCoachFeedback(true)}
         onOpenGameAnalysis={() => setShowGameAnalysisModal(true)}
       />
 

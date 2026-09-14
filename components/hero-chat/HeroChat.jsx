@@ -62,6 +62,17 @@ const COPY = {
   lowHp: { it: 'Saldo HP insufficiente per le azioni AI (costo standard: 2 HP).', en: 'Not enough HP for AI actions (standard cost: 2 HP).', es: 'HP insuficientes para acciones de IA (costo estándar: 2 HP).' },
   lowHpCta: { it: 'Ottieni HP', en: 'Get HP', es: 'Conseguir HP' },
   errorGeneric: { it: 'Qualcosa non ha funzionato. Riprova tra un momento.', en: 'Something went wrong. Try again in a moment.', es: 'Algo salió mal. Inténtalo de nuevo en un momento.' },
+  feedbackBadge: { it: 'Stiamo analizzando la tua partita', en: 'We are reviewing your match', es: 'Estamos analizando tu partido' },
+  feedbackCostNote: { it: '2 HP/messaggio', en: '2 HP/message', es: '2 HP/mensaje' },
+  feedbackExit: { it: 'Torna alla chat normale', en: 'Back to normal chat', es: 'Volver al chat normal' },
+  feedbackIntro: { it: 'Raccontami com’è andata la tua ultima partita. Cosa è andato bene? Cosa possiamo migliorare?', en: 'Tell me how your last match went. What went well? What can we improve?', es: 'Cuéntame cómo te fue en tu último partido. ¿Qué salió bien? ¿Qué podemos mejorar?' },
+  saveCardTitle: { it: 'Vuoi che lo ricordi?', en: 'Want me to remember this?', es: '¿Quieres que lo recuerde?' },
+  saveCardSub: { it: 'Salvo questa conversazione nella memoria e nella diagnosi di Hero. Il salvataggio costa 2 HP.', en: 'I’ll save this conversation into Hero’s memory and diagnosis. Saving costs 2 HP.', es: 'Guardaré esta conversación en la memoria y el diagnóstico de Hero. Guardar cuesta 2 HP.' },
+  saveCardSave: { it: 'Salva', en: 'Save', es: 'Guardar' },
+  saveCardSaving: { it: 'Salvataggio…', en: 'Saving…', es: 'Guardando…' },
+  saveCardLater: { it: 'Non ora', en: 'Not now', es: 'Ahora no' },
+  savedConfirm: { it: 'Fatto: l’ho salvato nella mia memoria e nella diagnosi. La prossima volta ne terrò conto. 💾', en: 'Done: I saved it into my memory and diagnosis. I’ll keep it in mind next time. 💾', es: 'Hecho: lo guardé en mi memoria y diagnóstico. Lo tendré en cuenta la próxima vez. 💾' },
+  saveError: { it: 'Non sono riuscito a salvare. Riprova.', en: 'I couldn’t save. Try again.', es: 'No pude guardar. Inténtalo de nuevo.' },
   states: {
     NEW: {
       title: { it: 'Crea la tua rosa', en: 'Create your squad', es: 'Crea tu plantilla' },
@@ -103,7 +114,6 @@ export default function HeroChat({
   recentMatches,
   gameAnalysisLastCapture,
   hpBalance,
-  onOpenFeedback,
   onOpenGameAnalysis
 }) {
   const router = useRouter()
@@ -116,6 +126,12 @@ export default function HeroChat({
   const [actionsOpen, setActionsOpen] = React.useState(false)
   const [listening, setListening] = React.useState(false)
   const [knowledgeScore, setKnowledgeScore] = React.useState(null)
+  // Modalita partita (Palestra dentro la chat): motore /api/coach-feedback-chat reale,
+  // salvataggio /api/save-coach-feedback + /api/refresh-diagnostic. Nessun modulo separato.
+  const [feedbackMode, setFeedbackMode] = React.useState(false)
+  const [feedbackMessages, setFeedbackMessages] = React.useState([])
+  const [feedbackSending, setFeedbackSending] = React.useState(false)
+  const [saveState, setSaveState] = React.useState('idle') // idle | saving | saved | error
   const recognitionRef = React.useRef(null)
   const feedRef = React.useRef(null)
 
@@ -298,6 +314,127 @@ export default function HeroChat({
     }
   }, [sending, messages, lang, router, stopListening])
 
+  const enterFeedbackMode = React.useCallback(() => {
+    setActionsOpen(false)
+    setFeedbackMode(true)
+    setSaveState('idle')
+    setFeedbackMessages([{ role: 'hero', content: L(lang, COPY.feedbackIntro) }])
+  }, [lang])
+
+  const exitFeedbackMode = React.useCallback(() => {
+    setFeedbackMode(false)
+    setFeedbackMessages([])
+    setSaveState('idle')
+  }, [])
+
+  const sendFeedbackMessage = React.useCallback(async (raw) => {
+    const message = String(raw || '').trim()
+    if (!message || feedbackSending) return
+    stopListening()
+
+    const historyForApi = feedbackMessages.slice(-10).map((m) => ({
+      role: m.role === 'hero' ? 'assistant' : 'user',
+      content: m.content
+    }))
+
+    setFeedbackMessages((prev) => [...prev, { role: 'user', content: message }])
+    setInput('')
+    setFeedbackSending(true)
+
+    try {
+      const token = await resolveToken()
+      if (!token) {
+        router.push('/login')
+        return
+      }
+
+      const res = await fetch('/api/coach-feedback-chat', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message, history: historyForApi, language: lang })
+      })
+
+      const data = await res.json().catch(() => ({}))
+
+      if (res.status === 402 || data?.code === 'insufficient_credits') {
+        setFeedbackMessages((prev) => [...prev, { role: 'hero', content: L(lang, COPY.lowHp), kind: 'lowhp' }])
+        return
+      }
+
+      if (!res.ok) {
+        setFeedbackMessages((prev) => [...prev, { role: 'hero', content: L(lang, COPY.errorGeneric), kind: 'error' }])
+        return
+      }
+
+      const answer = data.response || L(lang, COPY.errorGeneric)
+      setFeedbackMessages((prev) => [...prev, { role: 'hero', content: answer }])
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('credits-consumed'))
+      }
+    } catch {
+      setFeedbackMessages((prev) => [...prev, { role: 'hero', content: L(lang, COPY.errorGeneric), kind: 'error' }])
+    } finally {
+      setFeedbackSending(false)
+    }
+  }, [feedbackSending, feedbackMessages, lang, router, stopListening])
+
+  // Salvataggio reale in chat: memoria + profilo + diagnosi (contratto esistente di CoachFeedbackChat).
+  const handleSaveFeedback = React.useCallback(async () => {
+    if (saveState === 'saving') return
+    setSaveState('saving')
+    try {
+      const token = await resolveToken()
+      if (!token) {
+        router.push('/login')
+        return
+      }
+
+      const conversation = feedbackMessages.map((m) => ({
+        role: m.role === 'hero' ? 'assistant' : 'user',
+        content: m.content
+      }))
+
+      const res = await fetch('/api/save-coach-feedback', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          conversation,
+          session_type: lastMatch ? 'feedback' : 'update',
+          match_id: lastMatch?.id || null
+        })
+      })
+
+      if (!res.ok) {
+        setSaveState('error')
+        return
+      }
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('credits-consumed'))
+        window.dispatchEvent(new CustomEvent('knowledge-should-refresh'))
+      }
+      try {
+        await fetch('/api/refresh-diagnostic', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      } catch { /* non bloccare */ }
+
+      setSaveState('saved')
+      setMessages((prev) => [...prev, { role: 'hero', content: L(lang, COPY.savedConfirm) }])
+      window.setTimeout(() => exitFeedbackMode(), 1600)
+    } catch {
+      setSaveState('error')
+    }
+  }, [saveState, feedbackMessages, lastMatch, lang, router, exitFeedbackMode])
+
   const openFeedCard = (cardId) => {
     setFeedCards((prev) => (prev.includes(cardId) ? prev : [...prev, cardId]))
   }
@@ -321,7 +458,7 @@ export default function HeroChat({
       case 'NO_COACH':
         return () => router.push('/nuova-rosa-lab')
       case 'POST_MATCH':
-        return onOpenFeedback
+        return enterFeedbackMode
       case 'READY_NO_STATS':
         return onOpenGameAnalysis
       default:
@@ -333,7 +470,7 @@ export default function HeroChat({
     { key: 'stats', icon: BarChart3, label: L(lang, COPY.actionStats), run: () => onOpenGameAnalysis?.() },
     { key: 'prepare', icon: Trophy, label: L(lang, COPY.actionPrepare), run: () => router.push('/contromisure-pre-partita') },
     { key: 'cards', icon: Sparkles, label: L(lang, COPY.actionCards), run: () => router.push('/card-advisor-lab') },
-    { key: 'feedback', icon: MessageSquareHeart, label: L(lang, COPY.actionFeedback), run: () => onOpenFeedback?.() }
+    { key: 'feedback', icon: MessageSquareHeart, label: L(lang, COPY.actionFeedback), run: enterFeedbackMode }
   ]
 
   return (
@@ -352,7 +489,13 @@ export default function HeroChat({
         </div>
         <div className="hc-headerRight">
           {scoreRing && (
-            <span className="hc-ringPill" aria-label={`${scoreRing.value}%`} title={L(lang, COPY.knowledge)}>
+            <button
+              type="button"
+              className="hc-ringPill"
+              aria-label={`${L(lang, COPY.knowledge)}: ${scoreRing.value}%`}
+              title={L(lang, COPY.knowledge)}
+              onClick={() => openFeedCard('knowledge')}
+            >
               <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
                 <circle cx="13" cy="13" r="10" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="3" />
                 <circle
@@ -361,7 +504,7 @@ export default function HeroChat({
                 />
               </svg>
               <span className="hc-ringValue">{scoreRing.value}%</span>
-            </span>
+            </button>
           )}
           {typeof hpBalance === 'number' && (
             <span className="hc-hpPill">
@@ -411,6 +554,74 @@ export default function HeroChat({
           </div>
         ))}
 
+        {/* Modalita partita (Palestra in chat): badge + thread feedback reale */}
+        {feedbackMode && (
+          <div className="hc-feedbackBadge" role="status">
+            <span className="hc-feedbackBadgeDot" aria-hidden="true" />
+            <span className="hc-feedbackBadgeText">
+              {L(lang, COPY.feedbackBadge)} · {L(lang, COPY.feedbackCostNote)}
+            </span>
+            <button type="button" className="hc-feedbackExit" onClick={exitFeedbackMode}>
+              {L(lang, COPY.feedbackExit)}
+            </button>
+          </div>
+        )}
+
+        {feedbackMode && feedbackMessages.map((m, i) => (
+          <div key={`fb-${i}`} className={m.role === 'user' ? 'hc-row hc-rowUser' : 'hc-row'}>
+            {m.role === 'hero' && (
+              <span className="hc-bubbleAvatar" aria-hidden="true">
+                <img src="/coach.jpg" alt="" />
+              </span>
+            )}
+            <div className={m.role === 'user' ? 'hc-bubble hc-bubbleUser' : `hc-bubble hc-bubbleHero${m.kind === 'error' || m.kind === 'lowhp' ? ' hc-bubbleWarn' : ''}`}>
+              {m.kind === 'lowhp' && (
+                <span className="hc-warnRow">
+                  <AlertCircle size={14} aria-hidden="true" />
+                  <button type="button" className="hc-lowHpCta" onClick={() => router.push('/gestione-profilo')}>
+                    {L(lang, COPY.lowHpCta)}
+                  </button>
+                </span>
+              )}
+              {m.content}
+            </div>
+          </div>
+        ))}
+
+        {feedbackMode && feedbackSending && (
+          <div className="hc-row">
+            <span className="hc-bubbleAvatar" aria-hidden="true">
+              <img src="/coach.jpg" alt="" />
+            </span>
+            <div className="hc-bubble hc-bubbleHero hc-thinking">
+              <span className="hc-dot" /><span className="hc-dot" /><span className="hc-dot" />
+              <span className="hc-srOnly">{L(lang, COPY.thinking)}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Card salvataggio memoria (consenso): solo se l'utente ha scritto qualcosa */}
+        {feedbackMode && saveState !== 'saved' && feedbackMessages.some((m) => m.role === 'user') && (
+          <div className="hc-saveCard">
+            <p className="hc-stateTitle">{L(lang, COPY.saveCardTitle)}</p>
+            <p className="hc-stateDesc">{L(lang, COPY.saveCardSub)}</p>
+            {saveState === 'error' && <p className="hc-saveError">{L(lang, COPY.saveError)}</p>}
+            <div className="hc-saveActions">
+              <button
+                type="button"
+                className="hc-stateBtn"
+                onClick={handleSaveFeedback}
+                disabled={saveState === 'saving'}
+              >
+                {saveState === 'saving' ? L(lang, COPY.saveCardSaving) : L(lang, COPY.saveCardSave)}
+              </button>
+              <button type="button" className="hc-saveLater" onClick={exitFeedbackMode}>
+                {L(lang, COPY.saveCardLater)}
+              </button>
+            </div>
+          </div>
+        )}
+
         {sending && (
           <div className="hc-row">
             <span className="hc-bubbleAvatar" aria-hidden="true">
@@ -424,7 +635,7 @@ export default function HeroChat({
         )}
 
         {/* Card di stato reale (setup/post-match/stats): una sola, mai fake */}
-        {stateCopy && stateCta && (
+        {stateCopy && stateCta && !feedbackMode && (
           <div className="hc-stateCard">
             <p className="hc-stateTitle">{L(lang, stateCopy.title)}</p>
             <p className="hc-stateDesc">{L(lang, stateCopy.desc)}</p>
@@ -496,15 +707,11 @@ export default function HeroChat({
         </div>
       )}
 
-      {/* Quick actions (reference foto 1: Rosa / Quanto ti conosce) */}
+      {/* Quick actions (reference foto 1: Rosa; "Quanto ti conosce" si apre dall'anello header) */}
       <div className="hc-quickRow">
         <button type="button" className="hc-quickBtn" onClick={() => openFeedCard('roster')}>
           <Users size={16} aria-hidden="true" />
           {L(lang, COPY.roster)}
-        </button>
-        <button type="button" className="hc-quickBtn" onClick={() => openFeedCard('knowledge')}>
-          <Gauge size={16} aria-hidden="true" />
-          {L(lang, COPY.knowledge)}
         </button>
       </div>
 
@@ -535,7 +742,11 @@ export default function HeroChat({
           className="hc-composer"
           onSubmit={(e) => {
             e.preventDefault()
-            sendMessage(input)
+            if (feedbackMode) {
+              sendFeedbackMessage(input)
+            } else {
+              sendMessage(input)
+            }
           }}
         >
           <button
@@ -665,6 +876,12 @@ export default function HeroChat({
           border-radius: 999px;
           background: rgba(255, 255, 255, 0.04);
           border: 1px solid rgba(255, 255, 255, 0.09);
+          cursor: pointer;
+          font-family: inherit;
+        }
+
+        .hc-ringPill:hover {
+          border-color: rgba(61, 220, 151, 0.45);
         }
 
         .hc-ringValue {
@@ -982,6 +1199,81 @@ export default function HeroChat({
           text-align: left;
         }
 
+        .hc-feedbackBadge {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 8px;
+          padding: 9px 14px;
+          border-radius: 999px;
+          background: rgba(61, 220, 151, 0.1);
+          border: 1px solid rgba(61, 220, 151, 0.3);
+        }
+
+        .hc-feedbackBadgeDot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: #3ddc97;
+          flex-shrink: 0;
+        }
+
+        .hc-feedbackBadgeText {
+          flex: 1;
+          min-width: 0;
+          font-size: 12px;
+          font-weight: 700;
+          color: #3ddc97;
+        }
+
+        .hc-feedbackExit {
+          padding: 4px 10px;
+          border-radius: 999px;
+          border: 1px solid rgba(61, 220, 151, 0.35);
+          background: transparent;
+          color: rgba(61, 220, 151, 0.9);
+          font-size: 11px;
+          font-weight: 700;
+          font-family: inherit;
+          cursor: pointer;
+        }
+
+        .hc-saveCard {
+          border-radius: 16px;
+          padding: 16px 18px;
+          background: linear-gradient(150deg, rgba(61, 220, 151, 0.12), rgba(10, 20, 24, 0.65));
+          border: 1px solid rgba(61, 220, 151, 0.3);
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .hc-saveActions {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+          margin-top: 4px;
+        }
+
+        .hc-saveLater {
+          min-height: 44px;
+          padding: 10px 14px;
+          border: none;
+          background: transparent;
+          color: rgba(244, 246, 247, 0.6);
+          font-size: 13px;
+          font-weight: 600;
+          font-family: inherit;
+          cursor: pointer;
+        }
+
+        .hc-saveError {
+          margin: 0;
+          font-size: 12px;
+          color: #ff8a8a;
+        }
+
         .hc-lowHpBanner {
           display: flex;
           align-items: center;
@@ -1004,7 +1296,7 @@ export default function HeroChat({
 
         .hc-quickRow {
           display: grid;
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns: 1fr;
           gap: 10px;
           padding: 10px 4px 8px;
           flex-shrink: 0;
