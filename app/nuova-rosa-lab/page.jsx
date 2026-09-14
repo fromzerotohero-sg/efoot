@@ -2122,13 +2122,13 @@ function QuickPlayerPanel({
               <div className="nr-quick-stat-groups">
                 {statGroups.map((group) => (
                   <div key={group.key} className="nr-quick-stat-group">
-                    <span className="nr-quick-stat-group-title">{group.title[lang] || group.title.en}</span>
+                    <span className="nr-quick-stat-group-title">{qL(lang, group.title)}</span>
                     <div className="nr-quick-stat-chips">
                       {group.visible.map(([key, label]) => {
                         const value = Number(displayStats[key])
                         return (
                           <span key={key} className={`nr-quick-stat-chip tone-${getStatToneClass(value)}`}>
-                            <em>{label[lang] || label.en}</em>
+                            <em>{qL(lang, label)}</em>
                             <strong>{value}</strong>
                           </span>
                         )
@@ -10095,9 +10095,9 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-quick-section {
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.12);
           border-radius: 14px;
-          background: rgba(255, 255, 255, 0.03);
+          background: rgba(255, 255, 255, 0.045);
           overflow: hidden;
         }
 
@@ -10105,10 +10105,12 @@ export default withAuth(function NuovaRosaLabPage() {
           display: flex;
           align-items: center;
           justify-content: space-between;
+          gap: 10px;
           width: 100%;
-          padding: 12px 14px;
+          min-height: 46px;
+          padding: 10px 14px;
           border: none;
-          background: transparent;
+          background: rgba(255, 255, 255, 0.03);
           color: inherit;
           font: inherit;
           font-size: 13px;
@@ -10117,8 +10119,12 @@ export default withAuth(function NuovaRosaLabPage() {
           text-align: left;
         }
 
+        .nr-quick-section-head:hover {
+          background: rgba(255, 255, 255, 0.06);
+        }
+
         .nr-quick-section-body {
-          padding: 0 14px 14px;
+          padding: 12px 14px 14px;
         }
 
         .nr-quick-stat-groups {
