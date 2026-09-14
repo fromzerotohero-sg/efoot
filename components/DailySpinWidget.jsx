@@ -110,7 +110,7 @@ export default function DailySpinWidget({ lang: langProp } = {}) {
           place-items: center;
           padding: 18px;
           background:
-            radial-gradient(circle at 50% 12%, rgba(0, 212, 255, 0.26), transparent 34%),
+            radial-gradient(circle at 50% 12%, rgba(61, 220, 151, 0.26), transparent 34%),
             rgba(0, 0, 0, 0.74);
           overflow-y: auto;
         }
@@ -119,13 +119,13 @@ export default function DailySpinWidget({ lang: langProp } = {}) {
           position: relative;
           width: min(440px, 94vw);
           padding: clamp(20px, 5vw, 30px);
-          border: 1px solid rgba(255, 203, 5, 0.45);
-          border-radius: 28px;
+          border: 1px solid rgba(255, 203, 5, 0.3);
+          border-radius: 24px;
           background:
-            radial-gradient(circle at 50% 0%, rgba(255, 203, 5, 0.16), transparent 42%),
-            linear-gradient(145deg, rgba(8, 16, 34, 0.98), rgba(2, 6, 23, 0.98));
-          box-shadow: 0 24px 90px rgba(0,0,0,0.58), 0 0 54px rgba(0, 212, 255, 0.20);
-          color: #fff;
+            radial-gradient(circle at 50% 0%, rgba(255, 203, 5, 0.10), transparent 42%),
+            linear-gradient(180deg, var(--surface), var(--shell-bg));
+          box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+          color: var(--text-main);
           text-align: center;
           overflow: hidden;
         }
@@ -134,7 +134,7 @@ export default function DailySpinWidget({ lang: langProp } = {}) {
           content: '';
           position: absolute;
           inset: -40%;
-          background: conic-gradient(from 0deg, transparent, rgba(255,203,5,0.18), transparent, rgba(0,212,255,0.16), transparent);
+          background: conic-gradient(from 0deg, transparent, rgba(255,203,5,0.18), transparent, rgba(61,220,151,0.16), transparent);
           animation: dailyLoginSweep 7s linear infinite;
           pointer-events: none;
         }
@@ -173,7 +173,7 @@ export default function DailySpinWidget({ lang: langProp } = {}) {
           place-items: center;
           color: #06101f;
           background: linear-gradient(135deg, #fef3c7, #facc15 48%, #22d3ee);
-          box-shadow: 0 0 30px rgba(250,204,21,0.42), 0 0 58px rgba(0,212,255,0.28);
+          box-shadow: 0 0 30px rgba(250,204,21,0.42), 0 0 58px rgba(61,220,151,0.28);
           animation: dailyLoginPulse 1.9s ease-in-out infinite;
         }
 

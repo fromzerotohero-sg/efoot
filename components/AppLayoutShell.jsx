@@ -83,6 +83,16 @@ export default function AppLayoutShell({ children, showInstallPrompt = true, sho
           overscroll-behavior-y: contain;
         }
 
+        /* Dissolvenza leggera al cambio pagina (stessa sensazione ovunque) */
+        .shell-main > * {
+          animation: uxPageFade 0.18s ease-out;
+        }
+
+        @keyframes uxPageFade {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
         @media (min-width: 1024px) {
           .shell-content.sidebar-open {
             margin-left: 196px;

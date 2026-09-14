@@ -143,7 +143,7 @@ export default function TaskWidget() {
         justifyContent: 'center',
         minHeight: '100px'
       }}>
-        <Loader2 size={24} color="var(--primary-cyan)" style={{ animation: 'spin 1s linear infinite' }} />
+        <Loader2 size={24} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
       </div>
     )
   }

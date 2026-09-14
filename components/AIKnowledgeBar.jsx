@@ -390,7 +390,7 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
       <div style={{...styles.card, padding: isMobile ? '16px' : '24px'}}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div style={styles.avatarPulse}>
-            <RefreshCw size={24} color="var(--neon-cyan)" style={{ animation: 'spin 1s linear infinite' }} />
+            <RefreshCw size={24} color="var(--accent)" style={{ animation: 'spin 1s linear infinite' }} />
           </div>
           <div>
             <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', marginBottom: '4px' }}>

@@ -42,8 +42,8 @@ export default function ConfirmModal({
     },
     info: {
       icon: Info,
-      iconColor: 'var(--primary-cyan)',
-      borderColor: 'var(--border-cyan)'
+      iconColor: 'var(--accent)',
+      borderColor: 'var(--accent-border)'
     }
   }
 
@@ -60,8 +60,8 @@ export default function ConfirmModal({
       }
     : {
         background: 'rgba(0, 217, 255, 0.1)',
-        borderColor: 'var(--primary-cyan)',
-        color: 'var(--primary-cyan)'
+        borderColor: 'var(--accent)',
+        color: 'var(--accent)'
       }
 
   const modal = (
