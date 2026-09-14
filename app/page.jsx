@@ -244,12 +244,7 @@ function HomePage() {
       if (!res.ok) return
 
       const data = await res.json().catch(() => ({}))
-      if (data.captured_at) {
-        const d = new Date(data.captured_at)
-        setGameAnalysisLastCapture(isNaN(d.getTime()) ? data.captured_at : d.toLocaleDateString(lang === 'en' ? 'en-GB' : 'it-IT', { day: 'numeric', month: 'short', year: 'numeric' }))
-      } else {
-        setGameAnalysisLastCapture(null)
-      }
+      setGameAnalysisLastCapture(data.captured_at || null)
     } catch (_) {
       setGameAnalysisLastCapture(null)
     }
@@ -383,7 +378,6 @@ function HomePage() {
         recentMatches={recentMatches}
         gameAnalysisLastCapture={gameAnalysisLastCapture}
         hpBalance={hpBalance}
-        onOpenGameAnalysis={() => setShowGameAnalysisModal(true)}
         onStatsSuccess={fetchGameAnalysisCapture}
       />
 

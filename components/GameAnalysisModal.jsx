@@ -7,6 +7,7 @@ import { BarChart3, X, Upload, Camera, Image as ImageIcon, RefreshCw, CheckCircl
 import { MAX_IMAGE_UPLOAD_BYTES } from '@/lib/uploadConstants'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
+import { daysSince, STATS_STALE_DAYS } from '@/lib/chatReadiness'
 
 const SLOTS = [
   { key: 'slot1', labelKey: 'gameAnalysisSlot1', descKey: 'gameAnalysisSlot1Desc' },
@@ -68,6 +69,13 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
   const [success, setSuccess] = useState(false)
   const inputRef1 = useRef(null)
   const inputRef2 = useRef(null)
+  const statsAgeDays = daysSince(lastCaptureDate)
+  const lastCaptureLabel = lastCaptureDate
+    ? new Date(lastCaptureDate).toLocaleDateString(
+        lang === 'en' ? 'en-GB' : lang === 'es' ? 'es-ES' : 'it-IT',
+        { day: 'numeric', month: 'short', year: 'numeric' }
+      )
+    : null
 
   const getSlot = (key) => (key === 'slot1' ? slot1 : slot2)
   const setSlot = (key, value) => (key === 'slot1' ? setSlot1(value) : setSlot2(value))
@@ -204,7 +212,29 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
         </div>
         {lastCaptureDate && (
           <div style={{ fontSize: '13px', color: 'var(--neon-green)', marginBottom: '16px', textAlign: 'center' }}>
-            {t('gameAnalysisLastCapture')}: {lastCaptureDate}
+            {t('gameAnalysisLastCapture')}: {lastCaptureLabel || lastCaptureDate}
+          </div>
+        )}
+        {statsAgeDays != null && statsAgeDays >= STATS_STALE_DAYS && (
+          <div
+            role="status"
+            style={{
+              marginBottom: '16px',
+              padding: '11px 13px',
+              borderRadius: '12px',
+              border: '1px solid rgba(255, 191, 0, 0.35)',
+              background: 'rgba(255, 191, 0, 0.08)',
+              color: '#ffd76a',
+              fontSize: '12px',
+              lineHeight: 1.45,
+              textAlign: 'center'
+            }}
+          >
+            {lang === 'en'
+              ? `Your analysis is ${statsAgeDays} days old. Upload fresh screenshots to make Hero’s advice more accurate.`
+              : lang === 'es'
+                ? `Tu análisis tiene ${statsAgeDays} días. Sube capturas nuevas para mejorar los consejos de Hero.`
+                : `La tua analisi ha ${statsAgeDays} giorni. Carica screenshot nuovi per rendere più precisi i consigli di Hero.`}
           </div>
         )}
 
