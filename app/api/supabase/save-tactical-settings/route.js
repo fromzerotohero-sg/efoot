@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { validateIndividualInstruction } from '@/lib/tacticalInstructions'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
+import { TEAM_PLAYING_STYLE_IDS } from '@/lib/teamPlayingStyles'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -78,7 +79,7 @@ export async function POST(req) {
     const { team_playing_style, individual_instructions } = await req.json()
 
     // Validazione team_playing_style
-    const validStyles = ['possesso_palla', 'contropiede_veloce', 'contrattacco', 'vie_laterali', 'passaggio_lungo']
+    const validStyles = TEAM_PLAYING_STYLE_IDS
     if (team_playing_style !== null && team_playing_style !== undefined && team_playing_style !== '') {
       if (typeof team_playing_style !== 'string' || !validStyles.includes(team_playing_style.trim())) {
         return NextResponse.json(

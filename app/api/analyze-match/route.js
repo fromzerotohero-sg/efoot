@@ -619,7 +619,8 @@ Puoi dire che con più sezioni complete l'analisi sarebbe più precisa; NON dare
         'contropiede_veloce': 'Contropiede Veloce',
         'contrattacco': 'Contrattacco',
         'vie_laterali': 'Vie Laterali',
-        'passaggio_lungo': 'Passaggio Lungo'
+        'passaggio_lungo': 'Passaggio Lungo',
+        'pressing_totale': 'Pressing totale'
       }
       
       const competences = []

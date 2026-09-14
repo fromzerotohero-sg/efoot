@@ -826,12 +826,12 @@ OUTPUT: 2-4 frasi operative, rispondi alla domanda specifica (es. tiro/passaggio
 - OPPONENT DATA: use opponent player names only if they are present in real context data. Otherwise speak by role or zone: DM, AMF, winger, fullback, flank, central lane.
 OUTPUT: 2-4 imperative sentences; answer the specific question (e.g. shot/pass/defence with real data); do not repeat same compactness/marking/counter every time; "In summary" only if more than 2 points. No visible reasoning.`
 
-  const capsule = language === 'en' ? capsuleEn : capsuleIt
+  const capsule = language === 'en' || language === 'es' ? capsuleEn : capsuleIt
 
   // La coach dà CONSIGLI; i 3 punti sono SUGGERIMENTI OPERATIVI della coach (cliccabili), non domande che il cliente deve fare.
   const suggRulesIt = `SUGGERIMENTI (3, obbligatori): sono CONSIGLI della coach su cosa approfondire o fare dopo (testi brevi cliccabili). (1) Un suggerimento operativo su quanto hai appena detto (es. approfondisci marcatura per i centrali, sfrutta Ibra e Nedvěd per i tiri). (2) Uno su gameplay/rosa/partite legato alla risposta. (3) Un prossimo passo concreto. Scrivi come inviti della coach: es. "Approfondisci la marcatura per Maldini e Nesta", "Variare i tiri con i tuoi finisher", "Prossimo passo: copertura". NON sono domande che il cliente deve porre: sei tu che consigli. VIETATO: "Quale modulo/formazione", "meta generico/tier list", "perché ho perso", "migliorare un giocatore". Consentito: suggerimenti legati a movimenti/difficolta sue (es. "Allinea pressing ai tuoi CC", "Sfrutta filtranti con Opportunisti"). Niente uso app, niente tasti.`
   const suggRulesEn = `SUGGESTIONS (3, required): these are the COACH'S recommendations on what to explore or do next (short clickable texts). (1) One operational suggestion on what you just said (e.g. deepen marking for your centre-backs, use your finishers for shot variety). (2) One on gameplay/roster/matches tied to your answer. (3) One concrete next step. Phrase as the coach's prompts: e.g. "Explore marking for Maldini and Nesta", "Vary shots with your finishers", "Next step: coverage". These are NOT questions the client should ask: you are giving advice. FORBIDDEN: "Which formation/module", "generic meta/tier list", "why did I lose", "improve a player". Allowed: suggestions tied to their movements/difficulties. No app usage, no buttons.`
-  const suggRules = language === 'en' ? suggRulesEn : suggRulesIt
+  const suggRules = language === 'en' || language === 'es' ? suggRulesEn : suggRulesIt
 
   // Solo dati da Informazioni IA: niente lista "Problemi" da citare; se togli la spunta, l'IA non vede più quel problema
   const profileLines = [
@@ -846,12 +846,13 @@ ${hasHistory ? `NOTA: Continua la conversazione già iniziata. NON salutare.` : 
 
 ${profileLines.join('\n')}`
 
+  const replyLanguage = language === 'es' ? 'spagnolo' : language === 'en' ? 'inglese' : 'italiano'
   const blocks = [
     header,
     personalContextSummary ? `\n■ ${contextBlockLabel}:\n${personalContextSummary}` : '',
-    cardAvailabilityBlock ? `\n■ ${language === 'en' ? 'CARD ADVISOR STATUS' : 'STATO CARD ADVISOR'}:\n${cardAvailabilityBlock}` : '',
+    cardAvailabilityBlock ? `\n■ ${language === 'en' || language === 'es' ? 'CARD ADVISOR STATUS' : 'STATO CARD ADVISOR'}:\n${cardAvailabilityBlock}` : '',
     efootballKnowledge ? `\n■ MECCANICHE eFootball (RAG):\n${efootballKnowledge}` : '',
-    `\n${capsule}\n\nFORMATO RISPOSTA:\n[2-4 frasi operative con i TUOI consigli. "In sintesi" / "In summary" solo se utile; altrimenti chiudi con la raccomandazione principale.]\n\n---\nSUGGERIMENTI:\n1. [consiglio breve cliccabile]\n2. [consiglio breve cliccabile]\n3. [consiglio breve cliccabile]\n\n${suggRules}\n\nDOMANDA CLIENTE: "${userMessage}"\nRispondi come ${aiName} in ${language === 'it' ? 'italiano' : 'inglese'}.`
+    `\n${capsule}\n\nFORMATO RISPOSTA:\n[2-4 frasi operative con i TUOI consigli. "In sintesi" / "In summary" solo se utile; altrimenti chiudi con la raccomandazione principale.]\n\n---\nSUGGERIMENTI:\n1. [consiglio breve cliccabile]\n2. [consiglio breve cliccabile]\n3. [consiglio breve cliccabile]\n\n${suggRules}\n\nDOMANDA CLIENTE: "${userMessage}"\nRispondi come ${aiName} in ${replyLanguage}.`
   ].filter(Boolean)
 
   return blocks.join('\n')
@@ -864,12 +865,19 @@ ${profileLines.join('\n')}`
  * - Il RAG può escluderle (limite caratteri, ordine sezioni in getRelevantSectionsForContext)
  * - Devono applicarsi SEMPRE, indipendentemente dalla domanda
  */
+function replyLanguageLabel(lang) {
+  if (lang === 'es') return 'SPANISH'
+  if (lang === 'en') return 'ENGLISH'
+  return 'ITALIAN'
+}
+
 function buildSystemContentV2(lang) {
   const policies = getCoachPoliciesText(lang)
   const sharedCore = getCoachSharedCoreText(lang)
+  const replyLang = replyLanguageLabel(lang)
 
   const it = `Sei Coach AI per eFootball.
-LINGUA DI RISPOSTA: DEVI TASSATIVAMENTE RISPONDERE IN ${(lang === 'en' || lang === 'es') ? 'INGLESE' : 'ITALIANO'} (lingua UI/parametro "language" dell'app).
+LINGUA DI RISPOSTA: DEVI TASSATIVAMENTE RISPONDERE IN ${replyLang} (lingua UI/parametro "language" dell'app).
 
 ${policies}
 
@@ -898,7 +906,7 @@ PRIORITÀ PROFILO: Per "Punto debole", "Cosa vuole imparare" e "Note per l'IA" u
 OUTPUT COACH: 2-4 frasi operative, rispondi alla domanda specifica; varia i consigli; "In sintesi" solo se utile.`
 
   const en = `You are Coach AI for eFootball.
-RESPONSE LANGUAGE: YOU MUST STRICTLY REPLY IN ${(lang === 'en' || lang === 'es') ? 'ENGLISH' : 'ITALIAN'} (UI language / app "language" parameter).
+RESPONSE LANGUAGE: YOU MUST STRICTLY REPLY IN ${replyLang} (UI language / app "language" parameter).
 
 ${policies}
 
@@ -923,7 +931,7 @@ If the ANALYSIS SUMMARY includes "Game stats (eFootball Analisi, last 10 matches
 If the SUMMARY has Connection/Input delay/Lag (e.g. weak connection, input delay) OR the client mentions weak connection/lag/delay in the message, adapt advice: less reactive pressing and dribbling in defence (timing is harder), more positioning, coverage and structure; avoid suggestions that require perfect timing.
 PROFILE PRIORITY: For "Weak point", "Learn goals", and "Notes for AI" ALWAYS use the values from the PROFILE block at the top of the message (these are live/current). If the SUMMARY contains different values for the same fields, IGNORE those from the SUMMARY (they may be stale). Steer at least one piece of advice toward the weak point and learning goals when relevant to the question. Never quote the list back to the client (e.g. "you indicated you have difficulties in..."); use the data only to steer advice.
 
-CONSTRAINTS: only roster names; only 5 configurable team styles (Possession, Quick Counter, Long Ball Counter, Long Ball, Out Wide); contrattacco → contropiede_veloce and require coach competence >=70; individual instructions only max 5; formation limits §3.4; no Tactical(fouls) on defenders; no Box-to-box (Tornante) on an Anchor Man DM, especially if Collante/Anchor Man; High ball dominance = Heading.
+CONSTRAINTS: only roster names; only 6 configurable team styles (Possession Game, Quick Counter, Long Ball Counter, Long Ball, Out Wide, Overload / Pressing totale); contrattacco → contropiede_veloce and require coach competence >=70; individual instructions only max 5; formation limits §3.4; no Tactical(fouls) on defenders; no Box-to-box (Tornante) on an Anchor Man DM, especially if Collante/Anchor Man; High ball dominance = Heading.
 
 COACH OUTPUT: 2-4 imperative sentences; answer the specific question; vary advice; "In summary" only when useful.`
 
@@ -1021,7 +1029,7 @@ export async function POST(req) {
     }
     
     const { message: rawMessage, currentPage, appState, language = 'it', history: rawHistory } = body
-    const lang = (language === 'en' || language === 'it') ? language : 'it'
+    const lang = (language === 'en' || language === 'it' || language === 'es') ? language : 'it'
 
     if (!rawMessage || typeof rawMessage !== 'string') {
       return NextResponse.json(

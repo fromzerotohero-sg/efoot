@@ -35,7 +35,8 @@ export default function TacticalSettingsPanel({
     { id: 'contropiede_veloce', nameKey: 'contropiede_veloce' },
     { id: 'contrattacco', nameKey: 'contrattacco' },
     { id: 'vie_laterali', nameKey: 'vie_laterali' },
-    { id: 'passaggio_lungo', nameKey: 'passaggio_lungo' }
+    { id: 'passaggio_lungo', nameKey: 'passaggio_lungo' },
+    { id: 'pressing_totale', nameKey: 'pressing_totale' }
   ]
 
   const handleCategoryChange = (category, field, value) => {

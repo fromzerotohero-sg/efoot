@@ -246,14 +246,15 @@ Comportamento quando IA controlla giocatore in possesso:
 
 **Definisce direzione tattica squadra. L'attitudine allenatore influenza competenza stile.**
 
-**CONFIGURABILI IN APP (team_playing_style)**: solo questi 5 → Possesso palla, Contropiede veloce, Contrattacco, Passaggio lungo, Vie laterali. Gli altri stili sotto (Pressing Alto, Gegenpressing, Tiki-Taka, ecc.) sono concetti/gameplay, **non** selezionabili come team_playing_style.
+**CONFIGURABILI IN APP (team_playing_style, eFootball v6.0.0 / 2027)**: questi 6 → Possesso palla, Contropiede veloce, Contrattacco, Passaggio lungo, Vie laterali, **Pressing totale**. Alias ufficiali: EN **Overload**, ES **Superioridad**. Gli altri nomi sotto (Pressing Alto, Gegenpressing, Tiki-Taka, Pressing Costante, Catenaccio, ecc.) sono concetti/gameplay, **non** selezionabili come team_playing_style. Se l'utente chiede "pressing totale" / "overload" / "sovraccarico", intende lo stile ufficiale, NON Pressing Alto o Pressing Costante. Non dire che Pressing totale non esiste.
 
-### 4.1 Stili Base (5 Tipologie)
+### 4.1 Stili Base (6 Tipologie)
 - **Possesso palla**: Gioco costruito con passaggi corti e pazienti. **Quando serve**: centrocampisti tecnici, trequartisti creativi. **Perché**: controllo partita, pazienza, circolazione palla.
 - **Contropiede veloce**: Ripartenze veloci sfruttando spazi lasciati. **Quando serve**: attaccanti veloci, difensori con recupero rapido. **Perché**: velocità, passaggi verticali diretti.
 - **Contrattacco**: Attacco diretto con passaggi verticali rapidi; difesa compatta, ripartenze organizzate.
 - **Passaggio lungo**: Strategia basata su lanci lunghi. **Quando serve**: opportunisti, attaccanti fisici. **Perché**: verticalità, gioco aereo.
 - **Vie laterali**: Attacco principalmente attraverso fasce; esterni restano larghi per allargare la difesa avversaria. **Quando serve**: esterni con cross, attaccanti completi (piedi + testa). **Perché**: equilibrio tra fasce e centro; non solo cross – costruzione anche centrale. Difesa si concentra al centro; utile contro attacchi centrali avversari.
+- **Pressing totale** *(Overload / Superioridad)*: Concentra i giocatori sul lato in cui si trova il pallone per superiorità numerica. In possesso: passaggi corti anche in zone affollate e possesso più continuo. Senza palla: blocco compatto, chiusura rapida sul portatore; si può alzare la linea in metà avversaria per pressing alto. **Quando serve**: centrocampo tecnico, Resistenza alta, giocatori a loro agio in spazi stretti. **Rischio**: lato opposto scoperto sui cambi di gioco — serve un'uscita larga e un mediano di copertura. **Non confondere** con Pressing Alto / Pressing Costante / Gegenpressing (concetti di gameplay, non voce menu Stile squadra).
 
 ### 4.2 Stili Offensivi
 - **Attacco Diretto**: Passaggi verticali rapidi. **Quando serve**: velocità in attacco.
@@ -261,7 +262,7 @@ Comportamento quando IA controlla giocatore in possesso:
 - **Attacco Centrale**: Costruzione con combinazioni corte centrali. **Quando serve**: trequartisti tecnici, possesso.
 
 ### 4.3 Stili Difensivi
-- **Pressing Alto**: Difesa aggressiva per recuperare palla in zona avanzata. **Quando serve**: squadra con Resistenza alta; rischio: spazi dietro.
+- **Pressing Alto**: Difesa aggressiva per recuperare palla in zona avanzata. **Quando serve**: squadra con Resistenza alta; rischio: spazi dietro. **Non è** lo stile squadra Pressing totale (Overload): questo è un concetto di gameplay, non una voce del menu.
 - **Difesa Bassa**: Linea difensiva arretrata per ridurre spazi. **Quando serve**: contro attaccanti veloci, in vantaggio.
 - **Pressing Selettivo**: Intercettazione linee di passaggio. **Quando serve**: centrocampisti con Intercettazione.
 - **Contenimento Difensivo**: Lasciare possesso e ripartire con contropiedi. **Quando serve**: contro possesso avversario.
@@ -798,8 +799,9 @@ Le policy comportamentali per il Coach AI (errori da evitare, terminologia, anti
 
 ---
 
-**Versione**: 8.6.0 ENTERPRISE | **Data**: 29 Maggio 2026
+**Versione**: 8.7.0 ENTERPRISE | **Data**: 14 Settembre 2026
 **Principio**: FISSO vs CONFIGURABILE | **Terminologia**: Ufficiale eFootball
+**Changelog 8.7.0**: §4.1 sesto stile ufficiale **Pressing totale** (EN Overload, ES Superioridad, Konami v6.0.0). Distinto da Pressing Alto/Costante (concetti, non menu).
 **Changelog 8.6.0**: §2.1 Posizioni attivazione corrette per TUTTI i 24 stili card (allineate a fonti ufficiali eFootball 2026: FIFPlay, Scribd Guide, Konami Help). Rimossi sigle IT vecchie (P/SP/TRQ/CLD/CLS/CC/MED/DC/TD/TS) sostituite con posizioni ufficiali EN (CF/SS/AMF/CMF/DMF/RWF/LWF/RMF/LMF/CB/RB/LB). Aggiunte note "compatibile ma AI inattiva" dove pertinente. Classic No. 10: confermato SS/AMF only. Collante: confermato DMF only.
 **Changelog 8.5.4**: §8.3 alias Piedi magnetici = Calamita ai piedi; §8.4 Shadow Hunt e Contrasto a distanza; §8.11 tabella Showtime/sinonimi IT-EN (Magnetic Feet, Momentum Dribbling, Trickster, ecc.) per chat/contromisure; rimosso duplicato Dominio palle alte.
 **Changelog 8.5.3**: §7.10 regola build/meta funzionale (movimenti, difficolta, dati cliente; Sintesi rosa ≠ progressione PT).

@@ -34,7 +34,9 @@ const TEAM_STYLE_LABELS = {
   passaggio_lungo: { it: 'Passaggio lungo', en: 'Long Ball' },
   long_ball: { it: 'Passaggio lungo', en: 'Long Ball' },
   vie_laterali: { it: 'Vie laterali', en: 'Out Wide' },
-  out_wide: { it: 'Vie laterali', en: 'Out Wide' }
+  out_wide: { it: 'Vie laterali', en: 'Out Wide' },
+  pressing_totale: { it: 'Pressing totale', en: 'Overload' },
+  overload: { it: 'Pressing totale', en: 'Overload' }
 }
 
 function toAscii(value = '') {

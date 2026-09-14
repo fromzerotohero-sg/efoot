@@ -60,15 +60,28 @@ function normalizeCoach(coach) {
     normalized.age = toInt(normalized.age)
   }
 
-  // Normalizza playing_style_competence (5 stili con valori numerici)
+  // Normalizza playing_style_competence (6 stili con valori numerici, v6.0.0 + Pressing totale)
   if (normalized.playing_style_competence && typeof normalized.playing_style_competence === 'object') {
     const competence = normalized.playing_style_competence
     const normalizedCompetence = {}
     
-    const styles = ['possesso_palla', 'contropiede_veloce', 'contrattacco', 'vie_laterali', 'passaggio_lungo']
+    const styles = ['possesso_palla', 'contropiede_veloce', 'contrattacco', 'vie_laterali', 'passaggio_lungo', 'pressing_totale']
+    const aliasToStyle = {
+      overload: 'pressing_totale',
+      sovraccarico: 'pressing_totale',
+      superioridad: 'pressing_totale',
+      pressingtotale: 'pressing_totale',
+      'pressing totale': 'pressing_totale'
+    }
     styles.forEach(style => {
       if (competence[style] !== null && competence[style] !== undefined) {
         normalizedCompetence[style] = toInt(competence[style])
+      }
+    })
+    Object.entries(competence).forEach(([rawKey, value]) => {
+      const mapped = aliasToStyle[String(rawKey || '').toLowerCase().trim()]
+      if (mapped && normalizedCompetence[mapped] == null && value != null) {
+        normalizedCompetence[mapped] = toInt(value)
       }
     })
     
@@ -199,13 +212,14 @@ IMPORTANTE:
 - Estrai SOLO ciò che vedi nell'immagine (null se non visibile)
 - Estrai TUTTI questi dati: nome allenatore, età, nazionalità, squadra, categoria, tipo/pack
 
-COMPETENZA STILE DI GIOCO (5 valori numerici):
-Estrai i 5 valori numerici per questi stili:
-- "possesso_palla" (Possesso palla / Ball Possession)
+COMPETENZA STILE DI GIOCO (fino a 6 valori numerici):
+Estrai i valori numerici visibili per questi stili:
+- "possesso_palla" (Possesso palla / Possession Game)
 - "contropiede_veloce" (Contropiede veloce / Quick Counter)
-- "contrattacco" (Contrattacco / Counter Attack)
-- "vie_laterali" (Vie laterali / Wide)
+- "contrattacco" (Contrattacco / Long Ball Counter)
+- "vie_laterali" (Vie laterali / Out Wide)
 - "passaggio_lungo" (Passaggio lungo / Long Ball)
+- "pressing_totale" (Pressing totale / Overload / Superioridad / Sovraccarico) — obbligatorio se visibile sullo screenshot v6+
 
 AFFINITÀ DI ALLENAMENTO:
 - "training_affinity_description": Descrizione testo completa (es. "Giocatori veterani+: +200% punti esperienza")
@@ -240,7 +254,8 @@ Formato JSON richiesto:
     "contropiede_veloce": 57,
     "contrattacco": 89,
     "vie_laterali": 64,
-    "passaggio_lungo": 89
+    "passaggio_lungo": 89,
+    "pressing_totale": 80
   },
   "training_affinity_description": "Descrizione testo completa",
   "stat_boosters": [

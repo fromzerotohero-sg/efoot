@@ -438,7 +438,7 @@ Restituisci SOLO JSON valido, senza altro testo.`,
 IMPORTANTE:
 - Estrai SOLO ciò che vedi nell'immagine (null se non visibile)
 - Se vedi il RISULTATO della partita (es. "3-1", "2-2", "4-0"), estrailo nel campo "result" ESATTAMENTE come appare sullo schermo: gol squadra sinistra/casa - gol squadra destra/fuori
-- Estrai: formazione (es. "4-2-1-3", "4-3-3"), stile di gioco (es. "Contrattacco", "Possesso palla"), forza complessiva (team_strength, numero grande tipo 3245)
+- Estrai: formazione (es. "4-2-1-3", "4-3-3"), stile di gioco (es. "Contrattacco", "Possesso palla", "Pressing totale" / Overload), forza complessiva (team_strength, numero grande tipo 3245)
 
 Formato JSON richiesto:
 {

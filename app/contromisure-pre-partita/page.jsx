@@ -84,6 +84,9 @@ export default function CountermeasuresPreMatchPage() {
     if (/contrattacco|long ball counter/.test(value)) return (lang === 'en' || lang === 'es') ? 'Long Ball Counter' : 'Contrattacco'
     if (/passaggio lungo|long ball(?! counter)/.test(value)) return (lang === 'en' || lang === 'es') ? 'Long Ball' : 'Passaggio lungo'
     if (/vie laterali|out wide/.test(value)) return (lang === 'en' || lang === 'es') ? 'Out Wide' : 'Vie laterali'
+    if (/pressing totale|pressione totale|overload|sovraccarico|superioridad|presi[oó]n total/.test(value)) {
+      return lang === 'es' ? 'Superioridad' : (lang === 'en' ? 'Overload' : 'Pressing totale')
+    }
     return ''
   }
 
@@ -135,7 +138,7 @@ export default function CountermeasuresPreMatchPage() {
               : `${(lang === 'en' || lang === 'es') ? 'In match' : 'In partita'}: ${rawSuggestion}`),
         hint: lang === 'en'
           ? 'This is not one of the 5 official team playstyles: treat it as a match plan, not a setting.'
-          : 'Non è uno dei 5 stili squadra ufficiali: trattalo come piano in partita, non come impostazione.'
+          : 'Non è uno dei 6 stili squadra ufficiali: trattalo come piano in partita, non come impostazione.'
       }
     }
 
