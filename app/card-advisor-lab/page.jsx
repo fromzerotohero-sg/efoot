@@ -1012,12 +1012,11 @@ function ReleaseCard({ card, selected, labels, onSelect }) {
             <h3>{card.name}</h3>
             <p>{card.category} · {card.position} · {readableStyle}</p>
           </div>
-          <ChevronRight size={18} />
         </div>
-        <div className="score-row">
-          <span>{card.category}</span>
-          <strong>{labels.openCard}</strong>
-        </div>
+        <span className="release-card-cta">
+          {labels.openCard}
+          <ChevronRight size={16} aria-hidden="true" />
+        </span>
       </div>
     </button>
   )
@@ -2006,6 +2005,9 @@ export default withAuth(function CardAdvisorLabPage() {
             <div className="release-title-row">
               <h2>{labels.releaseTitle}</h2>
               <RosterLinkedChip labels={labels} rosterSummary={rosterSummary} />
+              <span className="release-count-chip" aria-live="polite">
+                <strong>{cards.length}</strong> {labels.cardsAvailable}
+              </span>
             </div>
             <p className="release-source-note">{labels.sourceNote}</p>
           </div>
@@ -2019,9 +2021,7 @@ export default withAuth(function CardAdvisorLabPage() {
                 placeholder={labels.searchPlaceholder}
               />
             </label>
-            <p className="release-result-count" aria-live="polite">
-              <strong>{cards.length}</strong> {labels.cardsAvailable}
-            </p>
+
           </div>
         </div>
 
@@ -2306,6 +2306,42 @@ export default withAuth(function CardAdvisorLabPage() {
         .release-search input:focus {
           border-color: rgba(192,132,252,0.58);
           box-shadow: 0 0 18px rgba(192,132,252,0.12);
+        }
+
+        .release-count-chip {
+          display: inline-flex;
+          align-items: baseline;
+          gap: 5px;
+          padding: 4px 10px;
+          border-radius: 999px;
+          background: var(--surface-2);
+          border: 1px solid var(--border-soft);
+          color: var(--text-dim);
+          font-size: 12px;
+          font-weight: 600;
+          white-space: nowrap;
+        }
+
+        .release-count-chip strong {
+          color: var(--cards-accent);
+          font-size: 13px;
+        }
+
+        .release-card-cta {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          width: 100%;
+          min-height: 42px;
+          margin-top: 10px;
+          padding: 9px 12px;
+          border-radius: 12px;
+          border: 1px solid rgba(255, 203, 5, 0.35);
+          background: rgba(255, 203, 5, 0.09);
+          color: #ffcb05;
+          font-size: 13px;
+          font-weight: 800;
         }
 
         .release-result-count {
