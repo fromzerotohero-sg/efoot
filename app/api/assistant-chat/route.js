@@ -13,6 +13,7 @@ import { buildRosterSkillAdvisorySection, formatPlayerSkillContext } from '@/lib
 import { localizeSkillTermsInText } from '@/lib/playerSkillLabels.js'
 import { buildCardAvailabilityBlock } from '@/lib/chatCardAvailability'
 import { fieldPositionMatchesCardCompetences } from '@/lib/playerSlotRoleMetadata'
+import { splitAdviceIntoTips } from '@/lib/chatReadiness'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -1390,11 +1391,16 @@ export async function POST(req) {
 
     const rawSuggestions = (Array.isArray(suggestions) && suggestions.length > 0) ? suggestions : getDefaultSuggestions(lang, safeCurrentPage)
     const finalSuggestions = rawSuggestions.map((s) => localizeCoachReplyText(s, lang))
+    const tipCards = splitAdviceIntoTips(responseWithReminder, 3)
     if (process.env.NODE_ENV !== 'production') console.log(`[assistant-chat] Success, model_used: ${model}`)
     return NextResponse.json(
       {
         response: responseWithReminder,
         suggestions: finalSuggestions,
+        tips: tipCards.length > 1 ? tipCards : undefined,
+        cards: tipCards.length > 1
+          ? tipCards.map((t) => ({ type: 'tip', id: t.id, title: t.title, body: t.body }))
+          : undefined,
         remaining: rateLimit.remaining,
         resetAt: rateLimit.resetAt,
         model_used: model

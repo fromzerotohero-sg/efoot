@@ -15,12 +15,17 @@ import {
   Trophy,
   Sparkles,
   MessageSquareHeart,
-  AlertCircle
+  AlertCircle,
+  Camera,
+  ImagePlus,
+  CheckCircle2
 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { pickLang } from '@/lib/i18n'
 import AIKnowledgeBar from '@/components/AIKnowledgeBar'
-import { resolveHomeState } from '@/components/coach-v2/homeState'
+import { resolveHomeState, resolveGreetingName } from '@/components/coach-v2/homeState'
+import { daysSince, splitAdviceIntoTips, STATS_STALE_DAYS } from '@/lib/chatReadiness'
+import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 
 /**
  * HERO CHAT — superficie conversazionale principale (Home).
@@ -32,11 +37,20 @@ import { resolveHomeState } from '@/components/coach-v2/homeState'
 
 const GREETED_KEY = 'hero_chat_greeted_v1'
 
+const MAX_ATTACH = 2
+const MAX_ATTACH_BYTES = 1.8 * 1024 * 1024
+const ATTACH_MAX_SIDE = 1200
+
+const TIP_TITLES = [
+  { it: 'Priorità', en: 'Priority', es: 'Prioridad' },
+  { it: 'Azione', en: 'Action', es: 'Acción' },
+  { it: 'Dettaglio', en: 'Detail', es: 'Detalle' }
+]
+
 const COPY = {
   online: { it: 'Online', en: 'Online', es: 'En línea' },
   heroTitle: { it: 'Parla con l’AI e porta il tuo gioco a un altro livello.', en: 'Talk to the AI and take your game to another level.', es: 'Habla con la IA y lleva tu juego a otro nivel.' },
   heroSub: { it: 'Tattiche. Rosa. Giocatori. Strategie. Sempre al tuo fianco.', en: 'Tactics. Squad. Players. Strategies. Always by your side.', es: 'Tácticas. Plantilla. Jugadores. Estrategias. Siempre a tu lado.' },
-  greeting: { it: 'Ciao! 👋 Sono il tuo assistente di gioco. Posso aiutarti con giocatori, tattiche, formazioni e molto altro. Cosa vuoi sapere oggi?', en: 'Hi! 👋 I’m your game assistant. I can help with players, tactics, formations and much more. What do you want to know today?', es: '¡Hola! 👋 Soy tu asistente de juego. Puedo ayudarte con jugadores, tácticas, formaciones y mucho más. ¿Qué quieres saber hoy?' },
   placeholder: { it: 'Chat', en: 'Chat', es: 'Chat' },
   send: { it: 'Invia messaggio', en: 'Send message', es: 'Enviar mensaje' },
   micStart: { it: 'Parla', en: 'Speak', es: 'Hablar' },
@@ -64,13 +78,51 @@ const COPY = {
   saveCardSave: { it: 'Salva', en: 'Save', es: 'Guardar' },
   saveCardSaving: { it: 'Salvataggio…', en: 'Saving…', es: 'Guardando…' },
   saveCardLater: { it: 'Non ora', en: 'Not now', es: 'Ahora no' },
-  savedConfirm: { it: 'Fatto: l’ho salvato nella mia memoria e nella diagnosi. La prossima volta ne terrò conto. 💾', en: 'Done: I saved it into my memory and diagnosis. I’ll keep it in mind next time. 💾', es: 'Hecho: lo guardé en mi memoria y diagnóstico. Lo tendré en cuenta la próxima vez. 💾' },
+  savedConfirm: { it: 'Fatto: l’ho salvato nella mia memoria e nella diagnosi. La prossima volta ne terrò conto.', en: 'Done: I saved it into my memory and diagnosis. I’ll keep it in mind next time.', es: 'Hecho: lo guardé en mi memoria y diagnóstico. Lo tendré en cuenta la próxima vez.' },
   saveError: { it: 'Non sono riuscito a salvare. Riprova.', en: 'I couldn’t save. Try again.', es: 'No pude guardar. Inténtalo de nuevo.' },
+  greetingNamed: {
+    it: (name) => `Ciao ${name}! Sono il tuo coach. Ti guido passo passo: rosa, statistiche, partite. Dimmi cosa vuoi fare — o tocca un’azione sotto.`,
+    en: (name) => `Hi ${name}! I’m your coach. I’ll guide you step by step: squad, stats, matches. Tell me what you need — or tap an action below.`,
+    es: (name) => `¡Hola ${name}! Soy tu coach. Te guío paso a paso: plantilla, estadísticas, partidos. Dime qué quieres — o toca una acción abajo.`
+  },
+  greetingReturningNamed: {
+    it: (name) => `Bentornato ${name}. Cosa facciamo oggi?`,
+    en: (name) => `Welcome back ${name}. What are we doing today?`,
+    es: (name) => `Bienvenido de nuevo ${name}. ¿Qué hacemos hoy?`
+  },
+  attachCamera: { it: 'Scatta foto', en: 'Take photo', es: 'Hacer foto' },
+  attachGallery: { it: 'Carica da galleria', en: 'Upload from gallery', es: 'Subir de la galería' },
+  attachStatsHint: { it: 'Foto Analisi eFootball (max 2)', en: 'eFootball Analysis screenshots (max 2)', es: 'Capturas de Análisis (máx. 2)' },
+  attachAnalyze: { it: 'Analizza e salva', en: 'Analyze and save', es: 'Analizar y guardar' },
+  counterAnalyze: { it: 'Crea contromisure', en: 'Build countermeasures', es: 'Crear contramedidas' },
+  counterAnalyzing: { it: 'Sto leggendo l’assetto avversario…', en: 'Reading the opponent setup…', es: 'Leyendo el planteamiento rival…' },
+  counterDone: { it: 'Piano pronto: controlla cosa cambierà prima di applicarlo.', en: 'Plan ready: review what will change before applying it.', es: 'Plan listo: revisa qué cambiará antes de aplicarlo.' },
+  planTitle: { it: 'Piano contromisure', en: 'Countermeasure plan', es: 'Plan de contramedidas' },
+  planApply: { it: 'Applica piano', en: 'Apply plan', es: 'Aplicar plan' },
+  planApplying: { it: 'Applico in sicurezza…', en: 'Applying safely…', es: 'Aplicando de forma segura…' },
+  planDismiss: { it: 'Non applicare', en: 'Do not apply', es: 'No aplicar' },
+  planStyle: { it: 'Stile squadra', en: 'Team playstyle', es: 'Estilo de equipo' },
+  planInstructions: { it: 'Istruzioni individuali', en: 'Individual instructions', es: 'Instrucciones individuales' },
+  planSubstitutions: { it: 'Cambi consigliati', en: 'Suggested substitutions', es: 'Cambios sugeridos' },
+  planManual: { it: 'Da verificare manualmente', en: 'Review manually', es: 'Revisar manualmente' },
+  planApplied: { it: 'Piano applicato. Ho aggiornato le impostazioni valide e lasciato in evidenza ciò che richiede controllo manuale.', en: 'Plan applied. Valid settings were updated and anything requiring manual review is highlighted.', es: 'Plan aplicado. Actualicé los ajustes válidos y destaqué lo que requiere revisión manual.' },
+  planError: { it: 'Non ho applicato modifiche. Controlla la formazione e riprova.', en: 'No changes were applied. Check your lineup and try again.', es: 'No se aplicaron cambios. Revisa tu alineación e inténtalo de nuevo.' },
+  attachAnalyzing: { it: 'Sto leggendo le tue statistiche…', en: 'Reading your stats…', es: 'Leyendo tus estadísticas…' },
+  attachDone: { it: 'Statistiche aggiornate. Ora posso consigliarti meglio.', en: 'Stats updated. I can advise you better now.', es: 'Estadísticas actualizadas. Ahora puedo aconsejarte mejor.' },
+  attachError: { it: 'Non sono riuscito a leggere le foto. Riprova con screenshot più nitidi.', en: 'I couldn’t read the photos. Try clearer screenshots.', es: 'No pude leer las fotos. Prueba capturas más nítidas.' },
+  tipExpand: { it: 'Approfondisci', en: 'Expand', es: 'Ampliar' },
+  tipCollapse: { it: 'Riduci', en: 'Collapse', es: 'Reducir' },
+  deepenAsk: { it: 'Spiegami meglio questo punto', en: 'Explain this point better', es: 'Explícame mejor este punto' },
+  staleDays: {
+    it: (n) => `${n} giorni che non aggiorni le statistiche. Con dati freschi i consigli sono più precisi.`,
+    en: (n) => `${n} days since your last stats update. Fresh data makes advice sharper.`,
+    es: (n) => `${n} días sin actualizar estadísticas. Datos frescos = consejos mejores.`
+  },
   states: {
     NEW: {
       title: { it: 'Crea la tua rosa', en: 'Create your squad', es: 'Crea tu plantilla' },
       desc: { it: 'Mi servono i tuoi giocatori reali per aiutarti davvero.', en: 'I need your real players to really help you.', es: 'Necesito tus jugadores reales para ayudarte de verdad.' },
-      cta: { it: 'Crea la tua rosa', en: 'Create your squad', es: 'Crear plantilla' }
+      cta: { it: 'Carica la rosa', en: 'Load your squad', es: 'Cargar plantilla' }
     },
     ROSTER_INCOMPLETE: {
       title: { it: 'Completa la rosa', en: 'Complete your squad', es: 'Completa tu plantilla' },
@@ -89,14 +141,129 @@ const COPY = {
     },
     READY_NO_STATS: {
       title: { it: 'Aggiungi le statistiche di gioco', en: 'Add your game stats', es: 'Añade tus estadísticas' },
-      desc: { it: 'Non servono per parlare con me, ma rendono i consigli più precisi.', en: 'Not required to talk to me, but they make advice sharper.', es: 'No hacen falta para hablar conmigo, pero hacen los consejos más precisos.' },
-      cta: { it: 'Aggiungi statistiche', en: 'Add game stats', es: 'Añadir estadísticas' }
+      desc: { it: 'Scatta o carica gli screenshot Analisi: lo facciamo qui in chat.', en: 'Take or upload Analysis screenshots — we do it here in chat.', es: 'Haz o sube capturas de Análisis: lo hacemos aquí en el chat.' },
+      cta: { it: 'Apri fotocamera', en: 'Open camera', es: 'Abrir cámara' }
+    },
+    STALE_STATS: {
+      title: { it: 'Statistiche da aggiornare', en: 'Stats need an update', es: 'Estadísticas por actualizar' },
+      desc: { it: 'Sono giorni che non aggiorni le statistiche. Con dati freschi i consigli sono più precisi.', en: 'It’s been days since your last stats update. Fresh data makes advice sharper.', es: 'Hace días que no actualizas las estadísticas. Datos frescos = consejos mejores.' },
+      cta: { it: 'Aggiorna ora', en: 'Update now', es: 'Actualizar ahora' }
     }
   }
 }
 
 function L(lang, entry) {
   return pickLang(lang, entry)
+}
+
+function Lfn(lang, entry, ...args) {
+  const fn = pickLang(lang, entry)
+  return typeof fn === 'function' ? fn(...args) : fn
+}
+
+function TipCards({ tips, lang, onDeepen }) {
+  const [expanded, setExpanded] = React.useState({})
+  if (!tips?.length) return null
+  return (
+    <div className="hc-tips">
+      {tips.map((tip, idx) => {
+        const open = !!expanded[tip.id]
+        const title = L(lang, TIP_TITLES[idx] || TIP_TITLES[0])
+        return (
+          <div key={tip.id} className={`hc-tip${open ? ' hc-tipOpen' : ''}`}>
+            <button
+              type="button"
+              className="hc-tipHead"
+              onClick={() => setExpanded((p) => ({ ...p, [tip.id]: !p[tip.id] }))}
+            >
+              <span className="hc-tipBadge">{idx + 1}</span>
+              <span className="hc-tipTitle">{title}</span>
+              <span className="hc-tipToggle">{open ? L(lang, COPY.tipCollapse) : L(lang, COPY.tipExpand)}</span>
+            </button>
+            <p className={`hc-tipBody${open ? '' : ' hc-tipBodyClamp'}`}>{tip.body}</p>
+            {open && (
+              <button
+                type="button"
+                className="hc-tipDeepen"
+                onClick={() => onDeepen?.(tip.body)}
+              >
+                {L(lang, COPY.deepenAsk)}
+              </button>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function PrematchPlanCard({ plan, lang, applying, onApply, onDismiss }) {
+  if (!plan) return null
+  const changeSet = plan.change_set || {}
+  const instructions = Object.values(changeSet.individual_instructions || {})
+  const substitutions = Array.isArray(changeSet.substitutions) ? changeSet.substitutions : []
+  const manual = Array.isArray(plan.apply_result?.manual_substitutions)
+    ? plan.apply_result.manual_substitutions
+    : []
+  const applied = plan.status === 'applied'
+
+  return (
+    <div className="hc-planCard">
+      <div className="hc-planHead">
+        <Trophy size={16} aria-hidden="true" />
+        <strong>{L(lang, COPY.planTitle)}</strong>
+        <span className={`hc-planStatus${applied ? ' hc-planStatusDone' : ''}`}>
+          {applied ? '✓' : 'Preview'}
+        </span>
+      </div>
+      {changeSet.team_playing_style && (
+        <div className="hc-planRow">
+          <span className="hc-planLabel">{L(lang, COPY.planStyle)}</span>
+          <strong>{changeSet.team_playing_style.replace(/_/g, ' ')}</strong>
+        </div>
+      )}
+      {instructions.length > 0 && (
+        <div className="hc-planSection">
+          <span className="hc-planLabel">{L(lang, COPY.planInstructions)}</span>
+          {instructions.map((item, index) => (
+            <span key={`${item.player_id}-${index}`} className="hc-planChip">
+              {item.player_name || item.player_id}: {item.instruction.replace(/_/g, ' ')}
+            </span>
+          ))}
+        </div>
+      )}
+      {substitutions.length > 0 && (
+        <div className="hc-planSection">
+          <span className="hc-planLabel">{L(lang, COPY.planSubstitutions)}</span>
+          {substitutions.map((item, index) => (
+            <span key={`${item.in_player_id}-${index}`} className="hc-planChip">
+              {item.in_player_name || item.in_player_id} → {item.out_player_name || item.out_player_id}
+            </span>
+          ))}
+        </div>
+      )}
+      {manual.length > 0 && (
+        <div className="hc-planManual">
+          <strong>{L(lang, COPY.planManual)}</strong>
+          {manual.map((item, index) => (
+            <span key={`${item.in_player_id}-${index}`}>
+              {item.in_player_name || item.in_player_id} → {item.out_player_name || item.out_player_id}
+            </span>
+          ))}
+        </div>
+      )}
+      {!applied && (
+        <div className="hc-planActions">
+          <button type="button" className="hc-stateBtn" onClick={onApply} disabled={applying}>
+            {applying ? L(lang, COPY.planApplying) : L(lang, COPY.planApply)}
+          </button>
+          <button type="button" className="hc-saveLater" onClick={onDismiss} disabled={applying}>
+            {L(lang, COPY.planDismiss)}
+          </button>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function HeroChat({
@@ -107,10 +274,12 @@ export default function HeroChat({
   recentMatches,
   gameAnalysisLastCapture,
   hpBalance,
-  onOpenGameAnalysis
+  onOpenGameAnalysis,
+  onStatsSuccess
 }) {
   const router = useRouter()
   const heroName = userProfile?.ai_name || 'Hero Coach'
+  const clientName = resolveGreetingName(userProfile)
 
   const [messages, setMessages] = React.useState([])
   const [feedCards, setFeedCards] = React.useState([]) // card ricche in-conversazione (dati reali)
@@ -125,8 +294,17 @@ export default function HeroChat({
   const [feedbackMessages, setFeedbackMessages] = React.useState([])
   const [feedbackSending, setFeedbackSending] = React.useState(false)
   const [saveState, setSaveState] = React.useState('idle') // idle | saving | saved | error
+  const [attachments, setAttachments] = React.useState([]) // [{ id, dataUrl, name }]
+  const [attachAnalyzing, setAttachAnalyzing] = React.useState(false)
+  const [attachmentMode, setAttachmentMode] = React.useState('stats') // stats | counter
+  const [threadId, setThreadId] = React.useState(null)
+  const [historyLoading, setHistoryLoading] = React.useState(true)
+  const [prematchPlan, setPrematchPlan] = React.useState(null)
+  const [prematchApplying, setPrematchApplying] = React.useState(false)
   const recognitionRef = React.useRef(null)
   const feedRef = React.useRef(null)
+  const cameraInputRef = React.useRef(null)
+  const galleryInputRef = React.useRef(null)
 
   const lastMatch = Array.isArray(recentMatches) && recentMatches.length > 0 ? recentMatches[0] : null
   const lastMatchRaw = lastMatch?.created_at || lastMatch?.match_date || null
@@ -183,7 +361,7 @@ export default function HeroChat({
   React.useEffect(() => {
     const el = feedRef.current
     if (el) el.scrollTop = el.scrollHeight
-  }, [messages, feedCards, sending])
+  }, [messages, feedCards, sending, attachments, attachAnalyzing, feedbackMessages, feedbackSending])
 
   // Mic: Web Speech API (stesso pattern di AssistantChat)
   const stopListening = React.useCallback(() => {
@@ -233,6 +411,77 @@ export default function HeroChat({
     return token
   }
 
+  const persistMessages = React.useCallback(async (items) => {
+    if (!Array.isArray(items) || !items.length) return
+    try {
+      const token = await resolveToken()
+      if (!token) return
+      const res = await fetch('/api/hero-chat', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          threadId,
+          messages: items.map((item) => ({
+            ...item,
+            payload: {
+              ...(item.payload || {}),
+              kind: item.kind || item.payload?.kind || null,
+              suggestions: item.suggestions || item.payload?.suggestions || null,
+              tips: item.tips || item.payload?.tips || null,
+              plan: item.plan || item.payload?.plan || null
+            }
+          }))
+        })
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && data.thread?.id && !threadId) setThreadId(data.thread.id)
+    } catch {
+      // La chat resta utilizzabile anche se la persistenza è temporaneamente offline.
+    }
+  }, [threadId])
+
+  React.useEffect(() => {
+    let cancelled = false
+    const loadHistory = async () => {
+      try {
+        const token = await resolveToken()
+        if (!token || cancelled) return
+        const res = await fetch('/api/hero-chat?limit=50', {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store'
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!cancelled && res.ok) {
+          setThreadId(data.thread?.id || null)
+          if (Array.isArray(data.messages) && data.messages.length) {
+            setMessages(data.messages)
+          }
+        }
+        const planRes = await fetch('/api/hero-chat/plans', {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store'
+        })
+        const planData = await planRes.json().catch(() => ({}))
+        if (!cancelled && planRes.ok && Array.isArray(planData.plans)) {
+          const resumable = planData.plans.find((plan) => plan.status === 'ready')
+            || planData.plans.find((plan) => plan.status === 'applied')
+          if (resumable) setPrematchPlan(resumable)
+        }
+      } catch {
+        // Fallback naturale: la sessione continua in memoria.
+      } finally {
+        if (!cancelled) setHistoryLoading(false)
+      }
+    }
+    loadHistory()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const sendMessage = React.useCallback(async (raw) => {
     const message = String(raw || '').trim()
     if (!message || sending) return
@@ -245,6 +494,7 @@ export default function HeroChat({
     }))
 
     setMessages((prev) => [...prev, { role: 'user', content: message }])
+    void persistMessages([{ role: 'user', content: message }])
     setInput('')
     setSending(true)
 
@@ -287,7 +537,19 @@ export default function HeroChat({
 
       const answer = data.response || data.answer || L(lang, COPY.errorGeneric)
       const suggestions = Array.isArray(data.suggestions) ? data.suggestions.filter(Boolean).slice(0, 3) : []
-      setMessages((prev) => [...prev, { role: 'hero', content: answer, suggestions }])
+      const apiTips = Array.isArray(data.tips) ? data.tips.filter((t) => t?.body).slice(0, 3) : null
+      const tips = apiTips?.length > 1 ? apiTips : splitAdviceIntoTips(answer, 3)
+      const heroMessage = {
+        role: 'hero',
+        content: answer,
+        suggestions,
+        tips: tips.length > 1 ? tips : null
+      }
+      setMessages((prev) => [
+        ...prev,
+        heroMessage
+      ])
+      void persistMessages([heroMessage])
 
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('credits-consumed'))
@@ -297,7 +559,7 @@ export default function HeroChat({
     } finally {
       setSending(false)
     }
-  }, [sending, messages, lang, router, stopListening])
+  }, [sending, messages, lang, router, stopListening, persistMessages])
 
   const enterFeedbackMode = React.useCallback(() => {
     setActionsOpen(false)
@@ -342,6 +604,7 @@ export default function HeroChat({
     }))
 
     setFeedbackMessages((prev) => [...prev, { role: 'user', content: message }])
+    void persistMessages([{ role: 'user', content: message }])
     setInput('')
     setFeedbackSending(true)
 
@@ -374,7 +637,9 @@ export default function HeroChat({
       }
 
       const answer = data.response || L(lang, COPY.errorGeneric)
-      setFeedbackMessages((prev) => [...prev, { role: 'hero', content: answer }])
+      const heroMessage = { role: 'hero', content: answer }
+      setFeedbackMessages((prev) => [...prev, heroMessage])
+      void persistMessages([heroMessage])
 
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('credits-consumed'))
@@ -384,7 +649,7 @@ export default function HeroChat({
     } finally {
       setFeedbackSending(false)
     }
-  }, [feedbackSending, feedbackMessages, lang, router, stopListening])
+  }, [feedbackSending, feedbackMessages, lang, router, stopListening, persistMessages])
 
   // Salvataggio reale in chat: memoria + profilo + diagnosi (contratto esistente di CoachFeedbackChat).
   const handleSaveFeedback = React.useCallback(async () => {
@@ -439,6 +704,281 @@ export default function HeroChat({
     }
   }, [saveState, feedbackMessages, lastMatch, lang, router, exitFeedbackMode])
 
+  const addAttachmentFiles = React.useCallback(async (fileList) => {
+    const files = Array.from(fileList || []).filter((f) => f?.type?.startsWith('image/'))
+    if (!files.length) return
+    setActionsOpen(false)
+    const next = [...attachments]
+    for (const file of files) {
+      if (next.length >= MAX_ATTACH) break
+      try {
+        const optimized = await optimizeImageFile(file, {
+          maxBytes: MAX_ATTACH_BYTES,
+          maxLongSide: ATTACH_MAX_SIDE
+        })
+        next.push({
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          dataUrl: optimized.dataUrl,
+          name: file.name || 'camera.jpg'
+        })
+      } catch {
+        setMessages((prev) => [...prev, { role: 'hero', content: L(lang, COPY.attachError), kind: 'error' }])
+      }
+    }
+    setAttachments(next.slice(0, MAX_ATTACH))
+  }, [attachments, lang])
+
+  const removeAttachment = React.useCallback((id) => {
+    setAttachments((prev) => prev.filter((a) => a.id !== id))
+  }, [])
+
+  const openCamera = React.useCallback(() => {
+    setActionsOpen(false)
+    cameraInputRef.current?.click()
+  }, [])
+
+  const openGallery = React.useCallback(() => {
+    setActionsOpen(false)
+    galleryInputRef.current?.click()
+  }, [])
+
+  const openStatsCamera = React.useCallback(() => {
+    setAttachmentMode('stats')
+    openCamera()
+  }, [openCamera])
+
+  const openStatsGallery = React.useCallback(() => {
+    setAttachmentMode('stats')
+    openGallery()
+  }, [openGallery])
+
+  const openCounterCamera = React.useCallback(() => {
+    setAttachmentMode('counter')
+    openCamera()
+  }, [openCamera])
+
+  const analyzeCountermeasureAttachment = React.useCallback(async (token, imageDataUrl) => {
+    const extractRes = await fetch('/api/extract-formation', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        'Accept-Language': lang === 'en' ? 'en' : lang === 'es' ? 'es' : 'it'
+      },
+      body: JSON.stringify({ imageDataUrl })
+    })
+    const extractData = await extractRes.json().catch(() => ({}))
+    if (!extractRes.ok) throw new Error(extractData.error || L(lang, COPY.attachError))
+
+    const saveRes = await fetch('/api/supabase/save-opponent-formation', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        formation_name: extractData.formation || null,
+        playing_style: extractData.playing_style || null,
+        extracted_data: {
+          formation: extractData.formation || null,
+          slot_positions: extractData.slot_positions || {},
+          players: extractData.players || [],
+          overall_strength: extractData.overall_strength || null,
+          tactical_style: extractData.tactical_style || null,
+          coach: extractData.coach || null,
+          visual_tactical_profile: extractData.visual_tactical_profile || null
+        },
+        is_pre_match: true
+      })
+    })
+    const saveData = await saveRes.json().catch(() => ({}))
+    if (!saveRes.ok || !saveData.formation?.id) {
+      throw new Error(saveData.error || L(lang, COPY.attachError))
+    }
+
+    const generateRes = await fetch('/api/generate-countermeasures', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        opponent_formation_id: saveData.formation.id,
+        language: lang
+      })
+    })
+    const generateData = await generateRes.json().catch(() => ({}))
+    if (!generateRes.ok || !generateData.success || !generateData.countermeasures) {
+      throw new Error(generateData.error || L(lang, COPY.attachError))
+    }
+
+    const planRes = await fetch('/api/hero-chat/plans', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        countermeasures: generateData.countermeasures,
+        opponent_formation_id: saveData.formation.id,
+        thread_id: threadId,
+        language: lang,
+        idempotency_key: `hero-${saveData.formation.id}-${Date.now()}`
+      })
+    })
+    const planData = await planRes.json().catch(() => ({}))
+    if (!planRes.ok || !planData.plan) {
+      throw new Error(planData.error || L(lang, COPY.attachError))
+    }
+    return planData.plan
+  }, [lang, threadId])
+
+  const analyzeAttachments = React.useCallback(async () => {
+    if (!attachments.length || attachAnalyzing) return
+    setAttachAnalyzing(true)
+    const processingMessage = {
+      role: 'hero',
+      content: attachmentMode === 'counter'
+        ? L(lang, COPY.counterAnalyzing)
+        : L(lang, COPY.attachAnalyzing),
+      kind: 'system'
+    }
+    setMessages((prev) => [...prev, processingMessage])
+    try {
+      const token = await resolveToken()
+      if (!token) {
+        router.push('/login')
+        return
+      }
+      if (attachmentMode === 'counter') {
+        const plan = await analyzeCountermeasureAttachment(token, attachments[0].dataUrl)
+        setPrematchPlan(plan)
+        setAttachments([])
+        const doneMessage = {
+          role: 'hero',
+          content: L(lang, COPY.counterDone),
+          kind: 'success',
+          plan: plan.change_set || null
+        }
+        setMessages((prev) => [...prev.filter((m) => m.kind !== 'system'), doneMessage])
+        void persistMessages([doneMessage])
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('credits-consumed'))
+        }
+        return
+      }
+      const res = await fetch('/api/extract-game-analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          'Accept-Language': lang === 'en' ? 'en' : lang === 'es' ? 'es' : 'it'
+        },
+        body: JSON.stringify({ imageDataUrls: attachments.map((a) => a.dataUrl) })
+      })
+      const data = await res.json().catch(() => ({}))
+      const dropSystem = (prev) => prev.filter((m) => m.kind !== 'system')
+      if (res.status === 402) {
+        setMessages((prev) => [...dropSystem(prev), { role: 'hero', content: L(lang, COPY.lowHp), kind: 'lowhp' }])
+        return
+      }
+      if (!res.ok || !data.success) {
+        setMessages((prev) => [...dropSystem(prev), { role: 'hero', content: data.error || L(lang, COPY.attachError), kind: 'error' }])
+        return
+      }
+      setAttachments([])
+      const doneMessage = { role: 'hero', content: L(lang, COPY.attachDone), kind: 'success' }
+      setMessages((prev) => [...dropSystem(prev), doneMessage])
+      void persistMessages([doneMessage])
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('credits-consumed'))
+        window.dispatchEvent(new CustomEvent('knowledge-should-refresh'))
+        window.dispatchEvent(new CustomEvent('diagnostic-updated'))
+      }
+      try {
+        await fetch('/api/refresh-diagnostic', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      } catch { /* non bloccare */ }
+      try {
+        await Promise.resolve(onStatsSuccess?.())
+      } catch { /* non bloccare */ }
+    } catch {
+      setMessages((prev) => [
+        ...prev.filter((m) => m.kind !== 'system'),
+        { role: 'hero', content: L(lang, COPY.attachError), kind: 'error' }
+      ])
+    } finally {
+      setAttachAnalyzing(false)
+    }
+  }, [
+    attachments,
+    attachAnalyzing,
+    attachmentMode,
+    analyzeCountermeasureAttachment,
+    lang,
+    router,
+    onStatsSuccess,
+    persistMessages
+  ])
+
+  const applyPrematchPlan = React.useCallback(async () => {
+    if (!prematchPlan?.id || prematchApplying) return
+    setPrematchApplying(true)
+    try {
+      const token = await resolveToken()
+      if (!token) {
+        router.push('/login')
+        return
+      }
+      const res = await fetch('/api/hero-chat/plans', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ plan_id: prematchPlan.id, action: 'apply' })
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || L(lang, COPY.planError))
+      }
+      setPrematchPlan(data.plan || prematchPlan)
+      const appliedMessage = { role: 'hero', content: L(lang, COPY.planApplied), kind: 'success' }
+      setMessages((prev) => [...prev, appliedMessage])
+      void persistMessages([appliedMessage])
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('diagnostic-updated'))
+        window.dispatchEvent(new CustomEvent('knowledge-should-refresh'))
+      }
+    } catch {
+      const errorMessage = { role: 'hero', content: L(lang, COPY.planError), kind: 'error' }
+      setMessages((prev) => [...prev, errorMessage])
+      void persistMessages([errorMessage])
+    } finally {
+      setPrematchApplying(false)
+    }
+  }, [lang, persistMessages, prematchApplying, prematchPlan, router])
+
+  const dismissPrematchPlan = React.useCallback(async () => {
+    if (!prematchPlan?.id) return
+    try {
+      const token = await resolveToken()
+      if (!token) return
+      await fetch('/api/hero-chat/plans', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ plan_id: prematchPlan.id, action: 'dismiss' })
+      })
+    } finally {
+      setPrematchPlan(null)
+    }
+  }, [prematchPlan])
+
   const openFeedCard = (cardId) => {
     setFeedCards((prev) => (prev.includes(cardId) ? prev : [...prev, cardId]))
   }
@@ -454,6 +994,14 @@ export default function HeroChat({
     return { c, offset: c * (1 - p / 100), value: p }
   })()
 
+  const statsAgeDays = daysSince(gameAnalysisLastCapture)
+  const stateDesc =
+    homeState === 'STALE_STATS' && statsAgeDays != null
+      ? Lfn(lang, COPY.staleDays, Math.max(statsAgeDays, STATS_STALE_DAYS))
+      : stateCopy
+        ? L(lang, stateCopy.desc)
+        : null
+
   const stateCta = (() => {
     switch (homeState) {
       case 'NEW':
@@ -464,13 +1012,17 @@ export default function HeroChat({
       case 'POST_MATCH':
         return enterFeedbackMode
       case 'READY_NO_STATS':
-        return onOpenGameAnalysis
+      case 'STALE_STATS':
+        return openStatsCamera
       default:
         return null
     }
   })()
 
   const quickActions = [
+    { key: 'camera', icon: Camera, label: L(lang, COPY.attachCamera), run: openStatsCamera },
+    { key: 'gallery', icon: ImagePlus, label: L(lang, COPY.attachGallery), run: openStatsGallery },
+    { key: 'counter', icon: Trophy, label: L(lang, COPY.actionPrepare), run: openCounterCamera },
     { key: 'stats', icon: BarChart3, label: L(lang, COPY.actionStats), run: () => onOpenGameAnalysis?.() },
     { key: 'prepare', icon: Trophy, label: L(lang, COPY.actionPrepare), run: () => router.push('/contromisure-pre-partita') },
     { key: 'cards', icon: Sparkles, label: L(lang, COPY.actionCards), run: () => router.push('/card-advisor-lab') },
@@ -543,8 +1095,8 @@ export default function HeroChat({
           </span>
           <div className="hc-bubble hc-bubbleHero">
             {greetingVariant === 'first'
-              ? L(lang, COPY.greeting)
-              : L(lang, { it: 'Bentornato! Cosa facciamo oggi?', en: 'Welcome back! What are we doing today?', es: '¡Bienvenido de nuevo! ¿Qué hacemos hoy?' })}
+              ? Lfn(lang, COPY.greetingNamed, clientName)
+              : Lfn(lang, COPY.greetingReturningNamed, clientName)}
           </div>
         </div>
 
@@ -555,7 +1107,7 @@ export default function HeroChat({
                 <img src="/coach.jpg" alt="" />
               </span>
             )}
-            <div className={m.role === 'user' ? 'hc-bubble hc-bubbleUser' : `hc-bubble hc-bubbleHero${m.kind === 'error' || m.kind === 'lowhp' ? ' hc-bubbleWarn' : ''}`}>
+            <div className={m.role === 'user' ? 'hc-bubble hc-bubbleUser' : `hc-bubble hc-bubbleHero${m.kind === 'error' || m.kind === 'lowhp' ? ' hc-bubbleWarn' : ''}${m.kind === 'success' ? ' hc-bubbleOk' : ''}`}>
               {m.kind === 'lowhp' && (
                 <span className="hc-warnRow">
                   <AlertCircle size={14} aria-hidden="true" />
@@ -564,7 +1116,16 @@ export default function HeroChat({
                   </button>
                 </span>
               )}
-              {m.content}
+              {m.kind === 'success' && (
+                <span className="hc-warnRow">
+                  <CheckCircle2 size={14} aria-hidden="true" />
+                </span>
+              )}
+              {m.tips?.length > 1 ? (
+                <TipCards tips={m.tips} lang={lang} onDeepen={(body) => sendMessage(`${L(lang, COPY.deepenAsk)}: ${body}`)} />
+              ) : (
+                m.content
+              )}
             </div>
           </div>
         ))}
@@ -653,7 +1214,7 @@ export default function HeroChat({
         {stateCopy && stateCta && !feedbackMode && (
           <div className="hc-stateCard">
             <p className="hc-stateTitle">{L(lang, stateCopy.title)}</p>
-            <p className="hc-stateDesc">{L(lang, stateCopy.desc)}</p>
+            <p className="hc-stateDesc">{stateDesc}</p>
             {homeState === 'ROSTER_INCOMPLETE' && stats && (
               <p className="hc-stateMeta">{L(lang, COPY.starters)}: {stats.titolari}/11</p>
             )}
@@ -661,6 +1222,16 @@ export default function HeroChat({
               {L(lang, stateCopy.cta)}
             </button>
           </div>
+        )}
+
+        {!feedbackMode && prematchPlan && (
+          <PrematchPlanCard
+            plan={prematchPlan}
+            lang={lang}
+            applying={prematchApplying}
+            onApply={applyPrematchPlan}
+            onDismiss={dismissPrematchPlan}
+          />
         )}
 
         {/* Card ricche in-conversazione (dati reali) */}
@@ -703,6 +1274,55 @@ export default function HeroChat({
 
       {/* Composer */}
       <div className="hc-composerWrap">
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hc-fileHidden"
+          onChange={(e) => {
+            addAttachmentFiles(e.target.files)
+            e.target.value = ''
+          }}
+        />
+        <input
+          ref={galleryInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hc-fileHidden"
+          onChange={(e) => {
+            addAttachmentFiles(e.target.files)
+            e.target.value = ''
+          }}
+        />
+        {attachments.length > 0 && (
+          <div className="hc-attachBar" role="region" aria-label={L(lang, COPY.attachStatsHint)}>
+            <p className="hc-attachHint">
+              {attachmentMode === 'counter' ? L(lang, COPY.actionPrepare) : L(lang, COPY.attachStatsHint)}
+            </p>
+            <div className="hc-attachThumbs">
+              {attachments.map((a) => (
+                <div key={a.id} className="hc-attachThumb">
+                  <img src={a.dataUrl} alt="" />
+                  <button type="button" className="hc-attachRemove" aria-label="X" onClick={() => removeAttachment(a.id)}>
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="hc-attachAnalyze"
+              disabled={attachAnalyzing || lowHp}
+              onClick={analyzeAttachments}
+            >
+              {attachAnalyzing
+                ? (attachmentMode === 'counter' ? L(lang, COPY.counterAnalyzing) : L(lang, COPY.attachAnalyzing))
+                : (attachmentMode === 'counter' ? L(lang, COPY.counterAnalyze) : L(lang, COPY.attachAnalyze))}
+            </button>
+          </div>
+        )}
         {actionsOpen && (
           <div className="hc-actionsSheet" role="menu" aria-label={L(lang, COPY.actions)}>
             {quickActions.map((a) => {
@@ -751,7 +1371,7 @@ export default function HeroChat({
             onChange={(e) => setInput(e.target.value)}
             placeholder={L(lang, COPY.placeholder)}
             aria-label={L(lang, COPY.placeholder)}
-            disabled={sending}
+            disabled={sending || attachAnalyzing || historyLoading}
           />
           <button
             type="button"
@@ -766,7 +1386,7 @@ export default function HeroChat({
             type="submit"
             className="hc-sendBtn"
             aria-label={L(lang, COPY.send)}
-            disabled={sending || !input.trim()}
+            disabled={sending || attachAnalyzing || historyLoading || !input.trim()}
           >
             <SendHorizonal size={16} />
           </button>
@@ -1408,6 +2028,254 @@ export default function HeroChat({
         .hc-sendBtn:disabled {
           opacity: 0.4;
           cursor: default;
+        }
+
+        .hc-fileHidden {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          opacity: 0;
+          pointer-events: none;
+        }
+
+        .hc-bubbleOk {
+          border-color: rgba(61, 220, 151, 0.35);
+        }
+
+        :global(.hc-tips) {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          width: 100%;
+        }
+
+        :global(.hc-tip) {
+          border-radius: 12px;
+          border: 1px solid var(--border-soft);
+          background: rgba(255, 255, 255, 0.03);
+          padding: 10px 12px;
+        }
+
+        :global(.hc-tipHead) {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          width: 100%;
+          border: none;
+          background: transparent;
+          color: inherit;
+          font: inherit;
+          padding: 0;
+          cursor: pointer;
+          text-align: left;
+        }
+
+        :global(.hc-tipBadge) {
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 11px;
+          font-weight: 800;
+          background: var(--accent-bg);
+          color: var(--accent);
+          flex-shrink: 0;
+        }
+
+        :global(.hc-tipTitle) {
+          flex: 1;
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0.02em;
+          text-transform: uppercase;
+          color: var(--accent);
+        }
+
+        :global(.hc-tipToggle) {
+          font-size: 11px;
+          color: var(--text-dim);
+          font-weight: 600;
+        }
+
+        :global(.hc-tipBody) {
+          margin: 8px 0 0;
+          font-size: 13px;
+          line-height: 1.45;
+          color: var(--text-main);
+          white-space: pre-wrap;
+        }
+
+        :global(.hc-tipBodyClamp) {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        :global(.hc-tipDeepen) {
+          margin-top: 8px;
+          border: none;
+          background: transparent;
+          color: var(--accent);
+          font-size: 12px;
+          font-weight: 700;
+          font-family: inherit;
+          padding: 0;
+          cursor: pointer;
+        }
+
+        .hc-attachBar {
+          margin: 0 0 8px;
+          padding: 10px 12px;
+          border-radius: 16px;
+          border: 1px solid var(--border-soft);
+          background: var(--surface);
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .hc-attachHint {
+          margin: 0;
+          font-size: 11px;
+          font-weight: 700;
+          color: var(--text-dim);
+        }
+
+        .hc-attachThumbs {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        .hc-attachThumb {
+          position: relative;
+          width: 64px;
+          height: 64px;
+          border-radius: 10px;
+          overflow: hidden;
+          border: 1px solid var(--border-soft);
+        }
+
+        .hc-attachThumb img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+
+        .hc-attachRemove {
+          position: absolute;
+          top: 4px;
+          right: 4px;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          border: none;
+          background: rgba(0, 0, 0, 0.65);
+          color: #fff;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+        }
+
+        .hc-attachAnalyze {
+          align-self: stretch;
+          min-height: 40px;
+          border-radius: 10px;
+          border: 1px solid var(--accent-border);
+          background: var(--accent-bg);
+          color: var(--accent);
+          font-size: 13px;
+          font-weight: 700;
+          font-family: inherit;
+          cursor: pointer;
+        }
+
+        .hc-attachAnalyze:disabled {
+          opacity: 0.5;
+          cursor: default;
+        }
+
+        :global(.hc-planCard) {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          padding: 14px;
+          border-radius: 16px;
+          border: 1px solid var(--accent-border);
+          background: linear-gradient(145deg, rgba(61, 220, 151, 0.11), rgba(255, 255, 255, 0.03));
+        }
+
+        :global(.hc-planHead) {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: var(--accent);
+        }
+
+        :global(.hc-planStatus) {
+          margin-left: auto;
+          padding: 4px 8px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.08);
+          color: var(--text-dim);
+          font-size: 10px;
+          font-weight: 800;
+          text-transform: uppercase;
+        }
+
+        :global(.hc-planStatusDone) {
+          color: var(--accent);
+          background: var(--accent-bg);
+        }
+
+        :global(.hc-planRow),
+        :global(.hc-planSection) {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 7px;
+          font-size: 13px;
+        }
+
+        :global(.hc-planLabel) {
+          width: 100%;
+          color: var(--text-dim);
+          font-size: 11px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.03em;
+        }
+
+        :global(.hc-planChip) {
+          display: inline-flex;
+          padding: 7px 9px;
+          border-radius: 9px;
+          background: rgba(0, 0, 0, 0.16);
+          color: var(--text-main);
+          font-size: 12px;
+        }
+
+        :global(.hc-planManual) {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          padding: 9px;
+          border-radius: 10px;
+          border: 1px solid rgba(255, 191, 0, 0.35);
+          color: #ffd76a;
+          font-size: 12px;
+        }
+
+        :global(.hc-planActions) {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
         }
 
         .hc-iconBtn:focus-visible,

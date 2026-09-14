@@ -384,6 +384,7 @@ function HomePage() {
         gameAnalysisLastCapture={gameAnalysisLastCapture}
         hpBalance={hpBalance}
         onOpenGameAnalysis={() => setShowGameAnalysisModal(true)}
+        onStatsSuccess={fetchGameAnalysisCapture}
       />
 
       <GameAnalysisModal 

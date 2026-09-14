@@ -1,14 +1,19 @@
 /**
- * Priorità stati Home Coach (Master §5.2):
- * NEW → ROSTER_INCOMPLETE → NO_COACH → POST_MATCH → READY_NO_STATS → OPERATIONAL.
- * POST_MATCH: ultimo match < 30 min (stessa semantica già usata in produzione).
+ * Priorità stati Home Coach (Master §5.2 + stale stats community):
+ * NEW → ROSTER_INCOMPLETE → NO_COACH → POST_MATCH → READY_NO_STATS → STALE_STATS → OPERATIONAL.
+ * POST_MATCH: ultimo match < 30 min.
+ * STALE_STATS: analisi eFootball presente ma più vecchia di 7 giorni.
  */
+import { STATS_STALE_DAYS, daysSince } from '@/lib/chatReadiness'
+
 export function resolveHomeState({ stats, hasActiveCoach, gameAnalysisLastCapture, lastMatchMinutesAgo }) {
   if (!stats || stats.totalPlayers === 0) return 'NEW'
   if (stats.titolari < 11) return 'ROSTER_INCOMPLETE'
   if (!hasActiveCoach) return 'NO_COACH'
   if (lastMatchMinutesAgo !== null && lastMatchMinutesAgo < 30) return 'POST_MATCH'
   if (!gameAnalysisLastCapture) return 'READY_NO_STATS'
+  const age = daysSince(gameAnalysisLastCapture)
+  if (age != null && age >= STATS_STALE_DAYS) return 'STALE_STATS'
   return 'OPERATIONAL'
 }
 
