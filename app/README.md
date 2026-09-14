@@ -14,10 +14,8 @@ Root layout: **solo** `app/layout.jsx`. Monta `AppLayoutShell`. Non creare `app/
 | `/match`, `/match/new`, `/match/[id]` | Partite | |
 | `/contromisure-pre-partita` | Contromisure | |
 | `/allenatori` | Coach | |
-| `/giocatore/[id]` | Dettaglio giocatore | |
 | `/impostazioni-profilo` | Profilo di gioco | |
 | `/gestione-profilo` | Utility HP | |
-| `/grafici-comparazione` | Grafici | |
 | `/guida` | Guida | |
 | `/login` | Redirect MetalGate | Non è form Supabase primario |
 | `/auth/callback`, `/login-success` | SSO | |

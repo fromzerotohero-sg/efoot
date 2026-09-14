@@ -8,7 +8,6 @@ Montata da `app/layout.jsx`. Contiene:
 - `DailySpinWidget`
 - `InstallAppPrompt` (condizionale)
 - `LiveCoachLauncher`
-- `AssistantChat` popup
 - `PrelaunchGate`, `MaintenanceGate`
 
 Non smontare questi pezzi “per semplificare” senza BYPASS UX esplicito.
@@ -24,7 +23,7 @@ UX V2 riduce gli ingressi primari a Coach · Rosa · Carte; i componenti possono
 
 | Componente | Ruolo |
 |------------|--------|
-| `AssistantChat` | Hero Chat |
+| `hero-chat/HeroChat` | Hero Chat |
 | `CoachFeedbackChat` | Motore Palestra |
 | `HeroCoachJourney` | Journey (bypass UX previsto) |
 | `AIKnowledgeBar` | “Quanto Hero ti conosce” |
@@ -33,7 +32,7 @@ UX V2 riduce gli ingressi primari a Coach · Rosa · Carte; i componenti possono
 
 ## Rosa / form
 
-`TacticalSettingsPanel`, `PositionSelectionModal`, `MissingDataModal`, `ManualPlayerModal`, `OnboardingFormation`, `CameraCaptureModal`, …
+`TacticalSettingsPanel`, `PositionSelectionModal`, `MissingDataModal`, `OnboardingFormation`, `CameraCaptureModal`, …
 
 ## Economia / account
 
