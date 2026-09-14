@@ -43,6 +43,8 @@ import {
   Camera,
   CheckCircle2,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Minus,
   Pencil,
   Plus,
@@ -410,14 +412,36 @@ function EnterpriseModalFrame({ show, onClose, title, subtitle, children, classN
   )
 }
 
-function EnterpriseSection({ title, children, actions = null }) {
+function EnterpriseSection({ title, children, actions = null, collapsible = false, defaultOpen = true }) {
+  const [open, setOpen] = React.useState(defaultOpen)
+
+  if (!collapsible) {
+    return (
+      <section className="nr-section-card">
+        <div className="nr-section-head">
+          <h3>{title}</h3>
+          {actions}
+        </div>
+        {children}
+      </section>
+    )
+  }
+
   return (
     <section className="nr-section-card">
-      <div className="nr-section-head">
+      <button
+        type="button"
+        className="nr-section-head nr-section-head-toggle"
+        onClick={() => setOpen((prev) => !prev)}
+        aria-expanded={open}
+      >
         <h3>{title}</h3>
-        {actions}
-      </div>
-      {children}
+        <span className="nr-section-head-right">
+          {actions}
+          {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </span>
+      </button>
+      {open ? children : null}
     </section>
   )
 }
@@ -1917,6 +1941,79 @@ function PhotoExtractionReviewModal({
   )
 }
 
+const QUICK_STAT_GROUPS = [
+  {
+    key: 'attack',
+    title: { it: 'Attacco', en: 'Attacking' },
+    stats: [
+      ['offensive_awareness', { it: 'Attacco offensivo', en: 'Off. awareness' }],
+      ['finishing', { it: 'Finalizzazione', en: 'Finishing' }],
+      ['dribbling', { it: 'Dribbling', en: 'Dribbling' }],
+      ['ball_control', { it: 'Controllo palla', en: 'Ball control' }]
+    ]
+  },
+  {
+    key: 'passing',
+    title: { it: 'Passaggi', en: 'Passing' },
+    stats: [
+      ['low_pass', { it: 'Passaggio basso', en: 'Low pass' }],
+      ['lofted_pass', { it: 'Passaggio alto', en: 'Lofted pass' }]
+    ]
+  },
+  {
+    key: 'defense',
+    title: { it: 'Difesa', en: 'Defending' },
+    stats: [
+      ['defensive_awareness', { it: 'Difesa', en: 'Def. awareness' }],
+      ['tackling', { it: 'Contrasto', en: 'Tackling' }]
+    ]
+  },
+  {
+    key: 'athleticism',
+    title: { it: 'Atletismo', en: 'Athleticism' },
+    stats: [
+      ['speed', { it: 'Velocità', en: 'Speed' }],
+      ['acceleration', { it: 'Accelerazione', en: 'Acceleration' }],
+      ['physical_contact', { it: 'Contatto fisico', en: 'Physical contact' }],
+      ['stamina', { it: 'Stamina', en: 'Stamina' }]
+    ]
+  },
+  {
+    key: 'goalkeeping',
+    title: { it: 'Portiere', en: 'Goalkeeping' },
+    gkOnly: true,
+    stats: [
+      ['gk_awareness', { it: 'Portiere', en: 'GK awareness' }],
+      ['gk_reflexes', { it: 'Riflessi', en: 'GK reflexes' }],
+      ['gk_reach', { it: 'Allungo', en: 'GK reach' }]
+    ]
+  }
+]
+
+function quickBoosterName(entry) {
+  if (!entry) return null
+  if (typeof entry === 'string') return entry
+  return entry.name || entry.booster_name || entry.label || null
+}
+
+function QuickSection({ title, count = null, defaultOpen = true, children }) {
+  const [open, setOpen] = React.useState(defaultOpen)
+  return (
+    <section className="nr-quick-section">
+      <button
+        type="button"
+        className="nr-quick-section-head"
+        onClick={() => setOpen((prev) => !prev)}
+        aria-expanded={open}
+      >
+        <span>{title}{count !== null ? ` · ${count}` : ''}</span>
+        {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+      </button>
+      {open ? <div className="nr-quick-section-body">{children}</div> : null}
+    </section>
+  )
+}
+
 function QuickPlayerPanel({
   player,
   slot,
@@ -1937,9 +2034,29 @@ function QuickPlayerPanel({
   const actionableMissing = profileCompletion.missing.filter((section) => section.key !== 'boosters')
   const missingLabels = actionableMissing.map((section) => section.label).join(', ')
 
+  const displayStats = (typeof getPlayerDisplayStats === 'function' ? getPlayerDisplayStats(player) : null) || {}
+  const positionUpper = String(player.position || '').toUpperCase()
+  const isGk = positionUpper.includes('PT') || positionUpper.includes('GK')
+  const statGroups = QUICK_STAT_GROUPS
+    .filter((group) => !group.gkOnly || isGk)
+    .map((group) => ({
+      ...group,
+      visible: group.stats.filter(([key]) => Number.isFinite(Number(displayStats[key])))
+    }))
+    .filter((group) => group.visible.length > 0)
+
+  const skillList = Array.isArray(player.skills) ? player.skills : []
+  const comSkillList = Array.isArray(player.com_skills) ? player.com_skills : []
+  const boosterNames = (Array.isArray(player.available_boosters) ? player.available_boosters : [])
+    .map(quickBoosterName)
+    .filter(Boolean)
+  const activeBoosterName = player.active_booster_name || null
+  const metaBits = [player.club_name, player.age ? `${player.age}` : null, player.nationality].filter(Boolean)
+
   return (
-    <div className="nr-modal-backdrop" onClick={onClose}>
-      <div className="nr-modal-shell nr-quick-shell" onClick={(event) => event.stopPropagation()}>
+    <div className="nr-modal-backdrop nr-quick-backdrop" onClick={onClose}>
+      <div className="nr-modal-shell nr-quick-shell nr-quick-sheet" onClick={(event) => event.stopPropagation()}>
+        <div className="nr-sheet-grip" aria-hidden="true" />
         <div className="nr-modal-header">
           <div>
             <span className="nr-mini-kicker">{lang === 'en' ? 'Player details' : 'Dettaglio giocatore'}</span>
@@ -1951,19 +2068,25 @@ function QuickPlayerPanel({
           </button>
         </div>
 
-        <div className="nr-quick-body">
-          <div className="nr-picker-detail-hero">
-            {cardImage ? (
-              <img src={cardImage} alt={player.player_name} />
-            ) : (
-              <div className="nr-slot-avatar-fallback"><User size={18} /></div>
-            )}
-            <div>
+        <div className="nr-quick-body nr-quick-body-sheet">
+          <div className="nr-quick-hero">
+            <div className="nr-quick-hero-media">
+              {cardImage ? (
+                <img src={cardImage} alt={player.player_name} />
+              ) : (
+                <div className="nr-slot-avatar-fallback"><User size={18} /></div>
+              )}
+              {player.overall_rating != null && (
+                <span className="nr-quick-ovr">{player.overall_rating}</span>
+              )}
+            </div>
+            <div className="nr-quick-hero-info">
               <span className="nr-mini-kicker">
                 {player?.metadata?.catalog_card_type || (lang === 'en' ? 'Roster player' : 'Giocatore rosa')}
               </span>
               <h3>{player.player_name}</h3>
               <p>{player.position || '-'} · {player.role || player.playing_style_name || '-'}</p>
+              {metaBits.length > 0 && <p className="nr-quick-meta">{metaBits.join(' · ')}</p>}
             </div>
           </div>
 
@@ -1983,6 +2106,64 @@ function QuickPlayerPanel({
                 {lang === 'en' ? 'Complete with photos' : 'Completa con foto'}
               </button>
             </div>
+          )}
+
+          {statGroups.length > 0 && (
+            <QuickSection title={lang === 'en' ? 'Stats' : 'Statistiche'}>
+              <div className="nr-quick-stat-groups">
+                {statGroups.map((group) => (
+                  <div key={group.key} className="nr-quick-stat-group">
+                    <span className="nr-quick-stat-group-title">{group.title[lang] || group.title.en}</span>
+                    <div className="nr-quick-stat-chips">
+                      {group.visible.map(([key, label]) => {
+                        const value = Number(displayStats[key])
+                        return (
+                          <span key={key} className={`nr-quick-stat-chip tone-${getStatToneClass(value)}`}>
+                            <em>{label[lang] || label.en}</em>
+                            <strong>{value}</strong>
+                          </span>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </QuickSection>
+          )}
+
+          {skillList.length > 0 && (
+            <QuickSection title={lang === 'en' ? 'Skills' : 'Abilità'} count={skillList.length} defaultOpen={skillList.length <= 6}>
+              <div className="nr-quick-chip-row">
+                {skillList.map((skill) => (
+                  <span key={skill} className="nr-quick-chip">{getSkillDisplayLabel(skill, lang)}</span>
+                ))}
+              </div>
+            </QuickSection>
+          )}
+
+          {comSkillList.length > 0 && (
+            <QuickSection title={lang === 'en' ? 'COM skills / AI styles' : 'Abilità COM / stili IA'} count={comSkillList.length} defaultOpen={false}>
+              <div className="nr-quick-chip-row">
+                {comSkillList.map((skill) => (
+                  <span key={skill} className="nr-quick-chip nr-quick-chip-com">{getSkillDisplayLabel(skill, lang)}</span>
+                ))}
+              </div>
+            </QuickSection>
+          )}
+
+          {(boosterNames.length > 0 || activeBoosterName) && (
+            <QuickSection title="Booster" count={boosterNames.length || null} defaultOpen={false}>
+              {activeBoosterName && (
+                <p className="nr-quick-active-booster">
+                  {lang === 'en' ? 'Active:' : 'Attivo:'} <strong>{activeBoosterName}</strong>
+                </p>
+              )}
+              <div className="nr-quick-chip-row">
+                {boosterNames.map((name, i) => (
+                  <span key={`${name}-${i}`} className="nr-quick-chip nr-quick-chip-booster">{name}</span>
+                ))}
+              </div>
+            </QuickSection>
           )}
 
           <div className="nr-quick-actions">
@@ -3378,7 +3559,7 @@ function PremiumPlayerModal({
 
           <div className="nr-reference-main-grid">
             <section className="nr-reference-left">
-              <EnterpriseSection title={t('attacking')}>
+              <EnterpriseSection title={t('attacking')} collapsible>
                 <div className="nr-stat-pairs">
                   <CompactStatInput label={t('offensive_awareness')} value={form.offensive_awareness} onChange={(value) => setForm((prev) => ({ ...prev, offensive_awareness: value }))} />
                   <CompactStatInput label={t('finishing')} value={form.finishing} onChange={(value) => setForm((prev) => ({ ...prev, finishing: value }))} />
@@ -3395,7 +3576,7 @@ function PremiumPlayerModal({
             </section>
 
             <section className="nr-reference-center">
-              <EnterpriseSection title={t('defending')}>
+              <EnterpriseSection title={t('defending')} collapsible>
                 <div className="nr-stat-pairs">
                   <CompactStatInput label={t('defensive_awareness')} value={form.defensive_awareness} onChange={(value) => setForm((prev) => ({ ...prev, defensive_awareness: value }))} />
                   <CompactStatInput label={t('defensive_engagement')} value={form.defensive_engagement} onChange={(value) => setForm((prev) => ({ ...prev, defensive_engagement: value }))} />
@@ -3407,7 +3588,7 @@ function PremiumPlayerModal({
             </section>
 
             <section className="nr-reference-right">
-              <EnterpriseSection title={t('athleticism')}>
+              <EnterpriseSection title={t('athleticism')} collapsible>
                 <div className="nr-stat-pairs">
                   <CompactStatInput label={t('speed')} value={form.speed} onChange={(value) => setForm((prev) => ({ ...prev, speed: value }))} />
                   <CompactStatInput label={t('acceleration')} value={form.acceleration} onChange={(value) => setForm((prev) => ({ ...prev, acceleration: value }))} />
@@ -3421,7 +3602,7 @@ function PremiumPlayerModal({
             </section>
 
             <section className="nr-reference-goalkeeping">
-              <EnterpriseSection title={t('goalkeeping')}>
+              <EnterpriseSection title={t('goalkeeping')} collapsible>
                 <div className="nr-stat-pairs">
                   <CompactStatInput label={t('goalkeeping')} value={form.gk_awareness} onChange={(value) => setForm((prev) => ({ ...prev, gk_awareness: value }))} />
                   <CompactStatInput label={t('gk_catching')} value={form.gk_catching} onChange={(value) => setForm((prev) => ({ ...prev, gk_catching: value }))} />
@@ -3435,7 +3616,7 @@ function PremiumPlayerModal({
 
           <div className="nr-reference-support-grid">
             <section className="nr-reference-skills">
-              <EnterpriseSection title={lang === 'en' ? 'Skills' : 'Abilita'}>
+              <EnterpriseSection title={lang === 'en' ? 'Skills' : 'Abilita'} collapsible>
                 <div className="nr-skill-command-panel">
                   <label className="nr-form-field">
                     <span>{t('nuovaRosaSelectOfficialSkill')}</span>
@@ -3487,7 +3668,7 @@ function PremiumPlayerModal({
 
             {comSkillsDraft.length > 0 && (
               <section className="nr-reference-com-skills">
-                <EnterpriseSection title={lang === 'en' ? 'COM skills / AI styles' : 'Abilità COM / stili IA'}>
+                <EnterpriseSection title={lang === 'en' ? 'COM skills / AI styles' : 'Abilità COM / stili IA'} collapsible>
                   <div className="nr-skill-chip-row nr-skill-chip-row-com">
                     {comSkillsDraft.map((skill) => (
                       <span key={skill} className="nr-skill-chip nr-skill-chip-readonly">
@@ -3505,7 +3686,7 @@ function PremiumPlayerModal({
             )}
 
             <section className="nr-reference-boosters">
-              <EnterpriseSection title={lang === 'en' ? 'Boosters' : 'Boosters'}>
+              <EnterpriseSection title={lang === 'en' ? 'Boosters' : 'Boosters'} collapsible>
                 {activeCoach ? (
                   <button
                     type="button"
@@ -3685,6 +3866,8 @@ export default withAuth(function NuovaRosaLabPage() {
   const [toast, setToast] = React.useState(null)
   const [selectedSlot, setSelectedSlot] = React.useState(null)
   const [selectedPlayer, setSelectedPlayer] = React.useState(null)
+  const [showBuildCommands, setShowBuildCommands] = React.useState(true)
+  const [showReserves, setShowReserves] = React.useState(true)
   const [showAssignModal, setShowAssignModal] = React.useState(false)
   const [assigning, setAssigning] = React.useState(false)
   const [pickerOpen, setPickerOpen] = React.useState(false)
@@ -5763,13 +5946,21 @@ export default withAuth(function NuovaRosaLabPage() {
       ) : (
         <div className="nr-main-stack">
           <section className="nr-build-workspace-row">
-            <div className="nr-build-coach-command-card">
+            <div className={`nr-build-coach-command-card${showBuildCommands ? '' : ' nr-collapsed'}`}>
               <div className="nr-build-coach-command-head">
                 <div>
                   <span className="nr-mini-kicker">{lang === 'en' ? 'Guided builds' : 'Build guidate'}</span>
                   <p>{lang === 'en' ? 'Choose where you want a suggestion' : 'Scegli dove vuoi un consiglio'}</p>
                 </div>
-                <Sparkles size={20} />
+                <button
+                  type="button"
+                  className="nr-icon-button"
+                  onClick={() => setShowBuildCommands((prev) => !prev)}
+                  aria-expanded={showBuildCommands}
+                  aria-label={lang === 'en' ? 'Toggle guided builds' : 'Mostra/nascondi build guidate'}
+                >
+                  {showBuildCommands ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </button>
               </div>
               <div className="nr-build-coach-command-grid">
                 <button type="button" className="nr-build-coach-action primary" onClick={requestBuildCoachForRoster} disabled={buildingRoster || loading}>
@@ -5854,7 +6045,7 @@ export default withAuth(function NuovaRosaLabPage() {
             saving={savingTacticalSettings}
           />
 
-          <section className="nr-reserve-section">
+          <section className={`nr-reserve-section${showReserves ? '' : ' nr-collapsed'}`}>
             <div className="nr-card-head">
               <div>
                 <span className="nr-mini-kicker">{t('nuovaRosaReserves')}</span>
@@ -5873,6 +6064,15 @@ export default withAuth(function NuovaRosaLabPage() {
                   : (lang === 'en' ? 'Add reserve' : 'Aggiungi riserva')}
               >
                 <Plus size={16} />
+              </button>
+              <button
+                type="button"
+                className="nr-icon-button"
+                onClick={() => setShowReserves((prev) => !prev)}
+                aria-expanded={showReserves}
+                aria-label={lang === 'en' ? 'Toggle reserves' : 'Mostra/nascondi riserve'}
+              >
+                {showReserves ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
               </button>
             </div>
             {riserve.length >= MAX_RESERVES && (
@@ -6223,11 +6423,11 @@ export default withAuth(function NuovaRosaLabPage() {
 
       <style jsx global>{`
         body:has(.nr-page) {
-          background:
-            radial-gradient(circle at 18% 8%, rgba(0, 212, 255, 0.22), transparent 28%),
-            radial-gradient(circle at 86% 12%, rgba(124, 58, 237, 0.22), transparent 30%),
-            radial-gradient(circle at 50% 95%, rgba(251, 191, 36, 0.12), transparent 32%),
-            linear-gradient(135deg, #020510 0%, #061226 40%, #030712 100%) !important;
+          background: #0a1117 !important;
+        }
+
+        html[data-theme='light'] body:has(.nr-page) {
+          background: #f9f6f1 !important;
         }
 
         .nr-page {
@@ -9792,6 +9992,232 @@ export default withAuth(function NuovaRosaLabPage() {
             max-width: none;
           }
         }
+
+        /* UX V2 — sezioni richiudibili (editor + pagina) */
+        .nr-section-head-toggle {
+          width: 100%;
+          border: none;
+          background: transparent;
+          font: inherit;
+          color: inherit;
+          text-align: left;
+          cursor: pointer;
+          padding: 0;
+        }
+
+        .nr-section-head-right {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          margin-left: auto;
+          color: inherit;
+        }
+
+        .nr-collapsed .nr-build-coach-command-grid,
+        .nr-collapsed .nr-build-coach-secondary-grid,
+        .nr-reserve-section.nr-collapsed .nr-reserve-grid {
+          display: none;
+        }
+
+        .nr-quick-sheet {
+          width: min(640px, calc(100vw - 24px));
+          display: flex;
+          flex-direction: column;
+          max-height: 86vh;
+          overflow: hidden;
+        }
+
+        .nr-quick-sheet .nr-quick-body-sheet {
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .nr-sheet-grip {
+          display: none;
+        }
+
+        .nr-quick-hero {
+          display: flex;
+          gap: 14px;
+          align-items: flex-start;
+        }
+
+        .nr-quick-hero-media {
+          position: relative;
+          flex-shrink: 0;
+        }
+
+        .nr-quick-hero-media img {
+          width: 84px;
+          height: 108px;
+          object-fit: cover;
+          border-radius: 12px;
+          display: block;
+        }
+
+        .nr-quick-ovr {
+          position: absolute;
+          right: -6px;
+          bottom: -6px;
+          min-width: 30px;
+          height: 30px;
+          padding: 0 6px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 10px;
+          background: linear-gradient(135deg, #3ddc97, #27a76a);
+          color: #05231a;
+          font-size: 15px;
+          font-weight: 900;
+          box-shadow: 0 6px 18px rgba(39, 167, 106, 0.4);
+        }
+
+        .nr-quick-hero-info h3 {
+          margin: 2px 0;
+          font-size: 18px;
+        }
+
+        .nr-quick-meta {
+          margin: 2px 0 0;
+          font-size: 12px;
+          opacity: 0.65;
+        }
+
+        .nr-quick-section {
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 14px;
+          background: rgba(255, 255, 255, 0.03);
+          overflow: hidden;
+        }
+
+        .nr-quick-section-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          width: 100%;
+          padding: 12px 14px;
+          border: none;
+          background: transparent;
+          color: inherit;
+          font: inherit;
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
+          text-align: left;
+        }
+
+        .nr-quick-section-body {
+          padding: 0 14px 14px;
+        }
+
+        .nr-quick-stat-groups {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .nr-quick-stat-group-title {
+          display: block;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          opacity: 0.6;
+          margin-bottom: 6px;
+        }
+
+        .nr-quick-stat-chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+
+        .nr-quick-stat-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 5px 10px;
+          border-radius: 999px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.04);
+          font-size: 11px;
+        }
+
+        .nr-quick-stat-chip em {
+          font-style: normal;
+          opacity: 0.7;
+        }
+
+        .nr-quick-stat-chip strong {
+          font-size: 12px;
+        }
+
+        .nr-quick-stat-chip.tone-elite strong { color: #3ddc97; }
+        .nr-quick-stat-chip.tone-good strong { color: #7dedc0; }
+        .nr-quick-stat-chip.tone-ok strong { color: #ffd76a; }
+        .nr-quick-stat-chip.tone-low strong { color: #ff8a8a; }
+
+        .nr-quick-chip-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+
+        .nr-quick-chip {
+          padding: 5px 10px;
+          border-radius: 999px;
+          font-size: 11px;
+          font-weight: 600;
+          border: 1px solid rgba(61, 220, 151, 0.3);
+          background: rgba(61, 220, 151, 0.08);
+          color: #7dedc0;
+        }
+
+        .nr-quick-chip-com {
+          border-color: rgba(192, 132, 252, 0.3);
+          background: rgba(192, 132, 252, 0.08);
+          color: #d8b4fe;
+        }
+
+        .nr-quick-chip-booster {
+          border-color: rgba(255, 203, 5, 0.3);
+          background: rgba(255, 203, 5, 0.08);
+          color: #ffcb05;
+        }
+
+        .nr-quick-active-booster {
+          margin: 0 0 8px;
+          font-size: 12px;
+          opacity: 0.85;
+        }
+
+        @media (max-width: 767px) {
+          .nr-quick-backdrop {
+            align-items: flex-end;
+            padding-left: 0;
+            padding-right: 0;
+            padding-bottom: 0;
+          }
+
+          .nr-quick-sheet {
+            align-self: flex-end;
+            width: 100%;
+            max-height: 88dvh;
+            border-radius: 20px 20px 0 0;
+          }
+
+          .nr-sheet-grip {
+            display: block;
+            width: 40px;
+            height: 4px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.25);
+            margin: 0 auto 6px;
+            flex-shrink: 0;
+          }
+        }
+
       `}</style>
     </main>
   )
