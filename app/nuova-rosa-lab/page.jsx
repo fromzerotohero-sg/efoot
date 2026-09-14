@@ -1259,7 +1259,7 @@ function CoachDetailsModal({ show, coach, onClose, onReplaceFromCatalog, onRepla
         <div className="nr-modal-footer">
           <button type="button" className="nr-secondary-button" onClick={onReplaceFromPhoto} disabled={saving}>
             <Upload size={14} />
-            {lang === 'en' ? 'Replace from photo' : 'Sostituisci da foto'}
+            {qL(lang, { it: 'Sostituisci da foto', en: 'Replace from photo', es: 'Sustituir desde foto' })}
           </button>
           <button type="button" className="nr-primary-button" onClick={onReplaceFromCatalog} disabled={saving}>
             <Search size={14} />
@@ -1944,48 +1944,48 @@ function PhotoExtractionReviewModal({
 const QUICK_STAT_GROUPS = [
   {
     key: 'attack',
-    title: { it: 'Attacco', en: 'Attacking' },
+    title: { it: 'Attacco', en: 'Attacking', es: 'Ataque' },
     stats: [
-      ['offensive_awareness', { it: 'Attacco offensivo', en: 'Off. awareness' }],
-      ['finishing', { it: 'Finalizzazione', en: 'Finishing' }],
-      ['dribbling', { it: 'Dribbling', en: 'Dribbling' }],
-      ['ball_control', { it: 'Controllo palla', en: 'Ball control' }]
+      ['offensive_awareness', { it: 'Attacco offensivo', en: 'Off. awareness', es: 'Conciencia ofensiva' }],
+      ['finishing', { it: 'Finalizzazione', en: 'Finishing', es: 'Finalización' }],
+      ['dribbling', { it: 'Dribbling', en: 'Dribbling', es: 'Regate' }],
+      ['ball_control', { it: 'Controllo palla', en: 'Ball control', es: 'Control de balón' }]
     ]
   },
   {
     key: 'passing',
-    title: { it: 'Passaggi', en: 'Passing' },
+    title: { it: 'Passaggi', en: 'Passing', es: 'Pases' },
     stats: [
-      ['low_pass', { it: 'Passaggio basso', en: 'Low pass' }],
-      ['lofted_pass', { it: 'Passaggio alto', en: 'Lofted pass' }]
+      ['low_pass', { it: 'Passaggio basso', en: 'Low pass', es: 'Pase bajo' }],
+      ['lofted_pass', { it: 'Passaggio alto', en: 'Lofted pass', es: 'Pase alto' }]
     ]
   },
   {
     key: 'defense',
-    title: { it: 'Difesa', en: 'Defending' },
+    title: { it: 'Difesa', en: 'Defending', es: 'Defensa' },
     stats: [
-      ['defensive_awareness', { it: 'Difesa', en: 'Def. awareness' }],
-      ['tackling', { it: 'Contrasto', en: 'Tackling' }]
+      ['defensive_awareness', { it: 'Difesa', en: 'Def. awareness', es: 'Conciencia defensiva' }],
+      ['tackling', { it: 'Contrasto', en: 'Tackling', es: 'Entrada' }]
     ]
   },
   {
     key: 'athleticism',
-    title: { it: 'Atletismo', en: 'Athleticism' },
+    title: { it: 'Atletismo', en: 'Athleticism', es: 'Atletismo' },
     stats: [
-      ['speed', { it: 'Velocità', en: 'Speed' }],
-      ['acceleration', { it: 'Accelerazione', en: 'Acceleration' }],
-      ['physical_contact', { it: 'Contatto fisico', en: 'Physical contact' }],
-      ['stamina', { it: 'Stamina', en: 'Stamina' }]
+      ['speed', { it: 'Velocità', en: 'Speed', es: 'Velocidad' }],
+      ['acceleration', { it: 'Accelerazione', en: 'Acceleration', es: 'Aceleración' }],
+      ['physical_contact', { it: 'Contatto fisico', en: 'Physical contact', es: 'Contacto físico' }],
+      ['stamina', { it: 'Stamina', en: 'Stamina', es: 'Resistencia' }]
     ]
   },
   {
     key: 'goalkeeping',
-    title: { it: 'Portiere', en: 'Goalkeeping' },
+    title: { it: 'Portiere', en: 'Goalkeeping', es: 'Portero' },
     gkOnly: true,
     stats: [
-      ['gk_awareness', { it: 'Portiere', en: 'GK awareness' }],
-      ['gk_reflexes', { it: 'Riflessi', en: 'GK reflexes' }],
-      ['gk_reach', { it: 'Allungo', en: 'GK reach' }]
+      ['gk_awareness', { it: 'Portiere', en: 'GK awareness', es: 'Portería' }],
+      ['gk_reflexes', { it: 'Riflessi', en: 'GK reflexes', es: 'Reflejos' }],
+      ['gk_reach', { it: 'Allungo', en: 'GK reach', es: 'Estirada' }]
     ]
   }
 ]
@@ -2012,6 +2012,12 @@ function QuickSection({ title, count = null, defaultOpen = true, children }) {
       {open ? <div className="nr-quick-section-body">{children}</div> : null}
     </section>
   )
+}
+
+function qL(lang, variants) {
+  if (lang === 'it') return variants.it
+  if (lang === 'es') return variants.es || variants.en
+  return variants.en
 }
 
 function QuickPlayerPanel({
@@ -2062,7 +2068,7 @@ function QuickPlayerPanel({
         <div className="nr-sheet-grip" aria-hidden="true" />
         <div className="nr-modal-header">
           <div>
-            <span className="nr-mini-kicker">{lang === 'en' ? 'Player details' : 'Dettaglio giocatore'}</span>
+            <span className="nr-mini-kicker">{qL(lang, { it: 'Dettaglio giocatore', en: 'Player details', es: 'Detalle del jugador' })}</span>
             <h2>{player.player_name}</h2>
             <p>{player.position || '-'} · {player.role || player.playing_style_name || player.card_type || '-'}</p>
           </div>
@@ -2085,7 +2091,7 @@ function QuickPlayerPanel({
             </div>
             <div className="nr-quick-hero-info">
               <span className="nr-mini-kicker">
-                {player?.metadata?.catalog_card_type || (lang === 'en' ? 'Roster player' : 'Giocatore rosa')}
+                {player?.metadata?.catalog_card_type || qL(lang, { it: 'Giocatore rosa', en: 'Roster player', es: 'Jugador de plantilla' })}
               </span>
               <h3>{player.player_name}</h3>
               <p>{player.position || '-'} · {player.role || player.playing_style_name || '-'}</p>
@@ -2097,22 +2103,22 @@ function QuickPlayerPanel({
             <div className="nr-complete-photo-callout">
               <AlertTriangle size={16} />
               <div>
-                <strong>{lang === 'en' ? 'Profile to complete' : 'Profilo da completare'}</strong>
+                <strong>{qL(lang, { it: 'Profilo da completare', en: 'Profile to complete', es: 'Perfil por completar' })}</strong>
                 <p>
                   {lang === 'en'
-                    ? `Missing ${missingLabels}. Add only the missing screenshots without replacing this player.`
+                    ? qL(lang, { it: `Mancano ${missingLabels}. Aggiungi solo le schermate mancanti senza sostituire questo giocatore.`, en: `Missing ${missingLabels}. Add only the missing screenshots without replacing this player.`, es: `Faltan ${missingLabels}. Añade solo las capturas que faltan sin sustituir este jugador.` })
                     : `Mancano ${missingLabels}. Aggiungi solo le schermate mancanti senza sostituire questo giocatore.`}
                 </p>
               </div>
               <button type="button" className="nr-primary-button" onClick={() => onCompletePhotoProfile(player, slot)}>
                 <Upload size={14} />
-                {lang === 'en' ? 'Complete with photos' : 'Completa con foto'}
+                {qL(lang, { it: 'Completa con foto', en: 'Complete with photos', es: 'Completar con fotos' })}
               </button>
             </div>
           )}
 
           {statGroups.length > 0 && (
-            <QuickSection title={lang === 'en' ? 'Stats' : 'Statistiche'}>
+            <QuickSection title={qL(lang, { it: 'Statistiche', en: 'Stats', es: 'Estadísticas' })}>
               <div className="nr-quick-stat-groups">
                 {statGroups.map((group) => (
                   <div key={group.key} className="nr-quick-stat-group">
@@ -2135,7 +2141,7 @@ function QuickPlayerPanel({
           )}
 
           {skillList.length > 0 && (
-            <QuickSection title={lang === 'en' ? 'Skills' : 'Abilità'} count={skillList.length} defaultOpen={skillList.length <= 6}>
+            <QuickSection title={qL(lang, { it: 'Abilità', en: 'Skills', es: 'Habilidades' })} count={skillList.length} defaultOpen={skillList.length <= 6}>
               <div className="nr-quick-chip-row">
                 {skillList.map((skill) => (
                   <span key={skill} className="nr-quick-chip">{getSkillDisplayLabel(skill, lang)}</span>
@@ -2145,7 +2151,7 @@ function QuickPlayerPanel({
           )}
 
           {comSkillList.length > 0 && (
-            <QuickSection title={lang === 'en' ? 'COM skills / AI styles' : 'Abilità COM / stili IA'} count={comSkillList.length} defaultOpen={false}>
+            <QuickSection title={qL(lang, { it: 'Abilità COM / stili IA', en: 'COM skills / AI styles', es: 'Habilidades COM / estilos IA' })} count={comSkillList.length} defaultOpen={false}>
               <div className="nr-quick-chip-row">
                 {comSkillList.map((skill) => (
                   <span key={skill} className="nr-quick-chip nr-quick-chip-com">{getSkillDisplayLabel(skill, lang)}</span>
@@ -2158,7 +2164,7 @@ function QuickPlayerPanel({
             <QuickSection title="Booster" count={boosterNames.length || null} defaultOpen={false}>
               {activeBoosterName && (
                 <p className="nr-quick-active-booster">
-                  {lang === 'en' ? 'Active:' : 'Attivo:'} <strong>{activeBoosterName}</strong>
+                  {qL(lang, { it: 'Attivo:', en: 'Active:', es: 'Activo:' })} <strong>{activeBoosterName}</strong>
                 </p>
               )}
               <div className="nr-quick-chip-row">
@@ -2172,42 +2178,42 @@ function QuickPlayerPanel({
           <div className="nr-quick-actions">
             <button type="button" className="nr-primary-button" onClick={() => onOpenReplace(player, true)}>
               <Pencil size={14} />
-              {lang === 'en' ? 'Edit player' : 'Modifica giocatore'}
+              {qL(lang, { it: 'Modifica giocatore', en: 'Edit player', es: 'Editar jugador' })}
             </button>
             {slot?.slot_index != null && (
               <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player)}>
-                {lang === 'en' ? 'Replace from catalog' : 'Sostituisci da catalogo'}
+                {qL(lang, { it: 'Sostituisci da catalogo', en: 'Replace from catalog', es: 'Sustituir del catálogo' })}
               </button>
             )}
             {slot?.slot_index != null && benchReserveCount > 0 && (
               <button type="button" className="nr-secondary-button" onClick={() => onReplaceWithReserve?.()}>
-                {lang === 'en' ? 'Replace with reserve' : 'Sostituisci con riserva'}
+                {qL(lang, { it: 'Sostituisci con riserva', en: 'Replace with reserve', es: 'Sustituir con suplente' })}
               </button>
             )}
             {slot?.slot_index != null && (
               <button type="button" className="nr-secondary-button" onClick={() => onRemoveFromSlot(player.id)}>
-                {lang === 'en' ? 'Move to reserves' : 'Sposta in riserva'}
+                {qL(lang, { it: 'Sposta in riserva', en: 'Move to reserves', es: 'Mover a suplentes' })}
               </button>
             )}
             {slot?.slot_index != null && (
               <button type="button" className="nr-secondary-button" onClick={onUploadPhoto}>
                 <Upload size={14} />
-                {lang === 'en' ? 'Replace from photo' : 'Sostituisci da foto'}
+                {qL(lang, { it: 'Sostituisci da foto', en: 'Replace from photo', es: 'Sustituir desde foto' })}
               </button>
             )}
             {slot?.slot_index == null && (
               <button type="button" className="nr-primary-button" onClick={() => onMoveReserveToStarter(player)}>
                 <ArrowRight size={14} />
-                {lang === 'en' ? 'Move to starters' : 'Sposta tra i titolari'}
+                {qL(lang, { it: 'Sposta tra i titolari', en: 'Move to starters', es: 'Mover a titulares' })}
               </button>
             )}
           </div>
 
           <div className="nr-danger-zone">
-            <span>{lang === 'en' ? 'Danger area' : 'Area pericolosa'}</span>
+            <span>{qL(lang, { it: 'Area pericolosa', en: 'Danger area', es: 'Zona peligrosa' })}</span>
             <button type="button" className="nr-danger-button" onClick={() => onDeletePlayer(player.id)}>
               <Trash2 size={14} />
-              {lang === 'en' ? 'Delete permanently' : 'Elimina definitivamente'}
+              {qL(lang, { it: 'Elimina definitivamente', en: 'Delete permanently', es: 'Eliminar definitivamente' })}
             </button>
           </div>
         </div>
@@ -2227,7 +2233,7 @@ function StarterReserveReplacementModal({ show, slot, reserves, assigning, onClo
       onClose={() => {
         if (!assigning) onClose()
       }}
-      title={lang === 'en' ? 'Replace with reserve' : 'Sostituisci con riserva'}
+      title={qL(lang, { it: 'Sostituisci con riserva', en: 'Replace with reserve', es: 'Sustituir con suplente' })}
       subtitle={
         lang === 'en'
           ? `Slot ${slotPosition || '?'} · ${slot.slot_index + 1}. The current starter moves to the bench (direct swap if the bench is full).`
@@ -3544,19 +3550,19 @@ function PremiumPlayerModal({
               {player.slot_index !== null && player.slot_index !== undefined && (
                 <>
                   <button type="button" className="nr-secondary-button" onClick={() => onOpenReplace(player)}>
-                    {lang === 'en' ? 'Replace from catalog' : 'Sostituisci da catalogo'}
+                    {qL(lang, { it: 'Sostituisci da catalogo', en: 'Replace from catalog', es: 'Sustituir del catálogo' })}
                   </button>
                   <button type="button" className="nr-secondary-button" onClick={() => onRemoveFromSlot(player.id)}>
-                    {lang === 'en' ? 'Move to reserves' : 'Sposta in riserva'}
+                    {qL(lang, { it: 'Sposta in riserva', en: 'Move to reserves', es: 'Mover a suplentes' })}
                   </button>
                 </>
               )}
             </div>
             <div className="nr-danger-zone">
-              <span>{lang === 'en' ? 'Danger area' : 'Area pericolosa'}</span>
+              <span>{qL(lang, { it: 'Area pericolosa', en: 'Danger area', es: 'Zona peligrosa' })}</span>
               <button type="button" className="nr-danger-button" onClick={() => onDeletePlayer(player.id)}>
                 <Trash2 size={14} />
-                {lang === 'en' ? 'Delete permanently' : 'Elimina definitivamente'}
+                {qL(lang, { it: 'Elimina definitivamente', en: 'Delete permanently', es: 'Eliminar definitivamente' })}
               </button>
             </div>
           </div>

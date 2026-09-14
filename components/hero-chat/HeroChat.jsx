@@ -140,26 +140,18 @@ export default function HeroChat({
   const stateCopy = COPY.states[homeState]
   const lowHp = typeof hpBalance === 'number' && Number.isFinite(hpBalance) && hpBalance < 2
 
-  // Greeting one-shot: prima bolla Hero, poi la conversazione reale
-  React.useEffect(() => {
-    if (messages.length > 0) return
+  // Greeting one-shot: bolla Hero tradotta a render-time (segue la lingua corrente,
+  // niente mix IT/ES quando l'utente cambia lingua dopo l'apertura).
+  const [greetingVariant] = React.useState(() => {
     let greeted = false
     try {
       greeted = localStorage.getItem(GREETED_KEY) === '1'
     } catch { /* ignore */ }
-    setMessages([
-      {
-        role: 'hero',
-        content: greeted
-          ? L(lang, { it: 'Bentornato! Cosa facciamo oggi?', en: 'Welcome back! What are we doing today?', es: '¡Bienvenido de nuevo! ¿Qué hacemos hoy?' })
-          : L(lang, COPY.greeting)
-      }
-    ])
     try {
       localStorage.setItem(GREETED_KEY, '1')
     } catch { /* ignore */ }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    return greeted ? 'returning' : 'first'
+  })
 
   // Knowledge score reale per l'anello header (stesso endpoint di AIKnowledgeBar)
   React.useEffect(() => {
@@ -524,6 +516,17 @@ export default function HeroChat({
           <p className="hc-bannerOverline">{L(lang, { it: 'Il tuo assistente di gioco', en: 'Your game assistant', es: 'Tu asistente de juego' })}</p>
           <h1 className="hc-bannerTitle">{L(lang, COPY.heroTitle)}</h1>
           <p className="hc-bannerSub">{L(lang, COPY.heroSub)}</p>
+        </div>
+
+        <div className="hc-row">
+          <span className="hc-bubbleAvatar" aria-hidden="true">
+            <img src="/coach.jpg" alt="" />
+          </span>
+          <div className="hc-bubble hc-bubbleHero">
+            {greetingVariant === 'first'
+              ? L(lang, COPY.greeting)
+              : L(lang, { it: 'Bentornato! Cosa facciamo oggi?', en: 'Welcome back! What are we doing today?', es: '¡Bienvenido de nuevo! ¿Qué hacemos hoy?' })}
+          </div>
         </div>
 
         {messages.map((m, i) => (
