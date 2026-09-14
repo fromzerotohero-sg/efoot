@@ -7,7 +7,6 @@ import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
 import { safeJsonResponse } from '@/lib/fetchHelper'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
-import CoachFeedbackChat from '@/components/CoachFeedbackChat'
 import { INDIVIDUAL_INSTRUCTIONS_CONFIG } from '@/lib/tacticalInstructions'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
@@ -173,10 +172,6 @@ export default function CountermeasuresPreMatchPage() {
     instructions: false,
     playSummary: true
   })
-  const [showPalestraCoach, setShowPalestraCoach] = React.useState(false)
-  const [palestraUserProfile, setPalestraUserProfile] = React.useState(null)
-  const [palestraLastMatch, setPalestraLastMatch] = React.useState(null)
-  const [palestraOpenLoading, setPalestraOpenLoading] = React.useState(false)
 
   const isProcessing = extracting || generating
   const processingCopy = React.useMemo(() => {
@@ -204,38 +199,8 @@ export default function CountermeasuresPreMatchPage() {
     }
   }, [extracting, lang])
 
-  const openPalestraCoach = React.useCallback(async () => {
-    setPalestraOpenLoading(true)
-    try {
-      let token = localStorage.getItem('auth_token')
-      if (!token && supabase) {
-        const { data: session } = await supabase.auth.getSession()
-        token = session?.session?.access_token
-      }
-      if (!token) {
-        router.push('/login')
-        return
-      }
-      const res = await fetch(`/api/dashboard?t=${Date.now()}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Cache-Control': 'no-cache, no-store',
-          Pragma: 'no-cache'
-        },
-        cache: 'no-store'
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setPalestraUserProfile(data.profile || null)
-        setPalestraLastMatch(data.matches?.[0] || null)
-      }
-      setShowPalestraCoach(true)
-    } catch (e) {
-      console.error('[contromisure-pre-partita] Prefetch dashboard for Palestra:', e)
-      setShowPalestraCoach(true)
-    } finally {
-      setPalestraOpenLoading(false)
-    }
+  const openPalestraCoach = React.useCallback(() => {
+    router.push('/?openCoach=1')
   }, [router])
 
   const handleImageSelect = async (e) => {
@@ -1250,7 +1215,7 @@ export default function CountermeasuresPreMatchPage() {
               <button
                 type="button"
                 className="neon-button"
-                disabled={palestraOpenLoading}
+                
                 onClick={openPalestraCoach}
                 style={{
                   width: '100%',
@@ -1259,21 +1224,14 @@ export default function CountermeasuresPreMatchPage() {
                   justifyContent: 'center',
                   gap: '8px',
                   minHeight: '44px',
-                  cursor: palestraOpenLoading ? 'wait' : 'pointer',
-                  opacity: palestraOpenLoading ? 0.85 : 1
+                  cursor: 'pointer',
+                  opacity: 1
                 }}
               >
-                {palestraOpenLoading ? (
-                  <>
-                    <RefreshCw size={18} style={{ animation: 'spin 1s linear infinite' }} aria-hidden />
-                    {t('loading')}
-                  </>
-                ) : (
-                  <>
-                    <MessageCircle size={18} aria-hidden />
-                    {t('openPalestraCoach')}
-                  </>
-                )}
+                <>
+                  <MessageCircle size={18} aria-hidden />
+                  {t('openPalestraCoach')}
+                </>
               </button>
             </div>
           </div>
@@ -1281,16 +1239,6 @@ export default function CountermeasuresPreMatchPage() {
         </>
       )}
 
-      <CoachFeedbackChat
-        show={showPalestraCoach}
-        onClose={() => {
-          setShowPalestraCoach(false)
-          setPalestraUserProfile(null)
-          setPalestraLastMatch(null)
-        }}
-        userProfile={palestraUserProfile}
-        lastMatch={palestraLastMatch}
-      />
 
       <style jsx>{`
         :global(body:has(.counter-page)) {

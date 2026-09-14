@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
 import { Save, SkipForward, RefreshCw, User, Gamepad2, Brain, CheckCircle2, AlertCircle, X, Wallet, Zap, LogOut, BookOpen, Gift } from 'lucide-react'
-import CoachFeedbackChat from '@/components/CoachFeedbackChat'
 import LanguageSwitch from '@/components/LanguageSwitch'
 import ThemeToggle from '@/components/ThemeToggle'
 
@@ -180,7 +179,6 @@ export default function ImpostazioniProfiloPage() {
   const [error, setError] = React.useState(null)
   const [success, setSuccess] = React.useState(null)
   const [toast, setToast] = React.useState(null) // { message, type: 'success' | 'error' }
-  const [showCoachGym, setShowCoachGym] = React.useState(false) // Stato per CoachFeedbackChat
   
   // Divisioni disponibili
   const divisions = ['Division 1', 'Division 2', 'Division 3', 'Division 4', 'Division 5', 'Division 6', 'Division 7', 'Division 8', 'Division 9', 'Division 10']
@@ -586,11 +584,11 @@ export default function ImpostazioniProfiloPage() {
             {t('coachDataSettingsTitle') || 'Dati tecnici di gioco'}
           </h3>
           <p style={{ fontSize: 'clamp(13px, 2.5vw, 14px)', color: '#888', lineHeight: 1.45, margin: 0 }}>
-            {t('coachDataSettingsDesc') || 'Per modificare piattaforma, connessione, livello passaggio e punto debole, usa la Palestra Coach.'}
+            {t('coachDataSettingsDesc') || 'Parlane con Hero nella chat: piattaforma, connessione, livello passaggio e punto debole li impara da come giochi.'}
           </p>
         </div>
         <button 
-          onClick={() => setShowCoachGym(true)}
+          onClick={() => router.push('/?openCoach=1')}
           className="neon-button"
           style={{
             whiteSpace: 'nowrap',
@@ -992,12 +990,6 @@ export default function ImpostazioniProfiloPage() {
         <CheckCircle2 size={20} />
         {saving ? t('saving') : t('completeProfile')}
       </button>
-      <CoachFeedbackChat 
-        show={showCoachGym}
-        onClose={() => setShowCoachGym(false)}
-        userProfile={profileData}
-        lastMatch={null}
-      />
       <style jsx>{`
 
 
