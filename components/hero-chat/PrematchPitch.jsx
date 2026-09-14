@@ -4,32 +4,19 @@ import React from 'react'
 import { DEFAULT_SLOT_POSITIONS, completeSlotPositions } from '@/lib/formationDefaultSlots'
 
 const POSITION_ALIASES = {
-  GK: 'PT',
-  PT: 'PT',
-  CB: 'DC',
-  DC: 'DC',
-  RB: 'TD',
-  TD: 'TD',
-  LB: 'TS',
-  TS: 'TS',
-  DMF: 'MED',
-  MED: 'MED',
-  CMF: 'CC',
-  CC: 'CC',
-  AMF: 'TRQ',
-  TRQ: 'TRQ',
-  RMF: 'CLD',
-  CLD: 'CLD',
-  LMF: 'CLS',
-  CLS: 'CLS',
-  RWF: 'EDA',
-  EDA: 'EDA',
-  LWF: 'ESA',
-  ESA: 'ESA',
-  SS: 'SP',
-  SP: 'SP',
-  CF: 'P',
-  P: 'P'
+  GK: 'PT', PT: 'PT',
+  CB: 'DC', DC: 'DC',
+  RB: 'TD', TD: 'TD',
+  LB: 'TS', TS: 'TS',
+  DMF: 'MED', MED: 'MED',
+  CMF: 'CC', CC: 'CC',
+  AMF: 'TRQ', TRQ: 'TRQ',
+  RMF: 'CLD', CLD: 'CLD',
+  LMF: 'CLS', CLS: 'CLS',
+  RWF: 'EDA', EDA: 'EDA',
+  LWF: 'ESA', ESA: 'ESA',
+  SS: 'SP', SP: 'SP',
+  CF: 'P', P: 'P'
 }
 
 async function resolveAuthToken() {
@@ -87,10 +74,7 @@ function shortInstruction(raw, lang) {
 }
 
 function normalizePos(value) {
-  const raw = String(value || '')
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g, '')
+  const raw = String(value || '').trim().toUpperCase().replace(/\s+/g, '')
   if (!raw) return ''
   return POSITION_ALIASES[raw] || raw
 }
@@ -134,9 +118,97 @@ function findSlotByPlayer(slots, playerId, playerName) {
   }) || null
 }
 
+function findMentionedSlots(slots, text) {
+  const blob = nameKey(text)
+  if (!blob) return []
+  const found = []
+  const used = new Set()
+  for (const slot of slots) {
+    const full = nameKey(slot.name || slot.inName)
+    if (!full || full.length < 3) continue
+    const last = full.split(' ').pop()
+    const tokens = [full, last].filter((t) => t && t.length >= 3)
+    let hitAt = -1
+    for (const token of tokens) {
+      const idx = blob.indexOf(token)
+      if (idx >= 0 && (hitAt < 0 || idx < hitAt)) hitAt = idx
+    }
+    if (hitAt >= 0 && !used.has(slot.index)) {
+      used.add(slot.index)
+      found.push({ slot, at: hitAt })
+    }
+  }
+  return found.sort((a, b) => a.at - b.at).map((row) => row.slot)
+}
+
+function buildZones(text, lang) {
+  const blob = nameKey(text)
+  if (!blob) return []
+  const zones = []
+  const labels = {
+    center: { it: 'Chiudi centro', en: 'Hold center', es: 'Cierra centro' },
+    wings: { it: 'Apri fasce', en: 'Use wings', es: 'Abre bandas' },
+    depth: { it: 'Profondità', en: 'Depth runs', es: 'Profundidad' }
+  }
+  if (/(trq|tra le linee|centrale|centro|ancoragg|scherm)/.test(blob)) {
+    zones.push({ id: 'center', className: 'hc-pitchZoneCenter', label: asText(labels.center, lang) })
+  }
+  if (/(fasce|corsie|ampiezza|estern|lato|wing|nedved|beckham|cld|cls|eda|esa)/.test(blob)) {
+    zones.push({ id: 'wings', className: 'hc-pitchZoneWings', label: asText(labels.wings, lang) })
+  }
+  if (/(profondit|vertical|dietro i terzin|attacca lo spazio|depth)/.test(blob)) {
+    zones.push({ id: 'depth', className: 'hc-pitchZoneDepth', label: asText(labels.depth, lang) })
+  }
+  return zones.slice(0, 3)
+}
+
+function buildMovementArrows(slots, text, playerSuggestions) {
+  const arrows = []
+  const seen = new Set()
+
+  const pushArrow = (from, to, kind) => {
+    if (!from || !to || from.index === to.index) return
+    const key = `${from.index}->${to.index}:${kind}`
+    if (seen.has(key)) return
+    seen.add(key)
+    arrows.push({
+      id: key,
+      kind,
+      x1: from.x,
+      y1: from.y,
+      x2: to.x,
+      y2: to.y
+    })
+  }
+
+  const mentioned = findMentionedSlots(slots, text)
+  for (let i = 0; i < mentioned.length - 1 && arrows.length < 3; i++) {
+    pushArrow(mentioned[i], mentioned[i + 1], i === 0 ? 'build' : 'attack')
+  }
+
+  const suggestions = Array.isArray(playerSuggestions) ? playerSuggestions : []
+  for (const sug of suggestions) {
+    if (arrows.length >= 4) break
+    const outSlot = findSlotByPlayer(slots, sug.replace_player_id || sug.out_player_id, sug.replace_player_name || sug.out_player_name)
+    const inSlot = findSlotByPlayer(slots, sug.player_id || sug.in_player_id, sug.player_name || sug.in_player_name)
+    if (outSlot && inSlot && outSlot.index !== inSlot.index) {
+      pushArrow(outSlot, inSlot, 'swap')
+    }
+  }
+
+  // Fallback: se testo parla di ampiezza ma poche frecce, collega MED/CC al lato più citato
+  if (arrows.length === 0 && mentioned.length >= 1) {
+    const pivot = slots.find((s) => ['MED', 'CC', 'DMF', 'CMF'].includes(normalizePos(s.position))) || slots.find((s) => s.index === 6)
+    if (pivot && mentioned[0] && pivot.index !== mentioned[0].index) {
+      pushArrow(pivot, mentioned[0], 'build')
+    }
+  }
+
+  return arrows.slice(0, 4)
+}
+
 /**
- * Mini campo read-only: titolari reali + overlay swap/istruzioni.
- * Preferisce starters/slotPositions dalla Home (dashboard già autenticata).
+ * Mini campo read-only: titolari + zone + frecce di gioco dal piano.
  */
 export default function PrematchPitch({
   starters: startersProp = null,
@@ -167,7 +239,6 @@ export default function PrematchPitch({
           return
         }
 
-        // Stesso endpoint della Home (Metalgate-safe)
         const res = await fetch(`/api/dashboard?t=${Date.now()}`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -294,8 +365,15 @@ export default function PrematchPitch({
     return base
   }, [starters, slotPositions, playerSuggestions, individualInstructions, focusText, lang])
 
+  const zones = React.useMemo(() => buildZones(focusText, lang), [focusText, lang])
+  const arrows = React.useMemo(
+    () => buildMovementArrows(overlay, focusText, playerSuggestions),
+    [overlay, focusText, playerSuggestions]
+  )
+
   const hasPlayers = overlay.some((s) => s.name || s.inName || s.outName)
   const hasOverlay = overlay.some((s) => s.outName || s.inName || s.instruction)
+  const hasVisuals = zones.length > 0 || arrows.length > 0
 
   return (
     <div className="hc-pitch" aria-label="Campo piano contromisure">
@@ -309,6 +387,62 @@ export default function PrematchPitch({
         <div className="hc-pitchBoxBottom" aria-hidden="true" />
         <div className="hc-pitchSideL" aria-hidden="true" />
         <div className="hc-pitchSideR" aria-hidden="true" />
+
+        {zones.map((zone) => (
+          <div key={zone.id} className={`hc-pitchZone ${zone.className}`} aria-hidden="true">
+            <span>{zone.label}</span>
+          </div>
+        ))}
+
+        {arrows.length > 0 && (
+          <svg className="hc-pitchArrows" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <marker id="hcArrowBuild" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+                <path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(125, 211, 252, 0.95)" />
+              </marker>
+              <marker id="hcArrowAttack" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+                <path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(61, 220, 151, 0.95)" />
+              </marker>
+              <marker id="hcArrowSwap" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+                <path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(255, 203, 5, 0.95)" />
+              </marker>
+            </defs>
+            {arrows.map((arrow) => {
+              const dx = arrow.x2 - arrow.x1
+              const dy = arrow.y2 - arrow.y1
+              const len = Math.sqrt(dx * dx + dy * dy) || 1
+              const shrink = 6
+              const x1 = arrow.x1 + (dx / len) * shrink
+              const y1 = arrow.y1 + (dy / len) * shrink
+              const x2 = arrow.x2 - (dx / len) * shrink
+              const y2 = arrow.y2 - (dy / len) * shrink
+              const stroke =
+                arrow.kind === 'attack'
+                  ? 'rgba(61, 220, 151, 0.9)'
+                  : arrow.kind === 'swap'
+                    ? 'rgba(255, 203, 5, 0.9)'
+                    : 'rgba(125, 211, 252, 0.9)'
+              const marker =
+                arrow.kind === 'attack'
+                  ? 'url(#hcArrowAttack)'
+                  : arrow.kind === 'swap'
+                    ? 'url(#hcArrowSwap)'
+                    : 'url(#hcArrowBuild)'
+              return (
+                <path
+                  key={arrow.id}
+                  d={`M ${x1} ${y1} Q ${(x1 + x2) / 2} ${(y1 + y2) / 2 - 4} ${x2} ${y2}`}
+                  fill="none"
+                  stroke={stroke}
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                  markerEnd={marker}
+                  className="hc-pitchArrowPath"
+                />
+              )
+            })}
+          </svg>
+        )}
 
         {overlay.map((slot) => {
           const showSwap = !!(slot.outName || slot.inName)
@@ -343,15 +477,36 @@ export default function PrematchPitch({
           )
         })}
       </div>
+
+      {hasVisuals && (
+        <div className="hc-pitchLegend" aria-hidden="true">
+          {zones.map((zone) => (
+            <span key={`z-${zone.id}`} className={`hc-pitchLegendChip hc-pitchLegend-${zone.id}`}>
+              {zone.label}
+            </span>
+          ))}
+          {arrows.some((a) => a.kind === 'build') && (
+            <span className="hc-pitchLegendChip hc-pitchLegend-build">Uscita</span>
+          )}
+          {arrows.some((a) => a.kind === 'attack') && (
+            <span className="hc-pitchLegendChip hc-pitchLegend-attack">Attacco</span>
+          )}
+          {arrows.some((a) => a.kind === 'swap') && (
+            <span className="hc-pitchLegendChip hc-pitchLegend-swap">Cambio</span>
+          )}
+        </div>
+      )}
+
       {!hasPlayers && loadState === 'loading' && (
         <p className="hc-pitchHint">Carico la tua formazione…</p>
       )}
       {!hasPlayers && loadState !== 'loading' && (
         <p className="hc-pitchHint">Formazione non disponibile — apri la rosa e riprova</p>
       )}
-      {hasPlayers && !hasOverlay && (
+      {hasPlayers && !hasOverlay && !hasVisuals && (
         <p className="hc-pitchHint">Tua formazione — i consigli sotto evidenziano i ruoli chiave</p>
       )}
+
       <style jsx>{`
         .hc-pitch {
           display: flex;
@@ -456,12 +611,87 @@ export default function PrematchPitch({
           background: rgba(255, 255, 255, 0.22);
         }
 
-        .hc-pitchSideL {
-          left: 6%;
+        .hc-pitchSideL { left: 6%; }
+        .hc-pitchSideR { right: 6%; }
+
+        .hc-pitchZone {
+          position: absolute;
+          pointer-events: none;
+          z-index: 1;
+          display: flex;
+          align-items: flex-start;
+          justify-content: center;
+          padding: 8px;
         }
 
-        .hc-pitchSideR {
-          right: 6%;
+        .hc-pitchZone span {
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          padding: 4px 8px;
+          border-radius: 999px;
+          backdrop-filter: blur(2px);
+        }
+
+        .hc-pitchZoneCenter {
+          left: 28%;
+          right: 28%;
+          top: 34%;
+          bottom: 34%;
+          border: 1.5px dashed rgba(255, 203, 5, 0.55);
+          border-radius: 16px;
+          background: rgba(255, 203, 5, 0.10);
+        }
+
+        .hc-pitchZoneCenter span {
+          color: #ffe08a;
+          background: rgba(20, 16, 4, 0.55);
+          border: 1px solid rgba(255, 203, 5, 0.4);
+        }
+
+        .hc-pitchZoneWings {
+          inset: 18% 4% 28% 4%;
+          border: 1.5px dashed rgba(125, 211, 252, 0.45);
+          border-radius: 14px;
+          background:
+            linear-gradient(90deg, rgba(125, 211, 252, 0.14), transparent 28%, transparent 72%, rgba(125, 211, 252, 0.14));
+        }
+
+        .hc-pitchZoneWings span {
+          color: #bae6fd;
+          background: rgba(4, 16, 28, 0.55);
+          border: 1px solid rgba(125, 211, 252, 0.4);
+        }
+
+        .hc-pitchZoneDepth {
+          left: 18%;
+          right: 18%;
+          top: 6%;
+          height: 24%;
+          border: 1.5px dashed rgba(61, 220, 151, 0.5);
+          border-radius: 14px;
+          background: rgba(61, 220, 151, 0.12);
+        }
+
+        .hc-pitchZoneDepth span {
+          color: #9dffc8;
+          background: rgba(4, 28, 16, 0.55);
+          border: 1px solid rgba(61, 220, 151, 0.4);
+        }
+
+        .hc-pitchArrows {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 2;
+          pointer-events: none;
+          overflow: visible;
+        }
+
+        .hc-pitchArrowPath {
+          filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.35));
         }
 
         .hc-pitchSlot {
@@ -477,7 +707,7 @@ export default function PrematchPitch({
           flex-direction: column;
           align-items: center;
           gap: 2px;
-          z-index: 2;
+          z-index: 3;
         }
 
         .hc-pitchSlotFocus {
@@ -560,6 +790,50 @@ export default function PrematchPitch({
           font-weight: 800;
           letter-spacing: 0.02em;
           text-transform: uppercase;
+        }
+
+        .hc-pitchLegend {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          justify-content: center;
+        }
+
+        .hc-pitchLegendChip {
+          min-height: 28px;
+          display: inline-flex;
+          align-items: center;
+          padding: 4px 10px;
+          border-radius: 999px;
+          font-size: 11px;
+          font-weight: 700;
+          border: 1px solid transparent;
+        }
+
+        .hc-pitchLegend-center {
+          color: #ffe08a;
+          background: rgba(255, 203, 5, 0.12);
+          border-color: rgba(255, 203, 5, 0.35);
+        }
+
+        .hc-pitchLegend-wings,
+        .hc-pitchLegend-build {
+          color: #bae6fd;
+          background: rgba(125, 211, 252, 0.12);
+          border-color: rgba(125, 211, 252, 0.35);
+        }
+
+        .hc-pitchLegend-depth,
+        .hc-pitchLegend-attack {
+          color: #9dffc8;
+          background: rgba(61, 220, 151, 0.12);
+          border-color: rgba(61, 220, 151, 0.35);
+        }
+
+        .hc-pitchLegend-swap {
+          color: #ffe08a;
+          background: rgba(255, 203, 5, 0.12);
+          border-color: rgba(255, 203, 5, 0.35);
         }
 
         .hc-pitchHint {
