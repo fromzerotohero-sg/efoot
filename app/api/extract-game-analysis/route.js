@@ -13,7 +13,9 @@ const MAX_SIZE_BYTES = 10 * 1024 * 1024 // 10MB per image
 
 function getPreferredLanguage(req) {
   const accept = req?.headers?.get?.('accept-language') || ''
-  return accept.toLowerCase().startsWith('it') || accept.includes('it') ? 'it' : 'en'
+  const normalized = accept.toLowerCase()
+  if (normalized.startsWith('es') || normalized.includes('es')) return 'es'
+  return normalized.startsWith('it') || normalized.includes('it') ? 'it' : 'en'
 }
 
 const ERRORS = {
@@ -39,7 +41,7 @@ const ERRORS = {
   }
 }
 
-const PROMPT = `Analizza gli screenshot della schermata "Analisi" di eFootball (statistiche ultime 10 partite).
+const PROMPT = `Analizza gli screenshot della schermata "Analisi" di eFootball (statistiche ultime 10 partite). Le etichette possono essere in italiano, inglese o spagnolo.
 Puoi ricevere 1 o 2 immagini: una con "Tipo di gol", "Tiro", "Comandi speciali"; l'altra con "Passaggio", "Dribbling", "Difesa".
 
 Estrai tutti i dati visibili (percentuali, valori, etichette). Per ogni categoria restituisci un oggetto con le voci lette e la percentuale o il valore numerico indicato per l'utente ("Tu").
@@ -240,6 +242,13 @@ export async function POST(req) {
     }
 
     const urls = imageDataUrls.filter(u => u && typeof u === 'string')
+    const invalidImage = urls.find((url) => !/^data:image\/[a-z0-9.+-]+;base64,/i.test(url))
+    if (invalidImage) {
+      return NextResponse.json(
+        { error: L.parse, code: 'invalid_image_payload' },
+        { status: 400, headers: { 'Content-Language': lang } }
+      )
+    }
     
     // Check and deduct credits upfront
     const totalCost = urls.length * AI_COST
@@ -261,7 +270,7 @@ export async function POST(req) {
         } catch (err1) {
           console.error('[extract-game-analysis] First image error:', err1)
           return NextResponse.json(
-            { error: L.parse },
+            { error: L.parse, code: 'unreadable_analysis_image' },
             { status: 422, headers: { 'Content-Language': lang } }
           )
         }
@@ -278,7 +287,7 @@ export async function POST(req) {
     } catch (parseErr) {
       console.error('[extract-game-analysis] Parse error:', parseErr)
       return NextResponse.json(
-        { error: L.parse },
+        { error: L.parse, code: 'unreadable_analysis_image' },
         { status: 422, headers: { 'Content-Language': lang } }
       )
     }
@@ -288,7 +297,7 @@ export async function POST(req) {
     if (isEmpty) {
       console.warn('[extract-game-analysis] Extracted stats are empty. Aborting save.')
       return NextResponse.json(
-        { error: L.parse },
+        { error: L.parse, code: 'unreadable_analysis_image' },
         { status: 422, headers: { 'Content-Language': lang } }
       )
     }

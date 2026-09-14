@@ -92,6 +92,8 @@ const COPY = {
   },
   attachCamera: { it: 'Scatta foto', en: 'Take photo', es: 'Hacer foto' },
   attachGallery: { it: 'Carica da galleria', en: 'Upload from gallery', es: 'Subir de la galería' },
+  attachStatsMode: { it: 'Statistiche', en: 'Stats', es: 'Estadísticas' },
+  attachCounterMode: { it: 'Contromisure', en: 'Countermeasures', es: 'Contramedidas' },
   attachStatsHint: { it: 'Foto Analisi eFootball (max 2)', en: 'eFootball Analysis screenshots (max 2)', es: 'Capturas de Análisis (máx. 2)' },
   attachAnalyze: { it: 'Analizza e salva', en: 'Analyze and save', es: 'Analizar y guardar' },
   counterAnalyze: { it: 'Crea contromisure', en: 'Build countermeasures', es: 'Crear contramedidas' },
@@ -1002,13 +1004,19 @@ export default function HeroChat({
         ? L(lang, stateCopy.desc)
         : null
 
+  const startChatPrompt = React.useCallback((message) => {
+    setActionsOpen(false)
+    setInput(message)
+  }, [])
+
   const stateCta = (() => {
     switch (homeState) {
       case 'NEW':
+        return () => startChatPrompt('Aiutami a caricare la mia rosa qui in chat, passo dopo passo.')
       case 'ROSTER_INCOMPLETE':
-        return () => router.push('/gestione-formazione')
+        return () => startChatPrompt('Aiutami a completare la mia rosa qui in chat.')
       case 'NO_COACH':
-        return () => router.push('/nuova-rosa-lab')
+        return () => startChatPrompt('Aiutami a scegliere e configurare il mio allenatore qui in chat.')
       case 'POST_MATCH':
         return enterFeedbackMode
       case 'READY_NO_STATS':
@@ -1023,9 +1031,13 @@ export default function HeroChat({
     { key: 'camera', icon: Camera, label: L(lang, COPY.attachCamera), run: openStatsCamera },
     { key: 'gallery', icon: ImagePlus, label: L(lang, COPY.attachGallery), run: openStatsGallery },
     { key: 'counter', icon: Trophy, label: L(lang, COPY.actionPrepare), run: openCounterCamera },
-    { key: 'stats', icon: BarChart3, label: L(lang, COPY.actionStats), run: () => onOpenGameAnalysis?.() },
-    { key: 'prepare', icon: Trophy, label: L(lang, COPY.actionPrepare), run: () => router.push('/contromisure-pre-partita') },
-    { key: 'cards', icon: Sparkles, label: L(lang, COPY.actionCards), run: () => router.push('/card-advisor-lab') },
+    { key: 'stats', icon: BarChart3, label: L(lang, COPY.actionStats), run: openStatsCamera },
+    {
+      key: 'cards',
+      icon: Sparkles,
+      label: L(lang, COPY.actionCards),
+      run: () => startChatPrompt('Controlla una carta della mia rosa e dimmi come posso usarla meglio.')
+    },
     { key: 'feedback', icon: MessageSquareHeart, label: L(lang, COPY.actionFeedback), run: enterFeedbackMode }
   ]
 
@@ -1301,6 +1313,26 @@ export default function HeroChat({
             <p className="hc-attachHint">
               {attachmentMode === 'counter' ? L(lang, COPY.actionPrepare) : L(lang, COPY.attachStatsHint)}
             </p>
+            <div className="hc-attachModes" role="tablist">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={attachmentMode === 'stats'}
+                className={`hc-attachMode${attachmentMode === 'stats' ? ' hc-attachModeActive' : ''}`}
+                onClick={() => setAttachmentMode('stats')}
+              >
+                {L(lang, COPY.attachStatsMode)}
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={attachmentMode === 'counter'}
+                className={`hc-attachMode${attachmentMode === 'counter' ? ' hc-attachModeActive' : ''}`}
+                onClick={() => setAttachmentMode('counter')}
+              >
+                {L(lang, COPY.attachCounterMode)}
+              </button>
+            </div>
             <div className="hc-attachThumbs">
               {attachments.map((a) => (
                 <div key={a.id} className="hc-attachThumb">
@@ -2142,6 +2174,30 @@ export default function HeroChat({
           font-size: 11px;
           font-weight: 700;
           color: var(--text-dim);
+        }
+
+        .hc-attachModes {
+          display: flex;
+          gap: 6px;
+        }
+
+        .hc-attachMode {
+          min-height: 30px;
+          padding: 5px 10px;
+          border-radius: 999px;
+          border: 1px solid var(--border-soft);
+          background: transparent;
+          color: var(--text-dim);
+          font-size: 11px;
+          font-weight: 700;
+          font-family: inherit;
+          cursor: pointer;
+        }
+
+        .hc-attachModeActive {
+          color: var(--accent);
+          border-color: var(--accent-border);
+          background: var(--accent-bg);
         }
 
         .hc-attachThumbs {
