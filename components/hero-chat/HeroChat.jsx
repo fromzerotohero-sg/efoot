@@ -508,11 +508,11 @@ function MatchUploadCard({
           <p>{L(lang, currentSection.description)}</p>
           <div className="hc-matchUploadActions">
             <button type="button" className="hc-matchUploadButton" onClick={onCamera} disabled={analyzing}>
-              <Camera size={15} aria-hidden="true" />
+              <Camera size={18} aria-hidden="true" />
               {L(lang, COPY.attachCamera)}
             </button>
             <button type="button" className="hc-matchUploadButton" onClick={onGallery} disabled={analyzing}>
-              <ImagePlus size={15} aria-hidden="true" />
+              <ImagePlus size={18} aria-hidden="true" />
               {L(lang, COPY.attachGallery)}
             </button>
           </div>
@@ -523,14 +523,12 @@ function MatchUploadCard({
               ))}
             </div>
           )}
-          <div className="hc-matchUploadFooter">
-            <button type="button" className="hc-saveLater" onClick={onSkip} disabled={analyzing}>
-              {L(lang, COPY.matchSkip)}
-            </button>
-            <button type="button" className="hc-attachAnalyze" onClick={onRead} disabled={!attachments.length || analyzing || lowHp}>
-              {analyzing ? L(lang, COPY.attachAnalyzing) : L(lang, COPY.attachRead)}
-            </button>
-          </div>
+          <button type="button" className="hc-matchPrimary" onClick={onRead} disabled={!attachments.length || analyzing || lowHp}>
+            {analyzing ? L(lang, COPY.attachAnalyzing) : L(lang, COPY.attachRead)}
+          </button>
+          <button type="button" className="hc-matchSkip" onClick={onSkip} disabled={analyzing}>
+            {L(lang, COPY.matchSkip)}
+          </button>
         </div>
       )}
 

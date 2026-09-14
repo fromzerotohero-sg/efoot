@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
+import PageLoading from '@/components/PageLoading'
 import {
   BookOpen,
   User,
@@ -229,23 +230,7 @@ export default function GuidaPage() {
   ]
 
   if (loading) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'var(--bg-darker)'
-      }}>
-        <div style={{
-          textAlign: 'center',
-          color: 'var(--accent)',
-          fontSize: '18px'
-        }}>
-          {t('loading')}
-        </div>
-      </div>
-    )
+    return <PageLoading />
   }
 
   return (

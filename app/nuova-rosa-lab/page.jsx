@@ -6,6 +6,7 @@ import { withAuth } from '@/components/AuthWrapper'
 import { supabase } from '@/lib/supabaseClient'
 import { getPositionRoleTranslationKey, useTranslation } from '@/lib/i18n'
 import ConfirmModal from '@/components/ConfirmModal'
+import BrandLoadingOverlay from '@/components/BrandLoadingOverlay'
 import TacticalSettingsPanel from '@/components/TacticalSettingsPanel'
 import PositionSelectionModal from '@/components/PositionSelectionModal'
 import { safeJsonResponse } from '@/lib/fetchHelper'
@@ -6408,20 +6409,12 @@ export default withAuth(function NuovaRosaLabPage() {
       )}
 
       {buildCoachOverlay && (
-        <div className="nr-build-coach-overlay" role="status" aria-live="polite">
-          <div className="nr-build-coach-progress-card">
-            <div className="nr-build-coach-progress-icon">
-              <span className="nr-build-coach-logo-scan" />
-              <span className="nr-build-coach-logo-orbit" />
-              <img src="/logo.png" alt="" />
-            </div>
-            <div>
-              <span className="nr-build-coach-progress-kicker">AI Coach</span>
-              <strong>{buildCoachOverlay.title}</strong>
-              <p>{buildCoachOverlay.message}</p>
-            </div>
-          </div>
-        </div>
+        <BrandLoadingOverlay
+          layout="horizontal"
+          kicker="AI Coach"
+          title={buildCoachOverlay.title}
+          status={buildCoachOverlay.message}
+        />
       )}
 
       {toast && (
@@ -8825,121 +8818,6 @@ export default withAuth(function NuovaRosaLabPage() {
           font-size: 14px;
           font-weight: 950;
           font-variant-numeric: tabular-nums;
-        }
-
-        .nr-build-coach-overlay {
-          position: fixed;
-          inset: 0;
-          z-index: 100600;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 18px;
-          background: rgba(3, 7, 18, 0.62);
-          backdrop-filter: blur(8px);
-        }
-
-        .nr-build-coach-progress-card {
-          width: min(430px, calc(100vw - 28px));
-          display: flex;
-          align-items: flex-start;
-          gap: 14px;
-          padding: 18px;
-          border-radius: 18px;
-          border: 1px solid rgba(0, 212, 255, 0.32);
-          background:
-            linear-gradient(135deg, rgba(0, 212, 255, 0.12), rgba(168, 85, 247, 0.12)),
-            rgba(8, 13, 29, 0.96);
-          box-shadow: 0 18px 60px rgba(0, 0, 0, 0.48);
-          overflow: hidden;
-        }
-
-        .nr-build-coach-progress-icon {
-          position: relative;
-          width: 54px;
-          height: 54px;
-          flex: 0 0 54px;
-          display: grid;
-          place-items: center;
-          border-radius: 16px;
-          color: var(--primary-cyan, #00d4ff);
-          background:
-            radial-gradient(circle, rgba(0, 212, 255, 0.12), rgba(168, 85, 247, 0.08) 62%, transparent 76%);
-          border: 1px solid rgba(0, 212, 255, 0.22);
-          overflow: hidden;
-          isolation: isolate;
-        }
-
-        .nr-build-coach-progress-icon img {
-          position: relative;
-          z-index: 2;
-          width: 42px;
-          max-height: 42px;
-          object-fit: contain;
-          filter: drop-shadow(0 0 9px rgba(0, 212, 255, 0.48));
-          animation: nrBrandInterference 1.18s steps(2, end) infinite;
-        }
-
-        .nr-build-coach-logo-orbit {
-          position: absolute;
-          inset: 5px;
-          border-radius: 14px;
-          border: 1px dashed rgba(255, 255, 255, 0.18);
-          animation: nrBrandOrbit 3.8s linear infinite;
-        }
-
-        .nr-build-coach-logo-scan {
-          position: absolute;
-          z-index: 3;
-          left: 6px;
-          right: 6px;
-          height: 2px;
-          border-radius: 999px;
-          background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.95), transparent);
-          box-shadow: 0 0 12px rgba(0, 212, 255, 0.72);
-          animation: nrBrandLogoScan 1.35s ease-in-out infinite;
-        }
-
-        .nr-build-coach-progress-kicker {
-          display: inline-flex;
-          margin-bottom: 4px;
-          color: #67e8f9;
-          font-size: 10px;
-          font-weight: 950;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-        }
-
-        .nr-build-coach-progress-card strong {
-          display: block;
-          color: #fff;
-          font-size: 16px;
-          margin-bottom: 6px;
-        }
-
-        .nr-build-coach-progress-card p {
-          margin: 0;
-          color: rgba(255, 255, 255, 0.72);
-          line-height: 1.45;
-          font-size: 13px;
-        }
-
-        @keyframes nrBrandInterference {
-          0%, 100% { transform: translate(0, 0) skewX(0deg); opacity: 1; }
-          12% { transform: translate(-1px, 1px) skewX(-1deg); }
-          20% { transform: translate(1px, -1px) skewX(1deg); filter: drop-shadow(2px 0 rgba(255, 0, 102, 0.30)) drop-shadow(-2px 0 rgba(0, 212, 255, 0.44)); }
-          44% { transform: translate(0, 0); }
-          62% { transform: translate(-1px, 0) skewX(0.6deg); }
-        }
-
-        @keyframes nrBrandLogoScan {
-          0% { top: 7px; opacity: 0; }
-          20%, 78% { opacity: 1; }
-          100% { top: calc(100% - 9px); opacity: 0; }
-        }
-
-        @keyframes nrBrandOrbit {
-          to { transform: rotate(360deg); }
         }
 
         .nr-form-field {

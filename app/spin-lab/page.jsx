@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { Coins, Gift, RotateCw, Sparkles, Trophy, Zap } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import {
@@ -452,9 +453,9 @@ export default function SpinLabPage() {
               </div>
               <h2>Grande colpo!</h2>
               <p>{message}</p>
-              <a href="/gestione-profilo" className="bank-link">
+              <Link href="/gestione-profilo" className="bank-link">
                 Scopri dove usare gli HP
-              </a>
+              </Link>
             </div>
           )}
         </section>

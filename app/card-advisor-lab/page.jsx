@@ -3,6 +3,7 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
 import { withAuth } from '@/components/AuthWrapper'
+import BrandLoadingOverlay from '@/components/BrandLoadingOverlay'
 import { useTranslation } from '@/lib/i18n'
 import {
   AlertTriangle,
@@ -1563,64 +1564,6 @@ function DetailPanel({
   )
 }
 
-function DeepAnalysisLoadingOverlay({ labels }) {
-  const tips = Array.isArray(labels.deepAnalysisLoadingTips) ? labels.deepAnalysisLoadingTips : []
-  const [tipIndex, setTipIndex] = React.useState(0)
-
-  React.useEffect(() => {
-    setTipIndex(0)
-    if (tips.length <= 1) return undefined
-    const id = window.setInterval(() => {
-      setTipIndex(index => (index + 1) % tips.length)
-    }, 5200)
-    return () => window.clearInterval(id)
-  }, [tips.length, labels.deepAnalysisLoadingTips])
-
-  const tip = tips[tipIndex] || labels.deepAnalysisLoading || ''
-
-  return (
-    <div
-      className="brand-analysis-overlay"
-      role="status"
-      aria-live="polite"
-      aria-busy="true"
-    >
-      <div className="brand-analysis-core">
-        <div className="brand-analysis-logo-wrap">
-          <span className="brand-analysis-orbit" aria-hidden="true" />
-          <span className="brand-analysis-scanline" aria-hidden="true" />
-          <img className="brand-analysis-logo" src="/logo.png" alt="" />
-        </div>
-        <div className="brand-analysis-copy">
-          <span>{labels.deepAnalysisLoadingKicker || 'Analisi coach'}</span>
-          <strong>{labels.deepAnalysisTitle}</strong>
-          <p className="brand-analysis-loading-status">
-            {labels.deepAnalysisLoadingStatus || labels.deepAnalysisLoading}
-          </p>
-        </div>
-        {tip ? (
-          <div className="brand-analysis-tip" key={tipIndex}>
-            <span className="brand-analysis-tip-label">
-              {labels.deepAnalysisLoadingTipLabel || 'Mentre aspetti'}
-            </span>
-            <p className="brand-analysis-tip-text">{tip}</p>
-            {tips.length > 1 ? (
-              <div className="brand-analysis-tip-dots" aria-hidden="true">
-                {tips.map((_, index) => (
-                  <span
-                    key={index}
-                    className={index === tipIndex ? 'is-active' : ''}
-                  />
-                ))}
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
-    </div>
-  )
-}
-
 function CardDetailsModal({
   card,
   labels,
@@ -1695,7 +1638,20 @@ function CardDetailsModal({
         className={`card-details-modal-inner${deepAnalysisLoading ? ' card-details-modal-inner--deep-loading' : ''}`}
         onClick={(event) => event.stopPropagation()}
       >
-        {deepAnalysisLoading && <DeepAnalysisLoadingOverlay labels={labels} />}
+        {deepAnalysisLoading && (
+          <BrandLoadingOverlay
+            variant="violet"
+            kicker={labels.deepAnalysisLoadingKicker || 'Analisi coach'}
+            title={labels.deepAnalysisTitle}
+            status={labels.deepAnalysisLoadingStatus || labels.deepAnalysisLoading}
+            tips={
+              Array.isArray(labels.deepAnalysisLoadingTips) && labels.deepAnalysisLoadingTips.length > 0
+                ? labels.deepAnalysisLoadingTips
+                : [labels.deepAnalysisLoading]
+            }
+            tipLabel={labels.deepAnalysisLoadingTipLabel || 'Mentre aspetti'}
+          />
+        )}
         <DetailPanel
           card={card}
           labels={labels}
@@ -2654,254 +2610,6 @@ export default withAuth(function CardAdvisorLabPage() {
         .card-details-modal-inner--deep-loading {
           overflow: hidden;
           touch-action: none;
-        }
-
-        .brand-analysis-overlay {
-          position: fixed;
-          inset: 0;
-          z-index: 2000;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          min-height: 100vh;
-          min-height: 100dvh;
-          padding:
-            max(18px, env(safe-area-inset-top, 0px))
-            max(18px, env(safe-area-inset-right, 0px))
-            max(18px, env(safe-area-inset-bottom, 0px))
-            max(18px, env(safe-area-inset-left, 0px));
-          background:
-            radial-gradient(circle at 50% 38%, rgba(192, 132, 252, 0.20), transparent 28%),
-            radial-gradient(circle at 48% 42%, rgba(138, 43, 226, 0.18), transparent 35%),
-            rgba(2, 4, 12, 0.78);
-          backdrop-filter: blur(10px);
-          overscroll-behavior: contain;
-        }
-
-        .brand-analysis-core {
-          position: relative;
-          width: min(430px, calc(100vw - 42px));
-          max-height: calc(100dvh - 36px);
-          display: grid;
-          justify-items: center;
-          gap: 18px;
-          padding: 24px 20px 22px;
-          border-radius: 26px;
-          border: 1px solid rgba(192, 132, 252, 0.32);
-          background:
-            linear-gradient(180deg, rgba(6, 11, 30, 0.94), rgba(3, 6, 18, 0.96)),
-            radial-gradient(circle at top, rgba(192, 132, 252, 0.18), transparent 38%);
-          box-shadow:
-            0 24px 80px rgba(0, 0, 0, 0.48),
-            inset 0 1px 0 rgba(255, 255, 255, 0.06);
-          overflow: hidden;
-        }
-
-        .brand-analysis-core::before,
-        .brand-analysis-core::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-        }
-
-        .brand-analysis-core::before {
-          background: repeating-linear-gradient(
-            0deg,
-            rgba(255, 255, 255, 0.04) 0,
-            rgba(255, 255, 255, 0.04) 1px,
-            transparent 1px,
-            transparent 5px
-          );
-          opacity: 0.32;
-          animation: brandScan 1.9s linear infinite;
-        }
-
-        .brand-analysis-core::after {
-          background: linear-gradient(90deg, transparent, rgba(192, 132, 252, 0.22), transparent);
-          transform: translateX(-120%);
-          animation: brandSweep 2.4s ease-in-out infinite;
-        }
-
-        .brand-analysis-logo-wrap {
-          position: relative;
-          width: 132px;
-          height: 132px;
-          display: grid;
-          place-items: center;
-          border-radius: 32px;
-          background: radial-gradient(circle, rgba(192, 132, 252, 0.13), rgba(138, 43, 226, 0.08) 50%, transparent 72%);
-          isolation: isolate;
-        }
-
-        .brand-analysis-logo-wrap::before,
-        .brand-analysis-logo-wrap::after {
-          content: '';
-          position: absolute;
-          inset: 14px;
-          border-radius: 26px;
-          border: 1px solid rgba(192, 132, 252, 0.28);
-          box-shadow: 0 0 24px rgba(192, 132, 252, 0.16);
-        }
-
-        .brand-analysis-logo-wrap::after {
-          inset: 4px;
-          border-color: rgba(250, 204, 21, 0.16);
-          animation: brandPulse 1.8s ease-in-out infinite;
-        }
-
-        .brand-analysis-logo {
-          position: relative;
-          z-index: 2;
-          width: 104px;
-          max-height: 104px;
-          object-fit: contain;
-          filter:
-            drop-shadow(0 0 12px rgba(192, 132, 252, 0.44))
-            drop-shadow(0 0 22px rgba(138, 43, 226, 0.22));
-          animation: brandInterference 1.15s steps(2, end) infinite;
-        }
-
-        .brand-analysis-orbit {
-          position: absolute;
-          inset: 7px;
-          border-radius: 30px;
-          border: 1px dashed rgba(255, 255, 255, 0.2);
-          animation: brandOrbit 3.8s linear infinite;
-        }
-
-        .brand-analysis-scanline {
-          position: absolute;
-          z-index: 3;
-          left: 10px;
-          right: 10px;
-          height: 2px;
-          border-radius: 999px;
-          background: linear-gradient(90deg, transparent, rgba(192, 132, 252, 0.95), transparent);
-          box-shadow: 0 0 16px rgba(192, 132, 252, 0.72);
-          animation: brandLogoScan 1.45s ease-in-out infinite;
-        }
-
-        .brand-analysis-copy {
-          position: relative;
-          z-index: 2;
-          text-align: center;
-        }
-
-        .brand-analysis-copy span {
-          display: inline-flex;
-          margin-bottom: 8px;
-          color: #67e8f9;
-          font-size: 11px;
-          font-weight: 950;
-          letter-spacing: 0.16em;
-        }
-
-        .brand-analysis-copy strong {
-          display: block;
-          color: var(--text-main);
-          font-size: clamp(18px, 5vw, 24px);
-          letter-spacing: -0.03em;
-        }
-
-        .brand-analysis-loading-status {
-          margin: 8px auto 0;
-          max-width: 32ch;
-          color: rgba(255, 255, 255, 0.72);
-          line-height: 1.45;
-          font-size: 13px;
-        }
-
-        .brand-analysis-tip {
-          position: relative;
-          z-index: 2;
-          width: min(100%, 380px);
-          margin-top: 4px;
-          padding: 14px 16px 12px;
-          border-radius: 18px;
-          border: 1px solid rgba(192, 132, 252, 0.22);
-          background: rgba(5, 10, 28, 0.72);
-          text-align: left;
-          animation: brandTipFade 0.4s ease;
-        }
-
-        .brand-analysis-tip-label {
-          display: block;
-          margin-bottom: 8px;
-          color: #facc15;
-          font-size: 10px;
-          font-weight: 950;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-        }
-
-        .brand-analysis-tip-text {
-          margin: 0;
-          color: rgba(255, 255, 255, 0.88);
-          font-size: 13px;
-          line-height: 1.55;
-        }
-
-        .brand-analysis-tip-dots {
-          display: flex;
-          justify-content: center;
-          gap: 6px;
-          margin-top: 12px;
-        }
-
-        .brand-analysis-tip-dots span {
-          width: 6px;
-          height: 6px;
-          border-radius: 999px;
-          background: rgba(255, 255, 255, 0.22);
-          transition: transform 0.2s ease, background 0.2s ease;
-        }
-
-        .brand-analysis-tip-dots span.is-active {
-          background: #67e8f9;
-          transform: scale(1.25);
-          box-shadow: 0 0 8px rgba(103, 232, 249, 0.5);
-        }
-
-        @keyframes brandTipFade {
-          from { opacity: 0; transform: translateY(6px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes brandInterference {
-          0%, 100% { transform: translate(0, 0) skewX(0deg); opacity: 1; }
-          10% { transform: translate(-1px, 1px) skewX(-1deg); }
-          18% { transform: translate(1px, -1px) skewX(1deg); filter: drop-shadow(2px 0 rgba(255, 0, 102, 0.36)) drop-shadow(-2px 0 rgba(192, 132, 252, 0.44)); }
-          38% { transform: translate(0, 0); }
-          52% { transform: translate(1px, 0) skewX(-0.6deg); }
-          64% { transform: translate(-1px, 0) skewX(0.6deg); }
-        }
-
-        @keyframes brandLogoScan {
-          0% { top: 20px; opacity: 0; }
-          18% { opacity: 1; }
-          78% { opacity: 1; }
-          100% { top: calc(100% - 22px); opacity: 0; }
-        }
-
-        @keyframes brandSweep {
-          0%, 42% { transform: translateX(-130%); opacity: 0; }
-          55% { opacity: 1; }
-          100% { transform: translateX(130%); opacity: 0; }
-        }
-
-        @keyframes brandScan {
-          from { transform: translateY(0); }
-          to { transform: translateY(12px); }
-        }
-
-        @keyframes brandPulse {
-          0%, 100% { opacity: 0.44; transform: scale(0.98); }
-          50% { opacity: 1; transform: scale(1.03); }
-        }
-
-        @keyframes brandOrbit {
-          to { transform: rotate(360deg); }
         }
 
         .card-details-modal .detail-panel {

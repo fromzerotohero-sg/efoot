@@ -683,6 +683,16 @@ body > * {
   to { transform: rotate(360deg); }
 }
 
+/* Dissolvenza leggera al cambio pagina (stessa sensazione ovunque) */
+.shell-main > * {
+  animation: uxPageFade 0.18s ease-out;
+}
+
+@keyframes uxPageFade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes bounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
@@ -1157,11 +1167,6 @@ body > * {
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
 /* Notifica "Nessun tour" */
 .guide-tour-notice {
   position: fixed;
@@ -1483,6 +1488,234 @@ body > * {
 
 @keyframes brandOrbit {
   to { transform: rotate(360deg); }
+}
+
+/* Variante viola (Card Advisor Lab) */
+.brand-analysis-overlay--violet {
+  background:
+    radial-gradient(circle at 50% 38%, rgba(192, 132, 252, 0.20), transparent 28%),
+    radial-gradient(circle at 48% 42%, rgba(138, 43, 226, 0.18), transparent 35%),
+    rgba(2, 4, 12, 0.78);
+}
+
+.brand-analysis-overlay--violet .brand-analysis-core {
+  border-color: rgba(192, 132, 252, 0.32);
+  background:
+    linear-gradient(180deg, rgba(6, 11, 30, 0.94), rgba(3, 6, 18, 0.96)),
+    radial-gradient(circle at top, rgba(192, 132, 252, 0.18), transparent 38%);
+}
+
+.brand-analysis-overlay--violet .brand-analysis-core::after {
+  background: linear-gradient(90deg, transparent, rgba(192, 132, 252, 0.22), transparent);
+}
+
+.brand-analysis-overlay--violet .brand-analysis-logo-wrap {
+  background: radial-gradient(circle, rgba(192, 132, 252, 0.13), rgba(138, 43, 226, 0.08) 50%, transparent 72%);
+}
+
+.brand-analysis-overlay--violet .brand-analysis-logo-wrap::before {
+  border-color: rgba(192, 132, 252, 0.28);
+  box-shadow: 0 0 24px rgba(192, 132, 252, 0.16);
+}
+
+.brand-analysis-overlay--violet .brand-analysis-logo {
+  filter:
+    drop-shadow(0 0 12px rgba(192, 132, 252, 0.44))
+    drop-shadow(0 0 22px rgba(138, 43, 226, 0.22));
+}
+
+.brand-analysis-overlay--violet .brand-analysis-scanline {
+  background: linear-gradient(90deg, transparent, rgba(192, 132, 252, 0.95), transparent);
+  box-shadow: 0 0 16px rgba(192, 132, 252, 0.72);
+}
+
+.brand-analysis-overlay--violet .brand-analysis-tip {
+  border-color: rgba(192, 132, 252, 0.22);
+}
+
+/* Variante compatta orizzontale dentro overlay (es. Build Coach in Nuova Rosa) */
+.brand-analysis-overlay--compact {
+  z-index: 100600;
+  background: rgba(3, 7, 18, 0.62);
+  backdrop-filter: blur(8px);
+}
+
+.brand-analysis-core--horizontal {
+  display: flex;
+  align-items: flex-start;
+  justify-items: initial;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(0, 212, 255, 0.12), rgba(168, 85, 247, 0.12)),
+    rgba(8, 13, 29, 0.96);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.48);
+}
+
+.brand-analysis-core--horizontal::before,
+.brand-analysis-core--horizontal::after {
+  display: none;
+}
+
+.brand-analysis-core--horizontal .brand-analysis-logo-wrap {
+  width: 54px;
+  height: 54px;
+  flex: 0 0 54px;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 212, 255, 0.22);
+  background:
+    radial-gradient(circle, rgba(0, 212, 255, 0.12), rgba(168, 85, 247, 0.08) 62%, transparent 76%);
+  overflow: hidden;
+}
+
+.brand-analysis-core--horizontal .brand-analysis-logo-wrap::before,
+.brand-analysis-core--horizontal .brand-analysis-logo-wrap::after {
+  display: none;
+}
+
+.brand-analysis-core--horizontal .brand-analysis-logo {
+  width: 42px;
+  max-height: 42px;
+  filter: drop-shadow(0 0 9px rgba(0, 212, 255, 0.48));
+}
+
+.brand-analysis-core--horizontal .brand-analysis-orbit {
+  inset: 5px;
+  border-radius: 14px;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.brand-analysis-core--horizontal .brand-analysis-scanline {
+  left: 6px;
+  right: 6px;
+}
+
+.brand-analysis-core--horizontal .brand-analysis-copy {
+  text-align: left;
+}
+
+.brand-analysis-core--horizontal .brand-analysis-copy span {
+  margin-bottom: 4px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+}
+
+.brand-analysis-core--horizontal .brand-analysis-copy strong {
+  margin-bottom: 6px;
+  font-size: 16px;
+  letter-spacing: normal;
+}
+
+.brand-analysis-core--horizontal .brand-analysis-loading-status {
+  margin: 0;
+  max-width: none;
+}
+
+/* Variante card orizzontale in-page (es. analisi Contromisure) */
+.brand-analysis-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: clamp(16px, 4vw, 22px);
+  margin-bottom: 24px;
+  border: 1px solid rgba(0, 212, 255, 0.20);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top right, rgba(0, 212, 255, 0.16), transparent 34%),
+    radial-gradient(circle at bottom left, rgba(255, 203, 5, 0.10), transparent 32%),
+    linear-gradient(135deg, rgba(5, 10, 24, 0.96), rgba(8, 18, 34, 0.94));
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.30), 0 0 30px rgba(0, 212, 255, 0.10);
+}
+
+.brand-analysis-card .brand-analysis-logo-wrap {
+  width: 116px;
+  height: 116px;
+  flex: 0 0 116px;
+  border-radius: 30px;
+  background: radial-gradient(circle, rgba(0, 212, 255, 0.16), rgba(138, 43, 226, 0.08) 58%, transparent 76%);
+}
+
+.brand-analysis-card .brand-analysis-logo-wrap::before,
+.brand-analysis-card .brand-analysis-logo-wrap::after {
+  display: none;
+}
+
+.brand-analysis-card .brand-analysis-logo {
+  width: 64px;
+  max-height: 64px;
+  filter: drop-shadow(0 0 12px rgba(0, 212, 255, 0.52));
+}
+
+.brand-analysis-card .brand-analysis-orbit {
+  inset: 8px;
+  border-radius: 26px;
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.brand-analysis-card .brand-analysis-scanline {
+  left: 16px;
+  right: 16px;
+}
+
+.brand-analysis-card .brand-analysis-copy {
+  text-align: left;
+}
+
+.brand-analysis-card .brand-analysis-copy span {
+  margin-bottom: 7px;
+  letter-spacing: 0.12em;
+}
+
+.brand-analysis-card .brand-analysis-copy strong {
+  color: var(--text-main);
+  font-size: clamp(18px, 4vw, 24px);
+  line-height: 1.12;
+  letter-spacing: normal;
+}
+
+.brand-analysis-card .brand-analysis-loading-status {
+  margin: 8px 0 0;
+  max-width: none;
+  color: #6b6b6b;
+  line-height: 1.55;
+  font-size: 14px;
+}
+
+.brand-analysis-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 13px;
+}
+
+.brand-analysis-steps em {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+@media (max-width: 720px) {
+  .brand-analysis-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .brand-analysis-card .brand-analysis-logo-wrap {
+    width: 94px;
+    height: 94px;
+    flex-basis: 94px;
+  }
 }
 
 /* UX V2 — Coach tool pages on dark premium shell (era tema chiaro: convertito) */

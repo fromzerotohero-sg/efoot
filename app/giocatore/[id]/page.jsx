@@ -13,6 +13,7 @@ import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 import { getSkillDisplayLabel } from '@/lib/playerSkillLabels'
 import ManualPlayerModal from '@/components/ManualPlayerModal'
 import ManualBoostersModal from '@/components/ManualBoostersModal'
+import PageLoading from '@/components/PageLoading'
 import { getPlayerDisplayStats, getPlayerDisplayOverall } from '@/lib/playerEffectiveStats'
 
 export default function PlayerDetailPage() {
@@ -522,17 +523,12 @@ export default function PlayerDetailPage() {
   }, [manualBoosters, player, playerId, t])
 
   if (loading) {
-    return (
-      <main style={{ padding: '32px 24px', minHeight: '100vh', textAlign: 'center' }}>
-        <RefreshCw size={32} style={{ animation: 'spin 1s linear infinite', marginBottom: '16px', color: 'var(--accent)' }} />
-        <div>{t('loading')}</div>
-      </main>
-    )
+    return <PageLoading />
   }
 
   if (error && !player) {
     return (
-      <main style={{ padding: '32px 24px', minHeight: '100vh' }}>
+      <div style={{ padding: '32px 24px', minHeight: '100vh' }}>
         <div className="error" style={{ marginBottom: '24px' }}>
           <AlertCircle size={18} />
           {error}
@@ -541,7 +537,7 @@ export default function PlayerDetailPage() {
           <ArrowLeft size={16} />
           {t('back')}
         </button>
-      </main>
+      </div>
     )
   }
 
@@ -574,7 +570,7 @@ export default function PlayerDetailPage() {
   }
 
   return (
-    <main style={{ padding: '32px 24px', minHeight: '100vh', maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={{ padding: '32px 24px', minHeight: '100vh', maxWidth: '1200px', margin: '0 auto' }}>
       {/* Header */}
       <div style={{ 
         display: 'flex', 
@@ -788,7 +784,7 @@ export default function PlayerDetailPage() {
           saving={uploading}
         />
       )}
-    </main>
+    </div>
   )
 }
 

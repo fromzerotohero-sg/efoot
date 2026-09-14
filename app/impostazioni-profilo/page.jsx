@@ -1,15 +1,17 @@
 'use client'
 
 import React from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
 import {
-  RefreshCw, CheckCircle2, AlertCircle, X,
+  CheckCircle2, AlertCircle, X,
   Zap, LogOut, BookOpen, Gift, Pencil
 } from 'lucide-react'
 import LanguageSwitch from '@/components/LanguageSwitch'
 import ThemeToggle from '@/components/ThemeToggle'
+import PageLoading from '@/components/PageLoading'
 
 
 /** Hub Account & Utility stile app: identita reale, HP reali, utility di sistema, logout reale.
@@ -126,10 +128,10 @@ function AccountUtilitySection({ t, lang, router }) {
           {account.email ? <span style={st.idMail}>{account.email}</span> : null}
         </div>
         {typeof hpBalance === 'number' && (
-          <a href="/gestione-profilo" style={{ ...st.hp, textDecoration: 'none' }} title="Hero Points">
+          <Link href="/gestione-profilo" style={{ ...st.hp, textDecoration: 'none' }} title="Hero Points">
             <Zap size={13} />
             {hpBalance} HP
-          </a>
+          </Link>
         )}
       </div>
 
@@ -511,12 +513,7 @@ export default function ImpostazioniProfiloPage() {
   ]
 
   if (loading) {
-    return (
-      <main style={{ padding: '32px 24px', minHeight: '100vh', textAlign: 'center' }}>
-        <RefreshCw size={32} style={{ animation: 'spin 1s linear infinite', marginBottom: '16px', color: 'var(--accent)' }} />
-        <div>{t('loadingProfile')}</div>
-      </main>
-    )
+    return <PageLoading label={t('loadingProfile')} />
   }
 
   return (

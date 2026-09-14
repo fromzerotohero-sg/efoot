@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import ConfirmModal from '@/components/ConfirmModal'
+import PageLoading from '@/components/PageLoading'
 import { ArrowLeft, Upload, Camera, AlertCircle, CheckCircle2, X, Trash2, Star, Info, Plus, Zap } from 'lucide-react'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
@@ -451,9 +452,7 @@ export default function AllenatoriPage() {
 
         {/* Loading */}
         {loading && (
-          <div className="neon-card" style={{ padding: '48px', textAlign: 'center' }}>
-            <div className="neon-text">{t('loading')}</div>
-          </div>
+          <PageLoading inline />
         )}
 
         {/* Lista Allenatori */}

@@ -10,6 +10,7 @@ import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import { INDIVIDUAL_INSTRUCTIONS_CONFIG } from '@/lib/tacticalInstructions'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
+import BrandLoadingOverlay from '@/components/BrandLoadingOverlay'
 import { ArrowLeft, Upload, AlertCircle, CheckCircle2, RefreshCw, X, Camera, Shield, Target, Users, Settings, ChevronDown, ChevronUp, Brain, MessageCircle, Trophy, Radio, Sparkles, Mic } from 'lucide-react'
 
 /** Estrae testo in lingua da valore stringa o oggetto bilingue { it, en } (coerente con analyze-match) */
@@ -445,26 +446,13 @@ export default function CountermeasuresPreMatchPage() {
       )}
 
       {isProcessing && (
-        <section className="counter-processing-card" role="status" aria-live="polite" aria-busy="true">
-          <div className="counter-processing-logo">
-            <span className="counter-logo-orbit" aria-hidden="true" />
-            <span className="counter-logo-scan" aria-hidden="true" />
-            <img src="/logo.png" alt="" />
-          </div>
-          <div className="counter-processing-copy">
-            <span>{processingCopy.kicker}</span>
-            <strong>{processingCopy.title}</strong>
-            <p>{processingCopy.text}</p>
-            <div className="counter-processing-steps">
-              {processingCopy.steps.map((step, index) => (
-                <em key={step}>
-                  <CheckCircle2 size={13} />
-                  {index + 1}. {step}
-                </em>
-              ))}
-            </div>
-          </div>
-        </section>
+        <BrandLoadingOverlay
+          inline
+          kicker={processingCopy.kicker}
+          title={processingCopy.title}
+          status={processingCopy.text}
+          steps={processingCopy.steps}
+        />
       )}
 
       {/* Upload Sezione */}
@@ -1394,8 +1382,7 @@ export default function CountermeasuresPreMatchPage() {
           animation: none;
         }
 
-        .counter-upload-card,
-        .counter-processing-card {
+        .counter-upload-card {
           position: relative;
           overflow: hidden;
           border: 1px solid rgba(0, 212, 255, 0.20);
@@ -1473,8 +1460,7 @@ export default function CountermeasuresPreMatchPage() {
           animation: counterBrandOrbit 4.2s linear infinite;
         }
 
-        .counter-upload-logo img,
-        .counter-processing-logo img {
+        .counter-upload-logo img {
           position: relative;
           z-index: 2;
           width: 64px;
@@ -1552,98 +1538,8 @@ export default function CountermeasuresPreMatchPage() {
           font-weight: 800;
         }
 
-        .counter-processing-card {
-          display: flex;
-          align-items: center;
-          gap: 18px;
-          padding: clamp(16px, 4vw, 22px);
-          margin-bottom: 24px;
-        }
-
-        .counter-processing-logo {
-          position: relative;
-          width: 116px;
-          height: 116px;
-          flex: 0 0 116px;
-          display: grid;
-          place-items: center;
-          border-radius: 30px;
-          background: radial-gradient(circle, rgba(0, 212, 255, 0.16), rgba(138, 43, 226, 0.08) 58%, transparent 76%);
-        }
-
-        .counter-logo-orbit {
-          position: absolute;
-          inset: 8px;
-          border-radius: 26px;
-          border: 1px dashed rgba(255, 255, 255, 0.22);
-          animation: counterBrandOrbit 3.8s linear infinite;
-        }
-
-        .counter-logo-scan {
-          position: absolute;
-          z-index: 3;
-          left: 16px;
-          right: 16px;
-          height: 2px;
-          border-radius: 999px;
-          background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.95), transparent);
-          box-shadow: 0 0 12px rgba(0, 212, 255, 0.72);
-          animation: counterBrandScan 1.35s ease-in-out infinite;
-        }
-
-        .counter-processing-copy span {
-          display: inline-flex;
-          margin-bottom: 7px;
-          color: #67e8f9;
-          font-size: 11px;
-          font-weight: 950;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-        }
-
-        .counter-processing-copy strong {
-          display: block;
-          color: var(--text-main);
-          font-size: clamp(18px, 4vw, 24px);
-          line-height: 1.12;
-        }
-
-        .counter-processing-copy p {
-          margin: 8px 0 0;
-          color: #6b6b6b;
-          line-height: 1.55;
-          font-size: 14px;
-        }
-
-        .counter-processing-steps {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-          margin-top: 13px;
-        }
-
-        .counter-processing-steps em {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 7px 10px;
-          border-radius: 999px;
-          color: rgba(255, 255, 255, 0.88);
-          background: rgba(255, 255, 255, 0.07);
-          border: 1px solid rgba(255, 255, 255, 0.10);
-          font-size: 12px;
-          font-style: normal;
-          font-weight: 800;
-        }
-
         @keyframes counterBrandOrbit {
           to { transform: rotate(360deg); }
-        }
-
-        @keyframes counterBrandScan {
-          0% { top: 16px; opacity: 0; }
-          20%, 78% { opacity: 1; }
-          100% { top: calc(100% - 18px); opacity: 0; }
         }
 
         @keyframes counterBrandInterference {
@@ -1655,8 +1551,7 @@ export default function CountermeasuresPreMatchPage() {
         }
 
         @media (max-width: 720px) {
-          .counter-upload-head,
-          .counter-processing-card {
+          .counter-upload-head {
             align-items: flex-start;
             flex-direction: column;
           }
@@ -1669,12 +1564,6 @@ export default function CountermeasuresPreMatchPage() {
 
           .counter-cta-row {
             grid-template-columns: 1fr;
-          }
-
-          .counter-processing-logo {
-            width: 94px;
-            height: 94px;
-            flex-basis: 94px;
           }
         }
       `}</style>

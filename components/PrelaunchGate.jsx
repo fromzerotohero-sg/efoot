@@ -5,56 +5,80 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useTranslation } from '@/lib/i18n'
 import { isPrelaunchPublicPath } from '@/lib/prelaunchRoutes'
 
+// Stato verificato UNA VOLTA per sessione JS: al cambio pagina si riusa il
+// risultato senza rifare la fetch (niente spinner a tutto schermo a ogni
+// navigazione). Si ri-verifica solo sulla pagina /access (dove lo stato puo
+// cambiare tramite codice di accesso) e sulla prima navigazione dopo averla lasciata.
+let prelaunchStatusCache = null
+
 export default function PrelaunchGate({ children }) {
   const pathname = usePathname()
   const router = useRouter()
   const { t } = useTranslation()
   const [state, setState] = React.useState({ checking: true, allowRender: false })
+  const prevPathnameRef = React.useRef(null)
 
   React.useEffect(() => {
     let mounted = true
+    const isPublic = isPrelaunchPublicPath(pathname || '/')
+    const isAccessPage = pathname === '/access'
+
+    const applyDecision = (payload) => {
+      const gateEnabled = Boolean(payload?.gateEnabled)
+      const hasAccess = Boolean(payload?.hasAccess)
+
+      if (!gateEnabled) {
+        if (isAccessPage) {
+          setState({ checking: true, allowRender: false })
+          router.replace('/')
+          return
+        }
+
+        setState({ checking: false, allowRender: true })
+        return
+      }
+
+      if (isAccessPage) {
+        if (hasAccess) {
+          setState({ checking: true, allowRender: false })
+          router.replace('/')
+          return
+        }
+
+        setState({ checking: false, allowRender: true })
+        return
+      }
+
+      if (!isPublic && !hasAccess) {
+        setState({ checking: true, allowRender: false })
+        router.replace('/access')
+        return
+      }
+
+      setState({ checking: false, allowRender: true })
+    }
+
+    const needsFreshCheck =
+      !prelaunchStatusCache || isAccessPage || prevPathnameRef.current === '/access'
+    prevPathnameRef.current = pathname || '/'
+
+    if (!needsFreshCheck) {
+      applyDecision(prelaunchStatusCache)
+      return
+    }
 
     const run = async () => {
-      const isPublic = isPrelaunchPublicPath(pathname || '/')
-      const isAccessPage = pathname === '/access'
-
       try {
         const response = await fetch('/api/prelaunch/status', {
           cache: 'no-store',
           credentials: 'same-origin',
         })
         const payload = await response.json().catch(() => ({}))
-        const gateEnabled = Boolean(payload?.gateEnabled)
-        const hasAccess = Boolean(payload?.hasAccess)
+        prelaunchStatusCache = payload
 
         if (!mounted) return
 
-        if (!gateEnabled) {
-          if (isAccessPage) {
-            router.replace('/')
-            return
-          }
-
-          setState({ checking: false, allowRender: true })
-          return
-        }
-
-        if (isAccessPage) {
-          if (hasAccess) {
-            router.replace('/')
-            return
-          }
-
-          setState({ checking: false, allowRender: true })
-          return
-        }
-
-        if (!isPublic && !hasAccess) {
-          router.replace('/access')
-          return
-        }
-
-        setState({ checking: false, allowRender: true })
+        applyDecision(payload)
       } catch (error) {
         console.error('[PrelaunchGate] Failed to check gate status:', error)
         if (!mounted) return
@@ -63,7 +87,6 @@ export default function PrelaunchGate({ children }) {
       }
     }
 
-    setState({ checking: true, allowRender: false })
     run()
 
     return () => {

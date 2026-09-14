@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import Link from 'next/link'
 import { useTranslation } from '@/lib/i18n'
 import { ArrowRight, BarChart3, MessageCircle, Shield, Sparkles, Wallet, X } from 'lucide-react'
 
@@ -55,11 +56,11 @@ export default function GestioneProfiloPage() {
       ]
 
   return (
-    <main style={{ padding: 'clamp(12px, 4vw, 24px)', minHeight: '100vh', maxWidth: '980px', margin: '0 auto' }}>
+    <div style={{ padding: 'clamp(12px, 4vw, 24px)', minHeight: '100vh', maxWidth: '980px', margin: '0 auto' }}>
       <section className="card hp-page-card">
-        <a href="/" className="hp-close-button" aria-label={(lang === 'en' || lang === 'es') ? 'Back to dashboard' : 'Torna alla dashboard'}>
+        <Link href="/" className="hp-close-button" aria-label={(lang === 'en' || lang === 'es') ? 'Back to dashboard' : 'Torna alla dashboard'}>
           <X size={18} />
-        </a>
+        </Link>
 
         <div className="hp-title-row">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
@@ -68,9 +69,9 @@ export default function GestioneProfiloPage() {
               {pageTitle}
             </h1>
           </div>
-          <a href="/" className="hp-dashboard-link">
+          <Link href="/" className="hp-dashboard-link">
             {(lang === 'en' || lang === 'es') ? 'Back to dashboard' : 'Torna alla dashboard'}
-          </a>
+          </Link>
         </div>
 
         <p style={{ margin: '0 0 18px', color: 'rgba(255,255,255,0.74)', lineHeight: 1.5 }}>
@@ -83,7 +84,7 @@ export default function GestioneProfiloPage() {
           {highlights.map((item) => {
             const Icon = item.icon
             return (
-              <a key={item.title} href={item.href} className="hp-use-card">
+              <Link key={item.title} href={item.href} className="hp-use-card">
                 <Icon size={22} color="#ffcb05" />
                 <strong>{item.title}</strong>
                 <p>{item.text}</p>
@@ -91,7 +92,7 @@ export default function GestioneProfiloPage() {
                   {(lang === 'en' || lang === 'es') ? 'Open' : 'Apri'}
                   <ArrowRight size={13} />
                 </span>
-              </a>
+              </Link>
             )
           })}
         </div>
@@ -117,9 +118,9 @@ export default function GestioneProfiloPage() {
         </p>
 
         <div className="hp-actions">
-          <a href="/" className="hp-back-link">
+          <Link href="/" className="hp-back-link">
             {(lang === 'en' || lang === 'es') ? 'Back to dashboard' : 'Torna alla dashboard'}
-          </a>
+          </Link>
           <a href="https://home.fromzerotohero.io/dashboard?usage" target="_blank" rel="noopener noreferrer" className="hp-buy-link">
             {buyLabel}
           </a>
@@ -325,6 +326,6 @@ export default function GestioneProfiloPage() {
           }
         }
       `}</style>
-    </main>
+    </div>
   )
 }

@@ -11,9 +11,9 @@ import HeroChat from '@/components/hero-chat/HeroChat'
 import { fetchCoachProfileFromApi, resolveAuthToken, buildAuthHeaders } from '@/lib/profileUxHelpers'
 import { withAuth } from '@/components/AuthWrapper'
 import {
-  RefreshCw,
   AlertCircle
 } from 'lucide-react'
+import PageLoading from '@/components/PageLoading'
 
 /** Legge query URL: openCoach=1 → Palestra Coach; openAssistantChat=1 → chat principale; openGameAnalysis=1 → GameAnalysisModal; openCardAdvisor=1 → Card Advisor Lab. */
 function OpenCoachListener({ onOpenCoach, onOpenAssistantChat, onOpenGameAnalysis, onOpenCardAdvisor }) {
@@ -310,14 +310,7 @@ function HomePage() {
   }, [loading])
 
   if (loading) {
-    return (
-      <div className="container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center' }}>
-          <RefreshCw size={40} color="#30b060" style={{ animation: 'spin 1s linear infinite', marginBottom: '16px' }} />
-          <p style={{ fontSize: '16px', color: 'rgba(244, 246, 247, 0.55)' }}>{t('loading')}</p>
-        </div>
-      </div>
-    )
+    return <PageLoading />
   }
 
   if (error) {
@@ -336,7 +329,7 @@ function HomePage() {
   }
 
   return (
-    <main data-tour-id="tour-dashboard-intro" className="max-w-7xl mx-auto" style={{ padding: '16px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div data-tour-id="tour-dashboard-intro" className="max-w-7xl mx-auto" style={{ padding: '16px', height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Suspense fallback={null}>
         <OpenCoachListener
           onOpenCoach={() => {
@@ -405,7 +398,7 @@ function HomePage() {
           to { transform: rotate(360deg); }
         }
       `}</style>
-    </main>
+    </div>
   )
 }
 

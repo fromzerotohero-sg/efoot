@@ -7,6 +7,7 @@ import { useTranslation } from '@/lib/i18n'
 import { mapErrorToUserMessage } from '@/lib/errorHelper'
 import { Upload, AlertCircle, CheckCircle2, RefreshCw, X, Camera, Calendar, Trophy, ChevronDown, ChevronUp, Users, Target, TrendingUp, TrendingDown, Shield, ArrowLeft } from 'lucide-react'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
+import PageLoading from '@/components/PageLoading'
 import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 
 // STEPS sarà definito dentro il componente per avere accesso a t()
@@ -289,19 +290,14 @@ export default function MatchDetailPage() {
   }
 
   if (loading) {
-    return (
-      <main style={{ padding: '32px 24px', minHeight: '100vh', textAlign: 'center' }}>
-        <RefreshCw size={32} style={{ animation: 'spin 1s linear infinite', marginBottom: '16px', color: 'var(--accent)' }} />
-        <div>{t('loading')}</div>
-      </main>
-    )
+    return <PageLoading />
   }
 
   // Se c'è errore ma non abbiamo match, mostra errore
   // Ma se abbiamo match (anche incompleto), permette l'accesso per completarlo
   if (error && !match && !loading) {
     return (
-      <main style={{ padding: '32px 24px', minHeight: '100vh' }}>
+      <div style={{ padding: '32px 24px', minHeight: '100vh' }}>
         <div className="error" style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <AlertCircle size={18} />
           {error}
@@ -309,24 +305,17 @@ export default function MatchDetailPage() {
         <button onClick={() => router.push('/')} className="neon-button">
           {t('backToDashboard')}
         </button>
-      </main>
+      </div>
     )
   }
 
   // Se ancora in caricamento, mostra loading
   if (loading || !match) {
-    return (
-      <main style={{ padding: '32px 24px', minHeight: '100vh' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <RefreshCw size={20} className="spin" />
-          <span>{t('loadingShort')}</span>
-        </div>
-      </main>
-    )
+    return <PageLoading label={t('loadingShort')} />
   }
 
   return (
-    <main style={{ padding: '24px', minHeight: '100vh', maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={{ padding: '24px', minHeight: '100vh', maxWidth: '1200px', margin: '0 auto' }}>
       {/* Header */}
       <div style={{ 
         display: 'flex', 
@@ -535,6 +524,6 @@ export default function MatchDetailPage() {
           to { transform: rotate(360deg); }
         }
       `}</style>
-    </main>
+    </div>
   )
 }

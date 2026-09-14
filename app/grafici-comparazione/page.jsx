@@ -7,7 +7,8 @@ import { supabase, getValidAccessToken } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
 import { getBenchmarkComparison, BENCHMARK_CATEGORIES } from '@/lib/gameAnalysisBenchmark'
 import GameAnalysisModal from '@/components/GameAnalysisModal'
-import { ArrowLeft, BarChart3, MessageCircle, RefreshCw, TrendingUp } from 'lucide-react'
+import PageLoading from '@/components/PageLoading'
+import { ArrowLeft, BarChart3, MessageCircle, TrendingUp } from 'lucide-react'
 
 const CATEGORY_KEYS = {
   shot_usage: 'chartsCategoryShot',
@@ -265,9 +266,7 @@ export default function GraficiComparazionePage() {
 
       <main style={{ maxWidth: '900px', width: '100%', minWidth: 0, margin: '0 auto', padding: 'clamp(16px, 4vw, 24px) clamp(16px, 4vw, 20px)', boxSizing: 'border-box' }}>
         {loading ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px', color: '#6b6b6b' }}>
-            <RefreshCw size={24} className="grafici-comparazione-spinner" />
-          </div>
+          <PageLoading inline />
         ) : !hasCharts ? (
           <div className="neon-card" style={{
             padding: '32px 24px',
@@ -358,8 +357,6 @@ export default function GraficiComparazionePage() {
         }}
         lastCaptureDate={capturedAt}
       />
-
-      <style dangerouslySetInnerHTML={{ __html: '.grafici-comparazione-spinner { animation: grafici-spin 1s linear infinite; } @keyframes grafici-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }' }} />
     </div>
   )
 }

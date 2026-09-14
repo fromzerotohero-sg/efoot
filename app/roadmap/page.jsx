@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { ArrowLeft, BookOpen } from 'lucide-react'
 import RoadmapVisualizer from '@/components/RoadmapVisualizer'
+import PageLoading from '@/components/PageLoading'
 import { useTranslation } from '@/lib/i18n'
 
 export default function RoadmapPage() {
@@ -178,12 +179,7 @@ export default function RoadmapPage() {
   }
 
   if (loading) {
-    return (
-      <div style={styles.loadingContainer}>
-          <div style={styles.spinner} />
-          <p>{t('loading')}</p>
-      </div>
-    )
+    return <PageLoading />
   }
 
   return (
@@ -247,24 +243,6 @@ const styles = {
     maxWidth: '900px',
     margin: '0 auto',
     padding: '0 20px'
-  },
-  loadingContainer: {
-    minHeight: '100vh',
-    backgroundColor: '#0a0a0a',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '20px',
-    color: '#888'
-  },
-  spinner: {
-    width: '40px',
-    height: '40px',
-    border: '3px solid rgba(0, 212, 255, 0.2)',
-    borderTop: '3px solid #00d4ff',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite'
   },
   header: {
     marginBottom: '32px'

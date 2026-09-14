@@ -47,6 +47,4 @@ Rate limit in-memory (`lib/rateLimiter.js`): mitigante, non Redis.
 - `auth/metalgate-callback`, `metalgate-sync`
 - `prelaunch/*`, `maintenance/*`
 
-## Quarantena
-
-- `smart/chat`, `smart/context`, `smart/countermeasures`, `smart/extract-formation` — non reintrodurre come ingresso UX (`SMART_COACH_ENTRY` default false)
+Lo Smart Coach (`smart/*`) è stato rimosso dal codice: non reintrodurlo come ingresso UX.
