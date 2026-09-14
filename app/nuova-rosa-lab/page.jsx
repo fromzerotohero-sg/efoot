@@ -10042,6 +10042,12 @@ export default withAuth(function NuovaRosaLabPage() {
           -webkit-overflow-scrolling: touch;
         }
 
+        /* Le sezioni NON devono restringersi dentro lo sheet flessibile:
+           senza questo flex-shrink il contenuto veniva tagliato a meta */
+        .nr-quick-body-sheet > * {
+          flex-shrink: 0;
+        }
+
         .nr-sheet-grip {
           display: none;
         }
