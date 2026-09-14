@@ -2099,6 +2099,7 @@ export default withAuth(function CardAdvisorLabPage() {
           width: min(1420px, 100%);
           margin: 0 auto;
           padding: clamp(18px, 3vw, 32px);
+          overflow-x: clip;
         }
 
         .lab-hero,
@@ -2180,6 +2181,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .release-header {
           display: flex;
+          flex-wrap: wrap;
           justify-content: space-between;
           align-items: flex-start;
           gap: 16px;
@@ -2208,26 +2210,25 @@ export default withAuth(function CardAdvisorLabPage() {
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          border: 1px solid rgba(74, 222, 128, 0.72);
-          background: linear-gradient(135deg, rgba(34,197,94,0.22), rgba(22,163,74,0.14));
-          color: #ecfdf5;
+          border: 1px solid var(--accent-border);
+          background: var(--accent-bg);
+          color: var(--accent);
           border-radius: 999px;
           padding: 6px 10px;
           font-size: 11px;
           font-weight: 800;
           line-height: 1.2;
-          box-shadow: 0 0 14px rgba(34,197,94,0.18);
           white-space: nowrap;
         }
 
         .roster-linked-chip svg {
-          color: #4ade80;
+          color: var(--accent);
           flex-shrink: 0;
         }
 
         .roster-linked-chip em {
           font-style: normal;
-          color: rgba(187, 247, 208, 0.95);
+          color: var(--accent);
           font-weight: 700;
         }
 
@@ -2247,7 +2248,7 @@ export default withAuth(function CardAdvisorLabPage() {
         .roster-nudge-banner p {
           margin: 0;
           flex: 1 1 200px;
-          color: rgba(255,255,255,0.78);
+          color: var(--text-main);
           font-size: 13px;
           line-height: 1.45;
         }
@@ -2284,7 +2285,7 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .release-search span {
-          color: rgba(255,255,255,0.58);
+          color: var(--text-dim);
           font-size: 11px;
           font-weight: 800;
           letter-spacing: 0.08em;
@@ -2294,9 +2295,9 @@ export default withAuth(function CardAdvisorLabPage() {
         .release-search input {
           width: 100%;
           min-height: 44px;
-          border: 1px solid rgba(192,132,252,0.24);
+          border: 1px solid var(--border-soft);
           border-radius: 14px;
-          background: rgba(2,4,12,0.42);
+          background: var(--surface);
           color: var(--text-main);
           padding: 0 14px;
           outline: none;
@@ -2310,7 +2311,7 @@ export default withAuth(function CardAdvisorLabPage() {
         .release-result-count {
           margin: 0;
           align-self: flex-end;
-          color: rgba(255,255,255,0.58);
+          color: var(--text-dim);
           font-size: 12px;
           line-height: 1.35;
           text-align: right;
@@ -2362,10 +2363,10 @@ export default withAuth(function CardAdvisorLabPage() {
           width: clamp(148px, 40vw, 188px);
           min-height: 56px;
           padding: 9px 11px 9px 13px;
-          border: 1px solid rgba(255,255,255,0.12);
+          border: 1px solid var(--border-soft);
           border-radius: 14px;
-          background: rgba(255,255,255,0.04);
-          color: rgba(255,255,255,0.88);
+          background: var(--surface-2);
+          color: var(--text-main);
           display: flex;
           flex-direction: column;
           align-items: flex-start;
@@ -2378,7 +2379,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
         .release-tab-type {
           width: 100%;
-          color: rgba(255,255,255,0.52);
+          color: var(--text-dim);
           font-size: 10px;
           font-weight: 800;
           letter-spacing: 0.07em;
@@ -2411,11 +2412,11 @@ export default withAuth(function CardAdvisorLabPage() {
         }
 
         .release-tab.is-active .release-tab-type {
-          color: #86efac;
+          color: var(--accent);
         }
 
         .release-tab.is-active .release-tab-title {
-          color: #f0fdf4;
+          color: var(--text-main);
         }
 
         .release-tab:focus-visible {
