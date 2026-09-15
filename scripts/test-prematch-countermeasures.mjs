@@ -82,6 +82,7 @@ const defenseCategory = Object.keys(INDIVIDUAL_INSTRUCTIONS_CONFIG).find((key) =
         visual_tactical_profile: { central_density: 'high', width_profile: 'narrow' }
       }
     },
+    currentTacticalSettings: { team_playing_style: 'vie_laterali' },
     roster: [{ player_name: 'Rijkaard' }]
   })
   const plan = presented.customer_plan
@@ -92,6 +93,10 @@ const defenseCategory = Object.keys(INDIVIDUAL_INSTRUCTIONS_CONFIG).find((key) =
   assert(plan.setup.team_playing_style === 'Vie laterali', 'team style extracted')
   assert(plan.main_decision === plan.diagnosis, 'single main decision mirrors diagnosis')
   assert(plan.setup_actions.some((action) => action.type === 'team_style'), 'setup actions expose exact team style')
+  assert(
+    plan.setup_actions.some((action) => action.type === 'team_style' && action.status === 'keep' && action.value === 'Vie laterali'),
+    'team-style ids normalize before computing setup delta'
+  )
   assert(plan.playbook.with_ball.includes('Apri il gioco sul lato debole'), 'with-ball playbook preserved')
   assert(plan.playbook.without_ball.includes('Marcatura su Bruno Fernandes'), 'real opponent name preserved in without-ball playbook')
   assert(Boolean(plan.plan_b?.trigger && plan.plan_b?.action), 'Plan B has trigger and response')

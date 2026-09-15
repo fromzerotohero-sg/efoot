@@ -131,6 +131,8 @@ const COPY = {
   planB: { it: 'Piano B', en: 'Plan B', es: 'Plan B' },
   planIf: { it: 'Se', en: 'If', es: 'Si' },
   planAskHero: { it: 'Continua con Hero', en: 'Continue with Hero', es: 'Continúa con Hero' },
+  planGenerated: { it: 'Generato', en: 'Generated', es: 'Generado' },
+  planMap: { it: 'Vedi il piano sul campo', en: 'See the plan on the pitch', es: 'Ver el plan en el campo' },
   planNoCountermeasure: { it: 'Nessuna modifica necessaria: parti dal tuo assetto e segui i passaggi chiave.', en: 'No change needed: start from your shape and follow the key steps.', es: 'No hace falta cambiar: empieza con tu estructura y sigue los pasos clave.' },
   planDetails: { it: 'Perché questo piano?', en: 'Why this plan?', es: '¿Por qué este plan?' },
   attachAnalyzing: { it: 'Sto leggendo le tue statistiche…', en: 'Reading your stats…', es: 'Leyendo tus estadísticas…' },
@@ -415,15 +417,26 @@ function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, for
     .map((item) => localized(item))
     .filter(Boolean)
     .slice(0, 3)
+  const generatedAt = (() => {
+    if (!plan.created_at) return ''
+    const date = new Date(plan.created_at)
+    if (Number.isNaN(date.getTime())) return ''
+    return date.toLocaleTimeString(lang === 'en' ? 'en-GB' : lang === 'es' ? 'es-ES' : 'it-IT', {
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  })()
 
   return (
     <div className="hc-planCard">
       <div className="hc-planHead">
         <Trophy size={16} aria-hidden="true" />
         <strong>{L(lang, COPY.planTitle)}</strong>
+        {generatedAt ? (
+          <span className="hc-planFreshness">{L(lang, COPY.planGenerated)} {generatedAt}</span>
+        ) : null}
         <span className="hc-planStatus hc-planStatusDone">✓</span>
       </div>
-      <p className="hc-planSaved">{L(lang, COPY.planSaved)}</p>
 
       <div className="hc-planHero">
         <span className="hc-planEyebrow">{L(lang, COPY.planDecision)}</span>
@@ -435,18 +448,6 @@ function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, for
           </p>
         ) : null}
       </div>
-
-      <PrematchPitch
-        starters={starters}
-        slotPositions={slotPositions}
-        formation={setup.formation || formation}
-        playerSuggestions={playerSuggestions}
-        individualInstructions={individualInstructions}
-        teamStyle={teamStyle}
-        attackLine={attackLines[0] || null}
-        defenseLine={defenseLines[0] || null}
-        lang={lang}
-      />
 
       <section className="hc-planSetup" aria-label={L(lang, COPY.planSetup)}>
         <div className="hc-planSectionHead">
@@ -498,6 +499,21 @@ function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, for
           <strong>{planBAction}</strong>
         </section>
       ) : null}
+
+      <details className="hc-planMap">
+        <summary>{L(lang, COPY.planMap)}</summary>
+        <PrematchPitch
+          starters={starters}
+          slotPositions={slotPositions}
+          formation={setup.formation || formation}
+          playerSuggestions={playerSuggestions}
+          individualInstructions={individualInstructions}
+          teamStyle={teamStyle}
+          attackLine={attackLines[0] || null}
+          defenseLine={defenseLines[0] || null}
+          lang={lang}
+        />
+      </details>
 
       {followUps.length > 0 && typeof onFollowup === 'function' ? (
         <section className="hc-planFollowups">
@@ -959,16 +975,31 @@ export default function HeroChat({
       try {
         const token = await resolveToken()
         if (!token || cancelled) return
-        const res = await fetch('/api/hero-chat?limit=50', {
-          headers: { Authorization: `Bearer ${token}` },
-          cache: 'no-store'
-        })
-        const data = await res.json().catch(() => ({}))
-        if (!cancelled && res.ok) {
-          setThreadId(data.thread?.id || null)
-          if (Array.isArray(data.messages) && data.messages.length) {
-            setMessages(data.messages)
+        const headers = { Authorization: `Bearer ${token}` }
+        const [historyRes, plansRes] = await Promise.all([
+          fetch('/api/hero-chat?limit=50', { headers, cache: 'no-store' }),
+          fetch('/api/hero-chat/plans', { headers, cache: 'no-store' })
+        ])
+        const [historyData, plansData] = await Promise.all([
+          historyRes.json().catch(() => ({})),
+          plansRes.json().catch(() => ({}))
+        ])
+        if (!cancelled && historyRes.ok) {
+          setThreadId(historyData.thread?.id || null)
+          if (Array.isArray(historyData.messages) && historyData.messages.length) {
+            setMessages(historyData.messages)
           }
+        }
+        if (!cancelled) {
+          const latestCanonicalPlan = plansRes.ok && Array.isArray(plansData.plans)
+            ? plansData.plans[0] || null
+            : null
+          const latestEmbeddedPlan = Array.isArray(historyData.messages)
+            ? [...historyData.messages].reverse().find((message) => (
+                (message.kind || message.payload?.kind) === 'plan' && message.plan
+              ))?.plan || null
+            : null
+          setPrematchPlan((current) => latestCanonicalPlan || latestEmbeddedPlan || current)
         }
       } catch {
         // Fallback naturale: la sessione continua in memoria.
@@ -1870,6 +1901,15 @@ export default function HeroChat({
     { key: 'match', icon: ClipboardList, label: L(lang, COPY.actionMatch), run: startMatchUpload },
     { key: 'feedback', icon: MessageSquareHeart, label: L(lang, COPY.actionFeedback), run: () => enterFeedbackMode(lastSavedMatchId || lastMatch?.id || null) }
   ]
+  const activePlanMessageIndex = prematchPlan
+    ? messages.findLastIndex((message) => {
+        const kind = message.kind || message.payload?.kind
+        if (kind !== 'plan' || !message.plan) return false
+        return prematchPlan.id
+          ? message.plan.id === prematchPlan.id
+          : message.plan.opponent_formation_id === prematchPlan.opponent_formation_id
+      })
+    : -1
 
   return (
     <div className="heroChat">
@@ -2112,32 +2152,19 @@ export default function HeroChat({
           }
 
           if (kind === 'plan' && m.plan) {
-            const hasNewerPlan = messages.slice(i + 1).some((item) => (
-              (item.kind || item.payload?.kind) === 'plan' && item.plan
-            ))
-            if (hasNewerPlan) return null
+            // Persisted plan messages remain part of conversation history, but the
+            // active card has one canonical source: prematchPlan.
+            if (i !== activePlanMessageIndex || !prematchPlan || feedbackMode || matchFlow) return null
             return (
-              <React.Fragment key={key}>
-                {m.content ? (
-                  <div className="hc-row">
-                    <span className="hc-bubbleAvatar" aria-hidden="true">
-                      <img src="/logo.png" alt="" />
-                    </span>
-                    <div className="hc-bubble hc-bubbleHero hc-bubbleOk">
-                      <span className="hc-warnRow"><CheckCircle2 size={14} aria-hidden="true" /></span>
-                      <ChatMarkdown>{m.content}</ChatMarkdown>
-                    </div>
-                  </div>
-                ) : null}
-                <PrematchPlanCard
-                  plan={m.plan}
-                  lang={lang}
-                  starters={starters}
-                  slotPositions={slotPositions}
-                  formation={formation}
-                  onFollowup={sendMessage}
-                />
-              </React.Fragment>
+              <PrematchPlanCard
+                key={key}
+                plan={prematchPlan}
+                lang={lang}
+                starters={starters}
+                slotPositions={slotPositions}
+                formation={formation}
+                onFollowup={sendMessage}
+              />
             )
           }
 
@@ -2216,6 +2243,17 @@ export default function HeroChat({
             </div>
           )
         })}
+
+        {prematchPlan && activePlanMessageIndex < 0 && !feedbackMode && !matchFlow && (
+          <PrematchPlanCard
+            plan={prematchPlan}
+            lang={lang}
+            starters={starters}
+            slotPositions={slotPositions}
+            formation={formation}
+            onFollowup={sendMessage}
+          />
+        )}
 
         {sending && (
           <div className="hc-row">
@@ -3319,8 +3357,14 @@ export default function HeroChat({
           color: var(--accent);
         }
 
-        :global(.hc-planStatus) {
+        :global(.hc-planFreshness) {
           margin-left: auto;
+          color: var(--text-dim);
+          font-size: 10px;
+          font-weight: 700;
+        }
+
+        :global(.hc-planStatus) {
           padding: 4px 8px;
           border-radius: 999px;
           background: var(--surface-3);
@@ -3584,7 +3628,8 @@ export default function HeroChat({
         :global(.hc-planSetup),
         :global(.hc-planPlaybook),
         :global(.hc-planB),
-        :global(.hc-planFollowups) {
+        :global(.hc-planFollowups),
+        :global(.hc-planMap) {
           border: 1px solid var(--border-soft);
           border-radius: 14px;
           background: var(--surface-2);
@@ -3786,6 +3831,29 @@ export default function HeroChat({
         :global(.hc-planFollowups button:hover) {
           border-color: var(--accent);
           color: var(--accent);
+        }
+
+        :global(.hc-planMap) {
+          overflow: hidden;
+        }
+
+        :global(.hc-planMap > summary) {
+          min-height: 46px;
+          display: flex;
+          align-items: center;
+          padding: 0 12px;
+          color: var(--text-main);
+          font-size: 12px;
+          font-weight: 800;
+          cursor: pointer;
+        }
+
+        :global(.hc-planMap[open] > summary) {
+          border-bottom: 1px solid var(--border-soft);
+        }
+
+        :global(.hc-planMap .hc-pitch) {
+          margin: 8px;
         }
 
         @media (max-width: 560px) {
