@@ -82,9 +82,9 @@ const COPY = {
     es: (name) => `¡Hola ${name}! Soy tu coach. Te guío paso a paso: plantilla, estadísticas, partidos. Dime qué quieres — o toca una acción abajo.`
   },
   greetingReturningNamed: {
-    it: (name) => `Bentornato ${name}. Cosa facciamo oggi?`,
-    en: (name) => `Welcome back ${name}. What are we doing today?`,
-    es: (name) => `Bienvenido de nuevo ${name}. ¿Qué hacemos hoy?`
+    it: (name) => `Bentornato ${name}. Cosa vuoi fare oggi?`,
+    en: (name) => `Welcome back ${name}. What would you like to do today?`,
+    es: (name) => `Bienvenido de nuevo ${name}. ¿Qué quieres hacer hoy?`
   },
   attachCamera: { it: 'Scatta foto', en: 'Take photo', es: 'Hacer foto' },
   attachGallery: { it: 'Carica da galleria', en: 'Upload from gallery', es: 'Subir de la galería' },
@@ -698,11 +698,6 @@ export default function HeroChat({
   onStatsSuccess
 }) {
   const router = useRouter()
-  const configuredHeroName = String(userProfile?.ai_name || '').trim()
-  const configuredHeroNameKey = configuredHeroName.toLowerCase().replace(/[^a-z0-9]/g, '')
-  const heroName = configuredHeroNameKey === 'fromzerotohero'
-    ? 'Hero Coach'
-    : configuredHeroName || 'Hero Coach'
   const clientName = resolveGreetingName(userProfile)
 
   const [messages, setMessages] = React.useState([])
@@ -764,7 +759,6 @@ export default function HeroChat({
     } catch { /* ignore */ }
     return greeted ? 'returning' : 'first'
   })
-
   // Knowledge score reale per l'anello header (stesso endpoint di AIKnowledgeBar)
   React.useEffect(() => {
     let cancelled = false
@@ -1752,9 +1746,6 @@ export default function HeroChat({
     setFeedCards((prev) => (prev.includes(cardId) ? prev : [...prev, cardId]))
   }
 
-  const lastHeroMessage = [...messages].reverse().find((m) => m.role === 'hero' && m.content && !String(m.kind || '').startsWith('workflow'))
-  const activeSuggestions = !sending && lastHeroMessage?.suggestions?.length ? lastHeroMessage.suggestions : []
-
   const scoreRing = (() => {
     if (typeof knowledgeScore !== 'number') return null
     const r = 10
@@ -1804,15 +1795,12 @@ export default function HeroChat({
 
   return (
     <div className="heroChat">
-      {/* Header conversazione: identità Hero + HP reale + anello conoscenza + impostazioni */}
+      {/* Header conversazione: logo + anello conoscenza */}
       <header className="hc-header">
         <div className="hc-identity">
           <span className="hc-avatarWrap">
             <img src="/logo.png" alt="" className="hc-avatar" />
             <span className="hc-online" aria-hidden="true" />
-          </span>
-          <span className="hc-nameBlock" aria-label={L(lang, COPY.online)}>
-            <strong>{heroName}</strong>
           </span>
         </div>
         <div className="hc-headerRight">
@@ -1833,12 +1821,6 @@ export default function HeroChat({
               </svg>
               <span className="hc-ringValue">{scoreRing.value}%</span>
             </button>
-          )}
-          {typeof hpBalance === 'number' && (
-            <span className="hc-hpPill">
-              <Zap size={13} aria-hidden="true" />
-              {hpBalance} HP
-            </span>
           )}
         </div>
       </header>
@@ -2186,15 +2168,6 @@ export default function HeroChat({
           </div>
         )}
 
-        {activeSuggestions.length > 0 && !feedbackMode && !matchFlow && (
-          <div className="hc-suggestions">
-            {activeSuggestions.map((sug) => (
-              <button key={sug} type="button" className="hc-suggestionPill" onClick={() => sendMessage(sug)}>
-                {sug}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* LOW HP banner (solo saldo reale noto) */}
@@ -2383,20 +2356,6 @@ export default function HeroChat({
           border: 2px solid var(--shell-bg);
         }
 
-        .hc-nameBlock {
-          display: flex;
-          flex-direction: column;
-          min-width: 0;
-        }
-
-        .hc-nameBlock strong {
-          font-size: 15px;
-          font-weight: 800;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
         .hc-headerRight {
           display: flex;
           align-items: center;
@@ -2424,33 +2383,6 @@ export default function HeroChat({
           font-size: 11px;
           font-weight: 800;
           color: var(--accent);
-        }
-
-        .hc-hpPill {
-          display: inline-flex;
-          align-items: center;
-          gap: 5px;
-          padding: 6px 12px;
-          border-radius: 999px;
-          background: var(--gold-bg);
-          border: 1px solid var(--gold-border);
-          color: var(--gold-text);
-          font-size: 12px;
-          font-weight: 800;
-          white-space: nowrap;
-        }
-
-        .hc-iconBtn {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 34px;
-          height: 34px;
-          border-radius: 10px;
-          background: var(--surface-2);
-          border: 1px solid var(--border-soft);
-          color: var(--text-dim);
-          cursor: pointer;
         }
 
         .hc-feed {
@@ -2804,26 +2736,6 @@ export default function HeroChat({
           margin: 0;
           font-size: 12px;
           color: var(--text-dim);
-        }
-
-        .hc-suggestions {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-        }
-
-        .hc-suggestionPill {
-          min-height: 36px;
-          padding: 8px 14px;
-          border-radius: 999px;
-          border: 1px solid var(--accent-border);
-          background: var(--accent-bg);
-          color: var(--accent);
-          font-size: 12px;
-          font-weight: 600;
-          font-family: inherit;
-          cursor: pointer;
-          text-align: left;
         }
 
         :global(.hc-guidedCard) {
@@ -4096,13 +4008,11 @@ export default function HeroChat({
           flex-wrap: wrap;
         }
 
-        .hc-iconBtn:focus-visible,
         .hc-sendBtn:focus-visible,
         .hc-micBtn:focus-visible,
         .hc-plusBtn:focus-visible,
         .hc-stateBtn:focus-visible,
         .hc-richCta:focus-visible,
-        .hc-suggestionPill:focus-visible,
         .hc-bubbleAction:focus-visible,
         .hc-actionItem:focus-visible,
         .hc-lowHpCta:focus-visible {
