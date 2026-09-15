@@ -4,6 +4,7 @@ import React from 'react'
 import Link from 'next/link'
 import { Menu, X, ShoppingCart, Home, User } from 'lucide-react'
 import CreditsBar from '@/components/CreditsBar'
+import NotificationBell from '@/components/NotificationBell'
 import { InstallAppPromptButton } from '@/components/InstallAppPrompt'
 import LanguageSwitch from '@/components/LanguageSwitch'
 import ThemeToggle from '@/components/ThemeToggle'
@@ -146,6 +147,9 @@ export default function TopBar({ showInstallPrompt = true }) {
 
           {/* Hero Points: utility compatta sempre raggiungibile */}
           <CreditsBar />
+
+          {/* Notifiche: campanella sempre visibile (mobile + desktop) */}
+          <NotificationBell />
 
           {/* Icona Carrello - solo tablet/desktop */}
           <button
