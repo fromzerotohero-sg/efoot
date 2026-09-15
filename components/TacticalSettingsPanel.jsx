@@ -74,8 +74,8 @@ export default function TacticalSettingsPanel({
   return (
     <div style={{
       marginBottom: '24px',
-      background: 'linear-gradient(180deg, rgba(13, 20, 40, 0.9), rgba(8, 12, 28, 0.95))',
-      border: '1px solid rgba(255, 255, 255, 0.08)',
+      background: 'var(--surface)',
+      border: '1px solid var(--border-soft)',
       borderRadius: '14px',
       overflow: 'hidden'
     }}>
@@ -91,19 +91,19 @@ export default function TacticalSettingsPanel({
           cursor: 'pointer',
           userSelect: 'none',
           background: isCollapsed
-            ? 'rgba(255, 255, 255, 0.02)'
-            : 'rgba(255, 255, 255, 0.03)',
+            ? 'var(--surface-2)'
+            : 'var(--surface-2)',
           transition: 'background 0.2s ease',
-          borderBottom: isCollapsed ? 'none' : '1px solid rgba(255, 255, 255, 0.08)'
+          borderBottom: isCollapsed ? 'none' : '1px solid var(--border-soft)'
         }}
         onMouseEnter={(e) => {
           if (isCollapsed) {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
+            e.currentTarget.style.background = 'var(--surface-3)'
           }
         }}
         onMouseLeave={(e) => {
           if (isCollapsed) {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)'
+            e.currentTarget.style.background = 'var(--surface-2)'
           }
         }}
       >
@@ -112,21 +112,21 @@ export default function TacticalSettingsPanel({
           alignItems: 'center',
           gap: '10px'
         }}>
-          <Settings size={18} color="#7ceeff" />
+          <Settings size={18} color="var(--info-text)" />
           <h2 style={{
             fontSize: 'clamp(15px, 1.8vw, 16px)',
             fontWeight: 600,
             margin: 0,
-            color: '#fff',
+            color: 'var(--text-main)',
             letterSpacing: '0.2px'
           }}>
             {t('tacticalSettings')}
           </h2>
         </div>
         {isCollapsed ? (
-          <ChevronDown size={20} color="rgba(255, 255, 255, 0.6)" />
+          <ChevronDown size={20} color="var(--text-secondary)" />
         ) : (
-          <ChevronUp size={20} color="rgba(255, 255, 255, 0.6)" />
+          <ChevronUp size={20} color="var(--text-secondary)" />
         )}
       </div>
 
@@ -143,7 +143,7 @@ export default function TacticalSettingsPanel({
           fontSize: 'clamp(11px, 1.2vw, 12px)',
           fontWeight: 700,
           marginBottom: '8px',
-          color: '#7ceeff',
+          color: 'var(--info-text)',
           letterSpacing: '0.08em',
           textTransform: 'uppercase'
         }}>
@@ -158,10 +158,10 @@ export default function TacticalSettingsPanel({
               width: '100%',
               padding: '10px 12px',
               paddingRight: '40px',
-              background: 'rgba(8, 12, 28, 0.85)',
-              border: '1px solid rgba(255, 255, 255, 0.14)',
+              background: 'var(--inset-bg)',
+              border: '1px solid var(--border-strong)',
               borderRadius: '10px',
-              color: '#fff',
+              color: 'var(--text-main)',
               fontSize: 'clamp(13px, 1.5vw, 15px)',
               cursor: 'pointer',
               appearance: 'none',
@@ -178,7 +178,7 @@ export default function TacticalSettingsPanel({
           </select>
           <ChevronDown
             size={18}
-            color="rgba(255, 255, 255, 0.55)"
+            color="var(--text-dim)"
             style={{
               position: 'absolute',
               right: '12px',
@@ -190,7 +190,7 @@ export default function TacticalSettingsPanel({
         </div>
         <div style={{
           fontSize: 'clamp(11px, 1.2vw, 12px)',
-          color: 'rgba(255, 255, 255, 0.55)',
+          color: 'var(--text-dim)',
           marginTop: '6px',
           lineHeight: '1.4'
         }}>
@@ -218,8 +218,8 @@ export default function TacticalSettingsPanel({
               key={category}
               style={{
                 padding: 'clamp(12px, 1.5vw, 14px)',
-                background: 'rgba(255, 255, 255, 0.03)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                background: 'var(--surface-2)',
+                border: '1px solid var(--border-soft)',
                 borderRadius: '12px'
               }}
             >
@@ -228,7 +228,7 @@ export default function TacticalSettingsPanel({
                 fontSize: 'clamp(11px, 1.2vw, 12px)',
                 fontWeight: 700,
                 marginBottom: '10px',
-                color: '#7ceeff',
+                color: 'var(--info-text)',
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase'
               }}>
@@ -240,7 +240,7 @@ export default function TacticalSettingsPanel({
                 <label style={{
                   display: 'block',
                   fontSize: 'clamp(11px, 1.2vw, 12px)',
-                  color: 'rgba(255, 255, 255, 0.55)',
+                  color: 'var(--text-dim)',
                   marginBottom: '4px'
                 }}>
                   {t('instruction')}:
@@ -254,10 +254,10 @@ export default function TacticalSettingsPanel({
                       width: '100%',
                       padding: '10px 12px',
                       paddingRight: '36px',
-                      background: 'rgba(8, 12, 28, 0.85)',
-                      border: '1px solid rgba(255, 255, 255, 0.14)',
+                      background: 'var(--inset-bg)',
+                      border: '1px solid var(--border-strong)',
                       borderRadius: '10px',
-                      color: '#fff',
+                      color: 'var(--text-main)',
                       fontSize: 'clamp(12px, 1.3vw, 14px)',
                       cursor: 'pointer',
                       appearance: 'none',
@@ -276,7 +276,7 @@ export default function TacticalSettingsPanel({
                   </select>
                   <ChevronDown
                     size={16}
-                    color="rgba(255, 255, 255, 0.55)"
+                    color="var(--text-dim)"
                     style={{
                       position: 'absolute',
                       right: '10px',
@@ -293,7 +293,7 @@ export default function TacticalSettingsPanel({
                 <label style={{
                   display: 'block',
                   fontSize: 'clamp(11px, 1.2vw, 12px)',
-                  color: 'rgba(255, 255, 255, 0.55)',
+                  color: 'var(--text-dim)',
                   marginBottom: '4px'
                 }}>
                   {t('selectPlayer')}:
@@ -308,10 +308,10 @@ export default function TacticalSettingsPanel({
                       width: '100%',
                       padding: '10px 12px',
                       paddingRight: '36px',
-                      background: 'rgba(8, 12, 28, 0.85)',
-                      border: '1px solid rgba(255, 255, 255, 0.14)',
+                      background: 'var(--inset-bg)',
+                      border: '1px solid var(--border-strong)',
                       borderRadius: '10px',
-                      color: compatiblePlayers.length === 0 ? 'rgba(255, 255, 255, 0.45)' : '#fff',
+                      color: compatiblePlayers.length === 0 ? 'var(--text-dim)' : 'var(--text-main)',
                       fontSize: 'clamp(12px, 1.3vw, 14px)',
                       cursor: compatiblePlayers.length === 0 ? 'not-allowed' : 'pointer',
                       appearance: 'none',
@@ -329,7 +329,7 @@ export default function TacticalSettingsPanel({
                   </select>
                   <ChevronDown
                     size={16}
-                    color="rgba(255, 255, 255, 0.55)"
+                    color="var(--text-dim)"
                     style={{
                       position: 'absolute',
                       right: '10px',
@@ -342,7 +342,7 @@ export default function TacticalSettingsPanel({
                 {compatiblePlayers.length === 0 && (
                   <div style={{
                     fontSize: 'clamp(11px, 1.2vw, 12px)',
-                    color: 'rgba(255, 255, 255, 0.55)',
+                    color: 'var(--text-dim)',
                     marginTop: '6px',
                     fontStyle: 'italic'
                   }}>
@@ -373,11 +373,11 @@ export default function TacticalSettingsPanel({
       <style jsx>{`
         .tsp-select:focus {
           outline: none;
-          border-color: rgba(0, 212, 255, 0.45) !important;
+          border-color: var(--info) !important;
         }
         .tsp-select option {
-          background: #0d1428;
-          color: #fff;
+          background: var(--surface);
+          color: var(--text-main);
         }
         .tsp-save-button {
           display: inline-flex;
@@ -385,9 +385,9 @@ export default function TacticalSettingsPanel({
           gap: 8px;
           padding: 11px 14px;
           border-radius: 12px;
-          border: 1px solid rgba(0, 212, 255, 0.3);
-          background: rgba(0, 212, 255, 0.1);
-          color: #fff;
+          border: 1px solid var(--info-border);
+          background: var(--info-bg);
+          color: var(--text-main);
           font-weight: 600;
           cursor: pointer;
           transition: background 0.18s ease, border-color 0.18s ease;

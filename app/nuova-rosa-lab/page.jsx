@@ -30,6 +30,7 @@ import {
   tryApplyBuildSliderDelta
 } from '@/lib/gameplayBuildCoach'
 import { MAX_TACCE_PER_MACRO } from '@/lib/efootballProgressionCost'
+import { MAX_ADDITIONAL_SKILLS } from '@/lib/efootballTruthLayer'
 import { PLAYER_SKILL_PRESETS, getSkillDisplayLabel, normalizePlayerSkillsArray, normalizeSkillKey } from '@/lib/playerSkillLabels'
 import { resolvePlayerCardImageUrl } from '@/lib/playerCardImage'
 import { resolvePlayingStyleDbName } from '@/lib/playingStyleResolve'
@@ -2962,6 +2963,9 @@ function PremiumPlayerModal({
     gk_reach: ''
   })
   const [skillsDraft, setSkillsDraft] = React.useState([])
+  const [nativeSkillsDraft, setNativeSkillsDraft] = React.useState([])
+  const [additionalSkillsDraft, setAdditionalSkillsDraft] = React.useState([])
+  const [skillProvenanceKnown, setSkillProvenanceKnown] = React.useState(false)
   const [comSkillsDraft, setComSkillsDraft] = React.useState([])
   const [selectedSkillPreset, setSelectedSkillPreset] = React.useState('')
   const [boostersDraft, setBoostersDraft] = React.useState([])
@@ -3029,7 +3033,18 @@ function PremiumPlayerModal({
       club_name: player.club_name || '',
       ...normalizedStats
     })
-    setSkillsDraft(normalizePlayerSkillsArray(Array.isArray(player.skills) ? player.skills : []))
+    const metadata = player.metadata && typeof player.metadata === 'object' ? player.metadata : {}
+    const extractedData = player.extracted_data && typeof player.extracted_data === 'object' ? player.extracted_data : {}
+    const allSavedSkills = normalizePlayerSkillsArray(Array.isArray(player.skills) ? player.skills : [])
+    const hasExplicitNative = Array.isArray(metadata.native_skills) || Array.isArray(extractedData.native_skills)
+    const explicitNative = normalizePlayerSkillsArray(metadata.native_skills || extractedData.native_skills || [])
+    const explicitAdditional = normalizePlayerSkillsArray(metadata.additional_skills || extractedData.additional_skills || [])
+    const nativeSkills = hasExplicitNative ? explicitNative : allSavedSkills
+    const additionalSkills = explicitAdditional.filter((skill) => !hasPlayerSkill(nativeSkills, skill))
+    setNativeSkillsDraft(nativeSkills)
+    setAdditionalSkillsDraft(additionalSkills)
+    setSkillProvenanceKnown(hasExplicitNative)
+    setSkillsDraft(normalizePlayerSkillsArray([...nativeSkills, ...additionalSkills]))
     setComSkillsDraft(normalizePlayerSkillsArray(Array.isArray(player.com_skills) ? player.com_skills : []))
     setSelectedSkillPreset('')
     setShowAllSkills(false)
@@ -3051,13 +3066,17 @@ function PremiumPlayerModal({
       setShowAllSkills(true)
       return
     }
+    if (additionalSkillsDraft.length >= MAX_ADDITIONAL_SKILLS) return
     setSkillsDraft((prev) => [...prev, normalized])
+    setAdditionalSkillsDraft((prev) => normalizePlayerSkillsArray([...prev, normalized]))
     setSelectedSkillPreset('')
     setShowAllSkills(true)
   }
 
   const removeSkill = (skill) => {
+    if (!hasPlayerSkill(additionalSkillsDraft, skill)) return
     setSkillsDraft((prev) => prev.filter((entry) => entry !== skill))
+    setAdditionalSkillsDraft((prev) => prev.filter((entry) => normalizeSkillKey(entry) !== normalizeSkillKey(skill)))
   }
 
   const addBooster = () => {
@@ -3252,6 +3271,8 @@ function PremiumPlayerModal({
       nationality: form.nationality,
       club_name: form.club_name,
       skills: normalizePlayerSkillsArray(skillsDraft),
+      native_skills: normalizePlayerSkillsArray(nativeSkillsDraft),
+      additional_skills: normalizePlayerSkillsArray(additionalSkillsDraft),
       com_skills: normalizePlayerSkillsArray(comSkillsDraft),
       available_boosters: boostersDraft.map((entry, idx) => {
         const maxLevel = idx === 1 ? 1 : 5
@@ -3267,7 +3288,9 @@ function PremiumPlayerModal({
       metadata: {
         catalog_booster_reminder: false,
         field_active_booster_names: fieldActiveBoosterNames,
-        field_coach_active: fieldCoachActive
+        field_coach_active: fieldCoachActive,
+        native_skills: normalizePlayerSkillsArray(nativeSkillsDraft),
+        additional_skills: normalizePlayerSkillsArray(additionalSkillsDraft)
       }
     }
 
@@ -3638,12 +3661,17 @@ function PremiumPlayerModal({
 
           <div className="nr-reference-support-grid">
             <section className="nr-reference-skills">
-              <EnterpriseSection title={(lang === 'en' || lang === 'es') ? 'Skills' : 'Abilita'} collapsible>
+              <EnterpriseSection title={(lang === 'en' || lang === 'es') ? 'Native and additional skills' : 'Abilità native e aggiuntive'} collapsible>
                 <div className="nr-skill-command-panel">
                   <label className="nr-form-field">
-                    <span>{t('nuovaRosaSelectOfficialSkill')}</span>
+                    <span>
+                      {lang === 'en'
+                        ? `Add skill (${additionalSkillsDraft.length}/${MAX_ADDITIONAL_SKILLS})`
+                        : `Aggiungi abilità (${additionalSkillsDraft.length}/${MAX_ADDITIONAL_SKILLS})`}
+                    </span>
                     <select
                       value={selectedSkillPreset}
+                      disabled={additionalSkillsDraft.length >= MAX_ADDITIONAL_SKILLS}
                       onChange={(event) => {
                         const value = event.target.value
                         setSelectedSkillPreset(value)
@@ -3662,12 +3690,21 @@ function PremiumPlayerModal({
                 </div>
 
                 <div className="nr-skill-chip-row">
-                  {visibleSkills.length > 0 ? visibleSkills.map((skill) => (
-                    <button key={skill} type="button" className="nr-skill-chip" onClick={() => removeSkill(skill)}>
-                      {getSkillDisplayLabel(skill, lang)}
-                      <X size={12} />
-                    </button>
-                  )) : (
+                  {visibleSkills.length > 0 ? visibleSkills.map((skill) => {
+                    const isAdditional = hasPlayerSkill(additionalSkillsDraft, skill)
+                    return isAdditional ? (
+                      <button key={skill} type="button" className="nr-skill-chip" onClick={() => removeSkill(skill)}>
+                        {getSkillDisplayLabel(skill, lang)} · {(lang === 'en' || lang === 'es') ? 'additional' : 'aggiuntiva'}
+                        <X size={12} />
+                      </button>
+                    ) : (
+                      <span key={skill} className="nr-skill-chip">
+                        {getSkillDisplayLabel(skill, lang)} · {skillProvenanceKnown
+                          ? ((lang === 'en' || lang === 'es') ? 'native' : 'nativa')
+                          : ((lang === 'en' || lang === 'es') ? 'already saved' : 'già salvata')}
+                      </span>
+                    )
+                  }) : (
                     <span className="nr-skill-empty">{(lang === 'en' || lang === 'es') ? 'No skills yet.' : 'Nessuna abilita ancora.'}</span>
                   )}
                 </div>
@@ -6653,56 +6690,8 @@ export default withAuth(function NuovaRosaLabPage() {
       )}
 
       <style jsx global>{`
-        body:has(.nr-page) {
-          background: #0a1117 !important;
-        }
-
-        html[data-theme='light'] body:has(.nr-page) {
-          background: #0a1117 !important;
-        }
-
-        .shell-main:has(.nr-page) {
-          background: #0a1117 !important;
-        }
-
         .nr-page {
-          color: #f4f6f7;
-        }
-
-        /* L'isola resta scura anche in light: i token semantici sono pinnati
-           ai valori dark così i componenti condivisi (TacticalSettingsPanel,
-           PositionSelectionModal, skeleton) non "flipperanno" mai qui dentro. */
-        html[data-theme='light'] .nr-page {
-          --surface: #101a20;
-          --surface-2: rgba(255, 255, 255, 0.05);
-          --surface-3: rgba(255, 255, 255, 0.08);
-          --text-main: #f4f6f7;
-          --text-dim: rgba(255, 255, 255, 0.55);
-          --text-primary: #ffffff;
-          --text-secondary: rgba(255, 255, 255, 0.7);
-          --text-tertiary: rgba(255, 255, 255, 0.5);
-          --border-soft: rgba(255, 255, 255, 0.08);
-          --border-softer: rgba(255, 255, 255, 0.07);
-          --border-strong: rgba(255, 255, 255, 0.2);
-          --inset-bg: rgba(0, 0, 0, 0.25);
-          --skeleton-bg: rgba(255, 255, 255, 0.06);
-          --info: #00d4ff;
-          --info-text: #7dd3fc;
-          --info-bg: rgba(0, 212, 255, 0.1);
-          --info-border: rgba(0, 212, 255, 0.35);
-          --accent: #3ddc97;
-          --accent-strong: #27a76a;
-          --accent-ink: #05231a;
-          --accent-bg: rgba(61, 220, 151, 0.12);
-          --accent-border: rgba(61, 220, 151, 0.3);
-          --gold-text: #ffd76a;
-          --gold-bg: rgba(255, 203, 5, 0.1);
-          --gold-border: rgba(255, 203, 5, 0.3);
-          --gold-ink: #1f1300;
-          --success-text: #86efac;
-          --danger-text: #fca5a5;
-          --primary-orange: #ff9500;
-          --cards-accent: #c084fc;
+          color: var(--text-main);
         }
 
         .nr-page {
@@ -6762,8 +6751,8 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-card,
         .nr-hero-card,
         .nr-modal-shell {
-          border: 1px solid rgba(0, 212, 255, 0.22);
-          background: linear-gradient(180deg, rgba(8, 12, 28, 0.96), rgba(5, 8, 20, 0.96));
+          border: 1px solid var(--info-border);
+          background: linear-gradient(180deg, var(--surface), var(--surface));
           border-radius: 18px;
         }
 
@@ -6774,11 +6763,11 @@ export default withAuth(function NuovaRosaLabPage() {
           margin-bottom: 16px;
           position: relative;
           overflow: hidden;
-          border-color: rgba(0, 212, 255, 0.34);
+          border-color: var(--info-border);
           background:
             radial-gradient(circle at 8% 12%, rgba(0, 212, 255, 0.22), transparent 32%),
             radial-gradient(circle at 82% 22%, rgba(255, 177, 66, 0.16), transparent 30%),
-            linear-gradient(135deg, rgba(10, 19, 43, 0.98), rgba(6, 9, 24, 0.96) 58%, rgba(9, 22, 39, 0.98));
+            linear-gradient(135deg, var(--surface), var(--surface) 58%, var(--surface));
           box-shadow:
             0 24px 80px rgba(0, 0, 0, 0.36),
             inset 0 0 0 1px rgba(255, 255, 255, 0.04);
@@ -6823,10 +6812,10 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-hero-side {
           border-radius: 18px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          border: 1px solid var(--border-soft);
           background:
             radial-gradient(circle at top right, rgba(52, 211, 153, 0.16), transparent 34%),
-            rgba(255, 255, 255, 0.045);
+            var(--surface-2);
           padding: 16px;
           align-self: stretch;
           display: flex;
@@ -6842,7 +6831,7 @@ export default withAuth(function NuovaRosaLabPage() {
           font-size: 12px;
           text-transform: uppercase;
           letter-spacing: 0.08em;
-          color: rgba(0, 212, 255, 0.82);
+          color: var(--info-text);
         }
 
         .nr-hero-copy h1,
@@ -6851,14 +6840,14 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-picker-detail h3,
         .nr-quick-body h3 {
           margin: 8px 0 0;
-          color: #fff;
+          color: var(--text-main);
         }
 
         .nr-hero-copy p,
         .nr-modal-header p,
         .nr-empty-state span,
         .nr-warning-box span {
-          color: rgba(255, 255, 255, 0.78);
+          color: var(--text-secondary);
         }
 
         .nr-hero-actions,
@@ -6871,7 +6860,7 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-complete-photo-callout {
           border-radius: 16px;
-          border: 1px solid rgba(245, 158, 11, 0.3);
+          border: 1px solid var(--gold-border);
           background:
             radial-gradient(circle at top right, rgba(245, 158, 11, 0.12), transparent 34%),
             rgba(245, 158, 11, 0.07);
@@ -6883,19 +6872,19 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-complete-photo-callout > svg {
-          color: #fbbf24;
+          color: var(--gold-text);
         }
 
         .nr-complete-photo-callout strong {
           display: block;
-          color: #fff;
+          color: var(--text-main);
           font-size: 13px;
           margin-bottom: 3px;
         }
 
         .nr-complete-photo-callout p {
           margin: 0;
-          color: rgba(255, 255, 255, 0.68);
+          color: var(--text-secondary);
           font-size: 12px;
           line-height: 1.4;
         }
@@ -6905,9 +6894,9 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-danger-button,
         .nr-icon-button {
           border-radius: 12px;
-          border: 1px solid rgba(0, 212, 255, 0.3);
-          background: rgba(0, 212, 255, 0.1);
-          color: #fff;
+          border: 1px solid var(--info-border);
+          background: var(--info-bg);
+          color: var(--text-main);
           padding: 11px 14px;
           display: inline-flex;
           align-items: center;
@@ -6921,7 +6910,7 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-danger-button:hover,
         .nr-icon-button:hover {
           transform: translateY(-1px);
-          border-color: rgba(0, 212, 255, 0.55);
+          border-color: var(--info);
         }
 
         .nr-primary-button:disabled,
@@ -6939,7 +6928,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-danger-zone {
-          border-top: 1px solid rgba(255, 255, 255, 0.08);
+          border-top: 1px solid var(--border-soft);
           margin-top: 4px;
           padding-top: 12px;
           display: flex;
@@ -6950,7 +6939,7 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-danger-zone > span,
         .nr-limit-note {
-          color: rgba(255, 255, 255, 0.62);
+          color: var(--text-secondary);
           font-size: 12px;
           line-height: 1.35;
         }
@@ -6961,7 +6950,7 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-limit-note {
           margin: -2px 0 12px;
-          color: rgba(255, 177, 66, 0.86);
+          color: var(--gold-text);
         }
 
         .nr-icon-button {
@@ -6993,10 +6982,10 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-build-coach-command-card {
           border-radius: 20px;
-          border: 1px solid rgba(0, 212, 255, 0.22);
+          border: 1px solid var(--info-border);
           background:
             radial-gradient(circle at 100% 0%, rgba(0, 212, 255, 0.18), transparent 32%),
-            linear-gradient(180deg, rgba(9, 14, 31, 0.96), rgba(5, 8, 20, 0.95));
+            linear-gradient(180deg, var(--surface), var(--surface));
           padding: 14px;
           box-shadow: 0 14px 40px rgba(0, 0, 0, 0.28);
         }
@@ -7011,12 +7000,12 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-build-coach-command-head p {
           margin: 4px 0 0;
-          color: rgba(255, 255, 255, 0.65);
+          color: var(--text-secondary);
           font-size: 12px;
         }
 
         .nr-build-coach-command-head > svg {
-          color: var(--primary-cyan, #00d4ff);
+          color: var(--primary-cyan, var(--info));
           filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.4));
         }
 
@@ -7041,8 +7030,8 @@ export default withAuth(function NuovaRosaLabPage() {
           margin-top: 10px;
           padding: 10px 12px;
           border-radius: 14px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          background: rgba(15, 23, 42, 0.62);
+          border: 1px solid var(--border-soft);
+          background: var(--inset-bg);
         }
 
         .nr-fluid-inline-copy {
@@ -7052,7 +7041,7 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-fluid-inline-copy span {
           display: block;
-          color: rgba(0, 212, 255, 0.86);
+          color: var(--info-text);
           font-size: 11px;
           font-weight: 900;
           letter-spacing: 0.06em;
@@ -7062,7 +7051,7 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-fluid-inline-copy small {
           display: block;
           margin-top: 2px;
-          color: rgba(255, 255, 255, 0.68);
+          color: var(--text-secondary);
           font-size: 11px;
           line-height: 1.35;
         }
@@ -7078,9 +7067,9 @@ export default withAuth(function NuovaRosaLabPage() {
           min-height: 38px;
           padding: 0 14px;
           border-radius: 999px;
-          border: 1px solid rgba(255, 255, 255, 0.14);
-          background: rgba(15, 23, 42, 0.86);
-          color: rgba(255, 255, 255, 0.78);
+          border: 1px solid var(--border-strong);
+          background: var(--inset-bg);
+          color: var(--text-secondary);
           font-size: 12px;
           font-weight: 800;
           letter-spacing: 0.04em;
@@ -7090,14 +7079,14 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-fluid-inline-switch button.is-active,
         .nr-fluid-inline-phases button.is-active {
-          border-color: rgba(34, 211, 238, 0.55);
-          background: rgba(0, 212, 255, 0.16);
-          color: #fff;
+          border-color: var(--info);
+          background: var(--info-bg);
+          color: var(--text-main);
         }
 
         .nr-fluid-inline-switch button:focus-visible,
         .nr-fluid-inline-phases button:focus-visible {
-          outline: 2px solid rgba(0, 212, 255, 0.85);
+          outline: 2px solid var(--info);
           outline-offset: 2px;
         }
 
@@ -7122,9 +7111,9 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-move-players-wide-button {
           width: 100%;
           border-radius: 14px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          background: rgba(15, 23, 42, 0.78);
-          color: #fff;
+          border: 1px solid var(--border-soft);
+          background: var(--inset-bg);
+          color: var(--text-main);
           min-height: 62px;
           padding: 12px;
           display: inline-flex;
@@ -7146,17 +7135,17 @@ export default withAuth(function NuovaRosaLabPage() {
           padding: 8px 10px;
           background:
             radial-gradient(circle at 0% 0%, rgba(0, 212, 255, 0.12), transparent 40%),
-            rgba(15, 23, 42, 0.7);
+            var(--inset-bg);
         }
 
         .nr-formation-inline-tile:hover:not(:disabled) {
           transform: translateY(-1px);
-          border-color: rgba(34, 211, 238, 0.42);
+          border-color: var(--info);
           box-shadow: 0 12px 26px rgba(0, 212, 255, 0.12);
         }
 
         .nr-formation-inline-tile span {
-          color: rgba(0, 212, 255, 0.78);
+          color: var(--info-text);
           font-size: 10px;
           font-weight: 900;
           text-transform: uppercase;
@@ -7164,7 +7153,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-formation-inline-tile strong {
-          color: #fff;
+          color: var(--text-main);
           font-size: 20px;
           line-height: 1;
           letter-spacing: -0.04em;
@@ -7175,7 +7164,7 @@ export default withAuth(function NuovaRosaLabPage() {
           font-size: 11px;
           font-weight: 700;
           line-height: 1.25;
-          color: rgba(255, 255, 255, 0.76);
+          color: var(--text-secondary);
           max-width: 100%;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -7186,9 +7175,9 @@ export default withAuth(function NuovaRosaLabPage() {
           min-height: 46px;
           justify-content: center;
           text-align: center;
-          color: rgba(255, 255, 255, 0.88);
+          color: var(--text-main);
           font-weight: 850;
-          background: rgba(15, 23, 42, 0.72);
+          background: var(--inset-bg);
         }
 
         .nr-build-coach-action.primary {
@@ -7200,8 +7189,8 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-build-coach-action:hover:not(:disabled),
         .nr-move-players-wide-button:hover:not(:disabled) {
           transform: translateY(-1px);
-          border-color: rgba(0, 212, 255, 0.48);
-          background: rgba(15, 23, 42, 0.95);
+          border-color: var(--info);
+          background: var(--surface);
         }
 
         .nr-build-coach-action.primary:hover:not(:disabled) {
@@ -7229,7 +7218,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-build-coach-action small {
-          color: rgba(255, 255, 255, 0.72);
+          color: var(--text-secondary);
           font-size: 11px;
         }
 
@@ -7272,9 +7261,9 @@ export default withAuth(function NuovaRosaLabPage() {
           z-index: 100300;
           width: 46px;
           height: 46px;
-          border-color: rgba(255, 255, 255, 0.28);
-          background: rgba(3, 7, 18, 0.96);
-          color: #fff;
+          border-color: var(--border-strong);
+          background: var(--surface);
+          color: var(--text-main);
           box-shadow: 0 18px 48px rgba(0, 0, 0, 0.46), 0 0 0 1px rgba(0, 212, 255, 0.18);
         }
 
@@ -7477,10 +7466,10 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-bench-item,
         .nr-catalog-card {
           width: 100%;
-          border: 1px solid rgba(0, 212, 255, 0.22);
+          border: 1px solid var(--info-border);
           border-radius: 14px;
-          background: rgba(9, 14, 31, 0.92);
-          color: #fff;
+          background: var(--surface);
+          color: var(--text-main);
           cursor: pointer;
         }
 
@@ -7738,7 +7727,7 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-catalog-card-copy p,
         .nr-catalog-card-meta {
           font-size: 10px;
-          color: rgba(255, 255, 255, 0.75);
+          color: var(--text-secondary);
           font-style: normal;
         }
 
@@ -7806,9 +7795,9 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-move-players-button {
-          border: 1px solid rgba(148, 163, 184, 0.28);
-          background: rgba(15, 23, 42, 0.72);
-          color: rgba(255, 255, 255, 0.82);
+          border: 1px solid var(--border-strong);
+          background: var(--inset-bg);
+          color: var(--text-main);
           padding: 11px 14px;
           min-height: 44px;
           border-radius: 13px;
@@ -7821,8 +7810,8 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-move-players-button:hover {
           transform: translateY(-1px);
-          border-color: rgba(148, 163, 184, 0.55);
-          background: rgba(15, 23, 42, 0.94);
+          border-color: var(--border-strong);
+          background: var(--surface);
         }
 
         .nr-reserve-grid {
@@ -7834,11 +7823,11 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-reserve-card {
           position: relative;
           border-radius: 14px;
-          border: 1px solid rgba(0, 212, 255, 0.16);
+          border: 1px solid var(--info-border);
           background:
             radial-gradient(circle at 0% 0%, rgba(0, 212, 255, 0.13), transparent 40%),
-            linear-gradient(180deg, rgba(8, 16, 36, 0.92), rgba(7, 13, 30, 0.94));
-          color: #fff;
+            linear-gradient(180deg, var(--surface), var(--surface));
+          color: var(--text-main);
           display: grid;
           grid-template-columns: 44px minmax(0, 1fr) auto auto;
           gap: 9px;
@@ -7853,8 +7842,8 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-reserve-card:hover {
           transform: translateY(-1px) scale(1.01);
-          border-color: rgba(0, 212, 255, 0.34);
-          background: linear-gradient(180deg, rgba(10, 20, 44, 0.95), rgba(8, 16, 36, 0.96));
+          border-color: var(--info-border);
+          background: linear-gradient(180deg, var(--surface), var(--surface));
         }
 
         .nr-reserve-remove {
@@ -7948,7 +7937,7 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-reserve-card-copy span {
           font-size: 9px;
-          color: rgba(255, 255, 255, 0.75);
+          color: var(--text-secondary);
         }
 
         .nr-reserve-position-pill {
@@ -7957,9 +7946,9 @@ export default withAuth(function NuovaRosaLabPage() {
           justify-content: center;
           min-width: 34px;
           border-radius: 999px;
-          border: 1px solid rgba(0, 212, 255, 0.24);
-          background: rgba(0, 212, 255, 0.08);
-          color: #dff8ff;
+          border: 1px solid var(--info-border);
+          background: var(--info-bg);
+          color: var(--info-text);
           padding: 5px 8px;
           font-size: 9px;
           font-weight: 800;
@@ -8015,9 +8004,9 @@ export default withAuth(function NuovaRosaLabPage() {
           flex-wrap: wrap;
         }
 
-        .compat-perfect { color: #34d399; }
-        .compat-adaptable { color: #fbbf24; }
-        .compat-out_of_role { color: #f87171; }
+        .compat-perfect { color: var(--accent); }
+        .compat-adaptable { color: var(--gold-text); }
+        .compat-out_of_role { color: var(--danger-text); }
 
         .nr-stats-grid,
         .nr-picker-stats {
@@ -8029,49 +8018,49 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-stats-grid div,
         .nr-picker-stats div {
           border-radius: 14px;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.06);
+          background: var(--surface-2);
+          border: 1px solid var(--border-soft);
           padding: 12px;
         }
 
         .nr-hero-side .nr-stats-grid div {
-          border-color: rgba(0, 212, 255, 0.18);
+          border-color: var(--info-border);
           background:
-            linear-gradient(180deg, rgba(0, 212, 255, 0.08), rgba(255, 255, 255, 0.035));
+            linear-gradient(180deg, rgba(0, 212, 255, 0.08), var(--surface-2));
         }
 
         .nr-hero-side .nr-stats-grid div:nth-child(2) {
-          border-color: rgba(52, 211, 153, 0.22);
+          border-color: var(--accent-border);
           background:
-            linear-gradient(180deg, rgba(52, 211, 153, 0.1), rgba(255, 255, 255, 0.035));
+            linear-gradient(180deg, rgba(52, 211, 153, 0.1), var(--surface-2));
         }
 
         .nr-hero-side .nr-stats-grid div:nth-child(3) {
-          border-color: rgba(255, 177, 66, 0.24);
+          border-color: var(--gold-border);
           background:
-            linear-gradient(180deg, rgba(255, 177, 66, 0.11), rgba(255, 255, 255, 0.035));
+            linear-gradient(180deg, rgba(255, 177, 66, 0.11), var(--surface-2));
         }
 
         .nr-stats-grid span,
         .nr-picker-stats span {
           display: block;
           font-size: 11px;
-          color: rgba(255, 255, 255, 0.6);
+          color: var(--text-secondary);
           margin-bottom: 4px;
         }
 
         .nr-stats-grid strong,
         .nr-picker-stats strong {
-          color: #fff;
+          color: var(--text-main);
           font-size: 18px;
         }
 
         .nr-coach-header-panel {
           border-radius: 16px;
-          border: 1px solid rgba(0, 212, 255, 0.2);
+          border: 1px solid var(--info-border);
           background:
             radial-gradient(circle at top right, rgba(0, 212, 255, 0.14), transparent 38%),
-            rgba(255, 255, 255, 0.045);
+            var(--surface-2);
           padding: 12px;
           display: flex;
           flex-direction: column;
@@ -8098,7 +8087,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-coach-header-main.is-clickable:hover {
-          background: rgba(255, 255, 255, 0.035);
+          background: var(--surface-2);
           transform: translateY(-1px);
         }
 
@@ -8138,7 +8127,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-coach-avatar-skeleton {
-          background: var(--skeleton-bg, rgba(255, 255, 255, 0.06));
+          background: var(--skeleton-bg);
           border: none;
           animation: nr-skeleton-shimmer 1.4s ease-in-out infinite;
           background-size: 200% 100%;
@@ -8155,7 +8144,7 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-skeleton-line {
           height: 11px;
           border-radius: 6px;
-          background: var(--skeleton-bg, rgba(255, 255, 255, 0.08));
+          background: var(--skeleton-bg);
           animation: nr-skeleton-shimmer 1.4s ease-in-out infinite;
           background-size: 200% 100%;
         }
@@ -8181,20 +8170,20 @@ export default withAuth(function NuovaRosaLabPage() {
           font-size: 11px;
           text-transform: uppercase;
           letter-spacing: 0.08em;
-          color: rgba(0, 212, 255, 0.78);
+          color: var(--info-text);
           margin-bottom: 3px;
         }
 
         .nr-coach-header-main strong {
           display: block;
-          color: #fff;
+          color: var(--text-main);
           font-size: 16px;
           line-height: 1.2;
         }
 
         .nr-coach-header-main p {
           margin: 4px 0 0;
-          color: rgba(255, 255, 255, 0.66);
+          color: var(--text-secondary);
           font-size: 12px;
           line-height: 1.35;
         }
@@ -8202,7 +8191,7 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-coach-header-main small {
           display: block;
           margin-top: 5px;
-          color: rgba(0, 212, 255, 0.7);
+          color: var(--info-text);
           font-size: 11px;
         }
 
@@ -8232,10 +8221,10 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-coach-details-hero {
           border-radius: 18px;
-          border: 1px solid rgba(0, 212, 255, 0.18);
+          border: 1px solid var(--info-border);
           background:
             radial-gradient(circle at top left, rgba(0, 212, 255, 0.12), transparent 34%),
-            rgba(255, 255, 255, 0.035);
+            var(--surface-2);
           padding: 14px;
           display: grid;
           grid-template-columns: auto minmax(0, 1fr);
@@ -8264,7 +8253,7 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-coach-details-hero h3 {
           margin: 4px 0;
-          color: #fff;
+          color: var(--text-main);
           font-size: 22px;
         }
 
@@ -8272,7 +8261,7 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-coach-description,
         .nr-coach-connection p {
           margin: 0;
-          color: rgba(255, 255, 255, 0.72);
+          color: var(--text-secondary);
           font-size: 13px;
           line-height: 1.45;
         }
@@ -8292,21 +8281,21 @@ export default withAuth(function NuovaRosaLabPage() {
           justify-content: space-between;
           gap: 12px;
           border-radius: 12px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          background: rgba(255, 255, 255, 0.035);
+          border: 1px solid var(--border-soft);
+          background: var(--surface-2);
           padding: 10px 12px;
-          color: rgba(255, 255, 255, 0.7);
+          color: var(--text-secondary);
           font-size: 13px;
         }
 
         .nr-coach-info-row strong,
         .nr-coach-style-row strong,
         .nr-coach-connection strong {
-          color: #fff;
+          color: var(--text-main);
         }
 
         .nr-coach-connection span {
-          color: rgba(255, 255, 255, 0.74);
+          color: var(--text-secondary);
           font-size: 13px;
         }
 
@@ -8360,11 +8349,11 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-picker-choice-card {
           min-height: 148px;
           border-radius: 18px;
-          border: 1px solid rgba(0, 212, 255, 0.18);
+          border: 1px solid var(--info-border);
           background:
             radial-gradient(circle at top left, rgba(0, 212, 255, 0.12), transparent 34%),
-            rgba(255, 255, 255, 0.035);
-          color: #fff;
+            var(--surface-2);
+          color: var(--text-main);
           padding: 18px;
           display: grid;
           grid-template-columns: auto minmax(0, 1fr) auto;
@@ -8376,30 +8365,30 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-picker-choice-card.primary {
-          border-color: rgba(52, 211, 153, 0.28);
+          border-color: var(--accent-border);
           background:
             radial-gradient(circle at top left, rgba(52, 211, 153, 0.14), transparent 36%),
-            rgba(255, 255, 255, 0.035);
+            var(--surface-2);
         }
 
         .nr-picker-choice-card:hover {
           transform: translateY(-2px);
-          border-color: rgba(0, 212, 255, 0.42);
-          background: rgba(0, 212, 255, 0.08);
+          border-color: var(--info);
+          background: var(--info-bg);
         }
 
         .nr-picker-choice-card:disabled {
           opacity: 0.55;
           cursor: not-allowed;
           transform: none;
-          border-color: rgba(255, 255, 255, 0.08);
-          background: rgba(255, 255, 255, 0.025);
+          border-color: var(--border-soft);
+          background: var(--surface-2);
         }
 
         .nr-picker-choice-card:disabled:hover {
           transform: none;
-          border-color: rgba(255, 255, 255, 0.08);
-          background: rgba(255, 255, 255, 0.025);
+          border-color: var(--border-soft);
+          background: var(--surface-2);
         }
 
         .nr-picker-choice-card strong {
@@ -8410,7 +8399,7 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-picker-choice-card p {
           margin: 0;
-          color: rgba(255, 255, 255, 0.72);
+          color: var(--text-secondary);
           font-size: 13px;
           line-height: 1.45;
         }
@@ -8419,12 +8408,12 @@ export default withAuth(function NuovaRosaLabPage() {
           width: 42px;
           height: 42px;
           border-radius: 14px;
-          background: rgba(0, 212, 255, 0.1);
-          border: 1px solid rgba(0, 212, 255, 0.18);
+          background: var(--info-bg);
+          border: 1px solid var(--info-border);
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          color: rgba(124, 238, 255, 0.95);
+          color: var(--info);
         }
 
         .nr-picker-subnav {
@@ -8448,13 +8437,13 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-photo-upload-intro {
           border-radius: 16px;
-          border: 1px solid rgba(0, 212, 255, 0.14);
-          background: rgba(0, 212, 255, 0.06);
+          border: 1px solid var(--info-border);
+          background: var(--info-bg);
           padding: 14px;
           display: flex;
           gap: 10px;
           align-items: flex-start;
-          color: rgba(255, 255, 255, 0.78);
+          color: var(--text-secondary);
           font-size: 13px;
           line-height: 1.45;
         }
@@ -8467,20 +8456,20 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-photo-step {
           border-radius: 14px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          background: rgba(255, 255, 255, 0.035);
+          border: 1px solid var(--border-soft);
+          background: var(--surface-2);
           padding: 10px;
           display: flex;
           align-items: center;
           gap: 8px;
-          color: rgba(255, 255, 255, 0.7);
+          color: var(--text-secondary);
         }
 
         .nr-photo-step span {
           width: 24px;
           height: 24px;
           border-radius: 999px;
-          background: rgba(255, 255, 255, 0.08);
+          background: var(--surface-3);
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -8490,15 +8479,15 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-photo-step.selected {
-          color: #d1fae5;
-          border-color: rgba(52, 211, 153, 0.28);
-          background: rgba(52, 211, 153, 0.08);
+          color: var(--accent);
+          border-color: var(--accent-border);
+          background: var(--accent-bg);
         }
 
         .nr-photo-step.extracting {
-          color: #bae6fd;
-          border-color: rgba(56, 189, 248, 0.32);
-          background: rgba(56, 189, 248, 0.09);
+          color: var(--info-text);
+          border-color: var(--info-border);
+          background: var(--info-bg);
         }
 
         .nr-photo-step small {
@@ -8515,7 +8504,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-photo-step small em {
-          color: rgba(255, 255, 255, 0.56);
+          color: var(--text-dim);
           font-size: 10px;
           font-style: normal;
           line-height: 1.2;
@@ -8523,23 +8512,23 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-photo-example-panel {
           border-radius: 16px;
-          border: 1px solid rgba(0, 212, 255, 0.18);
+          border: 1px solid var(--info-border);
           background:
             radial-gradient(circle at top left, rgba(0, 212, 255, 0.1), transparent 34%),
-            rgba(255, 255, 255, 0.025);
+            var(--surface-2);
           padding: 14px;
         }
 
         .nr-photo-example-copy strong {
           display: block;
-          color: #fff;
+          color: var(--text-main);
           font-size: 14px;
           margin-bottom: 4px;
         }
 
         .nr-photo-example-copy p {
           margin: 0 0 12px;
-          color: rgba(255, 255, 255, 0.7);
+          color: var(--text-secondary);
           font-size: 12px;
           line-height: 1.45;
         }
@@ -8611,7 +8600,7 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-photo-card-head p {
           margin: 0;
-          color: rgba(255, 255, 255, 0.68);
+          color: var(--text-secondary);
           font-size: 12px;
           line-height: 1.4;
         }
@@ -8619,10 +8608,10 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-photo-card-head > span {
           align-self: flex-start;
           border-radius: 999px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid var(--border-soft);
+          background: var(--surface-2);
           padding: 4px 8px;
-          color: rgba(255, 255, 255, 0.62);
+          color: var(--text-secondary);
           font-size: 10px;
           white-space: nowrap;
         }
@@ -8662,7 +8651,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-photo-preview span {
-          color: rgba(255, 255, 255, 0.75);
+          color: var(--text-secondary);
           font-size: 13px;
           min-width: 0;
           overflow: hidden;
@@ -8673,7 +8662,7 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-photo-preview span small {
           display: block;
           margin-top: 3px;
-          color: rgba(255, 255, 255, 0.52);
+          color: var(--text-dim);
           font-size: 11px;
           line-height: 1.25;
           overflow: hidden;
@@ -8693,7 +8682,7 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-photo-review-hero {
           border-radius: 18px;
-          border: 1px solid rgba(52, 211, 153, 0.24);
+          border: 1px solid var(--accent-border);
           background:
             radial-gradient(circle at top right, rgba(52, 211, 153, 0.14), transparent 34%),
             rgba(52, 211, 153, 0.06);
@@ -8702,18 +8691,18 @@ export default withAuth(function NuovaRosaLabPage() {
           justify-content: space-between;
           gap: 14px;
           align-items: center;
-          color: #d1fae5;
+          color: var(--accent);
         }
 
         .nr-photo-review-hero h3 {
           margin: 4px 0;
-          color: #fff;
+          color: var(--text-main);
           font-size: 22px;
         }
 
         .nr-photo-review-hero p {
           margin: 0;
-          color: rgba(255, 255, 255, 0.74);
+          color: var(--text-secondary);
           font-size: 13px;
         }
 
@@ -8725,8 +8714,8 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-photo-review-row {
           border-radius: 14px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          background: rgba(255, 255, 255, 0.035);
+          border: 1px solid var(--border-soft);
+          background: var(--surface-2);
           padding: 12px;
           display: grid;
           grid-template-columns: auto minmax(0, 1fr) auto;
@@ -8735,13 +8724,13 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-photo-review-row.ready {
-          border-color: rgba(52, 211, 153, 0.22);
-          background: rgba(52, 211, 153, 0.06);
+          border-color: var(--accent-border);
+          background: var(--accent-bg);
         }
 
         .nr-photo-review-row.missing {
-          border-color: rgba(245, 158, 11, 0.24);
-          background: rgba(245, 158, 11, 0.06);
+          border-color: var(--gold-border);
+          background: var(--gold-bg);
         }
 
         .nr-photo-review-row > span {
@@ -8751,34 +8740,34 @@ export default withAuth(function NuovaRosaLabPage() {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          background: rgba(255, 255, 255, 0.08);
+          background: var(--surface-3);
           color: currentColor;
         }
 
         .nr-photo-review-row.ready > span {
-          color: #34d399;
+          color: var(--accent);
         }
 
         .nr-photo-review-row.missing > span {
-          color: #fbbf24;
+          color: var(--gold-text);
         }
 
         .nr-photo-review-row strong {
           display: block;
-          color: #fff;
+          color: var(--text-main);
           font-size: 13px;
           margin-bottom: 2px;
         }
 
         .nr-photo-review-row p {
           margin: 0;
-          color: rgba(255, 255, 255, 0.62);
+          color: var(--text-secondary);
           font-size: 12px;
           line-height: 1.35;
         }
 
         .nr-photo-review-row em {
-          color: rgba(255, 255, 255, 0.58);
+          color: var(--text-secondary);
           font-size: 11px;
           font-style: normal;
           font-weight: 800;
@@ -8801,7 +8790,7 @@ export default withAuth(function NuovaRosaLabPage() {
 
 
         .nr-picker-shell.reserve-mode .nr-modal-header {
-          border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+          border-bottom: 1px solid var(--info-border);
           padding-bottom: 14px;
         }
 
@@ -8848,9 +8837,9 @@ export default withAuth(function NuovaRosaLabPage() {
           align-items: center;
           gap: 10px;
           padding: 12px 14px;
-          border: 1px solid rgba(0, 212, 255, 0.22);
+          border: 1px solid var(--info-border);
           border-radius: 14px;
-          background: rgba(255, 255, 255, 0.04);
+          background: var(--surface-2);
         }
 
         .nr-search-input input {
@@ -8859,7 +8848,7 @@ export default withAuth(function NuovaRosaLabPage() {
           border: 0;
           outline: none;
           background: transparent;
-          color: #fff;
+          color: var(--text-main);
           font-size: 14px;
           -webkit-appearance: none;
           appearance: none;
@@ -8876,7 +8865,7 @@ export default withAuth(function NuovaRosaLabPage() {
           align-items: center;
           justify-content: space-between;
           gap: 12px;
-          color: rgba(255, 255, 255, 0.68);
+          color: var(--text-secondary);
           font-size: 12px;
           font-weight: 700;
         }
@@ -8888,10 +8877,10 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-catalog-meta select {
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          border: 1px solid var(--border-soft);
           border-radius: 10px;
-          background: rgba(255, 255, 255, 0.04);
-          color: #fff;
+          background: var(--surface-2);
+          color: var(--text-main);
           padding: 8px 10px;
           font-size: 12px;
           font-weight: 700;
@@ -8903,10 +8892,10 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-load-more-button {
           width: 100%;
-          border: 1px solid rgba(0, 212, 255, 0.28);
+          border: 1px solid var(--info-border);
           border-radius: 14px;
-          background: rgba(0, 212, 255, 0.08);
-          color: #eafcff;
+          background: var(--info-bg);
+          color: var(--info-text);
           padding: 12px 14px;
           font-size: 13px;
           font-weight: 800;
@@ -8920,15 +8909,15 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-section-head h3 {
           margin: 0 0 8px;
-          color: #fff;
+          color: var(--text-main);
           font-size: 15px;
         }
 
         .nr-warning-box,
         .nr-empty-state {
           border-radius: 14px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid var(--border-soft);
+          background: var(--surface-2);
           padding: 14px;
           display: flex;
           gap: 10px;
@@ -8939,8 +8928,8 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-warning-box {
           justify-content: flex-start;
-          border-color: rgba(255, 149, 0, 0.28);
-          background: rgba(255, 149, 0, 0.08);
+          border-color: var(--gold-border);
+          background: var(--gold-bg);
         }
 
         .nr-toast {
@@ -8953,9 +8942,9 @@ export default withAuth(function NuovaRosaLabPage() {
           gap: 8px;
           padding: 12px 14px;
           border-radius: 14px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          background: rgba(6, 10, 22, 0.96);
-          color: #fff;
+          border: 1px solid var(--border-soft);
+          background: var(--surface);
+          color: var(--text-main);
           max-width: min(420px, calc(100vw - 32px));
         }
 
@@ -8964,21 +8953,21 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-toast.success {
-          border-color: rgba(52, 211, 153, 0.35);
+          border-color: var(--accent-border);
         }
 
         .nr-toast.upgrade {
-          border-color: rgba(251, 191, 36, 0.42);
+          border-color: var(--gold-border);
           background:
             radial-gradient(circle at 0% 50%, rgba(251, 191, 36, 0.16), transparent 38%),
-            rgba(6, 10, 22, 0.96);
+            var(--surface);
           box-shadow: 0 12px 34px rgba(251, 146, 60, 0.2), 0 0 0 1px rgba(251, 191, 36, 0.08) inset;
         }
 
         .nr-section-card {
           border-radius: 18px;
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid var(--border-soft);
+          background: var(--surface-2);
           padding: 16px;
         }
 
@@ -8996,20 +8985,20 @@ export default withAuth(function NuovaRosaLabPage() {
           gap: 12px;
           padding: 12px;
           border-radius: 14px;
-          border: 1px solid rgba(0, 212, 255, 0.2);
+          border: 1px solid var(--info-border);
           background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(168, 85, 247, 0.08));
         }
 
         .nr-build-coach-inline strong {
           display: block;
-          color: #fff;
+          color: var(--text-main);
           font-size: 13px;
           margin-bottom: 4px;
         }
 
         .nr-build-coach-inline p {
           margin: 0;
-          color: rgba(255, 255, 255, 0.68);
+          color: var(--text-secondary);
           font-size: 12px;
           line-height: 1.35;
         }
@@ -9018,10 +9007,10 @@ export default withAuth(function NuovaRosaLabPage() {
           margin-top: 12px;
           padding: 12px;
           border-radius: 14px;
-          border: 1px solid rgba(251, 191, 36, 0.24);
+          border: 1px solid var(--gold-border);
           background:
             radial-gradient(circle at 0% 0%, rgba(251, 191, 36, 0.12), transparent 36%),
-            rgba(255, 255, 255, 0.035);
+            var(--surface-2);
         }
 
         .nr-build-copy-head {
@@ -9034,14 +9023,14 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-build-copy-head strong {
           display: block;
-          color: #fff;
+          color: var(--text-main);
           font-size: 13px;
           margin-bottom: 4px;
         }
 
         .nr-build-copy-head p {
           margin: 0;
-          color: rgba(255, 255, 255, 0.66);
+          color: var(--text-secondary);
           font-size: 12px;
           line-height: 1.35;
         }
@@ -9055,9 +9044,9 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-build-copy-meta span {
-          border: 1px solid rgba(251, 191, 36, 0.24);
-          background: rgba(251, 191, 36, 0.08);
-          color: #fde68a;
+          border: 1px solid var(--gold-border);
+          background: var(--gold-bg);
+          color: var(--gold-text);
           border-radius: 999px;
           padding: 5px 8px;
           font-size: 11px;
@@ -9080,7 +9069,7 @@ export default withAuth(function NuovaRosaLabPage() {
           margin: 0 0 8px;
           font-size: 11px;
           line-height: 1.35;
-          color: rgba(255, 255, 255, 0.55);
+          color: var(--text-dim);
         }
 
         .nr-build-slider-row {
@@ -9089,16 +9078,16 @@ export default withAuth(function NuovaRosaLabPage() {
           align-items: center;
           gap: 8px;
           border-radius: 11px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          background: rgba(2, 6, 18, 0.44);
+          border: 1px solid var(--border-soft);
+          background: var(--inset-bg);
           padding: 7px 9px;
         }
 
         .nr-build-slider-row.is-active {
-          border-color: rgba(0, 212, 255, 0.22);
+          border-color: var(--info-border);
           background:
             linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(124, 58, 237, 0.06)),
-            rgba(2, 6, 18, 0.52);
+            var(--inset-bg);
         }
 
         .nr-build-slider-row.is-blocked {
@@ -9106,7 +9095,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-build-slider-row-label {
-          color: rgba(255, 255, 255, 0.78);
+          color: var(--text-secondary);
           font-size: 11px;
           font-weight: 800;
           line-height: 1.2;
@@ -9123,9 +9112,9 @@ export default withAuth(function NuovaRosaLabPage() {
           width: 28px;
           height: 28px;
           border-radius: 8px;
-          border: 1px solid rgba(255, 255, 255, 0.14);
-          background: rgba(0, 0, 0, 0.35);
-          color: #e2e8f0;
+          border: 1px solid var(--border-strong);
+          background: var(--inset-bg);
+          color: var(--text-main);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -9158,21 +9147,21 @@ export default withAuth(function NuovaRosaLabPage() {
           justify-content: space-between;
           gap: 8px;
           border-radius: 11px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          background: rgba(2, 6, 18, 0.44);
+          border: 1px solid var(--border-soft);
+          background: var(--inset-bg);
           padding: 7px 9px;
           min-height: 36px;
         }
 
         .nr-build-slider-chip.is-active {
-          border-color: rgba(0, 212, 255, 0.25);
+          border-color: var(--info-border);
           background:
             linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(124, 58, 237, 0.08)),
-            rgba(2, 6, 18, 0.52);
+            var(--inset-bg);
         }
 
         .nr-build-slider-chip span {
-          color: rgba(255, 255, 255, 0.76);
+          color: var(--text-secondary);
           font-size: 11px;
           font-weight: 800;
           min-width: 0;
@@ -9185,14 +9174,14 @@ export default withAuth(function NuovaRosaLabPage() {
           margin-top: 10px;
           padding: 12px 14px;
           border-radius: 12px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          background: rgba(0, 0, 0, 0.22);
+          border: 1px solid var(--border-soft);
+          background: var(--inset-bg);
         }
 
         .nr-build-coach-notes-warn {
           margin-bottom: 10px;
           font-size: 12px;
-          color: rgba(255, 196, 120, 0.95);
+          color: var(--gold-text);
         }
 
         .nr-build-coach-notes-warn p {
@@ -9207,7 +9196,7 @@ export default withAuth(function NuovaRosaLabPage() {
           display: block;
           font-size: 12px;
           margin-bottom: 6px;
-          color: rgba(255, 255, 255, 0.9);
+          color: var(--text-main);
         }
 
         .nr-build-coach-notes-reasons ul {
@@ -9215,7 +9204,7 @@ export default withAuth(function NuovaRosaLabPage() {
           padding-left: 18px;
           font-size: 12px;
           line-height: 1.4;
-          color: rgba(255, 255, 255, 0.78);
+          color: var(--text-secondary);
         }
 
         .nr-build-coach-notes-reasons li {
@@ -9237,16 +9226,16 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-form-field span {
           font-size: 12px;
-          color: rgba(255, 255, 255, 0.65);
+          color: var(--text-secondary);
         }
 
         .nr-form-field input,
         .nr-form-field select {
           width: 100%;
           border-radius: 12px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          background: rgba(10, 14, 31, 0.92);
-          color: #fff;
+          border: 1px solid var(--border-soft);
+          background: var(--inset-bg);
+          color: var(--text-main);
           padding: 12px;
           outline: none;
         }
@@ -9285,7 +9274,7 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-booster-row-head span {
           font-size: 13px;
           font-weight: 600;
-          color: rgba(255, 255, 255, 0.86);
+          color: var(--text-main);
         }
 
         .nr-booster-control-grid {
@@ -9296,8 +9285,8 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-booster-level-panel {
           border-radius: 12px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          background: rgba(10, 14, 31, 0.92);
+          border: 1px solid var(--border-soft);
+          background: var(--surface);
           padding: 10px;
           display: flex;
           flex-direction: column;
@@ -9306,7 +9295,7 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-booster-level-panel span {
           font-size: 12px;
-          color: rgba(255, 255, 255, 0.66);
+          color: var(--text-secondary);
         }
 
         .nr-booster-level-buttons {
@@ -9330,7 +9319,7 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-booster-level-label {
           font-size: 11px;
           font-weight: 650;
-          color: rgba(255, 255, 255, 0.55);
+          color: var(--text-dim);
           text-transform: uppercase;
           letter-spacing: 0.08em;
         }
@@ -9355,14 +9344,14 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-booster-hex-badge--interactive:focus-visible {
-          outline: 2px solid rgba(0, 212, 255, 0.55);
+          outline: 2px solid var(--info);
           outline-offset: 3px;
         }
 
         .nr-booster-hex-level {
           font-size: 13px;
           font-weight: 900;
-          color: #8aebff;
+          color: var(--info-text);
           line-height: 1;
           margin-top: -4px;
           text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
@@ -9391,7 +9380,7 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-booster-slot-only {
           font-size: 16px;
           font-weight: 800;
-          color: rgba(255, 255, 255, 0.88);
+          color: var(--text-main);
           letter-spacing: 0.04em;
         }
 
@@ -9402,7 +9391,7 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-booster-cat-lbl {
           font-size: 11px;
           font-weight: 650;
-          color: rgba(255, 255, 255, 0.5);
+          color: var(--text-dim);
           margin-bottom: 4px;
         }
 
@@ -9416,7 +9405,7 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-booster-level-compact-lbl {
           font-size: 11px;
           font-weight: 650;
-          color: rgba(255, 255, 255, 0.55);
+          color: var(--text-dim);
         }
 
         .nr-booster-level-buttons--inline {
@@ -9432,26 +9421,26 @@ export default withAuth(function NuovaRosaLabPage() {
           min-width: 44px;
           padding: 8px 10px;
           border-radius: 10px;
-          border: 1px solid rgba(0, 212, 255, 0.35);
-          background: rgba(0, 212, 255, 0.12);
-          color: #7ceeff;
+          border: 1px solid var(--info-border);
+          background: var(--info-bg);
+          color: var(--info-text);
           font-size: 13px;
           font-weight: 800;
           align-self: flex-start;
         }
 
         .nr-booster-slot-card--ef {
-          border-color: rgba(0, 212, 255, 0.26);
+          border-color: var(--info-border);
           background:
             radial-gradient(circle at 0% 0%, rgba(0, 212, 255, 0.12), transparent 42%),
-            linear-gradient(180deg, rgba(8, 18, 28, 0.55), rgba(10, 12, 22, 0.96));
+            linear-gradient(180deg, var(--inset-bg), var(--surface));
         }
 
         .nr-booster-level-btn {
           border-radius: 10px;
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          background: rgba(255, 255, 255, 0.03);
-          color: #fff;
+          border: 1px solid var(--border-soft);
+          background: var(--surface-2);
+          color: var(--text-main);
           font-size: 12px;
           font-weight: 600;
           padding: 8px 6px;
@@ -9459,17 +9448,17 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-booster-level-btn.is-active {
-          border-color: rgba(0, 212, 255, 0.45);
-          background: rgba(0, 212, 255, 0.16);
-          color: #7ceeff;
+          border-color: var(--info);
+          background: var(--info-bg);
+          color: var(--info-text);
         }
 
         .nr-mini-toggle {
           margin-top: 8px;
           border-radius: 999px;
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          background: rgba(255, 255, 255, 0.04);
-          color: rgba(255, 255, 255, 0.72);
+          border: 1px solid var(--border-soft);
+          background: var(--surface-2);
+          color: var(--text-secondary);
           font-size: 11px;
           font-weight: 750;
           padding: 7px 10px;
@@ -9478,9 +9467,9 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-mini-toggle.is-active {
-          border-color: rgba(0, 212, 255, 0.46);
-          background: rgba(0, 212, 255, 0.16);
-          color: #7ceeff;
+          border-color: var(--info);
+          background: var(--info-bg);
+          color: var(--info-text);
         }
 
         .nr-booster-slot-grid {
@@ -9491,8 +9480,8 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-booster-slot-card {
           border-radius: 14px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          background: rgba(255, 255, 255, 0.02);
+          border: 1px solid var(--border-soft);
+          background: var(--surface-2);
           padding: 10px;
           display: flex;
           flex-direction: column;
@@ -9509,16 +9498,16 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-skill-command-panel {
           border-radius: 16px;
-          border: 1px solid rgba(0, 212, 255, 0.14);
+          border: 1px solid var(--info-border);
           background:
             radial-gradient(circle at top left, rgba(0, 212, 255, 0.12), transparent 36%),
-            rgba(255, 255, 255, 0.025);
+            var(--surface-2);
           padding: 12px;
         }
 
         .nr-skill-command-panel .nr-form-field select {
-          border-color: rgba(0, 212, 255, 0.26);
-          background: rgba(5, 16, 34, 0.96);
+          border-color: var(--info-border);
+          background: var(--inset-bg);
           box-shadow: inset 0 0 0 1px rgba(0, 212, 255, 0.06);
         }
 
@@ -9547,8 +9536,8 @@ export default withAuth(function NuovaRosaLabPage() {
           flex-shrink: 0;
           margin-top: 0;
           padding: 12px 0 0;
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
-          background: linear-gradient(180deg, rgba(8, 12, 28, 0.72), rgba(8, 12, 28, 0.98));
+          border-top: 1px solid var(--border-soft);
+          background: linear-gradient(180deg, var(--inset-bg), var(--surface));
           position: sticky;
           bottom: 0;
           z-index: 6;
@@ -9558,7 +9547,7 @@ export default withAuth(function NuovaRosaLabPage() {
           margin: 0 0 10px;
           font-size: 12px;
           line-height: 1.45;
-          color: rgba(255, 255, 255, 0.62);
+          color: var(--text-secondary);
           flex: 1 1 100%;
         }
 
@@ -9587,8 +9576,8 @@ export default withAuth(function NuovaRosaLabPage() {
           padding: 14px;
           background:
             radial-gradient(circle at top, rgba(255, 145, 0, 0.18), transparent 38%),
-            linear-gradient(180deg, rgba(24, 16, 10, 0.98), rgba(10, 12, 20, 0.98));
-          border: 1px solid rgba(255, 166, 0, 0.18);
+            linear-gradient(180deg, var(--surface), var(--surface));
+          border: 1px solid var(--gold-border);
           display: flex;
           flex-direction: column;
           gap: 12px;
@@ -9607,12 +9596,12 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-premium-hero-copy h3 {
           margin: 4px 0 0;
           font-size: 24px;
-          color: #fff;
+          color: var(--text-main);
         }
 
         .nr-premium-hero-copy p {
           margin: 4px 0 0;
-          color: rgba(255, 255, 255, 0.8);
+          color: var(--text-main);
         }
 
         .nr-premium-card-frame {
@@ -9621,8 +9610,8 @@ export default withAuth(function NuovaRosaLabPage() {
           min-height: 0;
           border-radius: 16px;
           overflow: hidden;
-          border: 2px solid rgba(255, 177, 66, 0.25);
-          background: rgba(255, 255, 255, 0.04);
+          border: 2px solid var(--gold-border);
+          background: var(--surface-2);
           align-self: center;
         }
 
@@ -9645,8 +9634,8 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-premium-side-stats div,
         .nr-premium-summary-row div {
           border-radius: 14px;
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid var(--border-soft);
+          background: var(--surface-2);
           padding: 9px;
         }
 
@@ -9654,13 +9643,13 @@ export default withAuth(function NuovaRosaLabPage() {
         .nr-premium-summary-row span {
           display: block;
           font-size: 12px;
-          color: rgba(255, 255, 255, 0.62);
+          color: var(--text-secondary);
           margin-bottom: 4px;
         }
 
         .nr-premium-side-stats strong,
         .nr-premium-summary-row strong {
-          color: #fff;
+          color: var(--text-main);
           font-size: 16px;
         }
 
@@ -9735,7 +9724,7 @@ export default withAuth(function NuovaRosaLabPage() {
           hyphens: auto;
           line-height: 1.25;
           font-size: 11.5px;
-          color: rgba(255, 255, 255, 0.82);
+          color: var(--text-main);
         }
 
         .nr-stat-stepper {
@@ -9745,8 +9734,8 @@ export default withAuth(function NuovaRosaLabPage() {
           gap: 4px;
           padding: 3px;
           border-radius: 999px;
-          border: 1px solid rgba(255, 255, 255, 0.14);
-          background: rgba(9, 14, 30, 0.95);
+          border: 1px solid var(--border-strong);
+          background: var(--surface);
         }
 
         .nr-stat-stepper button {
@@ -9754,8 +9743,8 @@ export default withAuth(function NuovaRosaLabPage() {
           height: 28px;
           border: 0;
           border-radius: 999px;
-          background: rgba(255, 255, 255, 0.06);
-          color: rgba(255, 255, 255, 0.84);
+          background: var(--surface-2);
+          color: var(--text-main);
           font-size: 15px;
           font-weight: 900;
           line-height: 1;
@@ -9766,8 +9755,8 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-stat-stepper button:hover {
-          background: rgba(0, 212, 255, 0.13);
-          color: #fff;
+          background: var(--info-bg);
+          color: var(--text-main);
         }
 
         .nr-stat-compact-input {
@@ -9778,8 +9767,8 @@ export default withAuth(function NuovaRosaLabPage() {
           border: 0;
           outline: 0;
           border-radius: 999px;
-          background: rgba(255, 255, 255, 0.045);
-          color: #fff;
+          background: var(--surface-2);
+          color: var(--text-main);
           font-size: 12px;
           font-weight: 900;
           appearance: textfield;
@@ -9829,11 +9818,11 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-stat-stepper.tone-neutral {
-          border-color: rgba(255, 255, 255, 0.14);
+          border-color: var(--border-strong);
         }
 
         .nr-stat-stepper.tone-neutral .nr-stat-compact-input {
-          color: #fff;
+          color: var(--text-main);
         }
 
         .nr-mini-profile-grid {
@@ -9844,20 +9833,20 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-mini-profile-grid div {
           border-radius: 14px;
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid var(--border-soft);
+          background: var(--surface-2);
           padding: 10px;
         }
 
         .nr-mini-profile-grid span {
           display: block;
           font-size: 12px;
-          color: rgba(255, 255, 255, 0.62);
+          color: var(--text-secondary);
           margin-bottom: 4px;
         }
 
         .nr-mini-profile-grid strong {
-          color: #fff;
+          color: var(--text-main);
           font-size: 16px;
         }
 
@@ -9872,16 +9861,16 @@ export default withAuth(function NuovaRosaLabPage() {
           margin: 10px 0 0;
           font-size: 12px;
           line-height: 1.45;
-          color: rgba(255, 255, 255, 0.68);
+          color: var(--text-secondary);
         }
 
         .nr-role-editor-card {
           margin-top: 12px;
           border-radius: 14px;
-          border: 1px solid rgba(0, 212, 255, 0.16);
+          border: 1px solid var(--info-border);
           background:
             radial-gradient(circle at top left, rgba(0, 212, 255, 0.1), transparent 38%),
-            rgba(255, 255, 255, 0.035);
+            var(--surface-2);
           padding: 12px;
         }
 
@@ -9895,13 +9884,13 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-role-editor-head strong {
           display: block;
-          color: #fff;
+          color: var(--text-main);
           font-size: 13px;
         }
 
         .nr-role-editor-head p {
           margin: 4px 0 0;
-          color: rgba(255, 255, 255, 0.64);
+          color: var(--text-secondary);
           font-size: 12px;
           line-height: 1.35;
         }
@@ -9914,9 +9903,9 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-role-chip {
           border-radius: 999px;
-          border: 1px solid rgba(0, 212, 255, 0.22);
-          background: rgba(0, 212, 255, 0.08);
-          color: #eafcff;
+          border: 1px solid var(--info-border);
+          background: var(--info-bg);
+          color: var(--info-text);
           padding: 7px 10px;
           font-size: 12px;
           font-weight: 800;
@@ -9941,16 +9930,16 @@ export default withAuth(function NuovaRosaLabPage() {
           display: inline-block;
           margin-top: 8px;
           font-size: 12px;
-          color: rgba(255, 255, 255, 0.66);
+          color: var(--text-secondary);
         }
 
         .nr-skill-chip,
         .nr-skill-empty {
           border-radius: 999px;
           padding: 8px 10px;
-          background: rgba(0, 212, 255, 0.09);
-          border: 1px solid rgba(0, 212, 255, 0.14);
-          color: #fff;
+          background: var(--info-bg);
+          border: 1px solid var(--info-border);
+          color: var(--text-main);
           font-size: 12px;
           display: inline-flex;
           align-items: center;
@@ -9958,9 +9947,9 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-skill-empty {
-          background: rgba(255, 255, 255, 0.04);
-          border-color: rgba(255, 255, 255, 0.08);
-          color: rgba(255, 255, 255, 0.7);
+          background: var(--surface-2);
+          border-color: var(--border-soft);
+          color: var(--text-secondary);
         }
 
         .nr-slot-avatar-fallback {
@@ -10389,9 +10378,9 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-quick-section {
-          border: 1px solid rgba(255, 255, 255, 0.12);
+          border: 1px solid var(--border-soft);
           border-radius: 14px;
-          background: rgba(255, 255, 255, 0.045);
+          background: var(--surface-2);
           overflow: hidden;
         }
 
@@ -10404,7 +10393,7 @@ export default withAuth(function NuovaRosaLabPage() {
           min-height: 46px;
           padding: 10px 14px;
           border: none;
-          background: rgba(255, 255, 255, 0.03);
+          background: var(--surface-2);
           color: inherit;
           font: inherit;
           font-size: 13px;
@@ -10414,7 +10403,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
 
         .nr-quick-section-head:hover {
-          background: rgba(255, 255, 255, 0.06);
+          background: var(--surface-2);
         }
 
         .nr-quick-section-body {
@@ -10449,8 +10438,8 @@ export default withAuth(function NuovaRosaLabPage() {
           gap: 6px;
           padding: 5px 10px;
           border-radius: 999px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid var(--border-soft);
+          background: var(--surface-2);
           font-size: 11px;
         }
 
@@ -10463,10 +10452,10 @@ export default withAuth(function NuovaRosaLabPage() {
           font-size: 12px;
         }
 
-        .nr-quick-stat-chip.tone-elite strong { color: #3ddc97; }
-        .nr-quick-stat-chip.tone-good strong { color: #7dedc0; }
-        .nr-quick-stat-chip.tone-ok strong { color: #ffd76a; }
-        .nr-quick-stat-chip.tone-low strong { color: #ff8a8a; }
+        .nr-quick-stat-chip.tone-elite strong { color: var(--accent); }
+        .nr-quick-stat-chip.tone-good strong { color: var(--accent); }
+        .nr-quick-stat-chip.tone-ok strong { color: var(--gold-text); }
+        .nr-quick-stat-chip.tone-low strong { color: var(--danger-text); }
 
         .nr-quick-chip-row {
           display: flex;
@@ -10479,21 +10468,21 @@ export default withAuth(function NuovaRosaLabPage() {
           border-radius: 999px;
           font-size: 11px;
           font-weight: 600;
-          border: 1px solid rgba(61, 220, 151, 0.3);
-          background: rgba(61, 220, 151, 0.08);
-          color: #7dedc0;
+          border: 1px solid var(--accent-border);
+          background: var(--accent-bg);
+          color: var(--accent);
         }
 
         .nr-quick-chip-com {
           border-color: rgba(192, 132, 252, 0.3);
           background: rgba(192, 132, 252, 0.08);
-          color: #d8b4fe;
+          color: var(--cards-accent);
         }
 
         .nr-quick-chip-booster {
-          border-color: rgba(255, 203, 5, 0.3);
-          background: rgba(255, 203, 5, 0.08);
-          color: #ffcb05;
+          border-color: var(--gold-border);
+          background: var(--gold-bg);
+          color: var(--gold-text);
         }
 
         .nr-quick-active-booster {
@@ -10522,10 +10511,36 @@ export default withAuth(function NuovaRosaLabPage() {
             width: 40px;
             height: 4px;
             border-radius: 999px;
-            background: rgba(255, 255, 255, 0.25);
+            background: var(--border-strong);
             margin: 0 auto 6px;
             flex-shrink: 0;
           }
+        }
+
+        /* Light theme: inchiostri pastello pensati per superfici scure
+           (tone stepper, valori slider lime) vanno ri-mappati sui token. */
+        html[data-theme='light'] .nr-stat-stepper.tone-elite .nr-stat-compact-input {
+          color: var(--accent);
+        }
+
+        html[data-theme='light'] .nr-stat-stepper.tone-good .nr-stat-compact-input {
+          color: var(--success-text);
+        }
+
+        html[data-theme='light'] .nr-stat-stepper.tone-ok .nr-stat-compact-input {
+          color: var(--gold-text);
+        }
+
+        html[data-theme='light'] .nr-stat-stepper.tone-low .nr-stat-compact-input {
+          color: var(--danger-text);
+        }
+
+        html[data-theme='light'] .nr-build-slider-row-val {
+          color: var(--accent);
+        }
+
+        html[data-theme='light'] .nr-build-slider-chip strong {
+          color: var(--accent);
         }
 
       `}</style>
