@@ -55,5 +55,4 @@ Link esterno: https://tornei.fromzerotohero.io/
 
 ## Supporto
 
-Email: support@fromzerotohero.io  
-Guida in-app: `/guida`
+Email: support@fromzerotohero.io

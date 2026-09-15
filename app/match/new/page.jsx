@@ -725,7 +725,6 @@ export default function NewMatchPage() {
 
   return (
     <main
-      data-tour-id="tour-match-intro"
       className="match-upload-page"
       style={{
         minHeight: "100vh",
@@ -944,7 +943,6 @@ export default function NewMatchPage() {
       </section>
 
       <div
-        data-tour-id="tour-match-steps"
         className="match-step-grid"
         style={{
           display: "grid",
@@ -1083,7 +1081,6 @@ export default function NewMatchPage() {
       {/* Current Step Content */}
       {currentStepInfo && (
         <div
-          data-tour-id="tour-match-content"
           className="match-workspace-card"
           style={{
             ...shellCardStyle,
@@ -1748,7 +1745,6 @@ export default function NewMatchPage() {
       {(currentStep === STEPS.length - 1 ||
         Object.keys(stepData).length === STEPS.length) && (
         <div
-          data-tour-id="tour-match-save"
           style={{
             ...shellCardStyle,
             padding: "18px",

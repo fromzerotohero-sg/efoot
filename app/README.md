@@ -16,7 +16,6 @@ Root layout: **solo** `app/layout.jsx`. Monta `AppLayoutShell`. Non creare `app/
 | `/allenatori` | Coach | |
 | `/impostazioni-profilo` | Hub impostazioni app | Identita, HP, profilo di gioco, notifiche, preferenze, account |
 | `/gestione-profilo` | Redirect | Rimanda a `/impostazioni-profilo` |
-| `/guida` | Guida | |
 | `/login` | Redirect MetalGate | Non è form Supabase primario |
 | `/auth/callback`, `/login-success` | SSO | |
 | `/access` | Prelaunch | |

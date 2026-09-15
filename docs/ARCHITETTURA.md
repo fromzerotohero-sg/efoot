@@ -43,7 +43,6 @@ Analytics (GA `G-X69T3QE3GG`, Clarity `wylmfczjap`) si caricano in production; s
 | `/auth/callback`, `/login-success` | SSO |
 | `/access` | Gate prelaunch |
 | `/maintenance` | Manutenzione |
-| `/guida` | Guida in-app |
 | `/grafici-comparazione` | Grafici |
 
 Assenti nel codice: `/classifica`, `/api/leaderboard`, `lib/leaderboardHelper.js`.

@@ -6,7 +6,6 @@ import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTranslation, pickLang } from '@/lib/i18n'
 import {
-  BookOpen,
   Brain,
   Gift,
   LayoutGrid,
@@ -21,7 +20,6 @@ import {
   ChevronDown
 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
-import SidebarGuideTour from '@/components/SidebarGuideTour'
 import LanguageSwitch from '@/components/LanguageSwitch'
 import { useSidebar } from '@/components/SidebarContext'
 
@@ -100,7 +98,6 @@ export default function SidebarNew() {
   //   non esiste ancora una pagina Memoria Hero dedicata: niente destinazioni fake)
   // - HP → /impostazioni-profilo (sezione Hero Points: saldo, costi, acquisto)
   // - Lingua → LanguageSwitch (componente reale)
-  // - Guida → /guida
   // - Tornei → link esterno con redirect modal esistente
   const accountItems = [
     { href: '/impostazioni-profilo', icon: Wallet, label: 'HP', iconColor: '#fbbf24' },
@@ -109,7 +106,6 @@ export default function SidebarNew() {
 
   const otherItems = [
     { href: '/impostazioni-profilo', icon: Brain, label: pickLang(lang, { it: 'Memoria Hero', en: 'Hero Memory', es: 'Memoria Hero' }) },
-    { href: '/guida', icon: BookOpen, label: t('guide') },
     {
       href: 'https://tornei.fromzerotohero.io/',
       icon: Gift,
@@ -117,7 +113,6 @@ export default function SidebarNew() {
       shortcut: 'tornei',
       badgeText: pickLang(lang, { it: 'GRATIS', en: 'FREE', es: 'GRATIS' })
     },
-    { type: 'tour' },
     { type: 'language' }
   ]
 
@@ -408,9 +403,6 @@ export default function SidebarNew() {
                   })}
                 </div>
                 {otherItems.map((item) => {
-                  if (item.type === 'tour') {
-                    return <SidebarGuideTour key="tour" onClick={() => setIsOpen(false)} />
-                  }
                   if (item.type === 'language') {
                     return (
                       <div key="language" style={{ padding: '6px 12px' }}>

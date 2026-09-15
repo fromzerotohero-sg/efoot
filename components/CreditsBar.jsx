@@ -314,7 +314,6 @@ export default function CreditsBar() {
 
       <button
         type="button"
-        data-tour-id="tour-dashboard-credits"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="true"
