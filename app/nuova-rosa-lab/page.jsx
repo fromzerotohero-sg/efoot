@@ -6669,6 +6669,42 @@ export default withAuth(function NuovaRosaLabPage() {
           color: #f4f6f7;
         }
 
+        /* L'isola resta scura anche in light: i token semantici sono pinnati
+           ai valori dark così i componenti condivisi (TacticalSettingsPanel,
+           PositionSelectionModal, skeleton) non "flipperanno" mai qui dentro. */
+        html[data-theme='light'] .nr-page {
+          --surface: #101a20;
+          --surface-2: rgba(255, 255, 255, 0.05);
+          --surface-3: rgba(255, 255, 255, 0.08);
+          --text-main: #f4f6f7;
+          --text-dim: rgba(255, 255, 255, 0.55);
+          --text-primary: #ffffff;
+          --text-secondary: rgba(255, 255, 255, 0.7);
+          --text-tertiary: rgba(255, 255, 255, 0.5);
+          --border-soft: rgba(255, 255, 255, 0.08);
+          --border-softer: rgba(255, 255, 255, 0.07);
+          --border-strong: rgba(255, 255, 255, 0.2);
+          --inset-bg: rgba(0, 0, 0, 0.25);
+          --skeleton-bg: rgba(255, 255, 255, 0.06);
+          --info: #00d4ff;
+          --info-text: #7dd3fc;
+          --info-bg: rgba(0, 212, 255, 0.1);
+          --info-border: rgba(0, 212, 255, 0.35);
+          --accent: #3ddc97;
+          --accent-strong: #27a76a;
+          --accent-ink: #05231a;
+          --accent-bg: rgba(61, 220, 151, 0.12);
+          --accent-border: rgba(61, 220, 151, 0.3);
+          --gold-text: #ffd76a;
+          --gold-bg: rgba(255, 203, 5, 0.1);
+          --gold-border: rgba(255, 203, 5, 0.3);
+          --gold-ink: #1f1300;
+          --success-text: #86efac;
+          --danger-text: #fca5a5;
+          --primary-orange: #ff9500;
+          --cards-accent: #c084fc;
+        }
+
         .nr-page {
           width: min(1440px, 100%);
           margin: 0 auto;
@@ -8107,10 +8143,6 @@ export default withAuth(function NuovaRosaLabPage() {
           background-size: 200% 100%;
         }
 
-        :global(html[data-theme='light']) .nr-coach-avatar-skeleton {
-          background: rgba(0, 0, 0, 0.06);
-        }
-
         .nr-coach-header-skeletonText {
           display: flex;
           flex-direction: column;
@@ -8125,10 +8157,6 @@ export default withAuth(function NuovaRosaLabPage() {
           background: var(--skeleton-bg, rgba(255, 255, 255, 0.08));
           animation: nr-skeleton-shimmer 1.4s ease-in-out infinite;
           background-size: 200% 100%;
-        }
-
-        :global(html[data-theme='light']) .nr-skeleton-line {
-          background: rgba(0, 0, 0, 0.08);
         }
 
         .nr-skeleton-line-sm { width: 38%; }
