@@ -236,13 +236,21 @@ OVERALL RATING (CRITICO - Leggi con attenzione):
 
 - Estrai TUTTI questi dati: nome giocatore, posizione, overall rating, team, card_type, base_stats (attacking, defending, athleticism), skills, com_skills, boosters, height, weight, age, nationality, level, form, role, playing_style, ai_playstyles, matches_played, goals, assists, weak_foot_frequency, weak_foot_accuracy, injury_resistance
 
+STILI DI GIOCO (v6.0.0):
+- "playing_style" = stile principale visibile sotto il nome se ce n'è uno solo.
+- Se la card mostra DUE stili (attacco e difesa), metti:
+  * "attacking_playing_style"
+  * "defensive_playing_style"
+- Non inventare il secondo stile se non è visibile.
+
 ABILITÀ (due sezioni distinte in eFootball):
 - "Abilità giocatore" = prima lista (spesso in griglia, es. Cross calibrato, Marcatore, Intercettazione...). Mettila in "skills".
-- "Abilità aggiuntive" / "COM" = seconda lista sotto (es. Passaggio filtrante, Colpo di testa, Passaggio calibrato...). Mettila in "com_skills".
+- "Abilità aggiuntive" / "COM" = seconda lista sotto. Se è COM/stili IA (Funambolo, Treno in corsa, Long Ranger), mettila in "com_skills" e "ai_playstyles". Se è Additional Skills, mettila in "additional_skills" e tienila anche in "skills" solo se è la stessa lista visibile.
 - Se nella card vedi ENTRAMBE le sezioni, compila ENTRAMBE. Se vedi solo la prima, compila solo "skills".
+- Non restituire array vuoti al posto di una lista già letta da un'altra foto.
 
 STILI DI GIOCO IA (sezione "Stili di gioco IA" nella card):
-- Elenco di stili IA (es. "Treno in corsa", "Crossatore"). Mettili in "ai_playstyles" come array di stringhe.
+- Elenco di stili IA (es. "Treno in corsa", "Crossatore"). Mettili in "ai_playstyles" come array di stringhe. NON mescolarli in "skills".
 
 POSIZIONI ORIGINALI (NUOVO - Guarda Mini-Campo in Alto a Destra):
 - Guarda la sezione in alto a destra della card dove c'è un MINI-CAMPO diviso in zone
@@ -304,6 +312,9 @@ Formato JSON richiesto:
   "form": "B",
   "role": "Role",
   "playing_style": "Style Name",
+  "attacking_playing_style": "Attacking Style or null",
+  "defensive_playing_style": "Defensive Style or null",
+  "additional_skills": ["Additional Skill 1"],
   "matches_played": 204,
   "goals": 86,
   "assists": 37,

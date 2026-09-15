@@ -362,7 +362,7 @@ export async function POST(req) {
           ...(playerData.form && { form: playerData.form }),
           ...(fromCatalog
             ? { role: resolvedRole || playerData.role || null }
-            : playerData.role && { role: playerData.role }),
+            : (resolvedRole || playerData.role) && { role: resolvedRole || playerData.role }),
           ...(playerData.height !== null && playerData.height !== undefined && { height: playerData.height }),
           ...(playerData.weight !== null && playerData.weight !== undefined && { weight: playerData.weight }),
           ...(playerData.current_level !== null && playerData.current_level !== undefined && { current_level: playerData.current_level }),
@@ -370,7 +370,9 @@ export async function POST(req) {
           ...(playerData.active_booster_name && { active_booster_name: playerData.active_booster_name }),
           ...(fromCatalog
             ? { playing_style_id: playingStyleId }
-            : playerData.playing_style_id && { playing_style_id: playerData.playing_style_id }),
+            : playingStyleId
+              ? { playing_style_id: playingStyleId }
+              : playerData.playing_style_id && { playing_style_id: playerData.playing_style_id }),
           ...(shouldApplyOpRefresh && { original_positions: normalizedOpRefresh }),
           // Campi merged (sempre aggiornati)
           photo_slots: mergedPhotoSlots,

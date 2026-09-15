@@ -155,10 +155,8 @@ export async function POST(req) {
           formationLayout || null
         )
         if (!validationResult.valid) {
-          return NextResponse.json(
-            { error: validationResult.error },
-            { status: 400 }
-          )
+          droppedInstructions.push(categoryKey)
+          continue
         }
       }
     }

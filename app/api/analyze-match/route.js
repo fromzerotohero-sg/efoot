@@ -4,6 +4,7 @@ import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { callOpenAIWithRetry } from '@/lib/openaiHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { getRelevantSectionsForContext } from '@/lib/ragHelper'
+import { getTruthLayerPromptBlock } from '@/lib/efootballTruthLayer'
 import { deductCredits, AI_COST } from '@/lib/creditService'
 
 export const runtime = 'nodejs'
@@ -697,9 +698,8 @@ Puoi dire che con più sezioni complete l'analisi sarebbe più precisa; NON dare
   let attilaMemorySection = ''
   try {
     const ragContent = getRelevantSectionsForContext('analyze-match', 12000)
-    if (ragContent && ragContent.length > 0) {
-      attilaMemorySection = `\n\n📌 MEMORIA ATTILA - eFootball (Conoscenza Tattica):\n${ragContent}\n\n`
-    }
+    const truth = getTruthLayerPromptBlock('it')
+    attilaMemorySection = `\n\n📌 MEMORIA ATTILA - eFootball (Conoscenza Tattica):\n${truth}\n${ragContent || ''}\n\n`
   } catch (ragError) {
     console.error('[analyze-match] Error loading RAG knowledge:', ragError)
   }
@@ -715,7 +715,7 @@ ${userContext}${clientTeamText}${opponentNameText}${rosterText}${playersInMatchT
 ${availableDataText}
 ${missingText}
 ${attilaMemorySection}${conservativeMode}${personalizationInstructions}
-⚠️ OBBLIGATORIO: applica RAG §10.15 NON INFERIRE CAUSE (regole nel blocco MEMORIA ATTILA sopra). Vietato ragionamenti causali "X perché Y".
+⚠️ OBBLIGATORIO: NON INFERIRE CAUSE. Dati = indicatori, vietato "X perché Y". Niente Offensivo/Linea bassa. Formazione fluida e due Collegamenti solo come consiglio se i dati li mostrano.
 
 ⚠️ REGOLE CRITICHE - NON INVENTARE DATI (ASSOLUTO):
 1. NON menzionare goals/assists per giocatori specifici a meno che non siano esplicitamente forniti nei dati sopra

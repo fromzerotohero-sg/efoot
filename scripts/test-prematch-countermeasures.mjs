@@ -170,6 +170,7 @@ const defenseCategory = Object.keys(INDIVIDUAL_INSTRUCTIONS_CONFIG).find((key) =
   assert(Boolean(customer.diagnosis), 'partial diagnosis filled')
   assert(customer.setup.substitutions.length <= 1, 'customer caps swaps to 1')
   assert(customer.setup.individual_instructions.length <= 2, 'customer caps instructions to 2')
+  assert(!customer.setup.individual_instructions.some((row) => row.instruction === 'offensivo'), 'removed Attacking instruction filtered from customer plan')
   assert(customer.starting_plan.length <= 3, 'customer caps starting plan')
   assert(!hasTechnicalLeak(customer.diagnosis), 'partial diagnosis clean')
   for (const tip of customer.starting_plan) {

@@ -14,6 +14,10 @@ import {
   getPlayerSkillSemantic,
   hasSkillSemantic
 } from '../lib/playerSkillSemantics.js'
+import {
+  getMergedPlayerSkills,
+  getPlayerComAiPlaystyles
+} from '../lib/rosterSkillsContext.js'
 
 function assertEqual(actual, expected, label) {
   if (actual !== expected) {
@@ -184,5 +188,19 @@ assertEqual(
   'Tiro dalla distanza and Tiro dalla distanza',
   'localize long-range shooting'
 )
+
+const mixed = {
+  skills: ['Passaggio filtrante'],
+  additional_skills: ['Tiro di prima'],
+  com_skills: ['mazing run']
+}
+if (getMergedPlayerSkills(mixed).some((s) => /mazing/i.test(s))) {
+  console.error('FAIL merged skills included COM/AI')
+  process.exit(1)
+}
+if (getPlayerComAiPlaystyles(mixed).length === 0) {
+  console.error('FAIL COM/AI playstyles not separated')
+  process.exit(1)
+}
 
 console.log('OK: player skill labels')

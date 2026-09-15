@@ -28,6 +28,7 @@ import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import ChatMarkdown from '@/components/hero-chat/ChatMarkdown'
 import PrematchPitch from '@/components/hero-chat/PrematchPitch'
 import { opponentVisualTrait, instructionLabel } from '@/lib/prematchCustomerPlan'
+import { buildTacticalHistory } from '@/lib/coachSuggestionEngine'
 
 /**
  * HERO CHAT — superficie conversazionale principale (Home).
@@ -699,6 +700,7 @@ export default function HeroChat({
 }) {
   const router = useRouter()
   const clientName = resolveGreetingName(userProfile)
+  const greetUserKey = userProfile?.user_id || userProfile?.id || userProfile?.email || ''
 
   const [messages, setMessages] = React.useState([])
   const [feedCards, setFeedCards] = React.useState([]) // card ricche in-conversazione (dati reali)
@@ -747,18 +749,17 @@ export default function HeroChat({
   const stateCopy = COPY.states[homeState]
   const lowHp = typeof hpBalance === 'number' && Number.isFinite(hpBalance) && hpBalance < 2
 
-  // Greeting one-shot: bolla Hero tradotta a render-time (segue la lingua corrente,
-  // niente mix IT/ES quando l'utente cambia lingua dopo l'apertura).
-  const [greetingVariant] = React.useState(() => {
-    let greeted = false
+  // Greeting one-shot per utente: niente card ultima partita, solo Bentornato {name}.
+  const [greetingVariant, setGreetingVariant] = React.useState('returning')
+  React.useEffect(() => {
+    if (!greetUserKey) return
+    const storageKey = `${GREETED_KEY}:${greetUserKey}`
     try {
-      greeted = localStorage.getItem(GREETED_KEY) === '1'
+      const greeted = localStorage.getItem(storageKey) === '1'
+      setGreetingVariant(greeted ? 'returning' : 'first')
+      localStorage.setItem(storageKey, '1')
     } catch { /* ignore */ }
-    try {
-      localStorage.setItem(GREETED_KEY, '1')
-    } catch { /* ignore */ }
-    return greeted ? 'returning' : 'first'
-  })
+  }, [greetUserKey])
   // Knowledge score reale per l'anello header (stesso endpoint di AIKnowledgeBar)
   React.useEffect(() => {
     let cancelled = false
@@ -925,13 +926,7 @@ export default function HeroChat({
     setActionsOpen(false)
     pendingScrollRef.current = true
 
-    const historyForApi = messages
-      .filter((m) => m.role === 'user' || (m.role === 'hero' && m.content && !String(m.kind || '').startsWith('workflow')))
-      .slice(-10)
-      .map((m) => ({
-        role: m.role === 'hero' ? 'assistant' : 'user',
-        content: m.content
-      }))
+    const historyForApi = buildTacticalHistory(messages, 10)
 
     setMessages((prev) => [...prev, { role: 'user', content: message }])
     void persistMessages([{ role: 'user', content: message }])
@@ -1090,7 +1085,14 @@ export default function HeroChat({
     }))
 
     setFeedbackMessages((prev) => [...prev, { role: 'user', content: message }])
-    void persistMessages([{ role: 'user', content: message }])
+    void persistMessages([{
+      role: 'user',
+      content: message,
+      kind: 'workflow_feedback',
+      workflowId: activeWorkflowId,
+      workflowType: 'feedback',
+      payload: { kind: 'workflow_feedback', workflowId: activeWorkflowId, workflowType: 'feedback' }
+    }])
     setInput('')
     setFeedbackSending(true)
 
@@ -1123,7 +1125,14 @@ export default function HeroChat({
       }
 
       const answer = data.response || L(lang, COPY.errorGeneric)
-      const heroMessage = { role: 'hero', content: answer }
+      const heroMessage = {
+        role: 'hero',
+        content: answer,
+        kind: 'workflow_feedback',
+        workflowId: activeWorkflowId,
+        workflowType: 'feedback',
+        payload: { kind: 'workflow_feedback', workflowId: activeWorkflowId, workflowType: 'feedback' }
+      }
       setFeedbackMessages((prev) => [...prev, heroMessage])
       void persistMessages([heroMessage])
 
@@ -1135,7 +1144,7 @@ export default function HeroChat({
     } finally {
       setFeedbackSending(false)
     }
-  }, [feedbackSending, feedbackMessages, lang, router, stopListening, persistMessages])
+  }, [feedbackSending, feedbackMessages, lang, router, stopListening, persistMessages, activeWorkflowId])
 
   // Salvataggio reale in chat: memoria + profilo + diagnosi (contratto esistente di CoachFeedbackChat).
   const handleSaveFeedback = React.useCallback(async () => {
@@ -2112,7 +2121,7 @@ export default function HeroChat({
                 {m.content ? <ChatMarkdown>{m.content}</ChatMarkdown> : null}
                 {m.role === 'hero' && Array.isArray(m.suggestions) && m.suggestions.length > 0 && (
                   <div className="hc-bubbleActions">
-                    {m.suggestions.filter(Boolean).slice(0, 2).map((sug) => (
+                    {m.suggestions.filter(Boolean).slice(0, 3).map((sug) => (
                       <button
                         key={sug}
                         type="button"

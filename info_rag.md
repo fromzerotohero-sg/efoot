@@ -1,41 +1,44 @@
-**Versione**: 8.4.0 ENTERPRISE | **Data**: 10 Febbraio 2026 | **Lingua**: Italiano
-**Fonti**: Manuale eFootball, Best Practices Community, Documentazione Tecnica Ufficiale
+**Versione**: 9.0.0 ENTERPRISE | **Data**: 15 Settembre 2026 | **Lingua**: Italiano
+**Fonti**: Konami Version Info v6.0.0, Dream Team ufficiale, news Attack Trigger. Meta competitivo = community, mai legge di gioco.
+**Verità canonica runtime**: `lib/efootballTruthLayer.js`
 
 # DATABASE MECCANICHE eFootball ENTERPRISE - RAG System
 
 ## OBIETTIVO
-Database RAG enterprise per consigli tattici basati su meccaniche ufficiali eFootball. 
-**Principio fondamentale**: Distinguiere sempre tra CARATTERISTICHE FISSE (card) e ELEMENTI CONFIGURABILI (utente).
+Database RAG enterprise per consigli tattici basati su meccaniche ufficiali eFootball v6.0.0 (eFootball 2027).
+**Principio fondamentale**: Distinguere sempre **fatti di gioco**, **meta competitiva** e **euristiche FZTH**. Non inventare numeri non ufficiali.
 
 ---
 
 ## CONTESTO VIDEOGIOCO (FONDAMENTALE)
 
 ### Cosa sono i Giocatori in eFootball
-I giocatori in eFootball sono **CARD DIGITALI** con statistiche e caratteristiche **FISSE**:
-- **Non sono persone reali** → NON hanno "esperienza", "carriera", "maturità"
-- **Non crescono nel tempo** → Statistiche Overall, Velocità, Tiro sono FISSE sulla card
-- **Non si allenano** → Non puoi "migliorare" un giocatore
-- **Puoi solo scegliere** → Quale schierare, come posizionarlo, che istruzioni dare
+I giocatori sono **CARD DIGITALI**. Non sono persone reali: vietato parlare di "esperienza", "carriera", "maturità".
+- **Abilità native** della card: fisse
+- **Sviluppo**: Progression Points al level-up per alzare stats (Player Progression ufficiale)
+- **Skill Training**: massimo **5 Additional Skills**
+- **Position Training**: massimo **2** competenze posizione eleggibili; da v6.0.0 la posizione già registrata sulla card è esclusa
+- **Stile giocatore**: può essere in attacco, in difesa, o entrambi (v6.0.0)
+- In chat FZTH puoi consigliare chi schierare, dove, quali istruzioni, quale schema fluida e se vale la pena spendere Progression/Skill Training **solo se i dati della rosa lo mostrano**. Non inventare slider o skill aggiunte.
 
-### Differenza FISSO vs MODIFICABILE
+### Differenza CARD vs CONFIGURABILE vs SVILUPPO
 
 | ELEMENTO | STATO | DESCRIZIONE |
 |----------|-------|-------------|
-| **Statistiche Giocatore** | FISSO | Overall, Velocità, Tiro, Resistenza, ecc. - Immutabili |
-| **Stili di Gioco Giocatore** | ✅ FISSO | Opportunista, Collante, Onnipresente, ecc. - Immutabili (vedi §2 per i 22 stili canonici e alias EN) |
-| **Abilità native** (dalla card) | ✅ FISSO | Tiro al Volo, Contrasto Aggressivo, ecc. - Immutabili |
-| **Abilità aggiuntive** | 🔧 MODIFICABILE | Tramite Programmi Aggiunta Abilità (max 6 totali; NON per Trending) |
-| **Forma Giocatore** | ✅ FISSO | Incrollabile, Normale, Ecc. - Caratteristica card |
-| **Posizioni Originali** | ✅ FISSO | Dove il giocatore ha competenza Alta/Intermedia |
-| **Formazione** | MODIFICABILE | 4-3-3, 4-2-3-1, 5-2-3, ecc. - Scelta utente |
-| **Stile Squadra** | 🔧 MODIFICABILE | Possesso palla, Contropiede, ecc. - Scelta utente |
-| **Istruzioni Individuali** | 🔧 MODIFICABILE | Offensivo, Difensivo, Marcatura, ecc. - Configurabili |
-| **Titolari vs Riserve** | 🔧 MODIFICABILE | Chi schierare in campo - Decisione utente |
-| **Competenza Posizione** | 🔧 PARZIALE | Alto/Intermedio fisso, ma si può aggiungere posizione (max 2) |
+| **Abilità native** | CARD | Nascita della card, non si cancellano |
+| **Abilità aggiuntive** | SVILUPPO | Skill Training, max 5 Additional Skills (non Trending) |
+| **Stili COM / IA** | CARD | Funambolo, Treno in corsa, Long Ranger, ecc. NON occupano gli slot Additional Skills |
+| **Progression Points** | SVILUPPO | Slider stats dopo il level-up; non inventare la distribuzione se assente dai dati |
+| **Stili di Gioco Giocatore** | CARD | Attacco e/o difesa; non modificabili dall'utente |
+| **Forma Giocatore** | CARD | Incrollabile, Normale, ecc. |
+| **Posizioni Originali** | CARD + SVILUPPO | Competenza nativa + max 2 Position Training |
+| **Formazione / Formazione fluida** | CONFIGURABILE | Schema in possesso e schema senza palla (v6.0.0) |
+| **Stile Squadra** | CONFIGURABILE | 6 voci: Possesso palla, Contropiede veloce, Contrattacco, Passaggio lungo, Vie laterali, Pressing totale |
+| **Istruzioni Individuali** | CONFIGURABILE | Difensivo, Ancoraggio, Marcatura stretta, Marcatura uomo, Contropiede. **Offensivo** e **Linea bassa** rimossi in v6.0.0 |
+| **Titolari vs Riserve** | CONFIGURABILE | Chi schierare |
+| **Collegamento allenatore** | CARD ALLENATORE | 1 o 2 Link-up Plays; = Connection, non lag |
 
-**REGOLA ORO per l'AI**: MAI suggerire di "potenziare", "migliorare", "far crescere" un giocatore. 
-Puoi solo suggerire: chi usare, dove posizionarlo, che istruzioni dargli.
+**REGOLA ORO per l'AI**: non inventare sviluppo. Se i dati mostrano Progression/Skill Training, puoi consigliarli. Se mancano, resta su chi schierare, dove, istruzioni e Formazione fluida. Mai percentuali di stamina non ufficiali.
 
 ---
 
@@ -83,7 +86,7 @@ Puoi solo suggerire: chi usare, dove posizionarlo, che istruzioni dargli.
 - **Resistenza infortuni**: Probabilità di subire infortuni (valore alto = minor probabilità)
 
 ### 1.6 Soglie indicative (parametri META)
-Valori di riferimento per costruzione squadra. Le statistiche restano FISSE sulla card; questi numeri aiutano a scegliere quale card schierare.
+Valori di riferimento per costruzione squadra. Le soglie aiutano a scegliere quale card schierare o come spendere Progression Points se i dati li mostrano; non sono un overall immutabile.
 - **Difensori centrali**: Velocità e Accelerazione min. 85 (contropiede dominante)
 - **Terzini**: Velocità 90+ per recuperare su ali veloci
 - **Ali e attaccanti**: Velocità 90+ per dominare 1v1
@@ -92,13 +95,15 @@ Valori di riferimento per costruzione squadra. Le statistiche restano FISSE sull
 
 ---
 
-## 2. STILI GIOCATORE - Caratteristica card (FISSI)
+## 2. STILI GIOCATORE - Caratteristica card
 
-**≠ Stile squadra** (Possesso, Contropiede, ecc.): quello è in §4. Qui solo **caratteristiche FISSE della card**.
+**≠ Stile squadra** (Possesso, Contropiede, Pressing totale): quello è in §4. Qui solo **stili della card**.
 
-**IMPORTANTE**: Gli stili giocatore (Opportunista, Collante, Onnipresente, ecc.) sono **CARATTERISTICHE FISSE** della card. NON si possono modificare.
+**v6.0.0**: gli stili sono divisi in **Stile di gioco in attacco** e **Stile di gioco in difesa**. Una card può averne uno, l'altro, o entrambi. Esempio ufficiale: Opportunista in attacco + Pressione in attacco in difesa.
 
-**Totale ufficiale**: **22 stili giocatore** in eFootball 2026.
+**IMPORTANTE**: lo stile nativo della card non si cambia in menu. Nuovi stili difensivi (Pressione in attacco, Ruolo di copertura, Difensore instancabile, Disturbatore di passaggi, Maestro della difesa alta, Fulcro dell'attacco, Rapace in avanti, PT stopper) esistono in gioco/catalogo: se compaiono in rosa, usali; non dire che "non esistono".
+
+**Stili attacco canonici** (IT client / EN catalogo). Non sommare Onnipresente e Box-to-Box come due stili diversi: sono lo stesso stile con due etichette. Tra le linee = Orchestrator; Orchestratore è alias.
 
 **Sigle posizioni — bridge IT ↔ EN ufficiale Konami** (l'AI deve riconoscere entrambe):
 
@@ -231,7 +236,16 @@ Comportamento quando IA controlla giocatore in possesso:
 - **Difesa (D)**: 2-5 giocatori (fino a **3 DC**, max 1 TD, max 1 TS). **3 DC sono consentiti**. Se vuoi schierare un **4° difensore** quando hai già 3 DC, deve essere un **terzino** (TD o TS): vietato 4° DC. Con 3 DC già in campo, non aggiungere riserve DC se non esce un DC titolare; per aumentare la linea difensiva proponi TD/TS. Eccezione: una card principale DC può essere usata da terzino solo se nei dati ha posizione/competenza TD o TS, e va comunicata come TD/TS.
 - **Portiere (PT)**: posizione non modificabile
 
-### 3.5 Ruoli e comportamenti tattici
+### 3.5 Formazione fluida (v6.0.0, CONFIGURABILE)
+Due schemi nello stesso Game Plan: **forma in attacco** (palla) e **forma in difesa** (senza palla). Non si cambia a mano ad ogni transizione: è automatico.
+- Imposta prima lo schema con palla, poi chi copre gli spazi lasciati.
+- Il movimento non è istantaneo: un terzino alto resta scoperto se perdi palla. Riduci la distanza tra i due ruoli assegnati.
+- Auto-Pick può riempire entrambi gli schemi; verifica Stile attacco/difesa e competenza posizione.
+- FZTH consiglia le due forme; **non** le applica al gioco e **non** ha un editor a due schemi.
+
+**[COMMUNITY, non legge]** Punto di partenza frequente: difesa 4-2-3-1, attacco 3-2-4-1. Overload: 4-3-3 o 4-2-1-3 con uscita larga e mediano di copertura.
+
+### 3.6 Ruoli e comportamenti tattici
 **Mediano (MED)**: Davanti alla difesa, zona ristretta; interdizione e recupero palla. **Quando serve**: scudo difensivo, proteggere difesa contro trequartisti.
 **Mezzala**: Movimento verticale, inserimenti in area. **Quando serve**: goal da centrocampo, superiorità numerica in area.
 **Regista Basso**: Arretrato per costruzione, primo passaggio. **Quando serve**: gioco elaborato dal portiere, costruzione dal basso.
@@ -284,22 +298,22 @@ Comportamento quando IA controlla giocatore in possesso:
 
 ## 5. ISTRUZIONI INDIVIDUALI (CONFIGURABILI)
 
-**4 slot totali: 2 offensive (possesso palla), 2 difensive (senza possesso)**
+**4 slot totali: 2 in possesso, 2 senza possesso.**
 
-### Slot Offensive (in possesso palla)
-- **Difensivo**: Giocatore non si spinge troppo in avanti
-- **Offensivo**: Giocatore si spinge in avanti, partecipa ad attacco (**non assegnabile a ESA/EDA/SP/P**)
-- **Ancoraggio (Anchoring)**: Resta ancorato in zona (es. mediano davanti difesa)
+### Valide da v6.0.0
+- **Difensivo**: il giocatore non si spinge troppo in avanti (slot possesso)
+- **Ancoraggio (Anchoring)**: resta ancorato in zona
+- **Marcatura stretta**: marca da vicino
+- **Marcatura uomo**: marca un avversario specifico
+- **Contropiede**: riferimento per la ripartenza (slot senza possesso)
 
-### Slot Difensive (senza possesso palla)
-- **Marcatura stretta**: Marca avversario da vicino, riduce spazio
-- **Marcatura uomo**: Marca avversario specifico (man marking)
-- **Contropiede**: Giocatore è riferimento per contropiede
-- **Linea bassa (Deep line)**: Resta più arretrato (non assegnabile a difensori)
+### Rimosse in v6.0.0
+- **Offensivo / Attacking** e **Linea bassa / Deep Line** non esistono più nel Game Plan. Non consigliarle. Per alzare o abbassare un giocatore usa **Formazione fluida** (schema attacco vs schema difesa).
 
 ### Impostazioni Squadra
-- **Linea alta/bassa**: Alzare/abbassare linea difensiva con frecce
+- **Linea alta/bassa**: alzare/abbassare la linea di squadra con le frecce (non è l'istruzione individuale rimossa)
 - **Calci piazzati**: Primo/Secondo/Terzo attaccante per cross
+- **Collegamento**: alcuni allenatori hanno **due** Link-up Plays; se i dati ne mostrano due, citare entrambi (Focal Point / Key Man)
 
 ---
 
@@ -357,6 +371,8 @@ Comportamento quando IA controlla giocatore in possesso:
 **Passaggio Sensazionale**: Passaggio più rapido e incisivo (rischio maggiore se sei chiuso). Usalo quando sei **smarcato** e hai una linea di passaggio chiara.
 
 **Tiro Sensazionale**: Tiro più potente. Rende di più con abilità tiro speciali (es. **Tiro a scendere** / **Tiro a salire**) e quando hai tempo per orientare il corpo.
+
+**Volée dinamica (v6.0.0)**: su palla in aria, il Tiro sensazionale produce una volée. Non inventare tasti. Usala quando la palla è alta dopo un lancio o un rimpallo, non su palla bassa.
 
 **Tiro Calibrato**: Tiro più “piazzato” e delicato. Rende di più con abilità come **A giro da distante** o **Esterno a giro**, e quando vuoi privilegiare precisione rispetto alla potenza.
 
@@ -555,11 +571,12 @@ Nota affidabilita: "special double touch" e varianti "tess/croqueta interrotta" 
 ## 8. ABILITÀ GIOCATORI (MISTE: NATIVE FISSE + AGGIUNGIBILI)
 
 **REGOLA FONDAMENTALE**:
-- **Abilità native**: FISSE (con cui nasce la card)
-- **Abilità aggiuntive**: MODIFICABILI tramite "Programmi Aggiunta Abilità"
-- **Max 6 slot abilità totali** per giocatore
+- **Abilità native**: della card, non si cancellano
+- **Abilità aggiuntive**: Skill Training, massimo **5 Additional Skills** (fonte ufficiale Dream Team)
+- **Stili COM/IA** (Funambolo, Long Ranger, Treno in corsa, …): NON sono Additional Skills e NON occupano i 5 slot
 - **NON modificabili per giocatori TRENDING**
 - **Modificabili per**: In evidenza, In risalto, Epico, Leggendario, Standard
+- Se la rosa mescola native e aggiuntive nello stesso array, non inventare quali sono native: trattale come elenco non classificato e non dire "slot 6/6"
 
 **REGOLA AI nomi abilità (IT/EN)**: i nomi italiani canonici in questa sezione seguono il client ufficiale eFootball (allineati a `playerSkillLabels.js`). In rosa, catalogo PSD o eFootball Lab possono comparire **alias EN** o varianti community: usa la mappatura §8.11 e NON dire "abilità inesistente" se riconosci l'alias.
 
@@ -681,7 +698,7 @@ Nota affidabilita: "special double touch" e varianti "tess/croqueta interrotta" 
 - **Disponibile per**: In evidenza, In risalto, Epico, Leggendario, Standard
 - **NON disponibile per**: Trending (già max livello)
 - **Come funziona**: Usa programmi per far apprendere abilità al giocatore
-- **Max slot**: 6 abilità totali (native + aggiunte)
+- **Max Additional Skills**: 5 (ufficiale). Native restano sulla card a parte.
 
 ### 8.9 Priorità abilità per ruolo (per consigli)
 Quando si consigliano abilità da aggiungere (tramite Programmi, se non Trending): **Attaccanti** → Tiro di prima, Colpo di testa (se fisico), Finalizzazione acrobatica, Pallonetto mirato; **Registi** → Passaggio filtrante, Passaggio di prima, Passaggio calibrato; **Mediani** → Intercettazione, Contrasto Aggressivo, Tornante, Spirito combattivo; **Difensori** → Intercettazione, Marcatore, Colpo di testa, Dominio palle alte, Muro; **Ali** → Doppio tocco, Cross calibrato, Tornante; **Terzini** → Intercettazione, Cross calibrato (se offensivi); **Riserve d'impatto** → **Riserva di lusso**. Evitare abilità difensive su attaccanti puri; evitare abilità offensive su difensori centrali; max 2-3 abilità dribbling per giocatore.
@@ -744,7 +761,7 @@ Carta forte senza abilità corrette non renderà in game come dovrebbe. **Obblig
 - **Willpower** = **Forza di volontà** (§8.1) — boost progressivo abilità di tiro fino a 8 cumuli
 - **GK Directing Defense / GK Directing Defence** = **Direzione alla difesa** (§8.5)
 - **GK Spirit Roar** = **Portiere galvanizzatore** (§8.5)
-- **Attack Trigger** = **Attivatore d'attacco** (trait offensivo); citare solo l'effetto in scheda senza inventare numeri
+- **Attack Trigger** = **Attivatore d'attacco**: aumenta il Comportamento offensivo di **tutti gli altri compagni** quando questo giocatore ha palla. Il possessore non è incluso. Fonte ufficiale Konami.
 - **Gamesmanship** = **Astuzia** (§8.7) — NON confondere con Trickster (§8.3)
 
 **Regola generale per nomi EN non in elenco**: se appare un'abilità solo in inglese sulla carta, riportare l'effetto come scritto sulla scheda Konami/eFootball Lab senza tradurla in modo creativo.
@@ -778,7 +795,7 @@ L'influenza sulle prestazioni è significativa; considerare le frecce quando si 
 - Programmi Aggiunta Posizione per acquisire nuove posizioni
 - Portieri e campo non interscambiabili
 
-**Impatto su stile (§2.2)**: Con competenza Bassa o assente, lo stile giocatore **non si attiva** (passiva spenta se fuori ruolo). La forza complessiva scende; il giocatore si posiziona peggio rispetto a quando è in ruolo. Priorità: preferire sempre giocatori in posizione di competenza; se inevitabile fuori ruolo, usare Istruzioni individuali per compensare (es. Deep Line, Anchoring).
+**Impatto su stile (§2.2)**: Con competenza Bassa o assente, lo stile giocatore **non si attiva**. Priorità: giocatori in competenza. Se inevitabile fuori ruolo, compensare con Ancoraggio/Difensivo o con Formazione fluida (ruolo più basso nello schema senza palla). Non usare Linea bassa: è stata rimossa.
 
 ### 9.3 Valore Giocatore (VG)
 Valutazione massima 5 stelle (5★). Trending valutati su statistiche iniziali. Altri tipi su statistiche + potenziale.
@@ -799,8 +816,9 @@ Le policy comportamentali per il Coach AI (errori da evitare, terminologia, anti
 
 ---
 
-**Versione**: 8.7.0 ENTERPRISE | **Data**: 14 Settembre 2026
-**Principio**: FISSO vs CONFIGURABILE | **Terminologia**: Ufficiale eFootball
+**Versione**: 9.0.0 ENTERPRISE | **Data**: 15 Settembre 2026
+**Principio**: fatti ufficiali vs meta community vs euristiche FZTH | **Terminologia**: Ufficiale eFootball v6.0.0
+**Changelog 9.0.0**: allineamento Konami v6.0.0 — Progression/Skill Training max 5 Additional Skills, Formazione fluida, stili attacco/difesa, due Collegamenti, rimozione Offensivo e Linea bassa, Volée dinamica, Attack Trigger. Rimossa la regola "stats/card fisse". Stamina: solo effetti ufficiali, niente percentuali community.
 **Changelog 8.7.0**: §4.1 sesto stile ufficiale **Pressing totale** (EN Overload, ES Superioridad, Konami v6.0.0). Distinto da Pressing Alto/Costante (concetti, non menu).
 **Changelog 8.6.0**: §2.1 Posizioni attivazione corrette per TUTTI i 24 stili card (allineate a fonti ufficiali eFootball 2026: FIFPlay, Scribd Guide, Konami Help). Rimossi sigle IT vecchie (P/SP/TRQ/CLD/CLS/CC/MED/DC/TD/TS) sostituite con posizioni ufficiali EN (CF/SS/AMF/CMF/DMF/RWF/LWF/RMF/LMF/CB/RB/LB). Aggiunte note "compatibile ma AI inattiva" dove pertinente. Classic No. 10: confermato SS/AMF only. Collante: confermato DMF only.
 **Changelog 8.5.4**: §8.3 alias Piedi magnetici = Calamita ai piedi; §8.4 Shadow Hunt e Contrasto a distanza; §8.11 tabella Showtime/sinonimi IT-EN (Magnetic Feet, Momentum Dribbling, Trickster, ecc.) per chat/contromisure; rimosso duplicato Dominio palle alte.

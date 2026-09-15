@@ -4638,9 +4638,15 @@ export default withAuth(function NuovaRosaLabPage() {
         playerData = {
           ...playerData,
           ...extractedWithoutRating,
-          base_stats: data.player.base_stats || playerData.base_stats,
-          skills: data.player.skills || playerData.skills,
-          com_skills: data.player.com_skills || playerData.com_skills,
+          base_stats: data.player.base_stats && Object.keys(data.player.base_stats || {}).length > 0
+            ? data.player.base_stats
+            : playerData.base_stats,
+          skills: Array.isArray(data.player.skills) && data.player.skills.length > 0
+            ? data.player.skills
+            : playerData.skills,
+          com_skills: Array.isArray(data.player.com_skills) && data.player.com_skills.length > 0
+            ? data.player.com_skills
+            : playerData.com_skills,
           available_boosters: data.player.available_boosters || data.player.boosters || playerData.available_boosters,
           boosters: data.player.boosters || playerData.boosters
         }

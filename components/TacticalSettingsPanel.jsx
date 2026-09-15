@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { useTranslation } from '@/lib/i18n'
-import { INDIVIDUAL_INSTRUCTIONS_CONFIG } from '@/lib/tacticalInstructions'
+import { getSelectableInstructions, INDIVIDUAL_INSTRUCTIONS_CONFIG } from '@/lib/tacticalInstructions'
 import { ChevronDown, ChevronUp, Save, Settings } from 'lucide-react'
 
 export default function TacticalSettingsPanel({ 
@@ -67,17 +67,6 @@ export default function TacticalSettingsPanel({
 
     const inst = (instruction || '').trim()
     if (!inst) return base
-
-    // Regole prodotto: compatibilità per istruzione (non solo per categoria)
-    if ((category === 'attacco_1' || category === 'attacco_2') && inst === 'offensivo') {
-      const disallowed = new Set(['ESA', 'EDA', 'SP', 'P'])
-      return base.filter(p => !disallowed.has(String(p?.position || '').toUpperCase().trim()))
-    }
-
-    if ((category === 'difesa_1' || category === 'difesa_2') && inst === 'linea_bassa') {
-      const disallowed = new Set(['DC', 'TD', 'TS'])
-      return base.filter(p => !disallowed.has(String(p?.position || '').toUpperCase().trim()))
-    }
 
     return base
   }, [])
@@ -274,9 +263,11 @@ export default function TacticalSettingsPanel({
                     }}
                   >
                     <option value="">{t('selectInstruction')}</option>
-                    {config.availableInstructions.map(inst => (
+                    {getSelectableInstructions(category, currentSetting.instruction).map((inst) => (
                       <option key={inst.id} value={inst.id}>
-                        {t(inst.nameKey)}
+                        {inst.legacy
+                          ? `${t(inst.nameKey)} — v6 Formazione fluida`
+                          : t(inst.nameKey)}
                       </option>
                     ))}
                   </select>

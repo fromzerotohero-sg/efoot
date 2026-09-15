@@ -14,6 +14,14 @@ import { localizeSkillTermsInText } from '@/lib/playerSkillLabels.js'
 import { buildCardAvailabilityBlock } from '@/lib/chatCardAvailability'
 import { fieldPositionMatchesCardCompetences } from '@/lib/playerSlotRoleMetadata'
 import { splitAdviceIntoTips } from '@/lib/chatReadiness'
+import { formatCoachLinkUpsForPrompt, isRemovedIndividualInstruction } from '@/lib/efootballTruthLayer'
+import {
+  buildTacticalHistory,
+  defaultCoachFallbacks,
+  extractRosterNames,
+  formatTacticalFeedbackForPrompt,
+  refineCoachSuggestions
+} from '@/lib/coachSuggestionEngine'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -73,30 +81,9 @@ function sanitizeForPrompt(value, maxLen = 240) {
   return s.length > maxLen ? s.slice(0, maxLen) + '…' : s
 }
 
-/** Suggerimenti utili: analisi vs rosa, uso comandi/abilità, priorità concrete. Niente meta, niente "perché ho perso", niente "migliorare giocatore". */
-function getDefaultSuggestions(lang, currentPage = '') {
-  const page = (currentPage || '').toLowerCase()
-  const it = [
-    { page: 'gestione-formazione', q: ['Le mie statistiche di analisi sono adatte alla rosa che ho?', 'Uso passaggio e tiro in modo coerente con le abilità dei miei giocatori?', 'In base a rosa e partite, qual è la prima cosa su cui lavorare?'] },
-    { page: 'match/new', q: ['Cosa preparare per la prossima partita con la mia rosa?', 'Quali priorità in difesa e attacco con i giocatori che schiero?', 'Come sfruttare al meglio le abilità della rosa in partita?'] },
-    { page: 'match/', q: ['Cosa correggere dopo questa partita in base a come ho giocato?', 'Le mie statistiche (passaggio, tiro, difesa) vanno d\'accordo con la rosa?', 'Quali priorità per le prossime partite?'] },
-    { page: 'contromisure', q: ['Come contrastare formazioni aggressive con la mia rosa?', 'Quali priorità in difesa e attacco?', 'Cosa preparare sui piazzati con i miei giocatori?'] },
-    { page: 'allenatori', q: ['Quale stile abbinare al mio allenatore con la rosa?', 'Le mie statistiche di gioco sono adatte ai giocatori che ho?', 'Quali priorità con questo allenatore?'] },
-    { page: '', q: ['Le mie statistiche di analisi sono adatte alla rosa che ho?', 'Uso i comandi (passaggio, tiro, difesa) in modo coerente con le abilità della rosa?', 'In base a partite e dati, su cosa mi conviene lavorare prima?'] }
-  ]
-  const en = [
-    { page: 'gestione-formazione', q: ['Do my analysis stats match the roster I have?', 'Am I using passing and shooting in line with my players\' skills?', 'Based on roster and matches, what should I work on first?'] },
-    { page: 'match/new', q: ['What to prepare for the next match with my roster?', 'What priorities in defence and attack with the players I use?', 'How to get the most from my roster\'s skills in a match?'] },
-    { page: 'match/', q: ['What to fix after this match based on how I played?', 'Do my stats (passing, shot, defence) fit my roster?', 'What priorities for the next matches?'] },
-    { page: 'contromisure', q: ['How to counter aggressive formations with my roster?', 'What priorities in defence and attack?', 'What to prepare on set pieces with my players?'] },
-    { page: 'allenatori', q: ['What style fits my coach with my roster?', 'Do my game stats suit the players I have?', 'What priorities with this coach?'] },
-    { page: '', q: ['Do my analysis stats match the roster I have?', 'Am I using commands (passing, shot, defence) in line with my roster\'s skills?', 'Based on matches and data, what should I work on first?'] }
-  ]
-  const list = (lang === 'en' || lang === 'es') ? en : it
-  for (const { page: p, q } of list) {
-    if (p && page.includes(p)) return q
-  }
-  return ((lang === 'en' || lang === 'es') ? en : it).find(x => x.page === '').q
+/** CTA operative: niente domande, tier list o uso app. */
+function getDefaultSuggestions(lang) {
+  return defaultCoachFallbacks(lang)
 }
 
 /**
@@ -284,6 +271,15 @@ function localizeCoachReplyText(text, lang = 'it') {
   return localizeSkillTermsInText(String(text || ''), 'it')
 }
 
+function finalizeCoachSuggestions(parsed, lang, rosterNames) {
+  return refineCoachSuggestions(parsed, {
+    lang,
+    rosterNames,
+    max: 3,
+    fallback: getDefaultSuggestions(lang)
+  }).map((s) => localizeCoachReplyText(s, lang))
+}
+
 function finalizeCoachReply({ content = '', message = '', summary = '', lang = 'it', reminder = '' }) {
   const grounded = enforceLinkUpGrounding({ message, summary, content, lang })
   const localized = localizeCoachReplyText(grounded, lang)
@@ -297,10 +293,9 @@ function finalizeCoachReply({ content = '', message = '', summary = '', lang = '
  */
 function normalizeHistory(raw) {
   if (!Array.isArray(raw) || raw.length === 0) return []
+  const tactical = buildTacticalHistory(raw, MAX_HISTORY_MESSAGES)
   const out = []
-  for (let i = 0; i < Math.min(raw.length, MAX_HISTORY_MESSAGES); i++) {
-    const item = raw[i]
-    if (!item || typeof item !== 'object') continue
+  for (const item of tactical) {
     const role = item.role === 'assistant' ? 'assistant' : item.role === 'user' ? 'user' : null
     if (!role) continue
     let content = typeof item.content === 'string' ? item.content.trim() : ''
@@ -498,7 +493,7 @@ async function buildPersonalContext(userId, lang = 'it') {
       // Allenatore attivo (con competenze stili per intreccio dati)
       admin
         .from('coaches')
-        .select('coach_name, playing_style_competence')
+        .select('coach_name, playing_style_competence, connection, extracted_data, metadata')
         .eq('user_id', userId)
         .eq('is_active', true)
         .maybeSingle(),
@@ -693,7 +688,7 @@ async function buildPersonalContext(userId, lang = 'it') {
       if (!instr || typeof instr !== 'object') return ''
       const entries = Object.entries(instr)
         .map(([slot, v]) => ({ slot, v }))
-        .filter(({ v }) => v && typeof v === 'object' && v.enabled === true && v.instruction)
+        .filter(({ v }) => v && typeof v === 'object' && v.enabled === true && v.instruction && !isRemovedIndividualInstruction(v.instruction))
 
       if (entries.length === 0) return ''
       const lines = entries.slice(0, 8).map(({ slot, v }) => {
@@ -722,6 +717,8 @@ async function buildPersonalContext(userId, lang = 'it') {
         coachText += ` ${L.competenceHint} ${L.advisableStyles}: ${ok.length ? ok.join(', ') : L.noneLabel}. ${L.notAdvisableStyles}: ${no.length ? no.join(', ') : '-'}.`
       }
     }
+    const linkUpLine = formatCoachLinkUpsForPrompt(coachRow, lang)
+    if (linkUpLine) coachText += ` ${linkUpLine}`
 
     // Pattern tattici (da batch iniziale, formation_usage, recurring_issues) - per intreccio consigli formazione/problemi
     let patternText = ''
@@ -827,32 +824,32 @@ function buildPersonalizedPromptV2(userMessage, context, language = 'it', efootb
   const capsuleIt = `ENGINE (OBBLIGATORIO, token-budget):
 - INPUT: ROSA (stile card, stats vel/acc/res/fin/pas/tac, abilità, forma ↑/↓, h/w, competenze), MATCH/PATTERN (result, formation/stile, opponent formation, attack_areas, voti cliente, recurring_issues), COACH (competenze stile), TATTICA (stile squadra + istruzioni), RAG (limiti + movimenti/situazioni + community).
 - MICRO-SCORE: FIT (position = competenze), COACH_OK(style>=70; contrattacco→contropiede_veloce), SPD (vel+acc+Scatto), PASS (pas+filtrante/di prima/calibrato), WIN (tac+Intercettazione/Marcatore/Contrasto/Muro), AIR_DEF (h/w+Dominio palle alte), AIR_ATK (h/w+Colpo di testa), SUB (Riserva di lusso).
-- DECISIONE: scegli 1 leva principale + max 2 secondarie: (1) Fix FIT, (2) Fix mismatch coach/stile squadra, (3) Aggancia top recurring_issue, (4) 1-2 cambi titolari/riserve (vedi SOSTITUZIONI sotto), (5) 1 istruzione max 5, (6) gameplay solo "cosa fare" da §7.
+- DECISIONE: scegli 1 leva principale + max 2 secondarie: (1) Fix FIT, (2) Fix mismatch coach/stile squadra, (3) Aggancia top recurring_issue, (4) 1-2 cambi titolari/riserve (vedi SOSTITUZIONI sotto), (5) 1 istruzione valida (niente Offensivo/Linea bassa; Formazione fluida se alzare/abbassare), (6) gameplay solo "cosa fare" da §7.
 - VIETATO suggerire cambio formazione/modulo a meno che il cliente non lo chieda esplicitamente. Lavora sempre sulla formazione attuale salvata.
 - SOSTITUZIONI (leva 4, incrocio enterprise): (1) Sintomo da Statistiche di gioco, recurring_issues, voti partite o domanda. (2) Ruolo da rafforzare: tiro=fin+abilita tiro; passaggio=pas+abilita passaggio; difesa=tac+WIN. (3) Titolari: chi è in quel ruolo, forma, voti, stile giocatore. (4) Riserve: chi ha fin/pas/tac, abilita che compensano e stile giocatore adatto (RAG §2: es. Opportunista/Rapace d'area per finalizzazione, Giocatore chiave per inserimenti, Regista/Classico 10 per passaggio, Collante per difesa); posizione compatibile; incrocia con stile squadra e competenza allenatore (riassunto Tattica e Allenatore). (5) Un solo cambio concreto: Far uscire [titolare], far entrare [riserva]: [motivo da dati]. Usa sempre riassunto (Rosa stile+fin/pas/tac+abilita, Statistiche di gioco, Andamento/voti, Tattica, Allenatore, Sintesi rosa, Sinergie, Leve) e RAG §2/§7/§8 quando rilevante.
 - BUILD/META: consigli funzionali a movimenti e difficolta. Se chiede "build giuste/vanno bene": usa sezione Build progressione PT + Motivi app; non contraddire build generate dall app senza dati.
 - INVERSE: sintomo?cause?leva: fasce (attack_areas wide)?esterni senza WIN/Tornante?copertura/istruzioni; attacco sterile?PASS basso o stile incoerente?regista/cambio stile/modulo; palle alte?AIR_DEF basso?DC/MED più forti+piazzati.
 - RISPOSTE PRATICHE: quando la domanda riguarda partita, matchup o correzioni concrete, preferisci frasi condizionali osservabili: "se/quando succede X, fai Y". Aggiungi se utile una azione consigliata, un passaggio/giocata consigliata, una cosa da evitare e un check rapido.
 - AVVERSARIO: usa nomi di giocatori avversari solo se sono presenti nei dati reali del contesto. Se non ci sono, parla per ruolo o zona: mediano, trequartista, ala, terzino, fascia, corridoio centrale.
-OUTPUT: 2-4 frasi operative, rispondi alla domanda specifica (es. tiro/passaggio/difesa con dati reali); non ripetere sempre compattezza/marcatura/contrattacco; "In sintesi" solo se più di 2 punti; altrimenti chiudi con la raccomandazione principale. Niente ragionamento visibile.`
+OUTPUT: 1 posizione principale motivata dai dati, max 2 leve secondarie, 1 prossimo check osservabile. Una sola domanda solo se manca un dato decisivo. 2-4 frasi. Niente report enciclopedici né ragionamento interno visibile.`
 
   const capsuleEn = `ENGINE (REQUIRED, token-budget):
 - INPUT: ROSTER (card style, stats spd/acc/sta/fin/pas/tac, skills, form ↑/↓, h/w, competences), MATCH/PATTERN (result, formation/style, opponent formation, attack_areas, client ratings, recurring_issues), COACH (style competence), TACTICS (team style + instructions), RAG (limits + movements/situations + community).
 - MICRO-SCORES: FIT (position = competences), COACH_OK(style>=70; contrattacco→contropiede_veloce), SPD (spd+acc+Sprint), PASS (pas+Through ball/One-touch/Weighted), WIN (tac+Interception/Man marking/Aggressive tackle/Block), AIR_DEF (h/w+High ball dominance+Aerial superiority), AIR_ATK (h/w+Heading), SUB (Luxury sub=Super sub).
-- DECISION: pick 1 main lever + max 2 secondary: (1) Fix FIT, (2) Fix coach/team-style mismatch, (3) Anchor top recurring_issue, (4) 1-2 lineup changes (see SUBSTITUTIONS below), (5) 1 instruction max 5, (6) gameplay "what to do" only from §7.
+- DECISION: pick 1 main lever + max 2 secondary: (1) Fix FIT, (2) Fix coach/team-style mismatch, (3) Anchor top recurring_issue, (4) 1-2 lineup changes (see SUBSTITUTIONS below), (5) 1 valid instruction (no Attacking/Deep Line; Fluid Formation to raise/drop), (6) gameplay "what to do" only from §7.
 - FORBIDDEN to suggest formation/module changes unless explicitly asked. Always work with the current saved formation.
 - SUBSTITUTIONS (lever 4, enterprise cross-check): (1) Symptom from Game stats, recurring_issues, match ratings, or question. (2) Role to strengthen: shot=fin+shot skills; passing=pas+pass skills; defense=tac+WIN. (3) Starters: who is in that role, form, ratings, player style. (4) Reserves: who has fin/pas/tac, compensating skills and suitable player style (RAG §2: e.g. Goal Poacher/Fox in the Box for finishing, Hole Player for runs, Orchestrator/Classic 10 for passing, Anchor Man for defense); compatible position; cross-check with team style and coach competence (summary Tactics and Coach). (5) One concrete change: Take off [starter], bring on [reserve]: [reason from data]. Always use summary (Roster style+fin/pas/tac+skills, Game stats, Form/ratings, Tactics, Coach, Roster summary, Synergies, Levers) and RAG §2/§7/§8 when relevant.
 - BUILD/META: functional advice for movements and difficulties. If they ask builds ok/correct: use Progression builds section + app Why lines; do not contradict app-generated builds without data.
 - INVERSE: symptom?cause?lever: wide threat (attack_areas wide)?wide players lack WIN/track back?coverage/instructions; stale attack?low PASS or mismatch style?add creator/change style/formation; aerial goals?low AIR_DEF?stronger CB/DM + set pieces.
 - PRACTICAL ANSWERS: when the question is about match situations, matchup fixes, or concrete corrections, prefer observable conditional phrasing: "if/when X happens, do Y". Add, when useful, one recommended action, one recommended pass/play, one thing to avoid, and a quick check.
 - OPPONENT DATA: use opponent player names only if they are present in real context data. Otherwise speak by role or zone: DM, AMF, winger, fullback, flank, central lane.
-OUTPUT: 2-4 imperative sentences; answer the specific question (e.g. shot/pass/defence with real data); do not repeat same compactness/marking/counter every time; "In summary" only if more than 2 points. No visible reasoning.`
+OUTPUT: 1 main stance backed by data, max 2 secondary levers, 1 observable next check. Ask one question only if a decisive fact is missing. 2-4 sentences. No encyclopedic reports and no visible inner reasoning.`
 
   const capsule = language === 'en' || language === 'es' ? capsuleEn : capsuleIt
 
   // La coach dà CONSIGLI; i 3 punti sono SUGGERIMENTI OPERATIVI della coach (cliccabili), non domande che il cliente deve fare.
-  const suggRulesIt = `SUGGERIMENTI (3, obbligatori): sono CONSIGLI della coach su cosa approfondire o fare dopo (testi brevi cliccabili). (1) Un suggerimento operativo su quanto hai appena detto (es. approfondisci marcatura per i centrali, sfrutta Ibra e Nedvěd per i tiri). (2) Uno su gameplay/rosa/partite legato alla risposta. (3) Un prossimo passo concreto. Scrivi come inviti della coach: es. "Approfondisci la marcatura per Maldini e Nesta", "Variare i tiri con i tuoi finisher", "Prossimo passo: copertura". NON sono domande che il cliente deve porre: sei tu che consigli. VIETATO: "Quale modulo/formazione", "meta generico/tier list", "perché ho perso", "migliorare un giocatore". Consentito: suggerimenti legati a movimenti/difficolta sue (es. "Allinea pressing ai tuoi CC", "Sfrutta filtranti con Opportunisti"). Niente uso app, niente tasti.`
-  const suggRulesEn = `SUGGESTIONS (3, required): these are the COACH'S recommendations on what to explore or do next (short clickable texts). (1) One operational suggestion on what you just said (e.g. deepen marking for your centre-backs, use your finishers for shot variety). (2) One on gameplay/roster/matches tied to your answer. (3) One concrete next step. Phrase as the coach's prompts: e.g. "Explore marking for Maldini and Nesta", "Vary shots with your finishers", "Next step: coverage". These are NOT questions the client should ask: you are giving advice. FORBIDDEN: "Which formation/module", "generic meta/tier list", "why did I lose", "improve a player". Allowed: suggestions tied to their movements/difficulties. No app usage, no buttons.`
+  const suggRulesIt = `SUGGERIMENTI (2-3, solo se pertinenti): CONSIGLI della coach, testi brevi cliccabili, categorie diverse. (1) Approfondisci la risposta. (2) Leva su rosa/partita/istruzioni/Formazione fluida. (3) Prossimo test pratico. NON sono domande. VIETATO: "Quale modulo", "tier list", "perché ho perso", "migliorare un giocatore", nomi assenti dalla rosa, uso app. Se non hai 2 CTA utili, ne dai di meno.`
+  const suggRulesEn = `SUGGESTIONS (2-3, only if relevant): the COACH'S recommendations, short clickable texts, different categories. (1) Deepen the answer. (2) A roster/match/instruction/Fluid Formation lever. (3) A practical next test. These are NOT questions. FORBIDDEN: "Which formation", "tier list", "why did I lose", "improve a player", names not in roster, app usage. If you don't have 2 useful CTAs, give fewer.`
   const suggRules = language === 'en' || language === 'es' ? suggRulesEn : suggRulesIt
 
   // Solo dati da Informazioni IA: niente lista "Problemi" da citare; se togli la spunta, l'IA non vede più quel problema
@@ -874,7 +871,7 @@ ${profileLines.join('\n')}`
     personalContextSummary ? `\n■ ${contextBlockLabel}:\n${personalContextSummary}` : '',
     cardAvailabilityBlock ? `\n■ ${language === 'en' || language === 'es' ? 'CARD ADVISOR STATUS' : 'STATO CARD ADVISOR'}:\n${cardAvailabilityBlock}` : '',
     efootballKnowledge ? `\n■ MECCANICHE eFootball (RAG):\n${efootballKnowledge}` : '',
-    `\n${capsule}\n\nFORMATO RISPOSTA:\n[2-4 frasi operative con i TUOI consigli. "In sintesi" / "In summary" solo se utile; altrimenti chiudi con la raccomandazione principale.]\n\n---\nSUGGERIMENTI:\n1. [consiglio breve cliccabile]\n2. [consiglio breve cliccabile]\n3. [consiglio breve cliccabile]\n\n${suggRules}\n\nDOMANDA CLIENTE: "${userMessage}"\nRispondi come ${aiName} in ${replyLanguage}.`
+    `\n${capsule}\n\nFORMATO RISPOSTA:\n[1 posizione principale + max 2 leve + 1 prossimo check. 2-4 frasi. Una domanda solo se manca un dato decisivo.]\n\n---\nSUGGERIMENTI:\n1. [consiglio breve cliccabile]\n2. [consiglio breve cliccabile]\n3. [consiglio breve cliccabile opzionale]\n\n${suggRules}\n\nDOMANDA CLIENTE: "${userMessage}"\nRispondi come ${aiName} in ${replyLanguage}.`
   ].filter(Boolean)
 
   return blocks.join('\n')
@@ -925,7 +922,7 @@ Se nel RIASSUNTO ANALISI è presente la sezione "Statistiche di gioco (Analisi e
 Se nel RIASSUNTO c'è Connessione/Input delay/Ritardo (es. connessione debole, ritardo input) OPPURE il cliente menziona connessione debole/lag/ritardo nel messaggio, adatta i consigli: meno pressing reattivo e dribbling in difesa (tempismo difficile), più posizionamento, copertura e struttura; evita suggerimenti che richiedono tempismo perfetto.
 PRIORITÀ PROFILO: Per "Punto debole", "Cosa vuole imparare" e "Note per l'IA" usa SEMPRE i valori dal blocco PROFILO in testa al messaggio (sono live/aggiornati). Se il RIASSUNTO contiene valori diversi per gli stessi campi, IGNORA quelli del RIASSUNTO (possono essere stale). Orienta almeno un consiglio sul punto debole e sugli obiettivi di apprendimento quando rilevanti alla domanda. NON citare mai al cliente l'elenco (es. "hai indicato che hai difficoltà in..."); usa il dato solo per orientare i consigli.
 
-OUTPUT COACH: 2-4 frasi operative, rispondi alla domanda specifica; varia i consigli; "In sintesi" solo se utile.`
+OUTPUT COACH: 1 posizione principale motivata dai dati, max 2 leve secondarie, 1 prossimo check osservabile. Una sola domanda solo se manca un dato decisivo. Niente report enciclopedici.`
 
   const en = `You are Coach AI for eFootball.
 RESPONSE LANGUAGE: YOU MUST STRICTLY REPLY IN ${replyLang} (UI language / app "language" parameter).
@@ -953,9 +950,9 @@ If the ANALYSIS SUMMARY includes "Game stats (eFootball Analisi, last 10 matches
 If the SUMMARY has Connection/Input delay/Lag (e.g. weak connection, input delay) OR the client mentions weak connection/lag/delay in the message, adapt advice: less reactive pressing and dribbling in defence (timing is harder), more positioning, coverage and structure; avoid suggestions that require perfect timing.
 PROFILE PRIORITY: For "Weak point", "Learn goals", and "Notes for AI" ALWAYS use the values from the PROFILE block at the top of the message (these are live/current). If the SUMMARY contains different values for the same fields, IGNORE those from the SUMMARY (they may be stale). Steer at least one piece of advice toward the weak point and learning goals when relevant to the question. Never quote the list back to the client (e.g. "you indicated you have difficulties in..."); use the data only to steer advice.
 
-CONSTRAINTS: only roster names; only 6 configurable team styles (Possession Game, Quick Counter, Long Ball Counter, Long Ball, Out Wide, Overload / Pressing totale); contrattacco → contropiede_veloce and require coach competence >=70; individual instructions only max 5; formation limits §3.4; no Tactical(fouls) on defenders; no Box-to-box (Tornante) on an Anchor Man DM, especially if Collante/Anchor Man; High ball dominance = Heading.
+CONSTRAINTS: only roster names; only 6 configurable team styles (Possession Game, Quick Counter, Long Ball Counter, Long Ball, Out Wide, Overload / Pressing totale); contrattacco → contropiede_veloce and require coach competence >=70; valid individual instructions only (no Attacking/Deep Line); Fluid Formation and two Link-ups as advice only; formation limits §3.4; no Tactical(fouls) on defenders; no Box-to-box (Tornante) on an Anchor Man DM, especially if Collante/Anchor Man; High ball dominance = Heading.
 
-COACH OUTPUT: 2-4 imperative sentences; answer the specific question; vary advice; "In summary" only when useful.`
+COACH OUTPUT: 1 main stance backed by data, max 2 secondary levers, 1 observable next check. Ask one question only if a decisive fact is missing.`
 
   return (lang === 'en' || lang === 'es') ? en : it
 }
@@ -1088,6 +1085,7 @@ export async function POST(req) {
       : {}
 
     const history = normalizeHistory(rawHistory)
+    let rosterNames = []
     
     // Costruisci contesto personale
     let context
@@ -1147,6 +1145,7 @@ export async function POST(req) {
               .select('id, player_name, position, slot_index, original_positions')
               .eq('user_id', userId)
               .limit(23)
+            rosterNames = extractRosterNames(players || [])
             const outOfPosition = getOutOfPositionStarterLines(players || [], lang)
             if (outOfPosition.length > 0) {
               fitLines = lang === 'en'
@@ -1158,7 +1157,7 @@ export async function POST(req) {
               ;(players || []).forEach(p => { if (p?.id) map[String(p.id)] = p.player_name || '?' })
               const entries = Object.entries(liveInstr)
                 .map(([slot, v]) => ({ slot, v }))
-                .filter(({ v }) => v && typeof v === 'object' && v.enabled === true && v.instruction)
+                .filter(({ v }) => v && typeof v === 'object' && v.enabled === true && v.instruction && !isRemovedIndividualInstruction(v.instruction))
               if (entries.length > 0) {
                 const lines = entries.slice(0, 8).map(({ slot, v }) => {
                   const pid = v.player_id ? String(v.player_id) : ''
@@ -1187,6 +1186,34 @@ export async function POST(req) {
       if (!personalContextSummary) {
         personalContextSummary = await buildPersonalContext(userId, lang)
         if (personalContextSummary && process.env.NODE_ENV !== 'production') console.log('[assistant-chat] Personal context (fallback) loaded')
+      }
+      if (serviceKey && supabaseUrl) {
+        try {
+          const memoryAdmin = createClient(supabaseUrl, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } })
+          if (!rosterNames.length) {
+            const { data: nameRows } = await memoryAdmin
+              .from('players')
+              .select('player_name')
+              .eq('user_id', userId)
+              .limit(50)
+            rosterNames = extractRosterNames(nameRows || [])
+          }
+          const { data: feedbackRows } = await memoryAdmin
+            .from('user_tactical_feedback')
+            .select('conversation_summary, insights, formation_played, style_played, opponent_name, outcome, created_at')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(5)
+          const feedbackBlock = formatTacticalFeedbackForPrompt(feedbackRows || [], lang)
+          if (feedbackBlock) {
+            personalContextSummary = `${feedbackBlock}\n\n${personalContextSummary}`
+            if (personalContextSummary.length > MAX_PERSONAL_CONTEXT_CHARS) {
+              personalContextSummary = personalContextSummary.slice(0, MAX_PERSONAL_CONTEXT_CHARS) + '\n... (riassunto troncato).'
+            }
+          }
+        } catch (memoryError) {
+          console.warn('[assistant-chat] personal memory append failed (non-blocking):', memoryError?.message || memoryError)
+        }
       }
     } catch (pcError) {
       console.error('[assistant-chat] Context/diagnostic error (non-blocking):', pcError?.message)
@@ -1310,7 +1337,7 @@ export async function POST(req) {
               lang,
               reminder: microReminder
             })
-            const finalSuggestions = (Array.isArray(fs) && fs.length > 0) ? fs : getDefaultSuggestions(lang, safeCurrentPage)
+            const finalSuggestions = finalizeCoachSuggestions(fs, lang, rosterNames)
             if (process.env.NODE_ENV !== 'production') console.log('[assistant-chat] Success (fallback from model_not_found), model_used: gpt-4o')
             return NextResponse.json({
               response: responseWithReminder,
@@ -1354,7 +1381,7 @@ export async function POST(req) {
                   lang,
                   reminder: microReminder
                 })
-                const finalSuggestions = (Array.isArray(fs) && fs.length > 0) ? fs : getDefaultSuggestions(lang, safeCurrentPage)
+                const finalSuggestions = finalizeCoachSuggestions(fs, lang, rosterNames)
                 if (process.env.NODE_ENV !== 'production') console.log('[assistant-chat] Success (fallback from !response.ok), model_used: gpt-4o')
                 return NextResponse.json({
                   response: responseWithReminder,
@@ -1410,8 +1437,7 @@ export async function POST(req) {
     }
 
 
-    const rawSuggestions = (Array.isArray(suggestions) && suggestions.length > 0) ? suggestions : getDefaultSuggestions(lang, safeCurrentPage)
-    const finalSuggestions = rawSuggestions.map((s) => localizeCoachReplyText(s, lang))
+    const finalSuggestions = finalizeCoachSuggestions(suggestions, lang, rosterNames)
     const tipCards = splitAdviceIntoTips(responseWithReminder, 3)
     if (process.env.NODE_ENV !== 'production') console.log(`[assistant-chat] Success, model_used: ${model}`)
     return NextResponse.json(
