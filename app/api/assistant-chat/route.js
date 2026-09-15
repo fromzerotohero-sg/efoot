@@ -470,7 +470,8 @@ async function buildPersonalContext(userId, lang = 'it') {
       { data: matchesData },
       { data: tacticalRow },
       { data: coachRow },
-      { data: patternsRow }
+      { data: patternsRow },
+      { data: latestPrematchPlan }
     ] = await Promise.all([
       // Formation layout (base). Fluid phases live in formation_variants.
       admin
@@ -524,6 +525,15 @@ async function buildPersonalContext(userId, lang = 'it') {
         .from('team_tactical_patterns')
         .select('formation_usage, playing_style_usage, recurring_issues, attack_areas_avg, recovery_zones_avg')
         .eq('user_id', userId)
+        .maybeSingle(),
+      // Ultimo piano: rende contestuali i follow-up cliccabili della card.
+      admin
+        .from('prematch_plans')
+        .select('countermeasures, created_at')
+        .eq('user_id', userId)
+        .eq('status', 'ready')
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle()
     ])
     const clientFluid = buildFluidFormationState(formationRow, variantRows || [])
@@ -741,6 +751,31 @@ async function buildPersonalContext(userId, lang = 'it') {
 
     const tacticsText = `${L.teamStyle}: ${teamStyle}. ${L.individualInstructions}: ${numInstructions} ${L.instructionsActive}.${formatIndividualInstructions(indInstr)}`
 
+    const latestCustomerPlan = latestPrematchPlan?.countermeasures?.customer_plan || null
+    const latestPrematchText = (() => {
+      if (!latestCustomerPlan) return ''
+      const read = latestCustomerPlan.opponent_read || {}
+      const setupActions = Array.isArray(latestCustomerPlan.setup_actions)
+        ? latestCustomerPlan.setup_actions
+            .map((action) => `${action?.label || ''}: ${action?.value || ''}`.trim())
+            .filter(Boolean)
+            .slice(0, 5)
+            .join('; ')
+        : ''
+      const playbook = latestCustomerPlan.playbook || {}
+      const planB = latestCustomerPlan.plan_b || {}
+      return [
+        (lang === 'en' || lang === 'es') ? 'LATEST PRE-MATCH PLAN:' : 'ULTIMO PIANO PRE-PARTITA:',
+        `  Avversario: ${[read.formation, read.trait].filter(Boolean).join(' · ') || '?'}`,
+        `  Decisione: ${latestCustomerPlan.main_decision || latestCustomerPlan.diagnosis || '?'}`,
+        setupActions ? `  Setup: ${setupActions}` : '',
+        playbook.with_ball ? `  Con palla: ${playbook.with_ball}` : '',
+        playbook.without_ball ? `  Senza palla: ${playbook.without_ball}` : '',
+        planB.action ? `  Piano B: se ${planB.trigger || 'cambia il contesto'} → ${planB.action}` : '',
+        '  Se la domanda del cliente è un follow-up sul piano, rispondi su QUESTO piano senza rigenerarlo o parlare in astratto.'
+      ].filter(Boolean).join('\n')
+    })()
+
     // Allenatore attivo (da batch iniziale, con competenze stili per intreccio dati)
     let coachText = coachRow?.coach_name ? `${L.activeCoach}: ${coachRow.coach_name}.` : L.coachNotSet
     if (coachRow?.playing_style_competence && typeof coachRow.playing_style_competence === 'object') {
@@ -844,7 +879,8 @@ async function buildPersonalContext(userId, lang = 'it') {
       ...matchLines,
       '',
       tacticsText,
-      coachText
+      coachText,
+      latestPrematchText ? `\n${latestPrematchText}` : ''
     ]
 
     const optionalSections = [

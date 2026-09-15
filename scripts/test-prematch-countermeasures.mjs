@@ -42,6 +42,12 @@ const defenseCategory = Object.keys(INDIVIDUAL_INSTRUCTIONS_CONFIG).find((key) =
 {
   const raw = {
     diagnosis: 'Avversario in 4-2-1-3: centro denso, attacca le fasce.',
+    with_ball: 'Apri il gioco sul lato debole',
+    without_ball: 'Marcatura su Bruno Fernandes',
+    plan_b: {
+      trigger: 'L’avversario passa a due punte',
+      action: 'Togli la marcatura diretta e proteggi la profondità'
+    },
     play_summary: {
       match_key: 'Avversario in 4-2-1-3: centro denso, attacca le fasce.',
       attacking: 'Cerca ampiezza con Beckham',
@@ -72,6 +78,7 @@ const defenseCategory = Object.keys(INDIVIDUAL_INSTRUCTIONS_CONFIG).find((key) =
     opponentFormation: {
       formation_name: '4-2-1-3',
       extracted_data: {
+        players: [{ player_name: 'Bruno Fernandes', position: 'TRQ' }],
         visual_tactical_profile: { central_density: 'high', width_profile: 'narrow' }
       }
     },
@@ -83,6 +90,12 @@ const defenseCategory = Object.keys(INDIVIDUAL_INSTRUCTIONS_CONFIG).find((key) =
   assert(plan.countermeasures.attack.length === 1, 'attack line restored')
   assert(plan.countermeasures.defense.length === 1, 'defense line restored')
   assert(plan.setup.team_playing_style === 'Vie laterali', 'team style extracted')
+  assert(plan.main_decision === plan.diagnosis, 'single main decision mirrors diagnosis')
+  assert(plan.setup_actions.some((action) => action.type === 'team_style'), 'setup actions expose exact team style')
+  assert(plan.playbook.with_ball.includes('Apri il gioco sul lato debole'), 'with-ball playbook preserved')
+  assert(plan.playbook.without_ball.includes('Marcatura su Bruno Fernandes'), 'real opponent name preserved in without-ball playbook')
+  assert(Boolean(plan.plan_b?.trigger && plan.plan_b?.action), 'Plan B has trigger and response')
+  assert(Array.isArray(plan.follow_ups) && plan.follow_ups.length === 3, 'contextual plan follow-ups present')
   assert(!('confidence' in presented), 'confidence stripped')
   assert(!('warnings' in presented), 'warnings stripped')
   assert(!hasTechnicalLeak(plan.diagnosis), 'diagnosis has no technical leak')
@@ -251,6 +264,63 @@ const defenseCategory = Object.keys(INDIVIDUAL_INSTRUCTIONS_CONFIG).find((key) =
   })
   assert(Boolean(plan.opponent_read.trait), 'uncertain photo still surfaces one visual trait')
   assert(!/\d+%/.test(plan.opponent_read.trait || ''), 'trait has no confidence percent')
+}
+
+// --- Case: sparse 5-3-2 output is enriched with named targets and two phase steps ---
+{
+  const plan = buildCustomerPrematchPlan({
+    diagnosis: 'Blocca le due punte e crea ampiezza stabile.',
+    play_summary: {
+      attacking: 'Rijkaard come scarico fisso davanti alla difesa',
+      defending: 'Davids agganciato a una punta per togliere ricezioni comode'
+    },
+    starting_plan: [
+      'Mantieni ampiezza con Nedvěd sul lato debole',
+      'Rijkaard come scarico fisso davanti alla difesa',
+      'Davids agganciato a una punta per togliere ricezioni comode'
+    ],
+    countermeasures: {
+      tactical_adjustments: [],
+      player_suggestions: [],
+      formation_adjustments: [],
+      individual_instructions: [
+        { player_name: 'Edgar Davids', instruction: 'marcatura_uomo', target_player_name: 'Christian Pulišić', slot: 'difesa_1' },
+        { player_name: 'Frank Rijkaard', instruction: 'ancoraggio', slot: 'attacco_1' }
+      ]
+    }
+  }, {
+    lang: 'it',
+    roster: [
+      { player_name: 'Edgar Davids' },
+      { player_name: 'Frank Rijkaard' },
+      { player_name: 'Nedvěd' }
+    ],
+    opponentFormation: {
+      formation_name: '5-3-2',
+      extracted_data: {
+        players: [
+          { player_name: 'Andriy Shevchenko', position: 'SP', overall_rating: 105 },
+          { player_name: 'Christian Pulišić', position: 'SP', overall_rating: 100 },
+          { player_name: 'Ruud Gullit', position: 'CC', overall_rating: 105 }
+        ],
+        visual_tactical_profile: { central_density: 'high', two_strikers: true }
+      }
+    }
+  })
+  assert(
+    /Shevchenko/.test(plan.main_decision) && /Pulišić/.test(plan.main_decision),
+    'generic two-striker diagnosis is enriched with both opponent names'
+  )
+  assert(
+    plan.setup_actions.some((action) => /Marcatura a uomo su Christian Pulišić/.test(action.value)),
+    'marking setup preserves its validated opponent target'
+  )
+  assert(plan.playbook.with_ball.length === 2, 'with-ball phase contains two useful steps')
+  assert(plan.playbook.without_ball.length === 2, 'without-ball phase contains two useful steps')
+  assert(
+    plan.playbook.without_ball.some((step) => /Shevchenko/.test(step)),
+    'without-ball phase replaces generic striker wording with a real name'
+  )
 }
 
 // --- Case: same module, different opponent XI/shape → different customer read ---

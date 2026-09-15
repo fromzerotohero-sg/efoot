@@ -373,6 +373,7 @@ function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, for
       ? customer.setup_actions.map((action) => ({
           label: localized(action?.label),
           value: localized(action?.value),
+          detail: localized(action?.detail),
           status: action?.status || null
         })).filter((action) => action.label && action.value)
       : []
@@ -394,14 +395,18 @@ function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, for
     return fallback.slice(0, 5)
   })()
   const playbook = customer?.playbook || {}
-  const withBall = localized(playbook.with_ball)
-    || localized(attackLines[0]?.title)
-    || startingPlan[0]
-    || ''
-  const withoutBall = localized(playbook.without_ball)
-    || localized(defenseLines[0]?.title)
-    || startingPlan.find((tip) => tip !== withBall)
-    || ''
+  const phaseSteps = (value, fallbacks = []) => {
+    const source = Array.isArray(value) ? value : value ? [value] : fallbacks
+    return source.map((item) => localized(item)).filter(Boolean).slice(0, 2)
+  }
+  const withBall = phaseSteps(playbook.with_ball, [
+    attackLines[0]?.title,
+    startingPlan[0]
+  ])
+  const withoutBall = phaseSteps(playbook.without_ball, [
+    defenseLines[0]?.title,
+    startingPlan.find((tip) => !withBall.includes(tip))
+  ])
   const avoid = localized(playbook.avoid) || ''
   const planB = customer?.plan_b || null
   const planBTrigger = localized(planB?.trigger)
@@ -453,7 +458,10 @@ function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, for
             {setupActions.map((action, index) => (
               <div className="hc-planSetupRow" key={`${action.label}-${index}`}>
                 <span>{action.label}</span>
-                <strong>{action.value}</strong>
+                <div>
+                  <strong>{action.value}</strong>
+                  {action.detail ? <small>{action.detail}</small> : null}
+                </div>
                 {action.status === 'keep' ? <small>✓</small> : null}
               </div>
             ))}
@@ -461,18 +469,22 @@ function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, for
         ) : <p className="hc-planEmpty">{L(lang, COPY.planNoSetup)}</p>}
       </section>
 
-      {(withBall || withoutBall) && (
+      {(withBall.length > 0 || withoutBall.length > 0) && (
         <div className="hc-planPlaybook">
-          {withBall ? (
+          {withBall.length > 0 ? (
             <article className="hc-planPhase hc-planPhaseBall">
               <span>{L(lang, COPY.planWithBall)}</span>
-              <strong>{withBall}</strong>
+              <ol>
+                {withBall.map((step, index) => <li key={`with-ball-${index}`}>{step}</li>)}
+              </ol>
             </article>
           ) : null}
-          {withoutBall ? (
+          {withoutBall.length > 0 ? (
             <article className="hc-planPhase hc-planPhaseNoBall">
               <span>{L(lang, COPY.planWithoutBall)}</span>
-              <strong>{withoutBall}</strong>
+              <ol>
+                {withoutBall.map((step, index) => <li key={`without-ball-${index}`}>{step}</li>)}
+              </ol>
             </article>
           ) : null}
           {avoid ? <p className="hc-planAvoid"><strong>{L(lang, COPY.planAvoid)}:</strong> {avoid}</p> : null}
@@ -3618,9 +3630,18 @@ export default function HeroChat({
           font-size: 11px;
         }
 
-        :global(.hc-planSetupRow > strong) {
+        :global(.hc-planSetupRow > div > strong) {
+          display: block;
           color: var(--text-main);
           font-size: 12px;
+          line-height: 1.3;
+        }
+
+        :global(.hc-planSetupRow > div > small) {
+          display: block;
+          margin-top: 3px;
+          color: var(--text-dim);
+          font-size: 10px;
           line-height: 1.3;
         }
 
@@ -3668,10 +3689,24 @@ export default function HeroChat({
           color: var(--info-text);
         }
 
-        :global(.hc-planPhase > strong) {
+        :global(.hc-planPhase ol) {
+          display: grid;
+          gap: 7px;
+          margin: 0;
+          padding-left: 18px;
           color: var(--text-main);
           font-size: 12px;
           line-height: 1.4;
+        }
+
+        :global(.hc-planPhase li) {
+          padding-left: 2px;
+          font-weight: 700;
+        }
+
+        :global(.hc-planPhase li::marker) {
+          color: var(--accent);
+          font-weight: 900;
         }
 
         :global(.hc-planAvoid) {

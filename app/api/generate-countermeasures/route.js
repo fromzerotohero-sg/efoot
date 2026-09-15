@@ -978,6 +978,19 @@ if (process.env.NODE_ENV !== 'production') {
       const validInstructions = []
       const invalidInstructions = []
       const validSlots = new Set(['attacco_1', 'attacco_2', 'difesa_1', 'difesa_2'])
+      const opponentPlayers = opponentFormation.players || opponentFormation.extracted_data?.players || []
+      const resolveOpponentTarget = (requestedName) => {
+        const requested = String(requestedName || '').trim().toLowerCase()
+        const exact = opponentPlayers.find((player) => (
+          requested && String(player?.player_name || '').trim().toLowerCase() === requested
+        ))
+        if (exact?.player_name) return String(exact.player_name).trim()
+        const attackingRoles = new Set(['P', 'CF', 'SP', 'SS', 'TRQ', 'AMF', 'EDA', 'ESA', 'RWF', 'LWF'])
+        const fallback = [...opponentPlayers]
+          .filter((player) => attackingRoles.has(String(player?.position || '').trim().toUpperCase()))
+          .sort((a, b) => (Number(b?.overall_rating) || 0) - (Number(a?.overall_rating) || 0))[0]
+        return fallback?.player_name ? String(fallback.player_name).trim() : null
+      }
 
       for (const instr of countermeasures.countermeasures.individual_instructions) {
         const slot = typeof instr?.slot === 'string' ? normalizeInstructionSlot(instr.slot) : ''
@@ -996,12 +1009,16 @@ if (process.env.NODE_ENV !== 'production') {
           const posFromRoster = rosterPlayer?.position ? String(rosterPlayer.position).trim() : ''
           const nameFromModel = typeof instr.player_name === 'string' ? instr.player_name.trim() : ''
           const posFromModel = typeof instr.position === 'string' ? instr.position.trim() : ''
+          const targetPlayerName = ['marcatura_stretta', 'marcatura_uomo'].includes(instruction)
+            ? resolveOpponentTarget(instr.target_player_name)
+            : null
           validInstructions.push({
             ...instr,
             slot,
             instruction,
             player_name: nameFromRoster || nameFromModel || null,
-            position: posFromRoster || posFromModel || null
+            position: posFromRoster || posFromModel || null,
+            target_player_name: targetPlayerName
           })
         } else invalidInstructions.push({ instr, reason: check.error || 'istruzione non valida' })
       }
@@ -1043,6 +1060,28 @@ if (process.env.NODE_ENV !== 'production') {
       if (typeof s === 'string') return { it: s, en: s }
       if (s && typeof s === 'object' && ('it' in s || 'en' in s)) return s
       return s
+    }
+    ;['diagnosis', 'fit_proof'].forEach((key) => {
+      if (typeof countermeasures[key] === 'string') countermeasures[key] = toBilingual(countermeasures[key])
+    })
+    if (countermeasures.opponent_read && typeof countermeasures.opponent_read === 'object') {
+      ;['formation', 'trait', 'assumption'].forEach((key) => {
+        if (typeof countermeasures.opponent_read[key] === 'string') {
+          countermeasures.opponent_read[key] = toBilingual(countermeasures.opponent_read[key])
+        }
+      })
+    }
+    ;['with_ball', 'without_ball'].forEach((key) => {
+      const value = countermeasures[key]
+      if (Array.isArray(value)) countermeasures[key] = value.map(toBilingual).slice(0, 2)
+      else if (typeof value === 'string') countermeasures[key] = [toBilingual(value)]
+    })
+    if (countermeasures.plan_b && typeof countermeasures.plan_b === 'object') {
+      ;['trigger', 'action'].forEach((key) => {
+        if (typeof countermeasures.plan_b[key] === 'string') {
+          countermeasures.plan_b[key] = toBilingual(countermeasures.plan_b[key])
+        }
+      })
     }
     if (countermeasures.analysis) {
       if (typeof countermeasures.analysis.opponent_formation_analysis === 'string') {
@@ -1103,7 +1142,9 @@ if (process.env.NODE_ENV !== 'production') {
     const presented = presentCountermeasuresForCustomer(countermeasures, {
       lang: language === 'en' || language === 'es' ? language : 'it',
       opponentFormation,
-      roster
+      roster,
+      currentTacticalSettings: tacticalSettings,
+      clientFormation
     })
 
     // 14. Restituisci piano cliente + dati apply
