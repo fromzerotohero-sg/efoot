@@ -848,8 +848,11 @@ export default function HeroChat({
 
   // Greeting one-shot per utente: niente card ultima partita, solo Bentornato {name}.
   const [greetingVariant, setGreetingVariant] = React.useState('returning')
+  const [showInitialCta, setShowInitialCta] = React.useState(true)
   React.useEffect(() => {
     if (!greetUserKey) return
+    // Ogni nuova sessione utente riparte con un solo invito alla chat.
+    setShowInitialCta(true)
     const storageKey = `${GREETED_KEY}:${greetUserKey}`
     try {
       const greeted = localStorage.getItem(storageKey) === '1'
@@ -1048,6 +1051,7 @@ export default function HeroChat({
     if (!message || sending) return
     stopListening()
     setActionsOpen(false)
+    setShowInitialCta(false)
     pendingScrollRef.current = true
 
     const historyForApi = buildTacticalHistory(messages, 10)
@@ -1119,6 +1123,7 @@ export default function HeroChat({
 
   const enterFeedbackMode = React.useCallback((matchId = null) => {
     setActionsOpen(false)
+    setShowInitialCta(false)
     setMatchFlow(null)
     setPrematchPlan(null)
     setAttachments([])
@@ -1152,6 +1157,7 @@ export default function HeroChat({
   }, [])
 
   const beginFocusedAttachment = React.useCallback((mode = 'stats') => {
+    setShowInitialCta(false)
     setMatchFlow(null)
     setFeedbackMode(false)
     setFeedbackMessages([])
@@ -1325,6 +1331,7 @@ export default function HeroChat({
 
   const startMatchUpload = React.useCallback(() => {
     setActionsOpen(false)
+    setShowInitialCta(false)
     setFeedbackMode(false)
     setFeedbackMessages([])
     setPrematchPlan(null)
@@ -1913,6 +1920,7 @@ export default function HeroChat({
 
   const startChatPrompt = React.useCallback((message) => {
     setActionsOpen(false)
+    setShowInitialCta(false)
     setInput(message)
   }, [])
 
@@ -2334,9 +2342,8 @@ export default function HeroChat({
           </div>
         )}
 
-        {/* Ripartenza: il saluto vive in fondo come CTA per la nuova conversazione.
-            Chi vuole rileggere scorre in alto; chi torna riparte da qui. */}
-        {!historyLoading && (
+        {/* CTA iniziale della sessione: scompare al primo messaggio/azione. */}
+        {!historyLoading && showInitialCta && (
           <div className="hc-newConv">
             {messages.length > 0 && (
               <div className="hc-newConvDivider" aria-hidden="true">
