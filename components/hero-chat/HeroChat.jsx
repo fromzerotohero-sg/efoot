@@ -8,7 +8,6 @@ import {
   MicOff,
   Plus,
   Gauge,
-  Settings,
   Zap,
   X,
   Trophy,
@@ -699,7 +698,11 @@ export default function HeroChat({
   onStatsSuccess
 }) {
   const router = useRouter()
-  const heroName = userProfile?.ai_name || 'Hero Coach'
+  const configuredHeroName = String(userProfile?.ai_name || '').trim()
+  const configuredHeroNameKey = configuredHeroName.toLowerCase().replace(/[^a-z0-9]/g, '')
+  const heroName = configuredHeroNameKey === 'fromzerotohero'
+    ? 'Hero Coach'
+    : configuredHeroName || 'Hero Coach'
   const clientName = resolveGreetingName(userProfile)
 
   const [messages, setMessages] = React.useState([])
@@ -1575,8 +1578,9 @@ export default function HeroChat({
     return planData.plan
   }, [lang, threadId])
 
-  const confirmCountermeasureDraft = React.useCallback(async (correctedFormation) => {
-    if (!counterConfirmDraft?.formationId || counterConfirming) return
+  const confirmCountermeasureDraft = React.useCallback(async (correctedFormation, draftOverride = null) => {
+    const draft = draftOverride || counterConfirmDraft
+    if (!draft?.formationId || counterConfirming) return
     setCounterConfirming(true)
     const processingMessage = {
       role: 'hero',
@@ -1592,8 +1596,8 @@ export default function HeroChat({
       }
       const plan = await generateCountermeasurePlan(
         token,
-        counterConfirmDraft.formationId,
-        correctedFormation || counterConfirmDraft.formation
+        draft.formationId,
+        correctedFormation || draft.formation
       )
       setPrematchPlan(plan)
       setCounterConfirmDraft(null)
@@ -1658,6 +1662,10 @@ export default function HeroChat({
         )
         setCounterConfirmDraft(draft)
         setAttachments([])
+        if (!draft.uncertain && draft.formation) {
+          await confirmCountermeasureDraft(draft.formation, draft)
+          return
+        }
         setActiveWorkflowId(null)
         const confirmMessage = {
           role: 'hero',
@@ -1721,6 +1729,7 @@ export default function HeroChat({
     matchFlow,
     analyzeMatchAttachment,
     extractCountermeasureAttachment,
+    confirmCountermeasureDraft,
     lang,
     router,
     onStatsSuccess,
@@ -1802,9 +1811,8 @@ export default function HeroChat({
             <img src="/logo.png" alt="" className="hc-avatar" />
             <span className="hc-online" aria-hidden="true" />
           </span>
-          <span className="hc-nameBlock">
+          <span className="hc-nameBlock" aria-label={L(lang, COPY.online)}>
             <strong>{heroName}</strong>
-            <small>{L(lang, COPY.online)}</small>
           </span>
         </div>
         <div className="hc-headerRight">
@@ -1832,15 +1840,6 @@ export default function HeroChat({
               {hpBalance} HP
             </span>
           )}
-          <button
-            type="button"
-            className="hc-iconBtn"
-            aria-label={L(lang, { it: 'Impostazioni', en: 'Settings', es: 'Ajustes' })}
-            title={L(lang, { it: 'Impostazioni', en: 'Settings', es: 'Ajustes' })}
-            onClick={() => router.push('/impostazioni-profilo')}
-          >
-            <Settings size={17} />
-          </button>
         </div>
       </header>
 
@@ -2396,12 +2395,6 @@ export default function HeroChat({
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-        }
-
-        .hc-nameBlock small {
-          font-size: 11px;
-          color: var(--accent);
-          font-weight: 600;
         }
 
         .hc-headerRight {
