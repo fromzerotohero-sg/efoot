@@ -37,7 +37,8 @@ Analytics (GA `G-X69T3QE3GG`, Clarity `wylmfczjap`) si caricano in production; s
 | `/match`, `/match/new`, `/match/[id]` | Partite |
 | `/contromisure-pre-partita` | Contromisure |
 | `/allenatori` | Coach cards |
-| `/impostazioni-profilo`, `/gestione-profilo` | Profilo / HP utility |
+| `/impostazioni-profilo` | Hub profilo/impostazioni/notifiche (include HP) |
+| `/gestione-profilo` | Redirect a `/impostazioni-profilo` |
 | `/login` | Redirect MetalGate |
 | `/auth/callback`, `/login-success` | SSO |
 | `/access` | Gate prelaunch |

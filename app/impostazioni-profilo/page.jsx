@@ -5,44 +5,144 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
+import { OPEN_INSTALL_APP_PROMPT_EVENT } from '@/lib/pwaInstall'
 import {
   CheckCircle2, AlertCircle, X,
-  Zap, LogOut, BookOpen, Gift, Pencil
+  Zap, LogOut, BookOpen, Gift, Pencil, Wallet,
+  Download, LifeBuoy, UserCog, ChevronRight
 } from 'lucide-react'
 import LanguageSwitch from '@/components/LanguageSwitch'
 import ThemeToggle from '@/components/ThemeToggle'
 import PageLoading from '@/components/PageLoading'
 
+/** Token auth condiviso: localStorage prima, sessione Supabase come fallback. */
+async function getAuthToken() {
+  let token = localStorage.getItem('auth_token')
+  if (!token && supabase) {
+    const { data: session } = await supabase.auth.getSession()
+    token = session?.session?.access_token
+  }
+  return token
+}
 
-/** Hub Account & Utility stile app: identita reale, HP reali, utility di sistema, logout reale.
- *  Stili inline: la pagina ha gia un blocco styled-jsx e il componente deve restare indipendente. */
-function AccountUtilitySection({ t, lang, router }) {
-  const [account, setAccount] = React.useState({ name: '', email: '' })
+/** Scocca sezione stile impostazioni app: titolo piccolo + card contenuto. */
+function SettingsSection({ title, children, style }) {
+  return (
+    <section style={{ marginBottom: 22, ...style }}>
+      <h2 style={{
+        margin: '0 0 8px', padding: '0 4px',
+        fontSize: 12, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase',
+        color: 'var(--text-dim)'
+      }}>
+        {title}
+      </h2>
+      <div style={{
+        borderRadius: 18, background: 'var(--surface)',
+        border: '1px solid var(--border-soft)', overflow: 'hidden'
+      }}>
+        {children}
+      </div>
+    </section>
+  )
+}
+
+/** Riga stile lista impostazioni: icona, testo, controllo a destra. */
+function SettingsRow({ icon: Icon, label, sub, control, onClick, href, external, danger, disabled, last }) {
+  const base = {
+    display: 'flex', alignItems: 'center', gap: 12,
+    width: '100%', minHeight: 52, padding: '12px 16px',
+    border: 'none', borderBottom: last ? 'none' : '1px solid var(--border-softer)',
+    background: 'transparent', fontFamily: 'inherit', textAlign: 'left',
+    textDecoration: 'none', cursor: onClick || href ? 'pointer' : 'default',
+    opacity: disabled ? 0.55 : 1, boxSizing: 'border-box'
+  }
+  const content = (
+    <>
+      {Icon && (
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          width: 34, height: 34, borderRadius: 10, flexShrink: 0,
+          background: danger ? 'var(--surface-2)' : 'var(--accent-bg)',
+          border: `1px solid ${danger ? 'var(--border-soft)' : 'var(--accent-border)'}`,
+          color: danger ? 'var(--danger-text)' : 'var(--accent)'
+        }} aria-hidden="true">
+          <Icon size={16} />
+        </span>
+      )}
+      <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: 1 }}>
+        <span style={{
+          fontSize: 14, fontWeight: 700,
+          color: danger ? 'var(--danger-text)' : 'var(--text-main)',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+        }}>
+          {label}
+        </span>
+        {sub ? <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>{sub}</span> : null}
+      </span>
+      {control}
+      {(href || onClick) && !control && (
+        <ChevronRight size={16} color="var(--text-dim)" aria-hidden="true" style={{ flexShrink: 0 }} />
+      )}
+    </>
+  )
+  if (href && external) {
+    return <a href={href} target="_blank" rel="noopener noreferrer" style={base}>{content}</a>
+  }
+  if (href) {
+    return <Link href={href} style={base}>{content}</Link>
+  }
+  return (
+    <button type="button" onClick={onClick} disabled={disabled} style={base}>{content}</button>
+  )
+}
+
+/** Header identita: avatar con iniziale, username, email e chip completamento profilo. */
+function IdentitySection({ t, account, safeCompletionScore, completionText }) {
+  const initial = (account.name || account.email || 'H').charAt(0).toUpperCase()
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 18px' }}>
+      <span style={{
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        width: 46, height: 46, borderRadius: '50%', flexShrink: 0,
+        background: 'var(--accent-bg)', border: '1px solid var(--accent-border)',
+        color: 'var(--accent)', fontSize: 19, fontWeight: 900
+      }} aria-hidden="true">
+        {initial}
+      </span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: 1 }}>
+        <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {account.name || t('profile')}
+        </span>
+        {account.email ? (
+          <span style={{ fontSize: 12, color: 'var(--text-dim)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {account.email}
+          </span>
+        ) : null}
+      </div>
+      <span
+        style={{
+          display: 'inline-flex', alignItems: 'baseline', gap: 6,
+          padding: '6px 12px', borderRadius: 999, flexShrink: 0,
+          background: 'var(--accent-bg)', border: '1px solid var(--accent-border)', color: 'var(--accent)'
+        }}
+        aria-label={`${Math.round(safeCompletionScore)}%`}
+      >
+        <strong style={{ fontSize: 15, fontWeight: 900 }}>{Math.round(safeCompletionScore)}%</strong>
+        <small style={{ fontSize: 11, fontWeight: 700 }}>{completionText}</small>
+      </span>
+    </div>
+  )
+}
+
+/** Sezione Hero Points: saldo reale, tabella costi, disclaimer rimborso, link acquisto. */
+function HeroPointsSection({ t, lang }) {
   const [hpBalance, setHpBalance] = React.useState(null)
-
-  React.useEffect(() => {
-    try {
-      const raw = localStorage.getItem('metalgate_user')
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        const name = String(parsed?.username || '').trim()
-        const email = String(parsed?.email || '').trim()
-        setAccount({ name: name || (email ? email.split('@')[0] : ''), email })
-      }
-    } catch {
-      /* ignore */
-    }
-  }, [])
 
   React.useEffect(() => {
     let cancelled = false
     const fetchBalance = async () => {
       try {
-        let token = localStorage.getItem('auth_token')
-        if (!token && supabase) {
-          const { data: session } = await supabase.auth.getSession()
-          token = session?.session?.access_token
-        }
+        const token = await getAuthToken()
         if (!token || cancelled) return
         const res = await fetch('/api/credits/usage', {
           method: 'POST',
@@ -68,103 +168,264 @@ function AccountUtilitySection({ t, lang, router }) {
     }
   }, [])
 
-  const handleLogout = () => {
-    fetch('/api/prelaunch/logout', { method: 'POST' }).catch(() => {})
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('metalgate_user')
-    try {
-      sessionStorage.removeItem('dashboard_coach_mode_modal_seen_session_v1')
-    } catch {
-      /* ignore */
-    }
-    router.push('/login')
-  }
-
-  const initial = (account.name || account.email || 'H').charAt(0).toUpperCase()
-
-  const st = {
-    section: {
-      display: 'flex', flexDirection: 'column', gap: 16,
-      marginBottom: 16, padding: '16px 18px',
-      borderRadius: 18, background: 'var(--surface)', border: '1px solid var(--border-soft)'
-    },
-    head: { display: 'flex', alignItems: 'center', gap: 12 },
-    avatar: {
-      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-      width: 46, height: 46, borderRadius: '50%', flexShrink: 0,
-      background: 'var(--accent-bg)', border: '1px solid var(--accent-border)',
-      color: 'var(--accent)', fontSize: 19, fontWeight: 900
-    },
-    idBlock: { display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: 1 },
-    idName: { fontSize: 16, fontWeight: 800, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
-    idMail: { fontSize: 12, color: 'var(--text-dim)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
-    hp: {
-      display: 'inline-flex', alignItems: 'center', gap: 5,
-      padding: '6px 12px', borderRadius: 999, flexShrink: 0,
-      background: 'rgba(255, 203, 5, 0.16)', border: '1px solid rgba(255, 203, 5, 0.45)',
-      color: 'var(--text-main)', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap'
-    },
-    grid: { display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' },
-    item: { display: 'inline-flex', alignItems: 'center', gap: 8, minHeight: 40 },
-    label: { fontSize: 12, fontWeight: 700, color: 'var(--text-dim)' },
-    link: {
-      display: 'inline-flex', alignItems: 'center', gap: 8,
-      minHeight: 40, padding: '9px 14px', borderRadius: 10,
-      border: '1px solid var(--border-soft)', background: 'var(--surface-2)',
-      color: 'var(--text-main)', fontSize: 13, fontWeight: 600,
-      fontFamily: 'inherit', textDecoration: 'none', cursor: 'pointer'
-    },
-    logout: {
-      color: '#d93025', borderColor: 'rgba(217, 48, 37, 0.32)', background: 'rgba(217, 48, 37, 0.10)'
-    }
-  }
+  const rows = lang === 'en'
+    ? [
+        { service: 'Hero Chat: ask the AI coach', cost: '2 HP' },
+        { service: 'Card Advisor: evaluate a new card', cost: '2 HP' },
+        { service: 'Match analysis', cost: '2 HP' },
+        { service: 'Game stats extraction', cost: '2-4 HP' },
+        { service: 'Pre-match countermeasures', cost: '2 HP' },
+        { service: 'Player or coach extraction', cost: '2 HP' },
+        { service: 'Live Coach start', cost: '2 HP' },
+        { service: 'Live Coach extra minute', cost: '5 HP/min' }
+      ]
+    : [
+        { service: 'Hero Chat: chiedi al Coach AI', cost: '2 HP' },
+        { service: 'Card Advisor: valuta una nuova carta', cost: '2 HP' },
+        { service: 'Analisi partita', cost: '2 HP' },
+        { service: 'Estrazione statistiche di gioco', cost: '2-4 HP' },
+        { service: 'Contromisure pre-partita', cost: '2 HP' },
+        { service: 'Estrazione giocatore o allenatore', cost: '2 HP' },
+        { service: 'Live Coach avvio', cost: '2 HP' },
+        { service: 'Live Coach minuto extra', cost: '5 HP/min' }
+      ]
 
   return (
-    <section style={st.section} aria-label="Account">
-      <div style={st.head}>
-        <span style={st.avatar} aria-hidden="true">{initial}</span>
-        <div style={st.idBlock}>
-          <span style={st.idName}>{account.name || t('profile')}</span>
-          {account.email ? <span style={st.idMail}>{account.email}</span> : null}
-        </div>
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 16px', borderBottom: '1px solid var(--border-softer)', flexWrap: 'wrap' }}>
+        <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: 'var(--text-secondary)', flex: 1, minWidth: 200 }}>
+          {lang === 'en'
+            ? 'Hero Points are for the moments where you want help from the coach: a better card choice, a match plan, or a clear next step.'
+            : 'Gli Hero Points servono quando vuoi un aiuto concreto dal Coach: scegliere meglio una carta, preparare un match o capire la prossima cosa da migliorare.'}
+        </p>
         {typeof hpBalance === 'number' && (
-          <Link href="/gestione-profilo" style={{ ...st.hp, textDecoration: 'none' }} title="Hero Points">
+          <span
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              padding: '6px 12px', borderRadius: 999, flexShrink: 0,
+              background: 'var(--gold-bg)', border: '1px solid var(--gold-border)',
+              color: 'var(--gold-text)', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap'
+            }}
+            title="Hero Points"
+          >
             <Zap size={13} />
             {hpBalance} HP
-          </Link>
+          </span>
         )}
       </div>
 
-      <div style={st.grid}>
-        <div style={st.item}>
-          <span style={st.label}>{(lang === 'en' || lang === 'es') ? 'Language' : 'Lingua'}</span>
-          <LanguageSwitch />
+      <div>
+        <div style={{
+          display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 12,
+          padding: '10px 16px', background: 'var(--gold-bg)',
+          borderBottom: '1px solid var(--border-soft)',
+          fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em',
+          color: 'var(--text-main)'
+        }}>
+          <span>{t('profileHpService')}</span>
+          <span>HP</span>
         </div>
-        <div style={st.item}>
-          <span style={st.label}>{(lang === 'en' || lang === 'es') ? 'Theme' : 'Tema'}</span>
-          <ThemeToggle />
-        </div>
-        <a style={st.link} href="/guida">
-          <BookOpen size={16} />
-          <span>{t('guide')}</span>
-        </a>
-        <a style={st.link} href="https://tornei.fromzerotohero.io/" target="_blank" rel="noopener noreferrer">
-          <Gift size={16} />
-          <span>Tornei</span>
-        </a>
-        <button type="button" style={{ ...st.link, ...st.logout }} onClick={handleLogout}>
-          <LogOut size={16} />
-          <span>{t('logout')}</span>
-        </button>
+        {rows.map((row, idx) => (
+          <div
+            key={`${row.service}-${idx}`}
+            style={{
+              display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 12,
+              alignItems: 'center', padding: '11px 16px',
+              borderBottom: idx === rows.length - 1 ? 'none' : '1px solid var(--border-softer)'
+            }}
+          >
+            <span style={{ color: 'var(--text-main)', fontSize: 13, overflowWrap: 'anywhere' }}>{row.service}</span>
+            <strong style={{ color: 'var(--gold-text)', whiteSpace: 'nowrap', fontSize: 13 }}>{row.cost}</strong>
+          </div>
+        ))}
       </div>
-    </section>
+
+      <p style={{ margin: 0, padding: '12px 16px', fontSize: 12, lineHeight: 1.45, color: 'var(--text-dim)', borderTop: '1px solid var(--border-softer)' }}>
+        {lang === 'en'
+          ? 'If a platform error prevents an analysis from completing, the HP are automatically returned.'
+          : 'Se un errore della piattaforma blocca un’analisi, gli HP vengono riaccreditati automaticamente.'}
+        <br />
+        {lang === 'en'
+          ? 'Use them when you want a clear answer, a card decision or a tactical plan.'
+          : 'Usali quando vuoi una risposta chiara, una scelta sulle carte o un piano tattico.'}
+      </p>
+
+      <div style={{ padding: '0 16px 16px' }}>
+        <a
+          href="https://home.fromzerotohero.io/dashboard?usage"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            minHeight: 44, padding: '10px 18px', borderRadius: 999, width: '100%', boxSizing: 'border-box',
+            background: 'var(--gold-bg)', border: '1px solid var(--gold-border)',
+            color: 'var(--gold-text)', textDecoration: 'none', fontSize: 14, fontWeight: 900
+          }}
+        >
+          <Wallet size={16} />
+          {t('profileBuyHp')}
+        </a>
+      </div>
+    </div>
+  )
+}
+
+const NOTIFICATION_PREF_KEYS = ['daily_spin', 'weekly_goals', 'credits', 'leaderboard', 'coach']
+const NOTIFICATION_PREF_LABEL_KEYS = {
+  daily_spin: 'profileNotifDailySpin',
+  weekly_goals: 'profileNotifWeeklyGoals',
+  credits: 'profileNotifCredits',
+  leaderboard: 'profileNotifLeaderboard',
+  coach: 'profileNotifCoach'
+}
+
+/** Sezione Notifiche: toggle per categoria su /api/notifications/prefs (default ON). */
+function NotificationsSection({ t, lang, onToast }) {
+  const [prefs, setPrefs] = React.useState(null)
+  const [loadError, setLoadError] = React.useState(false)
+  const [savingKey, setSavingKey] = React.useState(null)
+
+  React.useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      try {
+        const token = await getAuthToken()
+        if (!token || cancelled) return
+        const res = await fetch('/api/notifications/prefs', {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store'
+        })
+        if (!res.ok) throw new Error('prefs load failed')
+        const data = await res.json().catch(() => null)
+        if (cancelled) return
+        const serverPrefs = data?.prefs && typeof data.prefs === 'object' ? data.prefs : {}
+        const next = {}
+        for (const key of NOTIFICATION_PREF_KEYS) {
+          next[key] = typeof serverPrefs[key] === 'boolean' ? serverPrefs[key] : true
+        }
+        setPrefs(next)
+      } catch {
+        if (!cancelled) setLoadError(true)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [])
+
+  const togglePref = async (key) => {
+    if (!prefs || savingKey) return
+    const prev = prefs
+    const next = { ...prefs, [key]: !prefs[key] }
+    setPrefs(next)
+    setSavingKey(key)
+    try {
+      const token = await getAuthToken()
+      if (!token) throw new Error('missing token')
+      const res = await fetch('/api/notifications/prefs', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [key]: next[key] })
+      })
+      if (!res.ok) throw new Error('prefs save failed')
+    } catch {
+      setPrefs(prev)
+      onToast({
+        type: 'error',
+        message: (lang === 'en' || lang === 'es')
+          ? 'Error saving notification preference'
+          : 'Errore nel salvataggio della preferenza'
+      })
+    } finally {
+      setSavingKey(null)
+    }
+  }
+
+  const renderSwitch = (key) => {
+    const on = prefs ? prefs[key] : true
+    const disabled = !prefs || savingKey === key
+    return (
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-label={t(NOTIFICATION_PREF_LABEL_KEYS[key])}
+        disabled={disabled}
+        onClick={() => togglePref(key)}
+        style={{
+          position: 'relative', flexShrink: 0,
+          width: 46, height: 28, borderRadius: 999,
+          border: `1px solid ${on ? 'var(--accent-border)' : 'var(--border-soft)'}`,
+          background: on ? 'var(--accent-bg)' : 'var(--surface-3)',
+          cursor: disabled ? 'wait' : 'pointer',
+          transition: 'background 0.15s ease, border-color 0.15s ease'
+        }}
+      >
+        <span
+          aria-hidden="true"
+          style={{
+            position: 'absolute', top: 3, left: on ? 21 : 3,
+            width: 20, height: 20, borderRadius: '50%',
+            background: on ? 'var(--accent)' : 'var(--text-dim)',
+            transition: 'left 0.15s ease'
+          }}
+        />
+      </button>
+    )
+  }
+
+  return (
+    <div>
+      {prefs === null && !loadError && (
+        <p style={{ margin: 0, padding: '14px 16px', fontSize: 13, color: 'var(--text-dim)' }}>{t('loading')}</p>
+      )}
+      {loadError && (
+        <p style={{ margin: 0, padding: '14px 16px', fontSize: 13, color: 'var(--danger-text)' }}>
+          {(lang === 'en' || lang === 'es')
+            ? 'Notification preferences unavailable right now.'
+            : 'Preferenze notifiche non disponibili al momento.'}
+        </p>
+      )}
+      {NOTIFICATION_PREF_KEYS.map((key, idx) => (
+        <div
+          key={key}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            minHeight: 52, padding: '12px 16px',
+            borderBottom: '1px solid var(--border-softer)'
+          }}
+        >
+          <span style={{ flex: 1, fontSize: 14, fontWeight: 700, color: 'var(--text-main)' }}>
+            {t(NOTIFICATION_PREF_LABEL_KEYS[key])}
+          </span>
+          {renderSwitch(key)}
+        </div>
+      ))}
+      <div
+        style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          minHeight: 52, padding: '12px 16px', opacity: 0.55
+        }}
+        aria-disabled="true"
+      >
+        <span style={{ flex: 1, fontSize: 14, fontWeight: 700, color: 'var(--text-main)' }}>
+          {t('profileNotifPushPhone')}
+        </span>
+        <span style={{
+          padding: '4px 10px', borderRadius: 999, flexShrink: 0,
+          background: 'var(--info-bg)', border: '1px solid var(--info-border)',
+          color: 'var(--info-text)', fontSize: 11, fontWeight: 800
+        }}>
+          {t('profileComingSoon')}
+        </span>
+      </div>
+    </div>
   )
 }
 
 export default function ImpostazioniProfiloPage() {
   const { t, lang } = useTranslation()
   const router = useRouter()
-  
+
   // Stato profilo
   const [profile, setProfile] = React.useState({
     first_name: '',
@@ -177,8 +438,9 @@ export default function ImpostazioniProfiloPage() {
     hours_per_week: null,
     common_problems: []
   })
-  
+
   const [profileData, setProfileData] = React.useState(null) // Dati completi dal server
+  const [account, setAccount] = React.useState({ name: '', email: '' })
   const [editingField, setEditingField] = React.useState(null) // { key, type, label }
   const [editValue, setEditValue] = React.useState('')
   const [editSaving, setEditSaving] = React.useState(false)
@@ -186,9 +448,21 @@ export default function ImpostazioniProfiloPage() {
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState(null)
   const [toast, setToast] = React.useState(null) // { message, type: 'success' | 'error' }
-  
-  // Divisioni disponibili
-  const divisions = ['Division 1', 'Division 2', 'Division 3', 'Division 4', 'Division 5', 'Division 6', 'Division 7', 'Division 8', 'Division 9', 'Division 10']
+
+  // Identita account da MetalGate (localStorage)
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem('metalgate_user')
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        const name = String(parsed?.username || '').trim()
+        const email = String(parsed?.email || '').trim()
+        setAccount({ name: name || (email ? email.split('@')[0] : ''), email })
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [])
 
   // Carica profilo esistente
   React.useEffect(() => {
@@ -199,7 +473,7 @@ export default function ImpostazioniProfiloPage() {
       try {
         let token = localStorage.getItem('auth_token')
         let userId = null
-        
+
         if (token) {
            const userData = localStorage.getItem('metalgate_user')
            if (userData) {
@@ -212,7 +486,7 @@ export default function ImpostazioniProfiloPage() {
              userId = session.session.user.id
            }
         }
-        
+
         if (!token) {
           // AuthWrapper gestirà redirect
           setLoading(false)
@@ -224,13 +498,13 @@ export default function ImpostazioniProfiloPage() {
           headers: { 'Authorization': `Bearer ${token}` },
           cache: 'no-store'
         })
-        
+
         if (!res.ok) {
           throw new Error(t('errorProfileLoad'))
         }
-        
+
         const profileData = await res.json()
-        
+
         if (profileData) {
            setProfileData(profileData)
            setProfile({
@@ -270,11 +544,7 @@ export default function ImpostazioniProfiloPage() {
   // Ricarica i dati profilo dal server (dopo una modifica singola)
   const reloadProfileData = React.useCallback(async () => {
     try {
-      let token = localStorage.getItem('auth_token')
-      if (!token && supabase) {
-        const { data: session } = await supabase.auth.getSession()
-        token = session?.session?.access_token
-      }
+      const token = await getAuthToken()
       if (!token) return
       const res = await fetch('/api/user/profile', {
         headers: { Authorization: `Bearer ${token}` },
@@ -335,11 +605,7 @@ export default function ImpostazioniProfiloPage() {
     setEditSaving(true)
     setEditError(null)
     try {
-      let token = localStorage.getItem('auth_token')
-      if (!token && supabase) {
-        const { data: session } = await supabase.auth.getSession()
-        token = session?.session?.access_token
-      }
+      const token = await getAuthToken()
       if (!token) {
         router.push('/login')
         return
@@ -388,7 +654,17 @@ export default function ImpostazioniProfiloPage() {
     }
   }
 
-  // Salva profilo (incrementale)
+  const handleLogout = () => {
+    fetch('/api/prelaunch/logout', { method: 'POST' }).catch(() => {})
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('metalgate_user')
+    try {
+      sessionStorage.removeItem('dashboard_coach_mode_modal_seen_session_v1')
+    } catch {
+      /* ignore */
+    }
+    router.push('/login')
+  }
 
   React.useEffect(() => {
     if (toast) {
@@ -397,12 +673,10 @@ export default function ImpostazioniProfiloPage() {
     }
   }, [toast])
 
-  // Skip sezione
-
   // Calcola percentuale completamento (se disponibile)
   const completionScore = profileData?.profile_completion_score ?? 0
   const completionLevel = profileData?.profile_completion_level || 'beginner'
-  
+
   const getLevelText = (level) => {
     switch(level) {
       case 'complete': return t('profileLevelComplete') || 'Completo'
@@ -435,79 +709,89 @@ export default function ImpostazioniProfiloPage() {
     if (!map) return raw
     return map[raw] || raw
   }
-  const profileOverviewCards = [
-    {
-      field: 'first_name',
-      label: (lang === 'en' || lang === 'es') ? 'Name' : 'Nome',
-      value: cleanValue(profile.first_name),
-      hint: (lang === 'en' || lang === 'es') ? 'How Hero calls you' : 'Come ti chiama Hero'
-    },
-    {
-      field: 'last_name',
-      label: (lang === 'en' || lang === 'es') ? 'Last name' : 'Cognome',
-      value: cleanValue(profile.last_name),
-      hint: (lang === 'en' || lang === 'es') ? 'Personal data' : 'Dati anagrafici'
-    },
-    {
-      field: 'favorite_team',
-      label: (lang === 'en' || lang === 'es') ? 'Favourite club' : 'Squadra del cuore',
-      value: cleanValue(profile.favorite_team),
-      hint: (lang === 'en' || lang === 'es') ? 'The club you support' : 'La squadra che tifi'
-    },
-    {
-      field: 'ai_name',
-      label: (lang === 'en' || lang === 'es') ? 'Coach name' : 'Nome del tuo coach',
-      value: cleanValue(profile.ai_name),
-      hint: (lang === 'en' || lang === 'es') ? 'How you call your coach' : 'Come chiami il tuo coach'
-    },
-    {
-      field: 'how_to_remember',
-      label: (lang === 'en' || lang === 'es') ? 'Coach memory note' : 'Nota memoria per il coach',
-      value: cleanValue(profile.how_to_remember),
-      hint: (lang === 'en' || lang === 'es') ? 'What Hero should remember' : 'Cosa deve ricordare Hero'
-    },
 
+  // Profilo di gioco: 11 campi in 3 gruppi, stessi editor bottom-sheet ed endpoint di salvataggio.
+  const gameProfileGroups = [
     {
-      label: (lang === 'en' || lang === 'es') ? 'Division' : 'Divisione',
-      field: 'current_division',
-
-      value: cleanValue(profile.current_division),
-      hint: (lang === 'en' || lang === 'es') ? 'Competitive level' : 'Livello competitivo'
+      label: t('profileGroupAnagrafica'),
+      cards: [
+        {
+          field: 'first_name',
+          label: (lang === 'en' || lang === 'es') ? 'Name' : 'Nome',
+          value: cleanValue(profile.first_name),
+          hint: (lang === 'en' || lang === 'es') ? 'How Hero calls you' : 'Come ti chiama Hero'
+        },
+        {
+          field: 'last_name',
+          label: (lang === 'en' || lang === 'es') ? 'Last name' : 'Cognome',
+          value: cleanValue(profile.last_name),
+          hint: (lang === 'en' || lang === 'es') ? 'Personal data' : 'Dati anagrafici'
+        }
+      ]
     },
     {
-      label: (lang === 'en' || lang === 'es') ? 'In-game team' : 'Team in game',
-      field: 'team_name',
-
-      value: cleanValue(profile.team_name || profile.favorite_team),
-      hint: (lang === 'en' || lang === 'es') ? 'Identity used in analyses' : 'Identita usata nelle analisi'
+      label: t('profileGroupGameIdentity'),
+      cards: [
+        {
+          field: 'team_name',
+          label: (lang === 'en' || lang === 'es') ? 'In-game team' : 'Team in game',
+          value: cleanValue(profile.team_name || profile.favorite_team),
+          hint: (lang === 'en' || lang === 'es') ? 'Identity used in analyses' : 'Identita usata nelle analisi'
+        },
+        {
+          field: 'favorite_team',
+          label: (lang === 'en' || lang === 'es') ? 'Favourite club' : 'Squadra del cuore',
+          value: cleanValue(profile.favorite_team),
+          hint: (lang === 'en' || lang === 'es') ? 'The club you support' : 'La squadra che tifi'
+        },
+        {
+          field: 'current_division',
+          label: (lang === 'en' || lang === 'es') ? 'Division' : 'Divisione',
+          value: cleanValue(profile.current_division),
+          hint: (lang === 'en' || lang === 'es') ? 'Competitive level' : 'Livello competitivo'
+        },
+        {
+          field: 'platform',
+          label: (lang === 'en' || lang === 'es') ? 'Platform' : 'Piattaforma',
+          value: fieldValue('platform', profileData?.platform),
+          hint: (lang === 'en' || lang === 'es') ? 'From Coach Gym' : 'Da Palestra Coach'
+        },
+        {
+          field: 'favourite_player_name',
+          label: (lang === 'en' || lang === 'es') ? 'Favourite player' : 'Giocatore preferito',
+          value: cleanValue(profileData?.favourite_player_name),
+          hint: (lang === 'en' || lang === 'es') ? 'Useful for examples' : 'Utile per esempi e consigli'
+        }
+      ]
     },
     {
-      label: (lang === 'en' || lang === 'es') ? 'Platform' : 'Piattaforma',
-      field: 'platform',
-
-      value: fieldValue('platform', profileData?.platform),
-      hint: (lang === 'en' || lang === 'es') ? 'From Coach Gym' : 'Da Palestra Coach'
-    },
-    {
-      label: (lang === 'en' || lang === 'es') ? 'Pass level' : 'Livello passaggi',
-      field: 'pass_level',
-
-      value: fieldValue('pass_level', profileData?.pass_level),
-      hint: (lang === 'en' || lang === 'es') ? 'Control profile' : 'Profilo comandi'
-    },
-    {
-      label: (lang === 'en' || lang === 'es') ? 'Weak point' : 'Punto debole',
-      field: 'ai_weak_point',
-
-      value: fieldValue('ai_weak_point', profileData?.ai_weak_point || profile.common_problems),
-      hint: (lang === 'en' || lang === 'es') ? 'What the coach should watch' : 'Cosa deve osservare il coach'
-    },
-    {
-      label: (lang === 'en' || lang === 'es') ? 'Favourite player' : 'Giocatore preferito',
-      field: 'favourite_player_name',
-
-      value: cleanValue(profileData?.favourite_player_name),
-      hint: (lang === 'en' || lang === 'es') ? 'Useful for examples' : 'Utile per esempi e consigli'
+      label: t('profileGroupCoachAi'),
+      cards: [
+        {
+          field: 'ai_name',
+          label: (lang === 'en' || lang === 'es') ? 'Coach name' : 'Nome del tuo coach',
+          value: cleanValue(profile.ai_name),
+          hint: (lang === 'en' || lang === 'es') ? 'How you call your coach' : 'Come chiami il tuo coach'
+        },
+        {
+          field: 'how_to_remember',
+          label: (lang === 'en' || lang === 'es') ? 'Coach memory note' : 'Nota memoria per il coach',
+          value: cleanValue(profile.how_to_remember),
+          hint: (lang === 'en' || lang === 'es') ? 'What Hero should remember' : 'Cosa deve ricordare Hero'
+        },
+        {
+          field: 'ai_weak_point',
+          label: (lang === 'en' || lang === 'es') ? 'Weak point' : 'Punto debole',
+          value: fieldValue('ai_weak_point', profileData?.ai_weak_point || profile.common_problems),
+          hint: (lang === 'en' || lang === 'es') ? 'What the coach should watch' : 'Cosa deve osservare il coach'
+        },
+        {
+          field: 'pass_level',
+          label: (lang === 'en' || lang === 'es') ? 'Pass level' : 'Livello passaggi',
+          value: fieldValue('pass_level', profileData?.pass_level),
+          hint: (lang === 'en' || lang === 'es') ? 'Control profile' : 'Profilo comandi'
+        }
+      ]
     }
   ]
 
@@ -516,58 +800,125 @@ export default function ImpostazioniProfiloPage() {
   }
 
   return (
-    <main data-tour-id="tour-profile-intro" className="profile-page">
-      {/* Page Header */}
-      {/* Header compatto: titolo + chip completamento (niente hero glow) */}
-      <header style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
-        <div style={{ minWidth: 0 }}>
-          <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>
-            {(lang === 'en' || lang === 'es') ? 'Player identity' : 'Identita giocatore'}
-          </p>
-          <h1 style={{ margin: 0, fontSize: 'clamp(24px, 5vw, 32px)', fontWeight: 800, letterSpacing: '-0.01em', color: 'var(--text-main)' }}>
-            {t('profileSettings')}
-          </h1>
-          <p style={{ margin: '6px 0 0', fontSize: 13, lineHeight: 1.5, color: 'var(--text-dim)', maxWidth: 560 }}>
-            {lang === 'en'
-              ? 'Your profile is the memory layer of the coach: the more complete it is, the more personal every suggestion becomes.'
-              : 'Il profilo e la memoria del coach: piu e completo, piu ogni consiglio diventa personale.'}
-          </p>
-        </div>
-        <span
-          style={{
-            display: 'inline-flex', alignItems: 'baseline', gap: 6,
-            padding: '6px 12px', borderRadius: 999, flexShrink: 0,
-            background: 'var(--accent-bg)', border: '1px solid var(--accent-border)', color: 'var(--accent)'
-          }}
-          aria-label={`${Math.round(safeCompletionScore)}%`}
-        >
-          <strong style={{ fontSize: 15, fontWeight: 900 }}>{Math.round(safeCompletionScore)}%</strong>
-          <small style={{ fontSize: 11, fontWeight: 700 }}>{getLevelText(completionLevel)}</small>
-        </span>
+    <div data-tour-id="tour-profile-intro" className="profile-page">
+      {/* Header compatto: titolo pagina */}
+      <header style={{ marginBottom: 18 }}>
+        <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>
+          {(lang === 'en' || lang === 'es') ? 'Player identity' : 'Identita giocatore'}
+        </p>
+        <h1 style={{ margin: 0, fontSize: 'clamp(24px, 5vw, 32px)', fontWeight: 800, letterSpacing: '-0.01em', color: 'var(--text-main)' }}>
+          {t('profileSettings')}
+        </h1>
+        <p style={{ margin: '6px 0 0', fontSize: 13, lineHeight: 1.5, color: 'var(--text-dim)', maxWidth: 560 }}>
+          {lang === 'en'
+            ? 'Your profile is the memory layer of the coach: the more complete it is, the more personal every suggestion becomes.'
+            : 'Il profilo e la memoria del coach: piu e completo, piu ogni consiglio diventa personale.'}
+        </p>
       </header>
 
-      {/* Account & Utility: hub stile app — identita, HP reali, utility di sistema, logout reale */}
-      <AccountUtilitySection t={t} lang={lang} router={router} />
+      {/* 1. Identita */}
+      <SettingsSection title={t('profile')}>
+        <IdentitySection
+          t={t}
+          account={account}
+          safeCompletionScore={safeCompletionScore}
+          completionText={getLevelText(completionLevel)}
+        />
+      </SettingsSection>
 
-      <section className="profile-metric-grid" aria-label={(lang === 'en' || lang === 'es') ? 'Profile overview' : 'Panoramica profilo'}>
-        {profileOverviewCards.map((card) => (
-          <button
-            type="button"
-            className={`profile-metric-card profile-metric-card--editable ${card.value ? '' : 'profile-metric-card--empty'}`}
-            key={card.label}
-            onClick={() => openFieldEditor(card)}
-            aria-label={`${card.label}: ${card.value || 'modifica'}`}
-            style={{ color: 'var(--text-main)' }}
-          >
-            <span className="profile-metric-card-head">
-              <span>{card.label}</span>
-              <Pencil size={13} aria-hidden="true" />
+      {/* 2. Hero Points */}
+      <SettingsSection title="Hero Points">
+        <HeroPointsSection t={t} lang={lang} />
+      </SettingsSection>
+
+      {/* 3. Profilo di gioco */}
+      <SettingsSection title={t('profileSectionGame')}>
+        <div style={{ padding: '14px 16px 18px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+          {gameProfileGroups.map((group) => (
+            <div key={group.label}>
+              <h3 style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 800, color: 'var(--text-dim)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                {group.label}
+              </h3>
+              <div className="profile-metric-grid" style={{ marginBottom: 0 }}>
+                {group.cards.map((card) => (
+                  <button
+                    type="button"
+                    className={`profile-metric-card profile-metric-card--editable ${card.value ? '' : 'profile-metric-card--empty'}`}
+                    key={card.field}
+                    onClick={() => openFieldEditor(card)}
+                    aria-label={`${card.label}: ${card.value || 'modifica'}`}
+                    style={{ color: 'var(--text-main)' }}
+                  >
+                    <span className="profile-metric-card-head">
+                      <span>{card.label}</span>
+                      <Pencil size={13} aria-hidden="true" />
+                    </span>
+                    <strong>{card.value || ((lang === 'en' || lang === 'es') ? 'Missing' : 'Da completare')}</strong>
+                    <small>{card.hint}</small>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </SettingsSection>
+
+      {/* 4. Notifiche */}
+      <SettingsSection title={t('profileSectionNotifications')}>
+        <NotificationsSection t={t} lang={lang} onToast={setToast} />
+      </SettingsSection>
+
+      {/* 5. Preferenze app */}
+      <SettingsSection title={t('profileSectionPreferences')}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 52, padding: '12px 16px', borderBottom: '1px solid var(--border-softer)' }}>
+            <span style={{ flex: 1, fontSize: 14, fontWeight: 700, color: 'var(--text-main)' }}>
+              {(lang === 'en' || lang === 'es') ? 'Language' : 'Lingua'}
             </span>
-            <strong>{card.value || ((lang === 'en' || lang === 'es') ? 'Missing' : 'Da completare')}</strong>
-            <small>{card.hint}</small>
-          </button>
-        ))}
-      </section>
+            <LanguageSwitch />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 52, padding: '12px 16px', borderBottom: '1px solid var(--border-softer)' }}>
+            <span style={{ flex: 1, fontSize: 14, fontWeight: 700, color: 'var(--text-main)' }}>
+              {(lang === 'en' || lang === 'es') ? 'Theme' : 'Tema'}
+            </span>
+            <ThemeToggle />
+          </div>
+          <SettingsRow icon={BookOpen} label={t('guide')} href="/guida" />
+          <SettingsRow icon={Gift} label="Tornei" href="https://tornei.fromzerotohero.io/" external />
+          <SettingsRow
+            icon={Download}
+            label={t('pwaInstallOpenManual')}
+            onClick={() => window.dispatchEvent(new CustomEvent(OPEN_INSTALL_APP_PROMPT_EVENT))}
+            last
+          />
+        </div>
+      </SettingsSection>
+
+      {/* 6. Account */}
+      <SettingsSection title={t('profileSectionAccount')}>
+        <div>
+          <SettingsRow
+            icon={UserCog}
+            label={t('profileManageAccount')}
+            href="https://home.fromzerotohero.io/dashboard"
+            external
+          />
+          <SettingsRow
+            icon={LifeBuoy}
+            label={t('profileSupport')}
+            sub="support@fromzerotohero.io"
+            href="mailto:support@fromzerotohero.io"
+            external
+          />
+          <SettingsRow
+            icon={LogOut}
+            label={t('logout')}
+            onClick={handleLogout}
+            danger
+            last
+          />
+        </div>
+      </SettingsSection>
 
       {/* Toast: feedback vicino all'azione (visibile anche se la sezione è in basso) */}
       {toast && (
@@ -577,10 +928,8 @@ export default function ImpostazioniProfiloPage() {
           right: '20px',
           zIndex: 10000,
           padding: '16px 20px',
-          background: toast.type === 'success'
-            ? 'rgba(34, 197, 94, 0.95)'
-            : 'rgba(239, 68, 68, 0.95)',
-          border: `2px solid ${toast.type === 'success' ? '#22c55e' : '#ef4444'}`,
+          background: 'var(--surface)',
+          border: `1px solid ${toast.type === 'success' ? 'var(--accent-border)' : 'var(--danger-text)'}`,
           borderRadius: '12px',
           boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
           display: 'flex',
@@ -592,11 +941,11 @@ export default function ImpostazioniProfiloPage() {
           backdropFilter: 'blur(8px)'
         }}>
           {toast.type === 'success' ? (
-            <CheckCircle2 size={20} color="#ffffff" />
+            <CheckCircle2 size={20} color="var(--accent)" />
           ) : (
-            <AlertCircle size={20} color="#ffffff" />
+            <AlertCircle size={20} color="var(--danger-text)" />
           )}
-          <span style={{ color: '#ffffff', fontSize: '14px', fontWeight: 600, flex: 1 }}>
+          <span style={{ color: 'var(--text-main)', fontSize: '14px', fontWeight: 600, flex: 1 }}>
             {typeof toast.message === 'string' ? toast.message : (toast.message?.message ?? String(toast.message ?? ''))}
           </span>
           <button
@@ -605,7 +954,7 @@ export default function ImpostazioniProfiloPage() {
             style={{
               background: 'transparent',
               border: 'none',
-              color: '#ffffff',
+              color: 'var(--text-dim)',
               cursor: 'pointer',
               padding: '4px',
               display: 'flex',
@@ -704,7 +1053,7 @@ export default function ImpostazioniProfiloPage() {
             )}
 
             {editError && (
-              <p style={{ margin: 0, fontSize: 13, color: '#d93025' }}>{editError}</p>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--danger-text)' }}>{editError}</p>
             )}
 
             <div style={{ display: 'flex', gap: 10, position: 'sticky', bottom: 0, background: 'var(--surface)', paddingTop: 10, marginTop: 'auto' }}>
@@ -740,15 +1089,12 @@ export default function ImpostazioniProfiloPage() {
       )}
 
       <style jsx>{`
-
-
         .profile-page {
-          width: min(1180px, 100%);
+          width: min(880px, 100%);
           margin: 0 auto;
           padding: clamp(14px, 3vw, 28px);
           min-height: 100vh;
         }
-
 
         .profile-metric-grid {
           display: grid;
@@ -757,7 +1103,6 @@ export default function ImpostazioniProfiloPage() {
           margin-bottom: 24px;
         }
 
-        
         .profile-metric-card--editable {
           font: inherit;
           text-align: left;
@@ -784,12 +1129,12 @@ export default function ImpostazioniProfiloPage() {
           color: var(--text-dim);
         }
 
-.profile-metric-card {
+        .profile-metric-card {
           min-height: 116px;
           padding: 18px;
           border: 1px solid var(--border-soft);
           border-radius: 18px;
-          background: var(--surface);
+          background: var(--surface-2);
           color: var(--text-main);
           box-shadow: 0 12px 34px rgba(0, 0, 0, 0.08);
         }
@@ -869,7 +1214,6 @@ export default function ImpostazioniProfiloPage() {
           }
         }
       `}</style>
-    </main>
+    </div>
   )
 }
-

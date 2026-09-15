@@ -5,6 +5,7 @@
 Montata da `app/layout.jsx`. Contiene:
 
 - `SidebarNew`, `TopBar`, `BottomNavigation`
+- `NotificationBell` (campanella notifiche in TopBar)
 - `DailySpinWidget`
 - `InstallAppPrompt` (condizionale)
 - `LiveCoachLauncher`

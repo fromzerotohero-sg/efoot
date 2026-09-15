@@ -468,7 +468,7 @@ export default function SpinLabPage() {
               </div>
               <h2>Grande colpo!</h2>
               <p>{message}</p>
-              <Link href="/gestione-profilo" className="bank-link">
+              <Link href="/impostazioni-profilo" className="bank-link">
                 Scopri dove usare gli HP
               </Link>
             </div>

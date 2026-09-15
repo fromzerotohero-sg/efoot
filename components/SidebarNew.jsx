@@ -98,12 +98,12 @@ export default function SidebarNew() {
   // - Account → /impostazioni-profilo
   // - Memoria Hero → adapter verso /impostazioni-profilo (la "Nota memoria per il coach" vive li;
   //   non esiste ancora una pagina Memoria Hero dedicata: niente destinazioni fake)
-  // - HP → /gestione-profilo ("Dove spendere HP")
+  // - HP → /impostazioni-profilo (sezione Hero Points: saldo, costi, acquisto)
   // - Lingua → LanguageSwitch (componente reale)
   // - Guida → /guida
   // - Tornei → link esterno con redirect modal esistente
   const accountItems = [
-    { href: '/gestione-profilo', icon: Wallet, label: 'HP', iconColor: '#fbbf24' },
+    { href: '/impostazioni-profilo', icon: Wallet, label: 'HP', iconColor: '#fbbf24' },
     { href: '/impostazioni-profilo', icon: User, label: pickLang(lang, { it: 'Profilo', en: 'Profile', es: 'Perfil' }) }
   ]
 
