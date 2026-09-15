@@ -1612,7 +1612,10 @@ export default function HeroChat({
         plan,
         payload: { kind: 'plan', plan }
       }
-      setMessages((prev) => [...prev.filter((m) => m.kind !== 'system'), doneMessage])
+      setMessages((prev) => [
+        ...prev.filter((m) => !['system', 'plan', 'counter_confirm'].includes(m.kind || m.payload?.kind)),
+        doneMessage
+      ])
       void persistMessages([doneMessage])
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('credits-consumed'))
@@ -1676,7 +1679,10 @@ export default function HeroChat({
           kind: 'counter_confirm',
           payload: { kind: 'counter_confirm', draft }
         }
-        setMessages((prev) => [...prev.filter((m) => m.kind !== 'system'), confirmMessage])
+        setMessages((prev) => [
+          ...prev.filter((m) => !['system', 'counter_confirm'].includes(m.kind || m.payload?.kind)),
+          confirmMessage
+        ])
         return
       }
       const res = await fetch('/api/extract-game-analysis', {
@@ -2043,6 +2049,10 @@ export default function HeroChat({
           }
 
           if (kind === 'plan' && m.plan) {
+            const hasNewerPlan = messages.slice(i + 1).some((item) => (
+              (item.kind || item.payload?.kind) === 'plan' && item.plan
+            ))
+            if (hasNewerPlan) return null
             return (
               <React.Fragment key={key}>
                 {m.content ? (
@@ -2068,6 +2078,11 @@ export default function HeroChat({
           }
 
           if (kind === 'counter_confirm') {
+            const hasNewerCounterState = messages.slice(i + 1).some((item) => {
+              const itemKind = item.kind || item.payload?.kind
+              return itemKind === 'counter_confirm' || itemKind === 'plan'
+            })
+            if (hasNewerCounterState) return null
             const draft = m.payload?.draft || counterConfirmDraft
             return (
               <CounterConfirmCard

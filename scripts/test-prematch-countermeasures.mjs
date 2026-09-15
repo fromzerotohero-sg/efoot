@@ -253,6 +253,64 @@ const defenseCategory = Object.keys(INDIVIDUAL_INSTRUCTIONS_CONFIG).find((key) =
   assert(!/\d+%/.test(plan.opponent_read.trait || ''), 'trait has no confidence percent')
 }
 
+// --- Case: same module, different opponent XI/shape → different customer read ---
+{
+  const baseOutput = {
+    play_summary: { match_key: 'Piano specifico dalla foto' },
+    analysis: { opponent_formation_analysis: '4-3-1-2' },
+    countermeasures: {
+      tactical_adjustments: [],
+      player_suggestions: [],
+      individual_instructions: [],
+      formation_adjustments: []
+    }
+  }
+  const central = buildCustomerPrematchPlan(baseOutput, {
+    lang: 'it',
+    opponentFormation: {
+      formation_name: '4-3-1-2',
+      extracted_data: {
+        players: [{ player_name: 'Bruno Fernandes', position: 'TRQ' }],
+        visual_tactical_profile: {
+          central_density: 'high',
+          width_profile: 'narrow',
+          side_bias: 'balanced',
+          two_strikers: true,
+          defensive_gaps: []
+        }
+      }
+    }
+  })
+  const wide = buildCustomerPrematchPlan(baseOutput, {
+    lang: 'it',
+    opponentFormation: {
+      formation_name: '4-3-1-2',
+      extracted_data: {
+        players: [{ player_name: 'Salah', position: 'CLD' }],
+        visual_tactical_profile: {
+          central_density: 'medium',
+          width_profile: 'wide',
+          side_bias: 'right',
+          two_strikers: false,
+          defensive_gaps: ['behind_fullbacks']
+        }
+      }
+    }
+  })
+  assert(
+    central.opponent_read.trait !== wide.opponent_read.trait,
+    'same module with different XI/shape produces a different opponent read'
+  )
+  assert(
+    /Bruno Fernandes/.test(central.opponent_read.trait || ''),
+    'read names the detected central creator'
+  )
+  assert(
+    /destra/.test(wide.opponent_read.trait || ''),
+    'read preserves detected side bias'
+  )
+}
+
 if (failed > 0) {
   console.error(`\n${failed} assertion(s) failed`)
   process.exit(1)

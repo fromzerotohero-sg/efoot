@@ -419,7 +419,6 @@ export async function POST(req) {
     // 6.1 Analizza match con formazioni simili all'avversario
     const similarFormationMatches = []
     const opponentFormationName = opponentFormation.formation_name || ''
-    const opponentPlayingStyle = opponentFormation.playing_style || ''
     
     // Lookup formazioni avversarie storiche (serve fallback corretto quando manca il match per ID esatto)
     const historyOppIds = [...new Set((matchHistory || []).map(m => m.opponent_formation_id).filter(Boolean))]
@@ -427,10 +426,17 @@ export async function POST(req) {
     if (historyOppIds.length > 0) {
       const { data: historyOppRows } = await admin
         .from('opponent_formations')
-        .select('id, formation_name, playing_style')
+        .select('id, formation_name, playing_style, players, extracted_data')
         .in('id', historyOppIds)
       ;(historyOppRows || []).forEach(o => { historyOppMap[o.id] = o })
     }
+
+    const normalizedPlayerNames = (formation) => new Set(
+      (formation?.players || formation?.extracted_data?.players || [])
+        .map(player => String(player?.player_name || '').trim().toLowerCase())
+        .filter(name => name.length >= 3)
+    )
+    const currentOpponentNames = normalizedPlayerNames(opponentFormation)
 
     if (matchHistory && matchHistory.length > 0) {
       matchHistory.forEach(match => {
@@ -443,13 +449,14 @@ export async function POST(req) {
           // Fallback: confronta usando la FORMAZIONE AVVERSARIA storica (non la formazione giocata dal cliente)
           const histOpp = matchOpponentFormationId ? historyOppMap[matchOpponentFormationId] : null
           const histOppFormation = histOpp?.formation_name || ''
-          const histOppStyle = histOpp?.playing_style || ''
-          const isSimilar = opponentFormationName && histOppFormation && (
-            histOppFormation.includes(opponentFormationName) ||
-            opponentFormationName.includes(histOppFormation) ||
-            (opponentPlayingStyle && histOppStyle &&
-             histOppStyle.toLowerCase().includes(opponentPlayingStyle.toLowerCase()))
-          )
+          const historicNames = normalizedPlayerNames(histOpp)
+          const sharedPlayers = [...currentOpponentNames].filter(name => historicNames.has(name)).length
+          // A newly uploaded photo always gets a new UUID. Treat it as the same
+          // opponent only when the shape and most of the detected XI agree.
+          // Formation-only history belongs to generic RAG, not personal evidence.
+          const sameFormation = opponentFormationName && histOppFormation
+            && histOppFormation === opponentFormationName
+          const isSimilar = sameFormation && sharedPlayers >= 6
 
           if (isSimilar) {
             similarFormationMatches.push(match)

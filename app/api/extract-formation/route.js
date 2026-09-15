@@ -182,6 +182,8 @@ IMPORTANTE:
   * formation_confidence / shape_confidence / slot_confidence: numeri 0-1
   * uncertain_points: massimo 4 dubbi sulla lettura
 - IMPORTANTE: il profilo tattico visuale deve essere prudente. Se non sei sicuro usa "unclear", array vuoti e confidenza bassa.
+- NON copiare i valori dell'esempio JSON: sono solo uno schema. Calcola ogni campo dalla posizione reale delle 11 card nella foto.
+- attackable_zones e defensive_gaps devono contenere solo zone realmente sostenute dalla disposizione visibile; non inserire automaticamente entrambi i lati o "behind_fullbacks".
 
 ALLENATORE (OPZIONALE - Solo se presente):
 - A volte nella schermata è presente anche l'allenatore/manager
@@ -215,17 +217,17 @@ Formato JSON richiesto:
     "pack_type": "Manager Pack (se visibile)"
   },
   "visual_tactical_profile": {
-    "width_profile": "narrow",
-    "central_density": "high",
-    "side_bias": "balanced",
+    "width_profile": "unclear",
+    "central_density": "unclear",
+    "side_bias": "unclear",
     "isolated_striker": false,
-    "two_strikers": true,
-    "attackable_zones": ["wide_left", "wide_right"],
-    "defensive_gaps": ["behind_fullbacks"],
-    "formation_confidence": 0.9,
-    "shape_confidence": 0.85,
-    "slot_confidence": 0.7,
-    "uncertain_points": []
+    "two_strikers": false,
+    "attackable_zones": [],
+    "defensive_gaps": [],
+    "formation_confidence": 0,
+    "shape_confidence": 0,
+    "slot_confidence": 0,
+    "uncertain_points": ["compila solo se esiste un dubbio reale"]
   }
 }
 
