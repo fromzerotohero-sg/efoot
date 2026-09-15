@@ -1503,12 +1503,17 @@ html[data-theme='light'] .hc-pitchPhaseToggle {
   background: rgba(0,0,0,0.04);
 }
 html[data-theme='light'] .hc-pitchPhaseToggle button { color: rgba(0,0,0,0.58); }
-html[data-theme='light'] .hc-pitchPhaseToggle button.is-active { color: #17130a; }
+html[data-theme='light'] .hc-pitchPhaseToggle button.is-active {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
 html[data-theme='light'] .hc-pitchLayer {
   background: rgba(255,255,255,0.85); color: rgba(0,0,0,0.65); border-color: rgba(0,0,0,0.12);
 }
 html[data-theme='light'] .hc-pitchLayer.is-on {
-  background: rgba(255,203,5,0.18); color: #b8860b; border-color: rgba(255,203,5,0.6);
+  background: var(--accent-bg);
+  color: var(--accent-strong);
+  border-color: var(--accent-border);
 }
 html[data-theme='light'] .hc-pitchTokenCircle {
   background: linear-gradient(160deg, rgba(255,255,255,0.95), rgba(240,240,240,0.95));
@@ -1674,7 +1679,14 @@ html[data-theme='light'] .hc-pitchTokenTooltip {
   -webkit-line-clamp: 2;
 }
 html[data-theme='light'] .hc-pitchHeaderCount {
-  color: #755900;
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+  color: var(--accent-strong);
+}
+html[data-theme='light'] .hc-pitchStyleChip {
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+  color: var(--accent-strong);
 }
 html[data-theme='light'] .hc-pitchTokenCircle {
   background: #17361f;
@@ -1698,6 +1710,28 @@ html[data-theme='light'] .hc-pitchActionDetail {
 }
 html[data-theme='light'] .hc-pitchActionTitle {
   color: #171717;
+}
+html[data-theme='light'] .hc-pitchTokenAction .hc-pitchTokenCircle {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg), 0 4px 10px rgba(0, 0, 0, 0.22);
+}
+html[data-theme='light'] .hc-pitchTokenInName {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+  color: var(--text-main);
+}
+html[data-theme='light'] .hc-pitchTokenBadge,
+html[data-theme='light'] .hc-pitchActionNum {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+html[data-theme='light'] .hc-pitchAttackLine {
+  stroke: var(--accent);
+  filter: drop-shadow(0 0 2px rgba(31, 157, 107, 0.35));
+}
+html[data-theme='light'] .hc-pitchTokenFocus .hc-pitchTokenCircle,
+html[data-theme='light'] .hc-pitchTokenSelected .hc-pitchTokenCircle {
+  box-shadow: 0 4px 10px rgba(0,0,0,0.22), 0 0 0 2px var(--accent-border), 0 0 16px rgba(31,157,107,0.22);
 }
 @media (max-width: 720px) {
   .hc-pitchField {
