@@ -110,18 +110,26 @@ GAME_FACTS.forEach((fact) => {
 const roster = ['Maldini', 'Nesta', 'Rijkaard']
 const ctas = refineCoachSuggestions([
   'Quale modulo mi consigli?',
-  'Approfondisci la marcatura per Maldini',
-  'Approfondisci la marcatura per Maldini',
+  'Fammi capire quando Maldini deve uscire in marcatura',
+  'Fammi capire quando Maldini deve uscire in marcatura',
   'Prova Mbappe in punta',
   'Incrocia questo con i titolari attuali',
-  'Prova la correzione principale nella prossima partita',
+  'Dimmi chi deve accompagnare Maldini in copertura',
+  'Dammi un esercizio semplice per allenare questa uscita',
   'tier list dei moduli'
 ], { lang: 'it', rosterNames: roster, fallback: defaultCoachFallbacks('it') })
 assert(ctas.length <= 3, 'max 3 CTAs')
 assert(ctas.length >= 2, 'at least 2 CTAs when useful')
-assert(!ctas.some((s) => /quale modulo|tier list|Mbappe/i.test(s)), 'forbidden and unknown-player CTAs dropped')
+assert(!ctas.some((s) => /quale modulo|tier list|Mbappe|incrocia/i.test(s)), 'forbidden, internal and unknown-player CTAs dropped')
+assert(ctas.some((s) => /capire/i.test(s)), 'CTA offers a tactical understanding path')
+assert(ctas.some((s) => /chi deve|applicar/i.test(s)), 'CTA offers a concrete application path')
+assert(ctas.some((s) => /esercizio|allenar/i.test(s)), 'CTA offers a training path')
 assert(mentionsUnknownPlayer('Prova Mbappe in punta', roster), 'unknown player detected in CTA')
-assert(!mentionsUnknownPlayer('Approfondisci la marcatura per Maldini', roster), 'roster player allowed in CTA')
+assert(!mentionsUnknownPlayer('Fammi capire la marcatura per Maldini', roster), 'roster player allowed in CTA')
+
+const fallbackCtas = defaultCoachFallbacks('it')
+assert(!fallbackCtas.some((s) => /incrocia|approfondisci|correzione principale/i.test(s)), 'fallback CTAs avoid internal or vague wording')
+assert(fallbackCtas.some((s) => /Spiegami/i.test(s)) && fallbackCtas.some((s) => /Mostrami/i.test(s)) && fallbackCtas.some((s) => /Dammi/i.test(s)), 'fallback CTAs guide understand/apply/train')
 
 const history = buildTacticalHistory([
   { role: 'user', content: 'feedback perso', kind: 'workflow_feedback', workflowType: 'feedback' },

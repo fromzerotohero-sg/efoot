@@ -969,9 +969,10 @@ OUTPUT: 1 main stance backed by data, max 2 secondary levers, 1 observable next 
 
   const capsule = language === 'en' || language === 'es' ? capsuleEn : capsuleIt
 
-  // La coach dà CONSIGLI; i 3 punti sono SUGGERIMENTI OPERATIVI della coach (cliccabili), non domande che il cliente deve fare.
-  const suggRulesIt = `SUGGERIMENTI (2-3, solo se pertinenti): CONSIGLI della coach, testi brevi cliccabili, categorie diverse. (1) Approfondisci la risposta. (2) Leva su rosa/partita/istruzioni/Formazione fluida. (3) Prossimo test pratico. NON sono domande. VIETATO: "Quale modulo", "tier list", "perché ho perso", "migliorare un giocatore", nomi assenti dalla rosa, uso app. Se non hai 2 CTA utili, ne dai di meno.`
-  const suggRulesEn = `SUGGESTIONS (2-3, only if relevant): the COACH'S recommendations, short clickable texts, different categories. (1) Deepen the answer. (2) A roster/match/instruction/Fluid Formation lever. (3) A practical next test. These are NOT questions. FORBIDDEN: "Which formation", "tier list", "why did I lose", "improve a player", names not in roster, app usage. If you don't have 2 useful CTAs, give fewer.`
+  // I pulsanti sono richieste del cliente che aprono il prossimo passo della conversazione.
+  // Hero ha già incrociato i dati: le CTA non devono chiedergli di rifare il lavoro interno.
+  const suggRulesIt = `SUGGERIMENTI (2-3, solo se pertinenti): scrivi brevi richieste cliccabili in prima persona, legate ESPLICITAMENTE al consiglio appena dato. Devono aiutare il cliente a: (1) CAPIRE il significato tattico ("Fammi capire quando Mbappé deve attaccare la profondità"); (2) APPLICARE un dettaglio concreto ("Dimmi chi deve accompagnare l’azione"); (3) ALLENARE con un test semplice ("Dammi un esercizio per allenare questa uscita"). Hero deve già usare automaticamente rosa, tattica, allenatore e dati: VIETATO "incrocia i dati", "incrocia con i titolari", "approfondisci la risposta", "prova la correzione principale" o altre formule vaghe/interne. VIETATO anche: "Quale modulo", "tier list", "perché ho perso", nomi assenti dalla rosa, uso app. Se non hai 2 percorsi davvero utili, danne di meno.`
+  const suggRulesEn = `SUGGESTIONS (2-3, only if relevant): write short first-person clickable requests tied EXPLICITLY to the advice just given. They must help the client: (1) UNDERSTAND the tactical meaning ("Help me understand when Mbappé should attack the space"); (2) APPLY one concrete detail ("Tell me who should support the move"); (3) TRAIN with a simple test ("Give me a drill to practise this build-up"). Hero must already use roster, tactics, coach and data automatically: FORBIDDEN "cross-check the data", "check against my starters", "expand the answer", "test the main correction", or other vague/internal wording. Also forbidden: "Which formation", "tier list", "why did I lose", names not in roster, app usage. If fewer than 2 paths are genuinely useful, give fewer.`
   const suggRules = language === 'en' || language === 'es' ? suggRulesEn : suggRulesIt
 
   // Solo dati da Informazioni IA: niente lista "Problemi" da citare; se togli la spunta, l'IA non vede più quel problema
@@ -996,7 +997,7 @@ ${profileLines.join('\n')}`
     personalContextSummary ? `\n■ ${contextBlockLabel}:\n${personalContextSummary}` : '',
     cardAvailabilityBlock ? `\n■ ${language === 'en' || language === 'es' ? 'CARD ADVISOR STATUS' : 'STATO CARD ADVISOR'}:\n${cardAvailabilityBlock}` : '',
     efootballKnowledge ? `\n■ MECCANICHE eFootball (RAG):\n${efootballKnowledge}` : '',
-    `\n${capsule}\n\nFORMATO RISPOSTA:\n[1 posizione principale + max 2 leve + 1 prossimo check. 2-4 frasi. Una domanda solo se manca un dato decisivo.]\n\n---\nSUGGERIMENTI:\n1. [consiglio breve cliccabile]\n2. [consiglio breve cliccabile]\n3. [consiglio breve cliccabile opzionale]\n\n${suggRules}\n\nDOMANDA CLIENTE: "${userMessage}"\nRispondi come ${aiName} in ${replyLanguage}.`
+    `\n${capsule}\n\nFORMATO RISPOSTA:\n[1 posizione principale + max 2 leve + 1 prossimo check. 2-4 frasi. Una domanda solo se manca un dato decisivo.]\n\n---\nSUGGERIMENTI:\n1. [richiesta breve per capire]\n2. [richiesta breve per applicare]\n3. [richiesta breve per allenare, opzionale]\n\n${suggRules}\n\nDOMANDA CLIENTE: "${userMessage}"\nRispondi come ${aiName} in ${replyLanguage}.`
   ].filter(Boolean)
 
   return blocks.join('\n')
