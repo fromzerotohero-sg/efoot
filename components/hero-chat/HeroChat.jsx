@@ -786,6 +786,7 @@ export default function HeroChat({
   hasActiveCoach,
   recentMatches,
   gameAnalysisLastCapture,
+  statsUploadRequest = 0,
   hpBalance,
   onStatsSuccess
 }) {
@@ -825,8 +826,10 @@ export default function HeroChat({
   const cameraInputRef = React.useRef(null)
   const galleryInputRef = React.useRef(null)
   const autoCounterAnalyzeRef = React.useRef(false)
+  const handledStatsUploadRequestRef = React.useRef(0)
   const stickToBottomRef = React.useRef(true)
   const pendingScrollRef = React.useRef(false)
+  const suppressNextScrollRef = React.useRef(false)
 
   const lastMatch = Array.isArray(recentMatches) && recentMatches.length > 0 ? recentMatches[0] : null
   const lastMatchRaw = lastMatch?.created_at || lastMatch?.match_date || null
@@ -892,6 +895,10 @@ export default function HeroChat({
   React.useEffect(() => {
     const el = feedRef.current
     if (!el) return
+    if (suppressNextScrollRef.current) {
+      suppressNextScrollRef.current = false
+      return
+    }
     if (pendingScrollRef.current || stickToBottomRef.current) {
       el.scrollTop = el.scrollHeight
       pendingScrollRef.current = false
@@ -999,6 +1006,9 @@ export default function HeroChat({
         if (!cancelled && historyRes.ok) {
           setThreadId(historyData.thread?.id || null)
           if (Array.isArray(historyData.messages) && historyData.messages.length) {
+            // Il primo popolamento da storico non deve scrollare in fondo:
+            // l'utente legge dall'alto (saluto → conversazione).
+            suppressNextScrollRef.current = true
             setMessages(historyData.messages)
           }
         }
@@ -1404,10 +1414,20 @@ export default function HeroChat({
     cameraInputRef.current?.click()
   }, [])
 
-  const openStatsCamera = React.useCallback(() => {
+  const openStatsWorkflow = React.useCallback(() => {
     beginFocusedAttachment('stats')
+  }, [beginFocusedAttachment])
+
+  const openStatsCamera = React.useCallback(() => {
+    openStatsWorkflow()
     openCamera()
-  }, [beginFocusedAttachment, openCamera])
+  }, [openStatsWorkflow, openCamera])
+
+  React.useEffect(() => {
+    if (statsUploadRequest <= 0 || handledStatsUploadRequestRef.current === statsUploadRequest) return
+    handledStatsUploadRequestRef.current = statsUploadRequest
+    openStatsWorkflow()
+  }, [statsUploadRequest, openStatsWorkflow])
 
   const openCounterCamera = React.useCallback(() => {
     beginFocusedAttachment('counter')
@@ -1956,7 +1976,7 @@ export default function HeroChat({
       </header>
 
       {/* Feed conversazione */}
-      <div className="hc-feed" ref={feedRef}>
+      <div className={`hc-feed${historyLoading ? '' : ' is-ready'}`} ref={feedRef}>
         <div className="hc-banner">
           <p className="hc-bannerOverline">{L(lang, { it: 'Il tuo assistente di gioco', en: 'Your game assistant', es: 'Tu asistente de juego' })}</p>
           <h1 className="hc-bannerTitle">{L(lang, COPY.heroTitle)}</h1>
@@ -1973,6 +1993,15 @@ export default function HeroChat({
               : Lfn(lang, COPY.greetingReturningNamed, clientName)}
           </div>
         </div>
+
+        {historyLoading && (
+          <div className="hc-historyLoading" aria-live="polite">
+            <span className="hc-historyDot" />
+            <span className="hc-historyDot" />
+            <span className="hc-historyDot" />
+            <span>{pickLang(lang, { it: 'Recupero la conversazione…', en: 'Loading your conversation…', es: 'Cargando la conversación…' })}</span>
+          </div>
+        )}
 
         {messages.map((m, i) => {
           const key = m.id || `msg-${i}`
@@ -2119,7 +2148,7 @@ export default function HeroChat({
                       {fm.kind === 'lowhp' && (
                         <span className="hc-warnRow">
                           <AlertCircle size={14} aria-hidden="true" />
-                          <button type="button" className="hc-lowHpCta" onClick={() => router.push('/gestione-profilo')}>
+                          <button type="button" className="hc-lowHpCta" onClick={() => router.push('/impostazioni-profilo')}>
                             {L(lang, COPY.lowHpCta)}
                           </button>
                         </span>
@@ -2227,7 +2256,7 @@ export default function HeroChat({
                 {kind === 'lowhp' && (
                   <span className="hc-warnRow">
                     <AlertCircle size={14} aria-hidden="true" />
-                    <button type="button" className="hc-lowHpCta" onClick={() => router.push('/gestione-profilo')}>
+                    <button type="button" className="hc-lowHpCta" onClick={() => router.push('/impostazioni-profilo')}>
                       {L(lang, COPY.lowHpCta)}
                     </button>
                   </span>
@@ -2315,7 +2344,7 @@ export default function HeroChat({
         <div className="hc-lowHpBanner" role="status">
           <AlertCircle size={14} aria-hidden="true" />
           <span>{L(lang, COPY.lowHp)}</span>
-          <button type="button" className="hc-lowHpCta" onClick={() => router.push('/gestione-profilo')}>
+          <button type="button" className="hc-lowHpCta" onClick={() => router.push('/impostazioni-profilo')}>
             {L(lang, COPY.lowHpCta)}
           </button>
         </div>
@@ -2536,6 +2565,36 @@ export default function HeroChat({
           overscroll-behavior: contain;
           -webkit-overflow-scrolling: touch;
         }
+
+        .hc-feed.is-ready {
+          animation: hcFeedFadeIn 0.22s ease-out;
+        }
+
+        @keyframes hcFeedFadeIn {
+          from { opacity: 0.4; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hc-historyLoading {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          align-self: flex-start;
+          padding: 8px 12px;
+          color: var(--text-dim);
+          font-size: 12.5px;
+        }
+
+        .hc-historyDot {
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          background: var(--text-dim);
+          animation: hcDotPulse 1s ease-in-out infinite;
+        }
+
+        .hc-historyDot:nth-child(2) { animation-delay: 0.15s; }
+        .hc-historyDot:nth-child(3) { animation-delay: 0.3s; }
 
         .hc-workflowDone {
           display: inline-flex;
