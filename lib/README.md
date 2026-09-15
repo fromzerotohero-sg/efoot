@@ -23,7 +23,7 @@
 
 ## Gate / flag
 
-`prelaunchServer.js`, `prelaunchRoutes.js`, `maintenanceServer.js`, `maintenanceRoutes.js`, `featureFlags.js`, `pwaInstall.js`, `dailySpinConfig.js`
+`prelaunchServer.js`, `prelaunchRoutes.js`, `maintenanceServer.js`, `maintenanceRoutes.js`, `featureFlags.js`, `pwaInstall.js`
 
 Doc crediti: [docs/COSTI_HP_USO_PIATTAFORMA.md](../docs/COSTI_HP_USO_PIATTAFORMA.md).  
 Non esiste più `docs/SISTEMA_CREDITI_AI.md`.

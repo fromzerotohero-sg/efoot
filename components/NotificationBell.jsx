@@ -16,7 +16,6 @@ import {
   Bell,
   Zap,
   Target,
-  Sparkles,
   CheckCheck,
   RefreshCw,
 } from "lucide-react";
@@ -30,12 +29,10 @@ const POLL_INTERVAL_MS = 5 * 60 * 1000;
 const TYPE_COLORS = {
   credits: "var(--gold-text)",
   weekly_goals: "var(--accent)",
-  daily_spin: "var(--info)",
 };
 const TYPE_ICONS = {
   credits: Zap,
   weekly_goals: Target,
-  daily_spin: Sparkles,
 };
 
 function getTypeColor(type) {

@@ -9,7 +9,6 @@ import LiveCoachLauncher from '@/components/LiveCoachLauncher'
 import InstallAppPrompt from '@/components/InstallAppPrompt'
 import PrelaunchGate from '@/components/PrelaunchGate'
 import MaintenanceGate from '@/components/MaintenanceGate'
-import DailySpinWidget from '@/components/DailySpinWidget'
 import { isPrelaunchPublicPath } from '@/lib/prelaunchRoutes'
 import { isMaintenancePublicPath } from '@/lib/maintenanceRoutes'
 import { useSidebar } from '@/components/SidebarContext'
@@ -50,7 +49,6 @@ export default function AppLayoutShell({ children, showInstallPrompt = true, sho
       </div>
 
       <BottomNavigation />
-      <DailySpinWidget />
       {showInstallPrompt && <InstallAppPrompt />}
       <LiveCoachLauncher showLauncherButton={false} />
       {showStagingBadge && (

@@ -15,7 +15,6 @@ Niente Stripe, PayPal o pagina `/crediti` nel codice. Wallet: **MetalGate**. Tra
 | `GET /api/credits/usage` | Bearer | Saldo/usage periodo |
 | `GET /api/credits/transactions` | Bearer | Log |
 | `POST /api/credits/accredit` | `CREDITS_ACCREDIT_API_KEY` | Webhook accredito |
-| `GET/POST /api/daily-spin` | Bearer | Daily reward idempotente |
 
 UI: `CreditsBar` / TopBar. Acquisto: `https://home.fromzerotohero.io/dashboard?usage`.
 

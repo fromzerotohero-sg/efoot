@@ -21,7 +21,6 @@ Root layout: **solo** `app/layout.jsx`. Monta `AppLayoutShell`. Non creare `app/
 | `/auth/callback`, `/login-success` | SSO | |
 | `/access` | Prelaunch | |
 | `/maintenance` | Manutenzione | |
-| `/spin-lab` | Lab Daily Spin | |
 
 Redirect: `/lista-giocatori`, `/upload` → formazione.
 

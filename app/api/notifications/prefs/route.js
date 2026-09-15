@@ -14,7 +14,7 @@ const NO_CACHE_HEADERS = {
 }
 
 // Categorie notifica gestibili dall'utente (default ON, opt-out con false)
-const PREF_KEYS = ['daily_spin', 'weekly_goals', 'credits', 'leaderboard', 'coach']
+const PREF_KEYS = ['weekly_goals', 'credits', 'leaderboard', 'coach']
 const DEFAULT_PREFS = Object.fromEntries(PREF_KEYS.map((key) => [key, true]))
 
 async function resolveUserId(admin, userData) {
@@ -106,7 +106,7 @@ export async function GET(req) {
 
 /**
  * POST /api/notifications/prefs
- * Body: oggetto parziale { daily_spin?: boolean, weekly_goals?: boolean, credits?: boolean, leaderboard?: boolean, coach?: boolean }
+ * Body: oggetto parziale { weekly_goals?: boolean, credits?: boolean, leaderboard?: boolean, coach?: boolean }
  * Merge read-modify-write sul JSONB esistente.
  */
 export async function POST(req) {

@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS public.notifications (
 );
 
 COMMENT ON TABLE public.notifications IS 'Notifiche in-app per utente (campanella). Inserite solo lato server via service role (bypassa RLS).';
-COMMENT ON COLUMN public.notifications.type IS 'Categoria notifica (daily_spin, weekly_goals, credits, leaderboard, coach). Usata anche per le preferenze opt-out.';
+COMMENT ON COLUMN public.notifications.type IS 'Categoria notifica (weekly_goals, credits, leaderboard, coach, product). Usata anche per le preferenze opt-out.';
 COMMENT ON COLUMN public.notifications.title IS 'Titolo breve della notifica (italiano).';
 COMMENT ON COLUMN public.notifications.body IS 'Testo opzionale della notifica.';
 COMMENT ON COLUMN public.notifications.href IS 'Destinazione in-app al click (es. /impostazioni-profilo).';

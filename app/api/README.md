@@ -43,7 +43,6 @@ Rate limit in-memory (`lib/rateLimiter.js`): mitigante, non Redis.
 ## Economia / auth / gate
 
 - `credits/usage`, `credits/transactions`, `credits/accredit`
-- `daily-spin`, `daily-spin/stats`
 - `auth/metalgate-callback`, `metalgate-sync`
 - `prelaunch/*`, `maintenance/*`
 

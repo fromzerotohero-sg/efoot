@@ -6,7 +6,7 @@ globs: ["app/layout.*", "**/app/**/layout.*"]
 # Layout root: solo layout.jsx
 
 - **In `app/` usare SOLO `app/layout.jsx`** come root layout. Non creare né rinominare in `app/layout.tsx`.
-- `app/layout.jsx` monta `LanguageProviderWrapper`, `SidebarProvider`, `GameAnalysisModalNavProvider` e **`AppLayoutShell`**. Non rimontare Sidebar/TopBar/BottomNav/AssistantChat/DailySpin/LiveCoach direttamente nel layout.
-- La shell globale vive in `components/AppLayoutShell.jsx`. Non cancellarla per “semplificare” il layout: è il contenitore di nav, gate prelaunch/maintenance, Daily Spin, Install prompt, Live Coach e AssistantChat popup.
+- `app/layout.jsx` monta `LanguageProviderWrapper`, `SidebarProvider`, `GameAnalysisModalNavProvider` e **`AppLayoutShell`**. Non rimontare Sidebar/TopBar/BottomNav/LiveCoach direttamente nel layout.
+- La shell globale vive in `components/AppLayoutShell.jsx`. Non cancellarla per “semplificare” il layout: è il contenitore di nav, gate prelaunch/maintenance, Install prompt e Live Coach.
 - Avere entrambi `layout.jsx` e `layout.tsx`, o solo `layout.tsx`, causa conflitti in Next.js e la dashboard non si carica.
 - Dopo qualsiasi modifica al layout: non aggiungere tipi TypeScript al file layout; lasciare il file come `.jsx`.

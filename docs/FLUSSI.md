@@ -81,7 +81,6 @@ azione AI → deductCredits / recordUsage (AI_COST = 2)
 402 → messaggio crediti insufficienti
 acquisto → home.fromzerotohero.io (MetalGate)
 webhook  → POST /api/credits/accredit (CREDITS_ACCREDIT_API_KEY)
-Daily Spin → /api/daily-spin (idempotente)
 Live Coach → start 2 HP, heartbeat, end; extra 5 HP/min
 ```
 

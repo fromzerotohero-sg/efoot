@@ -30,6 +30,5 @@ Non usare documenti storici con 1 HP o pesi variabili.
 
 ## Fuori tariffario AI
 
-- Daily Spin: accredito bonus idempotente (`/api/daily-spin`), non un costo.
 - Acquisto HP: MetalGate (`https://home.fromzerotohero.io/dashboard?usage`), non Stripe in-app.
 - Webhook accredito: `POST /api/credits/accredit` protetto da `CREDITS_ACCREDIT_API_KEY`.

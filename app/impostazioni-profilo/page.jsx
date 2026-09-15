@@ -270,9 +270,8 @@ function HeroPointsSection({ t, lang }) {
   )
 }
 
-const NOTIFICATION_PREF_KEYS = ['daily_spin', 'weekly_goals', 'credits', 'leaderboard', 'coach']
+const NOTIFICATION_PREF_KEYS = ['weekly_goals', 'credits', 'leaderboard', 'coach']
 const NOTIFICATION_PREF_LABEL_KEYS = {
-  daily_spin: 'profileNotifDailySpin',
   weekly_goals: 'profileNotifWeeklyGoals',
   credits: 'profileNotifCredits',
   leaderboard: 'profileNotifLeaderboard',

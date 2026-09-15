@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
-import { notifyUser } from '@/lib/notifyUser'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -12,18 +11,6 @@ const NO_CACHE_HEADERS = {
   Pragma: 'no-cache',
   Expires: '0',
   Vary: 'Authorization'
-}
-
-// Tipi notifica creabili dal client (eventi rilevati lato client, es. ruota disponibile)
-const CLIENT_POST_TYPES = ['daily_spin']
-
-function getRomeDateString(date = new Date()) {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Europe/Rome',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  }).format(date)
 }
 
 async function resolveUserId(admin, userData) {
@@ -155,58 +142,5 @@ export async function PATCH(req) {
   } catch (err) {
     console.error('[notifications] PATCH exception:', err)
     return NextResponse.json({ error: 'Error marking notifications as read' }, { status: 500 })
-  }
-}
-
-/**
- * POST /api/notifications
- * Notifiche per eventi rilevati dal client (es. ruota giornaliera disponibile).
- * Body: { type, title, body, href } — type in whitelist CLIENT_POST_TYPES.
- * Dedup: max 1 notifica per user+type per giorno (calendario Europe/Rome).
- */
-export async function POST(req) {
-  try {
-    const auth = await authenticate(req)
-    if (auth.error) return auth.error
-
-    const { admin, userId } = auth
-    const body = await req.json().catch(() => ({}))
-    const type = typeof body?.type === 'string' ? body.type : null
-    const title = typeof body?.title === 'string' ? body.title.trim() : null
-
-    if (!type || !CLIENT_POST_TYPES.includes(type)) {
-      return NextResponse.json({ error: 'Invalid notification type' }, { status: 400 })
-    }
-    if (!title) {
-      return NextResponse.json({ error: 'title required' }, { status: 400 })
-    }
-
-    // Dedup stesso giorno (Europe/Rome): confronto la data Rome dell'ultima notifica user+type
-    const todayRome = getRomeDateString()
-    const { data: lastSameType } = await admin
-      .from('notifications')
-      .select('created_at')
-      .eq('user_id', userId)
-      .eq('type', type)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    if (lastSameType?.created_at && getRomeDateString(new Date(lastSameType.created_at)) === todayRome) {
-      return NextResponse.json({ ok: true, deduplicated: true })
-    }
-
-    // notifyUser rispetta le preferenze opt-out e non lancia mai
-    await notifyUser(userId, {
-      type,
-      title,
-      body: typeof body?.body === 'string' ? body.body : null,
-      href: typeof body?.href === 'string' ? body.href : null
-    })
-
-    return NextResponse.json({ ok: true, deduplicated: false })
-  } catch (err) {
-    console.error('[notifications] POST exception:', err)
-    return NextResponse.json({ error: 'Error creating notification' }, { status: 500 })
   }
 }

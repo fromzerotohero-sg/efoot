@@ -6,7 +6,6 @@ Montata da `app/layout.jsx`. Contiene:
 
 - `SidebarNew`, `TopBar`, `BottomNavigation`
 - `NotificationBell` (campanella notifiche in TopBar)
-- `DailySpinWidget`
 - `InstallAppPrompt` (condizionale)
 - `LiveCoachLauncher`
 - `PrelaunchGate`, `MaintenanceGate`
@@ -37,4 +36,4 @@ UX V2 riduce gli ingressi primari a Coach · Rosa · Carte; i componenti possono
 
 ## Economia / account
 
-`CreditsBar`, `DailySpinWidget`, `LanguageProviderWrapper`, `LanguageSwitch`, `AuthWrapper`
+`CreditsBar`, `LanguageProviderWrapper`, `LanguageSwitch`, `AuthWrapper`

@@ -20,8 +20,8 @@ Verificato sul codice del 13 agosto 2026. Direzione prodotto: [UX_V2 Master](./U
 `app/layout.jsx` **non** monta sidebar/chat direttamente. Delega a `components/AppLayoutShell.jsx`:
 
 - `SidebarNew`, `TopBar`, `BottomNavigation`
-- `DailySpinWidget`, `InstallAppPrompt` (off su staging/preview)
-- `LiveCoachLauncher`, `AssistantChat` popup
+- `InstallAppPrompt` (off su staging/preview)
+- `LiveCoachLauncher`
 - `MaintenanceGate`, `PrelaunchGate`
 
 Analytics (GA `G-X69T3QE3GG`, Clarity `wylmfczjap`) si caricano in production; su `NEXT_PUBLIC_APP_ENV=staging` o `VERCEL_ENV=preview` restano spenti.
