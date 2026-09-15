@@ -1,15 +1,14 @@
 'use client'
 
 import React from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
-import { OPEN_INSTALL_APP_PROMPT_EVENT } from '@/lib/pwaInstall'
 import {
   CheckCircle2, AlertCircle, X,
-  Zap, LogOut, BookOpen, Gift, Pencil, Wallet,
-  Download, LifeBuoy, UserCog, ChevronRight
+  Coins, Zap, LogOut, Pencil, ChevronRight, ChevronDown, ExternalLink,
+  User, Shield, Heart, Award, Gamepad2, Star, Bot, NotebookPen, Target, Gauge,
+  CalendarCheck, Medal, Sparkles, Receipt, Sun, Moon, Languages, Trophy
 } from 'lucide-react'
 import LanguageSwitch from '@/components/LanguageSwitch'
 import ThemeToggle from '@/components/ThemeToggle'
@@ -25,20 +24,22 @@ async function getAuthToken() {
   return token
 }
 
-/** Scocca sezione stile impostazioni app: titolo piccolo + card contenuto. */
-function SettingsSection({ title, children, style }) {
+/** Sezione impostazioni: titolo piccolo uppercase + una card con righe separate da hairline. */
+function Section({ title, children }) {
   return (
-    <section style={{ marginBottom: 22, ...style }}>
+    <section>
       <h2 style={{
-        margin: '0 0 8px', padding: '0 4px',
-        fontSize: 12, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase',
+        margin: '20px 0 6px 4px',
+        fontSize: 11.5, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
         color: 'var(--text-dim)'
       }}>
         {title}
       </h2>
       <div style={{
-        borderRadius: 18, background: 'var(--surface)',
-        border: '1px solid var(--border-soft)', overflow: 'hidden'
+        background: 'var(--surface)',
+        border: '1px solid var(--border-soft)',
+        borderRadius: 14,
+        overflow: 'hidden'
       }}>
         {children}
       </div>
@@ -46,97 +47,138 @@ function SettingsSection({ title, children, style }) {
   )
 }
 
-/** Riga stile lista impostazioni: icona, testo, controllo a destra. */
-function SettingsRow({ icon: Icon, label, sub, control, onClick, href, external, danger, disabled, last }) {
-  const base = {
+/** Chip icona 32x32 allineata alla griglia delle righe. */
+function IconChip({ icon: Icon, gold }) {
+  return (
+    <span
+      aria-hidden="true"
+      style={{
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+        background: gold ? 'var(--gold-bg)' : 'var(--surface-3)',
+        color: gold ? 'var(--gold-text)' : 'var(--text-secondary)'
+      }}
+    >
+      <Icon size={16} />
+    </span>
+  )
+}
+
+/** Riga lista impostazioni: icona, label (+ sub), controllo/valore/chevron a destra. */
+function Row({ icon, iconNode, gold, label, sub, value, control, onClick, href, external, danger, first }) {
+  const interactive = Boolean(onClick || href)
+  const style = {
     display: 'flex', alignItems: 'center', gap: 12,
-    width: '100%', minHeight: 52, padding: '12px 16px',
-    border: 'none', borderBottom: last ? 'none' : '1px solid var(--border-softer)',
-    background: 'transparent', fontFamily: 'inherit', textAlign: 'left',
-    textDecoration: 'none', cursor: onClick || href ? 'pointer' : 'default',
-    opacity: disabled ? 0.55 : 1, boxSizing: 'border-box'
+    width: '100%', minHeight: 50, padding: '10px 14px',
+    border: 'none', borderTop: first ? 'none' : '1px solid var(--border-soft)',
+    fontFamily: 'inherit', textAlign: 'left',
+    textDecoration: 'none', boxSizing: 'border-box',
+    cursor: interactive ? 'pointer' : 'default',
+    color: 'inherit',
+    ...(interactive ? {} : { background: 'transparent' })
   }
   const content = (
     <>
-      {Icon && (
+      {iconNode || (icon ? <IconChip icon={icon} gold={gold} /> : null)}
+      <span style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0, flex: 1 }}>
         <span style={{
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          width: 34, height: 34, borderRadius: 10, flexShrink: 0,
-          background: danger ? 'var(--surface-2)' : 'var(--accent-bg)',
-          border: `1px solid ${danger ? 'var(--border-soft)' : 'var(--accent-border)'}`,
-          color: danger ? 'var(--danger-text)' : 'var(--accent)'
-        }} aria-hidden="true">
-          <Icon size={16} />
-        </span>
-      )}
-      <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: 1 }}>
-        <span style={{
-          fontSize: 14, fontWeight: 700,
+          fontSize: 14, fontWeight: 500,
           color: danger ? 'var(--danger-text)' : 'var(--text-main)',
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
         }}>
           {label}
         </span>
-        {sub ? <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>{sub}</span> : null}
+        {sub ? (
+          <span style={{
+            fontSize: 12, color: 'var(--text-dim)',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+          }}>
+            {sub}
+          </span>
+        ) : null}
       </span>
-      {control}
-      {(href || onClick) && !control && (
-        <ChevronRight size={16} color="var(--text-dim)" aria-hidden="true" style={{ flexShrink: 0 }} />
-      )}
+      {value != null && value !== '' ? (
+        <span style={{
+          marginLeft: 'auto', flexShrink: 0, maxWidth: '45%',
+          fontSize: 13, color: 'var(--text-dim)',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+        }}>
+          {value}
+        </span>
+      ) : null}
+      {control ? <span style={{ marginLeft: value ? 8 : 'auto', flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}>{control}</span> : null}
+      {interactive && !control && !danger ? (
+        external ? (
+          <ExternalLink size={14} color="var(--text-dim)" aria-hidden="true" style={{ flexShrink: 0, marginLeft: value ? 8 : 'auto' }} />
+        ) : (
+          <ChevronRight size={16} color="var(--text-dim)" aria-hidden="true" style={{ flexShrink: 0, marginLeft: value ? 8 : 'auto' }} />
+        )
+      ) : null}
     </>
   )
   if (href && external) {
-    return <a href={href} target="_blank" rel="noopener noreferrer" style={base}>{content}</a>
+    return <a href={href} target="_blank" rel="noopener noreferrer" className="srow" style={style}>{content}</a>
   }
   if (href) {
-    return <Link href={href} style={base}>{content}</Link>
+    return <a href={href} className="srow" style={style}>{content}</a>
   }
-  return (
-    <button type="button" onClick={onClick} disabled={disabled} style={base}>{content}</button>
-  )
+  if (onClick) {
+    return <button type="button" onClick={onClick} className="srow" style={style}>{content}</button>
+  }
+  return <div style={style}>{content}</div>
 }
 
-/** Header identita: avatar con iniziale, username, email e chip completamento profilo. */
-function IdentitySection({ t, account, safeCompletionScore, completionText }) {
+/** Riga identita: avatar con iniziale, nome, email e chip completamento profilo. */
+function IdentityRow({ account, score, levelText }) {
   const initial = (account.name || account.email || 'H').charAt(0).toUpperCase()
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 18px' }}>
-      <span style={{
-        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        width: 46, height: 46, borderRadius: '50%', flexShrink: 0,
-        background: 'var(--accent-bg)', border: '1px solid var(--accent-border)',
-        color: 'var(--accent)', fontSize: 19, fontWeight: 900
-      }} aria-hidden="true">
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 50, padding: '10px 14px' }}>
+      <span
+        aria-hidden="true"
+        style={{
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
+          background: 'var(--accent)', color: 'var(--accent-ink)',
+          fontSize: 16, fontWeight: 600
+        }}
+      >
         {initial}
       </span>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, flex: 1 }}>
-        <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {account.name || t('profile')}
+      <span style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0, flex: 1 }}>
+        <span style={{
+          fontSize: 15, fontWeight: 600, color: 'var(--text-main)',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+        }}>
+          {account.name || account.email || 'Hero'}
         </span>
         {account.email ? (
-          <span style={{ fontSize: 12, color: 'var(--text-dim)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <span style={{
+            fontSize: 12.5, color: 'var(--text-dim)',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+          }}>
             {account.email}
           </span>
         ) : null}
-      </div>
+      </span>
       <span
+        aria-label={`${Math.round(score)}%`}
         style={{
-          display: 'inline-flex', alignItems: 'baseline', gap: 6,
-          padding: '6px 12px', borderRadius: 999, flexShrink: 0,
-          background: 'var(--accent-bg)', border: '1px solid var(--accent-border)', color: 'var(--accent)'
+          display: 'inline-flex', alignItems: 'baseline', gap: 5,
+          padding: '4px 10px', borderRadius: 999, flexShrink: 0,
+          background: 'var(--accent-bg)', color: 'var(--accent)',
+          fontSize: 11.5, fontWeight: 700, whiteSpace: 'nowrap'
         }}
-        aria-label={`${Math.round(safeCompletionScore)}%`}
       >
-        <strong style={{ fontSize: 15, fontWeight: 900 }}>{Math.round(safeCompletionScore)}%</strong>
-        <small style={{ fontSize: 11, fontWeight: 700 }}>{completionText}</small>
+        {Math.round(score)}% · {levelText}
       </span>
     </div>
   )
 }
 
-/** Sezione Hero Points: saldo reale, tabella costi, disclaimer rimborso, link acquisto. */
-function HeroPointsSection({ t, lang }) {
+/** Sezione Hero Points: saldo reale, link acquisto esterno, tabella costi espandibile. */
+function HeroPointsCard({ lang }) {
   const [hpBalance, setHpBalance] = React.useState(null)
+  const [costsOpen, setCostsOpen] = React.useState(false)
 
   React.useEffect(() => {
     let cancelled = false
@@ -155,7 +197,7 @@ function HeroPointsSection({ t, lang }) {
         const balance = Number(data?.balance_remaining)
         if (!cancelled && Number.isFinite(balance)) setHpBalance(balance)
       } catch {
-        /* saldo non disponibile: niente pill */
+        /* saldo non disponibile: niente valore */
       }
     }
     fetchBalance()
@@ -192,80 +234,86 @@ function HeroPointsSection({ t, lang }) {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 16px', borderBottom: '1px solid var(--border-softer)', flexWrap: 'wrap' }}>
-        <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: 'var(--text-secondary)', flex: 1, minWidth: 200 }}>
-          {lang === 'en'
-            ? 'Hero Points are for the moments where you want help from the coach: a better card choice, a match plan, or a clear next step.'
-            : 'Gli Hero Points servono quando vuoi un aiuto concreto dal Coach: scegliere meglio una carta, preparare un match o capire la prossima cosa da migliorare.'}
-        </p>
+      {/* Saldo + acquisto */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 50, padding: '10px 14px' }}>
+        <IconChip icon={Coins} gold />
+        <span style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 500, color: 'var(--text-main)' }}>
+          Hero Points
+        </span>
         {typeof hpBalance === 'number' && (
-          <span
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              padding: '6px 12px', borderRadius: 999, flexShrink: 0,
-              background: 'var(--gold-bg)', border: '1px solid var(--gold-border)',
-              color: 'var(--gold-text)', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap'
-            }}
-            title="Hero Points"
-          >
-            <Zap size={13} />
+          <span style={{ flexShrink: 0, fontSize: 15, fontWeight: 700, color: 'var(--gold-text)', whiteSpace: 'nowrap' }}>
             {hpBalance} HP
           </span>
         )}
-      </div>
-
-      <div>
-        <div style={{
-          display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 12,
-          padding: '10px 16px', background: 'var(--gold-bg)',
-          borderBottom: '1px solid var(--border-soft)',
-          fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em',
-          color: 'var(--text-main)'
-        }}>
-          <span>{t('profileHpService')}</span>
-          <span>HP</span>
-        </div>
-        {rows.map((row, idx) => (
-          <div
-            key={`${row.service}-${idx}`}
-            style={{
-              display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 12,
-              alignItems: 'center', padding: '11px 16px',
-              borderBottom: idx === rows.length - 1 ? 'none' : '1px solid var(--border-softer)'
-            }}
-          >
-            <span style={{ color: 'var(--text-main)', fontSize: 13, overflowWrap: 'anywhere' }}>{row.service}</span>
-            <strong style={{ color: 'var(--gold-text)', whiteSpace: 'nowrap', fontSize: 13 }}>{row.cost}</strong>
-          </div>
-        ))}
-      </div>
-
-      <p style={{ margin: 0, padding: '12px 16px', fontSize: 12, lineHeight: 1.45, color: 'var(--text-dim)', borderTop: '1px solid var(--border-softer)' }}>
-        {lang === 'en'
-          ? 'If a platform error prevents an analysis from completing, the HP are automatically returned.'
-          : 'Se un errore della piattaforma blocca un’analisi, gli HP vengono riaccreditati automaticamente.'}
-        <br />
-        {lang === 'en'
-          ? 'Use them when you want a clear answer, a card decision or a tactical plan.'
-          : 'Usali quando vuoi una risposta chiara, una scelta sulle carte o un piano tattico.'}
-      </p>
-
-      <div style={{ padding: '0 16px 16px' }}>
         <a
           href="https://home.fromzerotohero.io/dashboard?usage"
           target="_blank"
           rel="noopener noreferrer"
           style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            minHeight: 44, padding: '10px 18px', borderRadius: 999, width: '100%', boxSizing: 'border-box',
+            display: 'inline-flex', alignItems: 'center', flexShrink: 0,
+            padding: '6px 12px', borderRadius: 8,
             background: 'var(--gold-bg)', border: '1px solid var(--gold-border)',
-            color: 'var(--gold-text)', textDecoration: 'none', fontSize: 14, fontWeight: 900
+            color: 'var(--gold-text)', textDecoration: 'none',
+            fontSize: 12.5, fontWeight: 600
           }}
         >
-          <Wallet size={16} />
-          {t('profileBuyHp')}
+          {lang === 'en' ? 'Buy' : 'Compra'}
         </a>
       </div>
+
+      {/* Expander tabella costi */}
+      <button
+        type="button"
+        onClick={() => setCostsOpen((v) => !v)}
+        aria-expanded={costsOpen}
+        className="srow"
+        style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          width: '100%', minHeight: 50, padding: '10px 14px',
+          border: 'none', borderTop: '1px solid var(--border-soft)',
+          fontFamily: 'inherit', textAlign: 'left', boxSizing: 'border-box',
+          cursor: 'pointer', color: 'inherit'
+        }}
+      >
+        <IconChip icon={Receipt} gold />
+        <span style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 500, color: 'var(--text-main)' }}>
+          {lang === 'en' ? 'Service costs' : 'Costi dei servizi'}
+        </span>
+        <ChevronDown
+          size={16}
+          color="var(--text-dim)"
+          aria-hidden="true"
+          className={`chev${costsOpen ? ' open' : ''}`}
+          style={{ flexShrink: 0 }}
+        />
+      </button>
+
+      {costsOpen && (
+        <div style={{ borderTop: '1px solid var(--border-soft)' }}>
+          {rows.map((row, idx) => (
+            <div
+              key={`${row.service}-${idx}`}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '8px 14px',
+                borderTop: idx === 0 ? 'none' : '1px solid var(--border-softer)'
+              }}
+            >
+              <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: 'var(--text-main)' }}>{row.service}</span>
+              <strong style={{ flexShrink: 0, fontSize: 12.5, fontWeight: 700, color: 'var(--gold-text)', whiteSpace: 'nowrap' }}>{row.cost}</strong>
+            </div>
+          ))}
+          <p style={{
+            margin: 0, padding: '8px 14px 10px',
+            borderTop: '1px solid var(--border-softer)',
+            fontSize: 12, lineHeight: 1.45, color: 'var(--text-dim)'
+          }}>
+            {lang === 'en'
+              ? 'If a platform error prevents an analysis from completing, the HP are automatically returned.'
+              : 'Se un errore della piattaforma blocca un’analisi, gli HP vengono riaccreditati automaticamente.'}
+          </p>
+        </div>
+      )}
     </div>
   )
 }
@@ -276,6 +324,12 @@ const NOTIFICATION_PREF_LABEL_KEYS = {
   credits: 'profileNotifCredits',
   leaderboard: 'profileNotifLeaderboard',
   coach: 'profileNotifCoach'
+}
+const NOTIFICATION_PREF_ICONS = {
+  weekly_goals: CalendarCheck,
+  credits: Zap,
+  leaderboard: Medal,
+  coach: Sparkles
 }
 
 /** Sezione Notifiche: toggle per categoria su /api/notifications/prefs (default ON). */
@@ -372,60 +426,54 @@ function NotificationsSection({ t, lang, onToast }) {
     )
   }
 
+  if (loadError) {
+    return (
+      <p style={{ margin: 0, padding: '12px 14px', fontSize: 13, color: 'var(--danger-text)' }}>
+        {(lang === 'en' || lang === 'es')
+          ? 'Notification preferences unavailable right now.'
+          : 'Preferenze notifiche non disponibili al momento.'}
+      </p>
+    )
+  }
+
+  if (prefs === null) {
+    return (
+      <p style={{ margin: 0, padding: '12px 14px', fontSize: 13, color: 'var(--text-dim)' }}>{t('loading')}</p>
+    )
+  }
+
   return (
     <div>
-      {prefs === null && !loadError && (
-        <p style={{ margin: 0, padding: '14px 16px', fontSize: 13, color: 'var(--text-dim)' }}>{t('loading')}</p>
-      )}
-      {loadError && (
-        <p style={{ margin: 0, padding: '14px 16px', fontSize: 13, color: 'var(--danger-text)' }}>
-          {(lang === 'en' || lang === 'es')
-            ? 'Notification preferences unavailable right now.'
-            : 'Preferenze notifiche non disponibili al momento.'}
-        </p>
-      )}
       {NOTIFICATION_PREF_KEYS.map((key, idx) => (
-        <div
+        <Row
           key={key}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 12,
-            minHeight: 52, padding: '12px 16px',
-            borderBottom: '1px solid var(--border-softer)'
-          }}
-        >
-          <span style={{ flex: 1, fontSize: 14, fontWeight: 700, color: 'var(--text-main)' }}>
-            {t(NOTIFICATION_PREF_LABEL_KEYS[key])}
-          </span>
-          {renderSwitch(key)}
-        </div>
+          first={idx === 0}
+          icon={NOTIFICATION_PREF_ICONS[key]}
+          label={t(NOTIFICATION_PREF_LABEL_KEYS[key])}
+          control={renderSwitch(key)}
+        />
       ))}
-      <div
-        style={{
-          display: 'flex', alignItems: 'center', gap: 12,
-          minHeight: 52, padding: '12px 16px', opacity: 0.55
-        }}
-        aria-disabled="true"
-      >
-        <span style={{ flex: 1, fontSize: 14, fontWeight: 700, color: 'var(--text-main)' }}>
-          {t('profileNotifPushPhone')}
-        </span>
-        <span style={{
-          padding: '4px 10px', borderRadius: 999, flexShrink: 0,
-          background: 'var(--info-bg)', border: '1px solid var(--info-border)',
-          color: 'var(--info-text)', fontSize: 11, fontWeight: 800
-        }}>
-          {t('profileComingSoon')}
-        </span>
-      </div>
     </div>
   )
+}
+
+/** Icona tema nella riga Preferenze: segue data-theme sul documentElement. */
+function ThemeIcon() {
+  const [theme, setTheme] = React.useState('dark')
+  React.useEffect(() => {
+    const read = () => setTheme(document.documentElement.dataset.theme === 'light' ? 'light' : 'dark')
+    read()
+    const observer = new MutationObserver(read)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => observer.disconnect()
+  }, [])
+  return <IconChip icon={theme === 'dark' ? Moon : Sun} />
 }
 
 export default function ImpostazioniProfiloPage() {
   const { t, lang } = useTranslation()
   const router = useRouter()
 
-  // Stato profilo
   const [profile, setProfile] = React.useState({
     first_name: '',
     last_name: '',
@@ -438,14 +486,13 @@ export default function ImpostazioniProfiloPage() {
     common_problems: []
   })
 
-  const [profileData, setProfileData] = React.useState(null) // Dati completi dal server
+  const [profileData, setProfileData] = React.useState(null)
   const [account, setAccount] = React.useState({ name: '', email: '' })
   const [editingField, setEditingField] = React.useState(null) // { key, type, label }
   const [editValue, setEditValue] = React.useState('')
   const [editSaving, setEditSaving] = React.useState(false)
   const [editError, setEditError] = React.useState(null)
   const [loading, setLoading] = React.useState(true)
-  const [error, setError] = React.useState(null)
   const [toast, setToast] = React.useState(null) // { message, type: 'success' | 'error' }
 
   // Identita account da MetalGate (localStorage)
@@ -467,23 +514,15 @@ export default function ImpostazioniProfiloPage() {
   React.useEffect(() => {
     const fetchProfile = async () => {
       setLoading(true)
-      setError(null)
 
       try {
         let token = localStorage.getItem('auth_token')
-        let userId = null
 
-        if (token) {
-           const userData = localStorage.getItem('metalgate_user')
-           if (userData) {
-             userId = JSON.parse(userData).id
-           }
-        } else if (supabase) {
-           const { data: session } = await supabase.auth.getSession()
-           if (session?.session) {
-             token = session.session.access_token
-             userId = session.session.user.id
-           }
+        if (!token && supabase) {
+          const { data: session } = await supabase.auth.getSession()
+          if (session?.session) {
+            token = session.session.access_token
+          }
         }
 
         if (!token) {
@@ -492,7 +531,6 @@ export default function ImpostazioniProfiloPage() {
           return
         }
 
-        // Carica profilo - usa sempre API server-side per sicurezza e consistenza
         const res = await fetch('/api/user/profile', {
           headers: { 'Authorization': `Bearer ${token}` },
           cache: 'no-store'
@@ -502,21 +540,21 @@ export default function ImpostazioniProfiloPage() {
           throw new Error(t('errorProfileLoad'))
         }
 
-        const profileData = await res.json()
+        const fresh = await res.json()
 
-        if (profileData) {
-           setProfileData(profileData)
-           setProfile({
-             first_name: profileData.first_name || '',
-             last_name: profileData.last_name || '',
-             current_division: profileData.current_division || '',
-             favorite_team: profileData.favorite_team || '',
-             team_name: profileData.team_name || '',
-             ai_name: profileData.ai_name || '',
-             how_to_remember: profileData.how_to_remember || '',
-             hours_per_week: profileData.hours_per_week || null,
-             common_problems: profileData.common_problems || []
-           })
+        if (fresh) {
+          setProfileData(fresh)
+          setProfile({
+            first_name: fresh.first_name || '',
+            last_name: fresh.last_name || '',
+            current_division: fresh.current_division || '',
+            favorite_team: fresh.favorite_team || '',
+            team_name: fresh.team_name || '',
+            ai_name: fresh.ai_name || '',
+            how_to_remember: fresh.how_to_remember || '',
+            hours_per_week: fresh.hours_per_week || null,
+            common_problems: fresh.common_problems || []
+          })
         }
       } catch (err) {
         console.error('[Impostazioni Profilo] Error loading profile:', err)
@@ -529,8 +567,7 @@ export default function ImpostazioniProfiloPage() {
     fetchProfile()
   }, [router, t])
 
-  // Blocca lo scroll del body quando la modale di editing è aperta
-  // (evita il salto a fondo pagina su mobile quando l'input riceve il focus)
+  // Blocca lo scroll del body quando il bottom-sheet di editing è aperto
   React.useEffect(() => {
     if (!editingField) return
     const prev = document.body.style.overflow
@@ -570,7 +607,6 @@ export default function ImpostazioniProfiloPage() {
     }
   }, [])
 
-  // Editor singolo campo: le card metriche sono cliccabili e modificabili.
   // Contratti reali: campi AI -> /api/supabase/save-ai-info (whitelist); anagrafica -> /api/supabase/save-profile.
   const FIELD_EDITOR_TYPES = {
     first_name: { type: 'text', target: 'profile' },
@@ -667,17 +703,16 @@ export default function ImpostazioniProfiloPage() {
 
   React.useEffect(() => {
     if (toast) {
-      const t = setTimeout(() => setToast(null), 4000)
-      return () => clearTimeout(t)
+      const timer = setTimeout(() => setToast(null), 4000)
+      return () => clearTimeout(timer)
     }
   }, [toast])
 
-  // Calcola percentuale completamento (se disponibile)
   const completionScore = profileData?.profile_completion_score ?? 0
   const completionLevel = profileData?.profile_completion_level || 'beginner'
 
   const getLevelText = (level) => {
-    switch(level) {
+    switch (level) {
       case 'complete': return t('profileLevelComplete') || 'Completo'
       case 'intermediate': return t('profileLevelIntermediate') || 'Intermedio'
       default: return t('profileLevelBeginner') || 'Principiante'
@@ -714,82 +749,27 @@ export default function ImpostazioniProfiloPage() {
     {
       label: t('profileGroupAnagrafica'),
       cards: [
-        {
-          field: 'first_name',
-          label: (lang === 'en' || lang === 'es') ? 'Name' : 'Nome',
-          value: cleanValue(profile.first_name),
-          hint: (lang === 'en' || lang === 'es') ? 'How Hero calls you' : 'Come ti chiama Hero'
-        },
-        {
-          field: 'last_name',
-          label: (lang === 'en' || lang === 'es') ? 'Last name' : 'Cognome',
-          value: cleanValue(profile.last_name),
-          hint: (lang === 'en' || lang === 'es') ? 'Personal data' : 'Dati anagrafici'
-        }
+        { field: 'first_name', icon: User, label: (lang === 'en' || lang === 'es') ? 'Name' : 'Nome', value: cleanValue(profile.first_name) },
+        { field: 'last_name', icon: User, label: (lang === 'en' || lang === 'es') ? 'Last name' : 'Cognome', value: cleanValue(profile.last_name) }
       ]
     },
     {
       label: t('profileGroupGameIdentity'),
       cards: [
-        {
-          field: 'team_name',
-          label: (lang === 'en' || lang === 'es') ? 'In-game team' : 'Team in game',
-          value: cleanValue(profile.team_name || profile.favorite_team),
-          hint: (lang === 'en' || lang === 'es') ? 'Identity used in analyses' : 'Identita usata nelle analisi'
-        },
-        {
-          field: 'favorite_team',
-          label: (lang === 'en' || lang === 'es') ? 'Favourite club' : 'Squadra del cuore',
-          value: cleanValue(profile.favorite_team),
-          hint: (lang === 'en' || lang === 'es') ? 'The club you support' : 'La squadra che tifi'
-        },
-        {
-          field: 'current_division',
-          label: (lang === 'en' || lang === 'es') ? 'Division' : 'Divisione',
-          value: cleanValue(profile.current_division),
-          hint: (lang === 'en' || lang === 'es') ? 'Competitive level' : 'Livello competitivo'
-        },
-        {
-          field: 'platform',
-          label: (lang === 'en' || lang === 'es') ? 'Platform' : 'Piattaforma',
-          value: fieldValue('platform', profileData?.platform),
-          hint: (lang === 'en' || lang === 'es') ? 'From Coach Gym' : 'Da Palestra Coach'
-        },
-        {
-          field: 'favourite_player_name',
-          label: (lang === 'en' || lang === 'es') ? 'Favourite player' : 'Giocatore preferito',
-          value: cleanValue(profileData?.favourite_player_name),
-          hint: (lang === 'en' || lang === 'es') ? 'Useful for examples' : 'Utile per esempi e consigli'
-        }
+        { field: 'team_name', icon: Shield, label: (lang === 'en' || lang === 'es') ? 'In-game team' : 'Team in game', value: cleanValue(profile.team_name || profile.favorite_team) },
+        { field: 'favorite_team', icon: Heart, label: (lang === 'en' || lang === 'es') ? 'Favourite club' : 'Squadra del cuore', value: cleanValue(profile.favorite_team) },
+        { field: 'current_division', icon: Award, label: (lang === 'en' || lang === 'es') ? 'Division' : 'Divisione', value: cleanValue(profile.current_division) },
+        { field: 'platform', icon: Gamepad2, label: (lang === 'en' || lang === 'es') ? 'Platform' : 'Piattaforma', value: fieldValue('platform', profileData?.platform) },
+        { field: 'favourite_player_name', icon: Star, label: (lang === 'en' || lang === 'es') ? 'Favourite player' : 'Giocatore preferito', value: cleanValue(profileData?.favourite_player_name) }
       ]
     },
     {
       label: t('profileGroupCoachAi'),
       cards: [
-        {
-          field: 'ai_name',
-          label: (lang === 'en' || lang === 'es') ? 'Coach name' : 'Nome del tuo coach',
-          value: cleanValue(profile.ai_name),
-          hint: (lang === 'en' || lang === 'es') ? 'How you call your coach' : 'Come chiami il tuo coach'
-        },
-        {
-          field: 'how_to_remember',
-          label: (lang === 'en' || lang === 'es') ? 'Coach memory note' : 'Nota memoria per il coach',
-          value: cleanValue(profile.how_to_remember),
-          hint: (lang === 'en' || lang === 'es') ? 'What Hero should remember' : 'Cosa deve ricordare Hero'
-        },
-        {
-          field: 'ai_weak_point',
-          label: (lang === 'en' || lang === 'es') ? 'Weak point' : 'Punto debole',
-          value: fieldValue('ai_weak_point', profileData?.ai_weak_point || profile.common_problems),
-          hint: (lang === 'en' || lang === 'es') ? 'What the coach should watch' : 'Cosa deve osservare il coach'
-        },
-        {
-          field: 'pass_level',
-          label: (lang === 'en' || lang === 'es') ? 'Pass level' : 'Livello passaggi',
-          value: fieldValue('pass_level', profileData?.pass_level),
-          hint: (lang === 'en' || lang === 'es') ? 'Control profile' : 'Profilo comandi'
-        }
+        { field: 'ai_name', icon: Bot, label: (lang === 'en' || lang === 'es') ? 'Coach name' : 'Nome del tuo coach', value: cleanValue(profile.ai_name) },
+        { field: 'how_to_remember', icon: NotebookPen, label: (lang === 'en' || lang === 'es') ? 'Coach memory note' : 'Nota memoria per il coach', value: cleanValue(profile.how_to_remember) },
+        { field: 'ai_weak_point', icon: Target, label: (lang === 'en' || lang === 'es') ? 'Weak point' : 'Punto debole', value: fieldValue('ai_weak_point', profileData?.ai_weak_point || profile.common_problems) },
+        { field: 'pass_level', icon: Gauge, label: (lang === 'en' || lang === 'es') ? 'Pass level' : 'Livello passaggi', value: fieldValue('pass_level', profileData?.pass_level) }
       ]
     }
   ]
@@ -799,145 +779,110 @@ export default function ImpostazioniProfiloPage() {
   }
 
   return (
-    <div data-tour-id="tour-profile-intro" className="profile-page">
-      {/* Header compatto: titolo pagina */}
-      <header style={{ marginBottom: 18 }}>
-        <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>
-          {(lang === 'en' || lang === 'es') ? 'Player identity' : 'Identita giocatore'}
-        </p>
-        <h1 style={{ margin: 0, fontSize: 'clamp(24px, 5vw, 32px)', fontWeight: 800, letterSpacing: '-0.01em', color: 'var(--text-main)' }}>
-          {t('profileSettings')}
-        </h1>
-        <p style={{ margin: '6px 0 0', fontSize: 13, lineHeight: 1.5, color: 'var(--text-dim)', maxWidth: 560 }}>
-          {lang === 'en'
-            ? 'Your profile is the memory layer of the coach: the more complete it is, the more personal every suggestion becomes.'
-            : 'Il profilo e la memoria del coach: piu e completo, piu ogni consiglio diventa personale.'}
-        </p>
-      </header>
+    <div style={{ maxWidth: 720, margin: '0 auto', padding: '16px 20px 48px' }}>
+      <h1 style={{ margin: '4px 0 0', fontSize: 20, fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--text-main)' }}>
+        {t('profileSettings')}
+      </h1>
 
-      {/* 1. Identita */}
-      <SettingsSection title={t('profile')}>
-        <IdentitySection
-          t={t}
+      {/* 1. Profilo: identita account */}
+      <Section title={t('profile')}>
+        <IdentityRow
           account={account}
-          safeCompletionScore={safeCompletionScore}
-          completionText={getLevelText(completionLevel)}
+          score={safeCompletionScore}
+          levelText={getLevelText(completionLevel)}
         />
-      </SettingsSection>
+      </Section>
 
       {/* 2. Hero Points */}
-      <SettingsSection title="Hero Points">
-        <HeroPointsSection t={t} lang={lang} />
-      </SettingsSection>
+      <Section title="Hero Points">
+        <HeroPointsCard lang={lang} />
+      </Section>
 
       {/* 3. Profilo di gioco */}
-      <SettingsSection title={t('profileSectionGame')}>
-        <div style={{ padding: '14px 16px 18px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-          {gameProfileGroups.map((group) => (
+      <Section title={t('profileSectionGame')}>
+        <div>
+          {gameProfileGroups.map((group, groupIdx) => (
             <div key={group.label}>
-              <h3 style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 800, color: 'var(--text-dim)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+              <h3 style={{
+                margin: 0,
+                padding: '10px 14px 4px',
+                borderTop: groupIdx === 0 ? 'none' : '1px solid var(--border-soft)',
+                fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
+                color: 'var(--text-dim)'
+              }}>
                 {group.label}
               </h3>
-              <div className="profile-metric-grid" style={{ marginBottom: 0 }}>
-                {group.cards.map((card) => (
-                  <button
-                    type="button"
-                    className={`profile-metric-card profile-metric-card--editable ${card.value ? '' : 'profile-metric-card--empty'}`}
-                    key={card.field}
-                    onClick={() => openFieldEditor(card)}
-                    aria-label={`${card.label}: ${card.value || 'modifica'}`}
-                    style={{ color: 'var(--text-main)' }}
-                  >
-                    <span className="profile-metric-card-head">
-                      <span>{card.label}</span>
-                      <Pencil size={13} aria-hidden="true" />
-                    </span>
-                    <strong>{card.value || ((lang === 'en' || lang === 'es') ? 'Missing' : 'Da completare')}</strong>
-                    <small>{card.hint}</small>
-                  </button>
-                ))}
-              </div>
+              {group.cards.map((card) => (
+                <Row
+                  key={card.field}
+                  icon={card.icon}
+                  label={card.label}
+                  value={card.value || '—'}
+                  control={<Pencil size={14} color="var(--text-dim)" aria-hidden="true" />}
+                  onClick={() => openFieldEditor(card)}
+                />
+              ))}
             </div>
           ))}
         </div>
-      </SettingsSection>
+      </Section>
 
       {/* 4. Notifiche */}
-      <SettingsSection title={t('profileSectionNotifications')}>
+      <Section title={t('profileSectionNotifications')}>
         <NotificationsSection t={t} lang={lang} onToast={setToast} />
-      </SettingsSection>
+      </Section>
 
       {/* 5. Preferenze app */}
-      <SettingsSection title={t('profileSectionPreferences')}>
+      <Section title={t('profileSectionPreferences')}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 52, padding: '12px 16px', borderBottom: '1px solid var(--border-softer)' }}>
-            <span style={{ flex: 1, fontSize: 14, fontWeight: 700, color: 'var(--text-main)' }}>
-              {(lang === 'en' || lang === 'es') ? 'Language' : 'Lingua'}
-            </span>
-            <LanguageSwitch />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 52, padding: '12px 16px', borderBottom: '1px solid var(--border-softer)' }}>
-            <span style={{ flex: 1, fontSize: 14, fontWeight: 700, color: 'var(--text-main)' }}>
-              {(lang === 'en' || lang === 'es') ? 'Theme' : 'Tema'}
-            </span>
-            <ThemeToggle />
-          </div>
-          <SettingsRow icon={BookOpen} label={t('guide')} href="/guida" />
-          <SettingsRow icon={Gift} label="Tornei" href="https://tornei.fromzerotohero.io/" external />
-          <SettingsRow
-            icon={Download}
-            label={t('pwaInstallOpenManual')}
-            onClick={() => window.dispatchEvent(new CustomEvent(OPEN_INSTALL_APP_PROMPT_EVENT))}
-            last
+          <Row
+            first
+            iconNode={<ThemeIcon />}
+            label={(lang === 'en' || lang === 'es') ? 'Theme' : 'Tema'}
+            control={<ThemeToggle />}
+          />
+          <Row
+            icon={Languages}
+            label={(lang === 'en' || lang === 'es') ? 'Language' : 'Lingua'}
+            control={<LanguageSwitch />}
+          />
+          <Row
+            icon={Trophy}
+            label="Tornei"
+            href="https://tornei.fromzerotohero.io/"
+            external
           />
         </div>
-      </SettingsSection>
+      </Section>
 
       {/* 6. Account */}
-      <SettingsSection title={t('profileSectionAccount')}>
-        <div>
-          <SettingsRow
-            icon={UserCog}
-            label={t('profileManageAccount')}
-            href="https://home.fromzerotohero.io/dashboard"
-            external
-          />
-          <SettingsRow
-            icon={LifeBuoy}
-            label={t('profileSupport')}
-            sub="support@fromzerotohero.io"
-            href="mailto:support@fromzerotohero.io"
-            external
-          />
-          <SettingsRow
-            icon={LogOut}
-            label={t('logout')}
-            onClick={handleLogout}
-            danger
-            last
-          />
-        </div>
-      </SettingsSection>
+      <Section title={t('profileSectionAccount')}>
+        <Row
+          first
+          icon={LogOut}
+          label={t('logout')}
+          onClick={handleLogout}
+          danger
+        />
+      </Section>
 
-      {/* Toast: feedback vicino all'azione (visibile anche se la sezione è in basso) */}
+      {/* Toast: feedback vicino all'azione */}
       {toast && (
         <div style={{
           position: 'fixed',
           top: '20px',
           right: '20px',
           zIndex: 10000,
-          padding: '16px 20px',
+          padding: '14px 18px',
           background: 'var(--surface)',
           border: `1px solid ${toast.type === 'success' ? 'var(--accent-border)' : 'var(--danger-text)'}`,
           borderRadius: '12px',
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
           display: 'flex',
           alignItems: 'center',
           gap: '12px',
-          minWidth: '280px',
+          minWidth: '260px',
           maxWidth: '420px',
-          animation: 'slideInRight 0.3s ease-out',
-          backdropFilter: 'blur(8px)'
+          animation: 'slideInRight 0.3s ease-out'
         }}>
           {toast.type === 'success' ? (
             <CheckCircle2 size={20} color="var(--accent)" />
@@ -966,8 +911,7 @@ export default function ImpostazioniProfiloPage() {
         </div>
       )}
 
-
-      {/* Foglio modifica campo (stile app): si apre dalla card cliccata */}
+      {/* Bottom-sheet modifica campo: si apre dalla riga cliccata */}
       {editingField && (
         <div
           role="dialog"
@@ -1088,129 +1032,22 @@ export default function ImpostazioniProfiloPage() {
       )}
 
       <style jsx>{`
-        .profile-page {
-          width: min(880px, 100%);
-          margin: 0 auto;
-          padding: clamp(14px, 3vw, 28px);
-          min-height: 100vh;
+        .srow {
+          background: transparent;
+          transition: background 0.15s ease;
         }
-
-        .profile-metric-grid {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 12px;
-          margin-bottom: 24px;
-        }
-
-        .profile-metric-card--editable {
-          font: inherit;
-          text-align: left;
-          cursor: pointer;
-          width: 100%;
-          transition: border-color 0.15s ease, transform 0.15s ease;
-        }
-
-        .profile-metric-card--editable:hover {
-          border-color: var(--accent-border);
-          transform: translateY(-2px);
-        }
-
-        .profile-metric-card--editable:focus-visible {
-          outline: 2px solid var(--accent);
-          outline-offset: 2px;
-        }
-
-        .profile-metric-card-head {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 8px;
-          color: var(--text-dim);
-        }
-
-        .profile-metric-card {
-          min-height: 116px;
-          padding: 18px;
-          border: 1px solid var(--border-soft);
-          border-radius: 18px;
+        .srow:hover {
           background: var(--surface-2);
-          color: var(--text-main);
-          box-shadow: 0 12px 34px rgba(0, 0, 0, 0.08);
         }
-
-        .profile-metric-card span,
-        .profile-metric-card small {
-          display: block;
-          color: var(--text-dim);
-          font-size: 12px;
-          line-height: 1.35;
+        .srow:focus-visible {
+          outline: 2px solid var(--accent);
+          outline-offset: -2px;
         }
-
-        .profile-metric-card strong {
-          display: block;
-          margin: 8px 0 4px;
-          color: var(--text-main);
-          font-size: clamp(22px, 4vw, 30px);
-          font-weight: 900;
-          line-height: 1.05;
-          letter-spacing: -0.03em;
+        .chev {
+          transition: transform 0.18s ease;
         }
-
-        .profile-metric-card--empty {
-          border-style: dashed;
-          opacity: 0.78;
-        }
-
-        .profile-metric-card--empty strong {
-          color: var(--text-dim);
-          font-size: clamp(16px, 3vw, 22px);
-          font-weight: 700;
-        }
-
-        .profile-page :global(input),
-        .profile-page :global(select),
-        .profile-page :global(textarea) {
-          min-height: 48px !important;
-          padding: 14px 15px !important;
-          border: 1px solid var(--border-soft) !important;
-          border-radius: 14px !important;
-          background: var(--surface) !important;
-          color: var(--text-main) !important;
-          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02) !important;
-          outline: none !important;
-          transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease !important;
-        }
-
-        .profile-page :global(textarea) {
-          min-height: 130px !important;
-          line-height: 1.5 !important;
-        }
-
-        .profile-page :global(input:focus),
-        .profile-page :global(select:focus),
-        .profile-page :global(textarea:focus) {
-          border-color: var(--accent-border) !important;
-          background: var(--surface-2) !important;
-          box-shadow: 0 0 0 3px var(--accent-bg) !important;
-        }
-
-        .profile-page :global(label) {
-          color: var(--text-dim) !important;
-          font-weight: 700 !important;
-        }
-
-        @media (max-width: 640px) {
-          .profile-page {
-            padding: 12px;
-          }
-
-          .profile-metric-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-
-          .profile-page :global(button) {
-            min-height: 46px;
-          }
+        .chev.open {
+          transform: rotate(180deg);
         }
       `}</style>
     </div>
