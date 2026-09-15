@@ -66,7 +66,8 @@ export async function POST(req) {
     }
 
     const safeMessages = messages
-      .filter((message) => message && (message.role === 'user' || message.role === 'hero' || message.role === 'system'))
+      // Gli indicatori system sono transitori e non devono diventare cronologia.
+      .filter((message) => message && (message.role === 'user' || message.role === 'hero'))
       .map((message) => ({
         role: message.role,
         content: String(message.content || '').slice(0, 8000),

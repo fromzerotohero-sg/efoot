@@ -1004,18 +1004,28 @@ export default function HeroChat({
         ])
         if (!cancelled && historyRes.ok) {
           setThreadId(historyData.thread?.id || null)
-          if (Array.isArray(historyData.messages) && historyData.messages.length) {
+          const persistedMessages = Array.isArray(historyData.messages)
+            ? historyData.messages.filter((message) => (
+                message?.role !== 'system' && (message?.kind || message?.payload?.kind) !== 'system'
+              ))
+            : []
+          if (persistedMessages.length) {
             // Si atterra in fondo: ultimi messaggi + CTA "nuova conversazione".
             pendingScrollRef.current = true
-            setMessages(historyData.messages)
+            setMessages(persistedMessages)
           }
         }
         if (!cancelled) {
           const latestCanonicalPlan = plansRes.ok && Array.isArray(plansData.plans)
             ? plansData.plans[0] || null
             : null
-          const latestEmbeddedPlan = Array.isArray(historyData.messages)
-            ? [...historyData.messages].reverse().find((message) => (
+          const persistedMessages = Array.isArray(historyData.messages)
+            ? historyData.messages.filter((message) => (
+                message?.role !== 'system' && (message?.kind || message?.payload?.kind) !== 'system'
+              ))
+            : []
+          const latestEmbeddedPlan = persistedMessages.length
+            ? [...persistedMessages].reverse().find((message) => (
                 (message.kind || message.payload?.kind) === 'plan' && message.plan
               ))?.plan || null
             : null

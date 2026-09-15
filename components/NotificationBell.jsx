@@ -64,7 +64,7 @@ function formatRelativeTime(value, lang) {
 
 /**
  * Centro notifiche – campanella in TopBar con badge non lette.
- * Desktop: popover sotto il bottone (come CreditsBar); mobile (<768px): bottom-sheet.
+ * Desktop e mobile: popover ancorato sotto la campanella.
  * Legge GET /api/notifications (Bearer), PATCH /api/notifications con { ids } o { all: true }
  * per segnare come lette. Refetch su eventi 'credits-accredited' e 'match-saved',
  * polling leggero ogni 5 minuti. Fallimento silenzioso: la campanella resta visibile.
@@ -149,19 +149,24 @@ export default function NotificationBell() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // Posizione popover: sotto il bottone, sempre in viewport (stesso pattern di CreditsBar)
+  // Posizione popover: vicino al bottone, sempre dentro la viewport.
   const updatePopoverPosition = useCallback(() => {
     if (!containerRef.current || typeof window === "undefined") return;
     const rect = containerRef.current.getBoundingClientRect();
     const gap = 8;
-    const maxLeft = Math.max(12, window.innerWidth - POPOVER_WIDTH - 12);
-    const left = Math.max(12, Math.min(rect.right - POPOVER_WIDTH, maxLeft));
-    const top = rect.bottom + gap;
+    const panelWidth = Math.min(POPOVER_WIDTH, window.innerWidth - 24);
+    const maxLeft = Math.max(12, window.innerWidth - panelWidth - 12);
+    const left = Math.max(12, Math.min(rect.right - panelWidth, maxLeft));
+    const maxHeight = Math.min(window.innerHeight * 0.7, 480);
+    const spaceBelow = window.innerHeight - rect.bottom - gap - 12;
+    const top = spaceBelow >= Math.min(maxHeight, 220)
+      ? rect.bottom + gap
+      : Math.max(12, rect.top - maxHeight - gap);
     setPopoverPosition({ top, left });
   }, []);
 
   useLayoutEffect(() => {
-    if (!open || isMobile) {
+    if (!open) {
       setPopoverPosition(null);
       return;
     }
@@ -482,9 +487,8 @@ export default function NotificationBell() {
         )}
       </button>
 
-      {/* Desktop: popover sotto il bottone */}
+      {/* Popover ancorato alla campanella, anche su mobile */}
       {open &&
-        !isMobile &&
         popoverPosition &&
         typeof document !== "undefined" &&
         createPortal(
@@ -509,62 +513,6 @@ export default function NotificationBell() {
             onClick={(e) => e.stopPropagation()}
           >
             {panelContent}
-          </div>,
-          document.body,
-        )}
-
-      {/* Mobile: bottom-sheet con backdrop */}
-      {open &&
-        isMobile &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label={t("notifications")}
-            style={{
-              position: "fixed",
-              inset: 0,
-              zIndex: POPOVER_Z_INDEX,
-              backgroundColor: "var(--bg-overlay)",
-              display: "flex",
-              alignItems: "flex-end",
-              justifyContent: "center",
-              animation: "notifFadeIn 0.2s ease-out",
-            }}
-            onClick={(e) => {
-              if (e.target === e.currentTarget) setOpen(false);
-            }}
-          >
-            <style>{`
-              @keyframes notifFadeIn {
-                from { opacity: 0; }
-                to { opacity: 1; }
-              }
-              @keyframes notifSlideUp {
-                from { transform: translateY(24px); opacity: 0; }
-                to { transform: translateY(0); opacity: 1; }
-              }
-            `}</style>
-            <div
-              ref={popoverRef}
-              style={{
-                width: "100%",
-                maxHeight: "70vh",
-                overflowY: "auto",
-                backgroundColor: "var(--bg-elevated)",
-                borderRadius: "16px 16px 0 0",
-                border: "1px solid var(--border-soft)",
-                borderBottom: "none",
-                boxShadow: "var(--shadow-lg)",
-                padding: "16px",
-                paddingBottom: "max(16px, env(safe-area-inset-bottom, 0px))",
-                animation: "notifSlideUp 0.3s ease-out",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {panelContent}
-            </div>
           </div>,
           document.body,
         )}
