@@ -15,7 +15,7 @@ import {
   isRemovedIndividualInstruction,
   isValidIndividualInstruction
 } from '../lib/efootballTruthLayer.js'
-import { getCoachPoliciesText } from '../lib/coachPromptRules.js'
+import { getCoachPoliciesText, getCoachSharedCoreText } from '../lib/coachPromptRules.js'
 import {
   buildTacticalHistory,
   defaultCoachFallbacks,
@@ -153,6 +153,16 @@ const feedbackBlock = formatTacticalFeedbackForPrompt([
 ], 'it')
 assert(/FEEDBACK TATTICO RECENTE/.test(feedbackBlock), 'feedback injected even without diagnostic cache')
 assert(/Alex/.test(feedbackBlock) && /CC scoperti/.test(feedbackBlock), 'feedback has provenance')
+
+const policiesFull = getCoachPoliciesText('it') + '\n' + getCoachSharedCoreText('it')
+assert(/non a essere recitati|non a essere RECITATI/i.test(policiesFull), 'verbalization rule: data is for deciding not reciting')
+assert(/SIGNIFICATO TATTICO/i.test(policiesFull), 'verbalization rule: tactical meaning')
+assert(/EVIDENZA -> SIGNIFICATO -> DECISIONE -> SPIEGAZIONE -> TEST/i.test(policiesFull), 'verbalization internal model present')
+const negExampleStripped = policiesFull
+  .replace(/ESEMPIO DA NON SEGUIRE:[\s\S]*?ESEMPIO DA SEGUIRE:/i, '')
+  .replace(/NO "Davids \(Passaggio di prima\)"/i, '')
+assert(!/Rijkaard \(Passaggio/.test(negExampleStripped), 'no parenthesized skill labels in positive examples')
+assert(/perché può far circolare la palla rapidamente/i.test(policiesFull), 'verbalization positive example present')
 
 if (failed > 0) {
   console.error(`\n${failed} assertion(s) failed`)
