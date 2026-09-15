@@ -229,6 +229,12 @@ export async function POST(req) {
         form_detailed: player.form_detailed || null,
         injury_resistance: player.injury_resistance || null,
         ai_playstyles: Array.isArray(player.ai_playstyles) ? player.ai_playstyles : [],
+        native_skills: Array.isArray(player.native_skills)
+          ? player.native_skills
+          : (Array.isArray(player.metadata?.native_skills) ? player.metadata.native_skills : []),
+        additional_skills: Array.isArray(player.additional_skills)
+          ? player.additional_skills
+          : (Array.isArray(player.metadata?.additional_skills) ? player.metadata.additional_skills : []),
         matches_played: player.matches_played || null,
         goals: player.goals || null,
         assists: player.assists || null,

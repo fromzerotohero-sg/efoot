@@ -103,6 +103,25 @@ function normalizePlayer(player) {
     normalized.skills = normalized.skills.slice(0, 40)
   }
 
+  // Native / Additional (v6 Skill Training): keep separate for metadata persistence (no new DB columns).
+  if (Array.isArray(normalized.additional_skills)) {
+    normalized.additional_skills = normalized.additional_skills.slice(0, 5)
+  } else {
+    normalized.additional_skills = []
+  }
+  if (Array.isArray(normalized.native_skills)) {
+    normalized.native_skills = normalized.native_skills.slice(0, 40)
+  } else if (Array.isArray(normalized.skills) && normalized.additional_skills.length > 0) {
+    const additionalKeys = new Set(
+      normalized.additional_skills.map((s) => String(s || '').trim().toLowerCase()).filter(Boolean)
+    )
+    normalized.native_skills = normalized.skills.filter(
+      (s) => !additionalKeys.has(String(s || '').trim().toLowerCase())
+    )
+  } else {
+    normalized.native_skills = Array.isArray(normalized.skills) ? [...normalized.skills] : []
+  }
+
   // Normalizza array com_skills (max 20)
   if (Array.isArray(normalized.com_skills)) {
     normalized.com_skills = normalized.com_skills.slice(0, 20)

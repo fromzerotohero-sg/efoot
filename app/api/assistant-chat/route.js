@@ -16,6 +16,21 @@ import { fieldPositionMatchesCardCompetences } from '@/lib/playerSlotRoleMetadat
 import { splitAdviceIntoTips } from '@/lib/chatReadiness'
 import { formatCoachLinkUpsForPrompt, isRemovedIndividualInstruction } from '@/lib/efootballTruthLayer'
 import {
+  buildFluidFormationState,
+  buildHeroFluidPromptBlock,
+  formatCoachLinkUpsForHeroPrompt,
+  formatHeroFluidContext,
+  prependLiveFluidOverride,
+  prependLiveLinkUpOverride,
+  startersForLinkUpVerification
+} from '@/lib/efootballV6TacticalModel'
+import { getPlacementWarningLines, getPlacementWarningTitle } from '@/lib/playerFieldPlacement'
+import {
+  buildFallbackEnterpriseSubset,
+  matchConnectionToRoster
+} from '@/lib/diagnosticBuilder'
+import { stripStaleDiagnosticSections } from '@/lib/diagnosticCacheSanitize'
+import {
   buildTacticalHistory,
   defaultCoachFallbacks,
   extractRosterNames,
@@ -448,6 +463,7 @@ async function buildPersonalContext(userId, lang = 'it') {
     // Le query sulle formazioni avversarie restano dopo (dipendono dai match caricati).
     const [
       { data: formationRow },
+      { data: variantRows },
       playersResult,
       { data: stylesData },
       { data: gameAnalysisRow },
@@ -456,12 +472,18 @@ async function buildPersonalContext(userId, lang = 'it') {
       { data: coachRow },
       { data: patternsRow }
     ] = await Promise.all([
-      // Formation layout
+      // Formation layout (base). Fluid phases live in formation_variants.
       admin
         .from('formation_layout')
         .select('formation, slot_positions')
         .eq('user_id', userId)
         .maybeSingle(),
+      admin
+        .from('formation_variants')
+        .select('id, phase, formation, slot_positions, is_active')
+        .eq('user_id', userId)
+        .in('phase', ['attack', 'defense'])
+        .eq('is_active', true),
       // Players (titolari + riserve) - include skills, forma, altezza/peso per ragionamento enterprise
       admin
         .from('players')
@@ -480,7 +502,7 @@ async function buildPersonalContext(userId, lang = 'it') {
       // Matches (ultime 10) - con formazione avversario, voti, zone attacco (enterprise)
       admin
         .from('matches')
-        .select('opponent_name, result, formation_played, playing_style_played, match_date, opponent_formation_id, player_ratings, attack_areas')
+        .select('opponent_name, result, formation_played, playing_style_played, match_date, opponent_formation_id, player_ratings, attack_areas, team_stats')
         .eq('user_id', userId)
         .order('match_date', { ascending: false })
         .limit(10),
@@ -500,10 +522,11 @@ async function buildPersonalContext(userId, lang = 'it') {
       // Pattern tattici (formation_usage, recurring_issues) - per intreccio consigli formazione/problemi
       admin
         .from('team_tactical_patterns')
-        .select('formation_usage, playing_style_usage, recurring_issues')
+        .select('formation_usage, playing_style_usage, recurring_issues, attack_areas_avg, recovery_zones_avg')
         .eq('user_id', userId)
         .maybeSingle()
     ])
+    const clientFluid = buildFluidFormationState(formationRow, variantRows || [])
 
     const { data: playersData, error: playersError } = playersResult
     if (playersError) {
@@ -627,7 +650,7 @@ async function buildPersonalContext(userId, lang = 'it') {
 
     const skillAdvisoryBlock = buildRosterSkillAdvisorySection(roster, gameAnalysisRow, lang)
 
-    // Disposizione reale in campo (da titolari per slot), non dal nome modulo formation
+    // Disposizione: preferisci formation_layout.formation se presente; altrimenti ricostruisci da titolari
     const positionsOrdered = titolari.map(p => (p.position || '?').trim() || '?').join(', ')
     const DEF = ['DC', 'TD', 'TS']
     const MID = ['MED', 'CC', 'TRQ', 'CLS', 'CLD']
@@ -646,7 +669,10 @@ async function buildPersonalContext(userId, lang = 'it') {
     if (counts.mid) summaryParts.push((lang === 'en' || lang === 'es') ? `${counts.mid} midfield` : `${counts.mid} centrocampo`)
     if (counts.fwd) summaryParts.push((lang === 'en' || lang === 'es') ? `${counts.fwd} forwards` : `${counts.fwd} attaccanti`)
     const dispositionSummary = summaryParts.length ? ` (${summaryParts.join(', ')})` : ''
-    const dispositionLine = `${L.dispositionInField}: ${positionsOrdered || L.formationNotSet}.${dispositionSummary}`
+    const baseFormationName = formationRow?.formation?.trim() || ''
+    const dispositionLine = baseFormationName
+      ? `${L.dispositionInField}: ${baseFormationName}${dispositionSummary}. Slot: ${positionsOrdered || L.formationNotSet}.`
+      : `${L.dispositionInField}: ${positionsOrdered || L.formationNotSet}.${dispositionSummary}`
 
     // Matches (ultime 10, da batch iniziale) - con formazione avversario, voti, zone attacco (enterprise)
     const matches = matchesData || []
@@ -675,7 +701,19 @@ async function buildPersonalContext(userId, lang = 'it') {
               if (entries.length) votiStr = ` [voti: ${entries.join(', ')}]`
             }
           }
-          return `  ${d} vs ${m.opponent_name || '?'} ${m.result || '-'} (form: ${m.formation_played || '-'}, stile: ${m.playing_style_played || '-'}${vsForm})${votiStr}`
+          let zonesStr = ''
+          const aa = m.attack_areas
+          if (aa && typeof aa === 'object') {
+            const left = aa.left ?? aa.Left ?? aa.L
+            const center = aa.center ?? aa.Centre ?? aa.C
+            const right = aa.right ?? aa.Right ?? aa.R
+            const parts = []
+            if (left != null) parts.push(`L${left}`)
+            if (center != null) parts.push(`C${center}`)
+            if (right != null) parts.push(`R${right}`)
+            if (parts.length) zonesStr = ` [zone: ${parts.join(' ')}]`
+          }
+          return `  ${d} vs ${m.opponent_name || '?'} ${m.result || '-'} (form: ${m.formation_played || '-'}, stile: ${m.playing_style_played || '-'}${vsForm})${votiStr}${zonesStr}`
         })
 
     // Team tactical settings (da batch iniziale)
@@ -717,13 +755,30 @@ async function buildPersonalContext(userId, lang = 'it') {
         coachText += ` ${L.competenceHint} ${L.advisableStyles}: ${ok.length ? ok.join(', ') : L.noneLabel}. ${L.notAdvisableStyles}: ${no.length ? no.join(', ') : '-'}.`
       }
     }
-    const linkUpLine = formatCoachLinkUpsForPrompt(coachRow, lang)
+    const linkUpLine = formatCoachLinkUpsForHeroPrompt({
+      coach: coachRow,
+      starters: startersForLinkUpVerification(titolari, clientFluid),
+      stylesLookup,
+      lang
+    }) || formatCoachLinkUpsForPrompt(coachRow, lang)
     if (linkUpLine) coachText += ` ${linkUpLine}`
+    const connMatch = coachRow?.connection
+      ? matchConnectionToRoster(coachRow.connection, startersForLinkUpVerification(titolari, clientFluid), stylesLookup)
+      : null
+    if (connMatch) {
+      const focalNames = (connMatch.focal || []).map((p) => p.player_name).filter(Boolean).slice(0, 3)
+      const keyNames = (connMatch.keyMan || []).map((p) => p.player_name).filter(Boolean).slice(0, 3)
+      if (focalNames.length) coachText += ` Focal Point compatibili: ${focalNames.join(', ')}.`
+      else if (connMatch.focalReq) coachText += ` Focal Point richiesto (${connMatch.focalReq}): nessun match in rosa.`
+      if (keyNames.length) coachText += ` Key Man compatibili: ${keyNames.join(', ')}.`
+      else if (connMatch.keyManReq) coachText += ` Key Man richiesto (${connMatch.keyManReq}): nessun match in rosa.`
+    }
 
-    // Pattern tattici (da batch iniziale, formation_usage, recurring_issues) - per intreccio consigli formazione/problemi
+    // Pattern tattici (da batch iniziale, formation_usage, playing_style_usage, recurring_issues)
     let patternText = ''
     if (patternsRow) {
       const formUsage = patternsRow.formation_usage && typeof patternsRow.formation_usage === 'object' && Object.keys(patternsRow.formation_usage).length > 0
+      const styleUsage = patternsRow.playing_style_usage && typeof patternsRow.playing_style_usage === 'object' && Object.keys(patternsRow.playing_style_usage).length > 0
       const issues = Array.isArray(patternsRow.recurring_issues) && patternsRow.recurring_issues.length > 0
       if (formUsage) {
         const top = Object.entries(patternsRow.formation_usage)
@@ -736,6 +791,20 @@ async function buildPersonalContext(userId, lang = 'it') {
         }).join('; ')
         patternText = `${L.patternMatches}: ${patternText}.`
       }
+      if (styleUsage) {
+        const topStyles = Object.entries(patternsRow.playing_style_usage)
+          .sort((a, b) => (b[1]?.matches || 0) - (a[1]?.matches || 0))
+          .slice(0, 2)
+          .map(([style, d]) => {
+            const m = d?.matches || 0
+            const wr = d?.win_rate != null ? Math.round(d.win_rate * 100) : '-'
+            return `${style}: ${m} ${L.partite} (${wr}% ${L.vittorie})`
+          })
+          .join('; ')
+        if (topStyles) {
+          patternText += (patternText ? ' ' : '') + `${(lang === 'en' || lang === 'es') ? 'Style usage' : 'Uso stili'}: ${topStyles}.`
+        }
+      }
       if (issues) {
         const issueList = patternsRow.recurring_issues.slice(0, 3).map(i => i?.issue || i).filter(Boolean).join(', ')
         patternText += (patternText ? ' ' : '') + `${L.recurringIssues}: ${issueList}.`
@@ -745,12 +814,23 @@ async function buildPersonalContext(userId, lang = 'it') {
     const reserveIdx = rosterLines.findIndex(l => l === reservesHeader)
     const starterLines = reserveIdx >= 0 ? rosterLines.slice(0, reserveIdx + 1) : rosterLines
     const benchLines = reserveIdx >= 0 ? rosterLines.slice(reserveIdx + 1) : []
+    const fluidBlock = buildHeroFluidPromptBlock({
+      fluid: clientFluid,
+      starters: titolari,
+      lang,
+      evidence: {
+        recurringIssues: patternsRow?.recurring_issues,
+        gameAnalysis: gameAnalysisRow?.stats,
+        attackAreas: (matches || []).map((m) => m.attack_areas).filter(Boolean).join(' ')
+      }
+    })
 
     const coreParts = [
       '======================================================================',
       L.boxTitle,
       L.boxSubtitle,
       '======================================================================',
+      fluidBlock,
       dispositionLine,
       '',
       L.positionNote,
@@ -770,6 +850,45 @@ async function buildPersonalContext(userId, lang = 'it') {
     const optionalSections = [
       { label: 'bench', lines: benchLines.length > 0 ? ['', L.reservesNote, ...benchLines] : [] },
       { label: 'pattern', lines: patternText ? ['', patternText] : [] },
+      {
+        label: 'enterprise',
+        lines: (() => {
+          const subset = buildFallbackEnterpriseSubset({
+            titolari,
+            riserve,
+            stylesLookup,
+            formation: baseFormationName || '',
+            teamStyle,
+            coachRow,
+            patternsRow,
+            individualInstructions: indInstr,
+            problems: [],
+            matchesCount: matches.length,
+            lang
+          })
+          return subset ? ['', subset] : []
+        })()
+      },
+      {
+        label: 'teamStats',
+        lines: (() => {
+          const withStats = matches.filter((m) => m.team_stats && typeof m.team_stats === 'object').slice(0, 3)
+          if (!withStats.length) return []
+          const lines = withStats.map((m) => {
+            const d = m.match_date ? String(m.match_date).slice(0, 10) : '?'
+            const ts = m.team_stats
+            const poss = ts.possession ?? ts.Possession
+            const shots = ts.shots ?? ts.Shots
+            const passAcc = ts.pass_accuracy ?? ts.passAccuracy
+            const bits = []
+            if (poss != null) bits.push(`poss ${poss}`)
+            if (shots != null) bits.push(`tiri ${shots}`)
+            if (passAcc != null) bits.push(`pass ${passAcc}`)
+            return `  ${d}: ${bits.join(', ') || 'stats present'}`
+          })
+          return ['', (lang === 'en' || lang === 'es') ? 'Match team stats (recent):' : 'Statistiche di gioco (ultime partite):', ...lines]
+        })()
+      },
       { label: 'build', lines: buildProgressionBlock ? ['', buildProgressionBlock] : [] },
       { label: 'skill', lines: skillAdvisoryBlock ? ['', skillAdvisoryBlock] : [] }
     ]
@@ -808,6 +927,9 @@ function buildPersonalizedPromptV2(userMessage, context, language = 'it', efootb
   const aiWeakPoint = sanitizeForPrompt(profile?.ai_weak_point || '', 60)
   const aiLearnGoals = sanitizeForPrompt(profile?.ai_learn_goals || '', 240)
   const aiNotes = sanitizeForPrompt(profile?.ai_notes || '', 280)
+  const commonProblems = Array.isArray(profile?.common_problems)
+    ? profile.common_problems.map((p) => sanitizeForPrompt(p, 40)).filter(Boolean).slice(0, 5)
+    : []
   const WEAK_POINT_LABELS = language === 'en'
     ? { defence: 'Defence', attack: 'Attack', set_pieces: 'Set pieces', transitions: 'Transitions', final_minutes: 'Final minutes' }
     : { defence: 'Difesa', attack: 'Attacco', set_pieces: 'Piazzati', transitions: 'Transizioni', final_minutes: 'Finale partita' }
@@ -825,7 +947,7 @@ function buildPersonalizedPromptV2(userMessage, context, language = 'it', efootb
 - INPUT: ROSA (stile card, stats vel/acc/res/fin/pas/tac, abilità, forma ↑/↓, h/w, competenze), MATCH/PATTERN (result, formation/stile, opponent formation, attack_areas, voti cliente, recurring_issues), COACH (competenze stile), TATTICA (stile squadra + istruzioni), RAG (limiti + movimenti/situazioni + community).
 - MICRO-SCORE: FIT (position = competenze), COACH_OK(style>=70; contrattacco→contropiede_veloce), SPD (vel+acc+Scatto), PASS (pas+filtrante/di prima/calibrato), WIN (tac+Intercettazione/Marcatore/Contrasto/Muro), AIR_DEF (h/w+Dominio palle alte), AIR_ATK (h/w+Colpo di testa), SUB (Riserva di lusso).
 - DECISIONE: scegli 1 leva principale + max 2 secondarie: (1) Fix FIT, (2) Fix mismatch coach/stile squadra, (3) Aggancia top recurring_issue, (4) 1-2 cambi titolari/riserve (vedi SOSTITUZIONI sotto), (5) 1 istruzione valida (niente Offensivo/Linea bassa; Formazione fluida se alzare/abbassare), (6) gameplay solo "cosa fare" da §7.
-- VIETATO suggerire cambio formazione/modulo a meno che il cliente non lo chieda esplicitamente. Lavora sempre sulla formazione attuale salvata.
+- FORMAZIONE FLUIDA: se nel contesto è ATTIVA, riconoscila ("La Formazione fluida è già attiva") e valuta ATTACCO vs DIFESA separatamente usando i ruoli di fase (non player.position). NON dire "attiva la formazione fluida". Se è NON ATTIVA, puoi suggerire di VALUTARLA solo quando i dati reali (recurring_issues, analisi, pattern, feedback) mostrano un bisogno diverso tra attacco e difesa; motiva. Vietato "Attiva Fluid, è migliore." Se non c'è evidenza, NON suggerirla.
 - SOSTITUZIONI (leva 4, incrocio enterprise): (1) Sintomo da Statistiche di gioco, recurring_issues, voti partite o domanda. (2) Ruolo da rafforzare: tiro=fin+abilita tiro; passaggio=pas+abilita passaggio; difesa=tac+WIN. (3) Titolari: chi è in quel ruolo, forma, voti, stile giocatore. (4) Riserve: chi ha fin/pas/tac, abilita che compensano e stile giocatore adatto (RAG §2: es. Opportunista/Rapace d'area per finalizzazione, Giocatore chiave per inserimenti, Regista/Classico 10 per passaggio, Collante per difesa); posizione compatibile; incrocia con stile squadra e competenza allenatore (riassunto Tattica e Allenatore). (5) Un solo cambio concreto: Far uscire [titolare], far entrare [riserva]: [motivo da dati]. Usa sempre riassunto (Rosa stile+fin/pas/tac+abilita, Statistiche di gioco, Andamento/voti, Tattica, Allenatore, Sintesi rosa, Sinergie, Leve) e RAG §2/§7/§8 quando rilevante.
 - BUILD/META: consigli funzionali a movimenti e difficolta. Se chiede "build giuste/vanno bene": usa sezione Build progressione PT + Motivi app; non contraddire build generate dall app senza dati.
 - INVERSE: sintomo?cause?leva: fasce (attack_areas wide)?esterni senza WIN/Tornante?copertura/istruzioni; attacco sterile?PASS basso o stile incoerente?regista/cambio stile/modulo; palle alte?AIR_DEF basso?DC/MED più forti+piazzati.
@@ -837,7 +959,7 @@ OUTPUT: 1 posizione principale motivata dai dati, max 2 leve secondarie, 1 pross
 - INPUT: ROSTER (card style, stats spd/acc/sta/fin/pas/tac, skills, form ↑/↓, h/w, competences), MATCH/PATTERN (result, formation/style, opponent formation, attack_areas, client ratings, recurring_issues), COACH (style competence), TACTICS (team style + instructions), RAG (limits + movements/situations + community).
 - MICRO-SCORES: FIT (position = competences), COACH_OK(style>=70; contrattacco→contropiede_veloce), SPD (spd+acc+Sprint), PASS (pas+Through ball/One-touch/Weighted), WIN (tac+Interception/Man marking/Aggressive tackle/Block), AIR_DEF (h/w+High ball dominance+Aerial superiority), AIR_ATK (h/w+Heading), SUB (Luxury sub=Super sub).
 - DECISION: pick 1 main lever + max 2 secondary: (1) Fix FIT, (2) Fix coach/team-style mismatch, (3) Anchor top recurring_issue, (4) 1-2 lineup changes (see SUBSTITUTIONS below), (5) 1 valid instruction (no Attacking/Deep Line; Fluid Formation to raise/drop), (6) gameplay "what to do" only from §7.
-- FORBIDDEN to suggest formation/module changes unless explicitly asked. Always work with the current saved formation.
+- FLUID FORMATION: if the context says it is ACTIVE, recognise it ("Fluid Formation is already active") and evaluate ATTACK vs DEFENCE separately using phase roles (not player.position). Do NOT say "turn Fluid on". If it is OFF, you MAY suggest evaluating it only when real data (recurring_issues, analysis, patterns, feedback) show a different attack vs defence need; motivate it. Forbidden: "Turn Fluid on, it is better." If there is no evidence, do not suggest it.
 - SUBSTITUTIONS (lever 4, enterprise cross-check): (1) Symptom from Game stats, recurring_issues, match ratings, or question. (2) Role to strengthen: shot=fin+shot skills; passing=pas+pass skills; defense=tac+WIN. (3) Starters: who is in that role, form, ratings, player style. (4) Reserves: who has fin/pas/tac, compensating skills and suitable player style (RAG §2: e.g. Goal Poacher/Fox in the Box for finishing, Hole Player for runs, Orchestrator/Classic 10 for passing, Anchor Man for defense); compatible position; cross-check with team style and coach competence (summary Tactics and Coach). (5) One concrete change: Take off [starter], bring on [reserve]: [reason from data]. Always use summary (Roster style+fin/pas/tac+skills, Game stats, Form/ratings, Tactics, Coach, Roster summary, Synergies, Levers) and RAG §2/§7/§8 when relevant.
 - BUILD/META: functional advice for movements and difficulties. If they ask builds ok/correct: use Progression builds section + app Why lines; do not contradict app-generated builds without data.
 - INVERSE: symptom?cause?lever: wide threat (attack_areas wide)?wide players lack WIN/track back?coverage/instructions; stale attack?low PASS or mismatch style?add creator/change style/formation; aerial goals?low AIR_DEF?stronger CB/DM + set pieces.
@@ -857,6 +979,9 @@ OUTPUT: 1 main stance backed by data, max 2 secondary levers, 1 observable next 
     `Profilo: ${firstName} | ${teamName}`,
     howToRemember ? `Memo: ${howToRemember}` : '',
     weakPointLabel ? (language === 'en' ? `Weak point (what makes you lose): ${weakPointLabel}` : `Punto debole (cosa ti fa perdere): ${weakPointLabel}`) : '',
+    commonProblems.length
+      ? (language === 'en' ? `Declared problems: ${commonProblems.join(', ')}` : `Problemi dichiarati: ${commonProblems.join(', ')}`)
+      : '',
     aiLearnGoals ? (language === 'en' ? `Learn goals: ${aiLearnGoals}` : `Cosa vuole imparare: ${aiLearnGoals}`) : '',
     aiNotes ? (language === 'en' ? `Notes for AI: ${aiNotes}` : `Note per l'IA: ${aiNotes}`) : ''
   ].filter(Boolean)
@@ -921,6 +1046,9 @@ DUE FONTI DATI (non in conflitto): (1) "Dati dalle partite inserite" = zone atta
 Se nel RIASSUNTO ANALISI è presente la sezione "Statistiche di gioco (Analisi eFootball, ultime 10 partite)" (tipo gol, tiro, passaggio, dribbling, difesa, comandi speciali), usala per consigli mirati: es. diversificare tipi di tiro, aumentare uso pressing/comandi, lavorare su passaggio o difesa in base alle percentuali reali. Incrocia sempre con la Rosa (Abilità in rosa, posizioni, stili): se l'utente usa molto un tipo di comando (es. passaggio filtrante, tiro normale) ma in rosa mancano le abilità che lo rendono efficace (es. Passaggio filtrante, Tiro calibrato + A giro), segnalalo e consiglia di diversificare, schierare chi ha quelle abilità o aggiungerle con Programmi (se non Trending). Usa la mappatura comando→abilità del RAG (§7.9 se presente). Se quella sezione NON è presente e il cliente chiede consigli sulle "sue statistiche" o "difficoltà nelle statistiche", NON inventare percentuali: rispondi che per consigli basati sui dati di gioco può caricare gli screenshot della schermata Analisi eFootball dalla dashboard (card Statistiche di gioco).
 Se nel RIASSUNTO c'è Connessione/Input delay/Ritardo (es. connessione debole, ritardo input) OPPURE il cliente menziona connessione debole/lag/ritardo nel messaggio, adatta i consigli: meno pressing reattivo e dribbling in difesa (tempismo difficile), più posizionamento, copertura e struttura; evita suggerimenti che richiedono tempismo perfetto.
 PRIORITÀ PROFILO: Per "Punto debole", "Cosa vuole imparare" e "Note per l'IA" usa SEMPRE i valori dal blocco PROFILO in testa al messaggio (sono live/aggiornati). Se il RIASSUNTO contiene valori diversi per gli stessi campi, IGNORA quelli del RIASSUNTO (possono essere stale). Orienta almeno un consiglio sul punto debole e sugli obiettivi di apprendimento quando rilevanti alla domanda. NON citare mai al cliente l'elenco (es. "hai indicato che hai difficoltà in..."); usa il dato solo per orientare i consigli.
+- FORMAZIONE FLUIDA: se ATTIVA nel contesto, dillo e valuta ATTACCO/DIFESA con i ruoli di fase. Se NON ATTIVA, suggeriscila solo se i dati mostrano un bisogno diverso tra le due fasi, e motiva. Mai cambiare formation_layout o player.position.
+
+CONSTRAINTS: solo nomi in rosa; solo 6 stili squadra configurabili (Possesso palla, Contropiede veloce, Contrattacco, Passaggio lungo, Vie laterali, Pressing totale / Overload); contrattacco → contropiede_veloce e competenza coach >=70; solo istruzioni individuali valide (niente Offensivo/Linea bassa); Formazione fluida e due Collegamenti solo come consiglio; limiti formazione §3.4; niente Tattica (falli) sui difensori; niente Tornante su un Collante/Anchor Man DM; Dominio palle alte = High ball dominance.
 
 OUTPUT COACH: 1 posizione principale motivata dai dati, max 2 leve secondarie, 1 prossimo check osservabile. Una sola domanda solo se manca un dato decisivo. Niente report enciclopedici.`
 
@@ -1128,33 +1256,38 @@ export async function POST(req) {
 
         if (cacheRow?.content && String(cacheRow.content).trim().length > 0 && cacheIsFresh) {
           let raw = String(cacheRow.content).trim()
+          // Live overlays replace Fluid/tactics/FIT and PROFILE header replaces AI info — strip stale copies
+          raw = stripStaleDiagnosticSections(raw, { stripAiInfo: true })
           personalContextSummary = raw.length > MAX_PERSONAL_CONTEXT_CHARS ? raw.slice(0, MAX_PERSONAL_CONTEXT_CHARS) + '\n... (riassunto troncato).' : raw
           contextBlockLabel = 'RIASSUNTO ANALISI'
           if (personalContextSummary) console.log('[assistant-chat] Diagnostic from cache used')
-          // Tattica live: la cache può essere vecchia; l'IA deve vedere sempre stile/istruzioni salvati in Supabase
-          const { data: tacticalRow } = await admin.from('team_tactical_settings').select('team_playing_style, individual_instructions').eq('user_id', userId).maybeSingle()
+          // Tattica + Fluida live: la cache può essere vecchia; l'IA deve vedere sempre lo stato salvato
+          const [{ data: tacticalRow }, { data: liveLayout }, { data: liveVariants }, { data: liveCoach }, { data: stylesData }] = await Promise.all([
+            admin.from('team_tactical_settings').select('team_playing_style, individual_instructions').eq('user_id', userId).maybeSingle(),
+            admin.from('formation_layout').select('formation, slot_positions').eq('user_id', userId).maybeSingle(),
+            admin.from('formation_variants').select('id, phase, formation, slot_positions, is_active').eq('user_id', userId).in('phase', ['attack', 'defense']).eq('is_active', true),
+            admin.from('coaches').select('coach_name, playing_style_competence, connection, extracted_data, metadata').eq('user_id', userId).eq('is_active', true).maybeSingle(),
+            admin.from('playing_styles').select('id, name')
+          ])
           const liveStyle = tacticalRow?.team_playing_style?.trim()
           const liveInstr = tacticalRow?.individual_instructions
           const numLive = (liveInstr && typeof liveInstr === 'object') ? Object.keys(liveInstr).length : 0
-          // Risolvi nomi giocatori per istruzioni e segnala fit live: la cache può non evidenziare fuori ruolo recenti.
+          const liveFluid = buildFluidFormationState(liveLayout, liveVariants || [])
+          // Risolvi nomi giocatori per istruzioni, Fluida e avvisi competenza
           let instrLines = ''
           let fitLines = ''
+          let livePlayers = []
           try {
             const { data: players } = await admin
               .from('players')
-              .select('id, player_name, position, slot_index, original_positions')
+              .select('id, player_name, position, slot_index, original_positions, playing_style_id')
               .eq('user_id', userId)
               .limit(23)
-            rosterNames = extractRosterNames(players || [])
-            const outOfPosition = getOutOfPositionStarterLines(players || [], lang)
-            if (outOfPosition.length > 0) {
-              fitLines = lang === 'en'
-                ? `\n[LIVE] Out-of-position starters (fix FIT first):\n${outOfPosition.join('\n')}\n`
-                : `\n[AGGIORNAMENTO LIVE] Titolari fuori posizione (correggi FIT prima):\n${outOfPosition.join('\n')}\n`
-            }
+            livePlayers = players || []
+            rosterNames = extractRosterNames(livePlayers)
             if (liveInstr && typeof liveInstr === 'object') {
               const map = {}
-              ;(players || []).forEach(p => { if (p?.id) map[String(p.id)] = p.player_name || '?' })
+              livePlayers.forEach(p => { if (p?.id) map[String(p.id)] = p.player_name || '?' })
               const entries = Object.entries(liveInstr)
                 .map(([slot, v]) => ({ slot, v }))
                 .filter(({ v }) => v && typeof v === 'object' && v.enabled === true && v.instruction && !isRemovedIndividualInstruction(v.instruction))
@@ -1168,6 +1301,24 @@ export async function POST(req) {
               }
             }
           } catch (_) {}
+          const liveStarters = livePlayers.filter((player) => player?.slot_index != null && Number(player.slot_index) >= 0 && Number(player.slot_index) <= 10)
+          const liveFluidText = formatHeroFluidContext({
+            fluid: liveFluid,
+            starters: liveStarters,
+            lang
+          })
+          const placementWarn = getPlacementWarningLines(liveStarters, lang, liveFluid)
+          if (placementWarn.length > 0) {
+            const liveTag = lang === 'en' ? '[LIVE]' : '[AGGIORNAMENTO LIVE]'
+            fitLines = `\n${liveTag} ${getPlacementWarningTitle(lang)}\n${placementWarn.join('\n')}\n`
+          } else {
+            const outOfPosition = getOutOfPositionStarterLines(livePlayers, lang)
+            if (outOfPosition.length > 0) {
+              fitLines = lang === 'en'
+                ? `\n[LIVE] Out-of-position starters (fix FIT first):\n${outOfPosition.join('\n')}\n`
+                : `\n[AGGIORNAMENTO LIVE] Titolari fuori posizione (correggi FIT prima):\n${outOfPosition.join('\n')}\n`
+            }
+          }
           if (liveStyle || numLive > 0) {
             const liveLine = lang === 'en'
               ? `[LIVE] Team style: ${liveStyle || 'not set'}. Individual instructions: ${numLive} active.${instrLines}\n`
@@ -1176,6 +1327,16 @@ export async function POST(req) {
           } else if (fitLines) {
             personalContextSummary = fitLines + personalContextSummary
           }
+          personalContextSummary = prependLiveFluidOverride(personalContextSummary, liveFluidText, lang)
+          const liveStylesLookup = {}
+          ;(stylesData || []).forEach((style) => { liveStylesLookup[style.id] = style.name || '' })
+          const liveLinkUpText = formatCoachLinkUpsForHeroPrompt({
+            coach: liveCoach,
+            starters: startersForLinkUpVerification(liveStarters, liveFluid),
+            stylesLookup: liveStylesLookup,
+            lang
+          })
+          personalContextSummary = prependLiveLinkUpOverride(personalContextSummary, liveLinkUpText, lang)
           if (personalContextSummary.length > MAX_PERSONAL_CONTEXT_CHARS) {
             personalContextSummary = personalContextSummary.slice(0, MAX_PERSONAL_CONTEXT_CHARS) + '\n... (riassunto troncato).'
           }

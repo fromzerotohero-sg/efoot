@@ -164,6 +164,60 @@ const negExampleStripped = policiesFull
 assert(!/Rijkaard \(Passaggio/.test(negExampleStripped), 'no parenthesized skill labels in positive examples')
 assert(/perché può far circolare la palla rapidamente/i.test(policiesFull), 'verbalization positive example present')
 
+// --- Ciclo 2: metadata skills, link-up array, RAG routing, fluid helpers, stale strip ---
+const fromMeta = {
+  skills: ['Passaggio filtrante', 'Tiro di prima', 'mazing run'],
+  metadata: {
+    native_skills: ['Passaggio filtrante'],
+    additional_skills: ['Tiro di prima']
+  },
+  com_skills: ['mazing run']
+}
+assert(getNativePlayerSkills(fromMeta).some((s) => /filtrante/i.test(getSkillDisplayLabel(s, 'it'))), 'native skills from metadata jsonb')
+assert(getAdditionalOrUnclassifiedPlayerSkills(fromMeta).some((s) => /tiro di prima/i.test(getSkillDisplayLabel(s, 'it'))), 'additional skills from metadata jsonb')
+assert(getAdditionalOrUnclassifiedPlayerSkills(fromMeta).length <= 5, 'max 5 additional respected')
+
+const arrayLinkUps = collectCoachLinkUps({
+  connection: [
+    { name: 'Link A', focal_point: { playing_style: 'Collante', position: 'MED' } },
+    { name: 'Link B', key_man: { playing_style: 'Opportunista', position: 'P' } }
+  ]
+})
+assert(arrayLinkUps.length === 2, 'link-ups from connection jsonb array (no connection_2)')
+assert(!/connection_2/.test(String(collectCoachLinkUps)), 'collectCoachLinkUps helper available')
+
+const { getRelevantSections, getRelevantSectionsForContext } = await import('../lib/ragHelper.js')
+const lineaBassaSections = getRelevantSections('perché non posso più usare linea bassa?', 8000)
+assert(/ISTRUZIONI INDIVIDUALI/i.test(lineaBassaSections), 'linea bassa routes to §5 individual instructions')
+assert(/rimoss|non consigli|v6\.0\.0/i.test(lineaBassaSections), 'linea bassa section explains removal')
+const analyzeBundle = getRelevantSectionsForContext('analyze-match', 20000)
+assert(/PROVENIENZA CATALOGO/i.test(analyzeBundle), '§11 provenance in analyze-match bundle')
+const counterBundle = getRelevantSectionsForContext('countermeasures', 22000)
+assert(/PROVENIENZA CATALOGO/i.test(counterBundle), '§11 provenance in countermeasures bundle')
+
+const { buildFluidFormationState, formatHeroFluidContext } = await import('../lib/efootballV6TacticalModel.js')
+const fluidOn = buildFluidFormationState(
+  { formation: '4-3-3', slot_positions: Object.fromEntries([...Array(11)].map((_, i) => [i, { x: 10, y: 10, position: 'CC' }])) },
+  [
+    { phase: 'attack', formation: '3-4-3', is_active: true, slot_positions: Object.fromEntries([...Array(11)].map((_, i) => [i, { x: 20, y: 20, position: 'CC' }])) },
+    { phase: 'defense', formation: '5-2-3', is_active: true, slot_positions: Object.fromEntries([...Array(11)].map((_, i) => [i, { x: 30, y: 30, position: 'CC' }])) }
+  ]
+)
+assert(fluidOn.enabled === true, 'fluid formation enabled when both phases active')
+const fluidText = formatHeroFluidContext({ fluid: fluidOn, starters: [], lang: 'it' })
+assert(/ATTIVA|ON/i.test(fluidText) && /3-4-3/.test(fluidText) && /5-2-3/.test(fluidText), 'Hero fluid context cites attack/defense')
+
+const { stripStaleDiagnosticSections } = await import('../lib/diagnosticCacheSanitize.js')
+const stripped = stripStaleDiagnosticSections(
+  `Profilo: Test\nInformazioni per l'IA: lag\nFORMAZIONE FLUIDA\nATTIVA\nbase 4-3-3\nTattica: stile squadra Possesso.\nRosa: ok`,
+  { stripAiInfo: true }
+)
+assert(!/Informazioni per l'IA/i.test(stripped), 'stale AI info stripped when PROFILE live')
+assert(!/FORMAZIONE FLUIDA/i.test(stripped), 'stale fluid block stripped for live overlay')
+assert(!/^Tattica:/m.test(stripped), 'stale tactics line stripped')
+
+assert(/STILI SQUADRA \(solo questi 6\)|TEAM PLAYSTYLES \(only these 6\)/i.test(getTruthLayerPromptBlock('en') + getTruthLayerPromptBlock('it')), 'truth layer is single source for 6 styles list')
+
 if (failed > 0) {
   console.error(`\n${failed} assertion(s) failed`)
   process.exit(1)

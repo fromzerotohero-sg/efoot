@@ -15,6 +15,7 @@ import { PHOTO_TYPE_KEYS, getPhotoTypeConfig } from '@/lib/playerPhotoTypes'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import { getImageOptimizeUserMessage } from '@/lib/imageOptimizeUserMessage'
 import { DEFAULT_FORMATION_NAME, DEFAULT_SLOT_POSITIONS } from '@/lib/formationDefaultSlots'
+import { getFluidCardRoleLabel, getPhasePositionFit, getPhasePositionFitLabel } from '@/lib/efootballV6TacticalModel'
 import { getFormationNameFromSlotPositions } from '@/lib/validateFormationLimits'
 import {
   isBuildMacroBlockedForPlayer,
@@ -513,7 +514,8 @@ function SlotPlayerCard({
   onRemove,
   lang,
   isEditMode = false,
-  onPositionChange
+  onPositionChange,
+  fluidEnabled = false
 }) {
   const [dragging, setDragging] = React.useState(false)
   const [dragOffset, setDragOffset] = React.useState({ x: 0, y: 0 })
@@ -521,8 +523,15 @@ function SlotPlayerCard({
   /** After opening from pointer release (edit mode), skip one synthetic click to avoid double-open on desktop */
   const skipNextSyntheticCardClickRef = React.useRef(false)
   const slotThumb = React.useMemo(() => resolvePlayerCardImageUrl(player), [player])
-  const roleLabel = isEditMode ? (slot.position || player.position || '-') : (player.position || slot.position || '-')
+  const roleLabel = getFluidCardRoleLabel({
+    fluidEnabled,
+    isEditMode,
+    slotPosition: slot.position,
+    playerPosition: player.position
+  })
   const rosterPosition = String(player?.position || roleLabel || '').trim().toUpperCase()
+  const phaseFit = fluidEnabled ? getPhasePositionFit(slot.position, player.original_positions) : null
+  const phaseFitLabel = phaseFit ? getPhasePositionFitLabel(phaseFit.fit, lang) : ''
   const initialsLabel = getPlayerInitials(player.player_name)
 
   React.useEffect(() => {
@@ -632,8 +641,8 @@ function SlotPlayerCard({
       onMouseDown={isEditMode ? handlePointerStart : undefined}
       onTouchStart={isEditMode ? handlePointerStart : undefined}
     >
-      <div className="nr-slot-top-badge">
-        <span>{roleLabel}</span>
+      <div className={`nr-slot-top-badge ${phaseFit?.fit === 'fuori_ruolo' ? 'is-out-of-role' : ''}`}>
+        <span>{phaseFitLabel ? `${roleLabel} · ${phaseFitLabel}` : roleLabel}</span>
       </div>
       <div className={`nr-slot-filled-main ${slotThumb ? 'has-photo' : 'has-initials'}`}>
         <div className="nr-slot-avatar-mini">
@@ -781,7 +790,8 @@ function SlotCard({
   onRemove,
   lang,
   isEditMode = false,
-  onPositionChange
+  onPositionChange,
+  fluidEnabled = false
 }) {
   return (
     <div className="nr-slot-card" style={{ left: `${slot.x}%`, top: `${slot.y}%` }}>
@@ -794,6 +804,7 @@ function SlotCard({
           lang={lang}
           isEditMode={isEditMode}
           onPositionChange={onPositionChange}
+          fluidEnabled={fluidEnabled}
         />
       ) : (
         <SlotEmptyCard slot={slot} onEmptyClick={onEmptyClick} isEditMode={isEditMode} onPositionChange={onPositionChange} />
@@ -3904,6 +3915,9 @@ export default withAuth(function NuovaRosaLabPage() {
   const [savingTacticalSettings, setSavingTacticalSettings] = React.useState(false)
   const [fieldEditMode, setFieldEditMode] = React.useState(false)
   const [customPositions, setCustomPositions] = React.useState({})
+  const [fluidEnabled, setFluidEnabled] = React.useState(false)
+  const [fluidPhase, setFluidPhase] = React.useState('attack')
+  const [fluidDraft, setFluidDraft] = React.useState({ attack: null, defense: null })
   const [savingFieldLayout, setSavingFieldLayout] = React.useState(false)
   const [showPhotoUploadModal, setShowPhotoUploadModal] = React.useState(false)
   const [photoUploadMode, setPhotoUploadMode] = React.useState('slot')
@@ -3958,18 +3972,28 @@ export default withAuth(function NuovaRosaLabPage() {
         return
       }
 
-      const res = await fetch(`/api/formation?t=${Date.now()}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          Pragma: 'no-cache'
-        },
-        cache: 'no-store'
-      })
+      const [res, variantsRes] = await Promise.all([
+        fetch(`/api/formation?t=${Date.now()}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            Pragma: 'no-cache'
+          },
+          cache: 'no-store'
+        }),
+        fetch(`/api/tactical/formation-variants?t=${Date.now()}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Cache-Control': 'no-store'
+          },
+          cache: 'no-store'
+        })
+      ])
 
       if (!res.ok) throw new Error('Failed to load formation data')
 
       const data = await res.json()
+      const variantsData = variantsRes.ok ? await variantsRes.json().catch(() => ({})) : {}
       const stylesLookup = {}
       ;(data.playingStyles || []).forEach((style) => {
         stylesLookup[style.id] = style.name
@@ -3988,6 +4012,21 @@ export default withAuth(function NuovaRosaLabPage() {
         }))
 
       setLayout((prev) => normalizeLayoutPayload(data?.layout, prev))
+      const nextLayout = normalizeLayoutPayload(data?.layout, null)
+      const fallbackPhase = {
+        formation: nextLayout?.formation || '4-3-3',
+        slot_positions: completeSlotPositions(nextLayout?.slot_positions || DEFAULT_SLOT_POSITIONS)
+      }
+      const fluid = variantsData?.fluid_formation || {}
+      setFluidEnabled(Boolean(fluid.enabled))
+      setFluidDraft({
+        attack: fluid.attack
+          ? { formation: fluid.attack.formation, slot_positions: completeSlotPositions(fluid.attack.slot_positions) }
+          : fallbackPhase,
+        defense: fluid.defense
+          ? { formation: fluid.defense.formation, slot_positions: completeSlotPositions(fluid.defense.slot_positions) }
+          : { ...fallbackPhase, slot_positions: completeSlotPositions(fallbackPhase.slot_positions) }
+      })
       setActiveCoach(data.activeCoach || null)
       setTacticalSettings(data.tacticalSettings || null)
       setTitolari(
@@ -5683,9 +5722,12 @@ export default withAuth(function NuovaRosaLabPage() {
   }, [fetchRoster, lang, refreshDiagnosticAfterSave, showToast, t])
 
   const slots = React.useMemo(() => {
+    const source = fluidEnabled
+      ? (fluidDraft[fluidPhase]?.slot_positions || layout?.slot_positions)
+      : layout?.slot_positions
     const base = completeSlotPositions(
-      layout?.slot_positions && typeof layout.slot_positions === 'object'
-        ? layout.slot_positions
+      source && typeof source === 'object'
+        ? source
         : DEFAULT_SLOT_POSITIONS
     )
 
@@ -5695,7 +5737,7 @@ export default withAuth(function NuovaRosaLabPage() {
       y: Number(customPositions?.[index]?.y ?? base?.[index]?.y ?? 50),
       position: customPositions?.[index]?.position || base?.[index]?.position || '?'
     }))
-  }, [customPositions, layout])
+  }, [customPositions, fluidDraft, fluidEnabled, fluidPhase, layout])
 
   const startersBySlot = React.useMemo(() => {
     const map = new Map()
@@ -5713,6 +5755,9 @@ export default withAuth(function NuovaRosaLabPage() {
   const allRosterPlayers = React.useMemo(() => [...titolari, ...riserve], [titolari, riserve])
 
   const handleFieldPositionChange = React.useCallback((slotIndex, position) => {
+    const sourceSlots = fluidEnabled
+      ? (fluidDraft[fluidPhase]?.slot_positions || {})
+      : (layout?.slot_positions || {})
     const allAttackSlots = []
     Object.entries(customPositions || {}).forEach(([idx, pos]) => {
       if (pos?.y < 40) allAttackSlots.push({ slotIndex: Number(idx), x: pos.x, y: pos.y })
@@ -5720,7 +5765,7 @@ export default withAuth(function NuovaRosaLabPage() {
     if (position?.y < 40) {
       allAttackSlots.push({ slotIndex: Number(slotIndex), x: position.x, y: position.y })
     }
-    Object.entries(layout?.slot_positions || {}).forEach(([idx, pos]) => {
+    Object.entries(sourceSlots).forEach(([idx, pos]) => {
       if (pos?.y < 40 && !customPositions?.[idx]) {
         allAttackSlots.push({ slotIndex: Number(idx), x: pos.x, y: pos.y })
       }
@@ -5735,8 +5780,8 @@ export default withAuth(function NuovaRosaLabPage() {
     const previousRole =
       customPositions?.[slotIndex]?.position ||
       customPositions?.[String(slotIndex)]?.position ||
-      layout?.slot_positions?.[slotIndex]?.position ||
-      layout?.slot_positions?.[String(slotIndex)]?.position ||
+      sourceSlots?.[slotIndex]?.position ||
+      sourceSlots?.[String(slotIndex)]?.position ||
       null
     const nextRole = applyMedCcHysteresis(previousRole, computedRole, position.x, position.y)
     let nextX = clampPercent(position.x)
@@ -5755,7 +5800,7 @@ export default withAuth(function NuovaRosaLabPage() {
         position: nextRole
       }
     }))
-  }, [customPositions, layout])
+  }, [customPositions, fluidDraft, fluidEnabled, fluidPhase, layout])
 
   const saveFieldLayout = React.useCallback(async (skipOutOfRoleWarning = false) => {
     if (!layout || Object.keys(customPositions).length === 0) {
@@ -5772,7 +5817,10 @@ export default withAuth(function NuovaRosaLabPage() {
       }
       if (!token) throw new Error(t('sessionExpired'))
 
-      const updatedSlotPositions = completeSlotPositions(layout.slot_positions)
+      const sourceSlots = fluidEnabled
+        ? (fluidDraft[fluidPhase]?.slot_positions || layout.slot_positions)
+        : layout.slot_positions
+      const updatedSlotPositions = completeSlotPositions(sourceSlots)
       Object.entries(customPositions).forEach(([slotIndex, pos]) => {
         let x = clampPercent(pos.x)
         let y = clampPercent(pos.y)
@@ -5797,8 +5845,8 @@ export default withAuth(function NuovaRosaLabPage() {
           const originalPositions = Array.isArray(player.original_positions) && player.original_positions.length > 0
             ? player.original_positions
             : (player.position ? [{ position: player.position, competence: 'Alta' }] : [])
-          const isOriginal = originalPositions.some((entry) => String(entry?.position || '').toUpperCase() === String(pos.position).toUpperCase())
-          if (isOriginal || originalPositions.length === 0) return null
+          const fit = getPhasePositionFit(pos.position, originalPositions)
+          if (fit.fit !== 'fuori_ruolo' || originalPositions.length === 0) return null
           return {
             player,
             newRole: pos.position,
@@ -5834,7 +5882,7 @@ export default withAuth(function NuovaRosaLabPage() {
         }
       }
 
-      if (skipOutOfRoleWarning && playersOutOfRole.length > 0) {
+      if (skipOutOfRoleWarning && !fluidEnabled && playersOutOfRole.length > 0) {
         await Promise.all(playersOutOfRole.map(async ({ player, newRole, originalPositions }) => {
           const roleExists = originalPositions.some((entry) => String(entry?.position || '').toUpperCase() === String(newRole).toUpperCase())
           if (roleExists) return
@@ -5854,6 +5902,43 @@ export default withAuth(function NuovaRosaLabPage() {
       }
 
       const effectiveFormation = getFormationNameFromSlotPositions(updatedSlotPositions) || layout.formation || 'Custom'
+
+      if (fluidEnabled) {
+        const nextPhase = {
+          formation: effectiveFormation,
+          slot_positions: updatedSlotPositions
+        }
+        const fallbackPhase = {
+          formation: layout.formation || '4-3-3',
+          slot_positions: completeSlotPositions(layout.slot_positions)
+        }
+        const attack = fluidPhase === 'attack' ? nextPhase : (fluidDraft.attack || fallbackPhase)
+        const defense = fluidPhase === 'defense' ? nextPhase : (fluidDraft.defense || fallbackPhase)
+        const response = await fetch('/api/tactical/formation-variants', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ enabled: true, attack, defense })
+        })
+        const data = await safeJsonResponse(response, t('errorSavingFormation'))
+        const saved = data?.fluid_formation || {}
+        setFluidEnabled(Boolean(saved.enabled))
+        setFluidDraft({
+          attack: saved.attack
+            ? { formation: saved.attack.formation, slot_positions: completeSlotPositions(saved.attack.slot_positions) }
+            : attack,
+          defense: saved.defense
+            ? { formation: saved.defense.formation, slot_positions: completeSlotPositions(saved.defense.slot_positions) }
+            : defense
+        })
+        setFieldEditMode(false)
+        setCustomPositions({})
+        await refreshDiagnosticAfterSave()
+        showToast(t('positionsSavedSuccessfully'), 'success')
+        return
+      }
 
       const response = await fetch('/api/supabase/save-formation-layout', {
         method: 'POST',
@@ -5879,7 +5964,97 @@ export default withAuth(function NuovaRosaLabPage() {
     } finally {
       setSavingFieldLayout(false)
     }
-  }, [customPositions, fetchRoster, lang, layout, refreshDiagnosticAfterSave, showToast, t, titolari])
+  }, [customPositions, fetchRoster, fluidDraft, fluidEnabled, fluidPhase, lang, layout, refreshDiagnosticAfterSave, showToast, t, titolari])
+
+  const persistFluidState = React.useCallback(async (enabled, draft = fluidDraft) => {
+    let token = getTokenFallback()
+    if (!token && supabase) {
+      const { data: session } = await supabase.auth.getSession()
+      token = session?.session?.access_token
+    }
+    if (!token) throw new Error(t('sessionExpired'))
+
+    const fallbackPhase = {
+      formation: layout?.formation || '4-3-3',
+      slot_positions: completeSlotPositions(layout?.slot_positions || DEFAULT_SLOT_POSITIONS)
+    }
+    const attack = draft?.attack || fallbackPhase
+    const defense = draft?.defense || fallbackPhase
+    const response = await fetch('/api/tactical/formation-variants', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(enabled ? { enabled: true, attack, defense } : { enabled: false })
+    })
+    const data = await safeJsonResponse(response, t('errorSavingFormation'))
+    const saved = data?.fluid_formation || {}
+    setFluidEnabled(Boolean(saved.enabled))
+    if (saved.attack || saved.defense) {
+      setFluidDraft({
+        attack: saved.attack
+          ? { formation: saved.attack.formation, slot_positions: completeSlotPositions(saved.attack.slot_positions) }
+          : attack,
+        defense: saved.defense
+          ? { formation: saved.defense.formation, slot_positions: completeSlotPositions(saved.defense.slot_positions) }
+          : defense
+      })
+    }
+    return saved
+  }, [fluidDraft, layout, t])
+
+  const handleFluidToggle = React.useCallback(async (enabled) => {
+    try {
+      setCustomPositions({})
+      setFieldEditMode(false)
+      if (enabled) {
+        const fallbackPhase = {
+          formation: layout?.formation || '4-3-3',
+          slot_positions: completeSlotPositions(layout?.slot_positions || DEFAULT_SLOT_POSITIONS)
+        }
+        const nextDraft = {
+          attack: fluidDraft.attack || fallbackPhase,
+          defense: fluidDraft.defense || { ...fallbackPhase, slot_positions: completeSlotPositions(fallbackPhase.slot_positions) }
+        }
+        setFluidDraft(nextDraft)
+        setFluidPhase('attack')
+        await persistFluidState(true, nextDraft)
+        showToast(t('fluidSaved'), 'success')
+      } else {
+        await persistFluidState(false)
+        showToast(t('fluidDisabled'), 'success')
+      }
+      await refreshDiagnosticAfterSave()
+    } catch (err) {
+      const { message } = mapErrorToUserMessage(err, t('errorSavingFormation'), lang)
+      showToast(message, 'error')
+    }
+  }, [fluidDraft, lang, layout, persistFluidState, refreshDiagnosticAfterSave, showToast, t])
+
+  const handleFluidPhaseChange = React.useCallback((nextPhase) => {
+    if (nextPhase === fluidPhase) return
+    if (Object.keys(customPositions).length > 0) {
+      const current = fluidDraft[fluidPhase] || {
+        formation: layout?.formation || '4-3-3',
+        slot_positions: completeSlotPositions(layout?.slot_positions)
+      }
+      const nextSlots = completeSlotPositions(current.slot_positions)
+      Object.entries(customPositions).forEach(([idx, pos]) => {
+        nextSlots[idx] = { ...nextSlots[idx], ...pos }
+      })
+      setFluidDraft((prev) => ({
+        ...prev,
+        [fluidPhase]: {
+          ...current,
+          formation: getFormationNameFromSlotPositions(nextSlots) || current.formation,
+          slot_positions: nextSlots
+        }
+      }))
+      setCustomPositions({})
+    }
+    setFluidPhase(nextPhase)
+  }, [customPositions, fluidDraft, fluidPhase, layout])
 
   const showFormationHelp = React.useCallback(() => {
     setConfirmModal({
@@ -6010,14 +6185,42 @@ export default withAuth(function NuovaRosaLabPage() {
               </div>
               <div className="nr-build-coach-secondary-grid">
                 <button type="button" className="nr-formation-inline-tile" onClick={showFormationHelp}>
-                  <span>{(lang === 'en' || lang === 'es') ? 'Formation' : 'Modulo'}</span>
-                  <strong>{layout?.formation || '4-3-3'}</strong>
+                  <span>{fluidEnabled
+                    ? (fluidPhase === 'attack' ? t('fluidAttack') : t('fluidDefense'))
+                    : ((lang === 'en' || lang === 'es') ? 'Formation' : 'Modulo')}</span>
+                  <strong>{fluidEnabled
+                    ? (fluidDraft[fluidPhase]?.formation || layout?.formation || '4-3-3')
+                    : (layout?.formation || '4-3-3')}</strong>
                   <em className="nr-formation-inline-style">{activeTeamPlaystyleLabel}</em>
                 </button>
                 <button type="button" className="nr-move-players-wide-button" onClick={() => setFieldEditMode(true)} disabled={fieldEditMode}>
                   <ArrowRight size={14} />
                   <span>{(lang === 'en' || lang === 'es') ? 'Move positions' : 'Muovi posizioni'}</span>
                 </button>
+              </div>
+              <div className="nr-fluid-inline-bar">
+                <div className="nr-fluid-inline-copy">
+                  <span>{t('fluidFormation')}</span>
+                  <small>{t('fluidFormationHelp')}</small>
+                </div>
+                <div className="nr-fluid-inline-switch" role="group" aria-label={t('fluidFormation')}>
+                  <button type="button" aria-pressed={!fluidEnabled} className={!fluidEnabled ? 'is-active' : ''} onClick={() => handleFluidToggle(false)}>
+                    OFF
+                  </button>
+                  <button type="button" aria-pressed={fluidEnabled} className={fluidEnabled ? 'is-active' : ''} onClick={() => handleFluidToggle(true)}>
+                    ON
+                  </button>
+                </div>
+                {fluidEnabled && (
+                  <div className="nr-fluid-inline-phases" role="group" aria-label={t('fluidPhasesGroupLabel')}>
+                    <button type="button" aria-pressed={fluidPhase === 'attack'} className={fluidPhase === 'attack' ? 'is-active' : ''} onClick={() => handleFluidPhaseChange('attack')}>
+                      {t('fluidAttack')}
+                    </button>
+                    <button type="button" aria-pressed={fluidPhase === 'defense'} className={fluidPhase === 'defense' ? 'is-active' : ''} onClick={() => handleFluidPhaseChange('defense')}>
+                      {t('fluidDefense')}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </section>
@@ -6033,6 +6236,11 @@ export default withAuth(function NuovaRosaLabPage() {
               </div>
             )}
             <div className="nr-field-shell">
+              {fluidEnabled && (
+                <div className="nr-fluid-field-badge" aria-live="polite">
+                  {t('fluidEditingPhase', { phase: fluidPhase === 'attack' ? t('fluidAttack') : t('fluidDefense') })}
+                </div>
+              )}
               <div className={`nr-field ${fieldEditMode ? 'is-editing' : ''}`} data-field-container>
                 <div className="nr-field-texture" />
                 <div className="nr-field-dark-vignette" />
@@ -6062,6 +6270,7 @@ export default withAuth(function NuovaRosaLabPage() {
                     lang={lang}
                     isEditMode={fieldEditMode}
                     onPositionChange={handleFieldPositionChange}
+                    fluidEnabled={fluidEnabled}
                   />
                 ))}
               </div>
@@ -6784,6 +6993,90 @@ export default withAuth(function NuovaRosaLabPage() {
           gap: 10px;
         }
 
+        .nr-fluid-inline-bar {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 10px;
+          margin-top: 10px;
+          padding: 10px 12px;
+          border-radius: 14px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(15, 23, 42, 0.62);
+        }
+
+        .nr-fluid-inline-copy {
+          flex: 1 1 160px;
+          min-width: 0;
+        }
+
+        .nr-fluid-inline-copy span {
+          display: block;
+          color: rgba(0, 212, 255, 0.86);
+          font-size: 11px;
+          font-weight: 900;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+        }
+
+        .nr-fluid-inline-copy small {
+          display: block;
+          margin-top: 2px;
+          color: rgba(255, 255, 255, 0.68);
+          font-size: 11px;
+          line-height: 1.35;
+        }
+
+        .nr-fluid-inline-switch,
+        .nr-fluid-inline-phases {
+          display: inline-flex;
+          gap: 6px;
+        }
+
+        .nr-fluid-inline-switch button,
+        .nr-fluid-inline-phases button {
+          min-height: 38px;
+          padding: 0 14px;
+          border-radius: 999px;
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          background: rgba(15, 23, 42, 0.86);
+          color: rgba(255, 255, 255, 0.78);
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          cursor: pointer;
+        }
+
+        .nr-fluid-inline-switch button.is-active,
+        .nr-fluid-inline-phases button.is-active {
+          border-color: rgba(34, 211, 238, 0.55);
+          background: rgba(0, 212, 255, 0.16);
+          color: #fff;
+        }
+
+        .nr-fluid-inline-switch button:focus-visible,
+        .nr-fluid-inline-phases button:focus-visible {
+          outline: 2px solid rgba(0, 212, 255, 0.85);
+          outline-offset: 2px;
+        }
+
+        .nr-fluid-field-badge {
+          position: absolute;
+          top: 10px;
+          left: 10px;
+          z-index: 2;
+          padding: 4px 10px;
+          border-radius: 999px;
+          background: rgba(10, 14, 39, 0.82);
+          border: 1px solid rgba(0, 212, 255, 0.35);
+          color: #fff;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+        }
+
         .nr-build-coach-action,
         .nr-formation-inline-tile,
         .nr-move-players-wide-button {
@@ -7240,6 +7533,10 @@ export default withAuth(function NuovaRosaLabPage() {
           font-weight: 900;
           letter-spacing: 0.04em;
           color: #e0f2fe;
+        }
+
+        .nr-slot-top-badge.is-out-of-role span {
+          color: #fecaca;
         }
 
         .nr-picker-detail-hero img,
@@ -9982,6 +10279,7 @@ export default withAuth(function NuovaRosaLabPage() {
 
         .nr-collapsed .nr-build-coach-command-grid,
         .nr-collapsed .nr-build-coach-secondary-grid,
+        .nr-collapsed .nr-fluid-inline-bar,
         .nr-reserve-section.nr-collapsed .nr-reserve-grid {
           display: none;
         }

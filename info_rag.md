@@ -816,14 +816,30 @@ Le policy comportamentali per il Coach AI (errori da evitare, terminologia, anti
 
 ---
 
+## 11. PROVENIENZA CATALOGO
+
+Le carte importate (rosa, catalogo, Card Advisor, Hub) possono venire da patch diverse:
+
+- **v5.4 / dump Hub vecchi** — dati legacy
+- **v6.0.0 / eFootball 2027** — dati allineati alla patch corrente
+
+**Regola AI (obbligatoria):**
+- Non chiamare una carta "**attuale**" / "**current**" se manca `source_version` o se non è `v6.0.0` / `eFootball 2027`.
+- Se la provenienza manca, di che i dati sono della **rosa/catalogo salvato**, non che sono la patch più recente.
+- Non inventare overall, skill o stili "meta di oggi" basandoti sul nome della carta: usa solo i dati salvati nel contesto.
+
+Questa regola è anche nel truth layer runtime (`lib/efootballTruthLayer.js`).
+
+---
+
 **Versione**: 9.0.0 ENTERPRISE | **Data**: 15 Settembre 2026
 **Principio**: fatti ufficiali vs meta community vs euristiche FZTH | **Terminologia**: Ufficiale eFootball v6.0.0
-**Changelog 9.0.0**: allineamento Konami v6.0.0 — Progression/Skill Training max 5 Additional Skills, Formazione fluida, stili attacco/difesa, due Collegamenti, rimozione Offensivo e Linea bassa, Volée dinamica, Attack Trigger. Rimossa la regola "stats/card fisse". Stamina: solo effetti ufficiali, niente percentuali community.
+**Changelog 9.0.0**: allineamento Konami v6.0.0 — Progression/Skill Training max 5 Additional Skills, Formazione fluida, stili attacco/difesa, due Collegamenti, rimozione Offensivo e Linea bassa, Volée dinamica, Attack Trigger. Rimossa la regola "stats/card fisse". Stamina: solo effetti ufficiali, niente percentuali community. Aggiunta §11 Provenienza catalogo.
 **Changelog 8.7.0**: §4.1 sesto stile ufficiale **Pressing totale** (EN Overload, ES Superioridad, Konami v6.0.0). Distinto da Pressing Alto/Costante (concetti, non menu).
-**Changelog 8.6.0**: §2.1 Posizioni attivazione corrette per TUTTI i 24 stili card (allineate a fonti ufficiali eFootball 2026: FIFPlay, Scribd Guide, Konami Help). Rimossi sigle IT vecchie (P/SP/TRQ/CLD/CLS/CC/MED/DC/TD/TS) sostituite con posizioni ufficiali EN (CF/SS/AMF/CMF/DMF/RWF/LWF/RMF/LMF/CB/RB/LB). Aggiunte note "compatibile ma AI inattiva" dove pertinente. Classic No. 10: confermato SS/AMF only. Collante: confermato DMF only.
+**Changelog 8.6.0**: §2.1 Posizioni attivazione corrette per TUTTI i 22 stili card della tabella canonica §2 (allineate a fonti ufficiali eFootball: FIFPlay, Scribd Guide, Konami Help). Rimossi sigle IT vecchie (P/SP/TRQ/CLD/CLS/CC/MED/DC/TD/TS) sostituite con posizioni ufficiali EN (CF/SS/AMF/CMF/DMF/RWF/LWF/RMF/LMF/CB/RB/LB). Aggiunte note "compatibile ma AI inattiva" dove pertinente. Classic No. 10: confermato SS/AMF only. Collante: confermato DMF only. (Nota storica: bozze precedenti citavano "24 stili"; la tabella canonica resta a 22 + stili difesa v6 documentati a parte.)
 **Changelog 8.5.4**: §8.3 alias Piedi magnetici = Calamita ai piedi; §8.4 Shadow Hunt e Contrasto a distanza; §8.11 tabella Showtime/sinonimi IT-EN (Magnetic Feet, Momentum Dribbling, Trickster, ecc.) per chat/contromisure; rimosso duplicato Dominio palle alte.
 **Changelog 8.5.3**: §7.10 regola build/meta funzionale (movimenti, difficolta, dati cliente; Sintesi rosa ≠ progressione PT).
-**Changelog 8.5.2**: §2 allineato ai 24 stili card reali: rimosso *Punta avanzata* / Adv. Striker (non esistono); *Punta arretrata* → **attacante di rientro**; chiarito Opportunista (linea fuorigioco, non "difensore").
+**Changelog 8.5.2**: §2 allineato ai 22 stili card della tabella: rimosso *Punta avanzata* / Adv. Striker (non esistono); *Punta arretrata* → **attacante di rientro**; chiarito Opportunista (linea fuorigioco, non "difensore").
 **Changelog 8.5**: §10 (NOTE CRITICHE) spostato da RAG a system prompt assistant-chat. Policy Coach AI ora in COACH_AI_POLICIES_* (sempre attive). RAG contiene solo meccaniche eFootball (§1-9).
 **Changelog 8.4**: §2.2 Attivazione stile e posizione ("passiva spenta se fuori ruolo"): stile non si attiva fuori competenza; §9.2 cross-ref; regola 5 FUORI RUOLO in NOTE CRITICHE; esempi risposta su giocatore che non rende.
 **Changelog 8.3**: §7.10 Consigli community Dream Team; §7.11 Squadra bloccata + Smart Assist.
