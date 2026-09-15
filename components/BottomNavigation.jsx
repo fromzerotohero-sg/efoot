@@ -3,20 +3,19 @@
 import React from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTranslation, pickLang } from '@/lib/i18n'
-import { useGameAnalysisModalNav, CLOSE_GAME_ANALYSIS_MODAL_EVENT } from '@/components/GameAnalysisModalNavContext'
 import { MessageSquare, Users, Sparkles } from 'lucide-react'
 
+// Tono unico per tutte le voci: verde accent quando attiva, neutro a riposo.
 const TONES = {
   coach: { active: 'var(--accent)', idle: 'var(--text-dim)', bg: 'var(--accent-bg)' },
-  rosa: { active: 'var(--info)', idle: 'var(--text-dim)', bg: 'var(--info-bg)' },
-  carte: { active: 'var(--cards-accent)', idle: 'var(--text-dim)', bg: 'color-mix(in srgb, var(--cards-accent) 12%, transparent)' }
+  rosa: { active: 'var(--accent)', idle: 'var(--text-dim)', bg: 'var(--accent-bg)' },
+  carte: { active: 'var(--accent)', idle: 'var(--text-dim)', bg: 'var(--accent-bg)' }
 }
 
 export default function BottomNavigation() {
   const { lang } = useTranslation()
   const pathname = usePathname()
   const router = useRouter()
-  const { isOpen: gameAnalysisModalOpen } = useGameAnalysisModalNav()
 
   const items = [
     { href: '/', label: 'Coach', icon: MessageSquare, key: 'coach' },
@@ -25,17 +24,11 @@ export default function BottomNavigation() {
   ]
 
   const isItemActive = (item) => {
-    if (item.key === 'coach') return pathname === '/' && !gameAnalysisModalOpen
+    if (item.key === 'coach') return pathname === '/'
     return pathname?.startsWith(item.href)
   }
 
   const handleNavigate = (item) => {
-    if (item.key === 'coach' && pathname === '/' && gameAnalysisModalOpen) {
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent(CLOSE_GAME_ANALYSIS_MODAL_EVENT))
-      }
-      return
-    }
     if (pathname !== item.href) router.push(item.href)
   }
 

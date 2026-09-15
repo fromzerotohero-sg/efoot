@@ -61,28 +61,28 @@ export default function SidebarNew() {
 
   // UX V2: navigazione primaria a 3 pilastri. Le vecchie sezioni (contromisure, match,
   // statistiche, upload) restano vive nelle route esistenti e saranno ricollocate sotto Coach.
-  // Toni campionati dalla tavola: Coach green, Rosa cyan (info), Carte purple. Gold solo HP.
+  // Tono UNICO per tutti i pilastri: verde accent quando attiva, neutro a riposo.
   const PILLAR_TONES = {
     coach: {
       color: 'var(--accent)',
       activeBg: 'var(--accent-bg)',
       activeBorder: 'var(--accent-border)',
       accent: 'var(--accent)',
-      idleIcon: 'var(--accent)'
+      idleIcon: 'var(--text-dim)'
     },
     rosa: {
-      color: 'var(--info)',
-      activeBg: 'var(--info-bg)',
-      activeBorder: 'var(--info-border)',
-      accent: 'var(--info)',
-      idleIcon: 'var(--info)'
+      color: 'var(--accent)',
+      activeBg: 'var(--accent-bg)',
+      activeBorder: 'var(--accent-border)',
+      accent: 'var(--accent)',
+      idleIcon: 'var(--text-dim)'
     },
     carte: {
-      color: 'var(--cards-accent)',
-      activeBg: 'color-mix(in srgb, var(--cards-accent) 12%, transparent)',
-      activeBorder: 'color-mix(in srgb, var(--cards-accent) 30%, transparent)',
-      accent: 'var(--cards-accent)',
-      idleIcon: 'color-mix(in srgb, var(--cards-accent) 65%, transparent)'
+      color: 'var(--accent)',
+      activeBg: 'var(--accent-bg)',
+      activeBorder: 'var(--accent-border)',
+      accent: 'var(--accent)',
+      idleIcon: 'var(--text-dim)'
     }
   }
 
