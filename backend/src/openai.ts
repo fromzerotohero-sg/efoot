@@ -1,17 +1,57 @@
+import type { BackendConfig } from './config.js'
+
 const DEFAULT_TIMEOUT_MS = 60_000
 const DEFAULT_MAX_RETRIES = 2
 
-function openAiError(type, message, statusCode = 502) {
-  const error = new Error(message)
+export type OpenAiErrorType =
+  | 'dormant'
+  | 'not_configured'
+  | 'model_not_found'
+  | 'rate_limit'
+  | 'server_error'
+  | 'client_error'
+  | 'timeout'
+  | 'network_error'
+  | 'unknown_error'
+  | 'no_content'
+  | 'parse_error'
+
+export interface OpenAiProviderError extends Error {
+  name: 'OpenAiProviderError'
+  type: OpenAiErrorType
+  statusCode: number
+}
+
+export interface OpenAiProviderOptions {
+  fetchImpl?: typeof fetch
+  sleep?: (ms: number) => Promise<unknown>
+  timeoutMs?: number
+  maxRetries?: number
+}
+
+export interface OpenAiProvider {
+  name: string
+  complete(requestBody: unknown, operationType?: string): Promise<Response>
+  // TODO(ts): the parsed payload shape belongs to each domain (vision, hero, ...);
+  // type it per-domain when the domains are converted.
+  parseJson(response: Response): Promise<unknown>
+}
+
+function openAiError(type: OpenAiErrorType, message: string, statusCode = 502): OpenAiProviderError {
+  const error = new Error(message) as OpenAiProviderError
   error.name = 'OpenAiProviderError'
   error.type = type
   error.statusCode = statusCode
   return error
 }
 
-export function createOpenAiProvider(config, options = {}) {
+interface OpenAiErrorResponse {
+  error?: { code?: string; type?: string; message?: string }
+}
+
+export function createOpenAiProvider(config: BackendConfig, options: OpenAiProviderOptions = {}): OpenAiProvider {
   const fetchImpl = options.fetchImpl || globalThis.fetch
-  const sleep = options.sleep || ((ms) => new Promise((resolve) => setTimeout(resolve, ms)))
+  const sleep = options.sleep || ((ms: number) => new Promise((resolve) => setTimeout(resolve, ms)))
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS
   const maxRetries = options.maxRetries ?? DEFAULT_MAX_RETRIES
 
@@ -25,7 +65,7 @@ export function createOpenAiProvider(config, options = {}) {
         throw openAiError('not_configured', 'OpenAI provider is not configured', 503)
       }
 
-      let lastError
+      let lastError: OpenAiProviderError | undefined
       for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
@@ -42,7 +82,7 @@ export function createOpenAiProvider(config, options = {}) {
           clearTimeout(timeoutId)
           if (response.ok) return response
 
-          const data = await response.json().catch(() => ({ error: {} }))
+          const data: OpenAiErrorResponse = await response.json().catch(() => ({ error: {} }))
           const code = data.error?.code || data.error?.type || 'unknown'
           const message = data.error?.message || 'Unable to process request'
           const normalized = message.toLowerCase()
@@ -77,8 +117,9 @@ export function createOpenAiProvider(config, options = {}) {
             throw lastError
           }
           throw openAiError('client_error', message, response.status)
-        } catch (error) {
+        } catch (rawError) {
           clearTimeout(timeoutId)
+          const error = rawError as { name?: string; message?: string } | null
           if (error?.name === 'OpenAiProviderError') throw error
           const timedOut = error?.name === 'AbortError' || error?.message?.includes('timeout')
           lastError = timedOut

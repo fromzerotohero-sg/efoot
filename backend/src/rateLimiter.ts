@@ -1,6 +1,41 @@
-const store = new Map()
+import type { FastifyInstance } from 'fastify'
+import type { IdentityProvider } from './types.js'
 
-export const RATE_LIMIT_CONFIG = {
+export interface RateLimitRule {
+  maxRequests: number
+  windowMs: number
+}
+
+export interface RateLimitResult {
+  allowed: boolean
+  limit: number
+  remaining: number
+  resetAt: Date
+}
+
+export interface RateLimiter {
+  check(userId: string, capability: string, override?: Partial<RateLimitRule>): Promise<RateLimitResult>
+  clear(): void
+}
+
+interface RateLimitEntry {
+  count: number
+  resetAt: number
+}
+
+declare module 'fastify' {
+  interface FastifyRequest {
+    rateLimit: RateLimitResult | null
+  }
+  interface FastifyContextConfig {
+    capability?: string
+    rateLimit?: Partial<RateLimitRule>
+  }
+}
+
+const store = new Map<string, RateLimitEntry>()
+
+export const RATE_LIMIT_CONFIG: Record<string, RateLimitRule> = {
   'matches.save': { maxRequests: 20, windowMs: 60_000 },
   'countermeasures.generate': { maxRequests: 5, windowMs: 60_000 },
   'users.profile.save': { maxRequests: 30, windowMs: 60_000 },
@@ -27,7 +62,7 @@ export const RATE_LIMIT_CONFIG = {
   'notifications.prefs': { maxRequests: 30, windowMs: 60_000 }
 }
 
-const RATE_LIMIT_ROUTES = new Map([
+const RATE_LIMIT_ROUTES = new Map<string, string>([
   ['POST /v1/players', 'players.save'],
   ['POST /v1/users/profile/save', 'users.profile.save'],
   ['POST /v1/users/ai-info', 'users.profile.save'],
@@ -53,13 +88,13 @@ const RATE_LIMIT_ROUTES = new Map([
   ['POST /v1/notifications/prefs', 'notifications.prefs']
 ])
 
-export function createRateLimiter({ now = () => Date.now() } = {}) {
+export function createRateLimiter({ now = () => Date.now() }: { now?: () => number } = {}): RateLimiter {
   return {
     async check(userId, capability, override = {}) {
       const config = {
         maxRequests: 10,
         windowMs: 60_000,
-        ...(RATE_LIMIT_CONFIG[capability] || {}),
+        ...((RATE_LIMIT_CONFIG[capability] || {}) as Partial<RateLimitRule>),
         ...override
       }
       const timestamp = now()
@@ -84,7 +119,11 @@ export function createRateLimiter({ now = () => Date.now() } = {}) {
   }
 }
 
-export function installRateLimitHook(app, limiter = createRateLimiter(), identity = null) {
+export function installRateLimitHook(
+  app: FastifyInstance,
+  limiter: RateLimiter = createRateLimiter(),
+  identity: IdentityProvider | null = null
+): void {
   app.decorateRequest('rateLimit', null)
   app.addHook('preHandler', async (request, reply) => {
     const routeKey = `${request.method} ${request.routeOptions?.url || ''}`

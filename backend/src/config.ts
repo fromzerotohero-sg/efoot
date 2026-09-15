@@ -1,17 +1,39 @@
 import { BACKEND_VERSION } from './inventory.js'
 
-function envFlag(name, fallback = '0') {
+export interface BackendConfig {
+  name: string
+  version: string
+  mode: 'dormant' | 'live'
+  dormant: boolean
+  host: string
+  port: number
+  supabaseUrl: string
+  supabaseAnonKey: string
+  supabaseServiceRoleKey: string
+  allowDormantDbReads: boolean
+  openAiApiKey: string
+  openAiModel: string
+  cardAdvisorAccessCode: string
+  prelaunchEnabled: boolean
+  prelaunchCode: string
+  maintenanceEnabled: boolean
+  maintenanceKey: string
+  secureCookies: boolean
+  allowLive: boolean
+}
+
+function envFlag(name: string, fallback = '0'): string {
   const raw = process.env[name]
   if (raw == null || raw === '') return fallback
   return String(raw).trim()
 }
 
-function envBoolean(name, fallback = false) {
+function envBoolean(name: string, fallback = false): boolean {
   const value = envFlag(name, fallback ? '1' : '0').toLowerCase()
   return ['1', 'true', 'yes', 'on'].includes(value)
 }
 
-export function loadConfig() {
+export function loadConfig(): BackendConfig {
   const mode = (process.env.BACKEND_MODE || 'dormant').trim().toLowerCase()
   const allowLive = envFlag('ALLOW_BACKEND_LIVE', '0') === '1'
   const dormant = mode !== 'live' || !allowLive

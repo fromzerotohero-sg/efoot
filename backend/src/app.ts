@@ -1,6 +1,7 @@
-import Fastify from 'fastify'
-import { loadConfig } from './config.js'
+import Fastify, { type FastifyInstance, type FastifyServerOptions } from 'fastify'
+import { loadConfig, type BackendConfig } from './config.js'
 import { createProviders } from './providers.js'
+import { type Providers } from './types.js'
 import { dormantPayload, installDormantGuard } from './dormant.js'
 import {
   createPlayerReadService,
@@ -46,7 +47,7 @@ import { registerCoachFeedbackRoutes } from './domains/coach-feedback/routes.js'
 import { createCoachFeedbackService } from './domains/coach-feedback/service.js'
 import { createCreditReadService } from './domains/credits/service.js'
 import { registerCreditReadRoutes } from './domains/credits/routes.js'
-import { createRateLimiter, installRateLimitHook } from './rateLimiter.js'
+import { createRateLimiter, installRateLimitHook, type RateLimiter } from './rateLimiter.js'
 import { createHeroContextBuilder } from './domains/hero-assistant/context.js'
 import { createHeroCardAvailability } from './domains/hero-assistant/cardAvailability.js'
 import { registerHeroAssistantRoutes } from './domains/hero-assistant/routes.js'
@@ -93,16 +94,72 @@ import {
   LEGACY_DB_TABLES,
   EDGE_FUNCTIONS_QUARANTINE,
   DOMAIN_CONTRACTS,
-  summarizeInventory
+  summarizeInventory,
+  type RouteInventoryItem
 } from './inventory.js'
 
-function backendPath(item) {
+// TODO(ts): domain services are still JS; the `any` override slots below get
+// precise types when each domain is converted.
+export interface BuildAppOverrides extends Partial<BackendConfig> {
+  logger?: FastifyServerOptions['logger']
+  providers?: Partial<Providers>
+  rateLimiter?: RateLimiter
+  aiKnowledge?: any
+  knowledgeRefresh?: any
+  playerReads?: any
+  playerWrites?: any
+  catalogReads?: any
+  formationReads?: any
+  formationWrites?: any
+  coachReads?: any
+  coachWrites?: any
+  tacticsWrites?: any
+  analyticsWrites?: any
+  matchWrites?: any
+  diagnosticReads?: any
+  diagnosticWrites?: any
+  userReads?: any
+  userWrites?: any
+  coachFeedback?: any
+  coachFeedbackDb?: any
+  heroAssistant?: any
+  heroContextBuilder?: any
+  heroCardAvailability?: any
+  heroPersistence?: any
+  heroPersistenceDb?: any
+  countermeasures?: any
+  countermeasuresRepository?: any
+  creditReads?: any
+  gameAnalysisStore?: any
+  vision?: any
+  cardAdvisorDb?: any
+  cardAdvisor?: any
+  cardAdvisorEvaluator?: any
+  cardAdvisorBuildPreview?: any
+  buildCoachDb?: any
+  buildCoach?: any
+  buildCoachCalculator?: any
+  dashboard?: any
+  dashboardDb?: any
+  gates?: any
+  notifications?: any
+  notificationDb?: any
+}
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    config: BackendConfig
+    providers: Providers
+  }
+}
+
+function backendPath(item: RouteInventoryItem): string {
   return `/v1/${item.capability.replace(/\./g, '/')}`
 }
 
-export async function buildApp(overrides = {}) {
+export async function buildApp(overrides: BuildAppOverrides = {}): Promise<FastifyInstance> {
   const config = { ...loadConfig(), ...overrides }
-  const providers = { ...createProviders(config), ...(overrides.providers || {}) }
+  const providers: Providers = { ...createProviders(config), ...(overrides.providers || {}) }
   const identityDelegate = providers.identity
   providers.identity = {
     ...identityDelegate,
@@ -189,11 +246,14 @@ export async function buildApp(overrides = {}) {
       readProvider: providers.serverSupabaseWrites,
       writeProvider: providers.serverSupabaseWrites
     })
+  // JS domain factories destructure options with defaults (`= null`, `= console`),
+  // which narrows their inferred parameter types; `as any` marks the untyped
+  // boundary until each domain is converted (same below).
   const knowledgeRefresh = overrides.knowledgeRefresh || createKnowledgeRefreshSideEffect({
     live: !config.dormant && config.allowLive === true,
-    refresh: ({ userId }) => aiKnowledge.read({ userId, refresh: true }),
+    refresh: ({ userId }: { userId: string }) => aiKnowledge.read({ userId, refresh: true }),
     logger: app.log
-  })
+  } as any)
 
   const playerReads =
     overrides.playerReads || createPlayerReadService(providers.readOnlySupabase)
@@ -233,11 +293,11 @@ export async function buildApp(overrides = {}) {
   const matchWrites =
     overrides.matchWrites || createMatchWriteService(providers.userSupabaseWrites, {
       logger: app.log,
-      afterSave: async ({ token, userId }) => {
+      afterSave: async ({ token, userId }: { token: string; userId: string }) => {
         await analyticsWrites.recalculatePatterns({ token, userId })
         knowledgeRefresh.schedule({ userId, source: 'matches.save' })
       }
-    })
+    } as any)
   registerMatchRoutes(app, { identity: providers.identity, matchWrites })
   const diagnosticReads =
     overrides.diagnosticReads || createDiagnosticReadService(providers.readOnlySupabase)
@@ -268,11 +328,11 @@ export async function buildApp(overrides = {}) {
         writeProvider: providers.serverSupabaseWrites
       }),
       aiKnowledge: {
-        update: (input) => aiKnowledge.read({ ...input, refresh: true })
+        update: (input: { userId: string }) => aiKnowledge.read({ ...input, refresh: true })
       },
       config,
       logger: app.log
-    })
+    } as any)
   registerCoachFeedbackRoutes(app, {
     identity: providers.identity,
     coachFeedback
@@ -287,12 +347,12 @@ export async function buildApp(overrides = {}) {
       contextBuilder: overrides.heroContextBuilder || createHeroContextBuilder({
         readProvider: providers.serverSupabaseWrites
       }),
-      rateLimiter: ({ userId, maxRequests, windowMs }) =>
+      rateLimiter: ({ userId, maxRequests, windowMs }: { userId: string; maxRequests: number; windowMs: number }) =>
         rateLimiter.check(userId, 'hero.chat', { maxRequests, windowMs }),
       cardAvailability: overrides.heroCardAvailability || createHeroCardAvailability({
         readProvider: providers.serverSupabaseWrites
       })
-    })
+    } as any)
   registerHeroAssistantRoutes(app, {
     identity: providers.identity,
     heroAssistant
@@ -311,7 +371,7 @@ export async function buildApp(overrides = {}) {
     identity: providers.identity,
     service: heroPersistence,
     rateLimiter
-  })
+  } as any)
 
   const countermeasures =
     overrides.countermeasures ||
@@ -328,7 +388,7 @@ export async function buildApp(overrides = {}) {
     identity: providers.identity,
     countermeasures,
     rateLimiter
-  })
+  } as any)
   const creditReads =
     overrides.creditReads || createCreditReadService(providers.readOnlySupabase)
   registerCreditReadRoutes(app, { identity: providers.identity, creditReads })
@@ -361,7 +421,7 @@ export async function buildApp(overrides = {}) {
     identity: providers.identity,
     service: cardAdvisor,
     accessCode: config.cardAdvisorAccessCode || ''
-  })
+  } as any)
 
   const buildCoachDb = overrides.buildCoachDb || createBuildCoachDb({
     readProvider: providers.readOnlySupabase,
@@ -404,7 +464,7 @@ export async function buildApp(overrides = {}) {
     // MetalGate endpoints remain explicit 501 placeholders.
     if (item.status !== 'deferred-metalgate') continue
     const url = backendPath(item)
-    const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].filter(
+    const methods = (['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const).filter(
       (method) => !app.hasRoute({ method, url })
     )
     if (!methods.length) continue

@@ -1,5 +1,12 @@
+import type { FastifyError, FastifyInstance } from 'fastify'
+import type { BackendConfig } from './config.js'
+import type { RouteInventoryItem } from './inventory.js'
+
 export class DormantError extends Error {
-  constructor(message, extra = {}) {
+  statusCode: number
+  extra: Record<string, unknown>
+
+  constructor(message: string, extra: Record<string, unknown> = {}) {
     super(message)
     this.name = 'DormantError'
     this.statusCode = 403
@@ -7,7 +14,7 @@ export class DormantError extends Error {
   }
 }
 
-export function assertDormantRead(config, action = 'write') {
+export function assertDormantRead(config: Pick<BackendConfig, 'dormant'>, action = 'write'): void {
   if (config.dormant) {
     throw new DormantError(`Blocked in dormant mode: ${action}`, {
       dormant: true,
@@ -16,7 +23,21 @@ export function assertDormantRead(config, action = 'write') {
   }
 }
 
-export function dormantPayload(item, action = 'invoke') {
+export interface DormantPayload {
+  ok: false
+  dormant: true
+  action: string
+  capability: string
+  domain: string
+  status: RouteInventoryItem['status']
+  source: string
+  mutating: boolean
+  credits: boolean
+  note: string | null
+  message: string
+}
+
+export function dormantPayload(item: RouteInventoryItem, action = 'invoke'): DormantPayload {
   return {
     ok: false,
     dormant: true,
@@ -36,7 +57,7 @@ export function dormantPayload(item, action = 'invoke') {
   }
 }
 
-export function installDormantGuard(app, config) {
+export function installDormantGuard(app: FastifyInstance, config: BackendConfig): void {
   app.addHook('onRequest', async (request, reply) => {
     const url = request.url.split('?')[0]
     if (url === '/health' || url === '/version' || url === '/inventory' || url === '/ready' || url === '/handoff/metalgate') return
@@ -51,7 +72,7 @@ export function installDormantGuard(app, config) {
     })
   })
 
-  app.setErrorHandler((error, request, reply) => {
+  app.setErrorHandler((error: FastifyError, request, reply) => {
     if (error instanceof DormantError) {
       return reply.code(error.statusCode).send({
         ok: false,

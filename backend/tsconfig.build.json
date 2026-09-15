@@ -1,0 +1,9 @@
+{
+  "//": "Emit-only config. tsconfig.json (allowJs, strict, noEmit) stays the typecheck source of truth. Here allowJs is off so tsc emits only .ts files: the JS domains import repo-root lib/*.js, which sits outside rootDir and cannot be emitted (TS5055). JS sources (domains/, auth.js, providers.js) are copied to dist by scripts/copy-dist-assets.mjs. noImplicitAny is off only to silence TS7016 for the JS imports; emitted JS is type-independent and identical either way.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowJs": false,
+    "noImplicitAny": false
+  },
+  "include": ["src/**/*.ts"]
+}

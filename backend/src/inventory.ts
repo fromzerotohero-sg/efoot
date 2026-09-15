@@ -11,7 +11,53 @@
 
 export const BACKEND_VERSION = '0.0.1-dormant'
 
-export const ROUTES = [
+export type RouteStatus =
+  | 'migrate'
+  | 'migrate-after-foundations'
+  | 'deferred-metalgate'
+  | 'legacy-do-not-migrate'
+  | 'frontend-only'
+  | 'db-owned'
+
+export interface RouteInventoryItem {
+  source: string
+  capability: string
+  domain: string
+  status: RouteStatus
+  mutating: boolean
+  credits?: boolean
+  creditsRead?: boolean
+  implementation?: string
+  dbRpc?: string
+  note?: string
+}
+
+export interface LibModuleItem {
+  source: string
+  domain: string
+  status: RouteStatus
+  note?: string
+}
+
+export interface DbTriggerItem {
+  name: string
+  table: string
+  owner: string
+  fn: string
+  note?: string
+}
+
+export interface InventorySummary {
+  routes: number
+  routesByStatus: Record<string, number>
+  libModules: number
+  dbTriggers: number
+  dbTables: number
+  edgeFunctionsQuarantine: number
+  domainContracts: number
+}
+
+export const ROUTES: RouteInventoryItem[] = [
   { source: 'app/api/user/profile/route.js', capability: 'users.profile', domain: 'users', status: 'migrate', mutating: true },
   { source: 'app/api/supabase/save-profile/route.js', capability: 'users.profile.save', domain: 'users', status: 'migrate', mutating: true },
   { source: 'app/api/supabase/save-ai-info/route.js', capability: 'users.aiInfo.save', domain: 'users', status: 'migrate', mutating: true },
@@ -90,7 +136,7 @@ export const ROUTES = [
 
 ]
 
-export const LIB_MODULES = [
+export const LIB_MODULES: LibModuleItem[] = [
   { source: 'lib/authHelper.js', domain: 'auth', status: 'migrate', note: 'JWT resolve; MetalGate /sso/verify is deferred' },
   { source: 'lib/creditService.js', domain: 'credits', status: 'migrate', note: 'Use MockCreditProvider until MetalGate cutover' },
   { source: 'lib/openaiHelper.js', domain: 'providers', status: 'migrate' },
@@ -156,7 +202,7 @@ export const LIB_MODULES = [
   { source: 'lib/supabaseClient.js', domain: 'frontend', status: 'frontend-only', note: 'Browser client stays in Next.js' }
 ]
 
-export const DB_TRIGGERS = [
+export const DB_TRIGGERS: DbTriggerItem[] = [
   { name: 'after_match_save_refresh_performance', table: 'matches', owner: 'db-owned', fn: 'trg_refresh_player_performance' },
   { name: 'trigger_cleanup_individual_instructions', table: 'players', owner: 'db-owned', fn: 'cleanup_orphan_individual_instructions' },
   { name: 'update_players_updated_at', table: 'players', owner: 'db-owned', fn: 'update_updated_at_column' },
@@ -165,7 +211,7 @@ export const DB_TRIGGERS = [
   { name: 'atomic_slot_assignment', table: 'players', owner: 'db-owned', fn: 'atomic_slot_assignment', note: 'RPC called by roster.assignSlot' }
 ]
 
-export const DB_TABLES = [
+export const DB_TABLES: string[] = [
   'user_profiles', 'players', 'coaches', 'formation_layout', 'formation_variants',
   'team_tactical_settings', 'playing_styles', 'matches', 'opponent_formations',
   'player_performance_aggregates', 'team_tactical_patterns', 'weekly_goals',
@@ -183,14 +229,14 @@ export const LEGACY_DB_TABLES = Object.freeze({
   live_coach_sessions: 'Legacy Live Coach; do not expose or migrate'
 })
 
-export const EDGE_FUNCTIONS_QUARANTINE = [
+export const EDGE_FUNCTIONS_QUARANTINE: string[] = [
   'process-screenshot', 'analyze-rosa', 'import-players-from-drive', 'import-players-json',
   'test-efootballhub', 'scrape-players', 'process-screenshot-gpt',
   'analyze-heatmap-screenshot-gpt', 'analyze-squad-formation-gpt', 'analyze-player-ratings-gpt',
   'voice-coaching-gpt', 'realtime-proxy'
 ]
 
-export const DOMAIN_CONTRACTS = [
+export const DOMAIN_CONTRACTS: string[] = [
   'Player Skill ≠ Additional Skill ≠ AI/COM Playstyle',
   'Form trait ≠ Live Update Rating A/B/C/D/E ≠ Current Condition',
   'Card/Natural Position ≠ formation slot position',
@@ -203,16 +249,17 @@ export const DOMAIN_CONTRACTS = [
   'Do not treat Offensivo / Linea bassa as valid v6 instructions'
 ]
 
-export function routeSources() {
+export function routeSources(): string[] {
   return ROUTES.map((row) => row.source.replace(/\\/g, '/'))
 }
 
-export function summarizeInventory() {
-  const countBy = (list, key) => list.reduce((acc, row) => {
-    const value = row[key]
-    acc[value] = (acc[value] || 0) + 1
-    return acc
-  }, {})
+export function summarizeInventory(): InventorySummary {
+  const countBy = (list: readonly RouteInventoryItem[], key: 'status'): Record<string, number> =>
+    list.reduce<Record<string, number>>((acc, row) => {
+      const value = row[key]
+      acc[value] = (acc[value] || 0) + 1
+      return acc
+    }, {})
   return {
     routes: ROUTES.length,
     routesByStatus: countBy(ROUTES, 'status'),

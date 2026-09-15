@@ -1,12 +1,34 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import type { BackendConfig } from './config.js'
+import type { HttpError } from './types.js'
 
-function unavailable(message, statusCode = 503) {
-  const error = new Error(message)
-  error.statusCode = statusCode
-  return error
+// TODO(ts): types/database.ts lives outside rootDir (src), so tsc cannot import
+// it; wire the generated `Database` schema as the SupabaseClient generic when
+// the domain conversion relocates or re-exports those types under src/.
+export type BackendSupabaseClient = SupabaseClient
+
+export interface ReadOnlySupabaseProvider {
+  name: string
+  forUser(token?: string): BackendSupabaseClient
+  forServerCatalog?(): BackendSupabaseClient
+  mutate(): Promise<never>
 }
 
-export function createReadOnlySupabaseProvider(config) {
+export interface UserSupabaseWriteProvider {
+  name: string
+  forUser(token?: string): BackendSupabaseClient
+}
+
+export interface ServerSupabaseWriteProvider {
+  name: string
+  forUser(token?: string): BackendSupabaseClient
+}
+
+function unavailable(message: string, statusCode = 503): HttpError {
+  return Object.assign(new Error(message), { statusCode })
+}
+
+export function createReadOnlySupabaseProvider(config: BackendConfig): ReadOnlySupabaseProvider {
   return {
     name: 'ReadOnlySupabaseProvider',
     forUser(token) {
@@ -45,7 +67,7 @@ export function createReadOnlySupabaseProvider(config) {
   }
 }
 
-export function createTestReadOnlyProvider(client) {
+export function createTestReadOnlyProvider(client: BackendSupabaseClient): ReadOnlySupabaseProvider {
   return {
     name: 'TestReadOnlySupabaseProvider',
     forUser() {
@@ -57,7 +79,7 @@ export function createTestReadOnlyProvider(client) {
   }
 }
 
-export function createUserSupabaseWriteProvider(config) {
+export function createUserSupabaseWriteProvider(config: BackendConfig): UserSupabaseWriteProvider {
   return {
     name: 'UserSupabaseWriteProvider',
     forUser(token) {
@@ -77,7 +99,7 @@ export function createUserSupabaseWriteProvider(config) {
   }
 }
 
-export function createServerSupabaseWriteProvider(config) {
+export function createServerSupabaseWriteProvider(config: BackendConfig): ServerSupabaseWriteProvider {
   return {
     name: 'ServerSupabaseWriteProvider',
     forUser(token) {
