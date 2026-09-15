@@ -75,7 +75,7 @@ function Row({ icon, iconNode, gold, label, sub, value, control, onClick, href, 
     textDecoration: 'none', boxSizing: 'border-box',
     cursor: interactive ? 'pointer' : 'default',
     color: 'inherit',
-    ...(interactive ? {} : { background: 'transparent' })
+    background: 'transparent'
   }
   const content = (
     <>
@@ -272,7 +272,7 @@ function HeroPointsCard({ lang }) {
           width: '100%', minHeight: 50, padding: '10px 14px',
           border: 'none', borderTop: '1px solid var(--border-soft)',
           fontFamily: 'inherit', textAlign: 'left', boxSizing: 'border-box',
-          cursor: 'pointer', color: 'inherit'
+          cursor: 'pointer', color: 'inherit', background: 'transparent'
         }}
       >
         <IconChip icon={Receipt} gold />
