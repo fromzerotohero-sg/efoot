@@ -348,7 +348,7 @@ export default function MatchDetailPage() {
       {/* Match Info */}
       <div className="neon-card" style={{ padding: '24px', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-          <Calendar size={24} color="#f59e0b" />
+          <Calendar size={24} color="var(--accent)" />
           <h1 style={{ fontSize: '24px', fontWeight: 700, margin: 0 }}>
             {t('match')}
           </h1>
@@ -360,7 +360,7 @@ export default function MatchDetailPage() {
           </div>
           <div>
             <div style={{ fontSize: '14px', opacity: 0.8, marginBottom: '4px' }}>{t('opponent')}</div>
-            <div style={{ fontSize: '18px', fontWeight: 600, color: '#f59e0b' }}>
+            <div style={{ fontSize: '18px', fontWeight: 600, color: 'var(--accent)' }}>
               {match.opponent_name || t('notSpecified')}
             </div>
           </div>
@@ -413,7 +413,7 @@ export default function MatchDetailPage() {
                   {hasData ? (
                     <CheckCircle2 size={20} color="#22C55E" />
                   ) : (
-                    <span style={{ fontSize: '12px', color: '#f59e0b' }}>{t('missing')}</span>
+                    <span style={{ fontSize: '12px', color: 'var(--info)' }}>{t('missing')}</span>
                   )}
                 </div>
                 
@@ -440,9 +440,9 @@ export default function MatchDetailPage() {
                           }}
                         >
                           {isUploading ? (
-                            <RefreshCw size={20} style={{ marginBottom: '8px', color: '#f59e0b', animation: 'spin 1s linear infinite' }} />
+                            <RefreshCw size={20} style={{ marginBottom: '8px', color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
                           ) : (
-                            <Camera size={20} style={{ marginBottom: '8px', color: '#f59e0b' }} />
+                            <Camera size={20} style={{ marginBottom: '8px', color: 'var(--accent)' }} />
                           )}
                           <div style={{ fontSize: '14px' }}>
                             {isUploading ? t('loadingShort') : t('uploadPhoto')}

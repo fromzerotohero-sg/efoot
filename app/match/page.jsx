@@ -662,20 +662,20 @@ export default function MatchHistoryPage() {
           justify-content: center;
           gap: 10px;
           width: 100%;
-          border: 1px solid rgba(255, 203, 5, 0.58);
+          border: 1px solid var(--accent-border);
           border-radius: 15px;
-          background: linear-gradient(135deg, #ffcb05, #ff8c00);
-          color: #111827;
+          background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+          color: var(--accent-ink);
           font-size: 15px;
           font-weight: 950;
           cursor: pointer;
-          box-shadow: 0 14px 34px rgba(255, 149, 0, 0.26), inset 0 1px 0 rgba(255,255,255,0.45);
+          box-shadow: 0 14px 34px rgba(39, 167, 106, 0.28), inset 0 1px 0 rgba(255,255,255,0.45);
           transition: transform 180ms ease, box-shadow 180ms ease;
         }
 
         .primary-cta:hover {
           transform: translateY(-2px);
-          box-shadow: 0 18px 42px rgba(255, 149, 0, 0.34), inset 0 1px 0 rgba(255,255,255,0.52);
+          box-shadow: 0 18px 42px rgba(39, 167, 106, 0.34), inset 0 1px 0 rgba(255,255,255,0.52);
         }
 
         .primary-cta.compact {

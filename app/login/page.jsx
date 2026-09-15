@@ -84,10 +84,10 @@ export default function LoginPage() {
           style={{
             width: '100%',
             padding: '14px 20px',
-            background: 'var(--primary-cyan)',
+            background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
             border: 'none',
             borderRadius: '8px',
-            color: '#000',
+            color: 'var(--accent-ink)',
             fontSize: '15px',
             fontWeight: 600,
             cursor: loading ? 'not-allowed' : 'pointer',

@@ -106,7 +106,7 @@ const COPY = {
   counterConfirmCta: { it: 'Genera piano', en: 'Generate plan', es: 'Generar plan' },
   counterConfirmFix: { it: 'Modulo', en: 'Formation', es: 'Módulo' },
   planTitle: { it: 'Piano pre-partita', en: 'Pre-match plan', es: 'Plan previo' },
-  planSaved: { it: 'Piano salvato in Hero. Imposta manualmente formazione, stile e istruzioni prima del calcio d’inizio.', en: 'Plan saved in Hero. Set the formation, style, and instructions manually before kickoff.', es: 'Plan guardado en Hero. Configura manualmente la formación, el estilo y las instrucciones antes del pitido.' },
+  planSaved: { it: 'Controlla il setup, poi entra in partita con una sola idea chiara.', en: 'Check the setup, then enter the match with one clear idea.', es: 'Comprueba la configuración y entra al partido con una sola idea clara.' },
   planRead: { it: 'Lettura avversario', en: 'Opponent read', es: 'Lectura del rival' },
   planStrengths: { it: 'Cosa fa bene', en: 'What they do well', es: 'Lo que hace bien' },
   planWeaknesses: { it: 'Dove attaccare', en: 'Where to attack', es: 'Dónde atacar' },
@@ -116,12 +116,21 @@ const COPY = {
   planStyle: { it: 'Stile squadra', en: 'Team playstyle', es: 'Estilo de equipo' },
   planInstructions: { it: 'Istruzioni individuali', en: 'Individual instructions', es: 'Instrucciones individuales' },
   planSubstitutions: { it: 'Cambi consigliati', en: 'Suggested substitutions', es: 'Cambios sugeridos' },
-  planManual: { it: 'Da verificare manualmente', en: 'Review manually', es: 'Revisar manualmente' },
+  planManual: { it: 'Nel Game Plan', en: 'In Game Plan', es: 'En Game Plan' },
   planQuickTips: { it: 'Piano iniziale', en: 'Starting plan', es: 'Plan inicial' },
   planSteps: { it: 'Passaggi chiave', en: 'Key steps', es: 'Pasos clave' },
   planCountermeasures: { it: 'Contromisure', en: 'Countermeasures', es: 'Contramedidas' },
   planAttackLine: { it: 'Linea d’attacco', en: 'Attacking line', es: 'Línea de ataque' },
   planDefenseLine: { it: 'Linea difensiva', en: 'Defensive line', es: 'Línea defensiva' },
+  planDecision: { it: 'Decisione', en: 'Decision', es: 'Decisión' },
+  planOpponent: { it: 'Avversario', en: 'Opponent', es: 'Rival' },
+  planSetup: { it: 'Imposta prima del calcio d’inizio', en: 'Set before kickoff', es: 'Configura antes del inicio' },
+  planNoSetup: { it: 'Mantieni il setup attuale.', en: 'Keep your current setup.', es: 'Mantén la configuración actual.' },
+  planWithBall: { it: 'Con palla', en: 'With the ball', es: 'Con balón' },
+  planWithoutBall: { it: 'Senza palla', en: 'Without the ball', es: 'Sin balón' },
+  planB: { it: 'Piano B', en: 'Plan B', es: 'Plan B' },
+  planIf: { it: 'Se', en: 'If', es: 'Si' },
+  planAskHero: { it: 'Continua con Hero', en: 'Continue with Hero', es: 'Continúa con Hero' },
   planNoCountermeasure: { it: 'Nessuna modifica necessaria: parti dal tuo assetto e segui i passaggi chiave.', en: 'No change needed: start from your shape and follow the key steps.', es: 'No hace falta cambiar: empieza con tu estructura y sigue los pasos clave.' },
   planDetails: { it: 'Perché questo piano?', en: 'Why this plan?', es: '¿Por qué este plan?' },
   attachAnalyzing: { it: 'Sto leggendo le tue statistiche…', en: 'Reading your stats…', es: 'Leyendo tus estadísticas…' },
@@ -272,7 +281,7 @@ const COUNTER_FORMATIONS = [
   '5-3-2', '5-4-1', '4-5-1', '4-1-3-2', '3-3-2-2', '4-2-2-2'
 ]
 
-function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, formation = null }) {
+function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, formation = null, onFollowup }) {
   if (!plan) return null
 
   const raw = plan.countermeasures || {}
@@ -288,9 +297,10 @@ function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, for
     || localized(raw.play_summary?.match_key)
     || localized(raw.diagnosis)
     || L(lang, COPY.planTitle)
+  const mainDecision = localized(customer?.main_decision) || diagnosis
 
   const trait = localized(customer?.opponent_read?.trait) || ''
-  const fitProof = localized(customer?.fit_proof) || ''
+  const opponentFormation = localized(customer?.opponent_read?.formation) || ''
   const teamStyle = setup.team_playing_style
     || changeSet.team_playing_style
     || null
@@ -358,9 +368,48 @@ function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, for
   const countermeasures = customer?.countermeasures || {}
   const attackLines = Array.isArray(countermeasures.attack) ? countermeasures.attack : []
   const defenseLines = Array.isArray(countermeasures.defense) ? countermeasures.defense : []
-  const whyBits = [fitProof, trait, localized(customer?.opponent_read?.assumption)]
-    .map((t) => String(t || '').trim())
+  const setupActions = (() => {
+    const fromCustomer = Array.isArray(customer?.setup_actions)
+      ? customer.setup_actions.map((action) => ({
+          label: localized(action?.label),
+          value: localized(action?.value),
+          status: action?.status || null
+        })).filter((action) => action.label && action.value)
+      : []
+    if (fromCustomer.length) return fromCustomer.slice(0, 5)
+    const fallback = []
+    if (setup.formation) fallback.push({ label: L(lang, COPY.counterConfirmFix), value: localized(setup.formation) })
+    if (teamStyle) fallback.push({ label: L(lang, COPY.planStyle), value: localized(teamStyle) })
+    playerSuggestions.slice(0, 1).forEach((suggestion) => {
+      const value = suggestion.replace_player_name && suggestion.player_name
+        ? `${suggestion.replace_player_name} → ${suggestion.player_name}`
+        : suggestion.player_name || suggestion.replace_player_name
+      if (value) fallback.push({ label: L(lang, COPY.planSubstitutions), value })
+    })
+    individualInstructions.slice(0, 2).forEach((instruction) => {
+      if (instruction.player_name && instruction.instruction_label) {
+        fallback.push({ label: instruction.player_name, value: instruction.instruction_label })
+      }
+    })
+    return fallback.slice(0, 5)
+  })()
+  const playbook = customer?.playbook || {}
+  const withBall = localized(playbook.with_ball)
+    || localized(attackLines[0]?.title)
+    || startingPlan[0]
+    || ''
+  const withoutBall = localized(playbook.without_ball)
+    || localized(defenseLines[0]?.title)
+    || startingPlan.find((tip) => tip !== withBall)
+    || ''
+  const avoid = localized(playbook.avoid) || ''
+  const planB = customer?.plan_b || null
+  const planBTrigger = localized(planB?.trigger)
+  const planBAction = localized(planB?.action || planB)
+  const followUps = (Array.isArray(customer?.follow_ups) ? customer.follow_ups : [])
+    .map((item) => localized(item))
     .filter(Boolean)
+    .slice(0, 3)
 
   return (
     <div className="hc-planCard">
@@ -372,8 +421,14 @@ function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, for
       <p className="hc-planSaved">{L(lang, COPY.planSaved)}</p>
 
       <div className="hc-planHero">
-        <strong>{diagnosis}</strong>
-        {trait ? <p>{trait}</p> : null}
+        <span className="hc-planEyebrow">{L(lang, COPY.planDecision)}</span>
+        <strong>{mainDecision}</strong>
+        {(opponentFormation || trait) ? (
+          <p className="hc-planOpponent">
+            <span>{L(lang, COPY.planOpponent)}</span>
+            {[opponentFormation, trait].filter(Boolean).join(' · ')}
+          </p>
+        ) : null}
       </div>
 
       <PrematchPitch
@@ -388,66 +443,62 @@ function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, for
         lang={lang}
       />
 
-      <section className="hc-countermeasures" aria-label={L(lang, COPY.planCountermeasures)}>
-        <div className="hc-countermeasuresHead">
-          <span className="hc-planQuickLabel">{L(lang, COPY.planCountermeasures)}</span>
-          <span className="hc-countermeasuresHint">{L(lang, COPY.planManual)}</span>
+      <section className="hc-planSetup" aria-label={L(lang, COPY.planSetup)}>
+        <div className="hc-planSectionHead">
+          <span className="hc-planQuickLabel">{L(lang, COPY.planSetup)}</span>
+          <span>{L(lang, COPY.planManual)}</span>
         </div>
-        {(attackLines.length > 0 || defenseLines.length > 0) ? (
-          <div className="hc-countermeasuresGrid">
-            <article className="hc-countermeasureColumn hc-countermeasureAttack">
-              <h3>{L(lang, COPY.planAttackLine)}</h3>
-              {attackLines.length > 0 ? (
-                <ol>
-                  {attackLines.map((item, index) => (
-                    <li key={`attack-${index}`}>
-                      <strong>{localized(item.title)}</strong>
-                      {item.reason ? <small>{localized(item.reason)}</small> : null}
-                    </li>
-                  ))}
-                </ol>
-              ) : <p>{L(lang, COPY.planNoCountermeasure)}</p>}
-            </article>
-            <article className="hc-countermeasureColumn hc-countermeasureDefense">
-              <h3>{L(lang, COPY.planDefenseLine)}</h3>
-              {defenseLines.length > 0 ? (
-                <ol>
-                  {defenseLines.map((item, index) => (
-                    <li key={`defense-${index}`}>
-                      <strong>{localized(item.title)}</strong>
-                      {item.reason ? <small>{localized(item.reason)}</small> : null}
-                    </li>
-                  ))}
-                </ol>
-              ) : <p>{L(lang, COPY.planNoCountermeasure)}</p>}
-            </article>
+        {setupActions.length > 0 ? (
+          <div className="hc-planSetupRows">
+            {setupActions.map((action, index) => (
+              <div className="hc-planSetupRow" key={`${action.label}-${index}`}>
+                <span>{action.label}</span>
+                <strong>{action.value}</strong>
+                {action.status === 'keep' ? <small>✓</small> : null}
+              </div>
+            ))}
           </div>
-        ) : (
-          <p className="hc-countermeasuresEmpty">{L(lang, COPY.planNoCountermeasure)}</p>
-        )}
+        ) : <p className="hc-planEmpty">{L(lang, COPY.planNoSetup)}</p>}
       </section>
 
-      {startingPlan.length > 0 && (
-        <div className="hc-planQuick">
-          <span className="hc-planQuickLabel">{L(lang, COPY.planSteps)}</span>
-          <ol className="hc-planQuickList">
-            {startingPlan.map((tip, index) => (
-              <li key={`start-${index}`}>{tip}</li>
-            ))}
-          </ol>
+      {(withBall || withoutBall) && (
+        <div className="hc-planPlaybook">
+          {withBall ? (
+            <article className="hc-planPhase hc-planPhaseBall">
+              <span>{L(lang, COPY.planWithBall)}</span>
+              <strong>{withBall}</strong>
+            </article>
+          ) : null}
+          {withoutBall ? (
+            <article className="hc-planPhase hc-planPhaseNoBall">
+              <span>{L(lang, COPY.planWithoutBall)}</span>
+              <strong>{withoutBall}</strong>
+            </article>
+          ) : null}
+          {avoid ? <p className="hc-planAvoid"><strong>{L(lang, COPY.planAvoid)}:</strong> {avoid}</p> : null}
         </div>
       )}
 
-      {whyBits.length > 0 && (
-        <details className="hc-planDetails">
-          <summary>{L(lang, COPY.planDetails)}</summary>
-          <div className="hc-planSection">
-            {whyBits.map((bit, index) => (
-              <p key={`why-${index}`}>{bit}</p>
+      {planBAction ? (
+        <section className="hc-planB">
+          <span>{L(lang, COPY.planB)}</span>
+          {planBTrigger ? <p><small>{L(lang, COPY.planIf)}</small> {planBTrigger}</p> : null}
+          <strong>{planBAction}</strong>
+        </section>
+      ) : null}
+
+      {followUps.length > 0 && typeof onFollowup === 'function' ? (
+        <section className="hc-planFollowups">
+          <span>{L(lang, COPY.planAskHero)}</span>
+          <div>
+            {followUps.map((followup) => (
+              <button type="button" key={followup} onClick={() => onFollowup(followup)}>
+                {followup}
+              </button>
             ))}
           </div>
-        </details>
-      )}
+        </section>
+      ) : null}
     </div>
   )
 }
@@ -2072,6 +2123,7 @@ export default function HeroChat({
                   starters={starters}
                   slotPositions={slotPositions}
                   formation={formation}
+                  onFollowup={sendMessage}
                 />
               </React.Fragment>
             )
@@ -3341,7 +3393,7 @@ export default function HeroChat({
           border-radius: 12px;
           padding: 11px 14px;
           background: var(--accent);
-          color: #04140c;
+          color: var(--accent-ink);
           font-size: 13px;
           font-weight: 800;
           cursor: pointer;
@@ -3362,7 +3414,33 @@ export default function HeroChat({
         :global(.hc-planHero strong) {
           display: block;
           color: var(--text-main);
-          font-size: 14px;
+          font-size: 16px;
+          line-height: 1.35;
+        }
+
+        :global(.hc-planEyebrow) {
+          display: block;
+          margin-bottom: 6px;
+          color: var(--accent);
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        :global(.hc-planOpponent) {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 5px;
+          align-items: baseline;
+        }
+
+        :global(.hc-planOpponent span) {
+          color: var(--text-main);
+          font-size: 10px;
+          font-weight: 850;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
         }
 
         :global(.hc-planHero p),
@@ -3416,11 +3494,11 @@ export default function HeroChat({
         }
 
         :global(.hc-countermeasureAttack h3) {
-          color: #e5bd25;
+          color: var(--gold-text);
         }
 
         :global(.hc-countermeasureDefense h3) {
-          color: #78aef5;
+          color: var(--info-text);
         }
 
         :global(.hc-countermeasureColumn ol) {
@@ -3491,8 +3569,196 @@ export default function HeroChat({
           line-height: 1.4;
         }
 
+        :global(.hc-planSetup),
+        :global(.hc-planPlaybook),
+        :global(.hc-planB),
+        :global(.hc-planFollowups) {
+          border: 1px solid var(--border-soft);
+          border-radius: 14px;
+          background: var(--surface-2);
+        }
+
+        :global(.hc-planSetup) {
+          padding: 12px;
+        }
+
+        :global(.hc-planSectionHead) {
+          display: flex;
+          align-items: baseline;
+          justify-content: space-between;
+          gap: 10px;
+          margin-bottom: 9px;
+        }
+
+        :global(.hc-planSectionHead > span:last-child) {
+          color: var(--text-dim);
+          font-size: 10px;
+        }
+
+        :global(.hc-planSetupRows) {
+          display: grid;
+          gap: 1px;
+          overflow: hidden;
+          border-radius: 10px;
+          background: var(--border-soft);
+        }
+
+        :global(.hc-planSetupRow) {
+          display: grid;
+          grid-template-columns: minmax(72px, 0.65fr) minmax(0, 1.35fr) auto;
+          align-items: center;
+          gap: 8px;
+          min-height: 42px;
+          padding: 8px 10px;
+          background: var(--inset-bg);
+        }
+
+        :global(.hc-planSetupRow > span) {
+          color: var(--text-dim);
+          font-size: 11px;
+        }
+
+        :global(.hc-planSetupRow > strong) {
+          color: var(--text-main);
+          font-size: 12px;
+          line-height: 1.3;
+        }
+
+        :global(.hc-planSetupRow > small) {
+          color: var(--accent);
+          font-weight: 900;
+        }
+
+        :global(.hc-planEmpty) {
+          margin: 0;
+          color: var(--text-dim);
+          font-size: 12px;
+        }
+
+        :global(.hc-planPlaybook) {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 8px;
+          padding: 8px;
+        }
+
+        :global(.hc-planPhase) {
+          min-width: 0;
+          padding: 11px;
+          border-radius: 11px;
+          background: var(--inset-bg);
+        }
+
+        :global(.hc-planPhase > span),
+        :global(.hc-planB > span),
+        :global(.hc-planFollowups > span) {
+          display: block;
+          margin-bottom: 6px;
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+        }
+
+        :global(.hc-planPhaseBall > span) {
+          color: var(--gold-text);
+        }
+
+        :global(.hc-planPhaseNoBall > span) {
+          color: var(--info-text);
+        }
+
+        :global(.hc-planPhase > strong) {
+          color: var(--text-main);
+          font-size: 12px;
+          line-height: 1.4;
+        }
+
+        :global(.hc-planAvoid) {
+          grid-column: 1 / -1;
+          margin: 0;
+          padding: 4px 5px 2px;
+          color: var(--text-dim);
+          font-size: 11px;
+          line-height: 1.4;
+        }
+
+        :global(.hc-planAvoid strong) {
+          color: var(--danger-text, #ff8f8f);
+        }
+
+        :global(.hc-planB) {
+          padding: 12px;
+          border-color: rgba(255, 203, 5, 0.2);
+          background: linear-gradient(145deg, rgba(255, 203, 5, 0.08), var(--surface-2));
+        }
+
+        :global(.hc-planB > span) {
+          color: var(--gold-text);
+        }
+
+        :global(.hc-planB p) {
+          margin: 0 0 5px;
+          color: var(--text-dim);
+          font-size: 11px;
+          line-height: 1.35;
+        }
+
+        :global(.hc-planB p small) {
+          color: var(--gold-text);
+          font-size: inherit;
+          font-weight: 850;
+          text-transform: uppercase;
+        }
+
+        :global(.hc-planB > strong) {
+          display: block;
+          color: var(--text-main);
+          font-size: 12px;
+          line-height: 1.4;
+        }
+
+        :global(.hc-planFollowups) {
+          padding: 12px;
+          background: var(--inset-bg);
+        }
+
+        :global(.hc-planFollowups > span) {
+          color: var(--text-dim);
+        }
+
+        :global(.hc-planFollowups > div) {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+
+        :global(.hc-planFollowups button) {
+          appearance: none;
+          border: 1px solid var(--accent-border);
+          border-radius: 999px;
+          background: var(--accent-bg);
+          color: var(--text-main);
+          padding: 7px 10px;
+          font: inherit;
+          font-size: 11px;
+          font-weight: 700;
+          line-height: 1.25;
+          text-align: left;
+          cursor: pointer;
+        }
+
+        :global(.hc-planFollowups button:hover) {
+          border-color: var(--accent);
+          color: var(--accent);
+        }
+
         @media (max-width: 560px) {
           :global(.hc-countermeasuresGrid) {
+            grid-template-columns: 1fr;
+          }
+
+          :global(.hc-planPlaybook) {
             grid-template-columns: 1fr;
           }
         }
@@ -3579,7 +3845,7 @@ export default function HeroChat({
         }
 
         :global(.hc-planAdviceWarning) {
-          border-left-color: #ffbf4d;
+          border-left-color: var(--primary-orange);
         }
 
         :global(.hc-matchCard) {

@@ -53,9 +53,9 @@ const boxStyle = {
   padding: 'clamp(20px, 4vw, 32px)',
   paddingBottom: 'calc(24px + 64px + env(safe-area-inset-bottom, 0px))',
   background: 'var(--surface)',
-  border: '2px solid #00d4ff',
+  border: '1px solid var(--border-soft)',
   borderRadius: '20px',
-  boxShadow: '0 0 10px #00d4ff, 0 0 30px rgba(0, 212, 255, 0.4)',
+  boxShadow: 'var(--shadow-lg)',
   boxSizing: 'border-box',
   position: 'relative'
 }
@@ -224,7 +224,7 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
           {t('gameAnalysisUploadHint')}
         </div>
         {lastCaptureDate && (
-          <div style={{ fontSize: '13px', color: 'var(--neon-green)', marginBottom: '16px', textAlign: 'center' }}>
+          <div style={{ fontSize: '13px', color: 'var(--success-text)', marginBottom: '16px', textAlign: 'center' }}>
             {t('gameAnalysisLastCapture')}: {lastCaptureLabel || lastCaptureDate}
           </div>
         )}
@@ -308,19 +308,19 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <BarChart3 size={20} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-                          <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--accent)', textShadow: '0 0 10px rgba(0,212,255,0.5)' }}>{t(labelKey)}</span>
-                          <span style={{ fontSize: '11px', padding: '2px 6px', background: 'var(--accent)', color: '#000', borderRadius: '4px', fontWeight: 700, boxShadow: '0 0 10px rgba(0,212,255,0.5)' }}>✓</span>
+                          <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--accent)' }}>{t(labelKey)}</span>
+                          <span style={{ fontSize: '11px', padding: '2px 6px', background: 'var(--accent)', color: 'var(--accent-ink)', borderRadius: '4px', fontWeight: 700 }}>✓</span>
                         </div>
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); removeSlot(key) }}
                           disabled={loading}
-                          style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#ff6b6b', padding: '6px 12px', borderRadius: '8px', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '12px', fontWeight: 600, transition: 'all 0.2s', boxShadow: '0 0 10px rgba(239,68,68,0.2)' }}
+                          style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', color: 'var(--danger-text)', padding: '6px 12px', borderRadius: '8px', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '12px', fontWeight: 600, transition: 'all 0.2s' }}
                         >
                           ✕ Rimuovi
                         </button>
                       </div>
-                      <img src={value.dataUrl} alt={t(labelKey)} style={{ width: '100%', maxHeight: '160px', objectFit: 'cover', borderRadius: '12px', marginBottom: '12px', border: '1px solid rgba(0,212,255,0.3)' }} />
+                      <img src={value.dataUrl} alt={t(labelKey)} style={{ width: '100%', maxHeight: '160px', objectFit: 'cover', borderRadius: '12px', marginBottom: '12px', border: '1px solid var(--info-border)' }} />
                       <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{t('uploadedPhotoLabel')}</span>
                     </>
                   ) : (
@@ -375,7 +375,7 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
           </div>
 
           {error && (
-            <p style={{ color: '#ef4444', fontSize: '13px', marginBottom: '12px' }}>
+            <p style={{ color: 'var(--danger-text)', fontSize: '13px', marginBottom: '12px' }}>
               {error}
               {hasBoth && t('gameAnalysisRetryOne') && (
                 <span style={{ display: 'block', marginTop: '8px', opacity: 0.95 }}>{t('gameAnalysisRetryOne')}</span>
@@ -383,7 +383,7 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
             </p>
           )}
           {success && (
-            <p style={{ color: 'var(--neon-green)', fontSize: '13px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <p style={{ color: 'var(--success-text)', fontSize: '13px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <CheckCircle2 size={16} />
               {t('gameAnalysisSuccess')}
             </p>
@@ -393,7 +393,7 @@ export default function GameAnalysisModal({ show, onClose, onSuccess, lastCaptur
             <div style={{ marginRight: 'auto', fontSize: '13px', opacity: 0.7 }}>
               {!hasAny
                 ? t('gameAnalysisNoImage')
-                : <span style={{ color: 'var(--neon-green)' }}>{[slot1, slot2].filter(Boolean).length} / 2 {t('gameAnalysisScreensLabel')}</span>}
+                : <span style={{ color: 'var(--success-text)' }}>{[slot1, slot2].filter(Boolean).length} / 2 {t('gameAnalysisScreensLabel')}</span>}
             </div>
             <button type="button" className="neon-button" onClick={onClose} disabled={loading} style={{ padding: '12px 24px', minHeight: 44 }}>
               {t('close')}

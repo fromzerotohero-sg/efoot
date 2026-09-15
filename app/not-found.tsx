@@ -16,8 +16,8 @@ export default function NotFound() {
         style={{
           marginTop: 24,
           padding: '12px 24px',
-          background: 'var(--neon-blue)',
-          color: '#000',
+          background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
+          color: 'var(--accent-ink)',
           border: 'none',
           borderRadius: 8,
           fontWeight: 600,

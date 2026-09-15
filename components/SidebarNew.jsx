@@ -61,7 +61,7 @@ export default function SidebarNew() {
 
   // UX V2: navigazione primaria a 3 pilastri. Le vecchie sezioni (contromisure, match,
   // statistiche, upload) restano vive nelle route esistenti e saranno ricollocate sotto Coach.
-  // Toni campionati dalla tavola: Coach green, Rosa blue, Carte purple. Gold solo HP.
+  // Toni campionati dalla tavola: Coach green, Rosa cyan (info), Carte purple. Gold solo HP.
   const PILLAR_TONES = {
     coach: {
       color: 'var(--accent)',
@@ -71,18 +71,18 @@ export default function SidebarNew() {
       idleIcon: 'var(--accent)'
     },
     rosa: {
-      color: '#60a5fa',
-      activeBg: 'rgba(96, 165, 250, 0.12)',
-      activeBorder: 'rgba(96, 165, 250, 0.3)',
-      accent: '#60a5fa',
-      idleIcon: 'rgba(96, 165, 250, 0.65)'
+      color: 'var(--info)',
+      activeBg: 'var(--info-bg)',
+      activeBorder: 'var(--info-border)',
+      accent: 'var(--info)',
+      idleIcon: 'var(--info)'
     },
     carte: {
-      color: '#c084fc',
-      activeBg: 'rgba(192, 132, 252, 0.12)',
-      activeBorder: 'rgba(192, 132, 252, 0.3)',
-      accent: '#c084fc',
-      idleIcon: 'rgba(192, 132, 252, 0.65)'
+      color: 'var(--cards-accent)',
+      activeBg: 'color-mix(in srgb, var(--cards-accent) 12%, transparent)',
+      activeBorder: 'color-mix(in srgb, var(--cards-accent) 30%, transparent)',
+      accent: 'var(--cards-accent)',
+      idleIcon: 'color-mix(in srgb, var(--cards-accent) 65%, transparent)'
     }
   }
 
@@ -100,7 +100,7 @@ export default function SidebarNew() {
   // - Lingua → LanguageSwitch (componente reale)
   // - Tornei → link esterno con redirect modal esistente
   const accountItems = [
-    { href: '/impostazioni-profilo', icon: Wallet, label: 'HP', iconColor: '#fbbf24' },
+    { href: '/impostazioni-profilo', icon: Wallet, label: 'HP', iconColor: 'var(--gold-text)' },
     { href: '/impostazioni-profilo', icon: User, label: pickLang(lang, { it: 'Profilo', en: 'Profile', es: 'Perfil' }) }
   ]
 
@@ -198,12 +198,12 @@ export default function SidebarNew() {
             letterSpacing: '0.5px',
             textTransform: 'uppercase',
             lineHeight: 1.2,
-            color: isWow ? '#03101d' : (item.variant === 'gold' ? '#1f1300' : 'var(--text-main)'),
+            color: isWow ? '#03101d' : (item.variant === 'gold' ? 'var(--gold-ink)' : 'var(--text-main)'),
             background: isWow
-              ? 'rgba(48, 176, 96, 0.18)'
+              ? 'var(--accent-bg)'
               : (item.variant === 'gold'
-                ? 'rgba(201, 162, 39, 0.22)'
-                : 'rgba(48, 176, 96, 0.18)'),
+                ? 'var(--gold-bg)'
+                : 'var(--accent-bg)'),
             border: '1px solid var(--border-soft)',
             boxShadow: 'none'
           }}
@@ -229,7 +229,7 @@ export default function SidebarNew() {
           lineHeight: 1.2,
           color: 'var(--accent)',
           background: 'var(--accent-bg)',
-          border: '1px solid rgba(61, 220, 151, 0.3)',
+          border: '1px solid var(--accent-border)',
           boxShadow: 'none'
         }}
       >
@@ -463,7 +463,7 @@ export default function SidebarNew() {
                     fontSize: '13px',
                     fontWeight: 500,
                     background: 'transparent',
-                    color: 'rgba(255, 130, 130, 0.75)',
+                    color: 'var(--danger-text)',
                     border: '1px solid transparent',
                     cursor: 'pointer',
                     width: '100%',
@@ -632,12 +632,12 @@ export default function SidebarNew() {
           position: relative;
           width: min(400px, 94vw);
           padding: clamp(24px, 5vw, 34px);
-          border: 1px solid var(--info-border);
+          border: 1px solid var(--accent-border);
           border-radius: 24px;
           background:
-            radial-gradient(circle at 50% 0%, rgba(34, 211, 238, 0.12), transparent 42%),
+            radial-gradient(circle at 50% 0%, var(--accent-bg), transparent 42%),
             var(--surface);
-          box-shadow: 0 24px 90px rgba(0,0,0,0.58), 0 0 54px rgba(34, 211, 238, 0.15);
+          box-shadow: 0 24px 90px rgba(0,0,0,0.58), 0 0 54px color-mix(in srgb, var(--accent) 15%, transparent);
           color: var(--text-main);
           text-align: center;
           overflow: hidden;
@@ -651,9 +651,9 @@ export default function SidebarNew() {
           border-radius: 999px;
           display: grid;
           place-items: center;
-          color: #03101d;
-          background: linear-gradient(135deg, #22d3ee, #a78bfa 48%, #7c3aed);
-          box-shadow: 0 0 30px rgba(34, 211, 238, 0.35), 0 0 50px rgba(168, 85, 247, 0.2);
+          color: var(--accent-ink);
+          background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+          box-shadow: 0 0 30px color-mix(in srgb, var(--accent) 35%, transparent);
           animation: redirect-pulse 2s ease-in-out infinite;
         }
 
@@ -672,7 +672,7 @@ export default function SidebarNew() {
         }
 
         .redirect-sub {
-          color: var(--info);
+          color: var(--accent);
           font-size: 0.85rem;
         }
 
@@ -696,15 +696,15 @@ export default function SidebarNew() {
         }
 
         .redirect-primary {
-          color: #03101d;
-          background: linear-gradient(135deg, #22d3ee, #a78bfa 52%, #7c3aed);
-          box-shadow: 0 0 22px rgba(34, 211, 238, 0.32), 0 0 40px rgba(168, 85, 247, 0.18);
+          color: var(--accent-ink);
+          background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+          box-shadow: 0 0 22px color-mix(in srgb, var(--accent) 32%, transparent);
         }
 
         .redirect-primary:hover {
           transform: translateY(-2px) scale(1.02);
           filter: brightness(1.08);
-          box-shadow: 0 0 30px rgba(34, 211, 238, 0.45), 0 0 55px rgba(168, 85, 247, 0.25);
+          box-shadow: 0 0 30px color-mix(in srgb, var(--accent) 45%, transparent);
         }
 
         .redirect-secondary {

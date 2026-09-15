@@ -1647,11 +1647,11 @@ export default function NewMatchPage() {
                       flex: 1,
                       background: currentData
                         ? "rgba(34, 197, 94, 0.16)"
-                        : "linear-gradient(135deg, #00d4ff 0%, #00a1a6 100%)",
+                        : "linear-gradient(135deg, var(--accent), var(--accent-strong))",
                       border: `1px solid ${currentData ? "rgba(34, 197, 94, 0.45)" : "rgba(61, 220, 151, 0.55)"}`,
                       borderRadius: "14px",
                       padding: "14px",
-                      color: currentData ? "var(--success-text)" : "#020510",
+                      color: currentData ? "var(--success-text)" : "var(--accent-ink)",
                       cursor:
                         extracting || saving || currentData
                           ? "not-allowed"
@@ -1932,7 +1932,7 @@ export default function NewMatchPage() {
                   boxShadow: "0 0 30px rgba(255,203,5,0.16)",
                 }}
               >
-                <Trophy size={32} color="var(--neon-orange)" />
+                <Trophy size={32} color="var(--gold-text)" />
               </div>
               <h2
                 style={{
@@ -2247,7 +2247,7 @@ export default function NewMatchPage() {
                   >
                     {t("sectionsMissing")} ({photosMissing.length})
                   </div>
-                  <div style={{ fontSize: "14px", color: "#ffa500" }}>
+                  <div style={{ fontSize: "14px", color: "var(--primary-orange)" }}>
                     {photosMissing.join(", ")}
                   </div>
                 </div>

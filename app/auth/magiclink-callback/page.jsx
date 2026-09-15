@@ -166,10 +166,10 @@ function MagiclinkCallbackContent() {
               onClick={() => router.push('/login')}
               style={{
                 padding: '12px 24px',
-                background: 'var(--neon-blue)',
+                background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
                 border: 'none',
                 borderRadius: '8px',
-                color: '#fff',
+                color: 'var(--accent-ink)',
                 fontSize: '14px',
                 fontWeight: 600,
                 cursor: 'pointer'

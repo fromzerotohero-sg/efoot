@@ -133,8 +133,8 @@ export default function InstallAppPrompt() {
           justify-content: center;
           font-size: 13px;
           font-weight: 700;
-          color: var(--gold-ink);
-          background: linear-gradient(135deg, var(--primary-gold), var(--primary-teal));
+          color: var(--accent-ink);
+          background: linear-gradient(135deg, var(--accent), var(--accent-strong));
         }
       `}</style>
       <div
@@ -378,9 +378,9 @@ export function InstallAppPromptButton() {
         width: 36,
         height: 36,
         borderRadius: 8,
-        background: 'rgba(221, 166, 47, 0.12)',
-        border: '1px solid rgba(221, 166, 47, 0.45)',
-        color: 'var(--primary-gold)',
+        background: 'var(--accent-bg)',
+        border: '1px solid var(--accent-border)',
+        color: 'var(--accent)',
         flexShrink: 0,
         cursor: 'pointer',
       }}

@@ -168,16 +168,15 @@ export default function AccessPage() {
             margin: '18px 0',
             padding: '18px',
             borderRadius: '18px',
-            background: 'linear-gradient(135deg, rgba(255, 203, 5, 0.12), rgba(168, 85, 247, 0.10), rgba(0, 212, 255, 0.10))',
-            border: '1px solid var(--gold-border)',
-            boxShadow: '0 0 24px rgba(255, 203, 5, 0.08)'
+            background: 'linear-gradient(135deg, var(--info-bg), var(--surface))',
+            border: '1px solid var(--info-border)'
           }}>
             <div style={{
               fontSize: '13px',
               fontWeight: 800,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
-              color: 'var(--gold-text)',
+              color: 'var(--info)',
               marginBottom: '8px'
             }}>
               Coming soon
@@ -258,7 +257,7 @@ export default function AccessPage() {
         <section style={{ display: 'grid', gap: '20px' }}>
           <div style={{
             background: 'var(--surface)',
-            border: '1px solid var(--gold-border)',
+            border: '1px solid var(--info-border)',
             borderRadius: '24px',
             padding: 'clamp(24px, 4vw, 32px)',
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
@@ -316,8 +315,8 @@ export default function AccessPage() {
                   padding: '15px 18px',
                   borderRadius: '14px',
                   border: 'none',
-                  background: 'linear-gradient(135deg, #ffcb05 0%, #ff9900 100%)',
-                  color: '#050814',
+                  background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
+                  color: 'var(--accent-ink)',
                   fontSize: '15px',
                   fontWeight: 800,
                   cursor: loading ? 'not-allowed' : 'pointer',
@@ -337,7 +336,7 @@ export default function AccessPage() {
                 borderRadius: '14px',
                 background: message.type === 'success' ? 'rgba(52, 199, 89, 0.12)' : 'rgba(255, 59, 48, 0.12)',
                 border: message.type === 'success' ? '1px solid rgba(52, 199, 89, 0.3)' : '1px solid rgba(255, 59, 48, 0.3)',
-                color: message.type === 'success' ? '#8BFFB0' : '#FF9D9D',
+                color: message.type === 'success' ? 'var(--success-text)' : 'var(--danger-text)',
                 fontSize: '14px',
                 lineHeight: 1.5
               }}>

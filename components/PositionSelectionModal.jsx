@@ -7,19 +7,31 @@ const POSITION_GROUPS = [
   {
     id: 'goalkeeper',
     icon: Shield,
-    color: '#fbbf24',
+    color: 'var(--gold-text)',
+    headerBg: 'var(--gold-bg)',
+    groupBorder: 'var(--gold-border)',
+    tileBg: 'var(--gold-bg)',
+    selectBorder: 'var(--gold-border)',
     positions: [{ id: 'PT' }]
   },
   {
     id: 'defense',
     icon: Shield,
     color: '#22c55e',
+    headerBg: '#22c55e15',
+    groupBorder: '#22c55e30',
+    tileBg: '#22c55e20',
+    selectBorder: '#22c55e50',
     positions: [{ id: 'DC' }, { id: 'TS' }, { id: 'TD' }]
   },
   {
     id: 'midfield',
     icon: Zap,
-    color: '#3b82f6',
+    color: 'var(--info)',
+    headerBg: 'var(--info-bg)',
+    groupBorder: 'var(--info-border)',
+    tileBg: 'var(--info-bg)',
+    selectBorder: 'var(--info-border)',
     positions: [
       { id: 'CC', displayEn: 'CMF' },
       { id: 'MED', displayEn: 'DMF' },
@@ -31,6 +43,10 @@ const POSITION_GROUPS = [
     id: 'attack',
     icon: Target,
     color: '#ef4444',
+    headerBg: '#ef444415',
+    groupBorder: '#ef444430',
+    tileBg: '#ef444420',
+    selectBorder: '#ef444450',
     // Solo questi ruoli in attacco (niente LWF/RWF/CF/SS duplicati)
     positions: [{ id: 'ESA' }, { id: 'EDA' }, { id: 'TRQ', displayEn: 'AMF' }, { id: 'SP' }, { id: 'P' }]
   }
@@ -128,7 +144,7 @@ export default function PositionSelectionModal({
     >
       <div 
         style={{
-          backgroundColor: 'var(--bg-primary, var(--surface))',
+          backgroundColor: 'var(--surface)',
           borderRadius: '12px',
           padding: '24px',
           paddingBottom: 'calc(24px + 64px + env(safe-area-inset-bottom, 0px))',
@@ -136,7 +152,7 @@ export default function PositionSelectionModal({
           width: '100%',
           maxHeight: 'calc(100vh - 100px)',
           overflowY: 'auto',
-          border: '1px solid var(--border-color, #333)',
+          border: '1px solid var(--border-soft)',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)'
         }}
         onClick={(e) => e.stopPropagation()}
@@ -144,7 +160,7 @@ export default function PositionSelectionModal({
         <h2 style={{ 
           marginTop: 0, 
           marginBottom: '8px',
-          color: 'var(--text-primary, #fff)',
+          color: 'var(--text-main)',
           fontSize: '20px',
           fontWeight: '600'
         }}>
@@ -154,7 +170,7 @@ export default function PositionSelectionModal({
         <p style={{ 
           marginTop: 0, 
           marginBottom: '16px',
-          color: 'var(--text-secondary, #aaa)',
+          color: 'var(--text-secondary)',
           fontSize: '14px'
         }}>
           {playerName}
@@ -162,7 +178,7 @@ export default function PositionSelectionModal({
         
         <p style={{ 
           marginBottom: '20px',
-          color: 'var(--text-secondary, #aaa)',
+          color: 'var(--text-secondary)',
           fontSize: '14px',
           lineHeight: '1.5'
         }}>
@@ -179,7 +195,7 @@ export default function PositionSelectionModal({
             
             return (
               <div key={group.id} style={{
-                border: `1px solid ${group.color}30`,
+                border: `1px solid ${group.groupBorder}`,
                 borderRadius: '12px',
                 overflow: 'hidden',
                 background: 'var(--inset-bg)'
@@ -190,8 +206,8 @@ export default function PositionSelectionModal({
                   alignItems: 'center',
                   gap: '10px',
                   padding: '12px 16px',
-                  background: `${group.color}15`,
-                  borderBottom: `1px solid ${group.color}30`
+                  background: group.headerBg,
+                  borderBottom: `1px solid ${group.groupBorder}`
                 }}>
                   <GroupIcon size={20} color={group.color} />
                   <span style={{ 
@@ -246,7 +262,7 @@ export default function PositionSelectionModal({
                           borderRadius: '8px',
                           cursor: 'pointer',
                           border: `1.5px solid ${selected ? group.color : 'transparent'}`,
-                          background: selected ? `${group.color}20` : 'var(--surface-2)',
+                          background: selected ? group.tileBg : 'var(--surface-2)',
                           transition: 'all 0.2s ease'
                         }}
                         onMouseEnter={(e) => {
@@ -306,7 +322,7 @@ export default function PositionSelectionModal({
                               marginLeft: '26px',
                               padding: '4px 8px',
                               borderRadius: '6px',
-                              border: `1px solid ${group.color}50`,
+                              border: `1px solid ${group.selectBorder}`,
                               background: 'var(--inset-bg)',
                               color: 'var(--text-main)',
                               fontSize: '11px',
@@ -331,7 +347,7 @@ export default function PositionSelectionModal({
         
         {selectedPositions.length === 0 && (
           <p style={{
-            color: 'var(--error-color, #ff4444)',
+            color: 'var(--danger-text)',
             fontSize: '13px',
             marginBottom: '16px'
           }}>
@@ -350,9 +366,9 @@ export default function PositionSelectionModal({
             style={{
               padding: '10px 20px',
               borderRadius: '8px',
-              border: '1px solid var(--border-color, #333)',
+              border: '1px solid var(--border-soft)',
               backgroundColor: 'transparent',
-              color: 'var(--text-primary, #fff)',
+              color: 'var(--text-main)',
               cursor: 'pointer',
               fontSize: '14px',
               fontWeight: '500'
@@ -367,12 +383,12 @@ export default function PositionSelectionModal({
               padding: '10px 20px',
               borderRadius: '8px',
               border: 'none',
-              backgroundColor: selectedPositions.length === 0 || uploading
-                ? 'var(--border-color, #333)' 
-                : 'var(--neon-blue, #00d4ff)',
+              background: selectedPositions.length === 0 || uploading
+                ? 'var(--surface-3)'
+                : 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
               color: selectedPositions.length === 0 || uploading
-                ? 'var(--text-secondary, #aaa)' 
-                : '#000',
+                ? 'var(--text-dim)'
+                : 'var(--accent-ink)',
               cursor: selectedPositions.length === 0 || uploading ? 'not-allowed' : 'pointer',
               fontSize: '14px',
               fontWeight: '600'

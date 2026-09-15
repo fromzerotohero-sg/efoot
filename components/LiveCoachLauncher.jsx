@@ -930,8 +930,15 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
             display: 'flex',
             alignItems: 'stretch',
             gap: '14px',
-            color: '#FFF4CC',
+            color: 'var(--gold-text)',
             backdropFilter: 'blur(18px)',
+            // FAB = isola scura brandizzata in entrambi i temi: pinna i token semantici sui valori dark
+            '--gold-text': '#ffd76a',
+            '--gold-bg': 'rgba(255, 203, 5, 0.1)',
+            '--gold-border': 'rgba(255, 203, 5, 0.3)',
+            '--success-text': '#86efac',
+            '--accent': '#3ddc97',
+            '--primary-orange': '#ff9500',
             padding: '14px 16px',
             textAlign: 'left',
             animation: isConnected ? 'liveCoachPulse 2.4s ease-in-out infinite' : 'none'
@@ -959,7 +966,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '15px', fontWeight: 800, color: '#FFF4CC' }}>{t('liveCoachTitle', { coachName: coachDisplayName })}</span>
+                  <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--gold-text)' }}>{t('liveCoachTitle', { coachName: coachDisplayName })}</span>
                   <span style={{
                     padding: '4px 8px',
                     borderRadius: '999px',
@@ -967,9 +974,9 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                     letterSpacing: '0.08em',
                     fontWeight: 800,
                     textTransform: 'uppercase',
-                    background: 'rgba(255,215,100,0.12)',
-                    border: '1px solid rgba(255,215,100,0.26)',
-                    color: '#FFD76A'
+                    background: 'var(--gold-bg)',
+                    border: '1px solid var(--gold-border)',
+                    color: 'var(--gold-text)'
                   }}>
                     {premiumLabel}
                   </span>
@@ -985,7 +992,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                 padding: '6px 9px',
                 borderRadius: '999px',
                 background: isConnected ? 'rgba(52,199,89,0.12)' : 'rgba(255,255,255,0.05)',
-                color: isConnected ? '#7DFF9A' : 'rgba(255,255,255,0.82)',
+                color: isConnected ? 'var(--success-text)' : 'rgba(255,255,255,0.82)',
                 fontSize: '11px',
                 fontWeight: 800
               }}>
@@ -993,7 +1000,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                   width: '8px',
                   height: '8px',
                   borderRadius: '50%',
-                  background: isConnected ? '#54F5A6' : '#FFD76A',
+                  background: isConnected ? 'var(--accent)' : 'var(--gold-text)',
                   animation: isConnected ? 'liveDot 1.4s ease-in-out infinite' : 'none'
                 }} />
                 {isConnected ? t('liveCoachLiveShort') : t('liveCoachReadyShort')}
@@ -1008,11 +1015,11 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                 padding: '8px 10px',
                 borderRadius: '12px',
                 background: 'rgba(255,255,255,0.05)',
-                color: '#FFF4CC',
+                color: 'var(--gold-text)',
                 fontSize: '12px',
                 fontWeight: 700
               }}>
-                <Zap size={13} color={balanceRemaining !== null && balanceRemaining <= 2 ? '#FFB454' : '#FFD76A'} />
+                <Zap size={13} color={balanceRemaining !== null && balanceRemaining <= 2 ? 'var(--primary-orange)' : 'var(--gold-text)'} />
                 {t('liveCoachStatHp')}: {creditsLoading ? '...' : (balanceRemaining ?? '--')}
               </div>
               <div style={{
@@ -1022,7 +1029,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                 padding: '8px 10px',
                 borderRadius: '12px',
                 background: isConnected ? 'rgba(0,212,255,0.08)' : 'rgba(255,255,255,0.05)',
-                color: '#FFF4CC',
+                color: 'var(--gold-text)',
                 fontSize: '12px',
                 fontWeight: 700
               }}>
@@ -1035,12 +1042,12 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                 gap: '6px',
                 padding: '8px 10px',
                 borderRadius: '12px',
-                background: 'rgba(255,215,100,0.08)',
-                color: '#FFF2C2',
+                background: 'var(--gold-bg)',
+                color: 'var(--gold-text)',
                 fontSize: '12px',
                 fontWeight: 700
               }}>
-                <Sparkles size={13} color="#FFD76A" />
+                <Sparkles size={13} color="var(--gold-text)" />
                 {t('liveCoachStatSpent')}: {currentSessionSpent}
               </div>
             </div>
@@ -1196,7 +1203,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                       padding: '8px 10px',
                       borderRadius: '999px',
                       background: isConnected ? 'rgba(52,199,89,0.12)' : 'var(--surface-2)',
-                      color: isConnected ? '#7DFF9A' : 'var(--text-secondary)',
+                      color: isConnected ? 'var(--success-text)' : 'var(--text-secondary)',
                       fontSize: '12px',
                       fontWeight: 800
                     }}>
@@ -1204,7 +1211,7 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                         width: '8px',
                         height: '8px',
                         borderRadius: '50%',
-                        background: isConnected ? '#54F5A6' : '#FFD76A',
+                        background: isConnected ? 'var(--accent)' : 'var(--gold-text)',
                         animation: isConnected ? 'liveDot 1.4s ease-in-out infinite' : 'none'
                       }} />
                       {isConnected ? t('liveCoachStatusLive') : isConnecting ? t('liveCoachStatusConnecting') : t('liveCoachStatusReady')}
@@ -1327,11 +1334,11 @@ export default function LiveCoachLauncher({ showLauncherButton = true }) {
                             position: 'absolute',
                             width: '4px',
                             height: '4px',
-                            background: isConnected ? '#00ff88' : '#00d4ff',
+                            background: isConnected ? 'var(--success-text)' : 'var(--info)',
                             borderRadius: '50%',
                             top: '50%',
                             left: '50%',
-                            boxShadow: `0 0 6px ${isConnected ? '#00ff88' : '#00d4ff'}`,
+                            boxShadow: `0 0 6px ${isConnected ? 'var(--success-text)' : 'var(--info)'}`,
                             animation: 'voiceOrbParticleOrbit 3s linear infinite',
                             animationDelay: `${i * 0.5}s`,
                             transformOrigin: '0 0'

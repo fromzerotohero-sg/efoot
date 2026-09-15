@@ -207,10 +207,10 @@ export default function CreditsBar() {
   };
 
   const getBarColor = (percentUsed, overage) => {
-    if (overage > 0) return "#FF9500";
-    if (percentUsed >= 95) return "#FF3B30";
-    if (percentUsed >= 75) return "#FF9500";
-    return "#34C759";
+    if (overage > 0) return "var(--primary-orange)";
+    if (percentUsed >= 95) return "var(--danger-text)";
+    if (percentUsed >= 75) return "var(--primary-orange)";
+    return "var(--accent)";
   };
 
   if (noSession) return null;
@@ -228,7 +228,7 @@ export default function CreditsBar() {
   const percentIncluded =
     included > 0 ? Math.min(100, Math.round((used / included) * 100)) : 0;
   const periodLabel = formatPeriod(data?.period_key);
-  const barColor = data ? getBarColor(percentIncluded, overage) : "#00d4ff";
+  const barColor = data ? getBarColor(percentIncluded, overage) : "var(--info)";
 
   const totalBalance = included + tempBalance;
   const compactLabel = loading
@@ -274,13 +274,13 @@ export default function CreditsBar() {
                   borderRadius: "999px",
                   display: "grid",
                   placeItems: "center",
-                  color: "#06101f",
+                  color: "var(--gold-ink)",
                   fontSize: "11px",
                   fontWeight: 950,
                   background:
-                    "linear-gradient(135deg, #fef3c7, #facc15 52%, #22d3ee)",
+                    "linear-gradient(135deg, var(--gold-text), color-mix(in srgb, var(--gold-text) 65%, var(--gold-ink)))",
                   boxShadow:
-                    "0 0 18px rgba(250,204,21,0.65), 0 0 30px rgba(0,212,255,0.35)",
+                    "0 0 18px var(--gold-border)",
                   transform:
                     "translate(var(--start-x), var(--start-y)) scale(0.8)",
                   animation:
@@ -330,12 +330,12 @@ export default function CreditsBar() {
           color: "var(--text-main)",
           background: "var(--surface-3)",
           border: highlight
-            ? "1px solid rgba(201, 150, 48, 0.7)"
+            ? "1px solid var(--gold-border)"
             : "1px solid var(--border-soft)",
           borderRadius: "10px",
           cursor: "pointer",
           boxShadow: highlight
-            ? "0 0 0 2px rgba(201, 150, 48, 0.22)"
+            ? "0 0 0 2px var(--gold-bg)"
             : "none",
           transition: "box-shadow 0.25s ease, border-color 0.25s ease",
         }}
@@ -343,13 +343,13 @@ export default function CreditsBar() {
         {loading ? (
           <RefreshCw
             size={16}
-            color="#00A8C8"
+            color="var(--info)"
             style={{ animation: "spin 1s linear infinite" }}
           />
         ) : error ? (
-          <AlertCircle size={16} color="#D99B27" />
+          <AlertCircle size={16} color="var(--primary-orange)" />
         ) : (
-          <Zap size={16} color="#C99630" fill="#C99630" />
+          <Zap size={16} color="var(--gold-text)" fill="var(--gold-text)" />
         )}
         {compactLabel != null && (
           <span style={{ fontWeight: 700, whiteSpace: "nowrap", color: "var(--text-main)" }}>
@@ -413,7 +413,7 @@ export default function CreditsBar() {
               >
                 <RefreshCw
                   size={18}
-                  color="var(--primary-cyan)"
+                  color="var(--info)"
                   style={{ animation: "spin 1s linear infinite" }}
                 />
                 <span style={{ fontSize: "14px" }}>{t("creditsLoading")}</span>
@@ -464,7 +464,7 @@ export default function CreditsBar() {
                           margin: 0,
                           fontSize: "16px",
                           fontWeight: 600,
-                          color: "var(--neon-cyan)",
+                          color: "var(--info)",
                         }}
                       >
                         {t("creditsTitle")}
@@ -500,7 +500,7 @@ export default function CreditsBar() {
                     gap: "4px",
                     fontSize: "15px",
                     fontWeight: 600,
-                    color: "var(--neon-cyan)",
+                    color: "var(--info)",
                   }}
                 >
                   <span>
@@ -530,7 +530,7 @@ export default function CreditsBar() {
                   style={{
                     width: "100%",
                     height: "8px",
-                    backgroundColor: "rgba(0, 212, 255, 0.05)",
+                    backgroundColor: "color-mix(in srgb, var(--info) 5%, transparent)",
                     borderRadius: "4px",
                     overflow: "hidden",
                     position: "relative",
@@ -559,8 +559,8 @@ export default function CreditsBar() {
                     style={{
                       marginTop: "12px",
                       padding: "12px",
-                      background: "rgba(0, 161, 166, 0.05)",
-                      border: "1px solid rgba(0, 161, 166, 0.2)",
+                      background: "var(--info-bg)",
+                      border: "1px solid var(--info-border)",
                       fontSize: "13px",
                       color: "var(--primary-orange)",
                       display: "flex",
@@ -588,24 +588,23 @@ export default function CreditsBar() {
                     gap: "8px",
                     marginTop: "16px",
                     padding: "12px",
-                    background: "rgba(0, 212, 255, 0.1)",
-                    border: "1px solid rgba(0, 212, 255, 0.3)",
+                    background: "var(--info-bg)",
+                    border: "1px solid var(--info-border)",
                     borderRadius: "8px",
-                    color: "var(--neon-cyan)",
+                    color: "var(--info)",
                     fontSize: "13px",
                     fontWeight: 500,
                     textDecoration: "none",
                     transition: "all 0.2s ease",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(0, 212, 255, 0.2)";
-                    e.currentTarget.style.borderColor =
-                      "rgba(0, 212, 255, 0.5)";
+                    e.currentTarget.style.background =
+                      "color-mix(in srgb, var(--info) 18%, transparent)";
+                    e.currentTarget.style.borderColor = "var(--info)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(0, 212, 255, 0.1)";
-                    e.currentTarget.style.borderColor =
-                      "rgba(0, 212, 255, 0.3)";
+                    e.currentTarget.style.background = "var(--info-bg)";
+                    e.currentTarget.style.borderColor = "var(--info-border)";
                   }}
                 >
                   <Settings size={16} />

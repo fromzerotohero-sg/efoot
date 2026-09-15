@@ -151,10 +151,10 @@ export default function ForgotPasswordPage() {
               style={{
                 width: '100%',
                 padding: '14px',
-                background: loading ? 'rgba(0, 212, 255, 0.3)' : 'var(--neon-blue)',
+                background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
                 border: 'none',
                 borderRadius: '8px',
-                color: '#fff',
+                color: 'var(--accent-ink)',
                 fontSize: '16px',
                 fontWeight: 600,
                 cursor: loading ? 'not-allowed' : 'pointer',

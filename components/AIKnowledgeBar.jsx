@@ -230,33 +230,33 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
   const getLevelConfig = (levelKey) => {
     const configs = {
       beginner: {
-        color: '#FF9500',
-        gradient: 'linear-gradient(135deg, #FF9500 0%, #FFB347 100%)',
-        glow: 'rgba(255, 149, 0, 0.5)',
+        color: 'var(--primary-orange)',
+        gradient: 'linear-gradient(135deg, var(--primary-orange) 0%, color-mix(in srgb, var(--primary-orange) 60%, var(--gold-text)) 100%)',
+        glow: 'color-mix(in srgb, var(--primary-orange) 45%, transparent)',
         icon: Target,
         label: t('aiKnowledgeBeginner') || 'Principiante',
         description: t('aiKnowledgeBeginnerShort') || 'Inizia il tuo percorso'
       },
       intermediate: {
-        color: '#00D4FF',
-        gradient: 'linear-gradient(135deg, #00A3CC 0%, #00D4FF 100%)',
-        glow: 'rgba(0, 212, 255, 0.5)',
+        color: 'var(--info)',
+        gradient: 'linear-gradient(135deg, var(--info) 0%, var(--info-text) 100%)',
+        glow: 'color-mix(in srgb, var(--info) 45%, transparent)',
         icon: Zap,
         label: t('aiKnowledgeIntermediate') || 'Intermedio',
         description: t('aiKnowledgeIntermediateShort') || 'Stai migliorando'
       },
       advanced: {
-        color: '#9D4EDD',
-        gradient: 'linear-gradient(135deg, #7B2CBF 0%, #C77DFF 100%)',
-        glow: 'rgba(157, 78, 221, 0.5)',
+        color: 'var(--cards-accent)',
+        gradient: 'linear-gradient(135deg, var(--cards-accent) 0%, color-mix(in srgb, var(--cards-accent) 55%, var(--text-main)) 100%)',
+        glow: 'color-mix(in srgb, var(--cards-accent) 45%, transparent)',
         icon: Trophy,
         label: t('aiKnowledgeAdvanced') || 'Avanzato',
         description: t('aiKnowledgeAdvancedShort') || 'Competenza elevata'
       },
       expert: {
-        color: '#FFD700',
-        gradient: 'linear-gradient(135deg, #B8860B 0%, #FFD700 100%)',
-        glow: 'rgba(255, 215, 0, 0.6)',
+        color: 'var(--gold-text)',
+        gradient: 'linear-gradient(135deg, color-mix(in srgb, var(--gold-text) 70%, var(--gold-ink)) 0%, var(--gold-text) 100%)',
+        glow: 'color-mix(in srgb, var(--gold-text) 50%, transparent)',
         icon: Crown,
         label: t('aiKnowledgeExpert') || 'Esperto',
         description: t('aiKnowledgeExpertShort') || 'Maestro del gioco'
@@ -284,8 +284,8 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
         <svg width={gaugeSize} height={gaugeSize} viewBox={`0 0 ${gaugeSize} ${gaugeSize}`} role="img" aria-label={scoreLabel}>
           <defs>
             <linearGradient id={`ai-knowledge-gauge-${variant}`} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#00A8C8" />
-              <stop offset="100%" stopColor="#27A76A" />
+              <stop offset="0%" stopColor="var(--info)" />
+              <stop offset="100%" stopColor="var(--accent-strong)" />
             </linearGradient>
           </defs>
           <circle cx={center} cy={center} r={gaugeRadius} fill="none" stroke={light ? 'var(--border-soft)' : 'var(--border-softer)'} strokeWidth={compact || variant === 'row' ? 7 : 10} />
@@ -346,8 +346,8 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'rgba(0,168,200,0.1)',
-              color: '#00A8C8',
+              background: 'var(--info-bg)',
+              color: 'var(--info)',
               flexShrink: 0
             }}>
               <Brain size={16} aria-hidden="true" />
@@ -404,8 +404,8 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
 
   if (error) {
     return (
-      <div style={{ ...styles.card, padding: isMobile ? '16px' : '24px', borderColor: 'rgba(239, 68, 68, 0.4)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#EF4444' }}>
+      <div style={{ ...styles.card, padding: isMobile ? '16px' : '24px', borderColor: 'color-mix(in srgb, var(--danger-text) 40%, transparent)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--danger-text)' }}>
           <AlertCircle size={24} />
           <span style={{ fontSize: '15px' }}>{error}</span>
         </div>
@@ -423,7 +423,7 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
         {/* Header row: Title + brand mark */}
         <div style={{...styles.header, marginBottom: isMobile ? '14px' : '18px'}}>
           <div style={styles.titleSection}>
-            <div style={{ ...styles.badgeRow, color: currentLevel.color, borderColor: `${currentLevel.color}55`, background: `${currentLevel.color}14` }}>
+            <div style={{ ...styles.badgeRow, color: currentLevel.color, borderColor: `color-mix(in srgb, ${currentLevel.color} 35%, transparent)`, background: `color-mix(in srgb, ${currentLevel.color} 8%, transparent)` }}>
               <LevelIcon size={13} />
               <span style={styles.badgeText}>HERO INTELLIGENCE</span>
             </div>
@@ -463,7 +463,7 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
             <span style={{...styles.scoreValue, fontSize: isMobile ? '42px' : '50px'}}>{Math.round(animatedScore)}</span>
             <span style={{...styles.scorePercent, fontSize: isMobile ? '18px' : '22px'}}>%</span>
           </div>
-          <span style={{ ...styles.scoreLabel, borderColor: `${currentLevel.color}42`, color: currentLevel.color }}>
+          <span style={{ ...styles.scoreLabel, borderColor: `color-mix(in srgb, ${currentLevel.color} 28%, transparent)`, color: currentLevel.color }}>
             {score < 65
               ? pickLang(lang, { it: 'In crescita', en: 'Growing', es: 'En crecimiento' })
               : score < 85
@@ -506,7 +506,7 @@ export default function AIKnowledgeBar({ variant = 'card', compact = false } = {
 
         {/* Level badge */}
         <div style={{...styles.levelSection, marginBottom: 0, gap: isMobile ? '8px' : '12px'}}>
-          <div style={{ ...styles.levelBadge, background: `${currentLevel.color}20`, borderColor: currentLevel.color }}>
+          <div style={{ ...styles.levelBadge, background: `color-mix(in srgb, ${currentLevel.color} 14%, transparent)`, borderColor: currentLevel.color }}>
             <LevelIcon size={isMobile ? 14 : 16} color={currentLevel.color} />
             <span style={{ ...styles.levelText, color: currentLevel.color }}>
               {currentLevel.label}
@@ -612,8 +612,8 @@ const styles = {
     width: '48px',
     height: '48px',
     borderRadius: '50%',
-    background: 'rgba(0, 212, 255, 0.1)',
-    border: '1px solid rgba(0, 212, 255, 0.3)',
+    background: 'var(--info-bg)',
+    border: '1px solid var(--info-border)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -624,7 +624,7 @@ const styles = {
     borderRadius: '22px',
     border: '2px solid',
     padding: '5px',
-    background: 'radial-gradient(circle at 35% 25%, rgba(255,255,255,0.22), rgba(0, 212, 255, 0.08) 38%, rgba(5, 8, 20, 0.72) 100%)',
+    background: 'radial-gradient(circle at 35% 25%, rgba(255,255,255,0.22), color-mix(in srgb, var(--info) 8%, transparent) 38%, rgba(5, 8, 20, 0.72) 100%)',
     transition: 'all 0.3s ease',
   },
   avatar: {
@@ -632,7 +632,7 @@ const styles = {
     height: '100%',
     borderRadius: '17px',
     objectFit: 'contain',
-    filter: 'drop-shadow(0 0 10px rgba(0, 212, 255, 0.55))',
+    filter: 'drop-shadow(0 0 10px color-mix(in srgb, var(--info) 55%, transparent))',
   },
   levelDot: {
     position: 'absolute',
@@ -657,10 +657,7 @@ const styles = {
   },
   scoreValue: {
     fontWeight: '800',
-    background: 'linear-gradient(180deg, var(--text-main) 0%, var(--text-secondary) 100%)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    backgroundClip: 'text',
+    color: 'var(--text-main)',
     lineHeight: 1,
     letterSpacing: '-2px',
   },

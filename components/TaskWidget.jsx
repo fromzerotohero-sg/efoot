@@ -136,7 +136,7 @@ export default function TaskWidget() {
         borderRadius: '12px',
         padding: '20px',
         marginBottom: '24px',
-        border: '1px solid rgba(0, 212, 255, 0.3)',
+        border: '1px solid var(--info-border)',
         boxShadow: 'var(--shadow-sm)',
         display: 'flex',
         alignItems: 'center',
@@ -155,8 +155,8 @@ export default function TaskWidget() {
         borderRadius: '12px',
         padding: '20px',
         marginBottom: '24px',
-        border: '1px solid #FF3B30',
-        color: '#FF3B30',
+        border: '1px solid var(--danger-text)',
+        color: 'var(--danger-text)',
         fontSize: '14px'
       }}>
         {t('error') || 'Error'}: {error}
@@ -180,7 +180,7 @@ export default function TaskWidget() {
         maxWidth: '100%',
         boxSizing: 'border-box',
         background: 'var(--surface)',
-        border: '1px solid rgba(0, 212, 255, 0.3)',
+        border: '1px solid var(--info-border)',
         borderRadius: '12px',
         overflow: 'hidden',
         boxShadow: 'var(--shadow-sm)'
@@ -206,8 +206,8 @@ export default function TaskWidget() {
           boxSizing: 'border-box'
         }}
       >
-        <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(255,165,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <Trophy size={26} color="var(--neon-orange)" />
+        <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'color-mix(in srgb, var(--gold-text) 18%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Trophy size={26} color="var(--gold-text)" />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 700, marginBottom: '4px', fontSize: 'clamp(16px, 4vw, 18px)' }}>
@@ -218,9 +218,9 @@ export default function TaskWidget() {
           </div>
         </div>
         {isExpanded ? (
-          <ChevronUp size={22} color="var(--neon-orange)" style={{ flexShrink: 0 }} aria-hidden />
+          <ChevronUp size={22} color="var(--gold-text)" style={{ flexShrink: 0 }} aria-hidden />
         ) : (
-          <ChevronDown size={22} color="var(--neon-orange)" style={{ flexShrink: 0 }} aria-hidden />
+          <ChevronDown size={22} color="var(--gold-text)" style={{ flexShrink: 0 }} aria-hidden />
         )}
       </div>
 
@@ -279,9 +279,9 @@ export default function TaskWidget() {
                   ? Math.min(100, Math.max(0, ((typeof task.current_value === 'number' ? task.current_value : 0) / task.target_value) * 100))
                   : 0
                 const difficultyStyles = {
-                  easy: { bg: 'rgba(34, 197, 94, 0.2)', color: '#4ade80', label: t('goalDifficultyEasy') },
-                  medium: { bg: 'rgba(251, 146, 60, 0.2)', color: '#fb923c', label: t('goalDifficultyMedium') },
-                  hard: { bg: 'rgba(239, 68, 68, 0.2)', color: '#f87171', label: t('goalDifficultyHard') }
+                  easy: { bg: 'color-mix(in srgb, var(--success-text) 18%, transparent)', color: 'var(--success-text)', label: t('goalDifficultyEasy') },
+                  medium: { bg: 'color-mix(in srgb, var(--primary-orange) 18%, transparent)', color: 'var(--primary-orange)', label: t('goalDifficultyMedium') },
+                  hard: { bg: 'color-mix(in srgb, var(--danger-text) 18%, transparent)', color: 'var(--danger-text)', label: t('goalDifficultyHard') }
                 }
                 const diffStyle = task.difficulty ? difficultyStyles[task.difficulty] : difficultyStyles.medium
                 
@@ -290,13 +290,13 @@ export default function TaskWidget() {
                     key={task.id}
                     style={{
                       padding: '12px',
-                      background: isCompleted ? 'rgba(0, 212, 255, 0.08)' : 'var(--surface)',
-                      borderColor: isCompleted ? 'rgba(0, 212, 255, 0.4)' : 'rgba(0, 212, 255, 0.15)',
+                      background: isCompleted ? 'var(--info-bg)' : 'var(--surface)',
+                      borderColor: isCompleted ? 'var(--info-border)' : 'color-mix(in srgb, var(--info) 15%, transparent)',
                       border: '1px solid',
                       borderRadius: '12px',
                       fontSize: '13px',
                       opacity: isFailed ? 0.6 : 1,
-                      boxShadow: isCompleted ? '0 0 15px rgba(0, 212, 255, 0.15)' : 'none'
+                      boxShadow: isCompleted ? '0 0 15px color-mix(in srgb, var(--info) 15%, transparent)' : 'none'
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '6px' }}>
@@ -335,7 +335,7 @@ export default function TaskWidget() {
                         </div>
                         {isActive && task.target_value > 0 && (
                           <div style={{ width: '100%', height: '4px', background: 'var(--surface-3)', borderRadius: '2px', overflow: 'hidden', marginTop: '8px' }}>
-                            <div style={{ width: `${progressPct}%`, height: '100%', background: 'var(--neon-cyan)', borderRadius: '2px', transition: 'width 0.3s ease' }} />
+                            <div style={{ width: `${progressPct}%`, height: '100%', background: 'var(--accent)', borderRadius: '2px', transition: 'width 0.3s ease' }} />
                           </div>
                         )}
                       </div>

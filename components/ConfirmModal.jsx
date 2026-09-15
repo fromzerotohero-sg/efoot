@@ -32,17 +32,17 @@ export default function ConfirmModal({
   const variantConfig = {
     error: {
       icon: AlertCircle,
-      iconColor: '#FF3B30',
+      iconColor: 'var(--danger-text)',
       borderColor: 'rgba(255, 59, 48, 0.3)'
     },
     danger: {
       icon: AlertCircle,
-      iconColor: '#FF3B30',
+      iconColor: 'var(--danger-text)',
       borderColor: 'rgba(255, 59, 48, 0.3)'
     },
     warning: {
       icon: AlertTriangle,
-      iconColor: '#FF9500',
+      iconColor: 'var(--primary-orange)',
       borderColor: 'rgba(255, 149, 0, 0.3)'
     },
     info: {
@@ -60,11 +60,11 @@ export default function ConfirmModal({
   const confirmButtonStyle = confirmVariant === 'danger'
     ? {
         background: 'rgba(255, 59, 48, 0.1)',
-        borderColor: '#FF3B30',
-        color: '#FF3B30'
+        borderColor: 'var(--danger-text)',
+        color: 'var(--danger-text)'
       }
     : {
-        background: 'rgba(0, 217, 255, 0.1)',
+        background: 'var(--accent-bg)',
         borderColor: 'var(--accent)',
         color: 'var(--accent)'
       }
@@ -144,7 +144,7 @@ export default function ConfirmModal({
           display: 'flex',
           flexDirection: 'column',
           minHeight: 0,
-          border: `1px solid ${variant === 'danger' ? 'rgba(255, 59, 48, 0.3)' : 'rgba(0, 212, 255, 0.3)'}`,
+          border: `1px solid ${config.borderColor}`,
           boxShadow: isSheet ? '0 -8px 32px rgba(0, 0, 0, 0.35)' : 'var(--shadow-lg)',
           animation: 'slideUp 0.3s ease-out',
           position: 'relative',
@@ -181,7 +181,7 @@ export default function ConfirmModal({
                 style={{ 
                 margin: 0,
                 marginBottom: '8px',
-                color: 'var(--text-primary, #fff)',
+                color: 'var(--text-main)',
                 fontSize: 'clamp(16px, 4.2vw, 20px)',
                 fontWeight: '600',
                 lineHeight: 1.25,
@@ -205,7 +205,7 @@ export default function ConfirmModal({
               {details && (
                 <p style={{
                   margin: '12px 0 0 0',
-                  color: 'var(--text-secondary, #aaa)',
+                  color: 'var(--text-secondary)',
                   fontSize: '13px',
                   lineHeight: '1.5',
                   opacity: 0.9

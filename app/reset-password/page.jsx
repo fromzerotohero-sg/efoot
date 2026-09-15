@@ -95,7 +95,7 @@ export default function ResetPasswordPage() {
           <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '24px' }}>
             {t('resetLinkExpired')}
           </p>
-          <Link href="/forgot-password" style={{ display: 'inline-block', padding: '12px 24px', background: 'var(--neon-blue)', color: '#fff', borderRadius: '8px', textDecoration: 'none', fontWeight: 600 }}>
+          <Link href="/forgot-password" style={{ display: 'inline-block', padding: '12px 24px', background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))', color: 'var(--accent-ink)', borderRadius: '8px', textDecoration: 'none', fontWeight: 600 }}>
             {t('forgotPasswordTitle')}
           </Link>
           <div style={{ marginTop: '24px' }}>
@@ -242,10 +242,10 @@ export default function ResetPasswordPage() {
               style={{
                 width: '100%',
                 padding: '14px',
-                background: loading ? 'rgba(0, 212, 255, 0.3)' : 'var(--neon-blue)',
+                background: 'linear-gradient(135deg, var(--accent), var(--accent-strong))',
                 border: 'none',
                 borderRadius: '8px',
-                color: '#fff',
+                color: 'var(--accent-ink)',
                 fontSize: '16px',
                 fontWeight: 600,
                 cursor: loading ? 'not-allowed' : 'pointer',
