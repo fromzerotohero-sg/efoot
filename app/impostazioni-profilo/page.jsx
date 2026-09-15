@@ -3,7 +3,7 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
-import { useTranslation } from '@/lib/i18n'
+import { useTranslation, pickLang } from '@/lib/i18n'
 import {
   CheckCircle2, AlertCircle, X,
   Coins, Zap, LogOut, Pencil, ChevronRight, ChevronDown, ExternalLink,
@@ -219,14 +219,23 @@ function HeroPointsCard({ lang }) {
         { service: 'Pre-match countermeasures', cost: '2 HP' },
         { service: 'Player or coach extraction', cost: '2 HP' }
       ]
-    : [
-        { service: 'Hero Chat: chiedi al Coach AI', cost: '2 HP' },
-        { service: 'Card Advisor: valuta una nuova carta', cost: '2 HP' },
-        { service: 'Analisi partita', cost: '2 HP' },
-        { service: 'Estrazione statistiche di gioco', cost: '2-4 HP' },
-        { service: 'Contromisure pre-partita', cost: '2 HP' },
-        { service: 'Estrazione giocatore o allenatore', cost: '2 HP' }
-      ]
+    : lang === 'es'
+      ? [
+          { service: 'Hero Chat: pregunta al Coach AI', cost: '2 HP' },
+          { service: 'Card Advisor: evalúa una carta nueva', cost: '2 HP' },
+          { service: 'Análisis de partido', cost: '2 HP' },
+          { service: 'Extracción de estadísticas de juego', cost: '2-4 HP' },
+          { service: 'Contramedidas prepartido', cost: '2 HP' },
+          { service: 'Extracción de jugador o entrenador', cost: '2 HP' }
+        ]
+      : [
+          { service: 'Hero Chat: chiedi al Coach AI', cost: '2 HP' },
+          { service: 'Card Advisor: valuta una nuova carta', cost: '2 HP' },
+          { service: 'Analisi partita', cost: '2 HP' },
+          { service: 'Estrazione statistiche di gioco', cost: '2-4 HP' },
+          { service: 'Contromisure pre-partita', cost: '2 HP' },
+          { service: 'Estrazione giocatore o allenatore', cost: '2 HP' }
+        ]
 
   return (
     <div>
@@ -253,7 +262,7 @@ function HeroPointsCard({ lang }) {
             fontSize: 12.5, fontWeight: 600
           }}
         >
-          {lang === 'en' ? 'Buy' : 'Compra'}
+          {pickLang(lang, { it: 'Compra', en: 'Buy', es: 'Comprar' })}
         </a>
       </div>
 
@@ -273,7 +282,7 @@ function HeroPointsCard({ lang }) {
       >
         <IconChip icon={Receipt} gold />
         <span style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 500, color: 'var(--text-main)' }}>
-          {lang === 'en' ? 'Service costs' : 'Costi dei servizi'}
+          {pickLang(lang, { it: 'Costi dei servizi', en: 'Service costs', es: 'Costes de los servicios' })}
         </span>
         <ChevronDown
           size={16}
@@ -304,9 +313,11 @@ function HeroPointsCard({ lang }) {
             borderTop: '1px solid var(--border-softer)',
             fontSize: 12, lineHeight: 1.45, color: 'var(--text-dim)'
           }}>
-            {lang === 'en'
-              ? 'If a platform error prevents an analysis from completing, the HP are automatically returned.'
-              : 'Se un errore della piattaforma blocca un’analisi, gli HP vengono riaccreditati automaticamente.'}
+            {pickLang(lang, {
+              it: 'Se un errore della piattaforma blocca un’analisi, gli HP vengono riaccreditati automaticamente.',
+              en: 'If a platform error prevents an analysis from completing, the HP are automatically returned.',
+              es: 'Si un error de la plataforma impide completar un análisis, los HP se devuelven automáticamente.'
+            })}
           </p>
         </div>
       )}
@@ -745,27 +756,27 @@ export default function ImpostazioniProfiloPage() {
     {
       label: t('profileGroupAnagrafica'),
       cards: [
-        { field: 'first_name', icon: User, label: (lang === 'en' || lang === 'es') ? 'Name' : 'Nome', value: cleanValue(profile.first_name) },
-        { field: 'last_name', icon: User, label: (lang === 'en' || lang === 'es') ? 'Last name' : 'Cognome', value: cleanValue(profile.last_name) }
+        { field: 'first_name', icon: User, label: pickLang(lang, { it: 'Nome', en: 'Name', es: 'Nombre' }), value: cleanValue(profile.first_name) },
+        { field: 'last_name', icon: User, label: pickLang(lang, { it: 'Cognome', en: 'Last name', es: 'Apellido' }), value: cleanValue(profile.last_name) }
       ]
     },
     {
       label: t('profileGroupGameIdentity'),
       cards: [
-        { field: 'team_name', icon: Shield, label: (lang === 'en' || lang === 'es') ? 'In-game team' : 'Team in game', value: cleanValue(profile.team_name || profile.favorite_team) },
-        { field: 'favorite_team', icon: Heart, label: (lang === 'en' || lang === 'es') ? 'Favourite club' : 'Squadra del cuore', value: cleanValue(profile.favorite_team) },
-        { field: 'current_division', icon: Award, label: (lang === 'en' || lang === 'es') ? 'Division' : 'Divisione', value: cleanValue(profile.current_division) },
-        { field: 'platform', icon: Gamepad2, label: (lang === 'en' || lang === 'es') ? 'Platform' : 'Piattaforma', value: fieldValue('platform', profileData?.platform) },
-        { field: 'favourite_player_name', icon: Star, label: (lang === 'en' || lang === 'es') ? 'Favourite player' : 'Giocatore preferito', value: cleanValue(profileData?.favourite_player_name) }
+        { field: 'team_name', icon: Shield, label: pickLang(lang, { it: 'Team in game', en: 'In-game team', es: 'Equipo en el juego' }), value: cleanValue(profile.team_name || profile.favorite_team) },
+        { field: 'favorite_team', icon: Heart, label: pickLang(lang, { it: 'Squadra del cuore', en: 'Favourite club', es: 'Club favorito' }), value: cleanValue(profile.favorite_team) },
+        { field: 'current_division', icon: Award, label: pickLang(lang, { it: 'Divisione', en: 'Division', es: 'División' }), value: cleanValue(profile.current_division) },
+        { field: 'platform', icon: Gamepad2, label: pickLang(lang, { it: 'Piattaforma', en: 'Platform', es: 'Plataforma' }), value: fieldValue('platform', profileData?.platform) },
+        { field: 'favourite_player_name', icon: Star, label: pickLang(lang, { it: 'Giocatore preferito', en: 'Favourite player', es: 'Jugador favorito' }), value: cleanValue(profileData?.favourite_player_name) }
       ]
     },
     {
       label: t('profileGroupCoachAi'),
       cards: [
-        { field: 'ai_name', icon: Bot, label: (lang === 'en' || lang === 'es') ? 'Coach name' : 'Nome del tuo coach', value: cleanValue(profile.ai_name) },
-        { field: 'how_to_remember', icon: NotebookPen, label: (lang === 'en' || lang === 'es') ? 'Coach memory note' : 'Nota memoria per il coach', value: cleanValue(profile.how_to_remember) },
-        { field: 'ai_weak_point', icon: Target, label: (lang === 'en' || lang === 'es') ? 'Weak point' : 'Punto debole', value: fieldValue('ai_weak_point', profileData?.ai_weak_point || profile.common_problems) },
-        { field: 'pass_level', icon: Gauge, label: (lang === 'en' || lang === 'es') ? 'Pass level' : 'Livello passaggi', value: fieldValue('pass_level', profileData?.pass_level) }
+        { field: 'ai_name', icon: Bot, label: pickLang(lang, { it: 'Nome del tuo coach', en: 'Coach name', es: 'Nombre del coach' }), value: cleanValue(profile.ai_name) },
+        { field: 'how_to_remember', icon: NotebookPen, label: pickLang(lang, { it: 'Nota memoria per il coach', en: 'Coach memory note', es: 'Nota de memoria para el coach' }), value: cleanValue(profile.how_to_remember) },
+        { field: 'ai_weak_point', icon: Target, label: pickLang(lang, { it: 'Punto debole', en: 'Weak point', es: 'Punto débil' }), value: fieldValue('ai_weak_point', profileData?.ai_weak_point || profile.common_problems) },
+        { field: 'pass_level', icon: Gauge, label: pickLang(lang, { it: 'Livello passaggi', en: 'Pass level', es: 'Nivel de pases' }), value: fieldValue('pass_level', profileData?.pass_level) }
       ]
     }
   ]
@@ -834,17 +845,17 @@ export default function ImpostazioniProfiloPage() {
           <Row
             first
             iconNode={<ThemeIcon />}
-            label={(lang === 'en' || lang === 'es') ? 'Theme' : 'Tema'}
+            label={pickLang(lang, { it: 'Tema', en: 'Theme', es: 'Tema' })}
             control={<ThemeToggle />}
           />
           <Row
             icon={Languages}
-            label={(lang === 'en' || lang === 'es') ? 'Language' : 'Lingua'}
+            label={pickLang(lang, { it: 'Lingua', en: 'Language', es: 'Idioma' })}
             control={<LanguageSwitch />}
           />
           <Row
             icon={Trophy}
-            label="Tornei"
+            label={pickLang(lang, { it: 'Tornei', en: 'Tournaments', es: 'Torneos' })}
             href="https://tornei.fromzerotohero.io/"
             external
           />

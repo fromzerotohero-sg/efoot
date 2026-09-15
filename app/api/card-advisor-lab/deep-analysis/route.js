@@ -510,14 +510,14 @@ function buildPrompt({ lang, card, catalogCard, profile, players, stylesLookup =
     roster: {
       has_roster: players.length > 0,
       starters,
-      reserves: reserves.slice(0, 20)
+      reserves: reserves.slice(0, 12)
     },
     formation: formation || null,
     coach: coach || null,
     tactical_settings: tacticalSettings || null,
     tactical_patterns: patterns || null,
     game_analysis: gameAnalysis?.stats || null,
-    diagnostic_summary: diagnostic ? sanitize(diagnostic.content, 3000) : '',
+    diagnostic_summary: diagnostic ? sanitize(diagnostic.content, 2000) : '',
     coach_feedback: feedback,
     player_performance: performance
   }
@@ -1069,7 +1069,7 @@ export async function POST(req) {
       performanceRes
     ] = await Promise.all([
       admin.from('user_profiles').select('first_name, nickname, team_name, ai_weak_point, ai_learn_goals, ai_notes, input_delay, connection_quality, pass_level').eq('user_id', userId).maybeSingle(),
-      admin.from('players').select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, skills, com_skills, form, base_stats, original_positions, height, weight, current_level, level_cap, active_booster_name, metadata, development_points').eq('user_id', userId).limit(60),
+      admin.from('players').select('id, player_name, position, overall_rating, playing_style_id, role, slot_index, skills, com_skills, form, base_stats, original_positions, height, weight, current_level, level_cap, active_booster_name, metadata, development_points').eq('user_id', userId).limit(40),
       admin.from('playing_styles').select('id, name'),
       admin.from('formation_layout').select('formation, slot_positions, updated_at').eq('user_id', userId).maybeSingle(),
       admin.from('coaches').select('coach_name, playing_style_competence, connection, stat_boosters, updated_at').eq('user_id', userId).eq('is_active', true).maybeSingle(),
@@ -1077,8 +1077,8 @@ export async function POST(req) {
       admin.from('team_tactical_patterns').select('formation_usage, playing_style_usage, recurring_issues, attack_areas_avg, our_attack_areas_avg, opponent_attack_areas_avg, conceded_goal_zones_avg, recovery_zones_avg, last_50_matches_count').eq('user_id', userId).maybeSingle(),
       admin.from('user_game_analysis').select('stats, captured_at').eq('user_id', userId).maybeSingle(),
       admin.from('user_diagnostic_cache').select('content, generated_at').eq('user_id', userId).maybeSingle(),
-      admin.from('user_tactical_feedback').select('conversation_summary, insights, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(3),
-      admin.from('player_performance_aggregates').select('player_id, average_rating, total_goals, total_assists, positions_played, position_performance, attack_areas_avg, recovery_zones_avg, last_50_matches_count').eq('user_id', userId).limit(20)
+      admin.from('user_tactical_feedback').select('conversation_summary, insights, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(2),
+      admin.from('player_performance_aggregates').select('player_id, average_rating, total_goals, total_assists, positions_played, position_performance, attack_areas_avg, recovery_zones_avg, last_50_matches_count').eq('user_id', userId).limit(12)
     ])
 
     const stylesLookup = {}
@@ -1087,10 +1087,10 @@ export async function POST(req) {
       summary: sanitize(row.conversation_summary, 400),
       insights: Array.isArray(row.insights) ? row.insights.slice(0, 4) : []
     }))
-    const performance = (performanceRes.data || []).slice(0, 12)
+    const performance = (performanceRes.data || []).slice(0, 8)
     const ragKnowledge = getRelevantSections(
       buildCardAdvisorRagQuery(card, catalogCard, tacticalRes.data || null),
-      9000
+      5000
     )
 
     const players = playersRes.data || []

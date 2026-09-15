@@ -20,11 +20,11 @@ import {
   Zap
 } from 'lucide-react'
 import {
-  getSkillDisplayLabel,
   localizeSkillTermsInText,
 } from '@/lib/playerSkillLabels'
 import { BUILD_SLIDER_ORDER, getBuildSliderLabel } from '@/lib/cardAdvisorBuildPreview'
 import { supabase, getValidAccessToken } from '@/lib/supabaseClient'
+import CardAdvisorStylePitch from '@/components/card-advisor/StylePitch'
 
 const HP_RECHARGE_URL = 'https://home.fromzerotohero.io/dashboard?usage'
 const DEEP_ANALYSIS_HP_COST = 2
@@ -141,10 +141,10 @@ const copy = {
     noRosterTitle: 'Valutazione carta disponibile',
     noRosterText: 'Senza rosa: carta e stile. Con rosa: sinergie e priorità concrete.',
     selectedHint: 'Tocca una carta per aprire la scheda.',
-    topPick: 'Sinergia alta',
-    goodPick: 'Sinergia buona',
-    situationalPick: 'Sinergia parziale',
-    skipPick: 'Da contestualizzare',
+    topPick: 'Prendi',
+    goodPick: 'Valuta',
+    situationalPick: 'Situazionale',
+    skipPick: 'Salta',
     compareCta: 'Completa la rosa per il fit',
     currentRelease: 'Pack corrente',
     allCards: 'Tutte le carte',
@@ -161,9 +161,22 @@ const copy = {
     synergyMedium: 'Sinergia media',
     synergyLow: 'Sinergia bassa',
     cardProfileOnly: 'Profilo carta',
-    rosterSynergy: 'Sinergia rosa',
+    rosterSynergy: 'Fit sulla tua rosa',
     moduleFit: 'Fit modulo',
     systemSynergy: 'Lettura sinergie',
+    freeReadTitle: 'Lettura immediata',
+    freeReadHintCard: 'Stima sul profilo carta. Con rosa completa diventa fit reale.',
+    freeReadHintRoster: 'Contesto rosa collegato: il Pro affinisce la decisione.',
+    freeWhy: 'Perché',
+    freeRisk: 'Attenzione',
+    freeUse: 'Come usarla',
+    openBuildCta: 'Apri build consigliata',
+    showMetaBuild: 'Confronta benchmark pack',
+    hideMetaBuild: 'Nascondi benchmark',
+    stylePitchKicker: 'Simulazione',
+    stylePitchTitle: 'Come si muove',
+    stylePitchMove: 'Movimento',
+    stylePitchPass: 'Passaggio',
     noFormationTitle: 'Completa i titolari',
     noFormationText: 'Servono 11 giocatori in campo (slot titolari) per il confronto con la tua rosa.',
     noCoachText: 'Coach attivo = stile e competenze nel verdetto.',
@@ -308,10 +321,10 @@ const copy = {
     noRosterTitle: 'Card evaluation available',
     noRosterText: 'No roster: card + style. With roster: real synergy and priorities.',
     selectedHint: 'Tap a card to open details.',
-    topPick: 'High synergy',
-    goodPick: 'Good synergy',
-    situationalPick: 'Partial synergy',
-    skipPick: 'Needs context',
+    topPick: 'Sign',
+    goodPick: 'Consider',
+    situationalPick: 'Situational',
+    skipPick: 'Skip',
     compareCta: 'Complete roster for fit',
     currentRelease: 'Current pack',
     allCards: 'All cards',
@@ -328,9 +341,22 @@ const copy = {
     synergyMedium: 'Medium synergy',
     synergyLow: 'Low synergy',
     cardProfileOnly: 'Card profile',
-    rosterSynergy: 'Roster synergy',
+    rosterSynergy: 'Fit for your squad',
     moduleFit: 'Module fit',
     systemSynergy: 'Synergy read',
+    freeReadTitle: 'Quick read',
+    freeReadHintCard: 'Card-profile estimate. With a full roster it becomes real fit.',
+    freeReadHintRoster: 'Roster linked: Pro sharpens the decision.',
+    freeWhy: 'Why',
+    freeRisk: 'Watch out',
+    freeUse: 'How to use',
+    openBuildCta: 'Open recommended build',
+    showMetaBuild: 'Compare pack benchmark',
+    hideMetaBuild: 'Hide benchmark',
+    stylePitchKicker: 'Simulation',
+    stylePitchTitle: 'How he moves',
+    stylePitchMove: 'Movement',
+    stylePitchPass: 'Pass',
     noFormationTitle: 'Complete your XI',
     noFormationText: 'Need 11 starters on the pitch (slots 0–10) for squad-fit analysis.',
     noCoachText: 'Active coach = style and competences in the verdict.',
@@ -475,10 +501,10 @@ const copy = {
     noRosterTitle: 'Evaluación de carta disponible',
     noRosterText: 'Sin plantilla: carta y estilo. Con plantilla: sinergias y prioridades concretas.',
     selectedHint: 'Toca una carta para abrir la ficha.',
-    topPick: 'Sinergia alta',
-    goodPick: 'Sinergia buena',
-    situationalPick: 'Sinergia parcial',
-    skipPick: 'A contextualizar',
+    topPick: 'Ficha',
+    goodPick: 'Valórala',
+    situationalPick: 'Situacional',
+    skipPick: 'Pasa',
     compareCta: 'Completa la plantilla para el encaje',
     currentRelease: 'Pack actual',
     allCards: 'Todas las cartas',
@@ -495,9 +521,22 @@ const copy = {
     synergyMedium: 'Sinergia media',
     synergyLow: 'Sinergia baja',
     cardProfileOnly: 'Perfil de carta',
-    rosterSynergy: 'Sinergia plantilla',
+    rosterSynergy: 'Encaje en tu plantilla',
     moduleFit: 'Encaje módulo',
     systemSynergy: 'Lectura de sinergias',
+    freeReadTitle: 'Lectura inmediata',
+    freeReadHintCard: 'Estimación del perfil de carta. Con plantilla completa pasa a encaje real.',
+    freeReadHintRoster: 'Plantilla vinculada: el Pro afina la decisión.',
+    freeWhy: 'Por qué',
+    freeRisk: 'Atención',
+    freeUse: 'Cómo usarla',
+    openBuildCta: 'Abrir build recomendada',
+    showMetaBuild: 'Comparar benchmark del pack',
+    hideMetaBuild: 'Ocultar benchmark',
+    stylePitchKicker: 'Simulación',
+    stylePitchTitle: 'Cómo se mueve',
+    stylePitchMove: 'Movimiento',
+    stylePitchPass: 'Pase',
     noFormationTitle: 'Completa los titulares',
     noFormationText: 'Se necesitan 11 jugadores en el campo (slots titulares) para comparar con tu plantilla.',
     noCoachText: 'Entrenador activo = estilo y competencias en el veredicto.',
@@ -824,10 +863,10 @@ function normalizeRelease(release) {
 
 function getVerdictMeta(verdict, labels) {
   const map = {
-    top: { label: labels.topPick, color: '#22c55e', bg: 'rgba(34,197,94,0.16)' },
+    top: { label: labels.topPick, color: 'var(--success-text)', bg: 'rgba(34,197,94,0.16)' },
     good: { label: labels.goodPick, color: 'var(--cards-accent)', bg: 'rgba(192,132,252,0.14)' },
-    situational: { label: labels.situationalPick, color: '#fbbf24', bg: 'rgba(251,191,36,0.14)' },
-    skip: { label: labels.skipPick, color: '#fb7185', bg: 'rgba(251,113,133,0.14)' }
+    situational: { label: labels.situationalPick, color: 'var(--gold-text)', bg: 'var(--gold-bg)' },
+    skip: { label: labels.skipPick, color: 'var(--danger-text)', bg: 'rgba(251,113,133,0.14)' }
   }
   return map[verdict] || map.situational
 }
@@ -856,6 +895,8 @@ function CardImage({ card, labels }) {
         <img
           src={proxiedImageUrl(card.imageUrl)}
           alt={card.name}
+          loading="lazy"
+          decoding="async"
           onError={() => setFailed(true)}
         />
       ) : (
@@ -889,12 +930,6 @@ function StatPill({ children }) {
 function localizeDeepAnalysisText(text, lang) {
   if (lang === 'en' || !text) return text
   return localizeSkillTermsInText(text, 'it')
-}
-
-function skillPillLabel(item, lang) {
-  if (!item) return ''
-  const raw = typeof item === 'string' ? item : item.skill || item.display
-  return getSkillDisplayLabel(raw, lang)
 }
 
 function DeepAnalysisSection({ tone, icon: Icon, title, items, lang }) {
@@ -996,10 +1031,14 @@ function getCoachConnectionLabel(activeCoach) {
   return connection.name || connection.connection || connection.title || connection.label || ''
 }
 
-function ReleaseCard({ card, selected, labels, onSelect }) {
+function ReleaseCard({ card, selected, labels, lang, onSelect }) {
+  const verdict = getVerdictMeta(card.verdict, labels)
+  const lever = lang === 'en'
+    ? (card.leverEn || card.lever || '')
+    : (card.lever || card.leverEn || '')
   const readableStyle = card.style && card.style !== 'Profilo da analizzare'
     ? card.style
-    : labels.openCard
+    : card.position
   return (
     <button
       type="button"
@@ -1011,9 +1050,16 @@ function ReleaseCard({ card, selected, labels, onSelect }) {
         <div className="release-card-heading">
           <div>
             <h3>{card.name}</h3>
-            <p>{card.category} · {card.position} · {readableStyle}</p>
+            <p>{card.overall} · {card.position} · {readableStyle}</p>
           </div>
+          <span
+            className="release-card-verdict"
+            style={{ color: verdict.color, background: verdict.bg }}
+          >
+            {verdict.label}
+          </span>
         </div>
+        {lever ? <p className="release-card-lever">{lever}</p> : null}
         <span className="release-card-cta">
           {labels.openCard}
           <ChevronRight size={16} aria-hidden="true" />
@@ -1049,9 +1095,8 @@ function RosterStatusPanel({ labels, rosterSummary, onLoadRoster, onOpenCoach })
   const isRosterOnly = rosterSummary.depth === 'roster_only'
   const isFormationOnly = rosterSummary.depth === 'formation'
 
-  if (rosterSummary.depth === 'system') {
-    return null
-  }
+  // Rosa completa + coach: basta il chip in header.
+  if (rosterSummary.depth === 'system') return null
 
   if (isFormationOnly) {
     return (
@@ -1065,54 +1110,44 @@ function RosterStatusPanel({ labels, rosterSummary, onLoadRoster, onOpenCoach })
     )
   }
 
+  // Solo quando manca qualcosa di bloccante per il fit.
+  if (isReady && !isRosterOnly) return null
+
   const title = isLoading
     ? labels.checkingRoster
     : isReady
-      ? isRosterOnly
-        ? labels.noFormationTitle
-        : labels.rosterReadyTitle
+      ? labels.noFormationTitle
       : isUnavailable
         ? labels.rosterUnavailableTitle
         : labels.rosterMissingTitle
   const text = isReady
-    ? isRosterOnly
-      ? labels.noFormationText
-      : isFormationOnly
-        ? `${labels.rosterReadyText} ${labels.noCoachText}`
-        : labels.rosterReadyText
+    ? labels.noFormationText
     : isUnavailable
       ? labels.rosterUnavailableText
       : labels.rosterMissingText
 
   return (
-    <section className={`roster-status-panel ${isReady ? 'ready' : ''}`}>
+    <section className={`roster-status-panel compact ${isReady ? 'ready' : ''}`}>
       <div className="roster-status-main">
         <span className="mini-kicker">{labels.teamFit}</span>
         <h3>{title}</h3>
         <p>{text}</p>
       </div>
-
       <div className="roster-status-side">
         <div className="roster-metrics">
           <div>
-            <span>{labels.rosterPlayers}</span>
-            <strong>{isLoading ? '...' : rosterSummary.totalPlayers ?? 0}</strong>
-          </div>
-          <div>
             <span>{labels.rosterStarters}</span>
-            <strong>{isLoading ? '...' : rosterSummary.starters ?? 0}</strong>
+            <strong>{isLoading ? '...' : rosterSummary.starters ?? 0}/11</strong>
           </div>
           <div>
             <span>{labels.rosterFormation}</span>
             <strong>{isLoading ? '...' : rosterSummary.formation || '-'}</strong>
           </div>
         </div>
-        {(!isReady || isRosterOnly || isFormationOnly) && (
-          <button type="button" onClick={isFormationOnly ? onOpenCoach : onLoadRoster}>
-            {isRosterOnly ? labels.saveFormationCta : isFormationOnly ? labels.addCoachCta : labels.loadRoster}
-            <ArrowRight size={16} />
-          </button>
-        )}
+        <button type="button" onClick={isFormationOnly ? onOpenCoach : onLoadRoster}>
+          {isRosterOnly ? labels.saveFormationCta : isFormationOnly ? labels.addCoachCta : labels.loadRoster}
+          <ArrowRight size={16} />
+        </button>
       </div>
     </section>
   )
@@ -1247,9 +1282,39 @@ function BuildPreviewCard({ title, hint, build, labels, lang, variant = 'meta', 
   )
 }
 
-function CardBuildPreviewSection({ preview, loading, labels, lang, hint, className = '' }) {
+function CardBuildPreviewSection({
+  preview,
+  loading,
+  labels,
+  lang,
+  hint,
+  className = '',
+  onRequestBuild
+}) {
+  const [showMeta, setShowMeta] = React.useState(false)
   const sectionHint = hint || labels.buildSectionHint
   const shellClass = ['build-preview-shell', className].filter(Boolean).join(' ')
+
+  if (!preview && !loading) {
+    return (
+      <div className={`${shellClass} build-preview-shell-gated`}>
+        <div className="build-preview-shell-head">
+          <Hammer size={18} />
+          <div>
+            <span>{labels.buildSectionTitle}</span>
+            <p>{sectionHint}</p>
+          </div>
+        </div>
+        {typeof onRequestBuild === 'function' ? (
+          <button type="button" className="build-preview-open-cta" onClick={onRequestBuild}>
+            {labels.openBuildCta}
+            <ChevronRight size={15} />
+          </button>
+        ) : null}
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className={`${shellClass} build-preview-shell-loading`} role="status" aria-live="polite">
@@ -1263,8 +1328,6 @@ function CardBuildPreviewSection({ preview, loading, labels, lang, hint, classNa
       </div>
     )
   }
-
-  if (!preview) return null
 
   if (!preview.ok) {
     const message =
@@ -1288,13 +1351,19 @@ function CardBuildPreviewSection({ preview, loading, labels, lang, hint, classNa
     )
   }
 
-  const skills = preview.skills || {}
   const ptDiffKeys =
     preview.meta?.ok && preview.roster?.ok
       ? BUILD_SLIDER_ORDER.filter(
           key => Number(preview.meta.sliders?.[key] || 0) !== Number(preview.roster.sliders?.[key] || 0)
         )
       : []
+  const rosterBuild = preview.roster?.ok ? preview.roster : null
+  const metaBuild = preview.meta?.ok ? preview.meta : null
+  const primaryBuild = rosterBuild || metaBuild
+  const primaryVariant = rosterBuild ? 'roster' : 'meta'
+  const primaryTitle = rosterBuild ? labels.buildRosterTitle : labels.buildMetaTitle
+  const primaryHint = rosterBuild ? labels.buildRosterHint : labels.buildMetaHint
+
   return (
     <div className={`${shellClass} build-preview-shell-compact`}>
       <div className="build-preview-shell-head">
@@ -1304,31 +1373,16 @@ function CardBuildPreviewSection({ preview, loading, labels, lang, hint, classNa
           <p>{sectionHint}</p>
         </div>
       </div>
-      <div className="build-preview-dual">
-        {preview.meta?.ok ? (
+      <div className="build-preview-dual build-preview-dual-priority">
+        {primaryBuild ? (
           <BuildPreviewCard
-            variant="meta"
-            title={labels.buildMetaTitle}
-            hint={labels.buildMetaHint}
-            build={preview.meta}
+            variant={primaryVariant}
+            title={primaryTitle}
+            hint={primaryHint}
+            build={primaryBuild}
             labels={labels}
             lang={lang}
-          />
-        ) : (
-          <article className="build-preview-card build-preview-card-muted">
-            <h4>{labels.buildMetaTitle}</h4>
-            <p>{labels.buildUnavailable}</p>
-          </article>
-        )}
-        {preview.roster?.ok ? (
-          <BuildPreviewCard
-            variant="roster"
-            title={labels.buildRosterTitle}
-            hint={labels.buildRosterHint}
-            build={preview.roster}
-            labels={labels}
-            lang={lang}
-            highlightKeys={ptDiffKeys}
+            highlightKeys={rosterBuild && metaBuild ? ptDiffKeys : []}
           />
         ) : (
           <article className="build-preview-card build-preview-card-muted">
@@ -1337,41 +1391,29 @@ function CardBuildPreviewSection({ preview, loading, labels, lang, hint, classNa
           </article>
         )}
       </div>
-      {skills.available !== false &&
-        (skills.items?.length > 0 || skills.message || skills.equippedNative?.length > 0) && (
-        <div className="build-preview-skills">
-          <div className="build-preview-skills-head">
-            <h4>{labels.buildSkillsTitle}</h4>
-          </div>
-          {skills.equippedNative?.length > 0 && (
-            <div className="build-preview-skills-pills" aria-label={labels.buildNativeSkills}>
-              {skills.equippedNative.map(item => (
-                <span
-                  key={item.skill}
-                  className={`build-preview-skill-pill${item.fixed ? ' build-preview-skill-pill-fixed' : ''}`}
-                >
-                  {skillPillLabel(item, lang)}
-                </span>
-              ))}
-            </div>
-          )}
-          {skills.items?.length > 0 && skills.slotsFree > 0 && (
-            <div className="build-preview-skill-next">
-              <span className="build-preview-skill-next-label">{labels.buildSkillNextTitle}</span>
-              <p className="build-preview-skill-next-hint">{labels.buildSkillNextHint}</p>
-              {skills.items.slice(0, 2).map(item => (
-                <div key={item.skill} className="build-preview-skill-next-card">
-                  <strong>{skillPillLabel(item, lang)}</strong>
-                  {item.reason ? <span>{item.reason}</span> : null}
-                </div>
-              ))}
-            </div>
-          )}
-          {skills.slotsFree === 0 && skills.message && (
-            <p className="build-preview-skills-note">{skills.message}</p>
-          )}
+      {metaBuild && rosterBuild ? (
+        <div className="build-preview-meta-gate">
+          <button
+            type="button"
+            className="build-preview-meta-toggle"
+            onClick={() => setShowMeta(value => !value)}
+            aria-expanded={showMeta}
+          >
+            {showMeta ? labels.hideMetaBuild : labels.showMetaBuild}
+            <ChevronRight size={14} className={showMeta ? 'build-preview-why-chevron-open' : ''} />
+          </button>
+          {showMeta ? (
+            <BuildPreviewCard
+              variant="meta"
+              title={labels.buildMetaTitle}
+              hint={labels.buildMetaHint}
+              build={metaBuild}
+              labels={labels}
+              lang={lang}
+            />
+          ) : null}
         </div>
-      )}
+      ) : null}
     </div>
   )
 }
@@ -1388,6 +1430,7 @@ function DetailPanel({
   deepAnalysisError,
   hpBalanceRemaining,
   onRequestDeepAnalysis,
+  onRequestBuild,
   onOpenGameAnalysis,
   onClose
 }) {
@@ -1395,6 +1438,12 @@ function DetailPanel({
   const verdictRef = React.useRef(null)
   const verdictScrollKeyRef = React.useRef(null)
   const insufficientHp = hpBalanceRemaining !== null && hpBalanceRemaining < DEEP_ANALYSIS_HP_COST
+  const rosterLinked = isRosterLinkedForAdvisor(rosterSummary)
+  const verdict = getVerdictMeta(card.verdict, labels)
+  const strengths = listFor(card, 'strengths', lang).slice(0, 2)
+  const risks = listFor(card, 'risks', lang).slice(0, 1)
+  const useLine = lang === 'en' ? (card.useEn || card.use || '') : (card.use || card.useEn || '')
+  const lever = lang === 'en' ? (card.leverEn || card.lever || '') : (card.lever || card.leverEn || '')
 
   React.useEffect(() => {
     if (!deepAnalysis || !card?.id) return undefined
@@ -1422,16 +1471,63 @@ function DetailPanel({
           <X size={18} />
         </button>
       )}
-      <div className="detail-hero">
+      <div className="detail-hero detail-hero-compact">
         <div className="detail-card-preview">
           <CardImage card={card} labels={labels} />
         </div>
         <div className="detail-copy">
           <h2>{card.name}</h2>
-          <div className="advisor-section-marker advisor-section-marker-premium">
-            <span>{labels.premiumSectionLabel}</span>
-            <small>{labels.premiumSectionHint}</small>
+          <p className="detail-meta-line">
+            {card.overall} · {card.position}
+            {card.style && card.style !== 'Profilo da analizzare' ? ` · ${card.style}` : ''}
+          </p>
+
+          <div className="free-verdict-card">
+            <div className="free-verdict-head">
+              <span
+                className="free-verdict-badge"
+                style={{ color: verdict.color, background: verdict.bg }}
+              >
+                {verdict.label}
+              </span>
+              <span className="free-verdict-scope">
+                {rosterLinked ? labels.rosterSynergy : labels.cardProfileOnly}
+              </span>
+            </div>
+            <h3>{labels.freeReadTitle}</h3>
+            <p className="free-verdict-hint">
+              {rosterLinked ? labels.freeReadHintRoster : labels.freeReadHintCard}
+            </p>
+            {lever ? (
+              <p className="free-verdict-lever">
+                <strong>{labels.mainLever}:</strong> {lever}
+              </p>
+            ) : null}
+            {strengths.length > 0 ? (
+              <div className="free-verdict-block">
+                <span>{labels.freeWhy}</span>
+                <ul>
+                  {strengths.map(item => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
+            ) : null}
+            {risks.length > 0 ? (
+              <div className="free-verdict-block free-verdict-block-risk">
+                <span>{labels.freeRisk}</span>
+                <ul>
+                  {risks.map(item => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
+            ) : null}
+            {useLine ? (
+              <p className="free-verdict-use">
+                <strong>{labels.freeUse}:</strong> {useLine}
+              </p>
+            ) : null}
           </div>
+
+          <CardAdvisorStylePitch card={card} labels={labels} lang={lang} />
+
           <div className={`deep-analysis-entry deep-analysis-entry-featured ${deepAnalysis ? 'deep-analysis-entry-unlocked' : ''}`}>
             <div className="deep-analysis-entry-copy">
               <div className="deep-analysis-entry-title">
@@ -1492,17 +1588,6 @@ function DetailPanel({
               </p>
             ) : null}
           </div>
-          {deepAnalysis.key_reasoning?.length > 0 && (
-            <div className="deep-reasoning-list">
-              <h4>{labels.deepKeyReasoning}</h4>
-              {deepAnalysis.key_reasoning.map(item => (
-                <article key={`${item.label}-${item.text}`}>
-                  {item.label && <span>{localizeDeepAnalysisText(item.label, lang)}</span>}
-                  <p>{localizeDeepAnalysisText(item.text, lang)}</p>
-                </article>
-              ))}
-            </div>
-          )}
           <button
             type="button"
             className="deep-report-toggle"
@@ -1558,7 +1643,37 @@ function DetailPanel({
         lang={lang}
         hint={deepAnalysis ? labels.buildSectionHintAfterPro : undefined}
         className={deepAnalysis ? 'build-preview-shell-after-verdict' : ''}
+        onRequestBuild={onRequestBuild}
       />
+
+      {!deepAnalysis ? (
+        !insufficientHp ? (
+          <div className="detail-mobile-cta">
+            <button
+              type="button"
+              className="deep-analysis-unlock-btn"
+              onClick={onRequestDeepAnalysis}
+              disabled={deepAnalysisLoading}
+              aria-busy={deepAnalysisLoading}
+            >
+              <span className="deep-analysis-unlock-btn-inner">
+                <Sparkles size={18} strokeWidth={2.25} aria-hidden />
+                <span className="deep-analysis-unlock-btn-text">
+                  <strong>{deepAnalysisLoading ? labels.deepAnalysisLoading : labels.proUnlockButton}</strong>
+                  {!deepAnalysisLoading ? <small>{labels.proUnlockButtonCost}</small> : null}
+                </span>
+              </span>
+            </button>
+          </div>
+        ) : null
+      ) : !buildPreview && !buildPreviewLoading && typeof onRequestBuild === 'function' ? (
+        <div className="detail-mobile-cta">
+          <button type="button" className="build-preview-open-cta" onClick={onRequestBuild}>
+            {labels.openBuildCta}
+            <ChevronRight size={15} />
+          </button>
+        </div>
+      ) : null}
 
     </section>
   )
@@ -1576,6 +1691,7 @@ function CardDetailsModal({
   deepAnalysisError,
   hpBalanceRemaining,
   onRequestDeepAnalysis,
+  onRequestBuild,
   onOpenGameAnalysis,
   onClose
 }) {
@@ -1664,6 +1780,7 @@ function CardDetailsModal({
           deepAnalysisError={deepAnalysisError}
           hpBalanceRemaining={hpBalanceRemaining}
           onRequestDeepAnalysis={onRequestDeepAnalysis}
+          onRequestBuild={onRequestBuild}
           onOpenGameAnalysis={onOpenGameAnalysis}
           onClose={onClose}
         />
@@ -1694,6 +1811,8 @@ export default withAuth(function CardAdvisorLabPage() {
     [creditsUsage]
   )
   const releaseTabsRef = React.useRef(null)
+  const buildPreviewAbortRef = React.useRef(null)
+  const deepAnalysisAbortRef = React.useRef(null)
   const cards = React.useMemo(() => {
     const baseCards = releaseId === 'all'
       ? activeReleases.flatMap(release => release.cards.map(card => ({ ...card, releaseName: release.name, releaseStatus: release.status })))
@@ -1760,7 +1879,7 @@ export default withAuth(function CardAdvisorLabPage() {
 
     async function loadReleases() {
       try {
-        const response = await fetch('/api/card-advisor-lab/releases', { cache: 'no-store' })
+        const response = await fetch('/api/card-advisor-lab/releases')
         if (!response.ok) throw new Error('Unable to load card releases')
         const data = await response.json()
         const normalized = Array.isArray(data?.releases)
@@ -1802,6 +1921,10 @@ export default withAuth(function CardAdvisorLabPage() {
     const token = await resolveClientAuthBearer()
     if (!token) return
 
+    const controller = new AbortController()
+    deepAnalysisAbortRef.current?.abort()
+    deepAnalysisAbortRef.current = controller
+
     setDeepAnalysisLoadingId(detailsCard.id)
     setDeepAnalysisErrors(prev => ({ ...prev, [analysisKey]: '' }))
     try {
@@ -1811,7 +1934,8 @@ export default withAuth(function CardAdvisorLabPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ card: detailsCard, lang: ['en', 'es'].includes(lang) ? 'en' : 'it' })
+        body: JSON.stringify({ card: detailsCard, lang: ['en', 'es'].includes(lang) ? 'en' : 'it' }),
+        signal: controller.signal
       })
       const data = await response.json().catch(() => ({}))
       if (!response.ok || !data?.analysis) {
@@ -1834,14 +1958,58 @@ export default withAuth(function CardAdvisorLabPage() {
         window.dispatchEvent(new CustomEvent('credits-consumed'))
       }
     } catch (error) {
+      if (error?.name === 'AbortError') return
       setDeepAnalysisErrors(prev => ({
         ...prev,
         [analysisKey]: error?.message || labels.deepAnalysisError
       }))
     } finally {
-      setDeepAnalysisLoadingId(null)
+      if (!controller.signal.aborted) setDeepAnalysisLoadingId(null)
     }
   }, [deepAnalysesByCard, deepAnalysisLoadingId, detailsCard, fetchCreditsUsage, labels.deepAnalysisError, labels.insufficientHpText, lang])
+
+  const requestBuildPreview = React.useCallback(async () => {
+    if (!detailsCard?.id) return
+    const cacheKey = buildPreviewCacheKey(detailsCard.id, lang)
+    if (buildPreviewsByCard[cacheKey] || buildPreviewLoadingId === detailsCard.id) return
+    const token = await resolveClientAuthBearer()
+    if (!token) return
+
+    const controller = new AbortController()
+    buildPreviewAbortRef.current?.abort()
+    buildPreviewAbortRef.current = controller
+
+    setBuildPreviewLoadingId(detailsCard.id)
+    try {
+      const response = await fetch('/api/card-advisor-lab/build-preview', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ card: detailsCard, lang: ['en', 'es'].includes(lang) ? 'en' : 'it' }),
+        signal: controller.signal
+      })
+      if (!response.ok) throw new Error('Build preview failed')
+      const data = await response.json()
+      if (data?.preview) {
+        const preview = data.preview
+        const shouldCache =
+          preview.ok ||
+          preview.code === 'non_progression_card_type' ||
+          preview.code === 'catalog_missing' ||
+          preview.code === 'max_level_one'
+        if (shouldCache) {
+          setBuildPreviewsByCard(prev => ({ ...prev, [cacheKey]: preview }))
+        }
+      }
+    } catch (error) {
+      if (error?.name === 'AbortError') return
+      console.warn('[card-advisor-lab] build preview unavailable:', error)
+    } finally {
+      if (!controller.signal.aborted) setBuildPreviewLoadingId(null)
+    }
+  }, [buildPreviewsByCard, buildPreviewLoadingId, detailsCard, lang])
 
   React.useEffect(() => {
     let active = true
@@ -1894,49 +2062,18 @@ export default withAuth(function CardAdvisorLabPage() {
     }
   }, [])
 
+  React.useEffect(() => () => {
+    buildPreviewAbortRef.current?.abort()
+    deepAnalysisAbortRef.current?.abort()
+  }, [])
+
   React.useEffect(() => {
-    let active = true
-
-    async function loadBuildPreview() {
-      if (!detailsCard?.id) return
-      const cacheKey = buildPreviewCacheKey(detailsCard.id, lang)
-      if (buildPreviewsByCard[cacheKey]) return
-      const token = await resolveClientAuthBearer()
-      if (!token) return
-
-      setBuildPreviewLoadingId(detailsCard.id)
-      try {
-        const response = await fetch('/api/card-advisor-lab/build-preview', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({ card: detailsCard, lang: ['en', 'es'].includes(lang) ? 'en' : 'it' })
-        })
-        if (!response.ok) throw new Error('Build preview failed')
-        const data = await response.json()
-        if (active && data?.preview) {
-          const preview = data.preview
-          const shouldCache =
-            preview.ok ||
-            preview.code === 'non_progression_card_type'
-          if (shouldCache) {
-            setBuildPreviewsByCard(prev => ({ ...prev, [cacheKey]: preview }))
-          }
-        }
-      } catch (error) {
-        console.warn('[card-advisor-lab] build preview unavailable:', error)
-      } finally {
-        if (active) setBuildPreviewLoadingId(null)
-      }
-    }
-
-    loadBuildPreview()
-    return () => {
-      active = false
-    }
-  }, [detailsCard, buildPreviewsByCard, lang])
+    // Chiudi/cambia carta: interrompi build e analysis in corso.
+    buildPreviewAbortRef.current?.abort()
+    deepAnalysisAbortRef.current?.abort()
+    setBuildPreviewLoadingId(null)
+    setDeepAnalysisLoadingId(null)
+  }, [detailsCardId])
 
   const selectedRelease = releaseId === 'all'
     ? { name: labels.allCards, cards: activeReleases.flatMap(release => release.cards), status: 'active' }
@@ -1944,15 +2081,11 @@ export default withAuth(function CardAdvisorLabPage() {
 
   return (
     <main className="card-advisor-page">
-      <section className="lab-hero">
+      <section className="lab-hero lab-hero-compact">
         <div className="hero-copy">
           <span className="lab-eyebrow"><Zap size={14} /> {labels.eyebrow}</span>
           <h1>{labels.title}</h1>
           <p>{labels.subtitle}</p>
-          <div className="hero-badges">
-            <span><ShieldCheck size={15} /> {labels.notPublic}</span>
-            <span><BarChart3 size={15} /> {labels.dataBadge}</span>
-          </div>
         </div>
       </section>
 
@@ -2011,13 +2144,13 @@ export default withAuth(function CardAdvisorLabPage() {
 
         <div className="lab-grid">
           <aside className="cards-column">
-            <p className="selected-hint">{labels.selectedHint}</p>
             <div className="cards-grid">
               {cards.length > 0 ? cards.map(card => (
                 <ReleaseCard
                   key={card.id}
                   card={card}
                   labels={labels}
+                  lang={['en', 'es'].includes(lang) ? 'en' : 'it'}
                   selected={selectedCard?.id === card.id}
                   onSelect={() => {
                     setSelectedId(card.id)
@@ -2047,6 +2180,7 @@ export default withAuth(function CardAdvisorLabPage() {
         deepAnalysisError={detailsDeepAnalysisError}
         hpBalanceRemaining={hpBalanceRemaining}
         onRequestDeepAnalysis={requestDeepAnalysis}
+        onRequestBuild={requestBuildPreview}
         onOpenGameAnalysis={() => router.push('/?openStatsUpload=1')}
         onClose={() => setDetailsCardId(null)}
       />
@@ -2673,6 +2807,396 @@ export default withAuth(function CardAdvisorLabPage() {
           display: flex;
           justify-content: space-between;
           gap: 10px;
+          align-items: flex-start;
+        }
+
+        .release-card-verdict {
+          flex-shrink: 0;
+          display: inline-flex;
+          align-items: center;
+          padding: 3px 8px;
+          border-radius: 999px;
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.02em;
+          text-transform: uppercase;
+          line-height: 1.2;
+        }
+
+        .release-card-lever {
+          margin: 6px 0 8px !important;
+          color: var(--text-secondary);
+          font-size: 12px;
+          line-height: 1.35;
+        }
+
+        .lab-hero-compact {
+          padding: clamp(16px, 3vw, 24px) !important;
+          margin-bottom: 12px;
+        }
+
+        .lab-hero-compact .hero-copy h1 {
+          margin: 8px 0 6px;
+          font-size: clamp(28px, 6vw, 48px);
+        }
+
+        .lab-hero-compact .hero-copy p {
+          margin: 0;
+          font-size: 15px;
+          max-width: 640px;
+        }
+
+        .roster-status-panel.compact {
+          grid-template-columns: minmax(0, 1fr) minmax(180px, 280px);
+          margin: 0 0 14px;
+          padding: 12px 14px;
+          border-radius: 16px;
+        }
+
+        .roster-status-panel.compact .roster-metrics {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .roster-status-panel.compact h3 {
+          font-size: 16px;
+          margin: 4px 0;
+        }
+
+        .free-verdict-card {
+          margin: 0 0 12px;
+          padding: 14px;
+          border-radius: 16px;
+          border: 1px solid var(--accent-border);
+          background:
+            radial-gradient(circle at top right, rgba(31, 157, 107, 0.12), transparent 42%),
+            var(--surface-2);
+        }
+
+        .free-verdict-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          margin-bottom: 8px;
+        }
+
+        .free-verdict-badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 4px 10px;
+          border-radius: 999px;
+          font-size: 11px;
+          font-weight: 850;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
+
+        .free-verdict-scope {
+          color: var(--text-dim);
+          font-size: 11px;
+          font-weight: 700;
+        }
+
+        .free-verdict-card h3 {
+          margin: 0 0 4px;
+          color: var(--text-main);
+          font-size: 18px;
+        }
+
+        .free-verdict-hint,
+        .free-verdict-lever,
+        .free-verdict-use {
+          margin: 0 0 8px;
+          color: var(--text-secondary);
+          font-size: 13px;
+          line-height: 1.45;
+        }
+
+        .free-verdict-block {
+          margin: 0 0 8px;
+        }
+
+        .free-verdict-block > span {
+          display: block;
+          margin-bottom: 4px;
+          color: var(--accent);
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+        }
+
+        .free-verdict-block-risk > span {
+          color: var(--danger-text);
+        }
+
+        .free-verdict-block ul {
+          margin: 0;
+          padding-left: 18px;
+          color: var(--text-main);
+          font-size: 13px;
+          line-height: 1.4;
+        }
+
+        .detail-meta-line {
+          margin: 0 0 12px;
+          color: var(--text-dim);
+          font-size: 13px;
+        }
+
+        .build-preview-shell-gated {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .ca-style-pitch {
+          margin: 0 0 14px;
+          padding: 12px;
+          border-radius: 16px;
+          border: 1px solid var(--accent-border);
+          background:
+            radial-gradient(circle at 12% 0%, rgba(31, 157, 107, 0.14), transparent 42%),
+            var(--surface-2);
+        }
+
+        .ca-style-pitch-head {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 10px;
+          margin-bottom: 10px;
+        }
+
+        .ca-style-pitch-kicker {
+          display: block;
+          color: var(--accent);
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .ca-style-pitch-head h3 {
+          margin: 2px 0 0;
+          color: var(--text-main);
+          font-size: 16px;
+          line-height: 1.2;
+        }
+
+        .ca-style-pitch-style {
+          flex-shrink: 0;
+          max-width: 46%;
+          padding: 5px 9px;
+          border-radius: 999px;
+          border: 1px solid var(--border-soft);
+          background: var(--inset-bg);
+          color: var(--text-secondary);
+          font-size: 11px;
+          font-weight: 700;
+          line-height: 1.2;
+          text-align: right;
+        }
+
+        .ca-style-pitch-field {
+          position: relative;
+          width: 100%;
+          aspect-ratio: 5 / 4;
+          max-height: 280px;
+          border-radius: 14px;
+          overflow: hidden;
+          border: 1px solid rgba(255,255,255,0.08);
+          box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25);
+        }
+
+        .ca-style-pitch-svg {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+        }
+
+        .ca-style-pitch-move {
+          stroke-dasharray: 48;
+          stroke-dashoffset: 48;
+          animation: ca-style-draw 1.4s ease-out forwards;
+        }
+
+        .ca-style-pitch-pass {
+          stroke-dasharray: 36;
+          stroke-dashoffset: 36;
+          animation: ca-style-draw 1.1s ease-out forwards;
+          opacity: 0.95;
+        }
+
+        .ca-style-pitch-ghost {
+          animation: ca-style-pulse 2.2s ease-in-out infinite;
+        }
+
+        .ca-style-pitch-token {
+          position: absolute;
+          z-index: 3;
+          transform: translate(-50%, -50%);
+          display: grid;
+          justify-items: center;
+          gap: 3px;
+          pointer-events: none;
+          animation: ca-style-token-in 0.55s ease-out both;
+        }
+
+        .ca-style-pitch-token-end {
+          opacity: 0.55;
+          animation: ca-style-token-end 1.5s ease-out both;
+        }
+
+        .ca-style-pitch-token-end .ca-style-pitch-token-role {
+          width: 28px;
+          height: 28px;
+          font-size: 9px;
+          border-color: rgba(125, 211, 168, 0.7);
+          background: rgba(8, 36, 24, 0.72);
+        }
+
+        .ca-style-pitch-token-role {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 34px;
+          height: 34px;
+          border-radius: 999px;
+          border: 2px solid rgba(251, 191, 36, 0.7);
+          background: rgba(8, 18, 12, 0.88);
+          color: #fff;
+          font-size: 10px;
+          font-weight: 850;
+          box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+        }
+
+        .ca-style-pitch-token-name {
+          max-width: 78px;
+          padding: 2px 6px;
+          border-radius: 999px;
+          background: rgba(2, 6, 4, 0.72);
+          color: #f8fafc;
+          font-size: 10px;
+          font-weight: 700;
+          text-align: center;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .ca-style-pitch-caption {
+          margin: 10px 0 6px;
+          color: var(--text-secondary);
+          font-size: 13px;
+          line-height: 1.45;
+        }
+
+        .ca-style-pitch-legend {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          color: var(--text-dim);
+          font-size: 11px;
+          font-weight: 700;
+        }
+
+        .ca-style-pitch-legend span {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .ca-style-pitch-legend i {
+          display: inline-block;
+          width: 16px;
+          height: 2px;
+          border-radius: 999px;
+        }
+
+        .ca-leg-move { background: #7dd3a8; }
+        .ca-leg-pass {
+          background: linear-gradient(90deg, rgba(251,191,36,0.2), rgba(251,191,36,0.95));
+        }
+
+        @keyframes ca-style-draw {
+          to { stroke-dashoffset: 0; }
+        }
+
+        @keyframes ca-style-pulse {
+          0%, 100% { opacity: 0.35; }
+          50% { opacity: 0.85; }
+        }
+
+        @keyframes ca-style-token-in {
+          from { opacity: 0; transform: translate(-50%, -42%) scale(0.86); }
+          to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        @keyframes ca-style-token-end {
+          0% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+          55% { opacity: 0; }
+          100% { opacity: 0.55; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .ca-style-pitch-move,
+          .ca-style-pitch-pass,
+          .ca-style-pitch-ghost,
+          .ca-style-pitch-token,
+          .ca-style-pitch-token-end {
+            animation: none !important;
+            stroke-dashoffset: 0 !important;
+            opacity: 1;
+          }
+        }
+
+        :global(html[data-theme='light']) .ca-style-pitch {
+          background:
+            radial-gradient(circle at 12% 0%, rgba(31, 157, 107, 0.10), transparent 42%),
+            var(--surface);
+          border-color: rgba(31, 157, 107, 0.28);
+        }
+
+        :global(html[data-theme='light']) .ca-style-pitch-caption,
+        :global(html[data-theme='light']) .ca-style-pitch-style {
+          color: var(--text-dim);
+        }
+
+        .build-preview-open-cta,
+        .build-preview-meta-toggle {
+          appearance: none;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          min-height: 42px;
+          padding: 10px 14px;
+          border-radius: 12px;
+          border: 1px solid var(--accent-border);
+          background: var(--accent-bg);
+          color: var(--text-main);
+          font: inherit;
+          font-size: 13px;
+          font-weight: 800;
+          cursor: pointer;
+        }
+
+        .build-preview-meta-gate {
+          display: grid;
+          gap: 10px;
+        }
+
+        .build-preview-meta-toggle {
+          justify-content: space-between;
+          width: 100%;
+          background: var(--inset-bg);
+          border-color: var(--border-soft);
+        }
+
+        .build-preview-dual-priority {
+          grid-template-columns: 1fr;
         }
 
         .release-card h3 {
@@ -2912,11 +3436,30 @@ export default withAuth(function CardAdvisorLabPage() {
           width: 100%;
         }
 
+        .detail-hero-compact {
+          gap: 14px;
+        }
+
+        .detail-hero-compact .detail-copy h2 {
+          margin: 0 0 4px;
+          font-size: clamp(22px, 4vw, 34px);
+        }
+
+        .detail-hero-compact .detail-card-preview {
+          width: min(148px, 36vw);
+          max-width: 148px;
+          flex: 0 0 min(148px, 36vw);
+        }
+
         .detail-card-preview {
           width: min(192px, 42vw);
           max-width: 192px;
           flex: 0 0 min(192px, 42vw);
           margin: 0 auto;
+        }
+
+        .detail-mobile-cta {
+          display: none;
         }
 
         .detail-card-preview .card-art {
@@ -5011,14 +5554,47 @@ export default withAuth(function CardAdvisorLabPage() {
             width: 100%;
             max-height: calc(100vh - 16px);
             max-height: calc(100dvh - 16px);
-            padding-bottom: max(96px, calc(env(safe-area-inset-bottom, 0px) + 92px));
-            scroll-padding-bottom: max(150px, calc(env(safe-area-inset-bottom, 0px) + 128px));
+            padding-bottom: 0;
+            scroll-padding-bottom: max(96px, calc(env(safe-area-inset-bottom, 0px) + 80px));
             border-radius: 22px 22px 12px 12px;
           }
 
           .card-details-modal .detail-panel {
             padding: 14px;
-            padding-bottom: max(118px, calc(env(safe-area-inset-bottom, 0px) + 112px));
+            padding-bottom: max(88px, calc(env(safe-area-inset-bottom, 0px) + 72px));
+          }
+
+          .detail-hero-compact {
+            flex-direction: row;
+            align-items: flex-start;
+          }
+
+          .detail-hero-compact .detail-card-preview {
+            width: 88px;
+            max-width: 88px;
+            flex: 0 0 88px;
+            margin: 0;
+          }
+
+          .detail-mobile-cta {
+            position: sticky;
+            bottom: 0;
+            z-index: 5;
+            display: flex;
+            margin: 12px -14px -14px;
+            padding: 10px 14px max(10px, env(safe-area-inset-bottom, 0px));
+            background: linear-gradient(180deg, transparent, var(--surface) 28%);
+            border-top: 1px solid var(--border-soft);
+          }
+
+          .detail-mobile-cta .deep-analysis-unlock-btn,
+          .detail-mobile-cta .build-preview-open-cta {
+            width: 100%;
+          }
+
+          .detail-panel:has(.detail-mobile-cta) .deep-analysis-entry-cta,
+          .detail-panel:has(.detail-mobile-cta) .build-preview-shell-gated .build-preview-open-cta {
+            display: none;
           }
 
           .coach-advice-card,
@@ -5251,6 +5827,27 @@ export default withAuth(function CardAdvisorLabPage() {
         :global(html[data-theme='light']) .advisor-section-marker-free {
           background: linear-gradient(90deg, rgba(147,51,234,0.06), rgba(31,157,107,0.04));
           border-color: rgba(147,51,234,0.20);
+        }
+
+        :global(html[data-theme='light']) .free-verdict-card {
+          background:
+            radial-gradient(circle at top right, rgba(31, 157, 107, 0.10), transparent 42%),
+            var(--surface);
+          border-color: rgba(31, 157, 107, 0.28);
+        }
+
+        :global(html[data-theme='light']) .free-verdict-hint,
+        :global(html[data-theme='light']) .free-verdict-lever,
+        :global(html[data-theme='light']) .free-verdict-use,
+        :global(html[data-theme='light']) .free-verdict-scope {
+          color: var(--text-dim);
+        }
+
+        :global(html[data-theme='light']) .build-preview-open-cta,
+        :global(html[data-theme='light']) .build-preview-meta-toggle {
+          background: var(--accent-bg);
+          border-color: var(--accent-border);
+          color: var(--text-main);
         }
 
         :global(html[data-theme='light']) .deep-analysis-entry {

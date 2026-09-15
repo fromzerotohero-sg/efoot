@@ -18,11 +18,7 @@ const CARD_SELECT = [
   'category',
   'image_url',
   'card_type',
-  'playing_style',
-  'player_skills',
-  'ai_playstyles',
-  'enrichment_status',
-  'completeness_score'
+  'playing_style'
 ].join(',')
 
 function decodeHtml(value = '') {
@@ -135,11 +131,7 @@ function normalizeDbCard(row) {
     overall: Number(row.overall_display) || null,
     category: row.category || row.card_type || 'Special',
     style: row.playing_style || '',
-    skills: Array.isArray(row.player_skills) ? row.player_skills : [],
-    aiPlaystyles: Array.isArray(row.ai_playstyles) ? row.ai_playstyles : [],
-    imageUrl: row.image_url,
-    enrichmentStatus: row.enrichment_status,
-    completenessScore: row.completeness_score
+    imageUrl: row.image_url
   }
 }
 
