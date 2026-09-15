@@ -2912,6 +2912,7 @@ function PremiumPlayerModal({
   show,
   player,
   slot,
+  fluidEnabled = false,
   onClose,
   onSave,
   onBuildCoach,
@@ -3263,7 +3264,6 @@ function PremiumPlayerModal({
 
     const payload = {
       player_name: form.player_name.trim(),
-      position: originalPositionsDraft[0]?.position || form.position,
       overall_rating: null,
       card_type: form.card_type,
       role: form.role,
@@ -3292,6 +3292,20 @@ function PremiumPlayerModal({
         native_skills: normalizePlayerSkillsArray(nativeSkillsDraft),
         additional_skills: normalizePlayerSkillsArray(additionalSkillsDraft)
       }
+    }
+
+    const starterSlotIndex = player?.slot_index != null ? Number(player.slot_index) : null
+    const slotMatchesStarter =
+      !fluidEnabled &&
+      slot &&
+      starterSlotIndex != null &&
+      Number.isFinite(starterSlotIndex) &&
+      starterSlotIndex >= 0 &&
+      starterSlotIndex <= 10 &&
+      Number(slot.slot_index) === starterSlotIndex &&
+      String(slot.position || '').trim()
+    if (slotMatchesStarter) {
+      payload.position = String(slot.position).trim()
     }
 
     const shouldPersistBuildPreview =
@@ -5903,8 +5917,8 @@ export default withAuth(function NuovaRosaLabPage() {
             ...showConfirmConfig({
               title: (lang === 'en' || lang === 'es') ? 'Players out of role' : 'Giocatori fuori ruolo',
               message: lang === 'en'
-                ? 'Some moved players are no longer in one of their original roles.'
-                : 'Alcuni giocatori spostati non sono piu in uno dei loro ruoli originali.',
+                ? 'Some moved players are no longer in one of their original roles. If you save, they stay in that slot. The missing competence is not added.'
+                : 'Alcuni giocatori spostati non sono piu in uno dei loro ruoli originali. Se salvi, restano in quello slot: la competenza mancante non viene aggiunta.',
               details,
               confirmLabel: (lang === 'en' || lang === 'es') ? 'Save anyway' : 'Salva comunque',
               cancelLabel: t('cancel')
@@ -5917,25 +5931,6 @@ export default withAuth(function NuovaRosaLabPage() {
           })
           return
         }
-      }
-
-      if (skipOutOfRoleWarning && !fluidEnabled && playersOutOfRole.length > 0) {
-        await Promise.all(playersOutOfRole.map(async ({ player, newRole, originalPositions }) => {
-          const roleExists = originalPositions.some((entry) => String(entry?.position || '').toUpperCase() === String(newRole).toUpperCase())
-          if (roleExists) return
-          const updatedOriginalPositions = [
-            ...originalPositions,
-            { position: newRole, competence: 'Intermedia' }
-          ]
-          await fetch(`/api/players/${player.id}`, {
-            method: 'PATCH',
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ original_positions: updatedOriginalPositions })
-          })
-        }))
       }
 
       const effectiveFormation = getFormationNameFromSlotPositions(updatedSlotPositions) || layout.formation || 'Custom'
@@ -6632,6 +6627,7 @@ export default withAuth(function NuovaRosaLabPage() {
       <PremiumPlayerModal
         player={showPremiumEditorModal ? selectedPlayer : null}
         slot={selectedSlot}
+        fluidEnabled={fluidEnabled}
         show={showPremiumEditorModal && !!selectedPlayer}
         onClose={() => {
           setShowPremiumEditorModal(false)

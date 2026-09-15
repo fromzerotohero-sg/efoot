@@ -4,6 +4,7 @@ import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { normalizeEfhubPosition } from '@/lib/efootballBuildRules'
 import { computePlayerFieldOverall } from '@/lib/playerOverallPipeline'
 import { normalizePlayerSkillsArray } from '@/lib/playerSkillLabels'
+import { MAX_ADDITIONAL_SKILLS } from '@/lib/efootballTruthLayer'
 import { lookupPlayingStyleId } from '@/lib/playingStyleResolve'
 import { buildSlotRoleAugmentsForStarter, metadataAfterMovingToReserves } from '@/lib/playerSlotRoleMetadata'
 
@@ -292,9 +293,41 @@ export async function PATCH(req, { params }) {
 
     if (body.skills !== undefined) {
       const existing = Array.isArray(existingPlayer.skills) ? existingPlayer.skills : []
-      updateData.skills = normalizePlayerSkillsArray(
-        hasArrayValue(body.skills) ? [...existing, ...body.skills] : existing
+      const existingMetadata =
+        existingPlayer.metadata && typeof existingPlayer.metadata === 'object'
+          ? existingPlayer.metadata
+          : {}
+      const requestMetadata =
+        body.metadata && typeof body.metadata === 'object'
+          ? body.metadata
+          : {}
+      const nativeSkills = normalizePlayerSkillsArray(
+        Array.isArray(existingMetadata.native_skills)
+          ? existingMetadata.native_skills
+          : (Array.isArray(body.native_skills)
+            ? body.native_skills
+            : requestMetadata.native_skills)
       )
+      const additionalSkills = normalizePlayerSkillsArray(
+        Array.isArray(body.additional_skills)
+          ? body.additional_skills
+          : requestMetadata.additional_skills
+      ).filter((skill) => !nativeSkills.some((native) => native.toLowerCase() === skill.toLowerCase()))
+      const hasSkillContract =
+        Array.isArray(existingMetadata.native_skills) ||
+        Array.isArray(body.native_skills) ||
+        Array.isArray(requestMetadata.native_skills)
+
+      if (hasSkillContract && additionalSkills.length > MAX_ADDITIONAL_SKILLS) {
+        return NextResponse.json(
+          { error: `A player can have at most ${MAX_ADDITIONAL_SKILLS} additional skills` },
+          { status: 400 }
+        )
+      }
+
+      updateData.skills = hasSkillContract
+        ? normalizePlayerSkillsArray([...nativeSkills, ...additionalSkills])
+        : normalizePlayerSkillsArray(hasArrayValue(body.skills) ? [...existing, ...body.skills] : existing)
     }
 
     if (body.com_skills !== undefined) {
@@ -386,25 +419,53 @@ export async function PATCH(req, { params }) {
       }
     }
 
-    // Spostamento titolare/riserva: stessi flag metadata della assign-player-to-slot (Coach / FIT)
+    // Titolare/riserva: stessi flag metadata della assign-player-to-slot (Coach / FIT).
+    // Ricalcola anche se cambiano solo competenze o position, altrimenti un titolare
+    // a cui aggiungi il ruolo dello slot resta marcato fuori ruolo.
+    let movingToReserves = false
+    let starterSlotToRefresh = null
     if (body.slot_index !== undefined) {
       const raw = body.slot_index
-      const toReserves = raw === null || raw === '' || raw === undefined
-      const nextSlot = toReserves ? null : Number(raw)
+      if (raw === null || raw === '') {
+        movingToReserves = true
+      } else {
+        const nextSlot = Number(raw)
+        if (!Number.isNaN(nextSlot) && nextSlot >= 0 && nextSlot <= 10) {
+          starterSlotToRefresh = nextSlot
+        } else {
+          movingToReserves = true
+        }
+      }
+    } else if (body.original_positions !== undefined || body.position !== undefined) {
+      const existingSlot = Number(existingPlayer.slot_index)
+      if (
+        existingPlayer.slot_index != null &&
+        !Number.isNaN(existingSlot) &&
+        existingSlot >= 0 &&
+        existingSlot <= 10
+      ) {
+        starterSlotToRefresh = existingSlot
+      }
+    }
+
+    if (movingToReserves || starterSlotToRefresh != null) {
       const mergedMetadata = {
         ...(existingPlayer.metadata && typeof existingPlayer.metadata === 'object' ? existingPlayer.metadata : {}),
         ...(updateData.metadata && typeof updateData.metadata === 'object' ? updateData.metadata : {})
       }
-      if (toReserves || Number.isNaN(nextSlot)) {
+      if (movingToReserves) {
         const cleared = metadataAfterMovingToReserves(mergedMetadata)
         if (cleared) updateData.metadata = cleared
-      } else if (nextSlot >= 0 && nextSlot <= 10) {
+      } else {
         const { data: formationRow } = await supabase
           .from('formation_layout')
           .select('slot_positions')
           .eq('user_id', userId)
           .maybeSingle()
-        const slotPos = formationRow?.slot_positions?.[nextSlot]?.position || null
+        const slotPos =
+          formationRow?.slot_positions?.[starterSlotToRefresh]?.position ||
+          formationRow?.slot_positions?.[String(starterSlotToRefresh)]?.position ||
+          null
         const mergedPosition =
           updateData.position !== undefined ? updateData.position : existingPlayer.position
         const mergedOriginalPositions =

@@ -4,6 +4,7 @@ import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { DEFAULT_SLOT_POSITIONS } from '@/lib/formationDefaultSlots'
 import { validateFormationLimits } from '@/lib/validateFormationLimits'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
+import { buildSlotRoleAugmentsForStarter } from '@/lib/playerSlotRoleMetadata'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -188,24 +189,39 @@ export async function POST(req) {
       )
     }
 
-    // 3. Sincronizza players.position con slot_positions (dopo salvataggio layout)
-    // Aggiorna position di tutti i giocatori titolari in base alle nuove posizioni slot
-    for (const [slotIndex, slotPos] of Object.entries(completeSlots)) {
-      const slotIdx = Number(slotIndex)
-      if (slotPos && slotPos.position && slotIdx >= 0 && slotIdx <= 10) {
-        const { error: playerUpdateError } = await admin
-          .from('players')
-          .update({ 
-            position: slotPos.position,
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', userId)
-          .eq('slot_index', slotIdx)
-        
-        if (playerUpdateError) {
-          // Log errore ma non bloccare (non critico)
-          console.warn(`[save-formation-layout] Error updating player position for slot ${slotIdx}:`, playerUpdateError)
-        }
+    // 3. Sincronizza players.position con gli slot. Competenze carta restano in original_positions;
+    // se lo slot non c'è tra le competenze, marca fuori ruolo voluto (non inventare competenze).
+    const { data: starters, error: startersError } = await admin
+      .from('players')
+      .select('id, slot_index, position, original_positions, metadata')
+      .eq('user_id', userId)
+      .gte('slot_index', 0)
+      .lte('slot_index', 10)
+
+    if (startersError) {
+      console.warn('[save-formation-layout] Error loading starters for position sync:', startersError)
+    }
+
+    for (const starter of starters || []) {
+      const slotIdx = Number(starter.slot_index)
+      const slotPos = completeSlots[slotIdx] || completeSlots[String(slotIdx)]
+      if (!slotPos?.position || Number.isNaN(slotIdx) || slotIdx < 0 || slotIdx > 10) continue
+      const { augments } = buildSlotRoleAugmentsForStarter({
+        playerRow: starter,
+        slotPosition: slotPos.position
+      })
+      const { error: playerUpdateError } = await admin
+        .from('players')
+        .update({
+          position: slotPos.position,
+          updated_at: new Date().toISOString(),
+          ...augments
+        })
+        .eq('id', starter.id)
+        .eq('user_id', userId)
+
+      if (playerUpdateError) {
+        console.warn(`[save-formation-layout] Error updating player position for slot ${slotIdx}:`, playerUpdateError)
       }
     }
 
