@@ -59,8 +59,7 @@ export default function SidebarNew() {
     return pathname?.startsWith(href)
   }
 
-  // UX V2: navigazione primaria a 3 pilastri. Le vecchie sezioni (contromisure, match,
-  // statistiche, upload) restano vive nelle route esistenti e saranno ricollocate sotto Coach.
+  // Navigazione primaria a 3 pilastri; i workflow operativi vivono dentro Hero.
   // Tono UNICO per tutti i pilastri: verde accent quando attiva, neutro a riposo.
   const PILLAR_TONES = {
     coach: {

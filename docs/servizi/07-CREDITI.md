@@ -5,7 +5,6 @@ Niente Stripe, PayPal o pagina `/crediti` nel codice. Wallet: **MetalGate**. Tra
 ## Codice
 
 - `lib/creditService.js` — `AI_COST = 2`, deduct/refund/accredito, chiamata MetalGate con `METALGATE_API_KEY`
-- `lib/liveCoachPricing.js` — 2 + 5/min
 - Tariffario: [COSTI_HP_USO_PIATTAFORMA.md](../COSTI_HP_USO_PIATTAFORMA.md)
 
 ## API

@@ -8,6 +8,7 @@ import { presentCountermeasuresForCustomer } from '@/lib/prematchCustomerPlan'
 import { deductCredits, AI_COST, handleCreditOperationError } from '@/lib/creditService'
 import { validateIndividualInstruction } from '@/lib/tacticalInstructions'
 import { rolesAreEquivalent, validateStartingXISwap } from '@/lib/formationDefenseRules'
+import { enforceCoachTeamStyleOnOutput } from '@/lib/teamPlayingStyles'
 import {
   activeTacticalInstructions,
   buildClientFormationSnapshot,
@@ -594,7 +595,7 @@ export async function POST(req) {
     // 7. Recupera pattern tattici (opzionale)
     const { data: tacticalPatterns, error: patternsError } = await admin
       .from('team_tactical_patterns')
-      .select('formation_usage, playing_style_usage, recurring_issues, attack_areas_avg, recovery_zones_avg')
+      .select('formation_usage, playing_style_usage, recurring_issues, attack_areas_avg, our_attack_areas_avg, opponent_attack_areas_avg, conceded_goal_zones_avg, recovery_zones_avg')
       .eq('user_id', userId)
       .maybeSingle()
 
@@ -1103,6 +1104,11 @@ if (process.env.NODE_ENV !== 'production') {
     }
 
     enforcePlanCoherence(countermeasures)
+    enforceCoachTeamStyleOnOutput(countermeasures, {
+      competence: activeCoach?.playing_style_competence,
+      currentStyle: effectiveTacticalSettings?.team_playing_style,
+      lang
+    })
     focusCountermeasuresOutput(countermeasures)
 
     // Safe fallback: never return an empty/meaningless plan after filtering.

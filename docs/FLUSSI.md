@@ -22,7 +22,7 @@ Route `forgot-password` / `reset-password` esistono ancora (legacy Supabase). L�
 ## Hero Chat
 
 ```
-AssistantChat (popup globale da AppLayoutShell, o /assistant)
+HeroChat (workflow integrato nella Home Coach)
   → POST /api/assistant-chat  (Bearer)
   → RAG sezioni da info_rag.md (keyword, non embeddings)
   → contesto da user_profiles, rosa, coach, cache diagnostica
@@ -35,7 +35,7 @@ AssistantChat (popup globale da AppLayoutShell, o /assistant)
 Aperta da Home e da contromisure, non è una route primaria.
 
 ```
-CoachFeedbackChat
+HeroChat — workflow feedback
   → POST /api/coach-feedback-chat
   → POST /api/save-coach-feedback  → user_tactical_feedback + campi profilo
 ```
@@ -62,15 +62,9 @@ UX V2: stessa identità Hero, motori separati.
 POST /api/supabase/save-match
   insert matches
   async: team_tactical_patterns, AI knowledge, weekly_goals progress
-
-POST /api/supabase/update-match
-  update matches + ricalcolo pattern/knowledge/task
-
-DELETE /api/supabase/delete-match
-  elimina match; non ricalcola esplicitamente pattern/performance come save/update (P2 noto)
 ```
 
-Contromisure: `/contromisure-pre-partita` → extract-formation + generate-countermeasures.
+Partite, statistiche e contromisure partono dalla chat Hero. Non esistono pagine Match autonome.
 
 ## Hero Points
 
@@ -81,7 +75,6 @@ azione AI → deductCredits / recordUsage (AI_COST = 2)
 402 → messaggio crediti insufficienti
 acquisto → home.fromzerotohero.io (MetalGate)
 webhook  → POST /api/credits/accredit (CREDITS_ACCREDIT_API_KEY)
-Live Coach → start 2 HP, heartbeat, end; extra 5 HP/min
 ```
 
 ## Task

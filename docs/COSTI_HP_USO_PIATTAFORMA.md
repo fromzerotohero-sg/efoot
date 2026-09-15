@@ -1,6 +1,6 @@
 # Costi Hero Points — unica fonte
 
-Verificato in `lib/creditService.js` (`AI_COST = 2`) e `lib/liveCoachPricing.js`.
+Verificato in `lib/creditService.js` (`AI_COST = 2`).
 Non usare documenti storici con 1 HP o pesi variabili.
 
 ## Regole
@@ -20,11 +20,8 @@ Non usare documenti storici con 1 HP o pesi variabili.
 | Save feedback `save-coach-feedback` | `AI_COST` | 2 |
 | Extract player / coach / formation / match-data / game-analysis | `AI_COST` | 2 |
 | Contromisure `generate-countermeasures` | `AI_COST` | 2 |
-| Analisi partita `analyze-match` | `AI_COST` | 2 |
 | Game analysis multi-image | 2 HP × immagine/URL | 2×N |
 | Card Advisor deep analysis | `DEEP_ANALYSIS_COST` | 2 |
-| Live Coach avvio | `LIVE_COACH_START_COST` | 2 |
-| Live Coach minuto extra | `LIVE_COACH_MINUTE_COST` | 5 / minuto |
 
 `CREDIT_WEIGHTS` in `creditService.js` è allineato a `AI_COST`; non reintrodurre pesi diversi senza decisione owner.
 

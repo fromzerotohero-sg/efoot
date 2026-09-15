@@ -1,6 +1,6 @@
 # Partite — contratto corrente
 
-Pagine: `/match`, `/match/new`, `/match/[id]`. In UX V2 diventano strumento contestuale di Coach, le route restano.
+Partite, statistiche e contromisure sono workflow della chat Hero. Non hanno pagine autonome.
 
 ## API
 
@@ -8,10 +8,6 @@ Pagine: `/match`, `/match/new`, `/match/[id]`. In UX V2 diventano strumento cont
 |--------|-------|---------|
 | POST | `/api/extract-match-data` | OCR/estrazione screenshot (gpt-4o), 2 HP |
 | POST | `/api/supabase/save-match` | insert `matches` + pattern + knowledge + task progress |
-| POST | `/api/supabase/update-match` | update + ricalcolo analogo |
-| DELETE | `/api/supabase/delete-match` | delete; **non** ricalcola pattern come save (gap P2) |
-| GET | `/api/matches` | lista |
-| POST | `/api/analyze-match` | riassunto AI (gpt-4o), 2 HP |
 | POST | `/api/extract-game-analysis` | stats di gioco, 2 HP × immagine |
 | POST | `/api/extract-formation` | formazione avversaria |
 | POST | `/api/supabase/save-opponent-formation` | salva modulo avversario |

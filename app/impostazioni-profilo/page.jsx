@@ -217,9 +217,7 @@ function HeroPointsCard({ lang }) {
         { service: 'Match analysis', cost: '2 HP' },
         { service: 'Game stats extraction', cost: '2-4 HP' },
         { service: 'Pre-match countermeasures', cost: '2 HP' },
-        { service: 'Player or coach extraction', cost: '2 HP' },
-        { service: 'Live Coach start', cost: '2 HP' },
-        { service: 'Live Coach extra minute', cost: '5 HP/min' }
+        { service: 'Player or coach extraction', cost: '2 HP' }
       ]
     : [
         { service: 'Hero Chat: chiedi al Coach AI', cost: '2 HP' },
@@ -227,9 +225,7 @@ function HeroPointsCard({ lang }) {
         { service: 'Analisi partita', cost: '2 HP' },
         { service: 'Estrazione statistiche di gioco', cost: '2-4 HP' },
         { service: 'Contromisure pre-partita', cost: '2 HP' },
-        { service: 'Estrazione giocatore o allenatore', cost: '2 HP' },
-        { service: 'Live Coach avvio', cost: '2 HP' },
-        { service: 'Live Coach minuto extra', cost: '5 HP/min' }
+        { service: 'Estrazione giocatore o allenatore', cost: '2 HP' }
       ]
 
   return (

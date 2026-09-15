@@ -1,6 +1,6 @@
 # Architettura corrente
 
-Verificato sul codice del 13 agosto 2026. Direzione prodotto: [UX_V2 Master](./UX_V2/FZTH_UX_V2_MASTER_OPERATING_SPECIFICATION_v1.1.md).
+Verificato sul codice corrente del 15 settembre 2026.
 
 ## Stack
 
@@ -21,7 +21,6 @@ Verificato sul codice del 13 agosto 2026. Direzione prodotto: [UX_V2 Master](./U
 
 - `SidebarNew`, `TopBar`, `BottomNavigation`
 - `InstallAppPrompt` (off su staging/preview)
-- `LiveCoachLauncher`
 - `MaintenanceGate`, `PrelaunchGate`
 
 Analytics (GA `G-X69T3QE3GG`, Clarity `wylmfczjap`) si caricano in production; su `NEXT_PUBLIC_APP_ENV=staging` o `VERCEL_ENV=preview` restano spenti.
@@ -33,12 +32,8 @@ Analytics (GA `G-X69T3QE3GG`, Clarity `wylmfczjap`) si caricano in production; s
 | `/` | Coach Home (S2): `components/coach-v2/CoachWorkspace.jsx` |
 | `/gestione-formazione` | Rosa: re-export di `nuova-rosa-lab` |
 | `/card-advisor-lab` | Carte |
-| `/assistant` | Chat a pagina intera (popup globale resta) |
-| `/match`, `/match/new`, `/match/[id]` | Partite |
-| `/contromisure-pre-partita` | Contromisure |
 | `/allenatori` | Coach cards |
 | `/impostazioni-profilo` | Hub profilo/impostazioni/notifiche (include HP) |
-| `/gestione-profilo` | Redirect a `/impostazioni-profilo` |
 | `/login` | Redirect MetalGate |
 | `/auth/callback`, `/login-success` | SSO |
 | `/access` | Gate prelaunch |
@@ -56,10 +51,9 @@ Hero UI
   domanda/consiglio  → POST /api/assistant-chat
   feedback/profilo   → POST /api/coach-feedback-chat
                        POST /api/save-coach-feedback
-  live sessione      → /api/live-coach/* (billing temporale)
+  stats/partita      → POST /api/extract-game-analysis e /api/extract-match-data
+  contromisure       → POST /api/generate-countermeasures
 ```
-
-Smart Coach (`NEXT_PUBLIC_FF_SMART_COACH_ENTRY`) è in quarantena, default off.
 
 ## Cosa non riscrivere nello sprint UX
 

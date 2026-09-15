@@ -24,7 +24,6 @@ Tornei: https://tornei.fromzerotohero.io/
 
 - Chat, palestra, extract, analisi, contromisure: **2 HP**
 - Card Advisor deep: **2 HP**
-- Live Coach: **2 HP** avvio + **5 HP**/minuto extra
 - Nessun pacchetto HP “incluso di default”
 
 ## FAQ
@@ -43,9 +42,6 @@ Il feedback va salvato dalla Palestra/memoria. La chat principale può non riusa
 
 **Chat a 1 HP / classifica mensile / pagamento Stripe**  
 Non esistono più così. HP via MetalGate. Niente classifica in-app.
-
-**Live Coach vs chat**  
-Live Coach è una sessione a tempo, non un messaggio.
 
 **Cancellare account / dati**  
 Indirizzare a support@fromzerotohero.io. Non inventare un pulsante se non lo vedi in Impostazioni.

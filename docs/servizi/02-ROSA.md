@@ -1,7 +1,7 @@
 # Rosa — contratto corrente
 
 Motore reale: `app/nuova-rosa-lab/page.jsx`.  
-`/gestione-formazione` e alias (`/lista-giocatori`, `/upload`) lo re-esportano o redirigono lì.
+`/gestione-formazione` lo re-esporta.
 
 Non riscrivere la pagina intera nello sprint UX. Progressive disclosure: campo + 11 titolari in evidenza; build/booster/skill dietro dettaglio.
 
@@ -16,7 +16,7 @@ Non riscrivere la pagina intera nello sprint UX. Progressive disclosure: campo +
 | Layout | `/api/supabase/save-formation-layout` |
 | Tattiche | `/api/supabase/save-tactical-settings` |
 | Coach | `save-coach`, `set-active-coach`, `extract-coach`, catalog `/api/coach-catalog/search` |
-| Dettaglio | `/giocatore/[id]`, `/api/players/[id]` |
+| Dettaglio | UI interna della Rosa, `/api/players/[id]` |
 | Build Coach | `/api/build-coach/*` |
 
 ## Tabelle

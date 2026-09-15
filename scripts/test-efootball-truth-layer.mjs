@@ -26,7 +26,12 @@ import {
 } from '../lib/coachSuggestionEngine.js'
 import { orderNewestFirstThenChronological } from '../lib/heroChatStore.js'
 import { getSelectableInstructions, validateIndividualInstruction } from '../lib/tacticalInstructions.js'
-import { getPlayerSplitPlayingStyles, resolvePlayingStyleDbName } from '../lib/playingStyleResolve.js'
+import {
+  getPlayerSplitPlayingStyles,
+  getPlayingStylesContract,
+  resolvePlayingStyleDbName
+} from '../lib/playingStyleResolve.js'
+import { getAdvisorEquippedSkills } from '../lib/cardAdvisorSkillSuggestions.js'
 import {
   getMergedPlayerSkills,
   getNativePlayerSkills,
@@ -65,7 +70,7 @@ assert(/Formazione fluida/.test(policies), 'policies mention Fluid Formation')
 assert(/max 5/.test(policies), 'policies mention 5 additional skills')
 
 assert(isComAiPlaystyle('mazing run') && isComAiPlaystyle('Funambolo'), 'COM/AI playstyles detected')
-assert(!isComAiPlaystyle('Trickster') && !isComAiPlaystyle('Attack Trigger'), 'real skills are not COM/AI')
+assert(isComAiPlaystyle('Trickster') && !isComAiPlaystyle('Attack Trigger'), 'Trickster is COM/AI; Attack Trigger is a player skill')
 
 const player = {
   skills: ['Passaggio filtrante', 'mazing run'],
@@ -79,10 +84,37 @@ assert(!merged.some((s) => /mazing|funambolo/i.test(s)), 'COM/AI not merged into
 assert(getNativePlayerSkills(player).map((s) => getSkillDisplayLabel(s, 'it')).some((s) => /filtrante/i.test(s)), 'native skills separated')
 assert(getAdditionalOrUnclassifiedPlayerSkills(player).map((s) => getSkillDisplayLabel(s, 'it')).some((s) => /tiro di prima/i.test(s)), 'additional skills separated')
 assert(getPlayerComAiPlaystyles(player).length >= 1, 'COM/AI playstyles exposed separately')
+const unknownSkillOrigin = { skills: ['Captaincy', 'One-touch Pass'] }
+assert(getNativePlayerSkills(unknownSkillOrigin).length === 0, 'missing provenance is not guessed as native')
+assert(getAdditionalOrUnclassifiedPlayerSkills(unknownSkillOrigin).length === 0, 'missing provenance is not guessed as additional')
+assert(getPlayerComAiPlaystyles({ com_skills: ['Trickster', 'One-touch Pass', '-'] }).length === 1, 'polluted COM data is filtered')
+
+const advisorNative = getAdvisorEquippedSkills(
+  { skills: ['One-touch Pass', 'Through Passing'] },
+  { player_skills: ['One-touch Pass', 'Through Passing', 'Fighting Spirit'] }
+)
+assert(advisorNative.slotsFree === 5 && advisorNative.programSlotUsed === 0, 'catalog native skills do not consume additional slots')
+const advisorWithAdds = getAdvisorEquippedSkills(
+  { skills: ['One-touch Pass'], additional_skills: ['Blocker', 'Interception'] },
+  null
+)
+assert(advisorWithAdds.slotsFree === 3 && advisorWithAdds.programSlotUsed === 2, 'only explicit additional skills consume five-slot budget')
 
 assert(resolvePlayingStyleDbName('Box-to-Box') === 'Box-to-Box', 'Box-to-Box exact DB name')
 assert(resolvePlayingStyleDbName('orchestrator') === 'Tra le linee', 'orchestrator maps to Tra le linee')
 assert(resolvePlayingStyleDbName('front line pressure') === 'Pressione in attacco', 'v6 defensive style')
+assert(resolvePlayingStyleDbName('High Line Master') === 'Maestro della difesa alta', 'new defensive style maps from PSDB')
+const catalogDual = getPlayingStylesContract({
+  players_payload: {
+    playing_styles: {
+      format: 'dual',
+      attack: 'Goal Poacher',
+      defense: 'Front Line Pressure',
+      primary: 'Goal Poacher'
+    }
+  }
+})
+assert(catalogDual.format === 'dual' && catalogDual.attack === 'Goal Poacher' && catalogDual.defense === 'Front Line Pressure', 'PSDB nested dual style preserved')
 const split = getPlayerSplitPlayingStyles({
   role: 'Opportunista',
   metadata: { attacking_playing_style: 'Opportunista', defensive_playing_style: 'Pressione in attacco' }

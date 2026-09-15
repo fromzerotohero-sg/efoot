@@ -10,12 +10,8 @@ Rate limit in-memory (`lib/rateLimiter.js`): mitigante, non Redis.
 - `assistant-chat` — Hero Chat (2 HP, gpt-5.2 → gpt-4o)
 - `coach-feedback-chat`, `save-coach-feedback` — Palestra (2 HP)
 - `refresh-diagnostic` — cache contesto
-- `generate-countermeasures`, `analyze-match`
+- `generate-countermeasures`
 - `extract-player`, `extract-coach`, `extract-formation`, `extract-match-data`, `extract-game-analysis` (gpt-4o)
-
-## Live Coach
-
-- `live-coach/session`, `heartbeat`, `end`
 
 ## Rosa / catalogo
 
@@ -29,7 +25,7 @@ Rate limit in-memory (`lib/rateLimiter.js`): mitigante, non Redis.
 
 ## Partite / profilo / knowledge
 
-- `matches`, `supabase/save-match`, `update-match`, `delete-match`, `save-opponent-formation`
+- `supabase/save-match`, `save-opponent-formation`
 - `supabase/save-profile`, `save-ai-info`
 - `user/profile`, `dashboard`, `ai-knowledge`
 - `tasks/list` (side effect generate/update), `tasks/generate`

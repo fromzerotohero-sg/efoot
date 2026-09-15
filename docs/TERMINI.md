@@ -12,7 +12,7 @@ Bozza tecnica 13 agosto 2026. **Non è un contratto revisionato.** Compilare tit
 
 ## 2. Servizio
 
-Coaching tattico per eFootball: rosa, chat AI, analisi screenshot, Card Advisor, Live Coach, obiettivi settimanali.
+Coaching tattico per eFootball: chat Hero, rosa, analisi screenshot, partite, contromisure e Card Advisor.
 
 Non include una classifica competitiva in-app.
 
@@ -25,7 +25,7 @@ Non include una classifica competitiva in-app.
 ## 4. Hero Points
 
 - Acquisto e saldo gestiti da MetalGate (es. dashboard `home.fromzerotohero.io`)
-- Consumo in-app secondo [COSTI_HP_USO_PIATTAFORMA.md](./COSTI_HP_USO_PIATTAFORMA.md): azioni AI standard 2 HP; Live Coach 2 HP + 5 HP/min; Card Advisor deep 2 HP
+- Consumo in-app secondo [COSTI_HP_USO_PIATTAFORMA.md](./COSTI_HP_USO_PIATTAFORMA.md): azioni AI standard 2 HP; Card Advisor deep 2 HP
 - HP a 0: le funzioni a pagamento si bloccano; i dati già salvati restano accessibili
 - Pacchetti prezzo/IVA/rimborso: **non copiati qui** perché i listini vecchi Stripe non corrispondono al codice. Devono uscire da MetalGate + legale.
 

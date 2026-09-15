@@ -7,28 +7,20 @@ Montata da `app/layout.jsx`. Contiene:
 - `SidebarNew`, `TopBar`, `BottomNavigation`
 - `NotificationBell` (campanella notifiche in TopBar)
 - `InstallAppPrompt` (condizionale)
-- `LiveCoachLauncher`
 - `PrelaunchGate`, `MaintenanceGate`
 
 Non smontare questi pezzi “per semplificare” senza BYPASS UX esplicito.
 
 ## Navigazione attuale
 
-Sidebar: dashboard, guida, tornei (esterno), profilo, rosa, stats modal, contromisure, carte, partite, grafici, HP.  
-Bottom nav: contromisure, dashboard, partite, carte, rosa, stats.
-
-UX V2 riduce gli ingressi primari a Coach · Rosa · Carte; i componenti possono restare dietro nuova IA.
+Sidebar e bottom nav espongono i tre pilastri Coach · Rosa · Carte. Statistiche, partite, feedback e contromisure si aprono dentro Hero.
 
 ## Coach / memoria
 
 | Componente | Ruolo |
 |------------|--------|
-| `hero-chat/HeroChat` | Hero Chat |
-| `CoachFeedbackChat` | Motore Palestra |
-| `HeroCoachJourney` | Journey (bypass UX previsto) |
-| `AIKnowledgeBar` | “Quanto Hero ti conosce” |
-| `TaskWidget`, `MissionCenter`, `CoachSuggestions` | Confluiscono in Next Action |
-| `GameAnalysisModal` | Stats di gioco |
+| `hero-chat/HeroChat` | Hero Chat e workflow Partite, Stats, Palestra e Contromisure |
+| `coach-v2/homeState` | Stato e prontezza dati della Home |
 
 ## Rosa / form
 

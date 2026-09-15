@@ -13,8 +13,6 @@ Fallback automatico su rifiuto modello: **`gpt-4o`**.
 | Contromisure `generate-countermeasures` | `OPENAI_MODEL` \|\| `gpt-5.2` → `gpt-4o` → `gpt-4-turbo` → `gpt-4` |
 | Card Advisor deep | `CARD_ADVISOR_DEEP_MODEL` \|\| `gpt-5.2` → fallback `gpt-4o` |
 | Extract player/coach/formation/match-data/game-analysis | **`gpt-4o` fisso** |
-| `analyze-match` | **`gpt-4o` fisso** |
-| `smart/*` (quarantena) | `gpt-4o` |
 
 In chat, sotto la risposta compare `model_used`. Se vedi `gpt-4o` sulla Hero Chat, OpenAI ha rifiutato `gpt-5.2` (o il valore di `OPENAI_MODEL`).
 

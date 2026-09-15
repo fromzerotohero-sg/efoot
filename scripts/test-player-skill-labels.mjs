@@ -44,7 +44,6 @@ const koemanSkills = [
   'Spirito combattivo',
   'Muro',
   'Scivolata',
-  'Caposaldo',
   'Long Reach Tackle'
 ].map((skill) => getSkillDisplayLabel(skill, 'it'))
 
@@ -55,7 +54,7 @@ if (koemanSkills[0] === 'Tiro dalla distanza') {
 
 assertEqual(koemanSkills[0], 'Lancio lungo preciso', 'Koeman Lancio lungo')
 assertEqual(koemanSkills[1], 'Tiro a salire', 'Koeman Tiri a salire')
-assertEqual(koemanSkills[9], 'Tackle in allungo', 'Koeman Long Reach Tackle')
+assertEqual(koemanSkills[8], 'Tackle in allungo', 'Koeman Long Reach Tackle')
 
 const productionVariants = {
   'Attack Trigger': 'Attivatore d\'attacco',
@@ -132,7 +131,6 @@ const requiredItalianSkills = [
   'Dominio palle alte',
   'Scivolata',
   'Taker in a lungo',
-  'Caposaldo',
   'Disimpegno acrobatico',
   'Difesa aspettante',
   'Pressing alle spalle',
@@ -179,9 +177,12 @@ if (!koemanLongShot || !/non sostituisce punta o ala/i.test(koemanLongShot.cauti
   process.exit(1)
 }
 
-const longPassSemantic = getPlayerSkillSemantic('Lancio lungo')
-assertEqual(longPassSemantic?.category, 'passing', 'Lancio lungo semantic category')
-assertEqual(longPassSemantic?.display, 'Lancio lungo preciso', 'Lancio lungo semantic display')
+assertEqual(hasSkillSemantic('Lancio lungo'), false, 'legacy Long Lofted Pass has no active semantic')
+assertEqual(isKnownPlayerSkill('Long Ball Expert'), false, 'COM style is not a Player Skill')
+assertEqual(isKnownPlayerSkill('Cross Specialist'), false, 'playing style is not a Player Skill')
+assertEqual(isKnownPlayerSkill('Aggressive Defence'), false, 'legacy label is not a Player Skill')
+assertEqual(isFixedInnateCardSkill('Captaincy'), false, 'Captaincy is trainable')
+assertEqual(isFixedInnateCardSkill('Tap Trick'), true, 'Tap Trick is premium')
 
 assertEqual(
   localizeSkillTermsInText('Long-Range Shooting and Long Range Shooting', 'it'),

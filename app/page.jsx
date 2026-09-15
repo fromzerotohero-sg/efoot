@@ -2,11 +2,8 @@
 
 import React, { Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { supabase, getValidAccessToken } from '@/lib/supabaseClient'
+import { supabase } from '@/lib/supabaseClient'
 import { useTranslation } from '@/lib/i18n'
-import GameAnalysisModal from '@/components/GameAnalysisModal'
-import { useGameAnalysisModalNav, OPEN_GAME_ANALYSIS_MODAL_EVENT, CLOSE_GAME_ANALYSIS_MODAL_EVENT } from '@/components/GameAnalysisModalNavContext'
-import TaskWidget from '@/components/TaskWidget'
 import HeroChat from '@/components/hero-chat/HeroChat'
 import { fetchCoachProfileFromApi, resolveAuthToken, buildAuthHeaders } from '@/lib/profileUxHelpers'
 import { withAuth } from '@/components/AuthWrapper'
@@ -15,14 +12,13 @@ import {
 } from 'lucide-react'
 import PageLoading from '@/components/PageLoading'
 
-/** Legge query URL: openCoach=1 → Palestra Coach; openAssistantChat=1 → chat principale; openGameAnalysis=1 → GameAnalysisModal; openCardAdvisor=1 → Card Advisor Lab; openCountermeasures=1 → Hero contromisure. */
-function OpenCoachListener({ onOpenCoach, onOpenAssistantChat, onOpenGameAnalysis, onOpenCardAdvisor, onOpenCountermeasures }) {
+/** Tutti i deep link Coach aprono un workflow dentro Hero; openGameAnalysis resta solo come alias legacy. */
+function OpenCoachListener({ onOpenCoach, onOpenAssistantChat, onOpenStatsUpload, onOpenCardAdvisor, onOpenCountermeasures }) {
   const searchParams = useSearchParams()
   const router = useRouter()
-  // useLayoutEffect: apre modal prima del paint così non si vede la dashboard “vuota” un frame
   React.useLayoutEffect(() => {
-    if (searchParams?.get('openGameAnalysis') === '1') {
-      onOpenGameAnalysis?.()
+    if (searchParams?.get('openStatsUpload') === '1' || searchParams?.get('openGameAnalysis') === '1') {
+      onOpenStatsUpload?.()
       router.replace('/', { scroll: false })
       return
     }
@@ -44,14 +40,13 @@ function OpenCoachListener({ onOpenCoach, onOpenAssistantChat, onOpenGameAnalysi
       onOpenCoach()
       router.replace('/', { scroll: false })
     }
-  }, [searchParams, onOpenCoach, onOpenAssistantChat, onOpenGameAnalysis, onOpenCardAdvisor, onOpenCountermeasures, router])
+  }, [searchParams, onOpenCoach, onOpenAssistantChat, onOpenStatsUpload, onOpenCardAdvisor, onOpenCountermeasures, router])
   return null
 }
 
 function HomePage() {
   const { t, lang } = useTranslation()
   const router = useRouter()
-  const { setIsOpen: setGameAnalysisNavOpen } = useGameAnalysisModalNav()
   const mountedRef = React.useRef(true)
   const [retryTrigger, setRetryTrigger] = React.useState(0)
   const [loading, setLoading] = React.useState(true)
@@ -66,47 +61,10 @@ function HomePage() {
   const [slotPositions, setSlotPositions] = React.useState(null)
   const [formationVariants, setFormationVariants] = React.useState([])
   const [recentMatches, setRecentMatches] = React.useState([])
-  const [showGameAnalysisModal, setShowGameAnalysisModal] = React.useState(false)
   const [gameAnalysisLastCapture, setGameAnalysisLastCapture] = React.useState(null)
+  const [statsUploadRequest, setStatsUploadRequest] = React.useState(0)
   const [hasActiveCoach, setHasActiveCoach] = React.useState(false)
   const [userProfile, setUserProfile] = React.useState(null)
-
-  React.useEffect(() => {
-    setGameAnalysisNavOpen(showGameAnalysisModal)
-  }, [showGameAnalysisModal, setGameAnalysisNavOpen])
-
-  React.useEffect(() => {
-    return () => setGameAnalysisNavOpen(false)
-  }, [setGameAnalysisNavOpen])
-
-  // Bottom nav su /: apre analisi senza Link → ?openGameAnalysis (niente doppia navigazione)
-  React.useEffect(() => {
-    const onOpen = () => setShowGameAnalysisModal(true)
-    if (typeof window !== 'undefined') {
-      window.addEventListener(OPEN_GAME_ANALYSIS_MODAL_EVENT, onOpen)
-    }
-    return () => {
-      if (typeof window !== 'undefined') {
-        window.removeEventListener(OPEN_GAME_ANALYSIS_MODAL_EVENT, onOpen)
-      }
-    }
-  }, [])
-
-  // Bottom nav: tap Dashboard con modal analisi aperto (stesso `/` → Link non chiude il modal da solo)
-  React.useEffect(() => {
-    const onClose = () => {
-      setShowGameAnalysisModal(false)
-      router.replace('/', { scroll: false })
-    }
-    if (typeof window !== 'undefined') {
-      window.addEventListener(CLOSE_GAME_ANALYSIS_MODAL_EVENT, onClose)
-    }
-    return () => {
-      if (typeof window !== 'undefined') {
-        window.removeEventListener(CLOSE_GAME_ANALYSIS_MODAL_EVENT, onClose)
-      }
-    }
-  }, [router])
 
   const openCardAdvisor = React.useCallback(() => {
     router.push('/card-advisor-lab')
@@ -361,7 +319,7 @@ function HomePage() {
               window.dispatchEvent(new CustomEvent('open-assistant-chat', { detail: { message: msg } }))
             }
           }}
-          onOpenGameAnalysis={() => setShowGameAnalysisModal(true)}
+          onOpenStatsUpload={() => setStatsUploadRequest((value) => value + 1)}
           onOpenCardAdvisor={openCardAdvisor}
           onOpenCountermeasures={() => {
             if (typeof window !== 'undefined') {
@@ -382,10 +340,7 @@ function HomePage() {
         </div>
       )}
 
-      {/* UX V2 — Coach workspace presentation. Motori/dati restano in questa page. */}
-      {/* HERO CHAT — superficie conversazionale principale (reference owner: 3 foto chat).
-          Motore /api/assistant-chat reale; card solo da dati reali. CoachWorkspace (coach-v2,
-          tema chiaro) sostituito dalla nuova direzione Hero-first dark. */}
+      {/* Hero è la superficie principale; motori e card usano soltanto dati reali. */}
       <HeroChat
         lang={lang}
         userProfile={userProfile}
@@ -397,28 +352,10 @@ function HomePage() {
         hasActiveCoach={hasActiveCoach}
         recentMatches={recentMatches}
         gameAnalysisLastCapture={gameAnalysisLastCapture}
+        statsUploadRequest={statsUploadRequest}
         hpBalance={hpBalance}
         onStatsSuccess={fetchGameAnalysisCapture}
       />
-
-      <GameAnalysisModal 
-        show={showGameAnalysisModal} 
-        onClose={() => {
-          setShowGameAnalysisModal(false)
-          router.replace('/', { scroll: false })
-        }} 
-        onSuccess={fetchGameAnalysisCapture} 
-        lastCaptureDate={gameAnalysisLastCapture} 
-      />
-
-      {/* UX V2 transitional side-effect bridge.
-          Do not remove until /api/tasks/list generation/progress side effects
-          are moved intentionally to the new Coach orchestration.
-          TaskWidget resta montato (fetch /api/tasks/list + listener match-saved /
-          diagnostic-updated) ma non e piu una card concorrente visibile. */}
-      <div style={{ display: 'none' }} aria-hidden="true">
-        <TaskWidget />
-      </div>
 
       <style jsx>{`
         @keyframes spin {

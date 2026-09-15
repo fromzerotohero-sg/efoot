@@ -1,15 +1,8 @@
 # Documentazione attiva — From Zero To Hero
 
-Aggiornato: 13 agosto 2026. Audit storico, pitch, confronti prima/dopo e vecchie specifiche non restano nel ramo: Git è lo storico.
+Aggiornato: 15 settembre 2026. Audit storico, pitch, confronti prima/dopo e vecchie specifiche non restano nel ramo: Git è lo storico.
 
-**Ordine delle fonti:** codice corrente → Supabase live (read-only) → decisioni owner → Master UX V2 → reference grafiche.
-
-## Fonte principale
-
-| Documento | Ruolo |
-|-----------|--------|
-| [UX_V2/FZTH_UX_V2_MASTER_OPERATING_SPECIFICATION_v1.1.md](./UX_V2/FZTH_UX_V2_MASTER_OPERATING_SPECIFICATION_v1.1.md) | Contratto operativo UX V2. Ogni slice Cursor deve ereditarlo. |
-| [../FZTH_NEW_UX_VISUAL_HANDOFF_CURSOR.md](../FZTH_NEW_UX_VISUAL_HANDOFF_CURSOR.md) | Handoff visivo. Live: MetalGate light. S2 fatto; S10 tools in corso. |
+**Ordine delle fonti:** codice corrente → Supabase live (read-only) → decisioni owner → documenti tecnici attivi.
 
 ## Contratti tecnici
 
@@ -21,7 +14,6 @@ Aggiornato: 13 agosto 2026. Audit storico, pitch, confronti prima/dopo e vecchie
 | [COSTI_HP_USO_PIATTAFORMA.md](./COSTI_HP_USO_PIATTAFORMA.md) | Unica fonte costi HP |
 | [SICUREZZA.md](./SICUREZZA.md) | Stato reale + rischi aperti |
 | [DEPLOY.md](./DEPLOY.md) | Vercel + MetalGate + Supabase |
-| [ripristino-lancio.md](./ripristino-lancio.md) | Gate prelaunch: spegnere senza rompere la shell |
 
 ## Servizi (contratti corti)
 
@@ -44,7 +36,6 @@ Non esiste un servizio Classifica nel codice corrente (`/classifica`, `/api/lead
 | [02-FUNZIONALITA/OPENAI_MODEL_GPT5.md](./02-FUNZIONALITA/OPENAI_MODEL_GPT5.md) | Mappa modelli realmente usati |
 | [PLAYER_CATALOG_IMPORT.md](./PLAYER_CATALOG_IMPORT.md) | Catalogo rosa: regole + tool presenti |
 | [CARD_ADVISOR_MANUAL_SUPABASE_IMPORT.md](./CARD_ADVISOR_MANUAL_SUPABASE_IMPORT.md) | Import Card Advisor con script esistenti |
-| [GUIDA_UTENTE.md](./GUIDA_UTENTE.md) | Guida prodotto (stato attuale + direzione V2) |
 | [CHATBOT_KNOWLEDGE_BASE.md](./CHATBOT_KNOWLEDGE_BASE.md) | Unica base supporto |
 
 ## Legale (da verificare con legale)

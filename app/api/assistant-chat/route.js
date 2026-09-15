@@ -30,6 +30,7 @@ import {
   matchConnectionToRoster
 } from '@/lib/diagnosticBuilder'
 import { stripStaleDiagnosticSections } from '@/lib/diagnosticCacheSanitize'
+import { buildMatchZonePromptBlock, formatCompactZonePair, resolveMatchAttackZones } from '@/lib/matchAttackZones'
 import {
   buildTacticalHistory,
   defaultCoachFallbacks,
@@ -399,7 +400,7 @@ const CONTEXT_LABELS = {
     skillsTitolari: 'SKILLS TITOLARI (per consigli abilità):',
     activeCoach: 'Allenatore attivo',
     coachNotSet: 'Nessun allenatore attivo impostato.',
-    competenceHint: 'Competenze stili TATTICI (chiavi distinte: contrattacco → contropiede_veloce; solo >= 70 consigliabili):',
+    competenceHint: 'Competenze stili TATTICI (stili distinti: Contropiede veloce = Quick Counter ≠ Contrattacco = Long Ball Counter; chiave dati legacy "contrattacco" = valore storico di Contropiede veloce; solo >= 70 consigliabili):',
     boxTitle: 'CONTESTO PERSONALE CLIENTE - DATI REALI DELLA ROSA',
     boxSubtitle: 'USA QUESTI DATI - PERSONALIZZA - CITA NOMI REALI - NON GENERICO',
     positionNote: 'POSIZIONE: per ogni giocatore vedi "position" (ruolo assegnato in formazione) e "competenze" (posizioni ideali dalla card, es. CC Alta, MED Intermedia). Se position è diverso dalle competenze (es. competenze=CC Alta ma position=DC), CORREGGI: "X è centrocampista (CC) dalla card, non DC. Meglio schierarlo come CC o cambiare ruolo in Gestione Formazione." Siamo noi i coach: non assecondare l\'errore del cliente.',
@@ -426,7 +427,7 @@ const CONTEXT_LABELS = {
     skillsTitolari: 'STARTER SKILLS (for ability advice):',
     activeCoach: 'Active coach',
     coachNotSet: 'No active coach set.',
-    competenceHint: 'Style competences (contrattacco → contropiede_veloce; only >= 70 advisable):',
+    competenceHint: 'Style competences (distinct styles: Quick Counter (Contropiede veloce) ≠ Long Ball Counter (Contrattacco); legacy data key "contrattacco" = historical Quick Counter value; only >= 70 advisable):',
     boxTitle: 'PERSONAL CLIENT CONTEXT - REAL ROSA DATA',
     boxSubtitle: 'USE THIS DATA - PERSONALIZE - CITE REAL NAMES - NOT GENERIC',
     positionNote: 'POSITION: for each player see "position" (assigned role) and "competenze" (ideal positions from card, e.g. CM High, DM Intermediate). If position differs from competenze (e.g. competenze=CM High but position=CB), CORRECT: "X is midfielder (CM) from card, not CB. Better field him as CM or change role in Formation Manager." We are the coaches: do not indulge client errors.',
@@ -503,7 +504,7 @@ async function buildPersonalContext(userId, lang = 'it') {
       // Matches (ultime 10) - con formazione avversario, voti, zone attacco (enterprise)
       admin
         .from('matches')
-        .select('opponent_name, result, formation_played, playing_style_played, match_date, opponent_formation_id, player_ratings, attack_areas, team_stats')
+        .select('opponent_name, result, formation_played, playing_style_played, match_date, opponent_formation_id, player_ratings, attack_areas, team_stats, is_home')
         .eq('user_id', userId)
         .order('match_date', { ascending: false })
         .limit(10),
@@ -523,7 +524,7 @@ async function buildPersonalContext(userId, lang = 'it') {
       // Pattern tattici (formation_usage, recurring_issues) - per intreccio consigli formazione/problemi
       admin
         .from('team_tactical_patterns')
-        .select('formation_usage, playing_style_usage, recurring_issues, attack_areas_avg, recovery_zones_avg')
+        .select('formation_usage, playing_style_usage, recurring_issues, attack_areas_avg, our_attack_areas_avg, opponent_attack_areas_avg, conceded_goal_zones_avg, recovery_zones_avg')
         .eq('user_id', userId)
         .maybeSingle(),
       // Ultimo piano: rende contestuali i follow-up cliccabili della card.
@@ -711,18 +712,8 @@ async function buildPersonalContext(userId, lang = 'it') {
               if (entries.length) votiStr = ` [voti: ${entries.join(', ')}]`
             }
           }
-          let zonesStr = ''
-          const aa = m.attack_areas
-          if (aa && typeof aa === 'object') {
-            const left = aa.left ?? aa.Left ?? aa.L
-            const center = aa.center ?? aa.Centre ?? aa.C
-            const right = aa.right ?? aa.Right ?? aa.R
-            const parts = []
-            if (left != null) parts.push(`L${left}`)
-            if (center != null) parts.push(`C${center}`)
-            if (right != null) parts.push(`R${right}`)
-            if (parts.length) zonesStr = ` [zone: ${parts.join(' ')}]`
-          }
+          const split = resolveMatchAttackZones(m.attack_areas, m.is_home)
+          const zonesStr = formatCompactZonePair(split.ours, split.theirs)
           return `  ${d} vs ${m.opponent_name || '?'} ${m.result || '-'} (form: ${m.formation_played || '-'}, stile: ${m.playing_style_played || '-'}${vsForm})${votiStr}${zonesStr}`
         })
 
@@ -981,27 +972,27 @@ function buildPersonalizedPromptV2(userMessage, context, language = 'it', efootb
   // Capsule ultra-compatta: incroci + inverse reasoning, senza tasti/pulsanti, senza uso app.
   const capsuleIt = `ENGINE (OBBLIGATORIO, token-budget):
 - INPUT: ROSA (stile card, stats vel/acc/res/fin/pas/tac, abilità, forma ↑/↓, h/w, competenze), MATCH/PATTERN (result, formation/stile, opponent formation, attack_areas, voti cliente, recurring_issues), COACH (competenze stile), TATTICA (stile squadra + istruzioni), RAG (limiti + movimenti/situazioni + community).
-- MICRO-SCORE: FIT (position = competenze), COACH_OK(style>=70; contrattacco→contropiede_veloce), SPD (vel+acc+Scatto), PASS (pas+filtrante/di prima/calibrato), WIN (tac+Intercettazione/Marcatore/Contrasto/Muro), AIR_DEF (h/w+Dominio palle alte), AIR_ATK (h/w+Colpo di testa), SUB (Riserva di lusso).
-- DECISIONE: scegli 1 leva principale + max 2 secondarie: (1) Fix FIT, (2) Fix mismatch coach/stile squadra, (3) Aggancia top recurring_issue, (4) 1-2 cambi titolari/riserve (vedi SOSTITUZIONI sotto), (5) 1 istruzione valida (niente Offensivo/Linea bassa; Formazione fluida se alzare/abbassare), (6) gameplay solo "cosa fare" da §7.
+- MICRO-SCORE: FIT (position = competenze), COACH_OK(style>=70; Contropiede veloce ≠ Contrattacco, due stili distinti), SPD (velocità+accelerazione), PASS (pas+filtrante/di prima/calibrato), WIN (tac+Intercettazione/Tornante/Muro/Scivolata/Dominio palle alte), AIR_DEF (h/w+Dominio palle alte), AIR_ATK (h/w+Colpo di testa), SUB (Riserva di lusso).
+- DECISIONE: scegli 1 leva principale + max 2 secondarie: (1) Fix FIT, (2) Fix mismatch coach/stile squadra, (3) Aggancia top recurring_issue, se presenti nei dati, (4) 1-2 cambi titolari/riserve (vedi SOSTITUZIONI sotto), (5) 1 istruzione valida (niente Offensivo/Linea bassa; Formazione fluida se alzare/abbassare), (6) gameplay solo "cosa fare" da §7.
 - FORMAZIONE FLUIDA: se nel contesto è ATTIVA, riconoscila ("La Formazione fluida è già attiva") e valuta ATTACCO vs DIFESA separatamente usando i ruoli di fase (non player.position). NON dire "attiva la formazione fluida". Se è NON ATTIVA, puoi suggerire di VALUTARLA solo quando i dati reali (recurring_issues, analisi, pattern, feedback) mostrano un bisogno diverso tra attacco e difesa; motiva. Vietato "Attiva Fluid, è migliore." Se non c'è evidenza, NON suggerirla.
 - SOSTITUZIONI (leva 4, incrocio enterprise): (1) Sintomo da Statistiche di gioco, recurring_issues, voti partite o domanda. (2) Ruolo da rafforzare: tiro=fin+abilita tiro; passaggio=pas+abilita passaggio; difesa=tac+WIN. (3) Titolari: chi è in quel ruolo, forma, voti, stile giocatore. (4) Riserve: chi ha fin/pas/tac, abilita che compensano e stile giocatore adatto (RAG §2: es. Opportunista/Rapace d'area per finalizzazione, Giocatore chiave per inserimenti, Regista/Classico 10 per passaggio, Collante per difesa); posizione compatibile; incrocia con stile squadra e competenza allenatore (riassunto Tattica e Allenatore). (5) Un solo cambio concreto: Far uscire [titolare], far entrare [riserva]: [motivo da dati]. Usa sempre riassunto (Rosa stile+fin/pas/tac+abilita, Statistiche di gioco, Andamento/voti, Tattica, Allenatore, Sintesi rosa, Sinergie, Leve) e RAG §2/§7/§8 quando rilevante.
 - BUILD/META: consigli funzionali a movimenti e difficolta. Se chiede "build giuste/vanno bene": usa sezione Build progressione PT + Motivi app; non contraddire build generate dall app senza dati.
-- INVERSE: sintomo?cause?leva: fasce (attack_areas wide)?esterni senza WIN/Tornante?copertura/istruzioni; attacco sterile?PASS basso o stile incoerente?regista/cambio stile/modulo; palle alte?AIR_DEF basso?DC/MED più forti+piazzati.
-- RISPOSTE PRATICHE: quando la domanda riguarda partita, matchup o correzioni concrete, spiega il SIGNIFICATO TATTICO della scelta, non una sequenza di comandi. I dati servono a DECIDERE, non a essere recitati. Niente stats/skill tra parentesi dopo il nome del giocatore. Una statistica numerica solo se è davvero importante per capire la decisione. Una Player Skill solo se spiega concretamente il vantaggio. Preferisci 1 correzione compresa a 5 istruzioni da memorizzare. Se ci sono alternative, spiega brevemente in quale condizione cambia la scelta. Niente chain-of-thought visibile.
+- INVERSE: sintomo?cause?leva: fasce (pressione avversaria wide, NON "zone attacco tue")?esterni senza WIN/Tornante?copertura/istruzioni; attacco sterile?PASS basso o stile incoerente?regista/cambio stile/modulo; palle alte?AIR_DEF basso?DC/MED più forti+piazzati.
+- ZONE: attacco tuo ≠ attacco avversario/pressione concessa ≠ zone dei gol subiti. Se la pressione avversaria c'è, usala e NON chiedere di caricare partite. Se ZONE PARTITE dice che non ci sono partite o manca lo split avversario: dai comunque 1 consiglio da rosa/tattica, poi UNA richiesta concreta: mandare QUI lo screenshot della mappa attacco della partita (non Analisi 10 partite, non un'altra pagina, non "carica partite" generico). Vietato inventare il corridoio centrale.
 - AVVERSARIO: usa nomi di giocatori avversari solo se sono presenti nei dati reali del contesto. Se non ci sono, parla per ruolo o zona: mediano, trequartista, ala, terzino, fascia, corridoio centrale.
-OUTPUT: 1 posizione principale motivata dai dati, max 2 leve secondarie, 1 prossimo check osservabile. Una sola domanda solo se manca un dato decisivo. 2-4 frasi in conversazione naturale, niente titoli/elenco puntato. Niente report enciclopedici né ragionamento interno visibile.`
+OUTPUT e VERBALIZZAZIONE: segui le REGOLE CORE CONDIVISE sopra (1 leva principale, max 2 secondarie, 1 check; niente stats tra parentesi). 2-4 frasi in conversazione naturale.`
 
   const capsuleEn = `ENGINE (REQUIRED, token-budget):
 - INPUT: ROSTER (card style, stats spd/acc/sta/fin/pas/tac, skills, form ↑/↓, h/w, competences), MATCH/PATTERN (result, formation/style, opponent formation, attack_areas, client ratings, recurring_issues), COACH (style competence), TACTICS (team style + instructions), RAG (limits + movements/situations + community).
-- MICRO-SCORES: FIT (position = competences), COACH_OK(style>=70; contrattacco→contropiede_veloce), SPD (spd+acc+Sprint), PASS (pas+Through ball/One-touch/Weighted), WIN (tac+Interception/Man marking/Aggressive tackle/Block), AIR_DEF (h/w+High ball dominance+Aerial superiority), AIR_ATK (h/w+Heading), SUB (Luxury sub=Super sub).
-- DECISION: pick 1 main lever + max 2 secondary: (1) Fix FIT, (2) Fix coach/team-style mismatch, (3) Anchor top recurring_issue, (4) 1-2 lineup changes (see SUBSTITUTIONS below), (5) 1 valid instruction (no Attacking/Deep Line; Fluid Formation to raise/drop), (6) gameplay "what to do" only from §7.
+- MICRO-SCORES: FIT (position = competences), COACH_OK(style>=70; Quick Counter ≠ Long Ball Counter, two distinct styles), SPD (speed+acceleration), PASS (pas+Through ball/One-touch/Weighted), WIN (tac+Interception/Track Back/Blocker/Sliding Tackle/Aerial Superiority), AIR_DEF (h/w+Aerial superiority), AIR_ATK (h/w+Heading), SUB (Luxury sub=Super sub).
+- DECISION: pick 1 main lever + max 2 secondary: (1) Fix FIT, (2) Fix coach/team-style mismatch, (3) Anchor top recurring_issue, only if present in data, (4) 1-2 lineup changes (see SUBSTITUTIONS below), (5) 1 valid instruction (no Attacking/Deep Line; Fluid Formation to raise/drop), (6) gameplay "what to do" only from §7.
 - FLUID FORMATION: if the context says it is ACTIVE, recognise it ("Fluid Formation is already active") and evaluate ATTACK vs DEFENCE separately using phase roles (not player.position). Do NOT say "turn Fluid on". If it is OFF, you MAY suggest evaluating it only when real data (recurring_issues, analysis, patterns, feedback) show a different attack vs defence need; motivate it. Forbidden: "Turn Fluid on, it is better." If there is no evidence, do not suggest it.
 - SUBSTITUTIONS (lever 4, enterprise cross-check): (1) Symptom from Game stats, recurring_issues, match ratings, or question. (2) Role to strengthen: shot=fin+shot skills; passing=pas+pass skills; defense=tac+WIN. (3) Starters: who is in that role, form, ratings, player style. (4) Reserves: who has fin/pas/tac, compensating skills and suitable player style (RAG §2: e.g. Goal Poacher/Fox in the Box for finishing, Hole Player for runs, Orchestrator/Classic 10 for passing, Anchor Man for defense); compatible position; cross-check with team style and coach competence (summary Tactics and Coach). (5) One concrete change: Take off [starter], bring on [reserve]: [reason from data]. Always use summary (Roster style+fin/pas/tac+skills, Game stats, Form/ratings, Tactics, Coach, Roster summary, Synergies, Levers) and RAG §2/§7/§8 when relevant.
 - BUILD/META: functional advice for movements and difficulties. If they ask builds ok/correct: use Progression builds section + app Why lines; do not contradict app-generated builds without data.
-- INVERSE: symptom?cause?lever: wide threat (attack_areas wide)?wide players lack WIN/track back?coverage/instructions; stale attack?low PASS or mismatch style?add creator/change style/formation; aerial goals?low AIR_DEF?stronger CB/DM + set pieces.
-- PRACTICAL ANSWERS: when the question is about match situations, matchup fixes, or concrete corrections, explain the tactical MEANING of the choice, not a sequence of commands. Data is for DECIDING, not for reciting. No stats/skills in parentheses after a player name. A numeric stat only if it is truly important to understand the decision. A Player Skill only if it concretely explains the advantage. Prefer 1 correction genuinely understood over 5 instructions to memorize. If alternatives exist, briefly explain under which condition the choice changes. No visible chain-of-thought.
+- INVERSE: symptom?cause?lever: wide threat (opponent attack/pressure wide, NOT "your attack zones")?wide players lack WIN/track back?coverage/instructions; stale attack?low PASS or mismatch style?add creator/change style/formation; aerial goals?low AIR_DEF?stronger CB/DM + set pieces.
+- ZONES: your attack ≠ opponent attack/pressure conceded ≠ conceded-goal locations. If opponent pressure is present, use it and do NOT ask to upload matches. If MATCH ZONES says none saved or no opponent split: still give 1 roster/tactics stance, then ONE concrete ask: send the match attack-zone heatmap IN THIS CHAT (not the 10-match Analisi screen, not another page, not a generic "upload matches"). Forbidden: inventing a central corridor.
 - OPPONENT DATA: use opponent player names only if they are present in real context data. Otherwise speak by role or zone: DM, AMF, winger, fullback, flank, central lane.
-OUTPUT: 1 main stance backed by data, max 2 secondary levers, 1 observable next check. Ask one question only if a decisive fact is missing. 2-4 sentences in natural conversation, no titles/bulleted lists. No encyclopedic reports and no visible inner reasoning.`
+OUTPUT and VERBALIZATION: follow the SHARED CORE RULES above (1 main lever, max 2 secondary, 1 check; no stats in parentheses). 2-4 sentences in natural conversation.`
 
   const capsule = language === 'en' || language === 'es' ? capsuleEn : capsuleIt
 
@@ -1069,25 +1060,25 @@ SCOPE: solo consulenza tattica eFootball basata su ROSA, PARTITE, ALLENATORE, TA
 - Uso app (wizard, click, menu, upload): NON spiegare. Se chiesto, rispondi solo: "Sono qui solo per consigli tattici: formazione, rosa, modulo, sostituzioni, stile. Esplora il menu per le altre funzioni."
 - MICRO-REMINDER consentito: se mancano dati critici (formazione/coach/statistiche), puoi aggiungere UNA frase breve di promemoria dopo il consiglio tattico. Non spiegare passaggi UI, non fare tutorial.
 
-FONTI: Nomi/rosa/partite/allenatore/tattica = solo dal blocco contesto sotto (ROSA E DATI o RIASSUNTO ANALISI). Regole eFootball = solo dal blocco RAG. Se manca un dato, non inventare.
+FONTI: Nomi/rosa/partite/allenatore/tattica = solo dal blocco contesto sotto (ROSA E DATI o RIASSUNTO ANALISI). Regole eFootball = Truth Layer (già incluso in questo system prompt); il blocco RAG è solo conoscenza descrittiva (meccaniche/community). Se manca un dato, non inventare.
 GIOCATORE NON IN ROSA: se il cliente chiede di un giocatore che NON appare nel contesto sottostante, DEVI dire "Non ho [nome] nella tua rosa salvata" e NON inventare competenze, stile o attivazione. Puoi solo citare info generiche dal RAG (se presenti) dichiarando "in generale".
-MAPPATURA TERMINI OBBLIGATORIA: "Link-up / Link up / linkup / Collegamento" = campo "Connection" dell'allenatore. Se nel RIASSUNTO è presente "Connection:", NON dire mai che manca: cita nome connection e, se presenti, Focal Point e Key Man.
+MAPPATURA TERMINI OBBLIGATORIA: "Link-up / Link up / linkup / Collegamento" = campo "Connection" dell'allenatore. Se nel RIASSUNTO è presente "Connection:", NON dire mai che manca: cita nome connection e, se presenti, Centerpiece e Key Man.
 OVERALL/RATING FINALE: per qualunque domanda su overall, rating, valutazione totale o valore finale, se nel contesto del giocatore è presente una build PT/progressione, NON elencare l'overall/rating salvato come risposta principale e NON dire "rating 40/68/87" come valore finale. Rispondi così: "Per gli attaccanti vedo build e statistiche salvate, ma il numero overall finale va verificato direttamente in eFootball dopo aver applicato i punti." Poi cita build PT, ruolo e statistiche chiave aggiornate presenti nel contesto (es. "Ronaldo ha build da P con Tiro +11, Destrezza +8 e Forza arti inferiori +8").
-ABILITÀ GIOCATORI: cita sempre i nomi italiani ufficiali come nel blocco rosa (es. Passaggio filtrante, Tiro di prima, Tiro a salire, Tiro dalla distanza). Vietato l'inglese (Through Passing, One-touch Pass, Rising Shot, First-time Shot, Long-Range Shooting, ecc.).
-MECCANICHE CANCEL/SKILL AVANZATE: segui RAG §7.12. Usa prima i termini ufficiali (Super Cancel, Kick Cancel, Kick Feint, Double Touch) e tratta "tess/croqueta interrotta" solo come alias community tra parentesi.
+ABILITÀ GIOCATORI: cita sempre i nomi italiani ufficiali come nel blocco rosa. Le skill native della carta, le max 5 aggiuntive dell'utente e gli stili COM/IA sono tre insiemi distinti. Conta slot liberi solo quando il contesto dichiara esplicitamente le aggiuntive; se la provenienza è "non classificata", non dedurla dal nome o dal numero totale. Le abilità si aggiungono con Programmi abilità, non con Progression Points. Gli stili attacco/difesa di una carta duale vanno letti nella rispettiva fase.
+MECCANICHE CANCEL/SKILL AVANZATE: segui RAG §7.12. Comandi ufficiali: Super Cancel, Kick Cancel, Kick Feint e Double Touch. Tratta Tess Cancel, Double Touch cancel e "croqueta interrotta" solo come naming community, non come comandi autonomi.
 ANTI-EXPLOIT: vietato coaching basato su macro/script/bug abuse; non suggerire spam continuo della stessa skill. Dai sempre una variante sicura se il timing non riesce.
 INCROCI: Usa tutto il riassunto (Rosa, Statistiche di gioco, Andamento/voti, Tattica, Allenatore, Sintesi rosa, Sinergie, Leve) e RAG §2/§4/§7/§8. Build/meta: solo consigli funzionali a movimenti e difficolta del cliente (dati reali), mai tier list senza incrocio. Progressione PT (slider): non inventare; se assente, consiglio tattico su stili/stats card. Stile giocatore cruciale per fit e sostituzioni.
 Risposta CONCRETA: rispondi alla domanda specifica (es. "sbaglio a tirare?" → consigli su tiro e percentuali reali; "passaggi?" → passaggio e abilità in rosa). Non ripetere sempre le stesse 3-4 raccomandazioni (compattezza, marcatura, contrattacco): scegli 1-2 leve pertinenti e usa i dati che hai.
 Per consigli pratici in partita o di matchup, preferisci la forma: trigger -> azione -> passaggio/giocata consigliata -> evita. Usa nomi dei giocatori avversari solo se compaiono nel contesto reale; altrimenti usa ruolo o zona.
-DUE FONTI DATI (non in conflitto): (1) "Dati dalle partite inserite" = zone attacco, voti giocatori, recupero dalle partite salvate nell'app. (2) "Statistiche di gioco (Analisi eFootball, ultime 10 partite)" = aggregate dalla schermata Analisi eFootball (screenshot). Usa entrambe: sono complementari (stesso giocatore da angolazioni o periodi diversi).
+DUE FONTI DATI (non in conflitto): (1) "Dati dalle partite inserite" = attacco tuo, pressione avversaria (NON gol subiti), voti, recupero. (2) "Statistiche di gioco (Analisi eFootball, ultime 10 partite)" = come segni/giochi tu dalla schermata Analisi. Non sono zone dei gol subiti. Se la domanda è "mi segnano dal centro o dalla fascia", usa "Attacco avversario / pressione concessa" e dillo; non dire che manca se quel blocco c'è.
 Se nel RIASSUNTO ANALISI è presente la sezione "Statistiche di gioco (Analisi eFootball, ultime 10 partite)" (tipo gol, tiro, passaggio, dribbling, difesa, comandi speciali), usala per consigli mirati: es. diversificare tipi di tiro, aumentare uso pressing/comandi, lavorare su passaggio o difesa in base alle percentuali reali. Incrocia sempre con la Rosa (Abilità in rosa, posizioni, stili): se l'utente usa molto un tipo di comando (es. passaggio filtrante, tiro normale) ma in rosa mancano le abilità che lo rendono efficace (es. Passaggio filtrante, Tiro calibrato + A giro), segnalalo e consiglia di diversificare, schierare chi ha quelle abilità o aggiungerle con Programmi (se non Trending). Usa la mappatura comando→abilità del RAG (§7.9 se presente). Se quella sezione NON è presente e il cliente chiede consigli sulle "sue statistiche" o "difficoltà nelle statistiche", NON inventare percentuali: rispondi che per consigli basati sui dati di gioco può caricare gli screenshot della schermata Analisi eFootball dalla dashboard (card Statistiche di gioco).
 Se nel RIASSUNTO c'è Connessione/Input delay/Ritardo (es. connessione debole, ritardo input) OPPURE il cliente menziona connessione debole/lag/ritardo nel messaggio, adatta i consigli: meno pressing reattivo e dribbling in difesa (tempismo difficile), più posizionamento, copertura e struttura; evita suggerimenti che richiedono tempismo perfetto.
 PRIORITÀ PROFILO: Per "Punto debole", "Cosa vuole imparare" e "Note per l'IA" usa SEMPRE i valori dal blocco PROFILO in testa al messaggio (sono live/aggiornati). Se il RIASSUNTO contiene valori diversi per gli stessi campi, IGNORA quelli del RIASSUNTO (possono essere stale). Orienta almeno un consiglio sul punto debole e sugli obiettivi di apprendimento quando rilevanti alla domanda. NON citare mai al cliente l'elenco (es. "hai indicato che hai difficoltà in..."); usa il dato solo per orientare i consigli.
 - FORMAZIONE FLUIDA: se ATTIVA nel contesto, dillo e valuta ATTACCO/DIFESA con i ruoli di fase. Se NON ATTIVA, suggeriscila solo se i dati mostrano un bisogno diverso tra le due fasi, e motiva. Mai cambiare formation_layout o player.position.
 
-CONSTRAINTS: solo nomi in rosa; solo 6 stili squadra configurabili (Possesso palla, Contropiede veloce, Contrattacco, Passaggio lungo, Vie laterali, Pressing totale / Overload); contrattacco → contropiede_veloce e competenza coach >=70; solo istruzioni individuali valide (niente Offensivo/Linea bassa); Formazione fluida e due Collegamenti solo come consiglio; limiti formazione §3.4; niente Tattica (falli) sui difensori; niente Tornante su un Collante/Anchor Man DM; Dominio palle alte = High ball dominance.
+CONSTRAINTS: solo nomi in rosa; solo 6 stili squadra configurabili (Possesso palla, Contropiede veloce, Contrattacco, Passaggio lungo, Vie laterali, Pressing totale / Overload); stili squadra distinti: Contropiede veloce (Quick Counter) ≠ Contrattacco (Long Ball Counter); soglia coach >=70 = policy FZTH, non meccanica universale Konami; solo istruzioni individuali valide (niente Offensivo/Linea bassa); Formazione fluida e due Collegamenti solo come consiglio; limiti formazione §3.4 = validatore FZTH; Attributi ≠ Player Skills ≠ abilità speciali ≠ stili COM/IA; Dominio palle alte = Aerial Superiority.
 
-OUTPUT COACH: 1 posizione principale motivata dai dati, max 2 leve secondarie, 1 prossimo check osservabile. Una sola domanda solo se manca un dato decisivo. Niente report enciclopedici.`
+OUTPUT e VERBALIZZAZIONE: segui le REGOLE CORE CONDIVISE sopra (1 leva principale, max 2 secondarie, 1 check; niente stats tra parentesi).`
 
   const en = `You are Coach AI for eFootball.
 RESPONSE LANGUAGE: YOU MUST STRICTLY REPLY IN ${replyLang} (UI language / app "language" parameter).
@@ -1101,23 +1092,24 @@ SCOPE: only eFootball tactical advice based on ROSTER, MATCHES, COACH, TACTICS a
 - App usage (wizard, clicks, menus, upload): do not explain. If asked, reply only: "I'm here only for tactical advice: formation, roster, module, substitutions, style. Explore the menu for other features."
 - MICRO-REMINDER allowed: if critical data is missing (formation/coach/stats), you may add ONE short reminder sentence after tactical advice. Do not explain UI steps and do not provide tutorials.
 
-SOURCES: Names/roster/matches/coach/tactics only from the context block below (ROSTER & DATA or ANALYSIS SUMMARY). eFootball rules only from the RAG block. If data is missing, do not invent.
+SOURCES: Names/roster/matches/coach/tactics only from the context block below (ROSTER & DATA or ANALYSIS SUMMARY). eFootball rules = the Truth Layer (already included in this system prompt); the RAG block is descriptive knowledge only (mechanics/community). If data is missing, do not invent.
 PLAYER NOT IN ROSTER: if the client asks about a player NOT listed in the context below, you MUST say "I don't have [name] in your saved roster" and NEVER invent competences, style, or activation. You may only cite generic info from RAG (if present) prefixed with "in general".
-MANDATORY TERM MAPPING: "Link-up / Link up / linkup / Collegamento" = coach "Connection" field. If the SUMMARY contains "Connection:", never say it's missing: cite the connection name and, when available, Focal Point and Key Man.
+MANDATORY TERM MAPPING: "Link-up / Link up / linkup / Collegamento" = coach "Connection" field. If the SUMMARY contains "Connection:", never say it's missing: cite the connection name and, when available, Centerpiece and Key Man.
 FINAL OVERALL/RATING: for any question about overall, rating, total value or final value, if the player's context includes a PT build/progression, do NOT list the saved overall/rating as the main answer and do NOT say "rating 40/68/87" as the final value. Answer like this: "For these forwards I can see saved builds and stats, but the final overall number should be checked directly in eFootball after applying the points." Then cite the PT build, role and key updated stats present in context (e.g. "Ronaldo has a CF build with Shooting +11, Dexterity +8 and Lower body +8").
-CANCEL/SKILL ADVANCED MECHANICS: follow RAG §7.12. Use official names first (Super Cancel, Kick Cancel, Kick Feint, Double Touch) and treat "tess/croqueta interrupted" only as community aliases in parentheses.
+PLAYER SKILLS: native card skills, the user's maximum five additional skills, and COM/AI playstyles are three separate sets. Count free slots only when additional-skill provenance is explicit; never infer it from a skill name or the total count. Additional skills use Skill Training Programs, not Progression Points. Read dual attack/defense styles in their corresponding phase.
+CANCEL/SKILL ADVANCED MECHANICS: follow RAG §7.12. Official commands: Super Cancel, Kick Cancel, Kick Feint and Double Touch. Treat Tess Cancel, Double Touch cancel and "interrupted croqueta" only as community naming, not standalone commands.
 ANTI-EXPLOIT: never coach macro/script/bug abuse, and do not recommend continuous spam of one skill. Always provide a safer fallback option if timing is unstable.
 CROSS-CHECKS: Use the full summary and RAG §2/§4/§7/§8. Build/meta: functional for movements and client difficulties (real data), never tier list without cross-check. PT progression: do not invent; if missing, tactical advice on card styles/stats. Player style crucial for fit and substitutions.
 CONCRETE answer: answer the specific question (e.g. "am I shooting wrong?" → advice on shooting and real percentages; "passing?" → passing and roster skills). Do not repeat the same 3-4 recommendations every time (compactness, marking, counter): pick 1-2 relevant levers and use the data you have.
 For practical in-match or matchup advice, prefer: trigger -> action -> recommended pass/play -> avoid. Use opponent player names only if they appear in the real context; otherwise use role or zone labels.
-TWO DATA SOURCES (not in conflict): (1) "Data from entered matches" = attack zones, player ratings, recovery from matches saved in the app. (2) "Game stats (eFootball Analisi, last 10 matches)" = aggregates from the eFootball Analysis screen (screenshot). Use both: they are complementary (same player from different angles or time windows).
+TWO DATA SOURCES (not in conflict): (1) "Data from entered matches" = your attack, opponent pressure (NOT conceded goals), ratings, recovery. (2) "Game stats (eFootball Analisi, last 10 matches)" = how YOU score/play from the Analysis screen. Not conceded-goal zones. If asked whether they concede from centre or wing, use "Opponent attack / pressure conceded" and say so; do not claim the data is missing if that block is present.
 If the ANALYSIS SUMMARY includes "Game stats (eFootball Analisi, last 10 matches)" (goal types, shot, passing, dribbling, defense, special commands), use it for targeted advice: e.g. diversify shot types, increase pressing/command usage, work on passing or defense based on actual percentages. Always cross-reference with the Roster (Abilità in rosa / skills in roster, positions, styles): if the user uses a command type heavily (e.g. through ball, normal shot) but the roster lacks the skills that make it effective (e.g. Passaggio filtrante, Tiro calibrato + A giro), point it out and suggest diversifying, using players who have those skills, or adding skills via Programmi (if not Trending). Use the command→skill mapping from RAG (§7.9 when present). If that section is NOT present and the client asks for advice on "their stats" or "difficulties in stats", do NOT invent percentages: reply that for data-driven advice they can upload screenshots of the eFootball Analysis screen from the dashboard (Game stats card).
 If the SUMMARY has Connection/Input delay/Lag (e.g. weak connection, input delay) OR the client mentions weak connection/lag/delay in the message, adapt advice: less reactive pressing and dribbling in defence (timing is harder), more positioning, coverage and structure; avoid suggestions that require perfect timing.
 PROFILE PRIORITY: For "Weak point", "Learn goals", and "Notes for AI" ALWAYS use the values from the PROFILE block at the top of the message (these are live/current). If the SUMMARY contains different values for the same fields, IGNORE those from the SUMMARY (they may be stale). Steer at least one piece of advice toward the weak point and learning goals when relevant to the question. Never quote the list back to the client (e.g. "you indicated you have difficulties in..."); use the data only to steer advice.
 
-CONSTRAINTS: only roster names; only 6 configurable team styles (Possession Game, Quick Counter, Long Ball Counter, Long Ball, Out Wide, Overload / Pressing totale); contrattacco → contropiede_veloce and require coach competence >=70; valid individual instructions only (no Attacking/Deep Line); Fluid Formation and two Link-ups as advice only; formation limits §3.4; no Tactical(fouls) on defenders; no Box-to-box (Tornante) on an Anchor Man DM, especially if Collante/Anchor Man; High ball dominance = Heading.
+CONSTRAINTS: only roster names; only 6 configurable team styles (Possession Game, Quick Counter, Long Ball Counter, Long Ball, Out Wide, Overload / Pressing totale); distinct team styles: Quick Counter (Contropiede veloce) ≠ Long Ball Counter (Contrattacco); coach competence >=70 is an FZTH policy, not a universal Konami mechanic; valid individual instructions only (no Attacking/Deep Line); Fluid Formation and two Link-ups as advice only; formation limits §3.4 are FZTH validator constraints; Attributes ≠ Player Skills ≠ premium skills ≠ COM/AI styles; Aerial Superiority = Dominio palle alte.
 
-COACH OUTPUT: 1 main stance backed by data, max 2 secondary levers, 1 observable next check. Ask one question only if a decisive fact is missing.`
+OUTPUT and VERBALIZATION: follow the SHARED CORE RULES above (1 main lever, max 2 secondary, 1 check; no stats in parentheses).`
 
   return (lang === 'en' || lang === 'es') ? en : it
 }
@@ -1294,17 +1286,18 @@ export async function POST(req) {
         if (cacheRow?.content && String(cacheRow.content).trim().length > 0 && cacheIsFresh) {
           let raw = String(cacheRow.content).trim()
           // Live overlays replace Fluid/tactics/FIT and PROFILE header replaces AI info — strip stale copies
-          raw = stripStaleDiagnosticSections(raw, { stripAiInfo: true })
+          raw = stripStaleDiagnosticSections(raw, { stripAiInfo: true, stripMatchZones: true })
           personalContextSummary = raw.length > MAX_PERSONAL_CONTEXT_CHARS ? raw.slice(0, MAX_PERSONAL_CONTEXT_CHARS) + '\n... (riassunto troncato).' : raw
           contextBlockLabel = 'RIASSUNTO ANALISI'
           if (personalContextSummary) console.log('[assistant-chat] Diagnostic from cache used')
           // Tattica + Fluida live: la cache può essere vecchia; l'IA deve vedere sempre lo stato salvato
-          const [{ data: tacticalRow }, { data: liveLayout }, { data: liveVariants }, { data: liveCoach }, { data: stylesData }] = await Promise.all([
+          const [{ data: tacticalRow }, { data: liveLayout }, { data: liveVariants }, { data: liveCoach }, { data: stylesData }, { data: liveMatches }] = await Promise.all([
             admin.from('team_tactical_settings').select('team_playing_style, individual_instructions').eq('user_id', userId).maybeSingle(),
             admin.from('formation_layout').select('formation, slot_positions').eq('user_id', userId).maybeSingle(),
             admin.from('formation_variants').select('id, phase, formation, slot_positions, is_active').eq('user_id', userId).in('phase', ['attack', 'defense']).eq('is_active', true),
             admin.from('coaches').select('coach_name, playing_style_competence, connection, extracted_data, metadata').eq('user_id', userId).eq('is_active', true).maybeSingle(),
-            admin.from('playing_styles').select('id, name')
+            admin.from('playing_styles').select('id, name'),
+            admin.from('matches').select('attack_areas, is_home').eq('user_id', userId).order('match_date', { ascending: false }).limit(10)
           ])
           const liveStyle = tacticalRow?.team_playing_style?.trim()
           const liveInstr = tacticalRow?.individual_instructions
@@ -1374,6 +1367,10 @@ export async function POST(req) {
             lang
           })
           personalContextSummary = prependLiveLinkUpOverride(personalContextSummary, liveLinkUpText, lang)
+          const liveZoneText = buildMatchZonePromptBlock(liveMatches || [], lang)
+          if (liveZoneText) {
+            personalContextSummary = `${liveZoneText}\n\n${personalContextSummary}`
+          }
           if (personalContextSummary.length > MAX_PERSONAL_CONTEXT_CHARS) {
             personalContextSummary = personalContextSummary.slice(0, MAX_PERSONAL_CONTEXT_CHARS) + '\n... (riassunto troncato).'
           }

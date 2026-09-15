@@ -215,7 +215,7 @@ const copy = {
     buildRosterMissing: 'Collega la rosa per la build personalizzata.',
     buildSkillsTitle: 'Abilità',
     buildSkillNextTitle: 'Da valutare in programma',
-    buildSkillNextHint: 'Utile solo se puoi ancora aggiungere un’abilità con i punti progressione.',
+    buildSkillNextHint: 'Utile solo se hai uno dei 5 slot aggiuntivi libero e usi un Programma abilità.',
     buildNativeSkills: 'Sulla carta',
     buildPtUsed: 'PT',
     buildPlayOvr: 'OVR gioco',
@@ -382,7 +382,7 @@ const copy = {
     buildRosterMissing: 'Link your roster for a personalized build.',
     buildSkillsTitle: 'Skills',
     buildSkillNextTitle: 'Worth adding in-game',
-    buildSkillNextHint: 'Only if you can still add a skill with progression points.',
+    buildSkillNextHint: 'Only if one of the five additional slots is free and you use a Skill Training Program.',
     buildNativeSkills: 'On card',
     buildPtUsed: 'PT',
     buildPlayOvr: 'In-game OVR',
@@ -549,7 +549,7 @@ const copy = {
     buildRosterMissing: 'Vincula la plantilla para la build personalizada.',
     buildSkillsTitle: 'Habilidades',
     buildSkillNextTitle: 'A valorar en el juego',
-    buildSkillNextHint: 'Útil solo si aún puedes añadir una habilidad con puntos de progresión.',
+    buildSkillNextHint: 'Solo si tienes libre uno de los cinco espacios adicionales y usas un Programa de habilidad.',
     buildNativeSkills: 'En la carta',
     buildPtUsed: 'PT',
     buildPlayOvr: 'OVR juego',
@@ -2047,7 +2047,7 @@ export default withAuth(function CardAdvisorLabPage() {
         deepAnalysisError={detailsDeepAnalysisError}
         hpBalanceRemaining={hpBalanceRemaining}
         onRequestDeepAnalysis={requestDeepAnalysis}
-        onOpenGameAnalysis={() => router.push('/?openGameAnalysis=1')}
+        onOpenGameAnalysis={() => router.push('/?openStatsUpload=1')}
         onClose={() => setDetailsCardId(null)}
       />
 

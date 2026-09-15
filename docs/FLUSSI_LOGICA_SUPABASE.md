@@ -6,9 +6,9 @@ Intrecci verificati. Non cambiare semantica di queste tabelle in uno sprint UX.
 
 | Tabella | Consumatori | Note |
 |---------|-------------|------|
-| `user_profiles` | Auth mapping, Hero, Palestra, Card Advisor, credits, tasks, Knowledge, Live | Hub utente. Include `metalgate_user_id`, knowledge score, dati di gioco. |
-| `user_tactical_feedback` | Diagnostic, Card Advisor, countermeasures, Live, Knowledge | Memoria Hero. Poco popolata; non perderla. |
-| `user_diagnostic_cache` | Hero Chat, Card Advisor, Live | Cache, non source of truth. Stale >6h: Hero può perdere dettaglio feedback. |
+| `user_profiles` | Auth mapping, Hero, Palestra, Card Advisor, credits, tasks, Knowledge | Hub utente. Include `metalgate_user_id`, knowledge score, dati di gioco. |
+| `user_tactical_feedback` | Diagnostic, Card Advisor, countermeasures, Knowledge | Memoria Hero. Poco popolata; non perderla. |
+| `user_diagnostic_cache` | Hero Chat, Card Advisor | Cache, non source of truth. Stale >6h: Hero può perdere dettaglio feedback. |
 
 ## Rosa / Coach
 
@@ -25,7 +25,7 @@ Intrecci verificati. Non cambiare semantica di queste tabelle in uno sprint UX.
 
 | Tabella | Ruolo |
 |---------|--------|
-| `matches` | CRUD partite. Save/update hanno side effect. |
+| `matches` | Partite salvate dal workflow Hero. |
 | `team_tactical_patterns` | Derivato dal codice (non editarlo dalla UI). |
 | `user_game_analysis` | Ultima analisi stats (una riga recente, non storico). |
 | `opponent_formations` | Contromisure / extract formation. |
@@ -45,8 +45,7 @@ Card Advisor: `card_advisor_releases`, `card_advisor_cards` (RLS on, policy asse
 
 | Trigger applicativo | Effetti |
 |---------------------|---------|
-| `save-match` / `update-match` | pattern + knowledge + (task progress) |
-| `delete-match` | delete only; **non** ricalcola pattern come save (gap noto) |
+| `save-match` | pattern + knowledge + task progress |
 | `save-coach-feedback` | `user_tactical_feedback` + eventuali campi profilo |
 | `tasks/list` GET | generate weekly goals + update progress |
 | `assign/remove slot` | coerenza 11 titolari |

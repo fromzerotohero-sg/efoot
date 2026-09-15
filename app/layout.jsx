@@ -3,7 +3,6 @@ import Script from 'next/script'
 import LanguageProviderWrapper from '@/components/LanguageProviderWrapper'
 import { SidebarProvider } from '@/components/SidebarContext'
 import AppLayoutShell from '@/components/AppLayoutShell'
-import { GameAnalysisModalNavProvider } from '@/components/GameAnalysisModalNavContext'
 
 // Layout unico: usare solo questo file. Non creare layout.tsx (conflitti / layout sbagliato = dashboard non carica).
 // Title/description: default IT; client can set document.title by lang via LanguageProviderWrapper
@@ -76,16 +75,14 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <LanguageProviderWrapper>
-          <GameAnalysisModalNavProvider>
-            <SidebarProvider>
-              <AppLayoutShell
-                showInstallPrompt={showInstallPrompt}
-                showStagingBadge={isStaging}
-              >
-                {children}
-              </AppLayoutShell>
-            </SidebarProvider>
-          </GameAnalysisModalNavProvider>
+          <SidebarProvider>
+            <AppLayoutShell
+              showInstallPrompt={showInstallPrompt}
+              showStagingBadge={isStaging}
+            >
+              {children}
+            </AppLayoutShell>
+          </SidebarProvider>
         </LanguageProviderWrapper>
       </body>
     </html>

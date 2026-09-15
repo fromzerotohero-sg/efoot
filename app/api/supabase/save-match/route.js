@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
+import { buildPatternZonePayload } from '@/lib/matchAttackZones'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -118,7 +119,7 @@ async function calculateTacticalPatterns(admin, userId) {
     // Recupera ultime 20 partite (per pattern formazione/stile)
     const { data: matches, error: matchesError } = await admin
       .from('matches')
-      .select('formation_played, playing_style_played, result, is_home')
+      .select('formation_played, playing_style_played, result, is_home, attack_areas, team_stats')
       .eq('user_id', userId)
       .order('match_date', { ascending: false })
       .limit(20)
@@ -189,6 +190,8 @@ async function calculateTacticalPatterns(admin, userId) {
     // recurring_issues: lasciato vuoto per ora (può essere implementato in futuro con analisi AI)
     const recurringIssues = []
 
+    const zonePayload = buildPatternZonePayload(matches)
+
     // UPSERT su team_tactical_patterns
     const { error: upsertError } = await admin
       .from('team_tactical_patterns')
@@ -198,7 +201,12 @@ async function calculateTacticalPatterns(admin, userId) {
         playing_style_usage: playingStyleUsage,
         recurring_issues: recurringIssues,
         last_50_matches_count: matches.length,
-        last_updated: new Date().toISOString()
+        last_updated: new Date().toISOString(),
+        our_attack_areas_avg: zonePayload.our_attack_areas_avg,
+        opponent_attack_areas_avg: zonePayload.opponent_attack_areas_avg,
+        conceded_goal_zones_avg: zonePayload.conceded_goal_zones_avg,
+        ...(zonePayload.total_goals_scored != null ? { total_goals_scored: zonePayload.total_goals_scored } : {}),
+        ...(zonePayload.total_goals_conceded != null ? { total_goals_conceded: zonePayload.total_goals_conceded } : {})
       }, {
         onConflict: 'user_id'
       })

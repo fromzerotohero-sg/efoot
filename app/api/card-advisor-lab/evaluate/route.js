@@ -1324,7 +1324,7 @@ function topNumericKey(input) {
 }
 
 function tacticalMapLine(patterns, cardPosition, lang) {
-  const attackKey = topNumericKey(patterns?.attack_areas_avg)
+  const attackKey = topNumericKey(patterns?.our_attack_areas_avg || patterns?.attack_areas_avg)
   const recoveryKey = topNumericKey(patterns?.recovery_zones_avg)
   if (!attackKey && !recoveryKey) return ''
   const sideRole = ['TD', 'CLD', 'EDA'].includes(cardPosition)
@@ -2289,7 +2289,7 @@ export async function POST(req) {
         safeSupabaseQuery(admin.from('playing_styles').select('id, name'), [], 'playing styles'),
         safeSupabaseQuery(admin.from('coaches').select('coach_name, playing_style_competence, connection, stat_boosters').eq('user_id', userId).eq('is_active', true).maybeSingle(), null, 'coach'),
         safeSupabaseQuery(admin.from('team_tactical_settings').select('team_playing_style, individual_instructions').eq('user_id', userId).maybeSingle(), null, 'tactical settings'),
-        safeSupabaseQuery(admin.from('team_tactical_patterns').select('formation_usage, playing_style_usage, recurring_issues, attack_areas_avg, recovery_zones_avg').eq('user_id', userId).maybeSingle(), {}, 'tactical patterns'),
+        safeSupabaseQuery(admin.from('team_tactical_patterns').select('formation_usage, playing_style_usage, recurring_issues, attack_areas_avg, our_attack_areas_avg, opponent_attack_areas_avg, conceded_goal_zones_avg, recovery_zones_avg').eq('user_id', userId).maybeSingle(), {}, 'tactical patterns'),
         safeSupabaseQuery(admin.from('user_game_analysis').select('stats, captured_at').eq('user_id', userId).maybeSingle(), null, 'game analysis')
       ])
       : await Promise.all([

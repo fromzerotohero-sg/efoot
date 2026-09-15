@@ -15,6 +15,11 @@ import {
   buildClientFormationSnapshot,
   getSnapshotPlayerRole
 } from '../lib/clientFormationSnapshot.js'
+import {
+  decideCoachTeamStyle,
+  enforceCoachTeamStyleOnOutput,
+  formatCoachTeamStylePromptBlock
+} from '../lib/teamPlayingStyles.js'
 
 let failed = 0
 function assert(cond, msg) {
@@ -442,6 +447,73 @@ function slotsWith(overrides = {}) {
   assert(
     /destra/.test(wide.opponent_read.trait || ''),
     'read preserves detected side bias'
+  )
+}
+
+// --- Case: Lampard identity blocks Possession downgrade ---
+{
+  const lampard = {
+    contrattacco: 58,
+    vie_laterali: 69,
+    possesso_palla: 75,
+    passaggio_lungo: 89,
+    pressing_totale: 89,
+    contropiede_veloce: 60
+  }
+  const promptBlock = formatCoachTeamStylePromptBlock(lampard, 'pressing_totale', 'it')
+  assert(/Pressing totale/.test(promptBlock), 'coach prompt names Pressing totale in Italian')
+  assert(!/pressing_totale:/.test(promptBlock), 'coach prompt does not leave pressing_totale as a raw key')
+  assert(/Possesso palla 75/.test(promptBlock) && /downgrade|più debole|NON proporli/i.test(promptBlock), 'coach prompt treats Possession 75 as weaker than identity')
+
+  const downgrade = decideCoachTeamStyle({
+    competence: lampard,
+    currentStyle: 'pressing_totale',
+    suggestedStyle: 'Stile squadra: Possesso palla'
+  })
+  assert(downgrade.action === 'keep' && downgrade.style.id === 'pressing_totale', 'active Pressing totale is not downgraded to Possession')
+
+  const peer = decideCoachTeamStyle({
+    competence: lampard,
+    currentStyle: 'pressing_totale',
+    suggestedStyle: 'Passaggio lungo'
+  })
+  assert(peer.action === 'change' && peer.style.id === 'passaggio_lungo', 'equal-identity Long Ball remains allowed')
+
+  const rewritten = decideCoachTeamStyle({
+    competence: lampard,
+    currentStyle: null,
+    suggestedStyle: 'Possesso palla'
+  })
+  assert(rewritten.action === 'change' && rewritten.style.value === 89, 'missing current style is rewritten to a Lampard identity style')
+
+  const output = {
+    analysis: { opponent_formation_analysis: '4-3-3' },
+    countermeasures: {
+      tactical_adjustments: [
+        { type: 'team_playing_style', suggestion: 'Stile squadra: Possesso palla', reason: 'controllo', priority: 'high' }
+      ],
+      player_suggestions: [],
+      individual_instructions: [],
+      formation_adjustments: []
+    }
+  }
+  enforceCoachTeamStyleOnOutput(output, {
+    competence: lampard,
+    currentStyle: 'pressing_totale',
+    lang: 'it'
+  })
+  const styleAdj = output.countermeasures.tactical_adjustments.find((row) => row.type === 'team_playing_style')
+  assert(/Pressing totale/.test(styleAdj?.suggestion || ''), 'post-AI filter rewrites Possession to Pressing totale')
+  const presented = presentCountermeasuresForCustomer(output, {
+    lang: 'it',
+    currentTacticalSettings: { team_playing_style: 'pressing_totale' },
+    opponentFormation: { formation_name: '4-3-3' }
+  })
+  assert(
+    presented.customer_plan.setup_actions.some((action) => (
+      action.type === 'team_style' && action.status === 'keep' && /Pressing totale/.test(action.value)
+    )),
+    'customer plan keeps Pressing totale instead of switching to Possession'
   )
 }
 

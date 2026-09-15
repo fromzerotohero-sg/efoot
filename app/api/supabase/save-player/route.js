@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { validateToken, extractBearerToken } from '@/lib/authHelper'
 import { checkRateLimit, RATE_LIMIT_CONFIG } from '@/lib/rateLimiter'
 import { normalizePlayerSkillsArray } from '@/lib/playerSkillLabels'
+import { MAX_ADDITIONAL_SKILLS } from '@/lib/efootballTruthLayer'
 import { enrichPlayerMetadataWithCardImage } from '@/lib/playerCardImage'
 import { lookupPlayingStyleId, resolvePlayingStyleDbName } from '@/lib/playingStyleResolve'
 import {
@@ -118,6 +119,17 @@ export async function POST(req) {
 
     const refreshOriginalPositions = Boolean(player.refresh_original_positions)
     const fromCatalog = isCatalogPlayerSave(player)
+    const additionalSkills = normalizePlayerSkillsArray(
+      Array.isArray(player.additional_skills)
+        ? player.additional_skills
+        : player.metadata?.additional_skills
+    )
+    if (additionalSkills.length > MAX_ADDITIONAL_SKILLS) {
+      return NextResponse.json(
+        { error: `A player can have at most ${MAX_ADDITIONAL_SKILLS} additional skills` },
+        { status: 400 }
+      )
+    }
 
     // Lookup playing_style_id: PESDB/catalogo in EN → nome IT in playing_styles
     let playingStyleId = null

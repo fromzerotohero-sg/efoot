@@ -1,6 +1,6 @@
 # Task / weekly goals — contratto corrente
 
-Pagine: widget su Home (`TaskWidget`, `MissionCenter`, `HeroCoachJourney`).  
+Nessuna superficie utente attiva. Il sottosistema resta solo per compatibilità dati e side effect.
 API: `GET /api/tasks/list`, `POST /api/tasks/generate`.  
 Tabella: `weekly_goals`. Helper: `lib/taskHelper.js`.
 
@@ -19,7 +19,7 @@ Se la generazione personalizzata fallisce, `taskHelper` inserisce task generici/
 
 ## Progresso da partite
 
-`save-match` / `update-match` chiamano `updateTasksProgressAfterMatch`.  
+`save-match` chiama `updateTasksProgressAfterMatch`.
 Task `use_ai_recommendations` legge `credit_transactions` (whitelist in `taskHelper.js`).
 
-In UX V2 i widget concorrenti Mission/Journey/Suggestions bypassano come ingressi; i side effect restano.
+I widget concorrenti non sono montati; i side effect restano.

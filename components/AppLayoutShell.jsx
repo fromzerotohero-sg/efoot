@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation'
 import SidebarNew from '@/components/SidebarNew'
 import TopBar from '@/components/TopBar'
 import BottomNavigation from '@/components/BottomNavigation'
-import LiveCoachLauncher from '@/components/LiveCoachLauncher'
 import InstallAppPrompt from '@/components/InstallAppPrompt'
 import PrelaunchGate from '@/components/PrelaunchGate'
 import MaintenanceGate from '@/components/MaintenanceGate'
@@ -50,7 +49,6 @@ export default function AppLayoutShell({ children, showInstallPrompt = true, sho
 
       <BottomNavigation />
       {showInstallPrompt && <InstallAppPrompt />}
-      <LiveCoachLauncher showLauncherButton={false} />
       {showStagingBadge && (
         <div
           aria-hidden="true"

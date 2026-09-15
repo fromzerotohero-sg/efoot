@@ -1,6 +1,6 @@
 # Hero Chat — contratto corrente
 
-UI: `components/AssistantChat.jsx` (popup montato da `AppLayoutShell`) e `/assistant`.  
+UI: `components/hero-chat/HeroChat.jsx`, integrata nella Home Coach.
 Motore: `POST /api/assistant-chat`. Costo: **2 HP**.
 
 ## Modello

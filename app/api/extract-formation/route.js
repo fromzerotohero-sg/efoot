@@ -167,7 +167,6 @@ IMPORTANTE:
 - Coordinate: x_percent=0 bordo sinistro e 100 bordo destro; y_percent=0 porta avversaria/parte alta e 100 porta propria/parte bassa. Misura la posizione reale della card, non dedurla dal nome del modulo.
 - Slot_index serve solo a mantenere stabile il legame giocatore↔card: PT=0; assegna 1-10 agli altri dal basso verso l'alto e, nella stessa linea, da sinistra a destra. Non riservare intervalli fissi a difensori/centrocampisti/attaccanti.
 - Estrai anche la formazione (es. "4-2-1-3", "4-3-3", ecc.) se visibile
-- Se vedi il volto/faccia del giocatore nella card, indicane la descrizione visiva
 - Genera anche un profilo tattico VISIVO prudente basato solo sulla disposizione 2D:
   * width_profile: "wide", "narrow" o "balanced"
   * central_density: "high", "medium" o "low"

@@ -71,7 +71,7 @@ export default function ConfirmModal({
 
   const modal = (
     <>
-      {/* Pulsanti colonna + altezza touch su mobile; sopra FAB AssistantChat (z-index ~10050) */}
+      {/* Pulsanti in colonna con altezza touch su mobile. */}
       <style>{`
         .confirm-modal-backdrop {
           min-height: 100vh;

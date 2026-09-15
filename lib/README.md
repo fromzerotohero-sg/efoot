@@ -7,7 +7,6 @@
 | `authHelper.js` | MetalGate verify + fallback Supabase; Bearer |
 | `supabaseClient.js` | Client browser (anon key) |
 | `creditService.js` | `AI_COST = 2`, MetalGate wallet, tracking locale |
-| `liveCoachPricing.js` | 2 HP start + 5 HP/min |
 | `openaiHelper.js` | timeout/retry, detect model_not_found |
 | `ragHelper.js` | sezioni da `info_rag.md` |
 | `rateLimiter.js` | in-memory, non multi-istanza |
@@ -21,9 +20,9 @@
 
 `taskHelper.js` (generate + fallback statico), `aiKnowledgeHelper.js`, `i18n.js`, `errorHelper.js`, `fetchHelper.js`
 
-## Gate / flag
+## Gate / PWA
 
-`prelaunchServer.js`, `prelaunchRoutes.js`, `maintenanceServer.js`, `maintenanceRoutes.js`, `featureFlags.js`, `pwaInstall.js`
+`prelaunchServer.js`, `prelaunchRoutes.js`, `maintenanceServer.js`, `maintenanceRoutes.js`, `pwaInstall.js`
 
 Doc crediti: [docs/COSTI_HP_USO_PIATTAFORMA.md](../docs/COSTI_HP_USO_PIATTAFORMA.md).  
 Non esiste più `docs/SISTEMA_CREDITI_AI.md`.
