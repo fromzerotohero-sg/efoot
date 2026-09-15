@@ -53,6 +53,7 @@ export async function GET(request) {
     // Fetch dashboard data in parallel
     const [
       { data: layoutData },
+      { data: formationVariants },
       { data: players },
       { data: matches },
       { data: patterns },
@@ -62,8 +63,15 @@ export async function GET(request) {
     ] = await Promise.all([
       // 1. Formation layout (User specific)
       supabase.from('formation_layout').select('formation, slot_positions').eq('user_id', userId).maybeSingle(),
+
+      // 2. Active Fluid Formation phases
+      supabase.from('formation_variants')
+        .select('phase, formation, slot_positions, is_active')
+        .eq('user_id', userId)
+        .in('phase', ['attack', 'defense'])
+        .eq('is_active', true),
       
-      // 2. Players
+      // 3. Players
       supabase.from('players')
         .select('id, player_name, overall_rating, position, slot_index')
         .eq('user_id', userId)
@@ -116,6 +124,7 @@ export async function GET(request) {
     
     return NextResponse.json({
       layout: layoutData,
+      formationVariants: formationVariants || [],
       players: players || [],
       matches: (matches || []).map(normalizeMatchSummary),
       patterns: patterns,

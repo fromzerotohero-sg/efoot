@@ -10,6 +10,11 @@ import {
 import { buildPrematchChangeSet } from '../lib/prematchChangeSet.js'
 import { validateStartingXISwap } from '../lib/formationDefenseRules.js'
 import { validateIndividualInstruction, INDIVIDUAL_INSTRUCTIONS_CONFIG } from '../lib/tacticalInstructions.js'
+import {
+  activeTacticalInstructions,
+  buildClientFormationSnapshot,
+  getSnapshotPlayerRole
+} from '../lib/clientFormationSnapshot.js'
 
 let failed = 0
 function assert(cond, msg) {
@@ -37,6 +42,60 @@ function hasTechnicalLeak(text) {
 const defenseCategory = Object.keys(INDIVIDUAL_INSTRUCTIONS_CONFIG).find((key) =>
   /difes|defense/i.test(key)
 ) || 'difesa_1'
+
+function slotsWith(overrides = {}) {
+  const defaults = {
+    0: 'PT', 1: 'TS', 2: 'DC', 3: 'DC', 4: 'TD',
+    5: 'MED', 6: 'CC', 7: 'CC', 8: 'TRQ', 9: 'SP', 10: 'P'
+  }
+  return Object.fromEntries(
+    Object.entries(defaults).map(([index, position]) => [
+      index,
+      {
+        x: 10 + Number(index) * 7,
+        y: 90 - Number(index) * 6,
+        position: overrides[index] || position
+      }
+    ])
+  )
+}
+
+// --- Case: one snapshot resolves base + both Fluid phases ---
+{
+  const starter = {
+    id: 'phase-player',
+    player_name: 'Phase Player',
+    position: 'TRQ',
+    slot_index: 6,
+    original_positions: [{ position: 'CC', competence: 'Alta' }, { position: 'MED', competence: 'Alta' }]
+  }
+  const snapshot = buildClientFormationSnapshot({
+    starters: [starter],
+    baseLayout: { formation: '4-3-3', slot_positions: slotsWith({ 6: 'CC' }) },
+    variantRows: [
+      { phase: 'attack', formation: '4-2-1-3', slot_positions: slotsWith({ 6: 'CC' }), is_active: true },
+      { phase: 'defense', formation: '4-1-4-1', slot_positions: slotsWith({ 6: 'MED' }), is_active: true }
+    ]
+  })
+  assert(snapshot.enabled, 'formation snapshot detects active Fluid Formation')
+  assert(getSnapshotPlayerRole(snapshot, starter, 'base') === 'CC', 'base slot overrides stale players.position')
+  assert(getSnapshotPlayerRole(snapshot, starter, 'attack') === 'CC', 'snapshot resolves attack role')
+  assert(getSnapshotPlayerRole(snapshot, starter, 'defense') === 'MED', 'snapshot resolves defense role')
+
+  const reserve = { id: 'reserve-med', position: 'MED', original_positions: ['MED'] }
+  const defenseSwap = validateStartingXISwap([starter], reserve, starter.id, {
+    getSlotRole: (player) => getSnapshotPlayerRole(snapshot, player, 'defense')
+  })
+  assert(defenseSwap.valid, 'swap validation can use the real defense-phase slot')
+
+  const active = activeTacticalInstructions({
+    individual_instructions: {
+      difesa_1: { enabled: true, player_id: starter.id, instruction: 'marcatura_uomo' },
+      difesa_2: { enabled: true, player_id: 'old-bench-player', instruction: 'contropiede' }
+    }
+  }, snapshot)
+  assert(Boolean(active.difesa_1) && !active.difesa_2, 'stale instructions for non-starters are removed')
+}
 
 // --- Case: empty / short bench → customer plan still has diagnosis + tips ---
 {

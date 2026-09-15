@@ -23,6 +23,7 @@ async function resolveAuthToken() {
 export default function PrematchPitch({
   starters: startersProp = null,
   slotPositions: slotPositionsProp = null,
+  formationVariants: formationVariantsProp = [],
   formation: formationProp = null,
   playerSuggestions = [],
   individualInstructions = [],
@@ -36,6 +37,8 @@ export default function PrematchPitch({
   const [fetchedStarters, setFetchedStarters] = React.useState([])
   const [fetchedSlots, setFetchedSlots] = React.useState(null)
   const [fetchedFormation, setFetchedFormation] = React.useState(null)
+  const [fetchedVariants, setFetchedVariants] = React.useState([])
+  const [phase, setPhase] = React.useState('attack')
   const [loadState, setLoadState] = React.useState(hasPropStarters ? 'ready' : 'loading')
 
   React.useEffect(() => {
@@ -64,6 +67,7 @@ export default function PrematchPitch({
         setFetchedStarters(titolari)
         if (data.layout?.slot_positions) setFetchedSlots(data.layout.slot_positions)
         if (data.layout?.formation) setFetchedFormation(data.layout.formation)
+        setFetchedVariants(Array.isArray(data.formationVariants) ? data.formationVariants : [])
         setLoadState(titolari.length ? 'ready' : 'empty')
       } catch { if (!cancelled) setLoadState('empty') }
     }
@@ -72,8 +76,16 @@ export default function PrematchPitch({
   }, [hasPropStarters])
 
   const starters = hasPropStarters ? startersProp : fetchedStarters
-  const slotPositions = slotPositionsProp || fetchedSlots || DEFAULT_SLOT_POSITIONS
-  const formation = formationProp || fetchedFormation || null
+  const formationVariants = Array.isArray(formationVariantsProp) && formationVariantsProp.length
+    ? formationVariantsProp
+    : fetchedVariants
+  const activeVariants = formationVariants.filter((variant) => variant?.is_active !== false)
+  const attackVariant = activeVariants.find((variant) => variant?.phase === 'attack')
+  const defenseVariant = activeVariants.find((variant) => variant?.phase === 'defense')
+  const fluidEnabled = Boolean(attackVariant && defenseVariant)
+  const phaseVariant = fluidEnabled ? (phase === 'defense' ? defenseVariant : attackVariant) : null
+  const slotPositions = phaseVariant?.slot_positions || slotPositionsProp || fetchedSlots || DEFAULT_SLOT_POSITIONS
+  const formation = phaseVariant?.formation || formationProp || fetchedFormation || null
 
   const overlay = React.useMemo(() => {
     const positions = completeSlotPositions(slotPositions || DEFAULT_SLOT_POSITIONS)
@@ -122,7 +134,13 @@ export default function PrematchPitch({
     }
 
     const usedForInstr = new Set()
-    const instructions = Array.isArray(individualInstructions) ? individualInstructions : []
+    const instructions = (Array.isArray(individualInstructions) ? individualInstructions : [])
+      .filter((row) => {
+        if (!fluidEnabled || !row?.slot) return true
+        return phase === 'defense'
+          ? String(row.slot).startsWith('difesa_')
+          : String(row.slot).startsWith('attacco_')
+      })
     for (const row of instructions) {
       const label = row?.instruction_label
         || instructionLabel(row?.instruction, lang)
@@ -147,7 +165,7 @@ export default function PrematchPitch({
       }
     }
     return base
-  }, [starters, slotPositions, playerSuggestions, individualInstructions, focusText, lang])
+  }, [starters, slotPositions, playerSuggestions, individualInstructions, focusText, lang, fluidEnabled, phase])
 
   const formationStr = React.useMemo(
     () => formationLabel(formation, slotPositions, lang),
@@ -161,10 +179,30 @@ export default function PrematchPitch({
     <div className="hc-pitch" aria-label="Campo piano contromisure">
       <div className="hc-pitchHeader">
         <div className="hc-pitchHeaderLeft">
-          <span className="hc-pitchHeaderLabel">Setup</span>
+          <span className="hc-pitchHeaderLabel">{fluidEnabled ? 'Formazione fluida' : 'Setup'}</span>
           <span className="hc-pitchHeaderFormation">{formationStr || 'La tua formazione'}</span>
         </div>
-        {styleLabel ? <span className="hc-pitchStyleChip">{styleLabel}</span> : null}
+        <div className="hc-pitchHeaderActions">
+          {fluidEnabled ? (
+            <div className="hc-pitchPhaseToggle" aria-label="Fase formazione fluida">
+              <button
+                type="button"
+                className={phase === 'attack' ? 'is-active' : ''}
+                onClick={() => setPhase('attack')}
+              >
+                {lang === 'en' ? 'Attack' : lang === 'es' ? 'Ataque' : 'Attacco'}
+              </button>
+              <button
+                type="button"
+                className={phase === 'defense' ? 'is-active' : ''}
+                onClick={() => setPhase('defense')}
+              >
+                {lang === 'en' ? 'Defence' : lang === 'es' ? 'Defensa' : 'Difesa'}
+              </button>
+            </div>
+          ) : null}
+          {styleLabel ? <span className="hc-pitchStyleChip">{styleLabel}</span> : null}
+        </div>
       </div>
 
       <div className="hc-pitchField">

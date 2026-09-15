@@ -163,12 +163,9 @@ Se ricevi due immagini, usale insieme: possono mostrare viste complementari dell
 
 IMPORTANTE:
 - Identifica TUTTI gli 11 giocatori visibili sul campo (formazione completa)
-- Per ogni giocatore, estrai: nome giocatore, posizione sul campo (slot_index 0-10), posizione giocatore (CF, MF, ecc.), overall rating, team, nationality (se visibile)
-- Lo slot_index deve essere basato sulla posizione sul campo:
-  * Portiere (PT): slot_index = 0
-  * Difensori (DC, TS, TD): slot_index = 1-4 (da sinistra a destra)
-  * Centrocampisti (MED, CC, CCB, TRQ, ESA): slot_index = 5-8 (da sinistra a destra)
-  * Attaccanti (SP, CF, CLD, CLS): slot_index = 9-10 (da sinistra a destra)
+- Per ogni giocatore, estrai: nome, slot_index univoco 0-10, ruolo mostrato, overall, team/nazionalità se visibili e coordinate x_percent/y_percent della card sul campo (0-100).
+- Coordinate: x_percent=0 bordo sinistro e 100 bordo destro; y_percent=0 porta avversaria/parte alta e 100 porta propria/parte bassa. Misura la posizione reale della card, non dedurla dal nome del modulo.
+- Slot_index serve solo a mantenere stabile il legame giocatore↔card: PT=0; assegna 1-10 agli altri dal basso verso l'alto e, nella stessa linea, da sinistra a destra. Non riservare intervalli fissi a difensori/centrocampisti/attaccanti.
 - Estrai anche la formazione (es. "4-2-1-3", "4-3-3", ecc.) se visibile
 - Se vedi il volto/faccia del giocatore nella card, indicane la descrizione visiva
 - Genera anche un profilo tattico VISIVO prudente basato solo sulla disposizione 2D:
@@ -201,6 +198,8 @@ Formato JSON richiesto:
       "player_name": "Nome Completo",
       "slot_index": 0,
       "position": "PT",
+      "x_percent": 50,
+      "y_percent": 92,
       "overall_rating": 95,
       "team": "Team Name",
       "nationality": "Country (se visibile)",
@@ -317,11 +316,26 @@ Restituisci SOLO JSON valido, senza altro testo.`
           
           usedSlots.add(slotIndex)
           
+          const x = Number(player.x_percent ?? player.x)
+          const y = Number(player.y_percent ?? player.y)
           return {
             ...player,
-            slot_index: slotIndex
+            slot_index: slotIndex,
+            x_percent: Number.isFinite(x) ? Math.max(0, Math.min(100, Math.round(x * 100) / 100)) : null,
+            y_percent: Number.isFinite(y) ? Math.max(0, Math.min(100, Math.round(y * 100) / 100)) : null
           }
         })
+
+        const geometricSlots = {}
+        formationData.players.forEach((player) => {
+          if (!Number.isFinite(player.x_percent) || !Number.isFinite(player.y_percent)) return
+          geometricSlots[player.slot_index] = {
+            x: player.x_percent,
+            y: player.y_percent,
+            position: String(player.position || '').trim().toUpperCase() || '?'
+          }
+        })
+        formationData.slot_positions = Object.keys(geometricSlots).length >= 8 ? geometricSlots : null
       }
       
       // Validazione semantica formazione
@@ -388,6 +402,40 @@ Restituisci SOLO JSON valido, senza altro testo.`
           shape_confidence: 0,
           slot_confidence: 0,
           uncertain_points: ['visual profile not available']
+        }
+      }
+
+      // Gate di coerenza: se etichetta modulo e ruoli letti divergono molto,
+      // forza la conferma utente già prevista dalla UI. Le coordinate restano
+      // la fonte geometrica e non vengono riscritte per adattarle al modulo.
+      if (formationData.formation && Array.isArray(formationData.players) && formationData.players.length >= 9) {
+        const nums = formationData.formation.split('-').map(Number).filter(Number.isFinite)
+        const role = (value) => String(value || '').trim().toUpperCase()
+        const defRoles = new Set(['DC', 'CB', 'TD', 'RB', 'TS', 'LB'])
+        const midRoles = new Set(['MED', 'DMF', 'CC', 'CMF', 'CCB', 'TRQ', 'AMF', 'CLD', 'RMF', 'CLS', 'LMF'])
+        const fwdRoles = new Set(['P', 'CF', 'SP', 'SS', 'EDA', 'RWF', 'ESA', 'LWF'])
+        const actual = { def: 0, mid: 0, fwd: 0 }
+        formationData.players.forEach((player) => {
+          const value = role(player.position)
+          if (defRoles.has(value)) actual.def += 1
+          else if (midRoles.has(value)) actual.mid += 1
+          else if (fwdRoles.has(value)) actual.fwd += 1
+        })
+        const expected = {
+          def: nums[0] || 0,
+          mid: nums.length > 2 ? nums.slice(1, -1).reduce((sum, value) => sum + value, 0) : (nums[1] || 0),
+          fwd: nums[nums.length - 1] || 0
+        }
+        const conflicts = ['def', 'mid', 'fwd'].filter((line) => (
+          expected[line] > 0 && Math.abs(expected[line] - actual[line]) > 1
+        ))
+        if (conflicts.length > 0) {
+          const profile = formationData.visual_tactical_profile
+          profile.uncertain_points = [
+            ...(profile.uncertain_points || []),
+            `module_role_mismatch:${conflicts.join(',')}`
+          ].slice(0, 4)
+          profile.formation_confidence = Math.min(Number(profile.formation_confidence) || 0, 0.45)
         }
       }
       

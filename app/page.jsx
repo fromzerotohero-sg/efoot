@@ -64,6 +64,7 @@ function HomePage() {
   })
   const [starters, setStarters] = React.useState([])
   const [slotPositions, setSlotPositions] = React.useState(null)
+  const [formationVariants, setFormationVariants] = React.useState([])
   const [recentMatches, setRecentMatches] = React.useState([])
   const [showGameAnalysisModal, setShowGameAnalysisModal] = React.useState(false)
   const [gameAnalysisLastCapture, setGameAnalysisLastCapture] = React.useState(null)
@@ -187,6 +188,7 @@ function HomePage() {
           }))
         )
         setSlotPositions(data.layout?.slot_positions || null)
+        setFormationVariants(Array.isArray(data.formationVariants) ? data.formationVariants : [])
         
         setRecentMatches(data.matches || [])
         setHasActiveCoach(data.hasActiveCoach)
@@ -390,6 +392,7 @@ function HomePage() {
         stats={stats}
         starters={starters}
         slotPositions={slotPositions}
+        formationVariants={formationVariants}
         formation={stats.formation}
         hasActiveCoach={hasActiveCoach}
         recentMatches={recentMatches}

@@ -132,7 +132,7 @@ const COPY = {
   planIf: { it: 'Se', en: 'If', es: 'Si' },
   planAskHero: { it: 'Continua con Hero', en: 'Continue with Hero', es: 'Continúa con Hero' },
   planGenerated: { it: 'Generato', en: 'Generated', es: 'Generado' },
-  planMap: { it: 'Vedi il piano sul campo', en: 'See the plan on the pitch', es: 'Ver el plan en el campo' },
+  planOperations: { it: 'Apri setup e istruzioni', en: 'Open setup and instructions', es: 'Abrir configuración e instrucciones' },
   planNoCountermeasure: { it: 'Nessuna modifica necessaria: parti dal tuo assetto e segui i passaggi chiave.', en: 'No change needed: start from your shape and follow the key steps.', es: 'No hace falta cambiar: empieza con tu estructura y sigue los pasos clave.' },
   planDetails: { it: 'Perché questo piano?', en: 'Why this plan?', es: '¿Por qué este plan?' },
   attachAnalyzing: { it: 'Sto leggendo le tue statistiche…', en: 'Reading your stats…', es: 'Leyendo tus estadísticas…' },
@@ -283,7 +283,15 @@ const COUNTER_FORMATIONS = [
   '5-3-2', '5-4-1', '4-5-1', '4-1-3-2', '3-3-2-2', '4-2-2-2'
 ]
 
-function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, formation = null, onFollowup }) {
+function PrematchPlanCard({
+  plan,
+  lang,
+  starters = [],
+  slotPositions = null,
+  formationVariants = [],
+  formation = null,
+  onFollowup
+}) {
   if (!plan) return null
 
   const raw = plan.countermeasures || {}
@@ -449,6 +457,22 @@ function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, for
         ) : null}
       </div>
 
+      <PrematchPitch
+        starters={starters}
+        slotPositions={slotPositions}
+        formationVariants={formationVariants}
+        formation={setup.formation || formation}
+        playerSuggestions={playerSuggestions}
+        individualInstructions={individualInstructions}
+        teamStyle={teamStyle}
+        attackLine={attackLines[0] || null}
+        defenseLine={defenseLines[0] || null}
+        lang={lang}
+      />
+
+      <details className="hc-planOperations">
+        <summary>{L(lang, COPY.planOperations)}</summary>
+        <div className="hc-planOperationsBody">
       <section className="hc-planSetup" aria-label={L(lang, COPY.planSetup)}>
         <div className="hc-planSectionHead">
           <span className="hc-planQuickLabel">{L(lang, COPY.planSetup)}</span>
@@ -500,21 +524,6 @@ function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, for
         </section>
       ) : null}
 
-      <details className="hc-planMap">
-        <summary>{L(lang, COPY.planMap)}</summary>
-        <PrematchPitch
-          starters={starters}
-          slotPositions={slotPositions}
-          formation={setup.formation || formation}
-          playerSuggestions={playerSuggestions}
-          individualInstructions={individualInstructions}
-          teamStyle={teamStyle}
-          attackLine={attackLines[0] || null}
-          defenseLine={defenseLines[0] || null}
-          lang={lang}
-        />
-      </details>
-
       {followUps.length > 0 && typeof onFollowup === 'function' ? (
         <section className="hc-planFollowups">
           <span>{L(lang, COPY.planAskHero)}</span>
@@ -527,6 +536,8 @@ function PrematchPlanCard({ plan, lang, starters = [], slotPositions = null, for
           </div>
         </section>
       ) : null}
+        </div>
+      </details>
     </div>
   )
 }
@@ -770,6 +781,7 @@ export default function HeroChat({
   stats,
   starters = [],
   slotPositions = null,
+  formationVariants = [],
   formation = null,
   hasActiveCoach,
   recentMatches,
@@ -2162,6 +2174,7 @@ export default function HeroChat({
                 lang={lang}
                 starters={starters}
                 slotPositions={slotPositions}
+                formationVariants={formationVariants}
                 formation={formation}
                 onFollowup={sendMessage}
               />
@@ -2250,6 +2263,7 @@ export default function HeroChat({
             lang={lang}
             starters={starters}
             slotPositions={slotPositions}
+            formationVariants={formationVariants}
             formation={formation}
             onFollowup={sendMessage}
           />
@@ -3629,7 +3643,7 @@ export default function HeroChat({
         :global(.hc-planPlaybook),
         :global(.hc-planB),
         :global(.hc-planFollowups),
-        :global(.hc-planMap) {
+        :global(.hc-planOperations) {
           border: 1px solid var(--border-soft);
           border-radius: 14px;
           background: var(--surface-2);
@@ -3833,11 +3847,11 @@ export default function HeroChat({
           color: var(--accent);
         }
 
-        :global(.hc-planMap) {
+        :global(.hc-planOperations) {
           overflow: hidden;
         }
 
-        :global(.hc-planMap > summary) {
+        :global(.hc-planOperations > summary) {
           min-height: 46px;
           display: flex;
           align-items: center;
@@ -3848,12 +3862,14 @@ export default function HeroChat({
           cursor: pointer;
         }
 
-        :global(.hc-planMap[open] > summary) {
+        :global(.hc-planOperations[open] > summary) {
           border-bottom: 1px solid var(--border-soft);
         }
 
-        :global(.hc-planMap .hc-pitch) {
-          margin: 8px;
+        :global(.hc-planOperationsBody) {
+          display: grid;
+          gap: 8px;
+          padding: 8px;
         }
 
         @media (max-width: 560px) {

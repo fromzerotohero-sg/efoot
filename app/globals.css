@@ -1254,6 +1254,29 @@ html[data-theme='light'] ::-webkit-scrollbar-thumb:hover {
   gap: 10px; padding: 0 2px 8px; flex-wrap: wrap;
 }
 .hc-pitchHeaderLeft { display: flex; flex-direction: column; gap: 2px; }
+.hc-pitchHeaderActions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.hc-pitchPhaseToggle {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 999px;
+  background: rgba(0,0,0,0.24);
+}
+.hc-pitchPhaseToggle button {
+  border: 0;
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: transparent;
+  color: rgba(255,255,255,0.58);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.hc-pitchPhaseToggle button.is-active {
+  background: #ffcb05;
+  color: #17130a;
+}
 .hc-pitchHeaderLabel {
   font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
   text-transform: uppercase; color: rgba(255,255,255,0.5);
@@ -1475,6 +1498,12 @@ html[data-theme='light'] .hc-pitchField {
 }
 html[data-theme='light'] .hc-pitchHeaderFormation { color: #1d1d1f; }
 html[data-theme='light'] .hc-pitchHeaderLabel { color: rgba(0,0,0,0.5); }
+html[data-theme='light'] .hc-pitchPhaseToggle {
+  border-color: rgba(0,0,0,0.12);
+  background: rgba(0,0,0,0.04);
+}
+html[data-theme='light'] .hc-pitchPhaseToggle button { color: rgba(0,0,0,0.58); }
+html[data-theme='light'] .hc-pitchPhaseToggle button.is-active { color: #17130a; }
 html[data-theme='light'] .hc-pitchLayer {
   background: rgba(255,255,255,0.85); color: rgba(0,0,0,0.65); border-color: rgba(0,0,0,0.12);
 }

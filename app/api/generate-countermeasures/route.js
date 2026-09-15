@@ -8,6 +8,11 @@ import { presentCountermeasuresForCustomer } from '@/lib/prematchCustomerPlan'
 import { deductCredits, AI_COST, handleCreditOperationError } from '@/lib/creditService'
 import { validateIndividualInstruction } from '@/lib/tacticalInstructions'
 import { rolesAreEquivalent, validateStartingXISwap } from '@/lib/formationDefenseRules'
+import {
+  activeTacticalInstructions,
+  buildClientFormationSnapshot,
+  getSnapshotPlayerRole
+} from '@/lib/clientFormationSnapshot'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -140,7 +145,19 @@ function countermeasureCopy(output) {
  * emit the structured swap, recover it only when the replacement slot is
  * unambiguous and passes the same deterministic swap rules.
  */
-function inferStructuredBenchSwap(output, riserve, titolari) {
+function validateSnapshotSwap(titolari, reserve, replacePlayerId, snapshot) {
+  const phases = snapshot?.enabled ? ['attack', 'defense'] : ['base']
+  const checks = phases.map((phase) => validateStartingXISwap(
+    titolari,
+    reserve,
+    replacePlayerId,
+    { getSlotRole: (player) => getSnapshotPlayerRole(snapshot, player, phase) }
+  ))
+  const failed = checks.find((check) => !check.valid)
+  return failed || checks[0] || validateStartingXISwap(titolari, reserve, replacePlayerId)
+}
+
+function inferStructuredBenchSwap(output, riserve, titolari, clientSnapshot = null) {
   const suggestions = output?.countermeasures?.player_suggestions
   if (Array.isArray(suggestions) && suggestions.length > 0) return null
   if (!Array.isArray(riserve) || !Array.isArray(titolari) || !titolari.length) return null
@@ -164,14 +181,17 @@ function inferStructuredBenchSwap(output, riserve, titolari) {
     return name && normalizedCopy.includes(name)
   })
   const validReplacements = titolari.filter((player) => (
-    validateStartingXISwap(titolari, reserve, player.id).valid
+    validateSnapshotSwap(titolari, reserve, player.id, clientSnapshot).valid
   ))
   const reserveRoles = [
     reserve.position,
     ...(Array.isArray(reserve.original_positions) ? reserve.original_positions : [])
   ].map((role) => typeof role === 'string' ? role : role?.position)
   const exactRole = validReplacements.filter((player) => (
-    reserveRoles.some((role) => rolesAreEquivalent(role, player.position))
+    reserveRoles.some((role) => rolesAreEquivalent(
+      role,
+      getSnapshotPlayerRole(clientSnapshot, player, 'defense') || player.position
+    ))
   ))
   const namedReplacement = mentionedStarters.filter((player) => validReplacements.includes(player))
   const replacements = namedReplacement.length === 1
@@ -189,7 +209,7 @@ function inferStructuredBenchSwap(output, riserve, titolari) {
     position: reserve.position,
     replace_player_id: outgoing.id,
     replace_player_name: outgoing.player_name,
-    replace_position: outgoing.position,
+    replace_position: getSnapshotPlayerRole(clientSnapshot, outgoing, 'defense') || outgoing.position,
     reason: 'Il piano cita questa riserva come leva per il setup.',
     priority: 'high'
   }
@@ -393,12 +413,32 @@ export async function POST(req) {
       .eq('user_id', userId)
       .maybeSingle()
 
+    const { data: formationVariants, error: formationVariantsError } = await admin
+      .from('formation_variants')
+      .select('id, phase, formation, slot_positions, is_active, source_version, updated_at')
+      .eq('user_id', userId)
+      .in('phase', ['attack', 'defense'])
+      .eq('is_active', true)
+
+    const clientFormationSnapshot = buildClientFormationSnapshot({
+      starters: titolari,
+      baseLayout: clientFormation,
+      variantRows: formationVariants || []
+    })
+
     // 4. Recupera impostazioni tattiche
     const { data: tacticalSettings, error: tacticalError } = await admin
       .from('team_tactical_settings')
       .select('team_playing_style, individual_instructions')
       .eq('user_id', userId)
       .maybeSingle()
+
+    const effectiveTacticalSettings = tacticalSettings
+      ? {
+          ...tacticalSettings,
+          individual_instructions: activeTacticalInstructions(tacticalSettings, clientFormationSnapshot)
+        }
+      : null
 
     // 5. Recupera allenatore attivo
     const { data: activeCoach, error: coachError } = await admin
@@ -597,6 +637,8 @@ if (process.env.NODE_ENV !== 'production') {
     titolariCount: titolari.length,
     riserveCount: riserve.length,
     hasClientFormation: !!clientFormation,
+    hasFluidFormation: clientFormationSnapshot.enabled,
+    formationVariantsError: formationVariantsError?.message || null,
     hasTacticalSettings: !!tacticalSettings,
     hasActiveCoach: !!activeCoach,
     matchHistorySize: matchHistory?.length || 0,
@@ -612,7 +654,7 @@ if (process.env.NODE_ENV !== 'production') {
         opponentFormation,
         roster || [],
         clientFormation || null,
-        tacticalSettings || null,
+        effectiveTacticalSettings || null,
         activeCoach || null,
         matchHistory || [],
         tacticalPatterns || null,
@@ -626,7 +668,8 @@ if (process.env.NODE_ENV !== 'production') {
           team_playing_style: tacticalSettings?.team_playing_style || null,
           coachFeedback: coachFeedback || [],
           userProfile: userProfile || null,
-          gameAnalysis: gameAnalysis?.stats || null
+          gameAnalysis: gameAnalysis?.stats || null,
+          clientFormationSnapshot
         },
         lang
       )
@@ -897,7 +940,12 @@ if (process.env.NODE_ENV !== 'production') {
               if (!replaceName) {
                 suggestion.replace_player_name = replaced.player_name || replaced.name || '?'
               }
-              const slotRole = String(replaced.position || suggestion.replace_position || '').trim()
+              const slotRole = String(
+                getSnapshotPlayerRole(clientFormationSnapshot, replaced, 'defense')
+                || replaced.position
+                || suggestion.replace_position
+                || ''
+              ).trim()
               if (!suggestion.replace_position) {
                 suggestion.replace_position = slotRole
               }
@@ -908,7 +956,12 @@ if (process.env.NODE_ENV !== 'production') {
                 suggestion.reserve_card_position = String(suggestion.position).trim()
               }
 
-              const swapCheck = validateStartingXISwap(titolari, reserve || { position: suggestion.position }, replaceId)
+              const swapCheck = validateSnapshotSwap(
+                titolari,
+                reserve || { position: suggestion.position },
+                replaceId,
+                clientFormationSnapshot
+              )
               if (!swapCheck.valid) {
                 isValid = false
                 reason = swapCheck.errors.includes('incompatible_slot_role')
@@ -964,7 +1017,7 @@ if (process.env.NODE_ENV !== 'production') {
       }
     }
 
-    const inferredSwap = inferStructuredBenchSwap(countermeasures, riserve, titolari)
+    const inferredSwap = inferStructuredBenchSwap(countermeasures, riserve, titolari, clientFormationSnapshot)
     if (inferredSwap) {
       countermeasures.countermeasures.player_suggestions = [inferredSwap]
       console.info('[generate-countermeasures] Recovered structured bench swap from verified customer copy', {
@@ -1002,11 +1055,30 @@ if (process.env.NODE_ENV !== 'production') {
           continue
         }
 
-        const check = validateIndividualInstruction(slot, playerId, instruction, titolari, clientFormation || null)
+        const check = validateIndividualInstruction(
+          slot,
+          playerId,
+          instruction,
+          titolari,
+          clientFormationSnapshot
+        )
         if (check.valid) {
+          const currentInstruction = effectiveTacticalSettings?.individual_instructions?.[slot]
+          if (
+            currentInstruction?.enabled &&
+            currentInstruction.player_id === playerId &&
+            normalizeInstructionId(currentInstruction.instruction) === instruction
+          ) {
+            continue
+          }
           const rosterPlayer = titolari.find((p) => p.id === playerId)
           const nameFromRoster = rosterPlayer?.player_name ? String(rosterPlayer.player_name).trim() : ''
-          const posFromRoster = rosterPlayer?.position ? String(rosterPlayer.position).trim() : ''
+          const instructionPhase = slot.startsWith('difesa_') ? 'defense' : 'attack'
+          const posFromRoster = getSnapshotPlayerRole(
+            clientFormationSnapshot,
+            rosterPlayer,
+            instructionPhase
+          ) || (rosterPlayer?.position ? String(rosterPlayer.position).trim() : '')
           const nameFromModel = typeof instr.player_name === 'string' ? instr.player_name.trim() : ''
           const posFromModel = typeof instr.position === 'string' ? instr.position.trim() : ''
           const targetPlayerName = ['marcatura_stretta', 'marcatura_uomo'].includes(instruction)
@@ -1143,7 +1215,7 @@ if (process.env.NODE_ENV !== 'production') {
       lang: language === 'en' || language === 'es' ? language : 'it',
       opponentFormation,
       roster,
-      currentTacticalSettings: tacticalSettings,
+      currentTacticalSettings: effectiveTacticalSettings,
       clientFormation
     })
 
