@@ -87,6 +87,10 @@ const COPY = {
     en: (name) => `Welcome back ${name}. What would you like to do today?`,
     es: (name) => `Bienvenido de nuevo ${name}. ¿Qué quieres hacer hoy?`
   },
+  newConversation: { it: 'Nuova conversazione', en: 'New conversation', es: 'Nueva conversación' },
+  ctaPromptNextMatch: { it: 'Preparami per la prossima partita', en: 'Get me ready for the next match', es: 'Prepárame para el próximo partido' },
+  ctaPromptRosa: { it: 'Come posso migliorare la mia rosa?', en: 'How can I improve my squad?', es: '¿Cómo puedo mejorar mi plantilla?' },
+  ctaPromptImprove: { it: 'Su cosa dovrei lavorare di più?', en: 'What should I work on the most?', es: '¿En qué debería trabajar más?' },
   attachCamera: { it: 'Scatta foto', en: 'Take photo', es: 'Hacer foto' },
   attachGallery: { it: 'Carica da galleria', en: 'Upload from gallery', es: 'Subir de la galería' },
   attachStatsMode: { it: 'Statistiche', en: 'Stats', es: 'Estadísticas' },
@@ -829,7 +833,6 @@ export default function HeroChat({
   const handledStatsUploadRequestRef = React.useRef(0)
   const stickToBottomRef = React.useRef(true)
   const pendingScrollRef = React.useRef(false)
-  const suppressNextScrollRef = React.useRef(false)
 
   const lastMatch = Array.isArray(recentMatches) && recentMatches.length > 0 ? recentMatches[0] : null
   const lastMatchRaw = lastMatch?.created_at || lastMatch?.match_date || null
@@ -895,10 +898,6 @@ export default function HeroChat({
   React.useEffect(() => {
     const el = feedRef.current
     if (!el) return
-    if (suppressNextScrollRef.current) {
-      suppressNextScrollRef.current = false
-      return
-    }
     if (pendingScrollRef.current || stickToBottomRef.current) {
       el.scrollTop = el.scrollHeight
       pendingScrollRef.current = false
@@ -1006,9 +1005,8 @@ export default function HeroChat({
         if (!cancelled && historyRes.ok) {
           setThreadId(historyData.thread?.id || null)
           if (Array.isArray(historyData.messages) && historyData.messages.length) {
-            // Il primo popolamento da storico non deve scrollare in fondo:
-            // l'utente legge dall'alto (saluto → conversazione).
-            suppressNextScrollRef.current = true
+            // Si atterra in fondo: ultimi messaggi + CTA "nuova conversazione".
+            pendingScrollRef.current = true
             setMessages(historyData.messages)
           }
         }
@@ -1983,17 +1981,6 @@ export default function HeroChat({
           <p className="hc-bannerSub">{L(lang, COPY.heroSub)}</p>
         </div>
 
-        <div className="hc-row">
-          <span className="hc-bubbleAvatar" aria-hidden="true">
-            <img src="/logo.png" alt="" />
-          </span>
-          <div className="hc-bubble hc-bubbleHero">
-            {greetingVariant === 'first'
-              ? Lfn(lang, COPY.greetingNamed, clientName)
-              : Lfn(lang, COPY.greetingReturningNamed, clientName)}
-          </div>
-        </div>
-
         {historyLoading && (
           <div className="hc-historyLoading" aria-live="polite">
             <span className="hc-historyDot" />
@@ -2337,6 +2324,45 @@ export default function HeroChat({
           </div>
         )}
 
+        {/* Ripartenza: il saluto vive in fondo come CTA per la nuova conversazione.
+            Chi vuole rileggere scorre in alto; chi torna riparte da qui. */}
+        {!historyLoading && (
+          <div className="hc-newConv">
+            {messages.length > 0 && (
+              <div className="hc-newConvDivider" aria-hidden="true">
+                <span className="hc-newConvLine" />
+                <span className="hc-newConvLabel">{L(lang, COPY.newConversation)}</span>
+                <span className="hc-newConvLine" />
+              </div>
+            )}
+            <div className="hc-row">
+              <span className="hc-bubbleAvatar" aria-hidden="true">
+                <img src="/logo.png" alt="" />
+              </span>
+              <div className="hc-bubble hc-bubbleHero">
+                {greetingVariant === 'first'
+                  ? Lfn(lang, COPY.greetingNamed, clientName)
+                  : Lfn(lang, COPY.greetingReturningNamed, clientName)}
+              </div>
+            </div>
+            <div className="hc-newConvChips">
+              {[COPY.ctaPromptNextMatch, COPY.ctaPromptRosa, COPY.ctaPromptImprove].map((prompt) => {
+                const text = L(lang, prompt)
+                return (
+                  <button
+                    key={text}
+                    type="button"
+                    className="hc-bubbleAction"
+                    onClick={() => sendMessage(text)}
+                  >
+                    {text}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* LOW HP banner (solo saldo reale noto) */}
@@ -2595,6 +2621,42 @@ export default function HeroChat({
 
         .hc-historyDot:nth-child(2) { animation-delay: 0.15s; }
         .hc-historyDot:nth-child(3) { animation-delay: 0.3s; }
+
+        .hc-newConv {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          padding-top: 2px;
+        }
+
+        .hc-newConvDivider {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 0 4px;
+        }
+
+        .hc-newConvLine {
+          flex: 1;
+          height: 1px;
+          background: var(--border-soft);
+        }
+
+        .hc-newConvLabel {
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--text-dim);
+          white-space: nowrap;
+        }
+
+        .hc-newConvChips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          padding-left: 44px;
+        }
 
         .hc-workflowDone {
           display: inline-flex;
