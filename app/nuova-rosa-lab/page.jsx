@@ -6661,6 +6661,10 @@ export default withAuth(function NuovaRosaLabPage() {
           background: #0a1117 !important;
         }
 
+        .shell-main:has(.nr-page) {
+          background: #0a1117 !important;
+        }
+
         .nr-page {
           color: #f4f6f7;
         }
