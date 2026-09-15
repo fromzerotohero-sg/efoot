@@ -72,11 +72,11 @@ export default function TacticalSettingsPanel({
   }, [])
 
   return (
-    <div className="neon-card" style={{
+    <div style={{
       marginBottom: '24px',
-      background: 'var(--surface)',
-      border: '1px solid rgba(0, 212, 255, 0.3)',
-      borderRadius: '10px',
+      background: 'linear-gradient(180deg, rgba(13, 20, 40, 0.9), rgba(8, 12, 28, 0.95))',
+      border: '1px solid rgba(255, 255, 255, 0.08)',
+      borderRadius: '14px',
       overflow: 'hidden'
     }}>
       {/* Header - Clickabile per Collassare/Espandere */}
@@ -87,23 +87,23 @@ export default function TacticalSettingsPanel({
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '12px',
-          padding: 'clamp(14px, 2vw, 18px)',
+          padding: 'clamp(14px, 2vw, 16px)',
           cursor: 'pointer',
           userSelect: 'none',
-          background: isCollapsed 
-            ? 'rgba(0, 212, 255, 0.05)' 
-            : 'rgba(0, 212, 255, 0.1)',
+          background: isCollapsed
+            ? 'rgba(255, 255, 255, 0.02)'
+            : 'rgba(255, 255, 255, 0.03)',
           transition: 'background 0.2s ease',
-          borderBottom: isCollapsed ? 'none' : '1px solid rgba(0, 212, 255, 0.15)'
+          borderBottom: isCollapsed ? 'none' : '1px solid rgba(255, 255, 255, 0.08)'
         }}
         onMouseEnter={(e) => {
           if (isCollapsed) {
-            e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)'
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
           }
         }}
         onMouseLeave={(e) => {
           if (isCollapsed) {
-            e.currentTarget.style.background = 'rgba(0, 212, 255, 0.05)'
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)'
           }
         }}
       >
@@ -112,21 +112,21 @@ export default function TacticalSettingsPanel({
           alignItems: 'center',
           gap: '10px'
         }}>
-          <Settings size={18} color="var(--neon-blue)" />
+          <Settings size={18} color="#7ceeff" />
           <h2 style={{
-            fontSize: 'clamp(16px, 2vw, 18px)',
+            fontSize: 'clamp(15px, 1.8vw, 16px)',
             fontWeight: 600,
             margin: 0,
-            color: 'var(--neon-blue)',
-            letterSpacing: '0.3px'
+            color: '#fff',
+            letterSpacing: '0.2px'
           }}>
             {t('tacticalSettings')}
           </h2>
         </div>
         {isCollapsed ? (
-          <ChevronDown size={20} color="var(--neon-blue)" style={{ opacity: 0.7 }} />
+          <ChevronDown size={20} color="rgba(255, 255, 255, 0.6)" />
         ) : (
-          <ChevronUp size={20} color="var(--neon-blue)" style={{ opacity: 0.7 }} />
+          <ChevronUp size={20} color="rgba(255, 255, 255, 0.6)" />
         )}
       </div>
 
@@ -140,26 +140,28 @@ export default function TacticalSettingsPanel({
       <div style={{ marginBottom: '16px' }}>
         <label style={{
           display: 'block',
-          fontSize: 'clamp(12px, 1.3vw, 13px)',
-          fontWeight: 600,
-          marginBottom: '6px',
-          color: 'var(--text-main)',
-          opacity: 0.9
+          fontSize: 'clamp(11px, 1.2vw, 12px)',
+          fontWeight: 700,
+          marginBottom: '8px',
+          color: '#7ceeff',
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase'
         }}>
           {t('teamPlayingStyle')}
         </label>
         <div style={{ position: 'relative' }}>
           <select
+            className="tsp-select"
             value={teamPlayingStyle}
             onChange={(e) => setTeamPlayingStyle(e.target.value)}
             style={{
               width: '100%',
               padding: '10px 12px',
               paddingRight: '40px',
-              background: 'var(--inset-bg)',
-              border: '1px solid var(--neon-blue)',
-              borderRadius: '8px',
-              color: 'var(--text-main)',
+              background: 'rgba(8, 12, 28, 0.85)',
+              border: '1px solid rgba(255, 255, 255, 0.14)',
+              borderRadius: '10px',
+              color: '#fff',
               fontSize: 'clamp(13px, 1.5vw, 15px)',
               cursor: 'pointer',
               appearance: 'none',
@@ -174,23 +176,23 @@ export default function TacticalSettingsPanel({
               </option>
             ))}
           </select>
-          <ChevronDown 
-            size={18} 
+          <ChevronDown
+            size={18}
+            color="rgba(255, 255, 255, 0.55)"
             style={{
               position: 'absolute',
               right: '12px',
               top: '50%',
               transform: 'translateY(-50%)',
-              pointerEvents: 'none',
-              opacity: 0.6
+              pointerEvents: 'none'
             }}
           />
         </div>
         <div style={{
-          fontSize: 'clamp(10px, 1.1vw, 11px)',
-          opacity: 0.6,
-          marginTop: '4px',
-          lineHeight: '1.3'
+          fontSize: 'clamp(11px, 1.2vw, 12px)',
+          color: 'rgba(255, 255, 255, 0.55)',
+          marginTop: '6px',
+          lineHeight: '1.4'
         }}>
           {t('teamPlayingStyleDescription')}
         </div>
@@ -212,23 +214,23 @@ export default function TacticalSettingsPanel({
           )
           
           return (
-            <div 
+            <div
               key={category}
-              className="neon-card"
               style={{
-                padding: '12px',
-                background: 'rgba(0, 212, 255, 0.04)',
-                border: '1px solid rgba(0, 212, 255, 0.15)',
-                borderRadius: '6px'
+                padding: 'clamp(12px, 1.5vw, 14px)',
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '12px'
               }}
             >
               {/* Titolo Categoria - Compatto */}
               <div style={{
-                fontSize: 'clamp(12px, 1.3vw, 13px)',
-                fontWeight: 600,
-                marginBottom: '8px',
-                color: 'var(--neon-blue)',
-                opacity: 0.9
+                fontSize: 'clamp(11px, 1.2vw, 12px)',
+                fontWeight: 700,
+                marginBottom: '10px',
+                color: '#7ceeff',
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase'
               }}>
                 {t(config.nameKey)}
               </div>
@@ -238,23 +240,24 @@ export default function TacticalSettingsPanel({
                 <label style={{
                   display: 'block',
                   fontSize: 'clamp(11px, 1.2vw, 12px)',
-                  opacity: 0.75,
+                  color: 'rgba(255, 255, 255, 0.55)',
                   marginBottom: '4px'
                 }}>
                   {t('instruction')}:
                 </label>
                 <div style={{ position: 'relative' }}>
                   <select
+                    className="tsp-select"
                     value={currentSetting.instruction || ''}
                     onChange={(e) => handleCategoryChange(category, 'instruction', e.target.value)}
                     style={{
                       width: '100%',
-                      padding: '8px 12px',
-                      paddingRight: '35px',
-                      background: 'var(--inset-bg)',
-                      border: '1px solid var(--neon-blue)',
-                      borderRadius: '6px',
-                      color: 'var(--text-main)',
+                      padding: '10px 12px',
+                      paddingRight: '36px',
+                      background: 'rgba(8, 12, 28, 0.85)',
+                      border: '1px solid rgba(255, 255, 255, 0.14)',
+                      borderRadius: '10px',
+                      color: '#fff',
                       fontSize: 'clamp(12px, 1.3vw, 14px)',
                       cursor: 'pointer',
                       appearance: 'none',
@@ -271,15 +274,15 @@ export default function TacticalSettingsPanel({
                       </option>
                     ))}
                   </select>
-                  <ChevronDown 
-                    size={16} 
+                  <ChevronDown
+                    size={16}
+                    color="rgba(255, 255, 255, 0.55)"
                     style={{
                       position: 'absolute',
                       right: '10px',
                       top: '50%',
                       transform: 'translateY(-50%)',
-                      pointerEvents: 'none',
-                      opacity: 0.6
+                      pointerEvents: 'none'
                     }}
                   />
                 </div>
@@ -290,24 +293,25 @@ export default function TacticalSettingsPanel({
                 <label style={{
                   display: 'block',
                   fontSize: 'clamp(11px, 1.2vw, 12px)',
-                  opacity: 0.75,
+                  color: 'rgba(255, 255, 255, 0.55)',
                   marginBottom: '4px'
                 }}>
                   {t('selectPlayer')}:
                 </label>
                 <div style={{ position: 'relative' }}>
                   <select
+                    className="tsp-select"
                     value={currentSetting.player_id || ''}
                     onChange={(e) => handleCategoryChange(category, 'player_id', e.target.value)}
                     disabled={compatiblePlayers.length === 0}
                     style={{
                       width: '100%',
-                      padding: '8px 12px',
-                      paddingRight: '35px',
-                      background: 'var(--inset-bg)',
-                      border: '1px solid var(--neon-blue)',
-                      borderRadius: '6px',
-                      color: compatiblePlayers.length === 0 ? 'var(--text-dim)' : 'var(--text-main)',
+                      padding: '10px 12px',
+                      paddingRight: '36px',
+                      background: 'rgba(8, 12, 28, 0.85)',
+                      border: '1px solid rgba(255, 255, 255, 0.14)',
+                      borderRadius: '10px',
+                      color: compatiblePlayers.length === 0 ? 'rgba(255, 255, 255, 0.45)' : '#fff',
                       fontSize: 'clamp(12px, 1.3vw, 14px)',
                       cursor: compatiblePlayers.length === 0 ? 'not-allowed' : 'pointer',
                       appearance: 'none',
@@ -323,23 +327,23 @@ export default function TacticalSettingsPanel({
                       </option>
                     ))}
                   </select>
-                  <ChevronDown 
-                    size={16} 
+                  <ChevronDown
+                    size={16}
+                    color="rgba(255, 255, 255, 0.55)"
                     style={{
                       position: 'absolute',
                       right: '10px',
                       top: '50%',
                       transform: 'translateY(-50%)',
-                      pointerEvents: 'none',
-                      opacity: 0.6
+                      pointerEvents: 'none'
                     }}
                   />
                 </div>
                 {compatiblePlayers.length === 0 && (
                   <div style={{
                     fontSize: 'clamp(11px, 1.2vw, 12px)',
-                    opacity: 0.6,
-                    marginTop: '4px',
+                    color: 'rgba(255, 255, 255, 0.55)',
+                    marginTop: '6px',
                     fontStyle: 'italic'
                   }}>
                     {t('noCompatiblePlayers')}
@@ -355,22 +359,48 @@ export default function TacticalSettingsPanel({
       <button
         onClick={handleSave}
         disabled={saving}
-        className="btn primary"
+        className="tsp-save-button"
         style={{
           width: '100%',
-          display: 'flex',
-          alignItems: 'center',
           justifyContent: 'center',
-          gap: '6px',
-          padding: '10px 12px',
           fontSize: 'clamp(12px, 1.3vw, 13px)',
-          fontWeight: 600,
           marginTop: '8px'
         }}
       >
         <Save size={14} />
         {saving ? t('saving') : t('save')}
       </button>
+      <style jsx>{`
+        .tsp-select:focus {
+          outline: none;
+          border-color: rgba(0, 212, 255, 0.45) !important;
+        }
+        .tsp-select option {
+          background: #0d1428;
+          color: #fff;
+        }
+        .tsp-save-button {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 11px 14px;
+          border-radius: 12px;
+          border: 1px solid rgba(0, 212, 255, 0.3);
+          background: rgba(0, 212, 255, 0.1);
+          color: #fff;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.18s ease, border-color 0.18s ease;
+        }
+        .tsp-save-button:hover:not(:disabled) {
+          background: rgba(0, 212, 255, 0.16);
+          border-color: rgba(0, 212, 255, 0.45);
+        }
+        .tsp-save-button:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      `}</style>
       </div>
       )}
     </div>
