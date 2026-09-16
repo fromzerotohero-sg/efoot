@@ -203,7 +203,7 @@ export async function POST(req) {
     let body
     try { body = await req.json() } catch { return NextResponse.json({ error: ERRORS.BODY_INVALID[lang] }, { status: 400 }) }
 
-    const conversation = Array.isArray(body.conversation) ? body.conversation.slice(0, MAX_CONVERSATION_MESSAGES) : []
+    const conversation = Array.isArray(body.conversation) ? body.conversation.slice(-MAX_CONVERSATION_MESSAGES) : []
     if (conversation.length === 0) return NextResponse.json({ error: ERRORS.CONVERSATION_REQUIRED[lang] }, { status: 400 })
 
     const sessionType = ['profile_setup', 'feedback', 'update'].includes(body.session_type) ? body.session_type : 'feedback'
@@ -260,6 +260,19 @@ export async function POST(req) {
       if (profileUpdates.ai_weak_point) {
         const WEAK_POINT_TO_LABEL = { defence: 'Difesa', attack: 'Attacco', set_pieces: 'Piazzati', transitions: 'Transizioni', final_minutes: 'Finale partita' }
         profileUpdates.common_problems = [WEAK_POINT_TO_LABEL[profileUpdates.ai_weak_point] || profileUpdates.ai_weak_point]
+      }
+      if (Array.isArray(profileUpdates.common_problems)) {
+        const { data: currentProfile, error: currentProfileError } = await admin
+          .from('user_profiles')
+          .select('common_problems')
+          .eq('user_id', userId)
+          .maybeSingle()
+        if (!currentProfileError) {
+          const previous = Array.isArray(currentProfile?.common_problems) ? currentProfile.common_problems : []
+          profileUpdates.common_problems = [...new Set([...previous, ...profileUpdates.common_problems])].slice(0, 10)
+        } else {
+          delete profileUpdates.common_problems
+        }
       }
       profileUpdates.updated_at = new Date().toISOString()
 

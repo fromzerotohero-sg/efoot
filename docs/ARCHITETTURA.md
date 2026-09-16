@@ -1,67 +1,76 @@
 # Architettura corrente
 
-Verificato sul codice corrente del 15 settembre 2026.
+Verificato sul codice del 16 settembre 2026.
 
 ## Stack
 
 | Layer | Tecnologia |
 |-------|------------|
-| App | Next.js 14 App Router, React 18, CSS proprio (nessun Tailwind/shadcn) |
-| Auth | MetalGate SSO + mapping `user_profiles`; fallback Supabase Auth in `validateToken` |
-| DB | Supabase PostgreSQL (progetto eFootball). Wallet/identità credito su MetalGate |
+| App | Next.js 14 App Router, React 18, CSS proprio |
+| Auth | MetalGate SSO + mapping `user_profiles`; fallback Supabase Auth |
+| DB | Supabase PostgreSQL (progetto eFootball). Wallet su MetalGate |
 | AI | OpenAI via `lib/openaiHelper.js`. RAG keyword su `info_rag.md` |
 | Hosting | Vercel |
-| Pagamenti HP | MetalGate wallet API (non Stripe/PayPal nel codice) |
+| Backend futuro | Fastify TypeScript in `backend/` — **dormiente**, zero traffico |
 
-`package.json` ha ancora il nome interno `gattilio27`; il prodotto utente è From Zero To Hero.
+`package.json` ha ancora il nome interno `gattilio27`; il prodotto è From Zero To Hero.
 
 ## Shell globale
 
-`app/layout.jsx` **non** monta sidebar/chat direttamente. Delega a `components/AppLayoutShell.jsx`:
+`app/layout.jsx` delega a `components/AppLayoutShell.jsx`:
 
-- `SidebarNew`, `TopBar`, `BottomNavigation`
-- `InstallAppPrompt` (off su staging/preview)
+- `SidebarNew`, `TopBar`, `BottomNavigation`, `NotificationBell`
+- `InstallAppPrompt` (soft CTA; off su staging/preview)
 - `MaintenanceGate`, `PrelaunchGate`
 
-Analytics (GA `G-X69T3QE3GG`, Clarity `wylmfczjap`) si caricano in production; su `NEXT_PUBLIC_APP_ENV=staging` o `VERCEL_ENV=preview` restano spenti.
+Analytics (GA, Clarity) solo in production.
 
-## Route pagina (reali)
+## Pagine reali
 
 | Path | Ruolo |
 |------|--------|
-| `/` | Coach Home (S2): `components/coach-v2/CoachWorkspace.jsx` |
-| `/gestione-formazione` | Rosa: re-export di `nuova-rosa-lab` |
+| `/` | Coach Home + Hero Chat |
+| `/gestione-formazione` | Rosa (re-export `nuova-rosa-lab`) |
+| `/nuova-rosa-lab` | Stesso motore Rosa |
 | `/card-advisor-lab` | Carte |
-| `/allenatori` | Coach cards |
-| `/impostazioni-profilo` | Hub profilo/impostazioni/notifiche (include HP) |
-| `/login` | Redirect MetalGate |
-| `/auth/callback`, `/login-success` | SSO |
+| `/allenatori` | Allenatori |
+| `/impostazioni-profilo` | Profilo, HP, notifiche, account |
+| `/login`, `/auth/callback`, `/login-success` | SSO |
 | `/access` | Gate prelaunch |
 | `/maintenance` | Manutenzione |
-| `/grafici-comparazione` | Grafici |
+| `/forgot-password`, `/reset-password`, `/auth/magiclink-callback` | Legacy Supabase |
 
-Assenti nel codice: `/classifica`, `/api/leaderboard`, `lib/leaderboardHelper.js`.
+Assenti: `/classifica`, pagine Match autonome, Live Coach, Tasks UI.
 
-## Motori, non pagine
+## Nav percepita
 
-UX V2 unifica la percezione “Hero Coach”. I motori restano separati:
+```
+Coach · Rosa · Carte
+Utility: Account, Memoria Hero, HP, lingua
+```
+
+Partite, stats, feedback e contromisure = workflow dentro Hero.
+
+## Motori (non confondere)
 
 ```
 Hero UI
-  domanda/consiglio  → POST /api/assistant-chat
-  feedback/profilo   → POST /api/coach-feedback-chat
-                       POST /api/save-coach-feedback
-  stats/partita      → POST /api/extract-game-analysis e /api/extract-match-data
-  contromisure       → POST /api/generate-countermeasures
+  consiglio tattico     → POST /api/assistant-chat
+  feedback / profilo    → POST /api/coach-feedback-chat
+                          POST /api/save-coach-feedback
+  screenshot / stats    → extract-* + save-match
+  contromisure          → POST /api/generate-countermeasures
+  carte deep            → POST /api/card-advisor-lab/deep-analysis
 ```
 
-## Cosa non riscrivere nello sprint UX
+## Cosa non riscrivere alla cieca
 
 - Contratti API e schema `user_profiles`, slot rosa, `user_tactical_feedback`
-- `creditService` / MetalGate wallet / prezzi HP
-- `info_rag.md` e `ragHelper.js` (non è vector-RAG)
+- `creditService` / prezzi HP / MetalGate wallet
+- `info_rag.md` e Truth Layer
 - Auth SSO e mapping MetalGate
-- Edge Functions Supabase (quarantena: non collegare, non cancellare)
-- Pagina `nuova-rosa-lab` come rewrite integrale (~9.8k righe)
+- Edge Functions Supabase in quarantena (non collegare, non cancellare)
+- Rewrite integrale di `nuova-rosa-lab`
+- Attivare il backend dormiente senza cutover approvato
 
-Semplificare significa BYPASS UX (nascondere ingresso primario), non spegnere il motore.
+Dettaglio sistemi: [README.md](./README.md).

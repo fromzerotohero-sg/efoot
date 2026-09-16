@@ -4,25 +4,33 @@
 
 | File | Ruolo |
 |------|--------|
-| `authHelper.js` | MetalGate verify + fallback Supabase; Bearer |
-| `supabaseClient.js` | Client browser (anon key) |
-| `creditService.js` | `AI_COST = 2`, MetalGate wallet, tracking locale |
-| `openaiHelper.js` | timeout/retry, detect model_not_found |
+| `authHelper.js` | MetalGate verify + fallback Supabase |
+| `supabaseClient.js` | Client browser (anon) |
+| `creditService.js` | `AI_COST = 2`, wallet MetalGate, tracking locale |
+| `openaiHelper.js` | timeout/retry, model_not_found |
 | `ragHelper.js` | sezioni da `info_rag.md` |
-| `rateLimiter.js` | in-memory, non multi-istanza |
-| `diagnosticBuilder.js` | cache contesto Hero |
+| `efootballTruthLayer.js` | regole ufficiali versionate |
+| `coachPromptRules.js` | policies + verbalizzazione condivisa |
+| `rateLimiter.js` | in-memory |
+| `diagnosticBuilder.js` / `diagnosticCacheSanitize.js` | contesto Hero |
+| `aiKnowledgeHelper.js` | “Quanto ti conosce” |
+| `heroChatStore.js` | persistenza thread (niente `system` UI) |
 
-## Rosa / carte / coach
+## Rosa / tattiche / zone
 
-`rosterSlotUtils.js`, `playerSavePayload.js`, `catalogPlayerBackfill.js`, `cardAdvisor*.js`, `efootballBuildRules.js`, `tacticalInstructions.js`, `formationDefaultSlots.js`, `validateFormationLimits.js`, …
+`playerSavePayload.js`, `rosterSkillsContext.js`, `playerSkillLabels.js`, `playingStyleResolve.js`, `teamPlayingStyles.js`, `tacticalInstructions.js`, `matchAttackZones.js`, `formation*`, `validateFormationLimits.js`, …
 
-## Task / knowledge / i18n
+## Card Advisor / contromisure
 
-`taskHelper.js` (generate + fallback statico), `aiKnowledgeHelper.js`, `i18n.js`, `errorHelper.js`, `fetchHelper.js`
+`cardAdvisor*.js`, `countermeasuresHelper.js`, `prematch*.js`
 
-## Gate / PWA
+## Gate / PWA / i18n
 
-`prelaunchServer.js`, `prelaunchRoutes.js`, `maintenanceServer.js`, `maintenanceRoutes.js`, `pwaInstall.js`
+`prelaunch*`, `maintenance*`, `pwaInstall.js`, `coachReadinessNudge.js`, `i18n.js`
 
-Doc crediti: [docs/COSTI_HP_USO_PIATTAFORMA.md](../docs/COSTI_HP_USO_PIATTAFORMA.md).  
-Non esiste più `docs/SISTEMA_CREDITI_AI.md`.
+## Legacy
+
+`taskHelper.js` — UI Task rimossa; non trattarlo come feature attiva.
+
+Costi: [docs/COSTI_HP_USO_PIATTAFORMA.md](../docs/COSTI_HP_USO_PIATTAFORMA.md).  
+Sistemi: [docs/sistemi/](../docs/sistemi/).

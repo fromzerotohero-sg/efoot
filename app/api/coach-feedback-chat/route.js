@@ -31,8 +31,9 @@ function getLang(req) {
 function normalizeHistory(raw) {
   if (!Array.isArray(raw) || raw.length === 0) return []
   const out = []
-  for (let i = 0; i < Math.min(raw.length, MAX_HISTORY_MESSAGES); i++) {
-    const item = raw[i]
+  const recent = raw.slice(-MAX_HISTORY_MESSAGES)
+  for (let i = 0; i < recent.length; i++) {
+    const item = recent[i]
     if (!item || typeof item !== 'object') continue
     const role = item.role === 'assistant' ? 'assistant' : item.role === 'user' ? 'user' : null
     if (!role) continue

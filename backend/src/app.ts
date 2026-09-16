@@ -251,7 +251,8 @@ export async function buildApp(overrides: BuildAppOverrides = {}): Promise<Fasti
   // boundary until each domain is converted (same below).
   const knowledgeRefresh = overrides.knowledgeRefresh || createKnowledgeRefreshSideEffect({
     live: !config.dormant && config.allowLive === true,
-    refresh: ({ userId }: { userId: string }) => aiKnowledge.read({ userId, refresh: true }),
+    refresh: ({ userId, token }: { userId: string; token?: string }) =>
+      aiKnowledge.read({ userId, token, refresh: true }),
     logger: app.log
   } as any)
 
@@ -295,7 +296,7 @@ export async function buildApp(overrides: BuildAppOverrides = {}): Promise<Fasti
       logger: app.log,
       afterSave: async ({ token, userId }: { token: string; userId: string }) => {
         await analyticsWrites.recalculatePatterns({ token, userId })
-        knowledgeRefresh.schedule({ userId, source: 'matches.save' })
+        knowledgeRefresh.schedule({ userId, token, source: 'matches.save' })
       }
     } as any)
   registerMatchRoutes(app, { identity: providers.identity, matchWrites })

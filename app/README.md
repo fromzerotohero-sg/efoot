@@ -1,22 +1,22 @@
 # app/ — route Next.js App Router
 
-Root layout: **solo** `app/layout.jsx`. Monta `AppLayoutShell`. Non creare `app/layout.tsx`.
+Root layout: **solo** `app/layout.jsx` → `AppLayoutShell`. Non creare `app/layout.tsx`.
 
-## Pagine
+## Pagine attive
 
-| Path | File | Note |
-|------|------|------|
-| `/` | `page.jsx` | Home/dashboard attuale |
-| `/gestione-formazione` | re-export `nuova-rosa-lab` | Motore Rosa |
-| `/nuova-rosa-lab` | `nuova-rosa-lab/page.jsx` | Stesso motore |
-| `/card-advisor-lab` | Card Advisor | Pilastro Carte |
-| `/allenatori` | Coach | |
-| `/impostazioni-profilo` | Hub impostazioni app | Identita, HP, profilo di gioco, notifiche, preferenze, account |
-| `/login` | Redirect MetalGate | Non è form Supabase primario |
-| `/auth/callback`, `/login-success` | SSO | |
-| `/access` | Prelaunch | |
-| `/maintenance` | Manutenzione | |
+| Path | Note |
+|------|------|
+| `/` | Home Coach + Hero |
+| `/gestione-formazione` | Rosa (re-export `nuova-rosa-lab`) |
+| `/nuova-rosa-lab` | Motore Rosa |
+| `/card-advisor-lab` | Carte |
+| `/allenatori` | Allenatori |
+| `/impostazioni-profilo` | Profilo, HP, notifiche, account |
+| `/login`, `/auth/callback`, `/login-success` | SSO MetalGate |
+| `/access`, `/maintenance` | Gate |
+| `/forgot-password`, `/reset-password`, `/auth/magiclink-callback` | Legacy Supabase |
 
-Partite, statistiche, Palestra e contromisure sono workflow interni a Hero Chat sulla Home, non pagine autonome.
+Partite, stats, Palestra e contromisure = workflow Hero, non pagine autonome.
 
-API: [api/README.md](./api/README.md)
+API: [api/README.md](./api/README.md)  
+Sistemi: [../docs/sistemi/](../docs/sistemi/)

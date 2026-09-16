@@ -1,92 +1,92 @@
 # Flussi applicativi correnti
 
-Route e side effect verificati nel codice. Dati/tabelle: [FLUSSI_LOGICA_SUPABASE.md](./FLUSSI_LOGICA_SUPABASE.md).
+Route e side effect verificati nel codice. Tabelle: [FLUSSI_LOGICA_SUPABASE.md](./FLUSSI_LOGICA_SUPABASE.md).  
+Sistemi: [sistemi/](./sistemi/).
 
 ## Auth (MetalGate)
 
 ```
-/login
-  → NEXT_PUBLIC_METALGATE_LOGIN_URL
-  → /auth/callback
-  → POST /api/auth/metalgate-callback
-  → mapping user_profiles.metalgate_user_id
-  → localStorage: metalgate_user + auth_token
-  → /login-success
-  → app (eventuale /access se PRELAUNCH_ACCESS_CODE è set)
+/login → MetalGate → /auth/callback → metalgate-callback
+  → user_profiles.metalgate_user_id
+  → localStorage token → /login-success → app
 ```
 
-`lib/authHelper.validateToken`: prova `POST {METALGATE_API}/sso/verify`, poi fallback `supabase.auth.getUser` salvo `forbidSupabaseFallback`.
-
-Route `forgot-password` / `reset-password` esistono ancora (legacy Supabase). L’ingresso primario è SSO MetalGate.
+Dettaglio: [sistemi/01-AUTH.md](./sistemi/01-AUTH.md).
 
 ## Hero Chat
 
 ```
-HeroChat (workflow integrato nella Home Coach)
-  → POST /api/assistant-chat  (Bearer)
-  → RAG sezioni da info_rag.md (keyword, non embeddings)
-  → contesto da user_profiles, rosa, coach, cache diagnostica
-  → se cache >6h il dettaglio user_tactical_feedback può non entrare nel prompt (P1 noto)
-  → deduct AI_COST (2 HP) via creditService / MetalGate
+HeroChat → POST /api/assistant-chat (Bearer, 2 HP)
+  → Truth Layer + RAG keyword (info_rag.md)
+  → contesto: profilo, rosa, coach, diagnostic, feedback, zone
+  → risposta naturale + suggerimenti
 ```
 
-## Palestra (motore interno)
+Persistenza: `/api/hero-chat` (niente messaggi `system` UI).  
+Dettaglio: [sistemi/04-HERO-CHAT.md](./sistemi/04-HERO-CHAT.md).
 
-Aperta da Home e da contromisure, non è una route primaria.
+## Palestra
 
 ```
-HeroChat — workflow feedback
-  → POST /api/coach-feedback-chat
-  → POST /api/save-coach-feedback  → user_tactical_feedback + campi profilo
+workflow feedback → coach-feedback-chat (2 HP)
+                 → save-coach-feedback (2 HP)
+                 → user_tactical_feedback (+ profilo se dichiarato)
 ```
 
-UX V2: stessa identità Hero, motori separati.
+Dettaglio: [sistemi/05-PALESTRA-COACH.md](./sistemi/05-PALESTRA-COACH.md).
 
 ## Rosa
 
 ```
-/gestione-formazione  (= nuova-rosa-lab)
-  picker catalogo → /api/player-catalog/search
-  save player     → /api/supabase/save-player
-  slot            → assign-player-to-slot / remove-player-from-slot
-  layout          → save-formation-layout
-  tattiche        → save-tactical-settings
-  coach           → save-coach / set-active-coach / extract-coach
+/gestione-formazione
+  catalogo → player-catalog/search
+  save/slot/layout/tattiche/coach → /api/supabase/* e /api/coaches
+  extract → extract-player / extract-coach
 ```
 
-11 titolari (`slot_index` 0–10) + riserve (`slot_index` NULL).
+Dettaglio: [sistemi/02-ROSA.md](./sistemi/02-ROSA.md).
 
-## Partite e derivati
-
-```
-POST /api/supabase/save-match
-  insert matches
-  async: team_tactical_patterns, AI knowledge, weekly_goals progress
-```
-
-Partite, statistiche e contromisure partono dalla chat Hero. Non esistono pagine Match autonome.
-
-## Hero Points
-
-Saldo effettivo utenti MetalGate: API wallet MetalGate. Tracking locale: `user_credit_usage`, `credit_transactions`.
+## Partite e contromisure
 
 ```
-azione AI → deductCredits / recordUsage (AI_COST = 2)
-402 → messaggio crediti insufficienti
-acquisto → home.fromzerotohero.io (MetalGate)
-webhook  → POST /api/credits/accredit (CREDITS_ACCREDIT_API_KEY)
+screenshot → extract-* → save-match
+  async: patterns + AI knowledge (+ weekly_goals legacy)
+contromisure → generate-countermeasures → hero-chat/plans
 ```
 
-## Task
-
-`GET /api/tasks/list` **non è read-only**: può generare `weekly_goals` e aggiornare il progresso. Fallback statico in `taskHelper.js` è debito noto. Preservare il side effect finché non viene spostato consapevolmente.
+Dettaglio: [sistemi/03-PARTITE.md](./sistemi/03-PARTITE.md).
 
 ## Card Advisor
 
 ```
 /card-advisor-lab
-  evaluate / releases / build-preview
-  deep-analysis → 2 HP, modello CARD_ADVISOR_DEEP_MODEL || gpt-5.2
+  releases / image / build-preview
+  deep-analysis → 2 HP
 ```
 
-Usa contesto reale: profilo, rosa, coach, tattiche, pattern, stats, diagnostic, feedback.
+Dettaglio: [sistemi/06-CARD-ADVISOR.md](./sistemi/06-CARD-ADVISOR.md).
+
+## Hero Points
+
+```
+azione AI → deductCredits (AI_COST = 2)
+402 → crediti insufficienti
+acquisto → home.fromzerotohero.io (MetalGate)
+webhook → POST /api/credits/accredit
+```
+
+Dettaglio: [sistemi/07-CREDITI.md](./sistemi/07-CREDITI.md), [COSTI_HP_USO_PIATTAFORMA.md](./COSTI_HP_USO_PIATTAFORMA.md).
+
+## Memoria / knowledge
+
+```
+save rosa/coach/tattica/profilo/partita/feedback
+  → updateAIKnowledgeScore / knowledge refresh
+GET /api/ai-knowledge → score + breakdown
+```
+
+Dettaglio: [sistemi/08-MEMORIA.md](./sistemi/08-MEMORIA.md).
+
+## Backend dormiente
+
+Zero traffico. Avvio locale solo per test. Cutover futuro documentato in [sistemi/09-BACKEND-DORMIENTE.md](./sistemi/09-BACKEND-DORMIENTE.md).

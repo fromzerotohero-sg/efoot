@@ -1,32 +1,44 @@
-# efoot-backend (cutover-ready, traffic disabled)
+# efoot-backend — cutover-ready, traffic disabled
 
-Separate Node.js + Fastify process. Production traffic stays on Next.js `app/api` until cutover.
-`dormant` describes traffic state, not implementation completeness.
+Processo Node.js + Fastify **separato**. Produzione resta su Next.js `app/api`.
 
-Default mode is **dormant**:
+`dormant` = stato traffico, non completezza implementativa.
 
-- no production traffic
-- no DNS / Vercel / main cutover
-- no writes, no real credit deductions, no cron
-- MetalGate identity and wallet are `NOT IMPLEMENTED` (deferred to Tommaso)
-- removed product APIs, including Live Coach / Realtime, are not exposed
+## Default: dormiente
+
+- nessun traffico produzione
+- nessun DNS / Vercel rewrite
+- nessuna write reale, nessun addebito HP reale, nessun cron
+- MetalGate identity/wallet = `NOT IMPLEMENTED` (Tommaso)
+- Live Coach, Tasks UI, Starter Pack e altre API senza caller = non esposte
 
 ```bash
 cd backend
 npm install
 npm test
+npm run typecheck
+npm run build
 npm run dev
 ```
 
-Listens on `127.0.0.1:4050`. Do not point the frontend here.
+Ascolta `127.0.0.1:4050`. Non puntare il frontend qui.
+
+## Endpoint di controllo
 
 - `GET /health` `/ready` `/version` `/inventory` `/handoff/metalgate`
-- Only routes called by the current UX have concrete Fastify handlers
-- Removed/unused APIs (Live Coach, Tasks, Starter Pack, Card Advisor evaluate/unlock, transaction history, repair endpoints) are intentionally not exposed
-- Dormant mode blocks writes, AI and costs
-- Only deferred MetalGate capabilities return explicit HTTP 501 placeholders
-- `src/inventory.js` audits every current `app/api` file and marks unused routes `legacy-do-not-migrate`
-- Real Fastify paths and methods: `types/routes.ts`
-- Types for Tommaso: `types/database.ts`, `types/routes.ts`, `types/notifications.ts`, `types/metalgate.ts`
 
-Hero, Contromisure and Palestra Coach were extracted after their data foundations.
+## Layout
+
+| Path | Ruolo |
+|------|--------|
+| `src/` | Runtime TypeScript |
+| `src/inventory.ts` | Catalogo route vs `app/api` |
+| `src/domains/*` | Domini estratti |
+| `types/` | Contratti per Tommaso |
+| `handoff/` | TOMMASO.md + ACCORGIMENTI |
+| `tests/` | Parità (ancora `.js`) |
+
+## Documentazione prodotto
+
+- [docs/sistemi/09-BACKEND-DORMIENTE.md](../docs/sistemi/09-BACKEND-DORMIENTE.md)
+- [handoff/TOMMASO.md](./handoff/TOMMASO.md)

@@ -369,7 +369,7 @@ async function buildAssistantContext(userId, currentPage, appState) {
     // Recupera profilo utente (nome, team, preferenze, Informazioni IA)
     const { data: profile } = await admin
       .from('user_profiles')
-      .select('first_name, team_name, ai_name, how_to_remember, common_problems, ai_weak_point, ai_learn_goals, ai_notes')
+      .select('first_name, team_name, ai_name, how_to_remember, common_problems, ai_weak_point, ai_learn_goals, ai_notes, current_division, initial_division, favorite_team, hours_per_week, connection_quality, slow_opponent_connection_issues, input_delay, pass_level, smart_assist, platform')
       .eq('user_id', userId)
       .maybeSingle()
     
@@ -954,6 +954,14 @@ function buildPersonalizedPromptV2(userMessage, context, language = 'it', efootb
   const aiWeakPoint = sanitizeForPrompt(profile?.ai_weak_point || '', 60)
   const aiLearnGoals = sanitizeForPrompt(profile?.ai_learn_goals || '', 240)
   const aiNotes = sanitizeForPrompt(profile?.ai_notes || '', 280)
+  const currentDivision = sanitizeForPrompt(profile?.current_division || '', 40)
+  const favoriteTeam = sanitizeForPrompt(profile?.favorite_team || '', 60)
+  const platform = sanitizeForPrompt(profile?.platform || '', 30)
+  const connectionQuality = sanitizeForPrompt(profile?.connection_quality || '', 60)
+  const slowOpponentConnectionIssues = sanitizeForPrompt(profile?.slow_opponent_connection_issues || '', 120)
+  const inputDelay = sanitizeForPrompt(profile?.input_delay || '', 60)
+  const passLevel = sanitizeForPrompt(profile?.pass_level || '', 30)
+  const smartAssist = sanitizeForPrompt(profile?.smart_assist || '', 30)
   const commonProblems = Array.isArray(profile?.common_problems)
     ? profile.common_problems.map((p) => sanitizeForPrompt(p, 40)).filter(Boolean).slice(0, 5)
     : []
@@ -1011,6 +1019,14 @@ OUTPUT and VERBALIZATION: follow the SHARED CORE RULES above (1 main lever, max 
       ? (language === 'en' ? `Declared problems: ${commonProblems.join(', ')}` : `Problemi dichiarati: ${commonProblems.join(', ')}`)
       : '',
     aiLearnGoals ? (language === 'en' ? `Learn goals: ${aiLearnGoals}` : `Cosa vuole imparare: ${aiLearnGoals}`) : '',
+    currentDivision ? (language === 'en' ? `Current division: ${currentDivision}` : `Divisione attuale: ${currentDivision}`) : '',
+    favoriteTeam ? (language === 'en' ? `Favourite team: ${favoriteTeam}` : `Squadra preferita: ${favoriteTeam}`) : '',
+    platform ? (language === 'en' ? `Platform: ${platform}` : `Piattaforma: ${platform}`) : '',
+    connectionQuality ? (language === 'en' ? `Connection quality: ${connectionQuality}` : `Qualità connessione: ${connectionQuality}`) : '',
+    slowOpponentConnectionIssues ? (language === 'en' ? `Slow-opponent connection issues: ${slowOpponentConnectionIssues}` : `Problemi connessione contro avversari lenti: ${slowOpponentConnectionIssues}`) : '',
+    inputDelay ? (language === 'en' ? `Input delay: ${inputDelay}` : `Input delay: ${inputDelay}`) : '',
+    passLevel ? (language === 'en' ? `Pass level: ${passLevel}` : `Livello passaggi: ${passLevel}`) : '',
+    smartAssist ? (language === 'en' ? `Smart Assist: ${smartAssist}` : `Smart Assist: ${smartAssist}`) : '',
     aiNotes ? (language === 'en' ? `Notes for AI: ${aiNotes}` : `Note per l'IA: ${aiNotes}`) : ''
   ].filter(Boolean)
   const header = `CONTESTO: ${contestoAttuale}
@@ -1400,7 +1416,8 @@ export async function POST(req) {
             .order('created_at', { ascending: false })
             .limit(5)
           const feedbackBlock = formatTacticalFeedbackForPrompt(feedbackRows || [], lang)
-          if (feedbackBlock) {
+          const summaryAlreadyHasFeedback = /Esperienza Coach|Coach Experience|feedback Palestra|Coach Gym feedback/i.test(personalContextSummary)
+          if (feedbackBlock && !summaryAlreadyHasFeedback) {
             personalContextSummary = `${feedbackBlock}\n\n${personalContextSummary}`
             if (personalContextSummary.length > MAX_PERSONAL_CONTEXT_CHARS) {
               personalContextSummary = personalContextSummary.slice(0, MAX_PERSONAL_CONTEXT_CHARS) + '\n... (riassunto troncato).'

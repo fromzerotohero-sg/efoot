@@ -1,14 +1,14 @@
 # Sicurezza — stato reale
 
 Questo documento descrive ciò che il codice e l’audit live mostrano, non una checklist “tutto a posto”.
-I finding P0/P1 **non** si risolvono dentro lo sprint UX V2: workstream SECURITY dedicata.
+I finding P0/P1 di sicurezza restano un workstream dedicato, non uno sprint UX.
 
 ## Auth
 
 - Ingresso: MetalGate SSO (`NEXT_PUBLIC_METALGATE_LOGIN_URL`).
 - API: Bearer token. `validateToken` verifica MetalGate `/sso/verify`, poi fallback Supabase Auth.
 - Mapping locale: `user_profiles.metalgate_user_id`.
-- Token in `localStorage` è debito noto; non migrare a cookie nello sprint UX.
+- Token in `localStorage` è debito noto; non migrare a cookie senza decisione auth.
 - `SUPABASE_SERVICE_ROLE_KEY` solo server-side. `NEXT_PUBLIC_SUPABASE_ANON_KEY` deve essere la chiave **anon**, mai service_role.
 
 **P0 docs:** `KEY_FIX.md` (rimosso) esponeva una service_role key in chiaro, anche come `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Se quella chiave è ancora valida va **ruotata** su Supabase e su Vercel.
@@ -28,9 +28,11 @@ I finding P0/P1 **non** si risolvono dentro lo sprint UX V2: workstream SECURITY
 
 `lib/rateLimiter.js` è in-memory. Su Vercel multi-istanza non è una protezione forte. Non documentarlo come WAF/Redis.
 
-## RLS / advisors (snapshot Master UX V2)
+## RLS / advisors (snapshot)
 
 Non dichiarare “RLS su tutte le tabelle”.
+
+**Nota cutover backend:** il Fastify dormiente scrive con JWT utente + RLS; production Next oggi usa spesso service-role. Prima del cutover verificare policy su ogni tabella scritta. Dettaglio: [backend/handoff/ACCORGIMENTI_PER_TOMMASO.md](../backend/handoff/ACCORGIMENTI_PER_TOMMASO.md).
 
 **MetalGate (progetto separato)** — P0:
 

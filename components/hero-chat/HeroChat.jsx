@@ -24,6 +24,11 @@ import { pickLang } from '@/lib/i18n'
 import AIKnowledgeBar from '@/components/AIKnowledgeBar'
 import { resolveHomeState, resolveGreetingName } from '@/components/coach-v2/homeState'
 import { daysSince, STATS_STALE_DAYS } from '@/lib/chatReadiness'
+import {
+  dismissReadinessNudge,
+  isReadinessNudgeDismissed,
+} from '@/lib/coachReadinessNudge'
+import { markPwaEngaged } from '@/lib/pwaInstall'
 import { optimizeImageFile } from '@/lib/imageUploadOptimizer'
 import ChatMarkdown from '@/components/hero-chat/ChatMarkdown'
 import PrematchPitch from '@/components/hero-chat/PrematchPitch'
@@ -78,14 +83,31 @@ const COPY = {
   savedConfirm: { it: 'Fatto: l’ho salvato nella mia memoria e nella diagnosi. La prossima volta ne terrò conto.', en: 'Done: I saved it into my memory and diagnosis. I’ll keep it in mind next time.', es: 'Hecho: lo guardé en mi memoria y diagnóstico. Lo tendré en cuenta la próxima vez.' },
   saveError: { it: 'Non sono riuscito a salvare. Riprova.', en: 'I couldn’t save. Try again.', es: 'No pude guardar. Inténtalo de nuevo.' },
   greetingNamed: {
-    it: (name) => `Ciao ${name}! Sono il tuo coach. Ti guido passo passo: rosa, statistiche, partite. Dimmi cosa vuoi fare — o tocca un’azione sotto.`,
-    en: (name) => `Hi ${name}! I’m your coach. I’ll guide you step by step: squad, stats, matches. Tell me what you need — or tap an action below.`,
-    es: (name) => `¡Hola ${name}! Soy tu coach. Te guío paso a paso: plantilla, estadísticas, partidos. Dime qué quieres — o toca una acción abajo.`
+    it: (name) => `Ciao ${name}! Sono il tuo coach. Puoi parlarmi subito — se manca qualcosa per consigli più precisi, te lo dico io senza bloccarti.`,
+    en: (name) => `Hi ${name}! I’m your coach. You can talk to me right away — if something’s missing for sharper advice, I’ll say so without blocking you.`,
+    es: (name) => `¡Hola ${name}! Soy tu coach. Puedes hablarme ya — si falta algo para consejos más precisos, te lo digo sin bloquearte.`
   },
   greetingReturningNamed: {
     it: (name) => `Bentornato ${name}. Cosa vuoi fare oggi?`,
     en: (name) => `Welcome back ${name}. What would you like to do today?`,
     es: (name) => `Bienvenido de nuevo ${name}. ¿Qué quieres hacer hoy?`
+  },
+  nudgeLater: { it: 'Dopo', en: 'Later', es: 'Después' },
+  nudgeTalkAnyway: { it: 'Parliamo comunque', en: 'Let’s talk anyway', es: 'Hablemos de todas formas' },
+  promptLoadRoster: {
+    it: 'Aiutami a caricare la mia rosa qui in chat, passo dopo passo.',
+    en: 'Help me load my squad here in chat, step by step.',
+    es: 'Ayúdame a cargar mi plantilla aquí en el chat, paso a paso.'
+  },
+  promptCompleteRoster: {
+    it: 'Aiutami a completare la mia rosa qui in chat.',
+    en: 'Help me complete my squad here in chat.',
+    es: 'Ayúdame a completar mi plantilla aquí en el chat.'
+  },
+  promptSetupCoach: {
+    it: 'Aiutami a scegliere e configurare il mio allenatore qui in chat.',
+    en: 'Help me choose and set up my coach here in chat.',
+    es: 'Ayúdame a elegir y configurar mi entrenador aquí en el chat.'
   },
   newConversation: { it: 'Nuova conversazione', en: 'New conversation', es: 'Nueva conversación' },
   ctaPromptNextMatch: { it: 'Preparami per la prossima partita', en: 'Get me ready for the next match', es: 'Prepárame para el próximo partido' },
@@ -181,34 +203,67 @@ const COPY = {
   },
   states: {
     NEW: {
-      title: { it: 'Crea la tua rosa', en: 'Create your squad', es: 'Crea tu plantilla' },
-      desc: { it: 'Mi servono i tuoi giocatori reali per aiutarti davvero.', en: 'I need your real players to really help you.', es: 'Necesito tus jugadores reales para ayudarte de verdad.' },
-      cta: { it: 'Carica la rosa', en: 'Load your squad', es: 'Cargar plantilla' }
+      title: { it: 'Per aiutarti al meglio', en: 'To help you better', es: 'Para ayudarte mejor' },
+      desc: {
+        it: 'Per consigli su misura mi servono i tuoi giocatori in campo. Caricare la rosa ci mette poco — vuoi farlo ora, o preferisci parlarmi in generale?',
+        en: 'For tailored advice I need your players on the pitch. Loading your squad is quick — want to do it now, or talk in general?',
+        es: 'Para consejos a medida necesito tus jugadores en el campo. Cargar la plantilla lleva poco — ¿lo hacemos ahora o hablamos en general?'
+      },
+      cta: { it: 'Carica la rosa', en: 'Load squad', es: 'Cargar plantilla' }
     },
     ROSTER_INCOMPLETE: {
-      title: { it: 'Completa la rosa', en: 'Complete your squad', es: 'Completa tu plantilla' },
-      desc: { it: 'Ti mancano titolari per una formazione completa.', en: 'You are missing starters for a complete formation.', es: 'Te faltan titulares para una formación completa.' },
+      title: { it: 'Quasi pronto', en: 'Almost ready', es: 'Casi listo' },
+      desc: {
+        it: 'Con l’XI completo i consigli su moduli e cambi diventano concreti. Possiamo completarla ora, oppure parliamo comunque.',
+        en: 'With a full XI, advice on formations and subs gets concrete. We can finish it now — or talk anyway.',
+        es: 'Con el XI completo, los consejos de módulos y cambios son concretos. Podemos completarla ahora — o hablar igual.'
+      },
       cta: { it: 'Completa rosa', en: 'Complete squad', es: 'Completar plantilla' }
     },
     NO_COACH: {
-      title: { it: 'Scegli il tuo allenatore', en: 'Choose your coach', es: 'Elige tu entrenador' },
-      desc: { it: 'L’allenatore attivo cambia modulo, tattica e consigli.', en: 'The active coach changes formation, tactics and advice.', es: 'El entrenador activo cambia formación, táctica y consejos.' },
-      cta: { it: 'Configura allenatore', en: 'Set up coach', es: 'Configurar entrenador' }
+      title: { it: 'Un passo in più', en: 'One more step', es: 'Un paso más' },
+      desc: {
+        it: 'Un allenatore attivo mi dice modulo e stile: così i consigli combaciano col tuo setup. Ci vuole un minuto.',
+        en: 'An active coach tells me formation and style so advice matches your setup. It takes about a minute.',
+        es: 'Un entrenador activo me dice módulo y estilo: así los consejos encajan con tu setup. Tarda un minuto.'
+      },
+      cta: { it: 'Scegli allenatore', en: 'Choose coach', es: 'Elegir entrenador' }
+    },
+    PROFILE_THIN: {
+      title: { it: 'Un dettaglio che aiuta', en: 'One detail that helps', es: 'Un detalle que ayuda' },
+      desc: {
+        it: 'Se mi dici nome e punto debole, centro meglio i consigli. Non è obbligatorio — ci mette poco quando vuoi.',
+        en: 'If you tell me your name and weak point, I aim advice better. Not required — it takes a moment whenever you want.',
+        es: 'Si me dices tu nombre y punto débil, centro mejor los consejos. No es obligatorio — lleva poco cuando quieras.'
+      },
+      cta: { it: 'Completa profilo', en: 'Complete profile', es: 'Completar perfil' }
     },
     POST_MATCH: {
-      title: { it: 'Raccontami com’è andata', en: 'Tell me how it went', es: 'Cuéntame cómo te fue' },
-      desc: { it: 'Partita appena finita: due minuti di feedback rendono i consigli più tuoi.', en: 'Match just finished: two minutes of feedback make advice more yours.', es: 'Partido recién terminado: dos minutos de feedback hacen los consejos más tuyos.' },
+      title: { it: 'Se ti va', en: 'If you want', es: 'Si te apetece' },
+      desc: {
+        it: 'Partita appena finita: due minuti di feedback rendono i prossimi consigli più tuoi. Nessuna fretta.',
+        en: 'Match just finished: two minutes of feedback make the next tips more yours. No rush.',
+        es: 'Partido recién terminado: dos minutos de feedback hacen los próximos consejos más tuyos. Sin prisa.'
+      },
       cta: { it: 'Raccontami com’è andata', en: 'Tell me how it went', es: 'Cuéntame cómo te fue' }
     },
     READY_NO_STATS: {
-      title: { it: 'Aggiungi le statistiche di gioco', en: 'Add your game stats', es: 'Añade tus estadísticas' },
-      desc: { it: 'Scatta o carica gli screenshot Analisi: lo facciamo qui in chat.', en: 'Take or upload Analysis screenshots — we do it here in chat.', es: 'Haz o sube capturas de Análisis: lo hacemos aquí en el chat.' },
-      cta: { it: 'Apri fotocamera', en: 'Open camera', es: 'Abrir cámara' }
+      title: { it: 'Quando vuoi', en: 'Whenever you want', es: 'Cuando quieras' },
+      desc: {
+        it: 'Con gli screenshot Analisi i consigli sui tuoi punti deboli diventano precisi. Lo facciamo qui in chat, quando ti va.',
+        en: 'With Analysis screenshots, advice on your weak spots gets precise. We do it here in chat, whenever you like.',
+        es: 'Con capturas de Análisis, los consejos sobre tus puntos débiles son precisos. Lo hacemos aquí en el chat, cuando quieras.'
+      },
+      cta: { it: 'Aggiungi stats', en: 'Add stats', es: 'Añadir stats' }
     },
     STALE_STATS: {
-      title: { it: 'Statistiche da aggiornare', en: 'Stats need an update', es: 'Estadísticas por actualizar' },
-      desc: { it: 'Sono giorni che non aggiorni le statistiche. Con dati freschi i consigli sono più precisi.', en: 'It’s been days since your last stats update. Fresh data makes advice sharper.', es: 'Hace días que no actualizas las estadísticas. Datos frescos = consejos mejores.' },
-      cta: { it: 'Aggiorna ora', en: 'Update now', es: 'Actualizar ahora' }
+      title: { it: 'Dati un po’ vecchi', en: 'Data a bit old', es: 'Datos un poco viejos' },
+      desc: {
+        it: 'Sono giorni che non aggiorni le statistiche. Con dati freschi i consigli sono più precisi — quando vuoi.',
+        en: 'It’s been days since your last stats update. Fresh data makes advice sharper — whenever you’re ready.',
+        es: 'Hace días que no actualizas estadísticas. Datos frescos = consejos mejores — cuando quieras.'
+      },
+      cta: { it: 'Aggiorna stats', en: 'Update stats', es: 'Actualizar stats' }
     }
   }
 }
@@ -842,9 +897,24 @@ export default function HeroChat({
       ? (Date.now() - lastMatchDate.getTime()) / (1000 * 60)
       : null
 
-  const homeState = resolveHomeState({ stats, hasActiveCoach, gameAnalysisLastCapture, lastMatchMinutesAgo })
+  const homeState = resolveHomeState({
+    stats,
+    hasActiveCoach,
+    gameAnalysisLastCapture,
+    lastMatchMinutesAgo,
+    userProfile
+  })
   const stateCopy = COPY.states[homeState]
   const lowHp = typeof hpBalance === 'number' && Number.isFinite(hpBalance) && hpBalance < 2
+
+  // Soft nudge: dismissibile (sessione o “Dopo” 3 giorni). Mai bloccante.
+  const [nudgeEpoch, setNudgeEpoch] = React.useState(0)
+  const nudgeDismissed = React.useMemo(
+    () => isReadinessNudgeDismissed(homeState),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- nudgeEpoch forza re-read storage
+    [homeState, nudgeEpoch]
+  )
+  const showReadinessNudge = Boolean(stateCopy) && !nudgeDismissed
 
   // Greeting one-shot per utente: niente card ultima partita, solo Bentornato {name}.
   const [greetingVariant, setGreetingVariant] = React.useState('returning')
@@ -1052,6 +1122,7 @@ export default function HeroChat({
     stopListening()
     setActionsOpen(false)
     setShowInitialCta(false)
+    markPwaEngaged()
     pendingScrollRef.current = true
 
     const historyForApi = buildTacticalHistory(messages, 10)
@@ -1921,27 +1992,61 @@ export default function HeroChat({
   const startChatPrompt = React.useCallback((message) => {
     setActionsOpen(false)
     setShowInitialCta(false)
+    markPwaEngaged()
     setInput(message)
   }, [])
+
+  const dismissNudge = React.useCallback((mode = 'session') => {
+    dismissReadinessNudge(homeState, mode)
+    setNudgeEpoch((n) => n + 1)
+  }, [homeState])
+
+  const openProfileSettings = React.useCallback(() => {
+    dismissNudge('session')
+    markPwaEngaged()
+    router.push('/impostazioni-profilo')
+  }, [dismissNudge, router])
 
   const stateCta = (() => {
     switch (homeState) {
       case 'NEW':
-        return () => startChatPrompt('Aiutami a caricare la mia rosa qui in chat, passo dopo passo.')
+        return () => {
+          dismissNudge('session')
+          startChatPrompt(L(lang, COPY.promptLoadRoster))
+        }
       case 'ROSTER_INCOMPLETE':
-        return () => startChatPrompt('Aiutami a completare la mia rosa qui in chat.')
+        return () => {
+          dismissNudge('session')
+          startChatPrompt(L(lang, COPY.promptCompleteRoster))
+        }
       case 'NO_COACH':
-        return () => startChatPrompt('Aiutami a scegliere e configurare il mio allenatore qui in chat.')
+        return () => {
+          dismissNudge('session')
+          startChatPrompt(L(lang, COPY.promptSetupCoach))
+        }
+      case 'PROFILE_THIN':
+        return () => openProfileSettings()
       case 'POST_MATCH':
-        return () => enterFeedbackMode(lastSavedMatchId || lastMatch?.id || null)
+        return () => {
+          dismissNudge('session')
+          enterFeedbackMode(lastSavedMatchId || lastMatch?.id || null)
+        }
       case 'READY_NO_STATS':
-        return openStatsCamera
       case 'STALE_STATS':
-        return null
+        return () => {
+          dismissNudge('session')
+          openStatsCamera()
+        }
       default:
         return null
     }
   })()
+
+  const talkAnyway = React.useCallback(() => {
+    dismissNudge('session')
+    setShowInitialCta(false)
+    markPwaEngaged()
+  }, [dismissNudge])
 
   const quickActions = [
     { key: 'stats', icon: Camera, label: L(lang, COPY.actionStats), run: openStatsCamera },
@@ -2315,16 +2420,38 @@ export default function HeroChat({
           </div>
         )}
 
-        {stateCopy && stateCta && !feedbackMode && !matchFlow && (
-          <div className="hc-stateCard">
-            <p className="hc-stateTitle">{L(lang, stateCopy.title)}</p>
-            <p className="hc-stateDesc">{stateDesc}</p>
-            {homeState === 'ROSTER_INCOMPLETE' && stats && (
-              <p className="hc-stateMeta">{L(lang, COPY.starters)}: {stats.titolari}/11</p>
-            )}
-            <button type="button" className="hc-stateBtn" onClick={stateCta}>
-              {L(lang, stateCopy.cta)}
-            </button>
+        {showReadinessNudge && stateCta && !feedbackMode && !matchFlow && (
+          <div className="hc-row hc-coachNudgeRow" role="status">
+            <span className="hc-bubbleAvatar" aria-hidden="true">
+              <img src="/logo.png" alt="" />
+            </span>
+            <div className="hc-bubble hc-bubbleHero hc-coachNudgeBubble">
+              <p className="hc-nudgeTitle">{L(lang, stateCopy.title)}</p>
+              <p className="hc-nudgeBody">{stateDesc}</p>
+              {homeState === 'ROSTER_INCOMPLETE' && stats && (
+                <p className="hc-nudgeMeta">{L(lang, COPY.starters)}: {stats.titolari}/11</p>
+              )}
+              <div className="hc-bubbleActions">
+                <button type="button" className="hc-bubbleAction hc-bubbleActionPrimary" onClick={stateCta}>
+                  {L(lang, stateCopy.cta)}
+                </button>
+                {(homeState === 'NEW'
+                  || homeState === 'ROSTER_INCOMPLETE'
+                  || homeState === 'NO_COACH'
+                  || homeState === 'PROFILE_THIN') && (
+                  <button type="button" className="hc-bubbleAction" onClick={talkAnyway}>
+                    {L(lang, COPY.nudgeTalkAnyway)}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="hc-bubbleAction"
+                  onClick={() => dismissNudge('later')}
+                >
+                  {L(lang, COPY.nudgeLater)}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -2342,7 +2469,7 @@ export default function HeroChat({
           </div>
         )}
 
-        {/* CTA iniziale della sessione: scompare al primo messaggio/azione. */}
+        {/* Greeting sessione: chip solo se non c’è già un nudge attivo (una cosa alla volta). */}
         {!historyLoading && showInitialCta && (
           <div className="hc-newConv">
             {messages.length > 0 && (
@@ -2362,21 +2489,23 @@ export default function HeroChat({
                   : Lfn(lang, COPY.greetingReturningNamed, clientName)}
               </div>
             </div>
-            <div className="hc-newConvChips">
-              {[COPY.ctaPromptNextMatch, COPY.ctaPromptRosa, COPY.ctaPromptImprove].map((prompt) => {
-                const text = L(lang, prompt)
-                return (
-                  <button
-                    key={text}
-                    type="button"
-                    className="hc-bubbleAction"
-                    onClick={() => sendMessage(text)}
-                  >
-                    {text}
-                  </button>
-                )
-              })}
-            </div>
+            {!showReadinessNudge && (
+              <div className="hc-newConvChips">
+                {[COPY.ctaPromptNextMatch, COPY.ctaPromptRosa, COPY.ctaPromptImprove].map((prompt) => {
+                  const text = L(lang, prompt)
+                  return (
+                    <button
+                      key={text}
+                      type="button"
+                      className="hc-bubbleAction"
+                      onClick={() => sendMessage(text)}
+                    >
+                      {text}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -2914,49 +3043,39 @@ export default function HeroChat({
           50% { opacity: 1; transform: translateY(-2px); }
         }
 
-        .hc-stateCard {
-          border-radius: 16px;
-          padding: 16px 18px;
-          background: linear-gradient(150deg, var(--accent-bg), var(--surface));
-          border: 1px solid var(--accent-border);
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
+        .hc-coachNudgeRow {
+          align-items: flex-start;
         }
 
-        .hc-stateTitle {
-          margin: 0;
-          font-size: 16px;
-          font-weight: 800;
+        .hc-coachNudgeBubble .hc-nudgeTitle {
+          margin: 0 0 6px;
+          font-size: 14px;
+          font-weight: 700;
           color: var(--text-main);
         }
 
-        .hc-stateDesc {
+        .hc-coachNudgeBubble .hc-nudgeBody {
           margin: 0;
-          font-size: 13px;
-          line-height: 1.5;
-          color: var(--text-dim);
+          font-size: 14px;
+          line-height: 1.45;
+          color: var(--text-main);
         }
 
-        .hc-stateMeta {
-          margin: 0;
-          font-size: 13px;
-          font-weight: 800;
+        .hc-coachNudgeBubble .hc-nudgeMeta {
+          margin: 8px 0 0;
+          font-size: 12px;
+          font-weight: 700;
           color: var(--accent);
         }
 
-        .hc-stateBtn {
-          align-self: flex-start;
-          min-height: 44px;
-          padding: 10px 18px;
-          border: none;
-          border-radius: 12px;
+        .hc-bubbleActionPrimary {
+          border-color: transparent;
           background: linear-gradient(135deg, var(--accent), var(--accent-strong));
           color: var(--accent-ink);
-          font-size: 14px;
-          font-weight: 800;
-          font-family: inherit;
-          cursor: pointer;
+        }
+
+        .hc-bubbleActionPrimary:hover {
+          filter: brightness(1.05);
         }
 
         .hc-richCard {

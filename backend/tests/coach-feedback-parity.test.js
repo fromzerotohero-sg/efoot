@@ -102,7 +102,7 @@ test('chat preserves context, history bounds, model fallback, cost, and response
   assert.equal(requests[0].body.max_completion_tokens, 400)
   assert.match(requests[0].body.messages[0].content, /PROFILO ATTUALE DEL CLIENTE/)
   assert.match(requests[0].body.messages[0].content, /ULTIMA PARTITA GIOCATA/)
-  assert.equal(requests[0].body.messages.length, 11)
+  assert.equal(requests[0].body.messages.length, 12)
   assert.deepEqual(credits.snapshot()[0], {
     type: 'deduct',
     capability: 'coach-feedback-chat',

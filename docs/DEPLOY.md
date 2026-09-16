@@ -10,8 +10,9 @@ Procedura reale. Nessuna migration Stripe, nessuna “pulizia Edge Functions” 
 | Vercel Preview | branch. Analytics/install prompt off se `VERCEL_ENV=preview` |
 | Staging UX V2 | progetto/env con `NEXT_PUBLIC_APP_ENV=staging` |
 | Production | `efootball.fromzerotohero.io`. `NEXT_PUBLIC_APP_ENV` omesso o `production` |
+| Backend Fastify | Solo locale/test. **Mai** in DNS/Vercel finché cutover non approvato |
 
-Main resta congelato durante UX V2: slice su branch → preview/staging → validazione → merge controllato.
+Branch feature → preview/staging → validazione → merge controllato.
 
 ## Variabili minime produzione
 
@@ -57,5 +58,6 @@ Lista completa senza segreti: `.env.example`.
 - Non applicare SQL RLS/Edge Function da documenti storici.
 - Non duplicare il progetto Supabase solo per UX.
 - Non committare `.env.local` o chiavi in markdown.
+- Non attivare il backend dormiente in produzione senza handoff Tommaso + fix P0.
 
 Rollback: Vercel → deployment precedente. I dati utente restano sul DB eFootball / MetalGate.

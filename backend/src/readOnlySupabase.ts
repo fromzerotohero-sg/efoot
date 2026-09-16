@@ -1,11 +1,11 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { BackendConfig } from './config.js'
 import type { HttpError } from './types.js'
+import type { Database } from './types/database.js'
 
-// TODO(ts): types/database.ts lives outside rootDir (src), so tsc cannot import
-// it; wire the generated `Database` schema as the SupabaseClient generic when
-// the domain conversion relocates or re-exports those types under src/.
-export type BackendSupabaseClient = SupabaseClient
+// src/types/database.ts is a verbatim copy of the generated production schema
+// (backend/types/database.ts); it gives every domain client typed table access.
+export type BackendSupabaseClient = SupabaseClient<Database>
 
 export interface ReadOnlySupabaseProvider {
   name: string
@@ -43,7 +43,7 @@ export function createReadOnlySupabaseProvider(config: BackendConfig): ReadOnlyS
       }
 
       // Anon key + caller JWT means RLS, not service_role, owns tenant isolation.
-      return createClient(config.supabaseUrl, config.supabaseAnonKey, {
+      return createClient<Database>(config.supabaseUrl, config.supabaseAnonKey, {
         auth: { autoRefreshToken: false, persistSession: false },
         global: { headers: { Authorization: `Bearer ${token}` } }
       })
@@ -57,7 +57,7 @@ export function createReadOnlySupabaseProvider(config: BackendConfig): ReadOnlyS
       }
       // Needed only for server-owned catalog tables that intentionally have no
       // client SELECT policy. Domain services receive this client for reads only.
-      return createClient(config.supabaseUrl, config.supabaseServiceRoleKey, {
+      return createClient<Database>(config.supabaseUrl, config.supabaseServiceRoleKey, {
         auth: { autoRefreshToken: false, persistSession: false }
       })
     },
@@ -91,7 +91,7 @@ export function createUserSupabaseWriteProvider(config: BackendConfig): UserSupa
       }
       if (!token) throw unavailable('Authenticated token required', 401)
       // Never service_role: the caller JWT and RLS must authorize every write.
-      return createClient(config.supabaseUrl, config.supabaseAnonKey, {
+      return createClient<Database>(config.supabaseUrl, config.supabaseAnonKey, {
         auth: { autoRefreshToken: false, persistSession: false },
         global: { headers: { Authorization: `Bearer ${token}` } }
       })
@@ -112,7 +112,7 @@ export function createServerSupabaseWriteProvider(config: BackendConfig): Server
       if (!token) throw unavailable('Authenticated token required', 401)
       // Identity is validated before domain invocation. Every domain query must
       // still include the resolved user_id: service_role bypasses RLS.
-      return createClient(config.supabaseUrl, config.supabaseServiceRoleKey, {
+      return createClient<Database>(config.supabaseUrl, config.supabaseServiceRoleKey, {
         auth: { autoRefreshToken: false, persistSession: false }
       })
     }

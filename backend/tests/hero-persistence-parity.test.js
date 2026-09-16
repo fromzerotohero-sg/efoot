@@ -96,10 +96,10 @@ test('chat parity keeps chronological reads, client shape, last two messages, an
     }
   })
 
-  assert.deepEqual(response.messages.map((message) => message.content), ['answer', 'state'])
+  assert.deepEqual(response.messages.map((message) => message.content), ['answer'])
   const insert = client.calls.find((call) =>
     call.table === 'hero_chat_messages' && call.operation === 'insert')
-  assert.equal(insert.payload.length, 2)
+  assert.equal(insert.payload.length, 1)
   assert.ok(insert.payload.every((row) => row.user_id === USER_ID))
   const deletion = client.calls.find((call) => call.operation === 'delete')
   assert.deepEqual(deletion.filters.find(([operator]) => operator === 'in')[2], ['m-80', 'm-81'])

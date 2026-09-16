@@ -1,6 +1,6 @@
 # Indice legale
 
-**Stato:** fatti prodotto allineati al codice (13 agosto 2026). Titolare, P.IVA, sede e testi contrattuali **non sono verificati da un legale**. Non usare questi file come policy pubblicata senza revisione.
+**Stato:** fatti prodotto allineati al codice (16 settembre 2026). Titolare, P.IVA, sede e testi contrattuali **non sono verificati da un legale**. Non usare questi file come policy pubblicata senza revisione.
 
 | Documento | Contenuto |
 |-----------|-----------|

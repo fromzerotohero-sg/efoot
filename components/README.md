@@ -1,30 +1,32 @@
 # components/
 
-## Shell globale (`AppLayoutShell.jsx`)
+## Shell (`AppLayoutShell.jsx`)
 
-Montata da `app/layout.jsx`. Contiene:
+Montata da `app/layout.jsx`:
 
 - `SidebarNew`, `TopBar`, `BottomNavigation`
-- `NotificationBell` (campanella notifiche in TopBar)
-- `InstallAppPrompt` (condizionale)
+- `NotificationBell`
+- `InstallAppPrompt` (soft CTA)
 - `PrelaunchGate`, `MaintenanceGate`
 
-Non smontare questi pezzi “per semplificare” senza BYPASS UX esplicito.
+## Navigazione
 
-## Navigazione attuale
+Coach · Rosa · Carte. Partite / stats / feedback / contromisure aprono dentro Hero.
 
-Sidebar e bottom nav espongono i tre pilastri Coach · Rosa · Carte. Statistiche, partite, feedback e contromisure si aprono dentro Hero.
-
-## Coach / memoria
+## Coach
 
 | Componente | Ruolo |
 |------------|--------|
-| `hero-chat/HeroChat` | Hero Chat e workflow Partite, Stats, Palestra e Contromisure |
-| `coach-v2/homeState` | Stato e prontezza dati della Home |
+| `hero-chat/HeroChat` | Chat + workflow Partite, Stats, Palestra, Contromisure |
+| `coach-v2/*` | Home Coach, `homeState`, readiness nudge |
 
 ## Rosa / form
 
-`TacticalSettingsPanel`, `PositionSelectionModal`, `MissingDataModal`, `OnboardingFormation`, `CameraCaptureModal`, …
+`TacticalSettingsPanel`, modal posizione/dati mancanti, capture, …
+
+## Carte
+
+`card-advisor/StylePitch.jsx` — pitch movimento stile (solo UI)
 
 ## Economia / account
 

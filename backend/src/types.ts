@@ -95,3 +95,6 @@ declare module 'fastify' {
     auth?: ResolvedIdentity
   }
 }
+
+// Repo-root lib/*.js used by domains is covered via // @ts-nocheck on those files
+// (paths sit outside backend rootDir; ambient relative declare module paths conflict with tsc).

@@ -1,45 +1,61 @@
 # app/api — route reali
 
 Quasi tutti gli endpoint utente richiedono `Authorization: Bearer`.  
-Eccezioni: webhook accredito (`CREDITS_ACCREDIT_API_KEY`), status prelaunch/maintenance, alcune route catalogo/releases a seconda del file.
+Eccezioni: webhook accredito (`CREDITS_ACCREDIT_API_KEY`), status prelaunch/maintenance, alcune route catalogo/releases.
 
-Rate limit in-memory (`lib/rateLimiter.js`): mitigante, non Redis.
+Rate limit: `lib/rateLimiter.js` in-memory (non Redis).
 
-## AI / Coach
+## Attive (UX corrente)
 
-- `assistant-chat` — Hero Chat (2 HP, gpt-5.2 → gpt-4o)
+**Hero / memoria**
+
+- `assistant-chat` — Hero (2 HP)
+- `hero-chat`, `hero-chat/plans` — persistenza
 - `coach-feedback-chat`, `save-coach-feedback` — Palestra (2 HP)
-- `refresh-diagnostic` — cache contesto
-- `generate-countermeasures`
-- `extract-player`, `extract-coach`, `extract-formation`, `extract-match-data`, `extract-game-analysis` (gpt-4o)
+- `refresh-diagnostic`, `ai-knowledge`
+- `generate-countermeasures` (2 HP)
 
-## Rosa / catalogo
+**Vision**
 
-- `player-catalog/search`, `coach-catalog/search`, `playing-styles`
+- `extract-player`, `extract-coach`, `extract-formation`, `extract-match-data`, `extract-game-analysis` (gpt-4o, 2 HP)
+
+**Rosa / coach / tattiche**
+
+- `player-catalog/search`, `coach-catalog/search`
 - `supabase/save-player`, `delete-player`, `assign-player-to-slot`, `remove-player-from-slot`
-- `supabase/save-formation-layout`, `save-tactical-settings`
-- `supabase/save-coach`, `set-active-coach`
-- `formation`, `players/[id]`
-- `build-coach/roster`, `build-coach/player/[id]`, `build-coach/repair-play-profile`
-- `starter-pack/import`
+- `supabase/save-formation-layout`, `save-tactical-settings`, `save-coach`, `set-active-coach`
+- `formation`, `players/[id]`, `coaches`
+- `tactical/formation-variants`
+- `build-coach/roster`, `build-coach/player/[id]`
 
-## Partite / profilo / knowledge
+**Partite**
 
 - `supabase/save-match`, `save-opponent-formation`
-- `supabase/save-profile`, `save-ai-info`
-- `user/profile`, `dashboard`, `ai-knowledge`
-- `tasks/list` (side effect generate/update), `tasks/generate`
-- `admin/recalculate-patterns`
 
-## Carte
+**Carte**
 
-- `card-advisor-lab/evaluate`, `deep-analysis` (2 HP), `releases`, `build-preview`, `image`
-- `card-advisor-access/unlock`
+- `card-advisor-lab/deep-analysis` (2 HP), `releases`, `build-preview`, `image`
 
-## Economia / auth / gate
+**Profilo / economia / gate / notifiche**
 
-- `credits/usage`, `credits/transactions`, `credits/accredit`
-- `auth/metalgate-callback`, `metalgate-sync`
+- `user/profile`, `supabase/save-profile`, `save-ai-info`, `dashboard`
+- `credits/usage`, `credits/accredit` (webhook)
+- `auth/metalgate-*`, `metalgate-sync`
 - `prelaunch/*`, `maintenance/*`
+- `notifications`, `notifications/prefs`
 
-Lo Smart Coach (`smart/*`) è stato rimosso dal codice: non reintrodurlo come ingresso UX.
+## Legacy (presenti su disco, non prodotto attivo)
+
+Non promuovere in UX / non migrare nel backend cutover senza decisione:
+
+- `tasks/list`, `tasks/generate`
+- `starter-pack/import`
+- `card-advisor-lab/evaluate`, `card-advisor-access/unlock`
+- `credits/transactions`
+- `build-coach/repair-play-profile`
+- `admin/recalculate-patterns`
+- `playing-styles` (stili arrivano da formation.read)
+- `prelaunch/session`
+
+Inventario ufficiale backend: `backend/src/inventory.ts`.  
+Doc sistemi: [../docs/sistemi/](../docs/sistemi/)
