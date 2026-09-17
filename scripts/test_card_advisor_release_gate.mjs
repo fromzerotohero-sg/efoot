@@ -4,6 +4,7 @@
  *   node scripts/test_card_advisor_release_gate.mjs
  */
 import { spawnSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
@@ -38,6 +39,9 @@ const ALLOW = [
   'Spain 2010 Selection',
   '2026 PFA TOTY',
   'Gracias, Leo!',
+  'National All Stars',
+  "Trendyol Süper Lig Monthly MVPs Aug '26",
+  'Eric Cantona',
 ]
 
 const DENY = [
@@ -52,6 +56,8 @@ const DENY = [
   'New Season Campaign 2027',
   'eFootball™ League 2027 Rewards Phase 1',
   'The Football Festival Campaign',
+  'Ranking Event Rewards 2027',
+  "International Match Campaign Sep '26",
 ]
 
 for (const name of ALLOW) {
@@ -91,6 +97,14 @@ extra = [n for n in deny if is_evaluable_card_advisor_release(n)]
 print('py_ok' if not bad and not extra else 'py_fail', len(bad), len(extra))
 `], { encoding: 'utf-8', cwd: join(root, 'scripts') })
 assert('python-gate', (py.stdout || '').includes('py_ok'), (py.stdout || py.stderr || '').trim())
+
+const releasesRoute = readFileSync(join(root, 'app/api/card-advisor-lab/releases/route.js'), 'utf8')
+assert(
+  'releases-live-url',
+  releasesRoute.includes("const EFHUB_RELEASES_URL = 'https://efhub.com/it/new-players'") &&
+    !releasesRoute.includes("const EFHUB_HOME_URL = 'https://efhub.com/it'"),
+  'API and importer read the same eFHUB releases page'
+)
 
 const failed = results.filter((row) => !row.ok)
 console.log(JSON.stringify({ passed: results.length - failed.length, failed: failed.length }))

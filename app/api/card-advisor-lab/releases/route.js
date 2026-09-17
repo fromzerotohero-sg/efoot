@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 export const fetchCache = 'force-no-store'
 
-const EFHUB_HOME_URL = 'https://efhub.com/it'
+const EFHUB_RELEASES_URL = 'https://efhub.com/it/new-players'
 
 const RELEASE_SELECT = 'id, source, source_release_id, source_url, release_name, release_date, category, status, last_synced_at'
 const CARD_SELECT = [
@@ -152,7 +152,7 @@ function normalizeDbRelease(release, cardsByRelease) {
   return {
     id: release.source_release_id || release.id,
     source: release.source || 'efhub',
-    sourceUrl: release.source_url || EFHUB_HOME_URL,
+    sourceUrl: release.source_url || EFHUB_RELEASES_URL,
     name: release.release_name,
     date: release.release_date || extractReleaseDate(release.release_name) || '',
     status: release.status || 'active',
@@ -199,7 +199,7 @@ async function fetchDbReleases() {
 }
 
 async function fetchLiveReleases() {
-  const response = await fetch(EFHUB_HOME_URL, {
+  const response = await fetch(EFHUB_RELEASES_URL, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (compatible; FromZeroToHeroCardAdvisor/1.0)',
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
@@ -233,7 +233,7 @@ export async function GET() {
       return NextResponse.json(
         {
           source: 'card_advisor_cards',
-          sourceUrl: EFHUB_HOME_URL,
+          sourceUrl: EFHUB_RELEASES_URL,
           fetchedAt: new Date().toISOString(),
           releases: servedDbReleases
         },
@@ -254,7 +254,7 @@ export async function GET() {
     return NextResponse.json(
       {
         source: 'efhub',
-        sourceUrl: EFHUB_HOME_URL,
+        sourceUrl: EFHUB_RELEASES_URL,
         fetchedAt: new Date().toISOString(),
         releases: liveReleases
       },

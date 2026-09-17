@@ -33,9 +33,12 @@ ALLOW_SUBSTRINGS = (
     "international cup",
     "icons",
     "national stars",
+    "national all stars",
     "rising stars",
+    "monthly mvps",
     "toty",
     "gracias",
+    "eric cantona",
 )
 
 RELEASE_DATE_RE = re.compile(r"(\d{1,2}\s+[A-Za-z]{3,9}\s+'?\d{2})")
